@@ -1,0 +1,11 @@
+{
+    "workbench.colorCustomizations": {
+        "errorLens.errorMessageBackground": "#00008B",
+        "errorLens.warningBackground": "#fff0",
+        "errorLens.errorBackground": "#fff0",
+        "editor.lineHighlightBackground": "#1073cf2d",
+        "editor.lineHighlightBorder": "#9fced11f",
+        "minimap.background": "#00000000",
+        "scrollbar.shadow": "#00000000"
+    }
+}
