@@ -1,6 +1,35 @@
 import { Link } from 'react-router-dom'
+import axios from 'axios'
 
 const Navbar = () => {
+  const generateLog = async () => {
+    try {
+      const response = await axios.get('http://localhost:4000/api/log', {
+        responseType: 'blob',
+      })
+
+      // Create a Blob from the response data
+      const blob = new Blob([response.data], { type: 'text/plain' })
+      const url = window.URL.createObjectURL(blob)
+
+      // Create a link element
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', 'kubestellarui.log')
+
+      // Append to the document and trigger click
+      document.body.appendChild(link)
+      link.click()
+
+      // Clean up
+      link.parentNode?.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error generating log:', error)
+      alert('Failed to generate log. Please try again.')
+    }
+  }
+
   return (
     <div className="navbar bg-base-100 w-full px-4 shadow-md">
       <div className="navbar-start">
@@ -23,6 +52,7 @@ const Navbar = () => {
             tabIndex={0}
             className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow">
             <li><Link to="/its">ITS</Link></li>
+            <li><Link to="/wds">WDS</Link></li>
           </ul>
         </div>
         <Link to="/" className="btn btn-ghost text-xl">KubestellarUI</Link>
@@ -30,14 +60,11 @@ const Navbar = () => {
       <div className="navbar-center hidden lg:flex">
         <ul className="menu menu-horizontal px-1">
           <li><Link to="/its">ITS</Link></li>
-        </ul>
-        <ul className="menu menu-horizontal px-1">
           <li><Link to="/wds">WDS</Link></li>
         </ul>
-        
       </div>
       <div className="navbar-end">
-        <a className="btn">Test</a>
+        <button className="btn" onClick={generateLog}>Generate Log</button>
       </div>
     </div>
   )

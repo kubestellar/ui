@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,7 +27,7 @@ type ManagedClusterInfo struct {
 
 type WorkloadInfo struct {
 	Name         string `json:"name"`
-	Kind         string `json:"kind"`
+	Kind         string `json:"kind"`      // 'Deployment' or 'Service'
 	Namespace    string `json:"namespace"`
 	CreationTime string `json:"creationTime"`
 }
@@ -67,6 +68,60 @@ func main() {
 			return
 		}
 		c.JSON(http.StatusOK, workloads)
+	})
+
+	// New Log Endpoint
+	router.GET("/api/log", func(c *gin.Context) {
+		// Fetch Kubernetes Information
+		contexts, clusters, currentContext, _, itsData := getKubeInfo()
+
+		// Fetch WDS Workloads
+		workloads, err := getWDSWorkloads()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		var logBuilder strings.Builder
+
+		logBuilder.WriteString("==== KubestellarUI Log ====\n\n")
+
+		logBuilder.WriteString(fmt.Sprintf("Current Context: %s\n\n", currentContext))
+
+		logBuilder.WriteString("=== Clusters ===\n")
+		for _, cluster := range clusters {
+			logBuilder.WriteString(fmt.Sprintf("- %s\n", cluster))
+		}
+
+		logBuilder.WriteString("\n=== Contexts ===\n")
+		for _, ctx := range contexts {
+			logBuilder.WriteString(fmt.Sprintf("- %s (Cluster: %s)\n", ctx.Name, ctx.Cluster))
+		}
+
+		logBuilder.WriteString("\n=== ITS Data ===\n")
+		for _, cluster := range itsData {
+			logBuilder.WriteString(fmt.Sprintf("- Name: %s\n", cluster.Name))
+			logBuilder.WriteString("  Labels:\n")
+			for key, value := range cluster.Labels {
+				logBuilder.WriteString(fmt.Sprintf("    %s=%s\n", key, value))
+			}
+			logBuilder.WriteString(fmt.Sprintf("  Creation Time: %s\n", cluster.CreationTime))
+		}
+
+		logBuilder.WriteString("\n=== WDS Workloads ===\n")
+		for _, workload := range workloads {
+			logBuilder.WriteString(fmt.Sprintf("- Name: %s\n", workload.Name))
+			logBuilder.WriteString(fmt.Sprintf("  Kind: %s\n", workload.Kind))
+			logBuilder.WriteString(fmt.Sprintf("  Namespace: %s\n", workload.Namespace))
+			logBuilder.WriteString(fmt.Sprintf("  Creation Time: %s\n\n", workload.CreationTime))
+		}
+
+		// Set Headers for File Download
+		c.Header("Content-Type", "text/plain")
+		c.Header("Content-Disposition", "attachment; filename=kubestellarui.log")
+
+		// Send the Log String
+		c.String(http.StatusOK, logBuilder.String())
 	})
 
 	router.Run(":4000")
