@@ -16,15 +16,10 @@ const ITS = () => {
     axios.get('http://localhost:4000/api/clusters')
       .then(response => {
         console.log('Response data:', response.data);
-        const clusterData = response.data.clusters || [];
-        
-        if (Array.isArray(clusterData)) {
-          clusterData.forEach(cluster => console.log('Cluster name:', cluster));
-          setClusters(clusterData.map(name => ({
-            name,
-            labels: {},
-            creationTime: new Date().toISOString()
-          })));
+        const itsData: ManagedClusterInfo[] = response.data.itsData || [];
+
+        if (Array.isArray(itsData)) {
+          setClusters(itsData);
         } else {
           console.error('Invalid data format received:', response.data);
           setError('Invalid data format received from server');
@@ -53,17 +48,21 @@ const ITS = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <h3 className="font-semibold mb-2">Labels</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {Object.entries(cluster.labels || {}).map(([key, value]) => (
-                      <span 
-                        key={`${key}-${value}`} 
-                        className="badge badge-primary"
-                        title={`${key}: ${value}`}
-                      >
-                        {key}={value}
-                      </span>
-                    ))}
-                  </div>
+                  {Object.keys(cluster.labels).length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(cluster.labels).map(([key, value]) => (
+                        <span 
+                          key={`${key}-${value}`} 
+                          className="badge badge-primary"
+                          title={`${key}: ${value}`}
+                        >
+                          {key}={value}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p>No labels available.</p>
+                  )}
                 </div>
                 <div>
                   <h3 className="font-semibold mb-2">Creation Time</h3>
