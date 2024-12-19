@@ -8,7 +8,6 @@ lerna-debug.log*
 .pnpm-debug.log*
 
 .DS_Store
-package.json
 package-lock.json
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
