@@ -15,11 +15,19 @@ const ITS = () => {
   useEffect(() => {
     axios.get('http://localhost:4000/api/clusters')
       .then(response => {
+        if (response.data !== clusters) {
+          setClusters(response.data.itsData || []);
+        }
+        setError(null);
         console.log('Response data:', response.data);
         const itsData: ManagedClusterInfo[] = response.data.itsData || [];
 
+        console.log('itsData:', itsData);
+
         if (Array.isArray(itsData)) {
+          console.log('Setting clusters state:', itsData);
           setClusters(itsData);
+
         } else {
           console.error('Invalid data format received:', response.data);
           setError('Invalid data format received from server');
@@ -31,11 +39,15 @@ const ITS = () => {
         setError('Error fetching ITS information');
         setLoading(false);
       });
-  }, []);
+    console.log('Loading state:', loading);
+    console.log('Clusters state:', clusters);
+  }, [loading, clusters]);
 
   if (loading) return <p className="text-center p-4">Loading ITS information...</p>;
   if (error) return <p className="text-center p-4 text-error">{error}</p>;
   if (!clusters.length) return <p className="text-center p-4">No clusters found</p>;
+  console.log('Loading state:', loading);
+  console.log('Clusters state:', clusters);
 
   return (
     <div className="w-full max-w-7xl mx-auto p-4">
@@ -44,15 +56,15 @@ const ITS = () => {
         {clusters.map((cluster) => (
           <div key={cluster.name} className="card bg-base-200 shadow-xl">
             <div className="card-body">
-              <h2 className="card-title">{cluster.name}</h2>
+              <h2 className="card-title">{cluster.name || 'No Name Available'}</h2>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <h3 className="font-semibold mb-2">Labels</h3>
                   {Object.keys(cluster.labels).length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {Object.entries(cluster.labels).map(([key, value]) => (
-                        <span 
-                          key={`${key}-${value}`} 
+                        <span
+                          key={`${key}-${value}`}
                           className="badge badge-primary"
                           title={`${key}: ${value}`}
                         >
