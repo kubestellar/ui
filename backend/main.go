@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -34,6 +35,8 @@ type WorkloadInfo struct {
 
 func main() {
 	router := gin.Default()
+
+	log.Println("Debug: KubestellarUI application started")
 
 	// CORS Middleware
 	router.Use(func(c *gin.Context) {
