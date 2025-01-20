@@ -6,6 +6,7 @@ on:
     branches: [ main ]
 
 jobs:
+
   frontend:
     name: Frontend Checks
     runs-on: ubuntu-latest
@@ -35,21 +36,24 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('src/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
       - name: Install Dependencies
+        working-directory: src
         run: pnpm install --frozen-lockfile
       
       - name: Lint Check
+        working-directory: src
         run: pnpm eslint . --ext .ts,.tsx
       
       - name: Build
+        working-directory: src
         run: pnpm build
         env:
           VITE_BASE_URL: http://localhost:4000
-
+  
   backend:
     name: Backend Checks
     runs-on: ubuntu-latest
