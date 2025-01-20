@@ -35,18 +35,18 @@ const K8sInfo = () => {
     <div className="w-full max-w-full p-4">
       <div className="grid grid-cols-3">
       <div>
-        <h2 className="text-2xl font-bold mb-6">Kubernetes Clusters ({clusters.length})</h2>
+        <h2 className="text-2xl font-bold mb-6">Kubernetes Clusters ({clusters?.length})</h2>
         <ul>
-          {clusters.map(cluster => (
+          {clusters && clusters.map(cluster => (
             <li key={cluster}>{cluster}</li>
           ))}
         </ul>
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold mb-6">Kubernetes Contexts ({contexts.length})</h2>
+        <h2 className="text-2xl font-bold mb-6">Kubernetes Contexts ({contexts?.length})</h2>
         <ul>
-          {contexts.map(ctx => (
+          {contexts && contexts.map(ctx => (
             <li key={ctx.name}>
               {ctx.name} {ctx.name === currentContext && '(Current)'} 
               <span style={{color: '#666'}}> → cluster: {ctx.cluster}</span>
