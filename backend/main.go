@@ -136,6 +136,9 @@ func getKubeInfo() ([]ContextInfo, []string, string, error, []ManagedClusterInfo
 		if home := homeDir(); home != "" {
 			kubeconfig = fmt.Sprintf("%s/.kube/config", home)
 		}
+		log.Printf("Using default kubeconfig path: %s", kubeconfig)
+	} else {
+		log.Printf("Using kubeconfig from enviorment: %s", kubeconfig)
 	}
 
 	config, err := clientcmd.LoadFromFile(kubeconfig)
