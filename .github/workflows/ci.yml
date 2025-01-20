@@ -23,13 +23,13 @@ jobs:
         run: npm ci 
 
       - name: Lint Check
-        run: npm run eslint . --ext .ts,.tsx
+        run: npm run lint
 
       - name: Build
         run: npm run build
         env:
           VITE_BASE_URL: http://localhost:4000
-          
+
   backend:
     name: Backend Checks
     runs-on: ubuntu-latest
