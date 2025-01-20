@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import { api } from '../lib/api';
 
 interface ContextInfo {
   name: string;
@@ -14,7 +14,7 @@ const K8sInfo = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    axios.get('http://localhost:4000/api/clusters')
+    api.get('/api/clusters')
       .then(response => {
         setContexts(response.data.contexts);
         setClusters(response.data.clusters);
