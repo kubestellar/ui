@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom'
 import axios from 'axios'
+import { api } from '../lib/api'
 
 const Navbar = () => {
   const generateLog = async () => {
     try {
-      const response = await axios.get('http://localhost:4000/api/log', {
+      const response = await api.get('/api/log', {
         responseType: 'blob',
       })
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { api } from '../lib/api';
 
 interface ManagedClusterInfo {
   name: string;
@@ -13,7 +13,7 @@ const ITS = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    axios.get('http://localhost:4000/api/clusters')
+    api.get('/api/clusters')
       .then(response => {
         if (response.data !== clusters) {
           setClusters(response.data.itsData || []);

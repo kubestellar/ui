@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { api } from '../lib/api';
 
 interface WorkloadInfo {
   name: string;
@@ -14,7 +15,7 @@ const WDS = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    axios.get('http://localhost:4000/api/wds/workloads')
+    api.get('/api/wds/workloads')
       .then(response => {
         console.log('Response data:', response.data);
         if (Array.isArray(response.data)) {
