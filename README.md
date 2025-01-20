@@ -31,9 +31,9 @@ Before you begin, ensure that your system meets the following requirements:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/katamyra/kubestellarUI.git
+git clone https://github.com/your-github-username/ui.git
 
-cd kubestellarUI
+cd ui
 ```
 
 ### 2. Create `.env` File for Frontend Configuration
