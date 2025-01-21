@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../lib/api';
 
 interface ManagedClusterInfo {
@@ -12,36 +12,34 @@ const ITS = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  const handleFetchCluster = useCallback(async () => {
+    setLoading(true)
+    try{
+      const response = await api.get('/api/clusters');
+      console.log(response)
+      // if(response.data !== clusters){
+      //   setClusters(response.data.itsData || []);
+      // }
+      // setError(null)
+      // console.log('Response data:', response.data);
+      const itsData: ManagedClusterInfo[] = response.data.itsData || [];
+      console.log('itsData:', itsData);
+      if (JSON.stringify(itsData) !== JSON.stringify(clusters)) {
+        console.log('Setting clusters state:', itsData);
+        setClusters(itsData);
+      }
+      setError(null);
+    }catch(error){
+      console.error('Error fetching ITS information:', error);
+      setError('Error fetching ITS information');
+    }finally{
+      setLoading(false)
+    }
+  },[clusters])
+
   useEffect(() => {
-    api.get('/api/clusters')
-      .then(response => {
-        if (response.data !== clusters) {
-          setClusters(response.data.itsData || []);
-        }
-        setError(null);
-        console.log('Response data:', response.data);
-        const itsData: ManagedClusterInfo[] = response.data.itsData || [];
-
-        console.log('itsData:', itsData);
-
-        if (Array.isArray(itsData)) {
-          console.log('Setting clusters state:', itsData);
-          setClusters(itsData);
-
-        } else {
-          console.error('Invalid data format received:', response.data);
-          setError('Invalid data format received from server');
-        }
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error('Error fetching ITS information:', error);
-        setError('Error fetching ITS information');
-        setLoading(false);
-      });
-    console.log('Loading state:', loading);
-    console.log('Clusters state:', clusters);
-  }, [loading]);
+    handleFetchCluster()
+  }, [handleFetchCluster]);
 
   if (loading) return <p className="text-center p-4">Loading ITS information...</p>;
   if (error) return <p className="text-center p-4 text-error">{error}</p>;
