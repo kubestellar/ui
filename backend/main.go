@@ -28,7 +28,7 @@ type ManagedClusterInfo struct {
 
 type WorkloadInfo struct {
 	Name         string `json:"name"`
-	Kind         string `json:"kind"`      // 'Deployment' or 'Service'
+	Kind         string `json:"kind"` // 'Deployment' or 'Service'
 	Namespace    string `json:"namespace"`
 	CreationTime string `json:"creationTime"`
 }
