@@ -99,17 +99,17 @@ The frontend development server will start, typically on port 5173.
                 </a>
             </td>
             <td align="center">
-                <a href="https://github.com/Gmin2">
-                    <img src="https://avatars.githubusercontent.com/u/127925465?v=4" width="100;" alt="Gmin2"/>
-                    <br />
-                    <sub><b>Mintu Gogoi</b></sub>
-                </a>
-            </td>
-            <td align="center">
                 <a href="https://github.com/manzil-infinity180">
                     <img src="https://avatars.githubusercontent.com/u/119070053?v=4" width="100;" alt="manzil-infinity180"/>
                     <br />
                     <sub><b>Rahul Vishwakarma</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/Gmin2">
+                    <img src="https://avatars.githubusercontent.com/u/127925465?v=4" width="100;" alt="Gmin2"/>
+                    <br />
+                    <sub><b>Mintu Gogoi</b></sub>
                 </a>
             </td>
             <td align="center">
