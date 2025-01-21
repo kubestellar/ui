@@ -77,3 +77,8 @@ The frontend development server will start, typically on port 5173.
 
 1. Backend API: [http://localhost:4000](http://localhost:4000)
 2. Frontend UI: [http://localhost:5173](http://localhost:5173)
+
+## Contributors
+
+<!-- readme: collaborators,contributors -start -->
+<!-- readme: collaborators,contributors -end -->
