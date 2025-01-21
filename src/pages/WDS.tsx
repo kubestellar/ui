@@ -56,7 +56,8 @@ const WDS = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold mb-2">Creation Time</h3>
-                  <p>{workload.creationTime.substring(0, workload.creationTime.indexOf("+")).trim()}</p>
+                  
+                  <p>{new Date(workload.creationTime.substring(0, workload.creationTime.indexOf("+")).trim()+"Z").toLocaleString()}</p>
                 </div>
               </div>
             </div>
