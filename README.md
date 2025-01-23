@@ -113,17 +113,17 @@ The frontend development server will start, typically on port 5173.
                 </a>
             </td>
             <td align="center">
-                <a href="https://github.com/RealRTorres">
-                    <img src="https://avatars.githubusercontent.com/u/72537940?v=4" width="100;" alt="RealRTorres"/>
-                    <br />
-                    <sub><b>RealRTorres</b></sub>
-                </a>
-            </td>
-            <td align="center">
                 <a href="https://github.com/yashpandey06">
                     <img src="https://avatars.githubusercontent.com/u/97700473?v=4" width="100;" alt="yashpandey06"/>
                     <br />
                     <sub><b>Yash Pandey</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/RealRTorres">
+                    <img src="https://avatars.githubusercontent.com/u/72537940?v=4" width="100;" alt="RealRTorres"/>
+                    <br />
+                    <sub><b>RealRTorres</b></sub>
                 </a>
             </td>
 		</tr>
