@@ -38,13 +38,15 @@ cd ui
 
 ### 2. Create `.env` File for Frontend Configuration
 
-To simplify managing different environment variables, create a `.env` file in the project root directory (where `package.json` is located).
+To simplify managing different environment variables, rename the `example.env` file to `.env` in the project root directory (where `package.json` is located).
 
 **Example `.env` file**:
 
 ```
 VITE_BASE_URL=http://localhost:4000
 ```
+
+This is because `.env` files are intended to be a personal environment configuration file. The included `example.env` in the repo is a standard that most other node projects include for the same purpose. You rename the file to `.env` and then change it's contents to align with your system and personal needs.
 
 ### 3. Install and Run Backend
 
