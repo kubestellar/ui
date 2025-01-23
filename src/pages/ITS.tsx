@@ -41,7 +41,7 @@ const ITS = () => {
       });
     console.log('Loading state:', loading);
     console.log('Clusters state:', clusters);
-  }, [loading]);
+  }, []);
 
   if (loading) return <p className="text-center p-4">Loading ITS information...</p>;
   if (error) return <p className="text-center p-4 text-error">{error}</p>;
