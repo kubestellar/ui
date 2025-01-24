@@ -1,11 +1,10 @@
 name: CI
 
 on:
-  pull_request:
-      types: [opened, reopened]
   push:
-    branches:
-      - main
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   build:
