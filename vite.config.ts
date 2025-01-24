@@ -12,7 +12,7 @@ export default defineConfig({
       open: true, // Automatically open the file in the browser if true
       gzipSize: true, // Show gzip sizes
       brotliSize: true, // Show brotli sizes
-      template: 'network', // sunburst, treemap, network, raw-data, list, flamegraph
+      // template: 'network', // sunburst, treemap, network, raw-data, list, flamegraph
     }),
   ],
 })
