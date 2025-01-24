@@ -11,7 +11,23 @@ jobs:
     env:
       CI_JOB_NUMBER: 1
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install size-limit
+        run: npm install --save-dev size-limit @size-limit/preset-app
+
+      # Build the project (if needed)
+      - name: Build project
+        run: npm run build
+
+      # Run size-limit check
       - uses: andresz1/size-limit-action@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
