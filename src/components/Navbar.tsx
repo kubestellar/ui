@@ -1,7 +1,13 @@
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router-dom';
+import { Sun, Moon } from 'lucide-react'
 import { api } from '../lib/api'
+import { useChangeTheme } from "../hooks/useChangeTheme";
+
 
 const Navbar = () => {
+
+  const { toggleTheme, theme } = useChangeTheme();
+
   const generateLog = async () => {
     try {
       const response = await api.get('/api/log', {
@@ -63,8 +69,20 @@ const Navbar = () => {
           <li><Link to="/wds">WDS</Link></li>
         </ul>
       </div>
-      <div className="navbar-end">
+      <div className="navbar-end space-x-2">
+
+        <button onClick={toggleTheme} className="btn btn-ghost btn-circle rounded p-2">
+          {theme === "dark" ? (
+            <Sun className="w-6 h-6" />
+          ) : (
+            <Moon className="w-6 h-6" />
+          )}
+        </button>
+
+
         <button className="btn" onClick={generateLog}>Generate Log</button>
+
+
       </div>
     </div>
   )
