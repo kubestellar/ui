@@ -807,4 +807,3 @@ func getWDSWorkloads() ([]WorkloadInfo, error) {
 
 	return workloads, nil
 }
-
