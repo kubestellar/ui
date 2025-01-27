@@ -87,6 +87,13 @@ The frontend development server will start, typically on port 5173.
 	<tbody>
 		<tr>
             <td align="center">
+                <a href="https://github.com/yashpandey06">
+                    <img src="https://avatars.githubusercontent.com/u/97700473?v=4" width="100;" alt="yashpandey06"/>
+                    <br />
+                    <sub><b>Yash Pandey</b></sub>
+                </a>
+            </td>
+            <td align="center">
                 <a href="https://github.com/clubanderson">
                     <img src="https://avatars.githubusercontent.com/u/407614?v=4" width="100;" alt="clubanderson"/>
                     <br />
@@ -112,13 +119,6 @@ The frontend development server will start, typically on port 5173.
                     <img src="https://avatars.githubusercontent.com/u/127925465?v=4" width="100;" alt="Gmin2"/>
                     <br />
                     <sub><b>Mintu Gogoi</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/yashpandey06">
-                    <img src="https://avatars.githubusercontent.com/u/97700473?v=4" width="100;" alt="yashpandey06"/>
-                    <br />
-                    <sub><b>Yash Pandey</b></sub>
                 </a>
             </td>
             <td align="center">
