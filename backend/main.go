@@ -134,16 +134,9 @@ func main() {
 		c.String(http.StatusOK, logBuilder.String())
 	})
 
-	// Route to create deployment
+	// Route to CRUD deployment
 	router.POST("/api/wds/create", createDeployment)
-	router.PUT("/api/wds/update", func(c *gin.Context) {
-		err := updateDeployment()
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{"message": "Deployment updated successfully!"})
-	})
+	router.PUT("/api/wds/update", updateDeployment)
 	router.DELETE("/api/wds/delete", deleteDeployment)
 	router.GET("/api/wds/:name", getDeploymentByName)
 	router.Run(":4000")
@@ -196,15 +189,6 @@ func int32Ptr(i int32) *int32 { return &i }
 
 func createDeployment(ctx *gin.Context) {
 	// Load the kubeconfig
-	dat, err := uploadFile(ctx)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": "failed to upload",
-			"err":     err,
-		})
-		return
-	}
-	fmt.Print(dat)
 	kubeconfig := os.Getenv("KUBECONFIG")
 	if kubeconfig == "" {
 		if home := homeDir(); home != "" {
@@ -257,7 +241,16 @@ func createDeployment(ctx *gin.Context) {
 		})
 		return
 	}
-	// if dat.
+	// upload the yaml configuration file and read their value
+	dat, err := uploadFile(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "failed to upload",
+			"err":     err,
+		})
+		return
+	}
+
 	replica := 1
 	if dat.Spec.Replicas&1 == 0 {
 		replica = dat.Spec.Replicas
@@ -317,10 +310,22 @@ func createDeployment(ctx *gin.Context) {
 	})
 }
 
-func updateDeployment() error {
+func updateDeployment(ctx *gin.Context) {
 	type parameters struct {
 		Namespace string `json:"namespace"`
 		Name      string `json:"name"`
+		Image     string `json:"image"`
+		Replicas  int32  `json:"replicas"`
+	}
+	params := parameters{}
+	if err := ctx.ShouldBindJSON(&params); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if params.Name == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "enter name of the deployment"})
+		return
 	}
 	kubeconfig := os.Getenv("KUBECONFIG")
 	if kubeconfig == "" {
@@ -332,13 +337,20 @@ func updateDeployment() error {
 	// Load the kubeconfig file
 	config, err := clientcmd.LoadFromFile(kubeconfig)
 	if err != nil {
-		return fmt.Errorf("failed to load kubeconfig: %w", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "failed to load kubeconfig",
+			"err":     err,
+		})
+		return
 	}
 
 	// Use WDS1 context specifically
 	ctxContext := config.Contexts["wds1"]
 	if ctxContext == nil {
-		return fmt.Errorf("WDS1 context not found in kubeconfig")
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "WDS1 context not found in kubeconfig",
+		})
+		return
 	}
 
 	// Create config for WDS cluster
@@ -351,33 +363,58 @@ func updateDeployment() error {
 
 	restConfig, err := clientConfig.ClientConfig()
 	if err != nil {
-		return fmt.Errorf("failed to create rest config: %w", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "failed to create rest config",
+			"err":     err,
+		})
+		return
 	}
 
 	// Create the Kubernetes clientset
 	clientset, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
-		return fmt.Errorf("failed to create Kubernetes clientset: %w", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "failed to create Kubernetes clientset",
+			"err":     err,
+		})
+		return
+	}
+
+	if params.Namespace == "" {
+		params.Namespace = "default"
 	}
 
 	// get the deployment object
-	deployment, err := clientset.AppsV1().Deployments("default").Get(context.TODO(), "nginx-deployment-upload", metav1.GetOptions{})
+	deployment, err := clientset.AppsV1().Deployments(params.Namespace).Get(context.TODO(), params.Name, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to get deployment: %v", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "failed to get deployment",
+			"error":   err.Error()})
+		return
 	}
 
-	// update the deployment
-	deployment.Spec.Template.Spec.Containers[0].Image = "nginx:1.20.1"
-	deployment.Spec.Replicas = int32Ptr(4)
+	// update the deployment - we are currently changing only Image and Replicas
+	if params.Image != "" {
+		deployment.Spec.Template.Spec.Containers[0].Image = params.Image
+	}
+	if params.Replicas&1 == 0 {
+		deployment.Spec.Replicas = int32Ptr(params.Replicas)
+	}
 	retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		_, updateErr := clientset.AppsV1().Deployments("default").Update(context.TODO(), deployment, metav1.UpdateOptions{})
 		return updateErr
 	})
 	if retryErr != nil {
-		return fmt.Errorf("failed to update deployment: %v", retryErr)
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "failed to update deployment",
+			"error":   retryErr})
+		return
 	}
 
-	return nil
+	ctx.JSON(http.StatusAccepted, gin.H{
+		"message": "Successfully updated the deployment!",
+		"name":    params.Name,
+	})
 }
 func deleteDeployment(ctx *gin.Context) {
 	type parameters struct {

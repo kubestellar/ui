@@ -41,8 +41,7 @@ const WDS = () => {
       <h1 className="text-2xl font-bold mb-6">WDS Workloads ({workloads.length})</h1>
       <div className="grid gap-4">
         {workloads.map((workload) => (
-          <div key={`${workload.kind}-${workload.namespace}-${workload.name}`} className="card bg-base-200 shadow-xl" 
-          onClick={() => window.open(`http://localhost:4000/api/wds/${workload.name}?namespace=${workload.namespace!=="" ? workload.namespace : "defaul"}`, "_blank", "noreferrer")}>
+          <div key={`${workload.kind}-${workload.namespace}-${workload.name}`} className="card bg-base-200 shadow-xl">
             <div className="card-body">
               <h2 className="card-title">{workload.name}</h2>
               <div className="grid grid-cols-3 gap-4">
@@ -60,6 +59,11 @@ const WDS = () => {
                   <p>{new Date(workload.creationTime).toLocaleString()}</p>
                 </div>
               </div>
+            </div>
+            <div>
+            <button className='rounded-md border-white'
+            onClick={() => window.open(`http://localhost:4000/api/wds/${workload.name}?namespace=${workload.namespace!=="" ? workload.namespace : "defaul"}`, "_blank", "noreferrer")}
+            >Get INFO</button>
             </div>
           </div>
         ))}
