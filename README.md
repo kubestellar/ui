@@ -138,6 +138,13 @@ The frontend development server will start, typically on port 5173.
                 </a>
             </td>
             <td align="center">
+                <a href="https://github.com/MAVRICK-1">
+                    <img src="https://avatars.githubusercontent.com/u/146999057?v=4" width="100;" alt="MAVRICK-1"/>
+                    <br />
+                    <sub><b>Rishi Mondal</b></sub>
+                </a>
+            </td>
+            <td align="center">
                 <a href="https://github.com/onkar717">
                     <img src="https://avatars.githubusercontent.com/u/144542684?v=4" width="100;" alt="onkar717"/>
                     <br />
