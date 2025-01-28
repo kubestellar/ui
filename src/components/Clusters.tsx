@@ -16,6 +16,7 @@ const K8sInfo = () => {
   useEffect(() => {
     api.get('/api/clusters')
       .then(response => {
+        console.log('Response data:', response.data);
         setContexts(response.data.contexts);
         setClusters(response.data.clusters);
         setCurrentContext(response.data.currentContext);

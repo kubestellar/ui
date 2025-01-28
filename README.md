@@ -38,13 +38,15 @@ cd ui
 
 ### 2. Create `.env` File for Frontend Configuration
 
-To simplify managing different environment variables, create a `.env` file in the project root directory (where `package.json` is located).
+To simplify managing different environment variables, rename the `example.env` file to `.env` in the project root directory (where `package.json` is located).
 
 **Example `.env` file**:
 
 ```
 VITE_BASE_URL=http://localhost:4000
 ```
+
+This is because `.env` files are intended to be a personal environment configuration file. The included `example.env` in the repo is a standard that most other node projects include for the same purpose. You rename the file to `.env` and then change it's contents to align with your system and personal needs.
 
 ### 3. Install and Run Backend
 
@@ -77,3 +79,72 @@ The frontend development server will start, typically on port 5173.
 
 1. Backend API: [http://localhost:4000](http://localhost:4000)
 2. Frontend UI: [http://localhost:5173](http://localhost:5173)
+
+## Contributors
+
+<!-- readme: collaborators,contributors -start -->
+<table>
+	<tbody>
+		<tr>
+            <td align="center">
+                <a href="https://github.com/clubanderson">
+                    <img src="https://avatars.githubusercontent.com/u/407614?v=4" width="100;" alt="clubanderson"/>
+                    <br />
+                    <sub><b>Andy Anderson</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/katamyra">
+                    <img src="https://avatars.githubusercontent.com/u/45225228?v=4" width="100;" alt="katamyra"/>
+                    <br />
+                    <sub><b>Krish Katariya</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/manzil-infinity180">
+                    <img src="https://avatars.githubusercontent.com/u/119070053?v=4" width="100;" alt="manzil-infinity180"/>
+                    <br />
+                    <sub><b>Rahul Vishwakarma</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/Gmin2">
+                    <img src="https://avatars.githubusercontent.com/u/127925465?v=4" width="100;" alt="Gmin2"/>
+                    <br />
+                    <sub><b>Mintu Gogoi</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/yashpandey06">
+                    <img src="https://avatars.githubusercontent.com/u/97700473?v=4" width="100;" alt="yashpandey06"/>
+                    <br />
+                    <sub><b>Yash Pandey</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/RealRTorres">
+                    <img src="https://avatars.githubusercontent.com/u/72537940?v=4" width="100;" alt="RealRTorres"/>
+                    <br />
+                    <sub><b>RealRTorres</b></sub>
+                </a>
+            </td>
+		</tr>
+		<tr>
+            <td align="center">
+                <a href="https://github.com/Jayesh0167">
+                    <img src="https://avatars.githubusercontent.com/u/191938611?v=4" width="100;" alt="Jayesh0167"/>
+                    <br />
+                    <sub><b>Jayesh Savaliya</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/onkar717">
+                    <img src="https://avatars.githubusercontent.com/u/144542684?v=4" width="100;" alt="onkar717"/>
+                    <br />
+                    <sub><b>Onkar Raghunath Shelke</b></sub>
+                </a>
+            </td>
+		</tr>
+	<tbody>
+</table>
+<!-- readme: collaborators,contributors -end -->

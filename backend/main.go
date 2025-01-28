@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,14 +24,14 @@ type ContextInfo struct {
 type ManagedClusterInfo struct {
 	Name         string            `json:"name"`
 	Labels       map[string]string `json:"labels"`
-	CreationTime string            `json:"creationTime"`
+	CreationTime time.Time         `json:"creationTime"`
 }
 
 type WorkloadInfo struct {
-	Name         string `json:"name"`
-	Kind         string `json:"kind"`      // 'Deployment' or 'Service'
-	Namespace    string `json:"namespace"`
-	CreationTime string `json:"creationTime"`
+	Name         string    `json:"name"`
+	Kind         string    `json:"kind"` // 'Deployment' or 'Service'
+	Namespace    string    `json:"namespace"`
+	CreationTime time.Time `json:"creationTime"`
 }
 
 func main() {
@@ -218,7 +219,7 @@ func getITSInfo() ([]ManagedClusterInfo, error) {
 		managedClusters = append(managedClusters, ManagedClusterInfo{
 			Name:         item.Metadata.Name,
 			Labels:       item.Metadata.Labels,
-			CreationTime: item.Metadata.CreationTimestamp,
+			CreationTime: time.Now().UTC(),
 		})
 	}
 
@@ -290,7 +291,7 @@ func getWDSWorkloads() ([]WorkloadInfo, error) {
 			Name:         deployment.Name,
 			Kind:         "Deployment",
 			Namespace:    deployment.Namespace,
-			CreationTime: deployment.CreationTimestamp.String(),
+			CreationTime: time.Now().UTC(),
 		})
 	}
 
@@ -300,7 +301,7 @@ func getWDSWorkloads() ([]WorkloadInfo, error) {
 			Name:         service.Name,
 			Kind:         "Service",
 			Namespace:    service.Namespace,
-			CreationTime: service.CreationTimestamp.String(),
+			CreationTime: time.Now().UTC(),
 		})
 	}
 

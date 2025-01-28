@@ -49,10 +49,10 @@ const ITS = () => {
         {clusters.map((cluster) => (
           <div key={cluster.name} className="card bg-base-200 shadow-xl">
             <div className="card-body">
-              <h2 className="card-title">{cluster.name || 'No Name Available'}</h2>
+            <h2 className="card-title">{cluster.name ? `Name: ${cluster.name}`: 'No Name Available'}</h2>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h3 className="font-semibold mb-2">Labels</h3>
+                <h3 className="font-semibold flex mb-2">Labels: </h3>
                   {cluster.labels && Object.keys(cluster.labels).length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {Object.entries(cluster.labels).map(([key, value]) => (

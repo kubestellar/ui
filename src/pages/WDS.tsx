@@ -56,6 +56,7 @@ const WDS = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold mb-2">Creation Time</h3>
+                  
                   <p>{new Date(workload.creationTime).toLocaleString()}</p>
                 </div>
               </div>
