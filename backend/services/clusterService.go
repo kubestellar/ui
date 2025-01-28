@@ -7,24 +7,42 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
 )
 
-func GetClusterNameFromKubeconfig(data []byte) (string, error) {
+func GetClusterConfigByName(data []byte, clusterName string) ([]byte, error) {
 	config, err := clientcmd.Load(data)
 	if err != nil {
-		return "", fmt.Errorf("invalid kubeconfig: %w", err)
+		return nil, fmt.Errorf("invalid kubeconfig: %w", err)
 	}
 
-	if config.CurrentContext == "" {
-		return "", fmt.Errorf("kubeconfig does not specify a current context")
+	cluster, exists := config.Clusters[clusterName]
+	if !exists {
+		return nil, fmt.Errorf("cluster '%s' not found in kubeconfig", clusterName)
 	}
 
-	context := config.Contexts[config.CurrentContext]
-	if context == nil || context.Cluster == "" {
-		return "", fmt.Errorf("invalid kubeconfig: cluster information missing")
+	singleClusterConfig := &api.Config{
+		Clusters: map[string]*api.Cluster{
+			clusterName: cluster,
+		},
+		Contexts: map[string]*api.Context{
+			clusterName: {
+				Cluster:  clusterName,
+				AuthInfo: config.Contexts[config.CurrentContext].AuthInfo,
+			},
+		},
+		AuthInfos: map[string]*api.AuthInfo{
+			config.Contexts[config.CurrentContext].AuthInfo: config.AuthInfos[config.Contexts[config.CurrentContext].AuthInfo],
+		},
+		CurrentContext: clusterName,
 	}
 
-	return context.Cluster, nil
+	serializedConfig, err := clientcmd.Write(*singleClusterConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to serialize kubeconfig for cluster '%s': %w", clusterName, err)
+	}
+
+	return serializedConfig, nil
 }
 
 func ValidateClusterConnectivity(kubeconfigData []byte) error {

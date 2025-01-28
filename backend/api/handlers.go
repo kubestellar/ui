@@ -24,6 +24,12 @@ func OnboardClusterHandler(c *gin.Context) {
 		return
 	}
 
+	clusterName := c.PostForm("name")
+	if clusterName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Cluster name is required"})
+		return
+	}
+
 	f, err := file.Open()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to open kubeconfig file"})
@@ -37,7 +43,7 @@ func OnboardClusterHandler(c *gin.Context) {
 		return
 	}
 
-	clusterName, err := services.GetClusterNameFromKubeconfig(content)
+	clusterConfig, err := services.GetClusterConfigByName(content, clusterName)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -52,9 +58,8 @@ func OnboardClusterHandler(c *gin.Context) {
 	clusterStatuses[clusterName] = "Pending"
 	mutex.Unlock()
 
-	// Start cluster validation in the background
 	go func() {
-		if err := services.ValidateClusterConnectivity(content); err != nil {
+		if err := services.ValidateClusterConnectivity(clusterConfig); err != nil {
 			log.Printf("Cluster '%s' validation failed: %v", clusterName, err)
 			mutex.Lock()
 			clusterStatuses[clusterName] = "Failed"
