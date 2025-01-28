@@ -1,7 +1,7 @@
-
 # KubestellarUI Setup Guide
 
 Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI application on your local machine after cloning the repository for development. The application consists of two main parts:
+
 1. **Frontend**: Built with React and TypeScript
 2. **Backend**: Built with Golang using the Gin framework.
 
@@ -10,21 +10,25 @@ Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI 
 Before you begin, ensure that your system meets the following requirements:
 
 ### 1. Golang
+
 - **Version**: 1.23.4
 - **Download Link**: [Golang Downloads](https://golang.org/dl/)
 
 ### 2. Node.js and npm
+
 - **Node.js Version**: ≥ 16.x.x
 - **npm Version**: Comes bundled with Node.js
 - **Download Link**: [Node.js Downloads](https://nodejs.org/en/download/)
 
 ### 3. Git
+
 - Ensure Git is installed to clone the repository
 - **Download Link**: [Git Downloads](https://git-scm.com/downloads)
 
 ### 4. Kubernetes Clusters
 
-- Ensure you have access to a Kubernetes cluster set up with the Kubestellar Getting Started Guide & prerequisites installed
+- Ensure you have access to a Kubernetes clusters setup with Kubestellar Getting Started Guide & Kubestellar prerequisites installed
+
 - **Kubestellar guide**: [Guide](https://docs.kubestellar.io/release-0.25.1/direct/get-started/)
 
 ## Installation Steps

@@ -20,6 +20,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/retry"
+
+	"github.com/katamyra/kubestellarUI/api"
 )
 
 type ContextInfo struct {
@@ -70,6 +72,9 @@ func main() {
 			"itsData":        itsData,
 		})
 	})
+
+	router.POST("/clusters/onboard", api.OnboardClusterHandler)
+	router.GET("/clusters/status", api.GetClusterStatusHandler)
 
 	router.GET("/api/wds/workloads", func(c *gin.Context) {
 		workloads, err := getWDSWorkloads()
