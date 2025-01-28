@@ -182,17 +182,17 @@ This will:
 		</tr>
 		<tr>
             <td align="center">
-                <a href="https://github.com/Jayesh0167">
-                    <img src="https://avatars.githubusercontent.com/u/191938611?v=4" width="100;" alt="Jayesh0167"/>
-                    <br />
-                    <sub><b>Jayesh Savaliya</b></sub>
-                </a>
-            </td>
-            <td align="center">
                 <a href="https://github.com/MAVRICK-1">
                     <img src="https://avatars.githubusercontent.com/u/146999057?v=4" width="100;" alt="MAVRICK-1"/>
                     <br />
                     <sub><b>Rishi Mondal</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/Jayesh0167">
+                    <img src="https://avatars.githubusercontent.com/u/191938611?v=4" width="100;" alt="Jayesh0167"/>
+                    <br />
+                    <sub><b>Jayesh Savaliya</b></sub>
                 </a>
             </td>
             <td align="center">
