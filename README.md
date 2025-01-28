@@ -23,7 +23,8 @@ Before you begin, ensure that your system meets the following requirements:
 - **Download Link**: [Git Downloads](https://git-scm.com/downloads)
 
 ### 4. Kubernetes Clusters
-- Ensure you have access to a Kubernetes clusters setup with Kubestellar Getting Started Guide & Kubestellar prerequisites installed
+
+- Ensure you have access to a Kubernetes cluster set up with the Kubestellar Getting Started Guide & prerequisites installed
 - **Kubestellar guide**: [Guide](https://docs.kubestellar.io/release-0.25.1/direct/get-started/)
 
 ## Installation Steps
@@ -40,13 +41,13 @@ cd ui
 
 To simplify managing different environment variables, rename the `example.env` file to `.env` in the project root directory (where `package.json` is located).
 
-**Example `.env` file**:
+**Example ****`.env`**** file**:
 
 ```
 VITE_BASE_URL=http://localhost:4000
 ```
 
-This is because `.env` files are intended to be a personal environment configuration file. The included `example.env` in the repo is a standard that most other node projects include for the same purpose. You rename the file to `.env` and then change it's contents to align with your system and personal needs.
+This is because `.env` files are intended to be a personal environment configuration file. The included `example.env` in the repo is a standard that most other node projects include for the same purpose. You rename the file to `.env` and then change its contents to align with your system and personal needs.
 
 ### 3. Install and Run Backend
 
@@ -65,15 +66,65 @@ The backend server will start on port 4000. You should see output indicating the
 #### Install Dependencies
 
 From the project root directory:
+
 ```bash
 npm install
 ```
 
 #### Run Development Server
+
 ```bash
 npm run dev
 ```
+
 The frontend development server will start, typically on port 5173.
+
+### 5. Run with Docker Compose
+
+If you prefer to run the application using Docker Compose, follow these steps:
+
+#### 1. Ensure Docker is Installed
+
+- **Download Link**: [Docker Downloads](https://www.docker.com/products/docker-desktop)
+
+#### 2. Run Docker Compose
+
+From the project root directory:
+
+```bash
+docker-compose up --build
+```
+
+To stop the application:
+
+```bash
+docker-compose down
+```
+
+#### 3. Use Docker Compose in Development Cycle
+
+For ongoing development, use the following steps:
+
+- **Quit the Application**:
+  ```bash
+  docker-compose down
+  ```
+
+- **Pull the Latest Changes**:
+  ```bash
+  git pull origin main
+  ```
+
+- **Restart the Application**:
+  ```bash
+  docker-compose up --build
+  ```
+
+This will:
+
+- Stop the running containers.
+- Pull the latest source code changes.
+- Rebuild and restart the application.
 
 ## Accessing the Application
 
