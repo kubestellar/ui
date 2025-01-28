@@ -1,0 +1,28 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kubestellar-frontend
+    ports:
+      - "5173:80"
+    environment:
+      VITE_BASE_URL: "http://localhost:4000"
+    networks:
+      - kubestellar-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: kubestellar-backend
+    ports:
+      - "4000:4000"
+    volumes:
+      - $HOME/.kube:/root/.kube:ro
+    networks:
+      - kubestellar-network
+
+networks:
+  kubestellar-network:
+    driver: bridge
