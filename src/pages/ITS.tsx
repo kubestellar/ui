@@ -17,14 +17,9 @@ const ITS = () => {
     try{
       const response = await api.get('/api/clusters');
       console.log(response)
-      // if(response.data !== clusters){
-      //   setClusters(response.data.itsData || []);
-      // }
-      // setError(null)
-      // console.log('Response data:', response.data);
       const itsData: ManagedClusterInfo[] = response.data.itsData || [];
       console.log('itsData:', itsData);
-      if (JSON.stringify(itsData) !== JSON.stringify(clusters)) {
+      if (Array.isArray(itsData)) {
         console.log('Setting clusters state:', itsData);
         setClusters(itsData);
       }
@@ -35,7 +30,7 @@ const ITS = () => {
     }finally{
       setLoading(false)
     }
-  },[clusters])
+  },[])
 
   useEffect(() => {
     handleFetchCluster()

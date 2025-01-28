@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { api } from '../lib/api';
 
@@ -13,25 +13,26 @@ const WDS = () => {
   const [workloads, setWorkloads] = useState<WorkloadInfo[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    api.get('/api/wds/workloads')
-      .then(response => {
+  const handleFetchWDS = useCallback(async () => {
+      setLoading(true)
+      try{
+        const response = await api.get('/api/wds/workloads');
         console.log('Response data:', response.data);
         if (Array.isArray(response.data)) {
           setWorkloads(response.data);
-        } else {
-          console.error('Invalid data format received:', response.data);
-          setError('Invalid data format received from server');
         }
-        setLoading(false);
-      })
-      .catch((error) => {
+        setError(null);
+      }catch(error){
         console.error('Error fetching WDS information:', error);
-        setError('Error fetching WDS information');
-        setLoading(false);
-      });
-  }, []);
+        setError('Invalid data format received from server');
+      }finally{
+        setLoading(false)
+      }
+    },[])
+
+  useEffect(() => {
+      handleFetchWDS()
+    }, [handleFetchWDS]);
 
   if (loading) return <p className="text-center p-4">Loading WDS information...</p>;
   if (error) return <p className="text-center p-4 text-error">{error}</p>;
