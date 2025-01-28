@@ -156,6 +156,13 @@ This will:
                 </a>
             </td>
             <td align="center">
+                <a href="https://github.com/yashpandey06">
+                    <img src="https://avatars.githubusercontent.com/u/97700473?v=4" width="100;" alt="yashpandey06"/>
+                    <br />
+                    <sub><b>Yash Pandey</b></sub>
+                </a>
+            </td>
+            <td align="center">
                 <a href="https://github.com/katamyra">
                     <img src="https://avatars.githubusercontent.com/u/45225228?v=4" width="100;" alt="katamyra"/>
                     <br />
@@ -167,13 +174,6 @@ This will:
                     <img src="https://avatars.githubusercontent.com/u/127925465?v=4" width="100;" alt="Gmin2"/>
                     <br />
                     <sub><b>Mintu Gogoi</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/yashpandey06">
-                    <img src="https://avatars.githubusercontent.com/u/97700473?v=4" width="100;" alt="yashpandey06"/>
-                    <br />
-                    <sub><b>Yash Pandey</b></sub>
                 </a>
             </td>
             <td align="center">
