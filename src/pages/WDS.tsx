@@ -61,6 +61,11 @@ const WDS = () => {
                 </div>
               </div>
             </div>
+            <div>
+            <button className='rounded-md border-white'
+            onClick={() => window.open(`http://localhost:4000/api/wds/${workload.name}?namespace=${workload.namespace!=="" ? workload.namespace : "defaul"}`, "_blank", "noreferrer")}
+            >Get INFO</button>
+            </div>
           </div>
         ))}
       </div>
