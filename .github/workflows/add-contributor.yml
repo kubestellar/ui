@@ -1,10 +1,15 @@
+name: Add new contributors to readme.md
+
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+
+  pull_request:
+    types:
+      - closed
 
 jobs:
   contrib-readme-job:
+    if: github.event.pull_request.merged == true && github.repository_owner == 'kubestellar' # Only run for merged PRs in 'kubestellar'
     runs-on: ubuntu-latest
     name: A job to automate contributors in README
     permissions:
@@ -12,9 +17,49 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - name: Contribute List
+      - name: Run Contributors List Action
         uses: akhilmhdh/contributors-readme-action@v2.3.10
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Wait for a few seconds
+        run: sleep 5
+        
+      - name: Fetch All Remote Branches
+        run: |
+          git fetch --all
+          echo "Fetched all remote branches"
+
+      - name: Detect the Branch Created by the Action
+        id: get-branch
+        run: |
+          # Debug: Show all branches to understand the issue
+          echo "Available branches:"
+          git branch --all --sort=-committerdate --format='%(refname:short)'
+
+          # Find the branch created by the contributors-readme-action
+          CURRENT_BRANCH=$(git branch --all --sort=-committerdate --format='%(refname:short)' | grep "contributors-readme-action" | head -n 1)
+          # Strip 'origin/' from the branch name if it exists
+          CURRENT_BRANCH_CLEAN=${CURRENT_BRANCH#origin/}
+          echo "CURRENT_BRANCH=$CURRENT_BRANCH_CLEAN" >> $GITHUB_ENV
+          echo "Branch created by action: $CURRENT_BRANCH_CLEAN"
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Amend Commit with Signed-off-by
+        run: |
+          # Checkout the branch properly
+          git checkout -B ${{ env.CURRENT_BRANCH }} origin/${{ env.CURRENT_BRANCH }}
+          git commit --amend --no-edit --signoff || echo "No changes to amend"
+          
+      - name: Push Changes Back to Remote Branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Push the amended commit back to the remote branch
+          git push --force-with-lease origin ${{ env.CURRENT_BRANCH }}
