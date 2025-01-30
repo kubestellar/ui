@@ -11,17 +11,21 @@ services:
     networks:
       - kubestellar-network
 
+
   backend:
     build:
-      context: ./backend
+      context: ./backend 
       dockerfile: Dockerfile
     container_name: kubestellar-backend
+    restart: unless-stopped
     ports:
       - "4000:4000"
     volumes:
       - $HOME/.kube:/root/.kube:ro
     networks:
       - kubestellar-network
+    environment:
+      - GO_ENV=production 
 
 networks:
   kubestellar-network:
