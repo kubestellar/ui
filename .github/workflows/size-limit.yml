@@ -49,14 +49,15 @@ jobs:
         run: |
           # Read the size-limit output
           output=$(cat size-limit-output.txt)
-
-          # Authenticate with GitHub CLI
-          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
-
-          # Create a comment on the pull request
+          
+          # Post a comment on the pull request
           gh pr comment ${{ github.event.pull_request.number }} --body "### 🚦 Size Limit Report
 
           \`\`\`
           $output
           \`\`\`
           "
+      
+      - uses: andresz1/size-limit-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
