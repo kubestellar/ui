@@ -142,10 +142,10 @@ This will:
 	<tbody>
 		<tr>
             <td align="center">
-                <a href="https://github.com/yashpandey06">
-                    <img src="https://avatars.githubusercontent.com/u/97700473?v=4" width="100;" alt="yashpandey06"/>
+                <a href="https://github.com/manzil-infinity180">
+                    <img src="https://avatars.githubusercontent.com/u/119070053?v=4" width="100;" alt="manzil-infinity180"/>
                     <br />
-                    <sub><b>Yash Pandey</b></sub>
+                    <sub><b>Rahul Vishwakarma</b></sub>
                 </a>
             </td>
             <td align="center">
@@ -156,10 +156,10 @@ This will:
                 </a>
             </td>
             <td align="center">
-                <a href="https://github.com/manzil-infinity180">
-                    <img src="https://avatars.githubusercontent.com/u/119070053?v=4" width="100;" alt="manzil-infinity180"/>
+                <a href="https://github.com/yashpandey06">
+                    <img src="https://avatars.githubusercontent.com/u/97700473?v=4" width="100;" alt="yashpandey06"/>
                     <br />
-                    <sub><b>Rahul Vishwakarma</b></sub>
+                    <sub><b>Yash Pandey</b></sub>
                 </a>
             </td>
             <td align="center">
