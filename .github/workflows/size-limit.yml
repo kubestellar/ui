@@ -44,15 +44,28 @@ jobs:
         with:
           script: |
             const fs = require('fs');
+            const github = require('@actions/github');
+
+            // Read the size limit output
             const output = fs.readFileSync('size-limit-output.txt', 'utf8');
+            
+            // Safely get the PR number
+            const prNumber = github.context.payload.pull_request?.number;
+
+            if (!prNumber) {
+              console.log('No pull request number found. Ensure this workflow is triggered by a pull request event.');
+              return;
+            }
+
+            // Prepare the comment
             const comment = `
               ### 🚦 Size Limit Report
               \`\`\`
               ${output}
               \`\`\`
-                          `;
-            const prNumber = github.context.payload.pull_request.number;
+            `;
 
+            // Post the comment on the pull request
             await github.rest.issues.createComment({
               ...github.context.repo,
               issue_number: prNumber,
