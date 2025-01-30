@@ -38,25 +38,6 @@ jobs:
       - name: Check bundle size
         id: size-limit
         run: npm run size-limit > size-limit-output.txt
-
-      - name: Install GitHub CLI
-        run: sudo apt-get install -y gh
-
-      - name: Post bundle size comment using `gh`
-        if: always()
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Read the size-limit output
-          output=$(cat size-limit-output.txt)
-          
-          # Post a comment on the pull request
-          gh pr comment ${{ github.event.pull_request.number }} --body "### 🚦 Size Limit Report
-
-          \`\`\`
-          $output
-          \`\`\`
-          "
       
       - uses: andresz1/size-limit-action@v1
         with:
