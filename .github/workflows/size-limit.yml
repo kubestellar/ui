@@ -39,38 +39,24 @@ jobs:
         id: size-limit
         run: npm run size-limit > size-limit-output.txt
 
-      - name: Post bundle size comment
+      - name: Install GitHub CLI
+        run: sudo apt-get install -y gh
+
+      - name: Post bundle size comment using `gh`
         if: always()
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            const github = require('@actions/github');
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Read the size-limit output
+          output=$(cat size-limit-output.txt)
 
-            // Read size-limit output from file
-            const output = fs.readFileSync('size-limit-output.txt', 'utf8');
+          # Authenticate with GitHub CLI
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
 
-            // Get pull request number from the GitHub context
-            const prNumber = github.context.payload.pull_request?.number;
+          # Create a comment on the pull request
+          gh pr comment ${{ github.event.pull_request.number }} --body "### 🚦 Size Limit Report
 
-            if (!prNumber) {
-              console.log('No pull request number found. Ensure the workflow is triggered by a pull request event.');
-              return;
-            }
-
-            // Construct the comment body
-            const comment = `
-              ### 🚦 Size Limit Report
-              \`\`\`
-              ${output}
-              \`\`\`
-            `;
-
-            // Post the comment on the pull request
-            await github.rest.issues.createComment({
-              owner: github.context.repo.owner,
-              repo: github.context.repo.repo,
-              issue_number: prNumber,
-              body: comment,
-            });
+          \`\`\`
+          $output
+          \`\`\`
+          "
