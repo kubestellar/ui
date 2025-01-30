@@ -42,32 +42,34 @@ jobs:
         if: always()
         uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const github = require('@actions/github');
-
-            // Read the size limit output
-            const output = fs.readFileSync('size-limit-output.txt', 'utf8');
             
-            // Safely get the PR number
-            const prNumber = github.context.payload.pull_request?.number;
+            try {
+              const output = fs.readFileSync('size-limit-output.txt', 'utf8');
+              
+              // Get the pull request number from the event context
+              const prNumber = context.issue.number;
+              
+              if (!prNumber) {
+                console.log('No pull request number found. Skipping comment creation.');
+                return;
+              }
 
-            if (!prNumber) {
-              console.log('No pull request number found. Ensure this workflow is triggered by a pull request event.');
-              return;
-            }
-
-            // Prepare the comment
-            const comment = `
-              ### 🚦 Size Limit Report
+              const comment = `### 🚦 Size Limit Report
               \`\`\`
               ${output}
-              \`\`\`
-            `;
+              \`\`\``;
 
-            // Post the comment on the pull request
-            await github.rest.issues.createComment({
-              ...github.context.repo,
-              issue_number: prNumber,
-              body: comment,
-            });
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.name,
+                issue_number: prNumber,
+                body: comment
+              });
+              
+            } catch (error) {
+              console.error('Error:', error);
+              throw error;
+            }
