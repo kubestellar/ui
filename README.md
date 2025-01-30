@@ -142,17 +142,17 @@ This will:
 	<tbody>
 		<tr>
             <td align="center">
-                <a href="https://github.com/clubanderson">
-                    <img src="https://avatars.githubusercontent.com/u/407614?v=4" width="100;" alt="clubanderson"/>
-                    <br />
-                    <sub><b>Andy Anderson</b></sub>
-                </a>
-            </td>
-            <td align="center">
                 <a href="https://github.com/manzil-infinity180">
                     <img src="https://avatars.githubusercontent.com/u/119070053?v=4" width="100;" alt="manzil-infinity180"/>
                     <br />
                     <sub><b>Rahul Vishwakarma</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/clubanderson">
+                    <img src="https://avatars.githubusercontent.com/u/407614?v=4" width="100;" alt="clubanderson"/>
+                    <br />
+                    <sub><b>Andy Anderson</b></sub>
                 </a>
             </td>
             <td align="center">
