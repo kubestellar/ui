@@ -46,6 +46,12 @@ jobs:
           echo "CURRENT_BRANCH=$CURRENT_BRANCH_CLEAN" >> $GITHUB_ENV
           echo "Branch created by action: $CURRENT_BRANCH_CLEAN"
 
+          # Stop if branch is empty
+          if [ -z "$CURRENT_BRANCH_CLEAN" ]; then
+            echo "No branch created by action. Stopping workflow."
+            exit 0
+          fi
+          
       - name: Configure Git
         run: |
           git config --global user.name "github-actions[bot]"
