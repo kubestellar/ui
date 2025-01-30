@@ -6,6 +6,7 @@ on:
 
 permissions:
   pull-requests: write
+  contents: read
 
 jobs:
   build:
@@ -37,24 +38,7 @@ jobs:
       - name: Check bundle size
         id: size-limit
         run: npm run size-limit > size-limit-output.txt
-
-      - name: Post bundle size comment
-        if: always()
-        uses: actions/github-script@v6
+      
+      - uses: andresz1/size-limit-action@v1
         with:
-          script: |
-            const fs = require('fs');
-            const output = fs.readFileSync('size-limit-output.txt', 'utf8');
-            const comment = `
-              ### 🚦 Size Limit Report
-              \`\`\`
-              ${output}
-              \`\`\`
-                          `;
-            const prNumber = github.context.payload.pull_request.number;
-
-            await github.rest.issues.createComment({
-              ...github.context.repo,
-              issue_number: prNumber,
-              body: comment,
-            });
+          github_token: ${{ secrets.GITHUB_TOKEN }}
