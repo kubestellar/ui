@@ -6,6 +6,7 @@ on:
 
 permissions:
   pull-requests: write
+  contents: read
 
 jobs:
   build:
@@ -45,31 +46,31 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            
-            try {
-              const output = fs.readFileSync('size-limit-output.txt', 'utf8');
-              
-              // Get the pull request number from the event context
-              const prNumber = context.issue.number;
-              
-              if (!prNumber) {
-                console.log('No pull request number found. Skipping comment creation.');
-                return;
-              }
+            const github = require('@actions/github');
 
-              const comment = `### 🚦 Size Limit Report
+            // Read size-limit output from file
+            const output = fs.readFileSync('size-limit-output.txt', 'utf8');
+
+            // Get pull request number from the GitHub context
+            const prNumber = github.context.payload.pull_request?.number;
+
+            if (!prNumber) {
+              console.log('No pull request number found. Ensure the workflow is triggered by a pull request event.');
+              return;
+            }
+
+            // Construct the comment body
+            const comment = `
+              ### 🚦 Size Limit Report
               \`\`\`
               ${output}
-              \`\`\``;
+              \`\`\`
+            `;
 
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.name,
-                issue_number: prNumber,
-                body: comment
-              });
-              
-            } catch (error) {
-              console.error('Error:', error);
-              throw error;
-            }
+            // Post the comment on the pull request
+            await github.rest.issues.createComment({
+              owner: github.context.repo.owner,
+              repo: github.context.repo.repo,
+              issue_number: prNumber,
+              body: comment,
+            });
