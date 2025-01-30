@@ -46,11 +46,11 @@ jobs:
           echo "CURRENT_BRANCH=$CURRENT_BRANCH_CLEAN" >> $GITHUB_ENV
           echo "Branch created by action: $CURRENT_BRANCH_CLEAN"
 
-      - name: Fail if no branch was detected
+      - name: Exit if no branch was detected
         if: env.CURRENT_BRANCH == ''
         run: |
           echo "No branch created. Exiting."
-          exit 1
+          exit 0
           
       - name: Configure Git
         run: |
