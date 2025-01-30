@@ -1,0 +1,35 @@
+# Ignore Go build artifacts
+/bin/
+*.exe
+*.out
+*.o
+*.a
+
+# Ignore Go modules cache
+/pkg/
+vendor/
+
+# Ignore dependency files (if using Go modules, only go.mod & go.sum are needed)
+**/node_modules
+**/dist
+**/coverage
+
+# Ignore Git files
+.git
+.gitignore
+
+# Ignore Docker-related files
+.dockerignore
+Dockerfile
+
+# Ignore IDE and editor settings
+*.swp
+*.swo
+*.idea/
+.vscode/
+*.log
+
+# Ignore temporary files
+tmp/
+*.tmp
+*.bak
