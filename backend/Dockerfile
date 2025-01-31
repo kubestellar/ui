@@ -4,7 +4,7 @@ FROM golang:1.22.3 AS builder
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy go.mod and go.sum files to the working directory
+# Copy go.mod and go.sum first to leverage Docker layer caching
 COPY go.mod go.sum ./
 
 # Download dependencies
@@ -13,8 +13,8 @@ RUN go mod download
 # Copy the rest of the source code
 COPY . ./
 
-# Build the Go application with static linking
-RUN CGO_ENABLED=0 GOOS=linux go build -o backend-app main.go
+# Build the Go application with optimizations for small binary size
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o backend-app main.go
 
 # Stage 2: Create a minimal image to run the application
 FROM alpine:3.18

@@ -5,7 +5,7 @@ updates:
     schedule:
       interval: "weekly"       
     versioning-strategy: "increase"
-  - package-ecosystem: "go"  
+  - package-ecosystem: "gomod"  
     directory: "/backend"            
     schedule:
       interval: "weekly"     
