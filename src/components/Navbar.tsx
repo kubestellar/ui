@@ -1,40 +1,38 @@
-import { Link } from 'react-router-dom';
-import { Sun, Moon } from 'lucide-react'
-import { api } from '../lib/api'
-import { useChangeTheme } from "../hooks/useChangeTheme";
-
+import { Link } from "react-router-dom";
+import { Sun, Moon } from "lucide-react";
+import { api } from "../lib/api";
+import useTheme from "../hooks/useTheme";
 
 const Navbar = () => {
-
-  const { toggleTheme, theme } = useChangeTheme();
+  const { toggleTheme, theme } = useTheme();
 
   const generateLog = async () => {
     try {
-      const response = await api.get('/api/log', {
-        responseType: 'blob',
-      })
+      const response = await api.get("/api/log", {
+        responseType: "blob",
+      });
 
       // Create a Blob from the response data
-      const blob = new Blob([response.data], { type: 'text/plain' })
-      const url = window.URL.createObjectURL(blob)
+      const blob = new Blob([response.data], { type: "text/plain" });
+      const url = window.URL.createObjectURL(blob);
 
       // Create a link element
-      const link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', 'kubestellarui.log')
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "kubestellarui.log");
 
       // Append to the document and trigger click
-      document.body.appendChild(link)
-      link.click()
+      document.body.appendChild(link);
+      link.click();
 
       // Clean up
-      link.parentNode?.removeChild(link)
-      window.URL.revokeObjectURL(url)
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Error generating log:', error)
-      alert('Failed to generate log. Please try again.')
+      console.error("Error generating log:", error);
+      alert("Failed to generate log. Please try again.");
     }
-  }
+  };
 
   return (
     <div className="navbar bg-base-100 w-full px-4 shadow-md">
@@ -46,32 +44,47 @@ const Navbar = () => {
               className="h-5 w-5"
               fill="none"
               viewBox="0 0 24 24"
-              stroke="currentColor">
+              stroke="currentColor"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth="2"
-                d="M4 6h16M4 12h8m-8 6h16" />
+                d="M4 6h16M4 12h8m-8 6h16"
+              />
             </svg>
           </div>
           <ul
             tabIndex={0}
-            className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow">
-            <li><Link to="/its">ITS</Link></li>
-            <li><Link to="/wds">WDS</Link></li>
+            className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
+          >
+            <li>
+              <Link to="/its">ITS</Link>
+            </li>
+            <li>
+              <Link to="/wds">WDS</Link>
+            </li>
           </ul>
         </div>
-        <Link to="/" className="btn btn-ghost text-xl">KubestellarUI</Link>
+        <Link to="/" className="btn btn-ghost text-xl">
+          KubestellarUI
+        </Link>
       </div>
       <div className="navbar-center hidden lg:flex">
         <ul className="menu menu-horizontal px-1">
-          <li><Link to="/its">ITS</Link></li>
-          <li><Link to="/wds">WDS</Link></li>
+          <li>
+            <Link to="/its">ITS</Link>
+          </li>
+          <li>
+            <Link to="/wds">WDS</Link>
+          </li>
         </ul>
       </div>
       <div className="navbar-end space-x-2">
-
-        <button onClick={toggleTheme} className="btn btn-ghost btn-circle rounded p-2">
+        <button
+          onClick={toggleTheme}
+          className="btn btn-ghost btn-circle rounded p-2"
+        >
           {theme === "dark" ? (
             <Sun className="w-6 h-6" />
           ) : (
@@ -79,13 +92,12 @@ const Navbar = () => {
           )}
         </button>
 
-
-        <button className="btn" onClick={generateLog}>Generate Log</button>
-
-
+        <button className="btn" onClick={generateLog}>
+          Generate Log
+        </button>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Navbar
+export default Navbar;
