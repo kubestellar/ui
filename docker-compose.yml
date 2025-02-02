@@ -14,21 +14,23 @@ services:
     command: ["npm", "run", "dev"]
 
   backend:
-    dns:
-    - 8.8.8.8
-    - 8.8.4.4
     build:
-      context: ./backend  # Now correctly pointing to backend folder
+      context: ./backend
       dockerfile: Dockerfile
       target: backend
     ports:
-      - "4000:4000"  # Fixed incorrect port mapping
+      - "4000:4000"
     volumes:
-      - ./backend:/app  # Mount only the backend folder
-      - /app/tmp
-      - $HOME/.kube:/root/.kube
+      - ./backend:/app
+      - /app/tmp        
+      - $HOME/.kube:/root/.kube 
     environment:
       - KUBECONFIG=/root/.kube/config
+    user: "root"
     command: ["air"]
- 
+    networks:
+      - backend_network
 
+networks:
+  backend_network:
+    driver: bridge

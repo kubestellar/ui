@@ -1,4 +1,8 @@
+# Backend Dockerfile
 FROM golang:1.22 AS backend
+
+# Set root user permissions
+USER root
 
 WORKDIR /app
 
@@ -12,9 +16,7 @@ COPY . .
 # Install air for hot reloading (compatible version)
 RUN go install github.com/cosmtrek/air@v1.42.0
 
-# Ensure backend has access to Kubernetes APIs
-ENV KUBECONFIG=/root/.kube/config
-VOLUME ["/root/.kube"]
+ENV PATH=$PATH:/usr/local/go/bin
 
 # Expose backend port
 EXPOSE 4000
