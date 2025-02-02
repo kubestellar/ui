@@ -1,31 +1,18 @@
-# Stage 1: Build
-FROM node:20-alpine AS builder
+# Frontend Dockerfile
+FROM node:20-alpine AS frontend
 
-# Set working directory
 WORKDIR /app
 
 # Install dependencies
 COPY package.json package-lock.json ./
-RUN npm install --frozen-lockfile
+RUN npm install
 
-# Copy the entire project
+# Copy the source code
 COPY . .
 
-# Build the app
-RUN npm run build
-
-# Stage 2: Serve the built app
-FROM nginx:stable-alpine
-
-# Copy the build output to the Nginx server
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Copy custom Nginx configuration (optional)
-# For example: adjust CORS or proxy settings
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Expose port
+# Expose the Vite development server port
 EXPOSE 5173
 
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start the development server with hot-reloading
+CMD ["npm", "run", "dev"]
+

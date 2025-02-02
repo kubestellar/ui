@@ -3,30 +3,32 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: kubestellar-frontend
+      target: frontend
     ports:
-      - "5173:80"
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
     environment:
       VITE_BASE_URL: "http://localhost:4000"
-    networks:
-      - kubestellar-network
-
+    command: ["npm", "run", "dev"]
 
   backend:
+    dns:
+    - 8.8.8.8
+    - 8.8.4.4
     build:
-      context: ./backend 
+      context: ./backend  # Now correctly pointing to backend folder
       dockerfile: Dockerfile
-    container_name: kubestellar-backend
-    restart: unless-stopped
+      target: backend
     ports:
-      - "4000:4000"
+      - "4000:4000"  # Fixed incorrect port mapping
     volumes:
-      - $HOME/.kube:/root/.kube:ro
-    networks:
-      - kubestellar-network
+      - ./backend:/app  # Mount only the backend folder
+      - /app/tmp
+      - $HOME/.kube:/root/.kube
     environment:
-      - GO_ENV=production 
+      - KUBECONFIG=/root/.kube/config
+    command: ["air"]
+ 
 
-networks:
-  kubestellar-network:
-    driver: bridge
