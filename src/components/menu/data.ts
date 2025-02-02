@@ -1,11 +1,9 @@
 import {
   HiOutlineHome,
   HiOutlineUser,
-  HiOutlineUsers,
   HiOutlineCube,
   HiOutlineClipboardDocumentList,
   HiOutlinePresentationChartBar,
-  HiOutlineDocumentText,
   HiOutlineServer,
 } from 'react-icons/hi2';
 

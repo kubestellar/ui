@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { HiBars3CenterLeft } from "react-icons/hi2";
 import { RxEnterFullScreen, RxExitFullScreen } from "react-icons/rx";
 import ChangeThemes from "./ChangeThemes";
@@ -17,7 +17,6 @@ const Header = () => {
     setIsFullScreen((prev) => !prev);
   };
 
-  const navigate = useNavigate();
 
   React.useEffect(() => {
     if (isFullScreen) {
