@@ -5,7 +5,7 @@ on:
     types:
       - closed
     branches:
-      - dev
+      - main
 
 jobs:
   build-and-push:
