@@ -50,7 +50,6 @@ func main() {
 	// CORS Middleware
 	router.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
@@ -144,6 +143,7 @@ func main() {
 	router.PUT("/api/wds/update", updateDeployment)
 	router.DELETE("/api/wds/delete", deleteDeployment)
 	router.GET("/api/wds/:name", getDeploymentByName)
+	router.GET("/api/wds/status", getDeploymentStatus)
 	router.Run(":4000")
 }
 
@@ -806,4 +806,76 @@ func getWDSWorkloads() ([]WorkloadInfo, error) {
 	}
 
 	return workloads, nil
+}
+
+func getClientSetKubeConfig() (*kubernetes.Clientset, error) {
+	kubeconfig := os.Getenv("KUBECONFIG")
+	if kubeconfig == "" {
+		if home := homeDir(); home != "" {
+			kubeconfig = fmt.Sprintf("%s/.kube/config", home)
+		}
+	}
+
+	// Load the kubeconfig file
+	config, err := clientcmd.LoadFromFile(kubeconfig)
+	if err != nil {
+		// c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load kubeconfig"})
+		return nil, fmt.Errorf("failed to load kubeconfig")
+	}
+
+	// Use WDS1 context specifically
+	ctxContext := config.Contexts["wds1"]
+	if ctxContext == nil {
+		// c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create ctxConfig"})
+		return nil, fmt.Errorf("failed to create ctxConfig")
+	}
+
+	// Create config for WDS cluster
+	clientConfig := clientcmd.NewDefaultClientConfig(
+		*config,
+		&clientcmd.ConfigOverrides{
+			CurrentContext: "wds1",
+		},
+	)
+
+	restConfig, err := clientConfig.ClientConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create restconfig")
+	}
+
+	clientset, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Kubernetes client")
+	}
+	return clientset, nil
+}
+
+// Get deployment status by name
+func getDeploymentStatus(c *gin.Context) {
+	clientset, err := getClientSetKubeConfig()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create Kubernetes client"})
+		return
+	}
+
+	deploymentName := c.Query("name")
+	if deploymentName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Deployment name is required"})
+		return
+	}
+
+	deployment, err := clientset.AppsV1().Deployments("default").Get(context.Background(), deploymentName, metav1.GetOptions{})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to get deployment: %s", err)})
+		return
+	}
+
+	status := deployment.Status
+	c.JSON(http.StatusOK, gin.H{
+		"deployment":          deployment.Name,
+		"readyReplicas":       status.ReadyReplicas,
+		"availableReplicas":   status.AvailableReplicas,
+		"unavailableReplicas": status.UnavailableReplicas,
+		"updatedReplicas":     status.UpdatedReplicas,
+	})
 }
