@@ -3,30 +3,34 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: kubestellar-frontend
+      target: frontend
     ports:
-      - "5173:80"
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
     environment:
       VITE_BASE_URL: "http://localhost:4000"
-    networks:
-      - kubestellar-network
-
+    command: ["npm", "run", "dev"]
 
   backend:
     build:
-      context: ./backend 
+      context: ./backend
       dockerfile: Dockerfile
-    container_name: kubestellar-backend
-    restart: unless-stopped
+      target: backend
     ports:
       - "4000:4000"
     volumes:
-      - $HOME/.kube:/root/.kube:ro
-    networks:
-      - kubestellar-network
+      - ./backend:/app
+      - /app/tmp        
+      - $HOME/.kube:/root/.kube 
     environment:
-      - GO_ENV=production 
+      - KUBECONFIG=/root/.kube/config
+    user: "root"
+    command: ["air"]
+    networks:
+      - backend_network
 
 networks:
-  kubestellar-network:
+  backend_network:
     driver: bridge

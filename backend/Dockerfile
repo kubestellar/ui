@@ -1,38 +1,25 @@
-# Stage 1: Build the Go application
-FROM golang:1.22.3 AS builder
+# Backend Dockerfile
+FROM golang:1.22 AS backend
 
-# Set the working directory inside the container
+# Set root user permissions
+USER root
+
 WORKDIR /app
 
-# Copy go.mod and go.sum first to leverage Docker layer caching
+# Install dependencies
 COPY go.mod go.sum ./
-
-# Download dependencies
 RUN go mod download
 
-# Copy the rest of the source code
-COPY . ./
+# Copy the backend source code
+COPY . .
 
-# Build the Go application with optimizations for small binary size
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o backend-app main.go
+# Install air for hot reloading (compatible version)
+RUN go install github.com/cosmtrek/air@v1.42.0
 
-# Stage 2: Create a minimal image to run the application
-FROM alpine:3.18
+ENV PATH=$PATH:/usr/local/go/bin
 
-# Install necessary certificates (needed for HTTPS calls, e.g., to Kubernetes APIs)
-RUN apk add --no-cache ca-certificates
-
-# Set the working directory inside the container
-WORKDIR /root/
-
-# Copy the built binary from the builder stage
-COPY --from=builder /app/backend-app .
-
-# Ensure the binary is executable
-RUN chmod +x backend-app
-
-# Expose the port your application will run on
+# Expose backend port
 EXPOSE 4000
 
-# Command to run the application
-CMD ["./backend-app"]
+# Start Air for live reload
+CMD ["air"]
