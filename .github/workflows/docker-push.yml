@@ -1,0 +1,49 @@
+name: Docker Image Build and Push
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - dev
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Quay.io
+        run: echo ${{ secrets.QUAY_IO_TOKEN }} | docker login quay.io -u kubestellar+kubestellar_ui --password-stdin
+
+      - name: Get version (commit hash)
+        id: version
+        run: echo "::set-output name=version::$(git rev-parse --short HEAD)"
+
+      - name: Build Frontend Docker image
+        if: github.event.pull_request.merged == true
+        run: |
+          docker build -t quay.io/kubestellar/ui:frontend-${{ steps.version.outputs.version }} -t quay.io/kubestellar/ui:frontend .
+
+      - name: Build Backend Docker image
+        if: github.event.pull_request.merged == true
+        run: |
+          cd backend
+          docker build -t quay.io/kubestellar/ui:backend-${{ steps.version.outputs.version }} -t quay.io/kubestellar/ui:backend .
+
+      - name: Push Frontend Docker image
+        if: github.event.pull_request.merged == true
+        run: |
+          docker push quay.io/kubestellar/ui:frontend-${{ steps.version.outputs.version }}
+          docker push quay.io/kubestellar/ui:frontend
+
+      - name: Push Backend Docker image
+        if: github.event.pull_request.merged == true
+        run: |
+          docker push quay.io/kubestellar/ui:backend-${{ steps.version.outputs.version }}
+          docker push quay.io/kubestellar/ui:backend
