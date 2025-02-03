@@ -22,6 +22,7 @@ import (
 	"k8s.io/client-go/util/retry"
 
 	"github.com/katamyra/kubestellarUI/api"
+	FetchYaml "github.com/katamyra/kubestellarUI/github"
 )
 
 type ContextInfo struct {
@@ -43,6 +44,7 @@ type WorkloadInfo struct {
 }
 
 func main() {
+
 	router := gin.Default()
 
 	log.Println("Debug: KubestellarUI application started")
@@ -193,6 +195,19 @@ func getKubeInfo() ([]ContextInfo, []string, string, error, []ManagedClusterInfo
 func int32Ptr(i int32) *int32 { return &i }
 
 func createDeployment(ctx *gin.Context) {
+	// this only need when you think i will mention github repo
+	type parameters struct {
+		Url  string `json:"url"`
+		Path string `json:"path"`
+	}
+	params := parameters{}
+	if _, _, err := ctx.Request.FormFile("wds"); err != nil {
+		if err := ctx.ShouldBindJSON(&params); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
 	// Load the kubeconfig
 	kubeconfig := os.Getenv("KUBECONFIG")
 	if kubeconfig == "" {
@@ -246,8 +261,28 @@ func createDeployment(ctx *gin.Context) {
 		})
 		return
 	}
+	var dat *Deployment
 	// upload the yaml configuration file and read their value
-	dat, err := uploadFile(ctx)
+	if len(params.Url) > 0 {
+		if !(len(params.Path) > 0 && len(params.Url) > 0 && strings.Contains(params.Url, "github")) {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"message": "both path and github repo url are required",
+			})
+			return
+		}
+		content, err := FetchYaml.FetchYamlFile(ctx, params.Url, params.Path)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"message": "failed to fetch the yaml file from github url",
+				"err":     err,
+			})
+			return
+		}
+		dat = (*Deployment)(content)
+	} else {
+		dat, err = uploadFile(ctx)
+	}
+
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "failed to upload",
@@ -512,6 +547,7 @@ type DeploymentStatus struct {
 }
 
 func getDeploymentByName(c *gin.Context) {
+
 	name := c.Param("name")
 	namespace := c.Query("namespace")
 	if namespace == "" {
