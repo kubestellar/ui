@@ -24,7 +24,7 @@ export const menu = [
     listItems: [
       {
         isLink: true,
-        url: '/clusters',
+        url: '/its',
         icon: HiOutlineServer,
         label: 'Overview',
       },
@@ -43,7 +43,7 @@ export const menu = [
     listItems: [
       {
         isLink: true,
-        url: '/workloads',
+        url: '/wds',
         icon: HiOutlinePresentationChartBar,
         label: 'deployments',
       },
