@@ -1,31 +1,26 @@
 services:
   frontend:
     build:
-      context: .
       dockerfile: Dockerfile
-    container_name: kubestellar-frontend
     ports:
       - "5173:80"
-    environment:
-      VITE_BASE_URL: "http://localhost:4000"
+    depends_on:
+      - backend
     networks:
       - kubestellar-network
-
 
   backend:
     build:
       context: ./backend 
       dockerfile: Dockerfile
-    container_name: kubestellar-backend
-    restart: unless-stopped
     ports:
       - "4000:4000"
     volumes:
-      - $HOME/.kube:/root/.kube:ro
+      - ~/.kube:/root/.kube
+    environment:
+      - KUBECONFIG=/root/.kube/config
     networks:
       - kubestellar-network
-    environment:
-      - GO_ENV=production 
 
 networks:
   kubestellar-network:

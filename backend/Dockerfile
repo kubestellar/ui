@@ -1,38 +1,38 @@
-# Stage 1: Build the Go application
-FROM golang:1.22.3 AS builder
+# Stage 1: Build the backend
+FROM golang:1.22.3 AS backend-builder
 
-# Set the working directory inside the container
+# Set the working directory
 WORKDIR /app
 
-# Copy go.mod and go.sum first to leverage Docker layer caching
+# Copy the Go modules manifest files
 COPY go.mod go.sum ./
 
 # Download dependencies
 RUN go mod download
 
-# Copy the rest of the source code
-COPY . ./
+# Copy the source code
+COPY . .
 
-# Build the Go application with optimizations for small binary size
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o backend-app main.go
+# Build the binary
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o backend main.go
 
-# Stage 2: Create a minimal image to run the application
-FROM alpine:3.18
+# Stage 2: Create a lightweight runtime image
+FROM alpine:latest
 
-# Install necessary certificates (needed for HTTPS calls, e.g., to Kubernetes APIs)
-RUN apk add --no-cache ca-certificates
+# Install necessary packages
+RUN apk --no-cache add ca-certificates curl
 
-# Set the working directory inside the container
+# Set the working directory
 WORKDIR /root/
 
-# Copy the built binary from the builder stage
-COPY --from=builder /app/backend-app .
+# Copy the compiled binary from the builder stage
+COPY --from=backend-builder /app/backend .
 
-# Ensure the binary is executable
-RUN chmod +x backend-app
+# Allow access to Kubernetes API
+VOLUME ["/root/.kube"]
 
-# Expose the port your application will run on
+# Expose the backend service port
 EXPOSE 4000
 
-# Command to run the application
-CMD ["./backend-app"]
+# Command to run the backend
+CMD ["./backend"]
