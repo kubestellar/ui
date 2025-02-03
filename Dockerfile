@@ -1,31 +1,28 @@
-# Stage 1: Build
-FROM node:20-alpine AS builder
+# Stage 1: Build frontend
+FROM node:18 AS frontend-builder
 
-# Set working directory
 WORKDIR /app
 
-# Install dependencies
+# Copy package.json and package-lock.json first to optimize Docker cache
 COPY package.json package-lock.json ./
-RUN npm install --frozen-lockfile
 
-# Copy the entire project
+# Install dependencies
+RUN npm install --legacy-peer-deps
+RUN echo "VITE_BASE_URL=http://localhost:4000" > .env
+# Copy the rest of the application code
 COPY . .
 
 # Build the app
 RUN npm run build
 
-# Stage 2: Serve the built app
-FROM nginx:stable-alpine
+# Stage 2: Serve with Nginx
+FROM nginx:alpine AS frontend
 
-# Copy the build output to the Nginx server
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Copy the build artifacts from the builder stage
+COPY --from=frontend-builder /app/dist /usr/share/nginx/html
 
-# Copy custom Nginx configuration (optional)
-# For example: adjust CORS or proxy settings
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Expose port 80 for the container
+EXPOSE 80
 
-# Expose port
-EXPOSE 5173
-
-# Start Nginx
+# Start Nginx server
 CMD ["nginx", "-g", "daemon off;"]
