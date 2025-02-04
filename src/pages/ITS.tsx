@@ -49,15 +49,6 @@ const ITS = () => {
     setStatusFilter(e.target.value);
   };
 
-  useEffect(() => {
-    // Filter clusters based on search query and status filter
-    const filtered = clusters.filter(cluster => {
-      const matchesSearchQuery = cluster.name.toLowerCase().includes(searchQuery);
-      const matchesStatusFilter = statusFilter ? cluster.status === statusFilter : true;
-      return matchesSearchQuery && matchesStatusFilter;
-    });
-    }, [searchQuery, statusFilter, clusters]);
-
   if (loading) return <p className="text-center p-4">Loading ITS information...</p>;
 
   return (
