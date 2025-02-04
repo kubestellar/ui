@@ -132,3 +132,5 @@ dist
 .yarn/install-state.gz
 .pnp.*
 bundle-stats.html
+
+backend/secret.yml
