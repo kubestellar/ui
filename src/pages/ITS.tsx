@@ -13,7 +13,6 @@ const ITS = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>(''); // For filter dropdown
-  const [filteredClusters, setFilteredClusters] = useState<ManagedClusterInfo[]>([]);
   // const [error, setError] = useState<string | null>(null);
 
   const handleFetchCluster = useCallback(async () => {
@@ -26,7 +25,6 @@ const ITS = () => {
       if (Array.isArray(itsData)) {
         console.log('Setting clusters state:', itsData);
         setClusters(itsData);
-        setFilteredClusters(itsData);
       }
       // setError(null);
     } catch (error) {
@@ -58,22 +56,7 @@ const ITS = () => {
       const matchesStatusFilter = statusFilter ? cluster.status === statusFilter : true;
       return matchesSearchQuery && matchesStatusFilter;
     });
-
-    setFilteredClusters(filtered);
-  }, [searchQuery, statusFilter, clusters]);
-
-  const handleCreateCluster = async () => {
-    try {
-      const response = await api.post('/api/clusters', { /* cluster creation data */ });
-      if (response.status === 201) {
-        alert('Cluster created successfully!');
-        handleFetchCluster(); // Refresh clusters after creation
-      }
-    } catch (error) {
-      console.error('Error creating cluster:', error);
-      alert('Failed to create cluster');
-    }
-  };
+    }, [searchQuery, statusFilter, clusters]);
 
   if (loading) return <p className="text-center p-4">Loading ITS information...</p>;
 
