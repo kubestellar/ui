@@ -13,7 +13,19 @@ const ITS = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>(''); // For filter dropdown
+
+  const [selectedClusters, setSelectedClusters] = useState<string[]>([]);
   // const [error, setError] = useState<string | null>(null);
+
+
+
+    const handleCheckboxChange = (name: string) => {
+      setSelectedClusters((prev) =>
+        prev.includes(name)
+          ? prev.filter((clusterName) => clusterName !== name) // Unselect if already selected
+          : [...prev, name] // Add if not selected
+      );
+    };
 
   const handleFetchCluster = useCallback(async () => {
     setLoading(true);
@@ -100,6 +112,7 @@ const ITS = () => {
         <table className="min-w-full border border-gray-700">
           <thead>
             <tr className="text-white bg-[#5294f6]">
+              <th className="p3"></th>
               <th className="p-3 text-left">Cluster Name</th>
               <th className="p-3 text-left">Namespace</th>
               <th className="p-3 text-left">Labels</th>
@@ -111,6 +124,11 @@ const ITS = () => {
           <tbody>
             {clusters.map((cluster, index) => (
               <tr key={cluster.name} className={`border-b ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}`}>
+                <td className="p-4"><input
+                type="checkbox"
+                checked={selectedClusters.includes(cluster.name)}
+                onChange={() => handleCheckboxChange(cluster.name)}
+              /></td>
                 <td className="p-3 font-medium">{cluster.name || 'N/A'}</td>
                 <td className="p-3 font-medium">Namespace</td> {/* Placeholder for Namespace */}
                 <td className="p-3">
