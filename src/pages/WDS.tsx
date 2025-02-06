@@ -3,7 +3,7 @@ import { api } from '../lib/api';
 
 interface WorkloadInfo {
   name: string;
-  kind: string;  // 'Deployment' or 'Service'
+  kind: string; // 'Deployment' or 'Service'
   namespace: string;
   creationTime: string;
 }
@@ -12,26 +12,29 @@ const WDS = () => {
   const [workloads, setWorkloads] = useState<WorkloadInfo[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  
+  const API_BASE_URL = window.location.origin;
+  
   const handleFetchWDS = useCallback(async () => {
-      setLoading(true)
-      try{
-        const response = await api.get('/api/wds/workloads');
-        console.log('Response data:', response.data);
-        if (Array.isArray(response.data)) {
-          setWorkloads(response.data);
-        }
-        setError(null);
-      }catch(error){
-        console.error('Error fetching WDS information:', error);
-        setError('Invalid data format received from server');
-      }finally{
-        setLoading(false)
+    setLoading(true);
+    try {
+      const response = await api.get('/api/wds/workloads');
+      console.log('Response data:', response.data);
+      if (Array.isArray(response.data)) {
+        setWorkloads(response.data);
       }
-    },[])
+      setError(null);
+    } catch (error) {
+      console.error('Error fetching WDS information:', error);
+      setError('Invalid data format received from server');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-      handleFetchWDS()
-    }, [handleFetchWDS]);
+    handleFetchWDS();
+  }, [handleFetchWDS]);
 
   if (loading) return <p className="text-center p-4">Loading WDS information...</p>;
   if (error) return <p className="text-center p-4 text-error">{error}</p>;
@@ -56,15 +59,17 @@ const WDS = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold mb-2">Creation Time</h3>
-                  
                   <p>{new Date(workload.creationTime).toLocaleString()}</p>
                 </div>
               </div>
             </div>
             <div>
-            <button className='rounded-md border-white'
-            onClick={() => window.open(`http://localhost:4000/api/wds/${workload.name}?namespace=${workload.namespace!=="" ? workload.namespace : "defaul"}`, "_blank", "noreferrer")}
-            >Get INFO</button>
+              <button
+                className='rounded-md border-white'
+                onClick={() => window.open(`${API_BASE_URL}/api/wds/${workload.name}?namespace=${workload.namespace || 'default'}`, "_blank", "noreferrer")}
+              >
+                Get INFO
+              </button>
             </div>
           </div>
         ))}
