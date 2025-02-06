@@ -60,13 +60,13 @@ export const menu = [
     listItems: [
       {
         isLink: true,
-        url: '/nodes',
+        url: '/bp',
         icon: HiOutlinePresentationChartBar,
         label: 'Overview',
       },
       {
         isLink: true,
-        url: '/nodes/manage',
+        url: '/bp/manage',
         icon: HiOutlineClipboardDocumentList,
         label: 'Policies',
       },
