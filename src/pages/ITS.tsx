@@ -94,17 +94,6 @@ const ITS = () => {
       <div className="flex justify-between mb-4">
         <div className="flex items-center space-x-4">
 
-          {/* Select All Checkbox */}
-          <td style={{ padding: '30px' }}>
-            <th className="checkbox-column">
-              <input
-                type="checkbox"
-                checked={selectAll}
-                onChange={handleSelectAll}
-              />
-            </th>
-          </td>
-            
           {/* Search Bar */}
           <div className="mb-4">
             <input
@@ -147,7 +136,16 @@ const ITS = () => {
         <table className="min-w-full border border-gray-700">
           <thead>
             <tr className="text-white bg-[#5294f6]">
-              <th className="p3"></th>
+              {/* Select All Checkbox */}
+              <td style={{ padding: '30px' }}>
+                <th className="checkbox-column">
+                  <input
+                    type="checkbox"
+                    checked={selectAll}
+                    onChange={handleSelectAll}
+                  />
+                </th>
+              </td>
               <th className="p-3 text-left">Cluster Name</th>
               <th className="p-3 text-left">Namespace</th>
               <th className="p-3 text-left">Labels</th>
