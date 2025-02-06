@@ -134,3 +134,4 @@ dist
 bundle-stats.html
 
 backend/secret.yml
+backend/backend

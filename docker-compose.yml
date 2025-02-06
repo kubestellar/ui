@@ -19,8 +19,9 @@ services:
       - ~/.kube:/root/.kube
     environment:
       - KUBECONFIG=/root/.kube/config
-    networks:
-      - kubestellar-network
+    network_mode: "host"  # <--- Use host network mode (Linux only)
+    # networks:
+    #   - kubestellar-network
 
 networks:
   kubestellar-network:
