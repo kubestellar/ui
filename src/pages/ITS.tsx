@@ -16,6 +16,8 @@ const ITS = () => {
   const [selectAll, setSelectAll] = useState<boolean>(false);
   const [selectedClusters, setSelectedClusters] = useState<string[]>([]);
   // const [error, setError] = useState<string | null>(null);
+  // const [checkedClusters, setCheckedClusters] = useState<Set<string>>(new Set());
+
 
   const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { checked } = event.target;
