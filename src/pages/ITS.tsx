@@ -13,19 +13,44 @@ const ITS = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>(''); // For filter dropdown
-
+  const [selectAll, setSelectAll] = useState<boolean>(false);
   const [selectedClusters, setSelectedClusters] = useState<string[]>([]);
   // const [error, setError] = useState<string | null>(null);
+  const [checkedClusters, setCheckedClusters] = useState<Set<string>>(new Set());
 
 
+  const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { checked } = event.target;
+    setSelectAll(checked);
 
-    const handleCheckboxChange = (name: string) => {
-      setSelectedClusters((prev) =>
-        prev.includes(name)
-          ? prev.filter((clusterName) => clusterName !== name) // Unselect if already selected
-          : [...prev, name] // Add if not selected
-      );
-    };
+    if (checked) {
+      // If "select all" is checked, select all clusters
+      const allClusterNames = clusters.map((cluster) => cluster.name);
+      setSelectedClusters(Array.from(allClusterNames));
+    } else {
+      // If "select all" is unchecked, uncheck all clusters
+      setSelectedClusters([]);
+    }
+  };
+
+  const handleCheckboxChange = (name: string) => {
+    const updatedSelectedClusters = new Set(selectedClusters);
+
+    if (updatedSelectedClusters.has(name)) {
+      updatedSelectedClusters.delete(name); // Uncheck the box
+    } else {
+      updatedSelectedClusters.add(name); // Check the box
+    }
+
+    setSelectedClusters(Array.from(updatedSelectedClusters));
+
+    // If all checkboxes are checked, set selectAll to true
+    if (updatedSelectedClusters.size === clusters.length) {
+      setSelectAll(true);
+    } else {
+      setSelectAll(false);
+    }
+  };
 
   const handleFetchCluster = useCallback(async () => {
     setLoading(true);
@@ -66,10 +91,20 @@ const ITS = () => {
   return (
     <div className="w-full max-w-7xl mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6 text-center">Managed Clusters ({clusters.length})</h1>
-
-      {/* Search and Create Cluster Button */}
       <div className="flex justify-between mb-4">
         <div className="flex items-center space-x-4">
+
+          {/* Select All Checkbox */}
+          <td style={{ padding: '30px' }}>
+            <th className="checkbox-column">
+              <input
+                type="checkbox"
+                checked={selectAll}
+                onChange={handleSelectAll}
+              />
+            </th>
+          </td>
+            
           {/* Search Bar */}
           <div className="mb-4">
             <input
@@ -123,12 +158,13 @@ const ITS = () => {
           </thead>
           <tbody>
             {clusters.map((cluster, index) => (
-              <tr key={cluster.name} className={`border-b ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}`}>
-                <td className="p-4"><input
-                type="checkbox"
-                checked={selectedClusters.includes(cluster.name)}
-                onChange={() => handleCheckboxChange(cluster.name)}
-              /></td>
+              <tr key={cluster.name}>
+                <td className="checkbox-cell" style={{ padding: '30px' }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedClusters.includes(cluster.name)}
+                    onChange={() => handleCheckboxChange(cluster.name)}
+                  /></td>
                 <td className="p-3 font-medium">{cluster.name || 'N/A'}</td>
                 <td className="p-3 font-medium">Namespace</td> {/* Placeholder for Namespace */}
                 <td className="p-3">
