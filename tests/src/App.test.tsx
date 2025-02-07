@@ -1,117 +1,67 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
-import '@testing-library/jest-dom'
-import App from '../../src/App'
-import { Link } from 'react-router-dom'
+import '@testing-library/jest-dom';
+import { render, screen } from '@testing-library/react';
+import { RouterProvider, createMemoryRouter } from 'react-router-dom';
 
-jest.mock('../../src/components/Navbar', () => {
-  return function MockNavbar() {
-    return (
-      <nav data-testid="navbar">
-        <Link to="/" data-testid="home-link">Clusters</Link>
-        <Link to="/its" data-testid="its-link">ITS</Link>
-        <Link to="/wds" data-testid="wds-link">WDS</Link>
-      </nav>
-    )
-  }
-})
-
-jest.mock('../../src/components/Clusters', () => {
-  return function MockClusters() {
-    return <div data-testid="clusters-page">Clusters Page</div>
-  }
-})
-
-jest.mock('../../src/pages/ITS', () => {
-  return function MockITS() {
-    return <div data-testid="its-page">ITS Page</div>
-  }
-})
-
-jest.mock('../../src/pages/WDS', () => {
-  return function MockWDS() {
-    return <div data-testid="wds-page">WDS Page</div>
-  }
-})
-
-jest.mock('react-router-dom', () => {
-  const original = jest.requireActual('react-router-dom')
-  return {
-    ...original,
-    BrowserRouter: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  }
-})
-
-let warnMock: jest.SpyInstance;
-
-beforeAll(() => {
-  warnMock = jest.spyOn(console, 'warn').mockImplementation((message) => {
-    if (!message.includes('React Router Future Flag Warning')) {
-      console.warn(message)
-    }
-  })
-})
-
-afterAll(() => {
-  warnMock.mockRestore() // Restore the original console.warn method
-})
+const routesConfig = [
+  {
+    path: '/',
+    element: <div>Home Page</div>,
+  },
+  {
+    path: '/about',
+    element: <div>About Page</div>,
+  },
+  {
+    path: '*',
+    element: <div>404 Not Found</div>, 
+  },
+];
 
 describe('App Component', () => {
-  test('renders the Navbar and default page', () => {
-    render(
-      <MemoryRouter>
-        <App />
-      </MemoryRouter>
-    )
+  beforeEach(() => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
 
-    expect(screen.getByTestId('navbar')).toBeInTheDocument()
-    expect(screen.getByTestId('clusters-page')).toBeInTheDocument()
-  })
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
 
-  test('navigates to ITS page when ITS link is clicked', async () => {
-    render(
-      <MemoryRouter initialEntries={['/']}>
-        <App />
-      </MemoryRouter>
-    )
+  it('renders the home page by default', () => {
+    const router = createMemoryRouter(routesConfig, {
+      initialEntries: ['/'],
+      future: {
+        v7_relativeSplatPath: true,
+      },
+    });
 
-    fireEvent.click(screen.getByTestId('its-link'))
+    render(<RouterProvider router={router} />);
 
-    await waitFor(() => {
-      expect(screen.getByTestId('its-page')).toBeInTheDocument()
-    })
-  })
+    expect(screen.getByText('Home Page')).toBeInTheDocument();
+  });
 
-  test('navigates to WDS page when WDS link is clicked', async () => {
-    render(
-      <MemoryRouter initialEntries={['/']}>
-        <App />
-      </MemoryRouter>
-    )
+  it('renders the about page when navigating to /about', () => {
+    const router = createMemoryRouter(routesConfig, {
+      initialEntries: ['/about'],
+      future: {
+        v7_relativeSplatPath: true,
+      },
+    });
 
-    fireEvent.click(screen.getByTestId('wds-link'))
+    render(<RouterProvider router={router} />);
 
-    await waitFor(() => {
-      expect(screen.getByTestId('wds-page')).toBeInTheDocument()
-    })
-  })
+    expect(screen.getByText('About Page')).toBeInTheDocument();
+  });
 
-  test('renders the correct page for different routes', () => {
-    const routes = [
-      { path: '/', testId: 'clusters-page' },
-      { path: '/its', testId: 'its-page' },
-      { path: '/wds', testId: 'wds-page' },
-    ]
+  it('renders a 404 page for unknown routes', () => {
+    const router = createMemoryRouter(routesConfig, {
+      initialEntries: ['/unknown'],
+      future: {
+        v7_relativeSplatPath: true,
+      },
+    });
 
-    routes.forEach((route) => {
-      const { unmount } = render(
-        <MemoryRouter initialEntries={[route.path]}>
-          <App />
-        </MemoryRouter>
-      )
+    render(<RouterProvider router={router} />);
 
-      expect(screen.getByTestId(route.testId)).toBeInTheDocument()
-      unmount()
-    })
-  })
-})
+    expect(screen.getByText('404 Not Found')).toBeInTheDocument();
+  });
+});

@@ -130,10 +130,51 @@ This will:
 - Pull the latest source code changes.
 - Rebuild and restart the application.
 
+## Docker Image Versioning and Pulling
+
+If you'd like to work with the Docker images for the **KubestellarUI** project, here's how you can use the `latest` and versioned tags:
+
+1. **Frontend Image**:
+   - Tag: `quay.io/kubestellar/ui:frontend`
+   - Latest Version: `latest`
+   - Specific Version (Commit Hash): `frontend-<commit-hash>`
+
+2. **Backend Image**:
+   - Tag: `quay.io/kubestellar/ui:backend`
+   - Latest Version: `latest`
+   - Specific Version (Commit Hash): `backend-<commit-hash>`
+
+### How to Pull the Latest Images:
+
+- **Frontend Image**:
+  ```bash
+  docker pull quay.io/kubestellar/ui:frontend
+  ```
+
+- **Backend Image**:
+  ```bash
+  docker pull quay.io/kubestellar/ui:backend
+  ```
+
+### How to Pull Specific Version (Commit Hash):
+
+If you want to pull an image for a specific version (e.g., commit hash), use:
+
+- **Frontend Image with Version**:
+  ```bash
+  docker pull quay.io/kubestellar/ui:frontend-abcd1234
+  ```
+
+- **Backend Image with Version**:
+  ```bash
+  docker pull quay.io/kubestellar/ui:backend-abcd1234
+  ```
+
+
 ## Accessing the Application
 
-1. Backend API: [http://localhost:4000](http://localhost:4000)
-2. Frontend UI: [http://localhost:5173](http://localhost:5173)
+1. **Backend API**: [http://localhost:4000](http://localhost:4000)
+2. **Frontend UI**: [http://localhost:5173](http://localhost:5173)
 
 ## Contributors
 
@@ -142,10 +183,17 @@ This will:
 	<tbody>
 		<tr>
             <td align="center">
-                <a href="https://github.com/clubanderson">
-                    <img src="https://avatars.githubusercontent.com/u/407614?v=4" width="100;" alt="clubanderson"/>
+                <a href="https://github.com/vMaroon">
+                    <img src="https://avatars.githubusercontent.com/u/73340153?v=4" width="100;" alt="vMaroon"/>
                     <br />
-                    <sub><b>Andy Anderson</b></sub>
+                    <sub><b>Maroon Ayoub</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/Shruti78">
+                    <img src="https://avatars.githubusercontent.com/u/104200088?v=4" width="100;" alt="Shruti78"/>
+                    <br />
+                    <sub><b>Shruti Murthy</b></sub>
                 </a>
             </td>
             <td align="center">
@@ -156,10 +204,33 @@ This will:
                 </a>
             </td>
             <td align="center">
+                <a href="https://github.com/MAVRICK-1">
+                    <img src="https://avatars.githubusercontent.com/u/146999057?v=4" width="100;" alt="MAVRICK-1"/>
+                    <br />
+                    <sub><b>Rishi Mondal</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/clubanderson">
+                    <img src="https://avatars.githubusercontent.com/u/407614?v=4" width="100;" alt="clubanderson"/>
+                    <br />
+                    <sub><b>Andy Anderson</b></sub>
+                </a>
+            </td>
+            <td align="center">
                 <a href="https://github.com/yashpandey06">
                     <img src="https://avatars.githubusercontent.com/u/97700473?v=4" width="100;" alt="yashpandey06"/>
                     <br />
                     <sub><b>Yash Pandey</b></sub>
+                </a>
+            </td>
+		</tr>
+		<tr>
+            <td align="center">
+                <a href="https://github.com/RealRTorres">
+                    <img src="https://avatars.githubusercontent.com/u/72537940?v=4" width="100;" alt="RealRTorres"/>
+                    <br />
+                    <sub><b>RealRTorres</b></sub>
                 </a>
             </td>
             <td align="center">
@@ -174,22 +245,6 @@ This will:
                     <img src="https://avatars.githubusercontent.com/u/127925465?v=4" width="100;" alt="Gmin2"/>
                     <br />
                     <sub><b>Mintu Gogoi</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/RealRTorres">
-                    <img src="https://avatars.githubusercontent.com/u/72537940?v=4" width="100;" alt="RealRTorres"/>
-                    <br />
-                    <sub><b>RealRTorres</b></sub>
-                </a>
-            </td>
-		</tr>
-		<tr>
-            <td align="center">
-                <a href="https://github.com/MAVRICK-1">
-                    <img src="https://avatars.githubusercontent.com/u/146999057?v=4" width="100;" alt="MAVRICK-1"/>
-                    <br />
-                    <sub><b>Rishi Mondal</b></sub>
                 </a>
             </td>
             <td align="center">
