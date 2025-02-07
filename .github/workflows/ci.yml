@@ -24,14 +24,23 @@ jobs:
 
       - name: Lint Check
         run: npm run lint
+      - name: ✅ Lint Check Passed
+        if: success()
+        run: echo "Linting successful ✅"
 
       - name: Run Frontend Tests
         run: npm test -- --ci --coverage
+      - name: ✅ Frontend Tests Passed
+        if: success()
+        run: echo "Frontend tests passed ✅"
 
       - name: Build
         run: npm run build
         env:
           VITE_BASE_URL: http://localhost:4000
+      - name: ✅ Frontend Build Successful
+        if: success()
+        run: echo "Frontend build successful ✅"
 
       - name: Run Frontend
         run: |
@@ -39,6 +48,9 @@ jobs:
           npm run dev &
         env:
           VITE_BASE_URL: http://localhost:4000
+      - name: ✅ Frontend Server Started
+        if: success()
+        run: echo "Frontend server started successfully ✅"
 
   backend:
     name: Backend Checks
@@ -56,6 +68,9 @@ jobs:
       - name: Install Dependencies
         working-directory: backend
         run: go mod download
+      - name: ✅ Dependencies Installed
+        if: success()
+        run: echo "Go dependencies installed successfully ✅"
       
       - name: Check Go Formatting
         working-directory: backend
@@ -65,17 +80,22 @@ jobs:
             gofmt -l .
             exit 1
           fi
+      - name: ✅ Formatting Check Passed
+        if: success()
+        run: echo "Go formatting check passed ✅"
       
       - name: Build Backend
         working-directory: backend
         run: go build -v ./...
+      - name: ✅ Backend Build Successful
+        if: success()
+        run: echo "Backend build successful ✅"
       
       - name: Run Backend
         working-directory: backend
         run: |
           echo "Starting Backend Server..."
           go run . &
-
-       # Notify success
-      - name: Complete
-        run: echo "Both Backend and Frontend build checks passed."
+      - name: ✅ Backend Server Started
+        if: success()
+        run: echo "Backend server started successfully ✅"
