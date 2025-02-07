@@ -1,21 +1,34 @@
 name: Greetings-New-Contributor
 
-on: [pull_request, issues]
+on:
+  pull_request:
+  issues:
 
 jobs:
   greeting:
     runs-on: ubuntu-latest
-    permissions: write-all
+    permissions:
+      issues: write
+      pull-requests: write
+
     steps:
-    - uses: actions/first-interaction@v1
-      with:
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        issue-message: |
-          👋 Hello! @${{ github.actor }} Welcome to the Kubestellar. 
+      - name: Debugging Info
+        run: |
+          echo "Actor: ${{ github.actor }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Event Name: ${{ github.event_name }}"
 
-          We're excited to have you here! Please make sure to check out our [contribution guide](./CONTRIBUTING.md) and feel free to join our [Slack channel](https://kubernetes.slack.com/archives/C058SUSL5AA) for any questions.
-        pr-message: |
-          👋 Hello! @${{ github.actor }} Welcome to the Kubestellar. 
+      - name: Greet New Contributor
+        uses: actions/first-interaction@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-message: |
+            👋 Hello! @${{ github.actor }} Welcome to the Kubestellar. 
 
-          Thank you for submitting your first Pull Request to KubeStellar. We are delighted to have you in our Universe!
-          Please make sure to check out our [contribution guide](./CONTRIBUTING.md) and feel free to join our [Slack channel](https://kubernetes.slack.com/archives/C058SUSL5AA) for any questions.
+            We're excited to have you here! Please make sure to check out our [contribution guide](./CONTRIBUTING.md) and feel free to join our [Slack channel](https://kubernetes.slack.com/archives/C058SUSL5AA) for any questions.
+
+          pr-message: |
+            👋 Hello! @${{ github.actor }} Welcome to the Kubestellar. 
+
+            Thank you for submitting your first Pull Request to KubeStellar. We are delighted to have you in our Universe!
+            Please make sure to check out our [contribution guide](./CONTRIBUTING.md) and feel free to join our [Slack channel](https://kubernetes.slack.com/archives/C058SUSL5AA) for any questions.
