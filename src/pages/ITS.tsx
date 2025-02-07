@@ -132,7 +132,7 @@ const ITS = () => {
       </div>
 
       {/* Table Container */}
-      <div className="overflow-x-auto rounded-md shadow-lg">
+      <div className="overflow-x-auto rounded-lg shadow-lg">
         <table className="min-w-full border border-gray-700">
           <thead>
             <tr className="text-white bg-[#5294f6]">
@@ -179,9 +179,14 @@ const ITS = () => {
                   )}
                 </td>
                 <td className="p-3">{new Date(cluster.creationTime).toLocaleString()}</td>
-                <td className="p-3">N/A</td> {/* Placeholder for cluster size */}
                 <td className="p-3">
-                  <span className="px-2 py-1 text-sm bg-green-200 text-green-800 rounded">Active</span>
+                  <span className="px-2 py-2 text-sm rounded-lg" style={{ border:"2px solid #9CCBA3", backgroundColor: "#D9F1D5", color: "#00000" }}>
+                    N/A {/* Placeholder for cluster size */}
+                    </span></td> 
+                <td className="p-3" style={{ padding: '15px' }}>
+                  <span className="font-bold px-2 py-1 text-sm rounded" style={{ border:"2px solid #9CCBA3", backgroundColor: "#D9F1D5", color: "#1B7939" }}>
+                    Active✓
+                  </span>
                 </td>
               </tr>
             ))}
