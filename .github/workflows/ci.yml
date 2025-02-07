@@ -37,6 +37,8 @@ jobs:
         run: |
           echo "Starting Frontend Server..."
           npm run dev &
+        env:
+          VITE_BASE_URL: http://localhost:4000
 
   backend:
     name: Backend Checks
