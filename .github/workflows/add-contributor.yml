@@ -44,18 +44,14 @@ jobs:
       - name: Detect the Branch Created by the Action
         id: get-branch
         run: |
-          # Debug: Show all branches to understand the issue
           echo "Available branches:"
-          git branch --all --sort=-committerdate --format='%(refname:short)'
+          git for-each-ref --sort=-committerdate --format='%(refname:short)' refs/remotes/origin
 
-          # Find the branch created by the contributors-readme-action
-          CURRENT_BRANCH=$(git branch --all --sort=-committerdate --format='%(refname:short)' | grep "contributors-readme-action" | head -n 1)
-          # Strip 'origin/' from the branch name if it exists
+          CURRENT_BRANCH=$(git for-each-ref --sort=-committerdate --format='%(refname:short)' refs/remotes/origin | grep "contributors-readme-action" | head -n 1)
           CURRENT_BRANCH_CLEAN=${CURRENT_BRANCH#origin/}
           echo "CURRENT_BRANCH=$CURRENT_BRANCH_CLEAN" >> $GITHUB_ENV
           echo "Branch created by action: $CURRENT_BRANCH_CLEAN"
 
-          # Stop if branch is empty
           if [ -z "$CURRENT_BRANCH_CLEAN" ]; then
             echo "No branch created by action. Skipping remaining steps."
             echo "SKIP_REMAINING=true" >> $GITHUB_ENV
@@ -67,18 +63,24 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+      - name: Checkout and Fetch the Detected Branch
+        if: env.SKIP_REMAINING != 'true'
+        run: |
+          git fetch origin ${{ env.CURRENT_BRANCH }}
+          git checkout -B ${{ env.CURRENT_BRANCH }} origin/${{ env.CURRENT_BRANCH }}
+
       - name: Amend Commit with Signed-off-by
         if: env.SKIP_REMAINING != 'true'
         run: |
-          # Checkout the branch properly
-          git checkout -B ${{ env.CURRENT_BRANCH }} origin/${{ env.CURRENT_BRANCH }}
-          git commit --amend --no-edit --signoff || echo "No changes to amend"
+          if git diff --cached --quiet; then
+            echo "No changes detected to amend."
+          else
+            git commit --amend --no-edit --signoff
+          fi
           
       - name: Push Changes Back to Remote Branch
         if: env.SKIP_REMAINING != 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Push the amended commit back to the remote branch
           git push --force-with-lease origin ${{ env.CURRENT_BRANCH }}
-      
