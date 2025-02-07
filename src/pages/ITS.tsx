@@ -15,9 +15,13 @@ const ITS = () => {
   const [statusFilter, setStatusFilter] = useState<string>(''); // For filter dropdown
   const [selectAll, setSelectAll] = useState<boolean>(false);
   const [selectedClusters, setSelectedClusters] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage] = useState<number>(5); // Number of clusters per page
   // const [error, setError] = useState<string | null>(null);
-  // const [checkedClusters, setCheckedClusters] = useState<Set<string>>(new Set());
 
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
 
   const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { checked } = event.target;
@@ -133,7 +137,7 @@ const ITS = () => {
 
       {/* Table Container */}
       <div className="overflow-x-auto rounded-lg shadow-lg">
-        <table className="min-w-full border border-gray-700">
+        <table className="w-full table-auto">
           <thead>
             <tr className="text-white bg-[#5294f6]">
               {/* Select All Checkbox */}
@@ -180,11 +184,11 @@ const ITS = () => {
                 </td>
                 <td className="p-3">{new Date(cluster.creationTime).toLocaleString()}</td>
                 <td className="p-3">
-                  <span className="px-2 py-2 text-sm rounded-lg" style={{ border:"2px solid #9CCBA3", backgroundColor: "#D9F1D5", color: "#00000" }}>
+                  <span className="px-2 py-2 text-sm rounded-lg" style={{ border: "2px solid #9CCBA3", backgroundColor: "#D9F1D5", color: "#00000" }}>
                     N/A {/* Placeholder for cluster size */}
-                    </span></td> 
+                  </span></td>
                 <td className="p-3" style={{ padding: '15px' }}>
-                  <span className="font-bold px-2 py-1 text-sm rounded" style={{ border:"2px solid #9CCBA3", backgroundColor: "#D9F1D5", color: "#1B7939" }}>
+                  <span className="font-bold px-2 py-1 text-sm rounded" style={{ border: "2px solid #9CCBA3", backgroundColor: "#D9F1D5", color: "#1B7939" }}>
                     Active✓
                   </span>
                 </td>
@@ -192,9 +196,31 @@ const ITS = () => {
             ))}
           </tbody>
         </table>
+        {/* Pagination Controls */}
+        <div className="pagination-controls flex justify-end items-center gap-4 py-2">
+          {/* Previous Button */}
+          <button className="px-3 py-1" style={{ border: " 2px solid #007AFF", backgroundColor: "#3D93FE", color: "#FFFFFF" }}
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            {"<"}
+          </button>
+
+          {/* Page Numbers */}
+          <span>
+            Page {currentPage} of {Math.ceil(clusters.length / itemsPerPage)}
+          </span>
+
+          {/* Next Button */}
+          <button className="px-3 py-1" style={{ border: " 2px solid #007AFF", backgroundColor: "#3D93FE", color: "#FFFFFF" }}
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === Math.ceil(clusters.length / itemsPerPage)}
+          >
+            {">"}
+          </button>
+        </div>
       </div>
     </div>
   );
 };
-
 export default ITS;
