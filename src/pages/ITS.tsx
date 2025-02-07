@@ -90,6 +90,26 @@ const ITS = () => {
     setStatusFilter(e.target.value);
   };
 
+ 
+   // Add this new function to filter clusters
+  const filteredClusters = clusters.filter((cluster) => {
+    const matchesSearch = cluster.name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    const matchesStatus = !statusFilter || cluster.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+ // Calculate pagination
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentClusters = filteredClusters.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
+ useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
+
   if (loading) return <p className="text-center p-4">Loading ITS information...</p>;
 
   return (
@@ -159,7 +179,7 @@ const ITS = () => {
             </tr>
           </thead>
           <tbody>
-            {clusters.map((cluster) => (
+            {currentClusters.map((cluster) => (
               <tr key={cluster.name}>
                 <td className="checkbox-cell" style={{ padding: '30px' }}>
                   <input
@@ -208,13 +228,13 @@ const ITS = () => {
 
           {/* Page Numbers */}
           <span>
-            Page {currentPage} of {Math.ceil(clusters.length / itemsPerPage)}
+            Page {currentPage} of {Math.ceil(filteredClusters.length / itemsPerPage)}
           </span>
 
           {/* Next Button */}
           <button className="px-3 py-1" style={{ border: " 2px solid #007AFF", backgroundColor: "#3D93FE", color: "#FFFFFF" }}
             onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === Math.ceil(clusters.length / itemsPerPage)}
+            disabled={currentPage === Math.ceil(filteredClusters.length / itemsPerPage)}
           >
             {">"}
           </button>
