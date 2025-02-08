@@ -5,6 +5,7 @@ import { RxEnterFullScreen, RxExitFullScreen } from "react-icons/rx";
 import ChangeThemes from "./ChangeThemes";
 import { menu } from "./menu/data";
 import MenuItem from "./menu/MenuItem";
+import { useCluster } from "../context/ClusterContext";
 
 interface Context {
   name: string;
@@ -16,6 +17,7 @@ const Header = () => {
   const element = document.getElementById("root");
   const [contexts, setContexts] = React.useState<Context[]>([]);
   const [currentContext, setCurrentContext] = React.useState("");
+  const { setSelectedCluster, setHasAvailableClusters } = useCluster();
 
   const [isDrawerOpen, setDrawerOpen] = React.useState(false);
   const toggleDrawer = () => setDrawerOpen(!isDrawerOpen);
@@ -31,10 +33,16 @@ const Header = () => {
           ctx.name.endsWith("-kubeflex")
         );
         setContexts(kubeflexContexts);
+        setHasAvailableClusters(kubeflexContexts.length > 0);
         setCurrentContext(data.currentContext);
+        setSelectedCluster(data.currentContext || null);
       })
-      .catch((error) => console.error("Error fetching contexts:", error));
-  }, []);
+      .catch((error) => {
+        console.error("Error fetching contexts:", error);
+        setHasAvailableClusters(false);
+        setSelectedCluster(null);
+      });
+  }, [setSelectedCluster, setHasAvailableClusters]);
 
   React.useEffect(() => {
     if (isFullScreen) {
@@ -43,6 +51,12 @@ const Header = () => {
       element?.requestFullscreen({ navigationUI: "auto" });
     }
   }, [element, isFullScreen]);
+
+  const handleClusterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newCluster = e.target.value;
+    setCurrentContext(newCluster);
+    setSelectedCluster(newCluster);
+  };
 
   return (
     <div className="fixed z-[3] top-0 left-0 right-0 bg-base-100 w-full flex justify-between px-3 xl:px-4 py-3 xl:py-5 gap-4 xl:gap-0">
@@ -75,12 +89,12 @@ const Header = () => {
                 className="flex items-center gap-1 xl:gap-2 mt-1 mb-5"
               >
                 <span className="text-[16px] leading-[1.2] sm:text-lg xl:text-xl 2xl:text-2xl font-semibold text-base-content dark:text-neutral-200">
-                <img
-                  src="/KubeSteller.png"
-                  alt="logo"
-                  className="w-44 h-auto object-contain"
-                />
-              </span>
+                  <img
+                    src="/KubeSteller.png"
+                    alt="logo"
+                    className="w-44 h-auto object-contain"
+                  />
+                </span>
               </Link>
               {menu.map((item, index) => (
                 <MenuItem
@@ -95,21 +109,21 @@ const Header = () => {
         </div>
 
         <Link to={"/"} className="flex items-center gap-1 xl:gap-2">
-        <span className="text-[16px] leading-[1.2] sm:text-lg xl:text-xl 2xl:text-2xl font-semibold text-base-content dark:text-neutral-200">
-          <img 
-            src="/KubeSteller.png" 
-            alt="logo" 
-            className="w-44 h-auto object-contain"
-          />
-        </span>
+          <span className="text-[16px] leading-[1.2] sm:text-lg xl:text-xl 2xl:text-2xl font-semibold text-base-content dark:text-neutral-200">
+            <img
+              src="/KubeSteller.png"
+              alt="logo"
+              className="w-44 h-auto object-contain"
+            />
+          </span>
         </Link>
       </div>
 
       <div className="flex items-center gap-0 xl:gap-1 2xl:gap-2 3xl:gap-5">
-          <select
+        <select
           className="select select-bordered w-[200px] mr-4"
           value={currentContext}
-          onChange={(e) => setCurrentContext(e.target.value)}
+          onChange={handleClusterChange}
         >
           <option value="" disabled>
             Select cluster
