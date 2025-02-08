@@ -6,9 +6,16 @@ import ChangeThemes from "./ChangeThemes";
 import { menu } from "./menu/data";
 import MenuItem from "./menu/MenuItem";
 
+interface Context {
+  name: string;
+  cluster: string;
+}
+
 const Header = () => {
   const [isFullScreen, setIsFullScreen] = React.useState(true);
   const element = document.getElementById("root");
+  const [contexts, setContexts] = React.useState<Context[]>([]);
+  const [currentContext, setCurrentContext] = React.useState("");
 
   const [isDrawerOpen, setDrawerOpen] = React.useState(false);
   const toggleDrawer = () => setDrawerOpen(!isDrawerOpen);
@@ -16,7 +23,18 @@ const Header = () => {
   const toggleFullScreen = () => {
     setIsFullScreen((prev) => !prev);
   };
-
+  React.useEffect(() => {
+    fetch("http://localhost:4000/api/clusters")
+      .then((response) => response.json())
+      .then((data) => {
+        const kubeflexContexts = data.contexts.filter((ctx: Context) =>
+          ctx.name.endsWith("-kubeflex")
+        );
+        setContexts(kubeflexContexts);
+        setCurrentContext(data.currentContext);
+      })
+      .catch((error) => console.error("Error fetching contexts:", error));
+  }, []);
 
   React.useEffect(() => {
     if (isFullScreen) {
@@ -88,6 +106,20 @@ const Header = () => {
       </div>
 
       <div className="flex items-center gap-0 xl:gap-1 2xl:gap-2 3xl:gap-5">
+          <select
+          className="select select-bordered w-[200px] mr-4"
+          value={currentContext}
+          onChange={(e) => setCurrentContext(e.target.value)}
+        >
+          <option value="" disabled>
+            Select cluster
+          </option>
+          {contexts.map((ctx) => (
+            <option key={ctx.name} value={ctx.name}>
+              {ctx.name}
+            </option>
+          ))}
+        </select>
         <button
           onClick={toggleFullScreen}
           className="hidden xl:inline-flex btn btn-circle btn-ghost"
