@@ -119,7 +119,7 @@ const ITS = () => {
         <div className="flex items-center space-x-4">
 
           {/* Search Bar */}
-          <div className="mb-4">
+          <div>
             <input
               type="text"
               value={searchQuery}
@@ -130,7 +130,7 @@ const ITS = () => {
           </div>
 
           {/* Filter Options */}
-          <div className="mb-4">
+          <div>
             <select
               id="statusFilter"
               value={statusFilter}
@@ -149,7 +149,7 @@ const ITS = () => {
             Create Cluster
           </button>
           {/* Import Cluster Button */}
-          <button className="bg-white text-blue-500 px-4 py-2 rounded shadow-lg hover:shadow-xl transition duration-200">
+          <button className="bg-white text-blue-500 border border-blue-500 px-4 py-2 rounded shadow-lg hover:shadow-xl transition duration-200">
             Import Cluster
           </button>
         </div>
