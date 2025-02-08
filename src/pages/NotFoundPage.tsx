@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Home, Moon, RefreshCw, Rocket, Sun } from 'lucide-react';
-import useTheme from '../hooks/useTheme';
+import React, { useEffect, useState } from "react";
+import { Home, RefreshCw, Rocket } from "lucide-react";
 
 const quotes = [
   {
@@ -19,7 +18,6 @@ const quotes = [
 
 const NotFoundPage: React.FC = () => {
   const [currentQuote, setCurrentQuote] = useState(0);
-  const { toggleTheme, theme } = useTheme();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -29,7 +27,7 @@ const NotFoundPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-base-200 transition-colors duration-300 overflow-hidden">
+    <div className="w-full h-full flex items-center justify-center overflow-hidden bg-base-200 relative">
       <style>
         {`
         layer base {
@@ -192,38 +190,8 @@ const NotFoundPage: React.FC = () => {
         }
         `}
       </style>
-      {/* Theme Toggle Button */}
-      <div className="fixed top-4 right-4 z-50">
-        <button
-          onClick={toggleTheme}
-          className="btn btn-ghost btn-circle transition-transform hover:rotate-12"
-          aria-label="Toggle theme"
-        >
-          {theme === 'light' ? (
-            <Moon className="h-5 w-5" />
-          ) : (
-            <Sun className="h-5 w-5" />
-          )}
-        </button>
-      </div>
-
       {/* Background Elements */}
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none opacity-10 dark:opacity-5">
-        <svg className="absolute w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
-              <path
-                d="M0 32V.5H32"
-                fill="none"
-                stroke="currentColor"
-                strokeOpacity=".1"
-              />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
-        </svg>
-      </div>
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {/* Stars */}
         <div className="absolute inset-0">
           {[...Array(50)].map((_, i) => (
@@ -242,13 +210,10 @@ const NotFoundPage: React.FC = () => {
         {/* Planets */}
         <svg className="absolute top-20 left-20 w-24 h-24 text-primary/20 animate-float" viewBox="0 0 100 100">
           <circle cx="50" cy="50" r="45" fill="currentColor" />
-          <ellipse cx="50" cy="50" rx="45" ry="15" className="text-primary/10" fill="currentColor" />
         </svg>
 
         <svg className="absolute bottom-20 right-20 w-32 h-32 text-primary/15 animate-float-delayed" viewBox="0 0 100 100">
           <circle cx="50" cy="50" r="45" fill="currentColor" />
-          <circle cx="30" cy="30" r="10" className="text-base-100" fill="currentColor" opacity="0.3" />
-          <circle cx="60" cy="40" r="8" className="text-base-100" fill="currentColor" opacity="0.2" />
         </svg>
 
         {/* Shooting Stars */}
@@ -266,7 +231,7 @@ const NotFoundPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Small Background Rockets */}
+        {/* Small Rockets */}
         {[...Array(3)].map((_, i) => (
           <div
             key={i}
@@ -297,31 +262,26 @@ const NotFoundPage: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex items-center justify-center p-4 min-h-screen">
-        <div className="max-w-2xl w-full text-center space-y-8 relative">
-          {/* Decorative Elements */}
-          <div className="absolute -left-16 -top-16 w-32 h-32 bg-primary/5 rounded-full blur-2xl" />
-          <div className="absolute -right-16 -bottom-16 w-32 h-32 bg-primary/5 rounded-full blur-2xl" />
-
-          {/* Logo */}
-          <div className="flex justify-center">
-            <div className="relative">
-              <div className="absolute inset-0 animate-pulse-slow blur-xl">
-                <img 
-                  src="KubeSteller.png" 
-                  alt=""
-                  className="h-16 md:h-24 opacity-50"
-                />
-              </div>
+      <div className="relative text-center space-y-6 max-w-2xl w-full px-4">
+        {/* Logo */}
+        <div className="flex justify-center">
+          <div className="relative">
+            <div className="absolute inset-0 animate-pulse-slow blur-xl">
               <img 
                 src="KubeSteller.png" 
-                alt="KubeStellar Logo" 
-                className="h-16 md:h-24 relative z-10 transition-transform hover:scale-105 duration-300"
+                alt=""
+                className="h-16 md:h-24 opacity-50"
               />
             </div>
+            <img 
+              src="KubeSteller.png" 
+              alt="KubeStellar Logo" 
+              className="h-16 md:h-24 relative z-10 transition-transform hover:scale-105 duration-300"
+            />
           </div>
-          
-          {/* 404 Text */}
+        </div>
+
+        {/* 404 Text */}
           <div className="space-y-4">
             <div className="relative">
               <h1 className="text-7xl md:text-9xl font-bold text-primary/10 animate-float">
@@ -340,40 +300,36 @@ const NotFoundPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Quote Carousel */}
-          <div className="relative h-24">
-            {quotes.map((quote, index) => (
-              <div
-                key={index}
+        {/* Quote Section */}
+        <div className="h-24 relative">
+          {quotes.map((quote, index) => (
+            <div
+              key={index}
                 className={`absolute w-full transition-all duration-500 ${
                   index === currentQuote
                     ? 'opacity-100 transform translate-y-0'
                     : 'opacity-0 transform translate-y-4'
-                }`}
-              >
-                <p className="text-lg italic text-base-content/80">{quote.text}</p>
-                <p className="text-sm mt-2 text-primary">{quote.author}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <button 
-              onClick={() => window.location.href = '/'}
-              className="btn btn-primary gap-2 transition-all duration-300 hover:scale-105 group"
+              }`}
             >
-              <Home className="group-hover:rotate-12 transition-transform" size={20} />
-              Return Home
-            </button>
+              <p className="text-lg italic text-base-content/80">{quote.text}</p>
+              <p className="text-sm text-primary">{quote.author}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <button onClick={() => (window.location.href = "/")} className="btn btn-primary">
+            <Home size={20} />
+            Return Home
+          </button>
             <button 
               onClick={() => window.location.reload()}
               className="btn btn-ghost gap-2 transition-all duration-300 hover:scale-105 group"
             >
               <RefreshCw className="group-hover:rotate-180 transition-transform" size={20} />
-              Try Again
-            </button>
-          </div>
+            Try Again
+          </button>
         </div>
       </div>
     </div>
