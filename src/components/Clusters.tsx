@@ -17,8 +17,17 @@ const K8sInfo = () => {
     api.get('/api/clusters')
       .then(response => {
         console.log('Response data:', response.data);
-        setContexts(response.data.contexts);
-        setClusters(response.data.clusters);
+           // Only show kubeflex contexts
+        const kubeflexContexts = response.data.contexts.filter(
+          (ctx: ContextInfo) => ctx.name.endsWith("-kubeflex")
+        );
+         // Get clusters associated with kubeflex contexts
+        const kubeflexClusters = response.data.clusters.filter(
+          (cluster: string) =>
+            kubeflexContexts.some((ctx: ContextInfo) => ctx.cluster === cluster)
+        );
+         setContexts(kubeflexContexts);
+        setClusters(kubeflexClusters);
         setCurrentContext(response.data.currentContext);
         setLoading(false);
       })
@@ -47,7 +56,7 @@ const K8sInfo = () => {
       <div>
         <h2 className="text-2xl font-bold mb-6">Kubernetes Contexts ({contexts?.length})</h2>
         <ul>
-          {contexts && contexts.map(ctx => (
+          {contexts.map((ctx) => (
             <li key={ctx.name}>
               {ctx.name} {ctx.name === currentContext && '(Current)'} 
               <span style={{color: '#666'}}> → cluster: {ctx.cluster}</span>
