@@ -1,7 +1,7 @@
 import { PieChart, Pie, Cell, Tooltip } from 'recharts';
 
 interface Props {
-  workload: { kind: string; count: number }; // Now includes count
+  workload: { kind: string; count: number };
   color: string;
 }
 
