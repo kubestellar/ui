@@ -6,7 +6,6 @@ import WDS from "../pages/WDS";
 import BP from "../pages/BP";
 import NotFoundPage from "../pages/NotFoundPage";
 
-
 export const routesConfig: RouteObject[] = [
   {
     path: "/",
@@ -16,7 +15,7 @@ export const routesConfig: RouteObject[] = [
       { path: "its", element: <ITS /> },
       { path: "wds", element: <WDS /> },
       { path: "bp", element: <BP /> },
+      { path: "*", element: <NotFoundPage /> },
     ],
-    errorElement: <NotFoundPage />,
   },
 ];
