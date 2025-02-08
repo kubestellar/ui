@@ -1,79 +1,106 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../lib/api';
 
+// Components
+import CreateOptions from '../components/CreateOptions';
+import DeploymentTable from '../components/DeploymentTable';
+import PieChartDisplay from '../components/PieChartDisplay';
+
+const API_BASE_URL = window.location.origin;
+
 interface WorkloadInfo {
   name: string;
-  kind: string; // 'Deployment' or 'Service'
+  kind: string;
   namespace: string;
   creationTime: string;
 }
 
+const COLORS = ["#28A745"];
+
 const WDS = () => {
   const [workloads, setWorkloads] = useState<WorkloadInfo[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  const API_BASE_URL = window.location.origin;
-  
-  const handleFetchWDS = useCallback(async () => {
+  const [showCreateOptions, setShowCreateOptions] = useState(false);
+  const [activeOption, setActiveOption] = useState<string | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  const fetchWDSData = useCallback(async () => {
     setLoading(true);
     try {
       const response = await api.get('/api/wds/workloads');
-      console.log('Response data:', response.data);
       if (Array.isArray(response.data)) {
         setWorkloads(response.data);
+      } else {
+        throw new Error('Invalid data format received from server');
       }
       setError(null);
     } catch (error) {
       console.error('Error fetching WDS information:', error);
-      setError('Invalid data format received from server');
+      setError('Failed to fetch WDS workloads. Please try again.');
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    handleFetchWDS();
-  }, [handleFetchWDS]);
+    fetchWDSData();
+  }, [fetchWDSData]);
+
+  // Group workloads by kind and count them
+  const workloadCounts = workloads.reduce((acc, workload) => {
+    acc[workload.kind] = (acc[workload.kind] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
   if (loading) return <p className="text-center p-4">Loading WDS information...</p>;
-  if (error) return <p className="text-center p-4 text-error">{error}</p>;
-  if (!workloads.length) return <p className="text-center p-4">No workloads found</p>;
+  if (error) return <p className="text-center p-4 text-red-600">{error}</p>;
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-4">
+    <div className="w-full max-w-7xl mx-auto p-4 text-white">
       <h1 className="text-2xl font-bold mb-6">WDS Workloads ({workloads.length})</h1>
-      <div className="grid gap-4">
-        {workloads.map((workload) => (
-          <div key={`${workload.kind}-${workload.namespace}-${workload.name}`} className="card bg-base-200 shadow-xl">
-            <div className="card-body">
-              <h2 className="card-title">{workload.name}</h2>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <h3 className="font-semibold mb-2">Kind</h3>
-                  <span className="badge badge-primary">{workload.kind}</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-2">Namespace</h3>
-                  <span className="badge badge-secondary">{workload.namespace}</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-2">Creation Time</h3>
-                  <p>{new Date(workload.creationTime).toLocaleString()}</p>
-                </div>
-              </div>
-            </div>
-            <div>
-              <button
-                className='rounded-md border-white'
-                onClick={() => window.open(`${API_BASE_URL}/api/wds/${workload.name}?namespace=${workload.namespace || 'default'}`, "_blank", "noreferrer")}
-              >
-                Get INFO
-              </button>
+
+      {/* Create Workload Button */}
+      <button
+        className="mb-4 px-4 py-2 bg-blue-500 rounded text-white"
+        onClick={() => {
+          setActiveOption("option1"); // Set first option as default
+          setShowCreateOptions(true);
+        }}
+      >
+        Create Workload
+      </button>
+
+      {/* Create Options */}
+      {showCreateOptions && (
+        <CreateOptions
+          activeOption={activeOption}
+          setActiveOption={setActiveOption}
+          setHasUnsavedChanges={setHasUnsavedChanges}
+          onCancel={() => {
+            if (hasUnsavedChanges && !window.confirm('You have unsaved changes. Discard them?')) return;
+            setShowCreateOptions(false);
+          }}
+        />
+      )}
+
+      {/* Workload Status */}
+      <section className="mt-12">
+        {Object.keys(workloadCounts).length > 0 && (
+          <div className="bg-gray-800 rounded-lg p-6">
+            <h2 className="text-xl font-bold mb-4">Workload Status</h2>
+            <div className="flex justify-around items-center">
+              {Object.entries(workloadCounts).map(([kind, count], index) => (
+                <PieChartDisplay key={index} workload={{ kind, count }} color={COLORS[0]} />
+              ))}
             </div>
           </div>
-        ))}
-      </div>
+        )}
+      </section>
+
+      {/* Workload Table */}
+      <DeploymentTable title="Deployments" workloads={workloads} baseUrl={API_BASE_URL} />
     </div>
   );
 };
