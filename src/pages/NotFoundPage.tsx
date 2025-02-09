@@ -276,7 +276,7 @@ const NotFoundPage: React.FC = () => {
             <img 
               src="KubeSteller.png" 
               alt="KubeStellar Logo" 
-              className="h-16 md:h-24 relative z-10 transition-transform hover:scale-105 duration-300"
+              className="h-16 md:h-24 relative z-1 transition-transform hover:scale-105 duration-300"
             />
           </div>
         </div>
