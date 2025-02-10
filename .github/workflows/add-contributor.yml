@@ -9,7 +9,7 @@ on:
 
 jobs:
   contrib-readme-job:
-    if: github.event.pull_request.merged == true && github.repository_owner == 'kubestellar' && github.event.repository.fork == false    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true && github.repository_owner == 'kubestellar' && github.event.repository.fork == false
     name: A job to automate contributors in README
     permissions:
       contents: write
