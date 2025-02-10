@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../lib/api';
+import { Button, TextField as Input, Badge, Table, TableHead as TableHeader, TableBody, TableRow, TableCell } from "@mui/material";
 
 interface ManagedClusterInfo {
   name: string;
@@ -120,7 +121,7 @@ const ITS = () => {
 
           {/* Search Bar */}
           <div>
-            <input
+            <Input
               type="text"
               value={searchQuery}
               onChange={handleSearchChange}
@@ -157,74 +158,76 @@ const ITS = () => {
 
       {/* Table Container */}
       <div className="overflow-x-auto rounded-lg shadow-lg">
-        <table className="w-full table-auto">
-          <thead>
-            <tr className="text-white bg-[#5294f6]">
+        <Table className="w-full table-auto">
+          <TableHeader>
+            <TableRow className="text-white bg-[#5294f6]">
               {/* Select All Checkbox */}
-              <td style={{ padding: '30px' }}>
-                <th className="checkbox-column">
+              <TableCell style={{ padding: '30px' }}>
+                <TableHeader className="checkbox-column">
                   <input
                     type="checkbox"
                     checked={selectAll}
                     onChange={handleSelectAll}
                   />
-                </th>
-              </td>
-              <th className="p-3 text-left">Cluster Name</th>
-              <th className="p-3 text-left">Namespace</th>
-              <th className="p-3 text-left">Labels</th>
-              <th className="p-3 text-left">Creation Time</th>
-              <th className="p-3 text-left">Cluster Size</th>
-              <th className="p-3 text-left">Status</th>
-            </tr>
-          </thead>
-          <tbody>
+                </TableHeader>
+              </TableCell>
+              <TableCell className="p-3 text-left">Cluster Name</TableCell>
+              <TableCell className="p-3 text-left">Namespace</TableCell>
+              <TableCell className="p-3 text-left">Labels</TableCell>
+              <TableCell className="p-3 text-left">Creation Time</TableCell>
+              <TableCell className="p-3 text-left">Cluster Size</TableCell>
+              <TableCell className="p-3 text-left">Status</TableCell>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {currentClusters.map((cluster) => (
-              <tr key={cluster.name}>
-                <td className="checkbox-cell" style={{ padding: '30px' }}>
+              <TableRow key={cluster.name}>
+                <TableCell className="checkbox-cell" style={{ border: "bottom", padding: '30px' }}>
                   <input
                     type="checkbox"
                     checked={selectedClusters.includes(cluster.name)}
                     onChange={() => handleCheckboxChange(cluster.name)}
-                  /></td>
-                <td className="p-3 font-medium">{cluster.name || 'N/A'}</td>
-                <td className="p-3 font-medium">Namespace</td> {/* Placeholder for Namespace */}
-                <td className="p-3">
-                  {cluster.labels && Object.keys(cluster.labels).length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {Object.entries(cluster.labels).map(([key, value]) => (
-                        <span key={`${key}-${value}`} className="bg-blue-200 text-blue-800 px-2 py-1 rounded text-sm">
-                          {key}={value}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <p>No labels</p>
-                  )}
-                </td>
-                <td className="p-3">{new Date(cluster.creationTime).toLocaleString()}</td>
-                <td className="p-3">
-                  <span className="px-2 py-2 text-sm rounded-lg" style={{ border: "2px solid #9CCBA3", backgroundColor: "#D9F1D5", color: "#00000" }}>
+                  /></TableCell>
+                <TableCell className="p-3 font-medium">{cluster.name || 'N/A'}</TableCell>
+                <TableCell className="p-3 font-medium">Namespace</TableCell> {/* Placeholder for Namespace */}
+                <TableCell>
+                  <td className="p-3">
+                    {cluster.labels && Object.keys(cluster.labels).length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {Object.entries(cluster.labels).map(([key, value]) => (
+                          <span key={`${key}-${value}`} className="bg-blue-200 text-blue-800 px-2 py-1 rounded text-sm">
+                            {key}={value}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p>No labels</p>
+                    )}
+                  </td>
+                </TableCell>
+                <TableCell className="p-3">{new Date(cluster.creationTime).toLocaleString()}</TableCell>
+                <TableCell className="p-3">
+                  <Badge className="px-2 py-2 text-sm rounded-lg" style={{ border: "2px solid #9CCBA3", backgroundColor: "#D9F1D5", color: "#00000" }}>
                     N/A {/* Placeholder for cluster size */}
-                  </span></td>
-                <td className="p-3" style={{ padding: '15px' }}>
-                  <span className="font-bold px-2 py-1 text-sm rounded" style={{ border: "2px solid #9CCBA3", backgroundColor: "#D9F1D5", color: "#1B7939" }}>
+                  </Badge></TableCell>
+                <TableCell className="p-3" style={{ padding: '15px' }}>
+                  <Badge className="font-bold px-2 py-1 text-sm rounded" style={{ border: "2px solid #9CCBA3", backgroundColor: "#D9F1D5", color: "#1B7939" }}>
                     Active✓
-                  </span>
-                </td>
-              </tr>
+                  </Badge>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
         {/* Pagination Controls */}
         <div className="pagination-controls flex justify-end items-center gap-4 py-2">
           {/* Previous Button */}
-          <button className="px-3 py-1" style={{ border: " 2px solid #007AFF", backgroundColor: "#3D93FE", color: "#FFFFFF" }}
+          <Button className="px-3 py-1" style={{ border: " 2px solid #007AFF", backgroundColor: "#3D93FE", color: "#FFFFFF" }}
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
           >
             {"<"}
-          </button>
+          </Button>
 
           {/* Page Numbers */}
           <span>
@@ -232,12 +235,12 @@ const ITS = () => {
           </span>
 
           {/* Next Button */}
-          <button className="px-3 py-1" style={{ border: " 2px solid #007AFF", backgroundColor: "#3D93FE", color: "#FFFFFF" }}
+          <Button className="px-3 py-1" style={{ border: " 2px solid #007AFF", backgroundColor: "#3D93FE", color: "#FFFFFF" }}
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === Math.ceil(filteredClusters.length / itemsPerPage)}
           >
             {">"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
