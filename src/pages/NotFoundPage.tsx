@@ -59,7 +59,7 @@ const NotFoundPage: React.FC = () => {
           }
 
           .animate-rocket-small {
-            animation: rocketSmall 10s linear infinite;
+            animation: rocketSmall 20s linear infinite;
           }
 
           .animate-trail {
@@ -126,20 +126,20 @@ const NotFoundPage: React.FC = () => {
         }
 
         @keyframes rocketMain {
-          0% {
-            transform: translate(120%, 100%) rotate(45deg);
-          }
-          100% {
-            transform: translate(-120%, -100%) rotate(45deg);
-          }
+            0% {
+              transform: translateX(-100%);
+            }
+            100% {
+              transform: translateX(100vw);
+            }
         }
 
         @keyframes rocketSmall {
           0% {
-            transform: translate(100vw, 0) rotate(45deg);
-          }
+              transform: translateX(-100%);
+            }
           100% {
-            transform: translate(-100vw, -50vh) rotate(45deg);
+            transform: translateX(100vw);
           }
         }
 
@@ -193,122 +193,77 @@ const NotFoundPage: React.FC = () => {
       {/* Background Elements */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {/* Stars */}
-        <div className="absolute inset-0">
-          {[...Array(50)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-1 h-1 bg-primary/40 rounded-full animate-twinkle"
-              style={{
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 3}s`,
-              }}
-            />
-          ))}
-        </div>
+        {[...Array(50)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 bg-primary/40 rounded-full animate-twinkle"
+            style={{
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 3}s`,
+            }}
+          />
+        ))}
 
         {/* Planets */}
         <svg className="absolute top-20 left-20 w-24 h-24 text-primary/20 animate-float" viewBox="0 0 100 100">
           <circle cx="50" cy="50" r="45" fill="currentColor" />
         </svg>
-
         <svg className="absolute bottom-20 right-20 w-32 h-32 text-primary/15 animate-float-delayed" viewBox="0 0 100 100">
           <circle cx="50" cy="50" r="45" fill="currentColor" />
         </svg>
 
         {/* Shooting Stars */}
-        <div className="absolute w-[2px] h-[2px] bg-primary animate-shooting-star" 
-             style={{ top: '20%', left: '10%' }} />
-        <div className="absolute w-[2px] h-[2px] bg-primary animate-shooting-star-delayed" 
-             style={{ top: '40%', right: '20%' }} />
-      </div>
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        {/* Main Rocket */}
-        <div className="absolute -right-8 animate-rocket-main">
+        <div className="absolute w-[2px] h-[2px] bg-primary animate-shooting-star" style={{ top: '20%', left: '10%' }} />
+        <div className="absolute w-[2px] h-[2px] bg-primary animate-shooting-star-delayed" style={{ top: '40%', right: '20%' }} />
+
+        {/* Rocket */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -left-8 animate-rocket-main">
           <Rocket size={80} className="text-primary/30 transform rotate-45" />
-          <div className="absolute -bottom-2 -right-2 w-12 h-12">
-            <div className="rocket-particles" />
-          </div>
         </div>
 
         {/* Small Rockets */}
-        {[...Array(3)].map((_, i) => (
-          <div
-            key={i}
-            className={`absolute animate-rocket-small opacity-20`}
-            style={{
-              top: `${30 + i * 20}%`,
-              animationDelay: `${i * 3}s`,
-            }}
+          {[...Array(5)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute animate-rocket-small opacity-20"
+              style={{
+                top: `${Math.random() * 100}%`,
+                left: '-100%',
+                animation: `rocketSmall ${10 + i * 3}s linear infinite`,
+                animationDelay: `${i * 3}s`,
+              }}
           >
             <Rocket size={40} className="text-primary transform rotate-45" />
           </div>
         ))}
-
-        {/* Rocket Trails */}
-        <div className="absolute inset-0">
-          {[...Array(5)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-[1px] h-[50px] bg-gradient-to-b from-primary/50 to-transparent animate-trail"
-              style={{
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                animationDelay: `${i * 0.5}s`,
-              }}
-            />
-          ))}
-        </div>
+      </div>
       </div>
 
       {/* Main Content */}
       <div className="relative text-center space-y-6 max-w-2xl w-full px-4">
         {/* Logo */}
         <div className="flex justify-center">
-          <div className="relative">
-            <div className="absolute inset-0 animate-pulse-slow blur-xl">
-              <img 
-                src="/KubeStellar.png" 
-                alt=""
-                className="h-16 md:h-24 opacity-50"
-              />
-            </div>
-            <img 
-              src="/KubeStellar.png" 
-              alt="KubeStellar Logo" 
-              className="h-16 md:h-24 relative z-1 transition-transform hover:scale-105 duration-300"
-            />
-          </div>
+          <img src="/KubeStellar.png" alt="KubeStellar Logo" className="h-16 md:h-24 transition-transform hover:scale-105 duration-300" />
         </div>
 
         {/* 404 Text */}
-          <div className="space-y-4">
-            <div className="relative">
-              <h1 className="text-7xl md:text-9xl font-bold text-primary/10 animate-float">
-                404
-              </h1>
-              <h1 className="text-7xl md:text-9xl font-bold text-primary absolute inset-0 animate-float-delayed">
-                404
-              </h1>
-            </div>
-            <h2 className="text-2xl md:text-3xl font-semibold text-base-content">
-              Houston, We Have a Problem
-            </h2>
-            <p className="text-base-content/70 max-w-md mx-auto">
-              The page you're looking for has drifted into deep space. 
-              Our stellar navigation system couldn't locate the requested coordinates.
-            </p>
-          </div>
+        <div className="space-y-4">
+          <h1 className="text-7xl md:text-9xl font-bold text-primary">404</h1>
+          <h2 className="text-2xl md:text-3xl font-semibold text-base-content">Houston, We Have a Problem</h2>
+          <p className="text-base-content/70 max-w-md mx-auto">
+            The page you're looking for has drifted into deep space. 
+          </p>
+        </div>
 
         {/* Quote Section */}
         <div className="h-24 relative">
           {quotes.map((quote, index) => (
             <div
               key={index}
-                className={`absolute w-full transition-all duration-500 ${
-                  index === currentQuote
-                    ? 'opacity-100 transform translate-y-0'
-                    : 'opacity-0 transform translate-y-4'
+              className={`absolute w-full transition-all duration-500 ${
+                index === currentQuote ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-4'
               }`}
             >
               <p className="text-lg italic text-base-content/80">{quote.text}</p>
@@ -323,11 +278,8 @@ const NotFoundPage: React.FC = () => {
             <Home size={20} />
             Return Home
           </button>
-            <button 
-              onClick={() => window.location.reload()}
-              className="btn btn-ghost gap-2 transition-all duration-300 hover:scale-105 group"
-            >
-              <RefreshCw className="group-hover:rotate-180 transition-transform" size={20} />
+          <button onClick={() => window.location.reload()} className="btn btn-ghost gap-2 transition-all duration-300 hover:scale-105 group">
+            <RefreshCw className="group-hover:rotate-180 transition-transform" size={20} />
             Try Again
           </button>
         </div>
