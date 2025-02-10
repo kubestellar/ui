@@ -55,11 +55,11 @@ const NotFoundPage: React.FC = () => {
           }
 
           .animate-rocket-main {
-            animation: rocketMain 15s linear infinite;
+            animation: rocketMain 30s linear infinite;
           }
 
           .animate-rocket-small {
-            animation: rocketSmall 20s linear infinite;
+            animation: rocketSmall 40s linear infinite;
           }
 
           .animate-trail {
