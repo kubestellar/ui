@@ -60,17 +60,17 @@ const ITS = () => {
     setLoading(true);
     try {
       const response = await api.get('/api/clusters');
-      console.log(response);
-      const itsData: ManagedClusterInfo[] = response.data.itsData || [];
-      console.log('itsData:', itsData);
+
+      console.log('itsData:', response);
+
+      const itsData: ManagedClusterInfo[] = response.data.itsData || []; 
+  
       if (Array.isArray(itsData)) {
         console.log('Setting clusters state:', itsData);
         setClusters(itsData);
       }
-      // setError(null);
     } catch (error) {
       console.error('Error fetching ITS information:', error);
-      // setError('Error fetching ITS information');
     } finally {
       setLoading(false);
     }
