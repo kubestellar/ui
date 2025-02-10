@@ -268,13 +268,13 @@ const NotFoundPage: React.FC = () => {
           <div className="relative">
             <div className="absolute inset-0 animate-pulse-slow blur-xl">
               <img 
-                src="KubeSteller.png" 
+                src="/KubeStellar.png" 
                 alt=""
                 className="h-16 md:h-24 opacity-50"
               />
             </div>
             <img 
-              src="KubeSteller.png" 
+              src="/KubeStellar.png" 
               alt="KubeStellar Logo" 
               className="h-16 md:h-24 relative z-1 transition-transform hover:scale-105 duration-300"
             />

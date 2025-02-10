@@ -90,7 +90,7 @@ const Header = () => {
               >
                 <span className="text-[16px] leading-[1.2] sm:text-lg xl:text-xl 2xl:text-2xl font-semibold text-base-content dark:text-neutral-200">
                   <img
-                    src="/KubeSteller.png"
+                    src="/KubeStellar.png"
                     alt="logo"
                     className="w-44 h-auto object-contain"
                   />
@@ -111,7 +111,7 @@ const Header = () => {
         <Link to={"/"} className="flex items-center gap-1 xl:gap-2">
           <span className="text-[16px] leading-[1.2] sm:text-lg xl:text-xl 2xl:text-2xl font-semibold text-base-content dark:text-neutral-200">
             <img
-              src="/KubeSteller.png"
+              src="/KubeStellar.png"
               alt="logo"
               className="w-44 h-auto object-contain"
             />
