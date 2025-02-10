@@ -26,7 +26,9 @@ const Header = () => {
     setIsFullScreen((prev) => !prev);
   };
   React.useEffect(() => {
-    fetch("http://localhost:4000/api/clusters")
+    const apiBaseUrl = window.location.origin;
+  
+    fetch(`${apiBaseUrl}/api/clusters`)
       .then((response) => response.json())
       .then((data) => {
         const kubeflexContexts = data.contexts.filter((ctx: Context) =>
