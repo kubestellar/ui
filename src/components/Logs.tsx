@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 const ShowLogs = () => {
   const [logs, setLogs] = useState([""]);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [ws, setWs] = useState<WebSocket | null>(null);
+  const [_, setWs] = useState<WebSocket | null>(null);
 //   const [error, setError] = useState(null);
 const { namespace, deployment } = useParams();
   useEffect(() => {
