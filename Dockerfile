@@ -18,8 +18,12 @@ RUN npm run build
 # Stage 2: Serve with Nginx
 FROM nginx:alpine AS frontend
 
+
 # Copy the build artifacts from the builder stage
 COPY --from=frontend-builder /app/dist /usr/share/nginx/html
+
+# Copy custom Nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expose port 80 for the container
 EXPOSE 80

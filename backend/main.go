@@ -133,6 +133,10 @@ func main() {
 	router.DELETE("/api/wds/delete", deployment.DeleteDeployment)
 	router.GET("/api/wds/:name", deployment.GetDeploymentByName)
 	router.GET("/api/wds/status", deployment.GetDeploymentStatus)
+	// websocket
+	router.GET("/ws", func(ctx *gin.Context) {
+		deployment.HandleDeploymentLogs(ctx.Writer, ctx.Request)
+	})
 	router.Run(":4000")
 }
 

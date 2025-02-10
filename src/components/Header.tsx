@@ -35,6 +35,7 @@ const Header = () => {
         const kubeflexContexts = data.contexts.filter(
           (ctx: Context) =>
             ctx.name.endsWith("-kubeflex") || ctx.cluster.endsWith("-kubeflex")
+
         );
 
         console.log("Kubeflex contexts:", kubeflexContexts);
