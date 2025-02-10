@@ -274,7 +274,7 @@ func UpdateDeployment(ctx *gin.Context) {
 	if params.Image != "" {
 		deployment.Spec.Template.Spec.Containers[0].Image = params.Image
 	}
-	if params.Replicas&1 == 0 {
+	if params.Replicas != 0 {
 		deployment.Spec.Replicas = int32Ptr(params.Replicas)
 	}
 	retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
