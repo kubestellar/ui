@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../lib/api';
-import { Button, TextField as Input, Badge, Table, TableHead as TableHeader, TableBody, TableRow, TableCell } from "@mui/material";
+import ClustersTable from '../components/ClustersTable';
+//import { Button, TextField as Input, Badge, Table, TableHead as TableHeader, TableBody, TableRow, TableCell } from "@mui/material";
 
 interface ManagedClusterInfo {
   name: string;
@@ -14,13 +15,13 @@ const ITS = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>(''); // For filter dropdown
-  const [selectAll, setSelectAll] = useState<boolean>(false);
-  const [selectedClusters, setSelectedClusters] = useState<string[]>([]);
+//  const [selectAll, setSelectAll] = useState<boolean>(false);
+//  const [selectedClusters, setSelectedClusters] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage] = useState<number>(5); // Number of clusters per page
   // const [error, setError] = useState<string | null>(null);
 
-  const handlePageChange = (pageNumber: number) => {
+  /*const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
   };
 
@@ -55,7 +56,7 @@ const ITS = () => {
     } else {
       setSelectAll(false);
     }
-  };
+  };*/
 
   const handleFetchCluster = useCallback(async () => {
     setLoading(true);
@@ -77,6 +78,19 @@ const ITS = () => {
     }
   }, []);
 
+    // Filter and paginate clusters before passing to the table
+    const filteredClusters = clusters.filter(
+      (cluster) =>
+        cluster.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        (statusFilter === "" || cluster.status === statusFilter)
+    );
+  
+    const totalPages = Math.ceil(filteredClusters.length / itemsPerPage);
+    const currentClusters = filteredClusters.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
+
   useEffect(() => {
     handleFetchCluster();
   }, [handleFetchCluster]);
@@ -91,16 +105,7 @@ const ITS = () => {
     setStatusFilter(e.target.value);
   };
 
- 
-   // Add this new function to filter clusters
-  const filteredClusters = clusters.filter((cluster) => {
-    const matchesSearch = cluster.name
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesStatus = !statusFilter || cluster.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
- // Calculate pagination
+ /*Calculate pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentClusters = filteredClusters.slice(
@@ -109,17 +114,22 @@ const ITS = () => {
   );
  useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter]);
+  }, [searchQuery, statusFilter]);*/
 
   if (loading) return <p className="text-center p-4">Loading ITS information...</p>;
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-4">
+    <div>
+      <h2>Clusters</h2>
+      {loading ? <p>Loading...</p> : <ClustersTable clusters={currentClusters} />}
+      {/* Add pagination controls here if needed */}
+    </div>
+    /*<div className="w-full max-w-7xl mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6 text-center">Managed Clusters ({clusters.length})</h1>
       <div className="flex justify-between mb-4">
         <div className="flex items-center space-x-4">
 
-          {/* Search Bar */}
+          {/* Search Bar 
           <div>
             <Input
               type="text"
@@ -130,7 +140,7 @@ const ITS = () => {
             />
           </div>
 
-          {/* Filter Options */}
+          {/* Filter Options 
           <div>
             <select
               id="statusFilter"
@@ -145,26 +155,26 @@ const ITS = () => {
             </select>
           </div>
 
-          {/* Create Cluster Button */}
+          {/* Create Cluster Button 
           <button className="bg-blue-500 text-white px-4 py-2 rounded shadow-lg hover:shadow-xl transition duration-200">
             Create Cluster
           </button>
-          {/* Import Cluster Button */}
+          {/* Import Cluster Button 
           <button className="bg-white text-blue-500 border border-blue-500 px-4 py-2 rounded shadow-lg hover:shadow-xl transition duration-200">
             Import Cluster
           </button>
         </div>
       </div>
 
-      {/* Table Container */}
+      {/* Table Container 
       <div className="overflow-x-auto rounded-lg shadow-lg">
         <Table className="w-full table-auto">
           <TableHeader>
             <TableRow className="text-white bg-[#5294f6]">
-              {/* Select All Checkbox */}
+              {/* Select All Checkbox 
               <TableCell style={{ padding: '30px' }}>
                 <TableHeader className="checkbox-column">
-                  <input
+                  {/*<input
                     type="checkbox"
                     checked={selectAll}
                     onChange={handleSelectAll}
@@ -189,7 +199,7 @@ const ITS = () => {
                     onChange={() => handleCheckboxChange(cluster.name)}
                   /></TableCell>
                 <TableCell className="p-3 font-medium">{cluster.name || 'N/A'}</TableCell>
-                <TableCell className="p-3 font-medium">Namespace</TableCell> {/* Placeholder for Namespace */}
+                <TableCell className="p-3 font-medium">Namespace</TableCell> {/* Placeholder for Namespace 
                 <TableCell>
                   <td className="p-3">
                     {cluster.labels && Object.keys(cluster.labels).length > 0 ? (
@@ -208,7 +218,7 @@ const ITS = () => {
                 <TableCell className="p-3">{new Date(cluster.creationTime).toLocaleString()}</TableCell>
                 <TableCell className="p-3">
                   <Badge className="px-2 py-2 text-sm rounded-lg" style={{ border: "2px solid #9CCBA3", backgroundColor: "#D9F1D5", color: "#00000" }}>
-                    N/A {/* Placeholder for cluster size */}
+                    N/A {/* Placeholder for cluster size 
                   </Badge></TableCell>
                 <TableCell className="p-3" style={{ padding: '15px' }}>
                   <Badge className="font-bold px-2 py-1 text-sm rounded" style={{ border: "2px solid #9CCBA3", backgroundColor: "#D9F1D5", color: "#1B7939" }}>
@@ -219,9 +229,9 @@ const ITS = () => {
             ))}
           </TableBody>
         </Table>
-        {/* Pagination Controls */}
+        {/* Pagination Controls 
         <div className="pagination-controls flex justify-end items-center gap-4 py-2">
-          {/* Previous Button */}
+          {/* Previous Button 
           <Button className="px-3 py-1" style={{ border: " 2px solid #007AFF", backgroundColor: "#3D93FE", color: "#FFFFFF" }}
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
@@ -229,12 +239,12 @@ const ITS = () => {
             {"<"}
           </Button>
 
-          {/* Page Numbers */}
+          {/* Page Numbers 
           <span>
             Page {currentPage} of {Math.ceil(filteredClusters.length / itemsPerPage)}
           </span>
 
-          {/* Next Button */}
+          {/* Next Button *
           <Button className="px-3 py-1" style={{ border: " 2px solid #007AFF", backgroundColor: "#3D93FE", color: "#FFFFFF" }}
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === Math.ceil(filteredClusters.length / itemsPerPage)}
@@ -244,6 +254,8 @@ const ITS = () => {
         </div>
       </div>
     </div>
+     */
+    
   );
 };
 export default ITS;

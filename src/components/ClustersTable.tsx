@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Badge, Checkbox, Table, TableContainer, TableHead, TableBody, TableRow, TableCell, Paper } from "@mui/material";
+import { Badge, Checkbox, Table, TableContainer, TableHead, TableBody, TableRow, TableCell, Paper } from "@mui/material";
 
 interface ManagedClusterInfo {
     name: string;
