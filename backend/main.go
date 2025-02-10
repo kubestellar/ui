@@ -155,7 +155,64 @@ func getKubeInfo() ([]ContextInfo, []string, string, error, []ManagedClusterInfo
 	var contexts []ContextInfo
 	clusterSet := make(map[string]bool)
 
-	// Filter contexts to only include kubeflex contexts
+	// First, get the its1 context to fetch managed clusters
+	var its1Context string
+	for contextName := range config.Contexts {
+		if strings.Contains(contextName, "its1") {
+			its1Context = contextName
+			break
+		}
+	}
+
+	// Get managed clusters from its1
+	var managedClusters []ManagedClusterInfo
+	if its1Context != "" {
+		// Use its1Context to get the managed clusters
+		config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+		if err != nil {
+			return nil, nil, "", err, nil
+		}
+
+		clientset, err := kubernetes.NewForConfig(config)
+		if err != nil {
+			return nil, nil, "", err, nil
+		}
+
+		// Get managed clusters from its1
+		clustersBytes, err := clientset.RESTClient().Get().
+			AbsPath("/apis/cluster.open-cluster-management.io/v1").
+			Resource("managedclusters").
+			DoRaw(context.TODO())
+		if err != nil {
+			fmt.Printf("Error getting managed clusters: %v\n", err)
+			// Continue with empty managed clusters list
+		} else {
+			var clusterList struct {
+				Items []struct {
+					Metadata struct {
+						Name              string            `json:"name"`
+						Labels            map[string]string `json:"labels"`
+						CreationTimestamp string            `json:"creationTimestamp"`
+					} `json:"metadata"`
+				} `json:"items"`
+			}
+
+			if err := json.Unmarshal(clustersBytes, &clusterList); err != nil {
+				fmt.Printf("Error unmarshaling clusters: %v\n", err)
+			} else {
+				for _, item := range clusterList.Items {
+					creationTime, _ := time.Parse(time.RFC3339, item.Metadata.CreationTimestamp)
+					managedClusters = append(managedClusters, ManagedClusterInfo{
+						Name:         item.Metadata.Name,
+						Labels:       item.Metadata.Labels,
+						CreationTime: creationTime,
+					})
+				}
+			}
+		}
+	}
+
+	// Now get the kubeflex contexts
 	for contextName, context := range config.Contexts {
 		if strings.HasSuffix(contextName, "-kubeflex") {
 			contexts = append(contexts, ContextInfo{
@@ -172,13 +229,7 @@ func getKubeInfo() ([]ContextInfo, []string, string, error, []ManagedClusterInfo
 		clusters = append(clusters, clusterName)
 	}
 
-	itsData, err := getITSInfo()
-	if err != nil {
-		fmt.Printf("ITS error: %v\n", err) // Debug print
-		// Don't return error, continue with other data
-	}
-
-	return contexts, clusters, config.CurrentContext, nil, itsData
+	return contexts, clusters, config.CurrentContext, nil, managedClusters
 }
 
 func getITSInfo() ([]ManagedClusterInfo, error) {
