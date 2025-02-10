@@ -36,8 +36,17 @@ const Header = () => {
         );
         setContexts(kubeflexContexts);
         setHasAvailableClusters(kubeflexContexts.length > 0);
-        setCurrentContext(data.currentContext);
-        setSelectedCluster(data.currentContext || null);
+
+        const currentKubeflexContext = data.currentContext?.endsWith(
+          "-kubeflex"
+        )
+          ? data.currentContext
+          : kubeflexContexts.length > 0
+          ? kubeflexContexts[0].name
+          : "";
+
+        setCurrentContext(currentKubeflexContext);
+        setSelectedCluster(currentKubeflexContext);
       })
       .catch((error) => {
         console.error("Error fetching contexts:", error);
@@ -57,7 +66,7 @@ const Header = () => {
   const handleClusterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newCluster = e.target.value;
     setCurrentContext(newCluster);
-    setSelectedCluster(newCluster);
+    setSelectedCluster(newCluster || null);
   };
 
   return (
