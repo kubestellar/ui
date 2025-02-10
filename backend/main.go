@@ -157,17 +157,15 @@ func getKubeInfo() ([]ContextInfo, []string, string, error, []ManagedClusterInfo
 	}
 
 	var contexts []ContextInfo
-	clusterSet := make(map[string]bool)
+	clusterSet := make(map[string]bool) // Use map to track unique clusters
 
-	// Filter contexts to only include kubeflex contexts
+	// Get contexts and their associated clusters
 	for contextName, context := range config.Contexts {
-		if strings.HasSuffix(contextName, "-kubeflex") {
-			contexts = append(contexts, ContextInfo{
-				Name:    contextName,
-				Cluster: context.Cluster,
-			})
-			clusterSet[context.Cluster] = true
-		}
+		contexts = append(contexts, ContextInfo{
+			Name:    contextName,
+			Cluster: context.Cluster,
+		})
+		clusterSet[context.Cluster] = true
 	}
 
 	// Convert unique clusters to slice

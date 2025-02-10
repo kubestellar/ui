@@ -1,7 +1,8 @@
-import React from "react";
-import { NavLink } from "react-router-dom";
-import { IconType } from "react-icons";
-import { useCluster } from "../../context/ClusterContext";
+import React from 'react';
+import { NavLink } from 'react-router-dom';
+import { IconType } from 'react-icons';
+import { useCluster } from '../../context/ClusterContext';
+
 
 interface MenuItemProps {
   onClick?: () => void;
@@ -15,15 +16,20 @@ interface MenuItemProps {
   }>;
 }
 
-const MenuItem: React.FC<MenuItemProps> = ({ onClick, catalog, listItems }) => {
-  const { selectedCluster, hasAvailableClusters } = useCluster();
+const MenuItem: React.FC<MenuItemProps> = ({
+  onClick,
+  catalog,
+  listItems,
+}) => {
+  const {selectedCluster, hasAvailableClusters} = useCluster();
   const isDisabled = !hasAvailableClusters || !selectedCluster;
-
-  const shouldDisableItem = (label: string) => {
+  // Determine if menu item should be disabled
+   const shouldDisableItem = (label: string) => {
+    // Don't disable these menu items
     const alwaysEnabledItems = ["Home", "User", "Onboard"];
-    return !alwaysEnabledItems.includes(label) && isDisabled;
+    if (alwaysEnabledItems.includes(label)) return false;
+    return isDisabled;
   };
-
   return (
     <div className="w-full flex flex-col items-stretch gap-2">
       <span className="hidden xl:block px-2 xl:text-sm 2xl:text-base 3xl:text-lg uppercase">
@@ -47,6 +53,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ onClick, catalog, listItems }) => {
                     : ""
                 }`
               }
+             
             >
               <listItem.icon
                 className={`xl:text-2xl 2xl:text-3xl 3xl:text-4xl ${
