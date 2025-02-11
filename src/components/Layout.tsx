@@ -4,8 +4,7 @@ import {
 } from "react-router-dom";
 import Header from "./Header";
 import Menu from "./menu/Menu";
-
-const GITHUB_REPO_URL = 'https://github.com/kubestellar/ui';
+import Footer from "./Footer";
 
 export function Layout() {
   // Log the commit hash to console for debugging
@@ -28,32 +27,7 @@ export function Layout() {
         </div>
       </div>
       
-      {/* Commit Hash Footer */}
-      <div 
-        style={{
-          position: 'fixed',
-          bottom: '10px', 
-          right: '10px', 
-          color: 'grey',      
-          fontSize: '20px',    
-          opacity: 0.8,        
-          zIndex: 9999,
-          fontWeight: 300,     
-          letterSpacing: '0.5px' 
-        }}
-      >
-        <a 
-          href={`${GITHUB_REPO_URL}/commit/${commitHash}`} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          style={{
-            color: 'black',
-            textDecoration: 'none'
-          }}
-        >
-          Commit: {commitHash}
-        </a>
-      </div>
+      <Footer commitHash={commitHash} />
     </div>
   );
 }
