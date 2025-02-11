@@ -49,9 +49,32 @@ To simplify managing different environment variables, rename the `example.env` f
 
 ```
 VITE_BASE_URL=http://localhost:4000
+VITE_APP_VERSION=0.1.0
+VITE_GIT_COMMIT_HASH=$GIT_COMMIT_HASH 
 ```
 
 This is because `.env` files are intended to be a personal environment configuration file. The included `example.env` in the repo is a standard that most other node projects include for the same purpose. You rename the file to `.env` and then change its contents to align with your system and personal needs.
+
+#### Tracking Application Version and Git Commit Hash
+
+KubestellarUI uses environment variables to provide transparency about the application version and current git commit hash.
+
+##### Environment Variables
+
+1. **VITE_BASE_URL**
+   - Purpose: Defines the base URL for API calls
+   - Example: `http://localhost:4000`
+
+2. **VITE_APP_VERSION**
+   - Purpose: Defines the current application version
+   - Example: `0.1.0`
+   - Best Practice: Use semantic versioning
+
+3. **VITE_GIT_COMMIT_HASH**
+   - Purpose: Automatically captures the current git commit hash
+   - Source: Dynamically extracted during build process
+   - Fallback: 'unknown' if git hash cannot be retrieved
+
 
 ### 3. Install and Run Backend
 
