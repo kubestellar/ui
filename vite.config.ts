@@ -4,6 +4,9 @@ import { visualizer } from "rollup-plugin-visualizer";
 import EnvironmentPlugin from 'vite-plugin-environment'
 import { execSync } from 'child_process';
 
+// DOCS: https://www.npmjs.com/package/rollup-plugin-visualizer
+// https://vitejs.dev/config/
+
 // Utility function to extract the current git commit hash
 // Provides a short 7-character version of the full commit hash
 const getGitCommitHash = () => {
@@ -32,10 +35,12 @@ export default defineConfig({
     // Bundle size and composition visualization
     // Helps in understanding application's build characteristics
     visualizer({
-      filename: "bundle-stats.html", 
-      open: true,           // Automatically open analysis in browser
-      gzipSize: true,       // Include gzip compressed size
-      brotliSize: true,     // Include brotli compressed size
+      filename: "bundle-stats.html", // Output file for the analysis
+      open: true, // Automatically open the file in the browser if true
+      gzipSize: true, // Show gzip sizes
+      brotliSize: true, // Show brotli sizes
+      // template: 'network', // sunburst, treemap, network, raw-data, list, flamegraph
+
     }),
   ],
 
