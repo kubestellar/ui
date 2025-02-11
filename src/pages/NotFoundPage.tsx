@@ -250,7 +250,6 @@ const NotFoundPage: React.FC = () => {
 
         {/* 404 Text */}
         <div className="space-y-4">
-          <h1 className="text-7xl md:text-9xl font-bold text-primary">404</h1>
           <h2 className="text-2xl md:text-3xl font-semibold text-base-content">Houston, We Have a Problem</h2>
           <p className="text-base-content/70 max-w-md mx-auto">
             The page you're looking for has drifted into deep space. 
