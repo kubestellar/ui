@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "GIT_COMMIT_HASH=$(git rev-parse HEAD) vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "jest",
