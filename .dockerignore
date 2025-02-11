@@ -8,7 +8,6 @@ yarn.lock
 pnpm-lock.yaml
 
 # Ignore Git files
-.git
 .gitignore
 
 # Ignore environment files (avoid exposing secrets)
