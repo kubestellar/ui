@@ -1,7 +1,7 @@
 ---
 name: Feature Request
 about: Suggest a new feature for this project
-title: '[FEATURE] Short description of the feature'
+title: '[FEATURE] '
 labels: enhancement
 assignees: ''
 

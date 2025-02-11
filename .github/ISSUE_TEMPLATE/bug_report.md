@@ -1,7 +1,7 @@
 ---
 name: Bug Report
 about: Report an issue to help us improve the project
-title: '[BUG] Short description of the issue'
+title: '[BUG] '
 labels: bug
 assignees: ''
 

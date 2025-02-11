@@ -6,6 +6,7 @@ import ChangeThemes from "./ChangeThemes";
 import { menu } from "./menu/data";
 import MenuItem from "./menu/MenuItem";
 import { useCluster } from "../context/ClusterContext";
+import { api } from "../lib/api";
 
 interface Context {
   name: string;
@@ -25,19 +26,33 @@ const Header = () => {
   const toggleFullScreen = () => {
     setIsFullScreen((prev) => !prev);
   };
+
   React.useEffect(() => {
-    const apiBaseUrl = window.location.origin;
-  
-    fetch(`${apiBaseUrl}/api/clusters`)
-      .then((response) => response.json())
-      .then((data) => {
-        const kubeflexContexts = data.contexts.filter((ctx: Context) =>
-          ctx.name.endsWith("-kubeflex")
+    api
+      .get("/api/clusters")
+      .then((response) => {
+        const data = response.data;
+        const kubeflexContexts = data.contexts.filter(
+          (ctx: Context) =>
+            ctx.name.endsWith("-kubeflex") || ctx.cluster.endsWith("-kubeflex")
+
         );
+
+        console.log("Kubeflex contexts:", kubeflexContexts);
+
         setContexts(kubeflexContexts);
         setHasAvailableClusters(kubeflexContexts.length > 0);
-        setCurrentContext(data.currentContext);
-        setSelectedCluster(data.currentContext || null);
+
+        let currentKubeflexContext = "";
+        if (data.currentContext?.endsWith("-kubeflex")) {
+          currentKubeflexContext = data.currentContext;
+        } else if (kubeflexContexts.length > 0) {
+          currentKubeflexContext = kubeflexContexts[0].name;
+        }
+
+        console.log("Selected context:", currentKubeflexContext);
+        setCurrentContext(currentKubeflexContext);
+        setSelectedCluster(currentKubeflexContext);
       })
       .catch((error) => {
         console.error("Error fetching contexts:", error);
@@ -57,7 +72,7 @@ const Header = () => {
   const handleClusterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newCluster = e.target.value;
     setCurrentContext(newCluster);
-    setSelectedCluster(newCluster);
+    setSelectedCluster(newCluster || null);
   };
 
   return (
