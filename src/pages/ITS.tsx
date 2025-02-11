@@ -44,7 +44,7 @@ const ITS = () => {
     <div>
       <div className="w-full max-w-7xl mx-auto p-4">
         <h1 className="text-2xl font-bold mb-6 text-center">Managed Clusters ({clusters.length})</h1>
-            {loading ? <p>Loading...</p> : <ClustersTable clusters={clusters} currentPage={1} totalPages={1} onPageChange={function (page: number): void {
+            {loading ? <p>Loading...</p> : <ClustersTable clusters={clusters} currentPage={1} totalPages={1} onPageChange={function (): void {
           throw new Error('Function not implemented.');
         } } />}
           </div>
