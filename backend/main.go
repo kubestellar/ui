@@ -16,6 +16,7 @@ import (
 
 	"github.com/katamyra/kubestellarUI/api"
 	"github.com/katamyra/kubestellarUI/wds/deployment"
+	"github.com/katamyra/kubestellarUI/wds/resources"
 )
 
 type ContextInfo struct {
@@ -137,6 +138,10 @@ func main() {
 	router.GET("/ws", func(ctx *gin.Context) {
 		deployment.HandleDeploymentLogs(ctx.Writer, ctx.Request)
 	})
+	// SERVICES
+	router.GET("/api/services/:namespace", resources.GetServiceList)
+	router.GET("/api/services/:namespace/:name", resources.GetServiceByServiceName)
+
 	router.Run(":4000")
 }
 
