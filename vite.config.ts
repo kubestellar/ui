@@ -4,35 +4,44 @@ import { visualizer } from "rollup-plugin-visualizer";
 import EnvironmentPlugin from 'vite-plugin-environment'
 import { execSync } from 'child_process';
 
-// Function to get git commit hash
+// Utility function to extract the current git commit hash
+// Provides a short 7-character version of the full commit hash
 const getGitCommitHash = () => {
   try {
-    // Use more robust git command
     return execSync('git rev-parse HEAD').toString().trim().slice(0, 7);
   } catch (error) {
-    console.error('Failed to get git commit hash:', error);
+    console.error('Failed to retrieve git commit hash:', error);
     return 'unknown';
   }
 };
 
+// Vite configuration for KubeStellar UI project
+// Includes React plugin, environment variable management, and bundle visualization
 export default defineConfig({
   plugins: [
+    // React framework integration
     react(),
-    EnvironmentPlugin('all', { 
-      // Prefix for environment variables
-      prefix: 'VITE_' 
-    }),
+
+    // Environment variable management
+    // Enables access to base URL and git commit hash across the application
     EnvironmentPlugin({
+      VITE_BASE_URL: process.env.VITE_BASE_URL,
       VITE_GIT_COMMIT_HASH: getGitCommitHash(),
     }),
+
+    // Bundle size and composition visualization
+    // Helps in understanding application's build characteristics
     visualizer({
-      filename: "bundle-stats.html",
-      open: true,
-      gzipSize: true,
-      brotliSize: true,
+      filename: "bundle-stats.html", 
+      open: true,           // Automatically open analysis in browser
+      gzipSize: true,       // Include gzip compressed size
+      brotliSize: true,     // Include brotli compressed size
     }),
   ],
+
+  // Global compile-time constants and environment variable definitions
+  // Ensures commit hash is available during build and runtime
   define: {
-    'import.meta.env.VITE_GIT_COMMIT_HASH': JSON.stringify(getGitCommitHash())
+    'import.meta.env.VITE_GIT_COMMIT_HASH': JSON.stringify(getGitCommitHash()),
   }
 })
