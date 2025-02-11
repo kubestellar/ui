@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Badge, Checkbox, Table, TableContainer, TableHead, TableBody, TableRow, TableCell, Paper } from "@mui/material";
+import { Badge, Button, Checkbox, FormControl, InputAdornment, InputLabel, MenuItem, Select, Table, TableContainer, TableHead, TableBody, TableRow, TableCell, TextField, Paper, SelectChangeEvent } from "@mui/material";
+import SearchIcon from '@mui/icons-material/Search';
 
 interface ManagedClusterInfo {
     name: string;
@@ -10,11 +11,33 @@ interface ManagedClusterInfo {
 
 interface ClustersTableProps {
     clusters: ManagedClusterInfo[];
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
 }
 
 const ClustersTable: React.FC<ClustersTableProps> = ({ clusters, currentPage, totalPages, onPageChange }) => {
+    const [query, setQuery] = useState('');
+    const [filteredClusters, setFilteredClusters] = useState<ManagedClusterInfo[]>(clusters);
+    const [filter, setFilter] = useState<string>('');
     const [selectAll, setSelectAll] = useState(false);
     const [selectedClusters, setSelectedClusters] = useState<string[]>([]);
+
+    const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setQuery(event.target.value);
+    };
+
+    const handleSearchSubmit = () => {
+        const filtered = clusters.filter(cluster =>
+            cluster.name.toLowerCase().includes(query.toLowerCase())
+        );
+        setFilteredClusters(filtered);
+    };
+
+    const handleFilterChange = (event: SelectChangeEvent<string>) => {
+        setFilter(event.target.value as string);
+    };
+
 
     const handleCheckboxChange = (clusterName: string) => {
         setSelectedClusters((prev) =>
@@ -35,6 +58,45 @@ const ClustersTable: React.FC<ClustersTableProps> = ({ clusters, currentPage, to
 
     return (
         <div>
+            {/* Inline Search Bar */}
+            <TextField
+                label="Search"
+                value={query}
+                onChange={handleSearchChange}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit()}
+                variant="outlined"
+                sx={{ width: '600' }}
+                InputProps={{
+                    startAdornment: (
+                        <InputAdornment position="start">
+                            <SearchIcon/>
+                        </InputAdornment>
+                    ),
+                }}
+            />
+
+            {/*Filter*/}
+            <FormControl sx={{ minWidth: 120 }}>
+                <InputLabel>Filter</InputLabel>
+                <Select
+                    value={filter}
+                    label="Filter"
+                    onChange={handleFilterChange}
+                >
+                    <MenuItem value="">None</MenuItem>
+                    <MenuItem value="active">Active</MenuItem>
+                    <MenuItem value="inactive">Inactive</MenuItem>
+                    <MenuItem value="pending">Pending</MenuItem>
+                </Select>
+            </FormControl>
+
+            <Button variant="contained" color="primary">
+                Create Cluster
+            </Button>
+            <Button variant="outlined" color="secondary">
+                Import Cluster
+            </Button>
+
             <TableContainer component={Paper}>
                 <Table>
                     <TableHead>
@@ -50,7 +112,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({ clusters, currentPage, to
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {clusters.map((cluster) => (
+                        {filteredClusters.map((cluster) => (
                             <TableRow key={cluster.name}>
                                 <TableCell>
                                     <Checkbox
