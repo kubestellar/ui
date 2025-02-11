@@ -245,7 +245,7 @@ const NotFoundPage: React.FC = () => {
       <div className="relative text-center space-y-6 max-w-2xl w-full px-4">
         {/* Logo */}
         <div className="flex justify-center">
-          <img src="/KubeStellar.png" alt="KubeStellar Logo" className="h-16 md:h-24 transition-transform hover:scale-105 duration-300" />
+          <img src="/KubeStellar.png" alt="KubeStellar Logo" className="h-16 md:h-24 transition-transform hover:scale-105 duration-300 mr-11" />
         </div>
 
         {/* 404 Text */}
