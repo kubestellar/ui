@@ -255,7 +255,7 @@ useEffect(() => {
           style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}
         >
         <button
-        onClick={() => setSelectedLog({ namespace: workloads?.namespace, deployment: workloads?.name })}
+        onClick={() => setSelectedLog({   namespace: "namespace", deployment: "deployment"})}
         className="block w-full bg-gray-800 text-left px-4 py-2 hover:bg-gray-700"> 
           Logs
         </button>
