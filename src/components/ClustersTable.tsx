@@ -60,6 +60,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({ clusters, currentPage, to
         <div>
             {/* Inline Search Bar */}
             <TextField
+                className="border p-2 rounded shadow-lg"
                 label="Search"
                 value={query}
                 onChange={handleSearchChange}
@@ -69,7 +70,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({ clusters, currentPage, to
                 InputProps={{
                     startAdornment: (
                         <InputAdornment position="start">
-                            <SearchIcon/>
+                            <SearchIcon />
                         </InputAdornment>
                     ),
                 }}
@@ -79,6 +80,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({ clusters, currentPage, to
             <FormControl sx={{ minWidth: 120 }}>
                 <InputLabel>Filter</InputLabel>
                 <Select
+                    className="border rounded shadow-lg"
                     value={filter}
                     label="Filter"
                     onChange={handleFilterChange}
@@ -90,71 +92,76 @@ const ClustersTable: React.FC<ClustersTableProps> = ({ clusters, currentPage, to
                 </Select>
             </FormControl>
 
-            <Button variant="contained" color="primary">
+            <Button variant="contained" className="bg-blue-500 text-white px-4 py-2 rounded shadow-lg hover:shadow-xl transition duration-200">
                 Create Cluster
             </Button>
-            <Button variant="outlined" color="secondary">
+            <Button variant="outlined" className="bg-white text-blue-500 border border-blue-500 px-4 py-2 rounded shadow-lg hover:shadow-xl transition duration-200">
                 Import Cluster
             </Button>
 
             <TableContainer component={Paper}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>
-                                <Checkbox checked={selectAll} onChange={handleSelectAll} />
-                            </TableCell>
-                            <TableCell>Name</TableCell>
-                            <TableCell>Labels</TableCell>
-                            <TableCell>Creation Time</TableCell>
-                            <TableCell>Cluster Size</TableCell>
-                            <TableCell>Status</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {filteredClusters.map((cluster) => (
-                            <TableRow key={cluster.name}>
+                <div className="overflow-x-auto rounded-lg shadow-lg">
+                    <Table className="w-full table-auto">
+                        <TableHead>
+                            <TableRow className=" bg-[#5294f6] text-white">
                                 <TableCell>
-                                    <Checkbox
-                                        checked={selectedClusters.includes(cluster.name)}
-                                        onChange={() => handleCheckboxChange(cluster.name)}
-                                    />
+                                    <Checkbox checked={selectAll} onChange={handleSelectAll} />
                                 </TableCell>
-                                <TableCell>{cluster.name}</TableCell>
-                                <TableCell> {cluster.labels && Object.keys(cluster.labels).length > 0 ? (
-                                    <div className="flex flex-wrap gap-2">
-                                        {Object.entries(cluster.labels).map(([key, value]) => (
-                                            <span key={`${key}-${value}`} className="bg-blue-200 text-blue-800 px-2 py-1 rounded text-sm">
-                                                {key}={value}
-                                            </span>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <p>No labels</p>
-                                )}
-                                </TableCell>
-                                <TableCell>{new Date(cluster.creationTime).toLocaleString()}</TableCell>
-                                <TableCell>
-                                    <Badge className="px-2 py-2 text-sm rounded-lg" style={{ border: "2px solid #9CCBA3", backgroundColor: "#D9F1D5", color: "#00000" }}>
-                                        N/A {/* Placeholder for cluster size */}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell>
-                                    <Badge className="font-bold px-2 py-1 text-sm rounded" style={{ border: "2px solid #9CCBA3", backgroundColor: "#D9F1D5", color: "#1B7939" }}>
-                                        Active✓
-                                    </Badge>
-                                </TableCell>
+                                <TableCell>Name</TableCell>
+                                <TableCell>Labels</TableCell>
+                                <TableCell>Creation Time</TableCell>
+                                <TableCell>Cluster Size</TableCell>
+                                <TableCell>Status</TableCell>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                        </TableHead>
+                        <TableBody>
+                            {filteredClusters.map((cluster) => (
+                                <TableRow key={cluster.name}>
+                                    <TableCell>
+                                        <Checkbox
+                                            checked={selectedClusters.includes(cluster.name)}
+                                            onChange={() => handleCheckboxChange(cluster.name)}
+                                        />
+                                    </TableCell>
+                                    <TableCell>{cluster.name}</TableCell>
+                                    <TableCell> {cluster.labels && Object.keys(cluster.labels).length > 0 ? (
+                                        <div className="flex flex-wrap gap-2">
+                                            {Object.entries(cluster.labels).map(([key, value]) => (
+                                                <span key={`${key}-${value}`} className="bg-blue-200 text-blue-800 px-2 py-1 rounded text-sm">
+                                                    {key}={value}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p>No labels</p>
+                                    )}
+                                    </TableCell>
+                                    <TableCell>{new Date(cluster.creationTime).toLocaleString()}</TableCell>
+                                    <TableCell>
+                                        <Badge className="px-2 py-2 text-sm rounded-lg" style={{ border: "2px solid #9CCBA3", backgroundColor: "#D9F1D5", color: "#00000" }}>
+                                            N/A {/* Placeholder for cluster size */}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge className="font-bold px-2 py-1 text-sm rounded" style={{ border: "2px solid #9CCBA3", backgroundColor: "#D9F1D5", color: "#1B7939" }}>
+                                            Active✓
+                                        </Badge>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+
                 {/* Pagination Controls (outside the table) */}
-                <div className="pagination">
-                    <button disabled={currentPage === 1} onClick={() => onPageChange(currentPage - 1)}>
+                <div className="pagination flex justify-end items-center gap-4 py-2">
+                    <button className="px-3 py-1" style={{ border: " 2px solid #007AFF", backgroundColor: "#3D93FE", color: "#FFFFFF" }}
+                        disabled={currentPage === 1} onClick={() => onPageChange(currentPage - 1)}>
                         Previous
                     </button>
                     <span>Page {currentPage} of {totalPages}</span>
-                    <button disabled={currentPage === totalPages} onClick={() => onPageChange(currentPage + 1)}>
+                    <button className="px-3 py-1" style={{ border: " 2px solid #007AFF", backgroundColor: "#3D93FE", color: "#FFFFFF" }}
+                        disabled={currentPage === totalPages} onClick={() => onPageChange(currentPage + 1)}>
                         Next
                     </button>
                 </div>
