@@ -74,14 +74,14 @@ const DeploymentDetails = ({ deploymentName, namespace, onClose }: Props) => {
           replicas: data.status?.replicas || 0,
           updatedReplicas: data.status?.updatedReplicas || 0,
           availableReplicas: data.status?.availableReplicas || 0,
-          conditions: data.status?.conditions?.map((cond: any) => ({
+          conditions: data.status?.conditions?.map((cond: { type: string; status: string; lastProbeTime?: string; reason?: string; message?: string }) => ({
             type: cond.type,
             status: cond.status,
             lastProbeTime: cond.lastProbeTime || "N/A",
             reason: cond.reason || "N/A",
             message: cond.message || "N/A"
           })) || [],
-          containerImages: data.spec?.template?.spec?.containers?.map((container: any) => container.image) || [],
+          containerImages: data.spec?.template?.spec?.containers?.map((container: { image: string }) => container.image) || [],
           resourceInfo: {
             strategy: data.spec?.strategy?.type || "N/A",
             minReadySeconds: data.spec?.minReadySeconds || 0,
@@ -160,7 +160,7 @@ const DeploymentDetails = ({ deploymentName, namespace, onClose }: Props) => {
 
 
 
-const Table = ({ title, headers, rows }: { title: string; headers: string[]; rows: any[][] }) => {
+const Table = ({ title, headers, rows }: { title: string; headers: string[]; rows: (string | number | React.ReactNode)[][] }) => {
   const [showDetails, setShowDetails] = useState(true);
   return (
     <div className={`p-4 ${showDetails ? "bg-gray-900" : "bg-gray-800"} rounded-lg`}>

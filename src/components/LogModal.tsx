@@ -39,6 +39,8 @@ const LogModal = ({ namespace, deploymentName, onClose }: LogModalProps) => {
         } catch (error) {
           term.writeln("Error fetching logs...");
           setLoading(false);
+          console.log(error);
+          
         }
       };
 

@@ -25,6 +25,7 @@ interface Props {
 }
 
 const DeploymentTable = ({ title, workloads, setSelectedDeployment }: Props) => {
+     
   const [showDetails, setShowDetails] = useState(true);
   const [menuOpen, setMenuOpen] = useState<number | null>(null);
   const [menuPosition, setMenuPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });

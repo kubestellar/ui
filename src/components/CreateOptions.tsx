@@ -64,6 +64,7 @@ const CreateOptions = ({
       // alert(error.message);
     }
   };
+  
 
 
 
@@ -81,6 +82,7 @@ const CreateOptions = ({
         JSON.parse(fileContent); // This will throw an error if invalid
       } catch (error) {
         alert("Invalid JSON format. Please fix the errors and try again.");
+        console.log(error);
         return;
       }
     }
