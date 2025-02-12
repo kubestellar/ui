@@ -7,6 +7,7 @@ interface ManagedClusterInfo {
   labels: { [key: string]: string };
   creationTime: string;
   status: string;
+  context: string;
 }
 
 const ITS = () => {
