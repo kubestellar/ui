@@ -47,8 +47,8 @@ interface Workload {
 const BP = () => {
   const [bindingPolicies, setBindingPolicies] = useState<BindingPolicyInfo[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [showPreview, setShowPreview] = useState(false);
-  const [selectedLabels, setSelectedLabels] = useState<Record<string, string>>({});
+ // const [showPreview, setShowPreview] = useState(false);
+  const [selectedLabels,] = useState<Record<string, string>>({});
   const [availableClusters, setAvailableClusters] = useState<ManagedCluster[]>([]);
   const [availableWorkloads, setAvailableWorkloads] = useState<Workload[]>([]);
 
