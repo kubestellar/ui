@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Badge, Button, Checkbox, FormControl, InputAdornment, InputLabel, MenuItem, Select, Table, TableContainer, TableHead, TableBody, TableRow, TableCell, TextField, Paper, SelectChangeEvent } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 
@@ -38,6 +39,12 @@ const ClustersTable: React.FC<ClustersTableProps> = ({ clusters, currentPage, to
     const handleFilterChange = (event: SelectChangeEvent<string>) => {
         setFilter(event.target.value as string);
     };
+
+    const navigate = useNavigate();
+    
+    const navigateToCreateCluster = () => {
+            navigate("/createcluster"); // Navigate to the page
+          };
 
     const handleCheckboxChange = (clusterName: string) => {
         setSelectedClusters((prev) =>
@@ -87,7 +94,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({ clusters, currentPage, to
                 </FormControl>
 
                 <div className="flex gap-2">
-                    <Button variant="contained">Create Cluster</Button>
+                    <Button variant="contained" onClick={navigateToCreateCluster}>Create Cluster</Button>
                     <Button variant="outlined">Import Cluster</Button>
                 </div>
             </div>

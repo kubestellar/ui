@@ -2,7 +2,8 @@ import { RouteObject } from "react-router-dom";
 import Clusters from "../components/Clusters";
 import { Layout } from "../components/Layout";
 import ITS from "../pages/ITS";
-import CreateCluster from "../pages/CreateCluster"; // Ensure that the file exists at this path
+import CreateCluster from "../pages/CreateCluster";
+import KubeconfigOnboarding from "../pages/KubeconfigOnboarding"; // Ensure that the file exists at this path
 import WDS from "../pages/WDS";
 import BP from "../pages/BP";
 import NotFoundPage from "../pages/NotFoundPage";
@@ -16,6 +17,7 @@ export const routesConfig: RouteObject[] = [
       { index: true, element: <Clusters /> },
       { path: "its", element: <ITS /> },
       { path: "createCluster", element: <CreateCluster /> },
+      { path: "kubeconfigOnboarding", element: <KubeconfigOnboarding /> },
       { path: "wds", element: <WDS /> },
       { path: "bp", element: <BP /> },
       { path: "*", element: <NotFoundPage /> },
