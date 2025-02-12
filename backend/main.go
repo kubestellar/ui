@@ -142,105 +142,105 @@ func main() {
 }
 
 func getKubeInfo() ([]ContextInfo, []string, string, error, []ManagedClusterInfo) {
-    kubeconfig := os.Getenv("KUBECONFIG")
-    if kubeconfig == "" {
-        if home := homeDir(); home != "" {
-            kubeconfig = fmt.Sprintf("%s/.kube/config", home)
-        }
-        log.Printf("Using default kubeconfig path: %s", kubeconfig)
-    } else {
-        log.Printf("Using kubeconfig from environment: %s", kubeconfig)
-    }
+	kubeconfig := os.Getenv("KUBECONFIG")
+	if kubeconfig == "" {
+		if home := homeDir(); home != "" {
+			kubeconfig = fmt.Sprintf("%s/.kube/config", home)
+		}
+		log.Printf("Using default kubeconfig path: %s", kubeconfig)
+	} else {
+		log.Printf("Using kubeconfig from environment: %s", kubeconfig)
+	}
 
-    config, err := clientcmd.LoadFromFile(kubeconfig)
-    if err != nil {
-        return nil, nil, "", err, nil
-    }
+	config, err := clientcmd.LoadFromFile(kubeconfig)
+	if err != nil {
+		return nil, nil, "", err, nil
+	}
 
-    var contexts []ContextInfo
-    clusterSet := make(map[string]bool)
-    currentContext := config.CurrentContext
+	var contexts []ContextInfo
+	clusterSet := make(map[string]bool)
+	currentContext := config.CurrentContext
 
-    var managedClusters []ManagedClusterInfo
+	var managedClusters []ManagedClusterInfo
 
-    for contextName := range config.Contexts {
-        if strings.HasPrefix(contextName, "its") {
-            log.Printf("Processing ITS context: %s", contextName)
+	for contextName := range config.Contexts {
+		if strings.HasPrefix(contextName, "its") {
+			log.Printf("Processing ITS context: %s", contextName)
 
-            clientConfig := clientcmd.NewNonInteractiveClientConfig(
-                *config,
-                contextName,
-                &clientcmd.ConfigOverrides{},
-                clientcmd.NewDefaultClientConfigLoadingRules(),
-            )
+			clientConfig := clientcmd.NewNonInteractiveClientConfig(
+				*config,
+				contextName,
+				&clientcmd.ConfigOverrides{},
+				clientcmd.NewDefaultClientConfigLoadingRules(),
+			)
 
-            restConfig, err := clientConfig.ClientConfig()
-            if err != nil {
-                log.Printf("Error creating REST config for context %s: %v", contextName, err)
-                continue
-            }
+			restConfig, err := clientConfig.ClientConfig()
+			if err != nil {
+				log.Printf("Error creating REST config for context %s: %v", contextName, err)
+				continue
+			}
 
-            clientset, err := kubernetes.NewForConfig(restConfig)
-            if err != nil {
-                log.Printf("Error creating clientset for context %s: %v", contextName, err)
-                continue
-            }
+			clientset, err := kubernetes.NewForConfig(restConfig)
+			if err != nil {
+				log.Printf("Error creating clientset for context %s: %v", contextName, err)
+				continue
+			}
 
-            clustersBytes, err := clientset.RESTClient().Get().
-                AbsPath("/apis/cluster.open-cluster-management.io/v1").
-                Resource("managedclusters").
-                DoRaw(context.TODO())
+			clustersBytes, err := clientset.RESTClient().Get().
+				AbsPath("/apis/cluster.open-cluster-management.io/v1").
+				Resource("managedclusters").
+				DoRaw(context.TODO())
 
-            if err != nil {
-                log.Printf("Error fetching managed clusters from context %s: %v", contextName, err)
-                continue
-            }
+			if err != nil {
+				log.Printf("Error fetching managed clusters from context %s: %v", contextName, err)
+				continue
+			}
 
-            var clusterList struct {
-                Items []struct {
-                    Metadata struct {
-                        Name              string            `json:"name"`
-                        Labels            map[string]string `json:"labels"`
-                        CreationTimestamp string            `json:"creationTimestamp"`
-                    } `json:"metadata"`
-                } `json:"items"`
-            }
+			var clusterList struct {
+				Items []struct {
+					Metadata struct {
+						Name              string            `json:"name"`
+						Labels            map[string]string `json:"labels"`
+						CreationTimestamp string            `json:"creationTimestamp"`
+					} `json:"metadata"`
+				} `json:"items"`
+			}
 
-            if err := json.Unmarshal(clustersBytes, &clusterList); err != nil {
-                log.Printf("Error unmarshaling clusters from context %s: %v", contextName, err)
-                continue
-            }
+			if err := json.Unmarshal(clustersBytes, &clusterList); err != nil {
+				log.Printf("Error unmarshaling clusters from context %s: %v", contextName, err)
+				continue
+			}
 
-            for _, item := range clusterList.Items {
-                creationTime, _ := time.Parse(time.RFC3339, item.Metadata.CreationTimestamp)
-                managedClusters = append(managedClusters, ManagedClusterInfo{
-                    Name:         item.Metadata.Name,
-                    Labels:       item.Metadata.Labels,
-                    CreationTime: creationTime,
-                    Context:      contextName,
-                })
-            }
-        }
-    }
+			for _, item := range clusterList.Items {
+				creationTime, _ := time.Parse(time.RFC3339, item.Metadata.CreationTimestamp)
+				managedClusters = append(managedClusters, ManagedClusterInfo{
+					Name:         item.Metadata.Name,
+					Labels:       item.Metadata.Labels,
+					CreationTime: creationTime,
+					Context:      contextName,
+				})
+			}
+		}
+	}
 
-    // Process other kubeflex contexts (non-its)
-    for contextName, context := range config.Contexts {
-        if strings.HasSuffix(contextName, "-kubeflex") {
-            contexts = append(contexts, ContextInfo{
-                Name:    contextName,
-                Cluster: context.Cluster,
-            })
-            clusterSet[context.Cluster] = true
-        }
-    }
+	// Process other kubeflex contexts (non-its)
+	for contextName, context := range config.Contexts {
+		if strings.HasSuffix(contextName, "-kubeflex") {
+			contexts = append(contexts, ContextInfo{
+				Name:    contextName,
+				Cluster: context.Cluster,
+			})
+			clusterSet[context.Cluster] = true
+		}
+	}
 
-    // Convert unique clusters to slice
-    var clusters []string
-    for clusterName := range clusterSet {
-        clusters = append(clusters, clusterName)
-    }
+	// Convert unique clusters to slice
+	var clusters []string
+	for clusterName := range clusterSet {
+		clusters = append(clusters, clusterName)
+	}
 
-    return contexts, clusters, currentContext, nil, managedClusters
+	return contexts, clusters, currentContext, nil, managedClusters
 }
 
 func getITSInfo() ([]ManagedClusterInfo, error) {
