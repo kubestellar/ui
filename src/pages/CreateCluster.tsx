@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   Box,
+  Button,
   Typography,
   TextField,
   MenuItem,
@@ -16,11 +17,25 @@ const CreateCluster = () => {
   const [clusterSet, setClusterSet] = useState("");
   const [importMode, setImportMode] = useState("");
 
+  const handleCreateCluster = () => {
+    console.log("Creating cluster with:", { clusterName, clusterSet });
+    // Add logic here to handle form submission (e.g., API call)
+  };
+
+  /* const ClusterSetDropdown = () => {
+    console.log("Creating cluster with:", { clusterSet, clusterSet });
+  };
+
+  const ClusterImportMode = () => {
+    console.log("Creating cluster with:", { clusterName, clusterSet });
+  };*/
+
   return (
     <Box
       display="flex"
-      justifyContent="center"
+      flexDirection="column"
       alignItems="center"
+      justifyContent="center"
       height="100vh"
       bgcolor="#E0F2F1"
     >
@@ -33,21 +48,27 @@ const CreateCluster = () => {
             Cluster Details
           </Typography>
 
-          {/* Cluster Name Field */}
-          <FormControl fullWidth sx={{ mt: 2 }}>
-            <InputLabel shrink>Cluster name *</InputLabel>
-            <TextField
-              fullWidth
-              placeholder="Enter cluster name"
-              value={clusterName}
-              onChange={(e) => setClusterName(e.target.value)}
-            />
-          </FormControl>
+          {/* Cluster Name Input */}
+          <TextField
+            fullWidth
+            label="Cluster Name *"
+            placeholder="Enter cluster name"
+            value={clusterName}
+            onChange={(e) => setClusterName(e.target.value)}
+            variant="outlined"
+            slotProps={{
+              inputLabel: { shrink: true },
+            }}
+            sx={{ mt: 3 }}
+          />
 
           {/* Cluster Set Dropdown */}
-          <FormControl fullWidth sx={{ mt: 2 }}>
-            <InputLabel>Cluster Set</InputLabel>
+          <FormControl fullWidth sx={{ mt: 3 }}>
+            <InputLabel id="cluster-set-label" shrink>
+              Cluster Set
+            </InputLabel>
             <Select
+              labelId="cluster-set-label"
               value={clusterSet}
               onChange={(e) => setClusterSet(e.target.value)}
               displayEmpty
@@ -61,18 +82,30 @@ const CreateCluster = () => {
 
           {/* Import Mode Dropdown */}
           <FormControl fullWidth sx={{ mt: 2 }}>
-            <InputLabel>Import mode</InputLabel>
+            <InputLabel>Select import mode</InputLabel>
             <Select
               value={importMode}
               onChange={(e) => setImportMode(e.target.value)}
               displayEmpty
             >
-              <MenuItem value="kubeconfig">kubectl</MenuItem>
+              <MenuItem value="kubeconfig">kubeconfig</MenuItem>
               <MenuItem value="manual">Manual</MenuItem>
               <MenuItem value="api">API/URL</MenuItem>
             </Select>
           </FormControl>
         </CardContent>
+
+        {/* "Create Cluster" Button */}
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleCreateCluster}
+          sx={{  display: "block" }} // Fix: Ensures it takes up space
+          disabled={!clusterName || !clusterSet} // Disable until form is filled
+        >
+          Create Cluster
+        </Button>
+
       </Card>
     </Box>
   );
