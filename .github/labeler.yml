@@ -1,0 +1,41 @@
+#
+# Add component-specific labels
+#
+
+# Add 'backend' label for backend-related files
+'backend':
+  - backend/**
+
+# Add 'frontend' label for frontend-related files
+'frontend':
+  - src/**
+  - public/**
+
+# Add 'ci' label for GitHub Actions workflows
+'ci':
+  - .github/workflows/**
+
+# Add 'config' label for configuration files
+'config':
+  - tailwind.config.js
+  - vite.config.ts
+  - eslint.config.js
+  - tsconfig*.json
+
+# Add 'documentation' label for documentation-related files
+'documentation':
+  - README.md
+  - LICENSE
+  - .github/ISSUE_TEMPLATE/**
+
+# Add 'docker' label for Docker-related files
+'docker':
+  - Dockerfile
+  - docker-compose.yml
+  - .dockerignore
+  - backend/Dockerfile
+  - backend/.dockerignore
+
+# Add 'other' label as a fallback for any other files
+'other':
+  - "*"
