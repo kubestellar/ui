@@ -6,12 +6,13 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/katamyra/kubestellarUI/wds"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Get deployment status by name
 func GetDeploymentStatus(c *gin.Context) {
-	clientset, err := getClientSetKubeConfig()
+	clientset, err := wds.GetClientSetKubeConfig()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create Kubernetes client"})
 		return
