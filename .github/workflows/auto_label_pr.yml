@@ -1,18 +1,21 @@
-name: Auto Label PRs
+# This workflow is based on github action official label action v4.
+# This workflow action is triggered on pull request event(on both fork & inside repo)
+# Labels will be applied based on filepath modification in PR.
+# This workflow uses a regex based labeling config file(.github/labeler.yml) to take labeling decision.
 
+name: "PR Labeler"
 on:
-  pull_request:
-    types: [opened, synchronize]
-
+- pull_request_target
 jobs:
   label:
+    permissions:
+      contents: read
+      pull-requests: write
     runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
 
-      - name: Auto-label PR
-        uses: actions/labeler@v5
-        with:
-          repo-token: "${{ secrets.GITHUB_TOKEN }}"
-          configuration-path: .github/labeler.yml
+    steps:
+    - uses: actions/labeler@v4
+      with:
+        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        configuration-path: ".github/labeler.yml"
+        sync-labels: false
