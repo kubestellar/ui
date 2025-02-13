@@ -156,6 +156,68 @@ func GetServiceByServiceName(ctx *gin.Context) {
 		}
 */
 func CreateService(ctx *gin.Context) {
+	type ServicePort struct {
+		Name       string `json:"name"`
+		Port       int32  `json:"port"`
+		TargetPort int32  `json:"targetPort"`
+		Protocol   string `json:"protocol"`
+	}
+	type Parameters struct {
+		Namespace string            `json:"namespace"`
+		Name      string            `json:"name"`
+		Labels    map[string]string `json:"labels"`
+		Ports     []ServicePort     `json:"ports"`
+	}
+	var params Parameters
+	if err := ctx.ShouldBindJSON(&params); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if params.Name == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "enter name of the deployment"})
+		return
+	}
+
+	if params.Namespace == "" {
+		params.Namespace = "default"
+	}
+	if params.Labels == nil {
+		params.Labels = map[string]string{
+			"app.kubernetes.io/name": params.Name,
+		}
+	}
+
+	if len(params.Ports) == 0 {
+		// default ports
+		params.Ports = []ServicePort{
+			{
+				Name:       "http",
+				Port:       80,
+				TargetPort: 9376,
+				Protocol:   "TCP",
+			},
+		}
+	}
+	var servicePorts []corev1.ServicePort
+
+	// Important: You need to convert the user given data to k8s formats
+	for _, p := range params.Ports {
+		if p.Port <= 0 || p.Port > 65535 {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid port number. Must be between 1-65535."})
+			return
+		}
+		protocol := corev1.ProtocolTCP
+		if p.Protocol != "" {
+			protocol = corev1.Protocol(p.Protocol)
+		}
+		servicePorts = append(servicePorts, corev1.ServicePort{
+			Name:       p.Name,
+			Port:       p.Port,
+			TargetPort: intstr.FromInt(int(p.TargetPort)),
+			Protocol:   protocol,
+		})
+	}
 	clientset, err := wds.GetClientSetKubeConfig()
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -166,28 +228,16 @@ func CreateService(ctx *gin.Context) {
 	}
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "service-from-go-client2",
-			Namespace: "default",
-			Labels: map[string]string{
-				"component": "apiserver",
-				"provider":  "go-client",
-			},
+			Name:      params.Name,
+			Namespace: params.Namespace,
+			Labels:    params.Labels,
 		},
 		Spec: corev1.ServiceSpec{
-			Selector: map[string]string{
-				"app.kubernetes.io/name": "MyApp",
-			},
-			Ports: []corev1.ServicePort{
-				{
-					Name:       "http",
-					Port:       80,
-					TargetPort: intstr.FromInt(9376), // random one
-					Protocol:   corev1.ProtocolTCP,
-				},
-			},
+			Selector: params.Labels,
+			Ports:    servicePorts,
 		},
 	}
-	_, err = clientset.CoreV1().Services("default").Create(ctx, service, metav1.CreateOptions{})
+	createdService, err := clientset.CoreV1().Services("default").Create(ctx, service, metav1.CreateOptions{})
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "failed to create service",
@@ -198,7 +248,7 @@ func CreateService(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusAccepted, gin.H{
 		"message":    "Service created successfully!",
-		"deployment": service,
+		"deployment": createdService,
 	})
 }
 
