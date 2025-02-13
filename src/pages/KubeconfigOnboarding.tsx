@@ -3,7 +3,13 @@ import { Button, Card, CardContent, Typography, TextField, Box } from "@mui/mate
 
 const KubeconfigOnboarding: React.FC = () => {
   return (
-    <Box display="flex" height="100vh" bgcolor="#E0F2F1">
+    <Box 
+    display="flex"
+    flexDirection="column"
+    alignItems="center"
+    justifyContent="center"
+    height="100vh"
+    bgcolor="#E0F2F1">
               
       {/* Main Content */}
       <Box flex={1} p={4}>
@@ -15,7 +21,7 @@ const KubeconfigOnboarding: React.FC = () => {
               <Box mt={2}>
                 <TextField fullWidth label="Cluster Name" defaultValue="xyz cluster" disabled margin="normal" />
                 <TextField fullWidth label="Import Mode" defaultValue="Kubeconfig" disabled margin="normal" />
-                <Button variant="contained" color="secondary" sx={{ mt: 2 }}>Upload</Button>
+                <Button variant="contained" sx={{ mt: 2 }}>Upload</Button>
               </Box>
             </CardContent>
           </Card>
