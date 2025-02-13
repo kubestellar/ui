@@ -2,6 +2,7 @@ package resources
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"net/http"
 	"time"
 
@@ -140,4 +141,99 @@ func GetServiceByServiceName(ctx *gin.Context) {
 		"service": serviceDetail,
 	})
 
+}
+
+/*
+	   -> DOCS: https://kubernetes.io/docs/concepts/services-networking/service/
+
+		Labels: map[string]string{
+		    "app.kubernetes.io/name": "MyApp",
+		    "app.kubernetes.io/instance": "myapp-1",
+		    "app.kubernetes.io/version": "1.0.0",
+		    "app.kubernetes.io/component": "frontend",
+		    "app.kubernetes.io/part-of": "myapp",
+		    "app.kubernetes.io/managed-by": "manual",
+		}
+*/
+func CreateService(ctx *gin.Context) {
+	clientset, err := wds.GetClientSetKubeConfig()
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "failed to create Kubernetes clientset",
+			"err":     err,
+		})
+		return
+	}
+	service := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "service-from-go-client2",
+			Namespace: "default",
+			Labels: map[string]string{
+				"component": "apiserver",
+				"provider":  "go-client",
+			},
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: map[string]string{
+				"app.kubernetes.io/name": "MyApp",
+			},
+			Ports: []corev1.ServicePort{
+				{
+					Name:       "http",
+					Port:       80,
+					TargetPort: intstr.FromInt(9376), // random one
+					Protocol:   corev1.ProtocolTCP,
+				},
+			},
+		},
+	}
+	_, err = clientset.CoreV1().Services("default").Create(ctx, service, metav1.CreateOptions{})
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "failed to create service",
+			"err":     err,
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusAccepted, gin.H{
+		"message":    "Service created successfully!",
+		"deployment": service,
+	})
+}
+
+func DeleteService(ctx *gin.Context) {
+	type parameters struct {
+		Namespace string `json:"namespace"`
+		Name      string `json:"name"`
+	}
+	params := parameters{}
+	if err := ctx.ShouldBindJSON(&params); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if params.Namespace == "" {
+		params.Namespace = "default"
+	}
+
+	clientset, err := wds.GetClientSetKubeConfig()
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "failed to create Kubernetes clientset",
+			"err":     err,
+		})
+		return
+	}
+	err = clientset.CoreV1().Services(params.Namespace).Delete(ctx, params.Name, metav1.DeleteOptions{})
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "failed to delete service",
+			"error":   err.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusAccepted, gin.H{
+		"name":    params.Name,
+		"message": "Successfully deleted service",
+	})
 }

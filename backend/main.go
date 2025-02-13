@@ -141,6 +141,8 @@ func main() {
 	// SERVICES
 	router.GET("/api/services/:namespace", resources.GetServiceList)
 	router.GET("/api/services/:namespace/:name", resources.GetServiceByServiceName)
+	router.POST("/api/services/create", resources.CreateService)
+	router.DELETE("/api/services/delete", resources.DeleteService)
 
 	router.Run(":4000")
 }
