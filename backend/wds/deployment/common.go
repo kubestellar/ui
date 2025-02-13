@@ -94,7 +94,7 @@ func CreateDeployment(ctx *gin.Context) {
 	}
 	var dat *Deployment
 	// upload the yaml configuration file and read their value
-	if len(params.Url) > 0 {
+	if params.Url != "" {
 		if !(len(params.Path) > 0 && len(params.Url) > 0 && strings.Contains(params.Url, "github")) {
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"message": "both path and github repo url are required",
@@ -112,21 +112,24 @@ func CreateDeployment(ctx *gin.Context) {
 		dat = (*Deployment)(content)
 	} else {
 		dat, err = uploadFile(ctx)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"message": "failed to upload",
+				"err":     err,
+			})
+			return
+		}
 	}
 
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": "failed to upload",
-			"err":     err,
-		})
+	replica := dat.Spec.Replicas
+	if replica == 0 {
+		replica = 1
+	}
+
+	if len(dat.Spec.Template.Spec.Containers) == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "No container specified in deployment YAML"})
 		return
 	}
-
-	replica := 1
-	if dat.Spec.Replicas&1 == 0 {
-		replica = dat.Spec.Replicas
-	}
-
 	// create the deployment object
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -176,6 +179,85 @@ func CreateDeployment(ctx *gin.Context) {
 	}
 	fmt.Println("Deployment created successfully!")
 	ctx.JSON(http.StatusAccepted, gin.H{
+		"message":    "Deployment created successfully!",
+		"deployment": deployment,
+	})
+}
+
+// user raw data - for editor
+func HandleCreateDeploymentJson(ctx *gin.Context) {
+	type ContainerPort struct {
+		ContainerPort int32 `json:"containerPort"`
+	}
+	type Container struct {
+		Name  string          `json:"name"`
+		Image string          `json:"image"`
+		Ports []ContainerPort `json:"ports"`
+	}
+
+	type Parameters struct {
+		Namespace string            `json:"namespace"`
+		Name      string            `json:"name"`
+		Replicas  int32             `json:"replicas"`
+		Labels    map[string]string `json:"labels"`
+		Container Container         `json:"container"`
+	}
+	params := Parameters{}
+	if err := ctx.ShouldBindJSON(&params); err != nil {
+		fmt.Println("hello1")
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	clientset, err := wds.GetClientSetKubeConfig()
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "failed to create Kubernetes clientset",
+			"err":     err,
+		})
+		return
+	}
+
+	deployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      params.Name,
+			Namespace: params.Namespace,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: int32Ptr(params.Replicas),
+			Selector: &metav1.LabelSelector{
+				MatchLabels: params.Labels,
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: params.Labels,
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  params.Container.Name,
+							Image: params.Container.Image,
+							Ports: []corev1.ContainerPort{
+								{
+									ContainerPort: params.Container.Ports[0].ContainerPort,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	_, err = clientset.AppsV1().Deployments(params.Namespace).Create(context.TODO(), deployment, metav1.CreateOptions{})
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "failed to create deployment",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, gin.H{
 		"message":    "Deployment created successfully!",
 		"deployment": deployment,
 	})
@@ -343,14 +425,5 @@ func uploadFile(ctx *gin.Context) (*Deployment, error) {
 	if err := yaml.Unmarshal(yamlData, &deployment); err != nil {
 		return nil, fmt.Errorf("failed to parse YAML: %v", err)
 	}
-	log.Print(deployment)
-	// ctx.JSON(http.StatusOK, gin.H{
-	// 	"status":     "success",
-	// 	"name":       deployment.Metadata.Name,
-	// 	"replicas":   deployment.Spec.Replicas,
-	// 	"container":  deployment.Spec.Template.Spec.Containers[0].Name,
-	// 	"image":      deployment.Spec.Template.Spec.Containers[0].Image,
-	// 	"deployment": deployment,
-	// })
 	return &deployment, nil
 }
