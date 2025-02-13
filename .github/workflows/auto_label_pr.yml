@@ -15,27 +15,4 @@ jobs:
         uses: actions/labeler@v5
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
-
-  labels:
-    backend:
-      - backend/**
-    frontend:
-      - src/**
-      - public/**
-    ci:
-      - .github/workflows/**
-    config:
-      - tailwind.config.js
-      - vite.config.ts
-      - eslint.config.js
-      - tsconfig*.json
-    documentation:
-      - README.md
-      - LICENSE
-      - .github/ISSUE_TEMPLATE/**
-    docker:
-      - Dockerfile
-      - docker-compose.yml
-      - .dockerignore
-    other:
-      - "*"
+          configuration-path: .github/workflows/labeler.yml

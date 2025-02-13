@@ -1,0 +1,30 @@
+backend:
+  - backend/**
+
+frontend:
+  - src/**
+  - public/**
+
+ci:
+  - .github/workflows/**
+
+config:
+  - tailwind.config.js
+  - vite.config.ts
+  - eslint.config.js
+  - tsconfig*.json
+
+documentation:
+  - README.md
+  - LICENSE
+  - .github/ISSUE_TEMPLATE/**
+
+docker:
+  - Dockerfile
+  - docker-compose.yml
+  - .dockerignore
+  - backend/Dockerfile
+  - backend/.dockerignore
+
+other:
+  - "*"
