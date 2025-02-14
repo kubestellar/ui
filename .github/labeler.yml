@@ -6,6 +6,9 @@
 'backend':
   - backend/**
 
+'wds':
+  - backend/wds/**
+
 # Add 'frontend' label for frontend-related files
 'frontend':
   - src/**
