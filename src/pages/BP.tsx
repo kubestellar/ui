@@ -19,7 +19,7 @@ import {
   Box,
   Typography,
 } from "@mui/material";
-import { Search, Filter, Plus, Upload, Info, Trash2 } from "lucide-react";
+import { Search, Filter, Plus,  Info, Trash2 } from "lucide-react";
 import CreateBindingPolicyDialog from "../components/CreateBindingPolicyDialog";
 
 interface BindingPolicyInfo {
@@ -47,6 +47,7 @@ const BP = () => {
     []
   );
   const [loading, setLoading] = useState<boolean>(true);
+  const [searchQuery, setSearchQuery] = useState<string>("");
   // const [showPreview, setShowPreview] = useState(false);
   const [selectedLabels] = useState<Record<string, string>>({});
   const [availableClusters, setAvailableClusters] = useState<ManagedCluster[]>(
@@ -172,22 +173,34 @@ const BP = () => {
     }
   };
 
-  const handleCreatePolicySubmit = (policyData: Omit<BindingPolicyInfo, 'creationDate' | 'clusters' | 'status'>) => {
-      setBindingPolicies((prev) => [
-        ...prev,
-        {
-          ...policyData,
-          clusters: 0,
-          creationDate: new Date().toLocaleString(),
-          status: "Active" as const,
-        },
-      ]);
-      setCreateDialogOpen(false);
-    };
+  const handleCreatePolicySubmit = (
+    policyData: Omit<BindingPolicyInfo, "creationDate" | "clusters" | "status">
+  ) => {
+    setBindingPolicies((prev) => [
+      ...prev,
+      {
+        ...policyData,
+        clusters: 0,
+        creationDate: new Date().toLocaleString(),
+        status: "Active" as const,
+      },
+    ]);
+    setCreateDialogOpen(false);
+  };
 
   const handlePreviewMatches = () => {
     setPreviewDialogOpen(true);
   };
+
+  // Add function to filter binding policies
+  const filteredPolicies = bindingPolicies.filter((policy) => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      policy.name.toLowerCase().includes(searchLower) ||
+      policy.workload.toLowerCase().includes(searchLower) ||
+      policy.status.toLowerCase().includes(searchLower)
+    );
+  });
 
   if (loading) {
     return (
@@ -212,6 +225,8 @@ const BP = () => {
           <TextField
             size="small"
             placeholder="Search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -238,9 +253,7 @@ const BP = () => {
           >
             Create Binding Policy
           </Button>
-          <Button variant="contained" startIcon={<Upload size={20} />}>
-            Import Binding Policy
-          </Button>
+       
         </Box>
       </Box>
 
@@ -263,7 +276,7 @@ const BP = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {bindingPolicies.map((policy) => (
+          {filteredPolicies.map((policy) => (
             <TableRow key={policy.name}>
               <TableCell>
                 <Button color="primary" sx={{ textTransform: "none" }}>
@@ -325,7 +338,7 @@ const BP = () => {
         }}
       >
         <Typography variant="body2" color="text.secondary">
-          Showing data 1 to 8 of 256K entries
+          Showing {filteredPolicies.length} of {bindingPolicies.length} entries
         </Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
           {[1, 2, 3, "...", 40].map((page, index) => (
