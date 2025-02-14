@@ -1,4 +1,4 @@
-import  { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Button,
   TextField,
@@ -17,15 +17,13 @@ import {
   Tooltip,
   Paper,
   Box,
-  Typography
-
+  Typography,
 } from "@mui/material";
-import { Search, Filter, Plus, Upload,Info  } from "lucide-react";
+import { Search, Filter, Plus, Upload, Info, Trash2 } from "lucide-react";
+import CreateBindingPolicyDialog from "../components/CreateBindingPolicyDialog";
 
 interface BindingPolicyInfo {
   name: string;
-  namespace: string;
-  labels: string[];
   clusters: number;
   workload: string;
   creationDate: string;
@@ -45,21 +43,28 @@ interface Workload {
 }
 
 const BP = () => {
-  const [bindingPolicies, setBindingPolicies] = useState<BindingPolicyInfo[]>([]);
+  const [bindingPolicies, setBindingPolicies] = useState<BindingPolicyInfo[]>(
+    []
+  );
   const [loading, setLoading] = useState<boolean>(true);
- // const [showPreview, setShowPreview] = useState(false);
-  const [selectedLabels,] = useState<Record<string, string>>({});
-  const [availableClusters, setAvailableClusters] = useState<ManagedCluster[]>([]);
+  // const [showPreview, setShowPreview] = useState(false);
+  const [selectedLabels] = useState<Record<string, string>>({});
+  const [availableClusters, setAvailableClusters] = useState<ManagedCluster[]>(
+    []
+  );
   const [availableWorkloads, setAvailableWorkloads] = useState<Workload[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+
+  const [selectedPolicy, setSelectedPolicy] =
+    useState<BindingPolicyInfo | null>(null);
 
   useEffect(() => {
     // Simulate loading initial data
     setTimeout(() => {
       setBindingPolicies([
-         {
+        {
           name: "winions-central",
-          namespace: "winions-central",
-          labels: ["region=aleolia", "cluster-opening"],
           clusters: 2,
           workload: "workload0",
           creationDate: "1/24/2025 9:12:18 AM",
@@ -67,8 +72,6 @@ const BP = () => {
         },
         {
           name: "Map This to That",
-          namespace: "my-this-and-that",
-          labels: ["app=mod", "cluster-open-mangeme..."],
           clusters: 1,
           workload: "workload1",
           creationDate: "1/20/2025 7:42:25 PM",
@@ -76,8 +79,6 @@ const BP = () => {
         },
         {
           name: "my nginx app on dev",
-          namespace: "nginx",
-          labels: ["kubestellarVersion", "location-group=edge"],
           clusters: 3,
           workload: "workload2",
           creationDate: "1/15/2025 9:12:18 PM",
@@ -85,8 +86,6 @@ const BP = () => {
         },
         {
           name: "my nginx app on prod",
-          namespace: "nginx",
-          labels: ["devteam=owner", "tier=candybar", "name=beriberi-langnahm"],
           clusters: 1,
           workload: "workload3",
           creationDate: "12/24/2025 4:20:50 AM",
@@ -94,8 +93,6 @@ const BP = () => {
         },
         {
           name: "my nginx app on staging",
-          namespace: "nginx",
-          labels: ["environment=daze", "region=us-west-2", "datacenter=deep-core"],
           clusters: 2,
           workload: "workload4",
           creationDate: "4/20/2024 6:04:20 AM",
@@ -103,14 +100,11 @@ const BP = () => {
         },
         {
           name: "new app on dev",
-          namespace: "new-app",
-          labels: ["environment=daze", "region=us-east-2", "datacenter=deep-space"],
           clusters: 5,
           workload: "workload5",
           creationDate: "4/20/2024 9:04:20 PM",
           status: "Inactive",
         },
-        // ... other policies as in your data
       ]);
 
       // Simulate loading clusters and workloads
@@ -118,71 +112,103 @@ const BP = () => {
         {
           name: "cluster-1",
           labels: { region: "aleolia", environment: "prod" },
-          status: "Ready"
+          status: "Ready",
         },
         {
           name: "cluster-2",
           labels: { region: "us-west-2", environment: "dev" },
-          status: "Ready"
-        }
+          status: "Ready",
+        },
       ]);
 
       setAvailableWorkloads([
         {
           name: "workload0",
           namespace: "winions-central",
-          labels: { app: "winions", type: "web" }
+          labels: { app: "winions", type: "web" },
         },
         {
           name: "workload1",
           namespace: "my-this-and-that",
-          labels: { app: "mod", type: "api" }
-        }
+          labels: { app: "mod", type: "api" },
+        },
       ]);
 
       setLoading(false);
     }, 1000);
   }, []);
 
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
-
-  const handleCreatePolicy = () => {
-    setCreateDialogOpen(true);
-  };
-
-  const handlePreviewMatches = () => {
-    setPreviewDialogOpen(true);
-  };
 
   // Calculate matches based on selected labels
   const getMatches = () => {
-    const matchedClusters = availableClusters.filter(cluster => {
-      return Object.entries(selectedLabels).every(([key, value]) => 
-        cluster.labels[key] === value
+    const matchedClusters = availableClusters.filter((cluster) => {
+      return Object.entries(selectedLabels).every(
+        ([key, value]) => cluster.labels[key] === value
       );
     });
 
-    const matchedWorkloads = availableWorkloads.filter(workload => {
-      return Object.entries(selectedLabels).every(([key, value]) => 
-        workload.labels[key] === value
+    const matchedWorkloads = availableWorkloads.filter((workload) => {
+      return Object.entries(selectedLabels).every(
+        ([key, value]) => workload.labels[key] === value
       );
     });
 
     return { matchedClusters, matchedWorkloads };
   };
 
+  const handleDeletePolicy = (policy: BindingPolicyInfo) => {
+    setSelectedPolicy(policy);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (selectedPolicy) {
+      setBindingPolicies((policies) =>
+        policies.filter((p) => p.name !== selectedPolicy.name)
+      );
+      setDeleteDialogOpen(false);
+      setSelectedPolicy(null);
+    }
+  };
+
+  const handleCreatePolicySubmit = (policyData: Omit<BindingPolicyInfo, 'creationDate' | 'clusters' | 'status'>) => {
+      setBindingPolicies((prev) => [
+        ...prev,
+        {
+          ...policyData,
+          clusters: 0,
+          creationDate: new Date().toLocaleString(),
+          status: "Active" as const,
+        },
+      ]);
+      setCreateDialogOpen(false);
+    };
+
+  const handlePreviewMatches = () => {
+    setPreviewDialogOpen(true);
+  };
+
   if (loading) {
-    return <Box sx={{ textAlign: 'center', color: 'text.secondary', py: 3 }}>
-      Loading KubeStellar Binding Policies...
-    </Box>;
+    return (
+      <Box sx={{ textAlign: "center", color: "text.secondary", py: 3 }}>
+        Loading KubeStellar Binding Policies...
+      </Box>
+    );
   }
 
   return (
-    <Paper sx={{ maxWidth: '100%', margin: 'auto', p: 3 }}>
+    <Paper sx={{ maxWidth: "100%", margin: "auto", p: 3 }}>
       {/* Header Section */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Box sx={{ display: 'flex', gap: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Box sx={{ display: "flex", gap: 2 }}>
           <TextField
             size="small"
             placeholder="Search"
@@ -198,18 +224,21 @@ const BP = () => {
             Filter
           </Button>
         </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
+        <CreateBindingPolicyDialog
+          open={createDialogOpen}
+          onClose={() => setCreateDialogOpen(false)}
+          onCreatePolicy={handleCreatePolicySubmit}
+        />
+
+        <Box sx={{ display: "flex", gap: 1 }}>
           <Button
             variant="outlined"
             startIcon={<Plus size={20} />}
-            onClick={handleCreatePolicy}
+            onClick={() => setCreateDialogOpen(true)}
           >
             Create Binding Policy
           </Button>
-          <Button
-            variant="contained"
-            startIcon={<Upload size={20} />}
-          >
+          <Button variant="contained" startIcon={<Upload size={20} />}>
             Import Binding Policy
           </Button>
         </Box>
@@ -220,8 +249,6 @@ const BP = () => {
         <TableHead>
           <TableRow>
             <TableCell>Binding Policy Name</TableCell>
-            <TableCell>Namespace</TableCell>
-            <TableCell>Labels</TableCell>
             <TableCell>Clusters</TableCell>
             <TableCell>Workload</TableCell>
             <TableCell>Creation Date</TableCell>
@@ -229,7 +256,7 @@ const BP = () => {
             <TableCell align="right">
               <Tooltip title="Preview matches">
                 <IconButton size="small" onClick={handlePreviewMatches}>
-               <Info />
+                  <Info />
                 </IconButton>
               </Tooltip>
             </TableCell>
@@ -239,70 +266,49 @@ const BP = () => {
           {bindingPolicies.map((policy) => (
             <TableRow key={policy.name}>
               <TableCell>
-                <Button
-                  color="primary"
-                  sx={{ textTransform: 'none' }}
-                >
+                <Button color="primary" sx={{ textTransform: "none" }}>
                   {policy.name}
                 </Button>
               </TableCell>
-              <TableCell>{policy.namespace}</TableCell>
               <TableCell>
-                <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                  {policy.labels.slice(0, 2).map((label, index) => (
-                    <Chip
-                      key={index}
-                      label={label}
-                      size="small"
-                      sx={{ backgroundColor: '#e3f2fd' }}
-                    />
-                  ))}
-                  {policy.labels.length > 2 && (
-                    <Chip
-                      label={`+${policy.labels.length - 2}`}
-                      size="small"
-                      sx={{ backgroundColor: '#f5f5f5' }}
-                    />
-                  )}
-                </Box>
+                <Chip label={policy.clusters} size="small" color="success" />
               </TableCell>
               <TableCell>
-                <Chip
-                  label={policy.clusters}
-                  size="small"
-                  color="success"
-                />
-              </TableCell>
-              <TableCell>
-                <Chip
-                  label={policy.workload}
-                  size="small"
-                  color="success"
-                />
+                <Chip label={policy.workload} size="small" color="success" />
               </TableCell>
               <TableCell>{policy.creationDate}</TableCell>
               <TableCell>
                 <Chip
                   label={policy.status}
                   size="small"
-                  color={policy.status === 'Active' ? 'success' : 'error'}
+                  color={policy.status === "Active" ? "success" : "error"}
                   sx={{
-                    '& .MuiChip-label': {
-                      display: 'flex',
-                      alignItems: 'center',
+                    "& .MuiChip-label": {
+                      display: "flex",
+                      alignItems: "center",
                       gap: 0.5,
                     },
                   }}
-                  icon={policy.status === 'Active' ? 
-                    <span>✓</span> : 
-                    <span>✗</span>
+                  icon={
+                    policy.status === "Active" ? <span>✓</span> : <span>✗</span>
                   }
                 />
               </TableCell>
               <TableCell align="right">
-                <IconButton size="small">
-             <Info />
-                </IconButton>
+                <Box
+                  sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}
+                >
+                  <IconButton size="small">
+                    <Info />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={() => handleDeletePolicy(policy)}
+                  >
+                    <Trash2 />
+                  </IconButton>
+                </Box>
               </TableCell>
             </TableRow>
           ))}
@@ -310,12 +316,19 @@ const BP = () => {
       </Table>
 
       {/* Pagination */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mt: 2,
+        }}
+      >
         <Typography variant="body2" color="text.secondary">
           Showing data 1 to 8 of 256K entries
         </Typography>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          {[1, 2, 3, '...', 40].map((page, index) => (
+        <Box sx={{ display: "flex", gap: 1 }}>
+          {[1, 2, 3, "...", 40].map((page, index) => (
             <Button
               key={index}
               variant="outlined"
@@ -328,23 +341,6 @@ const BP = () => {
         </Box>
       </Box>
 
-      {/* Create Dialog */}
-      <Dialog 
-        open={createDialogOpen} 
-        onClose={() => setCreateDialogOpen(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>Create Binding Policy</DialogTitle>
-        <DialogContent>
-          {/* Add your create policy form here */}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained">Create</Button>
-        </DialogActions>
-      </Dialog>
-
       {/* Preview Dialog */}
       <Dialog
         open={previewDialogOpen}
@@ -354,19 +350,30 @@ const BP = () => {
       >
         <DialogTitle>Preview Matches</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mt: 2 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 2,
+              mt: 2,
+            }}
+          >
             <Box>
-              <Typography variant="h6" gutterBottom>Matched Clusters</Typography>
-              {getMatches().matchedClusters.map(cluster => (
+              <Typography variant="h6" gutterBottom>
+                Matched Clusters
+              </Typography>
+              {getMatches().matchedClusters.map((cluster) => (
                 <Paper key={cluster.name} sx={{ p: 2, mb: 1 }}>
                   <Typography variant="subtitle1">{cluster.name}</Typography>
-                  <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 1 }}>
+                  <Box
+                    sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mt: 1 }}
+                  >
                     {Object.entries(cluster.labels).map(([key, value]) => (
                       <Chip
                         key={key}
                         label={`${key}=${value}`}
                         size="small"
-                        sx={{ backgroundColor: '#e3f2fd' }}
+                        sx={{ backgroundColor: "#e3f2fd" }}
                       />
                     ))}
                   </Box>
@@ -374,17 +381,21 @@ const BP = () => {
               ))}
             </Box>
             <Box>
-              <Typography variant="h6" gutterBottom>Matched Workloads</Typography>
-              {getMatches().matchedWorkloads.map(workload => (
+              <Typography variant="h6" gutterBottom>
+                Matched Workloads
+              </Typography>
+              {getMatches().matchedWorkloads.map((workload) => (
                 <Paper key={workload.name} sx={{ p: 2, mb: 1 }}>
                   <Typography variant="subtitle1">{workload.name}</Typography>
-                  <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 1 }}>
+                  <Box
+                    sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mt: 1 }}
+                  >
                     {Object.entries(workload.labels).map(([key, value]) => (
                       <Chip
                         key={key}
                         label={`${key}=${value}`}
                         size="small"
-                        sx={{ backgroundColor: '#e3f2fd' }}
+                        sx={{ backgroundColor: "#e3f2fd" }}
                       />
                     ))}
                   </Box>
@@ -395,6 +406,26 @@ const BP = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setPreviewDialogOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+      >
+        <DialogTitle>Delete Binding Policy</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete the binding policy "
+            {selectedPolicy?.name}"? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={confirmDelete}>
+            Delete
+          </Button>
         </DialogActions>
       </Dialog>
     </Paper>
