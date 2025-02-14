@@ -36,8 +36,7 @@ const CreateCluster = () => {
       flexDirection="column"
       alignItems="center"
       justifyContent="center"
-      height="100vh"
-      bgcolor="#E0F2F1"
+      height="60vh"
     >
       <Card sx={{ width: 600, p: 2, boxShadow: 3, borderRadius: 2 }}>
         <Typography variant="h5" fontWeight="bold" sx={{ mb: 2 }}>
