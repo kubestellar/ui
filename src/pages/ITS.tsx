@@ -25,21 +25,25 @@ const ITS = () => {
     setLoading(true);
     try {
       const response = await api.get("/api/clusters", { params: { page } });
-      console.log("itsData:", response);
+      console.log("API Response:", response.data);
 
-      // Convert regular clusters to managed cluster format if itsData is null
       let managedClusters: ManagedClusterInfo[] = [];
 
       if (response.data.itsData === null && response.data.contexts) {
-        managedClusters = response.data.contexts
-          .filter((ctx: ContextInfo) => ctx.name.endsWith("-kubeflex"))
-          .map((ctx: ContextInfo) => ({
-            name: ctx.name,
-            labels: { type: "local", provider: "kind" },
-            creationTime: new Date().toISOString(),
-            status: "Active",
-            context: ctx.name,
-          }));
+        managedClusters = response.data.contexts.map((ctx: ContextInfo) => ({
+          name: ctx.name,
+          labels: {
+            type: "local",
+            provider: ctx.name.startsWith("kind-")
+              ? "kind"
+              : ctx.name.startsWith("minikube")
+              ? "minikube"
+              : "unknown",
+          },
+          creationTime: new Date().toISOString(),
+          status: "Active",
+          context: ctx.name,
+        }));
       } else {
         managedClusters = response.data.itsData || [];
       }
