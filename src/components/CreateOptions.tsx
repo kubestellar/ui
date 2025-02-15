@@ -40,75 +40,82 @@ const CreateOptions = ({
   // using option2 two sending to backend 
   const handleFileUpload = async () => {
     if (!selectedFile) {
-      alert("Please select a file first.");
-      return;
+        console.error("No file selected.");
+        return;
     }
-  
+
     const formData = new FormData();
-    formData.append("file", selectedFile);
-    
+    formData.append("wds", selectedFile);
+
+    console.log("📤 Sending FormData:", formData.get("wds"));
+
     try {
-      const response = await fetch("http://localhost:4000/api/wds/create", {
-        method: "POST",
-        body: formData, // Don't set 'Content-Type', browser will do it
-      });
-  
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to upload file: ${errorText}`);
-      }
-  
-      alert("File uploaded successfully!");
+        const response = await fetch("http://localhost:4000/api/wds/create", {
+            method: "POST",
+            body: formData, 
+        });
+
+        const data = await response.json();
+        console.log("✅ Upload Response:", data);
+
+        if (response.ok) { 
+            alert("Deploy Successfully");
+
+            // ✅ Refresh page after successful deployment
+            window.location.reload(); 
+        } else {
+            alert(`Deployment failed: ${data.message || "Unknown error"}`);
+        }
+
     } catch (error) {
-      console.error("Error uploading file:", error);
-      // alert(error.message);
+        console.error("❌ Upload Error:", error);
+        alert("Upload failed.");
     }
-  };
-  
 
-
+    setSelectedFile(null);
+    setActiveOption("null");
+  }
 
   // using option1 two sending to backend 
-  const handleRawUpload = async () => {
-    const fileContent = editorContent.trim();
-    if (!fileContent) {
-      alert("Please enter YAML or JSON content.");
-      return;
-    }
+  // const handleRawUpload = async () => {
+  //   const fileContent = editorContent.trim();
+  //   if (!fileContent) {
+  //     alert("Please enter YAML or JSON content.");
+  //     return;
+  //   }
   
-    // Validate JSON if the selected format is JSON
-    if (fileType === "json") {
-      try {
-        JSON.parse(fileContent); // This will throw an error if invalid
-      } catch (error) {
-        alert("Invalid JSON format. Please fix the errors and try again.");
-        console.log(error);
-        return;
-      }
-    }
+  //   if (fileType === "json") {
+  //     try {
+  //       JSON.parse(fileContent); 
+  //     } catch (error) {
+  //       alert("Invalid JSON format.");
+  //       return;
+  //     }
+  //   }
   
-    try {
-      const response = await fetch("http://localhost:4000/api/wds/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": fileType === "json" ? "application/json" : "text/yaml",
-        },
-        body: fileContent, // Send raw text instead of FormData
-      });
+  //   try {
+  //     const response = await fetch("http://localhost:4000/api/wds/create", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": fileType === "json" ? "application/json" : "application/x-yaml",
+  //       },
+  //       body: JSON.stringify({
+  //         content: fileContent,
+  //         namespace: formData.namespace, // Pass namespace here
+  //       }),
+  //     });
   
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.message || "Upload failed");
-      }
+  //     if (!response.ok) {
+  //       const errorText = await response.text();
+  //       throw new Error(`Upload failed: ${errorText}`);
+  //     }
   
-      alert("Upload successful!");
-    } catch (error) {
-      console.error("Error uploading YAML/JSON:", error);
-      alert("Upload failed. Check the console for details.");
-    }
-  };
-  
-  
+  //     alert("Upload successful!");
+  //   } catch (error) {
+  //     console.error("Error uploading YAML/JSON:", error);
+  //     alert("Upload failed.");
+  //   }
+  // };
   
 
   const handleCancel = () => {
@@ -178,7 +185,7 @@ const CreateOptions = ({
           <div className="flex gap-6 mt-8">
             <button 
             className="h-10 px-4 bg-gray-600 text-gray-400 hover:text-gray-100 hover:bg-green-600 rounded"
-            onClick={handleRawUpload} // Call the function
+            // onClick={handleRawUpload} // Call the function
           >
             Upload
           </button>
