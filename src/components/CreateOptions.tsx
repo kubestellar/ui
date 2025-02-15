@@ -71,6 +71,8 @@ const CreateOptions = ({
       });
 
       const data = await response.json();
+      console.log(data);
+      
       if (response.ok) {
         alert("Deploy Successfully");
         window.location.reload();
@@ -108,6 +110,7 @@ const CreateOptions = ({
         return;
       }
     } catch (error) {
+      console.log(error);
       setError("Invalid JSON/YAML format.");
       return;
     }
@@ -128,6 +131,8 @@ const CreateOptions = ({
 
       if (!response.ok) {
         const errorText = await response.text();
+        console.log(errorText);
+        
         // throw new Error(Upload failed: ${errorText});
       }
 

@@ -31,6 +31,10 @@ const WDS = () => {
   const [pendingCancel, setPendingCancel] = useState<(() => void) | null>(null);
   const navigate = useNavigate();
 
+  console.log(loading);
+  console.log(error);
+  
+
   const fetchWDSData = useCallback(async () => {
     setLoading(true);
     try {

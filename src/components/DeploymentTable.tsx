@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogTitle,
@@ -20,9 +19,6 @@ import {
   Box,
   Typography,
   Paper,
-  // Select,
-  // FormControl,
-  // InputLabel,
 } from "@mui/material";
 
 import { FaCircle } from "react-icons/fa";
@@ -42,6 +38,24 @@ interface Workload {
   label: string;
   replicas: number;
 }
+
+interface DeploymentConfig {
+  metadata: {
+    namespace: string;
+    name: string;
+  };
+  spec: {
+    replicas?: number;
+    template: {
+      spec: {
+        containers: {
+          image: string;
+        }[];
+      };
+    };
+  };
+}
+
 
 interface Props {
   title: string;
@@ -127,7 +141,7 @@ spec:
         return;
       }
 
-      const parsedYaml = yaml.load(yamlData) as any;
+      const parsedYaml = yaml.load(yamlData) as DeploymentConfig;
       const updatedDeployment = {
         namespace: parsedYaml.metadata.namespace,
         name: parsedYaml.metadata.name,
@@ -135,7 +149,7 @@ spec:
         replicas: parsedYaml.spec.replicas || 1,
       };
 
-      const response = await axios.put(
+      await axios.put(
         "http://localhost:4000/api/wds/update",
         updatedDeployment,
         { headers: { "Content-Type": "application/json" } }
@@ -144,9 +158,8 @@ spec:
       alert(`✅ Deployment "${updatedDeployment.name}" updated successfully!`);
       setSelectedWorkload((prev) => (prev ? { ...prev, replicas: updatedDeployment.replicas } : null));
       setEditYaml(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error updating deployment:", error);
-      setError(error.response?.data?.message || "Failed to update deployment.");
     }
   };
 
@@ -182,7 +195,7 @@ spec:
         replicas: desiredReplicas,
       };
 
-      const response = await axios.put(
+      await axios.put(
         "http://localhost:4000/api/wds/update",
         scaleUpdate,
         { headers: { "Content-Type": "application/json" } }
@@ -208,7 +221,7 @@ spec:
     if (!selectedWorkload) return;
 
     try {
-      const response = await axios.delete("http://localhost:4000/api/wds/delete", {
+        await axios.delete("http://localhost:4000/api/wds/delete", {
         data: {
           name: selectedWorkload.name,
           namespace: selectedWorkload.namespace,
