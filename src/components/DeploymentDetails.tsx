@@ -1,8 +1,21 @@
 import { useEffect, useState } from "react";
-import { FiChevronDown, FiChevronUp } from "react-icons/fi";
+import {
+  Box,
+  Typography,
+  IconButton,
+  Paper,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  Collapse,
+  Alert,
+  CircularProgress,
+} from "@mui/material";
+import { FiChevronDown, FiChevronUp, FiX } from "react-icons/fi";
 import { api } from "../lib/api";
-import { FiX } from "react-icons/fi"; // Import close (X) icon
-
+import { useParams, useNavigate } from "react-router-dom";
 
 interface DeploymentInfo {
   name: string;
@@ -47,16 +60,12 @@ interface EventInfo {
   lastTimestamp: string;
 }
 
-interface Props {
-  deploymentName: string;
-  namespace: string;
-  onClose: () => void;
-}
-
-const DeploymentDetails = ({ deploymentName, namespace, onClose }: Props) => {
+const DeploymentDetails = () => {
+  const { namespace, deploymentName } = useParams();
   const [deployment, setDeployment] = useState<DeploymentInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchDeploymentData = async () => {
@@ -104,103 +113,128 @@ const DeploymentDetails = ({ deploymentName, namespace, onClose }: Props) => {
     fetchDeploymentData();
   }, [deploymentName, namespace]);
 
-  if (loading) return <p className="text-center">Loading deployment details...</p>;
-  if (error) return <p className="text-center text-red-600">{error}</p>;
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <Alert severity="error">{error}</Alert>
+      </Box>
+    );
+  }
 
   return (
-    <div className="mt-6 bg-gray-800 p-6 rounded-2xl text-white">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl">Deployemnt Details: {deployment?.name}</h2>
-        <button className="text-red-500 bg-gray-800 p-2  rounded-full border border-transparent hover:border-red-500 text-xl" onClick={onClose}>
+    <Paper elevation={3} sx={{ p: 3, bgcolor: "background.paper", borderRadius: 2 }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h4" fontWeight="bold">
+          Deployment Details: {deployment?.name}
+        </Typography>
+        <IconButton onClick={() => navigate(-1)} sx={{ color: "error.main" }}>
           <FiX />
-        </button>      
-        </div>
+        </IconButton>
+      </Box>
 
-      <div className="mt-4 space-y-3">
-        <Table title="Metadata" headers={["Name", "Namespace", "Created At", "Age", "UID"]} rows={[
+      <Box display="flex" flexDirection="column" gap={3}>
+        <DetailsTable title="Metadata" headers={["Name", "Namespace", "Created At", "Age", "UID"]} rows={[
           [deployment?.name, deployment?.namespace, deployment?.createdAt, deployment?.age, deployment?.uid]
         ]} />
 
-        <Table title="Resource Information" headers={["Strategy", "Min Ready Seconds", "Revision History Limit"]} rows={[
+        <DetailsTable title="Resource Information" headers={["Strategy", "Min Ready Seconds", "Revision History Limit"]} rows={[
           [deployment?.resourceInfo?.strategy, deployment?.resourceInfo?.minReadySeconds, deployment?.resourceInfo?.revisionHistoryLimit]
         ]} />
 
-        <Table title="Rolling Update Strategy" headers={["Max Surge", "Max Unavailable"]} rows={[
+        <DetailsTable title="Rolling Update Strategy" headers={["Max Surge", "Max Unavailable"]} rows={[
           [deployment?.rollingUpdateStrategy?.maxSurge || "N/A", deployment?.rollingUpdateStrategy?.maxUnavailable || "N/A"]
         ]} />
 
-        <Table title="Pod Status" headers={["Updated", "Available", "Total"]} rows={[
+        <DetailsTable title="Pod Status" headers={["Updated", "Available", "Total"]} rows={[
           [deployment?.updatedReplicas, deployment?.availableReplicas, deployment?.replicas]
         ]} />
 
-        <Table title="Conditions" headers={["Type", "Status", "Reason", "Message"]} rows={
+        <DetailsTable title="Conditions" headers={["Type", "Status", "Reason", "Message"]} rows={
           deployment?.conditions?.map(cond => [cond.type, cond.status, cond.reason, cond.message]) || []
         } />
 
-        <Table title="Container Images" headers={["Image"]} rows={
+        <DetailsTable title="Container Images" headers={["Image"]} rows={
           deployment?.containerImages?.map(img => [img]) || []
         } />
 
-        <Table title="New Replica Set" headers={["Name", "Namespace", "Age", "Pods", "Labels", "Images"]} rows={[
+        <DetailsTable title="New Replica Set" headers={["Name", "Namespace", "Age", "Pods", "Labels", "Images"]} rows={[
           [deployment?.newReplicaSet?.name, deployment?.newReplicaSet?.namespace, deployment?.newReplicaSet?.age, deployment?.newReplicaSet?.pods, deployment?.newReplicaSet?.labels, deployment?.newReplicaSet?.images?.join(", ")]
         ]} />
-        <Table title="Old Replica Set" headers={["Name", "Namespace", "Age", "Pods", "Labels", "Images"]} rows={[
+
+        <DetailsTable title="Old Replica Set" headers={["Name", "Namespace", "Age", "Pods", "Labels", "Images"]} rows={[
           [deployment?.oldReplicaSet?.name, deployment?.oldReplicaSet?.namespace, deployment?.oldReplicaSet?.age, deployment?.oldReplicaSet?.pods, deployment?.oldReplicaSet?.labels, deployment?.oldReplicaSet?.images?.join(", ")]
         ]} />
 
-        <Table title="Events" headers={["Type", "Reason", "Message", "Count", "First Timestamp", "Last Timestamp"]} rows={
+        <DetailsTable title="Events" headers={["Type", "Reason", "Message", "Count", "First Timestamp", "Last Timestamp"]} rows={
           deployment?.events?.map(event => [event.type, event.reason, event.message, event.count, event.firstTimestamp, event.lastTimestamp]) || []
         } />
-      </div>
-    </div>
+      </Box>
+    </Paper>
   );
 };
 
+interface DetailsTableProps {
+  title: string;
+  headers: string[];
+  rows: (string | number | React.ReactNode)[][];
+}
 
-
-
-
-const Table = ({ title, headers, rows }: { title: string; headers: string[]; rows: (string | number | React.ReactNode)[][] }) => {
+const DetailsTable = ({ title, headers, rows }: DetailsTableProps) => {
   const [showDetails, setShowDetails] = useState(true);
+
   return (
-    <div className={`p-4 ${showDetails ? "bg-gray-900" : "bg-gray-800"} rounded-lg`}>
-      <div className="flex justify-between items-center">
-        <h3 className="text-2xl">{title}</h3>
-        <button className={`${showDetails ? "bg-gray-900" : "bg-gray-800"} p-2 rounded-full hover:border hover:border-white`} onClick={() => setShowDetails(!showDetails)}>
+    <Paper elevation={1} sx={{ p: 2, bgcolor: "#f0f0f0", borderRadius: 2 }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h6" fontWeight="bold">
+          {title}
+        </Typography>
+        <IconButton onClick={() => setShowDetails(!showDetails)}>
           {showDetails ? <FiChevronUp /> : <FiChevronDown />}
-        </button>
-      </div>
-      {showDetails && (
-        <div className="max-h-80 overflow-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-gray-900 text-lg text-gray-400 h-16">
-                {headers.map((header, idx) => (
-                  <td key={idx} className="border-b border-gray-900">{header}</td>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.length > 0 ? (
-                rows.map((row, rowIndex) => (
-                  <tr key={rowIndex} className="h-14">
-                    {row.map((cell, cellIndex) => (
-                      <td key={cellIndex} className="text-lg text-left border-b border-gray-900">{cell || "-"}</td>
-                    ))}
-                  </tr>
-                ))
-              ) : (
-                <tr className="h-14">
-                  <td colSpan={headers.length} className="p-4 text-center">No data available</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
+        </IconButton>
+      </Box>
+
+      <Collapse in={showDetails}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              {headers.map((header, idx) => (
+                <TableCell key={idx} sx={{ variant: "h6", fontWeight: "bold", color: "text.secondary", borderBottom: "none" }}>
+                  {header}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {rows.length > 0 ? (
+              rows.map((row, rowIndex) => (
+                <TableRow key={rowIndex}>
+                  {row.map((cell, cellIndex) => (
+                    <TableCell key={cellIndex} sx={{ borderBottom: "none" }}>
+                      {cell || "-"}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={headers.length} align="center" sx={{ borderBottom: "none" }}>
+                  No data available
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </Collapse>
+    </Paper>
   );
 };
-
 
 export default DeploymentDetails;

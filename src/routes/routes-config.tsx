@@ -7,6 +7,7 @@ import KubeconfigOnboarding from "../pages/KubeconfigOnboarding"; // Ensure that
 import WDS from "../pages/WDS";
 import BP from "../pages/BP";
 import NotFoundPage from "../pages/NotFoundPage";
+import DeploymentDetails from "../components/DeploymentDetails";
 // import ShowLogs from "../components/Logs";
 
 export const routesConfig: RouteObject[] = [
@@ -20,7 +21,9 @@ export const routesConfig: RouteObject[] = [
       { path: "kubeconfigOnboarding", element: <KubeconfigOnboarding /> },
       { path: "wds", element: <WDS /> },
       { path: "bp", element: <BP /> },
+      { path: "deploymentdetails/:namespace/:deploymentName", element: <DeploymentDetails /> },
       { path: "*", element: <NotFoundPage /> },
+      // {path: "logs/:deployment/:namespace", element: <ShowLogs />} // TODO: remove it in future after deployment details page
       // {path: "logs/:deployment/:namespace", element: <ShowLogs />} // TODO: remove it in future after deployment details page
     ],
   },

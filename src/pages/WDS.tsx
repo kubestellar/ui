@@ -3,7 +3,10 @@ import { api } from "../lib/api";
 import CreateOptions from "../components/CreateOptions";
 import DeploymentTable from "../components/DeploymentTable";
 import PieChartDisplay from "../components/PieChartDisplay";
-import DeploymentDetails from "../components/DeploymentDetails";
+import { Box, Button } from "@mui/material";
+import { Plus } from "lucide-react";
+import { Grid, Card, CardContent, Typography } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
 export interface Workload {
   name: string;
@@ -15,20 +18,22 @@ export interface Workload {
   replicas: number;
 }
 
-
 const COLORS = ["#28A745"];
 
 const WDS = () => {
   const [workloads, setWorkloads] = useState<Workload[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState<string | null>(null);
   const [showCreateOptions, setShowCreateOptions] = useState(false);
   const [activeOption, setActiveOption] = useState<string | null>("option1");
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [selectedDeployment, setSelectedDeployment] = useState<Workload | null>(null);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const [pendingCancel, setPendingCancel] = useState<(() => void) | null>(null);
+  const navigate = useNavigate();
+
+  console.log(loading);
+  console.log(error);
+  
 
   const fetchWDSData = useCallback(async () => {
     setLoading(true);
@@ -47,19 +52,13 @@ const WDS = () => {
       setLoading(false);
     }
   }, []);
-  
-  console.log(loading);
-  console.log(error);
-  
+
   useEffect(() => {
     fetchWDSData();
   }, [fetchWDSData]);
 
-  // Filter only deployments
   const deployments = workloads.filter((workload) => workload.kind === "Deployment");
 
-  
-  // Group workloads by kind and count them
   const workloadCounts = workloads.reduce((acc, workload) => {
     acc[workload.kind] = (acc[workload.kind] || 0) + 1;
     return acc;
@@ -74,22 +73,27 @@ const WDS = () => {
     }
   };
 
+  const handleDeploymentClick = (workload: Workload | null) => {
+    if (workload) {
+      navigate(`/deploymentdetails/${workload.namespace}/${workload.name}`);
+    }
+  };
+  
+
   return (
     <div className="w-full max-w-7xl mx-auto p-4 text-white">
-      <h1 className="text-2xl font-bold mb-6">WDS Workloads ({workloads.length})</h1>
+      <h1 className="text-2xl text-black font-bold mb-6">WDS Workloads ({workloads.length})</h1>
 
-      {/* Create Workload Button */}
-      <button
-        className="mb-4 px-4 py-2 bg-blue-500 rounded text-white"
-        onClick={() => {
-          setActiveOption("option1");
-          setShowCreateOptions(true);
-        }}
-      >
-        Create Workload
-      </button>
+      <Box sx={{ display: "flex", gap: 1 }}>
+        <Button
+          variant="outlined"
+          startIcon={<Plus size={20} />}
+          onClick={() => { setShowCreateOptions(true); setActiveOption("option1"); }}
+        >
+          Create Workload
+        </Button>
+      </Box>
 
-      {/* Create Options */}
       {showCreateOptions && (
         <CreateOptions
           activeOption={activeOption}
@@ -99,7 +103,6 @@ const WDS = () => {
         />
       )}
 
-      {/* Unsaved Changes Modal */}
       {showUnsavedModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-gray-800 p-6 rounded-lg shadow-lg w-7xl">
@@ -127,34 +130,30 @@ const WDS = () => {
         </div>
       )}
 
-      {/* Workload Status */}
-      <section className="mt-12">
+      <Box sx={{ mt: 6, mb: 6 }}>
         {Object.keys(workloadCounts).length > 0 && (
-          <div className="bg-gray-800 rounded-lg p-6">
-            <h2 className="text-xl font-bold mb-4">Workload Status</h2>
-            <div className="flex justify-around items-center">
-              {Object.entries(workloadCounts).map(([kind, count], index) => (
-                <PieChartDisplay key={index} workload={{ kind, count }} color={COLORS[0]} />
-              ))}
-            </div>
-          </div>
+          <Card sx={{ p: 4, boxShadow: 3 }}>
+            <CardContent>
+              <Typography variant="h5" fontWeight="bold" color="text.primary" mb={2}>
+                Workload Status
+              </Typography>
+              <Grid container spacing={65} justifyContent="center">
+                {Object.entries(workloadCounts).map(([kind, count], index) => (
+                  <Grid item key={index}>
+                    <PieChartDisplay workload={{ kind, count }} color={COLORS[index % COLORS.length]} />
+                  </Grid>
+                ))}
+              </Grid>
+            </CardContent>
+          </Card>
         )}
-      </section>
+      </Box>
 
-      {/* Deployment Table */}
-      {selectedDeployment ? (
-        <DeploymentDetails
-          deploymentName={selectedDeployment.name}
-          namespace={selectedDeployment.namespace}
-          onClose={() => setSelectedDeployment(null)}
-        />
-      ) : (
-        <DeploymentTable
-          title="Deployments"
-          workloads={deployments}
-          setSelectedDeployment={setSelectedDeployment}
-        />
-      )}
+      <DeploymentTable
+        title="Deployments"
+        workloads={deployments}
+        setSelectedDeployment={handleDeploymentClick}
+      />
     </div>
   );
 };

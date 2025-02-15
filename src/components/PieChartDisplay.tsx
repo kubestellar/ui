@@ -16,8 +16,8 @@ const PieChartDisplay = ({ workload, color }: Props) => {
         </Pie>
         <Tooltip />
       </PieChart>
-      <p className="text-sm text-gray-300">Running : {workload.count}</p>
-      <p className="text-md mt-2 font-semibold">{workload.kind}</p>
+      <p className="text-sm text-black">Running : {workload.count}</p>
+      <p className="text-md text-black mt-2 font-semibold">{workload.kind}</p>
     </div>
   );
 };
