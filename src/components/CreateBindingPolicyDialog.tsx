@@ -32,8 +32,46 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   onClose,
   onCreatePolicy,
 }) => {
+  const defaultYamlTemplate = `apiVersion: control.kubestellar.io/v1alpha1
+kind: BindingPolicy
+metadata:
+  name: example-binding-policy
+  namespace: kubestellar
+spec:
+  # Selects the workload to bind
+  subject:
+    kind: Application
+    apiGroup: app.kubestellar.io
+    name: my-app
+    namespace: default
+  # Defines where the workload should be bound
+  placement:
+    # Matches clusters by label
+    clusterSelector:
+      matchLabels:
+        environment: production
+        region: us-east
+    # Defines clusters explicitly
+    staticPlacement:
+      clusterNames:
+        - cluster-a
+        - cluster-b
+  # Defines how the binding should behave
+  bindingMode: Propagate
+  # Optional: Define resource overrides for specific clusters
+  overrides:
+    - clusterName: cluster-a
+      patch:
+        spec:
+          replicas: 3
+    - clusterName: cluster-b
+      patch:
+        spec:
+          replicas: 5`;
+
   const [activeTab, setActiveTab] = useState<string>("yaml");
-  const [editorContent, setEditorContent] = useState<string>("");
+  const [editorContent, setEditorContent] =
+    useState<string>(defaultYamlTemplate);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileContent, setFileContent] = useState<string>("");
   const [policyName, setPolicyName] = useState<string>("");
@@ -42,7 +80,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   const handleTabChange = (_event: React.SyntheticEvent, value: string) => {
     setActiveTab(value);
     if (value === "yaml" && !editorContent) {
-      setEditorContent("");
+      setEditorContent(defaultYamlTemplate);
     }
   };
 
@@ -157,12 +195,12 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                           component="span"
                           color="primary"
                         >
-                          Choose YAML or JSON file
+                          Choose YAML file
                         </Button>
                         <input
                           type="file"
                           className="hidden"
-                          accept=".yaml,.yml,.json"
+                          accept=".yaml,.yml"
                           onChange={handleFileChange}
                         />
                       </label>
