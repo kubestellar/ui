@@ -2,7 +2,6 @@ package deployment
 
 /*
 ----- This are the things are present in this file -----
-* getClientSetKubeConfig - help you to setup your kubeconfig file
 * CreateDeployment - create deployment
 * UpdateDeployment - update deployment
 * DeleteDeployment - delete deployment
@@ -23,12 +22,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	FetchYaml "github.com/katamyra/kubestellarUI/github"
+	"github.com/katamyra/kubestellarUI/wds"
 	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/retry"
 )
 
@@ -71,51 +69,6 @@ type Deployment struct {
 }
 
 /*
-Load the KubeConfig file and return the kubernetes clientset which gives you access to play with the k8s api
-*/
-func getClientSetKubeConfig() (*kubernetes.Clientset, error) {
-	kubeconfig := os.Getenv("KUBECONFIG")
-	if kubeconfig == "" {
-		if home := homeDir(); home != "" {
-			kubeconfig = fmt.Sprintf("%s/.kube/config", home)
-		}
-	}
-
-	// Load the kubeconfig file
-	config, err := clientcmd.LoadFromFile(kubeconfig)
-	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load kubeconfig"})
-		return nil, fmt.Errorf("failed to load kubeconfig")
-	}
-
-	// Use WDS1 context specifically
-	ctxContext := config.Contexts["wds1"]
-	if ctxContext == nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create ctxConfig"})
-		return nil, fmt.Errorf("failed to create ctxConfig")
-	}
-
-	// Create config for WDS cluster
-	clientConfig := clientcmd.NewDefaultClientConfig(
-		*config,
-		&clientcmd.ConfigOverrides{
-			CurrentContext: "wds1",
-		},
-	)
-
-	restConfig, err := clientConfig.ClientConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create restconfig")
-	}
-
-	clientset, err := kubernetes.NewForConfig(restConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Kubernetes client")
-	}
-	return clientset, nil
-}
-
-/*
 CreateDeployment: Create deployment through the local deployment yaml file and also support with some limitation for the remote github url
 */
 func CreateDeployment(ctx *gin.Context) {
@@ -132,7 +85,7 @@ func CreateDeployment(ctx *gin.Context) {
 		}
 	}
 
-	clientset, err := getClientSetKubeConfig()
+	clientset, err := wds.GetClientSetKubeConfig()
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "failed to create Kubernetes clientset",
@@ -142,7 +95,7 @@ func CreateDeployment(ctx *gin.Context) {
 	}
 	var dat *Deployment
 	// upload the yaml configuration file and read their value
-	if len(params.Url) > 0 {
+	if params.Url != "" {
 		if !(len(params.Path) > 0 && len(params.Url) > 0 && strings.Contains(params.Url, "github")) {
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"message": "both path and github repo url are required",
@@ -160,21 +113,24 @@ func CreateDeployment(ctx *gin.Context) {
 		dat = (*Deployment)(content)
 	} else {
 		dat, err = uploadFile(ctx)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"message": "failed to upload",
+				"err":     err,
+			})
+			return
+		}
 	}
 
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": "failed to upload",
-			"err":     err,
-		})
+	replica := dat.Spec.Replicas
+	if replica == 0 {
+		replica = 1
+	}
+
+	if len(dat.Spec.Template.Spec.Containers) == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "No container specified in deployment YAML"})
 		return
 	}
-
-	replica := 1
-	if dat.Spec.Replicas&1 == 0 {
-		replica = dat.Spec.Replicas
-	}
-
 	// create the deployment object
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -229,6 +185,85 @@ func CreateDeployment(ctx *gin.Context) {
 	})
 }
 
+// user raw data - for editor
+func HandleCreateDeploymentJson(ctx *gin.Context) {
+	type ContainerPort struct {
+		ContainerPort int32 `json:"containerPort"`
+	}
+	type Container struct {
+		Name  string          `json:"name"`
+		Image string          `json:"image"`
+		Ports []ContainerPort `json:"ports"`
+	}
+
+	type Parameters struct {
+		Namespace string            `json:"namespace"`
+		Name      string            `json:"name"`
+		Replicas  int32             `json:"replicas"`
+		Labels    map[string]string `json:"labels"`
+		Container Container         `json:"container"`
+	}
+	params := Parameters{}
+	if err := ctx.ShouldBindJSON(&params); err != nil {
+		fmt.Println("hello1")
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	clientset, err := wds.GetClientSetKubeConfig()
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "failed to create Kubernetes clientset",
+			"err":     err,
+		})
+		return
+	}
+
+	deployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      params.Name,
+			Namespace: params.Namespace,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: int32Ptr(params.Replicas),
+			Selector: &metav1.LabelSelector{
+				MatchLabels: params.Labels,
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: params.Labels,
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  params.Container.Name,
+							Image: params.Container.Image,
+							Ports: []corev1.ContainerPort{
+								{
+									ContainerPort: params.Container.Ports[0].ContainerPort,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	_, err = clientset.AppsV1().Deployments(params.Namespace).Create(context.TODO(), deployment, metav1.CreateOptions{})
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "failed to create deployment",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, gin.H{
+		"message":    "Deployment created successfully!",
+		"deployment": deployment,
+	})
+}
+
 /*
 UpdateDeployment: This function is about updating the deployment
 */
@@ -250,7 +285,7 @@ func UpdateDeployment(ctx *gin.Context) {
 		return
 	}
 
-	clientset, err := getClientSetKubeConfig()
+	clientset, err := wds.GetClientSetKubeConfig()
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "Failed to create Kubernetes clientset",
@@ -321,7 +356,7 @@ func DeleteDeployment(ctx *gin.Context) {
 	if params.Namespace == "" {
 		params.Namespace = "default"
 	}
-	clientset, err := getClientSetKubeConfig()
+	clientset, err := wds.GetClientSetKubeConfig()
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "failed to create Kubernetes clientset",
@@ -404,14 +439,5 @@ func uploadFile(ctx *gin.Context) (*Deployment, error) {
 	if err := yaml.Unmarshal(yamlData, &deployment); err != nil {
 		return nil, fmt.Errorf("failed to parse YAML: %v", err)
 	}
-	log.Print(deployment)
-	// ctx.JSON(http.StatusOK, gin.H{
-	// 	"status":     "success",
-	// 	"name":       deployment.Metadata.Name,
-	// 	"replicas":   deployment.Spec.Replicas,
-	// 	"container":  deployment.Spec.Template.Spec.Containers[0].Name,
-	// 	"image":      deployment.Spec.Template.Spec.Containers[0].Image,
-	// 	"deployment": deployment,
-	// })
 	return &deployment, nil
 }

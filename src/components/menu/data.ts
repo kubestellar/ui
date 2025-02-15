@@ -33,6 +33,12 @@ export const menu = [
         url: '/createcluster',
         icon: HiOutlineCube,
         label: 'Onboard',
+      },
+      {
+        isLink: true,
+        url: '/kubeconfigOnboarding',
+        icon: HiOutlineCube,
+        label: 'Kubeconfig Onboard',
       }
     ],
   },

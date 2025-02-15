@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/katamyra/kubestellarUI/wds"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -33,7 +34,7 @@ func GetDeploymentByName(c *gin.Context) {
 		namespace = "default" // Use "default" namespace if not provided
 	}
 
-	clientset, err := getClientSetKubeConfig()
+	clientset, err := wds.GetClientSetKubeConfig()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "failed to create Kubernetes clientset",
