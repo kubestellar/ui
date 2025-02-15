@@ -34,12 +34,6 @@ export const menu = [
         icon: HiOutlineCube,
         label: 'Onboard',
       },
-      {
-        isLink: true,
-        url: '/kubeconfigOnboarding',
-        icon: HiOutlineCube,
-        label: 'Kubeconfig Onboard',
-      }
     ],
   },
 
