@@ -1,7 +1,26 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Badge, Button, Checkbox, FormControl, InputAdornment, InputLabel, MenuItem, Select, Table, TableContainer, TableHead, TableBody, TableRow, TableCell, TextField, Paper, SelectChangeEvent } from "@mui/material";
+import {
+  Badge,
+  Button,
+  Checkbox,
+  FormControl,
+  InputAdornment,
+  InputLabel,
+  MenuItem,
+  Select,
+  Table,
+  TableContainer,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  TextField,
+  Paper,
+  SelectChangeEvent,
+} from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import useTheme from "../hooks/useTheme";
 
 interface ManagedClusterInfo {
   name: string;
@@ -18,12 +37,19 @@ interface ClustersTableProps {
   onPageChange: (page: number) => void;
 }
 
-const ClustersTable: React.FC<ClustersTableProps> = ({ clusters, currentPage, totalPages, onPageChange }) => {
-    const [query, setQuery] = useState('');
-    const [filteredClusters, setFilteredClusters] = useState<ManagedClusterInfo[]>(clusters);
-    const [filter, setFilter] = useState<string>('');
+const ClustersTable: React.FC<ClustersTableProps> = ({
+  clusters,
+  currentPage,
+  totalPages,
+  onPageChange,
+}) => {
+  const [query, setQuery] = useState("");
+  const [filteredClusters, setFilteredClusters] =
+    useState<ManagedClusterInfo[]>(clusters);
+  const [filter, setFilter] = useState<string>("");
   const [selectAll, setSelectAll] = useState(false);
   const [selectedClusters, setSelectedClusters] = useState<string[]>([]);
+  const { theme } = useTheme();
 
   useEffect(() => {
     setFilteredClusters(clusters);
@@ -114,15 +140,51 @@ const ClustersTable: React.FC<ClustersTableProps> = ({ clusters, currentPage, to
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon />
+                <SearchIcon className={theme === "dark" ? "text-white" : ""} />
               </InputAdornment>
             ),
+          }}
+          InputLabelProps={{
+            style: {
+              color: theme === "dark" ? "white" : "inherit",
+            },
+          }}
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              "& input": {
+                color: theme === "dark" ? "white" : "inherit",
+              },
+              "& fieldset": {
+                borderColor: theme === "dark" ? "white" : "inherit",
+              },
+            },
           }}
         />
 
         <FormControl className="w-32">
-          <InputLabel>Filter</InputLabel>
-          <Select value={filter} label="Filter" onChange={handleFilterChange}>
+          <InputLabel
+            style={{
+              color: theme === "dark" ? "white" : "inherit",
+            }}
+          >
+            Filter
+          </InputLabel>
+          <Select
+            value={filter}
+            label="Filter"
+            onChange={handleFilterChange}
+            sx={{
+              "& .MuiSelect-select": {
+                color: theme === "dark" ? "white" : "inherit",
+              },
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: theme === "dark" ? "white" : "inherit",
+              },
+              "& .MuiSelect-icon": {
+                color: theme === "dark" ? "white" : "inherit",
+              },
+            }}
+          >
             <MenuItem value="">All</MenuItem>
             <MenuItem value="active">Active</MenuItem>
             <MenuItem value="inactive">Inactive</MenuItem>
@@ -209,11 +271,19 @@ const ClustersTable: React.FC<ClustersTableProps> = ({ clusters, currentPage, to
 
       {/* Pagination Controls */}
       <div className="flex justify-between items-center mt-4">
-                <Button disabled={currentPage === 1} onClick={() => onPageChange(currentPage - 1)}>
+        <Button
+          disabled={currentPage === 1}
+          onClick={() => onPageChange(currentPage - 1)}
+        >
           Previous
         </Button>
-                <span>Page {currentPage} of {totalPages}</span>
-                <Button disabled={currentPage === totalPages} onClick={() => onPageChange(currentPage + 1)}>
+        <span>
+          Page {currentPage} of {totalPages}
+        </span>
+        <Button
+          disabled={currentPage === totalPages}
+          onClick={() => onPageChange(currentPage + 1)}
+        >
           Next
         </Button>
       </div>
