@@ -24,6 +24,7 @@ export const routesConfig: RouteObject[] = [
       { path: "deploymentdetails/:namespace/:deploymentName", element: <DeploymentDetails /> },
       { path: "*", element: <NotFoundPage /> },
       // {path: "logs/:deployment/:namespace", element: <ShowLogs />} // TODO: remove it in future after deployment details page
+      // {path: "logs/:deployment/:namespace", element: <ShowLogs />} // TODO: remove it in future after deployment details page
     ],
   },
 ];

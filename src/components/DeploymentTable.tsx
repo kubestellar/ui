@@ -390,9 +390,9 @@ spec:
 
       {/* Logs Modal */}
       {selectedLog && (
-        <LogModal
-          namespace={selectedLog.namespace}
-          deploymentName={selectedLog.deployment}
+        <LogModal 
+          namespace={selectedLog.namespace} 
+          deploymentName={selectedLog.deployment} 
           onClose={() => setSelectedLog(null)}
         />
       )}

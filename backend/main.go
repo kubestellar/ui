@@ -15,6 +15,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/katamyra/kubestellarUI/api"
+	nsresources "github.com/katamyra/kubestellarUI/namespace/resources"
 	"github.com/katamyra/kubestellarUI/wds/deployment"
 	"github.com/katamyra/kubestellarUI/wds/resources"
 )
@@ -145,6 +146,13 @@ func main() {
 	router.GET("/api/services/:namespace/:name", resources.GetServiceByServiceName)
 	router.POST("/api/services/create", resources.CreateService)
 	router.DELETE("/api/services/delete", resources.DeleteService)
+
+	// NAMESPACES
+	router.GET("/api/namespaces", nsresources.GetAllNamespaces)
+	router.GET("/api/namespaces/:name", nsresources.GetNamespaceDetails)
+	router.POST("/api/namespaces/create", nsresources.CreateNamespace)
+	router.PUT("/api/namespaces/update/:name", nsresources.UpdateNamespace)
+	router.DELETE("/api/namespaces/delete/:name", nsresources.DeleteNamespace)
 
 	if err := router.Run(":4000"); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
