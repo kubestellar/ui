@@ -280,7 +280,7 @@ func UpdateDeployment(ctx *gin.Context) {
 		return
 	}
 
-	if params.Name == "" {	
+	if params.Name == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Enter the name of the deployment"})
 		return
 	}
@@ -341,7 +341,6 @@ func UpdateDeployment(ctx *gin.Context) {
 		"name":    params.Name,
 	})
 }
-
 
 func DeleteDeployment(ctx *gin.Context) {
 	type parameters struct {
