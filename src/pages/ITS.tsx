@@ -1,6 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
-import { api } from '../lib/api';
-import ClustersTable from '../components/ClustersTable';
+import { useState, useEffect, useCallback } from "react";
+import { api } from "../lib/api";
+import ClustersTable from "../components/ClustersTable";
+
+interface ContextInfo {
+  name: string;
+  cluster: string;
+}
 
 interface ManagedClusterInfo {
   name: string;
@@ -19,34 +24,49 @@ const ITS = () => {
   const handleFetchCluster = useCallback(async (page: number) => {
     setLoading(true);
     try {
-      const response = await api.get('/api/clusters', { params: { page } }); // Send page param
-      console.log('itsData:', response);
-      const itsData: ManagedClusterInfo[] = response.data.itsData || [];
+      const response = await api.get("/api/clusters", { params: { page } });
+      console.log("itsData:", response);
 
-      if (Array.isArray(itsData)) {
-        console.log('Setting clusters state:', itsData);
-        setClusters(itsData);
-        setTotalPages(response.data.totalPages || 1);
+      // Convert regular clusters to managed cluster format if itsData is null
+      let managedClusters: ManagedClusterInfo[] = [];
+
+      if (response.data.itsData === null && response.data.contexts) {
+        managedClusters = response.data.contexts
+          .filter((ctx: ContextInfo) => ctx.name.endsWith("-kubeflex"))
+          .map((ctx: ContextInfo) => ({
+            name: ctx.name,
+            labels: { type: "local", provider: "kind" },
+            creationTime: new Date().toISOString(),
+            status: "Active",
+            context: ctx.name,
+          }));
+      } else {
+        managedClusters = response.data.itsData || [];
       }
+
+      console.log("Setting clusters state:", managedClusters);
+      setClusters(managedClusters);
+      setTotalPages(response.data.totalPages || 1);
     } catch (error) {
-      console.error('Error fetching ITS information:', error);
+      console.error("Error fetching ITS information:", error);
     } finally {
       setLoading(false);
     }
   }, []);
 
-
   useEffect(() => {
     handleFetchCluster(1); // Default to page 1
   }, []);
 
-
-  if (loading) return <p className="text-center p-4">Loading ITS information...</p>;
+  if (loading)
+    return <p className="text-center p-4">Loading ITS information...</p>;
 
   return (
     <div>
       <div className="w-full max-w-7xl mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-6 text-center">Managed Clusters ({clusters.length})</h1>
+        <h1 className="text-2xl font-bold mb-6 text-center">
+          Managed Clusters ({clusters.length})
+        </h1>
         <ClustersTable
           clusters={clusters}
           currentPage={1} // ClustersTable will handle page state
