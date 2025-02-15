@@ -8,8 +8,6 @@ import (
 	ns "github.com/katamyra/kubestellarUI/namespace"
 )
 
-
-
 // createNamespace handles creating a new namespace
 func CreateNamespace(c *gin.Context) {
 	var namespace models.Namespace
