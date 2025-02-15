@@ -41,7 +41,7 @@ func main() {
 	// CORS Middleware
 	router.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
@@ -154,7 +154,9 @@ func main() {
 	router.PUT("/api/namespaces/update/:name", nsresources.UpdateNamespace)
 	router.DELETE("/api/namespaces/delete/:name", nsresources.DeleteNamespace)
 
-	router.Run(":4000")
+	if err := router.Run(":4000"); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
 }
 
 func getKubeInfo() ([]ContextInfo, []string, string, error, []ManagedClusterInfo) {
@@ -259,6 +261,7 @@ func getKubeInfo() ([]ContextInfo, []string, string, error, []ManagedClusterInfo
 	return contexts, clusters, currentContext, nil, managedClusters
 }
 
+// nolint:unused
 func getITSInfo() ([]ManagedClusterInfo, error) {
 	kubeconfig := os.Getenv("KUBECONFIG")
 	if kubeconfig == "" {

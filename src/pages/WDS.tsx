@@ -12,6 +12,7 @@ export interface Workload {
   creationTime: string;
   image: string;
   label: string;
+  replicas: number;
 }
 
 
@@ -159,4 +160,3 @@ const WDS = () => {
 };
 
 export default WDS;
-

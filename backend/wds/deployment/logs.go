@@ -38,13 +38,17 @@ func HandleDeploymentLogs(w http.ResponseWriter, r *http.Request) {
 	deploymentName := r.URL.Query().Get("deployment")
 
 	if namespace == "" || deploymentName == "" {
-		conn.WriteMessage(websocket.TextMessage, []byte("Error: Missing namespace or deployment name"))
+		if err := conn.WriteMessage(websocket.TextMessage, []byte("Error: Missing namespace or deployment name")); err != nil {
+			log.Printf("Failed to write message: %v", err)
+		}
 		return
 	}
 
 	clientset, err := wds.GetClientSetKubeConfig()
 	if err != nil {
-		conn.WriteMessage(websocket.TextMessage, []byte("Error: Failed to create Kubernetes clientset - "+err.Error()))
+		if err := conn.WriteMessage(websocket.TextMessage, []byte("Error: Failed to create Kubernetes clientset - "+err.Error())); err != nil {
+			log.Printf("Failed to send WebSocket message: %v", err)
+		}
 		return
 	}
 
@@ -56,7 +60,9 @@ func HandleDeploymentLogs(w http.ResponseWriter, r *http.Request) {
 func sendInitialLogs(conn *websocket.Conn, clientset *kubernetes.Clientset, namespace, deploymentName string) {
 	deployment, err := clientset.AppsV1().Deployments(namespace).Get(context.Background(), deploymentName, metav1.GetOptions{})
 	if err != nil {
-		conn.WriteMessage(websocket.TextMessage, []byte("Error: Failed to fetch deployment - "+err.Error()))
+		if err := conn.WriteMessage(websocket.TextMessage, []byte("Error: Failed to fetch deployment - "+err.Error())); err != nil {
+			log.Printf("Failed to send WebSocket message: %v", err)
+		}
 		return
 	}
 
@@ -79,7 +85,9 @@ func watchDeploymentChanges(conn *websocket.Conn, clientset *kubernetes.Clientse
 	}
 	watcher, err := clientset.AppsV1().Deployments(namespace).Watch(context.Background(), options)
 	if err != nil {
-		conn.WriteMessage(websocket.TextMessage, []byte("Error: Failed to watch deployment - "+err.Error()))
+		if err := conn.WriteMessage(websocket.TextMessage, []byte("Error: Failed to watch deployment - "+err.Error())); err != nil {
+			log.Printf("Failed to send WebSocket message: %v", err)
+		}
 		return
 	}
 
@@ -97,6 +105,7 @@ func watchDeploymentChanges(conn *websocket.Conn, clientset *kubernetes.Clientse
 
 		var logs []DeploymentUpdate
 		message := fmt.Sprintf("Deployment %s changed: %s", deployment.Name, event.Type)
+		log.Println(message)
 
 		if lastReplicas == nil || *lastReplicas != *deployment.Spec.Replicas {
 			message = fmt.Sprintf("Deployment %s updated - Replicas changed: %d", deployment.Name, *deployment.Spec.Replicas)
@@ -138,22 +147,23 @@ func getDeploymentLogs(deployment *v1.Deployment) []string {
 	}
 
 	logs := []string{
-		fmt.Sprintf("[%s] INFO: Deployment workload %s initiated", baseTime, deployment.Name),
-		fmt.Sprintf("[%s] INFO: Workload created with replicas: %d, image: %s", baseTime, replicas, deployment.Spec.Template.Spec.Containers[0].Image),
-		fmt.Sprintf("[%s] INFO: Namespace %s successfully updated", baseTime, deployment.Namespace),
-		fmt.Sprintf("[%s] INFO: Available Replicas: %d", baseTime, deployment.Status.AvailableReplicas),
+		fmt.Sprintf("[%v] INFO: Deployment workload %v initiated ", baseTime, deployment.Name),
+		fmt.Sprintf("[%v] INFO: Workload created with replicas: %d, image: %v ", baseTime, replicas, deployment.Spec.Template.Spec.Containers[0].Image),
+		fmt.Sprintf("[%v] INFO: Namespace %v successfully updated  ", baseTime, deployment.Namespace),
+		fmt.Sprintf("[%v] INFO: Available Replicas: %d ", baseTime, deployment.Status.AvailableReplicas),
 	}
 
+	// Check if Conditions slice has elements before accessing it
 	if len(deployment.Status.Conditions) > 0 {
-		cond := deployment.Status.Conditions[0]
+		condition := deployment.Status.Conditions[0]
 		logs = append(logs,
-			fmt.Sprintf("[%s] INFO: Condition: %s", baseTime, cond.Type),
-			fmt.Sprintf("[%s] INFO: LastUpdateTime: %s", baseTime, cond.LastUpdateTime.Time),
-			fmt.Sprintf("[%s] INFO: LastTransitionTime: %s", baseTime, cond.LastTransitionTime.Time),
-			fmt.Sprintf("[%s] INFO: Message: %s", baseTime, cond.Message),
+			fmt.Sprintf("[%v] INFO: Conditions: %s ", baseTime, condition.Type),
+			fmt.Sprintf("[%v] INFO: LastUpdateTime : %s ", baseTime, condition.LastUpdateTime.Time),
+			fmt.Sprintf("[%v] INFO: LastTransitionTime : %s ", baseTime, condition.LastTransitionTime.Time),
+			fmt.Sprintf("[%v] INFO: Message: %s ", baseTime, condition.Message),
 		)
 	} else {
-		logs = append(logs, fmt.Sprintf("[%s] WARNING: No conditions found for deployment", baseTime))
+		logs = append(logs, fmt.Sprintf("[%v] INFO: No conditions available", baseTime))
 	}
 
 	return logs

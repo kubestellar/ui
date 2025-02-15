@@ -31,6 +31,7 @@ import (
 )
 
 func int32Ptr(i int32) *int32 { return &i }
+
 func homeDir() string {
 	if h := os.Getenv("HOME"); h != "" {
 		return h
@@ -280,46 +281,58 @@ func UpdateDeployment(ctx *gin.Context) {
 	}
 
 	if params.Name == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "enter name of the deployment"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Enter the name of the deployment"})
 		return
 	}
+
 	clientset, err := wds.GetClientSetKubeConfig()
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": "failed to create Kubernetes clientset",
-			"err":     err,
+			"message": "Failed to create Kubernetes clientset",
+			"error":   err.Error(),
 		})
 		return
 	}
 
+	// Set default namespace if none provided
 	if params.Namespace == "" {
 		params.Namespace = "default"
 	}
 
-	// get the deployment object
+	// Get the deployment object
 	deployment, err := clientset.AppsV1().Deployments(params.Namespace).Get(context.TODO(), params.Name, metav1.GetOptions{})
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": "failed to get deployment",
-			"error":   err.Error()})
+			"message": "Failed to get deployment",
+			"error":   err.Error(),
+		})
 		return
 	}
 
-	// update the deployment - we are currently changing only Image and Replicas
-	if params.Image != "" {
-		deployment.Spec.Template.Spec.Containers[0].Image = params.Image
+	// Ensure the container list is not empty before updating
+	if len(deployment.Spec.Template.Spec.Containers) > 0 {
+		if params.Image != "" {
+			deployment.Spec.Template.Spec.Containers[0].Image = params.Image
+		}
+	} else {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "No containers found in deployment"})
+		return
 	}
+
 	if params.Replicas != 0 {
 		deployment.Spec.Replicas = int32Ptr(params.Replicas)
 	}
+
+	// Fix: Use the correct namespace instead of "default"
 	retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		_, updateErr := clientset.AppsV1().Deployments("default").Update(context.TODO(), deployment, metav1.UpdateOptions{})
+		_, updateErr := clientset.AppsV1().Deployments(params.Namespace).Update(context.TODO(), deployment, metav1.UpdateOptions{})
 		return updateErr
 	})
 	if retryErr != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": "failed to update deployment",
-			"error":   retryErr})
+			"message": "Failed to update deployment",
+			"error":   retryErr.Error(),
+		})
 		return
 	}
 
