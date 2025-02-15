@@ -30,7 +30,7 @@ export const menu = [
       },
       {
         isLink: true,
-        url: '/createcluster',
+        url: '/onboardcluster',
         icon: HiOutlineCube,
         label: 'Onboard',
       },

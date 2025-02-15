@@ -2,13 +2,13 @@ import { RouteObject } from "react-router-dom";
 import Clusters from "../components/Clusters";
 import { Layout } from "../components/Layout";
 import ITS from "../pages/ITS";
-import CreateCluster from "../pages/CreateCluster";
 import KubeconfigOnboarding from "../pages/KubeconfigOnboarding"; // Ensure that the file exists at this path
 import WDS from "../pages/WDS";
 import BP from "../pages/BP";
 import NotFoundPage from "../pages/NotFoundPage";
 import DeploymentDetails from "../components/DeploymentDetails";
 // import ShowLogs from "../components/Logs";
+import OnboaringCluster from "../pages/OnboardingCluster";
 
 export const routesConfig: RouteObject[] = [
   {
@@ -17,7 +17,7 @@ export const routesConfig: RouteObject[] = [
     children: [
       { index: true, element: <Clusters /> },
       { path: "its", element: <ITS /> },
-      { path: "createCluster", element: <CreateCluster /> },
+      { path: "onboardCluster", element: <OnboaringCluster /> },
       { path: "kubeconfigOnboarding", element: <KubeconfigOnboarding /> },
       { path: "wds", element: <WDS /> },
       { path: "bp", element: <BP /> },

@@ -104,11 +104,11 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
     setFilter(event.target.value as string);
   };
 
-  const navigate = useNavigate();
-
-  const navigateToCreateCluster = () => {
-    navigate("/createcluster"); // Navigate to the page
-  };
+    const navigate = useNavigate();
+    
+    const navigateToCreateCluster = () => {
+            navigate("/onboardCluster"); // Navigate to the page
+          };
 
   const handleCheckboxChange = (clusterName: string) => {
     setSelectedClusters((prev) =>
@@ -192,13 +192,11 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
           </Select>
         </FormControl>
 
-        <div className="flex gap-2">
-          <Button variant="contained" onClick={navigateToCreateCluster}>
-            Create Cluster
-          </Button>
-          <Button variant="outlined">Import Cluster</Button>
-        </div>
-      </div>
+                <div className="flex gap-2">
+                    <Button variant="contained" >Create Cluster</Button>
+                    <Button variant="contained" onClick={navigateToCreateCluster}>Import Cluster</Button>
+                </div>
+            </div>
 
       {/* Table */}
       <TableContainer component={Paper} className="overflow-auto">
