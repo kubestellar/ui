@@ -27,6 +27,29 @@ interface CreateBindingPolicyDialogProps {
   onCreatePolicy: (policyData: PolicyData) => void;
 }
 
+// Add confirmation dialog
+const CancelConfirmationDialog: React.FC<{
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}> = ({ open, onClose, onConfirm }) => (
+  <Dialog open={open} onClose={onClose}>
+    <DialogTitle>Cancel Policy Creation</DialogTitle>
+    <DialogContent>
+      <Alert severity="warning">
+        <AlertTitle>Warning</AlertTitle>
+        Are you sure you want to cancel? All changes will be lost.
+      </Alert>
+    </DialogContent>
+    <DialogActions>
+      <Button onClick={onClose}>Continue Editing</Button>
+      <Button onClick={onConfirm} color="error" variant="contained">
+        Yes, Cancel
+      </Button>
+    </DialogActions>
+  </Dialog>
+);
+
 const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   open,
   onClose,
@@ -76,6 +99,7 @@ spec:
   const [fileContent, setFileContent] = useState<string>("");
   const [policyName, setPolicyName] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
 
   const handleTabChange = (_event: React.SyntheticEvent, value: string) => {
     setActiveTab(value);
@@ -136,9 +160,27 @@ spec:
     }
   };
 
+  const handleCancelClick = () => {
+    // Only show confirmation if there's content
+    if (
+      activeTab === "yaml"
+        ? editorContent !== defaultYamlTemplate
+        : fileContent || policyName
+    ) {
+      setShowCancelConfirmation(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const handleConfirmCancel = () => {
+    setShowCancelConfirmation(false);
+    onClose();
+  };
+
   return (
     <>
-      <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
+      <Dialog open={open} onClose={handleCancelClick} maxWidth="lg" fullWidth>
         <DialogTitle>Create Binding Policy</DialogTitle>
         <DialogContent>
           <div className="mb-6">
@@ -217,7 +259,7 @@ spec:
           </Box>
 
           <DialogActions>
-            <Button variant="outlined" onClick={onClose}>
+            <Button variant="outlined" onClick={handleCancelClick}>
               Cancel
             </Button>
             <Button
@@ -233,6 +275,12 @@ spec:
           </DialogActions>
         </DialogContent>
       </Dialog>
+
+      <CancelConfirmationDialog
+        open={showCancelConfirmation}
+        onClose={() => setShowCancelConfirmation(false)}
+        onConfirm={handleConfirmCancel}
+      />
 
       <Snackbar
         open={!!error}
