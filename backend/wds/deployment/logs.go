@@ -38,13 +38,17 @@ func HandleDeploymentLogs(w http.ResponseWriter, r *http.Request) {
 	deploymentName := r.URL.Query().Get("deployment")
 
 	if namespace == "" || deploymentName == "" {
-		conn.WriteMessage(websocket.TextMessage, []byte("Error: Missing namespace or deployment name"))
+		if err := conn.WriteMessage(websocket.TextMessage, []byte("Error: Missing namespace or deployment name")); err != nil {
+			log.Printf("Failed to write message: %v", err)
+		}
 		return
 	}
 
 	clientset, err := wds.GetClientSetKubeConfig()
 	if err != nil {
-		conn.WriteMessage(websocket.TextMessage, []byte("Error: Failed to create Kubernetes clientset - "+err.Error()))
+		if err := conn.WriteMessage(websocket.TextMessage, []byte("Error: Failed to create Kubernetes clientset - "+err.Error())); err != nil {
+			log.Printf("Failed to send WebSocket message: %v", err)
+		}
 		return
 	}
 
@@ -56,7 +60,9 @@ func HandleDeploymentLogs(w http.ResponseWriter, r *http.Request) {
 func sendInitialLogs(conn *websocket.Conn, clientset *kubernetes.Clientset, namespace, deploymentName string) {
 	deployment, err := clientset.AppsV1().Deployments(namespace).Get(context.Background(), deploymentName, metav1.GetOptions{})
 	if err != nil {
-		conn.WriteMessage(websocket.TextMessage, []byte("Error: Failed to fetch deployment - "+err.Error()))
+		if err := conn.WriteMessage(websocket.TextMessage, []byte("Error: Failed to fetch deployment - "+err.Error())); err != nil {
+			log.Printf("Failed to send WebSocket message: %v", err)
+		}
 		return
 	}
 
@@ -79,7 +85,9 @@ func watchDeploymentChanges(conn *websocket.Conn, clientset *kubernetes.Clientse
 	}
 	watcher, err := clientset.AppsV1().Deployments(namespace).Watch(context.Background(), options)
 	if err != nil {
-		conn.WriteMessage(websocket.TextMessage, []byte("Error: Failed to watch deployment - "+err.Error()))
+		if err := conn.WriteMessage(websocket.TextMessage, []byte("Error: Failed to watch deployment - "+err.Error())); err != nil {
+			log.Printf("Failed to send WebSocket message: %v", err)
+		}
 		return
 	}
 
@@ -97,6 +105,7 @@ func watchDeploymentChanges(conn *websocket.Conn, clientset *kubernetes.Clientse
 
 		var logs []DeploymentUpdate
 		message := fmt.Sprintf("Deployment %s changed: %s", deployment.Name, event.Type)
+		log.Println(message)
 
 		if lastReplicas == nil || *lastReplicas != *deployment.Spec.Replicas {
 			message = fmt.Sprintf("Deployment %s updated - Replicas changed: %d", deployment.Name, *deployment.Spec.Replicas)
@@ -139,10 +148,8 @@ func getDeploymentLogs(deployment *v1.Deployment) []string {
 
 	logs := []string{
 		fmt.Sprintf("[%v] INFO: Deployment workload %v initiated ", baseTime, deployment.Name),
-		fmt.Sprintf("[%v] INFO: Workload created with replicas: %v, image: %v ", baseTime, deployment.Spec.Replicas, deployment.Spec.Template.Spec.Containers[0].Image),
+		fmt.Sprintf("[%v] INFO: Workload created with replicas: %d, image: %v ", baseTime, replicas, deployment.Spec.Template.Spec.Containers[0].Image),
 		fmt.Sprintf("[%v] INFO: Namespace %v successfully updated  ", baseTime, deployment.Namespace),
-		fmt.Sprintf("[%v] INFO: Namespace %v successfully updated  ", baseTime, deployment.Namespace),
-		fmt.Sprintf("[%v] INFO: Replicas: %d ", baseTime, deployment.Status.Replicas),
 		fmt.Sprintf("[%v] INFO: Available Replicas: %d ", baseTime, deployment.Status.AvailableReplicas),
 	}
 

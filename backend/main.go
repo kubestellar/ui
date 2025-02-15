@@ -146,7 +146,9 @@ func main() {
 	router.POST("/api/services/create", resources.CreateService)
 	router.DELETE("/api/services/delete", resources.DeleteService)
 
-	router.Run(":4000")
+	if err := router.Run(":4000"); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
 }
 
 func getKubeInfo() ([]ContextInfo, []string, string, error, []ManagedClusterInfo) {
@@ -251,6 +253,7 @@ func getKubeInfo() ([]ContextInfo, []string, string, error, []ManagedClusterInfo
 	return contexts, clusters, currentContext, nil, managedClusters
 }
 
+// nolint:unused
 func getITSInfo() ([]ManagedClusterInfo, error) {
 	kubeconfig := os.Getenv("KUBECONFIG")
 	if kubeconfig == "" {
