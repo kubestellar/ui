@@ -27,22 +27,84 @@ interface CreateBindingPolicyDialogProps {
   onCreatePolicy: (policyData: PolicyData) => void;
 }
 
+// Add confirmation dialog
+const CancelConfirmationDialog: React.FC<{
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}> = ({ open, onClose, onConfirm }) => (
+  <Dialog open={open} onClose={onClose}>
+    <DialogTitle>Cancel Policy Creation</DialogTitle>
+    <DialogContent>
+      <Alert severity="warning">
+        <AlertTitle>Warning</AlertTitle>
+        Are you sure you want to cancel? All changes will be lost.
+      </Alert>
+    </DialogContent>
+    <DialogActions>
+      <Button onClick={onClose}>Continue Editing</Button>
+      <Button onClick={onConfirm} color="error" variant="contained">
+        Yes, Cancel
+      </Button>
+    </DialogActions>
+  </Dialog>
+);
+
 const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   open,
   onClose,
   onCreatePolicy,
 }) => {
+  const defaultYamlTemplate = `apiVersion: control.kubestellar.io/v1alpha1
+kind: BindingPolicy
+metadata:
+  name: example-binding-policy
+  namespace: kubestellar
+spec:
+  # Selects the workload to bind
+  subject:
+    kind: Application
+    apiGroup: app.kubestellar.io
+    name: my-app
+    namespace: default
+  # Defines where the workload should be bound
+  placement:
+    # Matches clusters by label
+    clusterSelector:
+      matchLabels:
+        environment: production
+        region: us-east
+    # Defines clusters explicitly
+    staticPlacement:
+      clusterNames:
+        - cluster-a
+        - cluster-b
+  # Defines how the binding should behave
+  bindingMode: Propagate
+  # Optional: Define resource overrides for specific clusters
+  overrides:
+    - clusterName: cluster-a
+      patch:
+        spec:
+          replicas: 3
+    - clusterName: cluster-b
+      patch:
+        spec:
+          replicas: 5`;
+
   const [activeTab, setActiveTab] = useState<string>("yaml");
-  const [editorContent, setEditorContent] = useState<string>("");
+  const [editorContent, setEditorContent] =
+    useState<string>(defaultYamlTemplate);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileContent, setFileContent] = useState<string>("");
   const [policyName, setPolicyName] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
 
   const handleTabChange = (_event: React.SyntheticEvent, value: string) => {
     setActiveTab(value);
     if (value === "yaml" && !editorContent) {
-      setEditorContent("");
+      setEditorContent(defaultYamlTemplate);
     }
   };
 
@@ -98,9 +160,27 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
     }
   };
 
+  const handleCancelClick = () => {
+    // Only show confirmation if there's content
+    if (
+      activeTab === "yaml"
+        ? editorContent !== defaultYamlTemplate
+        : fileContent || policyName
+    ) {
+      setShowCancelConfirmation(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const handleConfirmCancel = () => {
+    setShowCancelConfirmation(false);
+    onClose();
+  };
+
   return (
     <>
-      <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
+      <Dialog open={open} onClose={handleCancelClick} maxWidth="lg" fullWidth>
         <DialogTitle>Create Binding Policy</DialogTitle>
         <DialogContent>
           <div className="mb-6">
@@ -157,12 +237,12 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                           component="span"
                           color="primary"
                         >
-                          Choose YAML or JSON file
+                          Choose YAML file
                         </Button>
                         <input
                           type="file"
                           className="hidden"
-                          accept=".yaml,.yml,.json"
+                          accept=".yaml,.yml"
                           onChange={handleFileChange}
                         />
                       </label>
@@ -179,7 +259,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
           </Box>
 
           <DialogActions>
-            <Button variant="outlined" onClick={onClose}>
+            <Button variant="outlined" onClick={handleCancelClick}>
               Cancel
             </Button>
             <Button
@@ -195,6 +275,12 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
           </DialogActions>
         </DialogContent>
       </Dialog>
+
+      <CancelConfirmationDialog
+        open={showCancelConfirmation}
+        onClose={() => setShowCancelConfirmation(false)}
+        onConfirm={handleConfirmCancel}
+      />
 
       <Snackbar
         open={!!error}
