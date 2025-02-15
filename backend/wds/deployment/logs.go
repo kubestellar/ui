@@ -58,13 +58,21 @@ func getDeploymentLogs(deployment *v1.Deployment) []string {
 		fmt.Sprintf("[%v] INFO: Workload created with replicas: %v, image: %v ", baseTime, deployment.Spec.Replicas, deployment.Spec.Template.Spec.Containers[0].Image),
 		fmt.Sprintf("[%v] INFO: Namespace %v successfully updated  ", baseTime, deployment.Namespace),
 		fmt.Sprintf("[%v] INFO: Namespace %v successfully updated  ", baseTime, deployment.Namespace),
-		fmt.Sprintf("[%v] INFO: Replicas: %s ", baseTime, string(deployment.Status.Replicas)),
-		fmt.Sprintf("[%v] INFO: Available Replicas: %s ", baseTime, string(deployment.Status.AvailableReplicas)),
-		fmt.Sprintf("[%v] INFO: Conditions: %s ", baseTime, deployment.Status.Conditions[0].Type),
-		fmt.Sprintf("[%v] INFO: LastUpdateTime : %s ", baseTime, deployment.Status.Conditions[0].LastUpdateTime.Time),
-		fmt.Sprintf("[%v] INFO: LastTransitionTime : %s ", baseTime, deployment.Status.Conditions[0].LastTransitionTime.Time),
-		fmt.Sprintf("[%v] INFO: Conditions: %s ", baseTime, deployment.Status.Conditions[0].Type),
-		fmt.Sprintf("[%v] INFO: Message: %s ", baseTime, deployment.Status.Conditions[0].Message),
+		fmt.Sprintf("[%v] INFO: Replicas: %d ", baseTime, deployment.Status.Replicas),
+		fmt.Sprintf("[%v] INFO: Available Replicas: %d ", baseTime, deployment.Status.AvailableReplicas),
+	}
+
+	// Check if Conditions slice has elements before accessing it
+	if len(deployment.Status.Conditions) > 0 {
+		condition := deployment.Status.Conditions[0]
+		logs = append(logs,
+			fmt.Sprintf("[%v] INFO: Conditions: %s ", baseTime, condition.Type),
+			fmt.Sprintf("[%v] INFO: LastUpdateTime : %s ", baseTime, condition.LastUpdateTime.Time),
+			fmt.Sprintf("[%v] INFO: LastTransitionTime : %s ", baseTime, condition.LastTransitionTime.Time),
+			fmt.Sprintf("[%v] INFO: Message: %s ", baseTime, condition.Message),
+		)
+	} else {
+		logs = append(logs, fmt.Sprintf("[%v] INFO: No conditions available", baseTime))
 	}
 
 	return logs

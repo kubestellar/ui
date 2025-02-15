@@ -2,12 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { FaCircle } from "react-icons/fa";
 import { FiChevronDown, FiChevronUp, FiMoreVertical } from "react-icons/fi";
 import Editor from "@monaco-editor/react";
-import axios from "axios"; // Import axios for API calls
-import { Info } from "lucide-react"; // Import the info icon from Lucide
+import axios from "axios";
+import { Info } from "lucide-react"; 
 import LogModal from "./LogModal";
-
-
-
+import yaml from "js-yaml"; 
 
 interface Workload {
   name: string;
@@ -16,6 +14,7 @@ interface Workload {
   creationTime: string;
   image: string;
   label: string;
+  replicas: number;  
 }
 
 interface Props {
@@ -24,7 +23,7 @@ interface Props {
   setSelectedDeployment: (workload: Workload | null) => void;
 }
 
-const DeploymentTable = ({ title, workloads, setSelectedDeployment }: Props) => {
+const DeploymentTable = ({ title, workloads,  setSelectedDeployment }: Props) => {
      
   const [showDetails, setShowDetails] = useState(true);
   const [menuOpen, setMenuOpen] = useState<number | null>(null);
@@ -33,90 +32,222 @@ const DeploymentTable = ({ title, workloads, setSelectedDeployment }: Props) => 
   const [editYaml, setEditYaml] = useState(false);
   const [yamlData, setYamlData] = useState<string>("");
   const [selectedLog, setSelectedLog] = useState<{ namespace: string; deployment: string } | null>(null);
-
-
-  // Scaling State
   const [scaleModalOpen, setScaleModalOpen] = useState(false);
   const [selectedWorkload, setSelectedWorkload] = useState<Workload | null>(null);
-  const [replicaCount, setReplicaCount] = useState<number>(1);
+  const [replicaCount, setReplicaCount] = useState<number>();
   const [desiredReplicas, setDesiredReplicas] = useState<number>(1);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
 
-  // menu dropdown
-  const handleMenuClick = (event: React.MouseEvent, index: number) => {
-    event.stopPropagation();
-    const rect = (event.target as HTMLElement).getBoundingClientRect();
+    // menu dropdown
+    const handleMenuClick = (event: React.MouseEvent, index: number) => {
+      event.stopPropagation();
+      const rect = (event.target as HTMLElement).getBoundingClientRect();
+      
+      const menuWidth = menuRef.current?.offsetWidth || 150;
+      const menuHeight = menuRef.current?.offsetHeight || 150;
+      const bottomSpace = window.innerHeight - rect.bottom;
+      let topPosition = rect.bottom + 8; // Default: place below
+      let leftPosition = rect.left - 100;
     
-    const menuWidth = menuRef.current?.offsetWidth || 150;
-    const menuHeight = menuRef.current?.offsetHeight || 150;
-    const bottomSpace = window.innerHeight - rect.bottom;
-    let topPosition = rect.bottom + 8; // Default: place below
-    let leftPosition = rect.left - 100;
+      if (bottomSpace < menuHeight) {
+        // Not enough space below, place above
+        topPosition = rect.top - menuHeight - 8;
+      }
+    
+      // Prevent menu from overflowing off the right edge
+      if (rect.left + menuWidth > window.innerWidth) {
+        leftPosition = window.innerWidth - menuWidth - 10; // 10px padding
+      }
+    
+      setMenuPosition({ top: topPosition, left: leftPosition });
+      setMenuOpen(menuOpen === index ? null : index);
+    };
   
-    if (bottomSpace < menuHeight) {
-      // Not enough space below, place above
-      topPosition = rect.top - menuHeight - 8;
-    }
-  
-    // Prevent menu from overflowing off the right edge
-    if (rect.left + menuWidth > window.innerWidth) {
-      leftPosition = window.innerWidth - menuWidth - 10; // 10px padding
-    }
-  
-    setMenuPosition({ top: topPosition, left: leftPosition });
-    setMenuOpen(menuOpen === index ? null : index);
-  };
-  
-  
-  // edit .yaml file 
-  const handleEditClick = async (workload: Workload) => {
-    setMenuOpen(null);
-    setSelectedWorkload(workload);
-
-    // Simulate fetching YAML file (replace with real API call)
-    const fetchedYaml = `apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: ${workload.name}
-  namespace: ${workload.namespace}
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: ${workload.label}
-  template:
-    metadata:
-      labels:
-        app: ${workload.label}
-    spec:
-      containers:
-        - name: ${workload.name}
-          image: ${workload.image}
-          ports:
-            - containerPort: 80`;
-
-    setYamlData(fetchedYaml);
-    setEditYaml(true);
-  };
-
-    // Handle Scaling
-  const handleScaleClick = (workload: Workload) => {
+    // Handle Edit Click (Open YAML Editor Modal)
+    const handleEditClick = async (workload: Workload) => {
       setMenuOpen(null);
       setSelectedWorkload(workload);
-      setScaleModalOpen(true);
-      // setReplicaCount(1); // Default replica count
-    };
-    
-    const handleScaleSave = () => {
-      if (selectedWorkload) {
-        console.log(
-          `kubectl scale -n ${selectedWorkload.namespace} deployment ${selectedWorkload.name} --replicas=${desiredReplicas}`
+
+      try {
+        // Fetch full deployment details
+        const response = await axios.get(
+          `http://localhost:4000/api/wds/${workload.name}?namespace=${workload.namespace}`
         );
+
+        console.log("Full Deployment Data:", response.data); // Debug API response
+
+        const fullDeployment = response.data;
+
+        // Ensure correct YAML generation by handling missing fields
+        const fetchedYaml = `
+    apiVersion: ${fullDeployment.apiVersion || "apps/v1"}
+    kind: ${fullDeployment.kind || "Deployment"}
+    metadata:
+      name: ${fullDeployment.metadata?.name || "unknown-deployment"}
+      namespace: ${fullDeployment.metadata?.namespace || "default"}
+    spec:
+      replicas: ${fullDeployment.spec?.replicas ?? 1}  # Default to 1 if undefined
+      selector:
+        matchLabels:
+          app: ${fullDeployment.spec?.selector?.matchLabels?.app || "unknown-label"}
+      template:
+        metadata:
+          labels:
+            app: ${fullDeployment.spec?.template?.metadata?.labels?.app || "unknown-label"}
+        spec:
+          containers:
+            - name: ${fullDeployment.spec?.template?.spec?.containers?.[0]?.name || "unknown-container"}
+              image: ${fullDeployment.spec?.template?.spec?.containers?.[0]?.image || "nginx:latest"}  # Default image
+              ports:
+                - containerPort: ${
+                  fullDeployment.spec?.template?.spec?.containers?.[0]?.ports?.[0]?.containerPort || 80
+                }`;
+
+        console.log("Generated YAML:", fetchedYaml); // Debug YAML output
+
+        setYamlData(fetchedYaml);
+        setEditYaml(true);
+      } catch (error) {
+        console.error("Error fetching full deployment data:", error);
       }
-      setScaleModalOpen(false);
     };
 
+    // Handle Save Click (Update Deployment)
+    const handleSave = async () => {
+      try {
+        if (!yamlData || !selectedWorkload) {
+          alert("Invalid data.");
+          return;
+        }
+
+        // Parse YAML to extract values
+        interface ParsedDeployment {
+          metadata: {
+            namespace: string;
+            name: string;
+          };
+          spec: {
+            replicas?: number;
+            template: {
+              spec: {
+                containers: { image: string }[];
+              };
+            };
+          };
+        }
+        
+        const parsedYaml = yaml.load(yamlData) as ParsedDeployment;
+        
+
+        // Construct API request body
+        const updatedDeployment = {
+          namespace: parsedYaml.metadata.namespace,
+          name: parsedYaml.metadata.name,
+          image: parsedYaml.spec.template.spec.containers[0].image,
+          replicas: parsedYaml.spec.replicas || 1, // Ensure replicas always exist
+        };
+
+        console.log("Updating Deployment:", updatedDeployment);
+
+        // Send PUT request to update deployment
+        const response = await axios.put(
+          "http://localhost:4000/api/wds/update",
+          updatedDeployment,
+          {
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+
+        console.log("Update Response:", response.data);
+        alert(`✅ Deployment "${updatedDeployment.name}" updated successfully!`);
+
+        // Update workloads list with new replicas count
+        setSelectedWorkload((prev) => (prev ? { ...prev, replicas: updatedDeployment.replicas } : null));
+
+        // Close modal after successful update
+        setEditYaml(false);
+      } catch (error: unknown) {
+        if (axios.isAxiosError(error)) {
+          console.error("❌ Error updating deployment:", error.response?.data?.message || error.message);
+          alert(`⚠️ Failed to update deployment: ${error.response?.data?.message || error.message}`);
+        } else {
+          console.error("❌ Unexpected error:", error);
+          alert("❌ An unexpected error occurred.");
+        }
+      }
+      
+    };
+
+    // Handle Scaling
+    const handleScaleClick = async (workload: Workload) => {
+      try {
+        // Set the selected workload first (prepares modal content)
+        setSelectedWorkload(workload);
+    
+        // Fetch the latest replica count from the API
+        const response = await axios.get(
+          `http://localhost:4000/api/wds/${workload.name}?namespace=${workload.namespace}`
+        );
+    
+        console.log("Replica Data from API:", response.data);
+    
+        // Ensure replicas exist in the response
+        const currentReplicas = response.data?.spec?.replicas ?? workload.replicas;
+    
+        console.log("Setting Replica Count:", currentReplicas);
+    
+        // First, delay the replica count update
+        setTimeout(() => {
+          setReplicaCount(currentReplicas);
+    
+          // After replica count is updated, wait another 500ms to open modal
+          setTimeout(() => {
+            setScaleModalOpen(true);
+          }, 500); // Delay before opening modal
+    
+        }, 500); // Delay before setting replica count
+    
+      } catch (error) {
+        console.error("Error fetching replica count:", error);
+      }
+    };
+
+    // Handle Scale Save (Update Replicas Only)
+    const handleScaleSave = async () => {
+        try {
+          if (!selectedWorkload || desiredReplicas === undefined) {
+            alert("Please select a workload and set the desired replicas.");
+            return;
+          }
+
+          const scaleUpdate = {
+            namespace: selectedWorkload.namespace,
+            name: selectedWorkload.name,
+            replicas: desiredReplicas, // Use user input for desired replicas
+          };
+
+          console.log("Scaling Deployment:", scaleUpdate);
+
+          // Send PUT request to update replicas
+          const response = await axios.put(
+          "http://localhost:4000/api/wds/update",
+            scaleUpdate,
+            {
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+
+          console.log("Scale Update Response:", response.data);
+          alert(`✅ Deployment "${scaleUpdate.name}" scaled to ${scaleUpdate.replicas} replicas successfully!`);
+          
+          // Close modal after successful update
+          setScaleModalOpen(false);
+        } catch (error) {
+          console.error("Error updating replicas:", error);
+          alert("❌ Failed to update replicas. Check console for details.");
+        }
+    };
 
     // handel delete button
     const handleDeleteClick = (workload: Workload) => {
@@ -124,57 +255,85 @@ spec:
       setDeleteModalOpen(true);
       setMenuOpen(null);
     };
-  
-    const confirmDelete = () => {
-      if (selectedWorkload) {
-        console.log(`Deleting workload: ${selectedWorkload.name}`);
+
+    // confirm delete
+    const confirmDelete = async () => {
+      if (!selectedWorkload) return;
+    
+      try {
+        const response = await axios.delete("http://localhost:4000/api/wds/delete", {
+          data: {
+            name: selectedWorkload.name,
+            namespace: selectedWorkload.namespace,
+          },
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+    
+        console.log("Delete Response:", response.data);
+    
+        // Remove the deleted workload from the UI
+        setSelectedDeployment(null);
+        
+        // Optionally update state if you're using useState for workloads
+        // setWorkloads(updatedWorkloads);  <-- Uncomment if you manage workloads state locally
+    
+        alert(`Deployment ${selectedWorkload.name} deleted successfully!`)
+        // ✅ Refresh page after successful deployment
+          window.location.reload(); 
+      } catch (error) {
+        console.error("Failed to delete deployment:", error);
+        alert("Error deleting deployment.");
       }
+    
       setDeleteModalOpen(false);
     };
-
-
-
     
-    // save
-  const handleSave = () => {
-      console.log("Updated YAML:", yamlData);
-      setEditYaml(false);
-  };
+    // logs
+    const handleLogsClick = (workload: Workload) => {
+      setSelectedLog({ namespace: workload.namespace, deployment: workload.name });
+    };
+    
+    // Log updates to replicaCount
+    useEffect(() => {
+      console.log("Updated Replica Count State:", replicaCount);
+    }, [replicaCount]);
+    
+    //
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+          setMenuOpen(null);
+        }
+      };
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }, []);
 
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setMenuOpen(null);
+    // Function to fetch real-time replica count
+    const fetchReplicaCount = async (namespace: string, deploymentName: string) => {
+      try {
+        const response = await axios.get(
+          `/apis/apps/v1/namespaces/${namespace}/deployments/${deploymentName}`
+        );
+        return response.data?.spec?.replicas || 1; // Default to 1 if not available
+      } catch (error) {
+        console.error("Error fetching replica count:", error);
+        return 1; // Fallback in case of an error
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
 
-  // Function to fetch real-time replica count
-const fetchReplicaCount = async (namespace: string, deploymentName: string) => {
-  try {
-    const response = await axios.get(
-      `/apis/apps/v1/namespaces/${namespace}/deployments/${deploymentName}`
-    );
-    return response.data?.spec?.replicas || 1; // Default to 1 if not available
-  } catch (error) {
-    console.error("Error fetching replica count:", error);
-    return 1; // Fallback in case of an error
-  }
-};
-
-// Fetch replicas when workload is selected
-useEffect(() => {
-  if (selectedWorkload) {
-    fetchReplicaCount(selectedWorkload.namespace, selectedWorkload.name).then(
-      (replicas) => setReplicaCount(replicas)
-    );
-  }
-}, [selectedWorkload]);
+    // Fetch replicas when workload is selected
+    useEffect(() => {
+      if (selectedWorkload) {
+        fetchReplicaCount(selectedWorkload.namespace, selectedWorkload.name).then(
+          (replicas) => setReplicaCount(replicas)
+        );
+      }
+    }, [selectedWorkload]);
 
   return (
     <div className="mt-8 bg-gray-800 p-6 rounded-lg relative">
@@ -255,7 +414,7 @@ useEffect(() => {
           style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}
         >
         <button
-        onClick={() => setSelectedLog({   namespace: "namespace", deployment: "deployment"})}
+        onClick={() => handleLogsClick(workloads[menuOpen!])}
         className="block w-full bg-gray-800 text-left px-4 py-2 hover:bg-gray-700"> 
           Logs
         </button>
@@ -380,9 +539,9 @@ useEffect(() => {
 
       {/* Logs Modal  */}
       {selectedLog && (
-        <LogModal
-          namespace={selectedLog.namespace}
-          deploymentName={selectedLog.deployment}
+        <LogModal 
+          namespace={selectedLog.namespace} 
+          deploymentName={selectedLog.deployment} 
           onClose={() => setSelectedLog(null)}
         />
       )}
