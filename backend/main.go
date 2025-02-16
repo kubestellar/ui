@@ -64,8 +64,8 @@ func main() {
 		})
 	})
 
-	router.POST("/clusters/onboard", api.OnboardClusterHandler)
-	router.GET("/clusters/status", api.GetClusterStatusHandler)
+	router.POST("/api/clusters/onboard", api.OnboardClusterHandler)
+	router.GET("api/clusters/status", api.GetClusterStatusHandler)
 
 	router.GET("/api/wds/workloads", func(c *gin.Context) {
 		workloads, err := deployment.GetWDSWorkloads()
@@ -182,9 +182,7 @@ func getKubeInfo() ([]ContextInfo, []string, string, error, []ManagedClusterInfo
 	var managedClusters []ManagedClusterInfo
 
 	for contextName := range config.Contexts {
-		if strings.HasPrefix(contextName, "its") {
-			log.Printf("Processing ITS context: %s", contextName)
-
+		if strings.Contains(contextName, "its") {
 			clientConfig := clientcmd.NewNonInteractiveClientConfig(
 				*config,
 				contextName,
