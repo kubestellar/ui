@@ -3,6 +3,11 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Button, Card, CardContent, Typography, TextField, Box, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import { api } from "../lib/api";
 
+interface Cluster {
+  clusterName: string;
+  status: string;
+}
+
 const KubeconfigOnboarding: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
@@ -57,7 +62,7 @@ const KubeconfigOnboarding: React.FC = () => {
     const interval = setInterval(async () => {
       try {
         const response = await api.get(`/api/clusters/status`);
-        const clusterStatus = response.data?.find((c: any) => c.clusterName === clusterName)?.status;
+        const clusterStatus = response.data?.find((c: Cluster) => c.clusterName === clusterName)?.status;
         if (clusterStatus) {
           setOnboardingStatus(clusterStatus);
 
@@ -146,7 +151,7 @@ const KubeconfigOnboarding: React.FC = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => navigate("/home")} color="primary">
+          <Button onClick={() => navigate("/")} color="primary">
             Go to Home
           </Button>
         </DialogActions>
