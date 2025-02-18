@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Editor from "@monaco-editor/react";
 import yaml from "js-yaml";
 import {
@@ -19,6 +19,7 @@ import {
 interface PolicyData {
   name: string;
   workload: string;
+  yaml: string;
 }
 
 interface CreateBindingPolicyDialogProps {
@@ -153,12 +154,28 @@ spec:
       onCreatePolicy({
         name: policyName,
         workload: "default-workload",
+        yaml: content,
       });
+      // Reset form after successful creation
+      setEditorContent(defaultYamlTemplate);
+      setPolicyName("");
+      setSelectedFile(null);
+      setFileContent("");
       onClose();
     } catch (error) {
       console.error("Error creating binding policy:", error);
     }
   };
+
+  // Reset form when dialog is opened
+  useEffect(() => {
+    if (open) {
+      setEditorContent(defaultYamlTemplate);
+      setPolicyName("");
+      setSelectedFile(null);
+      setFileContent("");
+    }
+  }, [open]);
 
   const handleCancelClick = () => {
     // Only show confirmation if there's content
