@@ -16,6 +16,8 @@ import {
 import { FiChevronDown, FiChevronUp, FiX } from "react-icons/fi";
 import { api } from "../lib/api";
 import { useParams, useNavigate } from "react-router-dom";
+import { ThemeContext } from "../context/ThemeContext"; // Import ThemeContext
+import { useContext } from "react";
 
 interface DeploymentInfo {
   name: string;
@@ -65,6 +67,8 @@ const DeploymentDetails = () => {
   const [deployment, setDeployment] = useState<DeploymentInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { theme } = useContext(ThemeContext);
+  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -130,7 +134,12 @@ const DeploymentDetails = () => {
   }
 
   return (
-    <Paper elevation={3} sx={{ p: 3, bgcolor: "background.paper", borderRadius: 2 }}>
+    <Paper elevation={3} 
+    sx={{ p: 3,
+      bgcolor: theme === "dark" ? "#1F2937" : "background.paper",
+      color: theme === "dark" ? "#ffffff" : "#000000",
+      borderRadius: 2 
+      }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4" fontWeight="bold">
           Deployment Details: {deployment?.name}
@@ -140,7 +149,7 @@ const DeploymentDetails = () => {
         </IconButton>
       </Box>
 
-      <Box display="flex" flexDirection="column" gap={3}>
+      <Box display="flex" flexDirection="column"  gap={3}>
         <DetailsTable title="Metadata" headers={["Name", "Namespace", "Created At", "Age", "UID"]} rows={[
           [deployment?.name, deployment?.namespace, deployment?.createdAt, deployment?.age, deployment?.uid]
         ]} />
@@ -187,54 +196,80 @@ interface DetailsTableProps {
   rows: (string | number | React.ReactNode)[][];
 }
 
-const DetailsTable = ({ title, headers, rows }: DetailsTableProps) => {
-  const [showDetails, setShowDetails] = useState(true);
+  const DetailsTable = ({ title, headers, rows }: DetailsTableProps) => {
+    const [showDetails, setShowDetails] = useState(true);
+    const { theme } = useContext(ThemeContext);
 
-  return (
-    <Paper elevation={1} sx={{ p: 2, bgcolor: "#f0f0f0", borderRadius: 2 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h6" fontWeight="bold">
-          {title}
-        </Typography>
-        <IconButton onClick={() => setShowDetails(!showDetails)}>
-          {showDetails ? <FiChevronUp /> : <FiChevronDown />}
-        </IconButton>
-      </Box>
 
-      <Collapse in={showDetails}>
+    return (
+      <Paper elevation={1} sx={{ p: 2,
+        bgcolor: theme === "dark" ? "#374151" : "background.paper",
+        color: theme === "dark" ? "#ffffff" : "#000000",
+        borderRadius: 2 }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <Typography variant="h6" fontWeight="bold">
+            {title}
+          </Typography>
+          <IconButton sx={{color: theme === "dark" ? "#ffffff" : "#000000",}} onClick={() => setShowDetails(!showDetails)}>
+            {showDetails ? <FiChevronUp /> : <FiChevronDown />}
+          </IconButton>
+        </Box>
+        <Collapse in={showDetails}>
         <Table>
-          <TableHead>
-            <TableRow>
-              {headers.map((header, idx) => (
-                <TableCell key={idx} sx={{ variant: "h6", fontWeight: "bold", color: "text.secondary", borderBottom: "none" }}>
-                  {header}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.length > 0 ? (
-              rows.map((row, rowIndex) => (
-                <TableRow key={rowIndex}>
-                  {row.map((cell, cellIndex) => (
-                    <TableCell key={cellIndex} sx={{ borderBottom: "none" }}>
-                      {cell || "-"}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={headers.length} align="center" sx={{ borderBottom: "none" }}>
-                  No data available
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </Collapse>
-    </Paper>
-  );
+  <TableHead>
+    <TableRow>
+      {headers.map((header, idx) => (
+        <TableCell
+          key={idx}
+          sx={{
+            variant: "h6",
+            fontWeight: "bold",
+            color: theme === "dark" ? "#ffffff" : "text.secondary", // Set white text in dark mode
+            borderBottom: "none",
+          }}
+        >
+          {header}
+        </TableCell>
+      ))}
+    </TableRow>
+  </TableHead>
+  <TableBody>
+    {rows.length > 0 ? (
+      rows.map((row, rowIndex) => (
+        <TableRow key={rowIndex}>
+          {row.map((cell, cellIndex) => (
+            <TableCell
+              key={cellIndex}
+              sx={{
+                borderBottom: "none",
+                color: theme === "dark" ? "#ffffff" : "inherit", // Ensure text remains white in dark mode
+              }}
+            >
+              {cell || "-"}
+            </TableCell>
+          ))}
+        </TableRow>
+      ))
+    ) : (
+      <TableRow>
+        <TableCell
+          colSpan={headers.length}
+          align="center"
+          sx={{
+            borderBottom: "none",
+            color: theme === "dark" ? "#ffffff" : "inherit",
+          }}
+        >
+          No data available
+        </TableCell>
+      </TableRow>
+    )}
+  </TableBody>
+</Table>
+
+        </Collapse>
+      </Paper>
+    );
 };
 
 export default DeploymentDetails;
