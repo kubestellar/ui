@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"github.com/katamyra/kubestellarUI/wds"
 	"k8s.io/client-go/informers"
 	"log"
@@ -78,19 +79,6 @@ func main() {
 		c.JSON(http.StatusOK, workloads)
 	})
 
-	router.GET("/logs/hello", func(ctx *gin.Context) {
-		clientset, err := wds.GetClientSetKubeConfig()
-		if err != nil {
-			panic(err)
-		}
-		ch := make(chan struct{})
-		factory := informers.NewSharedInformerFactory(clientset, 10*time.Minute)
-		c := wds.NewController(clientset, factory.Apps().V1().Deployments())
-		factory.Start(ch)
-		c.Run(ch)
-		fmt.Println(factory)
-		//factory.Apps().V1().Deployments().Informer()
-	})
 	// New Log Endpoint
 	router.GET("/api/log", func(c *gin.Context) {
 		// Fetch Kubernetes Information
@@ -155,6 +143,35 @@ func main() {
 	// websocket
 	router.GET("/ws", func(ctx *gin.Context) {
 		deployment.HandleDeploymentLogs(ctx.Writer, ctx.Request)
+	})
+	// WATCH ALL DEPLOYMENT LOGS USING INFORMER
+	router.GET("/api/wds/logs", func(ctx *gin.Context) {
+		var upgrader = websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+		}
+		var w = ctx.Writer
+		var r = ctx.Request
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			log.Println("Failed to upgrade connection:", err)
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Failed to upgrade to WebSocket"})
+			return
+		}
+		//defer conn.Close()
+
+		clientset, err := wds.GetClientSetKubeConfig()
+		if err != nil {
+			log.Println("Failed to get Kubernetes client:", err)
+			conn.WriteMessage(websocket.TextMessage, []byte("Error getting Kubernetes client"))
+			return
+		}
+		ch := make(chan struct{})
+		factory := informers.NewSharedInformerFactory(clientset, 10*time.Minute)
+		c := wds.NewController(clientset, factory.Apps().V1().Deployments(), conn)
+		factory.Start(ch)
+		go c.Run(ch)
 	})
 	// SERVICES
 	router.GET("/api/services/:namespace", resources.GetServiceList)
