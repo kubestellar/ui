@@ -3,7 +3,10 @@ export interface BindingPolicyInfo {
     clusters: number;
     workload: string;
     creationDate: string;
+    lastModifiedDate?: string;
+    bindingMode?: string;
     status: "Active" | "Inactive";
+    yaml: string;
 }
 
 export interface ManagedCluster {
