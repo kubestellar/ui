@@ -20,6 +20,8 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import useTheme from "../hooks/useTheme";
+import {Plus} from "lucide-react";
+import CreateOptions from "./ImportClusters";
 
 interface ManagedClusterInfo {
   name: string;
@@ -43,11 +45,12 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
   onPageChange,
 }) => {
   const [query, setQuery] = useState("");
-  const [filteredClusters, setFilteredClusters] =
-    useState<ManagedClusterInfo[]>(clusters);
+  const [filteredClusters, setFilteredClusters] = useState<ManagedClusterInfo[]>(clusters);
   const [filter, setFilter] = useState<string>("");
   const [selectAll, setSelectAll] = useState(false);
   const [selectedClusters, setSelectedClusters] = useState<string[]>([]);
+  const [showCreateOptions, setShowCreateOptions] = useState(false);
+  const [activeOption, setActiveOption] = useState<string | null>("option1");
   const { theme } = useTheme();
 
   useEffect(() => {
@@ -120,6 +123,10 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
     setSelectAll(!selectAll);
   };
 
+  const handleCancel = () => {
+    setShowCreateOptions(false);
+  };
+
   return (
     <div className="p-4">
       {/* Search, Filter, and Buttons */}
@@ -182,11 +189,34 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
             <MenuItem value="active">Active</MenuItem>
             <MenuItem value="inactive">Inactive</MenuItem>
             <MenuItem value="pending">Pending</MenuItem>
-          </Select>013
+          </Select>
         </FormControl>
 
         <div className="flex gap-2">
-          <Button variant="outlined">Import Cluster</Button>
+          <Button
+            variant="outlined"
+            startIcon={<Plus size={20} />}
+            onClick={() => {
+              setShowCreateOptions(true);
+              setActiveOption("option1");
+            }}
+            sx={{
+              borderColor: theme === "dark" ? "white" : "blue", // White border in dark mode
+              color: theme === "dark" ? "white" : "blue", // White text in dark mode
+              "&:hover": {
+                borderColor: theme === "dark" ? "white" : "blue", // Keep white border on hover in dark mode
+              },
+            }}
+          >
+            Import Cluster
+          </Button>
+          {showCreateOptions && (
+            <CreateOptions
+              activeOption={activeOption}
+              setActiveOption={setActiveOption}
+              onCancel={handleCancel}
+            />
+          )}
         </div>
       </div>
 
@@ -218,7 +248,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                   <TableCell>{cluster.name}</TableCell>
                   <TableCell>
                     {cluster.labels &&
-                    Object.keys(cluster.labels).length > 0 ? (
+                      Object.keys(cluster.labels).length > 0 ? (
                       <div className="flex flex-wrap gap-2">
                         {Object.entries(cluster.labels).map(([key, value]) => (
                           <span
