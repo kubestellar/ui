@@ -1,7 +1,6 @@
 import {
   HiOutlineHome,
   HiOutlineUser,
-  HiOutlineCube,
   HiOutlineClipboardDocumentList,
   HiOutlinePresentationChartBar,
   HiOutlineServer,
@@ -26,13 +25,7 @@ export const menu = [
         isLink: true,
         url: '/its',
         icon: HiOutlineServer,
-        label: 'Overview',
-      },
-      {
-        isLink: true,
-        url: '/createcluster',
-        icon: HiOutlineCube,
-        label: 'Onboard',
+        label: 'Manage',
       },
     ],
   },
