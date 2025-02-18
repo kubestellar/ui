@@ -25,9 +25,12 @@ import { FaCircle } from "react-icons/fa";
 import { FiChevronDown, FiChevronUp, FiMoreVertical } from "react-icons/fi";
 import Editor from "@monaco-editor/react";
 import axios from "axios";
-import { Info } from "lucide-react";
 import LogModal from "./LogModal";
 import yaml from "js-yaml";
+import { ThemeContext } from "../context/ThemeContext"; // Import ThemeContext
+import { useContext } from "react";
+
+
 
 interface Workload {
   name: string;
@@ -73,11 +76,12 @@ const DeploymentTable = ({ title, workloads, setSelectedDeployment }: Props) => 
   const [scaleModalOpen, setScaleModalOpen] = useState(false);
   const [selectedWorkload, setSelectedWorkload] = useState<Workload | null>(null);
   const [replicaCount, setReplicaCount] = useState<number>();
-  const [desiredReplicas, setDesiredReplicas] = useState<number>(1);
+  const [desiredReplicas, setDesiredReplicas] = useState<number | "">("");
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [error, setError] = useState<string>("");
+  const { theme } = useContext(ThemeContext);
+  
 
-  // const navigate = useNavigate();
 
   // Menu dropdown
   const handleMenuClick = (event: React.MouseEvent, index: number) => {
@@ -89,6 +93,7 @@ const DeploymentTable = ({ title, workloads, setSelectedDeployment }: Props) => 
     setMenuAnchorEl(null);
     setMenuOpen(null);
   };
+
 
   // Handle Edit Click (Open YAML Editor Modal)
   const handleEditClick = async (workload: Workload) => {
@@ -244,17 +249,18 @@ spec:
     setSelectedLog({ namespace: workload.namespace, deployment: workload.name });
   };
 
+
   return (
-    <Paper  elevation={3}  sx={{ p: 3, bgcolor: "background.paper", borderRadius: 2 }}>
+    <Paper  elevation={3}  sx={{ p: 3, bgcolor: theme === "dark" ? "#1F2937" : "background.paper", color: theme === "dark" ? "white" : "black",      borderRadius: 2 }}>
       {/* Header Section */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h6" fontWeight="bold">
           {title}
         </Typography>
-        <Typography variant="body2" color="textSecondary" mr={2}>
+        <Typography variant="body2" color="textSecondary" mr={2}  sx={{ color: theme === "dark" ? "white" : "black"}}>
           Items: {workloads.length}
-        </Typography>
-        <IconButton onClick={() => setShowDetails(!showDetails)}>
+        </Typography> 
+        <IconButton  sx={{ color: theme === "dark" ? "white" : "black"}} onClick={() => setShowDetails(!showDetails)}>
           {showDetails ? <FiChevronUp /> : <FiChevronDown />}
         </IconButton>
       </Box>
@@ -265,11 +271,11 @@ spec:
           <TableRow>
             {showDetails && (
               <>
-                <TableCell>Name</TableCell>
-                <TableCell>Kind</TableCell>
-                <TableCell>Namespace</TableCell>
-                <TableCell>Created</TableCell>
-                <TableCell align="right">Actions</TableCell>
+                <TableCell  sx={{ color: theme === "dark" ? "white" : "black", align:"right"}}>Name</TableCell>
+                <TableCell  sx={{ color: theme === "dark" ? "white" : "black", align:"right"}}>Kind</TableCell>
+                <TableCell  sx={{ color: theme === "dark" ? "white" : "black", align:"right"}}>Namespace</TableCell>
+                <TableCell  sx={{ color: theme === "dark" ? "white" : "black", align:"right"}}>Created</TableCell>
+                <TableCell align="right" sx={{ color: theme === "dark" ? "white" : "black", align:"right"}}></TableCell>
               </>
             )}
           </TableRow>
@@ -291,11 +297,11 @@ spec:
                       </Typography>
                     </Box>
                   </TableCell>
-                  <TableCell>{workload.kind}</TableCell>
-                  <TableCell>{workload.namespace}</TableCell>
-                  <TableCell>{new Date(workload.creationTime).toLocaleString()}</TableCell>
-                  <TableCell align="right">
-                    <IconButton onClick={(e) => handleMenuClick(e, index)}>
+                  <TableCell  sx={{ color: theme === "dark" ? "white" : "black", align:"right"}}>{workload.kind}</TableCell>
+                  <TableCell  sx={{ color: theme === "dark" ? "white" : "black", align:"right"}}>{workload.namespace}</TableCell>
+                  <TableCell  sx={{ color: theme === "dark" ? "white" : "black", align:"right"}}>{new Date(workload.creationTime).toLocaleString()}</TableCell>
+                  <TableCell  align="right">
+                    <IconButton  sx={{ color: theme === "dark" ? "white" : "black", align:"right"}} onClick={(e) => handleMenuClick(e, index)}>
                       <FiMoreVertical />
                     </IconButton>
                   </TableCell>
@@ -311,15 +317,47 @@ spec:
         open={menuOpen !== null}
         anchorEl={menuAnchorEl}
         onClose={handleMenuClose}
+        MenuListProps={{
+          sx: { bgcolor: theme === "dark" ? "#1F2937" : "background.paper", p: 0 } // Ensures full background coverage
+        }}
+        anchorReference="anchorPosition"
+        anchorPosition={menuAnchorEl ? { top: menuAnchorEl.getBoundingClientRect().bottom, left: menuAnchorEl.getBoundingClientRect().left - 55 } : undefined} // Move left by 10px
       >
-        <MenuItem onClick={() => {handleLogsClick(workloads[menuOpen!]); setMenuOpen(null)}}>Logs</MenuItem>
-        <MenuItem onClick={() => handleScaleClick(workloads[menuOpen!])}>Scale</MenuItem>
-        <MenuItem onClick={() => handleEditClick(workloads[menuOpen!])}>Edit</MenuItem>
-        <MenuItem onClick={() => handleDeleteClick(workloads[menuOpen!]) }>Delete</MenuItem>
+        <MenuItem 
+          onClick={() => { handleLogsClick(workloads[menuOpen!]); setMenuOpen(null); }} 
+          sx={{ color: theme === "dark" ? "white" : "black" }}
+        >
+          Logs
+        </MenuItem>
+        <MenuItem 
+          onClick={() => handleScaleClick(workloads[menuOpen!])} 
+          sx={{ color: theme === "dark" ? "white" : "black" }}
+        >
+          Scale
+        </MenuItem>
+        <MenuItem 
+          onClick={() => handleEditClick(workloads[menuOpen!])} 
+          sx={{ color: theme === "dark" ? "white" : "black" }}
+        >
+          Edit
+        </MenuItem>
+        <MenuItem 
+          onClick={() => handleDeleteClick(workloads[menuOpen!])} 
+          sx={{ color: theme === "dark" ? "white" : "black" }}
+        >
+          Delete
+        </MenuItem>
       </Menu>
 
       {/* YAML Editor Modal */}
-      <Dialog open={editYaml} onClose={() => setEditYaml(false)} maxWidth="lg" fullWidth>
+      <Dialog open={editYaml} onClose={() => setEditYaml(false)}  
+        sx={{
+          "& .MuiPaper-root": {
+            bgcolor: theme === "dark" ? "#1F2937" : "white",
+            color: theme === "dark" ? "white" : "black",
+          },
+        }}
+        maxWidth="lg" fullWidth>
         <DialogTitle>Edit Resource</DialogTitle>
         <DialogContent>
           <Editor
@@ -327,85 +365,148 @@ spec:
             defaultLanguage="yaml"
             value={yamlData}
             onChange={(value) => setYamlData(value || "")}
-            theme="vs-dark"
-          />
+            theme={theme === "dark" ? "vs-dark" : "vs-dark"}
+            />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleSave}>Upload</Button>
-          <Button onClick={() => setEditYaml(false)}>Cancel</Button>
+          <Button onClick={handleSave} sx={{ color: theme === "dark" ? "white" : "black" }}>Upload</Button>
+          <Button onClick={() => setEditYaml(false)} sx={{ color: theme === "dark" ? "white" : "black" }}>Cancel</Button>
         </DialogActions>
       </Dialog>
 
       {/* Scaling Modal */}
-      <Dialog open={scaleModalOpen} onClose={() => setScaleModalOpen(false)}>
+      <Dialog open={scaleModalOpen} 
+      onClose={() => setScaleModalOpen(false)}
+        sx={{
+          "& .MuiPaper-root": {
+            bgcolor: theme === "dark" ? "#1F2937" : "white",
+            color: theme === "dark" ? "white" : "black",
+          }
+      }}
+      >
         <DialogTitle>Scale a Resource</DialogTitle>
         <DialogContent>
-          <Typography variant="body1" mb={2}>
+          <Typography variant="body1" mb={2} sx={{ color: theme === "dark" ? "white" : "black" }}>
             Deployment {selectedWorkload?.name} will be updated to reflect the desired replica count.
           </Typography>
           <Box display="flex" gap={2} mb={2}>
-            <TextField
-              label="Desired Replicas"
-              type="number"
-              value={desiredReplicas}
-              onChange={(e) => setDesiredReplicas(Number(e.target.value))}
-              fullWidth
+          <TextField
+            label="Desired Replicas"
+            type="number"
+            value={desiredReplicas}
+            onChange={(e) => {
+              const value = e.target.value;
+              setDesiredReplicas(value === "" ? "" : Number(value));
+            }}
+            fullWidth
+            sx={{
+              input: { color: theme === "dark" ? "white" : "black" },
+              label: { color: theme === "dark" ? "white" : "black" },
+              "& .MuiOutlinedInput-root": {
+                "& fieldset": { borderColor: theme === "dark" ? "white" : "black" },
+                "&:hover fieldset": { borderColor: theme === "dark" ? "gray" : "black" },
+              },
+            }}
             />
             <TextField
               label="Actual Replicas"
+              type="number"
               value={replicaCount}
-              disabled
               fullWidth
+              sx={{
+                input: { color: theme === "dark" ? "white" : "black" },
+                label: { color: theme === "dark" ? "white" : "black" },
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": { borderColor: theme === "dark" ? "white" : "black" },
+                  "&:hover fieldset": { borderColor: theme === "dark" ? "gray" : "black" },
+                },
+              }}
             />
           </Box>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            <Info size={18} style={{ marginRight: 8 }} />
+          <Alert severity="info" sx={{ mb: 2 , color: theme === "dark" ? "white" : "black"}} >
+            {/* <Info  size={18} style={{ marginRight: 8 }} /> */}
             This action is equivalent to: kubectl scale -n deployment {selectedWorkload?.name} --replicas={replicaCount}
           </Alert>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleScaleSave}>Scale</Button>
-          <Button onClick={() => setScaleModalOpen(false)}>Cancel</Button>
+          <Button onClick={handleScaleSave} sx={{ color: theme === "dark" ? "white" : "black" }}>Scale</Button>
+          <Button onClick={() => setScaleModalOpen(false)} sx={{ color: theme === "dark" ? "white" : "black" }}>Cancel</Button>
         </DialogActions>
       </Dialog>
 
       {/* Delete Modal */}
-      <Dialog open={deleteModalOpen} onClose={() => setDeleteModalOpen(false)}>
-        <DialogTitle>Delete a Resource</DialogTitle>
+      <Dialog 
+        open={deleteModalOpen} 
+        onClose={() => setDeleteModalOpen(false)}
+        sx={{
+          "& .MuiPaper-root": { // Styles the Dialog background
+            backgroundColor: theme === "dark" ? "#333" : "#fff",
+            color: theme === "dark" ? "white" : "black",
+          }
+        }}
+      >
+        <DialogTitle 
+          sx={{ color: theme === "dark" ? "white" : "black" }}
+        >
+          Delete a Resource
+        </DialogTitle>
         <DialogContent>
-          <Typography variant="body1" mb={2}>
+          <Typography 
+            variant="body1" 
+            mb={2} 
+            sx={{ color: theme === "dark" ? "white" : "black" }}
+          >
             Are you sure you want to delete <strong>{selectedWorkload?.name}</strong> in namespace{" "}
             <strong>{selectedWorkload?.namespace}</strong>?
           </Typography>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            <Info size={18} style={{ marginRight: 8 }} />
+          <Alert 
+            severity="info" 
+            sx={{ 
+              mb: 2, 
+              backgroundColor: theme === "dark" ? "#444" : "inherit", 
+              color: theme === "dark" ? "white" : "black"
+            }}
+          >
+            {/* <Info size={18} style={{ marginRight: 8 }} /> */}
             This action is equivalent to: kubectl delete -n default pod {selectedWorkload?.name} --cascade=background
           </Alert>
         </DialogContent>
         <DialogActions>
-          <Button onClick={confirmDelete}>Delete</Button>
-          <Button onClick={() => setDeleteModalOpen(false)}>Cancel</Button>
+          <Button 
+            onClick={confirmDelete} 
+            sx={{ color: theme === "dark" ? "white" : "black" }}
+          >
+            Delete
+          </Button>
+          <Button 
+            onClick={() => setDeleteModalOpen(false)} 
+            sx={{ color: theme === "dark" ? "white" : "black" }}
+          >
+            Cancel
+          </Button>
         </DialogActions>
       </Dialog>
 
+
       {/* Logs Modal */}
-      {selectedLog && (
-        <LogModal 
-          namespace={selectedLog.namespace} 
-          deploymentName={selectedLog.deployment} 
-          onClose={() => setSelectedLog(null)}
-        />
-      )}
+        {selectedLog && (
+          <LogModal 
+            namespace={selectedLog.namespace} 
+            deploymentName={selectedLog.deployment} 
+            onClose={() => setSelectedLog(null)}
+          />
+        )}
+
 
       {/* Error Snackbar */}
-      <Snackbar
-        open={!!error}
-        autoHideDuration={6000}
-        onClose={() => setError("")}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert severity="error">{error}</Alert>
-      </Snackbar>
+        <Snackbar
+          open={!!error}
+          autoHideDuration={6000}
+          onClose={() => setError("")}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        >
+          <Alert severity="error">{error}</Alert>
+        </Snackbar>
     </Paper>
   );
 };

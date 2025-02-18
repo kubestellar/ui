@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useContext } from "react";
 import { X } from "lucide-react";
 import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
+import { ThemeContext } from "../context/ThemeContext"; // Import ThemeContext
 
 interface LogModalProps {
   namespace: string;
@@ -15,22 +16,22 @@ const LogModal = ({ namespace, deploymentName, onClose }: LogModalProps) => {
   const terminalInstance = useRef<Terminal | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { theme } = useContext(ThemeContext);
 
   useEffect(() => {
     if (!terminalRef.current) return;
 
     const term = new Terminal({
       theme: {
-        background: "#181818", // Darker background
-        foreground: "#D1D5DB", // Light gray text
+        background: theme === "dark" ? "#181818" : "#F5F5F5", // Dark or light background
+        foreground: theme === "dark" ? "#D1D5DB" : "#222222", // Light gray or dark text
         cursor: "#00FF00", // Green cursor
-        // selection: "#44475a", // Highlighted text color
       },
       cursorBlink: true,
       fontSize: 14,
       fontFamily: "monospace",
-      scrollback: 1000, // Allows more scroll history
-      disableStdin: true, // Prevent user input
+      scrollback: 1000,
+      disableStdin: true,
     });
 
     const fitAddon = new FitAddon();
@@ -43,14 +44,13 @@ const LogModal = ({ namespace, deploymentName, onClose }: LogModalProps) => {
 
     terminalInstance.current = term;
 
-    // Dynamically determine the WebSocket protocol
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const socket = new WebSocket(
       `${protocol}://localhost:4000/ws?namespace=${namespace}&deployment=${deploymentName}`
     );
 
     socket.onopen = () => {
-      term.writeln("\x1b[32m✔ Connected to log stream...\x1b[0m"); // Green text
+      term.writeln("\x1b[32m✔ Connected to log stream...\x1b[0m");
       setLoading(false);
       setError(null);
     };
@@ -65,7 +65,7 @@ const LogModal = ({ namespace, deploymentName, onClose }: LogModalProps) => {
     };
 
     socket.onclose = () => {
-      term.writeln("\x1b[31m⚠ Complete Logs. Connection closed.\x1b[0m"); // Red text
+      term.writeln("\x1b[31m⚠ Complete Logs. Connection closed.\x1b[0m");
       if (socket.readyState !== WebSocket.OPEN) {
         setError(" Connection closed. Please retry.");
       }
@@ -75,26 +75,40 @@ const LogModal = ({ namespace, deploymentName, onClose }: LogModalProps) => {
       socket.close();
       term.dispose();
     };
-  }, [namespace, deploymentName]);
+  }, [namespace, deploymentName, theme]); // Re-run effect when theme changes
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
-      <div className="bg-gray-900 p-5 rounded-xl shadow-lg w-3/4 h-3/4 flex flex-col">
+      <div
+        className={`p-5 rounded-xl shadow-lg w-3/4 h-3/4 flex flex-col ${
+          theme === "dark" ? "bg-gray-900 border-gray-700" : "bg-white border-gray-300"
+        }`}
+      >
         {/* Header */}
-        <div className="flex justify-between items-center border-b border-gray-700 pb-3">
-          <h2 className="text-2xl font-bold text-white">
+        <div
+          className={`flex justify-between items-center border-b pb-3 ${
+            theme === "dark" ? "border-gray-700 text-white" : "border-gray-300 text-black"
+          }`}
+        >
+          <h2 className="text-2xl font-bold">
             Logs: <span className="text-blue-400 text-2xl">{deploymentName}</span>
           </h2>
           <button
             onClick={onClose}
-            className="bg-gray-900 hover:text-red-400 transition duration-200"
+            className={`transition duration-200 ${
+              theme === "dark" ? "bg-gray-900 hover:text-red-600" : "hover:text-red-600 "
+            }`}
           >
             <X size={22} />
           </button>
         </div>
 
         {/* Terminal Section */}
-        <div className="mt-4 bg-black p-3 rounded-lg h-full border border-gray-700">
+        <div
+          className={`mt-4 p-3 rounded-lg h-full border ${
+            theme === "dark" ? "bg-black border-gray-700 text-white" : "bg-gray-100 border-gray-300 text-black"
+          }`}
+        >
           {loading && <p className="text-green-400">🔄 Loading logs...</p>}
           {error && <p className="text-red-400">{error}</p>}
           <div ref={terminalRef} className="h-full w-full overflow-auto"></div>
