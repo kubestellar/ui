@@ -4,15 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"k8s.io/client-go/kubernetes"
-	"log"
-	"net/http"
-	"time"
-
 	"github.com/gorilla/websocket"
 	"github.com/katamyra/kubestellarUI/wds"
 	v1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/informers"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/cache"
+	"log"
+	"net/http"
+	"time"
 )
 
 var upgrader = websocket.Upgrader{
@@ -54,7 +55,11 @@ func HandleDeploymentLogs(w http.ResponseWriter, r *http.Request) {
 
 	sendInitialLogs(conn, clientset, namespace, deploymentName)
 
-	watchDeploymentChanges(conn, clientset, namespace, deploymentName)
+	// Use an informer to watch the deployment
+	watchDeploymentWithInformer(conn, clientset, namespace, deploymentName)
+
+	// WE ARE USING INFORMER
+	//watchDeploymentChanges(conn, clientset, namespace, deploymentName)
 }
 
 func sendInitialLogs(conn *websocket.Conn, clientset *kubernetes.Clientset, namespace, deploymentName string) {
@@ -76,7 +81,59 @@ func sendInitialLogs(conn *websocket.Conn, clientset *kubernetes.Clientset, name
 	}
 }
 
+func watchDeploymentWithInformer(conn *websocket.Conn, clientset *kubernetes.Clientset, namespace, deploymentName string) {
+	factory := informers.NewSharedInformerFactoryWithOptions(clientset, 0,
+		informers.WithNamespace(namespace),
+		informers.WithTweakListOptions(func(options *metav1.ListOptions) {
+			options.FieldSelector = fmt.Sprintf("metadata.name=%s", deploymentName)
+		}),
+	)
+	informer := factory.Apps().V1().Deployments().Informer()
+
+	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		UpdateFunc: func(oldObj, newObj interface{}) {
+			oldDeployment, ok1 := oldObj.(*v1.Deployment)
+			newDeployment, ok2 := newObj.(*v1.Deployment)
+			if !ok1 || !ok2 || newDeployment.Name != deploymentName {
+				return
+			}
+			updateHandler(conn, oldDeployment, newDeployment)
+		},
+	})
+	stopCh := make(chan struct{})
+	defer close(stopCh)
+
+	go informer.Run(stopCh)
+
+	// Keep the connection open
+	select {}
+
+}
+
+func updateHandler(conn *websocket.Conn, oldDeployment, newDeployment *v1.Deployment) {
+	var logs []DeploymentUpdate
+	if *oldDeployment.Spec.Replicas != *newDeployment.Spec.Replicas {
+		logs = append(logs, DeploymentUpdate{
+			Timestamp: time.Now().Format(time.RFC3339),
+			Message:   fmt.Sprintf("Deployment %s updated - Replicas changed: %d", newDeployment.Name, *newDeployment.Spec.Replicas),
+		})
+	}
+	oldImage := oldDeployment.Spec.Template.Spec.Containers[0].Image
+	newImage := newDeployment.Spec.Template.Spec.Containers[0].Image
+	if oldImage != newImage {
+		logs = append(logs, DeploymentUpdate{
+			Timestamp: time.Now().Format(time.RFC3339),
+			Message:   fmt.Sprintf("Deployment %s updated - Image changed: %s", newDeployment.Name, newImage),
+		})
+	}
+	for _, logLine := range logs {
+		jsonMessage, _ := json.Marshal(logLine)
+		conn.WriteMessage(websocket.TextMessage, jsonMessage)
+	}
+}
+
 // Watches deployment changes and sends updates
+// Keeping it for reference - NOT USEFUL
 func watchDeploymentChanges(conn *websocket.Conn, clientset *kubernetes.Clientset, namespace, deploymentName string) {
 	options := metav1.ListOptions{
 		// remove this line it will become universal for all the deployment
