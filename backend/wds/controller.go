@@ -107,10 +107,15 @@ func (c *Controller) handleUpdate(oldObj, newObj interface{}) {
 		// Two different versions of the same Deployment will always have different RVs.
 		return
 	}
+	lastReplicas := oldDepl.Spec.Replicas
+	lastImage := oldDepl.Spec.Template.Spec.Containers[0].Image
+	fmt.Printf("LastReplica %d and Image: %s", *lastReplicas, lastImage)
 	fmt.Printf("Update triggered for %s/%s\n", newDepl.Namespace, newDepl.Name)
 	c.workqueue.Add(newObj)
 }
 func (c *Controller) handleDel(obj interface{}) {
 	fmt.Println("hello del is called")
+	depl := obj.(*appsv1.Deployment)
+	fmt.Printf("Deployment : %s", depl.Name)
 	c.workqueue.Add(obj)
 }
