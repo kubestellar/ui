@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   Badge,
   Button,
@@ -104,12 +103,6 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
     setFilter(event.target.value as string);
   };
 
-  const navigate = useNavigate();
-
-  const navigateToCreateCluster = () => {
-    navigate("/createcluster"); // Navigate to the page
-  };
-
   const handleCheckboxChange = (clusterName: string) => {
     setSelectedClusters((prev) =>
       prev.includes(clusterName)
@@ -189,13 +182,10 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
             <MenuItem value="active">Active</MenuItem>
             <MenuItem value="inactive">Inactive</MenuItem>
             <MenuItem value="pending">Pending</MenuItem>
-          </Select>
+          </Select>013
         </FormControl>
 
         <div className="flex gap-2">
-          <Button variant="contained" onClick={navigateToCreateCluster}>
-            Create Cluster
-          </Button>
           <Button variant="outlined">Import Cluster</Button>
         </div>
       </div>
