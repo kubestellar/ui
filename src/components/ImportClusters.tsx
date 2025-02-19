@@ -35,7 +35,6 @@ const ImportClusters = ({
 }: Props) => {
   const [fileType, setFileType] = useState<"yaml" | "json">("yaml");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [editorContent, setEditorContent] = useState<string>("");
   const [error, setError] = useState<string>("");
   //const [loading, setLoading] = useState(false);
@@ -61,7 +60,7 @@ const ImportClusters = ({
 
   return (
     <Dialog  open={!!activeOption} onClose={onCancel} maxWidth="lg" fullWidth>
-      <DialogTitle sx={{color: theme === "dark" ? "white" : "black" , bgcolor: theme === "dark" ? "#1F2937" : "background.paper"}}>Create Deployment</DialogTitle>
+      <DialogTitle sx={{color: theme === "dark" ? "white" : "black" , bgcolor: theme === "dark" ? "#1F2937" : "background.paper"}}>Import Cluster</DialogTitle>
       <DialogContent sx={{ bgcolor: theme === "dark" ? "#1F2937" : "background.paper"}} >
         <Box sx={{ width: "100%"}}>
           <Tabs
