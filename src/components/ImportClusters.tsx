@@ -214,36 +214,15 @@ const ImportClusters = ({
               >
                 <Alert severity="info" sx={{ mb: 2 }}>
                   <AlertTitle>Info</AlertTitle>
-                  Not Developed Full.
+                  Enter API/URL to import cluster.
                 </Alert>
 
                 <TextField
                   fullWidth
-                  label="App Name"
+                  label="API/URL"
                   value={formData.clusterName}
                   onChange={(e) =>
                     setFormData({ ...formData, clusterName: e.target.value })
-                  }
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: {
-                      borderColor: theme === "dark" ? "white" : "black",
-                    },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme === "dark" ? "white" : "black",
-                    },
-                  }}
-                />
-
-
-                <TextField
-                  fullWidth
-                  label="Container Image"
-                  value={formData.Region}
-                  onChange={(e) =>
-                    setFormData({ ...formData, Region: e.target.value })
                   }
                   sx={{
                     mb: 2,
@@ -262,13 +241,7 @@ const ImportClusters = ({
                   <Button onClick={handleCancel} sx={{ color: theme === "dark" ? "white" : "black" }}>
                     Cancel
                   </Button>
-                  <Button
-                    variant="contained"
-                    onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
-                  >
-                    {showAdvancedOptions ? "Hide Advanced Options" : "Show Advanced Options"}
-                  </Button>
-                  <Button variant="contained">Deploy</Button>
+                  <Button variant="contained">Import</Button>
                 </DialogActions>
               </Box>
             )}
