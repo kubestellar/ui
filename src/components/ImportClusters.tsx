@@ -35,7 +35,6 @@ const ImportClusters = ({
 }: Props) => {
   const [fileType, setFileType] = useState<"yaml" | "json">("yaml");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [editorContent, setEditorContent] = useState<string>("");
   const [error, setError] = useState<string>("");
   //const [loading, setLoading] = useState(false);
@@ -61,7 +60,7 @@ const ImportClusters = ({
 
   return (
     <Dialog  open={!!activeOption} onClose={onCancel} maxWidth="lg" fullWidth>
-      <DialogTitle sx={{color: theme === "dark" ? "white" : "black" , bgcolor: theme === "dark" ? "#1F2937" : "background.paper"}}>Create Deployment</DialogTitle>
+      <DialogTitle sx={{color: theme === "dark" ? "white" : "black" , bgcolor: theme === "dark" ? "#1F2937" : "background.paper"}}>Import Cluster</DialogTitle>
       <DialogContent sx={{ bgcolor: theme === "dark" ? "#1F2937" : "background.paper"}} >
         <Box sx={{ width: "100%"}}>
           <Tabs
@@ -214,36 +213,15 @@ const ImportClusters = ({
               >
                 <Alert severity="info" sx={{ mb: 2 }}>
                   <AlertTitle>Info</AlertTitle>
-                  Not Developed Full.
+                  Enter API/URL to import cluster.
                 </Alert>
 
                 <TextField
                   fullWidth
-                  label="App Name"
+                  label="API/URL"
                   value={formData.clusterName}
                   onChange={(e) =>
                     setFormData({ ...formData, clusterName: e.target.value })
-                  }
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: {
-                      borderColor: theme === "dark" ? "white" : "black",
-                    },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme === "dark" ? "white" : "black",
-                    },
-                  }}
-                />
-
-
-                <TextField
-                  fullWidth
-                  label="Container Image"
-                  value={formData.Region}
-                  onChange={(e) =>
-                    setFormData({ ...formData, Region: e.target.value })
                   }
                   sx={{
                     mb: 2,
@@ -262,13 +240,7 @@ const ImportClusters = ({
                   <Button onClick={handleCancel} sx={{ color: theme === "dark" ? "white" : "black" }}>
                     Cancel
                   </Button>
-                  <Button
-                    variant="contained"
-                    onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
-                  >
-                    {showAdvancedOptions ? "Hide Advanced Options" : "Show Advanced Options"}
-                  </Button>
-                  <Button variant="contained">Deploy</Button>
+                  <Button variant="contained">Import</Button>
                 </DialogActions>
               </Box>
             )}
