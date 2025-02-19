@@ -33,7 +33,7 @@ const ImportClusters = ({
   // setHasUnsavedChanges,
   onCancel,
 }: Props) => {
-  const [fileType, setFileType] = useState<"yaml" | "json">("yaml");
+  const [fileType, setFileType] = useState<"yaml">("yaml");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [editorContent, setEditorContent] = useState<string>("");
   const [error, setError] = useState<string>("");
@@ -107,7 +107,7 @@ const ImportClusters = ({
                         }}
                         value={fileType}
                         onChange={(e) => {
-                          setFileType(e.target.value as "yaml" | "json");
+                          setFileType(e.target.value as "yaml");
                           setEditorContent(""); // Clear the editor content on file type change
                         }}
                         label="File Type"
@@ -158,8 +158,7 @@ const ImportClusters = ({
               <Box sx={{color: theme === "dark" ? "white" : "black"}}>
                 <Alert severity="info" sx={{ mb: 2 }}>
                   <AlertTitle>Info</AlertTitle>
-                  Select a YAML or JSON file specifying the resources to deploy to
-                  the currently selected namespace.
+                  Select a kubeconfig file to import cluster.
                 </Alert>
 
                 <Box
@@ -172,11 +171,11 @@ const ImportClusters = ({
                   }}
                 >
                   <Button variant="contained" component="label">
-                    Choose YAML or JSON file
+                    Select Kubeconfig file
                     <input
                       type="file"
                       hidden
-                      accept=".yaml,.yml,.json"
+                      accept=".kube/config, .yaml,.yml"
                       onClick={(e) => (e.currentTarget.value = "")} // Ensure new file selection triggers event
                       onChange={(e) => {
                         const file = e.target.files?.[0] || null;
@@ -200,7 +199,7 @@ const ImportClusters = ({
                     onClick={handleFileUpload}
                     disabled={!selectedFile}
                   >
-                    Upload & Deploy
+                    Upload & Import
                   </Button>
                 </DialogActions>
               </Box>
