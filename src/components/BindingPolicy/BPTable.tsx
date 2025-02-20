@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import {
   Table,
   TableHead,
@@ -14,6 +14,7 @@ import {
 import { Info, Trash2, Edit2 } from "lucide-react";
 import { BindingPolicyInfo } from "../../types/bindingPolicy";
 import PolicyDetailDialog from "./Dialogs/PolicyDetailDialog";
+import { ThemeContext } from "../../context/ThemeContext";
 
 interface BPTableProps {
   policies: BindingPolicyInfo[];
@@ -44,22 +45,26 @@ const BPTable: React.FC<BPTableProps> = ({
     }
     return true;
   });
+  const { theme } = useContext(ThemeContext); 
 
   return (
     <>
       <Table>
         <TableHead>
-          <TableRow>
-            <TableCell>Binding Policy Name</TableCell>
-            <TableCell>Clusters</TableCell>
-            <TableCell>Workload</TableCell>
-            <TableCell>Creation Date</TableCell>
-            <TableCell>Status</TableCell>
-            <TableCell align="right">
+          <TableRow className={theme === "dark" ? "!text-white" : "" }>
+            <TableCell className="!text-lg !text-inherit">Binding Policy Name</TableCell>
+            <TableCell className="!text-lg !text-inherit">Clusters</TableCell>
+            <TableCell className="!text-lg !text-inherit">Workload</TableCell>
+            <TableCell className="!text-lg !text-inherit">Creation Date</TableCell>
+            <TableCell className="!text-lg !text-inherit">Status</TableCell>
+            <TableCell className="!text-lg !text-inherit" align="right">
               <Tooltip title="Preview matches">
-                <IconButton size="small" onClick={onPreviewMatches}>
-                  <Info />
-                </IconButton>
+              <IconButton
+                size="small"
+                onClick={onPreviewMatches}
+                sx={{ color: theme === "dark" ? "white" : "inherit" }}>
+              <Info />
+              </IconButton>
               </Tooltip>
             </TableCell>
           </TableRow>
@@ -82,7 +87,7 @@ const BPTable: React.FC<BPTableProps> = ({
               <TableCell>
                 <Chip label={policy.workload} size="small" color="success" />
               </TableCell>
-              <TableCell>{policy.creationDate}</TableCell>
+              <TableCell sx={{ color: theme === "dark" ? "white" : "inherit" }}>{policy.creationDate}</TableCell>
               <TableCell>
                 <Chip
                   label={policy.status}
@@ -104,10 +109,14 @@ const BPTable: React.FC<BPTableProps> = ({
                 <Box
                   sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}
                 >
-                  <IconButton size="small" onClick={() => onEditPolicy(policy)}>
+                  <IconButton
+                  sx={{ color: theme === "dark" ? "white" : "inherit" }}
+                  size="small" onClick={() => onEditPolicy(policy)}>
                     <Edit2 />
                   </IconButton>
-                  <IconButton size="small">
+                  <IconButton
+                  sx={{ color: theme === "dark" ? "white" : "inherit" }}
+                  size="small">
                     <Info />
                   </IconButton>
                   <IconButton

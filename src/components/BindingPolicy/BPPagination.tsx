@@ -1,5 +1,6 @@
-import React from "react";
+import React,{useContext} from "react";
 import { Box, Typography, Button } from "@mui/material";
+import { ThemeContext } from "../../context/ThemeContext";
 
 interface BPPaginationProps {
   filteredCount: number;
@@ -10,8 +11,9 @@ const BPPagination: React.FC<BPPaginationProps> = ({
   filteredCount,
   totalCount,
 }) => {
+  const { theme } = useContext(ThemeContext); 
   return (
-    <Box
+    <Box  
       sx={{
         display: "flex",
         justifyContent: "space-between",
@@ -19,7 +21,8 @@ const BPPagination: React.FC<BPPaginationProps> = ({
         mt: 2,
       }}
     >
-      <Typography variant="body2" color="text.secondary">
+      <Typography variant="body2" color="text.secondary"
+      className={theme === "dark" ? "!text-white" : "" }>
         Showing {filteredCount} of {totalCount} entries
       </Typography>
       <Box sx={{ display: "flex", gap: 1 }}>
