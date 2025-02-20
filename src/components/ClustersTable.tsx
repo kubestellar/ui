@@ -27,7 +27,7 @@ interface ManagedClusterInfo {
   name: string;
   labels: { [key: string]: string };
   creationTime: string;
-  status: string;
+  status?: string;
   context: string;
 }
 
@@ -62,48 +62,42 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
     let result = [...clusters];
 
     // Apply search query
-    if (query) {
-      result = result.filter(
-        (cluster) =>
-          cluster.name.toLowerCase().includes(query.toLowerCase()) ||
-          Object.entries(cluster.labels || {}).some(
-            ([key, value]) =>
-              key.toLowerCase().includes(query.toLowerCase()) ||
-              value.toLowerCase().includes(query.toLowerCase())
-          )
-      );
+    if (query.trim()) {
+      result = result.filter((cluster) => {
+        const searchLower = query.toLowerCase().trim();
+        const nameMatch = cluster.name.toLowerCase().includes(searchLower);
+        const labelMatch = Object.entries(cluster.labels || {}).some(
+          ([key, value]) =>
+            key.toLowerCase().includes(searchLower) ||
+            value.toLowerCase().includes(searchLower)
+        );
+        const contextMatch = cluster.context.toLowerCase().includes(searchLower);
+        return nameMatch || labelMatch || contextMatch;
+      });
     }
 
     // Apply status filter
     if (filter) {
       result = result.filter((cluster) => {
-        switch (filter.toLowerCase()) {
-          case "active":
-            return cluster.status === "Active";
-          case "inactive":
-            return cluster.status === "Inactive";
-          case "pending":
-            return cluster.status === "Pending";
-          default:
-            return true;
-        }
+        const currentStatus = cluster.status || 'Active✓';
+        return currentStatus.toLowerCase() === filter.toLowerCase();
       });
     }
 
     setFilteredClusters(result);
   }, [clusters, query, filter]);
 
-  // Apply filtering whenever search query or filter changes
+  // Apply filtering whenever search query, filter, or clusters change
   useEffect(() => {
     filterClusters();
-  }, [filterClusters]);
+  }, [filterClusters, query, filter, clusters]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(event.target.value);
   };
 
   const handleFilterChange = (event: SelectChangeEvent<string>) => {
-    setFilter(event.target.value as string);
+    setFilter(event.target.value);
   };
 
   const handleCheckboxChange = (clusterName: string) => {
@@ -193,9 +187,9 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
             }}
           >
             <MenuItem className={theme === "dark" ? "!bg-slate-800 !text-white hover:!bg-slate-900" : ""} value="">All</MenuItem>
-            <MenuItem className={theme === "dark" ? "!bg-slate-800 !text-white hover:!bg-slate-900" : ""} value="active">Active</MenuItem>
-            <MenuItem className={theme === "dark" ? "!bg-slate-800 !text-white hover:!bg-slate-900" : ""} value="inactive">Inactive</MenuItem>
-            <MenuItem className={theme === "dark" ? "!bg-slate-800 !text-white hover:!bg-slate-900" : ""} value="pending">Pending</MenuItem>
+            <MenuItem className={theme === "dark" ? "!bg-slate-800 !text-white hover:!bg-slate-900" : ""} value="Active✓">Active</MenuItem>
+            <MenuItem className={theme === "dark" ? "!bg-slate-800 !text-white hover:!bg-slate-900" : ""} value="Inactive">Inactive</MenuItem>
+            <MenuItem className={theme === "dark" ? "!bg-slate-800 !text-white hover:!bg-slate-900" : ""} value="Pending">Pending</MenuItem>
           </Select>
         </FormControl>
 
@@ -209,11 +203,17 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
               setActiveOption("option1");
             }}
             sx={{
-              borderColor: theme === "dark" ? "white" : "blue", // White border in dark mode
-              color: theme === "dark" ? "white" : "blue", // White text in dark mode
+              borderColor: theme === "dark" ? "#60A5FA" : "#2563EB", // blue-400 in dark, blue-600 in light
+              color: theme === "dark" ? "#60A5FA" : "#2563EB",
+              backgroundColor: theme === "dark" ? "rgba(96, 165, 250, 0.1)" : "transparent",
               "&:hover": {
-                borderColor: theme === "dark" ? "white" : "blue", // Keep white border on hover in dark mode
+                borderColor: theme === "dark" ? "#93C5FD" : "#1D4ED8", // blue-300 in dark, blue-700 in light
+                backgroundColor: theme === "dark" ? "rgba(96, 165, 250, 0.2)" : "rgba(37, 99, 235, 0.1)",
               },
+              textTransform: "none",
+              fontWeight: "600",
+              padding: "8px 16px",
+              borderRadius: "8px",
             }}
           >
             Import Cluster
@@ -280,8 +280,16 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge className="font-bold px-2 py-1 text-sm rounded bg-green-200 border border-green-500">
-                      Active✓
+                    <Badge 
+                      className={`font-bold px-2 py-1 text-sm rounded border ${
+                        cluster.status === 'Inactive' 
+                          ? 'bg-red-200 border-red-500'
+                          : cluster.status === 'Pending'
+                          ? 'bg-yellow-200 border-yellow-500'
+                          : 'bg-green-200 border-green-500'
+                      }`}
+                    >
+                      {cluster.status || 'Active✓'}
                     </Badge>
                   </TableCell>
                 </TableRow>
@@ -298,19 +306,57 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
       </TableContainer>
 
       {/* Pagination Controls */}
-      <div className="flex justify-between items-center mt-4">
+      <div className="flex justify-between items-center mt-4 px-2">
         <Button
           disabled={currentPage === 1}
           onClick={() => onPageChange(currentPage - 1)}
+          sx={{
+            color: theme === "dark" ? "#60A5FA" : "#2563EB",
+            borderColor: theme === "dark" ? "#60A5FA" : "#2563EB",
+            backgroundColor: theme === "dark" ? "rgba(96, 165, 250, 0.1)" : "transparent",
+            "&:hover": {
+              borderColor: theme === "dark" ? "#93C5FD" : "#1D4ED8",
+              backgroundColor: theme === "dark" ? "rgba(96, 165, 250, 0.2)" : "rgba(37, 99, 235, 0.1)",
+            },
+            "&.Mui-disabled": {
+              color: theme === "dark" ? "#475569" : "#94A3B8", // slate-600 in dark, slate-400 in light
+              borderColor: theme === "dark" ? "#475569" : "#94A3B8",
+            },
+            textTransform: "none",
+            fontWeight: "600",
+            padding: "6px 16px",
+            borderRadius: "6px",
+          }}
+          variant="outlined"
         >
           Previous
         </Button>
-        <span>
+        <span className={`${
+          theme === "dark" ? "text-gray-300" : "text-gray-700"
+        } font-medium`}>
           Page {currentPage} of {totalPages}
         </span>
         <Button
           disabled={currentPage === totalPages}
           onClick={() => onPageChange(currentPage + 1)}
+          sx={{
+            color: theme === "dark" ? "#60A5FA" : "#2563EB",
+            borderColor: theme === "dark" ? "#60A5FA" : "#2563EB",
+            backgroundColor: theme === "dark" ? "rgba(96, 165, 250, 0.1)" : "transparent",
+            "&:hover": {
+              borderColor: theme === "dark" ? "#93C5FD" : "#1D4ED8",
+              backgroundColor: theme === "dark" ? "rgba(96, 165, 250, 0.2)" : "rgba(37, 99, 235, 0.1)",
+            },
+            "&.Mui-disabled": {
+              color: theme === "dark" ? "#475569" : "#94A3B8",
+              borderColor: theme === "dark" ? "#475569" : "#94A3B8",
+            },
+            textTransform: "none",
+            fontWeight: "600",
+            padding: "6px 16px",
+            borderRadius: "6px",
+          }}
+          variant="outlined"
         >
           Next
         </Button>
