@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -11,6 +11,7 @@ import {
   Chip,
 } from "@mui/material";
 import { ManagedCluster, Workload } from "../../types/bindingPolicy";
+import { ThemeContext } from "../../context/ThemeContext";
 
 interface PreviewDialogProps {
   open: boolean;
@@ -25,8 +26,22 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
   matchedClusters,
   matchedWorkloads,
 }) => {
+  const { theme } = useContext(ThemeContext);
+  const isDarkMode = theme === "dark";
+
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      sx={{
+        "& .MuiPaper-root": {
+          backgroundColor: isDarkMode ? "#1e293b" : "inherit", // slate-800
+          color: isDarkMode ? "white" : "inherit",
+        },
+      }}
+    >
       <DialogTitle>Preview Matches</DialogTitle>
       <DialogContent>
         <Box
@@ -42,7 +57,15 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
               Matched Clusters
             </Typography>
             {matchedClusters.map((cluster) => (
-              <Paper key={cluster.name} sx={{ p: 2, mb: 1 }}>
+              <Paper
+                key={cluster.name}
+                sx={{
+                  p: 2,
+                  mb: 1,
+                  backgroundColor: isDarkMode ? "#334155" : "inherit", // slate-700
+                  color: isDarkMode ? "white" : "inherit",
+                }}
+              >
                 <Typography variant="subtitle1">{cluster.name}</Typography>
                 <Box
                   sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mt: 1 }}
@@ -52,7 +75,10 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
                       key={key}
                       label={`${key}=${value}`}
                       size="small"
-                      sx={{ backgroundColor: "#e3f2fd" }}
+                      sx={{
+                        backgroundColor: isDarkMode ? "#475569" : "#e3f2fd", // slate-600
+                        color: isDarkMode ? "white" : "inherit",
+                      }}
                     />
                   ))}
                 </Box>
@@ -64,7 +90,15 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
               Matched Workloads
             </Typography>
             {matchedWorkloads.map((workload) => (
-              <Paper key={workload.name} sx={{ p: 2, mb: 1 }}>
+              <Paper
+                key={workload.name}
+                sx={{
+                  p: 2,
+                  mb: 1,
+                  backgroundColor: isDarkMode ? "#334155" : "inherit",
+                  color: isDarkMode ? "white" : "inherit",
+                }}
+              >
                 <Typography variant="subtitle1">{workload.name}</Typography>
                 <Box
                   sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mt: 1 }}
@@ -74,7 +108,10 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
                       key={key}
                       label={`${key}=${value}`}
                       size="small"
-                      sx={{ backgroundColor: "#e3f2fd" }}
+                      sx={{
+                        backgroundColor: isDarkMode ? "#475569" : "#e3f2fd",
+                        color: isDarkMode ? "white" : "inherit",
+                      }}
                     />
                   ))}
                 </Box>
@@ -84,7 +121,9 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Close</Button>
+        <Button onClick={onClose} sx={{ color: isDarkMode ? "white" : "inherit" }}>
+          Close
+        </Button>
       </DialogActions>
     </Dialog>
   );
