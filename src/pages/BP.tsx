@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState ,useContext} from "react";
 import { Paper, Box } from "@mui/material";
 import BPHeader from "../components/BindingPolicy/Dialogs/BPHeader";
 import BPTable from "../components/BindingPolicy/BPTable";
@@ -6,16 +6,19 @@ import BPPagination from "../components/BindingPolicy/BPPagination";
 import PreviewDialog from "../components/BindingPolicy/PreviewDialog";
 import DeleteDialog from "../components/BindingPolicy/Dialogs/DeleteDialog";
 import EditBindingPolicyDialog from "../components/BindingPolicy/Dialogs/EditBindingPolicyDialog";
+import { ThemeContext } from "../context/ThemeContext"; // Import ThemeContext
 import {
   BindingPolicyInfo,
   ManagedCluster,
   Workload,
 } from "../types/bindingPolicy";
 
+
 const BP = () => {
   const [bindingPolicies, setBindingPolicies] = useState<BindingPolicyInfo[]>(
     []
   );
+  const { theme } = useContext(ThemeContext); // Get theme from context
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedLabels] = useState<Record<string, string>>({});
@@ -232,7 +235,7 @@ spec:
   const { matchedClusters, matchedWorkloads } = getMatches();
 
   return (
-    <Paper sx={{ maxWidth: "100%", margin: "auto", p: 3 }}>
+    <Paper sx={{ maxWidth: "100%", margin: "auto", p: 3, backgroundColor: theme === "dark" ? "#1F2937" : "#fff" }}>
       <BPHeader
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Editor from "@monaco-editor/react";
 import yaml from "js-yaml";
 import {
@@ -13,6 +13,7 @@ import {
   Snackbar,
 } from "@mui/material";
 import { BindingPolicyInfo } from "../../../types/bindingPolicy";
+import { ThemeContext } from "../../../context/ThemeContext"; // Assuming you have this context
 
 interface EditBindingPolicyDialogProps {
   open: boolean;
@@ -31,6 +32,8 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
   const [policyName, setPolicyName] = useState<string>(policy.name);
   const [error, setError] = useState<string>("");
   const [showUnsavedChanges, setShowUnsavedChanges] = useState(false);
+
+  const { theme } = useContext(ThemeContext); // Get the theme from context
 
   useEffect(() => {
     setEditorContent(policy.yaml);
@@ -72,11 +75,17 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
     }
   };
 
+  const isDarkTheme = theme === "dark"; // Check if the current theme is dark
+
   return (
     <>
       <Dialog open={open} onClose={handleClose} maxWidth="lg" fullWidth>
-        <DialogTitle>Edit Binding Policy</DialogTitle>
-        <DialogContent>
+        <DialogTitle className={isDarkTheme ? "bg-slate-800 text-white" : ""}>
+          Edit Binding Policy
+        </DialogTitle>
+        <DialogContent
+          className={isDarkTheme ? "bg-slate-800 text-white" : ""}
+        >
           <Alert severity="info" sx={{ mb: 2 }}>
             <AlertTitle>Info</AlertTitle>
             Edit your binding policy configuration. Changes will be applied
@@ -90,6 +99,10 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
             onChange={(e) => setPolicyName(e.target.value)}
             margin="normal"
             required
+            InputProps={{
+              className: isDarkTheme ? "!text-white" : "", // Make input text white in dark mode
+            }}
+            className={isDarkTheme ? "bg-slate-800 text-white" : ""} // Dark background for input in dark mode
           />
 
           <div className="rounded-md border mt-4">
@@ -109,12 +122,18 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
             />
           </div>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
+
+        <DialogActions
+          className={isDarkTheme ? "bg-slate-800" : ""} // Dark background for footer buttons
+        >
+          <Button onClick={handleClose} className={isDarkTheme ? "text-white" : ""}>
+            Cancel
+          </Button>
           <Button
             variant="contained"
             onClick={handleSave}
             disabled={!policyName || !editorContent}
+            className={isDarkTheme ? "bg-blue-700" : ""} // Button color in dark mode
           >
             Save Changes
           </Button>
@@ -125,16 +144,25 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
         open={showUnsavedChanges}
         onClose={() => setShowUnsavedChanges(false)}
       >
-        <DialogTitle>Unsaved Changes</DialogTitle>
-        <DialogContent>
+        <DialogTitle className={isDarkTheme ? "bg-slate-800 text-white" : ""}>
+          Unsaved Changes
+        </DialogTitle>
+        <DialogContent
+          className={isDarkTheme ? "bg-slate-800 text-white" : ""}
+        >
           <Alert severity="warning">
             <AlertTitle>Warning</AlertTitle>
             You have unsaved changes. Are you sure you want to close without
             saving?
           </Alert>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowUnsavedChanges(false)}>
+        <DialogActions
+          className={isDarkTheme ? "bg-slate-800" : ""}
+        >
+          <Button
+            onClick={() => setShowUnsavedChanges(false)}
+            className={isDarkTheme ? "text-white" : ""}
+          >
             Continue Editing
           </Button>
           <Button
@@ -144,6 +172,7 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
               setShowUnsavedChanges(false);
               onClose();
             }}
+            className={isDarkTheme ? "bg-red-700" : ""}
           >
             Discard Changes
           </Button>

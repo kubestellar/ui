@@ -7,7 +7,7 @@ import { Box, Button } from "@mui/material";
 import { Plus } from "lucide-react";
 import { Grid, Card, CardContent, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { ThemeContext } from "../context/ThemeContext"; // Import ThemeContext
+import { ThemeContext } from "../context/ThemeContext"; 
 
 export interface Workload {
   name: string;
@@ -22,7 +22,7 @@ export interface Workload {
 const COLORS = ["#28A745"];
 
 const WDS = () => {
-  const { theme } = useContext(ThemeContext); // Get theme from context
+  const { theme } = useContext(ThemeContext); 
   const [workloads, setWorkloads] = useState<Workload[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

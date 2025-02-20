@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Editor from "@monaco-editor/react";
 import yaml from "js-yaml";
 import {
@@ -15,6 +15,7 @@ import {
   TextField,
   Snackbar,
 } from "@mui/material";
+import { ThemeContext } from "../context/ThemeContext";
 
 interface PolicyData {
   name: string;
@@ -62,27 +63,21 @@ metadata:
   name: example-binding-policy
   namespace: kubestellar
 spec:
-  # Selects the workload to bind
   subject:
     kind: Application
     apiGroup: app.kubestellar.io
     name: my-app
     namespace: default
-  # Defines where the workload should be bound
   placement:
-    # Matches clusters by label
     clusterSelector:
       matchLabels:
         environment: production
         region: us-east
-    # Defines clusters explicitly
     staticPlacement:
       clusterNames:
         - cluster-a
         - cluster-b
-  # Defines how the binding should behave
   bindingMode: Propagate
-  # Optional: Define resource overrides for specific clusters
   overrides:
     - clusterName: cluster-a
       patch:
@@ -156,7 +151,6 @@ spec:
         workload: "default-workload",
         yaml: content,
       });
-      // Reset form after successful creation
       setEditorContent(defaultYamlTemplate);
       setPolicyName("");
       setSelectedFile(null);
@@ -167,7 +161,6 @@ spec:
     }
   };
 
-  // Reset form when dialog is opened
   useEffect(() => {
     if (open) {
       setEditorContent(defaultYamlTemplate);
@@ -178,7 +171,6 @@ spec:
   }, [open]);
 
   const handleCancelClick = () => {
-    // Only show confirmation if there's content
     if (
       activeTab === "yaml"
         ? editorContent !== defaultYamlTemplate
@@ -195,17 +187,24 @@ spec:
     onClose();
   };
 
+  const { theme } = useContext(ThemeContext);
+
+  const isDarkTheme = theme === "dark";
+
   return (
     <>
       <Dialog open={open} onClose={handleCancelClick} maxWidth="lg" fullWidth>
-        <DialogTitle>Create Binding Policy</DialogTitle>
-        <DialogContent>
+        <DialogTitle
+          className={isDarkTheme ? "bg-slate-800 text-white" : ""}
+        >
+          Create Binding Policy
+        </DialogTitle>
+        <DialogContent
+          className={isDarkTheme ? "bg-slate-800 text-white" : ""}
+        >
           <div className="mb-6">
-            <Alert severity="info">
-              <AlertTitle>Info</AlertTitle>
-              Create a binding policy by providing YAML configuration or
-              uploading a file. The policy will determine how workloads are
-              distributed across your clusters.
+            <Alert severity="info" className={isDarkTheme ? "text-white" : ""}>
+              <AlertTitle>Create a binding policy by providing YAML configuration or uploading a file. The policy will determine how workloads are distributed across your clusters.</AlertTitle>
             </Alert>
           </div>
 
@@ -216,7 +215,12 @@ spec:
             onChange={(e) => setPolicyName(e.target.value)}
             margin="normal"
             required
+            InputProps={{
+              className: isDarkTheme ? "!text-white" : "",
+            }}
+            className={isDarkTheme ? "bg-slate-800" : ""}
           />
+
 
           <Box sx={{ width: "100%" }}>
             <Tabs value={activeTab} onChange={handleTabChange}>

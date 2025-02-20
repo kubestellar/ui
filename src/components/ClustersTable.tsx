@@ -184,13 +184,21 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                 color: theme === "dark" ? "white" : "inherit",
               },
             }}
+            MenuProps={{
+              PaperProps: {
+                sx: {
+                  bgcolor: theme === "dark" ? "rgb(30 41 59)" : "white", // bg-slate-800
+                },
+              },
+            }}
           >
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="active">Active</MenuItem>
-            <MenuItem value="inactive">Inactive</MenuItem>
-            <MenuItem value="pending">Pending</MenuItem>
+            <MenuItem className={theme === "dark" ? "!bg-slate-800 !text-white hover:!bg-slate-900" : ""} value="">All</MenuItem>
+            <MenuItem className={theme === "dark" ? "!bg-slate-800 !text-white hover:!bg-slate-900" : ""} value="active">Active</MenuItem>
+            <MenuItem className={theme === "dark" ? "!bg-slate-800 !text-white hover:!bg-slate-900" : ""} value="inactive">Inactive</MenuItem>
+            <MenuItem className={theme === "dark" ? "!bg-slate-800 !text-white hover:!bg-slate-900" : ""} value="pending">Pending</MenuItem>
           </Select>
         </FormControl>
+
 
         <div className="flex gap-2">
           <Button
@@ -224,28 +232,28 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
       <TableContainer component={Paper} className="overflow-auto">
         <Table>
           <TableHead>
-            <TableRow className="bg-blue-500 text-white">
+            <TableRow className={theme === "dark" ? "bg-blue-800 !text-white" : "bg-blue-500" }>
               <TableCell>
                 <Checkbox checked={selectAll} onChange={handleSelectAll} />
               </TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Labels</TableCell>
-              <TableCell>Creation Time</TableCell>
-              <TableCell>Context</TableCell>
-              <TableCell>Status</TableCell>
+              <TableCell className="!text-lg !text-inherit">Name</TableCell>
+              <TableCell className="!text-lg !text-inherit">Labels</TableCell>
+              <TableCell className="!text-lg !text-inherit">Creation Time</TableCell>
+              <TableCell className="!text-lg !text-inherit">Context</TableCell>
+              <TableCell className="!text-lg !text-inherit">Status</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {filteredClusters.length > 0 ? (
               filteredClusters.map((cluster) => (
-                <TableRow key={cluster.name}>
+                <TableRow key={cluster.name} className={`${theme === "dark" ? "bg-gray-800 !text-white" : "!text-black"}`}>
                   <TableCell>
                     <Checkbox
                       checked={selectedClusters.includes(cluster.name)}
                       onChange={() => handleCheckboxChange(cluster.name)}
                     />
                   </TableCell>
-                  <TableCell>{cluster.name}</TableCell>
+                  <TableCell className="!text-inherit">{cluster.name}</TableCell>
                   <TableCell>
                     {cluster.labels &&
                       Object.keys(cluster.labels).length > 0 ? (
@@ -263,7 +271,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                       <p>No labels</p>
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="!text-inherit">
                     {new Date(cluster.creationTime).toLocaleString()}
                   </TableCell>
                   <TableCell>
@@ -279,8 +287,8 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                 </TableRow>
               ))
             ) : (
-              <TableRow>
-                <TableCell colSpan={6} align="center">
+              <TableRow className={theme === "dark" ? "!bg-slate-800 !text-white text" : ""}>
+                <TableCell className="!text-inherit" colSpan={6} align="center">
                   No clusters found matching your criteria
                 </TableCell>
               </TableRow>
