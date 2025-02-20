@@ -10,25 +10,43 @@ import {
   InputLabel,
   Card,
   CardContent,
+  CircularProgress,
+  FormHelperText,
 } from "@mui/material";
+import axios from "axios";
+import { BASE_URL } from "../utils/credentials";
 
 const CreateCluster = () => {
   const [clusterName, setClusterName] = useState("");
   const [clusterSet, setClusterSet] = useState("");
   const [importMode, setImportMode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleCreateCluster = () => {
-    console.log("Creating cluster with:", { clusterName, clusterSet });
-    // Add logic here to handle form submission (e.g., API call)
+  const handleCreateCluster = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const response = await axios.post(`${BASE_URL}/clusters/create`, {
+        clusterName,
+        clusterSet,
+        importMode,
+      });
+      if (response.status !== 200 && response.status !== 202) {
+        throw new Error("Network response was not ok");
+      }
+      console.log("Cluster creation initiated:", response.data);
+      // Optionally reset form fields after success
+      setClusterName("");
+      setClusterSet("");
+      setImportMode("");
+    } catch (err) {
+      console.error("Error creating cluster:", err);
+      setError("Failed to initiate cluster creation. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
-
-  /* const ClusterSetDropdown = () => {
-    console.log("Creating cluster with:", { clusterSet, clusterSet });
-  };
-
-  const ClusterImportMode = () => {
-    console.log("Creating cluster with:", { clusterName, clusterSet });
-  };*/
 
   return (
     <Box
@@ -36,75 +54,81 @@ const CreateCluster = () => {
       flexDirection="column"
       alignItems="center"
       justifyContent="center"
-      height="60vh"
+      height="80vh"
+      p={2}
     >
       <Card sx={{ width: 600, p: 2, boxShadow: 3, borderRadius: 2 }}>
-        <Typography variant="h5" fontWeight="bold" sx={{ mb: 2 }}>
-          Create Cluster
-        </Typography>
-        <CardContent>
-          <Typography variant="h6" fontWeight="bold">
-            Cluster Details
-          </Typography>
+        <form onSubmit={handleCreateCluster}>
+          <CardContent>
+            <Typography variant="h5" fontWeight="bold" sx={{ mb: 2 }}>
+              Create Cluster
+            </Typography>
+            <Typography variant="subtitle1" sx={{ mb: 2 }}>
+              Please fill in the details below:
+            </Typography>
 
-          {/* Cluster Name Input */}
-          <TextField
-            fullWidth
-            label="Cluster Name *"
-            placeholder="Enter cluster name"
-            value={clusterName}
-            onChange={(e) => setClusterName(e.target.value)}
-            variant="outlined"
-            slotProps={{
-              inputLabel: { shrink: true },
-            }}
-            sx={{ mt: 3 }}
-          />
+            <TextField
+              fullWidth
+              required
+              label="Cluster Name"
+              placeholder="Enter cluster name"
+              value={clusterName}
+              onChange={(e) => setClusterName(e.target.value)}
+              variant="outlined"
+              sx={{ mb: 3 }}
+            />
 
-          {/* Cluster Set Dropdown */}
-          <FormControl fullWidth sx={{ mt: 3 }}>
-            <InputLabel id="cluster-set-label" shrink>
-              Cluster Set
-            </InputLabel>
-            <Select
-              labelId="cluster-set-label"
-              value={clusterSet}
-              onChange={(e) => setClusterSet(e.target.value)}
-              displayEmpty
-            >
-              <MenuItem value="">Select a cluster set</MenuItem>
-              <MenuItem value="set1">Set 1</MenuItem>
-              <MenuItem value="set2">Set 2</MenuItem>
-              <MenuItem value="set3">Set 3</MenuItem>
-            </Select>
-          </FormControl>
+            <FormControl fullWidth required sx={{ mb: 3 }}>
+              <InputLabel id="cluster-set-label">Cluster Set</InputLabel>
+              <Select
+                labelId="cluster-set-label"
+                value={clusterSet}
+                label="Cluster Set"
+                onChange={(e) => setClusterSet(e.target.value)}
+              >
+                <MenuItem value="set1">Set 1</MenuItem>
+                <MenuItem value="set2">Set 2</MenuItem>
+                <MenuItem value="set3">Set 3</MenuItem>
+              </Select>
+              {!clusterSet && (
+                <FormHelperText>Please select a cluster set.</FormHelperText>
+              )}
+            </FormControl>
 
-          {/* Import Mode Dropdown */}
-          <FormControl fullWidth sx={{ mt: 2 }}>
-            <InputLabel>Select import mode</InputLabel>
-            <Select
-              value={importMode}
-              onChange={(e) => setImportMode(e.target.value)}
-              displayEmpty
-            >
-              <MenuItem value="kubeconfig">kubeconfig</MenuItem>
-              <MenuItem value="manual">Manual</MenuItem>
-              <MenuItem value="api">API/URL</MenuItem>
-            </Select>
-          </FormControl>
-        </CardContent>
+            {/* Import Mode Dropdown */}
+            <FormControl fullWidth required sx={{ mb: 3 }}>
+              <InputLabel id="import-mode-label">Import Mode</InputLabel>
+              <Select
+                labelId="import-mode-label"
+                value={importMode}
+                label="Import Mode"
+                onChange={(e) => setImportMode(e.target.value)}
+              >
+                <MenuItem value="kubeconfig">kubeconfig</MenuItem>
+                <MenuItem value="manual">Manual</MenuItem>
+                <MenuItem value="api">API/URL</MenuItem>
+              </Select>
+            </FormControl>
 
-        {/* "Create Cluster" Button */}
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleCreateCluster}
-          sx={{  display: "block" }} // Fix: Ensures it takes up space
-          disabled={!clusterName || !clusterSet} // Disable until form is filled
-        >
-          Create Cluster
-        </Button>
+            {error && (
+              <Typography color="error" sx={{ mb: 2 }}>
+                {error}
+              </Typography>
+            )}
 
+            <Box display="flex" justifyContent="flex-end">
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={!clusterName || !clusterSet || !importMode || loading}
+                sx={{ minWidth: 150 }}
+              >
+                {loading ? <CircularProgress size={24} color="inherit" /> : "Create Cluster"}
+              </Button>
+            </Box>
+          </CardContent>
+        </form>
       </Card>
     </Box>
   );

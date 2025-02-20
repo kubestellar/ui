@@ -91,3 +91,20 @@ func GetClusterStatusHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, statuses)
 }
+
+func CreateClusterHandler(c *gin.Context) {
+	var cluster models.Cluster
+
+	if err := c.ShouldBindJSON(&cluster); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload", "details": err.Error()})
+		return
+	}
+
+	if cluster.Name == "" || cluster.ClusterSet == "" || cluster.ImportMode == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required cluster details"})
+		return
+	}
+
+	services.CreateCluster(cluster)
+	c.JSON(http.StatusAccepted, gin.H{"message": "Cluster creation initiated"})
+}

@@ -3,6 +3,10 @@ package services
 import (
 	"context"
 	"fmt"
+	"log"
+	"time"
+
+	"github.com/katamyra/kubestellarUI/models"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -64,4 +68,14 @@ func ValidateClusterConnectivity(kubeconfigData []byte) error {
 	}
 
 	return nil
+}
+
+func CreateCluster(cluster models.Cluster) {
+	log.Printf("Initiating creation for cluster: %+v", cluster)
+	go func(c models.Cluster) {
+		// Simulate a delay in creating the cluster.
+		time.Sleep(15 * time.Second)
+		// Replace with real provisioning logic (e.g., calling cloud provider APIs).
+		log.Printf("Cluster '%s' created successfully", c.Name)
+	}(cluster)
 }
