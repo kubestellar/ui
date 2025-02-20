@@ -221,6 +221,7 @@ spec:
             className={isDarkTheme ? "bg-slate-800" : ""}
           />
 
+
           <Box sx={{ width: "100%" }}>
             <Tabs value={activeTab} onChange={handleTabChange}>
               <Tab label="Create from YAML" value="yaml" />

@@ -37,12 +37,14 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
       fullWidth
       sx={{
         "& .MuiPaper-root": {
-          backgroundColor: isDarkMode ? "#1e293b" : "inherit", // slate-800
-          color: isDarkMode ? "white" : "inherit",
+          backgroundColor: isDarkMode ? "#1e293b" : "#ffffff", // white background for light mode
+          color: isDarkMode ? "white" : "black", // black text for light mode
         },
       }}
     >
-      <DialogTitle>Preview Matches</DialogTitle>
+      <DialogTitle sx={{ color: isDarkMode ? "white" : "black" }}>
+        Preview Matches
+      </DialogTitle>
       <DialogContent>
         <Box
           sx={{
@@ -53,7 +55,7 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
           }}
         >
           <Box>
-            <Typography variant="h6" gutterBottom>
+            <Typography variant="h6" gutterBottom sx={{ color: isDarkMode ? "white" : "black" }}>
               Matched Clusters
             </Typography>
             {matchedClusters.map((cluster) => (
@@ -62,11 +64,13 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
                 sx={{
                   p: 2,
                   mb: 1,
-                  backgroundColor: isDarkMode ? "#334155" : "inherit", // slate-700
-                  color: isDarkMode ? "white" : "inherit",
+                  backgroundColor: isDarkMode ? "#334155" : "#ffffff", // white background for light mode
+                  color: isDarkMode ? "white" : "black", // black text for light mode
                 }}
               >
-                <Typography variant="subtitle1">{cluster.name}</Typography>
+                <Typography variant="subtitle1" sx={{ color: isDarkMode ? "white" : "black" }}>
+                  {cluster.name}
+                </Typography>
                 <Box
                   sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mt: 1 }}
                 >
@@ -76,8 +80,8 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
                       label={`${key}=${value}`}
                       size="small"
                       sx={{
-                        backgroundColor: isDarkMode ? "#475569" : "#e3f2fd", // slate-600
-                        color: isDarkMode ? "white" : "inherit",
+                        backgroundColor: isDarkMode ? "#475569" : "#e3f2fd", // light blue in light mode
+                        color: isDarkMode ? "white" : "black", // black text in light mode
                       }}
                     />
                   ))}
@@ -86,7 +90,7 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
             ))}
           </Box>
           <Box>
-            <Typography variant="h6" gutterBottom>
+            <Typography variant="h6" gutterBottom sx={{ color: isDarkMode ? "white" : "black" }}>
               Matched Workloads
             </Typography>
             {matchedWorkloads.map((workload) => (
@@ -95,13 +99,15 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
                 sx={{
                   p: 2,
                   mb: 1,
-                  backgroundColor: isDarkMode ? "#334155" : "inherit",
-                  color: isDarkMode ? "white" : "inherit",
+                  backgroundColor: isDarkMode ? "#334155" : "#ffffff", // white background for light mode
+                  color: isDarkMode ? "white" : "black", // black text for light mode
                 }}
               >
-                <Typography variant="subtitle1">{workload.name}</Typography>
+                <Typography variant="subtitle1" sx={{ color: isDarkMode ? "white" : "black" }}>
+                  {workload.name}
+                </Typography>
                 <Box
-                  sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mt: 1 }}
+                  sx={{ display: "lex", gap: 0.5, flexWrap: "wrap", mt: 1 }}
                 >
                   {Object.entries(workload.labels).map(([key, value]) => (
                     <Chip
@@ -109,8 +115,8 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
                       label={`${key}=${value}`}
                       size="small"
                       sx={{
-                        backgroundColor: isDarkMode ? "#475569" : "#e3f2fd",
-                        color: isDarkMode ? "white" : "inherit",
+                        backgroundColor: isDarkMode ? "#475569" : "#e3f2fd", // light blue in light mode
+                        color: isDarkMode ? "white" : "black", // black text in light mode
                       }}
                     />
                   ))}
@@ -121,7 +127,10 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} sx={{ color: isDarkMode ? "white" : "inherit" }}>
+        <Button
+          onClick={onClose}
+          sx={{ color: isDarkMode ? "white" : "black" }} // black text in light mode
+        >
           Close
         </Button>
       </DialogActions>
