@@ -91,9 +91,19 @@ const BPHeader: React.FC<BPHeaderProps> = ({
           variant="outlined"
           onClick={handleFilterClick}
           color={Object.keys(activeFilters).length > 0 ? "primary" : "inherit"}
+          sx={{
+            ...(theme === "dark" && {
+              borderColor: "white", // Ensures the border is white
+              color: "white", // Ensures the text is white
+              "&:hover": {
+                borderColor: "white", // Ensures border color remains white on hover
+              },
+            }),
+          }}
         >
           Filter
         </Button>
+
 
         {activeFilters.status && (
           <Chip
