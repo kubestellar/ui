@@ -43,7 +43,7 @@ func main() {
 
 	initLogger()
 	router := gin.Default()
-    
+
 	router.Use(ZapMiddleware())
 	log.Println("Debug: KubestellarUI application started")
 
@@ -194,17 +194,6 @@ func main() {
 
 	router.POST("api/deploy", api.DeployHandler)
 
-	router.GET("/ping", func(c *gin.Context) {
-		logger.Info("Ping endpoint hit")
-		c.JSON(200, gin.H{"message": "pong"})
-	})
-
-	router.GET("/error", func(c *gin.Context) {
-		c.JSON(500, gin.H{"error": "Something went wrong"})
-		c.Error(fmt.Errorf("Internal Server Error"))
-
-	})
-
 	if err := router.Run(":4000"); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
@@ -215,7 +204,7 @@ var logger *zap.Logger
 // Initialize Zap Logger
 func initLogger() {
 	config := zap.NewProductionConfig()
-	config.Encoding = "json" // Ensure JSON format
+	config.Encoding = "json"                // Ensure JSON format
 	config.OutputPaths = []string{"stdout"} // Console output (can also log to a file)
 	log, _ := config.Build()
 	logger = log
@@ -231,7 +220,7 @@ func ZapMiddleware() gin.HandlerFunc {
 		if c.Request.Body != nil {
 			bodyBytes, _ := io.ReadAll(c.Request.Body)
 			requestBody = string(bodyBytes)
-			c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes)) 
+			c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 		}
 
 		// Process the request
