@@ -295,9 +295,80 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                 </TableRow>
               ))
             ) : (
-              <TableRow className={theme === "dark" ? "!bg-slate-800 !text-white text" : ""}>
-                <TableCell className="!text-inherit" colSpan={6} align="center">
-                  No clusters found matching your criteria
+              <TableRow className={theme === "dark" ? "!bg-slate-800" : "bg-gray-50"}>
+                <TableCell colSpan={6} className="py-8">
+                  <div className="flex flex-col items-center justify-center text-center p-6">
+                    <svg
+                      className={`w-16 h-16 mb-4 ${theme === "dark" ? "text-slate-600" : "text-gray-400"}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <h3 className={`text-lg font-semibold mb-2 ${theme === "dark" ? "text-slate-200" : "text-gray-700"}`}>
+                      No Clusters Found
+                    </h3>
+                    <p className={`${theme === "dark" ? "text-slate-400" : "text-gray-500"} mb-4`}>
+                      {query && filter
+                        ? "No clusters match both your search and filter criteria"
+                        : query
+                        ? "No clusters match your search term"
+                        : filter
+                        ? "No clusters match your filter selection"
+                        : "No clusters available"}
+                    </p>
+                    {(query || filter) && (
+                      <div className="flex gap-2">
+                        {query && (
+                          <Button
+                            onClick={() => setQuery("")}
+                            size="small"
+                            sx={{
+                              color: theme === "dark" ? "#60A5FA" : "#2563EB",
+                              borderColor: theme === "dark" ? "#60A5FA" : "#2563EB",
+                              backgroundColor: theme === "dark" ? "rgba(96, 165, 250, 0.1)" : "transparent",
+                              "&:hover": {
+                                borderColor: theme === "dark" ? "#93C5FD" : "#1D4ED8",
+                                backgroundColor: theme === "dark" ? "rgba(96, 165, 250, 0.2)" : "rgba(37, 99, 235, 0.1)",
+                              },
+                              textTransform: "none",
+                              fontWeight: "600",
+                            }}
+                            variant="outlined"
+                          >
+                            Clear Search
+                          </Button>
+                        )}
+                        {filter && (
+                          <Button
+                            onClick={() => setFilter("")}
+                            size="small"
+                            sx={{
+                              color: theme === "dark" ? "#60A5FA" : "#2563EB",
+                              borderColor: theme === "dark" ? "#60A5FA" : "#2563EB",
+                              backgroundColor: theme === "dark" ? "rgba(96, 165, 250, 0.1)" : "transparent",
+                              "&:hover": {
+                                borderColor: theme === "dark" ? "#93C5FD" : "#1D4ED8",
+                                backgroundColor: theme === "dark" ? "rgba(96, 165, 250, 0.2)" : "rgba(37, 99, 235, 0.1)",
+                              },
+                              textTransform: "none",
+                              fontWeight: "600",
+                            }}
+                            variant="outlined"
+                          >
+                            Clear Filter
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             )}
