@@ -17,6 +17,7 @@ import (
 	"k8s.io/client-go/util/homedir"
 )
 
+// create BP
 func CreateBp(ctx *gin.Context) {
 
 	bpFile, err := ctx.FormFile("bpYaml")
@@ -66,6 +67,7 @@ func CreateBp(ctx *gin.Context) {
 
 }
 
+// delete BP by name
 func DeleteBp(ctx *gin.Context) {
 	name := ctx.Query("name")
 	if name == "" {
@@ -86,6 +88,17 @@ func DeleteBp(ctx *gin.Context) {
 
 }
 
+// delete all BPs
+func DeleteAllBp(ctx *gin.Context) {
+	c, err := getClientForBp()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+	err = c.BindingPolicies().DeleteCollection(context.TODO(), v1.DeleteOptions{}, v1.ListOptions{})
+	ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+
+}
+
 func getClientForBp() (*bpv1alpha1.ControlV1alpha1Client, error) {
 	kubeconfig := os.Getenv("KUBECONFIG")
 	if kubeconfig == "" {
@@ -97,7 +110,7 @@ func getClientForBp() (*bpv1alpha1.ControlV1alpha1Client, error) {
 	}
 	wds_ctx := os.Getenv("wds_context")
 	if wds_ctx == "" {
-		return nil, fmt.Errorf("env var wds_context is not set")
+		return nil, fmt.Errorf("env var wds_context not set")
 	}
 	overrides := &clientcmd.ConfigOverrides{
 		CurrentContext: wds_ctx,
@@ -105,7 +118,7 @@ func getClientForBp() (*bpv1alpha1.ControlV1alpha1Client, error) {
 	cconfig := clientcmd.NewDefaultClientConfig(*config, overrides)
 	restcnfg, err := cconfig.ClientConfig()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get rest config: %s", err)
+		return nil, err
 	}
 	c, err := bpv1alpha1.NewForConfig(restcnfg)
 	if err != nil {

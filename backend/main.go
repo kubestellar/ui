@@ -197,6 +197,7 @@ func main() {
 	// ROUTES FOR BP
 	router.POST("/api/bp/create", bp.CreateBp)
 	router.DELETE("/api/bp/delete/:name", bp.DeleteBp)
+	router.DELETE("/api/bp/delete", bp.DeleteAllBp)
 
 	if err := router.Run(":4000"); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
