@@ -1,6 +1,5 @@
 import { RouteObject } from "react-router-dom";
 import { Layout } from "../components/Layout";
-import ITS from "../pages/ITS";
 import KubeconfigOnboarding from "../pages/KubeconfigOnboarding"; // Ensure that the file exists at this path
 import WDS from "../pages/WDS";
 import BP from "../pages/BP";
