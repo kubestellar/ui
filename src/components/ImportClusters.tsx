@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Editor from "@monaco-editor/react";
-import { ThemeContext } from "../context/ThemeContext"; 
+import { ThemeContext } from "../context/ThemeContext";
 import { useContext } from "react";
 import {
   Dialog,
@@ -48,35 +48,35 @@ const ImportClusters = ({
 
   const handleFileUpload = async () => {
   };
-  
-  console.log(error);  
+
+  console.log(error);
 
   const handleCancel = () => {
     setSelectedFile(null); // Clear file selection
     setError("");          // Clear error messages
     setActiveOption(null);  // Close the modal
   };
-  
+
 
   return (
-    <Dialog  open={!!activeOption} onClose={onCancel} maxWidth="lg" fullWidth>
-      <DialogTitle sx={{color: theme === "dark" ? "white" : "black" , bgcolor: theme === "dark" ? "#1F2937" : "background.paper"}}>Import Cluster</DialogTitle>
-      <DialogContent sx={{ bgcolor: theme === "dark" ? "#1F2937" : "background.paper"}} >
-        <Box sx={{ width: "100%"}}>
+    <Dialog open={!!activeOption} onClose={onCancel} maxWidth="lg" fullWidth>
+      <DialogTitle sx={{ color: theme === "dark" ? "white" : "black", bgcolor: theme === "dark" ? "#1F2937" : "background.paper" }}>Import Cluster</DialogTitle>
+      <DialogContent sx={{ bgcolor: theme === "dark" ? "#1F2937" : "background.paper" }} >
+        <Box sx={{ width: "100%" }}>
           <Tabs
             value={activeOption}
             onChange={(_event, newValue) => setActiveOption(newValue)}
           >
-            <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="YAML paste" value="option1" />
-            <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Kubeconfig" value="option2" />
-            <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="API/URL" value="option3" />
-            <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Manual" value="option4" />
+            <Tab sx={{ color: theme === "dark" ? "white" : "black" }} label="YAML paste" value="option1" />
+            <Tab sx={{ color: theme === "dark" ? "white" : "black" }} label="Kubeconfig" value="option2" />
+            <Tab sx={{ color: theme === "dark" ? "white" : "black" }} label="API/URL" value="option3" />
+            <Tab sx={{ color: theme === "dark" ? "white" : "black" }} label="Manual" value="option4" />
           </Tabs>
 
-          <Box 
-          sx={{ 
-            mt: 2 ,
-          }}
+          <Box
+            sx={{
+              mt: 2,
+            }}
           >
             {activeOption === "option1" && (
               <Box>
@@ -86,60 +86,60 @@ const ImportClusters = ({
                 </Alert>
 
                 <FormControl
-                      fullWidth
-                      sx={{
-                        mb: 2,
-                        input: { color: theme === "dark" ? "white" : "black" },
-                        label: { color: theme === "dark" ? "white" : "black" },
-                        fieldset: {
-                          borderColor: theme === "dark" ? "white" : "black",
-                        },
-                        "& .MuiInputLabel-root.Mui-focused": {
-                          color: theme === "dark" ? "white" : "black",
-                        },
-                      }}
-                    >
-                      <InputLabel>File Type</InputLabel>
-                      <Select
-                        sx={{
+                  fullWidth
+                  sx={{
+                    mb: 2,
+                    input: { color: theme === "dark" ? "white" : "black" },
+                    label: { color: theme === "dark" ? "white" : "black" },
+                    fieldset: {
+                      borderColor: theme === "dark" ? "white" : "black",
+                    },
+                    "& .MuiInputLabel-root.Mui-focused": {
+                      color: theme === "dark" ? "white" : "black",
+                    },
+                  }}
+                >
+                  <InputLabel>File Type</InputLabel>
+                  <Select
+                    sx={{
+                      bgcolor: theme === "dark" ? "#1F2937" : "background.paper",
+                      color: theme === "dark" ? "white" : "black",
+                    }}
+                    value={fileType}
+                    onChange={(e) => {
+                      setFileType(e.target.value as "yaml");
+                      setEditorContent(""); // Clear the editor content on file type change
+                    }}
+                    label="File Type"
+                    MenuProps={{
+                      PaperProps: {
+                        sx: {
                           bgcolor: theme === "dark" ? "#1F2937" : "background.paper",
-                          color: theme === "dark" ? "white" : "black",
-                        }}
-                        value={fileType}
-                        onChange={(e) => {
-                          setFileType(e.target.value as "yaml");
-                          setEditorContent(""); // Clear the editor content on file type change
-                        }}
-                        label="File Type"
-                        MenuProps={{
-                          PaperProps: {
-                            sx: {
-                              bgcolor: theme === "dark" ? "#1F2937" : "background.paper",
-                            },
-                          },
-                        }}
-                      >
-                        <MenuItem sx={{ color: theme === "dark" ? "white" : "black" }} value="yaml">
-                          YAML
-                        </MenuItem>
-                      </Select>
+                        },
+                      },
+                    }}
+                  >
+                    <MenuItem sx={{ color: theme === "dark" ? "white" : "black" }} value="yaml">
+                      YAML
+                    </MenuItem>
+                  </Select>
                 </FormControl>
 
 
                 <Editor
-                    height="400px"
-                    language={fileType}
-                    value={editorContent}
-                    theme={theme === "dark" ? "light" : "vs-dark"} // Switch themes dynamically
-                    options={{
-                      minimap: { enabled: false },
-                      fontSize: 14,
-                      lineNumbers: "on",
-                      scrollBeyondLastLine: false,
-                      automaticLayout: true,
-                    }}
-                    onChange={(value) => setEditorContent(value || "")}
-                  />
+                  height="400px"
+                  language={fileType}
+                  value={editorContent}
+                  theme={theme === "dark" ? "light" : "vs-dark"} // Switch themes dynamically
+                  options={{
+                    minimap: { enabled: false },
+                    fontSize: 14,
+                    lineNumbers: "on",
+                    scrollBeyondLastLine: false,
+                    automaticLayout: true,
+                  }}
+                  onChange={(value) => setEditorContent(value || "")}
+                />
 
                 <DialogActions>
                   <Button onClick={handleCancel}>Cancel</Button>
@@ -155,22 +155,25 @@ const ImportClusters = ({
             )}
 
             {activeOption === "option2" && (
-              <Box sx={{color: theme === "dark" ? "white" : "black"}}>
+              <Box sx={{ color: theme === "dark" ? "white" : "black" }}>
                 <Alert severity="info" sx={{ mb: 2 }}>
                   <AlertTitle>Info</AlertTitle>
                   Select a kubeconfig file to import cluster.
                 </Alert>
 
+              <Box sx={{ mt: 2, border: 2, borderColor: "grey.500", borderRadius: 1, p: 2}}>
                 <Box
                   sx={{
                     border: 2,
                     borderColor: "grey.500",
+                    bgcolor: "#f5f5f5",
                     borderRadius: 1,
                     p: 2,
                     textAlign: "center",
                   }}
                 >
-                  <Button variant="contained" component="label">
+                  <Button variant="contained" component="label"
+                    sx={{boxShadow: 2}}>
                     Select Kubeconfig file
                     <input
                       type="file"
@@ -184,7 +187,7 @@ const ImportClusters = ({
                       }}
                     />
                   </Button>
-
+                  </Box>
                   {selectedFile && (
                     <Box sx={{ mt: 2 }}>
                       Selected file: <strong>{selectedFile.name}</strong>
@@ -198,6 +201,7 @@ const ImportClusters = ({
                     variant="contained"
                     onClick={handleFileUpload}
                     disabled={!selectedFile}
+                    sx={{ boxShadow: 2 }}
                   >
                     Upload & Import
                   </Button>
