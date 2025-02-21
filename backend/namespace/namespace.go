@@ -10,9 +10,9 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/katamyra/kubestellarUI/models"
 	"github.com/katamyra/kubestellarUI/wds"
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	appsv1 "k8s.io/api/apps/v1"
 )
 
 // timeout duration for Kubernetes API requests
@@ -24,14 +24,14 @@ var upgrader = websocket.Upgrader{
 
 // GetAllNamespacesWithResources fetches all namespaces and their connected resources
 type NamespaceDetails struct {
-	Name       string              `json:"name"`
-	Status     string              `json:"status"`
-	Labels     map[string]string   `json:"labels"`
-	Pods       []v1.Pod            `json:"pods"`
+	Name        string              `json:"name"`
+	Status      string              `json:"status"`
+	Labels      map[string]string   `json:"labels"`
+	Pods        []v1.Pod            `json:"pods"`
 	Deployments []appsv1.Deployment `json:"deployments"`
-	Services   []v1.Service        `json:"services"`
-	ConfigMaps []v1.ConfigMap      `json:"configmaps"`
-	Secrets    []v1.Secret         `json:"secrets"`
+	Services    []v1.Service        `json:"services"`
+	ConfigMaps  []v1.ConfigMap      `json:"configmaps"`
+	Secrets     []v1.Secret         `json:"secrets"`
 }
 
 // CreateNamespace creates a new namespace
