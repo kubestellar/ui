@@ -192,6 +192,7 @@ func main() {
 	router.POST("/api/namespaces/create", nsresources.CreateNamespace)
 	router.PUT("/api/namespaces/update/:name", nsresources.UpdateNamespace)
 	router.DELETE("/api/namespaces/delete/:name", nsresources.DeleteNamespace)
+	router.GET("/ws/namespaces", nsresources.NamespaceWebSocketHandler)
 
 	router.POST("api/deploy", api.DeployHandler)
 	// ROUTES FOR BP
