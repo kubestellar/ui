@@ -48,5 +48,39 @@ export default defineConfig({
   // Ensures commit hash is available during build and runtime
   define: {
     'import.meta.env.VITE_GIT_COMMIT_HASH': JSON.stringify(getGitCommitHash()),
-  }
+  },
+
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Core vendor dependencies
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          
+          // MUI core and icons in separate chunks
+          'vendor-mui-core': ['@mui/material'],
+          'vendor-mui-icons': ['@mui/icons-material'],
+          'vendor-mui-tree': ['@mui/x-tree-view'],
+          
+          // Feature-specific chunks
+          'charts': ['recharts'],
+          'editor': ['@monaco-editor/react'],
+          'terminal': ['xterm', 'xterm-addon-fit'],
+          
+          // Utility libraries
+          'utils': ['axios', 'js-yaml', 'nanoid'],
+        },
+      }
+    },
+  },
+
+  // Add preload directives
+  experimental: {
+    renderBuiltUrl(filename: string, { hostType }: { hostType: 'js' | 'css' | 'html' }) {
+      if (hostType === 'html') {
+        return { relative: true, preload: true };
+      }
+      return { relative: true };
+    }
+  },
 })
