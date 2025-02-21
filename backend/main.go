@@ -22,6 +22,7 @@ import (
 
 	"github.com/katamyra/kubestellarUI/api"
 	nsresources "github.com/katamyra/kubestellarUI/namespace/resources"
+	"github.com/katamyra/kubestellarUI/wds/bp"
 	"github.com/katamyra/kubestellarUI/wds/deployment"
 	"github.com/katamyra/kubestellarUI/wds/resources"
 	"go.uber.org/zap"
@@ -194,8 +195,8 @@ func main() {
 
 	router.POST("api/deploy", api.DeployHandler)
 	// ROUTES FOR BP
-	router.POST("/api/bp/create")
-	router.DELETE("/api/bp/delete/:name")
+	router.POST("/api/bp/create", bp.CreateBp)
+	router.DELETE("/api/bp/delete/:name", bp.DeleteBp)
 
 	if err := router.Run(":4000"); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
