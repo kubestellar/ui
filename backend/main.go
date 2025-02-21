@@ -1,17 +1,20 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/websocket"
-	"github.com/katamyra/kubestellarUI/wds"
-	"k8s.io/client-go/informers"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/gorilla/websocket"
+	"github.com/katamyra/kubestellarUI/wds"
+	"k8s.io/client-go/informers"
 
 	"github.com/gin-gonic/gin"
 	"k8s.io/client-go/kubernetes"
@@ -21,6 +24,7 @@ import (
 	nsresources "github.com/katamyra/kubestellarUI/namespace/resources"
 	"github.com/katamyra/kubestellarUI/wds/deployment"
 	"github.com/katamyra/kubestellarUI/wds/resources"
+	"go.uber.org/zap"
 )
 
 type ContextInfo struct {
@@ -37,8 +41,10 @@ type ManagedClusterInfo struct {
 
 func main() {
 
+	initLogger()
 	router := gin.Default()
 
+	router.Use(ZapMiddleware())
 	log.Println("Debug: KubestellarUI application started")
 
 	// CORS Middleware
@@ -190,6 +196,67 @@ func main() {
 
 	if err := router.Run(":4000"); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
+	}
+}
+
+var logger *zap.Logger
+
+// Initialize Zap Logger
+func initLogger() {
+	config := zap.NewProductionConfig()
+	config.Encoding = "json"                // Ensure JSON format
+	config.OutputPaths = []string{"stdout"} // Console output (can also log to a file)
+	log, _ := config.Build()
+	logger = log
+}
+
+// Middleware to log additional request/response details in structured format
+func ZapMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := time.Now()
+
+		// Capture Request Body
+		var requestBody string
+		if c.Request.Body != nil {
+			bodyBytes, _ := io.ReadAll(c.Request.Body)
+			requestBody = string(bodyBytes)
+			c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		}
+
+		// Process the request
+		c.Next()
+
+		// Capture Response Size
+		responseSize := c.Writer.Size()
+
+		// Capture Request Headers
+		headers := c.Request.Header
+
+		// Log in structured JSON format
+		logger.Info("HTTP Request",
+			zap.String("method", c.Request.Method),
+			zap.String("path", c.Request.URL.Path),
+			zap.Int("status", c.Writer.Status()),
+			zap.Duration("latency", time.Since(start)),
+			zap.String("ip", c.ClientIP()),
+			zap.String("user-agent", c.Request.UserAgent()),
+			zap.Any("query-params", c.Request.URL.Query()),
+			zap.String("request-body", requestBody),
+			zap.Any("headers", headers),
+			zap.Int("response-size", responseSize),
+		)
+
+		// Log errors separately in structured format
+		if len(c.Errors) > 0 {
+			for _, err := range c.Errors {
+				logger.Error("Request Error",
+					zap.String("method", c.Request.Method),
+					zap.String("path", c.Request.URL.Path),
+					zap.Int("status", c.Writer.Status()),
+					zap.String("error", err.Error()),
+				)
+			}
+		}
 	}
 }
 
