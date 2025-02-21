@@ -6,7 +6,8 @@ type ClusterStatus struct {
 }
 
 type Cluster struct {
-	Name       string `json:"clusterName"`
-	ClusterSet string `json:"clusterSet"`
-	ImportMode string `json:"importMode"`
+	Name   string   `json:"clusterName"`
+	Region string   `json:"Region"`
+	Value  []string `json:"value"`
+	Node   string   `json:"node"`
 }

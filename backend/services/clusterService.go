@@ -70,12 +70,12 @@ func ValidateClusterConnectivity(kubeconfigData []byte) error {
 	return nil
 }
 
-func CreateCluster(cluster models.Cluster) {
-	log.Printf("Initiating creation for cluster: %+v", cluster)
+func ImportCluster(cluster models.Cluster) {
+	log.Printf("Initiating import for cluster: %+v", cluster)
 	go func(c models.Cluster) {
-		// Simulate a delay in creating the cluster.
+		// Simulate a delay in importing the cluster.
 		time.Sleep(15 * time.Second)
-		// Replace with real provisioning logic (e.g., calling cloud provider APIs).
-		log.Printf("Cluster '%s' created successfully", c.Name)
+		// Replace with your real import/provisioning logic.
+		log.Printf("Cluster '%s' imported successfully", c.Name)
 	}(cluster)
 }

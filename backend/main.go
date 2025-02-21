@@ -75,7 +75,7 @@ func main() {
 
 	router.POST("/clusters/onboard", api.OnboardClusterHandler)
 	router.GET("/clusters/status", api.GetClusterStatusHandler)
-	router.POST("/clusters/create", api.CreateClusterHandler)
+	router.POST("/clusters/import", api.ImportClusterHandler)
 
 	router.GET("/api/wds/workloads", func(c *gin.Context) {
 		workloads, err := deployment.GetWDSWorkloads()
