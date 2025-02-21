@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { Network, Share2, AlertCircle, Check, ChevronDown } from "lucide-react";
 import {
   BindingPolicyInfo,
   ManagedCluster,
   Workload,
 } from "../../types/bindingPolicy";
+import { ThemeContext } from "../../context/ThemeContext";
 
 interface PolicyVisualizationProps {
   policy: BindingPolicyInfo;
@@ -20,6 +21,8 @@ const PolicyVisualization = ({
   previewMode = false,
 }: PolicyVisualizationProps) => {
   const [showDetails, setShowDetails] = useState(false);
+  const { theme } = useContext(ThemeContext);
+  const isDarkTheme = theme === "dark";
 
   // Calculate statistics
   const clusterCount = matchedClusters.length;
@@ -28,12 +31,12 @@ const PolicyVisualization = ({
   const matchRate = Math.round((clusterCount / totalClusters) * 100);
 
   return (
-    <div className="w-full p-6 bg-white rounded-lg shadow-lg">
+    <div className={`w-full p-6 rounded-lg shadow-lg ${isDarkTheme ? 'bg-slate-800 text-white' : 'bg-white'}`}>
       {/* Header Section */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-2">
-          <Network className="w-6 h-6 text-blue-600" />
-          <h2 className="text-xl font-semibold text-gray-800">
+          <Network className={`w-6 h-6 ${isDarkTheme ? 'text-blue-400' : 'text-blue-600'}`} />
+          <h2 className={`text-xl font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-800'}`}>
             {previewMode ? "Policy Preview" : "Policy Distribution"}
           </h2>
         </div>
@@ -49,12 +52,16 @@ const PolicyVisualization = ({
       <div className="relative mb-8">
         <div className="flex justify-between items-start space-x-4">
           {/* Workload Section */}
-          <div className="w-1/3 bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <h3 className="text-sm font-medium text-blue-800 mb-2">
+          <div className={`w-1/3 p-4 rounded-lg border ${
+            isDarkTheme ? 'bg-slate-700 border-blue-500' : 'bg-blue-50 border-blue-200'
+          }`}>
+            <h3 className={`text-sm font-medium ${isDarkTheme ? 'text-blue-300' : 'text-blue-800'} mb-2`}>
               Workload Source
             </h3>
-            <div className="bg-white p-3 rounded shadow-sm">
-              <code className="text-sm text-blue-900">{policy.workload}</code>
+            <div className={`p-3 rounded shadow-sm ${isDarkTheme ? 'bg-slate-600' : 'bg-white'}`}>
+              <code className={`text-sm ${isDarkTheme ? 'text-blue-300' : 'text-blue-900'}`}>
+                {policy.workload}
+              </code>
             </div>
             <div className="mt-2 text-sm text-blue-600">
               {workloadCount} matching workload{workloadCount !== 1 ? "s" : ""}
@@ -63,23 +70,29 @@ const PolicyVisualization = ({
 
           {/* Distribution Arrow */}
           <div className="flex-shrink-0 flex flex-col items-center justify-center pt-8">
-            <Share2 className="w-6 h-6 text-gray-400 transform rotate-90" />
-            <div className="text-sm text-gray-500 mt-2">{matchRate}% Match</div>
+            <Share2 className={`w-6 h-6 ${isDarkTheme ? 'text-gray-400' : 'text-gray-500'}`} />
+            <div className={`text-sm ${isDarkTheme ? 'text-gray-300' : 'text-gray-500'} mt-2`}>
+              {matchRate}% Match
+            </div>
           </div>
 
           {/* Clusters Section */}
-          <div className="w-2/3 bg-purple-50 p-4 rounded-lg border border-purple-200">
-            <h3 className="text-sm font-medium text-purple-800 mb-2">
+          <div className={`w-2/3 p-4 rounded-lg border ${
+            isDarkTheme ? 'bg-slate-700 border-purple-500' : 'bg-purple-50 border-purple-200'
+          }`}>
+            <h3 className={`text-sm font-medium ${isDarkTheme ? 'text-purple-300' : 'text-purple-800'} mb-2`}>
               Target Clusters ({clusterCount})
             </h3>
             <div className="grid grid-cols-2 gap-2">
               {matchedClusters.slice(0, 6).map((cluster) => (
                 <div
                   key={cluster.name}
-                  className="bg-white p-2 rounded shadow-sm flex items-center space-x-2"
+                  className={`p-2 rounded shadow-sm flex items-center space-x-2 ${
+                    isDarkTheme ? 'bg-slate-600' : 'bg-white'
+                  }`}
                 >
                   <Check className="w-4 h-4 text-green-500" />
-                  <span className="text-sm text-gray-700 truncate">
+                  <span className={`text-sm truncate ${isDarkTheme ? 'text-gray-200' : 'text-gray-700'}`}>
                     {cluster.name}
                   </span>
                 </div>
@@ -95,10 +108,12 @@ const PolicyVisualization = ({
       </div>
 
       {/* Insights Section */}
-      <div className="mt-6 border-t border-gray-100 pt-4">
+      <div className={`mt-6 border-t pt-4 ${isDarkTheme ? 'border-gray-600' : 'border-gray-100'}`}>
         <button
           onClick={() => setShowDetails(!showDetails)}
-          className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"
+          className={`flex items-center space-x-2 ${
+            isDarkTheme ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-800'
+          }`}
         >
           <ChevronDown
             className={`w-5 h-5 transform transition-transform ${
