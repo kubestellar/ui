@@ -13,12 +13,9 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/katamyra/kubestellarUI/wds"
 	"k8s.io/client-go/informers"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
-	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
