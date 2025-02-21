@@ -56,7 +56,11 @@ export default defineConfig({
         manualChunks: {
           // Core vendor dependencies
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-mui': ['@mui/material', '@mui/icons-material', '@mui/x-tree-view'],
+          
+          // MUI core and icons in separate chunks
+          'vendor-mui-core': ['@mui/material'],
+          'vendor-mui-icons': ['@mui/icons-material'],
+          'vendor-mui-tree': ['@mui/x-tree-view'],
           
           // Feature-specific chunks
           'charts': ['recharts'],
@@ -65,9 +69,6 @@ export default defineConfig({
           
           // Utility libraries
           'utils': ['axios', 'js-yaml', 'nanoid'],
-          
-          // New: Split MUI icons into separate chunk
-          'mui-icons': ['@mui/icons-material'],
         },
       }
     },
