@@ -93,3 +93,8 @@ func DeleteNamespace(c *gin.Context) {
 		"namespace": namespaceName,
 	})
 }
+
+// WebSocketHandler sends real-time updates on namespaces
+func NamespaceWebSocketHandler(c *gin.Context) {
+	ns.NamespaceWebSocketHandler(c.Writer, c.Request)
+}
