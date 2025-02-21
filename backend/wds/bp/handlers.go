@@ -95,8 +95,11 @@ func DeleteAllBp(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 	err = c.BindingPolicies().DeleteCollection(context.TODO(), v1.DeleteOptions{}, v1.ListOptions{})
-	ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"message": "Deleted all BPs"})
 }
 
 func getClientForBp() (*bpv1alpha1.ControlV1alpha1Client, error) {
