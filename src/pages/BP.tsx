@@ -1,4 +1,4 @@
-import { useEffect, useState ,useContext} from "react";
+import { useEffect, useState, useContext } from "react";
 import { Paper, Box } from "@mui/material";
 import BPHeader from "../components/BindingPolicy/Dialogs/BPHeader";
 import BPTable from "../components/BindingPolicy/BPTable";
@@ -12,7 +12,6 @@ import {
   ManagedCluster,
   Workload,
 } from "../types/bindingPolicy";
-
 
 const BP = () => {
   const [bindingPolicies, setBindingPolicies] = useState<BindingPolicyInfo[]>(
@@ -215,6 +214,11 @@ spec:
     setSelectedPolicy(null);
   };
 
+  const handlePreviewPolicy = (policy: BindingPolicyInfo) => {
+    setSelectedPolicy(policy);
+    setPreviewDialogOpen(true);
+  };
+
   const filteredPolicies = bindingPolicies.filter((policy) => {
     const searchLower = searchQuery.toLowerCase();
     return (
@@ -235,7 +239,14 @@ spec:
   const { matchedClusters, matchedWorkloads } = getMatches();
 
   return (
-    <Paper sx={{ maxWidth: "100%", margin: "auto", p: 3, backgroundColor: theme === "dark" ? "#1F2937" : "#fff" }}>
+    <Paper
+      sx={{
+        maxWidth: "100%",
+        margin: "auto",
+        p: 3,
+        backgroundColor: theme === "dark" ? "#1F2937" : "#fff",
+      }}
+    >
       <BPHeader
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -248,7 +259,7 @@ spec:
 
       <BPTable
         policies={filteredPolicies}
-        onPreviewMatches={() => setPreviewDialogOpen(true)}
+        onPreviewMatches={(policy) => handlePreviewPolicy(policy)}
         onDeletePolicy={handleDeletePolicy}
         onEditPolicy={handleEditPolicy}
         activeFilters={activeFilters}
@@ -264,6 +275,7 @@ spec:
         onClose={() => setPreviewDialogOpen(false)}
         matchedClusters={matchedClusters}
         matchedWorkloads={matchedWorkloads}
+        policy={selectedPolicy || undefined}
       />
 
       {selectedPolicy && (
