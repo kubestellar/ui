@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/katamyra/kubestellarUI/wds"
 	"k8s.io/client-go/informers"
 
 	"github.com/gin-gonic/gin"
@@ -22,6 +21,7 @@ import (
 
 	"github.com/katamyra/kubestellarUI/api"
 	nsresources "github.com/katamyra/kubestellarUI/namespace/resources"
+	"github.com/katamyra/kubestellarUI/wds"
 	"github.com/katamyra/kubestellarUI/wds/bp"
 	"github.com/katamyra/kubestellarUI/wds/deployment"
 	"github.com/katamyra/kubestellarUI/wds/resources"
@@ -76,6 +76,7 @@ func main() {
 
 	router.POST("/clusters/onboard", api.OnboardClusterHandler)
 	router.GET("/clusters/status", api.GetClusterStatusHandler)
+	router.POST("/clusters/import", api.ImportClusterHandler)
 
 	router.GET("/api/wds/workloads", func(c *gin.Context) {
 		workloads, err := deployment.GetWDSWorkloads()

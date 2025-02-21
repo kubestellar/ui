@@ -3,6 +3,10 @@ package services
 import (
 	"context"
 	"fmt"
+	"log"
+	"time"
+
+	"github.com/katamyra/kubestellarUI/models"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -64,4 +68,14 @@ func ValidateClusterConnectivity(kubeconfigData []byte) error {
 	}
 
 	return nil
+}
+
+func ImportCluster(cluster models.Cluster) {
+	log.Printf("Initiating import for cluster: %+v", cluster)
+	go func(c models.Cluster) {
+		// Simulate a delay in importing the cluster.
+		time.Sleep(15 * time.Second)
+		// Replace with your real import/provisioning logic.
+		log.Printf("Cluster '%s' imported successfully", c.Name)
+	}(cluster)
 }

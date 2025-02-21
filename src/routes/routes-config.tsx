@@ -1,6 +1,5 @@
 import { RouteObject } from "react-router-dom";
 import { Layout } from "../components/Layout";
-import CreateCluster from "../pages/CreateCluster";
 import KubeconfigOnboarding from "../pages/KubeconfigOnboarding"; // Ensure that the file exists at this path
 import WDS from "../pages/WDS";
 import BP from "../pages/BP";
@@ -38,7 +37,6 @@ export const routesConfig: RouteObject[] = [
           </Suspense>
         ) 
       },
-      { path: "createCluster", element: <CreateCluster /> },
       { path: "kubeconfigOnboarding", element: <KubeconfigOnboarding /> },
       { path: "wds", element: <WDS /> },
       { path: "bp", element: <BP /> },

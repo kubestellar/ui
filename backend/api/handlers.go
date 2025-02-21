@@ -91,3 +91,22 @@ func GetClusterStatusHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, statuses)
 }
+
+func ImportClusterHandler(c *gin.Context) {
+	var cluster models.Cluster
+
+	if err := c.ShouldBindJSON(&cluster); err != nil {
+		log.Printf("Binding error: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload", "details": err.Error()})
+		return
+	}
+
+	if cluster.Name == "" || cluster.Region == "" || cluster.Node == "" {
+		log.Printf("Validation error: missing required fields, cluster: %+v", cluster)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required cluster details"})
+		return
+	}
+
+	services.ImportCluster(cluster)
+	c.JSON(http.StatusAccepted, gin.H{"message": "Cluster import initiated"})
+}
