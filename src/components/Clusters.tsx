@@ -17,10 +17,12 @@ const K8sInfo = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await api.get('/api/clusters');
+        // Only show kubeflex contexts
+        const response = await api.get('/api/clusters'); 
         const kubeflexContexts = response.data.contexts.filter(
           (ctx: ContextInfo) => ctx.name.endsWith("-kubeflex")
         );
+        // Get clusters associated with kubeflex contexts
         const kubeflexClusters = response.data.clusters.filter(
           (cluster: string) =>
             kubeflexContexts.some((ctx: ContextInfo) => ctx.cluster === cluster)
