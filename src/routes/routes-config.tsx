@@ -1,7 +1,5 @@
 import { RouteObject } from "react-router-dom";
-import Clusters from "../components/Clusters";
 import { Layout } from "../components/Layout";
-import ITS from "../pages/ITS";
 import CreateCluster from "../pages/CreateCluster";
 import KubeconfigOnboarding from "../pages/KubeconfigOnboarding"; // Ensure that the file exists at this path
 import WDS from "../pages/WDS";
@@ -10,15 +8,36 @@ import NotFoundPage from "../pages/NotFoundPage";
 import DeploymentDetails from "../components/DeploymentDetails";
 import NameSpace from "../pages/NS";
 import TreeView from "../components/TreeViewComponent";
+import LoadingFallback from '../components/LoadingFallback';
+import { lazy, Suspense } from 'react';
 // import ShowLogs from "../components/Logs";
+
+// Improve lazy loading with prefetch
+const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ "../components/Clusters"));
+const ITSLazy = lazy(() => import(/* webpackPrefetch: true */ "../pages/ITS"));
+// ... update other lazy imports similarly ...
 
 export const routesConfig: RouteObject[] = [
   {
     path: "/",
     element: <Layout />,
     children: [
-      { index: true, element: <Clusters /> },
-      { path: "its", element: <ITS /> },
+      { 
+        index: true, 
+        element: (
+          <Suspense fallback={<LoadingFallback message="Loading clusters..." size="medium" />}>
+            <ClustersLazy />
+          </Suspense>
+        ) 
+      },
+      { 
+        path: "its", 
+        element: (
+          <Suspense fallback={<LoadingFallback message="Loading ITS..." size="small" />}>
+            <ITSLazy />
+          </Suspense>
+        ) 
+      },
       { path: "createCluster", element: <CreateCluster /> },
       { path: "kubeconfigOnboarding", element: <KubeconfigOnboarding /> },
       { path: "wds", element: <WDS /> },
