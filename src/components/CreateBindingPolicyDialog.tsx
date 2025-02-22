@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Editor from "@monaco-editor/react";
 import yaml from "js-yaml";
 import {
@@ -14,11 +14,14 @@ import {
   AlertTitle,
   TextField,
   Snackbar,
+  Typography,
 } from "@mui/material";
+import { ThemeContext } from "../context/ThemeContext";
 
 interface PolicyData {
   name: string;
   workload: string;
+  yaml: string;
 }
 
 interface CreateBindingPolicyDialogProps {
@@ -61,27 +64,21 @@ metadata:
   name: example-binding-policy
   namespace: kubestellar
 spec:
-  # Selects the workload to bind
   subject:
     kind: Application
     apiGroup: app.kubestellar.io
     name: my-app
     namespace: default
-  # Defines where the workload should be bound
   placement:
-    # Matches clusters by label
     clusterSelector:
       matchLabels:
         environment: production
         region: us-east
-    # Defines clusters explicitly
     staticPlacement:
       clusterNames:
         - cluster-a
         - cluster-b
-  # Defines how the binding should behave
   bindingMode: Propagate
-  # Optional: Define resource overrides for specific clusters
   overrides:
     - clusterName: cluster-a
       patch:
@@ -153,15 +150,28 @@ spec:
       onCreatePolicy({
         name: policyName,
         workload: "default-workload",
+        yaml: content,
       });
+      setEditorContent(defaultYamlTemplate);
+      setPolicyName("");
+      setSelectedFile(null);
+      setFileContent("");
       onClose();
     } catch (error) {
       console.error("Error creating binding policy:", error);
     }
   };
 
+  useEffect(() => {
+    if (open) {
+      setEditorContent(defaultYamlTemplate);
+      setPolicyName("");
+      setSelectedFile(null);
+      setFileContent("");
+    }
+  }, [open, defaultYamlTemplate]);
+
   const handleCancelClick = () => {
-    // Only show confirmation if there's content
     if (
       activeTab === "yaml"
         ? editorContent !== defaultYamlTemplate
@@ -178,43 +188,110 @@ spec:
     onClose();
   };
 
+  const { theme } = useContext(ThemeContext);
+  const isDarkTheme = theme === "dark";
+  const bgColor = isDarkTheme ? "#1F2937" : "background.paper";
+  const textColor = isDarkTheme ? "white" : "black";
+
   return (
     <>
-      <Dialog open={open} onClose={handleCancelClick} maxWidth="lg" fullWidth>
-        <DialogTitle>Create Binding Policy</DialogTitle>
-        <DialogContent>
-          <div className="mb-6">
-            <Alert severity="info">
-              <AlertTitle>Info</AlertTitle>
-              Create a binding policy by providing YAML configuration or
-              uploading a file. The policy will determine how workloads are
-              distributed across your clusters.
-            </Alert>
-          </div>
+      <Dialog 
+        open={open} 
+        onClose={handleCancelClick} 
+        maxWidth="lg" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            height: '80vh', // Fixed height
+            display: 'flex',
+            flexDirection: 'column',
+            m: 2, // Margin from screen edges
+            bgcolor: bgColor,
+            color: textColor,
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            borderBottom: 1,
+            borderColor: 'divider',
+            p: 2,
+            flex: '0 0 auto', // Prevent title from growing
+          }}
+        >
+          Create Binding Policy
+        </DialogTitle>
+        
+        <DialogContent
+          sx={{
+            p: 0, // Remove default padding
+            flex: 1, // Take remaining space
+            overflow: 'hidden', // Prevent double scrollbars
+          }}
+        >
+          <Box
+            sx={{
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {/* Info Alert */}
+            <Box sx={{ p: 2 }}>
+              <Alert severity="info">
+                <AlertTitle>Create a binding policy by providing YAML configuration or uploading a file.</AlertTitle>
+              </Alert>
+            </Box>
 
-          <TextField
-            fullWidth
-            label="Binding Policy Name"
-            value={policyName}
-            onChange={(e) => setPolicyName(e.target.value)}
-            margin="normal"
-            required
-          />
+            {/* Policy Name Input */}
+            <Box sx={{ px: 2 }}>
+              <TextField
+                fullWidth
+                label="Binding Policy Name"
+                value={policyName}
+                onChange={(e) => setPolicyName(e.target.value)}
+                required
+                sx={{
+                  my: 2,
+                  '& .MuiInputBase-input': { color: textColor },
+                  '& .MuiInputLabel-root': { color: textColor },
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'divider' },
+                }}
+              />
+            </Box>
 
-          <Box sx={{ width: "100%" }}>
-            <Tabs value={activeTab} onChange={handleTabChange}>
+            {/* Tabs */}
+            <Tabs 
+              value={activeTab} 
+              onChange={handleTabChange}
+              sx={{
+                borderBottom: 1,
+                borderColor: 'divider',
+                '& .MuiTab-root': {
+                  color: textColor,
+                  '&.Mui-selected': {
+                    color: 'primary.main',
+                  },
+                },
+              }}
+            >
               <Tab label="Create from YAML" value="yaml" />
               <Tab label="Upload File" value="file" />
             </Tabs>
 
-            <Box sx={{ mt: 2 }}>
+            {/* Tab Content */}
+            <Box sx={{ 
+              flex: 1,
+              overflow: 'auto',
+              p: 2,
+            }}>
               {activeTab === "yaml" && (
-                <div className="rounded-md border">
+                <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                   <Editor
-                    height="400px"
+                    height="100%"
                     language="yaml"
                     value={editorContent}
-                    theme="vs-dark"
+                    theme={isDarkTheme ? "vs-dark" : "light"}
                     options={{
                       minimap: { enabled: false },
                       fontSize: 14,
@@ -224,55 +301,64 @@ spec:
                     }}
                     onChange={(value) => setEditorContent(value || "")}
                   />
-                </div>
+                </Box>
               )}
 
               {activeTab === "file" && (
-                <div className="border-2 border-dashed rounded-lg p-8 text-center">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-center">
-                      <label className="cursor-pointer">
-                        <Button
-                          variant="contained"
-                          component="span"
-                          color="primary"
-                        >
-                          Choose YAML file
-                        </Button>
-                        <input
-                          type="file"
-                          className="hidden"
-                          accept=".yaml,.yml"
-                          onChange={handleFileChange}
-                        />
-                      </label>
-                    </div>
+                <Box
+                  sx={{
+                    height: '100%',
+                    border: '2px dashed',
+                    borderColor: 'divider',
+                    borderRadius: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Box sx={{ textAlign: 'center' }}>
+                    <Button
+                      variant="contained"
+                      component="label"
+                      sx={{ mb: 2 }}
+                    >
+                      Choose YAML file
+                      <input
+                        type="file"
+                        hidden
+                        accept=".yaml,.yml"
+                        onChange={handleFileChange}
+                      />
+                    </Button>
                     {selectedFile && (
-                      <div className="text-sm text-gray-600">
+                      <Typography>
                         Selected file: {selectedFile.name}
-                      </div>
+                      </Typography>
                     )}
-                  </div>
-                </div>
+                  </Box>
+                </Box>
               )}
             </Box>
-          </Box>
 
-          <DialogActions>
-            <Button variant="outlined" onClick={handleCancelClick}>
-              Cancel
-            </Button>
-            <Button
-              variant="contained"
-              onClick={handleCreate}
-              disabled={
-                !policyName ||
-                (activeTab === "yaml" ? !editorContent : !fileContent)
-              }
-            >
-              Create Policy
-            </Button>
-          </DialogActions>
+            {/* Actions */}
+            <DialogActions sx={{ 
+              p: 2, 
+              borderTop: 1, 
+              borderColor: 'divider',
+              bgcolor: bgColor,
+            }}>
+              <Button onClick={handleCancelClick}>
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleCreate}
+                disabled={!policyName || (activeTab === "yaml" ? !editorContent : !fileContent)}
+              >
+                Create Policy
+              </Button>
+            </DialogActions>
+          </Box>
         </DialogContent>
       </Dialog>
 

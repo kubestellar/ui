@@ -44,6 +44,8 @@ const CreateOptions = ({
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const { theme } = useContext(ThemeContext);
+  const [loading, setLoading] = useState(false);
+  const { theme } = useContext(ThemeContext);
 
   const [formData, setFormData] = useState({
     appName: "",
@@ -61,6 +63,8 @@ const CreateOptions = ({
     imagePullRequest: "",
     githuburl: "",
     path: ""
+    githuburl: "",
+    path: ""
   });
 
   const handleFileUpload = async () => {
@@ -69,8 +73,10 @@ const CreateOptions = ({
       return;
     }
   
+  
     const formData = new FormData();
     formData.append("wds", selectedFile);
+  
   
     try {
       const response = await fetch("http://localhost:4000/api/wds/create", {
@@ -78,8 +84,10 @@ const CreateOptions = ({
         body: formData,
       });
   
+  
       const data = await response.json();
       console.log(data);
+  
   
       if (response.ok) {
         showSnackbar(`Deployment successfully!` , "success");
@@ -102,10 +110,17 @@ const CreateOptions = ({
     }
   };
   
+  
   const handleRawUpload = async () => {
     const fileContent = editorContent.trim();
   
+  
     if (!fileContent) {
+      setSnackbar({
+        open: true,
+        message: "Please enter YAML or JSON content.",
+        severity: "error",
+      });
       setSnackbar({
         open: true,
         message: "Please enter YAML or JSON content.",
@@ -114,7 +129,9 @@ const CreateOptions = ({
       return;
     }
   
+  
     let requestBody;
+  
   
     try {
       let parsedInput: {
@@ -135,9 +152,29 @@ const CreateOptions = ({
         };
       };
   
+      let parsedInput: {
+        metadata?: { name: string; namespace?: string; labels?: Record<string, string> };
+        spec?: {
+          replicas?: number;
+          selector?: { matchLabels?: Record<string, string> };
+          template?: {
+            metadata?: { labels?: Record<string, string> };
+            spec?: {
+              containers?: {
+                name: string;
+                image: string;
+                ports?: { containerPort: number }[];
+              }[];
+            };
+          };
+        };
+      };
+  
       if (fileType === "json") {
         parsedInput = JSON.parse(fileContent);
+        parsedInput = JSON.parse(fileContent);
       } else if (fileType === "yaml") {
+        parsedInput = jsyaml.load(fileContent) as typeof parsedInput;
         parsedInput = jsyaml.load(fileContent) as typeof parsedInput;
       } else {
         setSnackbar({
@@ -145,8 +182,31 @@ const CreateOptions = ({
           message: "Unsupported file type. Please use JSON or YAML.",
           severity: "error",
         });
+        setSnackbar({
+          open: true,
+          message: "Unsupported file type. Please use JSON or YAML.",
+          severity: "error",
+        });
         return;
       }
+  
+      // ✅ Convert parsed input (either JSON or YAML) to match backend format
+      requestBody = {
+        namespace: parsedInput.metadata?.namespace || "default",
+        name: parsedInput.metadata?.name,
+        replicas: parsedInput.spec?.replicas || 1,
+        labels: parsedInput.metadata?.labels || {},
+        container: {
+          name: parsedInput.spec?.template?.spec?.containers?.[0]?.name || "",
+          image: parsedInput.spec?.template?.spec?.containers?.[0]?.image || "",
+          ports:
+            parsedInput.spec?.template?.spec?.containers?.[0]?.ports?.map(
+              (port: { containerPort: number }) => ({
+                containerPort: port.containerPort,
+              })
+            ) || [],
+        },
+      };
   
       // ✅ Convert parsed input (either JSON or YAML) to match backend format
       requestBody = {
@@ -182,6 +242,22 @@ const CreateOptions = ({
         message: "Missing required fields: 'namespace', 'name', or 'container'.",
         severity: "error",
       });
+      console.error("Parsing Error:", error);
+      setSnackbar({
+        open: true,
+        message: "Invalid JSON/YAML format.",
+        severity: "error",
+      });
+      return;
+    }
+  
+    // ✅ Validate required fields before sending the request
+    if (!requestBody.namespace || !requestBody.name || !requestBody.container.name) {
+      setSnackbar({
+        open: true,
+        message: "Missing required fields: 'namespace', 'name', or 'container'.",
+        severity: "error",
+      });
       return;
     }
   
@@ -191,8 +267,16 @@ const CreateOptions = ({
         message: "Container must have at least one port.",
         severity: "error",
       });
+  
+    if (!requestBody.container.ports.length) {
+      setSnackbar({
+        open: true,
+        message: "Container must have at least one port.",
+        severity: "error",
+      });
       return;
     }
+  
   
     try {
       const response = await fetch("http://localhost:4000/api/wds/create/json", {
@@ -205,7 +289,36 @@ const CreateOptions = ({
   
       const responseData = await response.json();
   
+  
+      const responseData = await response.json();
+  
       if (!response.ok) {
+        console.error("Backend Error:", responseData);
+  
+        if (response.status === 400 || response.status === 409 || response.status === 500) {
+          setSnackbar({
+            open: true,
+            message: `Deployment failed: ${responseData.err?.ErrStatus?.message || "Already exists."}`,
+            severity: "error",
+          });
+          return;
+        }
+  
+        setSnackbar({
+          open: true,
+          message: "Unknown error occurred.",
+          severity: "error",
+        });
+        return;
+      }
+  
+      setSnackbar({
+        open: true,
+        message: "Deployment successful!",
+        severity: "success",
+      });
+  
+      setTimeout(() => window.location.reload(), 500);
         console.error("Backend Error:", responseData);
   
         if (response.status === 400 || response.status === 409 || response.status === 500) {
@@ -320,6 +433,25 @@ const CreateOptions = ({
           <Tabs
             value={activeOption}
             onChange={(_event, newValue) => setActiveOption(newValue)}
+            sx={{
+              borderBottom: 1,
+              borderColor: 'divider',
+              bgcolor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+              '& .MuiTab-root': {
+                px: 3,
+                py: 1.5,
+                color: theme === 'dark' ? 'white' : 'black',
+                '&.Mui-selected': {
+                  color: 'primary.main',
+                  bgcolor: theme === 'dark' ? 'rgba(144, 202, 249, 0.08)' : '#E3F2FD',
+                },
+              },
+              '& .MuiTabs-indicator': {
+                height: 3,
+                borderTopLeftRadius: 3,
+                borderTopRightRadius: 3,
+              }
+            }}
           >
             <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Create from Input" value="option1" />
             <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Create from File" value="option2" />
@@ -332,11 +464,15 @@ const CreateOptions = ({
           }}
           >
             {activeOption === "option1" && (
-              <Box>
-                <Alert severity="info" sx={{ mb: 2 }}>
+              <Box sx={{ 
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+              }}>
+                <Alert severity="info">
                   <AlertTitle>Info</AlertTitle>
-                  Select a YAML or JSON file specifying the resources to deploy to
-                  the currently selected namespace.
+                  Select a YAML or JSON file specifying the resources to deploy.
                 </Alert>
 
                 <FormControl
@@ -398,14 +534,14 @@ const CreateOptions = ({
                     onChange={(value) => setEditorContent(value || "")}
                   />
 
-                <DialogActions>
-                  <Button onClick={handleCancel}>Cancel</Button>
+                <DialogActions sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
+                  <Button onClick={onCancel}>Cancel</Button>
                   <Button
                     variant="contained"
                     onClick={handleRawUpload}
                     disabled={!editorContent}
                   >
-                    Upload
+                    Deploy
                   </Button>
                 </DialogActions>
 
@@ -416,8 +552,7 @@ const CreateOptions = ({
               <Box sx={{color: theme === "dark" ? "white" : "black"}}>
                 <Alert severity="info" sx={{ mb: 2 }}>
                   <AlertTitle>Info</AlertTitle>
-                  Select a YAML or JSON file specifying the resources to deploy to
-                  the currently selected namespace.
+                  Select a YAML or JSON file specifying the resources to deploy.
                 </Alert>
 
                 <Box
@@ -436,9 +571,11 @@ const CreateOptions = ({
                       hidden
                       accept=".yaml,.yml,.json"
                       onClick={(e) => (e.currentTarget.value = "")} // Ensure new file selection triggers event
+                      onClick={(e) => (e.currentTarget.value = "")} // Ensure new file selection triggers event
                       onChange={(e) => {
                         const file = e.target.files?.[0] || null;
                         setSelectedFile(file);
+                        // setHasUnsavedChanges(true);
                         // setHasUnsavedChanges(true);
                       }}
                     />
@@ -452,7 +589,7 @@ const CreateOptions = ({
                 </Box>
 
                 <DialogActions>
-                  <Button onClick={handleCancel}>Cancel</Button>
+                  <Button onClick={onCancel}>Cancel</Button>
                   <Button
                     variant="contained"
                     onClick={handleFileUpload}
@@ -463,12 +600,11 @@ const CreateOptions = ({
                 </DialogActions>
               </Box>
             )}
-
             {activeOption === "option3" && (
               <Box className={theme === "dark" ? "bg-gray-800 text-white" : "text-black"} p={2} borderRadius={2}>
                 <Alert severity="info" sx={{ mb: 2 }}>
                   <AlertTitle>Info</AlertTitle>
-                  Fill out the form to create a deployment.
+                  Not Developed Full.
                 </Alert>
 
                 <TextField
@@ -484,6 +620,7 @@ const CreateOptions = ({
                     "& .MuiInputLabel-root.Mui-focused": { color: theme === "dark" ? "white" : "black" },
                   }}
                 />
+
 
                 <TextField
                   fullWidth

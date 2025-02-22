@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { Paper, Box } from "@mui/material";
 import BPHeader from "../components/BindingPolicy/Dialogs/BPHeader";
 import BPTable from "../components/BindingPolicy/BPTable";
 import BPPagination from "../components/BindingPolicy/BPPagination";
 import PreviewDialog from "../components/BindingPolicy/PreviewDialog";
 import DeleteDialog from "../components/BindingPolicy/Dialogs/DeleteDialog";
+import EditBindingPolicyDialog from "../components/BindingPolicy/Dialogs/EditBindingPolicyDialog";
+import { ThemeContext } from "../context/ThemeContext"; // Import ThemeContext
 import {
   BindingPolicyInfo,
   ManagedCluster,
@@ -15,6 +17,7 @@ const BP = () => {
   const [bindingPolicies, setBindingPolicies] = useState<BindingPolicyInfo[]>(
     []
   );
+  const { theme } = useContext(ThemeContext); // Get theme from context
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedLabels] = useState<Record<string, string>>({});
@@ -30,6 +33,7 @@ const BP = () => {
   const [activeFilters, setActiveFilters] = useState<{
     status?: "Active" | "Inactive";
   }>({});
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   useEffect(() => {
     // Simulate loading initial data
@@ -40,42 +44,81 @@ const BP = () => {
           clusters: 2,
           workload: "workload0",
           creationDate: "1/24/2025 9:12:18 AM",
+          lastModifiedDate: "1/25/2025 10:15:00 AM",
           status: "Active",
+          yaml: `apiVersion: control.kubestellar.io/v1alpha1
+kind: BindingPolicy
+metadata:
+  name: winions-central
+  namespace: kubestellar
+spec:
+  subject:
+    kind: Application
+    apiGroup: app.kubestellar.io
+    name: workload0
+    namespace: default
+  placement:
+    clusterSelector:
+      matchLabels:
+        environment: production
+        region: us-east
+    staticPlacement:
+      clusterNames:
+        - cluster-a
+        - cluster-b
+  bindingMode: Propagate`,
         },
         {
           name: "Map This to That",
           clusters: 1,
           workload: "workload1",
           creationDate: "1/20/2025 7:42:25 PM",
+          lastModifiedDate: "1/21/2025 3:30:00 PM",
           status: "Inactive",
+          yaml: `apiVersion: control.kubestellar.io/v1alpha1
+kind: BindingPolicy
+metadata:
+  name: Map This to That
+  namespace: kubestellar
+spec:
+  subject:
+    kind: Application
+    apiGroup: app.kubestellar.io
+    name: workload1
+    namespace: default
+  placement:
+    clusterSelector:
+      matchLabels:
+        environment: staging
+        region: us-west
+    staticPlacement:
+      clusterNames:
+        - cluster-c
+  bindingMode: Propagate`,
         },
         {
           name: "my nginx app on dev",
           clusters: 3,
           workload: "workload2",
           creationDate: "1/15/2025 9:12:18 PM",
+          lastModifiedDate: "1/16/2025 2:45:00 PM",
           status: "Inactive",
-        },
-        {
-          name: "my nginx app on prod",
-          clusters: 1,
-          workload: "workload3",
-          creationDate: "12/24/2025 4:20:50 AM",
-          status: "Active",
-        },
-        {
-          name: "my nginx app on staging",
-          clusters: 2,
-          workload: "workload4",
-          creationDate: "4/20/2024 6:04:20 AM",
-          status: "Active",
-        },
-        {
-          name: "new app on dev",
-          clusters: 5,
-          workload: "workload5",
-          creationDate: "4/20/2024 9:04:20 PM",
-          status: "Inactive",
+          yaml: `apiVersion: control.kubestellar.io/v1alpha1
+kind: BindingPolicy
+metadata:
+  name: my nginx app on dev
+  namespace: kubestellar
+spec:
+  subject:
+    kind: Application
+    apiGroup: app.kubestellar.io
+    name: workload2
+    namespace: default
+  placement:
+    clusterSelector:
+      matchLabels:
+        environment: development
+  bindingMode: Propagate`,
         },
       ]);
 
@@ -156,6 +199,26 @@ const BP = () => {
     setCreateDialogOpen(false);
   };
 
+  const handleEditPolicy = (policy: BindingPolicyInfo) => {
+    setSelectedPolicy(policy);
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = (updatedPolicy: Partial<BindingPolicyInfo>) => {
+    setBindingPolicies((policies) =>
+      policies.map((p) =>
+        p.name === updatedPolicy.name ? { ...p, ...updatedPolicy } : p
+      )
+    );
+    setEditDialogOpen(false);
+    setSelectedPolicy(null);
+  };
+
+  const handlePreviewPolicy = (policy: BindingPolicyInfo) => {
+    setSelectedPolicy(policy);
+    setPreviewDialogOpen(true);
+  };
+
   const filteredPolicies = bindingPolicies.filter((policy) => {
     const searchLower = searchQuery.toLowerCase();
     return (
@@ -176,7 +239,14 @@ const BP = () => {
   const { matchedClusters, matchedWorkloads } = getMatches();
 
   return (
-    <Paper sx={{ maxWidth: "100%", margin: "auto", p: 3 }}>
+    <Paper
+      sx={{
+        maxWidth: "100%",
+        margin: "auto",
+        p: 3,
+        backgroundColor: theme === "dark" ? "#1F2937" : "#fff",
+      }}
+    >
       <BPHeader
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -189,8 +259,9 @@ const BP = () => {
 
       <BPTable
         policies={filteredPolicies}
-        onPreviewMatches={() => setPreviewDialogOpen(true)}
+        onPreviewMatches={(policy) => handlePreviewPolicy(policy)}
         onDeletePolicy={handleDeletePolicy}
+        onEditPolicy={handleEditPolicy}
         activeFilters={activeFilters}
       />
 
@@ -204,7 +275,17 @@ const BP = () => {
         onClose={() => setPreviewDialogOpen(false)}
         matchedClusters={matchedClusters}
         matchedWorkloads={matchedWorkloads}
+        policy={selectedPolicy || undefined}
       />
+
+      {selectedPolicy && (
+        <EditBindingPolicyDialog
+          open={editDialogOpen}
+          onClose={() => setEditDialogOpen(false)}
+          onSave={handleSaveEdit}
+          policy={selectedPolicy}
+        />
+      )}
 
       <DeleteDialog
         open={deleteDialogOpen}

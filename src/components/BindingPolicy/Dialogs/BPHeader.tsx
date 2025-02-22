@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useContext } from "react";
 import {
   Button,
   TextField,
@@ -11,6 +11,7 @@ import {
 import { Search, Filter, Plus,  X } from "lucide-react";
 import CreateBindingPolicyDialog from "../../CreateBindingPolicyDialog";
 import { BindingPolicyInfo } from "../../../types/bindingPolicy";
+import { ThemeContext } from "../../../context/ThemeContext";
 
 interface BPHeaderProps {
   searchQuery: string;
@@ -47,6 +48,7 @@ const BPHeader: React.FC<BPHeaderProps> = ({
     setActiveFilters({ ...activeFilters, status });
     handleFilterClose();
   };
+  const { theme } = useContext(ThemeContext); 
 
   return (
     <Box
@@ -66,19 +68,43 @@ const BPHeader: React.FC<BPHeaderProps> = ({
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <Search size={20} />
+                <Search
+                  size={20}
+                  style={{ color: theme === "dark" ? "#ffffff" : "inherit" }}
+                />
               </InputAdornment>
             ),
           }}
+          sx={{
+            ...(theme === "dark" && {
+              input: { color: "white" },
+              "& .MuiOutlinedInput-root": {
+                "& fieldset": { borderColor: "white" },
+              },
+              "&::placeholder": { color: "rgba(255, 255, 255, 0.7)" },
+            }),
+          }}
         />
+
         <Button
           startIcon={<Filter size={20} />}
           variant="outlined"
           onClick={handleFilterClick}
           color={Object.keys(activeFilters).length > 0 ? "primary" : "inherit"}
+          sx={{
+            ...(theme === "dark" && {
+              borderColor: "white", // Ensures the border is white
+              color: "white", // Ensures the text is white
+              "&:hover": {
+                borderColor: "white", // Ensures border color remains white on hover
+              },
+            }),
+          }}
         >
           Filter
         </Button>
+
+
         {activeFilters.status && (
           <Chip
             label={`Status: ${activeFilters.status}`}
@@ -86,19 +112,55 @@ const BPHeader: React.FC<BPHeaderProps> = ({
             deleteIcon={<X size={16} />}
           />
         )}
+
         <Menu
           anchorEl={anchorEl}
           open={Boolean(anchorEl)}
           onClose={handleFilterClose}
+          PaperProps={{
+            sx: {
+              ...(theme === "dark" && {
+                backgroundColor: "#1e293b",
+                color: "white",
+              }),
+            },
+          }}
         >
-          <MenuItem onClick={() => handleStatusFilter("Active")}>
+          <MenuItem
+            sx={{
+              ...(theme === "dark" && {
+                backgroundColor: "#1e293b",
+                color: "white",
+                "&:hover": { backgroundColor: "#0f172a" },
+              }),
+            }}
+            onClick={() => handleStatusFilter("Active")}
+          >
             Status: Active
           </MenuItem>
-          <MenuItem onClick={() => handleStatusFilter("Inactive")}>
+          <MenuItem
+            sx={{
+              ...(theme === "dark" && {
+                backgroundColor: "#1e293b",
+                color: "white",
+                "&:hover": { backgroundColor: "#0f172a" },
+              }),
+            }}
+            onClick={() => handleStatusFilter("Inactive")}
+          >
             Status: Inactive
           </MenuItem>
           {activeFilters.status && (
-            <MenuItem onClick={() => handleStatusFilter(undefined)}>
+            <MenuItem
+              sx={{
+                ...(theme === "dark" && {
+                  backgroundColor: "#1e293b",
+                  color: "white",
+                  "&:hover": { backgroundColor: "#0f172a" },
+                }),
+              }}
+              onClick={() => handleStatusFilter(undefined)}
+            >
               Clear Status Filter
             </MenuItem>
           )}

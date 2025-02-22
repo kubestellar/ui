@@ -1,14 +1,19 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/gorilla/websocket"
+	"k8s.io/client-go/informers"
 
 	"github.com/gin-gonic/gin"
 	"k8s.io/client-go/kubernetes"
@@ -16,8 +21,11 @@ import (
 
 	"github.com/katamyra/kubestellarUI/api"
 	nsresources "github.com/katamyra/kubestellarUI/namespace/resources"
+	"github.com/katamyra/kubestellarUI/wds"
+	"github.com/katamyra/kubestellarUI/wds/bp"
 	"github.com/katamyra/kubestellarUI/wds/deployment"
 	"github.com/katamyra/kubestellarUI/wds/resources"
+	"go.uber.org/zap"
 )
 
 type ContextInfo struct {
@@ -34,8 +42,10 @@ type ManagedClusterInfo struct {
 
 func main() {
 
+	initLogger()
 	router := gin.Default()
 
+	router.Use(ZapMiddleware())
 	log.Println("Debug: KubestellarUI application started")
 
 	// CORS Middleware
@@ -66,6 +76,7 @@ func main() {
 
 	router.POST("/clusters/onboard", api.OnboardClusterHandler)
 	router.GET("/clusters/status", api.GetClusterStatusHandler)
+	router.POST("/clusters/import", api.ImportClusterHandler)
 
 	router.GET("/api/wds/workloads", func(c *gin.Context) {
 		workloads, err := deployment.GetWDSWorkloads()
@@ -141,6 +152,35 @@ func main() {
 	router.GET("/ws", func(ctx *gin.Context) {
 		deployment.HandleDeploymentLogs(ctx.Writer, ctx.Request)
 	})
+	// WATCH ALL DEPLOYMENT LOGS USING INFORMER
+	router.GET("/api/wds/logs", func(ctx *gin.Context) {
+		var upgrader = websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+		}
+		var w = ctx.Writer
+		var r = ctx.Request
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			log.Println("Failed to upgrade connection:", err)
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Failed to upgrade to WebSocket"})
+			return
+		}
+		//defer conn.Close()
+
+		clientset, err := wds.GetClientSetKubeConfig()
+		if err != nil {
+			log.Println("Failed to get Kubernetes client:", err)
+			conn.WriteMessage(websocket.TextMessage, []byte("Error getting Kubernetes client"))
+			return
+		}
+		ch := make(chan struct{})
+		factory := informers.NewSharedInformerFactory(clientset, 10*time.Minute)
+		c := wds.NewController(clientset, factory.Apps().V1().Deployments(), conn)
+		factory.Start(ch)
+		go c.Run(ch)
+	})
 	// SERVICES
 	router.GET("/api/services/:namespace", resources.GetServiceList)
 	router.GET("/api/services/:namespace/:name", resources.GetServiceByServiceName)
@@ -153,11 +193,77 @@ func main() {
 	router.POST("/api/namespaces/create", nsresources.CreateNamespace)
 	router.PUT("/api/namespaces/update/:name", nsresources.UpdateNamespace)
 	router.DELETE("/api/namespaces/delete/:name", nsresources.DeleteNamespace)
+	router.GET("/ws/namespaces", nsresources.NamespaceWebSocketHandler)
 
 	router.POST("api/deploy", api.DeployHandler)
+	// ROUTES FOR BP
+	router.POST("/api/bp/create", bp.CreateBp)
+	router.DELETE("/api/bp/delete/:name", bp.DeleteBp)
+	router.DELETE("/api/bp/delete", bp.DeleteAllBp)
 
 	if err := router.Run(":4000"); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
+	}
+}
+
+var logger *zap.Logger
+
+// Initialize Zap Logger
+func initLogger() {
+	config := zap.NewProductionConfig()
+	config.Encoding = "json"                // Ensure JSON format
+	config.OutputPaths = []string{"stdout"} // Console output (can also log to a file)
+	log, _ := config.Build()
+	logger = log
+}
+
+// Middleware to log additional request/response details in structured format
+func ZapMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := time.Now()
+
+		// Capture Request Body
+		var requestBody string
+		if c.Request.Body != nil {
+			bodyBytes, _ := io.ReadAll(c.Request.Body)
+			requestBody = string(bodyBytes)
+			c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		}
+
+		// Process the request
+		c.Next()
+
+		// Capture Response Size
+		responseSize := c.Writer.Size()
+
+		// Capture Request Headers
+		headers := c.Request.Header
+
+		// Log in structured JSON format
+		logger.Info("HTTP Request",
+			zap.String("method", c.Request.Method),
+			zap.String("path", c.Request.URL.Path),
+			zap.Int("status", c.Writer.Status()),
+			zap.Duration("latency", time.Since(start)),
+			zap.String("ip", c.ClientIP()),
+			zap.String("user-agent", c.Request.UserAgent()),
+			zap.Any("query-params", c.Request.URL.Query()),
+			zap.String("request-body", requestBody),
+			zap.Any("headers", headers),
+			zap.Int("response-size", responseSize),
+		)
+
+		// Log errors separately in structured format
+		if len(c.Errors) > 0 {
+			for _, err := range c.Errors {
+				logger.Error("Request Error",
+					zap.String("method", c.Request.Method),
+					zap.String("path", c.Request.URL.Path),
+					zap.Int("status", c.Writer.Status()),
+					zap.String("error", err.Error()),
+				)
+			}
+		}
 	}
 }
 

@@ -5,18 +5,26 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  Box,
   Typography,
-  Paper,
-  Chip,
+  Box,
+  Tabs,
+  Tab,
 } from "@mui/material";
-import { ManagedCluster, Workload } from "../../types/bindingPolicy";
+import PolicyVisualization from "./PolicyVisualization";
+import {
+  BindingPolicyInfo,
+  ManagedCluster,
+  Workload,
+} from "../../types/bindingPolicy";
+import { useContext } from "react";
+import { ThemeContext } from "../../context/ThemeContext";
 
 interface PreviewDialogProps {
   open: boolean;
   onClose: () => void;
   matchedClusters: ManagedCluster[];
   matchedWorkloads: Workload[];
+  policy?: BindingPolicyInfo;
 }
 
 const PreviewDialog: React.FC<PreviewDialogProps> = ({
@@ -24,67 +32,117 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
   onClose,
   matchedClusters,
   matchedWorkloads,
+  policy,
 }) => {
+  const [tabValue, setTabValue] = React.useState(0);
+  const { theme } = useContext(ThemeContext);
+  const isDarkTheme = theme === "dark";
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
+
+  if (!policy) return null;
+
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Preview Matches</DialogTitle>
-      <DialogContent>
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 2,
-            mt: 2,
-          }}
+    <Dialog 
+      open={open} 
+      onClose={onClose} 
+      maxWidth="md" 
+      fullWidth
+      PaperProps={{
+        sx: {
+          height: '80vh',
+          m: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          backgroundColor: isDarkTheme ? '#1e293b' : '#fff',
+          color: isDarkTheme ? '#fff' : 'inherit',
+        }
+      }}
+    >
+      <DialogTitle>
+        Policy Preview & Insights
+      </DialogTitle>
+      <DialogContent sx={{ 
+        flex: 1,
+        overflow: 'auto',
+        p: 2,
+        '&:first-of-type': {
+          pt: 2
+        }
+      }}>
+        <Tabs 
+          value={tabValue} 
+          onChange={handleTabChange}
+          textColor={isDarkTheme ? 'inherit' : 'primary'}
+          indicatorColor={isDarkTheme ? 'secondary' : 'primary'}
         >
-          <Box>
-            <Typography variant="h6" gutterBottom>
-              Matched Clusters
-            </Typography>
-            {matchedClusters.map((cluster) => (
-              <Paper key={cluster.name} sx={{ p: 2, mb: 1 }}>
-                <Typography variant="subtitle1">{cluster.name}</Typography>
-                <Box
-                  sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mt: 1 }}
-                >
-                  {Object.entries(cluster.labels).map(([key, value]) => (
-                    <Chip
-                      key={key}
-                      label={`${key}=${value}`}
-                      size="small"
-                      sx={{ backgroundColor: "#e3f2fd" }}
-                    />
-                  ))}
+          <Tab 
+            label="Visualization" 
+            className={isDarkTheme ? 'text-white' : ''}
+          />
+          <Tab 
+            label="Details" 
+            className={isDarkTheme ? 'text-white' : ''}
+          />
+        </Tabs>
+
+        <Box sx={{ mt: 2 }}>
+          {tabValue === 0 && (
+            <PolicyVisualization
+              policy={policy}
+              matchedClusters={matchedClusters}
+              matchedWorkloads={matchedWorkloads}
+              previewMode={true}
+            />
+          )}
+
+          {tabValue === 1 && (
+            <Box className={isDarkTheme ? 'text-white' : ''}>
+              <Typography variant="h6" gutterBottom>
+                Matching Details
+              </Typography>
+
+              <Typography variant="subtitle1" gutterBottom>
+                Matched Clusters ({matchedClusters.length})
+              </Typography>
+              {matchedClusters.map((cluster) => (
+                <Box key={cluster.name} sx={{ mb: 1 }}>
+                  <Typography variant="body2">
+                    {cluster.name} - {cluster.status}
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    Labels: {JSON.stringify(cluster.labels)}
+                  </Typography>
                 </Box>
-              </Paper>
-            ))}
-          </Box>
-          <Box>
-            <Typography variant="h6" gutterBottom>
-              Matched Workloads
-            </Typography>
-            {matchedWorkloads.map((workload) => (
-              <Paper key={workload.name} sx={{ p: 2, mb: 1 }}>
-                <Typography variant="subtitle1">{workload.name}</Typography>
-                <Box
-                  sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mt: 1 }}
-                >
-                  {Object.entries(workload.labels).map(([key, value]) => (
-                    <Chip
-                      key={key}
-                      label={`${key}=${value}`}
-                      size="small"
-                      sx={{ backgroundColor: "#e3f2fd" }}
-                    />
-                  ))}
+              ))}
+
+              <Typography variant="subtitle1" sx={{ mt: 2 }} gutterBottom>
+                Matched Workloads ({matchedWorkloads.length})
+              </Typography>
+              {matchedWorkloads.map((workload) => (
+                <Box key={workload.name} sx={{ mb: 1 }}>
+                  <Typography variant="body2">
+                    {workload.name} ({workload.namespace})
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    Labels: {JSON.stringify(workload.labels)}
+                  </Typography>
                 </Box>
-              </Paper>
-            ))}
-          </Box>
+              ))}
+            </Box>
+          )}
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Close</Button>
+        <Button 
+          onClick={onClose}
+          className={isDarkTheme ? 'text-white' : ''}
+        >
+          Close
+        </Button>
       </DialogActions>
     </Dialog>
   );
