@@ -43,40 +43,52 @@ cd ui
 
 ### 2. Create `.env` File for Frontend Configuration
 
-To simplify managing different environment variables, rename the `example.env` file to `.env` in the project root directory (where `package.json` is located).
+To configure the frontend, rename the `example.env` file to `.env` in the project root directory (where `package.json` is located).  
 
-**Example ****`.env`**** file**:
+**Example `.env` file:**  
 
 ```
 VITE_BASE_URL=http://localhost:4000
 VITE_APP_VERSION=0.1.0
-VITE_GIT_COMMIT_HASH=$GIT_COMMIT_HASH 
+VITE_GIT_COMMIT_HASH=$GIT_COMMIT_HASH
 ```
 
 This is because `.env` files are intended to be a personal environment configuration file. The included `example.env` in the repo is a standard that most other node projects include for the same purpose. You rename the file to `.env` and then change its contents to align with your system and personal needs.
 
 #### Tracking Application Version and Git Commit Hash
 
-KubestellarUI uses environment variables to provide transparency about the application version and current git commit hash.
+KubestellarUI uses environment variables to track the app version and the current Git commit hash.  
 
-##### Environment Variables
+#### **Environment Variables**  
 
-1. **VITE_BASE_URL**
-   - Purpose: Defines the base URL for API calls
-   - Example: `http://localhost:4000`
+| Variable               | Purpose                                 | Example |
+|------------------------|-----------------------------------------|---------|
+| `VITE_BASE_URL`        | Defines the base URL for API calls     | `http://localhost:4000` |
+| `VITE_APP_VERSION`     | Defines the current application version | `0.1.0` |
+| `VITE_GIT_COMMIT_HASH` | Captures the current Git commit hash   | (Set during build) |
 
-2. **VITE_APP_VERSION**
-   - Purpose: Defines the current application version
-   - Example: `0.1.0`
-   - Best Practice: Use semantic versioning
+---
 
-3. **VITE_GIT_COMMIT_HASH**
-   - Purpose: Automatically captures the current git commit hash
-   - Source: Dynamically extracted during build process
-   - Fallback: 'unknown' if git hash cannot be retrieved
+####  Run Redis Container**  
+
+KubestellarUI uses Redis for caching real-time WebSocket updates to prevent excessive Kubernetes API calls.  
+
+Run Redis using Docker:  
+
+```bash
+docker run --name redis -d -p 6379:6379 redis
+```
+
+Verify Redis is running:  
+
+```bash
+docker ps | grep redis
+```
+
+---
 
 
-### 3. Install and Run Backend
+###  Install and Run Backend
 
 ```bash
 cd backend
@@ -88,7 +100,7 @@ go run main.go
 
 The backend server will start on port 4000. You should see output indicating the server is running.
 
-### 4. Install and Run Frontend
+###  Install and Run Frontend
 
 #### Install Dependencies
 
@@ -106,7 +118,7 @@ npm run dev
 
 The frontend development server will start, typically on port 5173.
 
-### 5. Run with Docker Compose
+###  Run with Docker Compose
 
 If you prefer to run the application using Docker Compose, follow these steps:
 
