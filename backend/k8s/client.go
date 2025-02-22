@@ -2,29 +2,60 @@ package k8s
 
 import (
 	"fmt"
+	"os"
 
-	"github.com/katamyra/kubestellarUI/wds"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+// homeDir retrieves the user's home directory
+func homeDir() string {
+	if h := os.Getenv("HOME"); h != "" {
+		return h
+	}
+	return os.Getenv("USERPROFILE") // Windows
+}
+
 func GetClientSet() (*kubernetes.Clientset, dynamic.Interface, error) {
-	// Get Kubernetes clientset
-	clientset, err := wds.GetClientSetKubeConfig()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get Kubernetes clientset: %v", err)
+
+	kubeconfig := os.Getenv("KUBECONFIG")
+	if kubeconfig == "" {
+		if home := homeDir(); home != "" {
+			kubeconfig = fmt.Sprintf("%s/.kube/config", home)
+		}
 	}
 
-	// Manually load kubeconfig to get *rest.Config
-	kubeconfig := clientcmd.NewDefaultClientConfigLoadingRules().GetDefaultFilename()
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	// Load the kubeconfig file
+	config, err := clientcmd.LoadFromFile(kubeconfig)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load kubeconfig: %v", err)
 	}
 
-	// Create dynamic client using the same rest.Config
-	dynamicClient, err := dynamic.NewForConfig(config)
+	// Use WDS1 context specifically
+	ctxContext := config.Contexts["wds1"]
+	if ctxContext == nil {
+		return nil, nil, fmt.Errorf("failed to find context 'wds1'")
+	}
+
+	// Create config for WDS cluster
+	clientConfig := clientcmd.NewDefaultClientConfig(
+		*config,
+		&clientcmd.ConfigOverrides{
+			CurrentContext: "wds1",
+		},
+	)
+
+	restConfig, err := clientConfig.ClientConfig()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create restconfig: %v", err)
+	}
+
+	clientset, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create Kubernetes client: %v", err)
+	}
+	dynamicClient, err := dynamic.NewForConfig(restConfig)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create dynamic client: %v", err)
 	}

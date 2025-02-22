@@ -2,7 +2,6 @@ import { useState } from "react";
 import Editor from "@monaco-editor/react";
 import jsyaml from "js-yaml";
 import { ThemeContext } from "../context/ThemeContext"; 
-import { AlertColor } from "@mui/material";
 import { useContext } from "react";
 import {
   Dialog,
@@ -26,29 +25,22 @@ import {
 interface Props {
   activeOption: string | null;
   setActiveOption: (option: string | null) => void;
-  // setHasUnsavedChanges: (value: boolean) => void;
   onCancel: () => void;
 }
 
 const CreateOptions = ({
   activeOption,
   setActiveOption,
-  // setHasUnsavedChanges,
   onCancel,
 }: Props) => {
   const [fileType, setFileType] = useState<"yaml" | "json">("yaml");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [editorContent, setEditorContent] = useState<string>("");
-  const [snackbar, setSnackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: AlertColor; // Set correct type
-  }>({
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "error" | "warning" | "info" }>({
     open: false,
     message: "",
-    severity: "success", // Default value
-  });  
+    severity: "success",
+});
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const { theme } = useContext(ThemeContext);
@@ -73,11 +65,7 @@ const CreateOptions = ({
 
   const handleFileUpload = async () => {
     if (!selectedFile) {
-      setSnackbar({
-        open: true,
-        message: "No file selected.",
-        severity: "error",
-      });
+      showSnackbar(`No file selected.` , "error");
       return;
     }
   
@@ -94,40 +82,23 @@ const CreateOptions = ({
       console.log(data);
   
       if (response.ok) {
-        setSnackbar({
-          open: true,
-          message: "Deployment successful!",
-          severity: "success",
-        });
-  
+        showSnackbar(`Deployment successfully!` , "success");
         // Close modal properly before reloading
         handleCancel();
   
         // Wait a short time, then reload the page
-        setTimeout(() => {
-          window.location.reload();
-        }, 100);
+        // setTimeout(() => {
+        //   window.location.reload();
+        // }, 500);
   
       } else if (response.status === 400 || response.status === 409) {
-        setSnackbar({
-          open: true,
-          message: "Deployment already exists.",
-          severity: "warning",
-        });
+        showSnackbar(`Deployment already exists` , "error");
       } else {
-        setSnackbar({
-          open: true,
-          message: "Deployment failed. Please try again.",
-          severity: "error",
-        });
+        showSnackbar(`Deployment failed. Please try again.` , "error");
       }
     } catch (error) {
       console.error("Upload Error:", error);
-      setSnackbar({
-        open: true,
-        message: "Upload failed.",
-        severity: "error",
-      });
+      showSnackbar(`Upload failed.` , "error");
     }
   };
   
@@ -274,7 +245,6 @@ const CreateOptions = ({
   console.log(error);
   
   const handleDeploy = async () => {
-    // Check if both fields are filled
     if (!formData.githuburl || !formData.path) {
       setSnackbar({ open: true, message: "Please fill in both fields.", severity: "error" });
       return;
@@ -282,7 +252,6 @@ const CreateOptions = ({
   
     setLoading(true);
   
-    // Prepare the data to send to the backend
     const requestData = {
       url: formData.githuburl,
       path: formData.path,
@@ -298,51 +267,32 @@ const CreateOptions = ({
       });
   
       const result = await response.json();
-  
+      console.log(result);
+      
       if (response.ok) {
-        setSnackbar({
-          open: true,
-          message: "Deployment created successfully!",
-          severity: "success",
-        });
-  
-      // Clear only the githuburl and path fields after deployment
+        showSnackbar(`Deployment successfully!` , "success");
           setFormData((prevState) => ({
-            ...prevState, // Keep all other properties intact
-            githuburl: "", // Clear the GitHub URL field
-            path: "", // Clear the Path field
+            ...prevState, 
+            githuburl: "", 
+            path: "", 
           }))
   
-        // Refresh the page after a successful deployment
         setTimeout(() => {
           window.location.reload();
         }, 1000);
   
-        // Close the dialog if necessary (you can modify this based on your dialog setup)
         handleCancel();
       } else {
-        // Handle error response, e.g., if deployment already exists
         if (response.status === 409 || response.status === 400 || response.status === 500) {
-          setSnackbar({
-            open: true,
-            message: `Deployment already exists: ${result.message}`,
-            severity: "warning",
-          });
+          showSnackbar(`Deployment already exists` , "error");
         } else {
-          setSnackbar({
-            open: true,
-            message: `Error: ${result.message}`,
-            severity: "error",
-          });
+          showSnackbar(`Deployment failed. Please try again.` , "error");
+
         }
       }
     } catch (error) {
       console.log(error);
-      setSnackbar({
-        open: true,
-        message: "An error occurred while creating the deployment.",
-        severity: "error",
-      });
+      showSnackbar(`An error occurred while creating the deployment.` , "error");
     } finally {
       setLoading(false);
     }
@@ -354,6 +304,12 @@ const CreateOptions = ({
     setError("");          // Clear error messages
     setActiveOption(null);  // Close the modal
   };
+
+  const showSnackbar = (message: string, severity: "success" | "error") => {
+    console.log("Snackbar Triggered:", message, severity);
+    setSnackbar({ open: true, message, severity });
+  };
+  
   
 
   return (
@@ -368,7 +324,6 @@ const CreateOptions = ({
             <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Create from Input" value="option1" />
             <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Create from File" value="option2" />
             <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Create from Form" value="option3" />
-            <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Create from Github" value="option4" />
           </Tabs>
 
           <Box 
@@ -508,293 +463,8 @@ const CreateOptions = ({
                 </DialogActions>
               </Box>
             )}
+
             {activeOption === "option3" && (
-              <Box
-                className={theme === "dark" ? "bg-gray-800 text-white" : "text-black"}
-                p={2}
-                borderRadius={2}
-              >
-                <Alert severity="info" sx={{ mb: 2 }}>
-                  <AlertTitle>Info</AlertTitle>
-                  Not Developed Full.
-                </Alert>
-
-                <TextField
-                  fullWidth
-                  label="App Name"
-                  value={formData.appName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, appName: e.target.value })
-                  }
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: {
-                      borderColor: theme === "dark" ? "white" : "black",
-                    },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme === "dark" ? "white" : "black",
-                    },
-                  }}
-                />
-
-
-                <TextField
-                  fullWidth
-                  label="Container Image"
-                  value={formData.containerImage}
-                  onChange={(e) =>
-                    setFormData({ ...formData, containerImage: e.target.value })
-                  }
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: {
-                      borderColor: theme === "dark" ? "white" : "black",
-                    },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme === "dark" ? "white" : "black",
-                    },
-                  }}
-                />
-
-                <TextField
-                  fullWidth
-                  label="Number of Pods"
-                  type="number"
-                  value={formData.numberOfPods}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      numberOfPods: +e.target.value,
-                    })
-                  }
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: {
-                      borderColor: theme === "dark" ? "white" : "black",
-                    },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme === "dark" ? "white" : "black",
-                    },
-                  }}
-                />
-
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel
-                      sx={{
-                        color: theme === "dark" ? "white" : "black",
-                        "&.Mui-focused": { color: theme === "dark" ? "white" : "black" },
-                      }}
-                    >
-                      Service Type
-                    </InputLabel>
-                    <Select
-                      value={formData.service}
-                      onChange={(e) =>
-                        setFormData({ ...formData, service: e.target.value })
-                      }
-                      label="Service Type"
-                      sx={{
-                        color: theme === "dark" ? "white" : "black",
-                        "& .MuiSelect-select": {
-                          color: theme === "dark" ? "white" : "black",
-                        },
-                        "& .MuiOutlinedInput-notchedOutline": {
-                          borderColor: theme === "dark" ? "white" : "black",
-                        },
-                        "&:hover .MuiOutlinedInput-notchedOutline": {
-                          borderColor: theme === "dark" ? "white" : "black",
-                        },
-                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                          borderColor: theme === "dark" ? "white" : "black",
-                        },
-                      }}
-                    >
-                      <MenuItem value="None">None</MenuItem>
-                      <MenuItem value="ClusterIP">ClusterIP</MenuItem>
-                      <MenuItem value="NodePort">NodePort</MenuItem>
-                      <MenuItem value="LoadBalancer">LoadBalancer</MenuItem>
-                    </Select>
-                  </FormControl>
-
-
-
-                <TextField
-                  fullWidth
-                  label="Namespace"
-                  value={formData.namespace}
-                  onChange={(e) =>
-                    setFormData({ ...formData, namespace: e.target.value })
-                  }
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: {
-                      borderColor: theme === "dark" ? "white" : "black",
-                    },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme === "dark" ? "white" : "black",
-                    },
-                  }}
-                />
-
-                {showAdvancedOptions && (
-                  <>
-                    <TextField
-                      fullWidth
-                      label="Description"
-                      value={formData.description}
-                      onChange={(e) =>
-                        setFormData({ ...formData, description: e.target.value })
-                      }
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: {
-                      borderColor: theme === "dark" ? "white" : "black",
-                    },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme === "dark" ? "white" : "black",
-                    },
-                  }}
-                    />
-
-                    <TextField
-                      fullWidth
-                      label="CPU Requirement"
-                      value={formData.cpuRequirement}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          cpuRequirement: e.target.value,
-                        })
-                      }
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: {
-                      borderColor: theme === "dark" ? "white" : "black",
-                    },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme === "dark" ? "white" : "black",
-                    },
-                  }}
-                    />
-
-                    <TextField
-                      fullWidth
-                      label="Memory Requirement"
-                      value={formData.memoryRequirement}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          memoryRequirement: e.target.value,
-                        })
-                      }
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: {
-                      borderColor: theme === "dark" ? "white" : "black",
-                    },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme === "dark" ? "white" : "black",
-                    },
-                  }}
-                    />
-
-                    <TextField
-                      fullWidth
-                      label="Run Command"
-                      value={formData.runCommand}
-                      onChange={(e) =>
-                        setFormData({ ...formData, runCommand: e.target.value })
-                      }
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: {
-                      borderColor: theme === "dark" ? "white" : "black",
-                    },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme === "dark" ? "white" : "black",
-                    },
-                  }}
-                    />
-
-                    <TextField
-                      fullWidth
-                      label="Run Command Arguments"
-                      value={formData.runCommandArgs}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          runCommandArgs: e.target.value,
-                        })
-                      }
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: {
-                      borderColor: theme === "dark" ? "white" : "black",
-                    },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme === "dark" ? "white" : "black",
-                    },
-                  }}
-                    />
-
-                    <TextField
-                      fullWidth
-                      label="Image Pull Request"
-                      value={formData.imagePullRequest}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          imagePullRequest: e.target.value,
-                        })
-                      }
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: {
-                      borderColor: theme === "dark" ? "white" : "black",
-                    },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme === "dark" ? "white" : "black",
-                    },
-                  }}
-                    />
-                  </>
-                )}
-
-                <DialogActions>
-                  <Button onClick={handleCancel} sx={{ color: theme === "dark" ? "white" : "black" }}>
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="contained"
-                    onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
-                  >
-                    {showAdvancedOptions ? "Hide Advanced Options" : "Show Advanced Options"}
-                  </Button>
-                  <Button variant="contained">Deploy</Button>
-                </DialogActions>
-              </Box>
-            )}
-            {activeOption === "option4" && (
               <Box className={theme === "dark" ? "bg-gray-800 text-white" : "text-black"} p={2} borderRadius={2}>
                 <Alert severity="info" sx={{ mb: 2 }}>
                   <AlertTitle>Info</AlertTitle>
@@ -856,6 +526,7 @@ const CreateOptions = ({
                 </Alert>
             </Snackbar>
     </Dialog>
+    
   );
 };
 

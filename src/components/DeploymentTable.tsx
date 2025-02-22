@@ -80,14 +80,20 @@ const DeploymentTable = ({ title, workloads, setSelectedDeployment }: Props) => 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [error, setError] = useState<string>("");
   const { theme } = useContext(ThemeContext);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "error" | "warning" | "info" }>({
+    open: false,
+    message: "",
+    severity: "success",
+});
   
+console.log(error);
 
 
   // Menu dropdown
   const handleMenuClick = (event: React.MouseEvent, index: number) => {
     setMenuAnchorEl(event.currentTarget as HTMLElement);
     setMenuOpen(index);
-  };
+  };  
 
   const handleMenuClose = () => {
     setMenuAnchorEl(null);
@@ -160,10 +166,11 @@ spec:
         { headers: { "Content-Type": "application/json" } }
       );
 
-      alert(`✅ Deployment "${updatedDeployment.name}" updated successfully!`);
+      showSnackbar(`Deployment "${updatedDeployment.name}" updated successfully!` , "success");
       setSelectedWorkload((prev) => (prev ? { ...prev, replicas: updatedDeployment.replicas } : null));
       setEditYaml(false);
     } catch (error: unknown) {
+      showSnackbar(`Error updating selected deployment!` , "error");
       console.error("Error updating deployment:", error);
     }
   };
@@ -206,9 +213,10 @@ spec:
         { headers: { "Content-Type": "application/json" } }
       );
 
-      alert(`✅ Deployment "${scaleUpdate.name}" scaled to ${scaleUpdate.replicas} replicas successfully!`);
+      showSnackbar(`Deployment "${scaleUpdate.name}" scaled to ${scaleUpdate.replicas} replicas successfully!`, "success");
       setScaleModalOpen(false);
     } catch (error) {
+      showSnackbar(`Failed to update selected deployment`, "error");
       console.error("Error updating replicas:", error);
       setError("Failed to update replicas.");
     }
@@ -234,9 +242,13 @@ spec:
         headers: { "Content-Type": "application/json" },
       });
 
-      alert(`Deployment ${selectedWorkload.name} deleted successfully!`);
-      window.location.reload();
+      // alert(`Deployment ${selectedWorkload.name} deleted successfully!`);
+      showSnackbar(`Deployment ${selectedWorkload.name} successfully`, "success");
+      setTimeout(() => {
+        window.location.reload();
+      }, 200);
     } catch (error) {
+      showSnackbar(`Failed to delete ${selectedWorkload.name} deployment`, "error");
       console.error("Failed to delete deployment:", error);
       setError("Failed to delete deployment.");
     }
@@ -249,6 +261,9 @@ spec:
     setSelectedLog({ namespace: workload.namespace, deployment: workload.name });
   };
 
+  const showSnackbar = (message: string, severity: "success" | "error") => {
+    setSnackbar({ open: true, message, severity });
+};
 
   return (
     <Paper  elevation={3}  sx={{ p: 3, bgcolor: theme === "dark" ? "#1F2937" : "background.paper", color: theme === "dark" ? "white" : "black",      borderRadius: 2 }}>
@@ -498,15 +513,17 @@ spec:
         )}
 
 
-      {/* Error Snackbar */}
-        <Snackbar
-          open={!!error}
-          autoHideDuration={6000}
-          onClose={() => setError("")}
-          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-        >
-          <Alert severity="error">{error}</Alert>
-        </Snackbar>
+      {/* Snackbar Notification */}
+      <Snackbar
+                open={snackbar.open}
+                autoHideDuration={3000}
+                onClose={() => setSnackbar({ ...snackbar, open: false })}
+                anchorOrigin={{ vertical: "top", horizontal: "center" }}
+            >
+                <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: "100%" }}>
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
     </Paper>
   );
 };
