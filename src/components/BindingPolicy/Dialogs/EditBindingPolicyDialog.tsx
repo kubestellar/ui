@@ -83,10 +83,15 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
         maxWidth="lg" 
         fullWidth
         PaperProps={{
-          style: {
+          sx: {
+            height: '90vh',
+            m: 2,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
             backgroundColor: isDarkTheme ? '#1e293b' : '#fff',
             color: isDarkTheme ? '#fff' : 'inherit',
-          },
+          }
         }}
       >
         <DialogTitle>
@@ -94,7 +99,14 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
             Edit Binding Policy
           </Box>
         </DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ 
+          flex: 1,
+          overflow: 'auto',
+          p: 2,
+          '&:first-of-type': {
+            pt: 2
+          }
+        }}>
           <Alert 
             severity="info" 
             sx={{ 
@@ -155,7 +167,11 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
           </Box>
         </DialogContent>
 
-        <DialogActions sx={{ p: 2 }}>
+        <DialogActions sx={{ 
+          p: 2,
+          borderTop: 1,
+          borderColor: 'divider'
+        }}>
           <Button 
             onClick={handleClose}
             variant="outlined"

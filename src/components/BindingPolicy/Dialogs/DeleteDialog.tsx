@@ -22,7 +22,17 @@ const DeleteDialog: React.FC<DeleteDialogProps> = ({
   policyName,
 }) => {
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog 
+      open={open} 
+      onClose={onClose}
+      PaperProps={{
+        sx: {
+          width: '500px', // Fixed width
+          minHeight: '200px', // Minimum height
+          m: 2, // Consistent margin
+        }
+      }}
+    >
       <DialogTitle>Delete Binding Policy</DialogTitle>
       <DialogContent>
         <Typography>

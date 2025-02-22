@@ -51,16 +51,28 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
       maxWidth="md" 
       fullWidth
       PaperProps={{
-        style: {
+        sx: {
+          height: '80vh',
+          m: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
           backgroundColor: isDarkTheme ? '#1e293b' : '#fff',
           color: isDarkTheme ? '#fff' : 'inherit',
-        },
+        }
       }}
     >
-      <DialogTitle className={isDarkTheme ? 'text-white' : ''}>
+      <DialogTitle>
         Policy Preview & Insights
       </DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ 
+        flex: 1,
+        overflow: 'auto',
+        p: 2,
+        '&:first-of-type': {
+          pt: 2
+        }
+      }}>
         <Tabs 
           value={tabValue} 
           onChange={handleTabChange}
