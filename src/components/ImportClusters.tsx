@@ -271,9 +271,24 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                     <Button
                       variant="contained"
                       disabled={!editorContent}
+                      sx={{
+                        "&:disabled": {
+                             cursor: "not-allowed",
+                             pointerEvents: "all !important",
+                        },
+                        boxShadow: 2,
+                      }}
+                      className={`${
+                        !editorContent
+                          ? theme === "dark"
+                            ? "!bg-gray-700 !text-gray-400"
+                            : "!bg-gray-300 !text-gray-500"
+                          : ""
+                      }`}
                     >
                       Upload
                     </Button>
+
                   </DialogActions>
                 </Box>
               )}
@@ -331,7 +346,20 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                       variant="contained"
                       onClick={handleFileUpload}
                       disabled={!selectedFile}
-                      sx={{ boxShadow: 2 }}
+                      sx={{
+                        "&:disabled": {
+                             cursor: "not-allowed",
+                             pointerEvents: "all !important",
+                        },
+                        boxShadow: 2,
+                  }}
+                      className={`${
+                        !editorContent
+                          ? theme === "dark"
+                            ? "!bg-gray-700 !text-gray-400"
+                            : "!bg-gray-300 !text-gray-500"
+                          : ""
+                      }`}
                     >
                       Upload & Import
                     </Button>
@@ -465,6 +493,19 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                           variant="contained"
                           onClick={handleImportCluster}
                           disabled={!formData.clusterName || !formData.Region || !labels.length || !formData.node || loading}
+                          sx={{
+                            "&:disabled": {
+                                 cursor: "not-allowed",
+                                 pointerEvents: "all !important",
+                            },
+                      }}
+                          className={`${
+                            (!formData.clusterName || !formData.Region || !labels.length || !formData.node || loading)
+                              ? theme === "dark"
+                                ? "!bg-gray-700 !text-gray-400"
+                                : "!bg-gray-300 !text-gray-500"
+                              : ""
+                          }`}
                         >
                           {loading ? <CircularProgress size={24} /> : "Import"}
                         </Button>

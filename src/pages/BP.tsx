@@ -34,6 +34,8 @@ const BP = () => {
     status?: "Active" | "Inactive";
   }>({});
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     // Simulate loading initial data
@@ -219,14 +221,24 @@ spec:
     setPreviewDialogOpen(true);
   };
 
-  const filteredPolicies = bindingPolicies.filter((policy) => {
-    const searchLower = searchQuery.toLowerCase();
-    return (
-      policy.name.toLowerCase().includes(searchLower) ||
-      policy.workload.toLowerCase().includes(searchLower) ||
-      policy.status.toLowerCase().includes(searchLower)
-    );
-  });
+    const getFilteredPolicies = () => {
+    return bindingPolicies.filter((policy) => {
+      const searchLower = searchQuery.toLowerCase();
+      const matchesSearch = policy.name.toLowerCase().includes(searchLower) ||
+        policy.workload.toLowerCase().includes(searchLower) ||
+        policy.status.toLowerCase().includes(searchLower);
+      
+      const matchesStatus = !activeFilters.status || 
+        policy.status === activeFilters.status;
+      
+      return matchesSearch && matchesStatus;
+    });
+  };
+  const filteredPolicies = getFilteredPolicies();
+  const paginatedPolicies = filteredPolicies.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   if (loading) {
     return (
@@ -258,7 +270,7 @@ spec:
       />
 
       <BPTable
-        policies={filteredPolicies}
+       policies={paginatedPolicies}
         onPreviewMatches={(policy) => handlePreviewPolicy(policy)}
         onDeletePolicy={handleDeletePolicy}
         onEditPolicy={handleEditPolicy}
@@ -268,8 +280,10 @@ spec:
       <BPPagination
         filteredCount={filteredPolicies.length}
         totalCount={bindingPolicies.length}
+        itemsPerPage={itemsPerPage}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
       />
-
       <PreviewDialog
         open={previewDialogOpen}
         onClose={() => setPreviewDialogOpen(false)}
