@@ -51,11 +51,15 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
       maxWidth="lg" 
       fullWidth
       PaperProps={{
-        style: {
+        sx: {
+          height: '90vh',
+          m: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
           backgroundColor: isDarkTheme ? '#1e293b' : '#fff',
           color: isDarkTheme ? '#fff' : 'inherit',
-          transition: 'background-color 0.3s, color 0.3s',
-        },
+        }
       }}
     >
       <DialogTitle>
@@ -73,7 +77,14 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
           />
         </Box>
       </DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ 
+        flex: 1,
+        overflow: 'auto',
+        p: 2,
+        '&:first-of-type': {
+          pt: 2
+        }
+      }}>
         <Grid container spacing={3}>
           <Grid item xs={12} md={4}>
             <Paper 
@@ -248,7 +259,11 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
           </Grid>
         </Grid>
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ 
+        p: 2,
+        borderTop: 1,
+        borderColor: 'divider'
+      }}>
         <Button 
           onClick={onClose}
           className={isDarkTheme ? 'text-white' : ''}

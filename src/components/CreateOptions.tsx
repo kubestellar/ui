@@ -357,82 +357,111 @@ const CreateOptions = ({
   
 
   return (
-    <Dialog  open={!!activeOption} onClose={onCancel} maxWidth="lg" fullWidth>
-      <DialogTitle sx={{color: theme === "dark" ? "white" : "black" , bgcolor: theme === "dark" ? "#1F2937" : "background.paper"}}>Create Deployment</DialogTitle>
-      <DialogContent sx={{ bgcolor: theme === "dark" ? "#1F2937" : "background.paper"}} >
-        <Box sx={{ width: "100%"}}>
+    <Dialog 
+      open={!!activeOption} 
+      onClose={onCancel} 
+      maxWidth="lg" 
+      fullWidth
+      PaperProps={{
+        sx: {
+          height: '80vh',
+          display: 'flex',
+          flexDirection: 'column',
+          m: 2,
+          bgcolor: theme === 'dark' ? '#1F2937' : 'background.paper',
+          color: theme === 'dark' ? 'white' : 'black',
+        }
+      }}
+    >
+      <DialogTitle
+        sx={{
+          borderBottom: 1,
+          borderColor: 'divider',
+          p: 2,
+          flex: '0 0 auto',
+        }}
+      >
+        Create Deployment
+      </DialogTitle>
+      
+      <DialogContent
+        sx={{
+          p: 0,
+          flex: 1,
+          overflow: 'hidden',
+        }}
+      >
+        <Box
+          sx={{
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
           <Tabs
             value={activeOption}
             onChange={(_event, newValue) => setActiveOption(newValue)}
+            sx={{
+              borderBottom: 1,
+              borderColor: 'divider',
+              bgcolor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+              '& .MuiTab-root': {
+                px: 3,
+                py: 1.5,
+                color: theme === 'dark' ? 'white' : 'black',
+                '&.Mui-selected': {
+                  color: 'primary.main',
+                  bgcolor: theme === 'dark' ? 'rgba(144, 202, 249, 0.08)' : '#E3F2FD',
+                },
+              },
+              '& .MuiTabs-indicator': {
+                height: 3,
+                borderTopLeftRadius: 3,
+                borderTopRightRadius: 3,
+              }
+            }}
           >
-            <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Create from Input" value="option1" />
-            <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Create from File" value="option2" />
-            <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Create from Form" value="option3" />
-            <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Create from Github" value="option4" />
+            <Tab label="Create from Input" value="option1" />
+            <Tab label="Create from File" value="option2" />
+            <Tab label="Create from Form" value="option3" />
+            <Tab label="Create from Github" value="option4" />
           </Tabs>
 
-          <Box 
-          sx={{ 
-            mt: 2 ,
-          }}
-          >
+          <Box sx={{ 
+            flex: 1,
+            overflow: 'auto',
+            p: 3,
+          }}>
             {activeOption === "option1" && (
-              <Box>
-                <Alert severity="info" sx={{ mb: 2 }}>
+              <Box sx={{ 
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+              }}>
+                <Alert severity="info">
                   <AlertTitle>Info</AlertTitle>
-                  Select a YAML or JSON file specifying the resources to deploy to
-                  the currently selected namespace.
+                  Select a YAML or JSON file specifying the resources to deploy.
                 </Alert>
 
-                <FormControl
-                      fullWidth
-                      sx={{
-                        mb: 2,
-                        input: { color: theme === "dark" ? "white" : "black" },
-                        label: { color: theme === "dark" ? "white" : "black" },
-                        fieldset: {
-                          borderColor: theme === "dark" ? "white" : "black",
-                        },
-                        "& .MuiInputLabel-root.Mui-focused": {
-                          color: theme === "dark" ? "white" : "black",
-                        },
-                      }}
-                    >
-                      <InputLabel>File Type</InputLabel>
-                      <Select
-                        sx={{
-                          bgcolor: theme === "dark" ? "#1F2937" : "background.paper",
-                          color: theme === "dark" ? "white" : "black",
-                        }}
-                        value={fileType}
-                        onChange={(e) => {
-                          setFileType(e.target.value as "yaml" | "json");
-                          setEditorContent(""); // Clear the editor content on file type change
-                        }}
-                        label="File Type"
-                        MenuProps={{
-                          PaperProps: {
-                            sx: {
-                              bgcolor: theme === "dark" ? "#1F2937" : "background.paper",
-                            },
-                          },
-                        }}
-                      >
-                        <MenuItem sx={{ color: theme === "dark" ? "white" : "black" }} value="yaml">
-                          YAML
-                        </MenuItem>
-                        <MenuItem sx={{ color: theme === "dark" ? "white" : "black" }} value="json">
-                          JSON
-                        </MenuItem>
-                      </Select>
+                <FormControl sx={{ flex: '0 0 auto' }}>
+                  <InputLabel>File Type</InputLabel>
+                  <Select
+                    value={fileType}
+                    onChange={(e) => setFileType(e.target.value as "yaml" | "json")}
+                    label="File Type"
+                  >
+                    <MenuItem value="yaml">YAML</MenuItem>
+                    <MenuItem value="json">JSON</MenuItem>
+                  </Select>
                 </FormControl>
 
-
-                <Editor
-                    height="400px"
+                <Box sx={{ flex: 1, minHeight: 0 }}>
+                  <Editor
+                    height="100%"
                     language={fileType}
                     value={editorContent}
-                    theme={theme === "dark" ? "light" : "vs-dark"} // Switch themes dynamically
+                    theme={theme === "dark" ? "vs-dark" : "light"}
                     options={{
                       minimap: { enabled: false },
                       fontSize: 14,
@@ -442,27 +471,31 @@ const CreateOptions = ({
                     }}
                     onChange={(value) => setEditorContent(value || "")}
                   />
+                </Box>
 
-                <DialogActions>
-                  <Button onClick={handleCancel}>Cancel</Button>
+                <DialogActions sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
+                  <Button onClick={onCancel}>Cancel</Button>
                   <Button
                     variant="contained"
                     onClick={handleRawUpload}
                     disabled={!editorContent}
                   >
-                    Upload
+                    Deploy
                   </Button>
                 </DialogActions>
-
               </Box>
             )}
 
             {activeOption === "option2" && (
-              <Box sx={{color: theme === "dark" ? "white" : "black"}}>
-                <Alert severity="info" sx={{ mb: 2 }}>
+              <Box sx={{ 
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+              }}>
+                <Alert severity="info">
                   <AlertTitle>Info</AlertTitle>
-                  Select a YAML or JSON file specifying the resources to deploy to
-                  the currently selected namespace.
+                  Select a YAML or JSON file specifying the resources to deploy.
                 </Alert>
 
                 <Box
@@ -497,7 +530,7 @@ const CreateOptions = ({
                 </Box>
 
                 <DialogActions>
-                  <Button onClick={handleCancel}>Cancel</Button>
+                  <Button onClick={onCancel}>Cancel</Button>
                   <Button
                     variant="contained"
                     onClick={handleFileUpload}
@@ -509,12 +542,13 @@ const CreateOptions = ({
               </Box>
             )}
             {activeOption === "option3" && (
-              <Box
-                className={theme === "dark" ? "bg-gray-800 text-white" : "text-black"}
-                p={2}
-                borderRadius={2}
-              >
-                <Alert severity="info" sx={{ mb: 2 }}>
+              <Box sx={{ 
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+              }}>
+                <Alert severity="info">
                   <AlertTitle>Info</AlertTitle>
                   Not Developed Full.
                 </Alert>
@@ -781,9 +815,7 @@ const CreateOptions = ({
                 )}
 
                 <DialogActions>
-                  <Button onClick={handleCancel} sx={{ color: theme === "dark" ? "white" : "black" }}>
-                    Cancel
-                  </Button>
+                  <Button onClick={onCancel}>Cancel</Button>
                   <Button
                     variant="contained"
                     onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
@@ -795,8 +827,13 @@ const CreateOptions = ({
               </Box>
             )}
             {activeOption === "option4" && (
-              <Box className={theme === "dark" ? "bg-gray-800 text-white" : "text-black"} p={2} borderRadius={2}>
-                <Alert severity="info" sx={{ mb: 2 }}>
+              <Box sx={{ 
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+              }}>
+                <Alert severity="info">
                   <AlertTitle>Info</AlertTitle>
                   Fill out the form to create a deployment.
                 </Alert>
@@ -830,9 +867,7 @@ const CreateOptions = ({
                 />
 
                 <DialogActions>
-                  <Button onClick={handleCancel} sx={{ color: theme === "dark" ? "white" : "black" }}>
-                    Cancel
-                  </Button>
+                  <Button onClick={onCancel}>Cancel</Button>
                   <Button variant="contained" onClick={handleDeploy} disabled={loading}>
                     {loading ? "Deploying..." : "Deploy"}
                   </Button>
@@ -844,17 +879,19 @@ const CreateOptions = ({
         </Box>
       </DialogContent>
 
-                {/* Snackbar Notification */}
-                <Snackbar
-                open={snackbar.open}
-                autoHideDuration={3000}
-                onClose={() => setSnackbar({ ...snackbar, open: false })}
-                anchorOrigin={{ vertical: "top", horizontal: "center" }}
-            >
-                <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: "100%" }}>
-                    {snackbar.message}
-                </Alert>
-            </Snackbar>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert 
+          onClose={() => setSnackbar({ ...snackbar, open: false })} 
+          severity={snackbar.severity}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Dialog>
   );
 };
