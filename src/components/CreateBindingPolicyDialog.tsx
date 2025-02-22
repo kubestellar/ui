@@ -169,7 +169,7 @@ spec:
       setSelectedFile(null);
       setFileContent("");
     }
-  }, [open]);
+  }, [open, defaultYamlTemplate]);
 
   const handleCancelClick = () => {
     if (

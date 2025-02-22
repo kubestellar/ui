@@ -20,7 +20,6 @@ import {
   FormControl,
   InputLabel,
   CircularProgress,
-  Typography,
   FormHelperText,
 } from "@mui/material";
 import axios from "axios";
@@ -30,6 +29,11 @@ interface Props {
   activeOption: string | null;
   setActiveOption: (option: string | null) => void;
   onCancel: () => void;
+}
+
+interface ErrorResponse {
+  message: string;
+  status: number;
 }
 
 const commonInputSx = {
@@ -71,9 +75,13 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
       console.log("Cluster import initiated:", response.data);
       setFormData({ clusterName: "", Region: "", value: [], node: "" });
       setLabels([]);
-    } catch (err: any) {
-      console.error("Error importing cluster:", err);
-      setError("Failed to initiate cluster import. Please try again.");
+    } catch (error: unknown) {
+      console.error("Error importing cluster:", error);
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("An unknown error occurred");
+      }
     } finally {
       setLoading(false);
     }
