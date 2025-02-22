@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/katamyra/kubestellarUI/models"
+	"github.com/katamyra/kubestellarUI/redis"
 	"github.com/katamyra/kubestellarUI/wds"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -206,13 +207,31 @@ func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
+	redis.InitRedis() // Initialize Redis
+
 	for {
-		data, err := GetAllNamespacesWithResources()
+		// Try to fetch from Redis cache first
+		cachedData, err := redis.GetNamespaceCache("namespace_data")
 		if err != nil {
-			conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Error fetching namespaces: %v", err)))
-			return
+			fmt.Println("Redis error:", err)
 		}
-		jsonData, _ := json.Marshal(data)
+
+		var jsonData []byte
+		if cachedData == "" {
+			// If cache miss, fetch data from Kubernetes
+			data, err := GetAllNamespacesWithResources()
+			if err != nil {
+				conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Error fetching namespaces: %v", err)))
+				return
+			}
+
+			jsonData, _ = json.Marshal(data)
+			redis.SetNamespaceCache("namespace_data", string(jsonData), 10*time.Second) // Cache data for 10 seconds
+		} else {
+			// Use cached data
+			jsonData = []byte(cachedData)
+		}
+
 		conn.WriteMessage(websocket.TextMessage, jsonData)
 		time.Sleep(5 * time.Second) // Stream updates every 5 seconds
 	}
