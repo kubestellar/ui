@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useContext } from "react";
-import { useState, useEffect, useCallback, useContext } from "react";
 import { api } from "../lib/api";
 import CreateOptions from "../components/CreateOptions";
 import DeploymentTable from "../components/DeploymentTable";
@@ -8,7 +7,7 @@ import { Box, Button } from "@mui/material";
 import { Plus } from "lucide-react";
 import { Grid, Card, CardContent, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { ThemeContext } from "../context/ThemeContext"; // Import ThemeContext
+import { ThemeContext } from "../context/ThemeContext"; 
 
 export interface Workload {
   name: string;
@@ -23,7 +22,7 @@ export interface Workload {
 const COLORS = ["#28A745"];
 
 const WDS = () => {
-  const { theme } = useContext(ThemeContext); // Get theme from context
+  const { theme } = useContext(ThemeContext); 
   const [workloads, setWorkloads] = useState<Workload[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +52,6 @@ const WDS = () => {
   }, []);
 
 
-
   useEffect(() => {
     fetchWDSData();
   }, [fetchWDSData]);
@@ -67,7 +65,6 @@ const WDS = () => {
 
   const handleCancel = () => {
     setShowCreateOptions(false);
-    setShowCreateOptions(false);
   };
 
   const handleDeploymentClick = (workload: Workload | null) => {
@@ -79,24 +76,11 @@ const WDS = () => {
   return (
     <div className={`w-full max-w-7xl mx-auto p-4`}>
       <h1 className={`text-2xl font-bold mb-6  ${theme === "dark" ? "text-white" : "text-black"}`}>WDS Workloads ({workloads.length})</h1>
-    <div className={`w-full max-w-7xl mx-auto p-4`}>
-      <h1 className={`text-2xl font-bold mb-6  ${theme === "dark" ? "text-white" : "text-black"}`}>WDS Workloads ({workloads.length})</h1>
 
       <Box sx={{ display: "flex", gap: 1 }}>
         <Button
           variant="outlined"
           startIcon={<Plus size={20} />}
-          onClick={() => {
-            setShowCreateOptions(true);
-            setActiveOption("option1");
-          }}
-          sx={{
-            borderColor: theme === "dark" ? "white" : "blue", // White border in dark mode
-            color: theme === "dark" ? "white" : "blue", // White text in dark mode
-            "&:hover": {
-              borderColor: theme === "dark" ? "white" : "blue", // Keep white border on hover in dark mode
-            },
-          }}
           onClick={() => {
             setShowCreateOptions(true);
             setActiveOption("option1");
@@ -122,9 +106,7 @@ const WDS = () => {
       )}
 
       <Box sx={{ mt: 6, mb: 6, backgroundColor: theme === "dark" ? "#2d3748" : "#fff" }}>
-      <Box sx={{ mt: 6, mb: 6, backgroundColor: theme === "dark" ? "#2d3748" : "#fff" }}>
         {Object.keys(workloadCounts).length > 0 && (
-          <Card sx={{ p: 4, boxShadow: 3, backgroundColor: theme === "dark" ? "#1F2937" : "#fff" }}>
           <Card sx={{ p: 4, boxShadow: 3, backgroundColor: theme === "dark" ? "#1F2937" : "#fff" }}>
             <CardContent>
               <Typography 
@@ -133,15 +115,8 @@ const WDS = () => {
                 color={theme === "dark" ? "white" : "text.primary"} 
                 mb={2}
               >
-              <Typography 
-                variant="h5" 
-                fontWeight="bold" 
-                color={theme === "dark" ? "white" : "text.primary"} 
-                mb={2}
-              >
                 Workload Status
               </Typography>
-
 
               <Grid container spacing={65} justifyContent="center">
                 {Object.entries(workloadCounts).map(([kind, count], index) => (

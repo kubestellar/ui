@@ -7,6 +7,8 @@ import NotFoundPage from "../pages/NotFoundPage";
 import DeploymentDetails from "../components/DeploymentDetails";
 import NameSpace from "../pages/NS";
 import TreeView from "../components/TreeViewComponent";
+import { lazy, Suspense } from "react";
+import LoadingFallback from "../components/LoadingFallback";
 // import ShowLogs from "../components/Logs";
 
 // Improve lazy loading with prefetch
