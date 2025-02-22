@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -13,6 +13,8 @@ import {
 } from "@mui/material";
 import { BindingPolicyInfo } from "../../../types/bindingPolicy";
 import Editor from "@monaco-editor/react";
+import { ThemeContext } from "../../../context/ThemeContext";
+import ContentCopy from "@mui/icons-material/ContentCopy";
 
 interface PolicyDetailDialogProps {
   open: boolean;
@@ -25,6 +27,9 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
   onClose,
   policy,
 }) => {
+  const { theme } = useContext(ThemeContext);
+  const isDarkTheme = theme === "dark";
+
   // Extract binding mode from YAML if not directly provided
   const bindingMode =
     policy.bindingMode ||
@@ -40,10 +45,27 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
       ?.map((line) => line.replace(/\s+- /, "")) || [];
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
+    <Dialog 
+      open={open} 
+      onClose={onClose} 
+      maxWidth="lg" 
+      fullWidth
+      PaperProps={{
+        style: {
+          backgroundColor: isDarkTheme ? '#1e293b' : '#fff',
+          color: isDarkTheme ? '#fff' : 'inherit',
+          transition: 'background-color 0.3s, color 0.3s',
+        },
+      }}
+    >
       <DialogTitle>
         <Box display="flex" alignItems="center" gap={2}>
-          <Typography variant="h6">{policy.name}</Typography>
+          <Typography 
+            variant="h6"
+            className={isDarkTheme ? 'text-white' : ''}
+          >
+            {policy.name}
+          </Typography>
           <Chip
             label={policy.status}
             size="small"
@@ -54,58 +76,110 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
       <DialogContent>
         <Grid container spacing={3}>
           <Grid item xs={12} md={4}>
-            <Paper sx={{ p: 2, height: "100%" }}>
-              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+            <Paper 
+              sx={{ 
+                p: 2, 
+                height: "100%",
+                backgroundColor: isDarkTheme ? '#0f172a' : '#fff',
+                color: isDarkTheme ? '#fff' : 'inherit',
+              }}
+            >
+              <Typography 
+                variant="subtitle1" 
+                fontWeight="bold" 
+                gutterBottom
+                className={isDarkTheme ? 'text-white' : ''}
+              >
                 Policy Information
               </Typography>
               <Box display="flex" flexDirection="column" gap={2}>
                 <Box>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography 
+                    variant="body2" 
+                    className={isDarkTheme ? 'text-gray-400' : 'text-gray-600'}
+                  >
                     Created
                   </Typography>
-                  <Typography>{policy.creationDate}</Typography>
+                  <Typography className={isDarkTheme ? 'text-white' : ''}>
+                    {policy.creationDate}
+                  </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography 
+                    variant="body2" 
+                    className={isDarkTheme ? 'text-gray-400' : 'text-gray-600'}
+                  >
                     Last Modified
                   </Typography>
-                  <Typography>
+                  <Typography className={isDarkTheme ? 'text-white' : ''}>
                     {policy.lastModifiedDate || "Not available"}
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography 
+                    variant="body2" 
+                    className={isDarkTheme ? 'text-gray-400' : 'text-gray-600'}
+                  >
                     Binding Mode
                   </Typography>
-                  <Typography>{bindingMode}</Typography>
+                  <Typography className={isDarkTheme ? 'text-white' : ''}>
+                    {bindingMode}
+                  </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography 
+                    variant="body2" 
+                    className={isDarkTheme ? 'text-gray-400' : 'text-gray-600'}
+                  >
                     Clusters ({policy.clusters})
                   </Typography>
-                  {clusterNames.length > 0 ? (
-                    clusterNames.map((name, index) => (
-                      <Chip
-                        key={index}
-                        label={name}
-                        size="small"
-                        sx={{ mr: 1, mt: 1 }}
-                      />
-                    ))
-                  ) : (
-                    <Typography color="text.secondary" fontSize="0.875rem">
-                      No specific clusters defined
-                    </Typography>
-                  )}
+                  <Box sx={{ mt: 1 }}>
+                    {clusterNames.length > 0 ? (
+                      clusterNames.map((name, index) => (
+                        <Chip
+                          key={index}
+                          label={name}
+                          size="small"
+                          sx={{ 
+                            mr: 1, 
+                            mb: 1,
+                            backgroundColor: isDarkTheme ? '#334155' : undefined,
+                            color: isDarkTheme ? '#fff' : undefined,
+                            transition: 'all 0.2s',
+                            '&:hover': {
+                              backgroundColor: isDarkTheme ? '#475569' : undefined,
+                              transform: 'translateY(-1px)',
+                            },
+                          }}
+                        />
+                      ))
+                    ) : (
+                      <Typography 
+                        color="text.secondary"
+                        fontSize="0.875rem"
+                        className={isDarkTheme ? 'text-gray-400' : ''}
+                      >
+                        No specific clusters defined
+                      </Typography>
+                    )}
+                  </Box>
                 </Box>
                 <Box>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography 
+                    variant="body2" 
+                    className={isDarkTheme ? 'text-gray-400' : 'text-gray-600'}
+                  >
                     Workload
                   </Typography>
-                  <Typography>{policy.workload}</Typography>
+                  <Typography className={isDarkTheme ? 'text-white' : ''}>
+                    {policy.workload}
+                  </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography 
+                    variant="body2" 
+                    className={isDarkTheme ? 'text-gray-400' : 'text-gray-600'}
+                  >
                     Status
                   </Typography>
                   <Chip
@@ -119,16 +193,47 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
             </Paper>
           </Grid>
           <Grid item xs={12} md={8}>
-            <Paper sx={{ p: 2, height: "100%" }}>
-              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                YAML Configuration
-              </Typography>
-              <Box sx={{ mt: 2, border: 1, borderColor: "divider" }}>
+            <Paper 
+              sx={{ 
+                p: 2, 
+                height: "100%",
+                backgroundColor: isDarkTheme ? '#0f172a' : '#fff',
+                color: isDarkTheme ? '#fff' : 'inherit',
+              }}
+            >
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                mb: 2 
+              }}>
+                <Typography 
+                  variant="subtitle1" 
+                  fontWeight="bold"
+                  className={isDarkTheme ? 'text-white' : ''}
+                >
+                  YAML Configuration
+                </Typography>
+                <Button
+                  size="small"
+                  startIcon={<ContentCopy />}
+                  onClick={() => navigator.clipboard.writeText(policy.yaml)}
+                  sx={{
+                    color: isDarkTheme ? 'gray.300' : 'gray.600',
+                    '&:hover': {
+                      color: isDarkTheme ? 'white' : 'gray.800',
+                    },
+                  }}
+                >
+                  Copy
+                </Button>
+              </Box>
+              <Box sx={{ mt: 2, border: 1, borderColor: isDarkTheme ? 'gray.700' : 'divider' }}>
                 <Editor
                   height="400px"
                   language="yaml"
                   value={policy.yaml}
-                  theme="vs-dark"
+                  theme={isDarkTheme ? "vs-dark" : "light"}
                   options={{
                     readOnly: true,
                     minimap: { enabled: false },
@@ -144,7 +249,12 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
         </Grid>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Close</Button>
+        <Button 
+          onClick={onClose}
+          className={isDarkTheme ? 'text-white' : ''}
+        >
+          Close
+        </Button>
       </DialogActions>
     </Dialog>
   );

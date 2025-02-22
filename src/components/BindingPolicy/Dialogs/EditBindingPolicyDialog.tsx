@@ -11,9 +11,10 @@ import {
   AlertTitle,
   TextField,
   Snackbar,
+  Box,
 } from "@mui/material";
 import { BindingPolicyInfo } from "../../../types/bindingPolicy";
-import { ThemeContext } from "../../../context/ThemeContext"; // Assuming you have this context
+import { ThemeContext } from "../../../context/ThemeContext";
 
 interface EditBindingPolicyDialogProps {
   open: boolean;
@@ -32,8 +33,8 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
   const [policyName, setPolicyName] = useState<string>(policy.name);
   const [error, setError] = useState<string>("");
   const [showUnsavedChanges, setShowUnsavedChanges] = useState(false);
-
-  const { theme } = useContext(ThemeContext); // Get the theme from context
+  const { theme } = useContext(ThemeContext);
+  const isDarkTheme = theme === "dark";
 
   useEffect(() => {
     setEditorContent(policy.yaml);
@@ -58,7 +59,6 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
     if (!validateYaml(editorContent)) {
       return;
     }
-
     onSave({
       ...policy,
       name: policyName,
@@ -75,21 +75,41 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
     }
   };
 
-  const isDarkTheme = theme === "dark"; // Check if the current theme is dark
-
   return (
     <>
-      <Dialog open={open} onClose={handleClose} maxWidth="lg" fullWidth>
-        <DialogTitle className={isDarkTheme ? "bg-slate-800 text-white" : ""}>
-          Edit Binding Policy
+      <Dialog 
+        open={open} 
+        onClose={handleClose} 
+        maxWidth="lg" 
+        fullWidth
+        PaperProps={{
+          style: {
+            backgroundColor: isDarkTheme ? '#1e293b' : '#fff',
+            color: isDarkTheme ? '#fff' : 'inherit',
+          },
+        }}
+      >
+        <DialogTitle>
+          <Box className={isDarkTheme ? 'text-white' : ''}>
+            Edit Binding Policy
+          </Box>
         </DialogTitle>
-        <DialogContent
-          className={isDarkTheme ? "bg-slate-800 text-white" : ""}
-        >
-          <Alert severity="info" sx={{ mb: 2 }}>
-            <AlertTitle>Info</AlertTitle>
-            Edit your binding policy configuration. Changes will be applied
-            after saving.
+        <DialogContent>
+          <Alert 
+            severity="info" 
+            sx={{ 
+              mb: 2,
+              backgroundColor: isDarkTheme ? 'rgba(59, 130, 246, 0.1)' : undefined,
+              color: isDarkTheme ? '#fff' : undefined,
+              '& .MuiAlert-icon': {
+                color: isDarkTheme ? '#60a5fa' : undefined,
+              },
+            }}
+          >
+            <AlertTitle className={isDarkTheme ? 'text-blue-400' : ''}>
+              Info
+            </AlertTitle>
+            Edit your binding policy configuration. Changes will be applied after saving.
           </Alert>
 
           <TextField
@@ -99,18 +119,30 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
             onChange={(e) => setPolicyName(e.target.value)}
             margin="normal"
             required
-            InputProps={{
-              className: isDarkTheme ? "!text-white" : "", // Make input text white in dark mode
+            sx={{
+              '& .MuiInputLabel-root': {
+                color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : undefined,
+              },
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': {
+                  borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.23)' : undefined,
+                },
+                '&:hover fieldset': {
+                  borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.4)' : undefined,
+                },
+              },
+              '& .MuiInputBase-input': {
+                color: isDarkTheme ? '#fff' : undefined,
+              },
             }}
-            className={isDarkTheme ? "bg-slate-800 text-white" : ""} // Dark background for input in dark mode
           />
 
-          <div className="rounded-md border mt-4">
+          <Box sx={{ mt: 4, border: 1, borderColor: isDarkTheme ? 'gray.700' : 'divider' }}>
             <Editor
               height="400px"
               language="yaml"
               value={editorContent}
-              theme="vs-dark"
+              theme={isDarkTheme ? "vs-dark" : "light"}
               options={{
                 minimap: { enabled: false },
                 fontSize: 14,
@@ -120,20 +152,33 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
               }}
               onChange={(value) => setEditorContent(value || "")}
             />
-          </div>
+          </Box>
         </DialogContent>
 
-        <DialogActions
-          className={isDarkTheme ? "bg-slate-800" : ""} // Dark background for footer buttons
-        >
-          <Button onClick={handleClose} className={isDarkTheme ? "text-white" : ""}>
+        <DialogActions sx={{ p: 2 }}>
+          <Button 
+            onClick={handleClose}
+            variant="outlined"
+            sx={{
+              color: isDarkTheme ? '#fff' : undefined,
+              borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.23)' : undefined,
+              '&:hover': {
+                borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.4)' : undefined,
+              },
+            }}
+          >
             Cancel
           </Button>
           <Button
             variant="contained"
             onClick={handleSave}
             disabled={!policyName || !editorContent}
-            className={isDarkTheme ? "bg-blue-700" : ""} // Button color in dark mode
+            sx={{
+              backgroundColor: isDarkTheme ? '#3b82f6' : undefined,
+              '&:hover': {
+                backgroundColor: isDarkTheme ? '#2563eb' : undefined,
+              },
+            }}
           >
             Save Changes
           </Button>
@@ -143,25 +188,41 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
       <Dialog
         open={showUnsavedChanges}
         onClose={() => setShowUnsavedChanges(false)}
+        PaperProps={{
+          style: {
+            backgroundColor: isDarkTheme ? '#1e293b' : '#fff',
+            color: isDarkTheme ? '#fff' : 'inherit',
+          },
+        }}
       >
-        <DialogTitle className={isDarkTheme ? "bg-slate-800 text-white" : ""}>
+        <DialogTitle className={isDarkTheme ? 'text-white' : ''}>
           Unsaved Changes
         </DialogTitle>
-        <DialogContent
-          className={isDarkTheme ? "bg-slate-800 text-white" : ""}
-        >
-          <Alert severity="warning">
-            <AlertTitle>Warning</AlertTitle>
-            You have unsaved changes. Are you sure you want to close without
-            saving?
+        <DialogContent>
+          <Alert 
+            severity="warning"
+            sx={{
+              backgroundColor: isDarkTheme ? 'rgba(234, 179, 8, 0.1)' : undefined,
+              color: isDarkTheme ? '#fff' : undefined,
+              '& .MuiAlert-icon': {
+                color: isDarkTheme ? '#fbbf24' : undefined,
+              },
+            }}
+          >
+            <AlertTitle className={isDarkTheme ? 'text-yellow-400' : ''}>
+              Warning
+            </AlertTitle>
+            You have unsaved changes. Are you sure you want to close without saving?
           </Alert>
         </DialogContent>
-        <DialogActions
-          className={isDarkTheme ? "bg-slate-800" : ""}
-        >
+        <DialogActions sx={{ p: 2 }}>
           <Button
             onClick={() => setShowUnsavedChanges(false)}
-            className={isDarkTheme ? "text-white" : ""}
+            variant="outlined"
+            sx={{
+              color: isDarkTheme ? '#fff' : undefined,
+              borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.23)' : undefined,
+            }}
           >
             Continue Editing
           </Button>
@@ -172,7 +233,12 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
               setShowUnsavedChanges(false);
               onClose();
             }}
-            className={isDarkTheme ? "bg-red-700" : ""}
+            sx={{
+              backgroundColor: isDarkTheme ? '#dc2626' : undefined,
+              '&:hover': {
+                backgroundColor: isDarkTheme ? '#b91c1c' : undefined,
+              },
+            }}
           >
             Discard Changes
           </Button>
