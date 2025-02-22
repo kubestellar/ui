@@ -186,7 +186,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
               },
             }}
           >
-            <MenuItem className={theme === "dark" ? "!bg-slate-800 !text-white hover:!bg-slate-900" : ""} value="">All</MenuItem>
+            <MenuItem className={theme === "dark" ? "!bg-slate-800 !text-white hover:!bg-slate-900" : ""} value="All">All</MenuItem>
             <MenuItem className={theme === "dark" ? "!bg-slate-800 !text-white hover:!bg-slate-900" : ""} value="Active✓">Active</MenuItem>
             <MenuItem className={theme === "dark" ? "!bg-slate-800 !text-white hover:!bg-slate-900" : ""} value="Inactive">Inactive</MenuItem>
             <MenuItem className={theme === "dark" ? "!bg-slate-800 !text-white hover:!bg-slate-900" : ""} value="Pending">Pending</MenuItem>
