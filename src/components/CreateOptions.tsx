@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import Editor from "@monaco-editor/react";
 import jsyaml from "js-yaml";
-import { ThemeContext } from "../context/ThemeContext"; 
+import { ThemeContext } from "../context/ThemeContext";
 import { AlertColor } from "@mui/material";
-import { useContext } from "react";
+import { useWDSQueries } from "../hooks/queries/useWDSQueries";
+import { toast } from "react-hot-toast";
 import {
   Dialog,
   DialogContent,
@@ -21,25 +22,24 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  CircularProgress,
 } from "@mui/material";
 
 interface Props {
+  open: boolean;
   activeOption: string | null;
   setActiveOption: (option: string | null) => void;
-  // setHasUnsavedChanges: (value: boolean) => void;
   onCancel: () => void;
+  onSubmit: (data: any, isJson: boolean) => void;
 }
 
-const CreateOptions = ({
-  activeOption,
-  setActiveOption,
-  // setHasUnsavedChanges,
-  onCancel,
-}: Props) => {
+const CreateOptions = ({ open, activeOption, setActiveOption, onCancel }: Props) => {
+  const { theme } = useContext(ThemeContext);
+  const [editorContent, setEditorContent] = useState("");
+  const [isValidContent, setIsValidContent] = useState(false);
   const [fileType, setFileType] = useState<"yaml" | "json">("yaml");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
-  const [editorContent, setEditorContent] = useState<string>("");
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -48,28 +48,73 @@ const CreateOptions = ({
     open: false,
     message: "",
     severity: "success", // Default value
-  });  
+  });
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const { theme } = useContext(ThemeContext);
 
-  const [formData, setFormData] = useState({
-    appName: "",
-    containerImage: "",
-    numberOfPods: 1,
-    service: "None",
-    description: "",
-    namespace: "",
-    cpuRequirement: "",
-    memoryRequirement: "",
-    runCommand: "",
-    runCommandArgs: "",
-    key: "",
-    value: "",
-    imagePullRequest: "",
-    githuburl: "",
-    path: ""
-  });
+  const wdsQueries = useWDSQueries();
+  const createMutation = wdsQueries.useCreateWorkload();
+
+  const validateContent = (content: string) => {
+    try {
+      if (!content) {
+        setIsValidContent(false);
+        return;
+      }
+
+      if (activeOption === "option2") {
+        // Validate JSON
+        JSON.parse(content);
+      } else {
+        // For YAML, just check if it's not empty for now
+        // You might want to add a YAML validator library
+        if (content.trim().length > 0) {
+          setIsValidContent(true);
+          return;
+        }
+      }
+      setIsValidContent(true);
+    } catch (error) {
+      console.error('Validation error:', error);
+      setIsValidContent(false);
+    }
+  };
+
+  const handleEditorChange = (value: string | undefined) => {
+    const content = value || "";
+    setEditorContent(content);
+    validateContent(content);
+  };
+
+  const handleCreate = async () => {
+    try {
+      if (!editorContent) {
+        toast.error("Please enter workload configuration");
+        return;
+      }
+
+      console.log('Creating workload with:', {
+        content: editorContent,
+        isJson: activeOption === "option2"
+      });
+
+      await createMutation.mutateAsync({
+        data: editorContent,
+        isJson: activeOption === "option2"
+      });
+
+      setEditorContent("");
+      onCancel();
+    } catch (error) {
+      console.error('Create error:', error);
+      // Error toast is handled by the mutation
+    }
+  };
+
+  const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
+    setActiveOption(newValue);
+    validateContent(editorContent);
+  };
 
   const handleFileUpload = async () => {
     if (!selectedFile) {
@@ -101,7 +146,7 @@ const CreateOptions = ({
         });
   
         // Close modal properly before reloading
-        handleCancel();
+        onCancel();
   
         // Wait a short time, then reload the page
         setTimeout(() => {
@@ -177,7 +222,7 @@ const CreateOptions = ({
         return;
       }
   
-      // ✅ Convert parsed input (either JSON or YAML) to match backend format
+      // Convert parsed input (either JSON or YAML) to match backend format
       requestBody = {
         namespace: parsedInput.metadata?.namespace || "default",
         name: parsedInput.metadata?.name,
@@ -319,7 +364,7 @@ const CreateOptions = ({
         }, 1000);
   
         // Close the dialog if necessary (you can modify this based on your dialog setup)
-        handleCancel();
+        onCancel();
       } else {
         // Handle error response, e.g., if deployment already exists
         if (response.status === 409 || response.status === 400 || response.status === 500) {
@@ -348,550 +393,65 @@ const CreateOptions = ({
     }
   };
   
-
   const handleCancel = () => {
     setSelectedFile(null); // Clear file selection
     setError("");          // Clear error messages
     setActiveOption(null);  // Close the modal
   };
   
-
   return (
     <Dialog 
-      open={!!activeOption} 
+      open={open} 
       onClose={onCancel} 
-      maxWidth="lg" 
+      maxWidth="md" 
       fullWidth
       PaperProps={{
-        sx: {
-          height: '80vh',
-          display: 'flex',
-          flexDirection: 'column',
-          m: 2,
-          bgcolor: theme === 'dark' ? '#1F2937' : 'background.paper',
-          color: theme === 'dark' ? 'white' : 'black',
-        }
+        sx: { minHeight: '60vh' }
       }}
     >
-      <DialogTitle
-        sx={{
-          borderBottom: 1,
-          borderColor: 'divider',
-          p: 2,
-          flex: '0 0 auto',
-        }}
-      >
-        Create Deployment
-      </DialogTitle>
-      
-      <DialogContent
-        sx={{
-          p: 0,
-          flex: 1,
-          overflow: 'hidden',
-        }}
-      >
-        <Box
-          sx={{
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
+      <DialogTitle>Create Workload</DialogTitle>
+      <DialogContent>
+        <Tabs
+          value={activeOption}
+          onChange={handleTabChange}
+          sx={{ mb: 2 }}
         >
-          <Tabs
-            value={activeOption}
-            onChange={(_event, newValue) => setActiveOption(newValue)}
-            sx={{
-              borderBottom: 1,
-              borderColor: 'divider',
-              bgcolor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-              '& .MuiTab-root': {
-                px: 3,
-                py: 1.5,
-                color: theme === 'dark' ? 'white' : 'black',
-                '&.Mui-selected': {
-                  color: 'primary.main',
-                  bgcolor: theme === 'dark' ? 'rgba(144, 202, 249, 0.08)' : '#E3F2FD',
-                },
-              },
-              '& .MuiTabs-indicator': {
-                height: 3,
-                borderTopLeftRadius: 3,
-                borderTopRightRadius: 3,
-              }
+          <Tab value="option1" label="YAML" />
+          <Tab value="option2" label="JSON" />
+        </Tabs>
+        <Box sx={{ height: '400px' }}>
+          <Editor
+            height="100%"
+            defaultLanguage={activeOption === "option1" ? "yaml" : "json"}
+            theme={theme === "dark" ? "vs-dark" : "light"}
+            value={editorContent}
+            onChange={handleEditorChange}
+            options={{
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
+              automaticLayout: true,
             }}
-          >
-            <Tab label="Create from Input" value="option1" />
-            <Tab label="Create from File" value="option2" />
-            <Tab label="Create from Form" value="option3" />
-            <Tab label="Create from Github" value="option4" />
-          </Tabs>
-
-          <Box sx={{ 
-            flex: 1,
-            overflow: 'auto',
-            p: 3,
-          }}>
-            {activeOption === "option1" && (
-              <Box sx={{ 
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 2,
-              }}>
-                <Alert severity="info">
-                  <AlertTitle>Info</AlertTitle>
-                  Select a YAML or JSON file specifying the resources to deploy.
-                </Alert>
-
-                <FormControl sx={{ flex: '0 0 auto' }}>
-                  <InputLabel>File Type</InputLabel>
-                  <Select
-                    value={fileType}
-                    onChange={(e) => setFileType(e.target.value as "yaml" | "json")}
-                    label="File Type"
-                  >
-                    <MenuItem value="yaml">YAML</MenuItem>
-                    <MenuItem value="json">JSON</MenuItem>
-                  </Select>
-                </FormControl>
-
-                <Box sx={{ flex: 1, minHeight: 0 }}>
-                  <Editor
-                    height="100%"
-                    language={fileType}
-                    value={editorContent}
-                    theme={theme === "dark" ? "vs-dark" : "light"}
-                    options={{
-                      minimap: { enabled: false },
-                      fontSize: 14,
-                      lineNumbers: "on",
-                      scrollBeyondLastLine: false,
-                      automaticLayout: true,
-                    }}
-                    onChange={(value) => setEditorContent(value || "")}
-                  />
-                </Box>
-
-                <DialogActions sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
-                  <Button onClick={onCancel}>Cancel</Button>
-                  <Button
-                    variant="contained"
-                    onClick={handleRawUpload}
-                    disabled={!editorContent}
-                  >
-                    Deploy
-                  </Button>
-                </DialogActions>
-              </Box>
-            )}
-
-            {activeOption === "option2" && (
-              <Box sx={{ 
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 2,
-              }}>
-                <Alert severity="info">
-                  <AlertTitle>Info</AlertTitle>
-                  Select a YAML or JSON file specifying the resources to deploy.
-                </Alert>
-
-                <Box
-                  sx={{
-                    border: 2,
-                    borderColor: "grey.500",
-                    borderRadius: 1,
-                    p: 2,
-                    textAlign: "center",
-                  }}
-                >
-                  <Button variant="contained" component="label">
-                    Choose YAML or JSON file
-                    <input
-                      type="file"
-                      hidden
-                      accept=".yaml,.yml,.json"
-                      onClick={(e) => (e.currentTarget.value = "")} // Ensure new file selection triggers event
-                      onChange={(e) => {
-                        const file = e.target.files?.[0] || null;
-                        setSelectedFile(file);
-                        // setHasUnsavedChanges(true);
-                      }}
-                    />
-                  </Button>
-
-                  {selectedFile && (
-                    <Box sx={{ mt: 2 }}>
-                      Selected file: <strong>{selectedFile.name}</strong>
-                    </Box>
-                  )}
-                </Box>
-
-                <DialogActions>
-                  <Button onClick={onCancel}>Cancel</Button>
-                  <Button
-                    variant="contained"
-                    onClick={handleFileUpload}
-                    disabled={!selectedFile}
-                  >
-                    Upload & Deploy
-                  </Button>
-                </DialogActions>
-              </Box>
-            )}
-            {activeOption === "option3" && (
-              <Box sx={{ 
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 2,
-              }}>
-                <Alert severity="info">
-                  <AlertTitle>Info</AlertTitle>
-                  Not Developed Full.
-                </Alert>
-
-                <TextField
-                  fullWidth
-                  label="App Name"
-                  value={formData.appName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, appName: e.target.value })
-                  }
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: {
-                      borderColor: theme === "dark" ? "white" : "black",
-                    },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme === "dark" ? "white" : "black",
-                    },
-                  }}
-                />
-
-
-                <TextField
-                  fullWidth
-                  label="Container Image"
-                  value={formData.containerImage}
-                  onChange={(e) =>
-                    setFormData({ ...formData, containerImage: e.target.value })
-                  }
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: {
-                      borderColor: theme === "dark" ? "white" : "black",
-                    },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme === "dark" ? "white" : "black",
-                    },
-                  }}
-                />
-
-                <TextField
-                  fullWidth
-                  label="Number of Pods"
-                  type="number"
-                  value={formData.numberOfPods}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      numberOfPods: +e.target.value,
-                    })
-                  }
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: {
-                      borderColor: theme === "dark" ? "white" : "black",
-                    },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme === "dark" ? "white" : "black",
-                    },
-                  }}
-                />
-
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel
-                      sx={{
-                        color: theme === "dark" ? "white" : "black",
-                        "&.Mui-focused": { color: theme === "dark" ? "white" : "black" },
-                      }}
-                    >
-                      Service Type
-                    </InputLabel>
-                    <Select
-                      value={formData.service}
-                      onChange={(e) =>
-                        setFormData({ ...formData, service: e.target.value })
-                      }
-                      label="Service Type"
-                      sx={{
-                        color: theme === "dark" ? "white" : "black",
-                        "& .MuiSelect-select": {
-                          color: theme === "dark" ? "white" : "black",
-                        },
-                        "& .MuiOutlinedInput-notchedOutline": {
-                          borderColor: theme === "dark" ? "white" : "black",
-                        },
-                        "&:hover .MuiOutlinedInput-notchedOutline": {
-                          borderColor: theme === "dark" ? "white" : "black",
-                        },
-                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                          borderColor: theme === "dark" ? "white" : "black",
-                        },
-                      }}
-                    >
-                      <MenuItem value="None">None</MenuItem>
-                      <MenuItem value="ClusterIP">ClusterIP</MenuItem>
-                      <MenuItem value="NodePort">NodePort</MenuItem>
-                      <MenuItem value="LoadBalancer">LoadBalancer</MenuItem>
-                    </Select>
-                  </FormControl>
-
-
-
-                <TextField
-                  fullWidth
-                  label="Namespace"
-                  value={formData.namespace}
-                  onChange={(e) =>
-                    setFormData({ ...formData, namespace: e.target.value })
-                  }
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: {
-                      borderColor: theme === "dark" ? "white" : "black",
-                    },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme === "dark" ? "white" : "black",
-                    },
-                  }}
-                />
-
-                {showAdvancedOptions && (
-                  <>
-                    <TextField
-                      fullWidth
-                      label="Description"
-                      value={formData.description}
-                      onChange={(e) =>
-                        setFormData({ ...formData, description: e.target.value })
-                      }
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: {
-                      borderColor: theme === "dark" ? "white" : "black",
-                    },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme === "dark" ? "white" : "black",
-                    },
-                  }}
-                    />
-
-                    <TextField
-                      fullWidth
-                      label="CPU Requirement"
-                      value={formData.cpuRequirement}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          cpuRequirement: e.target.value,
-                        })
-                      }
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: {
-                      borderColor: theme === "dark" ? "white" : "black",
-                    },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme === "dark" ? "white" : "black",
-                    },
-                  }}
-                    />
-
-                    <TextField
-                      fullWidth
-                      label="Memory Requirement"
-                      value={formData.memoryRequirement}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          memoryRequirement: e.target.value,
-                        })
-                      }
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: {
-                      borderColor: theme === "dark" ? "white" : "black",
-                    },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme === "dark" ? "white" : "black",
-                    },
-                  }}
-                    />
-
-                    <TextField
-                      fullWidth
-                      label="Run Command"
-                      value={formData.runCommand}
-                      onChange={(e) =>
-                        setFormData({ ...formData, runCommand: e.target.value })
-                      }
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: {
-                      borderColor: theme === "dark" ? "white" : "black",
-                    },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme === "dark" ? "white" : "black",
-                    },
-                  }}
-                    />
-
-                    <TextField
-                      fullWidth
-                      label="Run Command Arguments"
-                      value={formData.runCommandArgs}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          runCommandArgs: e.target.value,
-                        })
-                      }
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: {
-                      borderColor: theme === "dark" ? "white" : "black",
-                    },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme === "dark" ? "white" : "black",
-                    },
-                  }}
-                    />
-
-                    <TextField
-                      fullWidth
-                      label="Image Pull Request"
-                      value={formData.imagePullRequest}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          imagePullRequest: e.target.value,
-                        })
-                      }
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: {
-                      borderColor: theme === "dark" ? "white" : "black",
-                    },
-                    "& .MuiInputLabel-root.Mui-focused": {
-                      color: theme === "dark" ? "white" : "black",
-                    },
-                  }}
-                    />
-                  </>
-                )}
-
-                <DialogActions>
-                  <Button onClick={onCancel}>Cancel</Button>
-                  <Button
-                    variant="contained"
-                    onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
-                  >
-                    {showAdvancedOptions ? "Hide Advanced Options" : "Show Advanced Options"}
-                  </Button>
-                  <Button variant="contained">Deploy</Button>
-                </DialogActions>
-              </Box>
-            )}
-            {activeOption === "option4" && (
-              <Box sx={{ 
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 2,
-              }}>
-                <Alert severity="info">
-                  <AlertTitle>Info</AlertTitle>
-                  Fill out the form to create a deployment.
-                </Alert>
-
-                <TextField
-                  fullWidth
-                  label="GitHub Url"
-                  value={formData.githuburl}
-                  onChange={(e) => setFormData({ ...formData, githuburl: e.target.value })}
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: { borderColor: theme === "dark" ? "white" : "black" },
-                    "& .MuiInputLabel-root.Mui-focused": { color: theme === "dark" ? "white" : "black" },
-                  }}
-                />
-
-                <TextField
-                  fullWidth
-                  label="Path"
-                  value={formData.path}
-                  onChange={(e) => setFormData({ ...formData, path: e.target.value })}
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: { borderColor: theme === "dark" ? "white" : "black" },
-                    "& .MuiInputLabel-root.Mui-focused": { color: theme === "dark" ? "white" : "black" },
-                  }}
-                />
-
-                <DialogActions>
-                  <Button onClick={onCancel}>Cancel</Button>
-                  <Button variant="contained" onClick={handleDeploy} disabled={loading}>
-                    {loading ? "Deploying..." : "Deploy"}
-                  </Button>
-                </DialogActions>
-              </Box>
-            )}
-
-          </Box>
+          />
         </Box>
       </DialogContent>
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <Alert 
-          onClose={() => setSnackbar({ ...snackbar, open: false })} 
-          severity={snackbar.severity}
+      <DialogActions>
+        <Button onClick={onCancel}>Cancel</Button>
+        <Button 
+          onClick={handleCreate}
+          disabled={!isValidContent || createMutation.isPending}
+          variant="contained"
+          color="primary"
         >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+          {createMutation.isPending ? (
+            <>
+              <CircularProgress size={20} sx={{ mr: 1 }} />
+              Creating...
+            </>
+          ) : (
+            'Create'
+          )}
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 };

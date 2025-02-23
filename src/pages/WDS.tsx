@@ -1,127 +1,80 @@
-import { useState, useEffect, useCallback, useContext } from "react";
-import { api } from "../lib/api";
+import { useState, useContext } from "react";
 import CreateOptions from "../components/CreateOptions";
 import DeploymentTable from "../components/DeploymentTable";
 import PieChartDisplay from "../components/PieChartDisplay";
-import { Box, Button } from "@mui/material";
+import { Box, Button, Grid, Card, CardContent, Typography } from "@mui/material";
 import { Plus } from "lucide-react";
-import { Grid, Card, CardContent, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { ThemeContext } from "../context/ThemeContext"; 
-
-export interface Workload {
-  name: string;
-  kind: string;
-  namespace: string;
-  creationTime: string;
-  image: string;
-  label: string;
-  replicas: number;
-}
-
-const COLORS = ["#28A745"];
+import { ThemeContext } from "../context/ThemeContext";
+import { useWDSQueries } from "../hooks/queries/useWDSQueries";
+import LoadingFallback from "../components/LoadingFallback";
+import { toast } from "react-hot-toast";
 
 const WDS = () => {
-  const { theme } = useContext(ThemeContext); 
-  const [workloads, setWorkloads] = useState<Workload[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { theme } = useContext(ThemeContext);
   const [showCreateOptions, setShowCreateOptions] = useState(false);
   const [activeOption, setActiveOption] = useState<string | null>("option1");
   const navigate = useNavigate();
 
-  console.log(loading);
-  console.log(error);
+  const wdsQueries = useWDSQueries();
+  
+  const { data: workloads = [], isLoading: workloadsLoading } = wdsQueries.useWorkloads();
+  const { data: statusData = [], isLoading: statusLoading } = wdsQueries.useWorkloadStatus();
+  const createMutation = wdsQueries.useCreateWorkload();
 
-  const fetchWDSData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await api.get<Workload[]>("/api/wds/workloads");
-      if (Array.isArray(response.data)) {
-        setWorkloads(response.data);
-      } else {
-        throw new Error("Invalid data format received from server");
-      }
-      setError(null);
-    } catch (error) {
-      console.error("Error fetching WDS information:", error);
-      setError("Failed to fetch WDS workloads. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  if (workloadsLoading || statusLoading) {
+    return <LoadingFallback message="Loading workloads..." />;
+  }
 
-
-  useEffect(() => {
-    fetchWDSData();
-  }, [fetchWDSData]);
-
-  const deployments = workloads.filter((workload) => workload.kind === "Deployment");
+  const deployments = workloads.filter((w) => w.kind === "Deployment");
 
   const workloadCounts = workloads.reduce((acc, workload) => {
     acc[workload.kind] = (acc[workload.kind] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
-  const handleCancel = () => {
-    setShowCreateOptions(false);
+  const handleDeploymentClick = (deployment: any) => {
+    navigate(`/deploymentdetails/${deployment.namespace}/${deployment.name}`);
   };
 
-  const handleDeploymentClick = (workload: Workload | null) => {
-    if (workload) {
-      navigate(`/deploymentdetails/${workload.namespace}/${workload.name}`);
+  const handleCreateWorkload = async (data: any, isJson: boolean = false) => {
+    try {
+      await createMutation.mutateAsync({ data, isJson });
+      setShowCreateOptions(false);
+      toast.success('Workload created successfully');
+    } catch (error) {
+      toast.error('Failed to create workload');
+      console.error('Error creating workload:', error);
     }
   };
 
   return (
     <div className={`w-full max-w-7xl mx-auto p-4`}>
-      <h1 className={`text-2xl font-bold mb-6  ${theme === "dark" ? "text-white" : "text-black"}`}>WDS Workloads ({workloads.length})</h1>
-
-      <Box sx={{ display: "flex", gap: 1 }}>
+      <Box sx={{ mb: 4, display: "flex", justifyContent: "space-between" }}>
+        <Typography variant="h4" color={theme === "dark" ? "white" : "text.primary"}>
+          WDS Workloads ({workloads.length})
+        </Typography>
         <Button
-          variant="outlined"
-          startIcon={<Plus size={20} />}
-          onClick={() => {
-            setShowCreateOptions(true);
-            setActiveOption("option1");
-          }}
-          sx={{
-            borderColor: theme === "dark" ? "white" : "blue", // White border in dark mode
-            color: theme === "dark" ? "white" : "blue", // White text in dark mode
-            "&:hover": {
-              borderColor: theme === "dark" ? "white" : "blue", // Keep white border on hover in dark mode
-            },
-          }}
+          variant="contained"
+          startIcon={<Plus />}
+          onClick={() => setShowCreateOptions(true)}
         >
           Create Workload
         </Button>
       </Box>
 
-      {showCreateOptions && (
-        <CreateOptions
-          activeOption={activeOption}
-          setActiveOption={setActiveOption}
-          onCancel={handleCancel}
-        />
-      )}
-
-      <Box sx={{ mt: 6, mb: 6, backgroundColor: theme === "dark" ? "#2d3748" : "#fff" }}>
+      {/* Status Cards */}
+      <Box sx={{ mb: 4 }}>
         {Object.keys(workloadCounts).length > 0 && (
-          <Card sx={{ p: 4, boxShadow: 3, backgroundColor: theme === "dark" ? "#1F2937" : "#fff" }}>
+          <Card>
             <CardContent>
-              <Typography 
-                variant="h5" 
-                fontWeight="bold" 
-                color={theme === "dark" ? "white" : "text.primary"} 
-                mb={2}
-              >
+              <Typography variant="h5" fontWeight="bold" color={theme === "dark" ? "white" : "text.primary"} mb={2}>
                 Workload Status
               </Typography>
-
-              <Grid container spacing={65} justifyContent="center">
+              <Grid container spacing={4} justifyContent="center">
                 {Object.entries(workloadCounts).map(([kind, count], index) => (
                   <Grid item key={index}>
-                    <PieChartDisplay workload={{ kind, count }} color={COLORS[index % COLORS.length]} />
+                    <PieChartDisplay workload={{ kind, count }} color="#4CAF50" />
                   </Grid>
                 ))}
               </Grid>
@@ -130,10 +83,20 @@ const WDS = () => {
         )}
       </Box>
 
+      {/* Deployments Table */}
       <DeploymentTable
         title="Deployments"
         workloads={deployments}
         setSelectedDeployment={handleDeploymentClick}
+      />
+
+      {/* Create Options Dialog */}
+      <CreateOptions
+        activeOption={activeOption}
+        setActiveOption={setActiveOption}
+        onCancel={() => setShowCreateOptions(false)}
+        onSubmit={handleCreateWorkload}
+        open={showCreateOptions}
       />
     </div>
   );

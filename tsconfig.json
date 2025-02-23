@@ -7,8 +7,9 @@
     "skipLibCheck": true,
     
     /* Bundler mode */
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
@@ -21,7 +22,7 @@
     "noFallthroughCasesInSwitch": true,
 
     /* Include Jest and testing-library types */
-    "types": ["jest", "node", "@testing-library/jest-dom"]
+    "types": ["jest", "node", "@testing-library/jest-dom", "react","react-dom" ]
   },
   "include": [
     "src",

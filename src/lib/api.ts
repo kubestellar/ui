@@ -9,12 +9,27 @@ export const api = axios.create({
   },
 });
 
-// Add request/response interceptors
+// Add request interceptor for debugging
+api.interceptors.request.use(
+  (config) => {
+    console.debug('API Request:', {
+      method: config.method,
+      url: config.url,
+      data: config.data,
+    });
+    return config;
+  },
+  (error) => {
+    console.error('API Request Error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for error handling
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle global error cases
-    console.error("API Error:", error);
+    console.error('API Error:', error);
     return Promise.reject(error);
   }
 );

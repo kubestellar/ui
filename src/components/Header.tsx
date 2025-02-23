@@ -6,60 +6,31 @@ import ChangeThemes from "./ChangeThemes";
 import { menu } from "./menu/data";
 import MenuItem from "./menu/MenuItem";
 import { useCluster } from "../context/ClusterContext";
-import { api } from "../lib/api";
-
-interface Context {
-  name: string;
-  cluster: string;
-}
+import LoadingFallback from './LoadingFallback';
+import { useHeaderQueries } from '../hooks/queries/useHeaderQueries';
 
 const Header = () => {
   const [isFullScreen, setIsFullScreen] = React.useState(true);
   const element = document.getElementById("root");
-  const [contexts, setContexts] = React.useState<Context[]>([]);
-  const [currentContext, setCurrentContext] = React.useState("");
   const { setSelectedCluster, setHasAvailableClusters } = useCluster();
-
   const [isDrawerOpen, setDrawerOpen] = React.useState(false);
-  const toggleDrawer = () => setDrawerOpen(!isDrawerOpen);
+  
+  const { useContexts } = useHeaderQueries();
+  const { data, isLoading, isError } = useContexts();
 
-  const toggleFullScreen = () => {
-    setIsFullScreen((prev) => !prev);
-  };
+  const toggleDrawer = () => setDrawerOpen(!isDrawerOpen);
+  const toggleFullScreen = () => setIsFullScreen((prev) => !prev);
 
   React.useEffect(() => {
-    api
-      .get("/api/clusters")
-      .then((response) => {
-        const data = response.data;
-        const kubeflexContexts = data.contexts.filter(
-          (ctx: Context) =>
-            ctx.name.endsWith("-kubeflex") || ctx.cluster.endsWith("-kubeflex")
-
-        );
-
-        console.log("Kubeflex contexts:", kubeflexContexts);
-
-        setContexts(kubeflexContexts);
-        setHasAvailableClusters(kubeflexContexts.length > 0);
-
-        let currentKubeflexContext = "";
-        if (data.currentContext?.endsWith("-kubeflex")) {
-          currentKubeflexContext = data.currentContext;
-        } else if (kubeflexContexts.length > 0) {
-          currentKubeflexContext = kubeflexContexts[0].name;
-        }
-
-        console.log("Selected context:", currentKubeflexContext);
-        setCurrentContext(currentKubeflexContext);
-        setSelectedCluster(currentKubeflexContext);
-      })
-      .catch((error) => {
-        console.error("Error fetching contexts:", error);
-        setHasAvailableClusters(false);
-        setSelectedCluster(null);
-      });
-  }, [setSelectedCluster, setHasAvailableClusters]);
+    if (data) {
+      setHasAvailableClusters(data.contexts.length > 0);
+      if (data.currentContext?.endsWith("-kubeflex")) {
+        setSelectedCluster(data.currentContext);
+      } else if (data.contexts.length > 0) {
+        setSelectedCluster(data.contexts[0].name);
+      }
+    }
+  }, [data, setSelectedCluster, setHasAvailableClusters]);
 
   React.useEffect(() => {
     if (isFullScreen) {
@@ -71,9 +42,20 @@ const Header = () => {
 
   const handleClusterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newCluster = e.target.value;
-    setCurrentContext(newCluster);
     setSelectedCluster(newCluster || null);
   };
+
+  if (isLoading) {
+    return <LoadingFallback size="small" />;
+  }
+
+  if (isError) {
+    return (
+      <div className="text-red-500 text-center">
+        Failed to load cluster information
+      </div>
+    );
+  }
 
   return (
     <div className="fixed z-[3] top-0 left-0 right-0 bg-base-100 w-full flex justify-between px-3 xl:px-4 py-3 xl:py-5 gap-4 xl:gap-0">
@@ -139,13 +121,13 @@ const Header = () => {
       <div className="flex items-center gap-0 xl:gap-1 2xl:gap-2 3xl:gap-5">
         <select
           className="select select-bordered w-[200px] mr-4"
-          value={currentContext}
+          value={data?.currentContext || ""}
           onChange={handleClusterChange}
         >
           <option value="" disabled>
             Select cluster
           </option>
-          {contexts.map((ctx) => (
+          {data?.contexts.map((ctx) => (
             <option key={ctx.name} value={ctx.name}>
               {ctx.name}
             </option>

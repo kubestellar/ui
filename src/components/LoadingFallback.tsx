@@ -1,37 +1,43 @@
-import React from 'react';
+import { useState, useEffect } from 'react';
+import { CircularProgress, Typography, Box, Alert } from '@mui/material';
 
-interface LoadingFallbackProps {
+interface Props {
   message?: string;
-  size?: 'small' | 'medium' | 'large';
+  timeout?: number;
+  size? :string;
 }
 
-const LoadingFallback: React.FC<LoadingFallbackProps> = ({ 
-  message = 'Loading...', 
-  size = 'medium' 
-}) => {
-  const spinnerSizes = {
-    small: 'h-8 w-8',
-    medium: 'h-12 w-12',
-    large: 'h-16 w-16'
-  };
+const LoadingFallback = ({ message = 'Loading...', timeout = 10000 }: Props) => {
+  const [showTimeout, setShowTimeout] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowTimeout(true);
+    }, timeout);
+
+    return () => clearTimeout(timer);
+  }, [timeout]);
+
+  if (showTimeout) {
+    return (
+      <Alert severity="warning" sx={{ m: 2 }}>
+        Loading is taking longer than expected. There might be an issue with the connection.
+      </Alert>
+    );
+  }
 
   return (
-    <div 
-      role="status"
-      aria-live="polite"
-      className="flex flex-col items-center justify-center min-h-[200px] gap-4"
+    <Box
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+      justifyContent="center"
+      minHeight="200px"
+      gap={2}
     >
-      <div 
-        className={`animate-spin rounded-full border-t-2 border-b-2 border-primary ${spinnerSizes[size]}`}
-        aria-hidden="true"
-      />
-      {message && (
-        <p className="text-sm text-gray-600 dark:text-gray-300">
-          {message}
-        </p>
-      )}
-      <span className="sr-only">Loading content...</span>
-    </div>
+      <CircularProgress />
+      <Typography>{message}</Typography>
+    </Box>
   );
 };
 

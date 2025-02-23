@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import LoadingFallback from './LoadingFallback';
+import { useK8sQueries } from '../hooks/queries/useK8sQueries';
 
 interface ContextInfo {
   name: string;
@@ -8,43 +9,14 @@ interface ContextInfo {
 }
 
 const K8sInfo = () => {
-  const [contexts, setContexts] = useState<ContextInfo[]>([]);
-  const [clusters, setClusters] = useState<string[]>([]);
-  const [currentContext, setCurrentContext] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const { useK8sInfo } = useK8sQueries();
+  const { data, isLoading, isError, error } = useK8sInfo();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Only show kubeflex contexts
-        const response = await api.get('/api/clusters'); 
-        const kubeflexContexts = response.data.contexts.filter(
-          (ctx: ContextInfo) => ctx.name.endsWith("-kubeflex")
-        );
-        // Get clusters associated with kubeflex contexts
-        const kubeflexClusters = response.data.clusters.filter(
-          (cluster: string) =>
-            kubeflexContexts.some((ctx: ContextInfo) => ctx.cluster === cluster)
-        );
-        setContexts(kubeflexContexts);
-        setClusters(kubeflexClusters);
-        setCurrentContext(response.data.currentContext);
-      } catch (error) {
-        console.error('Error fetching Kubernetes information:', error);
-        setError('Failed to load cluster information. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  if (loading) return <LoadingFallback message="Loading cluster information..." size="medium" />;
-  if (error) return (
+  if (isLoading) return <LoadingFallback message="Loading cluster information..." size="medium" />;
+  
+  if (isError) return (
     <div className="text-center p-4 text-red-600 dark:text-red-400">
-      <p>{error}</p>
+      <p>{error instanceof Error ? error.message : 'Failed to load cluster information'}</p>
       <button 
         onClick={() => window.location.reload()} 
         className="mt-4 px-4 py-2 bg-primary rounded-md text-white hover:bg-primary/90 transition-colors duration-200"
@@ -54,6 +26,15 @@ const K8sInfo = () => {
     </div>
   );
 
+  const kubeflexContexts = data?.contexts.filter(
+    (ctx) => ctx.name.endsWith("-kubeflex")
+  ) || [];
+
+  const kubeflexClusters = data?.clusters.filter(
+    (cluster) =>
+      kubeflexContexts.some((ctx) => ctx.cluster === cluster)
+  ) || [];
+
   return (
     <div className="w-full max-w-full p-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -62,11 +43,11 @@ const K8sInfo = () => {
           <h2 className="text-2xl font-bold mb-6 flex items-center">
             <span className="text-primary">Kubernetes Clusters</span>
             <span className="ml-2 px-3 py-1 bg-primary/10 rounded-full text-sm">
-              {clusters?.length}
+              {kubeflexClusters?.length}
             </span>
           </h2>
           <ul className="space-y-2">
-            {clusters && clusters.map(cluster => (
+            {kubeflexClusters && kubeflexClusters.map(cluster => (
               <li 
                 key={cluster} 
                 className="p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors duration-200 cursor-pointer"
@@ -82,18 +63,18 @@ const K8sInfo = () => {
           <h2 className="text-2xl font-bold mb-6 flex items-center">
             <span className="text-primary">Kubernetes Contexts</span>
             <span className="ml-2 px-3 py-1 bg-primary/10 rounded-full text-sm">
-              {contexts?.length}
+              {kubeflexContexts?.length}
             </span>
           </h2>
           <ul className="space-y-2">
-            {contexts.map((ctx) => (
+            {kubeflexContexts.map((ctx) => (
               <li 
                 key={ctx.name} 
                 className="p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors duration-200"
               >
                 <div className="flex items-center justify-between">
                   <span className="font-medium">{ctx.name}</span>
-                  {ctx.name === currentContext && (
+                  {ctx.name === data?.currentContext && (
                     <span className="px-2 py-1 text-xs bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100 rounded-full">
                       Current
                     </span>
@@ -111,7 +92,7 @@ const K8sInfo = () => {
         <div className="card bg-base-100 shadow-xl p-6 hover:shadow-2xl transition-shadow duration-300">
           <h2 className="text-2xl font-bold mb-6 text-primary">Current Context</h2>
           <div className="p-4 bg-base-200 rounded-lg border-l-4 border-primary">
-            <p className="font-mono text-sm break-all">{currentContext}</p>
+            <p className="font-mono text-sm break-all">{data?.currentContext}</p>
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -27,10 +27,10 @@ import Editor from "@monaco-editor/react";
 import axios from "axios";
 import LogModal from "./LogModal";
 import yaml from "js-yaml";
-import { ThemeContext } from "../context/ThemeContext"; // Import ThemeContext
-import { useContext } from "react";
-
-
+import { ThemeContext } from "../context/ThemeContext";
+import { useWDSQueries } from "../hooks/queries/useWDSQueries";
+import { toast } from "react-hot-toast";
+import LoadingFallback from "./LoadingFallback";
 
 interface Workload {
   name: string;
@@ -59,7 +59,6 @@ interface DeploymentConfig {
   };
 }
 
-
 interface Props {
   title: string;
   workloads: Workload[];
@@ -80,8 +79,12 @@ const DeploymentTable = ({ title, workloads, setSelectedDeployment }: Props) => 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [error, setError] = useState<string>("");
   const { theme } = useContext(ThemeContext);
-  
+  const wdsQueries = useWDSQueries();
 
+  const updateMutation = wdsQueries.useUpdateWorkload();
+  const deleteMutation = wdsQueries.useDeleteWorkload();
+  const scaleMutation = wdsQueries.useScaleWorkload();
+  const { data: statusData } = wdsQueries.useWorkloadStatus();
 
   // Menu dropdown
   const handleMenuClick = (event: React.MouseEvent, index: number) => {
@@ -93,7 +96,6 @@ const DeploymentTable = ({ title, workloads, setSelectedDeployment }: Props) => 
     setMenuAnchorEl(null);
     setMenuOpen(null);
   };
-
 
   // Handle Edit Click (Open YAML Editor Modal)
   const handleEditClick = async (workload: Workload) => {
@@ -147,24 +149,13 @@ spec:
       }
 
       const parsedYaml = yaml.load(yamlData) as DeploymentConfig;
-      const updatedDeployment = {
-        namespace: parsedYaml.metadata.namespace,
-        name: parsedYaml.metadata.name,
-        image: parsedYaml.spec.template.spec.containers[0].image,
-        replicas: parsedYaml.spec.replicas || 1,
-      };
-
-      await axios.put(
-        "http://localhost:4000/api/wds/update",
-        updatedDeployment,
-        { headers: { "Content-Type": "application/json" } }
-      );
-
-      alert(`✅ Deployment "${updatedDeployment.name}" updated successfully!`);
-      setSelectedWorkload((prev) => (prev ? { ...prev, replicas: updatedDeployment.replicas } : null));
+      await updateMutation.mutateAsync(parsedYaml);
+      
+      toast.success(`✅ Deployment "${parsedYaml.metadata.name}" updated successfully!`);
       setEditYaml(false);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error updating deployment:", error);
+      setError("Failed to update deployment.");
     }
   };
 
@@ -189,24 +180,18 @@ spec:
   // Handle Scale Save (Update Replicas Only)
   const handleScaleSave = async () => {
     try {
-      if (!selectedWorkload || desiredReplicas === undefined) {
+      if (!selectedWorkload || desiredReplicas === "") {
         setError("Please select a workload and set the desired replicas.");
         return;
       }
 
-      const scaleUpdate = {
+      await scaleMutation.mutateAsync({
         namespace: selectedWorkload.namespace,
         name: selectedWorkload.name,
-        replicas: desiredReplicas,
-      };
+        replicas: Number(desiredReplicas),
+      });
 
-      await axios.put(
-        "http://localhost:4000/api/wds/update",
-        scaleUpdate,
-        { headers: { "Content-Type": "application/json" } }
-      );
-
-      alert(`✅ Deployment "${scaleUpdate.name}" scaled to ${scaleUpdate.replicas} replicas successfully!`);
+      toast.success(`✅ Deployment "${selectedWorkload.name}" scaled to ${desiredReplicas} replicas successfully!`);
       setScaleModalOpen(false);
     } catch (error) {
       console.error("Error updating replicas:", error);
@@ -226,15 +211,12 @@ spec:
     if (!selectedWorkload) return;
 
     try {
-        await axios.delete("http://localhost:4000/api/wds/delete", {
-        data: {
-          name: selectedWorkload.name,
-          namespace: selectedWorkload.namespace,
-        },
-        headers: { "Content-Type": "application/json" },
+      await deleteMutation.mutateAsync({
+        namespace: selectedWorkload.namespace,
+        name: selectedWorkload.name,
       });
 
-      alert(`Deployment ${selectedWorkload.name} deleted successfully!`);
+      toast.success(`Deployment ${selectedWorkload.name} deleted successfully!`);
       window.location.reload();
     } catch (error) {
       console.error("Failed to delete deployment:", error);
@@ -248,7 +230,6 @@ spec:
   const handleLogsClick = (workload: Workload) => {
     setSelectedLog({ namespace: workload.namespace, deployment: workload.name });
   };
-
 
   return (
     <Paper  elevation={3}  sx={{ p: 3, bgcolor: theme === "dark" ? "#1F2937" : "background.paper", color: theme === "dark" ? "white" : "black",      borderRadius: 2 }}>
@@ -487,7 +468,6 @@ spec:
         </DialogActions>
       </Dialog>
 
-
       {/* Logs Modal */}
         {selectedLog && (
           <LogModal 
@@ -496,7 +476,6 @@ spec:
             onClose={() => setSelectedLog(null)}
           />
         )}
-
 
       {/* Error Snackbar */}
         <Snackbar

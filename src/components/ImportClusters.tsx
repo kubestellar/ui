@@ -23,8 +23,7 @@ import {
   FormHelperText,
   Snackbar,
 } from "@mui/material";
-import axios from "axios";
-import { BASE_URL } from "../utils/credentials";
+import { useClusterQueries } from '../hooks/queries/useClusterQueries';
 
 interface Props {
   activeOption: string | null;
@@ -60,26 +59,23 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
     node: "",
   });
 
+  const { useImportCluster } = useClusterQueries();
+  const { mutate: importCluster, isLoading: isImporting } = useImportCluster();
+
   const handleImportCluster = async () => {
     setErrorMessage("");
-    setLoading(true);
+    
     try {
-      const response = await axios.post(`${BASE_URL}/clusters/import`, {...formData, value:labels});
-      if (response.status !== 200 && response.status !== 202) {
-        throw new Error("Network response was not ok");
-      }
-      console.log("Cluster import initiated:", response.data);
+      await importCluster({...formData, value: labels});
       setFormData({ clusterName: "", Region: "", value: [], node: "" });
       setLabels([]);
+      onCancel(); // Close the dialog on success
     } catch (error: unknown) {
-      console.error("Error importing cluster:", error);
       if (error instanceof Error) {
         setErrorMessage(error.message);
       } else {
         setErrorMessage("An unknown error occurred");
       }
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -492,7 +488,7 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                         <Button
                           variant="contained"
                           onClick={handleImportCluster}
-                          disabled={!formData.clusterName || !formData.Region || !labels.length || !formData.node || loading}
+                          disabled={!formData.clusterName || !formData.Region || !labels.length || !formData.node || isImporting}
                           sx={{
                             "&:disabled": {
                                  cursor: "not-allowed",
@@ -500,14 +496,14 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                             },
                       }}
                           className={`${
-                            (!formData.clusterName || !formData.Region || !labels.length || !formData.node || loading)
+                            (!formData.clusterName || !formData.Region || !labels.length || !formData.node || isImporting)
                               ? theme === "dark"
                                 ? "!bg-gray-700 !text-gray-400"
                                 : "!bg-gray-300 !text-gray-500"
                               : ""
                           }`}
                         >
-                          {loading ? <CircularProgress size={24} /> : "Import"}
+                          {isImporting ? <CircularProgress size={24} /> : "Import"}
                         </Button>
                       </DialogActions>
                     </Box>

@@ -1,57 +1,30 @@
-import { useState, useEffect, useCallback } from 'react';
-import { api } from '../lib/api';
+import { useState } from 'react';
 import ClustersTable from '../components/ClustersTable';
 import LoadingFallback from '../components/LoadingFallback';
-
-interface ManagedClusterInfo {
-  name: string;
-  labels: { [key: string]: string };
-  creationTime: string;
-  status: string;
-  context: string;
-}
+import { useClusterQueries } from '../hooks/queries/useClusterQueries';
 
 const ITS = () => {
-  const [clusters, setClusters] = useState<ManagedClusterInfo[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [totalPages, setTotalPages] = useState<number>(1);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const { useClusters } = useClusterQueries();
+  
+  const { 
+    data, 
+    isLoading, 
+    isError, 
+    error 
+  } = useClusters(currentPage);
 
-  const handleFetchCluster = useCallback(async (page: number) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const response = await api.get('/api/clusters', { params: { page } });
-      const itsData: ManagedClusterInfo[] = response.data.itsData || [];
+  const handleFetchCluster = (page: number) => {
+    setCurrentPage(page);
+  };
 
-      if (Array.isArray(itsData)) {
-        setClusters(itsData);
-        setTotalPages(response.data.totalPages || 1);
-        setCurrentPage(page);
-      } else {
-        throw new Error('Invalid data format received');
-      }
-    } catch (error) {
-      console.error('Error fetching ITS information:', error);
-      setError('Failed to load managed clusters. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    handleFetchCluster(1);
-  }, [handleFetchCluster]);
-
-  if (loading) return (
+  if (isLoading) return (
     <div className="w-full max-w-7xl mx-auto p-4">
       <LoadingFallback message="Loading managed clusters..." size="medium" />
     </div>
   );
 
-  if (error) return (
+  if (isError) return (
     <div className="w-full max-w-7xl mx-auto p-4">
       <div className="bg-base-100 shadow-xl rounded-lg p-8 text-center">
         <div className="text-red-600 dark:text-red-400 mb-4">
@@ -68,7 +41,9 @@ const ITS = () => {
               d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" 
             />
           </svg>
-          <p className="text-lg font-semibold">{error}</p>
+          <p className="text-lg font-semibold">
+            {error instanceof Error ? error.message : 'Failed to load managed clusters'}
+          </p>
         </div>
         <button 
           onClick={() => handleFetchCluster(currentPage)} 
@@ -100,16 +75,16 @@ const ITS = () => {
           <h1 className="text-2xl font-bold flex items-center justify-center gap-3">
             <span className="text-primary">Managed Clusters</span>
             <span className="px-3 py-1 bg-primary/10 rounded-full text-sm">
-              {clusters.length}
+              {data?.itsData.length || 0}
             </span>
           </h1>
         </div>
         
         <div className="p-4">
           <ClustersTable
-            clusters={clusters}
+            clusters={data?.itsData || []}
             currentPage={currentPage}
-            totalPages={totalPages}
+            totalPages={data?.totalPages || 1}
             onPageChange={handleFetchCluster}
           />
         </div>
