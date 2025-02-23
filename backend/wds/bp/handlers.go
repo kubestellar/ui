@@ -19,7 +19,6 @@ import (
 
 // create BP
 func CreateBp(ctx *gin.Context) {
-
 	bpFile, err := ctx.FormFile("bpYaml")
 
 	if err != nil {
@@ -64,7 +63,6 @@ func CreateBp(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"message": "Created binding policy successfully"})
-
 }
 
 // delete BP by name
@@ -85,7 +83,6 @@ func DeleteBp(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"message": fmt.Errorf("deleted bp %s", name)})
-
 }
 
 // delete all BPs
@@ -128,5 +125,4 @@ func getClientForBp() (*bpv1alpha1.ControlV1alpha1Client, error) {
 		return nil, err
 	}
 	return c, nil
-
 }

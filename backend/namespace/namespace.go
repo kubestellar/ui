@@ -20,7 +20,13 @@ import (
 const requestTimeout = 5 * time.Second
 
 var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool { return true },
+	// CheckOrigin allows all cross-origin requests by always returning true.
+	// This is a security setting for WebSocket connections that controls which domains can connect.
+	// WARNING: Setting this to always return true is insecure for production environments
+	// as it allows any origin to establish WebSocket connections.
+	// @param r *http.Request - The incoming HTTP request
+	// @return bool - Always returns true, allowing all origins
+	CheckOrigin: func(_ *http.Request) bool { return true },
 }
 
 // GetAllNamespacesWithResources fetches all namespaces and their connected resources
@@ -158,6 +164,7 @@ func DeleteNamespace(name string) error {
 	return nil
 }
 
+// GetAllNamespacesWithResources retrieves all namespaces along with their associated resources.
 func GetAllNamespacesWithResources() ([]NamespaceDetails, error) {
 	clientset, err := wds.GetClientSetKubeConfig()
 	if err != nil {
@@ -198,7 +205,7 @@ func GetAllNamespacesWithResources() ([]NamespaceDetails, error) {
 	return namespaceDetails, nil
 }
 
-// WebSocket handler to stream namespace updates
+// NamespaceWebSocketHandler handles WebSocket connections and streams namespace updates.
 func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -221,12 +228,22 @@ func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			// If cache miss, fetch data from Kubernetes
 			data, err := GetAllNamespacesWithResources()
 			if err != nil {
-				conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Error fetching namespaces: %v", err)))
+				err = conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Error fetching namespaces: %v", err)))
+				if err != nil {
+					fmt.Println("WebSocket error:", err)
+				}
+				if err != nil {
+					fmt.Println("WebSocket close error:", err)
+				}
 				return
 			}
 
 			jsonData, _ = json.Marshal(data)
-			redis.SetNamespaceCache("namespace_data", string(jsonData), 10*time.Second) // Cache data for 10 seconds
+			err = redis.SetNamespaceCache("namespace_data", string(jsonData), 10*time.Second) // Cache data for 10 seconds
+
+			if err != nil {
+				fmt.Println("Redis error:", err)
+			}
 		} else {
 			// Use cached data
 			jsonData = []byte(cachedData)
