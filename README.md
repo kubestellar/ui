@@ -165,6 +165,21 @@ This will:
 - Pull the latest source code changes.
 - Rebuild and restart the application.
 
+### Check lint
+1. **Check for linting issues without modifying files**
+   ```sh
+   make check-lint
+   ```
+2. **Fix linting issues automatically**
+   ```sh
+   make fix-lint
+   ```
+3. **Run both checks and fixes together**
+   ```sh
+   make lint
+   ```
+
+
 ## Docker Image Versioning and Pulling
 
 If you'd like to work with the Docker images for the **KubestellarUI** project, here's how you can use the `latest` and versioned tags:
