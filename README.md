@@ -165,19 +165,52 @@ This will:
 - Pull the latest source code changes.
 - Rebuild and restart the application.
 
-### Check lint
-1. **Check for linting issues without modifying files**
-   ```sh
-   make check-lint
-   ```
-2. **Fix linting issues automatically**
-   ```sh
-   make fix-lint
-   ```
-3. **Run both checks and fixes together**
-   ```sh
-   make lint
-   ```
+## **🚀 Install GolangCI-Lint**
+
+To install **GolangCI-Lint**, follow these steps:
+
+### **🔹 Linux & macOS**
+Run the following command:
+```sh
+curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.54.2
+```
+Ensure `$(go env GOPATH)/bin` is in your `PATH`:
+```sh
+export PATH=$(go env GOPATH)/bin:$PATH
+```
+
+### **🔹 Windows**
+Use **scoop** (recommended):
+```powershell
+scoop install golangci-lint
+```
+Or **Go install**:
+```sh
+go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+```
+
+### **🔹 Verify Installation**
+Run:
+```sh
+golangci-lint --version
+```
+
+---
+
+## **🛠 Linting & Fixing Code**
+### **🔹 Check for Issues**
+```sh
+make check-lint
+```
+### **🔹 Auto-Fix Issues**
+```sh
+make fix-lint
+```
+### **🔹 Run Both**
+```sh
+make lint
+```
+
 
 
 ## Docker Image Versioning and Pulling
