@@ -12,8 +12,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"k8s.io/client-go/informers"
+
+	"github.com/gin-gonic/gin"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+
 	"github.com/katamyra/kubestellarUI/api"
 	nsresources "github.com/katamyra/kubestellarUI/namespace/resources"
 	"github.com/katamyra/kubestellarUI/wds"
@@ -21,9 +26,6 @@ import (
 	"github.com/katamyra/kubestellarUI/wds/deployment"
 	"github.com/katamyra/kubestellarUI/wds/resources"
 	"go.uber.org/zap"
-	"k8s.io/client-go/informers"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 type ContextInfo struct {
@@ -39,6 +41,7 @@ type ManagedClusterInfo struct {
 }
 
 func main() {
+
 	initLogger()
 	router := gin.Default()
 
@@ -48,12 +51,14 @@ func main() {
 	// CORS Middleware
 	router.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
 			return
 		}
+
 		c.Next()
 	})
 
@@ -195,6 +200,7 @@ func main() {
 	router.POST("api/deploy", api.DeployHandler)
 	// ROUTES FOR BP
 	router.POST("/api/bp/create", bp.CreateBp)
+	router.GET("/api/bp", bp.GetAllBp)
 	router.DELETE("/api/bp/delete/:name", bp.DeleteBp)
 	router.DELETE("/api/bp/delete", bp.DeleteAllBp)
 
