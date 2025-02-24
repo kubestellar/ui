@@ -13,9 +13,10 @@ interface MenuItemProps {
     label: string;
     onClick?: () => void;
   }>;
+  centered?: boolean;
 }
 
-const MenuItem: React.FC<MenuItemProps> = ({ onClick, catalog, listItems }) => {
+const MenuItem: React.FC<MenuItemProps> = ({ onClick, catalog, listItems, centered }) => {
   const { selectedCluster, hasAvailableClusters } = useCluster();
   const isDisabled = !hasAvailableClusters || !selectedCluster;
 
@@ -24,13 +25,22 @@ const MenuItem: React.FC<MenuItemProps> = ({ onClick, catalog, listItems }) => {
     return !alwaysEnabledItems.includes(label) && isDisabled;
   };
 
+  const getDisabledMessage = () => {
+    if (!hasAvailableClusters) return "Please configure a cluster first";
+    if (!selectedCluster) return "Please select a cluster to access this feature";
+    return "";
+  };
+
   return (
-    <div className="w-full flex flex-col items-stretch gap-2">
-      <span className="hidden xl:block px-2 xl:text-sm 2xl:text-base 3xl:text-lg uppercase">
+    <div className="w-full flex flex-col items-stretch gap-3 group mb-6" role="navigation">
+      <span className={`px-2 text-sm font-semibold text-primary/80 uppercase tracking-[0.15em] 
+        transition-all duration-300 hover:text-primary hover:pl-3 border-l-[3px] 
+        border-transparent ${centered ? 'text-center' : ''}`}>
         {catalog}
       </span>
       {listItems.map((listItem, index) => {
         const isItemDisabled = shouldDisableItem(listItem.label);
+        const disabledMessage = isItemDisabled ? getDisabledMessage() : "";
 
         if (listItem.isLink) {
           return (
@@ -38,24 +48,33 @@ const MenuItem: React.FC<MenuItemProps> = ({ onClick, catalog, listItems }) => {
               key={index}
               onClick={isItemDisabled ? (e) => e.preventDefault() : onClick}
               to={listItem.url || ""}
+              title={disabledMessage}
+              aria-disabled={isItemDisabled}
               className={({ isActive }) =>
-                `btn 2xl:min-h-[52px] 3xl:min-h-[64px] ${
-                  isActive ? "btn-active " : ""
-                }btn-ghost btn-block justify-start ${
-                  isItemDisabled
-                    ? "opacity-50 cursor-not-allowed pointer-events-none"
+                `flex items-center gap-4 px-4 py-3 rounded-xl transition-all 
+                duration-300 hover:bg-gradient-to-r from-primary/5 to-transparent
+                ${
+                  isActive && window.location.pathname === listItem.url
+                    ? "bg-primary/10 border-l-4 border-primary shadow-[inset_2px_0_8px_rgba(99,102,241,0.2)]"
                     : ""
+                } ${
+                  isItemDisabled
+                    ? "opacity-60 cursor-not-allowed pointer-events-none bg-gray-50/5"
+                    : "hover:translate-x-2 hover:shadow-md"
                 }`
               }
             >
               <listItem.icon
-                className={`xl:text-2xl 2xl:text-3xl 3xl:text-4xl ${
-                  isItemDisabled ? "text-gray-400" : ""
-                }`}
+                className={`text-2xl shrink-0 ${
+                  isItemDisabled 
+                    ? "text-gray-400" 
+                    : "text-primary drop-shadow-[0_2px_1px_rgba(99,102,241,0.15)]"
+                } transition-transform duration-300 group-hover:scale-110`}
+                aria-hidden="true"
               />
               <span
-                className={`xl:text-sm 2xl:text-base 3xl:text-lg capitalize ${
-                  isItemDisabled ? "text-gray-400" : ""
+                className={`text-sm font-medium tracking-wide ${
+                  isItemDisabled ? "text-gray-400" : "text-foreground/90"
                 }`}
               >
                 {listItem.label}
@@ -67,10 +86,13 @@ const MenuItem: React.FC<MenuItemProps> = ({ onClick, catalog, listItems }) => {
             <button
               key={index}
               onClick={listItem.onClick}
-              className="btn 2xl:min-h-[52px] 3xl:min-h-[64px] btn-ghost btn-block justify-start"
+              className="flex items-center gap-4 px-4 py-3 rounded-xl 
+              transition-all duration-300 hover:bg-gradient-to-r from-primary/5 
+              to-transparent hover:translate-x-2 hover:shadow-md
+              focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             >
-              <listItem.icon className="xl:text-2xl 2xl:text-3xl 3xl:text-4xl" />
-              <span className="xl:text-sm 2xl:text-base 3xl:text-lg capitalize">
+              <listItem.icon className="text-2xl text-primary shrink-0 drop-shadow-[0_2px_1px_rgba(99,102,241,0.15)]" />
+              <span className="text-sm font-medium tracking-wide text-foreground/90">
                 {listItem.label}
               </span>
             </button>
