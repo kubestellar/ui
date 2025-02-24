@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/kubestellar/api/control/v1alpha1"
@@ -21,17 +22,15 @@ import (
 func CreateBp(ctx *gin.Context) {
 
 	bpFile, err := ctx.FormFile("bpYaml")
-
 	if err != nil {
+		fmt.Printf("Debug - FormFile error: %v\n", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Errorf("failed to get bp yaml: %s", err.Error())})
 		return
 	}
-	if bpFile.Header.Get("Content-Type") != "application/yaml" {
-		ctx.JSON(http.StatusUnsupportedMediaType, gin.H{"error": fmt.Errorf("expected a yaml file")})
-		return
-	}
+
 	f, err := bpFile.Open()
 	if err != nil {
+		fmt.Printf("Debug - File open error: %v\n", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Errorf("failed to open to read bp yaml: %s", err.Error())})
 		return
 	}
@@ -39,32 +38,59 @@ func CreateBp(ctx *gin.Context) {
 
 	bpYamlBytes, err := io.ReadAll(f)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Errorf("filed to read bp yaml: %s", err.Error())})
+		fmt.Printf("Debug - Read error: %v\n", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Errorf("failed to read bp yaml: %s", err.Error())})
 		return
 	}
-	var bps v1alpha1.BindingPolicy
 
+	var bps v1alpha1.BindingPolicy
 	err = yaml.Unmarshal(bpYamlBytes, &bps)
 	if err != nil {
+		fmt.Printf("Debug - YAML unmarshal error: %v\n", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Errorf("failed to parse bp yaml: %s", err.Error())})
 		return
 	}
+
+	// Create new metadata if it's nil
+	if bps.ObjectMeta.Name == "" {
+		bps.ObjectMeta.Name = "test-binding-policy"
+	}
+
 	c, err := getClientForBp()
 	if err != nil {
+		fmt.Printf("Debug - Client creation error: %v\n", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Errorf("failed to create client for BP: %s", err.Error())})
 		return
 	}
-	_, err = c.BindingPolicies().Create(context.TODO(), &v1alpha1.BindingPolicy{
-		TypeMeta:   bps.TypeMeta,
-		ObjectMeta: bps.ObjectMeta,
-		Spec:       bps.Spec,
-	}, v1.CreateOptions{})
+
+	// Create with explicit TypeMeta
+	newBP := &v1alpha1.BindingPolicy{
+		TypeMeta: v1.TypeMeta{
+			APIVersion: "control.kubestellar.io/v1alpha1",
+			Kind:       "BindingPolicy",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      bps.ObjectMeta.Name,
+			Namespace: bps.ObjectMeta.Namespace,
+		},
+		Spec: bps.Spec,
+	}
+
+	_, err = c.BindingPolicies().Create(context.TODO(), newBP, v1.CreateOptions{})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Errorf("failed to create Bindping policy: %s", err.Error())})
+		if strings.Contains(err.Error(), "already exists") {
+			ctx.JSON(http.StatusConflict, gin.H{
+				"error":  fmt.Sprintf("BindingPolicy '%s' already exists", newBP.Name),
+				"status": "exists",
+			})
+			return
+		}
+		fmt.Printf("Debug - BP creation error: %v\n", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Errorf("failed to create Binding policy: %s", err.Error())})
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"message": "Created binding policy successfully"})
 
+	ctx.JSON(http.StatusOK, gin.H{"message": "Created binding policy successfully"})
 }
 
 // delete BP by name
@@ -107,26 +133,36 @@ func getClientForBp() (*bpv1alpha1.ControlV1alpha1Client, error) {
 	if kubeconfig == "" {
 		kubeconfig = filepath.Join(homedir.HomeDir(), ".kube", "config")
 	}
+	fmt.Printf("Debug - Using kubeconfig path: %s\n", kubeconfig)
+
 	config, err := clientcmd.LoadFromFile(kubeconfig)
 	if err != nil {
+		fmt.Printf("Debug - LoadFromFile error: %v\n", err)
 		return nil, err
 	}
+
 	wds_ctx := os.Getenv("wds_context")
 	if wds_ctx == "" {
 		return nil, fmt.Errorf("env var wds_context not set")
 	}
+	fmt.Printf("Debug - Using context: %s\n", wds_ctx)
+
 	overrides := &clientcmd.ConfigOverrides{
 		CurrentContext: wds_ctx,
 	}
 	cconfig := clientcmd.NewDefaultClientConfig(*config, overrides)
+
 	restcnfg, err := cconfig.ClientConfig()
 	if err != nil {
+		fmt.Printf("Debug - ClientConfig error: %v\n", err)
 		return nil, err
 	}
+
 	c, err := bpv1alpha1.NewForConfig(restcnfg)
 	if err != nil {
+		fmt.Printf("Debug - NewForConfig error: %v\n", err)
 		return nil, err
 	}
-	return c, nil
 
+	return c, nil
 }
