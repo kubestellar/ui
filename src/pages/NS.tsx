@@ -11,9 +11,6 @@ interface Namespace {
     name: string;
 }
 
-const API_BASE_URL = "http://localhost:4000/api/namespaces";
-const CLUSTER_INFO_URL = "http://localhost:4000/api/clusters";
-
 const NameSpace = () => {
     const [namespaces, setNamespaces] = useState<Namespace[]>([]);
     const [name, setName] = useState("");
