@@ -1,14 +1,18 @@
 import {
   HiOutlineHome,
   HiOutlineUser,
-  HiOutlineClipboardDocumentList,
-  HiOutlinePresentationChartBar,
-  HiOutlineServer,
+  HiOutlineCube,
+  HiOutlineSquares2X2,
+  HiOutlineCommandLine,
+  HiOutlineCog8Tooth,
+  HiOutlineShieldCheck,
 } from 'react-icons/hi2';
 
 export const menu = [
   {
     catalog: 'Main',
+    centered: true,
+    marginTop: '1rem',
     listItems: [
       {
         isLink: true,
@@ -21,45 +25,51 @@ export const menu = [
         url: '/profile',
         icon: HiOutlineUser,
         label: 'Profile',
+        marginBottom: '2rem',
       },
     ],
   },
   {
     catalog: 'Management',
+    centered: true,
+    marginTop: '1rem',
     listItems: [
       {
         isLink: true,
         url: '/its',
-        icon: HiOutlineServer,
-        label: 'Manage Clusters',
+        icon: HiOutlineCube,
+        label: 'Clusters',
       },
       {
         isLink: true,
         url: '/wds',
-        icon: HiOutlinePresentationChartBar,
+        icon: HiOutlineSquares2X2,
         label: 'Deployments',
       },
       {
         isLink: true,
         url: '/workloads/manage',
-        icon: HiOutlineClipboardDocumentList,
-        label: 'Manage Workloads',
+        icon: HiOutlineCommandLine,
+        label: 'Workloads',
+        marginBottom: '2rem',
       },
     ],
   },
   {
     catalog: 'Binding Policies',
+    centered: true,
+    marginTop: '1rem',
     listItems: [
       {
         isLink: true,
         url: '/bp',
-        icon: HiOutlinePresentationChartBar,
+        icon: HiOutlineShieldCheck,
         label: 'Overview',
       },
       {
         isLink: true,
         url: '/bp/manage',
-        icon: HiOutlineClipboardDocumentList,
+        icon: HiOutlineCog8Tooth,
         label: 'Manage Policies',
       },
     ],

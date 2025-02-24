@@ -13,9 +13,10 @@ interface MenuItemProps {
     label: string;
     onClick?: () => void;
   }>;
+  centered?: boolean;
 }
 
-const MenuItem: React.FC<MenuItemProps> = ({ onClick, catalog, listItems }) => {
+const MenuItem: React.FC<MenuItemProps> = ({ onClick, catalog, listItems, centered }) => {
   const { selectedCluster, hasAvailableClusters } = useCluster();
   const isDisabled = !hasAvailableClusters || !selectedCluster;
 
@@ -31,8 +32,10 @@ const MenuItem: React.FC<MenuItemProps> = ({ onClick, catalog, listItems }) => {
   };
 
   return (
-    <div className="w-full flex flex-col items-stretch gap-3 group" role="navigation">
-      <span className="px-2 text-sm font-semibold text-primary/80 uppercase tracking-[0.15em] transition-all duration-300 hover:text-primary hover:pl-3 border-l-[3px] border-transparent">
+    <div className="w-full flex flex-col items-stretch gap-3 group mb-6" role="navigation">
+      <span className={`px-2 text-sm font-semibold text-primary/80 uppercase tracking-[0.15em] 
+        transition-all duration-300 hover:text-primary hover:pl-3 border-l-[3px] 
+        border-transparent ${centered ? 'text-center' : ''}`}>
         {catalog}
       </span>
       {listItems.map((listItem, index) => {
@@ -51,7 +54,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ onClick, catalog, listItems }) => {
                 `flex items-center gap-4 px-4 py-3 rounded-xl transition-all 
                 duration-300 hover:bg-gradient-to-r from-primary/5 to-transparent
                 ${
-                  isActive 
+                  isActive && window.location.pathname === listItem.url
                     ? "bg-primary/10 border-l-4 border-primary shadow-[inset_2px_0_8px_rgba(99,102,241,0.2)]"
                     : ""
                 } ${
