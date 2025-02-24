@@ -6,9 +6,7 @@ import {
 import { Delete, Edit } from "@mui/icons-material";
 import axios from "axios";
 import Editor from "@monaco-editor/react";
-
-const API_BASE_URL = "http://localhost:4000/api/namespaces";
-const CLUSTER_INFO_URL = "http://localhost:4000/api/clusters";
+import { API_BASE_URL, CLUSTER_INFO_URL } from "../utils/credentials";
 
 
 interface Namespace {
