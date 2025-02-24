@@ -8,7 +8,7 @@ import {
 
 export const menu = [
   {
-    catalog: 'Dashboard',
+    catalog: 'Main',
     listItems: [
       {
         isLink: true,
@@ -16,34 +16,34 @@ export const menu = [
         icon: HiOutlineHome,
         label: 'Home',
       },
+      {
+        isLink: true,
+        url: '/profile',
+        icon: HiOutlineUser,
+        label: 'Profile',
+      },
     ],
   },
   {
-    catalog: 'Clusters',
+    catalog: 'Management',
     listItems: [
       {
         isLink: true,
         url: '/its',
         icon: HiOutlineServer,
-        label: 'Manage',
+        label: 'Manage Clusters',
       },
-    ],
-  },
-
-  {
-    catalog: 'Workloads',
-    listItems: [
       {
         isLink: true,
         url: '/wds',
         icon: HiOutlinePresentationChartBar,
-        label: 'deployments',
+        label: 'Deployments',
       },
       {
         isLink: true,
         url: '/workloads/manage',
         icon: HiOutlineClipboardDocumentList,
-        label: 'Manage',
+        label: 'Manage Workloads',
       },
     ],
   },
@@ -60,19 +60,7 @@ export const menu = [
         isLink: true,
         url: '/bp/manage',
         icon: HiOutlineClipboardDocumentList,
-        label: 'Policies',
-      },
-    ],
-  },
-
-  {
-    catalog: 'Profile',
-    listItems: [
-      {
-        isLink: true,
-        url: '/profile',
-        icon: HiOutlineUser,
-        label: 'User',
+        label: 'Manage Policies',
       },
     ],
   },
