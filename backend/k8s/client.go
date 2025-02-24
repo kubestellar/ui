@@ -17,8 +17,8 @@ func homeDir() string {
 	return os.Getenv("USERPROFILE") // Windows
 }
 
+// GetClientSet retrieves a Kubernetes clientset and dynamic client
 func GetClientSet() (*kubernetes.Clientset, dynamic.Interface, error) {
-
 	kubeconfig := os.Getenv("KUBECONFIG")
 	if kubeconfig == "" {
 		if home := homeDir(); home != "" {

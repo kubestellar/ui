@@ -27,3 +27,15 @@ stop:
 # Combined target to run backend and frontend
 all: start
 
+.PHONY: lint check-lint fix-lint
+
+# Run lint checks without fixing
+check-lint:
+	cd backend && golangci-lint run --config .golangci.yaml
+
+# Run lint and automatically fix issues
+fix-lint:
+	cd backend && golangci-lint run --fix --config .golangci.yaml
+
+# Run both check and fix in sequence
+lint: check-lint fix-lint

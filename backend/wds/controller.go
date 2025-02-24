@@ -6,6 +6,9 @@ package wds
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+	"time"
+
 	"github.com/gorilla/websocket"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -16,8 +19,6 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog/v2"
-	"log"
-	"time"
 )
 
 type Controller struct {
@@ -31,7 +32,6 @@ type Controller struct {
 
 func NewController(clientset kubernetes.Interface,
 	deploymentInformer appsinformers.DeploymentInformer, conn *websocket.Conn) *Controller {
-
 	/*
 		DOCS: https://github.com/kubernetes/sample-controller/blob/8ab9f14766821df256ea5234629493d2b66ab89d/controller.go#L110-L114
 			ratelimiter := workqueue.NewTypedMaxOfRateLimiter(
@@ -47,12 +47,15 @@ func NewController(clientset kubernetes.Interface,
 	}
 
 	// Set up an event handler for when Deployment resources change
-	deploymentInformer.Informer().AddEventHandler(
+	_, err := deploymentInformer.Informer().AddEventHandler(
 		cache.ResourceEventHandlerFuncs{
 			AddFunc:    controller.handleAdd,
 			UpdateFunc: controller.handleUpdate,
 			DeleteFunc: controller.handleDel,
 		})
+	if err != nil {
+		log.Fatalf("Failed to register event handler: %v", err)
+	}
 	return controller
 }
 

@@ -11,7 +11,7 @@ services:
 
   backend:
     build:
-      context: ./backend 
+      context: ./backend
       dockerfile: Dockerfile
     ports:
       - "4000:4000"
@@ -19,10 +19,15 @@ services:
       - ~/.kube:/root/.kube
     environment:
       - KUBECONFIG=/root/.kube/config
-    network_mode: "host"  # <--- Use host network mode (Linux only)
-    # networks:
-    #   - kubestellar-network
+    network_mode: "host"
 
+  redis:
+    image: "redis:latest"
+    container_name: "kubestellar-redis"
+    ports:
+      - "6379:6379"
+    network_mode: "host"
+  
 networks:
   kubestellar-network:
     driver: bridge

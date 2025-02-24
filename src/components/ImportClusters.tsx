@@ -24,7 +24,6 @@ import {
   Snackbar,
 } from "@mui/material";
 import axios from "axios";
-import { BASE_URL } from "../utils/credentials";
 
 interface Props {
   activeOption: string | null;
@@ -64,7 +63,7 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
     setErrorMessage("");
     setLoading(true);
     try {
-      const response = await axios.post(`${BASE_URL}/clusters/import`, {...formData, value:labels});
+      const response = await axios.post(`${process.env.VITE_BASE_URL}/clusters/import`, {...formData, value:labels});
       if (response.status !== 200 && response.status !== 202) {
         throw new Error("Network response was not ok");
       }
@@ -271,9 +270,24 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                     <Button
                       variant="contained"
                       disabled={!editorContent}
+                      sx={{
+                        "&:disabled": {
+                             cursor: "not-allowed",
+                             pointerEvents: "all !important",
+                        },
+                        boxShadow: 2,
+                      }}
+                      className={`${
+                        !editorContent
+                          ? theme === "dark"
+                            ? "!bg-gray-700 !text-gray-400"
+                            : "!bg-gray-300 !text-gray-500"
+                          : ""
+                      }`}
                     >
                       Upload
                     </Button>
+
                   </DialogActions>
                 </Box>
               )}
@@ -331,7 +345,20 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                       variant="contained"
                       onClick={handleFileUpload}
                       disabled={!selectedFile}
-                      sx={{ boxShadow: 2 }}
+                      sx={{
+                        "&:disabled": {
+                             cursor: "not-allowed",
+                             pointerEvents: "all !important",
+                        },
+                        boxShadow: 2,
+                  }}
+                      className={`${
+                        !editorContent
+                          ? theme === "dark"
+                            ? "!bg-gray-700 !text-gray-400"
+                            : "!bg-gray-300 !text-gray-500"
+                          : ""
+                      }`}
                     >
                       Upload & Import
                     </Button>
@@ -465,6 +492,19 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                           variant="contained"
                           onClick={handleImportCluster}
                           disabled={!formData.clusterName || !formData.Region || !labels.length || !formData.node || loading}
+                          sx={{
+                            "&:disabled": {
+                                 cursor: "not-allowed",
+                                 pointerEvents: "all !important",
+                            },
+                      }}
+                          className={`${
+                            (!formData.clusterName || !formData.Region || !labels.length || !formData.node || loading)
+                              ? theme === "dark"
+                                ? "!bg-gray-700 !text-gray-400"
+                                : "!bg-gray-300 !text-gray-500"
+                              : ""
+                          }`}
                         >
                           {loading ? <CircularProgress size={24} /> : "Import"}
                         </Button>

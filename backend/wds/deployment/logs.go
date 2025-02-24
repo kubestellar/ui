@@ -4,6 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
+	"time"
+
 	"github.com/gorilla/websocket"
 	"github.com/katamyra/kubestellarUI/wds"
 	v1 "k8s.io/api/apps/v1"
@@ -11,9 +15,6 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
-	"log"
-	"net/http"
-	"time"
 )
 
 var upgrader = websocket.Upgrader{
@@ -107,7 +108,6 @@ func watchDeploymentWithInformer(conn *websocket.Conn, clientset *kubernetes.Cli
 
 	// Keep the connection open
 	select {}
-
 }
 
 func updateHandler(conn *websocket.Conn, oldDeployment, newDeployment *v1.Deployment) {
@@ -128,7 +128,10 @@ func updateHandler(conn *websocket.Conn, oldDeployment, newDeployment *v1.Deploy
 	}
 	for _, logLine := range logs {
 		jsonMessage, _ := json.Marshal(logLine)
-		conn.WriteMessage(websocket.TextMessage, jsonMessage)
+		err := conn.WriteMessage(websocket.TextMessage, jsonMessage)
+		if err != nil {
+			log.Printf("failed to write WebSocket message: %v", err)
+		}
 	}
 }
 
