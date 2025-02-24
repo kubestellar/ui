@@ -28,7 +28,9 @@ Before you begin, ensure that your system meets the following requirements:
 - **Node.js Version**: ≥ 16.x.x
 - **npm Version**: Comes bundled with Node.js
 - **Download Link**: [Node.js Downloads](https://nodejs.org/en/download/)
-- **Note**: You can use [nvm](https://github.com/nvm-sh/nvm) to manage multiple Node.js versions.
+
+> [!NOTE]
+> You can use [nvm](https://github.com/nvm-sh/nvm) to manage multiple Node.js versions.
 
 ### 3. Git
 
@@ -72,7 +74,8 @@ VITE_APP_VERSION=0.1.0
 VITE_GIT_COMMIT_HASH=$GIT_COMMIT_HASH
 ```
 
-> [!NOTE] This is because `.env` files are intended to be a personal environment configuration file. The included `example.env` in the repo is a standard that most other node projects include for the same purpose. You rename the file to `.env` and then change its contents to align with your system and personal needs.
+> [!NOTE] 
+> This is because `.env` files are intended to be a personal environment configuration file. The included `example.env` in the repo is a standard that most other node projects include for the same purpose. You rename the file to `.env` and then change its contents to align with your system and personal needs.
 
 ##### Tracking Application Version and Git Commit Hash
 
@@ -137,7 +140,8 @@ If you prefer to run the application using Docker Compose, follow these steps:
 
 - **Download Link**: [Docker Downloads](https://www.docker.com/products/docker-desktop)
 
-> [!NOTE] If you are using Compose V1, change the `docker compose` command to `docker-compose` in the following steps.
+> [!NOTE] 
+> If you are using Compose V1, change the `docker compose` command to `docker-compose` in the following steps.
 > Checkout [Migrating to Compose V2](https://docs.docker.com/compose/releases/migrate/) for more info.
 
 #### Step 2: Run Services
