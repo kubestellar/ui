@@ -12,13 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/websocket"
-	"k8s.io/client-go/informers"
-
 	"github.com/gin-gonic/gin"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-
+	"github.com/gorilla/websocket"
 	"github.com/katamyra/kubestellarUI/api"
 	nsresources "github.com/katamyra/kubestellarUI/namespace/resources"
 	"github.com/katamyra/kubestellarUI/wds"
@@ -26,6 +21,9 @@ import (
 	"github.com/katamyra/kubestellarUI/wds/deployment"
 	"github.com/katamyra/kubestellarUI/wds/resources"
 	"go.uber.org/zap"
+	"k8s.io/client-go/informers"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 type ContextInfo struct {
@@ -41,7 +39,6 @@ type ManagedClusterInfo struct {
 }
 
 func main() {
-
 	initLogger()
 	router := gin.Default()
 

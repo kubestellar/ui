@@ -178,6 +178,57 @@ For ongoing development, use the following steps:
   ```bash
   docker compose up --build
   ```
+This will:
+
+- Stop the running containers.
+- Pull the latest source code changes.
+- Rebuild and restart the application.
+
+## **🚀 Install GolangCI-Lint**
+
+To install **GolangCI-Lint**, follow these steps:
+
+### **🔹 Linux & macOS**
+Run the following command:
+```sh
+curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.54.2
+```
+Ensure `$(go env GOPATH)/bin` is in your `PATH`:
+```sh
+export PATH=$(go env GOPATH)/bin:$PATH
+```
+
+### **🔹 Windows**
+Use **scoop** (recommended):
+```powershell
+scoop install golangci-lint
+```
+Or **Go install**:
+```sh
+go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+```
+
+### **🔹 Verify Installation**
+Run:
+```sh
+golangci-lint --version
+```
+
+---
+
+## **🛠 Linting & Fixing Code**
+### **🔹 Check for Issues**
+```sh
+make check-lint
+```
+### **🔹 Auto-Fix Issues**
+```sh
+make fix-lint
+```
+### **🔹 Run Both**
+```sh
+make lint
+```
 
 ### Docker Image Versioning and Pulling
 
