@@ -24,7 +24,6 @@ import {
   Snackbar,
 } from "@mui/material";
 import axios from "axios";
-import { BASE_URL } from "../utils/credentials";
 
 interface Props {
   activeOption: string | null;
@@ -64,7 +63,7 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
     setErrorMessage("");
     setLoading(true);
     try {
-      const response = await axios.post(`${BASE_URL}/clusters/import`, {...formData, value:labels});
+      const response = await axios.post(`${process.env.VITE_BASE_URL}/clusters/import`, {...formData, value:labels});
       if (response.status !== 200 && response.status !== 202) {
         throw new Error("Network response was not ok");
       }

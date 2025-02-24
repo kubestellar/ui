@@ -85,7 +85,7 @@ const CreateOptions = ({
     formData.append("wds", selectedFile);
   
     try {
-      const response = await fetch("http://localhost:4000/api/wds/create", {
+      const response = await fetch(`${process.env.VITE_BASE_URL}/api/wds/create`, {
         method: "POST",
         body: formData,
       });
@@ -224,7 +224,7 @@ const CreateOptions = ({
     }
   
     try {
-      const response = await fetch("http://localhost:4000/api/wds/create/json", {
+      const response = await fetch(`${process.env.VITE_BASE_URL}/api/wds/create/json`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -289,7 +289,7 @@ const CreateOptions = ({
     };
   
     try {
-      const response = await fetch("http://localhost:4000/api/wds/create", {
+      const response = await fetch(`${process.env.VITE_BASE_URL}/api/wds/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

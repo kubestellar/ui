@@ -46,7 +46,7 @@ const LogModal = ({ namespace, deploymentName, onClose }: LogModalProps) => {
 
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const socket = new WebSocket(
-      `${protocol}://localhost:4000/ws?namespace=${namespace}&deployment=${deploymentName}`
+      `${protocol}://${process.env.VITE_BASE_URL?.replace(/^http?:\/\//, '')}/ws?namespace=${namespace}&deployment=${deploymentName}`
     );
 
     socket.onopen = () => {
