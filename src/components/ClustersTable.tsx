@@ -76,8 +76,8 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
       });
     }
 
-    // Apply status filter
-    if (filter) {
+    // Apply status filter - only if filter is not "All"
+    if (filter && filter !== "All") {
       result = result.filter((cluster) => {
         const currentStatus = cluster.status || 'Active✓';
         return currentStatus.toLowerCase() === filter.toLowerCase();
