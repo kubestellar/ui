@@ -5,6 +5,15 @@ Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI 
 1. **Frontend**: Built with React and TypeScript
 2. **Backend**: Built with Golang using the Gin framework.
 
+## Contents
+
+- [Prerequisites](#prerequisites)
+- [Installation Steps](#installation-steps)
+  - [Local Setup](#local-setup)
+  - [Local Setup with Docker Compose](#local-setup-with-docker-compose)
+- [Docker Image Versioning and Pulling](#docker-image-versioning-and-pulling)
+- [Accessing the Application](#accessing-the-application)
+
 ## Prerequisites
 
 Before you begin, ensure that your system meets the following requirements:
@@ -19,6 +28,7 @@ Before you begin, ensure that your system meets the following requirements:
 - **Node.js Version**: ≥ 16.x.x
 - **npm Version**: Comes bundled with Node.js
 - **Download Link**: [Node.js Downloads](https://nodejs.org/en/download/)
+- **Note**: You can use [nvm](https://github.com/nvm-sh/nvm) to manage multiple Node.js versions.
 
 ### 3. Git
 
@@ -125,7 +135,7 @@ If you prefer to run the application using Docker Compose, follow these steps:
 
 #### Step 1: Ensure Docker is Installed
 
-[Docker Downloads](https://www.docker.com/products/docker-desktop)
+- **Download Link**: [Docker Downloads](https://www.docker.com/products/docker-desktop)
 
 > [!NOTE] If you are using Compose V1, change the `docker compose` command to `docker-compose` in the following steps.
 > Checkout [Migrating to Compose V2](https://docs.docker.com/compose/releases/migrate/) for more info.
