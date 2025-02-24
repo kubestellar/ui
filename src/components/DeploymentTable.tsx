@@ -102,7 +102,7 @@ const DeploymentTable = ({ title, workloads, setSelectedDeployment }: Props) => 
 
     try {
       const response = await axios.get(
-        `http://localhost:4000/api/wds/${workload.name}?namespace=${workload.namespace}`
+        `${process.env.VITE_BASE_URL}/api/wds/${workload.name}?namespace=${workload.namespace}`
       );
       const fullDeployment = response.data;
 
@@ -155,7 +155,7 @@ spec:
       };
 
       await axios.put(
-        "http://localhost:4000/api/wds/update",
+        `${process.env.VITE_BASE_URL}/api/wds/update`,
         updatedDeployment,
         { headers: { "Content-Type": "application/json" } }
       );
@@ -175,7 +175,7 @@ spec:
 
     try {
       const response = await axios.get(
-        `http://localhost:4000/api/wds/${workload.name}?namespace=${workload.namespace}`
+        `${process.env.VITE_BASE_URL}/api/wds/${workload.name}?namespace=${workload.namespace}`
       );
       const currentReplicas = response.data?.spec?.replicas ?? workload.replicas;
       setReplicaCount(currentReplicas);
@@ -201,7 +201,7 @@ spec:
       };
 
       await axios.put(
-        "http://localhost:4000/api/wds/update",
+        `${process.env.VITE_BASE_URL}/api/wds/update`,
         scaleUpdate,
         { headers: { "Content-Type": "application/json" } }
       );
@@ -226,7 +226,7 @@ spec:
     if (!selectedWorkload) return;
 
     try {
-        await axios.delete("http://localhost:4000/api/wds/delete", {
+        await axios.delete(`${process.env.VITE_BASE_URL}/api/wds/delete`, {
         data: {
           name: selectedWorkload.name,
           namespace: selectedWorkload.namespace,
