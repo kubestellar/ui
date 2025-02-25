@@ -89,6 +89,18 @@ func main() {
 		c.JSON(http.StatusOK, workloads)
 	})
 
+	router.GET("/api/context", func(c *gin.Context) {
+		currentContext, context, err := wds.ListContexts()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"context":         context,
+			"current-context": currentContext,
+		})
+	})
+
 	// New Log Endpoint
 	router.GET("/api/log", func(c *gin.Context) {
 		// Fetch Kubernetes Information
