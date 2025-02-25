@@ -149,7 +149,7 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
     flexGrow: 1,        //Ensures proper height
     minHeight: 0,       //Prevents flexbox shrinking issues
     bgcolor: theme === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
-  };  
+  };
 
   const formContentStyles = {
     display: 'flex',
