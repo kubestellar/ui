@@ -380,7 +380,7 @@ return (
           defaultLanguage="yaml"
           value={yamlData}
           onChange={(value) => setYamlData(value || "")}
-          theme={theme === "dark" ? "vs-dark" : "vs-dark"}
+          theme={theme === "dark" ? "vs-dark" : "light"}
           />
       </DialogContent>
       <DialogActions>
@@ -513,7 +513,7 @@ return (
       )}
 
 
-    {/* Error Snackbar */}
+    {/* Snackbar Notification */}
     <Snackbar
                 open={snackbar.open}
                 autoHideDuration={3000}
@@ -523,7 +523,7 @@ return (
                 <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: "100%" }}>
                     {snackbar.message}
                 </Alert>
-            </Snackbar> 
+            </Snackbar>
   </Paper>
 );
 };

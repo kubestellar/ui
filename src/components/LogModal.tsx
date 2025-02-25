@@ -80,7 +80,7 @@ const LogModal = ({ namespace, deploymentName, onClose }: LogModalProps) => {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
       <div
-        className={`p-5 rounded-xl shadow-lg w-3/4 h-3/4 flex flex-col ${
+        className={`p-5 shadow-lg w-3/4 h-3/4 flex flex-col ${
           theme === "dark" ? "bg-gray-900 border-gray-700" : "bg-white border-gray-300"
         }`}
       >
@@ -96,7 +96,7 @@ const LogModal = ({ namespace, deploymentName, onClose }: LogModalProps) => {
           <button
             onClick={onClose}
             className={`transition duration-200 ${
-              theme === "dark" ? "bg-gray-900 hover:text-red-600" : "hover:text-red-600 "
+              theme === "dark" ? "bg-gray-900 hover:text-red-600" : "hover:text-red-600 bg-white border-none"
             }`}
           >
             <X size={22} />

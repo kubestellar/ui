@@ -323,7 +323,7 @@ const CreateOptions = ({
           >
             <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Create from Input" value="option1" />
             <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Create from File" value="option2" />
-            <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Create from Form" value="option3" />
+            <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Create from Github" value="option3" />
           </Tabs>
 
           <Box 
@@ -387,7 +387,7 @@ const CreateOptions = ({
                     height="400px"
                     language={fileType}
                     value={editorContent}
-                    theme={theme === "dark" ? "light" : "vs-dark"} // Switch themes dynamically
+                    theme={theme === "dark" ? "vs-dark" : "light"} // Switch themes dynamically
                     options={{
                       minimap: { enabled: false },
                       fontSize: 14,
