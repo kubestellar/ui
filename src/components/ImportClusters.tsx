@@ -54,29 +54,71 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
 
   const [formData, setFormData] = useState({
     clusterName: "",
+    clusterSet: "",
+    node: "",
     Region: "",
     value: ["1"],
-    node: "",
   });
+
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "warning" | "info";
+  }>({
+    open: false,
+    message: "",
+    severity: "info", // Can be "success", "error", "warning", or "info"
+  });
+
+  const API_BASE_URL = "http://localhost:5000"; // JSON-Server runs on this port by default
 
   const handleImportCluster = async () => {
     setErrorMessage("");
     setLoading(true);
+
+    // ✅ Define requestData at the start of the function
+    const requestData = {
+      clusterName: formData.clusterName,
+      clusterSet: formData.clusterSet, 
+      node: formData.node,
+      value: formData.value,
+      region: formData.Region
+  };
+
+  console.log("🚀 Sending data to API:", requestData); // ✅ Debugging log
+
     try {
-      const response = await axios.post(`${process.env.VITE_BASE_URL}/clusters/import`, {...formData, value:labels});
-      if (response.status !== 200 && response.status !== 202) {
-        throw new Error("Network response was not ok");
-      }
+      // Send cluster import request to backend
+      const response = await axios.post(`${API_BASE_URL}/clusters`, { ...formData, value: labels });
       console.log("Cluster import initiated:", response.data);
-      setFormData({ clusterName: "", Region: "", value: [], node: "" });
+
+      // Clear form fields after a successful import
+      setFormData({ clusterName: "", clusterSet: "", node: "", Region: "", value: []} );
       setLabels([]);
+
+      // Show success message (if needed)
+      setSnackbar({
+        open: true,
+        message: "Cluster import started successfully!",
+        severity: "success",
+      });
+
     } catch (error: unknown) {
       console.error("Error importing cluster:", error);
+      // Handle Axios errors properly
       if (error instanceof Error) {
         setErrorMessage(error.message);
       } else {
         setErrorMessage("An unknown error occurred");
       }
+
+      // Show error message (if needed)
+      setSnackbar({
+        open: true,
+        message: "Error importing cluster. Please check your inputs.",
+        severity: "error",
+      });
+
     } finally {
       setLoading(false);
     }
@@ -123,10 +165,18 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
 
   return (
     <>
-      <Dialog 
-        open={!!activeOption} 
-        onClose={onCancel} 
-        maxWidth="lg" 
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={5000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
+      </Snackbar>
+
+      <Dialog
+        open={!!activeOption}
+        onClose={onCancel}
+        maxWidth="lg"
         fullWidth
         PaperProps={{
           sx: {
@@ -149,7 +199,7 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
         >
           Import Cluster
         </DialogTitle>
-        
+
         <DialogContent
           sx={{
             p: 0,
@@ -200,7 +250,7 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
               <Tab label="Manual" value="option4" />
             </Tabs>
 
-            <Box sx={{ 
+            <Box sx={{
               flex: 1,
               overflow: 'auto',
               p: 3,
@@ -212,8 +262,8 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                     Paste a YAML file.
                   </Alert>
 
-                  <FormControl 
-                    sx={{ 
+                  <FormControl
+                    sx={{
                       flex: '0 0 auto',
                       '& .MuiOutlinedInput-root': {
                         borderRadius: 1,
@@ -241,7 +291,7 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                     </Select>
                   </FormControl>
 
-                  <Box sx={{ 
+                  <Box sx={{
                     flex: 1,
                     minHeight: 0,
                     border: 1,
@@ -272,18 +322,17 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                       disabled={!editorContent}
                       sx={{
                         "&:disabled": {
-                             cursor: "not-allowed",
-                             pointerEvents: "all !important",
+                          cursor: "not-allowed",
+                          pointerEvents: "all !important",
                         },
                         boxShadow: 2,
                       }}
-                      className={`${
-                        !editorContent
-                          ? theme === "dark"
-                            ? "!bg-gray-700 !text-gray-400"
-                            : "!bg-gray-300 !text-gray-500"
-                          : ""
-                      }`}
+                      className={`${!editorContent
+                        ? theme === "dark"
+                          ? "!bg-gray-700 !text-gray-400"
+                          : "!bg-gray-300 !text-gray-500"
+                        : ""
+                        }`}
                     >
                       Upload
                     </Button>
@@ -319,7 +368,7 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                         textAlign: "center",
                       }}
                     >
-                      <Button  component="label" sx={{ boxShadow: 2 }}>
+                      <Button component="label" sx={{ boxShadow: 2 }}>
                         Select Kubeconfig file
                         <input
                           type="file"
@@ -347,18 +396,17 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                       disabled={!selectedFile}
                       sx={{
                         "&:disabled": {
-                             cursor: "not-allowed",
-                             pointerEvents: "all !important",
+                          cursor: "not-allowed",
+                          pointerEvents: "all !important",
                         },
                         boxShadow: 2,
-                  }}
-                      className={`${
-                        !editorContent
-                          ? theme === "dark"
-                            ? "!bg-gray-700 !text-gray-400"
-                            : "!bg-gray-300 !text-gray-500"
-                          : ""
-                      }`}
+                      }}
+                      className={`${!editorContent
+                        ? theme === "dark"
+                          ? "!bg-gray-700 !text-gray-400"
+                          : "!bg-gray-300 !text-gray-500"
+                        : ""
+                        }`}
                     >
                       Upload & Import
                     </Button>
@@ -398,8 +446,8 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                     <AlertTitle>Info</AlertTitle>
                     Fill out the form to import cluster manually.
                   </Alert>
-                  
-                  <Box 
+
+                  <Box
                     sx={{
                       flex: 1,
                       overflow: 'auto',
@@ -415,14 +463,19 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                         sx={commonInputSx}
                         fullWidth
                       />
-                      
+
                       <FormControl sx={commonInputSx} required fullWidth>
                         <InputLabel>Cluster Set</InputLabel>
                         <Select
                           value={option}
-                          onChange={(e) => setOption(e.target.value)}
+                          onChange={(e) => {
+                            console.log("🚀 Selected Cluster Set:", formData.clusterSet);
+                            setFormData({ ...formData, clusterSet: e.target.value });
+                            setOption(e.target.value);
+                          }}
                           label="Cluster Set"
                         >
+                          <MenuItem value="">Select a Cluster</MenuItem>
                           <MenuItem value="Cluster Set 1">Cluster Set 1</MenuItem>
                           <MenuItem value="Cluster Set 2">Cluster Set 2</MenuItem>
                           <MenuItem value="Cluster Set 3">Cluster Set 3</MenuItem>
@@ -431,7 +484,7 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                           <FormHelperText>Please select a cluster set.</FormHelperText>
                         )}
                       </FormControl>
-                      
+
                       <TextField
                         label="Number of Nodes"
                         value={formData.node}
@@ -439,7 +492,7 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                         sx={commonInputSx}
                         fullWidth
                       />
-                      
+
                       <TextField
                         label="Region"
                         value={formData.Region}
@@ -447,7 +500,7 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                         sx={commonInputSx}
                         fullWidth
                       />
-                      
+
                       <Autocomplete
                         multiple
                         freeSolo
@@ -456,10 +509,10 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                         onChange={(_, newValue) => setLabels(newValue)}
                         renderTags={(value: string[], getTagProps) =>
                           value.map((option, index) => (
-                            <Chip 
-                              label={option} 
+                            <Chip
+                              label={option}
                               {...getTagProps({ index })}
-                              sx={{ 
+                              sx={{
                                 borderRadius: 1,
                                 '& .MuiChip-deleteIcon': {
                                   color: theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)',
@@ -469,10 +522,10 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                           ))
                         }
                         renderInput={(params) => (
-                          <TextField 
-                            {...params} 
-                            label="Labels" 
-                            placeholder="Add Labels" 
+                          <TextField
+                            {...params}
+                            label="Labels"
+                            placeholder="Add Labels"
                             sx={commonInputSx}
                             fullWidth
                           />
@@ -480,8 +533,8 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                       />
                     </Box>
 
-                    <Box sx={{ 
-                      mt: 'auto', 
+                    <Box sx={{
+                      mt: 'auto',
                       pt: 2,
                       borderTop: 1,
                       borderColor: 'divider',
@@ -494,17 +547,16 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                           disabled={!formData.clusterName || !formData.Region || !labels.length || !formData.node || loading}
                           sx={{
                             "&:disabled": {
-                                 cursor: "not-allowed",
-                                 pointerEvents: "all !important",
+                              cursor: "not-allowed",
+                              pointerEvents: "all !important",
                             },
-                      }}
-                          className={`${
-                            (!formData.clusterName || !formData.Region || !labels.length || !formData.node || loading)
-                              ? theme === "dark"
-                                ? "!bg-gray-700 !text-gray-400"
-                                : "!bg-gray-300 !text-gray-500"
-                              : ""
-                          }`}
+                          }}
+                          className={`${(!formData.clusterName || !formData.Region || !labels.length || !formData.node || loading)
+                            ? theme === "dark"
+                              ? "!bg-gray-700 !text-gray-400"
+                              : "!bg-gray-300 !text-gray-500"
+                            : ""
+                            }`}
                         >
                           {loading ? <CircularProgress size={24} /> : "Import"}
                         </Button>

@@ -140,6 +140,3 @@ backend/backend
 
 # history  file
 .history/
-
-#Temproary log testing for Import Clusters
-db.json

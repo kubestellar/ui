@@ -1,0 +1,25 @@
+{
+  "clusters": [
+    {
+      "id": "e747",
+      "clusterName": "cluster-name-test",
+      "clusterSet": "Cluster Set 2",
+      "node": "5",
+      "Region": "North America",
+      "value": [
+        "label"
+      ]
+    },
+    {
+      "id": "986f",
+      "clusterName": "Second-testing",
+      "clusterSet": "Cluster Set 2",
+      "node": "1",
+      "Region": "Eurasia",
+      "value": [
+        "Blahlabel",
+        "Blah blah"
+      ]
+    }
+  ]
+}
