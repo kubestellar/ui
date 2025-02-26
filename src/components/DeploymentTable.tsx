@@ -455,7 +455,7 @@ return (
       onClose={() => setDeleteModalOpen(false)}
       sx={{
         "& .MuiPaper-root": { // Styles the Dialog background
-          backgroundColor: theme === "dark" ? "#333" : "#fff",
+          backgroundColor: theme === "dark" ? "#1F2937" : "#fff",
           color: theme === "dark" ? "white" : "black",
         }
       }}
