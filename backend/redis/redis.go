@@ -41,8 +41,6 @@ func GetNamespaceCache(key string) (string, error) {
 	return val, nil
 }
 
-
-
 // SetFilePath sets the file path in Redis
 func SetFilePath(filepath string) error {
 	if err := rdb.Set(ctx, filePathKey, filepath, 0).Err(); err != nil {

@@ -184,7 +184,7 @@ func main() {
 		factory.Start(ch)
 		go c.Run(ch)
 	})
-	redis.InitRedis() 
+	redis.InitRedis()
 	// SERVICES
 	router.GET("/api/services/:namespace", resources.GetServiceList)
 	router.GET("/api/services/:namespace/:name", resources.GetServiceByServiceName)
