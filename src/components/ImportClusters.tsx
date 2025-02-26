@@ -1,9 +1,7 @@
-import { useState, useContext } from "react";
+import { useEffect, useState, useContext } from "react";
 import Editor from "@monaco-editor/react";
 import { ThemeContext } from "../context/ThemeContext";
 import {
-  Autocomplete,
-  Chip,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -20,7 +18,6 @@ import {
   FormControl,
   InputLabel,
   CircularProgress,
-  FormHelperText,
   Snackbar,
 } from "@mui/material";
 import axios from "axios";
@@ -48,17 +45,24 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [editorContent, setEditorContent] = useState<string>("");
   const [labels, setLabels] = useState<string[]>([]);
-  const [option, setOption] = useState("");
+  //const [option, setOption] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   const [formData, setFormData] = useState({
     clusterName: "",
-    clusterSet: "",
+    token: "",
     node: "",
     Region: "",
     value: ["1"],
   });
+
+  const [token, setToken] = useState<string>("");
+
+  useEffect(() => {
+    setToken("placeholder-token"); // Temporary fix so it's "used"
+  }, []);
+
 
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -79,13 +83,10 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
     // ✅ Define requestData at the start of the function
     const requestData = {
       clusterName: formData.clusterName,
-      clusterSet: formData.clusterSet, 
-      node: formData.node,
-      value: formData.value,
-      region: formData.Region
-  };
+      token: formData.token
+    };
 
-  console.log("🚀 Sending data to API:", requestData); // ✅ Debugging log
+    console.log("🚀 Sending data to API:", requestData); // ✅ Debugging log
 
     try {
       // Send cluster import request to backend
@@ -93,7 +94,7 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
       console.log("Cluster import initiated:", response.data);
 
       // Clear form fields after a successful import
-      setFormData({ clusterName: "", clusterSet: "", node: "", Region: "", value: []} );
+      setFormData({ clusterName: "", token: "", node: "", Region: "", value: [] });
       setLabels([]);
 
       // Show success message (if needed)
@@ -447,7 +448,7 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                 <Box sx={tabContentStyles}>
                   <Alert severity="info">
                     <AlertTitle>Info</AlertTitle>
-                    Fill out the form to import cluster manually.
+                    Enter cluster name to generate a token, to then run in the CLI.
                   </Alert>
 
                   <Box
@@ -467,74 +468,26 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                         sx={commonInputSx}
                         fullWidth
                       />
+                      {/* Token should be outside the form since it’s not user-inputted */}
+                      <div>
+                        <TextField
+                          label="Generated Token"
+                          variant="outlined"
+                          fullWidth
+                          multiline
+                          rows={4} // Adjust for more height
+                          value="example-token-12345"
+                          InputProps={{ readOnly: true }}
+                        />
+                        <Button onClick={() => navigator.clipboard.writeText(token)}>Copy Token</Button>
+                      </div>
 
-                      <FormControl sx={commonInputSx} required fullWidth>
-                        <InputLabel>Cluster Set</InputLabel>
-                        <Select
-                          value={option}
-                          onChange={(e) => {
-                            console.log("🚀 Selected Cluster Set:", formData.clusterSet);
-                            setFormData({ ...formData, clusterSet: e.target.value });
-                            setOption(e.target.value);
-                          }}
-                          label="Cluster Set"
-                        >
-                          <MenuItem value="">Select a Cluster</MenuItem>
-                          <MenuItem value="Cluster Set 1">Cluster Set 1</MenuItem>
-                          <MenuItem value="Cluster Set 2">Cluster Set 2</MenuItem>
-                          <MenuItem value="Cluster Set 3">Cluster Set 3</MenuItem>
-                        </Select>
-                        {!option && (
-                          <FormHelperText>Please select a cluster set.</FormHelperText>
-                        )}
-                      </FormControl>
+                      <p>Run this command in the CLI:</p>
+                      <code>
+                        clusteradm join --token {token} --cluster-name {formData.clusterName}
+                      </code>
 
-                      <TextField
-                        label="Number of Nodes"
-                        value={formData.node}
-                        onChange={(e) => setFormData({ ...formData, node: e.target.value })}
-                        sx={commonInputSx}
-                        fullWidth
-                      />
 
-                      <TextField
-                        label="Region"
-                        value={formData.Region}
-                        onChange={(e) => setFormData({ ...formData, Region: e.target.value })}
-                        sx={commonInputSx}
-                        fullWidth
-                      />
-
-                      <Autocomplete
-                        multiple
-                        freeSolo
-                        options={[]}
-                        value={labels}
-                        onChange={(_, newValue) => setLabels(newValue)}
-                        renderTags={(value: string[], getTagProps) =>
-                          value.map((option, index) => (
-                            <Chip
-                              label={option}
-                              {...getTagProps({ index })}
-                              sx={{
-                                borderRadius: 1,
-                                '& .MuiChip-deleteIcon': {
-                                  color: theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)',
-                                }
-                              }}
-                            />
-                          ))
-                        }
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label="Labels"
-                            placeholder="Add Labels"
-                            sx={commonInputSx}
-                            fullWidth
-                          />
-                        )}
-                      />
                     </Box>
 
                     <Box sx={{
