@@ -83,7 +83,6 @@ func FetchYamlFile(ctx context.Context, github_url string, path string) (*Deploy
 	if res.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(res.Body)
 		return nil, fmt.Errorf("API request failed with status %d: %s", res.StatusCode, string(body))
-
 	}
 	defer res.Body.Close()
 	var files []GitHubFile
@@ -100,7 +99,6 @@ func FetchYamlFile(ctx context.Context, github_url string, path string) (*Deploy
 	for _, file := range files {
 		if (strings.HasSuffix(file.Name, ".yml") || strings.HasSuffix(file.Name, ".yaml")) &&
 			strings.Contains(file.Name, "deployment") {
-
 			// Download the YAML file content
 			content, err := GetYamlFile(ctx, file.DownloadURL)
 			if err != nil {
@@ -125,11 +123,9 @@ func FetchYamlFile(ctx context.Context, github_url string, path string) (*Deploy
 	}
 
 	return nil, fmt.Errorf("no valid deployment workloads found")
-
 }
 
 func GetYamlFile(ctx context.Context, downloadUrl string) (string, error) {
-
 	req, err := http.NewRequestWithContext(ctx, "GET", downloadUrl, nil)
 	if err != nil {
 		return "", fmt.Errorf("error creating request: %v", err)
@@ -148,5 +144,4 @@ func GetYamlFile(ctx context.Context, downloadUrl string) (string, error) {
 		return "", fmt.Errorf("error reading response: %v", err)
 	}
 	return string(content), nil
-
 }

@@ -1,6 +1,5 @@
 import { RouteObject } from "react-router-dom";
 import { Layout } from "../components/Layout";
-import KubeconfigOnboarding from "../pages/KubeconfigOnboarding"; // Ensure that the file exists at this path
 import WDS from "../pages/WDS";
 import BP from "../pages/BP";
 import NotFoundPage from "../pages/NotFoundPage";
@@ -37,7 +36,6 @@ export const routesConfig: RouteObject[] = [
           </Suspense>
         ) 
       },
-      { path: "kubeconfigOnboarding", element: <KubeconfigOnboarding /> },
       { path: "wds", element: <WDS /> },
       { path: "bp", element: <BP /> },
       { path: "namespaces" , element: <NameSpace />},

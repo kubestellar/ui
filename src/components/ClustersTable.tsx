@@ -76,8 +76,8 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
       });
     }
 
-    // Apply status filter
-    if (filter) {
+    // Apply status filter - only if filter is not "All"
+    if (filter && filter !== "All") {
       result = result.filter((cluster) => {
         const currentStatus = cluster.status || 'Active✓';
         return currentStatus.toLowerCase() === filter.toLowerCase();
@@ -186,7 +186,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
               },
             }}
           >
-            <MenuItem className={theme === "dark" ? "!bg-slate-800 !text-white hover:!bg-slate-900" : ""} value="">All</MenuItem>
+            <MenuItem className={theme === "dark" ? "!bg-slate-800 !text-white hover:!bg-slate-900" : ""} value="All">All</MenuItem>
             <MenuItem className={theme === "dark" ? "!bg-slate-800 !text-white hover:!bg-slate-900" : ""} value="Active✓">Active</MenuItem>
             <MenuItem className={theme === "dark" ? "!bg-slate-800 !text-white hover:!bg-slate-900" : ""} value="Inactive">Inactive</MenuItem>
             <MenuItem className={theme === "dark" ? "!bg-slate-800 !text-white hover:!bg-slate-900" : ""} value="Pending">Pending</MenuItem>

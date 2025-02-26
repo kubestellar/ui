@@ -7,10 +7,6 @@ import { Delete, Edit } from "@mui/icons-material";
 import axios from "axios";
 import Editor from "@monaco-editor/react";
 
-const API_BASE_URL = "http://localhost:4000/api/namespaces";
-const CLUSTER_INFO_URL = "http://localhost:4000/api/clusters";
-
-
 interface Namespace {
     name: string;
 }
@@ -40,7 +36,7 @@ const NameSpace = () => {
     const fetchNamespaces = async () => {
         setLoading(true);
         try {
-            const response = await axios.get(API_BASE_URL);
+            const response = await axios.get(`${process.env.VITE_BASE_URL}/api/namespaces`);
             setNamespaces(response.data.namespaces || []);
         } catch (error) {
             console.error("Error fetching namespaces:", error);
@@ -51,7 +47,7 @@ const NameSpace = () => {
     };
     const fetchClusterInfo = async () => {
         try {
-            const response = await axios.get(CLUSTER_INFO_URL);
+            const response = await axios.get(`${process.env.VITE_BASE_URL}/api/clusters`);
             console.log("Cluster Info Response:", response.data.clusters[0]); // Debugging line
             setClusterName(response.data.clusters[0] || "Unknown");
             setCurrentContext(response.data.currentContext || "Unknown");
@@ -64,7 +60,7 @@ const NameSpace = () => {
 
     const handleCreate = async () => {
         try {
-            await axios.post(`${API_BASE_URL}/create`, { name });
+            await axios.post(`${process.env.VITE_BASE_URL}/api/namespaces/create`, { name });
             showSnackbar("Namespace created successfully", "success");
             fetchNamespaces();
             setName("");
@@ -78,13 +74,13 @@ const NameSpace = () => {
     const handleDelete = async (nsName: string) => {
         setDeletingNamespaces((prev) => [...prev, nsName]); // Mark as deleting
         try {
-            await axios.delete(`${API_BASE_URL}/delete/${nsName}`);
+            await axios.delete(`${process.env.VITE_BASE_URL}/api/namespaces/delete/${nsName}`);
             
             // Wait until the namespace is fully deleted
             let isDeleted = false;
             while (!isDeleted) {
                 await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait 2 seconds
-                const response = await axios.get(API_BASE_URL);
+                const response = await axios.get(`${process.env.VITE_BASE_URL}/api/namespaces`);
                 if (!response.data.namespaces.some((ns: Namespace) => ns.name === nsName)) {
                     isDeleted = true;
                 }
@@ -109,7 +105,7 @@ const NameSpace = () => {
     const handleSaveEdit = async () => {
         try {
             const parsedData = JSON.parse(editorContent);
-            await axios.put(`${API_BASE_URL}/update/${selectedNamespace}`, parsedData);
+            await axios.put(`${process.env.VITE_BASE_URL}/api/namespaces/update/${selectedNamespace}`, parsedData);
             showSnackbar("Namespace labels updated successfully", "success");
             fetchNamespaces();
             setEditDialogOpen(false);

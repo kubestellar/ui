@@ -1,16 +1,16 @@
 package resources
 
 import (
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/katamyra/kubestellarUI/wds"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 type Label struct {
@@ -140,7 +140,6 @@ func GetServiceByServiceName(ctx *gin.Context) {
 	ctx.JSON(http.StatusAccepted, gin.H{
 		"service": serviceDetail,
 	})
-
 }
 
 /*

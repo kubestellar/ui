@@ -27,7 +27,6 @@ type WorkloadInfo struct {
 }
 
 func GetDeploymentByName(c *gin.Context) {
-
 	name := c.Param("name")
 	namespace := c.Query("namespace")
 	if namespace == "" {

@@ -1,14 +1,18 @@
 import {
   HiOutlineHome,
   HiOutlineUser,
-  HiOutlineClipboardDocumentList,
-  HiOutlinePresentationChartBar,
-  HiOutlineServer,
+  HiOutlineCube,
+  HiOutlineSquares2X2,
+  HiOutlineCommandLine,
+  HiOutlineCog8Tooth,
+  HiOutlineShieldCheck,
 } from 'react-icons/hi2';
 
 export const menu = [
   {
-    catalog: 'Dashboard',
+    catalog: 'Main',
+    centered: true,
+    marginTop: '1rem',
     listItems: [
       {
         isLink: true,
@@ -16,63 +20,57 @@ export const menu = [
         icon: HiOutlineHome,
         label: 'Home',
       },
+      {
+        isLink: true,
+        url: '/profile',
+        icon: HiOutlineUser,
+        label: 'Profile',
+        marginBottom: '2rem',
+      },
     ],
   },
   {
-    catalog: 'Clusters',
+    catalog: 'Management',
+    centered: true,
+    marginTop: '1rem',
     listItems: [
       {
         isLink: true,
         url: '/its',
-        icon: HiOutlineServer,
-        label: 'Manage',
+        icon: HiOutlineCube,
+        label: 'Clusters',
       },
-    ],
-  },
-
-  {
-    catalog: 'Workloads',
-    listItems: [
       {
         isLink: true,
         url: '/wds',
-        icon: HiOutlinePresentationChartBar,
-        label: 'deployments',
+        icon: HiOutlineSquares2X2,
+        label: 'Deployments',
       },
       {
         isLink: true,
         url: '/workloads/manage',
-        icon: HiOutlineClipboardDocumentList,
-        label: 'Manage',
+        icon: HiOutlineCommandLine,
+        label: 'Workloads',
+        marginBottom: '2rem',
       },
     ],
   },
   {
     catalog: 'Binding Policies',
+    centered: true,
+    marginTop: '1rem',
     listItems: [
       {
         isLink: true,
         url: '/bp',
-        icon: HiOutlinePresentationChartBar,
+        icon: HiOutlineShieldCheck,
         label: 'Overview',
       },
       {
         isLink: true,
         url: '/bp/manage',
-        icon: HiOutlineClipboardDocumentList,
-        label: 'Policies',
-      },
-    ],
-  },
-
-  {
-    catalog: 'Profile',
-    listItems: [
-      {
-        isLink: true,
-        url: '/profile',
-        icon: HiOutlineUser,
-        label: 'User',
+        icon: HiOutlineCog8Tooth,
+        label: 'Manage Policies',
       },
     ],
   },
