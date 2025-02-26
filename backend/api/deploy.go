@@ -31,8 +31,6 @@ type GitHubWebhookPayload struct {
 	} `json:"commits"`
 }
 
-
-
 // DeployHandler handles deployment requests
 func DeployHandler(c *gin.Context) {
 	var request DeployRequest
@@ -48,7 +46,7 @@ func DeployHandler(c *gin.Context) {
 	}
 
 	// Store repo & folder path in Redis for future auto-deployments
-	redis.SetFilePath( request.FolderPath)
+	redis.SetFilePath(request.FolderPath)
 	redis.SetRepoURL(request.RepoURL)
 
 	tempDir := fmt.Sprintf("/tmp/%d", time.Now().Unix())
@@ -102,7 +100,6 @@ func GitHubWebhookHandler(c *gin.Context) {
 
 	repoUrl := request.Repository.CloneURL
 
-
 	tempDir := fmt.Sprintf("/tmp/%d", time.Now().Unix())
 	cmd := exec.Command("git", "clone", repoUrl, tempDir)
 	if err := cmd.Run(); err != nil {
@@ -129,7 +126,7 @@ func GitHubWebhookHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, deploymentTree)
 
-    // Todo
+	// Todo
 	// // Check if any modified file is inside the stored deployment folder
 	// shouldDeploy := false
 	// for _, commit := range request.Commits {
