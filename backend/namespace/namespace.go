@@ -214,7 +214,6 @@ func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	redis.InitRedis() // Initialize Redis
 
 	for {
 		// Try to fetch from Redis cache first
