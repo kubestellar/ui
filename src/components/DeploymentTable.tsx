@@ -27,8 +27,7 @@ import Editor from "@monaco-editor/react";
 import axios from "axios";
 import LogModal from "./LogModal";
 import yaml from "js-yaml";
-import { ThemeContext } from "../context/ThemeContext"; // Import ThemeContext
-import { useContext } from "react";
+import useTheme from "../stores/themeStore";
 
 
 interface Workload {
@@ -78,7 +77,7 @@ const DeploymentTable = ({ title, workloads, setSelectedDeployment }: Props) => 
   const [desiredReplicas, setDesiredReplicas] = useState<number | "">("");
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [error, setError] = useState<string>("");
-  const { theme } = useContext(ThemeContext);
+  const theme = useTheme((state) => state.theme)
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "error" | "warning" | "info" }>({
     open: false,
     message: "",

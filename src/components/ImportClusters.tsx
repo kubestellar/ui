@@ -1,6 +1,5 @@
-import { useState, useContext } from "react";
+import { useState } from "react";
 import Editor from "@monaco-editor/react";
-import { ThemeContext } from "../context/ThemeContext";
 import {
   Autocomplete,
   Chip,
@@ -24,6 +23,7 @@ import {
   Snackbar,
 } from "@mui/material";
 import axios from "axios";
+import useTheme from "../stores/themeStore";
 
 interface Props {
   activeOption: string | null;
@@ -40,7 +40,7 @@ const commonInputSx = {
 };
 
 const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
-  const { theme } = useContext(ThemeContext);
+  const theme = useTheme((state) => state.theme)
   const textColor = theme === "dark" ? "white" : "black";
   const bgColor = theme === "dark" ? "#1F2937" : "background.paper";
 

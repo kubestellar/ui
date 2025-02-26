@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
 import { Sun, Moon } from "lucide-react";
 import { api } from "../lib/api";
-import useTheme from "../hooks/useTheme";
+import useTheme from "../stores/themeStore";
 
 const Navbar = () => {
-  const { toggleTheme, theme } = useTheme();
+  const theme = useTheme((state) => state.theme);
+  const toggleTheme = useTheme((state) => state.toggleTheme);
 
   const generateLog = async () => {
     try {

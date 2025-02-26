@@ -1,6 +1,5 @@
-import { useContext } from "react";
-import { ThemeContext } from "../context/ThemeContext"; // Import ThemeContext
 import { PieChart, Pie, Cell, Tooltip } from "recharts";
+import useTheme from "../stores/themeStore";
 
 interface Props {
   workload: { kind: string; count: number };
@@ -8,7 +7,10 @@ interface Props {
 }
 
 const PieChartDisplay = ({ workload, color }: Props) => {
-  const { theme = "light" } = useContext(ThemeContext); // Get theme
+  const theme = useTheme((state) => state.theme)
+  const toggleTheme = useTheme((state) => state.toggleTheme)
+
+  if(theme === "dark") toggleTheme()
 
   return (
     <div className="flex flex-col items-center">

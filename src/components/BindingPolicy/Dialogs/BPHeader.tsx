@@ -1,4 +1,4 @@
-import React, { useState,useContext } from "react";
+import React, { useState } from "react";
 import {
   Button,
   TextField,
@@ -11,7 +11,7 @@ import {
 import { Search, Filter, Plus,  X } from "lucide-react";
 import CreateBindingPolicyDialog from "../../CreateBindingPolicyDialog";
 import { BindingPolicyInfo } from "../../../types/bindingPolicy";
-import { ThemeContext } from "../../../context/ThemeContext";
+import useTheme from "../../../stores/themeStore";
 
 interface BPHeaderProps {
   searchQuery: string;
@@ -48,7 +48,7 @@ const BPHeader: React.FC<BPHeaderProps> = ({
     setActiveFilters({ ...activeFilters, status });
     handleFilterClose();
   };
-  const { theme } = useContext(ThemeContext); 
+  const theme = useTheme((state) => state.theme) 
 
   return (
     <Box

@@ -5,8 +5,8 @@ import { RxEnterFullScreen, RxExitFullScreen } from "react-icons/rx";
 import ChangeThemes from "./ChangeThemes";
 import { menu } from "./menu/data";
 import MenuItem from "./menu/MenuItem";
-import { useCluster } from "../context/ClusterContext";
 import { api } from "../lib/api";
+import useClusterStore from "../stores/clusterStore";
 
 interface Context {
   name: string;
@@ -18,7 +18,8 @@ const Header = () => {
   const element = document.getElementById("root");
   const [contexts, setContexts] = React.useState<Context[]>([]);
   const [currentContext, setCurrentContext] = React.useState("");
-  const { setSelectedCluster, setHasAvailableClusters } = useCluster();
+  const setSelectedCluster = useClusterStore((state) => state.setSelectedCluster)
+  const setHasAvailableClusters = useClusterStore((state) => state.setHasAvailableClusters)
 
   const [isDrawerOpen, setDrawerOpen] = React.useState(false);
   const toggleDrawer = () => setDrawerOpen(!isDrawerOpen);
