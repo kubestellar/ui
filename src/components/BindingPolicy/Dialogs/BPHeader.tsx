@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+
 import {
   Button,
   TextField,
@@ -8,7 +9,7 @@ import {
   MenuItem,
   Chip,
 } from "@mui/material";
-import { Search, Filter, Plus,  X } from "lucide-react";
+import { Search, Filter, Plus, X } from "lucide-react";
 import CreateBindingPolicyDialog from "../../CreateBindingPolicyDialog";
 import { BindingPolicyInfo } from "../../../types/bindingPolicy";
 import useTheme from "../../../stores/themeStore";
@@ -21,8 +22,10 @@ interface BPHeaderProps {
   onCreatePolicy: (
     policyData: Omit<BindingPolicyInfo, "creationDate" | "clusters" | "status">
   ) => void;
-  activeFilters: { status?: "Active" | "Inactive" };
-  setActiveFilters: (filters: { status?: "Active" | "Inactive" }) => void;
+  activeFilters: { status?: "Active" | "Inactive" | "Pending" };
+  setActiveFilters: (filters: {
+    status?: "Active" | "Inactive" | "Pending";
+  }) => void;
 }
 
 const BPHeader: React.FC<BPHeaderProps> = ({
@@ -44,8 +47,11 @@ const BPHeader: React.FC<BPHeaderProps> = ({
     setAnchorEl(null);
   };
 
-  const handleStatusFilter = (status: "Active" | "Inactive" | undefined) => {
-    setActiveFilters({ ...activeFilters, status });
+  const handleStatusFilter = (status: string | undefined) => {
+    setActiveFilters({
+      ...activeFilters,
+      status: status as "Active" | "Inactive" | "Pending" | undefined,
+    });
     handleFilterClose();
   };
   const theme = useTheme((state) => state.theme) 
@@ -93,17 +99,16 @@ const BPHeader: React.FC<BPHeaderProps> = ({
           color={Object.keys(activeFilters).length > 0 ? "primary" : "inherit"}
           sx={{
             ...(theme === "dark" && {
-              borderColor: "white", // Ensures the border is white
-              color: "white", // Ensures the text is white
+              borderColor: "white", 
+              color: "white", 
               "&:hover": {
-                borderColor: "white", // Ensures border color remains white on hover
+                borderColor: "white", 
               },
             }),
           }}
         >
           Filter
         </Button>
-
 
         {activeFilters.status && (
           <Chip
@@ -137,6 +142,18 @@ const BPHeader: React.FC<BPHeaderProps> = ({
             onClick={() => handleStatusFilter("Active")}
           >
             Status: Active
+          </MenuItem>
+          <MenuItem
+            sx={{
+              ...(theme === "dark" && {
+                backgroundColor: "#1e293b",
+                color: "white",
+                "&:hover": { backgroundColor: "#0f172a" },
+              }),
+            }}
+            onClick={() => handleStatusFilter("Pending")}
+          >
+            Status: Pending
           </MenuItem>
           <MenuItem
             sx={{
