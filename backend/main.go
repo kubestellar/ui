@@ -21,7 +21,6 @@ import (
 )
 
 func main() {
-
 	initLogger()
 	router := gin.Default()
 
