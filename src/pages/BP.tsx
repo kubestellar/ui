@@ -1,23 +1,44 @@
-import { useEffect, useState, useContext } from "react";
-import { Paper, Box } from "@mui/material";
+import { useEffect, useState, useContext, useCallback } from "react";
+import { Paper, Box, Snackbar, Alert } from "@mui/material";
 import BPHeader from "../components/BindingPolicy/Dialogs/BPHeader";
 import BPTable from "../components/BindingPolicy/BPTable";
 import BPPagination from "../components/BindingPolicy/BPPagination";
 import PreviewDialog from "../components/BindingPolicy/PreviewDialog";
 import DeleteDialog from "../components/BindingPolicy/Dialogs/DeleteDialog";
 import EditBindingPolicyDialog from "../components/BindingPolicy/Dialogs/EditBindingPolicyDialog";
-import { ThemeContext } from "../context/ThemeContext"; // Import ThemeContext
+import { ThemeContext } from "../context/ThemeContext";
 import {
   BindingPolicyInfo,
   ManagedCluster,
   Workload,
 } from "../types/bindingPolicy";
+import { api } from "../lib/api";
+
+// Define type for the raw binding policy from API
+interface RawBindingPolicy {
+  metadata: {
+    name: string;
+    creationTimestamp?: string;
+    managedFields?: Array<{
+      time?: string;
+    }>;
+    annotations?: {
+      yaml?: string;
+    };
+  };
+  spec: {
+    clusterSelectors?: Array<unknown>;
+    downsync?: Array<{
+      apiGroup?: string;
+    }>;
+  };
+}
 
 const BP = () => {
   const [bindingPolicies, setBindingPolicies] = useState<BindingPolicyInfo[]>(
     []
   );
-  const { theme } = useContext(ThemeContext); // Get theme from context
+  const { theme } = useContext(ThemeContext);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedLabels] = useState<Record<string, string>>({});
@@ -30,130 +51,123 @@ const BP = () => {
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const [selectedPolicy, setSelectedPolicy] =
     useState<BindingPolicyInfo | null>(null);
+
   const [activeFilters, setActiveFilters] = useState<{
-    status?: "Active" | "Inactive";
+    status?: "Active" | "Inactive" | "Pending";
   }>({});
+
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [successMessage, setSuccessMessage] = useState<string>("");
+
+  // Extract the fetch binding policies 
+  const fetchBindingPolicies = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await api.get("/api/bp");
+      const data = response.data;
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      // Fetch status for each binding policy
+      const policiesWithStatus = await Promise.all(
+        data.bindingPolicies.map(async (policy: RawBindingPolicy) => {
+          try {
+            const statusResponse = await api.get(
+              `/api/bp/status?name=${policy.metadata.name}`
+            );
+
+            // Use the data directly from the status response
+            const statusData = statusResponse.data;
+
+            return {
+              name: policy.metadata.name,
+              // Use clusters from the status API
+              clusters: statusData.clusters?.length || 0,
+              // Use the actual clusters from the API
+              clusterList: statusData.clusters || [],
+              // Use actual workloads from the API
+              workloadList: statusData.workloads || [],
+              // Create a workload display string
+              workload:
+                statusData.workloads?.length > 0
+                  ? statusData.workloads[0]
+                  : "No workload specified",
+              creationDate: policy.metadata.creationTimestamp
+                ? new Date(policy.metadata.creationTimestamp).toLocaleString()
+                : "Unknown",
+              lastModifiedDate: policy.metadata.managedFields?.[0]?.time
+                ? new Date(
+                    policy.metadata.managedFields[0].time
+                  ).toLocaleString()
+                : undefined,
+              // Map status from API to component status with proper capitalization
+              status:
+                statusData.status === "active"
+                  ? "Active"
+                  : statusData.status === "pending"
+                  ? "Pending"
+                  : "Inactive",
+              // Store the binding mode from the API
+              bindingMode: statusData.bindingMode || "N/A",
+              // Store the namespace from the API
+              namespace: statusData.namespace || "default",
+              // Store any conditions returned by the API
+              conditions: statusData.conditions || null,
+              yaml:
+                policy.metadata.annotations?.yaml ||
+                JSON.stringify(policy, null, 2),
+            };
+          } catch (error) {
+            console.error(
+              `Error fetching status for ${policy.metadata.name}:`,
+              error
+            );
+            return {
+              name: policy.metadata.name,
+              clusters: policy.spec.clusterSelectors?.length || 0,
+              clusterList: [],
+              workloadList: [],
+              workload:
+                policy.spec.downsync?.[0]?.apiGroup || "No workload specified",
+              creationDate: policy.metadata.creationTimestamp
+                ? new Date(policy.metadata.creationTimestamp).toLocaleString()
+                : "Unknown",
+              lastModifiedDate: policy.metadata.managedFields?.[0]?.time
+                ? new Date(
+                    policy.metadata.managedFields[0].time
+                  ).toLocaleString()
+                : undefined,
+              status: "Inactive", 
+              bindingMode: "N/A",
+              namespace: "default",
+              conditions: null,
+              yaml:
+                policy.metadata.annotations?.yaml ||
+                JSON.stringify(policy, null, 2),
+            };
+          }
+        })
+      );
+
+      setBindingPolicies(policiesWithStatus);
+    } catch (error) {
+      console.error("Error fetching binding policies:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    // Simulate loading initial data
-    setTimeout(() => {
-      setBindingPolicies([
-        {
-          name: "winions-central",
-          clusters: 2,
-          workload: "workload0",
-          creationDate: "1/24/2025 9:12:18 AM",
-          lastModifiedDate: "1/25/2025 10:15:00 AM",
-          status: "Active",
-          yaml: `apiVersion: control.kubestellar.io/v1alpha1
-kind: BindingPolicy
-metadata:
-  name: winions-central
-  namespace: kubestellar
-spec:
-  subject:
-    kind: Application
-    apiGroup: app.kubestellar.io
-    name: workload0
-    namespace: default
-  placement:
-    clusterSelector:
-      matchLabels:
-        environment: production
-        region: us-east
-    staticPlacement:
-      clusterNames:
-        - cluster-a
-        - cluster-b
-  bindingMode: Propagate`,
-        },
-        {
-          name: "Map This to That",
-          clusters: 1,
-          workload: "workload1",
-          creationDate: "1/20/2025 7:42:25 PM",
-          lastModifiedDate: "1/21/2025 3:30:00 PM",
-          status: "Inactive",
-          yaml: `apiVersion: control.kubestellar.io/v1alpha1
-kind: BindingPolicy
-metadata:
-  name: Map This to That
-  namespace: kubestellar
-spec:
-  subject:
-    kind: Application
-    apiGroup: app.kubestellar.io
-    name: workload1
-    namespace: default
-  placement:
-    clusterSelector:
-      matchLabels:
-        environment: staging
-        region: us-west
-    staticPlacement:
-      clusterNames:
-        - cluster-c
-  bindingMode: Propagate`,
-        },
-        {
-          name: "my nginx app on dev",
-          clusters: 3,
-          workload: "workload2",
-          creationDate: "1/15/2025 9:12:18 PM",
-          lastModifiedDate: "1/16/2025 2:45:00 PM",
-          status: "Inactive",
-          yaml: `apiVersion: control.kubestellar.io/v1alpha1
-kind: BindingPolicy
-metadata:
-  name: my nginx app on dev
-  namespace: kubestellar
-spec:
-  subject:
-    kind: Application
-    apiGroup: app.kubestellar.io
-    name: workload2
-    namespace: default
-  placement:
-    clusterSelector:
-      matchLabels:
-        environment: development
-  bindingMode: Propagate`,
-        },
-      ]);
+    setAvailableClusters([]);
+    setAvailableWorkloads([]);
 
-      // Simulate loading clusters and workloads
-      setAvailableClusters([
-        {
-          name: "cluster-1",
-          labels: { region: "aleolia", environment: "prod" },
-          status: "Ready",
-        },
-        {
-          name: "cluster-2",
-          labels: { region: "us-west-2", environment: "dev" },
-          status: "Ready",
-        },
-      ]);
-
-      setAvailableWorkloads([
-        {
-          name: "workload0",
-          namespace: "winions-central",
-          labels: { app: "winions", type: "web" },
-        },
-        {
-          name: "workload1",
-          namespace: "my-this-and-that",
-          labels: { app: "mod", type: "api" },
-        },
-      ]);
-
-      setLoading(false);
-    }, 1000);
-  }, []);
+    // Initial data fetch
+    fetchBindingPolicies();
+  }, [fetchBindingPolicies]);
 
   const getMatches = () => {
     const matchedClusters = availableClusters.filter((cluster) => {
@@ -171,34 +185,55 @@ spec:
     return { matchedClusters, matchedWorkloads };
   };
 
-  const handleDeletePolicy = (policy: BindingPolicyInfo) => {
+  const handleDeletePolicy = async (policy: BindingPolicyInfo) => {
     setSelectedPolicy(policy);
     setDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (selectedPolicy) {
-      setBindingPolicies((policies) =>
-        policies.filter((p) => p.name !== selectedPolicy.name)
-      );
-      setDeleteDialogOpen(false);
-      setSelectedPolicy(null);
+      try {
+        // Call the API to delete the policy
+        await api.get(
+          `/api/bp/delete?name=${selectedPolicy.name}&namespace=${selectedPolicy.namespace}`
+        );
+
+        // Update UI state after successful deletion
+        await fetchBindingPolicies(); // Refresh the list after deletion
+        setSuccessMessage(
+          `Binding Policy "${selectedPolicy.name}" deleted successfully`
+        );
+      } catch (error) {
+        console.error("Error deleting binding policy:", error);
+        setSuccessMessage(
+          `Error deleting binding policy "${selectedPolicy.name}"`
+        );
+      } finally {
+        setDeleteDialogOpen(false);
+        setSelectedPolicy(null);
+      }
     }
   };
 
-  const handleCreatePolicySubmit = (
+  const handleCreatePolicySubmit = async (
     policyData: Omit<BindingPolicyInfo, "creationDate" | "clusters" | "status">
   ) => {
-    setBindingPolicies((prev) => [
-      ...prev,
-      {
-        ...policyData,
-        clusters: 0,
-        creationDate: new Date().toLocaleString(),
-        status: "Active" as const,
-      },
-    ]);
-    setCreateDialogOpen(false);
+    try {
+      setCreateDialogOpen(false);
+
+      // Set a success message
+      setSuccessMessage(
+        `Binding Policy "${policyData.name}" created successfully`
+      );
+
+      // Refresh the binding policies list
+      await fetchBindingPolicies();
+    } catch (error) {
+      console.error("Error refreshing after policy creation:", error);
+      setSuccessMessage(
+        `Binding Policy "${policyData.name}" created, but there was an error refreshing the list`
+      );
+    }
   };
 
   const handleEditPolicy = (policy: BindingPolicyInfo) => {
@@ -206,14 +241,24 @@ spec:
     setEditDialogOpen(true);
   };
 
-  const handleSaveEdit = (updatedPolicy: Partial<BindingPolicyInfo>) => {
+  const handleSaveEdit = async (updatedPolicy: Partial<BindingPolicyInfo>) => {
+    try {
     setBindingPolicies((policies) =>
-      policies.map((p) =>
-        p.name === updatedPolicy.name ? { ...p, ...updatedPolicy } : p
-      )
-    );
-    setEditDialogOpen(false);
-    setSelectedPolicy(null);
+        policies.map((p) =>
+          p.name === updatedPolicy.name ? { ...p, ...updatedPolicy } : p
+        )
+      );
+      setEditDialogOpen(false);
+      setSelectedPolicy(null);
+      setSuccessMessage(
+        `Binding Policy "${updatedPolicy.name}" updated successfully`
+      );
+    } catch (error) {
+      console.error("Error updating binding policy:", error);
+      setSuccessMessage(
+        `Error updating binding policy "${updatedPolicy.name}"`
+      );
+    }
   };
 
   const handlePreviewPolicy = (policy: BindingPolicyInfo) => {
@@ -221,19 +266,21 @@ spec:
     setPreviewDialogOpen(true);
   };
 
-    const getFilteredPolicies = () => {
+  const getFilteredPolicies = () => {
     return bindingPolicies.filter((policy) => {
       const searchLower = searchQuery.toLowerCase();
-      const matchesSearch = policy.name.toLowerCase().includes(searchLower) ||
+      const matchesSearch =
+        policy.name.toLowerCase().includes(searchLower) ||
         policy.workload.toLowerCase().includes(searchLower) ||
         policy.status.toLowerCase().includes(searchLower);
-      
-      const matchesStatus = !activeFilters.status || 
-        policy.status === activeFilters.status;
-      
+
+      const matchesStatus =
+        !activeFilters.status || policy.status === activeFilters.status;
+
       return matchesSearch && matchesStatus;
     });
   };
+
   const filteredPolicies = getFilteredPolicies();
   const paginatedPolicies = filteredPolicies.slice(
     (currentPage - 1) * itemsPerPage,
@@ -251,63 +298,80 @@ spec:
   const { matchedClusters, matchedWorkloads } = getMatches();
 
   return (
-    <Paper
-      sx={{
-        maxWidth: "100%",
-        margin: "auto",
-        p: 3,
-        backgroundColor: theme === "dark" ? "#1F2937" : "#fff",
-      }}
-    >
-      <BPHeader
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        createDialogOpen={createDialogOpen}
-        setCreateDialogOpen={setCreateDialogOpen}
-        onCreatePolicy={handleCreatePolicySubmit}
-        activeFilters={activeFilters}
-        setActiveFilters={setActiveFilters}
-      />
-
-      <BPTable
-       policies={paginatedPolicies}
-        onPreviewMatches={(policy) => handlePreviewPolicy(policy)}
-        onDeletePolicy={handleDeletePolicy}
-        onEditPolicy={handleEditPolicy}
-        activeFilters={activeFilters}
-      />
-
-      <BPPagination
-        filteredCount={filteredPolicies.length}
-        totalCount={bindingPolicies.length}
-        itemsPerPage={itemsPerPage}
-        currentPage={currentPage}
-        onPageChange={setCurrentPage}
-      />
-      <PreviewDialog
-        open={previewDialogOpen}
-        onClose={() => setPreviewDialogOpen(false)}
-        matchedClusters={matchedClusters}
-        matchedWorkloads={matchedWorkloads}
-        policy={selectedPolicy || undefined}
-      />
-
-      {selectedPolicy && (
-        <EditBindingPolicyDialog
-          open={editDialogOpen}
-          onClose={() => setEditDialogOpen(false)}
-          onSave={handleSaveEdit}
-          policy={selectedPolicy}
+    <>
+      <Paper
+        sx={{
+          maxWidth: "100%",
+          margin: "auto",
+          p: 3,
+          backgroundColor: theme === "dark" ? "#1F2937" : "#fff",
+        }}
+      >
+        <BPHeader
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          createDialogOpen={createDialogOpen}
+          setCreateDialogOpen={setCreateDialogOpen}
+          onCreatePolicy={handleCreatePolicySubmit}
+          activeFilters={activeFilters}
+          setActiveFilters={setActiveFilters}
         />
-      )}
 
-      <DeleteDialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
-        onConfirm={confirmDelete}
-        policyName={selectedPolicy?.name}
-      />
-    </Paper>
+        <BPTable
+          policies={paginatedPolicies}
+          onPreviewMatches={(policy) => handlePreviewPolicy(policy)}
+          onDeletePolicy={handleDeletePolicy}
+          onEditPolicy={handleEditPolicy}
+          activeFilters={activeFilters}
+        />
+
+        <BPPagination
+          filteredCount={filteredPolicies.length}
+          totalCount={bindingPolicies.length}
+          itemsPerPage={itemsPerPage}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+        />
+        <PreviewDialog
+          open={previewDialogOpen}
+          onClose={() => setPreviewDialogOpen(false)}
+          matchedClusters={matchedClusters}
+          matchedWorkloads={matchedWorkloads}
+          policy={selectedPolicy || undefined}
+        />
+
+        {selectedPolicy && (
+          <EditBindingPolicyDialog
+            open={editDialogOpen}
+            onClose={() => setEditDialogOpen(false)}
+            onSave={handleSaveEdit}
+            policy={selectedPolicy}
+          />
+        )}
+
+        <DeleteDialog
+          open={deleteDialogOpen}
+          onClose={() => setDeleteDialogOpen(false)}
+          onConfirm={confirmDelete}
+          policyName={selectedPolicy?.name}
+        />
+      </Paper>
+
+      <Snackbar
+        open={!!successMessage}
+        autoHideDuration={6000}
+        onClose={() => setSuccessMessage("")}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSuccessMessage("")}
+          severity="success"
+          sx={{ width: "100%" }}
+        >
+          {successMessage}
+        </Alert>
+      </Snackbar>
+    </>
   );
 };
 
