@@ -13,6 +13,14 @@ import (
 	"os"
 	"strings"
 	"time"
+	"github.com/gin-gonic/gin"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/katamyra/kubestellarUI/api"
+	"github.com/katamyra/kubestellarUI/redis"
+	"github.com/katamyra/kubestellarUI/wds/bp"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -90,6 +98,14 @@ func main() {
 		// Send the Log String
 		c.String(http.StatusOK, logBuilder.String())
 	})
+
+	redis.InitRedis()
+
+
+	router.POST("api/deploy", api.DeployHandler)
+	router.POST("api/webhook", api.GitHubWebhookHandler)
+
+	router.GET("/api/bp", bp.GetAllBp)
 
 	if err := router.Run(":4000"); err != nil {
 		log.Fatalf("Failed to start server: %v", err)

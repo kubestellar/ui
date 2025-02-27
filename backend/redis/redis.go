@@ -11,6 +11,8 @@ import (
 var ctx = context.Background()
 var rdb *redis.Client
 
+const filePathKey = "filepath"
+
 // InitRedis initializes the Redis client
 func InitRedis() {
 	rdb = redis.NewClient(&redis.Options{
@@ -35,6 +37,42 @@ func GetNamespaceCache(key string) (string, error) {
 		return "", nil // Cache miss
 	} else if err != nil {
 		return "", fmt.Errorf("failed to get cache: %v", err)
+	}
+	return val, nil
+}
+
+// SetFilePath sets the file path in Redis
+func SetFilePath(filepath string) error {
+	if err := rdb.Set(ctx, filePathKey, filepath, 0).Err(); err != nil {
+		return fmt.Errorf("failed to set filepath: %v", err)
+	}
+	return nil
+}
+
+// GetFilePath retrieves the file path from Redis
+func GetFilePath() (string, error) {
+	val, err := rdb.Get(ctx, filePathKey).Result()
+	if err == redis.Nil {
+		return "", nil // Key not found
+	} else if err != nil {
+		return "", fmt.Errorf("failed to get filepath: %v", err)
+	}
+	return val, nil
+}
+
+func SetRepoURL(repoURL string) error {
+	if err := rdb.Set(ctx, "repoURL", repoURL, 0).Err(); err != nil {
+		return fmt.Errorf("failed to set repoURL: %v", err)
+	}
+	return nil
+}
+
+func GetRepoURL() (string, error) {
+	val, err := rdb.Get(ctx, "repoURL").Result()
+	if err == redis.Nil {
+		return "", nil // Key not found
+	} else if err != nil {
+		return "", fmt.Errorf("failed to get repoURL: %v", err)
 	}
 	return val, nil
 }

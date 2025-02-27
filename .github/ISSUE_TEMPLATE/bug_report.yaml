@@ -1,0 +1,60 @@
+name: "Bug Report"
+description: "Report a bug or unexpected behavior."
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to report a bug! Please fill out the following sections with as much detail as possible.
+
+        **Tip**: Screenshots, error logs, or even short screen captures can help us pinpoint the issue faster.
+  - type: checkboxes
+    id: existing-issue-check
+    attributes:
+      label: "Is there an existing issue for this?"
+      description: "Before creating a new report, please check if someone else has already reported the same issue."
+      options:
+        - label: "I have searched the existing issues and couldn't find a duplicate."
+          required: true
+
+  - type: textarea
+    id: current-behavior
+    attributes:
+      label: "Current Behavior"
+      description: "What is the unexpected behavior? Be specific, and include any relevant logs or screenshots if possible."
+      placeholder: "Describe what you observe..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: "Expected Behavior"
+      description: "What did you expect to happen?"
+      placeholder: "Describe the expected outcome..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: "Steps to Reproduce"
+      description: "Provide the steps we can follow to reproduce the bug."
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Scroll down to '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: "Additional Context/Logs"
+      description: "Paste any additional logs or error messages. Attach screenshots if it helps illustrate the problem."
+      render: shell
+    validations:
+      required: false

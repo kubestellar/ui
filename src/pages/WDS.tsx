@@ -8,6 +8,7 @@ import { Plus } from "lucide-react";
 import { Grid, Card, CardContent, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeContext"; 
+import LoadingFallback from "../components/LoadingFallback";
 
 export interface Workload {
   name: string;
@@ -72,6 +73,19 @@ const WDS = () => {
       navigate(`/deploymentdetails/${workload.namespace}/${workload.name}`);
     }
   };
+
+  if (loading) return <LoadingFallback message="Loading Wds Deployments..." size="medium" />;
+  if (error) return (
+    <div className="text-center p-4 text-red-600 dark:text-red-400">
+      <p>{error}</p>
+      <button 
+        onClick={() => window.location.reload()} 
+        className="mt-4 px-4 py-2 bg-primary rounded-md text-white hover:bg-primary/90 transition-colors duration-200"
+      >
+        Retry
+      </button>
+    </div>
+  );
 
   return (
     <div className={`w-full max-w-7xl mx-auto p-4`}>
