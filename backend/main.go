@@ -12,7 +12,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/katamyra/kubestellarUI/routes"
-	"github.com/katamyra/kubestellarUI/wds"
 	"github.com/katamyra/kubestellarUI/wds/deployment"
 
 	"github.com/katamyra/kubestellarUI/api"
