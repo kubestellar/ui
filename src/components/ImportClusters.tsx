@@ -143,7 +143,7 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
     gap: 2,
     border: 1,
     borderColor: 'divider',
-    borderRadius: 1,
+    borderRadius: 0,
     p: 3,
     overflowY: 'auto',  // Scroll in the right place
     flexGrow: 1,        //Ensures proper height
@@ -221,30 +221,52 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
               value={activeOption}
               onChange={(_event, newValue) => setActiveOption(newValue)}
               sx={{
-                borderBottom: 2,
-                borderColor: 'divider',
-                bgcolor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                position: 'relative',
+                '& .MuiTabs-flexContainer': {
+                  gap: '4px',
+                  position: 'relative',
+                  zIndex: 1,
+                  justifyContent: 'flex',
+                },
                 '& .MuiTab-root': {
                   px: 3,
                   py: 1.5,
-                  color: textColor,
-                  borderRight: 1,
-                  borderColor: 'divider',
-                  '&.Mui-selected': {
-                    color: 'primary.main',
-                    bgcolor: theme === 'dark' ? 'rgba(144, 202, 249, 0.08)' : '#E3F2FD',
-                    borderBottom: 2,
-                    borderColor: 'primary.main',
-                  },
+                  minHeight: '48px',
+                  fontWeight: 500,
+                  letterSpacing: '0.02em',
+                  color: theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)',
+                  backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.03)' : '#f0f0f0',
+                  border: '3px solid',
+                  borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.2)',
+                  borderRadius: '0px 0px 0 0',
+                  transition: 'all 0.2s ease-in-out',
+                  marginBottom: '-5px',
+                  
                   '&:hover': {
-                    bgcolor: theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+                    backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.07)' : '#f5f5f5',
+                    borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.3)',
+                  },
+                  
+                  '&.Mui-selected': {
+                    color: theme === 'dark' ? '#fff' : '#000',
+                    backgroundColor: theme === 'dark' ? 'rgba(31, 41, 55, 0.9)' : '#ffffff',
+                    borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+                    borderBottom: 'none',
+                    zIndex: 2,
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      bottom: 0,
+                      left: -2,
+                      right: -2,
+                      height: '2px',
+                      backgroundColor: theme === 'dark' ? 'rgba(31, 41, 55, 0.9)' : '#ffffff',
+                    },
                   },
                 },
                 '& .MuiTabs-indicator': {
-                  height: 3,
-                  borderTopLeftRadius: 3,
-                  borderTopRightRadius: 3,
-                }
+                  display: 'none',
+                },
               }}
             >
               <Tab label="YAML paste" value="option1" />
@@ -259,7 +281,17 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
               p: 3,
             }}>
               {activeOption === "option1" && (
-                <Box sx={tabContentStyles}>
+                <Box sx={{
+                  ...tabContentStyles,
+                  border: 1,
+                  borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.3)',
+                  borderTop: 'none',
+                  borderLeft: '2px solid',
+                  marginLeft: '20px',
+                  marginRight: '8px',
+                  position: 'relative',
+                  width: 'calc(100% - 28px)',
+                }}>
                   <Alert severity="info">
                     <AlertTitle>Info</AlertTitle>
                     Paste a YAML file.
