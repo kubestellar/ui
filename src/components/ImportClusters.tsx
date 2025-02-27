@@ -145,6 +145,9 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
     borderColor: 'divider',
     borderRadius: 1,
     p: 3,
+    overflowY: 'auto',  // Scroll in the right place
+    flexGrow: 1,        //Ensures proper height
+    minHeight: 0,       //Prevents flexbox shrinking issues
     bgcolor: theme === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
   };
 
@@ -450,9 +453,10 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                   <Box
                     sx={{
                       flex: 1,
-                      overflow: 'auto',
                       display: 'flex',
                       flexDirection: 'column',
+                      overflow: 'visible', //Prevents label cutting
+                      minHeight: 0,        //Ensures proper flex behavior
                     }}
                   >
                     <Box sx={formContentStyles}>

@@ -6,8 +6,9 @@ import NotFoundPage from "../pages/NotFoundPage";
 import DeploymentDetails from "../components/DeploymentDetails";
 import NameSpace from "../pages/NS";
 import TreeView from "../components/TreeViewComponent";
-import LoadingFallback from '../components/LoadingFallback';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense } from "react";
+import LoadingFallback from "../components/LoadingFallback";
+import WecsTreeview from "../components/WecsTopology";
 // import ShowLogs from "../components/Logs";
 
 // Improve lazy loading with prefetch
@@ -39,10 +40,12 @@ export const routesConfig: RouteObject[] = [
       { path: "wds", element: <WDS /> },
       { path: "bp", element: <BP /> },
       { path: "namespaces" , element: <NameSpace />},
+      { path: "namespaces" , element: <NameSpace />},
       { path: "deploymentdetails/:namespace/:deploymentName", element: <DeploymentDetails /> },
       { path: "treeview", element: <TreeView /> },
+      { path: "wds/treeview", element: <TreeView /> },
+      { path: "wecs/treeview", element: <WecsTreeview /> },
       { path: "*", element: <NotFoundPage /> },
-      // {path: "logs/:deployment/:namespace", element: <ShowLogs />} // TODO: remove it in future after deployment details page
       // {path: "logs/:deployment/:namespace", element: <ShowLogs />} // TODO: remove it in future after deployment details page
     ],
   },
