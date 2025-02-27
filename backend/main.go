@@ -16,7 +16,6 @@ import (
 
 	"github.com/katamyra/kubestellarUI/api"
 	"github.com/katamyra/kubestellarUI/redis"
-	"github.com/katamyra/kubestellarUI/wds/bp"
 	"go.uber.org/zap"
 )
 
@@ -99,11 +98,6 @@ func main() {
 
 	router.POST("api/deploy", api.DeployHandler)
 	router.POST("api/webhook", api.GitHubWebhookHandler)
-
-	router.GET("/api/bp", bp.GetAllBp)
-	router.GET("/api/bp/status", bp.GetBpStatus)
-	router.DELETE("/api/bp/delete/:name", bp.DeleteBp)
-	router.DELETE("/api/bp/delete", bp.DeleteAllBp)
 
 	if err := router.Run(":4000"); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
