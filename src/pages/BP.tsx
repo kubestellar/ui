@@ -1,6 +1,5 @@
 
-import { Paper, Box } from "@mui/material";
-import { useEffect, useState, useContext, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Paper, Box, Snackbar, Alert } from "@mui/material";
 import BPHeader from "../components/BindingPolicy/Dialogs/BPHeader";
 import BPTable from "../components/BindingPolicy/BPTable";
