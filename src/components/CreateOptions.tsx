@@ -73,7 +73,7 @@ const CreateOptions = ({
     formData.append("wds", selectedFile);
   
     try {
-      const response = await fetch(`${process.env.VITE_BASE_URL}/api/wds/create`, {
+      const response = await fetch("http://localhost:4000/api/wds/create", {
         method: "POST",
         body: formData,
       });
@@ -84,12 +84,12 @@ const CreateOptions = ({
       if (response.ok) {
         showSnackbar(`Deployment successfully!` , "success");
         // Close modal properly before reloading
-        handleCancel();
+        // handleCancel();
   
         // Wait a short time, then reload the page
-        // setTimeout(() => {
-        //   window.location.reload();
-        // }, 500);
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
   
       } else if (response.status === 400 || response.status === 409) {
         showSnackbar(`Deployment already exists` , "error");
@@ -195,7 +195,7 @@ const CreateOptions = ({
     }
   
     try {
-      const response = await fetch(`${process.env.VITE_BASE_URL}/api/wds/create/json`, {
+      const response = await fetch("http://localhost:4000/api/wds/create/json", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -258,7 +258,7 @@ const CreateOptions = ({
     };
   
     try {
-      const response = await fetch(`${process.env.VITE_BASE_URL}/api/wds/create`, {
+      const response = await fetch("http://localhost:4000/api/wds/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -281,7 +281,7 @@ const CreateOptions = ({
           window.location.reload();
         }, 1000);
   
-        handleCancel();
+        // handleCancel();
       } else {
         if (response.status === 409 || response.status === 400 || response.status === 500) {
           showSnackbar(`Deployment already exists` , "error");
@@ -313,7 +313,7 @@ const CreateOptions = ({
   
 
   return (
-    <Dialog  open={!!activeOption} onClose={onCancel} maxWidth="lg" fullWidth>
+    <Dialog open={!!activeOption} onClose={onCancel} maxWidth="lg" fullWidth>
       <DialogTitle sx={{color: theme === "dark" ? "white" : "black" , bgcolor: theme === "dark" ? "#1F2937" : "background.paper"}}>Create Deployment</DialogTitle>
       <DialogContent sx={{ bgcolor: theme === "dark" ? "#1F2937" : "background.paper"}} >
         <Box sx={{ width: "100%"}}>
@@ -323,12 +323,12 @@ const CreateOptions = ({
           >
             <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Create from Input" value="option1" />
             <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Create from File" value="option2" />
-            <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Create from Form" value="option3" />
+            <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Create from Github" value="option3" />
           </Tabs>
 
           <Box 
           sx={{ 
-            mt: 2 ,
+            mt: 2,
           }}
           >
             {activeOption === "option1" && (
@@ -362,7 +362,7 @@ const CreateOptions = ({
                         value={fileType}
                         onChange={(e) => {
                           setFileType(e.target.value as "yaml" | "json");
-                          setEditorContent(""); // Clear the editor content on file type change
+                          setEditorContent(""); 
                         }}
                         label="File Type"
                         MenuProps={{
@@ -382,12 +382,11 @@ const CreateOptions = ({
                       </Select>
                 </FormControl>
 
-
                 <Editor
                     height="400px"
                     language={fileType}
                     value={editorContent}
-                    theme={theme === "dark" ? "light" : "vs-dark"} // Switch themes dynamically
+                    theme={theme === "dark" ? "vs-dark" : "light"}
                     options={{
                       minimap: { enabled: false },
                       fontSize: 14,
@@ -408,12 +407,18 @@ const CreateOptions = ({
                     Upload
                   </Button>
                 </DialogActions>
-
               </Box>
             )}
 
             {activeOption === "option2" && (
-              <Box sx={{color: theme === "dark" ? "white" : "black"}}>
+              <Box 
+              sx={{color: theme === "dark" ? "white" : "black",
+                height: "617px",
+                display: "flex",           // Added
+                flexDirection: "column",   // Added
+                justifyContent: "center"   // Added
+              }}
+              > 
                 <Alert severity="info" sx={{ mb: 2 }}>
                   <AlertTitle>Info</AlertTitle>
                   Select a YAML or JSON file specifying the resources to deploy to
@@ -425,8 +430,11 @@ const CreateOptions = ({
                     border: 2,
                     borderColor: "grey.500",
                     borderRadius: 1,
-                    p: 2,
+                    p: 27,
                     textAlign: "center",
+                    display: "flex",         // Added
+                    flexDirection: "column", // Added
+                    alignItems: "center"     // Added
                   }}
                 >
                   <Button variant="contained" component="label">
@@ -435,11 +443,10 @@ const CreateOptions = ({
                       type="file"
                       hidden
                       accept=".yaml,.yml,.json"
-                      onClick={(e) => (e.currentTarget.value = "")} // Ensure new file selection triggers event
+                      onClick={(e) => (e.currentTarget.value = "")}
                       onChange={(e) => {
                         const file = e.target.files?.[0] || null;
                         setSelectedFile(file);
-                        // setHasUnsavedChanges(true);
                       }}
                     />
                   </Button>
@@ -465,40 +472,50 @@ const CreateOptions = ({
             )}
 
             {activeOption === "option3" && (
-              <Box className={theme === "dark" ? "bg-gray-800 text-white" : "text-black"} p={2} borderRadius={2}>
-                <Alert severity="info" sx={{ mb: 2 }}>
+              <Box
+                className={theme === "dark" ? "bg-gray-800 text-white" : "text-black"}
+                sx={{ height: "617px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}
+                p={2}
+                borderRadius={2}
+              >
+                {/* Alert at the Top */}
+                <Alert severity="info">
                   <AlertTitle>Info</AlertTitle>
                   Fill out the form to create a deployment.
                 </Alert>
 
-                <TextField
-                  fullWidth
-                  label="GitHub Url"
-                  value={formData.githuburl}
-                  onChange={(e) => setFormData({ ...formData, githuburl: e.target.value })}
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: { borderColor: theme === "dark" ? "white" : "black" },
-                    "& .MuiInputLabel-root.Mui-focused": { color: theme === "dark" ? "white" : "black" },
-                  }}
-                />
+                {/* Centered GitHub URL and Path Fields */}
+                <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                  <TextField
+                    fullWidth
+                    label="GitHub Url"
+                    value={formData.githuburl}
+                    onChange={(e) => setFormData({ ...formData, githuburl: e.target.value })}
+                    sx={{
+                      mb: 2,
+                      input: { color: theme === "dark" ? "white" : "black" },
+                      label: { color: theme === "dark" ? "white" : "black" },
+                      fieldset: { borderColor: theme === "dark" ? "white" : "black" },
+                      "& .MuiInputLabel-root.Mui-focused": { color: theme === "dark" ? "white" : "black" },
+                    }}
+                  />
 
-                <TextField
-                  fullWidth
-                  label="Path"
-                  value={formData.path}
-                  onChange={(e) => setFormData({ ...formData, path: e.target.value })}
-                  sx={{
-                    mb: 2,
-                    input: { color: theme === "dark" ? "white" : "black" },
-                    label: { color: theme === "dark" ? "white" : "black" },
-                    fieldset: { borderColor: theme === "dark" ? "white" : "black" },
-                    "& .MuiInputLabel-root.Mui-focused": { color: theme === "dark" ? "white" : "black" },
-                  }}
-                />
+                  <TextField
+                    fullWidth
+                    label="Path"
+                    value={formData.path}
+                    onChange={(e) => setFormData({ ...formData, path: e.target.value })}
+                    sx={{
+                      mb: 2,
+                      input: { color: theme === "dark" ? "white" : "black" },
+                      label: { color: theme === "dark" ? "white" : "black" },
+                      fieldset: { borderColor: theme === "dark" ? "white" : "black" },
+                      "& .MuiInputLabel-root.Mui-focused": { color: theme === "dark" ? "white" : "black" },
+                    }}
+                  />
+                </Box>
 
+                {/* Deploy and Cancel Buttons at the Bottom */}
                 <DialogActions>
                   <Button onClick={handleCancel} sx={{ color: theme === "dark" ? "white" : "black" }}>
                     Cancel
@@ -509,24 +526,21 @@ const CreateOptions = ({
                 </DialogActions>
               </Box>
             )}
-
           </Box>
         </Box>
       </DialogContent>
 
-                {/* Snackbar Notification */}
-                <Snackbar
-                open={snackbar.open}
-                autoHideDuration={3000}
-                onClose={() => setSnackbar({ ...snackbar, open: false })}
-                anchorOrigin={{ vertical: "top", horizontal: "center" }}
-            >
-                <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: "100%" }}>
-                    {snackbar.message}
-                </Alert>
-            </Snackbar>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: "100%" }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Dialog>
-    
   );
 };
 

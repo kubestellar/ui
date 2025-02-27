@@ -21,6 +21,7 @@ import (
 
 	"github.com/katamyra/kubestellarUI/api"
 	nsresources "github.com/katamyra/kubestellarUI/namespace/resources"
+	"github.com/katamyra/kubestellarUI/redis"
 	"github.com/katamyra/kubestellarUI/wds"
 	"github.com/katamyra/kubestellarUI/wds/bp"
 	"github.com/katamyra/kubestellarUI/wds/deployment"
@@ -183,6 +184,7 @@ func main() {
 		factory.Start(ch)
 		go c.Run(ch)
 	})
+	redis.InitRedis()
 	// SERVICES
 	router.GET("/api/services/:namespace", resources.GetServiceList)
 	router.GET("/api/services/:namespace/:name", resources.GetServiceByServiceName)
@@ -198,6 +200,8 @@ func main() {
 	router.GET("/ws/namespaces", nsresources.NamespaceWebSocketHandler)
 
 	router.POST("api/deploy", api.DeployHandler)
+	router.POST("api/webhook", api.GitHubWebhookHandler)
+
 	// ROUTES FOR BP
 	router.POST("/api/bp/create", bp.CreateBp)
 	router.GET("/api/bp", bp.GetAllBp)

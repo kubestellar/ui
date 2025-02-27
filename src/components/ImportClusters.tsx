@@ -45,15 +45,13 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [editorContent, setEditorContent] = useState<string>("");
   const [labels, setLabels] = useState<string[]>([]);
-  //const [option, setOption] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [command, setCommand] = useState("");
 
   const [formData, setFormData] = useState({
     clusterName: "",
     token: "",
-    node: "",
-    Region: "",
     value: ["1"],
   });
 
@@ -62,7 +60,6 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
   useEffect(() => {
     setToken("placeholder-token"); // Temporary fix so it's "used"
   }, []);
-
 
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -74,19 +71,36 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
     severity: "info", // Can be "success", "error", "warning", or "info"
   });
 
+  // Fetch token whenever clusterName changes
+  useEffect(() => {
+    if (formData.clusterName) {
+      fetch(`/api/get-token?cluster=${formData.clusterName}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setFormData((prev) => ({ ...prev, token: data.token }));
+        })
+        .catch((err) => console.error("Error fetching token:", err));
+    }
+  }, [formData.clusterName]);
+
+  // Update the command dynamically when formData changes
+  useEffect(() => {
+    console.log("Current clusterName:", formData.clusterName);
+    console.log("Current token:", formData.token);
+
+    if (formData.clusterName && formData.token) {
+      const newCommand = `clusteradm join --hub-token ${formData.token} --cluster-name ${formData.clusterName}`;
+      console.log("Generated Command:", newCommand); // ✅ Debugging step
+      setCommand(newCommand);
+    }
+  }, [formData.clusterName, formData.token]);
+
+
   const API_BASE_URL = "http://localhost:5000"; // JSON-Server runs on this port by default
 
   const handleImportCluster = async () => {
     setErrorMessage("");
     setLoading(true);
-
-    // ✅ Define requestData at the start of the function
-    const requestData = {
-      clusterName: formData.clusterName,
-      token: formData.token
-    };
-
-    console.log("🚀 Sending data to API:", requestData); // ✅ Debugging log
 
     try {
       // Send cluster import request to backend
@@ -94,7 +108,7 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
       console.log("Cluster import initiated:", response.data);
 
       // Clear form fields after a successful import
-      setFormData({ clusterName: "", token: "", node: "", Region: "", value: [] });
+      setFormData({ clusterName: "", token: "", value: [] });
       setLabels([]);
 
       // Show success message (if needed)
@@ -468,26 +482,22 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                         sx={commonInputSx}
                         fullWidth
                       />
-                      {/* Token should be outside the form since it’s not user-inputted */}
                       <div>
-                        <TextField
-                          label="Generated Token"
-                          variant="outlined"
-                          fullWidth
-                          multiline
-                          rows={4} // Adjust for more height
-                          value="example-token-12345"
-                          InputProps={{ readOnly: true }}
-                        />
-                        <Button onClick={() => navigator.clipboard.writeText(token)}>Copy Token</Button>
+                        <p>Run this command in the CLI:</p>
+                        <code>
+                          clusteradm join --token {token} --cluster-name {formData.clusterName}
+                        </code>
+                        <Button
+                          onClick={() =>
+                            navigator.clipboard.writeText(
+                              `clusteradm join --hub-token ${formData.token} --cluster-name ${formData.clusterName}`
+                            )
+                          }
+                          variant="contained"
+                        >
+                          Copy
+                        </Button>
                       </div>
-
-                      <p>Run this command in the CLI:</p>
-                      <code>
-                        clusteradm join --token {token} --cluster-name {formData.clusterName}
-                      </code>
-
-
                     </Box>
 
                     <Box sx={{
@@ -501,14 +511,14 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                         <Button
                           variant="contained"
                           onClick={handleImportCluster}
-                          disabled={!formData.clusterName || !formData.Region || !labels.length || !formData.node || loading}
+                          disabled={!formData.clusterName || loading}
                           sx={{
                             "&:disabled": {
                               cursor: "not-allowed",
                               pointerEvents: "all !important",
                             },
                           }}
-                          className={`${(!formData.clusterName || !formData.Region || !labels.length || !formData.node || loading)
+                          className={`${(!formData.clusterName || loading)
                             ? theme === "dark"
                               ? "!bg-gray-700 !text-gray-400"
                               : "!bg-gray-300 !text-gray-500"
