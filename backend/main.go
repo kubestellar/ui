@@ -205,6 +205,7 @@ func main() {
 	// ROUTES FOR BP
 	router.POST("/api/bp/create", bp.CreateBp)
 	router.GET("/api/bp", bp.GetAllBp)
+	router.GET("/api/bp/status", bp.GetBpStatus)
 	router.DELETE("/api/bp/delete/:name", bp.DeleteBp)
 	router.DELETE("/api/bp/delete", bp.DeleteAllBp)
 

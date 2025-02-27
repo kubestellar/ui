@@ -9,6 +9,7 @@ import {
   Chip,
   IconButton,
   Box,
+  Tooltip,
 } from "@mui/material";
 import { Info, Trash2, Edit2 } from "lucide-react";
 import { BindingPolicyInfo } from "../../types/bindingPolicy";
@@ -20,7 +21,7 @@ interface BPTableProps {
   onPreviewMatches: (policy: BindingPolicyInfo) => void;
   onDeletePolicy: (policy: BindingPolicyInfo) => void;
   onEditPolicy: (policy: BindingPolicyInfo) => void;
-  activeFilters: { status?: "Active" | "Inactive" };
+  activeFilters: { status?: "Active" | "Inactive" | "Pending" };
 }
 
 const BPTable: React.FC<BPTableProps> = ({
@@ -37,6 +38,11 @@ const BPTable: React.FC<BPTableProps> = ({
     setSelectedPolicy(policy);
   };
 
+  const handleEdit = (policy: BindingPolicyInfo) => {
+    setSelectedPolicy(null);
+    onEditPolicy(policy);
+  };
+
   const filteredPolicies = policies.filter((policy) => {
     if (!policy) return false;
     if (activeFilters.status && policy.status !== activeFilters.status) {
@@ -45,6 +51,61 @@ const BPTable: React.FC<BPTableProps> = ({
     return true;
   });
   const { theme } = useContext(ThemeContext);
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "active":
+        return "success";
+      case "pending":
+        return "warning";
+      case "inactive":
+        return "error";
+      default:
+        return "default";
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "active":
+        return <span>✓</span>;
+      case "pending":
+        return <span>⋯</span>;
+      case "inactive":
+        return <span>✗</span>;
+      default:
+        return undefined;
+    }
+  };
+
+  const renderClusterChip = (policy: BindingPolicyInfo) => {
+    if (!policy.clusterList || policy.clusterList.length === 0) {
+      return <Chip label="0" size="small" color="default" />;
+    }
+
+    return (
+      <Tooltip title={policy.clusterList.join(", ")} arrow>
+        <Chip label={policy.clusters} size="small" color="success" />
+      </Tooltip>
+    );
+  };
+
+  const renderWorkloadChip = (policy: BindingPolicyInfo) => {
+    if (!policy.workloadList || policy.workloadList.length === 0) {
+      return <Chip label="None" size="small" color="default" />;
+    }
+
+    const displayText =
+      policy.workloadList.length > 1
+        ? `${policy.workloadList[0]} +${policy.workloadList.length - 1}`
+        : policy.workloadList[0];
+
+    return (
+      <Tooltip title={policy.workloadList.join(", ")} arrow>
+        <Chip label={displayText} size="small" color="success" />
+      </Tooltip>
+    );
+  };
 
   return (
     <>
@@ -77,12 +138,8 @@ const BPTable: React.FC<BPTableProps> = ({
                   {policy.name}
                 </Button>
               </TableCell>
-              <TableCell>
-                <Chip label={policy.clusters} size="small" color="success" />
-              </TableCell>
-              <TableCell>
-                <Chip label={policy.workload} size="small" color="success" />
-              </TableCell>
+              <TableCell>{renderClusterChip(policy)}</TableCell>
+              <TableCell>{renderWorkloadChip(policy)}</TableCell>
               <TableCell sx={{ color: theme === "dark" ? "white" : "inherit" }}>
                 {policy.creationDate}
               </TableCell>
@@ -90,7 +147,7 @@ const BPTable: React.FC<BPTableProps> = ({
                 <Chip
                   label={policy.status}
                   size="small"
-                  color={policy.status === "Active" ? "success" : "error"}
+                  color={getStatusColor(policy.status)}
                   sx={{
                     "& .MuiChip-label": {
                       display: "flex",
@@ -98,9 +155,7 @@ const BPTable: React.FC<BPTableProps> = ({
                       gap: 0.5,
                     },
                   }}
-                  icon={
-                    policy.status === "Active" ? <span>✓</span> : <span>✗</span>
-                  }
+                  icon={getStatusIcon(policy.status)}
                 />
               </TableCell>
               <TableCell align="right">
@@ -140,6 +195,7 @@ const BPTable: React.FC<BPTableProps> = ({
           open={Boolean(selectedPolicy)}
           onClose={() => setSelectedPolicy(null)}
           policy={selectedPolicy}
+          onEdit={handleEdit}
         />
       )}
     </>
