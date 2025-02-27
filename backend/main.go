@@ -3,17 +3,16 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/katamyra/kubestellarUI/routes"
-	"github.com/katamyra/kubestellarUI/wds/deployment"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
 	"github.com/gin-gonic/gin"
-	"k8s.io/client-go/kubernetes"
+	"github.com/katamyra/kubestellarUI/routes"
+	"github.com/katamyra/kubestellarUI/wds/deployment"
 
 	"github.com/katamyra/kubestellarUI/api"
 	"github.com/katamyra/kubestellarUI/redis"
@@ -98,7 +97,6 @@ func main() {
 	})
 
 	redis.InitRedis()
-
 
 	router.POST("api/deploy", api.DeployHandler)
 	router.POST("api/webhook", api.GitHubWebhookHandler)
