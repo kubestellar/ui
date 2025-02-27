@@ -10,11 +10,25 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/katamyra/kubestellarUI/k8s"
+	"github.com/katamyra/kubestellarUI/redis"
 )
 
 type DeployRequest struct {
 	RepoURL    string `json:"repo_url"`
 	FolderPath string `json:"folder_path"`
+}
+
+// GitHubWebhookPayload defines the expected structure of the webhook request
+type GitHubWebhookPayload struct {
+	Repository struct {
+		CloneURL string `json:"clone_url"`
+	} `json:"repository"`
+	Commits []struct {
+		ID       string   `json:"id"`
+		Message  string   `json:"message"`
+		URL      string   `json:"url"`
+		Modified []string `json:"modified"`
+	} `json:"commits"`
 }
 
 // DeployHandler handles deployment requests
@@ -30,6 +44,10 @@ func DeployHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "repo_url is required"})
 		return
 	}
+
+	// Store repo & folder path in Redis for future auto-deployments
+	redis.SetFilePath(request.FolderPath)
+	redis.SetRepoURL(request.RepoURL)
 
 	tempDir := fmt.Sprintf("/tmp/%d", time.Now().Unix())
 	cmd := exec.Command("git", "clone", request.RepoURL, tempDir)
@@ -56,4 +74,92 @@ func DeployHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, deploymentTree)
+}
+
+// GitHubWebhookHandler processes GitHub webhook events
+func GitHubWebhookHandler(c *gin.Context) {
+	var request GitHubWebhookPayload
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid webhook payload", "details": err.Error()})
+		return
+	}
+
+	// Retrieve stored deployment path for this repo
+	folderPath, err := redis.GetFilePath()
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No deployment configured for this repository"})
+		return
+	}
+
+	// repoUrl, err := redis.GetRepoURL()
+	// if err != nil {
+	// 	c.JSON(http.StatusNotFound, gin.H{"error": "No deployment configured for this repository"})
+	// 	return
+	// }
+
+	repoUrl := request.Repository.CloneURL
+
+	tempDir := fmt.Sprintf("/tmp/%d", time.Now().Unix())
+	cmd := exec.Command("git", "clone", repoUrl, tempDir)
+	if err := cmd.Run(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to clone repo", "details": err.Error()})
+		return
+	}
+	defer os.RemoveAll(tempDir)
+
+	deployPath := tempDir
+	if folderPath != "" {
+		deployPath = filepath.Join(tempDir, folderPath)
+	}
+
+	if _, err := os.Stat(deployPath); os.IsNotExist(err) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Specified folder does not exist"})
+		return
+	}
+
+	deploymentTree, err := k8s.DeployManifests(deployPath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Deployment failed", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, deploymentTree)
+
+	// Todo
+	// // Check if any modified file is inside the stored deployment folder
+	// shouldDeploy := false
+	// for _, commit := range request.Commits {
+	// 	for _, modifiedFile := range commit.Modified {
+	// 		normalizedModFile := filepath.ToSlash(modifiedFile)
+	// 		normalizedFolderPath := filepath.ToSlash(folderPath)
+
+	// 		if strings.HasPrefix(normalizedModFile, normalizedFolderPath) {
+	// 			shouldDeploy = true
+	// 			break
+	// 		}
+	// 	}
+	// 	if shouldDeploy {
+	// 		break
+	// 	}
+	// }
+
+	// // Trigger deployment if relevant changes are found
+	// if shouldDeploy {
+	// 	deploymentTree, err := k8s.DeployManifests(folderPath)
+	// 	if err != nil {
+	// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Deployment failed", "details": err.Error()})
+	// 		return
+	// 	}
+
+	// 	c.JSON(http.StatusOK, gin.H{
+	// 		"message":   "Deployment successful",
+	// 		"namespace": deploymentTree.Namespace,
+	// 		"details":   deploymentTree,
+	// 	})
+	// 	return
+	// }
+
+	// No relevant changes detected
+	c.JSON(http.StatusOK, gin.H{"message": "No relevant changes detected"})
 }

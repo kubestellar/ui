@@ -6,6 +6,8 @@ import {
   HiOutlineCommandLine,
   HiOutlineCog8Tooth,
   HiOutlineShieldCheck,
+  HiOutlineCubeTransparent,
+  HiOutlineCog,
 } from 'react-icons/hi2';
 
 export const menu = [
@@ -71,6 +73,26 @@ export const menu = [
         url: '/bp/manage',
         icon: HiOutlineCog8Tooth,
         label: 'Manage Policies',
+      },
+    ],
+  },
+  // treeview 
+  {
+    catalog: 'KubeStellar Topology',
+    centered: true,
+    marginTop: '1rem',
+    listItems: [
+      {
+        isLink: true,
+        url: '/wds/treeview',
+        icon: HiOutlineCubeTransparent,
+        label: 'Workload Topology',
+      },
+      {
+        isLink: true,
+        url: '/wecs/treeview',
+        icon: HiOutlineCog,
+        label: `WEC'S Topology`,
       },
     ],
   },
