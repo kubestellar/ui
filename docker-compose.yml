@@ -6,9 +6,7 @@ services:
       - "5173:80"
     depends_on:
       - backend
-    networks:
-      - kubestellar-network
-
+    network_mode: "host"
   backend:
     build:
       context: ./backend
@@ -18,8 +16,30 @@ services:
     volumes:
       - ~/.kube:/root/.kube
     environment:
-      - KUBECONFIG=/root/.kube/config
+      - POSTGRES_HOST=localhost
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=jwt_db
+      - DATABASE_URL=postgres://postgres:password@localhost:5432/jwt_db?sslmode=disable
+      - JWT_SECRET=mysecretkey
+    depends_on:
+      - postgres
     network_mode: "host"
+
+  postgres:
+    image: "postgres:latest"
+    container_name: "kubestellar-postgres"
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=jwt_db
+    ports:
+      - "5432:5432"
+    network_mode: "host"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
 
   redis:
     image: "redis:latest"
@@ -27,7 +47,6 @@ services:
     ports:
       - "6379:6379"
     network_mode: "host"
-  
-networks:
-  kubestellar-network:
-    driver: bridge
+
+volumes:
+  postgres-data:
