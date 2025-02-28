@@ -1,9 +1,7 @@
-import { useState, useContext } from "react";
+import { useEffect, useState, useContext } from "react";
 import Editor from "@monaco-editor/react";
 import { ThemeContext } from "../context/ThemeContext";
 import {
-  Autocomplete,
-  Chip,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -20,10 +18,8 @@ import {
   FormControl,
   InputLabel,
   CircularProgress,
-  FormHelperText,
   Snackbar,
 } from "@mui/material";
-import axios from "axios";
 
 interface Props {
   activeOption: string | null;
@@ -47,17 +43,14 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
   const [fileType, setFileType] = useState<"yaml">("yaml");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [editorContent, setEditorContent] = useState<string>("");
-  const [labels, setLabels] = useState<string[]>([]);
-  const [option, setOption] = useState("");
   const [loading, setLoading] = useState(false);
+  //const [csrStatus, setCsrStatus] = useState("Waiting for user to run command...");
+
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   const [formData, setFormData] = useState({
     clusterName: "",
-    clusterSet: "",
-    node: "",
-    Region: "",
-    value: ["1"],
+    token: "",
   });
 
   const [snackbar, setSnackbar] = useState<{
@@ -70,31 +63,27 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
     severity: "info", // Can be "success", "error", "warning", or "info"
   });
 
-  const API_BASE_URL = "http://localhost:5000"; // JSON-Server runs on this port by default
+  // Fetch token whenever clusterName changes
+  useEffect(() => {
+    if (formData.clusterName) {
+      fetch(`/api/get-token?cluster=${formData.clusterName}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setFormData((prev) => ({ ...prev, token: data.token }));
+        })
+        .catch((err) => console.error("Error fetching token:", err));
+    }
+  }, [formData.clusterName]);
+
+  const generatedCommand = `clusteradm join --hub-token ${formData.token} --hub-apiserver http://localhost:3000/api/hub --cluster-name ${formData.clusterName}`;
 
   const handleImportCluster = async () => {
     setErrorMessage("");
     setLoading(true);
 
-    // ✅ Define requestData at the start of the function
-    const requestData = {
-      clusterName: formData.clusterName,
-      clusterSet: formData.clusterSet, 
-      node: formData.node,
-      value: formData.value,
-      region: formData.Region
-  };
-
-  console.log("🚀 Sending data to API:", requestData); // ✅ Debugging log
-
     try {
-      // Send cluster import request to backend
-      const response = await axios.post(`${API_BASE_URL}/clusters`, { ...formData, value: labels });
-      console.log("Cluster import initiated:", response.data);
-
       // Clear form fields after a successful import
-      setFormData({ clusterName: "", clusterSet: "", node: "", Region: "", value: []} );
-      setLabels([]);
+      setFormData({ clusterName: "", token: "" });
 
       // Show success message (if needed)
       setSnackbar({
@@ -136,6 +125,10 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
     setActiveOption(null);
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
   const tabContentStyles = {
     height: '100%',
     display: 'flex',
@@ -143,7 +136,7 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
     gap: 2,
     border: 1,
     borderColor: 'divider',
-    borderRadius: 0,
+    borderRadius: 1,
     p: 3,
     overflowY: 'auto',  // Scroll in the right place
     flexGrow: 1,        //Ensures proper height
@@ -221,52 +214,30 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
               value={activeOption}
               onChange={(_event, newValue) => setActiveOption(newValue)}
               sx={{
-                position: 'relative',
-                '& .MuiTabs-flexContainer': {
-                  gap: '4px',
-                  position: 'relative',
-                  zIndex: 1,
-                  justifyContent: 'flex',
-                },
+                borderBottom: 2,
+                borderColor: 'divider',
+                bgcolor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
                 '& .MuiTab-root': {
                   px: 3,
                   py: 1.5,
-                  minHeight: '48px',
-                  fontWeight: 500,
-                  letterSpacing: '0.02em',
-                  color: theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)',
-                  backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.03)' : '#f0f0f0',
-                  border: '3px solid',
-                  borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.2)',
-                  borderRadius: '0px 0px 0 0',
-                  transition: 'all 0.2s ease-in-out',
-                  marginBottom: '-5px',
-                  
-                  '&:hover': {
-                    backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.07)' : '#f5f5f5',
-                    borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.3)',
-                  },
-                  
+                  color: textColor,
+                  borderRight: 1,
+                  borderColor: 'divider',
                   '&.Mui-selected': {
-                    color: theme === 'dark' ? '#fff' : '#000',
-                    backgroundColor: theme === 'dark' ? 'rgba(31, 41, 55, 0.9)' : '#ffffff',
-                    borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
-                    borderBottom: 'none',
-                    zIndex: 2,
-                    '&::before': {
-                      content: '""',
-                      position: 'absolute',
-                      bottom: 0,
-                      left: -2,
-                      right: -2,
-                      height: '2px',
-                      backgroundColor: theme === 'dark' ? 'rgba(31, 41, 55, 0.9)' : '#ffffff',
-                    },
+                    color: 'primary.main',
+                    bgcolor: theme === 'dark' ? 'rgba(144, 202, 249, 0.08)' : '#E3F2FD',
+                    borderBottom: 2,
+                    borderColor: 'primary.main',
+                  },
+                  '&:hover': {
+                    bgcolor: theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
                   },
                 },
                 '& .MuiTabs-indicator': {
-                  display: 'none',
-                },
+                  height: 3,
+                  borderTopLeftRadius: 3,
+                  borderTopRightRadius: 3,
+                }
               }}
             >
               <Tab label="YAML paste" value="option1" />
@@ -281,17 +252,7 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
               p: 3,
             }}>
               {activeOption === "option1" && (
-                <Box sx={{
-                  ...tabContentStyles,
-                  border: 1,
-                  borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.3)',
-                  borderTop: 'none',
-                  borderLeft: '2px solid',
-                  marginLeft: '20px',
-                  marginRight: '8px',
-                  position: 'relative',
-                  width: 'calc(100% - 28px)',
-                }}>
+                <Box sx={tabContentStyles}>
                   <Alert severity="info">
                     <AlertTitle>Info</AlertTitle>
                     Paste a YAML file.
@@ -479,7 +440,7 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                 <Box sx={tabContentStyles}>
                   <Alert severity="info">
                     <AlertTitle>Info</AlertTitle>
-                    Fill out the form to import cluster manually.
+                    Enter cluster name to generate a token, to then run in the CLI.
                   </Alert>
 
                   <Box
@@ -494,79 +455,23 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                     <Box sx={formContentStyles}>
                       <TextField
                         label="Cluster Name"
+                        variant="outlined"
+                        name="clusterName"
                         value={formData.clusterName}
-                        onChange={(e) => setFormData({ ...formData, clusterName: e.target.value })}
+                        onChange={handleChange}
                         sx={commonInputSx}
                         fullWidth
                       />
+                      <div>
+                        {/* Show the generated command inside a <code> block */}
+                        <p>Run this command in the CLI:</p>
+                        <code>{generatedCommand}</code>
 
-                      <FormControl sx={commonInputSx} required fullWidth>
-                        <InputLabel>Cluster Set</InputLabel>
-                        <Select
-                          value={option}
-                          onChange={(e) => {
-                            console.log("🚀 Selected Cluster Set:", formData.clusterSet);
-                            setFormData({ ...formData, clusterSet: e.target.value });
-                            setOption(e.target.value);
-                          }}
-                          label="Cluster Set"
-                        >
-                          <MenuItem value="">Select a Cluster</MenuItem>
-                          <MenuItem value="Cluster Set 1">Cluster Set 1</MenuItem>
-                          <MenuItem value="Cluster Set 2">Cluster Set 2</MenuItem>
-                          <MenuItem value="Cluster Set 3">Cluster Set 3</MenuItem>
-                        </Select>
-                        {!option && (
-                          <FormHelperText>Please select a cluster set.</FormHelperText>
-                        )}
-                      </FormControl>
-
-                      <TextField
-                        label="Number of Nodes"
-                        value={formData.node}
-                        onChange={(e) => setFormData({ ...formData, node: e.target.value })}
-                        sx={commonInputSx}
-                        fullWidth
-                      />
-
-                      <TextField
-                        label="Region"
-                        value={formData.Region}
-                        onChange={(e) => setFormData({ ...formData, Region: e.target.value })}
-                        sx={commonInputSx}
-                        fullWidth
-                      />
-
-                      <Autocomplete
-                        multiple
-                        freeSolo
-                        options={[]}
-                        value={labels}
-                        onChange={(_, newValue) => setLabels(newValue)}
-                        renderTags={(value: string[], getTagProps) =>
-                          value.map((option, index) => (
-                            <Chip
-                              label={option}
-                              {...getTagProps({ index })}
-                              sx={{
-                                borderRadius: 1,
-                                '& .MuiChip-deleteIcon': {
-                                  color: theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)',
-                                }
-                              }}
-                            />
-                          ))
-                        }
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label="Labels"
-                            placeholder="Add Labels"
-                            sx={commonInputSx}
-                            fullWidth
-                          />
-                        )}
-                      />
+                        {/* Copy Button */}
+                        <Button onClick={() => navigator.clipboard.writeText(generatedCommand)} variant="contained">
+                          Copy
+                        </Button>
+                      </div>
                     </Box>
 
                     <Box sx={{
@@ -580,14 +485,14 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                         <Button
                           variant="contained"
                           onClick={handleImportCluster}
-                          disabled={!formData.clusterName || !formData.Region || !labels.length || !formData.node || loading}
+                          disabled={!formData.clusterName || loading}
                           sx={{
                             "&:disabled": {
                               cursor: "not-allowed",
                               pointerEvents: "all !important",
                             },
                           }}
-                          className={`${(!formData.clusterName || !formData.Region || !labels.length || !formData.node || loading)
+                          className={`${(!formData.clusterName || loading)
                             ? theme === "dark"
                               ? "!bg-gray-700 !text-gray-400"
                               : "!bg-gray-300 !text-gray-500"
@@ -616,5 +521,4 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
     </>
   );
 };
-
 export default ImportClusters;

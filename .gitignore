@@ -143,3 +143,6 @@ backend/backend
 
 #Temproary log testing for Import Clusters
 db.json
+
+#Personal text file
+ExtraCode.md
