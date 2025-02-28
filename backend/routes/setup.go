@@ -11,4 +11,5 @@ func SetupRoutes(router *gin.Engine) {
 	setupServiceRoutes(router)
 	setupNamespaceRoutes(router)
 	setupBlueprintRoutes(router)
+	SetupAuthRoutes(router)
 }

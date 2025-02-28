@@ -6,7 +6,10 @@ toolchain go1.23.4
 
 require (
 	github.com/gin-gonic/gin v1.10.0
+	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/joho/godotenv v1.5.1
 	github.com/kubestellar/kubestellar v0.26.0
+	github.com/lib/pq v1.10.9
 	github.com/redis/go-redis/v9 v9.7.1
 	go.uber.org/zap v1.27.0
 	k8s.io/api v0.32.2
