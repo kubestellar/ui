@@ -49,476 +49,476 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   const [formData, setFormData] = useState({
-      clusterName: "",
-      token: "",
-    });
+    clusterName: "",
+    token: "",
+  });
 
-    const [snackbar, setSnackbar] = useState<{
-      open: boolean;
-      message: string;
-      severity: "success" | "error" | "warning" | "info";
-    }>({
-      open: false,
-      message: "",
-      severity: "info", // Can be "success", "error", "warning", or "info"
-    });
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "warning" | "info";
+  }>({
+    open: false,
+    message: "",
+    severity: "info", // Can be "success", "error", "warning", or "info"
+  });
 
-      // Fetch token whenever clusterName changes
-      useEffect(() => {
-        if (formData.clusterName) {
-          fetch(`/api/get-token?cluster=${formData.clusterName}`)
-            .then((res) => res.json())
-            .then((data) => {
-              setFormData((prev) => ({ ...prev, token: data.token }));
-            })
-            .catch((err) => console.error("Error fetching token:", err));
-        }
-      }, [formData.clusterName]);
+  // Fetch token whenever clusterName changes
+  useEffect(() => {
+    if (formData.clusterName) {
+      fetch(`/api/get-token?cluster=${formData.clusterName}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setFormData((prev) => ({ ...prev, token: data.token }));
+        })
+        .catch((err) => console.error("Error fetching token:", err));
+    }
+  }, [formData.clusterName]);
 
-    const generatedCommand = `clusteradm join --hub-token ${formData.token} --cluster-name ${formData.clusterName}`;
-   
-    const handleImportCluster = async () => {
-      setErrorMessage("");
-      setLoading(true);
+  const generatedCommand = `clusteradm join --hub-token ${formData.token} --hub-apiserver http://localhost:3000/api/hub --cluster-name ${formData.clusterName}`;
 
-      try {
-        // Clear form fields after a successful import
-        setFormData({ clusterName: "", token: ""});
+  const handleImportCluster = async () => {
+    setErrorMessage("");
+    setLoading(true);
 
-        // Show success message (if needed)
-        setSnackbar({
-          open: true,
-          message: "Cluster import started successfully!",
-          severity: "success",
-        });
+    try {
+      // Clear form fields after a successful import
+      setFormData({ clusterName: "", token: "" });
 
-      } catch (error: unknown) {
-        console.error("Error importing cluster:", error);
-        // Handle Axios errors properly
-        if (error instanceof Error) {
-          setErrorMessage(error.message);
-        } else {
-          setErrorMessage("An unknown error occurred");
-        }
+      // Show success message (if needed)
+      setSnackbar({
+        open: true,
+        message: "Cluster import started successfully!",
+        severity: "success",
+      });
 
-        // Show error message (if needed)
-        setSnackbar({
-          open: true,
-          message: "Error importing cluster. Please check your inputs.",
-          severity: "error",
-        });
-
-      } finally {
-        setLoading(false);
+    } catch (error: unknown) {
+      console.error("Error importing cluster:", error);
+      // Handle Axios errors properly
+      if (error instanceof Error) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage("An unknown error occurred");
       }
-    };
 
-    const handleFileUpload = async () => {
-      // Implement file reading and processing here
-      console.log("File upload triggered");
-    };
+      // Show error message (if needed)
+      setSnackbar({
+        open: true,
+        message: "Error importing cluster. Please check your inputs.",
+        severity: "error",
+      });
 
-    const handleCancel = () => {
-      setSelectedFile(null);
-      setEditorContent("");
-      setErrorMessage("");
-      setActiveOption(null);
-    };
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-    };
-    
-    const tabContentStyles = {
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 2,
-      border: 1,
-      borderColor: 'divider',
-      borderRadius: 1,
-      p: 3,
-      overflowY: 'auto',  // Scroll in the right place
-      flexGrow: 1,        //Ensures proper height
-      minHeight: 0,       //Prevents flexbox shrinking issues
-      bgcolor: theme === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
-    };
+  const handleFileUpload = async () => {
+    // Implement file reading and processing here
+    console.log("File upload triggered");
+  };
 
-    const formContentStyles = {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 2,
+  const handleCancel = () => {
+    setSelectedFile(null);
+    setEditorContent("");
+    setErrorMessage("");
+    setActiveOption(null);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const tabContentStyles = {
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 2,
+    border: 1,
+    borderColor: 'divider',
+    borderRadius: 1,
+    p: 3,
+    overflowY: 'auto',  // Scroll in the right place
+    flexGrow: 1,        //Ensures proper height
+    minHeight: 0,       //Prevents flexbox shrinking issues
+    bgcolor: theme === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
+  };
+
+  const formContentStyles = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 2,
+    width: '100%',
+    maxWidth: '800px', // Limit maximum width for better readability
+    mx: 'auto', // Center the form
+    '& .MuiFormControl-root': {
       width: '100%',
-      maxWidth: '800px', // Limit maximum width for better readability
-      mx: 'auto', // Center the form
-      '& .MuiFormControl-root': {
-        width: '100%',
-      },
-      '& .MuiTextField-root': {
-        width: '100%',
-      }
-    };
+    },
+    '& .MuiTextField-root': {
+      width: '100%',
+    }
+  };
 
-    return (
-      <>
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={5000}
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-        >
-          <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
-        </Snackbar>
+  return (
+    <>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={5000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
+      </Snackbar>
 
-        <Dialog
-          open={!!activeOption}
-          onClose={onCancel}
-          maxWidth="lg"
-          fullWidth
-          PaperProps={{
-            sx: {
-              height: '80vh',
-              display: 'flex',
-              flexDirection: 'column',
-              m: 2,
-              bgcolor: bgColor,
-              color: textColor,
-            }
+      <Dialog
+        open={!!activeOption}
+        onClose={onCancel}
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{
+          sx: {
+            height: '80vh',
+            display: 'flex',
+            flexDirection: 'column',
+            m: 2,
+            bgcolor: bgColor,
+            color: textColor,
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            borderBottom: 1,
+            borderColor: 'divider',
+            p: 2,
+            flex: '0 0 auto',
           }}
         >
-          <DialogTitle
-            sx={{
-              borderBottom: 1,
-              borderColor: 'divider',
-              p: 2,
-              flex: '0 0 auto',
-            }}
-          >
-            Import Cluster
-          </DialogTitle>
+          Import Cluster
+        </DialogTitle>
 
-          <DialogContent
+        <DialogContent
+          sx={{
+            p: 0,
+            flex: 1,
+            overflow: 'hidden',
+          }}
+        >
+          <Box
             sx={{
-              p: 0,
-              flex: 1,
-              overflow: 'hidden',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
-            <Box
+            <Tabs
+              value={activeOption}
+              onChange={(_event, newValue) => setActiveOption(newValue)}
               sx={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
+                borderBottom: 2,
+                borderColor: 'divider',
+                bgcolor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                '& .MuiTab-root': {
+                  px: 3,
+                  py: 1.5,
+                  color: textColor,
+                  borderRight: 1,
+                  borderColor: 'divider',
+                  '&.Mui-selected': {
+                    color: 'primary.main',
+                    bgcolor: theme === 'dark' ? 'rgba(144, 202, 249, 0.08)' : '#E3F2FD',
+                    borderBottom: 2,
+                    borderColor: 'primary.main',
+                  },
+                  '&:hover': {
+                    bgcolor: theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+                  },
+                },
+                '& .MuiTabs-indicator': {
+                  height: 3,
+                  borderTopLeftRadius: 3,
+                  borderTopRightRadius: 3,
+                }
               }}
             >
-              <Tabs
-                value={activeOption}
-                onChange={(_event, newValue) => setActiveOption(newValue)}
-                sx={{
-                  borderBottom: 2,
-                  borderColor: 'divider',
-                  bgcolor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-                  '& .MuiTab-root': {
-                    px: 3,
-                    py: 1.5,
-                    color: textColor,
-                    borderRight: 1,
-                    borderColor: 'divider',
-                    '&.Mui-selected': {
-                      color: 'primary.main',
-                      bgcolor: theme === 'dark' ? 'rgba(144, 202, 249, 0.08)' : '#E3F2FD',
-                      borderBottom: 2,
-                      borderColor: 'primary.main',
-                    },
-                    '&:hover': {
-                      bgcolor: theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
-                    },
-                  },
-                  '& .MuiTabs-indicator': {
-                    height: 3,
-                    borderTopLeftRadius: 3,
-                    borderTopRightRadius: 3,
-                  }
-                }}
-              >
-                <Tab label="YAML paste" value="option1" />
-                <Tab label="Kubeconfig" value="option2" />
-                <Tab label="API/URL" value="option3" />
-                <Tab label="Manual" value="option4" />
-              </Tabs>
+              <Tab label="YAML paste" value="option1" />
+              <Tab label="Kubeconfig" value="option2" />
+              <Tab label="API/URL" value="option3" />
+              <Tab label="Manual" value="option4" />
+            </Tabs>
 
-              <Box sx={{
-                flex: 1,
-                overflow: 'auto',
-                p: 3,
-              }}>
-                {activeOption === "option1" && (
-                  <Box sx={tabContentStyles}>
-                    <Alert severity="info">
-                      <AlertTitle>Info</AlertTitle>
-                      Paste a YAML file.
-                    </Alert>
+            <Box sx={{
+              flex: 1,
+              overflow: 'auto',
+              p: 3,
+            }}>
+              {activeOption === "option1" && (
+                <Box sx={tabContentStyles}>
+                  <Alert severity="info">
+                    <AlertTitle>Info</AlertTitle>
+                    Paste a YAML file.
+                  </Alert>
 
-                    <FormControl
-                      sx={{
-                        flex: '0 0 auto',
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: 1,
-                          '& fieldset': {
-                            borderWidth: 1,
-                            borderColor: 'divider',
-                          },
-                          '&:hover fieldset': {
-                            borderColor: 'primary.main',
-                          },
+                  <FormControl
+                    sx={{
+                      flex: '0 0 auto',
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 1,
+                        '& fieldset': {
+                          borderWidth: 1,
+                          borderColor: 'divider',
                         },
-                      }}
-                    >
-                      <InputLabel sx={{ color: textColor }}>File Type</InputLabel>
-                      <Select
-                        value={fileType}
-                        onChange={(e) => {
-                          setFileType(e.target.value as "yaml");
-                          setEditorContent("");
-                        }}
-                        label="File Type"
-                        sx={{ bgcolor: bgColor, color: textColor }}
-                      >
-                        <MenuItem value="yaml">YAML</MenuItem>
-                      </Select>
-                    </FormControl>
-
-                    <Box sx={{
-                      flex: 1,
-                      minHeight: 0,
-                      border: 1,
-                      borderColor: 'divider',
-                      borderRadius: 1,
-                      overflow: 'hidden',
-                    }}>
-                      <Editor
-                        height="100%"
-                        language={fileType}
-                        value={editorContent}
-                        theme={theme === "dark" ? "vs-dark" : "light"}
-                        options={{
-                          minimap: { enabled: false },
-                          fontSize: 14,
-                          lineNumbers: "on",
-                          scrollBeyondLastLine: false,
-                          automaticLayout: true,
-                        }}
-                        onChange={(value) => setEditorContent(value || "")}
-                      />
-                    </Box>
-
-                    <DialogActions sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
-                      <Button onClick={onCancel}>Cancel</Button>
-                      <Button
-                        variant="contained"
-                        disabled={!editorContent}
-                        sx={{
-                          "&:disabled": {
-                            cursor: "not-allowed",
-                            pointerEvents: "all !important",
-                          },
-                          boxShadow: 2,
-                        }}
-                        className={`${!editorContent
-                          ? theme === "dark"
-                            ? "!bg-gray-700 !text-gray-400"
-                            : "!bg-gray-300 !text-gray-500"
-                          : ""
-                          }`}
-                      >
-                        Upload
-                      </Button>
-
-                    </DialogActions>
-                  </Box>
-                )}
-
-                {activeOption === "option2" && (
-                  <Box sx={tabContentStyles}>
-                    <Alert severity="info">
-                      <AlertTitle>Info</AlertTitle>
-                      Select a kubeconfig file to import cluster.
-                    </Alert>
-                    <Box
-                      sx={{
-                        border: 2,
-                        borderStyle: 'dashed',
-                        borderColor: 'divider',
-                        borderRadius: 2,
-                        p: 3,
-                        textAlign: "center",
-                        transition: 'border-color 0.2s',
-                        '&:hover': {
+                        '&:hover fieldset': {
                           borderColor: 'primary.main',
                         },
+                      },
+                    }}
+                  >
+                    <InputLabel sx={{ color: textColor }}>File Type</InputLabel>
+                    <Select
+                      value={fileType}
+                      onChange={(e) => {
+                        setFileType(e.target.value as "yaml");
+                        setEditorContent("");
                       }}
+                      label="File Type"
+                      sx={{ bgcolor: bgColor, color: textColor }}
                     >
-                      <Box
-                        sx={{
-                          borderRadius: 1,
-                          p: 2,
-                          textAlign: "center",
-                        }}
-                      >
-                        <Button component="label" sx={{ boxShadow: 2 }}>
-                          Select Kubeconfig file
-                          <input
-                            type="file"
-                            hidden
-                            accept=".kube/config, .yaml, .yml"
-                            onClick={(e) => (e.currentTarget.value = "")}
-                            onChange={(e) => {
-                              const file = e.target.files?.[0] || null;
-                              setSelectedFile(file);
-                            }}
-                          />
-                        </Button>
-                      </Box>
-                      {selectedFile && (
-                        <Box sx={{ mt: 2 }}>
-                          Selected file: <strong>{selectedFile.name}</strong>
-                        </Box>
-                      )}
-                    </Box>
-                    <DialogActions>
-                      <Button onClick={handleCancel}>Cancel</Button>
-                      <Button
-                        variant="contained"
-                        onClick={handleFileUpload}
-                        disabled={!selectedFile}
-                        sx={{
-                          "&:disabled": {
-                            cursor: "not-allowed",
-                            pointerEvents: "all !important",
-                          },
-                          boxShadow: 2,
-                        }}
-                        className={`${!editorContent
-                          ? theme === "dark"
-                            ? "!bg-gray-700 !text-gray-400"
-                            : "!bg-gray-300 !text-gray-500"
-                          : ""
-                          }`}
-                      >
-                        Upload & Import
-                      </Button>
-                    </DialogActions>
-                  </Box>
-                )}
+                      <MenuItem value="yaml">YAML</MenuItem>
+                    </Select>
+                  </FormControl>
 
-                {activeOption === "option3" && (
-                  <Box sx={tabContentStyles}>
-                    <Alert severity="info">
-                      <AlertTitle>Info</AlertTitle>
-                      Enter API/URL to import cluster.
-                    </Alert>
-                    <TextField
-                      fullWidth
-                      label="API/URL"
-                      value={formData.clusterName}
-                      onChange={(e) =>
-                        setFormData({ ...formData, clusterName: e.target.value })
-                      }
-                      sx={commonInputSx}
+                  <Box sx={{
+                    flex: 1,
+                    minHeight: 0,
+                    border: 1,
+                    borderColor: 'divider',
+                    borderRadius: 1,
+                    overflow: 'hidden',
+                  }}>
+                    <Editor
+                      height="100%"
+                      language={fileType}
+                      value={editorContent}
+                      theme={theme === "dark" ? "vs-dark" : "light"}
+                      options={{
+                        minimap: { enabled: false },
+                        fontSize: 14,
+                        lineNumbers: "on",
+                        scrollBeyondLastLine: false,
+                        automaticLayout: true,
+                      }}
+                      onChange={(value) => setEditorContent(value || "")}
                     />
-                    <DialogActions>
-                      <Button onClick={handleCancel} sx={{ color: textColor }}>
-                        Cancel
-                      </Button>
-                      <Button variant="contained" sx={{ boxShadow: 2 }}>
-                        Import
-                      </Button>
-                    </DialogActions>
                   </Box>
-                )}
 
-                {activeOption === "option4" && (
-                  <Box sx={tabContentStyles}>
-                    <Alert severity="info">
-                      <AlertTitle>Info</AlertTitle>
-                      Enter cluster name to generate a token, to then run in the CLI.
-                    </Alert>
+                  <DialogActions sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
+                    <Button onClick={onCancel}>Cancel</Button>
+                    <Button
+                      variant="contained"
+                      disabled={!editorContent}
+                      sx={{
+                        "&:disabled": {
+                          cursor: "not-allowed",
+                          pointerEvents: "all !important",
+                        },
+                        boxShadow: 2,
+                      }}
+                      className={`${!editorContent
+                        ? theme === "dark"
+                          ? "!bg-gray-700 !text-gray-400"
+                          : "!bg-gray-300 !text-gray-500"
+                        : ""
+                        }`}
+                    >
+                      Upload
+                    </Button>
 
+                  </DialogActions>
+                </Box>
+              )}
+
+              {activeOption === "option2" && (
+                <Box sx={tabContentStyles}>
+                  <Alert severity="info">
+                    <AlertTitle>Info</AlertTitle>
+                    Select a kubeconfig file to import cluster.
+                  </Alert>
+                  <Box
+                    sx={{
+                      border: 2,
+                      borderStyle: 'dashed',
+                      borderColor: 'divider',
+                      borderRadius: 2,
+                      p: 3,
+                      textAlign: "center",
+                      transition: 'border-color 0.2s',
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                      },
+                    }}
+                  >
                     <Box
                       sx={{
-                        flex: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        overflow: 'visible', //Prevents label cutting
-                        minHeight: 0,        //Ensures proper flex behavior
+                        borderRadius: 1,
+                        p: 2,
+                        textAlign: "center",
                       }}
                     >
-                      <Box sx={formContentStyles}>
-                        <TextField
-                          label="Cluster Name"
-                          variant="outlined"
-                          name="clusterName"
-                          value={formData.clusterName}
-                          onChange={handleChange}
-                          sx={commonInputSx}
-                          fullWidth
+                      <Button component="label" sx={{ boxShadow: 2 }}>
+                        Select Kubeconfig file
+                        <input
+                          type="file"
+                          hidden
+                          accept=".kube/config, .yaml, .yml"
+                          onClick={(e) => (e.currentTarget.value = "")}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] || null;
+                            setSelectedFile(file);
+                          }}
                         />
-                        <div>
-                          {/* Show the generated command inside a <code> block */}
-                          <p>Run this command in the CLI:</p>
-                          <code>{generatedCommand}</code>
-
-                          {/* Copy Button */}
-                          <Button onClick={() => navigator.clipboard.writeText(generatedCommand)} variant="contained">
-                            Copy
-                          </Button>
-                        </div>
+                      </Button>
+                    </Box>
+                    {selectedFile && (
+                      <Box sx={{ mt: 2 }}>
+                        Selected file: <strong>{selectedFile.name}</strong>
                       </Box>
+                    )}
+                  </Box>
+                  <DialogActions>
+                    <Button onClick={handleCancel}>Cancel</Button>
+                    <Button
+                      variant="contained"
+                      onClick={handleFileUpload}
+                      disabled={!selectedFile}
+                      sx={{
+                        "&:disabled": {
+                          cursor: "not-allowed",
+                          pointerEvents: "all !important",
+                        },
+                        boxShadow: 2,
+                      }}
+                      className={`${!editorContent
+                        ? theme === "dark"
+                          ? "!bg-gray-700 !text-gray-400"
+                          : "!bg-gray-300 !text-gray-500"
+                        : ""
+                        }`}
+                    >
+                      Upload & Import
+                    </Button>
+                  </DialogActions>
+                </Box>
+              )}
 
-                      <Box sx={{
-                        mt: 'auto',
-                        pt: 2,
-                        borderTop: 1,
-                        borderColor: 'divider',
-                      }}>
-                        <DialogActions>
-                          <Button onClick={handleCancel}>Cancel</Button>
-                          <Button
-                            variant="contained"
-                            onClick={handleImportCluster}
-                            disabled={!formData.clusterName || loading}
-                            sx={{
-                              "&:disabled": {
-                                cursor: "not-allowed",
-                                pointerEvents: "all !important",
-                              },
-                            }}
-                            className={`${(!formData.clusterName || loading)
-                              ? theme === "dark"
-                                ? "!bg-gray-700 !text-gray-400"
-                                : "!bg-gray-300 !text-gray-500"
-                              : ""
-                              }`}
-                          >
-                            {loading ? <CircularProgress size={24} /> : "Import"}
-                          </Button>
-                        </DialogActions>
-                      </Box>
+              {activeOption === "option3" && (
+                <Box sx={tabContentStyles}>
+                  <Alert severity="info">
+                    <AlertTitle>Info</AlertTitle>
+                    Enter API/URL to import cluster.
+                  </Alert>
+                  <TextField
+                    fullWidth
+                    label="API/URL"
+                    value={formData.clusterName}
+                    onChange={(e) =>
+                      setFormData({ ...formData, clusterName: e.target.value })
+                    }
+                    sx={commonInputSx}
+                  />
+                  <DialogActions>
+                    <Button onClick={handleCancel} sx={{ color: textColor }}>
+                      Cancel
+                    </Button>
+                    <Button variant="contained" sx={{ boxShadow: 2 }}>
+                      Import
+                    </Button>
+                  </DialogActions>
+                </Box>
+              )}
+
+              {activeOption === "option4" && (
+                <Box sx={tabContentStyles}>
+                  <Alert severity="info">
+                    <AlertTitle>Info</AlertTitle>
+                    Enter cluster name to generate a token, to then run in the CLI.
+                  </Alert>
+
+                  <Box
+                    sx={{
+                      flex: 1,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      overflow: 'visible', //Prevents label cutting
+                      minHeight: 0,        //Ensures proper flex behavior
+                    }}
+                  >
+                    <Box sx={formContentStyles}>
+                      <TextField
+                        label="Cluster Name"
+                        variant="outlined"
+                        name="clusterName"
+                        value={formData.clusterName}
+                        onChange={handleChange}
+                        sx={commonInputSx}
+                        fullWidth
+                      />
+                      <div>
+                        {/* Show the generated command inside a <code> block */}
+                        <p>Run this command in the CLI:</p>
+                        <code>{generatedCommand}</code>
+
+                        {/* Copy Button */}
+                        <Button onClick={() => navigator.clipboard.writeText(generatedCommand)} variant="contained">
+                          Copy
+                        </Button>
+                      </div>
+                    </Box>
+
+                    <Box sx={{
+                      mt: 'auto',
+                      pt: 2,
+                      borderTop: 1,
+                      borderColor: 'divider',
+                    }}>
+                      <DialogActions>
+                        <Button onClick={handleCancel}>Cancel</Button>
+                        <Button
+                          variant="contained"
+                          onClick={handleImportCluster}
+                          disabled={!formData.clusterName || loading}
+                          sx={{
+                            "&:disabled": {
+                              cursor: "not-allowed",
+                              pointerEvents: "all !important",
+                            },
+                          }}
+                          className={`${(!formData.clusterName || loading)
+                            ? theme === "dark"
+                              ? "!bg-gray-700 !text-gray-400"
+                              : "!bg-gray-300 !text-gray-500"
+                            : ""
+                            }`}
+                        >
+                          {loading ? <CircularProgress size={24} /> : "Import"}
+                        </Button>
+                      </DialogActions>
                     </Box>
                   </Box>
-                )}
-              </Box>
+                </Box>
+              )}
             </Box>
-          </DialogContent>
-        </Dialog>
+          </Box>
+        </DialogContent>
+      </Dialog>
 
-        <Snackbar
-          open={!!errorMessage}
-          autoHideDuration={6000}
-          onClose={() => setErrorMessage("")}
-          message={errorMessage}
-          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-        />
-      </>
-    );
-  };
-  export default ImportClusters;
+      <Snackbar
+        open={!!errorMessage}
+        autoHideDuration={6000}
+        onClose={() => setErrorMessage("")}
+        message={errorMessage}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      />
+    </>
+  );
+};
+export default ImportClusters;
