@@ -13,14 +13,7 @@ import (
 )
 
 func setupDeploymentRoutes(router *gin.Engine) {
-	router.GET("/api/wds/workloads", func(c *gin.Context) {
-		workloads, err := deployment.GetWDSWorkloads()
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusOK, workloads)
-	})
+	router.GET("/api/wds/workloads", deployment.GetWDSWorkloads)
 	router.POST("/api/wds/create", deployment.CreateDeployment)
 	router.POST("/api/wds/create/json", deployment.HandleCreateDeploymentJson)
 	router.PUT("/api/wds/update", deployment.UpdateDeployment)

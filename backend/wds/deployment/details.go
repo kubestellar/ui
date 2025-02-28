@@ -7,16 +7,12 @@ GetDeploymentByName, GetWDSWorkloads
 
 import (
 	"context"
-	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/katamyra/kubestellarUI/wds"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 type WorkloadInfo struct {
@@ -67,54 +63,33 @@ func GetDeploymentByName(c *gin.Context) {
 	})
 }
 
-func GetWDSWorkloads() ([]WorkloadInfo, error) {
-	kubeconfig := os.Getenv("KUBECONFIG")
-	if kubeconfig == "" {
-		if home := homeDir(); home != "" {
-			kubeconfig = fmt.Sprintf("%s/.kube/config", home)
-		}
-	}
-
-	// Load the kubeconfig file
-	config, err := clientcmd.LoadFromFile(kubeconfig)
+func GetWDSWorkloads(c *gin.Context) {
+	clientset, err := wds.GetClientSetKubeConfig()
 	if err != nil {
-		return nil, err
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "failed to create Kubernetes clientset",
+			"err":     err,
+		})
+		return
 	}
 
-	// Use WDS1 context specifically
-	ctxContext := config.Contexts["wds1"]
-	if ctxContext == nil {
-		return nil, fmt.Errorf("WDS1 context not found in kubeconfig")
-	}
-
-	// Create config for WDS cluster
-	clientConfig := clientcmd.NewDefaultClientConfig(
-		*config,
-		&clientcmd.ConfigOverrides{
-			CurrentContext: "wds1",
-		},
-	)
-
-	restConfig, err := clientConfig.ClientConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	clientset, err := kubernetes.NewForConfig(restConfig)
-	if err != nil {
-		return nil, err
+	namespace := c.Query("namespace")
+	if namespace == "" {
+		namespace = "" // Use "" namespace if not provided (all deployment listed out)
 	}
 
 	// Get Deployments
-	deployments, err := clientset.AppsV1().Deployments("").List(context.TODO(), metav1.ListOptions{})
+	deployments, err := clientset.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get deployments: %w", err)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Deployment not found", "details": err.Error()})
+		return
 	}
 
 	// Get Services
-	services, err := clientset.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{})
+	services, err := clientset.CoreV1().Services(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get services: %w", err)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Services not found", "details": err.Error()})
+		return
 	}
 
 	var workloads []WorkloadInfo
@@ -138,6 +113,5 @@ func GetWDSWorkloads() ([]WorkloadInfo, error) {
 			CreationTime: service.CreationTimestamp.Time,
 		})
 	}
-
-	return workloads, nil
+	c.JSON(http.StatusOK, workloads)
 }
