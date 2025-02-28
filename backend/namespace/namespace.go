@@ -99,8 +99,8 @@ func GetAllNamespaces() ([]models.Namespace, error) {
 	return namespaceDetails, nil
 }
 
-// GetNamespaceDetails fetches details of a specific namespace
-func GetNamespaceDetails(namespace string) (*models.Namespace, error) {
+// GetNamespaceDetails fetches detailed information about a specific namespace
+func GetNamespaceDetails(namespace string) (*NamespaceDetails, error) {
 	clientset, err := wds.GetClientSetKubeConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize Kubernetes client: %v", err)
@@ -114,10 +114,22 @@ func GetNamespaceDetails(namespace string) (*models.Namespace, error) {
 		return nil, fmt.Errorf("namespace '%s' not found: %v", namespace, err)
 	}
 
-	details := &models.Namespace{
-		Name:   ns.Name,
-		Status: string(ns.Status.Phase),
-		Labels: ns.Labels,
+	// Fetch all related resources
+	pods, _ := clientset.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{})
+	deployments, _ := clientset.AppsV1().Deployments(namespace).List(ctx, metav1.ListOptions{})
+	services, _ := clientset.CoreV1().Services(namespace).List(ctx, metav1.ListOptions{})
+	configMaps, _ := clientset.CoreV1().ConfigMaps(namespace).List(ctx, metav1.ListOptions{})
+	secrets, _ := clientset.CoreV1().Secrets(namespace).List(ctx, metav1.ListOptions{})
+
+	details := &NamespaceDetails{
+		Name:        ns.Name,
+		Status:      string(ns.Status.Phase),
+		Labels:      ns.Labels,
+		Pods:        pods.Items,
+		Deployments: deployments.Items,
+		Services:    services.Items,
+		ConfigMaps:  configMaps.Items,
+		Secrets:     secrets.Items,
 	}
 
 	return details, nil

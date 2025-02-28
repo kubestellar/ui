@@ -23,7 +23,7 @@ export interface Workload {
 const COLORS = ["#28A745"];
 
 const WDS = () => {
-  const { theme } = useContext(ThemeContext); 
+  const { theme } = useContext(ThemeContext);
   const [workloads, setWorkloads] = useState<Workload[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,12 +52,13 @@ const WDS = () => {
     }
   }, []);
 
-
   useEffect(() => {
     fetchWDSData();
   }, [fetchWDSData]);
 
-  const deployments = workloads.filter((workload) => workload.kind === "Deployment");
+  const deployments = workloads.filter(
+    (workload) => workload.kind === "Deployment"
+  );
 
   const workloadCounts = workloads.reduce((acc, workload) => {
     acc[workload.kind] = (acc[workload.kind] || 0) + 1;
@@ -88,29 +89,39 @@ const WDS = () => {
   );
 
   return (
-    <div className={`w-full max-w-7xl mx-auto p-4`}>
-      <h1 className={`text-2xl font-bold mb-6  ${theme === "dark" ? "text-white" : "text-black"}`}>WDS Workloads ({workloads.length})</h1>
-
-      <Box sx={{ display: "flex", gap: 1 }}>
-        <Button
-          variant="outlined"
-          startIcon={<Plus size={20} />}
-          onClick={() => {
-            setShowCreateOptions(true);
-            setActiveOption("option1");
-          }}
-          sx={{
-            borderColor: theme === "dark" ? "white" : "blue", // White border in dark mode
-            color: theme === "dark" ? "white" : "blue", // White text in dark mode
-            "&:hover": {
-              borderColor: theme === "dark" ? "white" : "blue", // Keep white border on hover in dark mode
-            },
-          }}
+    <div className={`w-full p-4`}>
+      <div className="flex justify-between items-center">
+        <h1
+          className={`text-2xl font-bold ${
+            theme === "dark" ? "text-white" : "text-black"
+          }`}
         >
-          Create Workload
-        </Button>
-      </Box>
+          <span className="text-[#4498FF]">WDS Workloads</span>
+          <span className="ml-2 px-3 py-1 bg-primary/10 rounded-full text-sm">
+            {workloads?.length}
+          </span>
+        </h1>
 
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button
+            variant="outlined"
+            startIcon={<Plus size={20} />}
+            onClick={() => {
+              setShowCreateOptions(true);
+              setActiveOption("option1");
+            }}
+            sx={{
+              borderColor: theme === "dark" ? "white" : "[#2f86ff]", // White border in dark mode
+              color: theme === "dark" ? "white" : "#2f86ff", // White text in dark mode
+              "&:hover": {
+                borderColor: theme === "dark" ? "white" : "#2f86ff", // Keep white border on hover in dark mode
+              },
+            }}
+          >
+            Create Workload
+          </Button>
+        </Box>
+      </div>
       {showCreateOptions && (
         <CreateOptions
           activeOption={activeOption}
@@ -119,14 +130,26 @@ const WDS = () => {
         />
       )}
 
-      <Box sx={{ mt: 6, mb: 6, backgroundColor: theme === "dark" ? "#2d3748" : "#fff" }}>
+      <Box
+        sx={{
+          mt: 3,
+          mb: 3,
+          backgroundColor: theme === "dark" ? "#2d3748" : "#fff",
+        }}
+      >
         {Object.keys(workloadCounts).length > 0 && (
-          <Card sx={{ p: 4, boxShadow: 3, backgroundColor: theme === "dark" ? "#1F2937" : "#fff" }}>
+          <Card
+            sx={{
+              p: 4,
+              boxShadow: 3,
+              backgroundColor: theme === "dark" ? "#1F2937" : "#fff",
+            }}
+          >
             <CardContent>
-              <Typography 
-                variant="h5" 
-                fontWeight="bold" 
-                color={theme === "dark" ? "white" : "text.primary"} 
+              <Typography
+                variant="h5"
+                fontWeight="bold"
+                color={theme === "dark" ? "white" : "text.primary"}
                 mb={2}
               >
                 Workload Status
@@ -135,7 +158,10 @@ const WDS = () => {
               <Grid container spacing={65} justifyContent="center">
                 {Object.entries(workloadCounts).map(([kind, count], index) => (
                   <Grid item key={index}>
-                    <PieChartDisplay workload={{ kind, count }} color={COLORS[index % COLORS.length]} />
+                    <PieChartDisplay
+                      workload={{ kind, count }}
+                      color={COLORS[index % COLORS.length]}
+                    />
                   </Grid>
                 ))}
               </Grid>

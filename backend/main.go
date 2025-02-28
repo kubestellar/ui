@@ -2,17 +2,13 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"log"
-	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/katamyra/kubestellarUI/routes"
-	"github.com/katamyra/kubestellarUI/wds/deployment"
 
 	"github.com/katamyra/kubestellarUI/api"
 	"github.com/katamyra/kubestellarUI/redis"
@@ -40,59 +36,6 @@ func main() {
 		c.Next()
 	})
 	routes.SetupRoutes(router)
-	// New Log Endpoint
-	router.GET("/api/log", func(c *gin.Context) {
-		// Fetch Kubernetes Information
-		contexts, clusters, currentContext, _, itsData := routes.GetKubeInfo()
-
-		// Fetch WDS Workloads
-		workloads, err := deployment.GetWDSWorkloads()
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		var logBuilder strings.Builder
-
-		logBuilder.WriteString("==== KubestellarUI Log ====\n\n")
-
-		logBuilder.WriteString(fmt.Sprintf("Current Context: %s\n\n", currentContext))
-
-		logBuilder.WriteString("=== Clusters ===\n")
-		for _, cluster := range clusters {
-			logBuilder.WriteString(fmt.Sprintf("- %s\n", cluster))
-		}
-
-		logBuilder.WriteString("\n=== Contexts ===\n")
-		for _, ctx := range contexts {
-			logBuilder.WriteString(fmt.Sprintf("- %s (Cluster: %s)\n", ctx.Name, ctx.Cluster))
-		}
-
-		logBuilder.WriteString("\n=== ITS Data ===\n")
-		for _, cluster := range itsData {
-			logBuilder.WriteString(fmt.Sprintf("- Name: %s\n", cluster.Name))
-			logBuilder.WriteString("  Labels:\n")
-			for key, value := range cluster.Labels {
-				logBuilder.WriteString(fmt.Sprintf("    %s=%s\n", key, value))
-			}
-			logBuilder.WriteString(fmt.Sprintf("  Creation Time: %s\n", cluster.CreationTime))
-		}
-
-		logBuilder.WriteString("\n=== WDS Workloads ===\n")
-		for _, workload := range workloads {
-			logBuilder.WriteString(fmt.Sprintf("- Name: %s\n", workload.Name))
-			logBuilder.WriteString(fmt.Sprintf("  Kind: %s\n", workload.Kind))
-			logBuilder.WriteString(fmt.Sprintf("  Namespace: %s\n", workload.Namespace))
-			logBuilder.WriteString(fmt.Sprintf("  Creation Time: %s\n\n", workload.CreationTime))
-		}
-
-		// Set Headers for File Download
-		c.Header("Content-Type", "text/plain")
-		c.Header("Content-Disposition", "attachment; filename=kubestellarui.log")
-
-		// Send the Log String
-		c.String(http.StatusOK, logBuilder.String())
-	})
 
 	redis.InitRedis()
 

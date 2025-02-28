@@ -60,7 +60,7 @@ const K8sInfo = () => {
         {/* Clusters Card */}
         <div className="card bg-base-100 shadow-xl p-6 hover:shadow-2xl transition-shadow duration-300">
           <h2 className="text-2xl font-bold mb-6 flex items-center">
-            <span className="text-primary">Kubernetes Clusters</span>
+            <span className="text-kubeprimary">Kubernetes Clusters</span>
             <span className="ml-2 px-3 py-1 bg-primary/10 rounded-full text-sm">
               {clusters?.length}
             </span>
@@ -80,7 +80,7 @@ const K8sInfo = () => {
         {/* Contexts Card */}
         <div className="card bg-base-100 shadow-xl p-6 hover:shadow-2xl transition-shadow duration-300">
           <h2 className="text-2xl font-bold mb-6 flex items-center">
-            <span className="text-primary">Kubernetes Contexts</span>
+            <span className="text-[#4498FF]">Kubernetes Contexts</span>
             <span className="ml-2 px-3 py-1 bg-primary/10 rounded-full text-sm">
               {contexts?.length}
             </span>
@@ -109,8 +109,8 @@ const K8sInfo = () => {
 
         {/* Current Context Card */}
         <div className="card bg-base-100 shadow-xl p-6 hover:shadow-2xl transition-shadow duration-300">
-          <h2 className="text-2xl font-bold mb-6 text-primary">Current Context</h2>
-          <div className="p-4 bg-base-200 rounded-lg border-l-4 border-primary">
+          <h2 className="text-2xl font-bold mb-6 text-kubeprimary">Current Context</h2>
+          <div className="p-4 bg-base-200 rounded-lg border-l-4 border-kubeprimary">
             <p className="font-mono text-sm break-all">{currentContext}</p>
           </div>
         </div>
