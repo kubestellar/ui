@@ -42,7 +42,6 @@ func main() {
 	postgresql.ConnectDB()
 	models.InitDB()
 
-
 	router.POST("api/deploy", api.DeployHandler)
 	router.POST("api/webhook", api.GitHubWebhookHandler)
 
