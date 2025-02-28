@@ -90,8 +90,8 @@ html, body {
   margin-right: -3px;
 }
 
-/* Add a single dash exactly in the middle */
-.react-flow__node::after {
+/* Add a single dash exactly in the middle for non-terminal nodes only */
+.react-flow__node:not(.terminal-node)::after {
   content: "-"; /* Single dash */
   position: absolute;
   top: 50%;
