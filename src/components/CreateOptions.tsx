@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Editor from "@monaco-editor/react";
 import jsyaml from "js-yaml";
-import { ThemeContext } from "../context/ThemeContext"; 
+import { ThemeContext } from "../context/ThemeContext";
 import { useContext } from "react";
 import {
   Dialog,
@@ -68,24 +68,23 @@ const CreateOptions = ({
       showSnackbar(`No file selected.` , "error");
       return;
     }
-  
+
     const formData = new FormData();
     formData.append("wds", selectedFile);
-  
+
     try {
       const response = await fetch("http://localhost:4000/api/wds/create", {
         method: "POST",
         body: formData,
       });
-  
+
       const data = await response.json();
       console.log(data);
-  
+
       if (response.ok) {
         showSnackbar(`Deployment successfully!` , "success");
         // Close modal properly before reloading
         // handleCancel();
-  
         // Wait a short time, then reload the page
         setTimeout(() => {
           window.location.reload();
@@ -101,10 +100,10 @@ const CreateOptions = ({
       showSnackbar(`Upload failed.` , "error");
     }
   };
-  
+
   const handleRawUpload = async () => {
     const fileContent = editorContent.trim();
-  
+
     if (!fileContent) {
       setSnackbar({
         open: true,
@@ -113,12 +112,16 @@ const CreateOptions = ({
       });
       return;
     }
-  
+
     let requestBody;
-  
+
     try {
       let parsedInput: {
-        metadata?: { name: string; namespace?: string; labels?: Record<string, string> };
+        metadata?: {
+          name: string;
+          namespace?: string;
+          labels?: Record<string, string>;
+        };
         spec?: {
           replicas?: number;
           selector?: { matchLabels?: Record<string, string> };
@@ -134,7 +137,7 @@ const CreateOptions = ({
           };
         };
       };
-  
+
       if (fileType === "json") {
         parsedInput = JSON.parse(fileContent);
       } else if (fileType === "yaml") {
@@ -147,7 +150,7 @@ const CreateOptions = ({
         });
         return;
       }
-  
+
       // ✅ Convert parsed input (either JSON or YAML) to match backend format
       requestBody = {
         namespace: parsedInput.metadata?.namespace || "default",
@@ -165,26 +168,39 @@ const CreateOptions = ({
             ) || [],
         },
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Parsing Error:", error);
-      setSnackbar({
-        open: true,
-        message: "Invalid JSON/YAML format.",
-        severity: "error",
-      });
+      if (typeof error === "object" && error !== null && "reason" in error) {
+        setSnackbar({
+          open: true,
+          message: "Error: " + (error as { reason: string }).reason,
+          severity: "error",
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: "An unknown error occurred",
+          severity: "error",
+        });
+      }
       return;
     }
-  
+
     // ✅ Validate required fields before sending the request
-    if (!requestBody.namespace || !requestBody.name || !requestBody.container.name) {
+    if (
+      !requestBody.namespace ||
+      !requestBody.name ||
+      !requestBody.container.name
+    ) {
       setSnackbar({
         open: true,
-        message: "Missing required fields: 'namespace', 'name', or 'container'.",
+        message:
+          "Missing required fields: 'namespace', 'name', or 'container'.",
         severity: "error",
       });
       return;
     }
-  
+
     if (!requestBody.container.ports.length) {
       setSnackbar({
         open: true,
@@ -193,7 +209,7 @@ const CreateOptions = ({
       });
       return;
     }
-  
+
     try {
       const response = await fetch("http://localhost:4000/api/wds/create/json", {
         method: "POST",
@@ -204,19 +220,25 @@ const CreateOptions = ({
       });
   
       const responseData = await response.json();
-  
+
       if (!response.ok) {
         console.error("Backend Error:", responseData);
-  
-        if (response.status === 400 || response.status === 409 || response.status === 500) {
+
+        if (
+          response.status === 400 ||
+          response.status === 409 ||
+          response.status === 500
+        ) {
           setSnackbar({
             open: true,
-            message: `Deployment failed: ${responseData.err?.ErrStatus?.message || "Already exists."}`,
+            message: `Deployment failed: ${
+              responseData.err?.ErrStatus?.message || "Already exists."
+            }`,
             severity: "error",
           });
           return;
         }
-  
+
         setSnackbar({
           open: true,
           message: "Unknown error occurred.",
@@ -224,13 +246,13 @@ const CreateOptions = ({
         });
         return;
       }
-  
+
       setSnackbar({
         open: true,
         message: "Deployment successful!",
         severity: "success",
       });
-  
+
       setTimeout(() => window.location.reload(), 500);
     } catch (error) {
       console.error("Error uploading:", error);
@@ -241,22 +263,26 @@ const CreateOptions = ({
       });
     }
   };
-  
+
   console.log(error);
-  
+
   const handleDeploy = async () => {
     if (!formData.githuburl || !formData.path) {
-      setSnackbar({ open: true, message: "Please fill in both fields.", severity: "error" });
+      setSnackbar({
+        open: true,
+        message: "Please fill in both fields.",
+        severity: "error",
+      });
       return;
     }
-  
+
     setLoading(true);
   
     const requestData = {
       url: formData.githuburl,
       path: formData.path,
     };
-  
+
     try {
       const response = await fetch("http://localhost:4000/api/wds/create", {
         method: "POST",
@@ -265,7 +291,7 @@ const CreateOptions = ({
         },
         body: JSON.stringify(requestData),
       });
-  
+
       const result = await response.json();
       console.log(result);
       
@@ -297,12 +323,11 @@ const CreateOptions = ({
       setLoading(false);
     }
   };
-  
 
   const handleCancel = () => {
     setSelectedFile(null); // Clear file selection
-    setError("");          // Clear error messages
-    setActiveOption(null);  // Close the modal
+    setError(""); // Clear error messages
+    setActiveOption(null); // Close the modal
   };
 
   const showSnackbar = (message: string, severity: "success" | "error") => {
@@ -483,7 +508,6 @@ const CreateOptions = ({
                   <AlertTitle>Info</AlertTitle>
                   Fill out the form to create a deployment.
                 </Alert>
-
                 {/* Centered GitHub URL and Path Fields */}
                 <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
                   <TextField
