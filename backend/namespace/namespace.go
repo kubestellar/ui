@@ -135,7 +135,6 @@ func GetNamespaceDetails(namespace string) (*NamespaceDetails, error) {
 	return details, nil
 }
 
-
 // UpdateNamespace updates namespace labels
 func UpdateNamespace(namespaceName string, labels map[string]string) error {
 	clientset, err := wds.GetClientSetKubeConfig()
