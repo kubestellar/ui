@@ -1,10 +1,7 @@
-// import React from 'react';
-
-import useTheme from "../hooks/useTheme";
-
+import useTheme from "../stores/themeStore";
 
 const ChangeThemes = () => {
-  const { toggleTheme } = useTheme();
+  const toggleTheme = useTheme((state) => state.toggleTheme);
 
   return (
     <div className="w-full">

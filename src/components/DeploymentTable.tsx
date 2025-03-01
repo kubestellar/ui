@@ -27,8 +27,7 @@ import Editor from "@monaco-editor/react";
 import axios from "axios";
 import LogModal from "./LogModal";
 import yaml from "js-yaml";
-import { ThemeContext } from "../context/ThemeContext"; // Import ThemeContext
-import { useContext } from "react";
+import useTheme from "../stores/themeStore";
 
 
 interface Workload {
@@ -78,7 +77,7 @@ const DeploymentTable = ({ title, workloads, setSelectedDeployment }: Props) => 
   const [desiredReplicas, setDesiredReplicas] = useState<number | "">("");
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [error, setError] = useState<string>("");
-  const { theme } = useContext(ThemeContext);
+  const theme = useTheme((state) => state.theme)
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "error" | "warning" | "info" }>({
     open: false,
     message: "",
@@ -266,7 +265,7 @@ spec:
 };
 
 return (
-  <Paper  elevation={3}  sx={{ p: 3, bgcolor: theme === "dark" ? "#2f86ff" : "background.paper", color: theme === "dark" ? "white" : "black",      borderRadius: 2 }}>
+  <Paper  elevation={3}  sx={{ p: 3, bgcolor: theme === "dark" ? "#1F2937" : "background.paper", color: theme === "dark" ? "white" : "black",      borderRadius: 2 }}>
     {/* Header Section */}
     <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
       <Typography variant="h6" fontWeight="bold">

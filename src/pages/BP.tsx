@@ -1,4 +1,5 @@
-import { useEffect, useState, useContext, useCallback } from "react";
+
+import { useEffect, useState, useCallback } from "react";
 import { Paper, Box, Snackbar, Alert } from "@mui/material";
 import BPHeader from "../components/BindingPolicy/Dialogs/BPHeader";
 import BPTable from "../components/BindingPolicy/BPTable";
@@ -6,12 +7,12 @@ import BPPagination from "../components/BindingPolicy/BPPagination";
 import PreviewDialog from "../components/BindingPolicy/PreviewDialog";
 import DeleteDialog from "../components/BindingPolicy/Dialogs/DeleteDialog";
 import EditBindingPolicyDialog from "../components/BindingPolicy/Dialogs/EditBindingPolicyDialog";
-import { ThemeContext } from "../context/ThemeContext";
 import {
   BindingPolicyInfo,
   ManagedCluster,
   Workload,
 } from "../types/bindingPolicy";
+import useTheme from "../stores/themeStore";
 import { api } from "../lib/api";
 
 // Define type for the raw binding policy from API
@@ -38,7 +39,7 @@ const BP = () => {
   const [bindingPolicies, setBindingPolicies] = useState<BindingPolicyInfo[]>(
     []
   );
-  const { theme } = useContext(ThemeContext);
+  const theme = useTheme((state) => state.theme)
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedLabels] = useState<Record<string, string>>({});

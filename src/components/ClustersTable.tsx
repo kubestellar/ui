@@ -19,8 +19,8 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { Plus, CloudOff, Filter } from "lucide-react";
-import useTheme from "../hooks/useTheme";
 import CreateOptions from "./ImportClusters";
+import useTheme from "../stores/themeStore";
 
 interface ManagedClusterInfo {
   name: string;
@@ -50,7 +50,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
   const [selectedClusters, setSelectedClusters] = useState<string[]>([]);
   const [showCreateOptions, setShowCreateOptions] = useState(false);
   const [activeOption, setActiveOption] = useState<string | null>("option1");
-  const { theme } = useTheme();
+  const theme = useTheme((state) => state.theme)
 
   const isDark = theme === "dark";
 

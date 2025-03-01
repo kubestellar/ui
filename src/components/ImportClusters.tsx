@@ -1,6 +1,5 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState } from "react";
 import Editor from "@monaco-editor/react";
-import { ThemeContext } from "../context/ThemeContext";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +19,7 @@ import {
   CircularProgress,
   Snackbar,
 } from "@mui/material";
+import useTheme from "../stores/themeStore";
 
 interface Props {
   activeOption: string | null;
@@ -36,7 +36,7 @@ const commonInputSx = {
 };
 
 const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
-  const { theme } = useContext(ThemeContext);
+  const theme = useTheme((state) => state.theme)
   const textColor = theme === "dark" ? "white" : "black";
   const bgColor = theme === "dark" ? "#1F2937" : "background.paper";
 
@@ -51,6 +51,7 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
   const [formData, setFormData] = useState({
     clusterName: "",
     token: "",
+    hubApiServer: "",
   });
 
   const [snackbar, setSnackbar] = useState<{
@@ -75,7 +76,17 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
     }
   }, [formData.clusterName]);
 
-  const generatedCommand = `clusteradm join --hub-token ${formData.token} --hub-apiserver http://localhost:3000/api/hub --cluster-name ${formData.clusterName}`;
+   // ✅ Fetch the Hub API Server URL on mount
+   useEffect(() => {
+    fetch("/api/hub") // Change this to your actual endpoint
+      .then((res) => res.json())
+      .then((data) => {
+        setFormData((prev) => ({ ...prev, hubApiServer: data.apiserver }));
+      })
+      .catch((err) => console.error("Error fetching hub API server:", err));
+  }, []);
+
+  const generatedCommand = `clusteradm join --hub-token ${formData.token} --hub-apiserver ${formData.hubApiServer} --cluster-name ${formData.clusterName}`;
 
   const handleImportCluster = async () => {
     setErrorMessage("");
@@ -83,7 +94,7 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
 
     try {
       // Clear form fields after a successful import
-      setFormData({ clusterName: "", token: "" });
+      setFormData({ clusterName: "", token: "", hubApiServer: "" });
 
       // Show success message (if needed)
       setSnackbar({
