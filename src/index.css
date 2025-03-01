@@ -100,3 +100,10 @@ html, body {
   font-size: 10px; /* Adjust size */
   color: black; /* Adjust color */
 }
+
+@font-face {
+  font-family: 'Got Milk Sans Serif';
+  src: url('./assets/Gotmilk-Font.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}

@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import LoadingFallback from "./LoadingFallback";
 import kube from "../assets/kubestellar.png"
+import '../index.css'
 
 const Profile = () => {
   const [username, setUsername] = useState("");
@@ -70,9 +71,15 @@ const Profile = () => {
             backgroundSize: 'cover',
           }}
         >
-          <Typography variant="h4" sx={{ mb: 15 }}>
-          Let's Multi-Cluster!
-           </Typography>
+        <Typography 
+          variant="h2" 
+          sx={{ 
+            mb: 12, 
+            fontFamily: 'Got Milk Sans Serif, sans-serif', // Fallback to sans-serif if font fails
+          }}
+        >
+          got multi-cluster!
+        </Typography>
           <Box sx={{ 
             width: '200px', 
             height: '200px', 
