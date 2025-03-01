@@ -32,21 +32,18 @@ type GitHubWebhookPayload struct {
 	} `json:"commits"`
 }
 
-// DeployHandler handles deployment requests
-func DeployHandler(c *gin.Context) {
+func supportDeployHandler(c *gin.Context) (string, string, error) {
 	var request DeployRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": err.Error()})
-		return
+		return "", "", fmt.Errorf("invalid request body: %v", err)
 	}
 
 	log.Print(request)
 	fmt.Print("\n")
 
 	if request.RepoURL == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "repo_url is required"})
-		return
+		return "", "", fmt.Errorf("repo_url is required")
 	}
 
 	// Store repo & folder path in Redis for future auto-deployments
@@ -56,10 +53,8 @@ func DeployHandler(c *gin.Context) {
 	tempDir := fmt.Sprintf("/tmp/%d", time.Now().Unix())
 	cmd := exec.Command("git", "clone", request.RepoURL, tempDir)
 	if err := cmd.Run(); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to clone repo", "details": err.Error()})
-		return
+		return "", "", fmt.Errorf("failed to clone repo: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
 
 	deployPath := tempDir
 	log.Printf("%s", deployPath)
@@ -69,10 +64,51 @@ func DeployHandler(c *gin.Context) {
 	}
 
 	if _, err := os.Stat(deployPath); os.IsNotExist(err) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Specified folder does not exist"})
+		return "", "", fmt.Errorf("specified folder does not exist: %v", err)
+	}
+	return deployPath, tempDir, nil
+}
+
+// DeployHandler handles deployment requests
+func DeployHandler(c *gin.Context) {
+	deployPath, tempDir, err := supportDeployHandler(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	defer os.RemoveAll(tempDir)
+	deploymentTree, err := k8s.DeployManifests(deployPath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Deployment failed", "details": err.Error()})
 		return
 	}
 
+	c.JSON(http.StatusOK, deploymentTree)
+}
+
+type DeployWorkloadRequest struct {
+	RepoURL string `json:"repo_url"`
+}
+
+func DeployHandlerLikeForLike(c *gin.Context) {
+	var workloadType DeployWorkloadRequest
+
+	if err := c.ShouldBindJSON(&workloadType); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "no work type field mention", "details": err.Error()})
+		return
+	}
+
+	if workloadType.RepoURL == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "no workload type"})
+		return
+	}
+
+	deployPath, tempDir, err := supportDeployHandler(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	defer os.RemoveAll(tempDir)
 	deploymentTree, err := k8s.DeployManifestsLikeForLike(deployPath, "Deployment")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Deployment failed", "details": err.Error()})
