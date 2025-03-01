@@ -55,4 +55,17 @@ func setupDeploymentRoutes(router *gin.Engine) {
 		go c.Run(ch)
 	})
 
+	// context
+	router.GET("/api/context", func(c *gin.Context) {
+		currentContext, context, err := wds.ListContexts()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"context":         context,
+			"current-context": currentContext,
+		})
+	})
+
 }

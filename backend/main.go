@@ -37,6 +37,7 @@ func main() {
 
 		c.Next()
 	})
+
 	routes.SetupRoutes(router)
 	redis.InitRedis()
 	postgresql.ConnectDB()
