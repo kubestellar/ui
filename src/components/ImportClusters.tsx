@@ -1,8 +1,6 @@
 import { useState } from "react";
 import Editor from "@monaco-editor/react";
 import {
-  Autocomplete,
-  Chip,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -19,11 +17,8 @@ import {
   FormControl,
   InputLabel,
   CircularProgress,
-  FormHelperText,
   Snackbar,
 } from "@mui/material";
-import axios from "axios";
-import useTheme from "../stores/themeStore";
 
 interface Props {
   activeOption: string | null;
@@ -47,17 +42,15 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
   const [fileType, setFileType] = useState<"yaml">("yaml");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [editorContent, setEditorContent] = useState<string>("");
-  const [labels, setLabels] = useState<string[]>([]);
-  const [option, setOption] = useState("");
   const [loading, setLoading] = useState(false);
+  //const [csrStatus, setCsrStatus] = useState("Waiting for user to run command...");
+
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   const [formData, setFormData] = useState({
     clusterName: "",
-    clusterSet: "",
-    node: "",
-    Region: "",
-    value: ["1"],
+    token: "",
+    hubApiServer: "",
   });
 
   const [snackbar, setSnackbar] = useState<{
@@ -70,31 +63,37 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
     severity: "info", // Can be "success", "error", "warning", or "info"
   });
 
-  const API_BASE_URL = "http://localhost:5000"; // JSON-Server runs on this port by default
+  // Fetch token whenever clusterName changes
+  useEffect(() => {
+    if (formData.clusterName) {
+      fetch(`/api/get-token?cluster=${formData.clusterName}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setFormData((prev) => ({ ...prev, token: data.token }));
+        })
+        .catch((err) => console.error("Error fetching token:", err));
+    }
+  }, [formData.clusterName]);
+
+   // ✅ Fetch the Hub API Server URL on mount
+   useEffect(() => {
+    fetch("/api/hub") // Change this to your actual endpoint
+      .then((res) => res.json())
+      .then((data) => {
+        setFormData((prev) => ({ ...prev, hubApiServer: data.apiserver }));
+      })
+      .catch((err) => console.error("Error fetching hub API server:", err));
+  }, []);
+
+  const generatedCommand = `clusteradm join --hub-token ${formData.token} --hub-apiserver ${formData.hubApiServer} --cluster-name ${formData.clusterName}`;
 
   const handleImportCluster = async () => {
     setErrorMessage("");
     setLoading(true);
 
-    // ✅ Define requestData at the start of the function
-    const requestData = {
-      clusterName: formData.clusterName,
-      clusterSet: formData.clusterSet, 
-      node: formData.node,
-      value: formData.value,
-      region: formData.Region
-  };
-
-  console.log("🚀 Sending data to API:", requestData); // ✅ Debugging log
-
     try {
-      // Send cluster import request to backend
-      const response = await axios.post(`${API_BASE_URL}/clusters`, { ...formData, value: labels });
-      console.log("Cluster import initiated:", response.data);
-
       // Clear form fields after a successful import
-      setFormData({ clusterName: "", clusterSet: "", node: "", Region: "", value: []} );
-      setLabels([]);
+      setFormData({ clusterName: "", token: "", hubApiServer: "" });
 
       // Show success message (if needed)
       setSnackbar({
@@ -134,6 +133,10 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
     setEditorContent("");
     setErrorMessage("");
     setActiveOption(null);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const tabContentStyles = {
@@ -447,7 +450,7 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                 <Box sx={tabContentStyles}>
                   <Alert severity="info">
                     <AlertTitle>Info</AlertTitle>
-                    Fill out the form to import cluster manually.
+                    Enter cluster name to generate a token, to then run in the CLI.
                   </Alert>
 
                   <Box
@@ -462,79 +465,23 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                     <Box sx={formContentStyles}>
                       <TextField
                         label="Cluster Name"
+                        variant="outlined"
+                        name="clusterName"
                         value={formData.clusterName}
-                        onChange={(e) => setFormData({ ...formData, clusterName: e.target.value })}
+                        onChange={handleChange}
                         sx={commonInputSx}
                         fullWidth
                       />
+                      <div>
+                        {/* Show the generated command inside a <code> block */}
+                        <p>Run this command in the CLI:</p>
+                        <code>{generatedCommand}</code>
 
-                      <FormControl sx={commonInputSx} required fullWidth>
-                        <InputLabel>Cluster Set</InputLabel>
-                        <Select
-                          value={option}
-                          onChange={(e) => {
-                            console.log("🚀 Selected Cluster Set:", formData.clusterSet);
-                            setFormData({ ...formData, clusterSet: e.target.value });
-                            setOption(e.target.value);
-                          }}
-                          label="Cluster Set"
-                        >
-                          <MenuItem value="">Select a Cluster</MenuItem>
-                          <MenuItem value="Cluster Set 1">Cluster Set 1</MenuItem>
-                          <MenuItem value="Cluster Set 2">Cluster Set 2</MenuItem>
-                          <MenuItem value="Cluster Set 3">Cluster Set 3</MenuItem>
-                        </Select>
-                        {!option && (
-                          <FormHelperText>Please select a cluster set.</FormHelperText>
-                        )}
-                      </FormControl>
-
-                      <TextField
-                        label="Number of Nodes"
-                        value={formData.node}
-                        onChange={(e) => setFormData({ ...formData, node: e.target.value })}
-                        sx={commonInputSx}
-                        fullWidth
-                      />
-
-                      <TextField
-                        label="Region"
-                        value={formData.Region}
-                        onChange={(e) => setFormData({ ...formData, Region: e.target.value })}
-                        sx={commonInputSx}
-                        fullWidth
-                      />
-
-                      <Autocomplete
-                        multiple
-                        freeSolo
-                        options={[]}
-                        value={labels}
-                        onChange={(_, newValue) => setLabels(newValue)}
-                        renderTags={(value: string[], getTagProps) =>
-                          value.map((option, index) => (
-                            <Chip
-                              label={option}
-                              {...getTagProps({ index })}
-                              sx={{
-                                borderRadius: 1,
-                                '& .MuiChip-deleteIcon': {
-                                  color: theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)',
-                                }
-                              }}
-                            />
-                          ))
-                        }
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label="Labels"
-                            placeholder="Add Labels"
-                            sx={commonInputSx}
-                            fullWidth
-                          />
-                        )}
-                      />
+                        {/* Copy Button */}
+                        <Button onClick={() => navigator.clipboard.writeText(generatedCommand)} variant="contained">
+                          Copy
+                        </Button>
+                      </div>
                     </Box>
 
                     <Box sx={{
@@ -548,14 +495,14 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
                         <Button
                           variant="contained"
                           onClick={handleImportCluster}
-                          disabled={!formData.clusterName || !formData.Region || !labels.length || !formData.node || loading}
+                          disabled={!formData.clusterName || loading}
                           sx={{
                             "&:disabled": {
                               cursor: "not-allowed",
                               pointerEvents: "all !important",
                             },
                           }}
-                          className={`${(!formData.clusterName || !formData.Region || !labels.length || !formData.node || loading)
+                          className={`${(!formData.clusterName || loading)
                             ? theme === "dark"
                               ? "!bg-gray-700 !text-gray-400"
                               : "!bg-gray-300 !text-gray-500"
@@ -584,5 +531,4 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
     </>
   );
 };
-
 export default ImportClusters;
