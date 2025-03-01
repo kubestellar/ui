@@ -17,13 +17,13 @@ Before proceeding, ensure you have the following installed:
 
 🔹 **Run the following command to start a PostgreSQL container:**  
 ```sh
-docker run --name jwt-auth-db -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=admin -e POSTGRES_DB=jwt_auth -p 5432:5432 -d postgres
+docker run --name jwt-auth-db -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=password -e POSTGRES_DB=jwt_db -p 5432:5432 -d postgres
 ```
 ### **Breakdown of Flags:**  
 - `--name jwt-auth-db` → Container name  
 - `-e POSTGRES_USER=admin` → Set the default PostgreSQL user  
 - `-e POSTGRES_PASSWORD=admin` → Set the default PostgreSQL password  
-- `-e POSTGRES_DB=jwt_auth` → Set the default database name  
+- `-e POSTGRES_DB=jwt_db` → Set the default database name  
 - `-p 5432:5432` → Expose PostgreSQL on port **5432**  
 - `-d postgres` → Run the container in detached mode  
 
@@ -77,8 +77,8 @@ JWT_SECRET=mysecurekeygeneratedhere
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=admin
-DB_PASSWORD=admin
-DB_NAME=jwt_auth
+DB_PASSWORD=password
+DB_NAME=jwt_db
 
 # JWT Secret Key (Replace with your generated key)
 JWT_SECRET=mysecurekeygeneratedhere
@@ -93,8 +93,8 @@ If you prefer not to use a `.env` file, you can export variables manually in you
 export DB_HOST=localhost
 export DB_PORT=5432
 export DB_USER=admin
-export DB_PASSWORD=admin
-export DB_NAME=jwt_auth
+export DB_PASSWORD=password
+export DB_NAME=jwt_db
 export JWT_SECRET=mysecurekeygeneratedhere
 ```
 
@@ -125,7 +125,7 @@ go run main.go
   ```json
   {
     "username": "admin",
-    "password": "admin"
+    "password": " "
   }
   ```
 #### **Response:**
