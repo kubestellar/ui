@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Editor from "@monaco-editor/react";
 import {
   Dialog,
@@ -19,6 +19,7 @@ import {
   CircularProgress,
   Snackbar,
 } from "@mui/material";
+import useTheme from "../stores/themeStore";
 
 interface Props {
   activeOption: string | null;
