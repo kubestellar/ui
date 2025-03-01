@@ -106,7 +106,7 @@ func SwitchKubeConfigContext(newContext string) (*kubernetes.Clientset, error) {
 	clientConfig := clientcmd.NewDefaultClientConfig(
 		*config,
 		&clientcmd.ConfigOverrides{
-			CurrentContext: newContext,
+			CurrentContext: newContext, // wds1, wds2
 		},
 	)
 
