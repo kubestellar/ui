@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/katamyra/kubestellarUI/models"
+	"github.com/katamyra/kubestellarUI/postgresql"
 	"github.com/katamyra/kubestellarUI/routes"
 
 	"github.com/katamyra/kubestellarUI/api"
@@ -36,8 +38,9 @@ func main() {
 		c.Next()
 	})
 	routes.SetupRoutes(router)
-
 	redis.InitRedis()
+	postgresql.ConnectDB()
+	models.InitDB()
 
 	router.POST("api/deploy", api.DeployHandler)
 	router.POST("api/webhook", api.GitHubWebhookHandler)
