@@ -52,7 +52,7 @@ const ITS = () => {
   );
 
   if (error) return (
-    <div className="w-full max-w-7xl mx-auto p-4">
+    <div className="w-full p-4">
       <div className="bg-base-100 shadow-xl rounded-lg p-8 text-center">
         <div className="text-red-600 dark:text-red-400 mb-4">
           <svg 
@@ -94,17 +94,8 @@ const ITS = () => {
   );
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-4">
-      <div className="bg-base-100 shadow-xl rounded-lg overflow-hidden">
-        <div className="p-6 border-b border-base-200">
-          <h1 className="text-2xl font-bold flex items-center justify-center gap-3">
-            <span className="text-primary">Managed Clusters</span>
-            <span className="px-3 py-1 bg-primary/10 rounded-full text-sm">
-              {clusters.length}
-            </span>
-          </h1>
-        </div>
-        
+    <div className="w-full p-4">
+      <div className="bg-base-100 shadow-xl rounded-lg overflow-hidden">        
         <div className="p-4">
           <ClustersTable
             clusters={clusters}
