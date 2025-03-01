@@ -83,7 +83,7 @@ func ListContexts() (string, []string, error) {
 	return currentContext, contexts, nil
 }
 
-func SwitchContext(newContext string) (*kubernetes.Clientset, error) {
+func SwitchKubeConfigContext(newContext string) (*kubernetes.Clientset, error) {
 	config, err := getKubeConfig()
 	if err != nil {
 		// c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load kubeconfig"})
