@@ -20,7 +20,7 @@ const Profile = () => {
   const [passwordError, setPasswordError] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!username.trim()) {
       setUsernameError(true);
@@ -34,7 +34,7 @@ const Profile = () => {
     console.log("Password:", password);
     setUsernameError(false);
     setPasswordError(false);
-  };
+  };  
 
   // Use useEffect to simulate loading and set loading to false after a delay
   useEffect(() => {
