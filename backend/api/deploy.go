@@ -2,7 +2,6 @@ package api
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -36,11 +35,8 @@ func supportDeployHandler(c *gin.Context) (string, string, error) {
 	var request DeployRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
-		return "", "", fmt.Errorf("invalid request body: %v", err)
+		return "", "", fmt.Errorf("invalid request body: %v", err.Error())
 	}
-
-	log.Print(request)
-	fmt.Print("\n")
 
 	if request.RepoURL == "" {
 		return "", "", fmt.Errorf("repo_url is required")
@@ -57,8 +53,7 @@ func supportDeployHandler(c *gin.Context) (string, string, error) {
 	}
 
 	deployPath := tempDir
-	log.Printf("%s", deployPath)
-	fmt.Print("\n")
+
 	if request.FolderPath != "" {
 		deployPath = filepath.Join(tempDir, request.FolderPath)
 	}
@@ -86,30 +81,19 @@ func DeployHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, deploymentTree)
 }
 
-type DeployWorkloadRequest struct {
-	RepoURL string `json:"repo_url"`
-}
-
 func DeployHandlerLikeForLike(c *gin.Context) {
-	var workloadType DeployWorkloadRequest
-
-	if err := c.ShouldBindJSON(&workloadType); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "no work type field mention", "details": err.Error()})
+	workloadType := c.Query("type")
+	if workloadType == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "we expect query of type", "details": "add ?type=<workload_type>"})
 		return
 	}
-
-	if workloadType.RepoURL == "" {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "no workload type"})
-		return
-	}
-
 	deployPath, tempDir, err := supportDeployHandler(c)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	defer os.RemoveAll(tempDir)
-	deploymentTree, err := k8s.DeployManifestsLikeForLike(deployPath, "Deployment")
+	deploymentTree, err := k8s.DeployManifestsLikeForLike(deployPath, workloadType)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Deployment failed", "details": err.Error()})
 		return

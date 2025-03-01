@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	FetchYaml "github.com/katamyra/kubestellarUI/github"
 	"github.com/katamyra/kubestellarUI/wds"
 	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
@@ -72,17 +71,8 @@ type Deployment struct {
 CreateDeployment: Create deployment through the local deployment yaml file and also support with some limitation for the remote github url
 */
 func CreateDeployment(ctx *gin.Context) {
-	// this only need when you think i will mention github repo
-	type parameters struct {
-		Url  string `json:"url"`
-		Path string `json:"path"`
-	}
-	params := parameters{}
 	if _, _, err := ctx.Request.FormFile("wds"); err != nil {
-		if err := ctx.ShouldBindJSON(&params); err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 
 	clientset, err := wds.GetClientSetKubeConfig()
@@ -95,31 +85,14 @@ func CreateDeployment(ctx *gin.Context) {
 	}
 	var dat *Deployment
 	// upload the yaml configuration file and read their value
-	if params.Url != "" {
-		if !(len(params.Path) > 0 && len(params.Url) > 0 && strings.Contains(params.Url, "github")) {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"message": "both path and github repo url are required",
-			})
-			return
-		}
-		content, err := FetchYaml.FetchYamlFile(ctx, params.Url, params.Path)
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"message": "failed to fetch the yaml file from github url",
-				"err":     err,
-			})
-			return
-		}
-		dat = (*Deployment)(content)
-	} else {
-		dat, err = uploadFile(ctx)
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"message": "failed to upload",
-				"err":     err,
-			})
-			return
-		}
+
+	dat, err = uploadFile(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "failed to upload",
+			"err":     err,
+		})
+		return
 	}
 
 	replica := dat.Spec.Replicas

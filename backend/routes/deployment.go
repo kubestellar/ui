@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/katamyra/kubestellarUI/api"
 	"github.com/katamyra/kubestellarUI/wds"
 	"github.com/katamyra/kubestellarUI/wds/deployment"
 	"k8s.io/client-go/informers"
@@ -16,6 +17,7 @@ func setupDeploymentRoutes(router *gin.Engine) {
 	router.GET("/api/wds/workloads", deployment.GetWDSWorkloads)
 	router.POST("/api/wds/create", deployment.CreateDeployment)
 	router.POST("/api/wds/create/json", deployment.HandleCreateDeploymentJson)
+	router.POST("/api/wds/gitops/create", api.DeployHandlerLikeForLike)
 	router.PUT("/api/wds/update", deployment.UpdateDeployment)
 	router.DELETE("/api/wds/delete", deployment.DeleteDeployment)
 	router.GET("/api/wds/:name", deployment.GetDeploymentByName)

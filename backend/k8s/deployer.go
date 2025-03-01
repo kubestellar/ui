@@ -3,7 +3,6 @@ package k8s
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -44,8 +43,6 @@ func getResourceGVR(kind string) schema.GroupVersionResource {
 func ApplyOrCreateResource(dynamicClient dynamic.Interface, gvr schema.GroupVersionResource, obj *unstructured.Unstructured, namespace string) error {
 	resource := dynamicClient.Resource(gvr).Namespace(namespace)
 
-	fmt.Print(resource)
-	fmt.Print(obj)
 	// Retry logic for better resilience
 	return retry.OnError(retry.DefaultRetry, func(err error) bool { return true }, func() error {
 		existing, err := resource.Get(context.TODO(), obj.GetName(), v1.GetOptions{})
@@ -100,20 +97,11 @@ func DeployManifests(deployPath string) (*DeploymentTree, error) {
 			return nil, fmt.Errorf("failed to parse YAML %s: %v", filePath, err)
 		}
 
-		log.Print(obj)
-		fmt.Print("\n")
-
 		// Get correct resource GVR
 		gvr := getResourceGVR(obj.GetKind())
 		if gvr.Resource == "" {
 			continue
 		}
-
-		log.Print(gvr)
-		fmt.Print("\n")
-
-		log.Print(obj.GetKind())
-		fmt.Print("\n")
 
 		// Detect namespace dynamically
 		namespace := obj.GetNamespace()
@@ -183,10 +171,6 @@ func DeployManifestsLikeForLike(deployPath, typeOfWorkload string) (*DeploymentT
 			return nil, fmt.Errorf("failed to parse YAML %s: %v", filePath, err)
 		}
 
-		fmt.Print("Before condition \n")
-		log.Print(obj.GetKind())
-		fmt.Print("\n")
-
 		if strings.ToLower(obj.GetKind()) != strings.ToLower(typeOfWorkload) {
 			continue
 		}
@@ -196,9 +180,6 @@ func DeployManifestsLikeForLike(deployPath, typeOfWorkload string) (*DeploymentT
 		if gvr.Resource == "" {
 			continue
 		}
-
-		log.Print(obj.GetKind())
-		fmt.Print("\n")
 
 		// Detect namespace dynamically
 		namespace := obj.GetNamespace()
@@ -241,8 +222,6 @@ func DeployManifestsLikeForLike(deployPath, typeOfWorkload string) (*DeploymentT
 func ApplyOrCreateResourceLikeForLike(dynamicClient dynamic.Interface, gvr schema.GroupVersionResource, obj *unstructured.Unstructured, namespace string) error {
 	resource := dynamicClient.Resource(gvr).Namespace(namespace)
 
-	fmt.Print(resource)
-	fmt.Print(obj)
 	// Retry logic for better resilience
 	return retry.OnError(retry.DefaultRetry, func(err error) bool { return true }, func() error {
 		existing, err := resource.Get(context.TODO(), obj.GetName(), v1.GetOptions{})

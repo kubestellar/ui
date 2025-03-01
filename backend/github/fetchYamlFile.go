@@ -49,6 +49,7 @@ type RepoInfo struct {
 	Repo  string
 }
 
+// TODO: Remove this - Not using anymore
 func ParseGitHubURL(url string) (RepoInfo, error) {
 	url = strings.TrimRight(url, "/")
 
