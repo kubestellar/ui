@@ -1,8 +1,6 @@
 import { useState } from "react";
 import Editor from "@monaco-editor/react";
 import jsyaml from "js-yaml";
-import { ThemeContext } from "../context/ThemeContext";
-import { useContext } from "react";
 import {
   Dialog,
   DialogContent,
