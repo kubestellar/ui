@@ -8,7 +8,6 @@ import { Plus } from "lucide-react";
 import { Grid, Card, CardContent, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import LoadingFallback from "../components/LoadingFallback";
-import useTheme from "../stores/themeStore";
 
 export interface Workload {
   name: string;
