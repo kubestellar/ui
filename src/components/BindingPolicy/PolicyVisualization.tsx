@@ -1,11 +1,11 @@
-import { useState, useContext } from "react";
+import { useState } from "react";
 import { Network, Share2, AlertCircle, Check, ChevronDown } from "lucide-react";
 import {
   BindingPolicyInfo,
   ManagedCluster,
   Workload,
 } from "../../types/bindingPolicy";
-import { ThemeContext } from "../../context/ThemeContext";
+import useTheme from "../../stores/themeStore";
 
 interface PolicyVisualizationProps {
   policy: BindingPolicyInfo;
@@ -21,7 +21,7 @@ const PolicyVisualization = ({
   previewMode = false,
 }: PolicyVisualizationProps) => {
   const [showDetails, setShowDetails] = useState(false);
-  const { theme } = useContext(ThemeContext);
+  const theme = useTheme((state) => state.theme)
   const isDarkTheme = theme === "dark";
 
   // Calculate statistics
