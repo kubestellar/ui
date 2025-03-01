@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -40,6 +41,9 @@ func DeployHandler(c *gin.Context) {
 		return
 	}
 
+	log.Print(request)
+	fmt.Print("\n")
+
 	if request.RepoURL == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "repo_url is required"})
 		return
@@ -58,6 +62,8 @@ func DeployHandler(c *gin.Context) {
 	defer os.RemoveAll(tempDir)
 
 	deployPath := tempDir
+	log.Printf("%s", deployPath)
+	fmt.Print("\n")
 	if request.FolderPath != "" {
 		deployPath = filepath.Join(tempDir, request.FolderPath)
 	}
@@ -67,7 +73,7 @@ func DeployHandler(c *gin.Context) {
 		return
 	}
 
-	deploymentTree, err := k8s.DeployManifests(deployPath)
+	deploymentTree, err := k8s.DeployManifestsLikeForLike(deployPath, "Deployment")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Deployment failed", "details": err.Error()})
 		return
