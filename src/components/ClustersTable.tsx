@@ -19,7 +19,6 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { Plus, CloudOff, Filter } from "lucide-react";
-import useTheme from "../hooks/useTheme";
 import CreateOptions from "./ImportClusters";
 import useTheme from "../stores/themeStore";
 
