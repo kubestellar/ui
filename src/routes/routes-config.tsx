@@ -9,6 +9,7 @@ import TreeView from "../components/TreeViewComponent";
 import { lazy, Suspense } from "react";
 import LoadingFallback from "../components/LoadingFallback";
 import WecsTreeview from "../components/WecsTopology";
+import Profile from "../components/Profile";
 // import ShowLogs from "../components/Logs";
 
 // Improve lazy loading with prefetch
@@ -42,9 +43,9 @@ export const routesConfig: RouteObject[] = [
       { path: "namespaces" , element: <NameSpace />},
       { path: "namespaces" , element: <NameSpace />},
       { path: "deploymentdetails/:namespace/:deploymentName", element: <DeploymentDetails /> },
-      { path: "treeview", element: <TreeView /> },
       { path: "wds/treeview", element: <TreeView /> },
       { path: "wecs/treeview", element: <WecsTreeview /> },
+      { path: "profile", element: <Profile /> },
       { path: "*", element: <NotFoundPage /> },
       // {path: "logs/:deployment/:namespace", element: <ShowLogs />} // TODO: remove it in future after deployment details page
     ],

@@ -6,7 +6,7 @@ services:
       - "5173:80"
     depends_on:
       - backend
-    network_mode: "host"
+
   backend:
     build:
       context: ./backend
