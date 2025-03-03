@@ -11,7 +11,7 @@ import LoadingFallback from "../components/LoadingFallback";
 import WecsTreeview from "../components/WecsTopology";
 import Profile from "../components/Profile";
 import ProtectedRoute from "../components/ProtectedRoute";
-import PublicRoute from "../components/PublicRoute"; // Import PublicRoute
+import PublicRoute from "../components/PublicRoute";
 
 const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ "../components/Clusters"));
 const ITSLazy = lazy(() => import(/* webpackPrefetch: true */ "../pages/ITS"));

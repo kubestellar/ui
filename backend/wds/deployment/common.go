@@ -323,7 +323,6 @@ func UpdateDeployment(ctx *gin.Context) {
 		deployment.Spec.Replicas = int32Ptr(params.Replicas)
 	}
 
-	// Fix: Use the correct namespace instead of "default"
 	retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		_, updateErr := clientset.AppsV1().Deployments(params.Namespace).Update(context.TODO(), deployment, metav1.UpdateOptions{})
 		return updateErr

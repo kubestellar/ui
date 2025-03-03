@@ -1,6 +1,8 @@
 package resources
 
 import (
+	"context"
+	"log"
 	"net/http"
 	"time"
 
@@ -10,20 +12,17 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/util/retry"
 )
 
-type Label struct {
-	Component string `json:"component"`
-	Provider  string `json:"provider"`
-}
 type MetaDataDetail struct {
-	Name              string    `json:"name"`
-	Namespace         string    `json:"namespace"`
-	Uid               string    `json:"uid"`
-	ResourceVersion   string    `json:"resourceVersion"`
-	CreationTimestamp time.Time `json:"creationTimestamp"`
-	Labels            Label     `json:"labels,omitempty"`
+	Name              string            `json:"name"`
+	Namespace         string            `json:"namespace"`
+	Uid               string            `json:"uid"`
+	ResourceVersion   string            `json:"resourceVersion"`
+	CreationTimestamp time.Time         `json:"creationTimestamp"`
+	Labels            map[string]string `json:"labels"`
+	Annotations       map[string]string `json:"annotations"`
 	ManagedFields     []struct {
 		Manager    string    `json:"manager"`
 		Operation  string    `json:"operation"`
@@ -32,13 +31,26 @@ type MetaDataDetail struct {
 		FieldsType string    `json:"fieldsType"`
 	} `json:"managedFields"`
 }
-
+type Spec struct {
+	Ports                         []corev1.ServicePort                 `json:"ports"`
+	Selector                      map[string]string                    `json:"selector"`
+	ClusterIP                     string                               `json:"clusterIP"`
+	ClusterIPs                    []string                             `json:"clusterIPs"`
+	Type                          corev1.ServiceType                   `json:"type"`
+	SessionAffinity               corev1.ServiceAffinity               `json:"sessionAffinity"`
+	ExternalTrafficPolicy         corev1.ServiceExternalTrafficPolicy  `json:"externalTrafficPolicy"`
+	IpFamilies                    []corev1.IPFamily                    `json:"ipFamilies"`
+	IpFamilyPolicy                *corev1.IPFamilyPolicy               `json:"ipFamilyPolicy"`
+	AllocateLoadBalancerNodePorts *bool                                `json:"allocateLoadBalancerNodePorts"`
+	InternalTrafficPolicy         *corev1.ServiceInternalTrafficPolicy `json:"internalTrafficPolicy"`
+}
 type Status struct {
 	LoadBalancer corev1.LoadBalancerStatus `json:"loadBalancer,omitempty"`
 }
 type ServiceDetail struct {
 	Metadata MetaDataDetail `json:"metadata"`
 	Status   Status         `json:"status"`
+	Spec     Spec           `json:"spec"`
 }
 
 func helperServiceDetails(service corev1.Service) ServiceDetail {
@@ -49,6 +61,8 @@ func helperServiceDetails(service corev1.Service) ServiceDetail {
 			Uid:               string(service.UID),
 			ResourceVersion:   service.ResourceVersion,
 			CreationTimestamp: service.CreationTimestamp.Time,
+			Labels:            service.Labels,
+			Annotations:       service.Annotations,
 			ManagedFields: make([]struct {
 				Manager    string    `json:"manager"`
 				Operation  string    `json:"operation"`
@@ -57,6 +71,19 @@ func helperServiceDetails(service corev1.Service) ServiceDetail {
 				FieldsType string    `json:"fieldsType"`
 			}, len(service.ManagedFields)),
 		},
+		Spec: Spec{
+			Ports:                         service.Spec.Ports,
+			Selector:                      service.Spec.Selector,
+			ClusterIP:                     service.Spec.ClusterIP,
+			ClusterIPs:                    service.Spec.ClusterIPs,
+			Type:                          service.Spec.Type,
+			SessionAffinity:               service.Spec.SessionAffinity,
+			ExternalTrafficPolicy:         service.Spec.ExternalTrafficPolicy,
+			IpFamilies:                    service.Spec.IPFamilies,
+			IpFamilyPolicy:                service.Spec.IPFamilyPolicy,
+			AllocateLoadBalancerNodePorts: service.Spec.AllocateLoadBalancerNodePorts,
+			InternalTrafficPolicy:         service.Spec.InternalTrafficPolicy,
+		},
 		Status: struct {
 			LoadBalancer corev1.LoadBalancerStatus `json:"loadBalancer,omitempty"`
 		}{
@@ -64,8 +91,7 @@ func helperServiceDetails(service corev1.Service) ServiceDetail {
 		},
 	}
 	if service.Labels != nil {
-		serviceDetail.Metadata.Labels.Component = service.Labels["component"]
-		serviceDetail.Metadata.Labels.Provider = service.Labels["provider"]
+		serviceDetail.Metadata.Labels = service.Labels
 	}
 
 	// Copy managed fields
@@ -155,17 +181,12 @@ func GetServiceByServiceName(ctx *gin.Context) {
 		}
 */
 func CreateService(ctx *gin.Context) {
-	type ServicePort struct {
-		Name       string `json:"name"`
-		Port       int32  `json:"port"`
-		TargetPort int32  `json:"targetPort"`
-		Protocol   string `json:"protocol"`
-	}
+
 	type Parameters struct {
-		Namespace string            `json:"namespace"`
-		Name      string            `json:"name"`
-		Labels    map[string]string `json:"labels"`
-		Ports     []ServicePort     `json:"ports"`
+		Namespace string               `json:"namespace"`
+		Name      string               `json:"name"`
+		Labels    map[string]string    `json:"labels"`
+		Ports     []corev1.ServicePort `json:"ports"`
 	}
 	var params Parameters
 	if err := ctx.ShouldBindJSON(&params); err != nil {
@@ -189,12 +210,12 @@ func CreateService(ctx *gin.Context) {
 
 	if len(params.Ports) == 0 {
 		// default ports
-		params.Ports = []ServicePort{
+		params.Ports = []corev1.ServicePort{
 			{
-				Name:       "http",
-				Port:       80,
-				TargetPort: 9376,
-				Protocol:   "TCP",
+				Name: "http",
+				Port: 80,
+				// TargetPort: 9376,
+				Protocol: "TCP",
 			},
 		}
 	}
@@ -211,10 +232,10 @@ func CreateService(ctx *gin.Context) {
 			protocol = corev1.Protocol(p.Protocol)
 		}
 		servicePorts = append(servicePorts, corev1.ServicePort{
-			Name:       p.Name,
-			Port:       p.Port,
-			TargetPort: intstr.FromInt(int(p.TargetPort)),
-			Protocol:   protocol,
+			Name: p.Name,
+			Port: p.Port,
+			// TargetPort: intstr.FromInt(int(p.TargetPort)),
+			Protocol: protocol,
 		})
 	}
 	clientset, err := wds.GetClientSetKubeConfig()
@@ -251,6 +272,92 @@ func CreateService(ctx *gin.Context) {
 	})
 }
 
+func UpdateService(ctx *gin.Context) {
+	type parameters struct {
+		Namespace   string               `json:"namespace"`
+		Name        string               `json:"name"`
+		Labels      map[string]string    `json:"labels"`
+		Type        string               `json:"type"`
+		Selector    map[string]string    `json:"selector"`
+		Ports       []corev1.ServicePort `json:"ports"`
+		Annotations map[string]string    `json:"annotations"`
+	}
+	params := parameters{}
+
+	if err := ctx.ShouldBindJSON(&params); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if params.Name == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Enter the name of the service"})
+		return
+	}
+
+	clientset, err := wds.GetClientSetKubeConfig()
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "Failed to create Kubernetes clientset",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	if params.Namespace == "" {
+		params.Namespace = "default"
+	}
+
+	// Get the services
+	service, err := clientset.CoreV1().Services(params.Namespace).Get(ctx, params.Name, metav1.GetOptions{})
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "Failed to get service",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	if len(params.Labels) > 0 {
+		log.Print(params.Labels)
+		service.Labels = params.Labels
+	}
+	if len(params.Ports) > 0 {
+		service.Spec.Ports = params.Ports
+	}
+
+	if len(params.Selector) > 0 {
+		service.Spec.Selector = params.Selector
+	}
+	if params.Type != "" {
+		service.Spec.Type = corev1.ServiceType(params.Type)
+	}
+	if len(params.Annotations) > 0 {
+		if service.Annotations == nil {
+			service.Annotations = make(map[string]string)
+		}
+		for k, v := range params.Annotations {
+			service.Annotations[k] = v
+		}
+	}
+
+	retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		_, updateErr := clientset.CoreV1().Services(params.Namespace).Update(context.TODO(), service, metav1.UpdateOptions{})
+		return updateErr
+	})
+
+	if retryErr != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "Failed to update services",
+			"error":   retryErr.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusAccepted, gin.H{
+		"message": "Successfully updated the service!",
+		"name":    params.Name,
+	})
+
+}
 func DeleteService(ctx *gin.Context) {
 	type parameters struct {
 		Namespace string `json:"namespace"`
