@@ -90,8 +90,8 @@ html, body {
   margin-right: -3px;
 }
 
-/* Add a single dash exactly in the middle for non-terminal nodes only */
-.react-flow__node:not(.terminal-node)::after {
+/* Add a single dash exactly in the middle */
+.react-flow__node::after {
   content: "-"; /* Single dash */
   position: absolute;
   top: 50%;
@@ -99,11 +99,4 @@ html, body {
   transform: translateY(-50%);
   font-size: 10px; /* Adjust size */
   color: black; /* Adjust color */
-}
-
-@font-face {
-  font-family: 'Got Milk Sans Serif';
-  src: url('./assets/Gotmilk-Font.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
 }
