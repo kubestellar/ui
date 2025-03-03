@@ -9,5 +9,6 @@ func setupServiceRoutes(router *gin.Engine) {
 	router.GET("/api/services/:namespace", resources.GetServiceList)
 	router.GET("/api/services/:namespace/:name", resources.GetServiceByServiceName)
 	router.POST("/api/services/create", resources.CreateService)
+	router.PUT("/api/services/update", resources.UpdateService)
 	router.DELETE("/api/services/delete", resources.DeleteService)
 }

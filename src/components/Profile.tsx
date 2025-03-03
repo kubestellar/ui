@@ -7,8 +7,12 @@ import {
   Button, 
   Box,
   Container,
-  Grid
+  Grid,
+  Snackbar,
+  Alert,
+  AlertColor // Import AlertColor type
 } from "@mui/material";
+import { useNavigate, useLocation } from "react-router-dom";
 import LoadingFallback from "./LoadingFallback";
 import kube from "../assets/kubestellar.png";
 import "../index.css";
@@ -17,39 +21,105 @@ const Profile = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [usernameError, setUsernameError] = useState(false);
+  const [usernameErrorMessage, setUsernameErrorMessage] = useState("");
   const [passwordError, setPasswordError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  // Type snackbarSeverity with AlertColor
+  const [snackbarSeverity, setSnackbarSeverity] = useState<AlertColor>("success");
+  
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!username.trim()) {
       setUsernameError(true);
+      setUsernameErrorMessage("Please enter username");
+      setPasswordError(false);
       return;
     }
-    if (!password.trim()) {
+
+    try {
+      const loginResponse = await fetch("http://localhost:4000/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const loginData = await loginResponse.json();
+
+      if (loginResponse.ok) {
+        localStorage.setItem("jwtToken", loginData.token);
+        console.log("Token stored:", localStorage.getItem("jwtToken"));
+
+        const token = localStorage.getItem("jwtToken");
+        const protectedResponse = await fetch("http://localhost:4000/protected", {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+
+        const protectedData = await protectedResponse.json();
+
+        if (protectedResponse.ok) {
+          setSnackbarMessage("Login successful");
+          setSnackbarSeverity("success");
+          setOpenSnackbar(true);
+          setTimeout(() => {
+            navigate("/");
+          }, 1000);
+        } else {
+          setSnackbarMessage(protectedData.error || "Invalid token");
+          setSnackbarSeverity("error");
+          setOpenSnackbar(true);
+          localStorage.removeItem("jwtToken");
+          setTimeout(() => {
+            navigate("/profile");
+          }, 1000);
+        }
+
+        setUsernameError(false);
+        setPasswordError(false);
+      } else {
+        setUsernameError(false);
+        setUsernameErrorMessage("");
+        setPasswordError(true);
+      }
+    } catch (error) {
+      setUsernameError(false);
+      setUsernameErrorMessage("");
       setPasswordError(true);
-      return;
+      console.error("Error:", error);
     }
-    console.log("Username:", username);
-    console.log("Password:", password);
-    setUsernameError(false);
-    setPasswordError(false);
   };  
 
-  // Use useEffect to simulate loading and set loading to false after a delay
+  const handleCloseSnackbar = () => {
+    setOpenSnackbar(false);
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 1000); // 1-second delay to simulate loading
+    }, 1000);
 
-    // Cleanup timer on unmount
+    if (location.state && (location.state as { errorMessage?: string }).errorMessage) {
+      setSnackbarMessage("You need to sign in to continue. Let’s get you logged in!");
+      setSnackbarSeverity("error");
+      setOpenSnackbar(true);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+
     return () => clearTimeout(timer);
-  }, []);
+  }, [location, navigate]);
 
   if (loading) return <LoadingFallback message="Loading Profile..." size="medium" />;
 
   return (
-    // Use a full-screen container to cover the entire viewport
     <Box sx={{ 
       height: "100vh", 
       width: "100vw", 
@@ -57,11 +127,10 @@ const Profile = () => {
       position: "fixed", 
       top: 0, 
       left: 0,
-      zIndex: 1000, // Ensure it overlays other elements like the sidebar
+      zIndex: 1000,
     }}>
       <Container maxWidth={false} sx={{ height: "100%", padding: 0, margin: 0 }}>
         <Grid container sx={{ height: "100%" }}>
-          {/* Left Section (Expanded Blue Background with Mascot and Text) */}
           <Grid 
             item 
             xs={12} 
@@ -76,15 +145,15 @@ const Profile = () => {
               padding: 4,
               background: "rgb(0, 81, 255)",
               backgroundSize: "cover",
-              height: "100vh", // Full viewport height
-              width: "100%", // Full width for mobile, adjusted for desktop
+              height: "100vh",
+              width: "100%",
             }}
           >
             <Typography 
               variant="h2" 
               sx={{ 
                 mb: 12, 
-                fontFamily: "Got Milk Sans Serif, sans-serif", // Fallback to sans-serif if font fails
+                fontFamily: "Got Milk Sans Serif, sans-serif",
               }}
             >
               got multi-cluster!
@@ -98,8 +167,6 @@ const Profile = () => {
               backgroundPosition: "center",
             }} />
           </Grid>
-
-          {/* Right Section (Login Form) */}
           <Grid 
             item 
             xs={12} 
@@ -110,7 +177,7 @@ const Profile = () => {
               alignItems: "center",
               background: "white",
               padding: 4,
-              height: "100vh", // Full viewport height
+              height: "100vh",
             }}
           >
             <Card sx={{ 
@@ -142,7 +209,7 @@ const Profile = () => {
                     style={{ width: "250px" }}
                   />
                 </Box>
-                <form onSubmit={handleSubmit} style={{ flexGrow: 1 }}>
+                <form onSubmit={handleSubmit} style={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
                   <TextField
                     fullWidth
                     label="Username"
@@ -151,9 +218,10 @@ const Profile = () => {
                     onChange={(e) => {
                       setUsername(e.target.value);
                       setUsernameError(false);
+                      setUsernameErrorMessage("");
                     }}
                     error={usernameError}
-                    helperText={usernameError ? "Username is required" : ""}
+                    helperText={usernameError ? usernameErrorMessage : ""}
                     margin="dense"
                     sx={{ 
                       "& .MuiInputBase-root": { 
@@ -171,7 +239,7 @@ const Profile = () => {
                       minHeight: "70px",
                     }}
                   />
-                  <Box sx={{ mt: 3 }}>
+                  <Box sx={{ mt: 3, position: "relative" }}>
                     <TextField
                       fullWidth
                       type="password"
@@ -183,7 +251,6 @@ const Profile = () => {
                         setPasswordError(false);
                       }}
                       error={passwordError}
-                      helperText={passwordError ? "Password is required" : ""}
                       margin="dense"
                       sx={{ 
                         "& .MuiInputBase-root": { 
@@ -201,13 +268,28 @@ const Profile = () => {
                         minHeight: "70px",
                       }}
                     />
+                    {passwordError && (
+                      <Typography 
+                        sx={{ 
+                          color: "error.main", 
+                          position: "absolute",
+                          top: "100%", // Position below password field
+                          left: 0,
+                          right: 0,
+                          textAlign: "center",
+                          mt: 1, // Small margin to avoid overlap
+                        }}
+                      >
+                        Invalid username or password
+                      </Typography>
+                    )}
                   </Box>
                   <Button 
                     type="submit" 
                     variant="text"
                     fullWidth 
                     sx={{ 
-                      mt: 4, 
+                      mt: 8, // Fixed margin-top to maintain position
                       color: "rgb(5, 128, 243)",
                       borderRadius: 2,
                       fontWeight: "bold",
@@ -249,6 +331,21 @@ const Profile = () => {
           </Grid>
         </Grid>
       </Container>
+
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbarSeverity}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
