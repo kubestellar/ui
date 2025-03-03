@@ -17,7 +17,7 @@ Before proceeding, ensure you have the following installed:
 
 🔹 **Run the following command to start a PostgreSQL container:**  
 ```sh
-docker run --name jwt-auth-db -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=password -e POSTGRES_DB=jwt_db -p 5432:5432 -d postgres
+docker run --name jwt-auth-db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password -e POSTGRES_DB=jwt_db -p 5432:5432 -d postgres
 ```
 ### **Breakdown of Flags:**  
 - `--name jwt-auth-db` → Container name  

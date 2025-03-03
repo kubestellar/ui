@@ -16,13 +16,14 @@ services:
     volumes:
       - ~/.kube:/root/.kube
     environment:
+      - REDIS_HOST=localhost
+      - REDIS_PORT=6379
       - POSTGRES_HOST=localhost
       - POSTGRES_PORT=5432
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=jwt_db
       - DATABASE_URL=postgres://postgres:password@localhost:5432/jwt_db?sslmode=disable
-      - JWT_SECRET=mysecretkey
     depends_on:
       - postgres
     network_mode: "host"
