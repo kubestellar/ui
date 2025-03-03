@@ -10,7 +10,6 @@ import { lazy, Suspense } from "react";
 import LoadingFallback from "../components/LoadingFallback";
 import WecsTreeview from "../components/WecsTopology";
 import Profile from "../components/Profile";
-import ServiceDetails from "../components/ServiceDetails";
 import ProtectedRoute from "../components/ProtectedRoute";
 import PublicRoute from "../components/PublicRoute"; // Import PublicRoute
 
@@ -71,14 +70,6 @@ export const routesConfig: RouteObject[] = [
         element: (
           <ProtectedRoute>
             <DeploymentDetails />
-          </ProtectedRoute>
-        ) 
-      },
-      { 
-        path: "/servicedetails/:namespace/:serviceName", 
-        element: (
-          <ProtectedRoute>
-            <ServiceDetails />
           </ProtectedRoute>
         ) 
       },
