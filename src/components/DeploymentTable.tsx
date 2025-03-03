@@ -266,9 +266,9 @@ spec:
 };
 
 return (
-  <Paper  elevation={3}  sx={{ p: 3, bgcolor: theme === "dark" ? "#2f86ff" : "background.paper", color: theme === "dark" ? "white" : "black",      borderRadius: 2 }}>
+  <Paper  elevation={3}  sx={{ mb: 3, p: 3, bgcolor: theme === "dark" ? "#2f86ff" : "background.paper", color: theme === "dark" ? "white" : "black", borderRadius: 2 }}>
     {/* Header Section */}
-    <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+    <Box display="flex" justifyContent="space-between" alignItems="center">
       <Typography variant="h6" fontWeight="bold">
         {title}
       </Typography>

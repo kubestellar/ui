@@ -1,6 +1,6 @@
 import { RouteObject } from "react-router-dom";
 import { Layout } from "../components/Layout";
-// import WDS from "../pages/WDS";
+import WDS from "../pages/WDS";
 import BP from "../pages/BP";
 import NotFoundPage from "../pages/NotFoundPage";
 import DeploymentDetails from "../components/DeploymentDetails";
@@ -9,12 +9,12 @@ import TreeView from "../components/TreeViewComponent";
 import { lazy, Suspense } from "react";
 import LoadingFallback from "../components/LoadingFallback";
 import WecsTreeview from "../components/WecsTopology";
-// import ShowLogs from "../components/Logs";
+import Profile from "../components/Profile";
+import ProtectedRoute from "../components/ProtectedRoute";
+import PublicRoute from "../components/PublicRoute";
 
-// Improve lazy loading with prefetch
 const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ "../components/Clusters"));
 const ITSLazy = lazy(() => import(/* webpackPrefetch: true */ "../pages/ITS"));
-// ... update other lazy imports similarly ...
 
 export const routesConfig: RouteObject[] = [
   {
@@ -24,29 +24,87 @@ export const routesConfig: RouteObject[] = [
       { 
         index: true, 
         element: (
-          <Suspense fallback={<LoadingFallback message="Loading clusters..." size="medium" />}>
-            <ClustersLazy />
-          </Suspense>
+          <ProtectedRoute>
+            <Suspense fallback={<LoadingFallback message="Loading clusters..." size="medium" />}>
+              <ClustersLazy />
+            </Suspense>
+          </ProtectedRoute>
         ) 
       },
       { 
         path: "its", 
         element: (
-          <Suspense fallback={<LoadingFallback message="Loading ITS..." size="small" />}>
-            <ITSLazy />
-          </Suspense>
+          <ProtectedRoute>
+            <Suspense fallback={<LoadingFallback message="Loading ITS..." size="small" />}>
+              <ITSLazy />
+            </Suspense>
+          </ProtectedRoute>
         ) 
       },
-      { path: "wds", element: <TreeView /> },
-      { path: "bp", element: <BP /> },
-      { path: "namespaces" , element: <NameSpace />},
-      { path: "namespaces" , element: <NameSpace />},
-      { path: "deploymentdetails/:namespace/:deploymentName", element: <DeploymentDetails /> },
-      { path: "treeview", element: <TreeView /> },
-      { path: "wds/treeview", element: <TreeView /> },
-      { path: "wecs/treeview", element: <WecsTreeview /> },
-      { path: "*", element: <NotFoundPage /> },
-      // {path: "logs/:deployment/:namespace", element: <ShowLogs />} // TODO: remove it in future after deployment details page
+      { 
+        path: "wds", 
+        element: (
+          <ProtectedRoute>
+            <WDS />
+          </ProtectedRoute>
+        ) 
+      },
+      { 
+        path: "bp", 
+        element: (
+          <ProtectedRoute>
+            <BP />
+          </ProtectedRoute>
+        ) 
+      },
+      { 
+        path: "namespaces", 
+        element: (
+          <ProtectedRoute>
+            <NameSpace />
+          </ProtectedRoute>
+        ) 
+      },
+      { 
+        path: "deploymentdetails/:namespace/:deploymentName", 
+        element: (
+          <ProtectedRoute>
+            <DeploymentDetails />
+          </ProtectedRoute>
+        ) 
+      },
+      { 
+        path: "wds/treeview", 
+        element: (
+          <ProtectedRoute>
+            <TreeView />
+          </ProtectedRoute>
+        ) 
+      },
+      { 
+        path: "wecs/treeview", 
+        element: (
+          <ProtectedRoute>
+            <WecsTreeview />
+          </ProtectedRoute>
+        ) 
+      },
+      { 
+        path: "profile", 
+        element: (
+          <PublicRoute>
+            <Profile />
+          </PublicRoute>
+        ) // Wrap with PublicRoute
+      },
+      { 
+        path: "*", 
+        element: (
+          <ProtectedRoute>
+            <NotFoundPage />
+          </ProtectedRoute>
+        ) 
+      },
     ],
   },
 ];
