@@ -1,6 +1,6 @@
 import { RouteObject } from "react-router-dom";
 import { Layout } from "../components/Layout";
-import WDS from "../pages/WDS";
+// import WDS from "../pages/WDS";
 import BP from "../pages/BP";
 import NotFoundPage from "../pages/NotFoundPage";
 import DeploymentDetails from "../components/DeploymentDetails";
@@ -37,7 +37,7 @@ export const routesConfig: RouteObject[] = [
           </Suspense>
         ) 
       },
-      { path: "wds", element: <WDS /> },
+      { path: "wds", element: <TreeView /> },
       { path: "bp", element: <BP /> },
       { path: "namespaces" , element: <NameSpace />},
       { path: "namespaces" , element: <NameSpace />},
