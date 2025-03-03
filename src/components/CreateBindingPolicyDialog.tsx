@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect } from "react";
 import Editor from "@monaco-editor/react";
 import yaml from "js-yaml";
 import {
@@ -17,7 +17,7 @@ import {
   Typography,
   CircularProgress,
 } from "@mui/material";
-import { ThemeContext } from "../context/ThemeContext";
+import useTheme from "../stores/themeStore";
 import { api } from "../lib/api";
 
 interface PolicyData {
@@ -263,7 +263,7 @@ spec:
     onClose();
   };
 
-  const { theme } = useContext(ThemeContext);
+  const theme = useTheme((state) => state.theme)
   const isDarkTheme = theme === "dark";
   const bgColor = isDarkTheme ? "#1F2937" : "background.paper";
   const textColor = isDarkTheme ? "white" : "black";

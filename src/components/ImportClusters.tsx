@@ -1,6 +1,5 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState } from "react";
 import Editor from "@monaco-editor/react";
-import { ThemeContext } from "../context/ThemeContext";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +19,7 @@ import {
   CircularProgress,
   Snackbar,
 } from "@mui/material";
+import useTheme from "../stores/themeStore";
 
 interface Props {
   activeOption: string | null;
@@ -36,7 +36,7 @@ const commonInputSx = {
 };
 
 const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
-  const { theme } = useContext(ThemeContext);
+  const theme = useTheme((state) => state.theme)
   const textColor = theme === "dark" ? "white" : "black";
   const bgColor = theme === "dark" ? "#1F2937" : "background.paper";
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useContext } from "react";
+import { useState, useEffect, useCallback,  } from "react";
 import { api } from "../lib/api";
 import CreateOptions from "../components/CreateOptions";
 import DeploymentTable from "../components/DeploymentTable";
@@ -7,7 +7,7 @@ import { Box, Button } from "@mui/material";
 import { Plus } from "lucide-react";
 import { Grid, Card, CardContent, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { ThemeContext } from "../context/ThemeContext"; 
+import useTheme from "../stores/themeStore";
 import LoadingFallback from "../components/LoadingFallback";
 
 export interface Workload {
@@ -23,7 +23,7 @@ export interface Workload {
 const COLORS = ["#28A745"];
 
 const WDS = () => {
-  const { theme } = useContext(ThemeContext);
+  const theme = useTheme((state) => state.theme)
   const [workloads, setWorkloads] = useState<Workload[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

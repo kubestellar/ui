@@ -1,8 +1,8 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { IconType } from "react-icons";
-import { useCluster } from "../../context/ClusterContext";
-import { useLocation } from "react-router-dom";
+import useClusterStore from "../../stores/clusterStore";
+
 interface MenuItemProps {
   onClick?: () => void;
   catalog: string;
@@ -23,7 +23,8 @@ const MenuItem: React.FC<MenuItemProps> = ({
   centered,
 }) => {
   const location = useLocation();
-  const { selectedCluster, hasAvailableClusters } = useCluster();
+  const selectedCluster = useClusterStore((state) => state.selectedCluster);
+  const hasAvailableClusters = useClusterStore((state) => state.hasAvailableClusters);
   const isDisabled = !hasAvailableClusters || !selectedCluster;
 
   const shouldDisableItem = (label: string) => {

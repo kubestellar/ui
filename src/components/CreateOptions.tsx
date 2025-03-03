@@ -1,8 +1,7 @@
+
 import { useState } from "react";
 import Editor from "@monaco-editor/react";
 import jsyaml from "js-yaml";
-import { ThemeContext } from "../context/ThemeContext";
-import { useContext } from "react";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +20,7 @@ import {
   FormControl,
   InputLabel,
 } from "@mui/material";
+import useTheme from "../stores/themeStore";
 
 interface Props {
   activeOption: string | null;
@@ -43,7 +43,7 @@ const CreateOptions = ({
 });
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const { theme } = useContext(ThemeContext);
+  const theme = useTheme((state) => state.theme)
 
   const [formData, setFormData] = useState({
     appName: "",

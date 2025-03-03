@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect } from "react";
 import Editor from "@monaco-editor/react";
 import yaml from "js-yaml";
 import {
@@ -14,7 +14,7 @@ import {
   Box,
 } from "@mui/material";
 import { BindingPolicyInfo } from "../../../types/bindingPolicy";
-import { ThemeContext } from "../../../context/ThemeContext";
+import useTheme from "../../../stores/themeStore";
 
 interface EditBindingPolicyDialogProps {
   open: boolean;
@@ -33,7 +33,7 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
   const [policyName, setPolicyName] = useState<string>(policy.name);
   const [error, setError] = useState<string>("");
   const [showUnsavedChanges, setShowUnsavedChanges] = useState(false);
-  const { theme } = useContext(ThemeContext);
+  const theme = useTheme((state) => state.theme)
   const isDarkTheme = theme === "dark";
 
   useEffect(() => {

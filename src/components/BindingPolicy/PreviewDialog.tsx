@@ -16,8 +16,7 @@ import {
   ManagedCluster,
   Workload,
 } from "../../types/bindingPolicy";
-import { useContext } from "react";
-import { ThemeContext } from "../../context/ThemeContext";
+import useTheme from "../../stores/themeStore";
 
 interface PreviewDialogProps {
   open: boolean;
@@ -35,7 +34,7 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
   policy,
 }) => {
   const [tabValue, setTabValue] = React.useState(0);
-  const { theme } = useContext(ThemeContext);
+  const theme = useTheme((state) => state.theme)
   const isDarkTheme = theme === "dark";
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
