@@ -10,9 +10,8 @@ import { lazy, Suspense } from "react";
 import LoadingFallback from "../components/LoadingFallback";
 import WecsTreeview from "../components/WecsTopology";
 import Profile from "../components/Profile";
-import ServiceDetails from "../components/ServiceDetails";
 import ProtectedRoute from "../components/ProtectedRoute";
-import PublicRoute from "../components/PublicRoute"; // Import PublicRoute
+import PublicRoute from "../components/PublicRoute";
 
 const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ "../components/Clusters"));
 const ITSLazy = lazy(() => import(/* webpackPrefetch: true */ "../pages/ITS"));
@@ -71,14 +70,6 @@ export const routesConfig: RouteObject[] = [
         element: (
           <ProtectedRoute>
             <DeploymentDetails />
-          </ProtectedRoute>
-        ) 
-      },
-      { 
-        path: "/servicedetails/:namespace/:serviceName", 
-        element: (
-          <ProtectedRoute>
-            <ServiceDetails />
           </ProtectedRoute>
         ) 
       },

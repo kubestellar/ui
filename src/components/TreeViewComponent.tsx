@@ -30,8 +30,11 @@ import { ZoomIn, ZoomOut } from "@mui/icons-material";
 import { FiMoreVertical } from "react-icons/fi";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import LoadingFallback from "./LoadingFallback";
+import DeploymentDetailsTree, { DeploymentDetailsProps } from "../components/DeploymentDetailsTree";
+// import { ThemeContext } from "../context/ThemeContext";
+// import { useContext } from "react";
 
-// Define interfaces (unchanged)
+// Define interfaces
 interface NodeData {
   label: JSX.Element;
 }
@@ -100,7 +103,7 @@ const nodeStyle: React.CSSProperties = {
   height: "30px",
 };
 
-// CustomZoomControls and FlowWithScroll components remain unchanged
+// CustomZoomControls component
 const CustomZoomControls = () => {
   const { getZoom, setViewport } = useReactFlow();
   const [zoomLevel, setZoomLevel] = useState<number>(200);
@@ -159,11 +162,12 @@ const CustomZoomControls = () => {
   );
 };
 
+// FlowWithScroll component
 const FlowWithScroll = ({ nodes, edges }: { nodes: CustomNode[]; edges: CustomEdge[] }) => {
   const { setViewport, getViewport } = useReactFlow();
 
   const handleWheel = (event: React.WheelEvent) => {
-    const reactFlowContainer = document.querySelector('.react-flow');
+    const reactFlowContainer = document.querySelector(".react-flow");
     const isInsideTree = reactFlowContainer && reactFlowContainer.contains(event.target as Node);
 
     if (isInsideTree) {
@@ -218,6 +222,7 @@ const FlowWithScroll = ({ nodes, edges }: { nodes: CustomNode[]; edges: CustomEd
   );
 };
 
+// Main TreeView component
 const TreeView = () => {
   const [formData, setFormData] = useState<{ githuburl: string; path: string }>({ githuburl: "", path: "" });
   const [loading, setLoading] = useState<boolean>(false);
@@ -228,7 +233,9 @@ const TreeView = () => {
   const [snackbarMessage, setSnackbarMessage] = useState<string>("");
   const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
   const [contextMenu, setContextMenu] = useState<{ nodeId: string | null; x: number; y: number } | null>(null);
-  const [dialogOpen, setDialogOpen] = useState<boolean>(false); // New state for dialog
+  const [dialogOpen, setDialogOpen] = useState<boolean>(false);
+  const [selectedDeployment, setSelectedDeployment] = useState<DeploymentDetailsProps | null>(null);
+  // const { theme } = useContext(ThemeContext);
 
   const transformDataToTree = useCallback((data: Namespace[]) => {
     const nodes: CustomNode[] = [];
@@ -237,9 +244,9 @@ const TreeView = () => {
     const verticalSpacing = 40;
     const additionalTopLevelSpacing = verticalSpacing / 2;
     const podVerticalSpacing = verticalSpacing + additionalTopLevelSpacing;
-  
+
     let globalY = 40;
-  
+
     const getDaysAgo = (creationTimestamp: string | undefined): string => {
       if (!creationTimestamp) return "";
       const currentDate = new Date("2025-02-25");
@@ -248,7 +255,7 @@ const TreeView = () => {
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
       return diffDays > 0 ? `${diffDays} days` : "Today";
     };
-  
+
     const addNode = (
       id: string,
       label: string,
@@ -257,12 +264,13 @@ const TreeView = () => {
       parent: string | null = null,
       type: string = "",
       collapsed: boolean = false,
-      parentDeploymentStatus?: string
+      parentDeploymentStatus?: string,
+      namespace?: string
     ) => {
       let icon: string = "";
       let dynamicText: string = "";
       let heartColor: string = "rgb(24, 190, 148)";
-  
+
       if (type === "namespace" && parent === null) {
         if (!data.find((ns) => ns.name === label)?.status || data.find((ns) => ns.name === label)?.status !== "Active") {
           heartColor = "#ff0000";
@@ -295,7 +303,7 @@ const TreeView = () => {
           heartColor = "#ff0000";
         }
       }
-  
+
       if (type === "namespace") {
         icon = ns;
         dynamicText = "ns";
@@ -318,9 +326,9 @@ const TreeView = () => {
         icon = ep;
         dynamicText = "endpoint";
       }
-  
+
       const iconSrc = icon || "";
-  
+
       let creationTimestamp: string | undefined = "";
       if (type === "namespace") {
         const ns = data.find((ns) => ns.name === label);
@@ -341,9 +349,9 @@ const TreeView = () => {
         const service = data.flatMap((ns) => ns.services || []).find((svc) => svc.metadata.name === parent?.replace("service-", ""));
         creationTimestamp = service?.metadata.creationTimestamp || new Date().toISOString();
       }
-  
+
       const timeAgo = getDaysAgo(creationTimestamp);
-  
+
       nodes.push({
         id,
         data: {
@@ -356,11 +364,22 @@ const TreeView = () => {
                 justifyContent: "space-between",
                 width: "100%",
               }}
+              onClick={(e) => {
+                if ((e.target as HTMLElement).tagName === "svg" || (e.target as HTMLElement).closest("svg")) return;
+                if (type === "deployment") {
+                  setSelectedDeployment({
+                    namespace: namespace!,
+                    deploymentName: label,
+                    onClose: handleClosePanel,
+                    isOpen: true, // Include isOpen here
+                  });
+                }
+              }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "10px", marginLeft: "-5px" }}>
                 <div>
                   <img src={iconSrc} alt={label} width="18" height="18" />
-                  <span style={{ color: "gray", fontWeight: 500 }}>{dynamicText}</span>
+                  <span style={{ color: "gray", fontWeight: "500" }}>{dynamicText}</span>
                 </div>
                 <div style={{ textAlign: "left" }}>
                   <div>{label}</div>
@@ -376,7 +395,25 @@ const TreeView = () => {
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                 <FiMoreVertical
-                  style={{ fontSize: "11px", color: "#34aadc", marginRight: "-10px", cursor: "pointer" }}
+                  style={{
+                    fontSize: "15px",
+                    color: "#00a2b3",
+                    marginRight: "-10px",
+                    cursor: "pointer",
+                    padding: "1px",
+                  }}
+                  onMouseEnter={(e) => {
+                    const target = e.target as HTMLElement;
+                    target.style.backgroundColor = "#e0e0e0";
+                    target.style.borderRadius = "50%";
+                    target.style.color = "#00a2b3";
+                  }}
+                  onMouseLeave={(e) => {
+                    const target = e.target as HTMLElement;
+                    target.style.backgroundColor = "transparent";
+                    target.style.borderRadius = "0";
+                    target.style.color = "#00a2b3";
+                  }}
                   onClick={(e) => handleMenuOpen(e, id)}
                 />
               </div>
@@ -412,7 +449,7 @@ const TreeView = () => {
         targetPosition: Position.Left,
         collapsed,
       });
-  
+
       if (parent) {
         edges.push({
           id: `edge-${parent}-${id}`,
@@ -425,132 +462,124 @@ const TreeView = () => {
         });
       }
     };
-  
+
     data.forEach((namespace: Namespace, nsIndex: number) => {
       const namespaceId = `namespace-${namespace.name}`;
       const x = 15;
-  
+
       let currentY = globalY;
       let minY = Infinity;
       let maxY = -Infinity;
-  
-      // Calculate vertical space for deployments
+
       if (namespace.deployments?.length) {
         namespace.deployments.forEach((deployment: Deployment) => {
           const numPods = deployment.spec.replicas;
-          const podHeight = numPods > 1 ? (numPods * podVerticalSpacing) - podVerticalSpacing : 0;
-          const deploymentY = numPods === 1 ? currentY : currentY + (podHeight / 2);
-          minY = Math.min(minY, numPods === 1 ? deploymentY : deploymentY - (podHeight / 2));
-          maxY = Math.max(maxY, numPods === 1 ? deploymentY + verticalSpacing : deploymentY + (podHeight / 2));
-          currentY = numPods === 1 ? deploymentY + verticalSpacing : deploymentY + (podHeight / 2) + verticalSpacing;
+          const podHeight = numPods > 1 ? numPods * podVerticalSpacing - podVerticalSpacing : 0;
+          const deploymentY = numPods === 1 ? currentY : currentY + podHeight / 2;
+          minY = Math.min(minY, numPods === 1 ? deploymentY : deploymentY - podHeight / 2);
+          maxY = Math.max(maxY, numPods === 1 ? deploymentY + verticalSpacing : deploymentY + podHeight / 2);
+          currentY = numPods === 1 ? deploymentY + verticalSpacing : deploymentY + podHeight / 2 + verticalSpacing;
           currentY += additionalTopLevelSpacing;
         });
       }
-  
-      // Calculate vertical space for services
+
       if (namespace.services?.length) {
         namespace.services.forEach((service: Service) => {
           const numEndpoints = service.status?.loadBalancer?.ingress?.length || 0;
-          const endpointHeight = numEndpoints > 1 ? (numEndpoints * verticalSpacing) - verticalSpacing : 0;
-          const serviceY = numEndpoints === 1 ? currentY : currentY + (endpointHeight / 2);
-          minY = Math.min(minY, numEndpoints === 1 ? serviceY : serviceY - (endpointHeight / 2));
-          maxY = Math.max(maxY, numEndpoints === 1 ? serviceY + verticalSpacing : serviceY + (endpointHeight / 2));
-          currentY = numEndpoints === 1 ? serviceY + verticalSpacing : serviceY + (endpointHeight / 2) + verticalSpacing;
+          const endpointHeight = numEndpoints > 1 ? numEndpoints * verticalSpacing - verticalSpacing : 0;
+          const serviceY = numEndpoints === 1 ? currentY : currentY + endpointHeight / 2;
+          minY = Math.min(minY, numEndpoints === 1 ? serviceY : serviceY - endpointHeight / 2);
+          maxY = Math.max(maxY, numEndpoints === 1 ? serviceY + verticalSpacing : serviceY + endpointHeight / 2);
+          currentY = numEndpoints === 1 ? serviceY + verticalSpacing : serviceY + endpointHeight / 2 + verticalSpacing;
           currentY += additionalTopLevelSpacing;
         });
       }
-  
-      // Calculate vertical space for configmaps
+
       if (namespace.configmaps?.length) {
         const numConfigs = namespace.configmaps.length;
-        const configHeight = numConfigs > 1 ? (numConfigs * verticalSpacing) - verticalSpacing : 0;
-        const configStartY = currentY + (configHeight / 2);
+        const configHeight = numConfigs > 1 ? numConfigs * verticalSpacing - verticalSpacing : 0;
+        const configStartY = currentY + configHeight / 2;
         minY = Math.min(minY, currentY);
-        maxY = Math.max(maxY, configStartY + (configHeight / 2));
-        currentY = configStartY + (configHeight / 2) + verticalSpacing;
+        maxY = Math.max(maxY, configStartY + configHeight / 2);
+        currentY = configStartY + configHeight / 2 + verticalSpacing;
         currentY += additionalTopLevelSpacing;
       }
-  
+
       if (!namespace.deployments?.length && !namespace.services?.length && !namespace.configmaps?.length) {
         minY = currentY;
         maxY = currentY;
       }
-  
+
       const totalChildHeight = maxY - minY;
-      const namespaceY = minY + (totalChildHeight / 2);
+      const namespaceY = minY + totalChildHeight / 2;
       addNode(namespaceId, namespace.name, x, namespaceY, null, "namespace", false);
-  
-      currentY = namespaceY - (totalChildHeight / 2);
-  
-      // Add deployments and replicasets
+
+      currentY = namespaceY - totalChildHeight / 2;
+
       if (namespace.deployments?.length) {
         namespace.deployments.forEach((deployment: Deployment) => {
           const deploymentId = `deployment-${deployment.metadata.name}`;
           const numPods = deployment.spec.replicas;
-          const podHeight = numPods > 1 ? (numPods * podVerticalSpacing) - podVerticalSpacing : 0;
-          const deploymentY = numPods === 1 ? currentY : currentY + (podHeight / 2);
-          addNode(deploymentId, deployment.metadata.name, x + horizontalSpacing, deploymentY, namespaceId, "deployment", false, deployment.status);
-  
-          // Add replicaset as child of deployment
+          const podHeight = numPods > 1 ? numPods * podVerticalSpacing - podVerticalSpacing : 0;
+          const deploymentY = numPods === 1 ? currentY : currentY + podHeight / 2;
+          addNode(deploymentId, deployment.metadata.name, x + horizontalSpacing, deploymentY, namespaceId, "deployment", false, deployment.status, namespace.name);
+
           if (deployment.spec.replicas > 0) {
             const replicasetId = `replicaset-${deployment.metadata.name}`;
             addNode(replicasetId, "replica", x + horizontalSpacing * 2, deploymentY, deploymentId, "replicaset", false, deployment.status);
           }
-  
-          currentY = numPods === 1 ? deploymentY + verticalSpacing : deploymentY + (podHeight / 2) + verticalSpacing;
+
+          currentY = numPods === 1 ? deploymentY + verticalSpacing : deploymentY + podHeight / 2 + verticalSpacing;
           currentY += additionalTopLevelSpacing;
         });
       }
-  
-      // Add services and endpoints
+
       if (namespace.services?.length) {
         namespace.services.forEach((service: Service) => {
           const serviceId = `service-${service.metadata.name}`;
           const numEndpoints = service.status?.loadBalancer?.ingress?.length || 0;
-          const endpointHeight = numEndpoints > 1 ? (numEndpoints * verticalSpacing) - verticalSpacing : 0;
-          const serviceY = numEndpoints === 1 ? currentY : currentY + (endpointHeight / 2);
+          const endpointHeight = numEndpoints > 1 ? numEndpoints * verticalSpacing - verticalSpacing : 0;
+          const serviceY = numEndpoints === 1 ? currentY : currentY + endpointHeight / 2;
           addNode(serviceId, service.metadata.name, x + horizontalSpacing, serviceY, namespaceId, "service", false);
-  
-          // Add endpoints as children of service
+
           if (service.status?.loadBalancer?.ingress) {
             service.status.loadBalancer.ingress.forEach((endpoint, j: number) => {
               const endpointId = `endpoint-${service.metadata.name}-${j}`;
-              const endpointY = numEndpoints === 1 ? serviceY : serviceY + (j * verticalSpacing) - (endpointHeight / 2);
+              const endpointY = numEndpoints === 1 ? serviceY : serviceY + j * verticalSpacing - endpointHeight / 2;
               addNode(endpointId, endpoint.hostname || endpoint.ip || "Endpoint", x + horizontalSpacing * 2, endpointY, serviceId, "endpoint", false);
             });
           }
-  
-          currentY = numEndpoints === 1 ? serviceY + verticalSpacing : serviceY + (endpointHeight / 2) + verticalSpacing;
+
+          currentY = numEndpoints === 1 ? serviceY + verticalSpacing : serviceY + endpointHeight / 2 + verticalSpacing;
           currentY += additionalTopLevelSpacing;
         });
       }
-  
-      // Add configmaps (including specific 'config-kuberoot-ca.crt' if present)
+
       if (namespace.configmaps?.length) {
         const configParentId = `configs-parent-${namespace.name}`;
         const numConfigs = namespace.configmaps.length;
-        const configHeight = numConfigs > 1 ? (numConfigs * verticalSpacing) - verticalSpacing : 0;
-        const configParentY = currentY + (configHeight / 2);
+        const configHeight = numConfigs > 1 ? numConfigs * verticalSpacing - verticalSpacing : 0;
+        const configParentY = currentY + configHeight / 2;
         addNode(configParentId, "Configs", x + horizontalSpacing, configParentY, namespaceId, "config", false);
-  
+
         namespace.configmaps.forEach((config: ConfigMap, i: number) => {
           const configId = `config-${config.metadata.name}`;
-          const configY = numConfigs === 1 ? configParentY : configParentY + (i * verticalSpacing) - (configHeight / 2);
+          const configY = numConfigs === 1 ? configParentY : configParentY + i * verticalSpacing - configHeight / 2;
           addNode(configId, config.metadata.name, x + horizontalSpacing * 2, configY, configParentId, "config", false);
         });
-  
-        currentY = configParentY + (configHeight / 2) + verticalSpacing;
+
+        currentY = configParentY + configHeight / 2 + verticalSpacing;
         currentY += additionalTopLevelSpacing;
       }
-  
-      globalY = currentY + verticalSpacing * (nsIndex + 1); // Ensure each namespace starts fresh
+
+      globalY = currentY + verticalSpacing * (nsIndex + 1);
     });
-  
+
     setNodes(nodes);
     setEdges(edges);
-  
+
     const totalHeight = globalY + 50;
-    const reactFlowContainer = document.querySelector('.react-flow') as HTMLElement | null;
+    const reactFlowContainer = document.querySelector(".react-flow") as HTMLElement | null;
     if (reactFlowContainer) {
       reactFlowContainer.style.height = `${totalHeight}px`;
     }
@@ -642,8 +671,8 @@ const TreeView = () => {
       setResponseData([]);
     } finally {
       setLoading(false);
-      setDialogOpen(false); // Close dialog after deploy attempt
-      setFormData({ githuburl: "", path: "" }); // Reset form data
+      setDialogOpen(false);
+      setFormData({ githuburl: "", path: "" });
     }
   };
 
@@ -704,112 +733,122 @@ const TreeView = () => {
 
   const handleDialogClose = () => {
     setDialogOpen(false);
-    setFormData({ githuburl: "", path: "" }); // Reset form data on close
+    setFormData({ githuburl: "", path: "" });
+  };
+
+  const handleClosePanel = () => {
+    if (selectedDeployment) {
+      setSelectedDeployment({ ...selectedDeployment, isOpen: false });
+      setTimeout(() => setSelectedDeployment(null), 500); // Clear after animation
+    }
   };
 
   return (
-    <Box>
-      <Box sx={{ mb: 4, display: "flex", alignItems: "center", gap: 2 }}>
-      <Typography variant="h4">Tree View Deployment</Typography>
-        <Button variant="contained" onClick={handleDialogOpen}>
-          + New App
-        </Button>
-      </Box>
-
-      <Alert severity="info" sx={{ mb: 4 }}>
-        <AlertTitle>Info</AlertTitle>
-        Click "+ New App" to deploy your Kubernetes application.
-      </Alert>
-
-      <Box mt={3} style={{ width: "82vw", position: "relative" }}>
-        {(!responseData || responseData.length === 0) ? (
-          <LoadingFallback message="Wds Tree-View is Loading..." size="medium" />
-        ) : (
-          <ReactFlowProvider>
-            <FlowWithScroll nodes={nodes} edges={edges} />
-            <CustomZoomControls />
-          </ReactFlowProvider>
-        )}
-
-        {contextMenu && (
-          <Menu
-            open={Boolean(contextMenu)}
-            onClose={handleMenuClose}
-            anchorReference="anchorPosition"
-            anchorPosition={
-              contextMenu
-                ? { top: contextMenu.y, left: contextMenu.x }
-                : undefined
-            }
-          >
-            <MenuItem onClick={() => handleMenuAction("Details")}>Details</MenuItem>
-            <MenuItem onClick={() => handleMenuAction("Sync")}>Sync</MenuItem>
-            <MenuItem onClick={() => handleMenuAction("Delete")}>Delete</MenuItem>
-            <MenuItem onClick={() => handleMenuAction("Logs")}>Logs</MenuItem>
-            <MenuItem onClick={() => handleMenuAction("Restart")}>Restart</MenuItem>
-            <MenuItem onClick={() => handleMenuAction("Resume")}>Resume</MenuItem>
-          </Menu>
-        )}
-      </Box>
-
-      <Dialog
-        open={dialogOpen}
-        onClose={handleDialogClose}
-        sx={{
-          "& .MuiDialog-paper": {
-            position: "fixed",
-            right: 0,
-            top: 0,
-            bottom: 0,
-            margin: 0,
-            maxWidth: "1200px",
-            width: "100%",
-            height: "100%",
-            borderRadius: 0,
-          },
-        }}
-      >
-        <DialogTitle>Create New App</DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            label="GitHub URL"
-            value={formData.githuburl}
-            onChange={(e) => setFormData((prev) => ({ ...prev, githuburl: e.target.value }))}
-            sx={{ mt: 2, mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Path"
-            value={formData.path}
-            onChange={(e) => setFormData((prev) => ({ ...prev, path: e.target.value }))}
-            sx={{ mb: 2 }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDialogClose} color="secondary">
-            Cancel
+    <Box sx={{ display: "flex", height: "100vh", width: "80vw" }}>
+      {/* Main content (Tree View) */}
+      <Box sx={{ flex: 1, position: "relative" }}>
+        <Box sx={{ mb: 4, display: "flex", alignItems: "center", gap: 2 }}>
+          <Typography variant="h4">Tree View Deployment</Typography>
+          <Button variant="contained" onClick={handleDialogOpen}>
+            + New App
           </Button>
-          <Button
-            variant="contained"
-            onClick={handleDeploy}
-            disabled={loading}
-          >
-            {loading ? <CircularProgress size={24} /> : "Deploy"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        </Box>
 
-      <Snackbar
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        open={snackbarOpen}
-        autoHideDuration={4000}
-        onClose={handleSnackbarClose}
-      >
-        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: "100%" }}>
-          {snackbarMessage}
+        <Alert severity="info" sx={{ mb: 4 }}>
+          <AlertTitle>Info</AlertTitle>
+          Click "+ New App" to deploy your Kubernetes application.
         </Alert>
-      </Snackbar>
+
+        <Box mt={3} style={{ width: "100%", position: "relative" }}>
+          {(!responseData || responseData.length === 0) ? (
+            <LoadingFallback message="Wds Tree-View is Loading..." size="medium" />
+          ) : (
+            <ReactFlowProvider>
+              <FlowWithScroll nodes={nodes} edges={edges} />
+              <CustomZoomControls />
+            </ReactFlowProvider>
+          )}
+
+          {contextMenu && (
+            <Menu
+              open={Boolean(contextMenu)}
+              onClose={handleMenuClose}
+              anchorReference="anchorPosition"
+              anchorPosition={contextMenu ? { top: contextMenu.y, left: contextMenu.x } : undefined}
+            >
+              <MenuItem onClick={() => handleMenuAction("Details")}>Details</MenuItem>
+              <MenuItem onClick={() => handleMenuAction("Sync")}>Sync</MenuItem>
+              <MenuItem onClick={() => handleMenuAction("Delete")}>Delete</MenuItem>
+              <MenuItem onClick={() => handleMenuAction("Logs")}>Logs</MenuItem>
+              <MenuItem onClick={() => handleMenuAction("Restart")}>Restart</MenuItem>
+              <MenuItem onClick={() => handleMenuAction("Resume")}>Resume</MenuItem>
+            </Menu>
+          )}
+        </Box>
+
+        <Dialog
+          open={dialogOpen}
+          onClose={handleDialogClose}
+          sx={{
+            "& .MuiDialog-paper": {
+              position: "fixed",
+              right: 0,
+              top: 0,
+              bottom: 0,
+              margin: 0,
+              maxWidth: "1200px",
+              width: "100%",
+              height: "100%",
+              borderRadius: 0,
+            },
+          }}
+        >
+          <DialogTitle>Create New App</DialogTitle>
+          <DialogContent>
+            <TextField
+              fullWidth
+              label="GitHub URL"
+              value={formData.githuburl}
+              onChange={(e) => setFormData((prev) => ({ ...prev, githuburl: e.target.value }))}
+              sx={{ mt: 2, mb: 2 }}
+            />
+            <TextField
+              fullWidth
+              label="Path"
+              value={formData.path}
+              onChange={(e) => setFormData((prev) => ({ ...prev, path: e.target.value }))}
+              sx={{ mb: 2 }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleDialogClose} color="secondary">
+              Cancel
+            </Button>
+            <Button variant="contained" onClick={handleDeploy} disabled={loading}>
+              {loading ? <CircularProgress size={24} /> : "Deploy"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Snackbar
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+          open={snackbarOpen}
+          autoHideDuration={4000}
+          onClose={handleSnackbarClose}
+        >
+          <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: "100%" }}>
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
+      </Box>
+
+      {/* Right-side panel */}
+      <DeploymentDetailsTree
+        namespace={selectedDeployment?.namespace || ""}
+        deploymentName={selectedDeployment?.deploymentName || ""}
+        onClose={handleClosePanel}
+        isOpen={selectedDeployment?.isOpen || false}
+      />
     </Box>
   );
 };
