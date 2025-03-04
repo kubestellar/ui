@@ -11,5 +11,5 @@ func setupBindingPolicyRoutes(router *gin.Engine) {
 	router.POST("/api/bp/create", bp.CreateBp)
 	router.DELETE("/api/bp/delete/:name", bp.DeleteBp)
 	router.DELETE("/api/bp/delete", bp.DeleteAllBp)
-	router.PATCH("/api/bp/patch", bp.UpdateBp)
+	router.PATCH("/api/bp/update/:name", bp.UpdateBp)
 }

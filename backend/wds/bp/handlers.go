@@ -589,7 +589,7 @@ func GetBpStatus(ctx *gin.Context) {
 // Updates the Binding policy with the given name, Assuming that it exists
 func UpdateBp(ctx *gin.Context) {
 
-	bpName := ctx.Query("name")
+	bpName := ctx.Param("name")
 	if bpName == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "expected name for Binding policy"})
 		return
