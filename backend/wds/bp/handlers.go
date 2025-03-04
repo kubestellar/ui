@@ -6,16 +6,13 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/kubestellar/api/control/v1alpha1"
-	bpv1alpha1 "github.com/kubestellar/kubestellar/pkg/generated/clientset/versioned/typed/control/v1alpha1"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 type StoredBindingPolicy struct {
@@ -140,71 +137,6 @@ func GetAllBp(ctx *gin.Context) {
 		"bindingPolicies": bpsWithStatus,
 		"count":           len(bpsWithStatus),
 	})
-}
-
-// extractTargetClusters extracts the list of target clusters from ClusterSelectors
-func extractTargetClusters(bp *v1alpha1.BindingPolicy) []string {
-	clusters := []string{}
-
-	for _, selector := range bp.Spec.ClusterSelectors {
-		// If matchLabels contains kubernetes.io/cluster-name, add it
-		if clusterName, ok := selector.MatchLabels["kubernetes.io/cluster-name"]; ok {
-			clusters = append(clusters, clusterName)
-		}
-
-		// Handle other selectors that might target clusters differently
-		for k, v := range selector.MatchLabels {
-			// Skip the standard cluster name we already processed
-			if k == "kubernetes.io/cluster-name" {
-				continue
-			}
-			// Add as "label:value" format to give context to the label
-			clusters = append(clusters, fmt.Sprintf("%s:%s", k, v))
-		}
-	}
-
-	return clusters
-}
-
-// extractWorkloads gets a list of workloads affected by this BP
-func extractWorkloads(bp *v1alpha1.BindingPolicy) []string {
-	workloads := []string{}
-
-	// Process downsync resources
-	for _, ds := range bp.Spec.Downsync {
-		apiGroupValue := "core" // Default to core
-		if ds.APIGroup != nil && *ds.APIGroup != "" {
-			apiGroupValue = *ds.APIGroup
-		}
-
-		// Add each resource with its API group
-		for _, resource := range ds.Resources {
-			// Format as apiGroup/resource
-			workloadType := fmt.Sprintf("%s/%s", apiGroupValue, resource)
-
-			// Add namespaces if specified
-			if len(ds.Namespaces) > 0 {
-				for _, ns := range ds.Namespaces {
-					workloads = append(workloads, fmt.Sprintf("%s (ns:%s)", workloadType, ns))
-				}
-			} else {
-				workloads = append(workloads, workloadType)
-			}
-		}
-	}
-
-	return workloads
-}
-
-// filterBPsByNamespace filters the binding policies by namespace
-func filterBPsByNamespace(bps []BindingPolicyWithStatus, namespace string) []BindingPolicyWithStatus {
-	var filtered []BindingPolicyWithStatus
-	for _, bp := range bps {
-		if bp.Namespace == namespace {
-			filtered = append(filtered, bp)
-		}
-	}
-	return filtered
 }
 
 // CreateBp creates a new BindingPolicy
@@ -654,42 +586,29 @@ func GetBpStatus(ctx *gin.Context) {
 	})
 }
 
-// getClientForBp creates a new client for BindingPolicy operations
-func getClientForBp() (*bpv1alpha1.ControlV1alpha1Client, error) {
-	kubeconfig := os.Getenv("KUBECONFIG")
-	if kubeconfig == "" {
-		kubeconfig = filepath.Join(homedir.HomeDir(), ".kube", "config")
-	}
-	fmt.Printf("Debug - Using kubeconfig path: %s\n", kubeconfig)
+// Updates the Binding policy with the given name, Assuming that it exists
+func UpdateBp(ctx *gin.Context) {
 
-	config, err := clientcmd.LoadFromFile(kubeconfig)
+	bpName := ctx.Param("name")
+	if bpName == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "expected name for Binding policy"})
+		return
+	}
+	jsonBytes, err := ctx.GetRawData()
 	if err != nil {
-		fmt.Printf("Debug - LoadFromFile error: %v\n", err)
-		return nil, err
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
-	wds_ctx := os.Getenv("wds_context")
-	if wds_ctx == "" {
-		return nil, fmt.Errorf("env var wds_context not set")
-	}
-	fmt.Printf("Debug - Using context: %s\n", wds_ctx)
-
-	overrides := &clientcmd.ConfigOverrides{
-		CurrentContext: wds_ctx,
-	}
-	cconfig := clientcmd.NewDefaultClientConfig(*config, overrides)
-
-	restcnfg, err := cconfig.ClientConfig()
+	c, err := getClientForBp()
 	if err != nil {
-		fmt.Printf("Debug - ClientConfig error: %v\n", err)
-		return nil, err
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
-
-	c, err := bpv1alpha1.NewForConfig(restcnfg)
+	updatedBp, err := c.BindingPolicies().Patch(context.TODO(), bpName, types.MergePatchType, jsonBytes, v1.PatchOptions{})
 	if err != nil {
-		fmt.Printf("Debug - NewForConfig error: %v\n", err)
-		return nil, err
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
+	ctx.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("updated %s", updatedBp.Name)})
 
-	return c, nil
 }
