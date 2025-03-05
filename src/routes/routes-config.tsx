@@ -10,7 +10,7 @@ import { lazy, Suspense } from "react";
 import LoadingFallback from "../components/LoadingFallback";
 import WecsTreeview from "../components/WecsTopology";
 import Profile from "../components/Profile";
-import ProtectedRoute from "../components/ProtectedRoute";
+// import ProtectedRoute from "../components/ProtectedRoute";
 import PublicRoute from "../components/PublicRoute";
 
 const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ "../components/Clusters"));
@@ -24,85 +24,67 @@ export const routesConfig: RouteObject[] = [
       { 
         index: true, 
         element: (
-          <ProtectedRoute>
-            <Suspense fallback={<LoadingFallback message="Loading clusters..." size="medium" />}>
-              <ClustersLazy />
-            </Suspense>
-          </ProtectedRoute>
+          <Suspense fallback={<LoadingFallback message="Loading clusters..." size="medium" />}>
+            <ClustersLazy />
+          </Suspense>
         ) 
-      },
-      { 
+        },
+        { 
         path: "its", 
         element: (
-          <ProtectedRoute>
-            <Suspense fallback={<LoadingFallback message="Loading ITS..." size="small" />}>
-              <ITSLazy />
-            </Suspense>
-          </ProtectedRoute>
+          <Suspense fallback={<LoadingFallback message="Loading ITS..." size="small" />}>
+            <ITSLazy />
+          </Suspense>
         ) 
-      },
-      { 
+        },
+        { 
         path: "wds", 
         element: (
-          <ProtectedRoute>
-            <WDS />
-          </ProtectedRoute>
+          <WDS />
         ) 
-      },
-      { 
+        },
+        { 
         path: "bp", 
         element: (
-          <ProtectedRoute>
-            <BP />
-          </ProtectedRoute>
+          <BP />
         ) 
-      },
-      { 
+        },
+        { 
         path: "namespaces", 
         element: (
-          <ProtectedRoute>
-            <NameSpace />
-          </ProtectedRoute>
+          <NameSpace />
         ) 
-      },
-      { 
+        },
+        { 
         path: "deploymentdetails/:namespace/:deploymentName", 
         element: (
-          <ProtectedRoute>
-            <DeploymentDetails />
-          </ProtectedRoute>
+          <DeploymentDetails />
         ) 
-      },
-      { 
+        },
+        { 
         path: "wds/treeview", 
         element: (
-          <ProtectedRoute>
-            <TreeView />
-          </ProtectedRoute>
+          <TreeView />
         ) 
-      },
-      { 
+        },
+        { 
         path: "wecs/treeview", 
         element: (
-          <ProtectedRoute>
-            <WecsTreeview />
-          </ProtectedRoute>
+          <WecsTreeview />
         ) 
-      },
-      { 
+        },
+        { 
         path: "profile", 
         element: (
           <PublicRoute>
-            <Profile />
+          <Profile />
           </PublicRoute>
         ) // Wrap with PublicRoute
-      },
-      { 
+        },
+        { 
         path: "*", 
         element: (
-          <ProtectedRoute>
-            <NotFoundPage />
-          </ProtectedRoute>
+          <NotFoundPage />
         ) 
       },
     ],
