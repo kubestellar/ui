@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-//  mapResourceToGVR maps resource types to their GroupVersionResource (GVR)
+// mapResourceToGVR maps resource types to their GroupVersionResource (GVR)
 func mapResourceToGVR(resourceType string) schema.GroupVersionResource {
 	switch resourceType {
 	case "deployments":
@@ -30,6 +30,7 @@ func mapResourceToGVR(resourceType string) schema.GroupVersionResource {
 		return schema.GroupVersionResource{} // Return empty GVR if not found
 	}
 }
+
 // CreateResource creates a Kubernetes resource
 func CreateResource(c *gin.Context) {
 	_, dynamicClient, err := GetClientSet()
@@ -41,7 +42,7 @@ func CreateResource(c *gin.Context) {
 	resourceType := c.Param("resourceType")
 	namespace := c.Param("namespace")
 
-	gvr :=  mapResourceToGVR(resourceType)
+	gvr := mapResourceToGVR(resourceType)
 	if gvr.Resource == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
 		return
@@ -86,7 +87,6 @@ func CreateResource(c *gin.Context) {
 	c.JSON(http.StatusCreated, result)
 }
 
-
 // GetResource retrieves a resource
 func GetResource(c *gin.Context) {
 	_, dynamicClient, err := GetClientSet()
@@ -99,7 +99,7 @@ func GetResource(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 
-	gvr :=  mapResourceToGVR(resourceType)
+	gvr := mapResourceToGVR(resourceType)
 	if gvr.Resource == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
 		return
@@ -126,7 +126,7 @@ func GetResourceAsJSON(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 
-	gvr :=  mapResourceToGVR(resourceType)
+	gvr := mapResourceToGVR(resourceType)
 	if gvr.Resource == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
 		return
@@ -159,7 +159,7 @@ func GetResourceAsYAML(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 
-	gvr :=  mapResourceToGVR(resourceType)
+	gvr := mapResourceToGVR(resourceType)
 	if gvr.Resource == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
 		return
@@ -192,7 +192,7 @@ func UpdateResource(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name") // Extract resource name
 
-	gvr :=  mapResourceToGVR(resourceType)
+	gvr := mapResourceToGVR(resourceType)
 	if gvr.Resource == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
 		return
@@ -229,7 +229,7 @@ func DeleteResource(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 
-	gvr :=  mapResourceToGVR(resourceType)
+	gvr := mapResourceToGVR(resourceType)
 	if gvr.Resource == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
 		return
