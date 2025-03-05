@@ -38,6 +38,11 @@ interface ClustersTableProps {
   onPageChange: (page: number) => void;
 }
 
+interface CSRStatus {
+  approved: boolean;
+  message?: string;
+}
+
 const ClustersTable: React.FC<ClustersTableProps> = ({
   clusters,
   currentPage,
@@ -52,7 +57,6 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
   const [showCreateOptions, setShowCreateOptions] = useState(false);
   const [activeOption, setActiveOption] = useState<string | null>("option1");
   const theme = useTheme((state) => state.theme)
-
   const isDark = theme === "dark";
 
   useEffect(() => {
