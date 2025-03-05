@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import {
   Box,
@@ -16,8 +17,7 @@ import {
 import { FiChevronDown, FiChevronUp, FiX } from "react-icons/fi";
 import { api } from "../lib/api";
 import { useParams, useNavigate } from "react-router-dom";
-import { ThemeContext } from "../context/ThemeContext"; // Import ThemeContext
-import { useContext } from "react";
+import useTheme from "../stores/themeStore";
 
 interface DeploymentInfo {
   name: string;
@@ -67,7 +67,7 @@ const DeploymentDetails = () => {
   const [deployment, setDeployment] = useState<DeploymentInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { theme } = useContext(ThemeContext);
+  const theme = useTheme((state) => state.theme)
   
   const navigate = useNavigate();
 
@@ -198,7 +198,7 @@ interface DetailsTableProps {
 
   const DetailsTable = ({ title, headers, rows }: DetailsTableProps) => {
     const [showDetails, setShowDetails] = useState(true);
-    const { theme } = useContext(ThemeContext);
+    const theme = useTheme((state) => state.theme)
 
 
     return (

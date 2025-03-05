@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Box,
   Typography,
@@ -10,189 +10,52 @@ import {
   TableRow,
   TableCell,
   TableBody,
-  Alert,
-  CircularProgress,
-  Button,
   Checkbox,
+  Button,
   Icon,
 } from "@mui/material";
 import { FiX } from "react-icons/fi";
 import Editor from "@monaco-editor/react";
 import jsyaml from "js-yaml";
-import { api } from "../lib/api";
 
-interface DeploymentInfo {
-  name: string;
+// interface Namespace {
+//   name: string;
+//   status?: string;
+//   labels?: Record<string, string>;
+//   deployments?: Deployment[];
+//   services?: Service[];
+//   configmaps?: ConfigMap[];
+// }
+
+// interface Deployment {
+//   metadata: { name: string; creationTimestamp?: string };
+//   spec: { replicas: number };
+//   status?: string;
+// }
+
+interface Service {
+  metadata: { name: string; creationTimestamp?: string };
+  spec?: { clusterIP?: string; ports?: { port: number; targetPort: number; protocol: string }[]; type?: string };
+  status?: { loadBalancer?: { ingress?: { hostname?: string; ip?: string }[] } } & { status?: string };
+}
+
+// interface ConfigMap {
+//   metadata: { name: string; creationTimestamp?: string };
+// }
+
+interface ServiceDetailsProps {
+  serviceName: string;
   namespace: string;
-  createdAt?: string;
-  age?: string;
-  uid?: string;
-  rollingUpdateStrategy?: {
-    maxSurge?: string;
-    maxUnavailable?: string;
-  };
-  replicas?: number;
-  updatedReplicas?: number;
-  availableReplicas?: number;
-  conditions?: { type: string; status: string; lastProbeTime?: string; reason?: string; message?: string }[];
-  containerImages?: string[];
-  resourceInfo?: {
-    strategy?: string;
-    minReadySeconds?: number;
-    revisionHistoryLimit?: number;
-  };
-  newReplicaSet?: ReplicaSetInfo;
-  oldReplicaSet?: ReplicaSetInfo;
-  events?: EventInfo[];
-  manifest?: string;
-  diffManifest?: string;
-  desiredManifest?: string;
-}
-
-interface ReplicaSetInfo {
-  name: string;
-  namespace: string;
-  age: string;
-  pods: number;
-  labels: string;
-  images: string[];
-}
-
-interface EventInfo {
-  type: string;
-  reason: string;
-  message: string;
-  count: number;
-  firstTimestamp: string;
-  lastTimestamp: string;
-}
-
-interface Container {
-  image?: string;
-  name?: string;
-  ports?: { containerPort: number }[];
-}
-
-export interface DeploymentDetailsProps {
-  namespace: string;
-  deploymentName: string;
   onClose: () => void;
   isOpen: boolean;
+  serviceData: Service | null;
 }
 
-const DeploymentDetailsTree = ({ namespace, deploymentName, onClose, isOpen }: DeploymentDetailsProps) => {
-  const [deployment, setDeployment] = useState<DeploymentInfo | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const ServiceDetailsPanel = ({ serviceName, namespace, onClose, isOpen, serviceData }: ServiceDetailsProps) => {
   const [tabValue, setTabValue] = useState(0);
   const [manifestTab, setManifestTab] = useState(0);
   const [isClosing, setIsClosing] = useState(false); // Track closing animation
   const panelRef = useRef<HTMLDivElement>(null);
-
-  console.log(error);
-
-  useEffect(() => {
-    if (!namespace || !deploymentName) {
-      setDeployment(null);
-      setLoading(false);
-      return;
-    }
-
-    const fetchDeploymentData = async () => {
-      setLoading(true);
-      try {
-        const response = await api.get(`/api/wds/${deploymentName}?namespace=${namespace}`);
-        const data = response.data;
-
-        let desiredManifest = "No DESIRED manifest available";
-        if (data.spec) {
-          const desiredManifestObj = {
-            apiVersion: data.apiVersion || "apps/v1",
-            kind: "Deployment",
-            metadata: {
-              labels: data.metadata?.labels || { app: deploymentName, "app.kubernetes.io/instance": deploymentName },
-              name: data.metadata?.name || deploymentName,
-              namespace: data.metadata?.namespace || "default",
-            },
-            spec: {
-              replicas: data.spec?.replicas || 1,
-              selector: {
-                matchLabels: data.spec?.selector?.matchLabels || { app: deploymentName },
-              },
-              template: {
-                metadata: {
-                  labels: data.spec?.template?.metadata?.labels || { app: deploymentName },
-                },
-                spec: {
-                  containers: data.spec?.template?.spec?.containers?.map((container: Container) => ({
-                    image: container.image || "",
-                    name: container.name || deploymentName,
-                    ports: container.ports?.map((port) => ({ containerPort: port.containerPort })) || [{ containerPort: 80 }],
-                  })) || [],
-                },
-              },
-            },
-          };
-          desiredManifest = jsyaml.dump(desiredManifestObj, { indent: 2 });
-        }
-
-        setDeployment({
-          name: data.metadata?.name || "Unknown",
-          namespace: data.metadata?.namespace || "Unknown",
-          createdAt: data.metadata?.creationTimestamp || "N/A",
-          age: calculateAge(data.metadata?.creationTimestamp),
-          uid: data.metadata?.uid || "N/A",
-          rollingUpdateStrategy: data.spec?.strategy?.rollingUpdate || {},
-          replicas: data.spec?.replicas || 0,
-          updatedReplicas: data.status?.updatedReplicas || 0,
-          availableReplicas: data.status?.availableReplicas || 0,
-          conditions: data.status?.conditions?.map((cond: { 
-            type: string; 
-            status: string; 
-            lastProbeTime?: string; 
-            reason?: string; 
-            message?: string 
-          }) => ({
-            type: cond.type,
-            status: cond.status,
-            lastProbeTime: cond.lastProbeTime || "N/A",
-            reason: cond.reason || "N/A",
-            message: cond.message || "N/A",
-          })) || [],
-          containerImages: data.spec?.template?.spec?.containers?.map((container: Container) => container.image) || [],
-          resourceInfo: {
-            strategy: data.spec?.strategy?.type || "N/A",
-            minReadySeconds: data.spec?.minReadySeconds || 0,
-            revisionHistoryLimit: data.spec?.revisionHistoryLimit || 0,
-          },
-          newReplicaSet: data.status?.newReplicaSet || {},
-          oldReplicaSet: data.status?.oldReplicaSet || {},
-          events: data.status?.events || [],
-          manifest: JSON.stringify(data, null, 2),
-          diffManifest: "No DIFF manifest available",
-          desiredManifest: desiredManifest,
-        });
-
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching deployment details:", err);
-        setError("Failed to load deployment details.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDeploymentData();
-  }, [deploymentName, namespace]);
-
-  const calculateAge = (creationTimestamp: string | undefined): string => {
-    if (!creationTimestamp) return "N/A";
-    const createdDate = new Date(creationTimestamp);
-    const currentDate = new Date();
-    const diffMs = currentDate.getTime() - createdDate.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    return diffDays > 0 ? `${diffDays} days ago` : "Today";
-  };
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -202,22 +65,79 @@ const DeploymentDetailsTree = ({ namespace, deploymentName, onClose, isOpen }: D
     setManifestTab(newValue);
   };
 
-  const jsonToYaml = (jsonString: string) => {
-    try {
-      const jsonObj = JSON.parse(jsonString);
-      return jsyaml.dump(jsonObj, { indent: 2 });
-    } catch (error) {
-      console.log(error);
-      return jsonString;
+  const calculateAge = (creationTimestamp: string | undefined): string => {
+    if (!creationTimestamp) return "N/A";
+    const createdDate = new Date(creationTimestamp);
+    const currentDate = new Date("2025-03-04"); // Current date
+    const diffMs = currentDate.getTime() - createdDate.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? `${diffDays} days ago` : "Today";
+  };
+
+  // Generate a sample manifest for the service
+  const generateServiceManifest = (service: Service | null): string => {
+    if (!service) {
+      return `apiVersion: v1
+kind: Service
+metadata:
+  name: ${serviceName}
+  namespace: ${namespace}
+  labels:
+    app: ${serviceName}
+    app.kubernetes.io/instance: ${serviceName}
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+  selector:
+    app: ${serviceName}
+  type: NodePort
+  clusterIP: 10.96.0.1`;
     }
+
+    return jsyaml.dump({
+      apiVersion: "v1",
+      kind: "Service",
+      metadata: {
+        name: service.metadata?.name || serviceName,
+        namespace: namespace,
+        labels: {
+          app: serviceName,
+          "app.kubernetes.io/instance": serviceName,
+        },
+      },
+      spec: {
+        ports: service.spec?.ports?.map((port) => ({
+          port: port.port,
+          targetPort: port.targetPort,
+          protocol: port.protocol,
+        })) || [{ port: 80, targetPort: 80, protocol: "TCP" }],
+        selector: {
+          app: serviceName,
+        },
+        type: service.spec?.type || "NodePort",
+        clusterIP: service.spec?.clusterIP || "10.96.0.1",
+      },
+      status: {
+        loadBalancer: service.status?.loadBalancer || {},
+      },
+    }, { indent: 2 });
   };
 
-  const handleSync = () => {
-    console.log("Sync clicked for", deploymentName);
+  // Determine service status and health based on JSON data and TreeView logic
+  const getServiceStatus = (service: Service | null): string => {
+    if (!service || !service.spec?.clusterIP) {
+      return "Out of Sync";
+    }
+    return "Synced";
   };
 
-  const handleDelete = () => {
-    console.log("Delete clicked for", deploymentName);
+  const getServiceHealth = (service: Service | null): string => {
+    if (!service || !service.spec?.clusterIP) {
+      return "Degraded";
+    }
+    return "Healthy";
   };
 
   // Handle clicks outside the panel to close it
@@ -243,7 +163,7 @@ const DeploymentDetailsTree = ({ namespace, deploymentName, onClose, isOpen }: D
     const timer = setTimeout(() => {
       setIsClosing(false);
       onClose();
-    }, 0); // Match the transition duration (0.4s)
+    }, 0); // Match the transition duration (0.5s)
 
     return () => clearTimeout(timer);
   };
@@ -267,28 +187,20 @@ const DeploymentDetailsTree = ({ namespace, deploymentName, onClose, isOpen }: D
     >
       {isClosing ? (
         <Box sx={{ height: "100%", width: "100%" }} /> // Blank state during closing
-      ) : loading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-          <CircularProgress />
-        </Box>
-      ) : error ? (
-        <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-          <Alert severity="error">{error}</Alert>
-        </Box>
-      ) : deployment && isOpen ? ( // Only show content if panel is fully open and not closing
+      ) : serviceData && isOpen ? ( // Only show content if panel is fully open and not closing
         <Box ref={panelRef} sx={{ p: 6, height: "100%" }}>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={5}>
             <Box display="flex" alignItems="center" gap={2}>
               <Typography variant="h4" fontWeight="bold" sx={{ color: "#000000", fontSize: "20px" }}>
-                {deploymentName}
+                {serviceName} <span style={{ color: "#666666", fontSize: "14px" }}>svc</span>
               </Typography>
-              <Icon sx={{ color: "#00b4d8", fontSize: "20px" }} className="fas fa-heart" />
+              <Icon sx={{ color: getServiceHealth(serviceData) === "Healthy" ? "#00b4d8" : "#ff0000", fontSize: "20px" }} className="fas fa-heart" />
             </Box>
             <Box display="flex" alignItems="center" gap={0.5}>
               <Button
                 variant="contained"
                 size="small"
-                onClick={handleSync}
+                onClick={() => console.log("Sync clicked for", serviceName)}
                 sx={{
                   bgcolor: "#6d7f8b",
                   color: "#ffffff",
@@ -303,7 +215,7 @@ const DeploymentDetailsTree = ({ namespace, deploymentName, onClose, isOpen }: D
               <Button
                 variant="contained"
                 size="small"
-                onClick={handleDelete}
+                onClick={() => console.log("Delete clicked for", serviceName)}
                 sx={{
                   bgcolor: "#6d7f8b",
                   color: "#ffffff",
@@ -315,7 +227,7 @@ const DeploymentDetailsTree = ({ namespace, deploymentName, onClose, isOpen }: D
               >
                 DELETE
               </Button>
-              <IconButton onClick={handleClose} sx={{ color: "#6d7f8b", fontSize: "20px" }}>
+              <IconButton onClick={handleClose} sx={{ color: "#6d7f8b", fontSize: "20px" }}> {/* Use handleClose instead of onClose */}
                 <FiX />
               </IconButton>
             </Box>
@@ -342,12 +254,11 @@ const DeploymentDetailsTree = ({ namespace, deploymentName, onClose, isOpen }: D
           >
             <Tab label="SUMMARY" />
             <Tab label="EVENTS" />
-            <Tab label="LOGS" />
           </Tabs>
 
           <Paper elevation={1} sx={{ bgcolor: "#ffffff", p: 1, borderRadius: 1, mt: 2, mb: 4 }}>
             <Box sx={{ mt: 1, p: 1, bgcolor: "#ffffff" }}>
-              {tabValue === 0 && (
+              {tabValue === 0 && ( // SUMMARY tab
                 <Table sx={{ borderRadius: 1 }}>
                   <TableBody>
                     <TableRow>
@@ -355,7 +266,7 @@ const DeploymentDetailsTree = ({ namespace, deploymentName, onClose, isOpen }: D
                         KIND
                       </TableCell>
                       <TableCell sx={{ borderBottom: "1px solid #e0e0e0", padding: "19px 12px", color: "#333333", fontSize: "14px" }}>
-                        Deployment
+                        Service
                       </TableCell>
                     </TableRow>
                     <TableRow>
@@ -363,7 +274,7 @@ const DeploymentDetailsTree = ({ namespace, deploymentName, onClose, isOpen }: D
                         NAME
                       </TableCell>
                       <TableCell sx={{ borderBottom: "1px solid #e0e0e0", padding: "19px 12px", color: "#333333", fontSize: "14px" }}>
-                        {deployment.name} <span style={{ color: "#00b4d8", fontSize: "14px" }}>⧉</span>
+                        {serviceName} <span style={{ color: "#666666", fontSize: "14px" }}>svc</span>
                       </TableCell>
                     </TableRow>
                     <TableRow>
@@ -371,7 +282,7 @@ const DeploymentDetailsTree = ({ namespace, deploymentName, onClose, isOpen }: D
                         NAMESPACE
                       </TableCell>
                       <TableCell sx={{ borderBottom: "1px solid #e0e0e0", padding: "19px 12px", color: "#333333", fontSize: "14px" }}>
-                        {deployment.namespace} <span style={{ color: "#00b4d8", fontSize: "14px" }}>⧉</span>
+                        {namespace} <span style={{ color: "#666666", fontSize: "14px" }}>ns</span>
                       </TableCell>
                     </TableRow>
                     <TableRow>
@@ -379,7 +290,23 @@ const DeploymentDetailsTree = ({ namespace, deploymentName, onClose, isOpen }: D
                         CREATED AT
                       </TableCell>
                       <TableCell sx={{ borderBottom: "1px solid #e0e0e0", padding: "19px 12px", color: "#333333", fontSize: "14px" }}>
-                        {deployment.createdAt} ({deployment.age})
+                        {serviceData.metadata?.creationTimestamp ? calculateAge(serviceData.metadata.creationTimestamp) : "02/17/2025 21:12:30 (15 days ago)"}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ borderBottom: "1px solid #e0e0e0", padding: "19px 12px", color: "#333333", fontSize: "14px" }}>
+                        TYPE
+                      </TableCell>
+                      <TableCell sx={{ borderBottom: "1px solid #e0e0e0", padding: "19px 12px", color: "#333333", fontSize: "14px" }}>
+                        {serviceData?.spec?.type || "NodePort"}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ borderBottom: "1px solid #e0e0e0", padding: "19px 12px", color: "#333333", fontSize: "14px" }}>
+                        HOSTNAMES
+                      </TableCell>
+                      <TableCell sx={{ borderBottom: "1px solid #e0e0e0", padding: "19px 12px", color: "#333333", fontSize: "14px" }}>
+                        {serviceData?.status?.loadBalancer?.ingress?.map((ingress) => ingress.hostname || ingress.ip).join(", ") || ""}
                       </TableCell>
                     </TableRow>
                     <TableRow>
@@ -387,7 +314,9 @@ const DeploymentDetailsTree = ({ namespace, deploymentName, onClose, isOpen }: D
                         STATUS
                       </TableCell>
                       <TableCell sx={{ borderBottom: "1px solid #e0e0e0", padding: "19px 12px", color: "#333333", fontSize: "14px" }}>
-                        <span style={{ color: "#00b4d8", fontSize: "14px" }}>Synced</span>
+                        <span style={{ color: getServiceStatus(serviceData) === "Synced" ? "#00b4d8" : "#ff0000", fontSize: "14px" }}>
+                          {getServiceStatus(serviceData)}
+                        </span>
                       </TableCell>
                     </TableRow>
                     <TableRow>
@@ -395,7 +324,9 @@ const DeploymentDetailsTree = ({ namespace, deploymentName, onClose, isOpen }: D
                         HEALTH
                       </TableCell>
                       <TableCell sx={{ borderBottom: "1px solid #e0e0e0", padding: "19px 12px", color: "#333333", fontSize: "14px" }}>
-                        <span style={{ color: "#00b4d8", fontSize: "14px" }}>Healthy</span>
+                        <span style={{ color: getServiceHealth(serviceData) === "Healthy" ? "#00b4d8" : "#ff0000", fontSize: "14px" }}>
+                          {getServiceHealth(serviceData)}
+                        </span>
                       </TableCell>
                     </TableRow>
                     <TableRow>
@@ -408,53 +339,18 @@ const DeploymentDetailsTree = ({ namespace, deploymentName, onClose, isOpen }: D
                 </Table>
               )}
 
-              {tabValue === 1 && (
+              {tabValue === 1 && ( // EVENTS tab
                 <Box sx={{ bgcolor: "#ffffff", p: 1, borderRadius: 2, color: "#666666", fontSize: "14px", display: "flex", justifyContent: "center", alignItems: "center", height: "700px" }}>
                   <Typography variant="body2" sx={{ color: "#666666" }}>
                     No events available
                   </Typography>
                 </Box>
               )}
-
-              {tabValue === 2 && (
-                <Box sx={{ bgcolor: "#ffffff", p: 1, borderRadius: 2, color: "#333333", fontSize: "14px", height: "700px" }}>
-                  <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
-                    <Typography variant="body2" sx={{ mr: 0.5, color: "#666666", fontSize: "14px" }}>
-                      containing
-                    </Typography>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2, bgcolor: "", borderRadius: 100 }}>
-                      <IconButton size="small" sx={{ color: "#00b4d8", p: 2 }}>
-                        <span style={{ fontSize: "30px" }}>▼</span>
-                      </IconButton>
-                      <IconButton size="small" sx={{ color: "#666666", p: 2 }}>
-                        <span style={{ fontSize: "30px" }}>+</span>
-                      </IconButton>
-                      <IconButton size="small" sx={{ color: "#666666", p: 2 }}>
-                        <span style={{ fontSize: "30px" }}>☾</span>
-                      </IconButton>
-                      <IconButton size="small" sx={{ color: "#666666", p: 2 }}>
-                        <span style={{ fontSize: "30px" }}>⚙</span>
-                      </IconButton>
-                      <IconButton size="small" sx={{ color: "#666666", p: 2 }}>
-                        <span style={{ fontSize: "30px" }}>⏏</span>
-                      </IconButton>
-                      <IconButton size="small" sx={{ color: "#666666", p: 2 }}>
-                        <span style={{ fontSize: "30px" }}>⟳</span>
-                      </IconButton>
-                    </Box>
-                  </Box>
-                  <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "300px" }}>
-                    <Typography variant="body2" sx={{ color: "#666666", fontSize: "14px" }}>
-                      No logs available
-                    </Typography>
-                  </Box>
-                </Box>
-              )}
             </Box>
           </Paper>
 
-          {tabValue === 0 && (
-            <Paper elevation={1} sx={{ bgcolor: "#ffffff", p: 1, borderRadius: 1, mt: 4}}>
+          {tabValue === 0 && ( // Manifest section (only in Summary tab, as per Argo CD images)
+            <Paper elevation={1} sx={{ bgcolor: "#ffffff", p: 1, borderRadius: 1, mt: 4, mb: 4 }}>
               <Tabs
                 value={manifestTab}
                 onChange={handleManifestTabChange}
@@ -478,7 +374,7 @@ const DeploymentDetailsTree = ({ namespace, deploymentName, onClose, isOpen }: D
                 <Tab label="DESIRED MANIFEST" />
               </Tabs>
 
-              <Box sx={{ mt: 1, p: 1, bgcolor: "#ffffff"}}>
+              <Box sx={{ mt: 1, p: 1, bgcolor: "#ffffff", pb: 4 }}>
                 {manifestTab === 0 && (
                   <Paper
                     elevation={0}
@@ -487,13 +383,15 @@ const DeploymentDetailsTree = ({ namespace, deploymentName, onClose, isOpen }: D
                       p: 1,
                       border: "1px solid #e0e0e0",
                       borderRadius: 2,
+                      overflow: "auto",
+                      maxHeight: "40vh",
                       mb: 4,
                     }}
                   >
                     <Editor
                       height="400px"
                       language="yaml"
-                      value={deployment.manifest ? jsonToYaml(deployment.manifest) : "No manifest available"}
+                      value={serviceData ? generateServiceManifest(serviceData) : "No manifest available"}
                       theme="light"
                       options={{
                         minimap: { enabled: false },
@@ -563,7 +461,7 @@ const DeploymentDetailsTree = ({ namespace, deploymentName, onClose, isOpen }: D
                     <Editor
                       height="400px"
                       language="yaml"
-                      value={deployment.diffManifest ? jsonToYaml(deployment.diffManifest) : "No DIFF manifest available"}
+                      value="No DIFF manifest available"
                       theme="light"
                       options={{
                         minimap: { enabled: false },
@@ -585,35 +483,31 @@ const DeploymentDetailsTree = ({ namespace, deploymentName, onClose, isOpen }: D
                       p: 1,
                       border: "1px solid #e0e0e0",
                       borderRadius: 2,
+                      overflow: "auto",
+                      maxHeight: "40vh",
                       mb: 4,
                     }}
                   >
                     <Editor
                       height="400px"
                       language="yaml"
-                      value={deployment.desiredManifest || `apiVersion: apps/v1
-kind: Deployment
+                      value={serviceData ? generateServiceManifest(serviceData) : `apiVersion: v1
+kind: Service
 metadata:
+  name: ${serviceName}
+  namespace: ${namespace}
   labels:
-    app: ${deploymentName}
-    app.kubernetes.io/instance: ${deploymentName}
-  name: ${deploymentName}
-  namespace: ${deployment.namespace || "default"}
+    app: ${serviceName}
+    app.kubernetes.io/instance: ${serviceName}
 spec:
-  replicas: ${deployment.replicas || 1}
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
   selector:
-    matchLabels:
-      app: ${deploymentName}
-  template:
-    metadata:
-      labels:
-        app: ${deploymentName}
-    spec:
-      containers:
-        - image: ${deployment.containerImages?.[0] || ""}
-          name: ${deploymentName}
-          ports:
-            - containerPort: 80`}
+    app: ${serviceName}
+  type: "NodePort"
+  clusterIP: "10.96.0.1"}`}
                       theme="light"
                       options={{
                         minimap: { enabled: false },
@@ -635,4 +529,4 @@ spec:
   );
 };
 
-export default DeploymentDetailsTree;
+export default ServiceDetailsPanel;

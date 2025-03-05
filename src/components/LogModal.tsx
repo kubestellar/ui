@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState, useContext } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
-import { ThemeContext } from "../context/ThemeContext"; // Import ThemeContext
+import useTheme from "../stores/themeStore";
 
 interface LogModalProps {
   namespace: string;
@@ -16,7 +16,7 @@ const LogModal = ({ namespace, deploymentName, onClose }: LogModalProps) => {
   const terminalInstance = useRef<Terminal | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { theme } = useContext(ThemeContext);
+  const theme = useTheme((state) => state.theme)
 
   useEffect(() => {
     if (!terminalRef.current) return;

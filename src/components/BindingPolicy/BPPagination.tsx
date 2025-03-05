@@ -1,6 +1,6 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { Box, Typography, Button } from "@mui/material";
-import { ThemeContext } from "../../context/ThemeContext";
+import useTheme from '../../stores/themeStore';
 
 interface PaginationProps {
   filteredCount: number;
@@ -17,7 +17,7 @@ const BPPagination: React.FC<PaginationProps> = ({
   currentPage,
   onPageChange
 }) => {
-  const { theme } = useContext(ThemeContext);
+  const theme = useTheme((state) => state.theme)
   const totalPages = Math.ceil(filteredCount / itemsPerPage);
   
   const getPageNumbers = (): (number | string)[] => {

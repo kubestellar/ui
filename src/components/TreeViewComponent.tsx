@@ -31,8 +31,8 @@ import { FiMoreVertical } from "react-icons/fi";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import LoadingFallback from "./LoadingFallback";
 import DeploymentDetailsTree, { DeploymentDetailsProps } from "../components/DeploymentDetailsTree";
-// import { ThemeContext } from "../context/ThemeContext";
-// import { useContext } from "react";
+import NamespaceDetailsPanel from "../components/NamespaceDetailsPanel";
+import ServiceDetailsPanel from "../components/ServiceDetailsPanel";
 
 // Define interfaces
 interface NodeData {
@@ -74,6 +74,7 @@ interface CustomEdge extends BaseEdge {
 interface Namespace {
   name: string;
   status?: string;
+  labels?: Record<string, string>;
   deployments?: Deployment[];
   services?: Service[];
   configmaps?: ConfigMap[];
@@ -87,7 +88,7 @@ interface Deployment {
 
 interface Service {
   metadata: { name: string; creationTimestamp?: string };
-  spec?: { clusterIP?: string };
+  spec?: { clusterIP?: string; ports?: { port: number; targetPort: number; protocol: string }[]; type?: string };
   status?: { loadBalancer?: { ingress?: { hostname?: string; ip?: string }[] } } & { status?: string };
 }
 
@@ -235,7 +236,8 @@ const TreeView = () => {
   const [contextMenu, setContextMenu] = useState<{ nodeId: string | null; x: number; y: number } | null>(null);
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [selectedDeployment, setSelectedDeployment] = useState<DeploymentDetailsProps | null>(null);
-  // const { theme } = useContext(ThemeContext);
+  const [selectedNamespace, setSelectedNamespace] = useState<{ name: string; onClose: () => void; isOpen: boolean } | null>(null);
+  const [selectedService, setSelectedService] = useState<{ name: string; namespace: string; onClose: () => void; isOpen: boolean } | null>(null);
 
   const transformDataToTree = useCallback((data: Namespace[]) => {
     const nodes: CustomNode[] = [];
@@ -366,12 +368,25 @@ const TreeView = () => {
               }}
               onClick={(e) => {
                 if ((e.target as HTMLElement).tagName === "svg" || (e.target as HTMLElement).closest("svg")) return;
-                if (type === "deployment") {
+                if (type === "namespace") {
+                  setSelectedNamespace({
+                    name: label,
+                    onClose: handleCloseNamespacePanel,
+                    isOpen: true,
+                  });
+                } else if (type === "deployment") {
                   setSelectedDeployment({
                     namespace: namespace!,
                     deploymentName: label,
                     onClose: handleClosePanel,
-                    isOpen: true, // Include isOpen here
+                    isOpen: true,
+                  });
+                } else if (type === "service") {
+                  setSelectedService({
+                    name: label,
+                    namespace: namespace!,
+                    onClose: handleCloseServicePanel,
+                    isOpen: true,
                   });
                 }
               }}
@@ -540,7 +555,7 @@ const TreeView = () => {
           const numEndpoints = service.status?.loadBalancer?.ingress?.length || 0;
           const endpointHeight = numEndpoints > 1 ? numEndpoints * verticalSpacing - verticalSpacing : 0;
           const serviceY = numEndpoints === 1 ? currentY : currentY + endpointHeight / 2;
-          addNode(serviceId, service.metadata.name, x + horizontalSpacing, serviceY, namespaceId, "service", false);
+          addNode(serviceId, service.metadata.name, x + horizontalSpacing, serviceY, namespaceId, "service", false, undefined, namespace.name);
 
           if (service.status?.loadBalancer?.ingress) {
             service.status.loadBalancer.ingress.forEach((endpoint, j: number) => {
@@ -743,10 +758,39 @@ const TreeView = () => {
     }
   };
 
+  const handleCloseNamespacePanel = () => {
+    if (selectedNamespace) {
+      setSelectedNamespace({ ...selectedNamespace, isOpen: false });
+      setTimeout(() => setSelectedNamespace(null), 500); // Clear after animation
+    }
+  };
+
+  const handleCloseServicePanel = () => {
+    if (selectedService) {
+      setSelectedService({ ...selectedService, isOpen: false });
+      setTimeout(() => setSelectedService(null), 500); // Clear after animation
+    }
+  };
+
   return (
-    <Box sx={{ display: "flex", height: "100vh", width: "80vw" }}>
-      {/* Main content (Tree View) */}
-      <Box sx={{ flex: 1, position: "relative" }}>
+    <Box
+      sx={{
+        display: "flex",
+        height: "100vh",
+        width: "100%", // Cover the full browser page
+        position: "relative", // Ensure proper stacking context
+      }}
+    >
+      {/* Main content (Tree View) with blur effect when any panel is open */}
+      <Box
+        sx={{
+          flex: 1,
+          position: "relative",
+          filter: (selectedService?.isOpen || selectedNamespace?.isOpen || selectedDeployment?.isOpen) ? "blur(5px)" : "none", // Blur when any panel is open
+          transition: "filter 0.3s ease-in-out",
+          pointerEvents: (selectedService?.isOpen || selectedNamespace?.isOpen || selectedDeployment?.isOpen) ? "none" : "auto", // Disable interactions on blurred area
+        }}
+      >
         <Box sx={{ mb: 4, display: "flex", alignItems: "center", gap: 2 }}>
           <Typography variant="h4">Tree View Deployment</Typography>
           <Button variant="contained" onClick={handleDialogOpen}>
@@ -842,12 +886,29 @@ const TreeView = () => {
         </Snackbar>
       </Box>
 
-      {/* Right-side panel */}
+      {/* Right-side panel for Deployment (remains unblurred) */}
       <DeploymentDetailsTree
         namespace={selectedDeployment?.namespace || ""}
         deploymentName={selectedDeployment?.deploymentName || ""}
         onClose={handleClosePanel}
         isOpen={selectedDeployment?.isOpen || false}
+      />
+
+      {/* Right-side panel for Namespace (remains unblurred) */}
+      <NamespaceDetailsPanel
+        namespaceName={selectedNamespace?.name || ""}
+        onClose={handleCloseNamespacePanel}
+        isOpen={selectedNamespace?.isOpen || false}
+        namespaceData={responseData?.find((ns) => ns.name === selectedNamespace?.name) || null}
+      />
+
+      {/* Right-side panel for Service (remains unblurred) */}
+      <ServiceDetailsPanel
+        serviceName={selectedService?.name || ""}
+        namespace={selectedService?.namespace || ""}
+        onClose={handleCloseServicePanel}
+        isOpen={selectedService?.isOpen || false}
+        serviceData={responseData?.find((ns) => ns.name === selectedService?.namespace)?.services?.find((svc) => svc.metadata.name === selectedService?.name) || null}
       />
     </Box>
   );

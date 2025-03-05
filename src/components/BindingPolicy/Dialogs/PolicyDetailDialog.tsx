@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React from "react";
 import {
   Dialog,
   DialogTitle,
@@ -13,8 +13,8 @@ import {
 } from "@mui/material";
 import {  BindingPolicyInfo } from "../../../types/bindingPolicy";
 import Editor from "@monaco-editor/react";
-import { ThemeContext } from "../../../context/ThemeContext";
 import ContentCopy from "@mui/icons-material/ContentCopy";
+import useTheme from "../../../stores/themeStore";
 
 interface PolicyDetailDialogProps {
   open: boolean;
@@ -29,7 +29,7 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
   policy,
   onEdit,
 }) => {
-  const { theme } = useContext(ThemeContext);
+  const theme = useTheme((state) => state.theme)
   const isDarkTheme = theme === "dark";
 
   // Use the binding mode directly from the policy object

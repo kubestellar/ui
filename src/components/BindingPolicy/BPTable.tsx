@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
 import {
   Table,
   TableHead,
@@ -14,7 +14,7 @@ import {
 import { Info, Trash2, Edit2 } from "lucide-react";
 import { BindingPolicyInfo } from "../../types/bindingPolicy";
 import PolicyDetailDialog from "./Dialogs/PolicyDetailDialog";
-import { ThemeContext } from "../../context/ThemeContext";
+import useTheme from "../../stores/themeStore";
 
 interface BPTableProps {
   policies: BindingPolicyInfo[];
@@ -50,7 +50,7 @@ const BPTable: React.FC<BPTableProps> = ({
     }
     return true;
   });
-  const { theme } = useContext(ThemeContext);
+  const theme = useTheme((state) => state.theme)
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
