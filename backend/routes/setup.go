@@ -12,4 +12,5 @@ func SetupRoutes(router *gin.Engine) {
 	setupNamespaceRoutes(router)
 	SetupAuthRoutes(router)
 	setupBindingPolicyRoutes(router)
+	SetupResourceRoutes(router)
 }
