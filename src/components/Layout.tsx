@@ -19,11 +19,13 @@ export function Layout() {
 
   const commitHash = import.meta.env.VITE_GIT_COMMIT_HASH || 'unknown';
 
+  const isLoading = false; // Set this based on your loading logic
+
   return (
     <div className="w-full min-h-screen flex flex-col justify-between relative">
       <ScrollRestoration /> 
       <div>
-        <Header />
+        <Header isLoading={isLoading} />
         <div className="w-full flex gap-0 pt-20 xl:pt-[96px] 2xl:pt-[112px] mb-auto">
           <div className="hidden xl:block xl:w-[250px] 2xl:w-[280px] 3xl:w-[350px] border-r-2 border-base-300 dark:border-slate-700 px-3 xl:px-4 xl:py-1">
             <Suspense fallback={<LoadingPlaceholder />}>
