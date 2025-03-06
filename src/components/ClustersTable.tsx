@@ -38,11 +38,6 @@ interface ClustersTableProps {
   onPageChange: (page: number) => void;
 }
 
-interface CSRStatus {
-  approved: boolean;
-  message?: string;
-}
-
 const ClustersTable: React.FC<ClustersTableProps> = ({
   clusters,
   currentPage,
