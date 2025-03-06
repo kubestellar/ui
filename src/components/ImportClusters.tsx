@@ -20,6 +20,7 @@ import {
   Snackbar,
 } from "@mui/material";
 import useTheme from "../stores/themeStore";
+//import { useCSRStatus } from "../hooks/useCSRStatus";
 
 interface Props {
   activeOption: string | null;
@@ -44,8 +45,6 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [editorContent, setEditorContent] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  //const [csrStatus, setCsrStatus] = useState("Waiting for user to run command...");
-
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   const [formData, setFormData] = useState({
@@ -87,6 +86,8 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
   }, []);
 
   const generatedCommand = `clusteradm join --hub-token ${formData.token} --hub-apiserver ${formData.hubApiServer} --cluster-name ${formData.clusterName}`;
+  //const { status, loading: csrLoading, error } = useCSRStatus(formData.clusterName);
+ 
 
   const handleImportCluster = async () => {
     setErrorMessage("");
