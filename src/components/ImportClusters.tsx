@@ -77,7 +77,7 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
 
    // ✅ Fetch the Hub API Server URL on mount
    useEffect(() => {
-    fetch("/api/hub") // Change this to your actual endpoint
+    fetch("/clusters/manual/generateCommand") // Change this to your actual endpoint
       .then((res) => res.json())
       .then((data) => {
         setFormData((prev) => ({ ...prev, hubApiServer: data.apiserver }));
@@ -92,38 +92,60 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
   const handleImportCluster = async () => {
     setErrorMessage("");
     setLoading(true);
-
+  
     try {
-      // Clear form fields after a successful import
-      setFormData({ clusterName: "", token: "", hubApiServer: "" });
-
-      // Show success message (if needed)
+      const response = await fetch("http://localhost:4000/clusters/manual/generateCommand", {  // ✅ Updated API endopoint
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          clusterName: formData.clusterName,
+          token: formData.token,
+          hubApiServer: formData.hubApiServer,
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to generate import command.");
+      }
+  
+      // Show success message and display the command
       setSnackbar({
         open: true,
-        message: "Cluster import started successfully!",
+        message: "Cluster import command generated successfully!",
         severity: "success",
       });
-
+  
+      console.log("Generated Command:", data.command); // Log for debugging
+      // Optionally, you can display the command in the UI
+  
+      // Clear form fields after a successful request
+      setFormData({ clusterName: "", token: "", hubApiServer: "" });
+  
     } catch (error: unknown) {
-      console.error("Error importing cluster:", error);
-      // Handle Axios errors properly
+      console.error("Error generating import command:", error);
+  
       if (error instanceof Error) {
         setErrorMessage(error.message);
       } else {
         setErrorMessage("An unknown error occurred");
       }
-
-      // Show error message (if needed)
+  
+      // Show error message
       setSnackbar({
         open: true,
-        message: "Error importing cluster. Please check your inputs.",
+        message: "Error generating import command. Please check your inputs.",
         severity: "error",
       });
-
+  
     } finally {
       setLoading(false);
     }
   };
+  
 
   const handleFileUpload = async () => {
     // Implement file reading and processing here
