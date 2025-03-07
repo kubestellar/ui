@@ -1,58 +1,18 @@
-import { useEffect, useState } from 'react';
-import { api } from '../lib/api';
+import { useK8sQueries } from '../hooks/queries/useK8sQueries';
 import LoadingFallback from './LoadingFallback';
 
-interface ContextInfo {
-  name: string;
-  cluster: string;
-}
-
 const K8sInfo = () => {
-  const [contexts, setContexts] = useState<ContextInfo[]>([]);
-  const [clusters, setClusters] = useState<string[]>([]);
-  const [currentContext, setCurrentContext] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const { useK8sInfo } = useK8sQueries();
+  const { data, error, isLoading } = useK8sInfo();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Only show kubeflex contexts
-        const response = await api.get('/api/clusters'); 
-        const kubeflexContexts = response.data.contexts.filter(
-          (ctx: ContextInfo) => ctx.name.endsWith("-kubeflex")
-        );
-        // Get clusters associated with kubeflex contexts
-        const kubeflexClusters = response.data.clusters.filter(
-          (cluster: string) =>
-            kubeflexContexts.some((ctx: ContextInfo) => ctx.cluster === cluster)
-        );
-        setContexts(kubeflexContexts);
-        setClusters(kubeflexClusters);
-        setCurrentContext(response.data.currentContext);
-      } catch (error) {
-        console.error('Error fetching Kubernetes information:', error);
-        setError('Failed to load cluster information. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
+  if (isLoading) return <LoadingFallback message="Loading cluster information..." size="medium" />;
+  if (error) return <div>Error loading contexts: {error.message}</div>;
 
-    fetchData();
-  }, []);
-
-  if (loading) return <LoadingFallback message="Loading cluster information..." size="medium" />;
-  if (error) return (
-    <div className="text-center p-4 text-red-600 dark:text-red-400">
-      <p>{error}</p>
-      <button 
-        onClick={() => window.location.reload()} 
-        className="mt-4 px-4 py-2 bg-primary rounded-md text-white hover:bg-primary/90 transition-colors duration-200"
-      >
-        Retry
-      </button>
-    </div>
-  );
+  const contexts = data?.contexts.filter(ctx => ctx.name.endsWith("-kubeflex")) || [];
+  const clusters = data?.clusters.filter(cluster => 
+    contexts.some(ctx => ctx.cluster === cluster)
+  ) || [];
+  const currentContext = data?.currentContext || '';
 
   return (
     <div className="w-full max-w-full p-4">
@@ -62,11 +22,11 @@ const K8sInfo = () => {
           <h2 className="text-2xl font-bold mb-6 flex items-center">
             <span className="text-kubeprimary">Kubernetes Clusters</span>
             <span className="ml-2 px-3 py-1 bg-primary/10 rounded-full text-sm">
-              {clusters?.length}
+              {clusters.length}
             </span>
           </h2>
           <ul className="space-y-2">
-            {clusters && clusters.map(cluster => (
+            {clusters.map(cluster => (
               <li 
                 key={cluster} 
                 className="p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors duration-200 cursor-pointer"
@@ -82,7 +42,7 @@ const K8sInfo = () => {
           <h2 className="text-2xl font-bold mb-6 flex items-center">
             <span className="text-[#4498FF]">Kubernetes Contexts</span>
             <span className="ml-2 px-3 py-1 bg-primary/10 rounded-full text-sm">
-              {contexts?.length}
+              {contexts.length}
             </span>
           </h2>
           <ul className="space-y-2">
