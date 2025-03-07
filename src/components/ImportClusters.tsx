@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useClusterQueries } from '../hooks/queries/useClusterQueries';
 import Editor from "@monaco-editor/react";
 import {
   Dialog,
@@ -37,6 +38,10 @@ const commonInputSx = {
 };
 
 const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
+  const { useClusters } = useClusterQueries(); // Import the hook
+  const [currentPage, setCurrentPage] = useState(1);
+  const { data, error, isLoading } = useClusters(currentPage); // Fetch clusters for the current page
+
   const theme = useTheme((state) => state.theme)
   const textColor = theme === "dark" ? "white" : "black";
   const bgColor = theme === "dark" ? "#1F2937" : "background.paper";
@@ -44,7 +49,7 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
   const [fileType, setFileType] = useState<"yaml">("yaml");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [editorContent, setEditorContent] = useState<string>("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   const [formData, setFormData] = useState({
@@ -77,7 +82,7 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
 
    // ✅ Fetch the Hub API Server URL on mount
    useEffect(() => {
-    fetch("/api/hub") // Change this to your actual endpoint
+    fetch("/clusters/manual/generateCommand") // Change this to your actual endpoint
       .then((res) => res.json())
       .then((data) => {
         setFormData((prev) => ({ ...prev, hubApiServer: data.apiserver }));
@@ -92,38 +97,60 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
   const handleImportCluster = async () => {
     setErrorMessage("");
     setLoading(true);
-
+  
     try {
-      // Clear form fields after a successful import
-      setFormData({ clusterName: "", token: "", hubApiServer: "" });
-
-      // Show success message (if needed)
+      const response = await fetch("http://localhost:4000/clusters/manual/generateCommand", {  // ✅ Updated API endopoint
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          clusterName: formData.clusterName,
+          token: formData.token,
+          hubApiServer: formData.hubApiServer,
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to generate import command.");
+      }
+  
+      // Show success message and display the command
       setSnackbar({
         open: true,
-        message: "Cluster import started successfully!",
+        message: "Cluster import command generated successfully!",
         severity: "success",
       });
-
+  
+      console.log("Generated Command:", data.command); // Log for debugging
+      // Optionally, you can display the command in the UI
+  
+      // Clear form fields after a successful request
+      setFormData({ clusterName: "", token: "", hubApiServer: "" });
+  
     } catch (error: unknown) {
-      console.error("Error importing cluster:", error);
-      // Handle Axios errors properly
+      console.error("Error generating import command:", error);
+  
       if (error instanceof Error) {
         setErrorMessage(error.message);
       } else {
         setErrorMessage("An unknown error occurred");
       }
-
-      // Show error message (if needed)
+  
+      // Show error message
       setSnackbar({
         open: true,
-        message: "Error importing cluster. Please check your inputs.",
+        message: "Error generating import command. Please check your inputs.",
         severity: "error",
       });
-
+  
     } finally {
       setLoading(false);
     }
   };
+  
 
   const handleFileUpload = async () => {
     // Implement file reading and processing here
@@ -169,6 +196,35 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
     '& .MuiTextField-root': {
       width: '100%',
     }
+  };
+
+  // Handle loading state
+  if (isLoading) return (
+    <div className="w-full p-4">
+      <CircularProgress />
+      <p>Loading clusters...</p>
+    </div>
+  );
+
+  // Handle error state
+  if (error) return (
+    <div className="w-full p-4">
+      <Alert severity="error">
+        <AlertTitle>Error</AlertTitle>
+        {error.message || 'Failed to load clusters. Please try again later.'}
+      </Alert>
+    </div>
+  );
+
+  const clusters = data?.itsData || []; // Extract clusters from the fetched data
+
+  // Add pagination controls
+  const handleNextPage = () => {
+    setCurrentPage((prev) => prev + 1);
+  };
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1)); // Prevent going below page 1
   };
 
   return (
@@ -530,6 +586,24 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
         message={errorMessage}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       />
+
+      <div>
+        <button onClick={handlePreviousPage} disabled={currentPage === 1}>
+          Previous
+        </button>
+        <button onClick={handleNextPage}>
+          Next
+        </button>
+      </div>
+
+      <h2>Clusters</h2>
+      <ul>
+        {clusters.map((cluster) => (
+          <li key={cluster.name}>
+            {cluster.name} - {cluster.namespace}
+          </li>
+        ))}
+      </ul>
     </>
   );
 };
