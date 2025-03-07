@@ -38,7 +38,7 @@ func getGVR(discoveryClient discovery.DiscoveryInterface, resourceType string) (
 }
 
 func containsClusterWideResourceType(resourceType string) bool {
-	clusterWideResources := []string{"persistentvolumes", "nodes", "namespaces", "storageclasses", "clusterscopedresources"}
+	clusterWideResources := []string{"persistentvolumes", "nodes", "namespaces", "storageclasses"}
 	for _, r := range clusterWideResources {
 		if r == resourceType {
 			return true
