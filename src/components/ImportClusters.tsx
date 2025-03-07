@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useClusterQueries } from '../hooks/queries/useClusterQueries';
 import Editor from "@monaco-editor/react";
 import {
   Dialog,
@@ -37,6 +38,10 @@ const commonInputSx = {
 };
 
 const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
+  const { useClusters } = useClusterQueries(); // Import the hook
+  const [currentPage, setCurrentPage] = useState(1);
+  const { data, error, isLoading } = useClusters(currentPage); // Fetch clusters for the current page
+
   const theme = useTheme((state) => state.theme)
   const textColor = theme === "dark" ? "white" : "black";
   const bgColor = theme === "dark" ? "#1F2937" : "background.paper";
@@ -44,7 +49,7 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
   const [fileType, setFileType] = useState<"yaml">("yaml");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [editorContent, setEditorContent] = useState<string>("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   const [formData, setFormData] = useState({
@@ -191,6 +196,35 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
     '& .MuiTextField-root': {
       width: '100%',
     }
+  };
+
+  // Handle loading state
+  if (isLoading) return (
+    <div className="w-full p-4">
+      <CircularProgress />
+      <p>Loading clusters...</p>
+    </div>
+  );
+
+  // Handle error state
+  if (error) return (
+    <div className="w-full p-4">
+      <Alert severity="error">
+        <AlertTitle>Error</AlertTitle>
+        {error.message || 'Failed to load clusters. Please try again later.'}
+      </Alert>
+    </div>
+  );
+
+  const clusters = data?.itsData || []; // Extract clusters from the fetched data
+
+  // Add pagination controls
+  const handleNextPage = () => {
+    setCurrentPage((prev) => prev + 1);
+  };
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1)); // Prevent going below page 1
   };
 
   return (
@@ -552,6 +586,24 @@ const ImportClusters = ({ activeOption, setActiveOption, onCancel }: Props) => {
         message={errorMessage}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       />
+
+      <div>
+        <button onClick={handlePreviousPage} disabled={currentPage === 1}>
+          Previous
+        </button>
+        <button onClick={handleNextPage}>
+          Next
+        </button>
+      </div>
+
+      <h2>Clusters</h2>
+      <ul>
+        {clusters.map((cluster) => (
+          <li key={cluster.name}>
+            {cluster.name} - {cluster.namespace}
+          </li>
+        ))}
+      </ul>
     </>
   );
 };

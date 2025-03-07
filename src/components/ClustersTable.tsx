@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import {
   Button,
@@ -51,7 +50,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
   const [selectedClusters, setSelectedClusters] = useState<string[]>([]);
   const [showCreateOptions, setShowCreateOptions] = useState(false);
   const [activeOption, setActiveOption] = useState<string | null>("option1");
-  const theme = useTheme((state) => state.theme)
+  const theme = useTheme((state) => state.theme);
   const isDark = theme === "dark";
 
   useEffect(() => {
@@ -270,7 +269,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
               },
             }}
           >
-            <MenuItem value="">All Statuses</MenuItem>
+            <MenuItem value="">All Status</MenuItem>
             <MenuItem value="active✓">
               <span className="flex items-center gap-2">
                 <span
