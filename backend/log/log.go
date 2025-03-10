@@ -28,6 +28,7 @@ func LogDebug(msg string, fields ...zap.Field) {
 func init() {
 
 	cfg := zap.NewProductionConfig()
+	cfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
 	cfg.DisableStacktrace = true
 	zapLogger, _ := cfg.Build()
 	logger = zapLogger
