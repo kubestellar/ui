@@ -184,121 +184,39 @@ func CreateBp(ctx *gin.Context) {
 	rawYAML := string(bpYamlBytes)
 	fmt.Printf("Debug - Received YAML:\n%s\n", rawYAML)
 
-	// Parse YAML into a generic map structure
-	var yamlData map[string]interface{}
-	if err := yaml.Unmarshal(bpYamlBytes, &yamlData); err != nil {
-		fmt.Printf("Debug - YAML parsing error: %v\n", err)
+	// First parse YAML into a map to extract basic metadata
+	var yamlMap map[string]interface{}
+	if err := yaml.Unmarshal(bpYamlBytes, &yamlMap); err != nil {
+		fmt.Printf("Debug - Initial YAML parsing error: %v\n", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid YAML format: %s", err.Error())})
 		return
 	}
 
-	// Extract metadata
-	metadataMap, ok := yamlData["metadata"].(map[interface{}]interface{})
+	// Extract and validate critical fields
+	metadataMap, ok := yamlMap["metadata"].(map[interface{}]interface{})
 	if !ok {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "metadata section is required"})
+		fmt.Printf("Debug - No metadata found in YAML\n")
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "metadata section is required in binding policy"})
 		return
 	}
 
+	// Extract name - this is required
 	name, ok := metadataMap["name"].(string)
 	if !ok || name == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "metadata.name is required"})
+		fmt.Printf("Debug - Missing required name in metadata\n")
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "metadata.name is required and cannot be empty"})
 		return
 	}
 
+	// Extract namespace (default to "default" if not provided)
 	namespace := "default"
 	if ns, ok := metadataMap["namespace"].(string); ok && ns != "" {
 		namespace = ns
 	}
 
-	// Extract spec
-	specMap, ok := yamlData["spec"].(map[interface{}]interface{})
-	if !ok {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "spec section is required"})
-		return
-	}
+	fmt.Printf("Debug - Extracted name: %s, namespace: %s\n", name, namespace)
 
-	// Create a StoredBindingPolicy to capture the original YAML information
-	storedBP := &StoredBindingPolicy{
-		Name:             name,
-		Namespace:        namespace,
-		ClusterSelectors: []map[string]string{},
-		APIGroups:        []string{},
-		Resources:        []string{},
-		Namespaces:       []string{},
-		RawYAML:          rawYAML,
-	}
-
-	// Extract cluster selectors
-	clusterSelectors, ok := specMap["clusterSelectors"].([]interface{})
-	if ok {
-		fmt.Printf("Debug - Found %d cluster selectors\n", len(clusterSelectors))
-		for i, selector := range clusterSelectors {
-			selectorMap, ok := selector.(map[interface{}]interface{})
-			if !ok {
-				continue
-			}
-
-			matchLabels, ok := selectorMap["matchLabels"].(map[interface{}]interface{})
-			if !ok {
-				continue
-			}
-
-			// Convert to string map
-			stringMap := make(map[string]string)
-			for k, v := range matchLabels {
-				key, ok1 := k.(string)
-				val, ok2 := v.(string)
-				if ok1 && ok2 {
-					stringMap[key] = val
-					fmt.Printf("Debug - Selector[%d] found label: %s=%s\n", i, key, val)
-				}
-			}
-
-			if len(stringMap) > 0 {
-				storedBP.ClusterSelectors = append(storedBP.ClusterSelectors, stringMap)
-			}
-		}
-	}
-
-	// Extract downsync
-	downsync, ok := specMap["downsync"].([]interface{})
-	if ok && len(downsync) > 0 {
-		fmt.Printf("Debug - Found %d downsync rules\n", len(downsync))
-		for i, rule := range downsync {
-			ruleMap, ok := rule.(map[interface{}]interface{})
-			if !ok {
-				continue
-			}
-
-			// Extract API Group
-			if apiGroup, ok := ruleMap["apiGroup"].(string); ok {
-				storedBP.APIGroups = append(storedBP.APIGroups, apiGroup)
-				fmt.Printf("Debug - Downsync[%d] apiGroup: %s\n", i, apiGroup)
-			}
-
-			// Extract Resources
-			if resources, ok := ruleMap["resources"].([]interface{}); ok {
-				for _, res := range resources {
-					if resStr, ok := res.(string); ok {
-						storedBP.Resources = append(storedBP.Resources, resStr)
-						fmt.Printf("Debug - Downsync[%d] resource: %s\n", i, resStr)
-					}
-				}
-			}
-
-			// Extract Namespaces
-			if namespaces, ok := ruleMap["namespaces"].([]interface{}); ok {
-				for _, ns := range namespaces {
-					if nsStr, ok := ns.(string); ok {
-						storedBP.Namespaces = append(storedBP.Namespaces, nsStr)
-						fmt.Printf("Debug - Downsync[%d] namespace: %s\n", i, nsStr)
-					}
-				}
-			}
-		}
-	}
-
-	// Create a new BP object for API use
+	// Create a KubeStellar BindingPolicy object with proper TypeMeta/ObjectMeta
 	newBP := &v1alpha1.BindingPolicy{
 		TypeMeta: v1.TypeMeta{
 			APIVersion: "control.kubestellar.io/v1alpha1",
@@ -310,14 +228,78 @@ func CreateBp(ctx *gin.Context) {
 		},
 	}
 
-	// Now parse the full YAML into the binding policy (best effort)
+	// Now parse the full YAML into the binding policy
 	if err := yaml.Unmarshal(bpYamlBytes, newBP); err != nil {
-		fmt.Printf("Debug - Warning: Full unmarshal had issues: %v\n", err)
+		fmt.Printf("Debug - Full YAML parsing error: %v\n", err)
+		// Continue anyway, we'll fix what we can
 	}
 
-	fmt.Printf("Debug - Parsed BindingPolicy for API:\n")
-	fmt.Printf("Name: %s\n", newBP.Name)
-	fmt.Printf("Namespace: %s\n", newBP.Namespace)
+	// Double-check that we didn't lose the name/namespace during unmarshal
+	if newBP.Name == "" {
+		newBP.Name = name
+	}
+
+	if newBP.Namespace == "" {
+		newBP.Namespace = namespace
+	}
+
+	// Fix downsync fields - ensure APIGroup is never empty
+	for i, ds := range newBP.Spec.Downsync {
+		// If APIGroup is empty, set it to "core" (for core resources)
+		if ds.APIGroup == nil || *ds.APIGroup == "" {
+			coreGroup := "core"
+			newBP.Spec.Downsync[i].APIGroup = &coreGroup
+			fmt.Printf("Debug - Fixed empty APIGroup in downsync[%d] to 'core'\n", i)
+		}
+
+		// Make sure namespaces is not empty if specified
+		if len(ds.Namespaces) == 0 {
+			// Default to the binding policy's namespace if not specified
+			newBP.Spec.Downsync[i].Namespaces = []string{newBP.Namespace}
+			fmt.Printf("Debug - Added default namespace '%s' to downsync[%d]\n", newBP.Namespace, i)
+		}
+	}
+
+	// Create StoredBindingPolicy for cache
+	storedBP := &StoredBindingPolicy{
+		Name:             newBP.Name,
+		Namespace:        newBP.Namespace,
+		ClusterSelectors: []map[string]string{},
+		APIGroups:        []string{},
+		Resources:        []string{},
+		Namespaces:       []string{},
+		RawYAML:          rawYAML,
+	}
+
+	// Extract cluster selectors for storage
+	for _, selector := range newBP.Spec.ClusterSelectors {
+		stringMap := make(map[string]string)
+		for k, v := range selector.MatchLabels {
+			stringMap[k] = v
+		}
+		storedBP.ClusterSelectors = append(storedBP.ClusterSelectors, stringMap)
+	}
+
+	// Extract downsync rules for storage
+	for _, ds := range newBP.Spec.Downsync {
+		if ds.APIGroup != nil {
+			storedBP.APIGroups = append(storedBP.APIGroups, *ds.APIGroup)
+		}
+
+		storedBP.Resources = append(storedBP.Resources, ds.Resources...)
+		storedBP.Namespaces = append(storedBP.Namespaces, ds.Namespaces...)
+	}
+
+	// Verify object before submission
+	if newBP.Name == "" {
+		fmt.Printf("Debug - ERROR: Name is still empty after fixes!\n")
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Failed to set binding policy name"})
+		return
+	}
+
+	// Recreate YAML from our fixed object for debugging
+	fixedYAML, _ := yaml.Marshal(newBP)
+	fmt.Printf("Debug - Fixed YAML to submit:\n%s\n", string(fixedYAML))
 
 	// Get client
 	c, err := getClientForBp()
@@ -328,8 +310,8 @@ func CreateBp(ctx *gin.Context) {
 	}
 
 	// Store policy before API call
-	uiCreatedPolicies[name] = storedBP
-	fmt.Printf("Debug - Stored policy in memory cache with key: %s\n", name)
+	uiCreatedPolicies[newBP.Name] = storedBP
+	fmt.Printf("Debug - Stored policy in memory cache with key: %s\n", newBP.Name)
 
 	// Create the binding policy
 	createdBP, err := c.BindingPolicies().Create(context.TODO(), newBP, v1.CreateOptions{})
@@ -346,16 +328,17 @@ func CreateBp(ctx *gin.Context) {
 		return
 	}
 
-	// Generate clusters and workloads for response
+	// Extract clusters directly from stored data for immediate response
 	clusters := []string{}
 	for _, selector := range storedBP.ClusterSelectors {
 		if clusterName, ok := selector["kubernetes.io/cluster-name"]; ok {
+			fmt.Printf("Debug - Adding cluster %s to response\n", clusterName)
 			clusters = append(clusters, clusterName)
 		}
 	}
 
+	// Extract workloads from stored data
 	workloads := []string{}
-	// Process each API group and resource combination
 	for i, apiGroup := range storedBP.APIGroups {
 		if i < len(storedBP.Resources) {
 			resource := storedBP.Resources[i]
@@ -371,6 +354,9 @@ func CreateBp(ctx *gin.Context) {
 			}
 		}
 	}
+
+	fmt.Printf("Debug - Response clusters: %v\n", clusters)
+	fmt.Printf("Debug - Response workloads: %v\n", workloads)
 
 	// Return success with created BP details
 	ctx.JSON(http.StatusOK, gin.H{
@@ -460,16 +446,10 @@ func GetBpStatus(ctx *gin.Context) {
 	}
 
 	if namespace == "" {
-		namespace = "default"
+		namespace = "default" // Set default namespace
 	}
 
 	fmt.Printf("Debug - GetBpStatus - Using namespace: '%s'\n", namespace)
-
-	// Check if we have this policy in our memory store
-	storedBP, exists := uiCreatedPolicies[name]
-	if exists {
-		fmt.Printf("Debug - GetBpStatus - Found policy in memory store\n")
-	}
 
 	c, err := getClientForBp()
 	if err != nil {
@@ -478,41 +458,50 @@ func GetBpStatus(ctx *gin.Context) {
 		return
 	}
 
-	// Get binding policies from API
-	bpList, err := c.BindingPolicies().List(context.TODO(), v1.ListOptions{})
+	// Try to get binding policy directly
+	bp, err := c.BindingPolicies().Get(context.TODO(), name, v1.GetOptions{})
 	if err != nil {
-		fmt.Printf("Debug - GetBpStatus - List error: %v\n", err)
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to list binding policies: %v", err),
-		})
-		return
-	}
+		fmt.Printf("Debug - GetBpStatus - Get error: %v\n", err)
 
-	fmt.Printf("Debug - GetBpStatus - Found %d binding policies from API\n", len(bpList.Items))
-
-	// Find the specific binding policy
-	var bp *v1alpha1.BindingPolicy
-	for i := range bpList.Items {
-		if bpList.Items[i].Name == name {
-			bp = &bpList.Items[i]
-			fmt.Printf("Debug - Found BP with name '%s' in namespace '%s'\n",
-				bp.Name, bp.Namespace)
-
-			// Use requested namespace if not specified in API
-			if bp.Namespace == "" {
-				bp.Namespace = namespace
-				fmt.Printf("Debug - Using requested namespace: %s\n", namespace)
-			}
-
-			break
+		// Try to list all binding policies to see if it exists with a different name/namespace
+		bpList, listErr := c.BindingPolicies().List(context.TODO(), v1.ListOptions{})
+		if listErr != nil {
+			ctx.JSON(http.StatusNotFound, gin.H{
+				"error": fmt.Sprintf("Binding policy '%s' not found and failed to list policies: %v", name, listErr),
+			})
+			return
 		}
+
+		// Check if we can find the policy with a different namespace
+		var foundBP *v1alpha1.BindingPolicy
+		fmt.Printf("Debug - GetBpStatus - Listing all BPs to find '%s'\n", name)
+		for i, item := range bpList.Items {
+			fmt.Printf("Debug - BP #%d: %s/%s\n", i, item.Namespace, item.Name)
+			if item.Name == name {
+				foundBP = &bpList.Items[i]
+				break
+			}
+		}
+
+		if foundBP == nil {
+			ctx.JSON(http.StatusNotFound, gin.H{
+				"error": fmt.Sprintf("Binding policy '%s' not found in any namespace", name),
+			})
+			return
+		}
+
+		bp = foundBP
+		fmt.Printf("Debug - GetBpStatus - Found BP with matching name in namespace '%s'\n", bp.Namespace)
 	}
 
-	if bp == nil {
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"error": fmt.Sprintf("Binding policy '%s' not found", name),
-		})
-		return
+	// Debug: Print the found binding policy details
+	fmt.Printf("Debug - GetBpStatus - Found BP with name '%s' in namespace '%s'\n",
+		bp.Name, bp.Namespace)
+
+	// Print spec details for debugging
+	yamlData, err := yaml.Marshal(bp)
+	if err == nil {
+		fmt.Printf("Debug - BP YAML:\n%s\n", string(yamlData))
 	}
 
 	// Determine if the policy is active based on status fields
@@ -535,45 +524,52 @@ func GetBpStatus(ctx *gin.Context) {
 		status = "active"
 	}
 
-	// Prepare response clusters and workloads
-	var clusters []string
-	var workloads []string
+	// Extract clusters directly from the binding policy
+	clusters := []string{}
+	for i, selector := range bp.Spec.ClusterSelectors {
+		fmt.Printf("Debug - ClusterSelector #%d: %+v\n", i, selector)
 
-	// If we have a stored copy, use that for clusters and workloads
-	if exists {
-		fmt.Printf("Debug - Using stored policy data for response\n")
-
-		// Extract clusters from stored data
-		clusters = []string{}
-		for _, selector := range storedBP.ClusterSelectors {
-			if clusterName, ok := selector["kubernetes.io/cluster-name"]; ok {
-				clusters = append(clusters, clusterName)
-			}
+		// Check for kubernetes.io/cluster-name label
+		if clusterName, ok := selector.MatchLabels["kubernetes.io/cluster-name"]; ok {
+			fmt.Printf("Debug - Found cluster: %s\n", clusterName)
+			clusters = append(clusters, clusterName)
 		}
 
-		// Extract workloads from stored data
-		workloads = []string{}
-		for i, apiGroup := range storedBP.APIGroups {
-			if i < len(storedBP.Resources) {
-				resource := storedBP.Resources[i]
-				workloadType := fmt.Sprintf("%s/%s", apiGroup, resource)
-
-				// Add namespaces if specified
-				if len(storedBP.Namespaces) > 0 {
-					for _, ns := range storedBP.Namespaces {
-						workloads = append(workloads, fmt.Sprintf("%s (ns:%s)", workloadType, ns))
-					}
-				} else {
-					workloads = append(workloads, workloadType)
-				}
+		// Add any other labels as additional info
+		for k, v := range selector.MatchLabels {
+			if k != "kubernetes.io/cluster-name" {
+				clusters = append(clusters, fmt.Sprintf("%s:%s", k, v))
 			}
 		}
-	} else {
-		// Try to extract from the API object (fallback)
-		fmt.Printf("Debug - Extracting data from API object\n")
-		clusters = extractTargetClusters(bp)
-		workloads = extractWorkloads(bp)
 	}
+
+	// Extract workloads
+	workloads := []string{}
+	for i, ds := range bp.Spec.Downsync {
+		apiGroupValue := "core" // Default to core
+		if ds.APIGroup != nil && *ds.APIGroup != "" {
+			apiGroupValue = *ds.APIGroup
+		}
+
+		fmt.Printf("Debug - Downsync #%d: APIGroup=%s, Resources=%v, Namespaces=%v\n",
+			i, apiGroupValue, ds.Resources, ds.Namespaces)
+
+		for _, resource := range ds.Resources {
+			workloadType := fmt.Sprintf("%s/%s", apiGroupValue, resource)
+
+			if len(ds.Namespaces) > 0 {
+				for _, ns := range ds.Namespaces {
+					workloads = append(workloads, fmt.Sprintf("%s (ns:%s)", workloadType, ns))
+				}
+			} else {
+				workloads = append(workloads, workloadType)
+			}
+		}
+	}
+
+	// Print debug info before returning
+	fmt.Printf("Debug - Returning %d clusters: %v\n", len(clusters), clusters)
+	fmt.Printf("Debug - Returning %d workloads: %v\n", len(workloads), workloads)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"name":        bp.Name,
