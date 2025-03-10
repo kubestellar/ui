@@ -55,7 +55,6 @@ func CreateResource(c *gin.Context) {
 		return
 	}
 	resourceType := c.Param("resourceType")
-	// TODO:  Omit namespace for cluster-wide resources
 	namespace := c.Param("namespace")
 	discoveryClient := clientset.Discovery()
 	gvr, err := getGVR(discoveryClient, resourceType)
