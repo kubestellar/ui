@@ -13,6 +13,7 @@ import {
 } from "../types/bindingPolicy";
 import useTheme from "../stores/themeStore";
 import { api } from "../lib/api";
+import axios from "axios";
 
 // Define type for the raw binding policy from API
 interface RawBindingPolicy {
@@ -161,10 +162,10 @@ const fetchBindingPolicies = useCallback(async () => {
     );
 
     setBindingPolicies(policiesWithStatus);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching binding policies:", error);
     // Handle 500 errors gracefully
-    if (error.response && error.response.status === 500) {
+    if (axios.isAxiosError(error) && error.response?.status === 500) {
       console.warn("Server returned 500 error, likely no binding policies exist");
       setBindingPolicies([]);
     }
