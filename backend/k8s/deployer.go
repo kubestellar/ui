@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,39 +12,49 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/util/retry"
 )
 
-// DeploymentTree represents the response hierarchy
+// DeploymentTree represents the hierarchical response of deployed resources
 type DeploymentTree struct {
-	Namespace   string                 `json:"namespace"`
-	Deployments []string               `json:"deployments"`
-	Services    []string               `json:"services"`
-	Configs     map[string]interface{} `json:"configs"`
+	Namespace string                 `json:"namespace"`
+	Resources map[string]interface{} `json:"resources"` // Hierarchical resource mapping
 }
 
-// getResourceGVR maps Kubernetes Kind to GroupVersionResource
-func getResourceGVR(kind string) schema.GroupVersionResource {
-	switch strings.ToLower(kind) {
-	case "deployment":
-		return schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
-	case "service":
-		return schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
-	case "secret":
-		return schema.GroupVersionResource{Group: "", Version: "v1", Resource: "secrets"}
-	case "configmap":
-		return schema.GroupVersionResource{Group: "", Version: "v1", Resource: "configmaps"}
-	default:
-		return schema.GroupVersionResource{}
+// getResourceGVR dynamically fetches the correct GroupVersionResource (GVR) using the Discovery API
+func getResourceGVR(discoveryClient discovery.DiscoveryInterface, kind string) (schema.GroupVersionResource, error) {
+	resourceList, err := discoveryClient.ServerPreferredResources()
+	if err != nil {
+		return schema.GroupVersionResource{}, fmt.Errorf("failed to get API resources: %v", err)
 	}
+
+	for _, resourceGroup := range resourceList {
+		for _, resource := range resourceGroup.APIResources {
+			if strings.EqualFold(resource.Kind, kind) {
+				gv, err := schema.ParseGroupVersion(resourceGroup.GroupVersion)
+				if err != nil {
+					return schema.GroupVersionResource{}, err
+				}
+				return schema.GroupVersionResource{Group: gv.Group, Version: gv.Version, Resource: resource.Name}, nil
+			}
+		}
+	}
+	return schema.GroupVersionResource{}, fmt.Errorf("resource kind '%s' not found", kind)
 }
 
-// applyOrCreateResource intelligently creates or updates a Kubernetes resource
-func ApplyOrCreateResource(dynamicClient dynamic.Interface, gvr schema.GroupVersionResource, obj *unstructured.Unstructured, namespace string) error {
+// applyOrCreateResource applies or simulates applying a Kubernetes resource
+func applyOrCreateResource(dynamicClient dynamic.Interface, gvr schema.GroupVersionResource, obj *unstructured.Unstructured, namespace string, dryRun bool) error {
 	resource := dynamicClient.Resource(gvr).Namespace(namespace)
 
-	// Retry logic for better resilience
+	// If dry-run, simulate creation and return
+	if dryRun {
+		fmt.Printf("[Dry Run] Would apply %s %s in namespace %s\n", obj.GetKind(), obj.GetName(), namespace)
+		return nil
+	}
+
+	// Retry logic for resilience
 	return retry.OnError(retry.DefaultRetry, func(err error) bool { return true }, func() error {
 		existing, err := resource.Get(context.TODO(), obj.GetName(), v1.GetOptions{})
 		if err == nil {
@@ -66,19 +77,20 @@ func ApplyOrCreateResource(dynamicClient dynamic.Interface, gvr schema.GroupVers
 	})
 }
 
-// DeployManifests applies Kubernetes manifests from a directory
-func DeployManifests(deployPath string) (*DeploymentTree, error) {
-	_, dynamicClient, err := GetClientSet()
+// DeployManifests applies Kubernetes manifests from a directory with optional dry-run mode
+func DeployManifests(deployPath string, dryRun bool) (*DeploymentTree, error) {
+	clientSet, dynamicClient, err := GetClientSet()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get Kubernetes client: %v", err)
 	}
 
+	discoveryClient := clientSet.Discovery()
 	files, err := os.ReadDir(deployPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read folder: %v", err)
 	}
 
-	tree := &DeploymentTree{Configs: make(map[string]interface{})}
+	tree := &DeploymentTree{Resources: make(map[string]interface{})}
 	var detectedNamespace string
 
 	for _, file := range files {
@@ -97,9 +109,10 @@ func DeployManifests(deployPath string) (*DeploymentTree, error) {
 			return nil, fmt.Errorf("failed to parse YAML %s: %v", filePath, err)
 		}
 
-		// Get correct resource GVR
-		gvr := getResourceGVR(obj.GetKind())
-		if gvr.Resource == "" {
+		// Get correct resource GVR using Discovery API
+		gvr, err := getResourceGVR(discoveryClient, obj.GetKind())
+		if err != nil {
+			fmt.Printf("Skipping unsupported kind: %s\n", obj.GetKind())
 			continue
 		}
 
@@ -115,21 +128,17 @@ func DeployManifests(deployPath string) (*DeploymentTree, error) {
 			finalNamespace = "default"
 		}
 
-		// Apply (create or update) the resource
-		err = ApplyOrCreateResource(dynamicClient, gvr, &obj, finalNamespace)
+		// Apply or simulate resource application
+		err = applyOrCreateResource(dynamicClient, gvr, &obj, finalNamespace, dryRun)
 		if err != nil {
 			return nil, fmt.Errorf("failed to apply %s: %v", obj.GetKind(), err)
 		}
 
-		// Organize in hierarchy
-		switch obj.GetKind() {
-		case "Deployment":
-			tree.Deployments = append(tree.Deployments, obj.GetName())
-		case "Service":
-			tree.Services = append(tree.Services, obj.GetName())
-		case "ConfigMap", "Secret":
-			tree.Configs[obj.GetKind()] = obj.GetName()
+		// Organize in hierarchical structure
+		if _, exists := tree.Resources[obj.GetKind()]; !exists {
+			tree.Resources[obj.GetKind()] = []string{}
 		}
+		tree.Resources[obj.GetKind()] = append(tree.Resources[obj.GetKind()].([]string), obj.GetName())
 	}
 
 	// Use detected namespace or "default" if none was found
@@ -139,4 +148,14 @@ func DeployManifests(deployPath string) (*DeploymentTree, error) {
 
 	tree.Namespace = detectedNamespace
 	return tree, nil
+}
+
+// PrettyPrint prints JSON formatted output of DeploymentTree
+func PrettyPrint(tree *DeploymentTree) {
+	jsonData, err := json.MarshalIndent(tree, "", "  ")
+	if err != nil {
+		fmt.Println("Error converting tree to JSON:", err)
+		return
+	}
+	fmt.Println(string(jsonData))
 }
