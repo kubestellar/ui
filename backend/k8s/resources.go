@@ -11,43 +11,66 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/dynamic"
 )
 
 // mapResourceToGVR maps resource types to their GroupVersionResource (GVR)
-func mapResourceToGVR(resourceType string) schema.GroupVersionResource {
-	switch resourceType {
-	case "deployments":
-		return schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
-	case "services":
-		return schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
-	case "configmaps":
-		return schema.GroupVersionResource{Group: "", Version: "v1", Resource: "configmaps"}
-	case "ingresses":
-		return schema.GroupVersionResource{Group: "networking.k8s.io", Version: "v1", Resource: "ingresses"}
-	case "persistentvolumeclaims":
-		return schema.GroupVersionResource{Group: "", Version: "v1", Resource: "persistentvolumeclaims"}
-	default:
-		return schema.GroupVersionResource{} // Return empty GVR if not found
+func getGVR(discoveryClient discovery.DiscoveryInterface, resourceType string) (schema.GroupVersionResource, error) {
+	resourceList, err := discoveryClient.ServerPreferredResources()
+	if err != nil {
+		return schema.GroupVersionResource{}, err
 	}
+
+	for _, resourceGroup := range resourceList {
+		for _, resource := range resourceGroup.APIResources {
+			// we are looking for the resourceType
+			if resource.Name == resourceType {
+				gv, err := schema.ParseGroupVersion(resourceGroup.GroupVersion)
+				if err != nil {
+					return schema.GroupVersionResource{}, err
+				}
+				return schema.GroupVersionResource{Group: gv.Group, Version: gv.Version, Resource: resource.Name}, nil
+			}
+		}
+	}
+	return schema.GroupVersionResource{}, fmt.Errorf("resource not found")
+}
+
+func containsClusterWideResourceType(resourceType string) bool {
+	clusterWideResources := []string{"persistentvolumes", "nodes", "namespaces", "storageclasses"}
+	for _, r := range clusterWideResources {
+		if r == resourceType {
+			return true
+		}
+	}
+	return false
 }
 
 // CreateResource creates a Kubernetes resource
 func CreateResource(c *gin.Context) {
-	_, dynamicClient, err := GetClientSet()
+	clientset, dynamicClient, err := GetClientSet()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
 	resourceType := c.Param("resourceType")
 	namespace := c.Param("namespace")
+	discoveryClient := clientset.Discovery()
+	gvr, err := getGVR(discoveryClient, resourceType)
 
-	gvr := mapResourceToGVR(resourceType)
-	if gvr.Resource == "" {
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
 		return
 	}
-
+	var resource dynamic.ResourceInterface
+	isClusterWide := containsClusterWideResourceType(resourceType)
+	// cluster-wide resouces does not look for namespaces
+	if isClusterWide {
+		resource = dynamicClient.Resource(gvr)
+	} else {
+		resource = dynamicClient.Resource(gvr).Namespace(namespace)
+	}
 	var resourceData map[string]interface{}
 
 	// Detect Content-Type
@@ -76,8 +99,9 @@ func CreateResource(c *gin.Context) {
 	}
 
 	// Convert the map to an unstructured resource
-	resource := &unstructured.Unstructured{Object: resourceData}
-	result, err := dynamicClient.Resource(gvr).Namespace(namespace).Create(c, resource, v1.CreateOptions{})
+	resourceObj := &unstructured.Unstructured{Object: resourceData}
+	// TODO: Retry Logic
+	result, err := resource.Create(c, resourceObj, v1.CreateOptions{})
 	if err != nil {
 		fmt.Println("Kubernetes API Error:", err) // Debugging
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -89,7 +113,7 @@ func CreateResource(c *gin.Context) {
 
 // GetResource retrieves a resource
 func GetResource(c *gin.Context) {
-	_, dynamicClient, err := GetClientSet()
+	clientset, dynamicClient, err := GetClientSet()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -99,90 +123,44 @@ func GetResource(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 
-	gvr := mapResourceToGVR(resourceType)
-	if gvr.Resource == "" {
+	discoveryClient := clientset.Discovery()
+	gvr, err := getGVR(discoveryClient, resourceType)
+
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
 		return
 	}
 
-	result, err := dynamicClient.Resource(gvr).Namespace(namespace).Get(c, name, v1.GetOptions{})
+	var resource dynamic.ResourceInterface
+	isClusterWide := containsClusterWideResourceType(resourceType)
+	if isClusterWide {
+		resource = dynamicClient.Resource(gvr)
+	} else {
+		resource = dynamicClient.Resource(gvr).Namespace(namespace)
+	}
+	result, err := resource.Get(c, name, v1.GetOptions{})
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	format := c.Query("format")
+	if format == "yaml" || format == "yml" {
+		yamlData, err := yaml.Marshal(result)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to convert to YAML"})
+			return
+		}
+		c.Data(http.StatusOK, "application/x-yaml", yamlData)
 		return
 	}
 
 	c.JSON(http.StatusOK, result)
 }
 
-// GetResourceAsJSON retrieves a resource in JSON format
-func GetResourceAsJSON(c *gin.Context) {
-	_, dynamicClient, err := GetClientSet()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	resourceType := c.Param("resourceType")
-	namespace := c.Param("namespace")
-	name := c.Param("name")
-
-	gvr := mapResourceToGVR(resourceType)
-	if gvr.Resource == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
-		return
-	}
-
-	result, err := dynamicClient.Resource(gvr).Namespace(namespace).Get(c, name, v1.GetOptions{})
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-		return
-	}
-
-	jsonData, err := json.MarshalIndent(result, "", "  ")
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to convert to JSON"})
-		return
-	}
-
-	c.Data(http.StatusOK, "application/json", jsonData)
-}
-
-// GetResourceAsYAML retrieves a resource in YAML format
-func GetResourceAsYAML(c *gin.Context) {
-	_, dynamicClient, err := GetClientSet()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	resourceType := c.Param("resourceType")
-	namespace := c.Param("namespace")
-	name := c.Param("name")
-
-	gvr := mapResourceToGVR(resourceType)
-	if gvr.Resource == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
-		return
-	}
-
-	result, err := dynamicClient.Resource(gvr).Namespace(namespace).Get(c, name, v1.GetOptions{})
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-		return
-	}
-
-	yamlData, err := yaml.Marshal(result)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to convert to YAML"})
-		return
-	}
-
-	c.Data(http.StatusOK, "application/x-yaml", yamlData)
-}
-
 // UpdateResource updates an existing Kubernetes resource
 func UpdateResource(c *gin.Context) {
-	_, dynamicClient, err := GetClientSet()
+	clientset, dynamicClient, err := GetClientSet()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -192,10 +170,19 @@ func UpdateResource(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name") // Extract resource name
 
-	gvr := mapResourceToGVR(resourceType)
-	if gvr.Resource == "" {
+	discoveryClient := clientset.Discovery()
+	gvr, err := getGVR(discoveryClient, resourceType)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
 		return
+	}
+	var resource dynamic.ResourceInterface
+
+	isClusterWide := containsClusterWideResourceType(resourceType)
+	if isClusterWide {
+		resource = dynamicClient.Resource(gvr)
+	} else {
+		resource = dynamicClient.Resource(gvr).Namespace(namespace)
 	}
 
 	var resourceData map[string]interface{}
@@ -205,10 +192,10 @@ func UpdateResource(c *gin.Context) {
 	}
 
 	// Ensure the resource has a name before updating
-	resource := &unstructured.Unstructured{Object: resourceData}
-	resource.SetName(name)
-
-	result, err := dynamicClient.Resource(gvr).Namespace(namespace).Update(c, resource, v1.UpdateOptions{})
+	resourceObj := &unstructured.Unstructured{Object: resourceData}
+	resourceObj.SetName(name)
+	// TODO: Retry Logic
+	result, err := resource.Update(c, resourceObj, v1.UpdateOptions{})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -219,7 +206,7 @@ func UpdateResource(c *gin.Context) {
 
 // DeleteResource deletes a resource
 func DeleteResource(c *gin.Context) {
-	_, dynamicClient, err := GetClientSet()
+	clientset, dynamicClient, err := GetClientSet()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -229,13 +216,21 @@ func DeleteResource(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 
-	gvr := mapResourceToGVR(resourceType)
-	if gvr.Resource == "" {
+	discoveryClient := clientset.Discovery()
+	gvr, err := getGVR(discoveryClient, resourceType)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
 		return
 	}
+	var resource dynamic.ResourceInterface
+	isClusterWide := containsClusterWideResourceType(resourceType)
+	if isClusterWide {
+		resource = dynamicClient.Resource(gvr)
+	} else {
+		resource = dynamicClient.Resource(gvr).Namespace(namespace)
+	}
 
-	err = dynamicClient.Resource(gvr).Namespace(namespace).Delete(c, name, v1.DeleteOptions{})
+	err = resource.Delete(c, name, v1.DeleteOptions{})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
