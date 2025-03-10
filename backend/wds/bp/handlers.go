@@ -389,18 +389,13 @@ func CreateBp(ctx *gin.Context) {
 
 // DeleteBp deletes a BindingPolicy by name and namespace
 func DeleteBp(ctx *gin.Context) {
-	name := ctx.Query("name")
-	namespace := ctx.Query("namespace")
+	name := ctx.Param("name")
 
 	if name == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "name parameter is required"})
 		return
 	}
-
-	if namespace == "" {
-		namespace = "default"
-	}
-
+	log.LogInfo("", zap.String("deleting bp: ", name))
 	c, err := getClientForBp()
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -409,15 +404,15 @@ func DeleteBp(ctx *gin.Context) {
 
 	err = c.BindingPolicies().Delete(context.TODO(), name, v1.DeleteOptions{})
 	if err != nil {
+		log.LogError("", zap.String("err", err.Error()))
 		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to delete binding policy '%s' in namespace '%s': %v", name, namespace, err),
+			"error": fmt.Sprintf("failed to delte Bp: %s", name),
 		})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf("Successfully deleted binding policy '%s' in namespace '%s'", name, namespace),
-	})
+	ctx.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("deleted %s", name)})
+
 }
 
 // DeleteAllBp deletes all BindingPolicies

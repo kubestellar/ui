@@ -21,7 +21,8 @@ func getClientForBp() (*bpv1alpha1.ControlV1alpha1Client, error) {
 	if kubeconfig == "" {
 		kubeconfig = filepath.Join(homedir.HomeDir(), ".kube", "config")
 	}
-	log.LogDebug("", zap.String("kubeconfig patha: ", kubeconfig))
+	log.LogDebug("creating client For BP")
+	log.LogDebug("", zap.String("kubeconfig path: ", kubeconfig))
 
 	config, err := clientcmd.LoadFromFile(kubeconfig)
 	if err != nil {
