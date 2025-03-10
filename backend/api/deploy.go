@@ -45,6 +45,9 @@ func DeployHandler(c *gin.Context) {
 		return
 	}
 
+	// Extract dryRun flag from query parameters
+	dryRun := c.Query("dryRun") == "true"
+
 	// Store repo & folder path in Redis for future auto-deployments
 	redis.SetFilePath(request.FolderPath)
 	redis.SetRepoURL(request.RepoURL)
@@ -67,12 +70,23 @@ func DeployHandler(c *gin.Context) {
 		return
 	}
 
-	deploymentTree, err := k8s.DeployManifests(deployPath)
+	// Deploy with dryRun option
+	deploymentTree, err := k8s.DeployManifests(deployPath, dryRun)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Deployment failed", "details": err.Error()})
 		return
 	}
 
+	// If dry run, notify the user
+	if dryRun {
+		c.JSON(http.StatusOK, gin.H{
+			"message":         "Dry run successful. No changes applied.",
+			"deployment_tree": deploymentTree,
+		})
+		return
+	}
+
+	// Return actual deployment result
 	c.JSON(http.StatusOK, deploymentTree)
 }
 
@@ -92,14 +106,7 @@ func GitHubWebhookHandler(c *gin.Context) {
 		return
 	}
 
-	// repoUrl, err := redis.GetRepoURL()
-	// if err != nil {
-	// 	c.JSON(http.StatusNotFound, gin.H{"error": "No deployment configured for this repository"})
-	// 	return
-	// }
-
 	repoUrl := request.Repository.CloneURL
-
 	tempDir := fmt.Sprintf("/tmp/%d", time.Now().Unix())
 	cmd := exec.Command("git", "clone", repoUrl, tempDir)
 	if err := cmd.Run(); err != nil {
@@ -118,48 +125,18 @@ func GitHubWebhookHandler(c *gin.Context) {
 		return
 	}
 
-	deploymentTree, err := k8s.DeployManifests(deployPath)
+	// Check for dry run parameter
+	dryRun := c.Query("dryRun") == "true"
+	deploymentTree, err := k8s.DeployManifests(deployPath, dryRun)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Deployment failed", "details": err.Error()})
 		return
 	}
 
+	if dryRun {
+		c.JSON(http.StatusOK, gin.H{"message": "Dry run successful", "deployment": deploymentTree})
+		return
+	}
+
 	c.JSON(http.StatusOK, deploymentTree)
-
-	// Todo
-	// // Check if any modified file is inside the stored deployment folder
-	// shouldDeploy := false
-	// for _, commit := range request.Commits {
-	// 	for _, modifiedFile := range commit.Modified {
-	// 		normalizedModFile := filepath.ToSlash(modifiedFile)
-	// 		normalizedFolderPath := filepath.ToSlash(folderPath)
-
-	// 		if strings.HasPrefix(normalizedModFile, normalizedFolderPath) {
-	// 			shouldDeploy = true
-	// 			break
-	// 		}
-	// 	}
-	// 	if shouldDeploy {
-	// 		break
-	// 	}
-	// }
-
-	// // Trigger deployment if relevant changes are found
-	// if shouldDeploy {
-	// 	deploymentTree, err := k8s.DeployManifests(folderPath)
-	// 	if err != nil {
-	// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Deployment failed", "details": err.Error()})
-	// 		return
-	// 	}
-
-	// 	c.JSON(http.StatusOK, gin.H{
-	// 		"message":   "Deployment successful",
-	// 		"namespace": deploymentTree.Namespace,
-	// 		"details":   deploymentTree,
-	// 	})
-	// 	return
-	// }
-
-	// No relevant changes detected
-	c.JSON(http.StatusOK, gin.H{"message": "No relevant changes detected"})
 }
