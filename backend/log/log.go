@@ -2,7 +2,7 @@ package log
 
 import "go.uber.org/zap"
 
-var logger, _ = zap.NewProduction()
+var logger *zap.Logger
 
 func LogInfo(msg string, fields ...zap.Field) {
 	logger.Info(msg, fields...)
@@ -23,4 +23,13 @@ func LogFatal(msg string, fields ...zap.Field) {
 
 func LogDebug(msg string, fields ...zap.Field) {
 	logger.Debug(msg, fields...)
+}
+
+func init() {
+
+	cfg := zap.NewProductionConfig()
+	cfg.DisableStacktrace = true
+	zapLogger, _ := cfg.Build()
+	logger = zapLogger
+
 }

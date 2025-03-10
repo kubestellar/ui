@@ -9,7 +9,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/katamyra/kubestellarUI/log"
 	"github.com/kubestellar/kubestellar/api/control/v1alpha1"
+	"go.uber.org/zap"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -39,13 +41,12 @@ type BindingPolicyWithStatus struct {
 
 // GetAllBp retrieves all BindingPolicies with enhanced information
 func GetAllBp(ctx *gin.Context) {
-	fmt.Printf("Debug - Retrieving all binding policies\n")
-	fmt.Printf("Debug - KUBECONFIG: %s\n", os.Getenv("KUBECONFIG"))
-	fmt.Printf("Debug - wds_context: %s\n", os.Getenv("wds_context"))
+	log.LogDebug("retrieving all binding policies")
+	log.LogDebug("Using wds context: ", zap.String("wds_context", os.Getenv("wds_context")))
 
 	c, err := getClientForBp()
 	if err != nil {
-		fmt.Printf("Debug - Client creation error: %v\n", err)
+		log.LogError("failed to create client for Bp", zap.String("error", err.Error()))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Errorf("failed to create client for BP: %s", err.Error())})
 		return
 	}
@@ -69,7 +70,7 @@ func GetAllBp(ctx *gin.Context) {
 	for i := range bpList.Items {
 		yamlData, err := yaml.Marshal(bpList.Items[i])
 		if err != nil {
-			fmt.Printf("Debug - YAML marshal error: %v\n", err)
+			log.LogError("Yaml Marshal faled", zap.String("error", err.Error()))
 			continue
 		}
 
@@ -124,7 +125,7 @@ func GetAllBp(ctx *gin.Context) {
 
 	// Filter by namespace if specified
 	if namespace != "" {
-		fmt.Printf("Debug - Filtering by namespace: %s\n", namespace)
+		log.LogDebug("filtering by namespace", zap.String("namespace", namespace))
 		filteredBPs := filterBPsByNamespace(bpsWithStatus, namespace)
 		ctx.JSON(http.StatusOK, gin.H{
 			"bindingPolicies": filteredBPs,
