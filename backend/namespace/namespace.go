@@ -8,42 +8,33 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/katamyra/kubestellarUI/k8s"
 	"github.com/katamyra/kubestellarUI/models"
 	"github.com/katamyra/kubestellarUI/redis"
-	"github.com/katamyra/kubestellarUI/wds"
-	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // timeout duration for Kubernetes API requests
 const requestTimeout = 5 * time.Second
 
 var upgrader = websocket.Upgrader{
-	// CheckOrigin allows all cross-origin requests by always returning true.
-	// This is a security setting for WebSocket connections that controls which domains can connect.
-	// WARNING: Setting this to always return true is insecure for production environments
-	// as it allows any origin to establish WebSocket connections.
-	// @param r *http.Request - The incoming HTTP request
-	// @return bool - Always returns true, allowing all origins
 	CheckOrigin: func(_ *http.Request) bool { return true },
 }
 
-// GetAllNamespacesWithResources fetches all namespaces and their connected resources
+// NamespaceDetails holds namespace information and resources
 type NamespaceDetails struct {
-	Name        string              `json:"name"`
-	Status      string              `json:"status"`
-	Labels      map[string]string   `json:"labels"`
-	Pods        []v1.Pod            `json:"pods"`
-	Deployments []appsv1.Deployment `json:"deployments"`
-	Services    []v1.Service        `json:"services"`
-	ConfigMaps  []v1.ConfigMap      `json:"configmaps"`
-	Secrets     []v1.Secret         `json:"secrets"`
+	Name      string                           `json:"name"`
+	Status    string                           `json:"status"`
+	Labels    map[string]string                `json:"labels"`
+	Resources map[string][]unstructured.Unstructured `json:"resources"`
 }
 
 // CreateNamespace creates a new namespace
 func CreateNamespace(namespace models.Namespace) error {
-	clientset, err := wds.GetClientSetKubeConfig()
+	clientset, _, err := k8s.GetClientSet()
 	if err != nil {
 		return fmt.Errorf("failed to initialize Kubernetes client: %v", err)
 	}
@@ -51,7 +42,6 @@ func CreateNamespace(namespace models.Namespace) error {
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
 
-	// Create namespace with optional labels
 	_, err = clientset.CoreV1().Namespaces().Create(ctx, &v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   namespace.Name,
@@ -67,7 +57,7 @@ func CreateNamespace(namespace models.Namespace) error {
 
 // GetAllNamespaces fetches all namespaces along with their pods
 func GetAllNamespaces() ([]models.Namespace, error) {
-	clientset, err := wds.GetClientSetKubeConfig()
+	clientset, _, err := k8s.GetClientSet()
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize Kubernetes client: %v", err)
 	}
@@ -99,9 +89,9 @@ func GetAllNamespaces() ([]models.Namespace, error) {
 	return namespaceDetails, nil
 }
 
-// GetNamespaceDetails fetches detailed information about a specific namespace
-func GetNamespaceDetails(namespace string) (*NamespaceDetails, error) {
-	clientset, err := wds.GetClientSetKubeConfig()
+// GetNamespaceResources fetches resources for a namespace using discovery API
+func GetNamespaceResources(namespace string) (*NamespaceDetails, error) {
+	clientset, dynamicClient, err := k8s.GetClientSet()
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize Kubernetes client: %v", err)
 	}
@@ -114,30 +104,66 @@ func GetNamespaceDetails(namespace string) (*NamespaceDetails, error) {
 		return nil, fmt.Errorf("namespace '%s' not found: %v", namespace, err)
 	}
 
-	// Fetch all related resources
-	pods, _ := clientset.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{})
-	deployments, _ := clientset.AppsV1().Deployments(namespace).List(ctx, metav1.ListOptions{})
-	services, _ := clientset.CoreV1().Services(namespace).List(ctx, metav1.ListOptions{})
-	configMaps, _ := clientset.CoreV1().ConfigMaps(namespace).List(ctx, metav1.ListOptions{})
-	secrets, _ := clientset.CoreV1().Secrets(namespace).List(ctx, metav1.ListOptions{})
+	// Use discovery API to get available API resources
+	resources, err := clientset.Discovery().ServerPreferredNamespacedResources()
+	if err != nil {
+		return nil, fmt.Errorf("failed to discover resources: %v", err)
+	}
 
 	details := &NamespaceDetails{
-		Name:        ns.Name,
-		Status:      string(ns.Status.Phase),
-		Labels:      ns.Labels,
-		Pods:        pods.Items,
-		Deployments: deployments.Items,
-		Services:    services.Items,
-		ConfigMaps:  configMaps.Items,
-		Secrets:     secrets.Items,
+		Name:      ns.Name,
+		Status:    string(ns.Status.Phase),
+		Labels:    ns.Labels,
+		Resources: make(map[string][]unstructured.Unstructured),
+	}
+
+	// Fetch resources for the namespace based on discovered API resources
+	for _, apiResourceList := range resources {
+		for _, apiResource := range apiResourceList.APIResources {
+			// Skip resources that can't be listed or watched
+			if !containsVerb(apiResource.Verbs, "list") {
+				continue
+			}
+
+			gv, err := schema.ParseGroupVersion(apiResourceList.GroupVersion)
+			if err != nil {
+				continue
+			}
+
+			gvr := schema.GroupVersionResource{
+				Group:    gv.Group,
+				Version:  gv.Version,
+				Resource: apiResource.Name,
+			}
+
+			// Get resources in the namespace
+			list, err := dynamicClient.Resource(gvr).Namespace(namespace).List(ctx, metav1.ListOptions{})
+			if err != nil {
+				// Skip resources that error
+				continue
+			}
+
+			resourceKey := fmt.Sprintf("%s.%s/%s", gv.Group, gv.Version, apiResource.Name)
+			details.Resources[resourceKey] = list.Items
+		}
 	}
 
 	return details, nil
 }
 
+// containsVerb checks if a verb is in the list of verbs
+func containsVerb(verbs []string, verb string) bool {
+	for _, v := range verbs {
+		if v == verb {
+			return true
+		}
+	}
+	return false
+}
+
 // UpdateNamespace updates namespace labels
 func UpdateNamespace(namespaceName string, labels map[string]string) error {
-	clientset, err := wds.GetClientSetKubeConfig()
+	clientset, _, err := k8s.GetClientSet()
 	if err != nil {
 		return fmt.Errorf("failed to initialize Kubernetes client: %v", err)
 	}
@@ -161,7 +187,7 @@ func UpdateNamespace(namespaceName string, labels map[string]string) error {
 
 // DeleteNamespace removes a namespace
 func DeleteNamespace(name string) error {
-	clientset, err := wds.GetClientSetKubeConfig()
+	clientset, _, err := k8s.GetClientSet()
 	if err != nil {
 		return fmt.Errorf("failed to initialize Kubernetes client: %v", err)
 	}
@@ -178,7 +204,7 @@ func DeleteNamespace(name string) error {
 
 // GetAllNamespacesWithResources retrieves all namespaces along with their associated resources.
 func GetAllNamespacesWithResources() ([]NamespaceDetails, error) {
-	clientset, err := wds.GetClientSetKubeConfig()
+	clientset, _, err := k8s.GetClientSet()
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize Kubernetes client: %v", err)
 	}
@@ -194,24 +220,11 @@ func GetAllNamespacesWithResources() ([]NamespaceDetails, error) {
 	var namespaceDetails []NamespaceDetails
 
 	for _, ns := range namespaces.Items {
-		var details NamespaceDetails
-		details.Name = ns.Name
-		details.Status = string(ns.Status.Phase)
-		details.Labels = ns.Labels
-
-		pods, _ := clientset.CoreV1().Pods(ns.Name).List(ctx, metav1.ListOptions{})
-		deployments, _ := clientset.AppsV1().Deployments(ns.Name).List(ctx, metav1.ListOptions{})
-		services, _ := clientset.CoreV1().Services(ns.Name).List(ctx, metav1.ListOptions{})
-		configMaps, _ := clientset.CoreV1().ConfigMaps(ns.Name).List(ctx, metav1.ListOptions{})
-		secrets, _ := clientset.CoreV1().Secrets(ns.Name).List(ctx, metav1.ListOptions{})
-
-		details.Pods = pods.Items
-		details.Deployments = deployments.Items
-		details.Services = services.Items
-		details.ConfigMaps = configMaps.Items
-		details.Secrets = secrets.Items
-
-		namespaceDetails = append(namespaceDetails, details)
+		details, err := GetNamespaceResources(ns.Name)
+		if err != nil {
+			continue
+		}
+		namespaceDetails = append(namespaceDetails, *details)
 	}
 
 	return namespaceDetails, nil
@@ -241,9 +254,6 @@ func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 				err = conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Error fetching namespaces: %v", err)))
 				if err != nil {
 					fmt.Println("WebSocket error:", err)
-				}
-				if err != nil {
-					fmt.Println("WebSocket close error:", err)
 				}
 				return
 			}
