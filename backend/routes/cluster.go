@@ -8,7 +8,7 @@ import (
 )
 
 func setupClusterRoutes(router *gin.Engine) {
-	router.GET("/api/clusters/managed", func(c *gin.Context) {
+	router.GET("/api/clusters", func(c *gin.Context) {
 		contexts, clusters, currentContext, err, itsData := handlers.GetKubeInfo()
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
