@@ -26,9 +26,9 @@ var upgrader = websocket.Upgrader{
 
 // NamespaceDetails holds namespace information and resources
 type NamespaceDetails struct {
-	Name      string                           `json:"name"`
-	Status    string                           `json:"status"`
-	Labels    map[string]string                `json:"labels"`
+	Name      string                                 `json:"name"`
+	Status    string                                 `json:"status"`
+	Labels    map[string]string                      `json:"labels"`
 	Resources map[string][]unstructured.Unstructured `json:"resources"`
 }
 
