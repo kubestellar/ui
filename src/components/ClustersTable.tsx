@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Button,
   Checkbox,
@@ -15,11 +15,10 @@ import {
   TableCell,
   TextField,
   Paper,
-  SelectChangeEvent,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { Plus, CloudOff, Filter } from "lucide-react";
-import CreateOptions from "./ImportClusters";
+import CreateOptions from "./ImportClusters"; // Dialog for cluster import (if needed)
 import useTheme from "../stores/themeStore";
 
 interface ManagedClusterInfo {
@@ -57,11 +56,8 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
     setFilteredClusters(clusters);
   }, [clusters]);
 
-  // Combined search and filter function
   const filterClusters = useCallback(() => {
     let result = [...clusters];
-
-    // Apply search query
     if (query.trim()) {
       result = result.filter((cluster) => {
         const searchLower = query.toLowerCase().trim();
@@ -71,25 +67,19 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
             key.toLowerCase().includes(searchLower) ||
             value.toLowerCase().includes(searchLower)
         );
-        const contextMatch = cluster.context
-          .toLowerCase()
-          .includes(searchLower);
+        const contextMatch = cluster.context.toLowerCase().includes(searchLower);
         return nameMatch || labelMatch || contextMatch;
       });
     }
-
-    // Apply status filter - only if filter is not "All"
     if (filter && filter !== "All") {
       result = result.filter((cluster) => {
         const currentStatus = cluster.status || "Active✓";
         return currentStatus.toLowerCase() === filter.toLowerCase();
       });
     }
-
     setFilteredClusters(result);
   }, [clusters, query, filter]);
 
-  // Apply filtering whenever search query, filter, or clusters change
   useEffect(() => {
     filterClusters();
   }, [filterClusters, query, filter, clusters]);
@@ -98,8 +88,8 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
     setQuery(event.target.value);
   };
 
-  const handleFilterChange = (event: SelectChangeEvent<string>) => {
-    setFilter(event.target.value);
+  const handleFilterChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+    setFilter(event.target.value as string);
   };
 
   const handleCheckboxChange = (clusterName: string) => {
@@ -124,43 +114,31 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
   };
 
   const colors = {
-    primary: "#2f86ff", // Blue from KubeStellar logo
-    primaryLight: "#9ad6f9", // Light Blue from KubeStellar logo
-    primaryDark: "#1a65cc", // Darker shade of primary blue
-    secondary: "#67c073", // Green from KubeStellar logo
-    white: "#ffffff", // White from KubeStellar palette
-
-    // UI colors
-    background: isDark ? "#0f172a" : "#ffffff", // Slate-900 in dark, White in light
-    paper: isDark ? "#1e293b" : "#f8fafc", // Slate-800 in dark, Slate-50 in light
-    text: isDark ? "#f1f5f9" : "#1e293b", // Slate-100 in dark, Slate-800 in light
-    textSecondary: isDark ? "#94a3b8" : "#64748b", // Slate-400 in dark, Slate-500 in light
-    border: isDark ? "#334155" : "#e2e8f0", // Slate-700 in dark, Slate-200 in light
-
-    // Status colors
-    success: "#67c073", // Using the KubeStellar green
-    warning: "#ffb347", // Orange for warnings
-    error: "#ff6b6b", // Red for errors
-    disabled: isDark ? "#475569" : "#94a3b8", // Slate-600 in dark, Slate-400 in light
+    primary: "#2f86ff",
+    primaryLight: "#9ad6f9",
+    primaryDark: "#1a65cc",
+    secondary: "#67c073",
+    white: "#ffffff",
+    background: isDark ? "#0f172a" : "#ffffff",
+    paper: isDark ? "#1e293b" : "#f8fafc",
+    text: isDark ? "#f1f5f9" : "#1e293b",
+    textSecondary: isDark ? "#94a3b8" : "#64748b",
+    border: isDark ? "#334155" : "#e2e8f0",
+    success: "#67c073",
+    warning: "#ffb347",
+    error: "#ff6b6b",
+    disabled: isDark ? "#475569" : "#94a3b8",
   };
 
   return (
-    <div
-      className="p-4"
-      style={{ backgroundColor: colors.background, color: colors.text }}
-    >
+    <div className="p-4" style={{ backgroundColor: colors.background, color: colors.text }}>
       <div className="mb-8">
-        <h1
-          className="text-3xl font-bold mb-2 flex items-center gap-2"
-          style={{ color: colors.primary }}
-        >
+        <h1 className="text-3xl font-bold mb-2 flex items-center gap-2" style={{ color: colors.primary }}>
           <div>Manage Clusters</div>
           <span
             className="text-sm px-3 py-1 rounded-full"
             style={{
-              backgroundColor: isDark
-                ? "rgba(47, 134, 255, 0.2)"
-                : "rgba(47, 134, 255, 0.1)",
+              backgroundColor: isDark ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
               color: colors.primary,
             }}
           >
@@ -172,7 +150,6 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
         </p>
       </div>
 
-      {/* Search, Filter, and Buttons */}
       <div className="flex flex-wrap gap-4 items-center justify-between mb-4">
         <TextField
           label="Search Clusters"
@@ -189,36 +166,20 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
             ),
           }}
           InputLabelProps={{
-            style: {
-              color: colors.textSecondary,
-            },
+            style: { color: colors.textSecondary },
           }}
           sx={{
             "& .MuiOutlinedInput-root": {
-              "& input": {
-                color: colors.text,
-              },
-              "& fieldset": {
-                borderColor: colors.border,
-              },
-              "&:hover fieldset": {
-                borderColor: colors.primaryLight,
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: colors.primary,
-              },
+              "& input": { color: colors.text },
+              "& fieldset": { borderColor: colors.border },
+              "&:hover fieldset": { borderColor: colors.primaryLight },
+              "&.Mui-focused fieldset": { borderColor: colors.primary },
             },
           }}
         />
 
         <FormControl className="w-40">
-          <InputLabel
-            style={{
-              color: colors.textSecondary,
-            }}
-          >
-            Status Filter
-          </InputLabel>
+          <InputLabel style={{ color: colors.textSecondary }}>Status Filter</InputLabel>
           <Select
             value={filter}
             label="Status Filter"
@@ -230,70 +191,31 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                 alignItems: "center",
                 gap: "0.5rem",
               },
-              "& .MuiOutlinedInput-notchedOutline": {
-                borderColor: colors.border,
-              },
-              "&:hover .MuiOutlinedInput-notchedOutline": {
-                borderColor: colors.primaryLight,
-              },
-              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                borderColor: colors.primary,
-              },
-              "& .MuiSelect-icon": {
-                color: colors.textSecondary,
-              },
+              "& .MuiOutlinedInput-notchedOutline": { borderColor: colors.border },
+              "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: colors.primaryLight },
+              "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: colors.primary },
+              "& .MuiSelect-icon": { color: colors.textSecondary },
             }}
             IconComponent={() => (
-              <Filter
-                size={18}
-                style={{ color: colors.textSecondary, marginRight: "8px" }}
-              />
+              <Filter size={18} style={{ color: colors.textSecondary, marginRight: "8px" }} />
             )}
-            MenuProps={{
-              PaperProps: {
-                sx: {
-                  bgcolor: colors.paper,
-                  borderRadius: "8px",
-                  boxShadow: isDark
-                    ? "0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.3)"
-                    : "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)",
-                  "& .MuiMenuItem-root": {
-                    color: colors.text,
-                    "&:hover": {
-                      backgroundColor: isDark
-                        ? "rgba(47, 134, 255, 0.15)"
-                        : "rgba(47, 134, 255, 0.08)",
-                    },
-                  },
-                },
-              },
-            }}
           >
             <MenuItem value="">All Status</MenuItem>
             <MenuItem value="active✓">
               <span className="flex items-center gap-2">
-                <span
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: colors.success }}
-                ></span>
+                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.success }}></span>
                 Active
               </span>
             </MenuItem>
             <MenuItem value="inactive">
               <span className="flex items-center gap-2">
-                <span
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: colors.error }}
-                ></span>
+                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.error }}></span>
                 Inactive
               </span>
             </MenuItem>
             <MenuItem value="pending">
               <span className="flex items-center gap-2">
-                <span
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: colors.warning }}
-                ></span>
+                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.warning }}></span>
                 Pending
               </span>
             </MenuItem>
@@ -311,9 +233,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
             sx={{
               bgcolor: colors.primary,
               color: colors.white,
-              "&:hover": {
-                bgcolor: colors.primaryDark,
-              },
+              "&:hover": { bgcolor: colors.primaryDark },
               textTransform: "none",
               fontWeight: "600",
               padding: "8px 20px",
@@ -326,16 +246,11 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
             Import Cluster
           </Button>
           {showCreateOptions && (
-            <CreateOptions
-              activeOption={activeOption}
-              setActiveOption={setActiveOption}
-              onCancel={handleCancel}
-            />
+            <CreateOptions activeOption={activeOption} setActiveOption={setActiveOption} onCancel={handleCancel} />
           )}
         </div>
       </div>
 
-      {/* Table */}
       <TableContainer
         component={Paper}
         className="overflow-auto"
@@ -352,7 +267,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
           <TableHead>
             <TableRow
               sx={{
-                background: `${colors.primary}`,
+                background: colors.primary,
                 "& .MuiTableCell-head": {
                   color: colors.white,
                   fontWeight: 600,
@@ -367,9 +282,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                   onChange={handleSelectAll}
                   sx={{
                     color: colors.white,
-                    "&.Mui-checked": {
-                      color: colors.white,
-                    },
+                    "&.Mui-checked": { color: colors.white },
                   }}
                 />
               </TableCell>
@@ -388,9 +301,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                   sx={{
                     backgroundColor: colors.paper,
                     "&:hover": {
-                      backgroundColor: isDark
-                        ? "rgba(47, 134, 255, 0.08)"
-                        : "rgba(47, 134, 255, 0.04)",
+                      backgroundColor: isDark ? "rgba(47, 134, 255, 0.08)" : "rgba(47, 134, 255, 0.04)",
                     },
                     "& .MuiTableCell-body": {
                       color: colors.text,
@@ -405,9 +316,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                       onChange={() => handleCheckboxChange(cluster.name)}
                       sx={{
                         color: colors.textSecondary,
-                        "&.Mui-checked": {
-                          color: colors.primary,
-                        },
+                        "&.Mui-checked": { color: colors.primary },
                       }}
                     />
                   </TableCell>
@@ -415,22 +324,15 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                     <div className="font-medium">{cluster.name}</div>
                   </TableCell>
                   <TableCell>
-                    {cluster.labels &&
-                    Object.keys(cluster.labels).length > 0 ? (
+                    {cluster.labels && Object.keys(cluster.labels).length > 0 ? (
                       <div className="flex flex-wrap gap-2">
                         {Object.entries(cluster.labels).map(([key, value]) => (
                           <span
                             key={`${key}-${value}`}
                             style={{
-                              backgroundColor: isDark
-                                ? "rgba(47, 134, 255, 0.15)"
-                                : "rgba(47, 134, 255, 0.08)",
+                              backgroundColor: isDark ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.08)",
                               color: colors.primary,
-                              border: `1px solid ${
-                                isDark
-                                  ? "rgba(47, 134, 255, 0.4)"
-                                  : "rgba(47, 134, 255, 0.3)"
-                              }`,
+                              border: `1px solid ${isDark ? "rgba(47, 134, 255, 0.4)" : "rgba(47, 134, 255, 0.3)"}`,
                             }}
                             className="px-2 py-1 rounded text-xs font-medium"
                           >
@@ -439,28 +341,16 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                         ))}
                       </div>
                     ) : (
-                      <span style={{ color: colors.textSecondary }}>
-                        No labels
-                      </span>
+                      <span style={{ color: colors.textSecondary }}>No labels</span>
                     )}
                   </TableCell>
-                  <TableCell>
-                    {new Date(cluster.creationTime).toLocaleString()}
-                  </TableCell>
+                  <TableCell>{new Date(cluster.creationTime).toLocaleString()}</TableCell>
                   <TableCell>
                     <span
                       style={{
-                        backgroundColor: isDark
-                          ? "rgba(103, 192, 115, 0.2)"
-                          : "rgba(103, 192, 115, 0.1)",
-                        color: isDark
-                          ? "rgb(154, 214, 249)"
-                          : "rgb(47, 134, 255)",
-                        border: `1px solid ${
-                          isDark
-                            ? "rgba(103, 192, 115, 0.4)"
-                            : "rgba(103, 192, 115, 0.3)"
-                        }`,
+                        backgroundColor: isDark ? "rgba(103, 192, 115, 0.2)" : "rgba(103, 192, 115, 0.1)",
+                        color: isDark ? "rgb(154, 214, 249)" : "rgb(47, 134, 255)",
+                        border: `1px solid ${isDark ? "rgba(103, 192, 115, 0.4)" : "rgba(103, 192, 115, 0.3)"}`,
                       }}
                       className="px-2 py-1 text-xs font-medium rounded-lg"
                     >
@@ -491,35 +381,13 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                             : colors.success,
                         border:
                           cluster.status === "Inactive"
-                            ? `1px solid ${
-                                isDark
-                                  ? "rgba(255, 107, 107, 0.4)"
-                                  : "rgba(255, 107, 107, 0.3)"
-                              }`
+                            ? `1px solid ${isDark ? "rgba(255, 107, 107, 0.4)" : "rgba(255, 107, 107, 0.3)"}`
                             : cluster.status === "Pending"
-                            ? `1px solid ${
-                                isDark
-                                  ? "rgba(255, 179, 71, 0.4)"
-                                  : "rgba(255, 179, 71, 0.3)"
-                              }`
-                            : `1px solid ${
-                                isDark
-                                  ? "rgba(103, 192, 115, 0.4)"
-                                  : "rgba(103, 192, 115, 0.3)"
-                              }`,
+                            ? `1px solid ${isDark ? "rgba(255, 179, 71, 0.4)" : "rgba(255, 179, 71, 0.3)"}`
+                            : `1px solid ${isDark ? "rgba(103, 192, 115, 0.4)" : "rgba(103, 192, 115, 0.3)"}`,
                       }}
                     >
-                      <span
-                        className="w-2 h-2 rounded-full"
-                        style={{
-                          backgroundColor:
-                            cluster.status === "Inactive"
-                              ? colors.error
-                              : cluster.status === "Pending"
-                              ? colors.warning
-                              : colors.success,
-                        }}
-                      ></span>
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cluster.status === "Inactive" ? colors.error : cluster.status === "Pending" ? colors.warning : colors.success }}></span>
                       {cluster.status || "Active✓"}
                     </span>
                   </TableCell>
@@ -529,23 +397,11 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
               <TableRow>
                 <TableCell colSpan={6} className="py-12">
                   <div className="flex flex-col items-center justify-center text-center p-6">
-                    <CloudOff
-                      size={48}
-                      style={{
-                        color: colors.textSecondary,
-                        marginBottom: "16px",
-                      }}
-                    />
-                    <h3
-                      style={{ color: colors.text }}
-                      className="text-lg font-semibold mb-2"
-                    >
+                    <CloudOff size={48} style={{ color: colors.textSecondary, marginBottom: "16px" }} />
+                    <h3 style={{ color: colors.text }} className="text-lg font-semibold mb-2">
                       No Clusters Found
                     </h3>
-                    <p
-                      style={{ color: colors.textSecondary }}
-                      className="mb-4 max-w-md"
-                    >
+                    <p style={{ color: colors.textSecondary }} className="mb-4 max-w-md">
                       {query && filter
                         ? "No clusters match both your search and filter criteria"
                         : query
@@ -563,14 +419,10 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                             sx={{
                               color: colors.primary,
                               borderColor: colors.primary,
-                              backgroundColor: isDark
-                                ? "rgba(47, 134, 255, 0.1)"
-                                : "transparent",
+                              backgroundColor: isDark ? "rgba(47, 134, 255, 0.1)" : "transparent",
                               "&:hover": {
                                 borderColor: colors.primaryLight,
-                                backgroundColor: isDark
-                                  ? "rgba(47, 134, 255, 0.2)"
-                                  : "rgba(47, 134, 255, 0.1)",
+                                backgroundColor: isDark ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
                               },
                               textTransform: "none",
                               fontWeight: "600",
@@ -587,14 +439,10 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                             sx={{
                               color: colors.primary,
                               borderColor: colors.primary,
-                              backgroundColor: isDark
-                                ? "rgba(47, 134, 255, 0.1)"
-                                : "transparent",
+                              backgroundColor: isDark ? "rgba(47, 134, 255, 0.1)" : "transparent",
                               "&:hover": {
                                 borderColor: colors.primaryLight,
-                                backgroundColor: isDark
-                                  ? "rgba(47, 134, 255, 0.2)"
-                                  : "rgba(47, 134, 255, 0.1)",
+                                backgroundColor: isDark ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
                               },
                               textTransform: "none",
                               fontWeight: "600",
@@ -614,7 +462,6 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
         </Table>
       </TableContainer>
 
-      {/* Pagination Controls */}
       <div className="flex justify-between items-center mt-6 px-2">
         <Button
           disabled={currentPage === 1}
@@ -622,15 +469,10 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
           sx={{
             color: currentPage === 1 ? colors.disabled : colors.primary,
             borderColor: currentPage === 1 ? colors.disabled : colors.primary,
-            backgroundColor:
-              isDark && currentPage !== 1
-                ? "rgba(47, 134, 255, 0.1)"
-                : "transparent",
+            backgroundColor: isDark && currentPage !== 1 ? "rgba(47, 134, 255, 0.1)" : "transparent",
             "&:hover": {
               borderColor: colors.primaryLight,
-              backgroundColor: isDark
-                ? "rgba(47, 134, 255, 0.2)"
-                : "rgba(47, 134, 255, 0.1)",
+              backgroundColor: isDark ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
             },
             "&.Mui-disabled": {
               color: colors.disabled,
@@ -645,30 +487,21 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
         >
           Previous
         </Button>
-
         <div className="flex items-center gap-2">
           <span style={{ color: colors.textSecondary }} className="font-medium">
             Page {currentPage} of {totalPages}
           </span>
         </div>
-
         <Button
           disabled={currentPage === totalPages}
           onClick={() => onPageChange(currentPage + 1)}
           sx={{
-            color:
-              currentPage === totalPages ? colors.disabled : colors.primary,
-            borderColor:
-              currentPage === totalPages ? colors.disabled : colors.primary,
-            backgroundColor:
-              isDark && currentPage !== totalPages
-                ? "rgba(47, 134, 255, 0.1)"
-                : "transparent",
+            color: currentPage === totalPages ? colors.disabled : colors.primary,
+            borderColor: currentPage === totalPages ? colors.disabled : colors.primary,
+            backgroundColor: isDark && currentPage !== totalPages ? "rgba(47, 134, 255, 0.1)" : "transparent",
             "&:hover": {
               borderColor: colors.primaryLight,
-              backgroundColor: isDark
-                ? "rgba(47, 134, 255, 0.2)"
-                : "rgba(47, 134, 255, 0.1)",
+              backgroundColor: isDark ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
             },
             "&.Mui-disabled": {
               color: colors.disabled,
