@@ -43,7 +43,7 @@ func GetAllNamespaces(c *gin.Context) {
 func GetNamespaceDetails(c *gin.Context) {
 	namespaceName := c.Param("name")
 
-	details, err := ns.GetNamespaceDetails(namespaceName)
+	details, err := ns.GetNamespaceResources(namespaceName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Namespace not found", "details": err.Error()})
 		return
