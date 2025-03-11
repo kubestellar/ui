@@ -5,8 +5,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/katamyra/kubestellarUI/log"
 	"github.com/kubestellar/kubestellar/api/control/v1alpha1"
 	bpv1alpha1 "github.com/kubestellar/kubestellar/pkg/generated/clientset/versioned/typed/control/v1alpha1"
+	"go.uber.org/zap"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 )
@@ -19,11 +21,12 @@ func getClientForBp() (*bpv1alpha1.ControlV1alpha1Client, error) {
 	if kubeconfig == "" {
 		kubeconfig = filepath.Join(homedir.HomeDir(), ".kube", "config")
 	}
-	fmt.Printf("Debug - Using kubeconfig path: %s\n", kubeconfig)
+	log.LogDebug("creating client For BP")
+	log.LogDebug("", zap.String("kubeconfig path: ", kubeconfig))
 
 	config, err := clientcmd.LoadFromFile(kubeconfig)
 	if err != nil {
-		fmt.Printf("Debug - LoadFromFile error: %v\n", err)
+		log.LogError("Failed to load kubeconfig", zap.String("err", err.Error()))
 		return nil, err
 	}
 
@@ -31,7 +34,7 @@ func getClientForBp() (*bpv1alpha1.ControlV1alpha1Client, error) {
 	if wds_ctx == "" {
 		return nil, fmt.Errorf("env var wds_context not set")
 	}
-	fmt.Printf("Debug - Using context: %s\n", wds_ctx)
+	log.LogDebug("", zap.String("wds_contex: ", wds_ctx))
 
 	overrides := &clientcmd.ConfigOverrides{
 		CurrentContext: wds_ctx,
@@ -40,13 +43,13 @@ func getClientForBp() (*bpv1alpha1.ControlV1alpha1Client, error) {
 
 	restcnfg, err := cconfig.ClientConfig()
 	if err != nil {
-		fmt.Printf("Debug - ClientConfig error: %v\n", err)
+		log.LogError("failed to get rest config", zap.String("error", err.Error()))
 		return nil, err
 	}
 
 	c, err := bpv1alpha1.NewForConfig(restcnfg)
 	if err != nil {
-		fmt.Printf("Debug - NewForConfig error: %v\n", err)
+		log.LogError("failed to create bp client", zap.String("error", err.Error()))
 		return nil, err
 	}
 

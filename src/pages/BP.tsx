@@ -207,8 +207,8 @@ const fetchBindingPolicies = useCallback(async () => {
     if (selectedPolicy) {
       try {
         // Call the API to delete the policy
-        await api.get(
-          `/api/bp/delete?name=${selectedPolicy.name}&namespace=${selectedPolicy.namespace}`
+        await api.delete(
+          `/api/bp/delete/${selectedPolicy.name}`
         );
 
         // Update UI state after successful deletion
