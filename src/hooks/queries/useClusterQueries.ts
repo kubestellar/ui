@@ -39,7 +39,7 @@ export const useClusterQueries = () => {
     return useQuery({
       queryKey: ['clusters', page],
       queryFn: async (): Promise<ClusterResponse> => {
-        const response = await api.get('/api/clusters/managed', { params: { page } });
+        const response = await api.get('/api/clusters', { params: { page } });
         return {
           itsData: response.data.itsData || [],
           totalPages: response.data.totalPages || 1,

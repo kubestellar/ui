@@ -32,7 +32,7 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
 
   React.useEffect(() => {
     api
-      .get("/api/clusters/managed")
+      .get("/api/clusters")
       .then((response) => {
         const data = response.data;
         const kubeflexContexts = data.contexts.filter(

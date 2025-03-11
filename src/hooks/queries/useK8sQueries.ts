@@ -17,7 +17,7 @@ export const useK8sQueries = () => {
     return useQuery({
       queryKey: ['k8s-info'],
       queryFn: async (): Promise<K8sResponse> => {
-        const response = await api.get('/api/clusters/managed');
+        const response = await api.get('/api/clusters');
         return {
           contexts: response.data.contexts,
           clusters: response.data.clusters,
