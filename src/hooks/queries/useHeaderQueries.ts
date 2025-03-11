@@ -17,7 +17,7 @@ export const useHeaderQueries = () => {
     return useQuery({
       queryKey: ['contexts'],
       queryFn: async (): Promise<ClusterContextResponse> => {
-        const response = await api.get('/api/clusters/managed');
+        const response = await api.get('/api/clusters');
         return {
           contexts: response.data.contexts.filter((ctx: Context) => 
             ctx.name.endsWith("-kubeflex") || ctx.cluster.endsWith("-kubeflex")
