@@ -15,6 +15,7 @@ import {
   TableCell,
   TextField,
   Paper,
+  SelectChangeEvent,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { Plus, CloudOff, Filter } from "lucide-react";
@@ -88,7 +89,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
     setQuery(event.target.value);
   };
 
-  const handleFilterChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+  const handleFilterChange = (event: SelectChangeEvent<string>) => {
     setFilter(event.target.value as string);
   };
 
