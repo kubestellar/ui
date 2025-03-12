@@ -1,4 +1,4 @@
-import React, { useEffect, useState, ChangeEvent } from "react";
+import React, { useState, ChangeEvent } from "react";
 import {
   Dialog,
   DialogContent,
@@ -98,29 +98,10 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
     severity: "info",
   });
 
-  // State for Manual tab (option4)
   const [manualCommand, setManualCommand] = useState<CommandResponse | null>(null);
   const [manualLoading, setManualLoading] = useState<boolean>(false);
   const [manualError, setManualError] = useState<string>("");
 
-  // Define interface for hub API response
-  interface HubApiResponse {
-    apiserver: string;
-  }
-
-  // For non-manual tabs, fetch hub API Server info using a POST request
-  useEffect(() => {
-    if (activeOption !== "option4") {
-      api
-        .post<HubApiResponse>("/clusters/manual/generateCommand", {})
-        .then((response) => {
-          setFormData((prev) => ({ ...prev, hubApiServer: response.data.apiserver }));
-        })
-        .catch((err: unknown) => console.error("Error fetching hub API server:", err));
-    }
-  }, [activeOption]);
-
-  // Generate command for Manual tab using Axios
   const handleGenerateCommand = async () => {
     if (!formData.clusterName.trim()) return;
     setManualError("");
