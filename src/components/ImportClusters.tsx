@@ -2,14 +2,11 @@ import React, { useState, ChangeEvent } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogTitle,
-  DialogActions,
   Button,
   Tabs,
   Tab,
   Box,
   Alert,
-  AlertTitle,
   TextField,
   Select,
   MenuItem,
@@ -17,20 +14,10 @@ import {
   InputLabel,
   CircularProgress,
   Snackbar,
-  Checkbox,
-  Table,
-  TableContainer,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-  Paper,
 } from "@mui/material";
 import Editor from "@monaco-editor/react";
 import useTheme from "../stores/themeStore";
-import { useClusterQueries } from "../hooks/queries/useClusterQueries";
 import { api } from "../lib/api";
-import { CloudOff } from "lucide-react";
 
 // Common styling objects
 const commonInputSx = {
@@ -39,21 +26,6 @@ const commonInputSx = {
   label: { color: "inherit" },
   fieldset: { borderColor: "inherit" },
   "& .MuiInputLabel-root.Mui-focused": { color: "inherit" },
-};
-
-const formContentStyles = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 2,
-  width: "100%",
-  maxWidth: "800px",
-  mx: "auto",
-  "& .MuiFormControl-root": {
-    width: "100%",
-  },
-  "& .MuiTextField-root": {
-    width: "100%",
-  },
 };
 
 interface Props {
@@ -69,12 +41,27 @@ export interface CommandResponse {
 }
 
 const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCancel }) => {
-  const { useClusters } = useClusterQueries();
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const { data, error, isLoading } = useClusters(currentPage);
   const theme = useTheme((state) => state.theme);
   const textColor = theme === "dark" ? "white" : "black";
   const bgColor = theme === "dark" ? "#1F2937" : "background.paper";
+
+  // Define colors first, before any styling objects that use it
+  const colors = {
+    primary: "#2f86ff",
+    primaryLight: "#9ad6f9",
+    primaryDark: "#1a65cc",
+    secondary: "#67c073",
+    white: "#ffffff",
+    background: theme === "dark" ? "#0f172a" : "#ffffff",
+    paper: theme === "dark" ? "#1e293b" : "#f8fafc",
+    text: theme === "dark" ? "#f1f5f9" : "#1e293b",
+    textSecondary: theme === "dark" ? "#94a3b8" : "#64748b",
+    border: theme === "dark" ? "#334155" : "#e2e8f0",
+    success: "#67c073",
+    warning: "#ffb347",
+    error: "#ff6b6b",
+    disabled: theme === "dark" ? "#475569" : "#94a3b8",
+  };
 
   // State for non-manual tabs
   const [fileType, setFileType] = useState<"yaml">("yaml");
@@ -157,45 +144,67 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
     bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.03)" : "rgba(0, 0, 0, 0.02)",
   };
 
-  if (isLoading)
-    return (
-      <div className="w-full p-4">
-        <CircularProgress />
-        <p>Loading clusters...</p>
-      </div>
-    );
-
-  if (error)
-    return (
-      <div className="w-full p-4">
-        <Alert severity="error">
-          <AlertTitle>Error</AlertTitle>
-          {error instanceof Error ? error.message : "Failed to load clusters. Please try again later."}
-        </Alert>
-      </div>
-    );
-
-  const clusters = data?.itsData || [];
-
-  const handleNextPage = () => setCurrentPage((prev) => prev + 1);
-  const handlePreviousPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
-
-  const colors = {
-    primary: "#2f86ff",
-    primaryLight: "#9ad6f9",
-    primaryDark: "#1a65cc",
-    secondary: "#67c073",
-    white: "#ffffff",
-    background: theme === "dark" ? "#0f172a" : "#ffffff",
-    paper: theme === "dark" ? "#1e293b" : "#f8fafc",
-    text: theme === "dark" ? "#f1f5f9" : "#1e293b",
-    textSecondary: theme === "dark" ? "#94a3b8" : "#64748b",
-    border: theme === "dark" ? "#334155" : "#e2e8f0",
-    success: "#67c073",
-    warning: "#ffb347",
-    error: "#ff6b6b",
-    disabled: theme === "dark" ? "#475569" : "#94a3b8",
+  // Enhanced styling objects - now defined after colors
+  const enhancedTabContentStyles = {
+    ...tabContentStyles,
+    borderRadius: 2,
+    boxShadow: theme === "dark" 
+      ? "inset 0 1px 3px 0 rgba(0, 0, 0, 0.3)" 
+      : "inset 0 1px 3px 0 rgba(0, 0, 0, 0.06)",
+    transition: "all 0.2s ease-in-out",
+    bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.03)" : "rgba(0, 0, 0, 0.02)",
   };
+
+  const buttonStyles = {
+    textTransform: "none",
+    fontWeight: 600,
+    borderRadius: 1.5,
+    py: { xs: 1, sm: 1.2, md: 1.4 },
+    px: { xs: 2, sm: 3, md: 4 },
+    boxShadow: theme === "dark" ? "0 4px 6px -1px rgba(0, 0, 0, 0.2)" : "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+    transition: "all 0.2s ease",
+    fontSize: { xs: "0.875rem", sm: "0.9rem", md: "1rem" },
+  };
+
+  const primaryButtonStyles = {
+    ...buttonStyles,
+    bgcolor: colors.primary,
+    color: colors.white,
+    "&:hover": {
+      bgcolor: colors.primaryDark,
+      transform: "translateY(-2px)",
+      boxShadow: theme === "dark" 
+        ? "0 6px 10px -1px rgba(0, 0, 0, 0.3)" 
+        : "0 6px 10px -1px rgba(0, 0, 0, 0.15)",
+    },
+    "&:active": {
+      transform: "translateY(0)",
+    },
+    "&.Mui-disabled": {
+      bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.12)",
+      color: theme === "dark" ? "rgba(255, 255, 255, 0.3)" : "rgba(0, 0, 0, 0.26)",
+    }
+  };
+
+  const secondaryButtonStyles = {
+    ...buttonStyles,
+    bgcolor: "transparent",
+    color: textColor,
+    border: 1,
+    borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.23)" : "rgba(0, 0, 0, 0.23)",
+    "&:hover": {
+      bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)",
+      borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)",
+      transform: "translateY(-2px)",
+      boxShadow: theme === "dark" 
+        ? "0 4px 8px -2px rgba(0, 0, 0, 0.3)" 
+        : "0 4px 8px -2px rgba(0, 0, 0, 0.1)",
+    },
+    "&:active": {
+      transform: "translateY(0)",
+    }
+  };
+
 
   return (
     <>
@@ -203,8 +212,27 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
         open={snackbar.open}
         autoHideDuration={5000}
         onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
+        <Alert 
+          severity={snackbar.severity}
+          sx={{
+            borderRadius: 2,
+            boxShadow: theme === "dark" 
+              ? "0 8px 16px rgba(0, 0, 0, 0.4)" 
+              : "0 8px 16px rgba(0, 0, 0, 0.1)",
+            "& .MuiAlert-icon": {
+              fontSize: "1.5rem",
+              mr: 1.5
+            },
+            "& .MuiAlert-message": {
+              fontSize: "0.95rem",
+              fontWeight: 500
+            }
+          }}
+        >
+          {snackbar.message}
+        </Alert>
       </Snackbar>
 
       <Dialog
@@ -214,68 +242,302 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
         fullWidth
         PaperProps={{
           sx: {
-            height: "80vh",
+            height: { xs: "90vh", sm: "85vh", md: "80vh" },
             display: "flex",
             flexDirection: "column",
-            m: 2,
+            m: { xs: 0.5, sm: 1, md: 2 },
             bgcolor: bgColor,
             color: textColor,
+            borderRadius: { xs: 1, sm: 2, md: 3 },
+            overflow: "hidden",
+            boxShadow: theme === "dark" 
+              ? "0 20px 25px -5px rgba(0, 0, 0, 0.8), 0 10px 10px -5px rgba(0, 0, 0, 0.5)" 
+              : "0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1)",
+            border: theme === "dark" ? `1px solid ${colors.border}` : "none",
+            maxWidth: { sm: "98%", md: "95%", lg: "1000px" },
           },
         }}
+        TransitionProps={{
+          style: {
+            transition: "transform 0.3s ease-out, opacity 0.3s ease"
+          }
+        }}
       >
-        <DialogTitle sx={{ borderBottom: 1, borderColor: "divider", p: 2, flex: "0 0 auto" }}>
+        <Box
+          sx={{
+            borderBottom: 1,
+            borderColor: "divider",
+            p: { xs: 1, sm: 1.5, md: 2 },
+            flex: "0 0 auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: 0.5,
+            bgcolor: theme === "dark" ? "rgba(0, 0, 0, 0.2)" : "rgba(0, 0, 0, 0.02)",
+          }}
+        >
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Box sx={{ 
+              display: "flex", 
+              alignItems: "center", 
+              gap: 1,
+              color: theme === "dark" ? colors.primaryLight : colors.primary,
+            }}>
+              <Box 
+                sx={{ 
+                  width: { xs: 32, sm: 36 }, 
+                  height: { xs: 32, sm: 36 }, 
+                  borderRadius: "10px", 
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: "center",
+                  bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.1)",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                }}
+              >
+                <span role="img" aria-label="import" style={{ fontSize: "1.25rem" }}>⚓</span>
+              </Box>
+              <Box>
+                <Box sx={{ fontSize: { xs: "1rem", sm: "1.1rem" }, fontWeight: 700, color: textColor }}>
           Import Cluster
-        </DialogTitle>
-        <DialogContent sx={{ p: 0, flex: 1, overflow: "hidden" }}>
-          <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+                </Box>
+                <Box sx={{ 
+                  fontSize: "0.75rem",
+                  color: colors.textSecondary, 
+                  mt: 0.25,
+                  display: { xs: "none", sm: "block" } 
+                }}>
+                  Connect your Kubernetes cluster to the platform
+                </Box>
+              </Box>
+            </Box>
+            <Button 
+              onClick={onCancel}
+              sx={{ 
+                minWidth: 'auto', 
+                p: 0.5,
+                borderRadius: "50%",
+                color: theme === "dark" ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.5)",
+                "&:hover": {
+                  backgroundColor: theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
+                }
+              }}
+            >
+              <Box sx={{ fontSize: "1.1rem" }}>✕</Box>
+            </Button>
+          </Box>
+          
             <Tabs
               value={activeOption}
               onChange={(_event, newValue) => setActiveOption(newValue)}
+              variant="scrollable"
+              scrollButtons="auto"
               sx={{
-                borderBottom: 2,
-                borderColor: "divider",
-                bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)",
+                mt: 0.25,
+                "& .MuiTabs-flexContainer": {
+                  gap: { xs: 0.25, sm: 0.5 },
+                },
                 "& .MuiTab-root": {
-                  px: 3,
-                  py: 1.5,
-                  color: textColor,
-                  borderRight: 1,
-                  borderColor: "divider",
+                  minHeight: { xs: 36, sm: 40 },
+                  px: { xs: 1, sm: 1.5 },
+                  py: { xs: 0.5, sm: 0.75 },
+                  color: colors.textSecondary,
+                  fontSize: { xs: "0.75rem", sm: "0.8rem" },
+                  fontWeight: 500,
+                  transition: "all 0.2s ease",
+                  borderRadius: "8px",
+                  position: "relative",
+                  overflow: "hidden",
+                  "&:before": {
+                    content: '""',
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: "2px",
+                    backgroundColor: "transparent",
+                    transition: "all 0.2s ease",
+                  },
                   "&.Mui-selected": {
-                    color: "primary.main",
-                    bgcolor: theme === "dark" ? "rgba(144, 202, 249, 0.08)" : "#E3F2FD",
-                    borderBottom: 2,
-                    borderColor: "primary.main",
+                    color: theme === "dark" ? colors.white : colors.primary,
+                    backgroundColor: "transparent",
+                    fontWeight: 600,
+                    "&:before": {
+                      backgroundColor: colors.primary,
+                      height: "3px",
+                      boxShadow: theme === "dark" 
+                        ? `0 2px 8px ${colors.primary}80` 
+                        : `0 2px 8px ${colors.primary}40`,
+                    },
+                    "& $iconContainer": {
+                      backgroundColor: `${colors.primary}20`,
+                      color: colors.primary,
+                    }
                   },
                   "&:hover": {
-                    bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.08)",
+                    backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.04)",
+                    "&:before": {
+                      backgroundColor: `${colors.primary}30`,
+                      height: "2px",
+                    },
+                    "& $iconContainer": {
+                      backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.08)",
+                      color: theme === "dark" ? colors.primaryLight : colors.primary,
+                    },
                   },
                 },
                 "& .MuiTabs-indicator": {
-                  height: 3,
-                  borderTopLeftRadius: 3,
-                  borderTopRightRadius: 3,
+                  display: "none",
                 },
               }}
             >
-              <Tab label="YAML paste" value="option1" />
-              <Tab label="Kubeconfig" value="option2" />
-              <Tab label="API/URL" value="option3" />
-              <Tab label="Manual" value="option4" />
+            <Tab 
+              label={
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <Box 
+                    className="iconContainer"
+                    sx={{ 
+                      width: 24, 
+                      height: 24, 
+                      borderRadius: "6px", 
+                      display: "flex", 
+                      alignItems: "center", 
+                      justifyContent: "center",
+                      transition: "all 0.2s ease",
+                    }}
+                  >
+                    <span role="img" aria-label="yaml" style={{ fontSize: "0.9rem" }}>📄</span>
+                  </Box>
+                  YAML
+                </Box>
+              } 
+              value="option1" 
+            />
+            <Tab 
+              label={
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <Box 
+                    className="iconContainer"
+                    sx={{ 
+                      width: 24, 
+                      height: 24, 
+                      borderRadius: "6px", 
+                      display: "flex", 
+                      alignItems: "center", 
+                      justifyContent: "center",
+                      transition: "all 0.2s ease",
+                    }}
+                  >
+                    <span role="img" aria-label="kubeconfig" style={{ fontSize: "0.9rem" }}>📁</span>
+                  </Box>
+                  Kubeconfig
+                </Box>
+              } 
+              value="option2" 
+            />
+            <Tab 
+              label={
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <Box 
+                    className="iconContainer"
+                    sx={{ 
+                      width: 24, 
+                      height: 24, 
+                      borderRadius: "6px", 
+                      display: "flex", 
+                      alignItems: "center", 
+                      justifyContent: "center",
+                      transition: "all 0.2s ease",
+                    }}
+                  >
+                    <span role="img" aria-label="api" style={{ fontSize: "0.9rem" }}>🔗</span>
+                  </Box>
+                  API/URL
+                </Box>
+              } 
+              value="option3" 
+            />
+            <Tab 
+              label={
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <Box 
+                    className="iconContainer"
+                    sx={{ 
+                      width: 24, 
+                      height: 24, 
+                      borderRadius: "6px", 
+                      display: "flex", 
+                      alignItems: "center", 
+                      justifyContent: "center",
+                      transition: "all 0.2s ease",
+                    }}
+                  >
+                    <span role="img" aria-label="manual" style={{ fontSize: "0.9rem" }}>⚙️</span>
+                  </Box>
+                  Manual
+                </Box>
+              } 
+              value="option4" 
+            />
             </Tabs>
+        </Box>
 
-            <Box sx={{ flex: 1, overflow: "auto", p: 3 }}>
+        <DialogContent sx={{ p: 0, flex: 1, overflow: "hidden" }}>
+          <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+            <Box sx={{ flex: 1, overflow: "auto", p: { xs: 1, sm: 1.5 } }}>
+              {/* YAML paste option */}
               {activeOption === "option1" && (
-                <Box sx={tabContentStyles}>
-                  <Alert severity="info">
-                    <AlertTitle>Info</AlertTitle>
-                    Paste a YAML file.
-                  </Alert>
+                <Box sx={{
+                  ...enhancedTabContentStyles,
+                  border: "none",
+                  boxShadow: "none",
+                  bgcolor: "transparent",
+                  p: 0,
+                }}>
+                  <Box sx={{
+                    p: { xs: 1.5, sm: 2, md: 2.5 },
+                    borderRadius: { xs: 1.5, sm: 2 },
+                    backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.8)",
+                    border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"}`,
+                    boxShadow: theme === "dark" 
+                      ? "0 4px 12px rgba(0, 0, 0, 0.3)" 
+                      : "0 4px 12px rgba(0, 0, 0, 0.05)",
+                    mb: 1.5,
+                    width: "100%",
+                    maxWidth: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    height: "calc(100% - 8px)",
+                  }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+                      <Box 
+                        sx={{ 
+                          width: 36, 
+                          height: 36, 
+                          borderRadius: "8px", 
+                          display: "flex", 
+                          alignItems: "center", 
+                          justifyContent: "center",
+                          bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.1)",
+                          color: theme === "dark" ? colors.primaryLight : colors.primary,
+                        }}
+                      >
+                        <span role="img" aria-label="info" style={{ fontSize: "1.25rem" }}>📄</span>
+                      </Box>
+                      <Box>
+                        <Box sx={{ fontWeight: 600, fontSize: "1rem", color: textColor }}>
+                          Paste your Kubernetes YAML configuration
+                        </Box>
+                        <Box sx={{ color: colors.textSecondary, fontSize: "0.875rem", mt: 0.5 }}>
+                          Import your cluster by pasting a valid Kubernetes YAML configuration
+                        </Box>
+                      </Box>
+                    </Box>
+
                   <FormControl
                     sx={{
-                      flex: "0 0 auto",
+                        mb: 3,
                       "& .MuiOutlinedInput-root": {
-                        borderRadius: 1,
+                          borderRadius: 1.5,
                         "& fieldset": { borderWidth: 1, borderColor: "divider" },
                         "&:hover fieldset": { borderColor: "primary.main" },
                       },
@@ -289,12 +551,27 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                         setEditorContent("");
                       }}
                       label="File Type"
-                      sx={{ bgcolor: bgColor, color: textColor }}
+                        sx={{ 
+                          bgcolor: theme === "dark" ? "rgba(0, 0, 0, 0.2)" : bgColor, 
+                          color: textColor,
+                          minWidth: 150,
+                        }}
                     >
                       <MenuItem value="yaml">YAML</MenuItem>
                     </Select>
                   </FormControl>
-                  <Box sx={{ flex: 1, minHeight: 0, border: 1, borderColor: "divider", borderRadius: 1, overflow: "hidden" }}>
+
+                    <Box 
+                      sx={{ 
+                        height: { xs: "calc(100% - 160px)", sm: "calc(100% - 170px)", md: "calc(100% - 180px)" },
+                        border: 1, 
+                        borderColor: "divider", 
+                        borderRadius: 1.5,
+                        overflow: "hidden",
+                        boxShadow: "inset 0 1px 3px rgba(0,0,0,0.05)",
+                        mb: 1.5,
+                      }}
+                    >
                     <Editor
                       height="100%"
                       language={fileType}
@@ -306,47 +583,129 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                         lineNumbers: "on",
                         scrollBeyondLastLine: false,
                         automaticLayout: true,
+                          padding: { top: 16, bottom: 16 },
+                          fontFamily: "'Fira Code', monospace",
                       }}
                       onChange={(value) => setEditorContent(value || "")}
                     />
                   </Box>
-                  <DialogActions sx={{ pt: 2, borderTop: 1, borderColor: "divider" }}>
-                    <Button onClick={onCancel}>Cancel</Button>
+
+                    <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+                      <Button 
+                        onClick={onCancel}
+                        variant="outlined"
+                        sx={secondaryButtonStyles}
+                      >
+                        Cancel
+                      </Button>
                     <Button
                       variant="contained"
                       disabled={!editorContent}
-                      sx={{
-                        "&:disabled": { cursor: "not-allowed", pointerEvents: "all !important" },
-                        boxShadow: 2,
-                      }}
+                        sx={primaryButtonStyles}
                     >
-                      Upload
+                        Import Cluster
                     </Button>
-                  </DialogActions>
+                    </Box>
+                  </Box>
                 </Box>
               )}
 
+              {/* Kubeconfig option */}
               {activeOption === "option2" && (
-                <Box sx={tabContentStyles}>
-                  <Alert severity="info">
-                    <AlertTitle>Info</AlertTitle>
-                    Select a kubeconfig file to import cluster.
-                  </Alert>
+                <Box sx={{
+                  ...enhancedTabContentStyles,
+                  border: "none",
+                  boxShadow: "none",
+                  bgcolor: "transparent",
+                  p: 0,
+                }}>
+                  <Box sx={{
+                    p: { xs: 1.5, sm: 2, md: 2.5 },
+                    borderRadius: { xs: 1.5, sm: 2 },
+                    backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.8)",
+                    border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"}`,
+                    boxShadow: theme === "dark" 
+                      ? "0 4px 12px rgba(0, 0, 0, 0.3)" 
+                      : "0 4px 12px rgba(0, 0, 0, 0.05)",
+                    mb: 1.5,
+                    width: "100%",
+                    maxWidth: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    height: "calc(100% - 8px)",
+                  }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
                   <Box
                     sx={{
-                      border: 2,
+                          width: 36, 
+                          height: 36, 
+                          borderRadius: "8px", 
+                          display: "flex", 
+                          alignItems: "center", 
+                          justifyContent: "center",
+                          bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.1)",
+                          color: theme === "dark" ? colors.primaryLight : colors.primary,
+                        }}
+                      >
+                        <span role="img" aria-label="info" style={{ fontSize: "1.25rem" }}>📁</span>
+                      </Box>
+                      <Box>
+                        <Box sx={{ fontWeight: 600, fontSize: "1rem", color: textColor }}>
+                          Upload Kubeconfig File
+                        </Box>
+                        <Box sx={{ color: colors.textSecondary, fontSize: "0.875rem", mt: 0.5 }}>
+                          Import your cluster by uploading a kubeconfig file
+                        </Box>
+                      </Box>
+                    </Box>
+
+                    <Box
+                      sx={{
+                        border: 1,
                       borderStyle: "dashed",
                       borderColor: "divider",
-                      borderRadius: 2,
-                      p: 3,
+                        borderRadius: { xs: 1.5, sm: 2 },
+                        p: { xs: 1.5, sm: 2 },
                       textAlign: "center",
-                      transition: "border-color 0.2s",
-                      "&:hover": { borderColor: "primary.main" },
-                    }}
-                  >
-                    <Box sx={{ borderRadius: 1, p: 2, textAlign: "center" }}>
-                      <Button component="label" sx={{ boxShadow: 2 }}>
-                        Select Kubeconfig file
+                        transition: "all 0.3s ease",
+                        backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.2)" : "rgba(0, 0, 0, 0.01)",
+                        "&:hover": { 
+                          borderColor: "primary.main",
+                          backgroundColor: theme === "dark" ? "rgba(47, 134, 255, 0.05)" : "rgba(47, 134, 255, 0.02)",
+                        },
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        height: "calc(100% - 160px)",
+                        mb: 1.5,
+                      }}
+                    >
+                      <Box 
+                        sx={{ 
+                          mb: 2,
+                          p: 1.5,
+                          borderRadius: "50%",
+                          backgroundColor: theme === "dark" ? "rgba(47, 134, 255, 0.1)" : "rgba(47, 134, 255, 0.05)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <span role="img" aria-label="upload" style={{ fontSize: "1.5rem" }}>📤</span>
+                      </Box>
+                      <Box sx={{ mb: 1.5, fontWeight: 500, fontSize: "0.9rem" }}>
+                        Drag and drop your kubeconfig file here
+                      </Box>
+                      <Box sx={{ color: colors.textSecondary, mb: 1.5, fontSize: "0.8rem" }}>
+                        - or -
+                      </Box>
+                      <Button 
+                        component="label" 
+                        variant="contained"
+                        sx={primaryButtonStyles}
+                      >
+                        Browse Files
                         <input
                           type="file"
                           hidden
@@ -358,122 +717,776 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                           }}
                         />
                       </Button>
-                    </Box>
                     {selectedFile && (
-                      <Box sx={{ mt: 2 }}>
-                        Selected file: <strong>{selectedFile.name}</strong>
+                        <Box 
+                          sx={{ 
+                            mt: 3, 
+                            p: 2, 
+                            borderRadius: 2, 
+                            backgroundColor: theme === "dark" ? "rgba(47, 134, 255, 0.1)" : "rgba(47, 134, 255, 0.05)",
+                            border: `1px solid ${theme === "dark" ? "rgba(47, 134, 255, 0.3)" : "rgba(47, 134, 255, 0.2)"}`,
+                            display: "flex",
+                            alignItems: "flex-start",
+                            gap: 1.5,
+                            animation: "fadeIn 0.3s ease",
+                            "@keyframes fadeIn": {
+                              "0%": { opacity: 0, transform: "translateY(10px)" },
+                              "100%": { opacity: 1, transform: "translateY(0)" }
+                            }
+                          }}
+                        >
+                          <span role="img" aria-label="file" style={{ fontSize: "1.25rem" }}>📄</span>
+                          <Box>
+                            <Box sx={{ fontWeight: 600 }}>{selectedFile.name}</Box>
+                            <Box sx={{ fontSize: "0.75rem", color: colors.textSecondary }}>
+                              {(selectedFile.size / 1024).toFixed(1)} KB
+                            </Box>
+                          </Box>
                       </Box>
                     )}
                   </Box>
-                  <DialogActions>
-                    <Button onClick={handleCancel}>Cancel</Button>
+
+                    <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+                      <Button 
+                        onClick={handleCancel}
+                        variant="outlined"
+                        sx={secondaryButtonStyles}
+                      >
+                        Cancel
+                      </Button>
                     <Button
                       variant="contained"
                       onClick={handleFileUpload}
                       disabled={!selectedFile}
-                      sx={{
-                        "&:disabled": { cursor: "not-allowed", pointerEvents: "all !important" },
-                        boxShadow: 2,
-                      }}
+                        sx={primaryButtonStyles}
                     >
-                      Upload & Import
+                        Import Cluster
                     </Button>
-                  </DialogActions>
+                    </Box>
+                  </Box>
                 </Box>
               )}
 
+              {/* API/URL option */}
               {activeOption === "option3" && (
-                <Box sx={tabContentStyles}>
-                  <Alert severity="info">
-                    <AlertTitle>Info</AlertTitle>
-                    Enter API/URL to import cluster.
-                  </Alert>
+                <Box sx={{
+                  ...enhancedTabContentStyles,
+                  border: "none",
+                  boxShadow: "none",
+                  bgcolor: "transparent",
+                  p: 0,
+                }}>
+                  <Box sx={{
+                    p: { xs: 1.5, sm: 2, md: 2.5 },
+                    borderRadius: { xs: 1.5, sm: 2 },
+                    backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.8)",
+                    border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"}`,
+                    boxShadow: theme === "dark" 
+                      ? "0 4px 12px rgba(0, 0, 0, 0.3)" 
+                      : "0 4px 12px rgba(0, 0, 0, 0.05)",
+                    mb: 1.5,
+                    width: "100%",
+                    maxWidth: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    height: "calc(100% - 8px)",
+                  }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+                      <Box 
+                        sx={{ 
+                          width: 36, 
+                          height: 36, 
+                          borderRadius: "8px", 
+                          display: "flex", 
+                          alignItems: "center", 
+                          justifyContent: "center",
+                          bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.1)",
+                          color: theme === "dark" ? colors.primaryLight : colors.primary,
+                        }}
+                      >
+                        <span role="img" aria-label="info" style={{ fontSize: "1.25rem" }}>🔗</span>
+                      </Box>
+                      <Box>
+                        <Box sx={{ fontWeight: 600, fontSize: "1rem", color: textColor }}>
+                          Connect via API/URL
+                        </Box>
+                        <Box sx={{ color: colors.textSecondary, fontSize: "0.875rem", mt: 0.5 }}>
+                          Import your cluster by providing the API endpoint and authentication details
+                        </Box>
+                      </Box>
+                    </Box>
+
+                    <Box sx={{ mb: 3 }}>
                   <TextField
                     fullWidth
-                    label="API/URL"
+                        label="API/URL Endpoint"
+                        placeholder="https://kubernetes.example.com:6443"
                     value={formData.clusterName}
                     onChange={(e) => setFormData({ ...formData, clusterName: e.target.value })}
-                    sx={commonInputSx}
+                    InputProps={{
+                      sx: {
+                        borderRadius: 1.5,
+                        backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.02)",
+                        color: theme === "dark" ? "#ffffff" : "inherit",
+                      },
+                      startAdornment: (
+                        <Box sx={{ color: colors.textSecondary, mr: 1 }}>🔗</Box>
+                      ),
+                    }}
+                    sx={{
+                      ...commonInputSx,
+                      "& .MuiOutlinedInput-root": {
+                        color: theme === "dark" ? "#ffffff" : "inherit",
+                        "&:hover .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "primary.main",
+                          borderWidth: "1px",
+                        },
+                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "primary.main",
+                          borderWidth: "2px",
+                        },
+                      },
+                      "& .MuiOutlinedInput-input": {
+                        color: theme === "dark" ? "#ffffff" : "inherit",
+                      },
+                      "& .MuiInputLabel-root": {
+                        color: theme === "dark" ? "rgba(255, 255, 255, 0.7)" : "inherit",
+                      },
+                      "& .MuiInputLabel-root.Mui-focused": {
+                        color: theme === "dark" ? colors.primaryLight : colors.primary,
+                      },
+                    }}
                   />
-                  <DialogActions>
-                    <Button onClick={handleCancel} sx={{ color: textColor }}>
+                  <TextField
+                    fullWidth
+                    label="Authentication Token (Optional)"
+                    placeholder="Enter authentication token if required"
+                    type="password"
+                    value={formData.token}
+                    onChange={(e) => setFormData({ ...formData, token: e.target.value })}
+                    InputProps={{
+                      sx: {
+                        borderRadius: 1.5,
+                        backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.02)",
+                        color: theme === "dark" ? "#ffffff" : "inherit",
+                      },
+                      startAdornment: (
+                        <Box sx={{ color: colors.textSecondary, mr: 1 }}>🔒</Box>
+                      ),
+                    }}
+                    sx={{
+                      ...commonInputSx,
+                      mb: 0,
+                      "& .MuiOutlinedInput-root": {
+                        color: theme === "dark" ? "#ffffff" : "inherit",
+                        "&:hover .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "primary.main",
+                          borderWidth: "1px",
+                        },
+                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "primary.main",
+                          borderWidth: "2px",
+                        },
+                      },
+                      "& .MuiOutlinedInput-input": {
+                        color: theme === "dark" ? "#ffffff" : "inherit",
+                      },
+                      "& .MuiInputLabel-root": {
+                        color: theme === "dark" ? "rgba(255, 255, 255, 0.7)" : "inherit",
+                      },
+                      "& .MuiInputLabel-root.Mui-focused": {
+                        color: theme === "dark" ? colors.primaryLight : colors.primary,
+                      },
+                    }}
+                  />
+                </Box>
+
+                    <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+                      <Button 
+                        onClick={handleCancel} 
+                        variant="outlined"
+                        sx={secondaryButtonStyles}
+                      >
                       Cancel
                     </Button>
-                    <Button variant="contained" sx={{ boxShadow: 2 }}>
-                      Import
+                      <Button 
+                        variant="contained" 
+                        disabled={!formData.clusterName.trim()}
+                        sx={primaryButtonStyles}
+                      >
+                        Connect & Import
                     </Button>
-                  </DialogActions>
+                    </Box>
+                  </Box>
                 </Box>
               )}
 
+              {/* Manual option - Enhanced */}
               {activeOption === "option4" && (
-                <Box sx={tabContentStyles}>
-                  <Alert severity="info">
-                    <AlertTitle>Info</AlertTitle>
-                    Enter the cluster name to generate the onboarding command.
-                  </Alert>
-                  <Box sx={formContentStyles}>
+                <Box sx={{
+                  ...enhancedTabContentStyles,
+                  border: "none",
+                  boxShadow: "none",
+                  bgcolor: "transparent",
+                  p: 0,
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                }}>
+                  <Box sx={{
+                    p: { xs: 1.5, sm: 2, md: 2.5 },
+                    borderRadius: { xs: 1.5, sm: 2 },
+                    backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.8)",
+                    border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"}`,
+                    boxShadow: theme === "dark" 
+                      ? "0 4px 12px rgba(0, 0, 0, 0.3)" 
+                      : "0 4px 12px rgba(0, 0, 0, 0.05)",
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                  }}>
+                    {/* Header with improved description */}
+                    <Box sx={{ 
+                      display: "flex", 
+                      alignItems: "flex-start", 
+                      gap: 1.5, 
+                      mb: 2,
+                      p: 1.5,
+                      borderRadius: 1.5,
+                      bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.08)" : "rgba(47, 134, 255, 0.04)",
+                    }}>
+                      <Box 
+                        sx={{ 
+                          width: 32, 
+                          height: 32, 
+                          borderRadius: "8px", 
+                          display: "flex", 
+                          alignItems: "center", 
+                          justifyContent: "center",
+                          bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.1)",
+                          color: theme === "dark" ? colors.primaryLight : colors.primary,
+                          flexShrink: 0,
+                          mt: 0.5,
+                        }}
+                      >
+                        <span role="img" aria-label="info" style={{ fontSize: "1rem" }}>⚙️</span>
+                      </Box>
+                      <Box>
+                        <Box sx={{ fontWeight: 600, fontSize: "0.95rem", color: textColor, mb: 0.5 }}>
+                          Manual Cluster Setup
+                        </Box>
+                        <Box sx={{ color: colors.textSecondary, fontSize: "0.8rem", lineHeight: 1.4 }}>
+                          This is the simplest way to connect your Kubernetes cluster. Enter a name below, generate a command, and run it on your cluster to establish the connection.
+                        </Box>
+                      </Box>
+                    </Box>
+
+                    {!manualCommand ? (
+                      <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                        {/* Input section with improved styling */}
+                        <Box sx={{ 
+                          backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.01)",
+                          borderRadius: 1.5,
+                          p: 2,
+                          mb: 2,
+                          border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
+                        }}>
+                          <Box sx={{ mb: 1, fontWeight: 500, fontSize: "0.85rem", color: textColor }}>
+                            Name your cluster
+                          </Box>
                     <TextField
-                      label="Cluster Name"
                       variant="outlined"
                       name="clusterName"
                       value={formData.clusterName}
                       onChange={handleChange}
-                      sx={commonInputSx}
+                            placeholder="e.g., production-cluster, dev-k8s"
+                            size="small"
+                            InputProps={{
+                              sx: {
+                                borderRadius: 1.5,
+                                backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(255, 255, 255, 0.8)",
+                                fontSize: "0.85rem",
+                                height: "40px",
+                                color: theme === "dark" ? "#ffffff" : "inherit",
+                              },
+                              startAdornment: (
+                                <Box sx={{ color: colors.textSecondary, mr: 1, display: "flex", alignItems: "center" }}>
+                                  <span role="img" aria-label="cluster" style={{ fontSize: "0.9rem" }}>🔶</span>
+                                </Box>
+                              ),
+                            }}
+                            sx={{
+                              ...commonInputSx,
+                              mb: 0,
+                              "& .MuiOutlinedInput-root": {
+                                color: theme === "dark" ? "#ffffff" : "inherit",
+                                "&:hover .MuiOutlinedInput-notchedOutline": {
+                                  borderColor: colors.primary,
+                                  borderWidth: "1px",
+                                },
+                                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                                  borderColor: colors.primary,
+                                  borderWidth: "2px",
+                                },
+                              },
+                              "& .MuiOutlinedInput-input": {
+                                color: theme === "dark" ? "#ffffff" : "inherit",
+                              },
+                              "& .MuiInputLabel-root": {
+                                color: theme === "dark" ? "rgba(255, 255, 255, 0.7)" : "inherit",
+                              },
+                              "& .MuiInputLabel-root.Mui-focused": {
+                                color: theme === "dark" ? colors.primaryLight : colors.primary,
+                              },
+                            }}
                       fullWidth
                     />
-                    {!manualCommand ? (
-                      <Box display="flex" flexDirection="column" gap={2}>
+                          <Box sx={{ 
+                            mt: 1, 
+                            fontSize: "0.75rem", 
+                            color: colors.textSecondary,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5
+                          }}>
+                            <span role="img" aria-label="tip" style={{ fontSize: "0.8rem" }}>💡</span>
+                            Use a descriptive name that helps you identify this cluster
+                          </Box>
+                        </Box>
+
+                        {/* Error message with improved styling */}
                         {manualError && (
-                          <Alert severity="error">
-                            <AlertTitle>Error</AlertTitle>
+                          <Alert 
+                            severity="error" 
+                            icon={<span role="img" aria-label="error" style={{ fontSize: "1rem" }}>❌</span>}
+                            sx={{ 
+                              mb: 2, 
+                              borderRadius: 1.5,
+                              py: 1,
+                              px: 1.5,
+                              animation: "fadeIn 0.3s ease-in-out",
+                              "@keyframes fadeIn": {
+                                "0%": { opacity: 0, transform: "translateY(-5px)" },
+                                "100%": { opacity: 1, transform: "translateY(0)" }
+                              },
+                              boxShadow: "0 2px 6px rgba(255,107,107,0.15)",
+                              "& .MuiAlert-message": {
+                                fontSize: "0.8rem",
+                              }
+                            }}
+                          >
+                            <Box sx={{ fontWeight: 600 }}>Error</Box>
                             {manualError}
                           </Alert>
                         )}
+
+                        {/* Visual guide with steps */}
+                        <Box sx={{ 
+                          flex: 1,
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 1.5,
+                          mt: 1,
+                        }}>
+                          <Box sx={{ 
+                            display: "flex", 
+                            alignItems: "flex-start", 
+                            gap: 1.5,
+                            p: 1.5,
+                            borderRadius: 1.5,
+                            bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.01)",
+                            border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
+                          }}>
+                            <Box sx={{ 
+                              width: 24, 
+                              height: 24, 
+                              borderRadius: "50%", 
+                              display: "flex", 
+                              alignItems: "center", 
+                              justifyContent: "center",
+                              bgcolor: theme === "dark" ? "rgba(103, 192, 115, 0.15)" : "rgba(103, 192, 115, 0.1)",
+                              color: colors.success,
+                              flexShrink: 0,
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
+                            }}>
+                              1
+                            </Box>
+                            <Box sx={{ fontSize: "0.8rem", color: colors.textSecondary }}>
+                              Enter a unique name for your cluster above
+                            </Box>
+                          </Box>
+                          
+                          <Box sx={{ 
+                            display: "flex", 
+                            alignItems: "flex-start", 
+                            gap: 1.5,
+                            p: 1.5,
+                            borderRadius: 1.5,
+                            bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.01)",
+                            border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
+                          }}>
+                            <Box sx={{ 
+                              width: 24, 
+                              height: 24, 
+                              borderRadius: "50%", 
+                              display: "flex", 
+                              alignItems: "center", 
+                              justifyContent: "center",
+                              bgcolor: theme === "dark" ? "rgba(103, 192, 115, 0.15)" : "rgba(103, 192, 115, 0.1)",
+                              color: colors.success,
+                              flexShrink: 0,
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
+                            }}>
+                              2
+                            </Box>
+                            <Box sx={{ fontSize: "0.8rem", color: colors.textSecondary }}>
+                              Click "Generate Command" to create a connection command
+                            </Box>
+                          </Box>
+                          
+                          <Box sx={{ 
+                            display: "flex", 
+                            alignItems: "flex-start", 
+                            gap: 1.5,
+                            p: 1.5,
+                            borderRadius: 1.5,
+                            bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.01)",
+                            border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
+                          }}>
+                            <Box sx={{ 
+                              width: 24, 
+                              height: 24, 
+                              borderRadius: "50%", 
+                              display: "flex", 
+                              alignItems: "center", 
+                              justifyContent: "center",
+                              bgcolor: theme === "dark" ? "rgba(103, 192, 115, 0.15)" : "rgba(103, 192, 115, 0.1)",
+                              color: colors.success,
+                              flexShrink: 0,
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
+                            }}>
+                              3
+                            </Box>
+                            <Box sx={{ fontSize: "0.8rem", color: colors.textSecondary }}>
+                              Run the generated command on your cluster to establish the connection
+                            </Box>
+                          </Box>
+                        </Box>
+
+                        {/* Button section with improved styling */}
+                        <Box sx={{ 
+                          display: "flex", 
+                          justifyContent: "flex-end", 
+                          gap: { xs: 0.75, sm: 1 }, 
+                          mt: "auto",
+                          pt: 2,
+                          borderTop: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
+                        }}>
+                          <Button 
+                            onClick={handleCancel}
+                            variant="outlined"
+                            size="small"
+                            sx={{
+                              ...secondaryButtonStyles,
+                              py: { xs: 0.5, sm: 0.75 },
+                              px: { xs: 1, sm: 1.5 },
+                              fontSize: { xs: "0.75rem", sm: "0.8rem" },
+                              minWidth: { xs: "60px", sm: "70px" },
+                            }}
+                          >
+                            Cancel
+                          </Button>
                         <Button
                           variant="contained"
+                            size="small"
                           onClick={handleGenerateCommand}
                           disabled={!formData.clusterName.trim() || manualLoading}
-                          sx={{ minWidth: { xs: "100%", sm: 150 } }}
-                        >
-                          {manualLoading ? (
-                            <CircularProgress size={24} color="inherit" />
-                          ) : (
-                            "Generate Command"
-                          )}
+                            sx={{
+                              ...primaryButtonStyles,
+                              py: { xs: 0.5, sm: 0.75 },
+                              px: { xs: 1.5, sm: 2 },
+                              fontSize: { xs: "0.75rem", sm: "0.8rem" },
+                            }}
+                            startIcon={
+                              manualLoading ? (
+                                <CircularProgress size={14} color="inherit" />
+                              ) : (
+                                <span role="img" aria-label="generate" style={{ fontSize: "0.9rem" }}>⚡</span>
+                              )
+                            }
+                          >
+                            {manualLoading ? "Generating..." : "Generate Command"}
                         </Button>
+                        </Box>
                       </Box>
                     ) : (
-                      <Box display="flex" flexDirection="column" gap={2}>
-                        <Alert severity="success">
-                          <AlertTitle>Success</AlertTitle>
-                          Command generated for cluster: <strong>{manualCommand.clusterName}</strong>
+                      <Box 
+                        sx={{
+                          flex: 1,
+                          display: "flex",
+                          flexDirection: "column",
+                          animation: "fadeIn 0.4s ease-in-out",
+                          "@keyframes fadeIn": {
+                            "0%": { opacity: 0 },
+                            "100%": { opacity: 1 }
+                          }
+                        }}
+                      >
+                        {/* Success message with improved styling */}
+                        <Alert 
+                          severity="success" 
+                          icon={<span role="img" aria-label="success" style={{ fontSize: "1rem" }}>✅</span>}
+                          sx={{ 
+                            mb: 2, 
+                            borderRadius: 1.5,
+                            py: 1,
+                            px: 1.5,
+                            boxShadow: "0 2px 6px rgba(103,192,115,0.15)",
+                            "& .MuiAlert-message": {
+                              fontSize: "0.8rem",
+                            }
+                          }}
+                        >
+                          <Box sx={{ fontWeight: 600 }}>Command Generated Successfully</Box>
+                          <Box sx={{ mt: 0.5 }}>
+                            Run this command on your cluster <strong>{manualCommand.clusterName}</strong> to connect it to the platform.
+                          </Box>
                         </Alert>
+
+                        {/* Command display with improved styling and text wrapping */}
+                        <Box sx={{ position: "relative", mb: 2 }}>
                         <Box
                           component="pre"
-                          p={2}
                           sx={{
-                            backgroundColor: "#f5f5f5",
-                            borderRadius: 1,
+                              flex: "1 1 auto",
+                              p: { xs: 1.5, sm: 2 },
+                              backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.4)" : "#f5f5f5",
+                              color: theme === "dark" ? "#e6e6e6" : "#333",
+                              borderRadius: 1.5,
                             overflowX: "auto",
+                              border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"}`,
+                              fontSize: { xs: "0.75rem", sm: "0.8rem" },
+                              fontFamily: "'Fira Code', monospace",
+                              position: "relative",
+                              boxShadow: "inset 0 1px 3px rgba(0,0,0,0.1)",
+                              lineHeight: 1.4,
+                              minHeight: "120px",
+                              maxHeight: "200px",
+                              whiteSpace: "pre-wrap",
+                              wordWrap: "break-word",
+                              wordBreak: "break-all",
+                              maxWidth: "100%",
+                              "&::-webkit-scrollbar": {
+                                width: "4px",
+                                height: "4px",
+                              },
+                              "&::-webkit-scrollbar-thumb": {
+                                backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.2)",
+                                borderRadius: "2px",
+                              },
+                              "&::-webkit-scrollbar-track": {
+                                backgroundColor: "transparent",
+                              },
+                              "&::before": {
+                                content: '"$"',
+                                color: theme === "dark" ? "#9ad6f9" : "#1a65cc",
+                                marginRight: "6px",
+                                fontWeight: "bold",
+                                position: "absolute",
+                                left: { xs: "0.75rem", sm: "1rem" },
+                                top: { xs: "0.75rem", sm: "1rem" },
+                              },
+                              paddingLeft: { xs: "1.5rem", sm: "2rem" },
                           }}
                         >
                           {manualCommand.command}
                         </Box>
+                          
+                          {/* Copy button overlay */}
                         <Button
                           variant="contained"
-                          onClick={() => navigator.clipboard.writeText(manualCommand.command)}
-                          sx={{ minWidth: { xs: "100%", sm: 150 } }}
-                        >
-                          Copy Command
+                            size="small"
+                            onClick={() => {
+                              navigator.clipboard.writeText(manualCommand.command);
+                              setSnackbar({
+                                open: true,
+                                message: "Command copied to clipboard!",
+                                severity: "success"
+                              });
+                            }}
+                            sx={{
+                              position: "absolute",
+                              top: 8,
+                              right: 8,
+                              minWidth: "auto",
+                              p: 0.5,
+                              borderRadius: 1,
+                              bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
+                              color: theme === "dark" ? colors.primaryLight : colors.primary,
+                              boxShadow: "none",
+                              "&:hover": {
+                                bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.3)" : "rgba(47, 134, 255, 0.2)",
+                                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                              }
+                            }}
+                          >
+                            <span role="img" aria-label="copy" style={{ fontSize: "0.9rem" }}>📋</span>
                         </Button>
                       </Box>
-                    )}
+
+                        {/* Instructions section with improved styling */}
+                        <Box sx={{ flex: 1 }}>
+                          <Box sx={{ fontWeight: 600, fontSize: "0.85rem", mb: 1.5, color: textColor }}>
+                            Next steps:
                   </Box>
-                  <Box sx={{ mt: "auto", pt: 2, borderTop: 1, borderColor: "divider" }}>
-                    <DialogActions>
-                      <Button onClick={handleCancel}>Cancel</Button>
-                    </DialogActions>
+                          
+                          <Box sx={{ 
+                            display: "flex", 
+                            flexDirection: "column",
+                            gap: 1.5,
+                          }}>
+                            <Box sx={{ 
+                              display: "flex", 
+                              alignItems: "flex-start", 
+                              gap: 1.5,
+                              p: 1.5,
+                              borderRadius: 1.5,
+                              bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.01)",
+                              border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
+                            }}>
+                              <Box sx={{ 
+                                width: 24, 
+                                height: 24, 
+                                borderRadius: "50%", 
+                                display: "flex", 
+                                alignItems: "center", 
+                                justifyContent: "center",
+                                bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.1)",
+                                color: theme === "dark" ? colors.primaryLight : colors.primary,
+                                flexShrink: 0,
+                                fontSize: "0.75rem",
+                                fontWeight: 600,
+                              }}>
+                                1
+                  </Box>
+                              <Box sx={{ fontSize: "0.8rem", color: colors.textSecondary }}>
+                                Copy the command above and run it on your Kubernetes cluster
+                </Box>
+            </Box>
+                            
+                            <Box sx={{ 
+                              display: "flex", 
+                              alignItems: "flex-start", 
+                              gap: 1.5,
+                              p: 1.5,
+                              borderRadius: 1.5,
+                              bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.01)",
+                              border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
+                            }}>
+                              <Box sx={{ 
+                                width: 24, 
+                                height: 24, 
+                                borderRadius: "50%", 
+                                display: "flex", 
+                                alignItems: "center", 
+                                justifyContent: "center",
+                                bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.1)",
+                                color: theme === "dark" ? colors.primaryLight : colors.primary,
+                                flexShrink: 0,
+                                fontSize: "0.75rem",
+                                fontWeight: 600,
+                              }}>
+                                2
+          </Box>
+                              <Box sx={{ fontSize: "0.8rem", color: colors.textSecondary }}>
+                                Wait for the connection to be established (this may take a few moments)
+                              </Box>
+                            </Box>
+                            
+                            <Box sx={{ 
+                              display: "flex", 
+                              alignItems: "flex-start", 
+                              gap: 1.5,
+                              p: 1.5,
+                              borderRadius: 1.5,
+                              bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.01)",
+                              border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
+                            }}>
+                              <Box sx={{ 
+                                width: 24, 
+                                height: 24, 
+                                borderRadius: "50%", 
+                                display: "flex", 
+                                alignItems: "center", 
+                                justifyContent: "center",
+                                bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.1)",
+                                color: theme === "dark" ? colors.primaryLight : colors.primary,
+                                flexShrink: 0,
+                                fontSize: "0.75rem",
+                  fontWeight: 600,
+                              }}>
+                                3
+                              </Box>
+                              <Box sx={{ fontSize: "0.8rem", color: colors.textSecondary }}>
+                                Your cluster will appear in the clusters list when connected
+                              </Box>
+                            </Box>
+                          </Box>
+                        </Box>
+
+                        {/* Button section with improved styling */}
+                        <Box sx={{ 
+                          display: "flex", 
+                          justifyContent: "space-between", 
+                          gap: { xs: 0.75, sm: 1 }, 
+                          mt: "auto",
+                          pt: 2,
+                          borderTop: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
+                        }}>
+        <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={() => {
+                              setManualCommand(null);
+                              setFormData(prev => ({ ...prev, clusterName: "" }));
+                            }}
+          sx={{
+                              ...secondaryButtonStyles,
+                              py: { xs: 0.5, sm: 0.75 },
+                              px: { xs: 1, sm: 1.5 },
+                              fontSize: { xs: "0.75rem", sm: "0.8rem" },
+                            }}
+                            startIcon={<span role="img" aria-label="reset" style={{ fontSize: "0.8rem" }}>🔄</span>}
+                          >
+                            Start Over
+        </Button>
+        <Button
+                            variant="contained"
+                            size="small"
+                            onClick={() => {
+                              navigator.clipboard.writeText(manualCommand.command);
+                              setSnackbar({
+                                open: true,
+                                message: "Command copied to clipboard!",
+                                severity: "success"
+                              });
+                            }}
+          sx={{
+                              ...primaryButtonStyles,
+                              py: { xs: 0.5, sm: 0.75 },
+                              px: { xs: 1.5, sm: 2 },
+                              fontSize: { xs: "0.75rem", sm: "0.8rem" },
+                            }}
+                            startIcon={<span role="img" aria-label="copy" style={{ fontSize: "0.8rem" }}>📋</span>}
+                          >
+                            Copy Command
+        </Button>
+                        </Box>
+                      </Box>
+                    )}
                   </Box>
                 </Box>
               )}
@@ -481,241 +1494,6 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
           </Box>
         </DialogContent>
       </Dialog>
-
-      {/* Pagination and Clusters Table */}
-      <div>
-        <button onClick={handlePreviousPage} disabled={currentPage === 1}>
-          Previous
-        </button>
-        <button onClick={handleNextPage}>Next</button>
-      </div>
-      <h2>Clusters</h2>
-      <TableContainer
-        component={Paper}
-        className="overflow-auto"
-        sx={{
-          backgroundColor: colors.paper,
-          boxShadow:
-            theme === "dark"
-              ? "0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2)"
-              : "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)",
-          borderRadius: "12px",
-          border: `1px solid ${colors.border}`,
-        }}
-      >
-        <Table>
-          <TableHead>
-            <TableRow
-              sx={{
-                background: colors.primary,
-                "& .MuiTableCell-head": {
-                  color: colors.white,
-                  fontWeight: 600,
-                  padding: "16px",
-                  fontSize: "0.95rem",
-                },
-              }}
-            >
-              <TableCell>
-                <Checkbox
-                  checked={false}
-                  sx={{
-                    color: colors.white,
-                    "&.Mui-checked": { color: colors.white },
-                  }}
-                />
-              </TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Labels</TableCell>
-              <TableCell>Creation Time</TableCell>
-              <TableCell>Context</TableCell>
-              <TableCell>Status</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {clusters.length > 0 ? (
-              clusters.map((cluster) => (
-                <TableRow
-                  key={cluster.name}
-                  sx={{
-                    backgroundColor: colors.paper,
-                    "&:hover": {
-                      backgroundColor:
-                        theme === "dark" ? "rgba(47, 134, 255, 0.08)" : "rgba(47, 134, 255, 0.04)",
-                    },
-                    "& .MuiTableCell-body": {
-                      color: colors.text,
-                      borderColor: colors.border,
-                      padding: "12px 16px",
-                    },
-                  }}
-                >
-                  <TableCell>
-                    <Checkbox sx={{ color: colors.textSecondary, "&.Mui-checked": { color: colors.primary } }} />
-                  </TableCell>
-                  <TableCell>
-                    <div className="font-medium">{cluster.name}</div>
-                  </TableCell>
-                  <TableCell>
-                    {cluster.labels && Object.keys(cluster.labels).length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {Object.entries(cluster.labels).map(([key, value]) => (
-                          <span
-                            key={`${key}-${value}`}
-                            style={{
-                              backgroundColor:
-                                theme === "dark" ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.08)",
-                              color: colors.primary,
-                              border: `1px solid ${
-                                theme === "dark" ? "rgba(47, 134, 255, 0.4)" : "rgba(47, 134, 255, 0.3)"
-                              }`,
-                            }}
-                            className="px-2 py-1 rounded text-xs font-medium"
-                          >
-                            {key}={value}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <span style={{ color: colors.textSecondary }}>No labels</span>
-                    )}
-                  </TableCell>
-                  <TableCell>{new Date(cluster.creationTime).toLocaleString()}</TableCell>
-                  <TableCell>
-                    <span
-                      style={{
-                        backgroundColor:
-                          theme === "dark" ? "rgba(103, 192, 115, 0.2)" : "rgba(103, 192, 115, 0.1)",
-                        color: theme === "dark" ? "rgb(154, 214, 249)" : "rgb(47, 134, 255)",
-                        border: `1px solid ${
-                          theme === "dark" ? "rgba(103, 192, 115, 0.4)" : "rgba(103, 192, 115, 0.3)"
-                        }`,
-                      }}
-                      className="px-2 py-1 text-xs font-medium rounded-lg"
-                    >
-                      {cluster.context}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className="px-2 py-1 text-xs font-medium rounded-lg inline-flex items-center gap-1"
-                      style={{
-                        backgroundColor:
-                          cluster.status === "Inactive"
-                            ? theme === "dark"
-                              ? "rgba(255, 107, 107, 0.2)"
-                              : "rgba(255, 107, 107, 0.1)"
-                            : cluster.status === "Pending"
-                            ? theme === "dark"
-                              ? "rgba(255, 179, 71, 0.2)"
-                              : "rgba(255, 179, 71, 0.1)"
-                            : theme === "dark"
-                            ? "rgba(103, 192, 115, 0.2)"
-                            : "rgba(103, 192, 115, 0.1)",
-                        color:
-                          cluster.status === "Inactive"
-                            ? colors.error
-                            : cluster.status === "Pending"
-                            ? colors.warning
-                            : colors.success,
-                        border:
-                          cluster.status === "Inactive"
-                            ? `1px solid ${
-                                theme === "dark" ? "rgba(255, 107, 107, 0.4)" : "rgba(255, 107, 107, 0.3)"
-                              }`
-                            : cluster.status === "Pending"
-                            ? `1px solid ${
-                                theme === "dark" ? "rgba(255, 179, 71, 0.4)" : "rgba(255, 179, 71, 0.3)"
-                              }`
-                            : `1px solid ${
-                                theme === "dark" ? "rgba(103, 192, 115, 0.4)" : "rgba(103, 192, 115, 0.3)"
-                              }`,
-                      }}
-                    >
-                      <span
-                        className="w-2 h-2 rounded-full"
-                        style={{
-                          backgroundColor:
-                            cluster.status === "Inactive"
-                              ? colors.error
-                              : cluster.status === "Pending"
-                              ? colors.warning
-                              : colors.success,
-                        }}
-                      ></span>
-                      {cluster.status || "Active✓"}
-                    </span>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={6} className="py-12">
-                  <div className="flex flex-col items-center justify-center text-center p-6">
-                    <CloudOff size={48} style={{ color: colors.textSecondary, marginBottom: "16px" }} />
-                    <h3 style={{ color: colors.text }} className="text-lg font-semibold mb-2">
-                      No Clusters Found
-                    </h3>
-                    <p style={{ color: colors.textSecondary }} className="mb-4 max-w-md">
-                      {clusters.length === 0 ? "No clusters available" : "No clusters match your search criteria"}
-                    </p>
-                  </div>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      <div className="flex justify-between items-center mt-6 px-2">
-        <Button
-          disabled={currentPage === 1}
-          onClick={handlePreviousPage}
-          sx={{
-            color: currentPage === 1 ? colors.disabled : colors.primary,
-            borderColor: currentPage === 1 ? colors.disabled : colors.primary,
-            backgroundColor: theme === "dark" && currentPage !== 1 ? "rgba(47, 134, 255, 0.1)" : "transparent",
-            "&:hover": {
-              borderColor: colors.primaryLight,
-              backgroundColor: theme === "dark" ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
-            },
-            "&.Mui-disabled": { color: colors.disabled, borderColor: colors.disabled },
-            textTransform: "none",
-            fontWeight: "600",
-            padding: "6px 16px",
-            borderRadius: "8px",
-          }}
-          variant="outlined"
-        >
-          Previous
-        </Button>
-        <div className="flex items-center gap-2">
-          <span style={{ color: colors.textSecondary }} className="font-medium">
-            Page {currentPage} of {data?.totalPages || 1}
-          </span>
-        </div>
-        <Button
-          disabled={currentPage === (data?.totalPages || 1)}
-          onClick={handleNextPage}
-          sx={{
-            color: currentPage === (data?.totalPages || 1) ? colors.disabled : colors.primary,
-            borderColor: currentPage === (data?.totalPages || 1) ? colors.disabled : colors.primary,
-            backgroundColor: theme === "dark" && currentPage !== (data?.totalPages || 1) ? "rgba(47, 134, 255, 0.1)" : "transparent",
-            "&:hover": {
-              borderColor: colors.primaryLight,
-              backgroundColor: theme === "dark" ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
-            },
-            "&.Mui-disabled": { color: colors.disabled, borderColor: colors.disabled },
-            textTransform: "none",
-            fontWeight: "600",
-            padding: "6px 16px",
-            borderRadius: "8px",
-          }}
-          variant="outlined"
-        >
-          Next
-        </Button>
-      </div>
     </>
   );
 };
