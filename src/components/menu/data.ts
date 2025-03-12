@@ -5,7 +5,6 @@ import {
   HiOutlineSquares2X2,
   HiOutlineCommandLine,
   HiOutlineCog8Tooth,
-  HiOutlineShieldCheck,
   HiOutlineCubeTransparent,
   HiOutlineCog,
 } from 'react-icons/hi2';
@@ -62,12 +61,6 @@ export const menu = [
     centered: true,
     marginTop: '1rem',
     listItems: [
-      {
-        isLink: true,
-        url: '/bp',
-        icon: HiOutlineShieldCheck,
-        label: 'Overview',
-      },
       {
         isLink: true,
         url: '/bp/manage',

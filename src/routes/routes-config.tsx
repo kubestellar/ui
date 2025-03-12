@@ -44,7 +44,7 @@ export const routesConfig: RouteObject[] = [
         ) 
         },
         { 
-        path: "bp", 
+        path: "bp/manage", 
         element: (
           <BP />
         ) 
