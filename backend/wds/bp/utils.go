@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/katamyra/kubestellarUI/log"
 	"github.com/kubestellar/kubestellar/api/control/v1alpha1"
@@ -57,8 +58,18 @@ func getClientForBp() (*bpv1alpha1.ControlV1alpha1Client, error) {
 }
 
 // extractWorkloads gets a list of workloads affected by this BP
+// Now includes both downsync resources and specific workloads
+// extractWorkloads gets a list of workloads affected by this BP
 func extractWorkloads(bp *v1alpha1.BindingPolicy) []string {
 	workloads := []string{}
+
+	// Safety check
+	if bp == nil {
+		fmt.Printf("Debug - extractWorkloads - BP is nil\n")
+		return workloads
+	}
+
+	fmt.Printf("Debug - extractWorkloads - Processing %d Downsync rules\n", len(bp.Spec.Downsync))
 
 	// Process downsync resources
 	for _, ds := range bp.Spec.Downsync {
@@ -67,10 +78,16 @@ func extractWorkloads(bp *v1alpha1.BindingPolicy) []string {
 			apiGroupValue = *ds.APIGroup
 		}
 
+		fmt.Printf("Debug - extractWorkloads - Found APIGroup: %s, Resources: %v, Namespaces: %v\n",
+			apiGroupValue, ds.Resources, ds.Namespaces)
+
 		// Add each resource with its API group
 		for _, resource := range ds.Resources {
+			// Convert resource to lowercase for consistent handling
+			resourceLower := strings.ToLower(resource)
+
 			// Format as apiGroup/resource
-			workloadType := fmt.Sprintf("%s/%s", apiGroupValue, resource)
+			workloadType := fmt.Sprintf("%s/%s", apiGroupValue, resourceLower)
 
 			// Add namespaces if specified
 			if len(ds.Namespaces) > 0 {
@@ -83,6 +100,7 @@ func extractWorkloads(bp *v1alpha1.BindingPolicy) []string {
 		}
 	}
 
+	fmt.Printf("Debug - extractWorkloads - Extracted %d workloads: %v\n", len(workloads), workloads)
 	return workloads
 }
 
@@ -90,23 +108,56 @@ func extractWorkloads(bp *v1alpha1.BindingPolicy) []string {
 func extractTargetClusters(bp *v1alpha1.BindingPolicy) []string {
 	clusters := []string{}
 
-	for _, selector := range bp.Spec.ClusterSelectors {
-		// If matchLabels contains kubernetes.io/cluster-name, add it
-		if clusterName, ok := selector.MatchLabels["kubernetes.io/cluster-name"]; ok {
-			clusters = append(clusters, clusterName)
+	// Safety check
+	if bp == nil {
+		fmt.Printf("Debug - extractTargetClusters - BP is nil\n")
+		return clusters
+	}
+
+	if len(bp.Spec.ClusterSelectors) == 0 {
+		fmt.Printf("Debug - extractTargetClusters - No ClusterSelectors found\n")
+		return clusters
+	}
+
+	fmt.Printf("Debug - extractTargetClusters - Processing %d ClusterSelectors\n", len(bp.Spec.ClusterSelectors))
+
+	// Iterate through each cluster selector
+	for i, selector := range bp.Spec.ClusterSelectors {
+		fmt.Printf("Debug - extractTargetClusters - Processing selector #%d\n", i)
+
+		// Check if MatchLabels is nil
+		if selector.MatchLabels == nil {
+			fmt.Printf("Debug - extractTargetClusters - MatchLabels is nil for selector #%d\n", i)
+			continue
 		}
 
-		// Handle other selectors that might target clusters differently
+		// Debug all labels in this selector
 		for k, v := range selector.MatchLabels {
-			// Skip the standard cluster name we already processed
+			fmt.Printf("Debug - extractTargetClusters - Label %s=%s\n", k, v)
+
+			// Check specifically for kubernetes.io/cluster-name label
 			if k == "kubernetes.io/cluster-name" {
-				continue
+				fmt.Printf("Debug - extractTargetClusters - Found cluster name: %s\n", v)
+				clusters = append(clusters, v)
 			}
-			// Add as "label:value" format to give context to the label
-			clusters = append(clusters, fmt.Sprintf("%s:%s", k, v))
 		}
 	}
 
+	// If no clusters found using the selector labels, try general labels
+	if len(clusters) == 0 {
+		fmt.Printf("Debug - extractTargetClusters - No clusters found via kubernetes.io/cluster-name, checking all labels\n")
+		for i, selector := range bp.Spec.ClusterSelectors {
+			if selector.MatchLabels != nil {
+				for k, v := range selector.MatchLabels {
+					// Add any label that might identify a cluster
+					clusters = append(clusters, fmt.Sprintf("%s:%s", k, v))
+					fmt.Printf("Debug - extractTargetClusters - Added generic label #%d: %s:%s\n", i, k, v)
+				}
+			}
+		}
+	}
+
+	fmt.Printf("Debug - extractTargetClusters - Returning %d clusters: %v\n", len(clusters), clusters)
 	return clusters
 }
 
