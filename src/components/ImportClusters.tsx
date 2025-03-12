@@ -1222,7 +1222,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                           </Box>
                         </Alert>
 
-                        {/* Command display with improved styling */}
+                        {/* Command display with improved styling and text wrapping */}
                         <Box sx={{ position: "relative", mb: 2 }}>
                           <Box
                             component="pre"
@@ -1241,6 +1241,10 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                               lineHeight: 1.4,
                               minHeight: "120px",
                               maxHeight: "200px",
+                              whiteSpace: "pre-wrap",
+                              wordWrap: "break-word",
+                              wordBreak: "break-all",
+                              maxWidth: "100%",
                               "&::-webkit-scrollbar": {
                                 width: "4px",
                                 height: "4px",
@@ -1257,7 +1261,11 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                                 color: theme === "dark" ? "#9ad6f9" : "#1a65cc",
                                 marginRight: "6px",
                                 fontWeight: "bold",
+                                position: "absolute",
+                                left: { xs: "0.75rem", sm: "1rem" },
+                                top: { xs: "0.75rem", sm: "1rem" },
                               },
+                              paddingLeft: { xs: "1.5rem", sm: "2rem" },
                             }}
                           >
                             {manualCommand.command}
