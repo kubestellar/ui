@@ -18,13 +18,20 @@ import (
 )
 
 type StoredBindingPolicy struct {
-	Name             string              `json:"name"`
-	Namespace        string              `json:"namespace"`
-	ClusterSelectors []map[string]string `json:"clusterSelectors"` // Each entry is matchLabels map
-	APIGroups        []string            `json:"apiGroups"`
-	Resources        []string            `json:"resources"`
-	Namespaces       []string            `json:"namespaces"`
-	RawYAML          string              `json:"rawYAML"`
+	Name              string              `json:"name"`
+	Namespace         string              `json:"namespace"`
+	ClusterSelectors  []map[string]string `json:"clusterSelectors"` // Each entry is matchLabels map
+	APIGroups         []string            `json:"apiGroups"`
+	Resources         []string            `json:"resources"`
+	Namespaces        []string            `json:"namespaces"`
+	SpecificWorkloads []WorkloadInfo      `json:"specificWorkloads"` // Added this field
+	RawYAML           string              `json:"rawYAML"`
+}
+type WorkloadInfo struct {
+	APIVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+	Name       string `json:"name"`
+	Namespace  string `json:"namespace"`
 }
 
 // Global store for binding policies created via the UI
@@ -141,6 +148,8 @@ func GetAllBp(ctx *gin.Context) {
 }
 
 // CreateBp creates a new BindingPolicy
+// CreateBp creates a new BindingPolicy
+// CreateBp creates a new BindingPolicy
 func CreateBp(ctx *gin.Context) {
 	fmt.Printf("Debug - Starting CreateBp handler\n")
 	fmt.Printf("Debug - KUBECONFIG: %s\n", os.Getenv("KUBECONFIG"))
@@ -191,6 +200,54 @@ func CreateBp(ctx *gin.Context) {
 		fmt.Printf("Debug - Initial YAML parsing error: %v\n", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid YAML format: %s", err.Error())})
 		return
+	}
+
+	// Extract specific workloads information if present
+	specificWorkloads := []WorkloadInfo{}
+	if specObj, ok := yamlMap["spec"].(map[interface{}]interface{}); ok {
+		if workloadsList, ok := specObj["workloads"].([]interface{}); ok {
+			fmt.Printf("Debug - Found workloads section with %d entries\n", len(workloadsList))
+
+			for i, workloadObj := range workloadsList {
+				if workload, ok := workloadObj.(map[interface{}]interface{}); ok {
+					// Extract apiVersion
+					apiVersion := ""
+					if av, ok := workload["apiVersion"].(string); ok {
+						apiVersion = av
+					}
+
+					// Extract kind
+					kind := ""
+					if k, ok := workload["kind"].(string); ok {
+						kind = k
+					}
+
+					// Extract name and namespace
+					name := ""
+					namespace := ""
+					if metaObj, ok := workload["metadata"].(map[interface{}]interface{}); ok {
+						if n, ok := metaObj["name"].(string); ok {
+							name = n
+						}
+						if ns, ok := metaObj["namespace"].(string); ok {
+							namespace = ns
+						}
+					}
+
+					if apiVersion != "" && kind != "" {
+						workloadInfo := WorkloadInfo{
+							APIVersion: apiVersion,
+							Kind:       kind,
+							Name:       name,
+							Namespace:  namespace,
+						}
+						specificWorkloads = append(specificWorkloads, workloadInfo)
+						fmt.Printf("Debug - Added specific workload #%d: %s/%s: %s (ns:%s)\n",
+							i, apiVersion, kind, name, namespace)
+					}
+				}
+			}
+		}
 	}
 
 	// Extract and validate critical fields
@@ -263,13 +320,14 @@ func CreateBp(ctx *gin.Context) {
 
 	// Create StoredBindingPolicy for cache
 	storedBP := &StoredBindingPolicy{
-		Name:             newBP.Name,
-		Namespace:        newBP.Namespace,
-		ClusterSelectors: []map[string]string{},
-		APIGroups:        []string{},
-		Resources:        []string{},
-		Namespaces:       []string{},
-		RawYAML:          rawYAML,
+		Name:              newBP.Name,
+		Namespace:         newBP.Namespace,
+		ClusterSelectors:  []map[string]string{},
+		APIGroups:         []string{},
+		Resources:         []string{},
+		Namespaces:        []string{},
+		SpecificWorkloads: specificWorkloads, // Add specific workloads
+		RawYAML:           rawYAML,
 	}
 
 	// Extract cluster selectors for storage
@@ -340,10 +398,12 @@ func CreateBp(ctx *gin.Context) {
 
 	// Extract workloads from stored data
 	workloads := []string{}
+	// 1. First add the downsync workloads
 	for i, apiGroup := range storedBP.APIGroups {
 		if i < len(storedBP.Resources) {
-			resource := storedBP.Resources[i]
-			workloadType := fmt.Sprintf("%s/%s", apiGroup, resource)
+			// Convert resource to lowercase for consistent handling
+			resourceLower := strings.ToLower(storedBP.Resources[i])
+			workloadType := fmt.Sprintf("%s/%s", apiGroup, resourceLower)
 
 			// Add namespaces if specified
 			if len(storedBP.Namespaces) > 0 {
@@ -356,9 +416,20 @@ func CreateBp(ctx *gin.Context) {
 		}
 	}
 
+	// 2. Now add the specific workloads
+	for _, workload := range storedBP.SpecificWorkloads {
+		workloadDesc := fmt.Sprintf("Specific: %s/%s", workload.APIVersion, workload.Kind)
+		if workload.Name != "" {
+			workloadDesc += fmt.Sprintf(": %s", workload.Name)
+		}
+		if workload.Namespace != "" {
+			workloadDesc += fmt.Sprintf(" (ns:%s)", workload.Namespace)
+		}
+		workloads = append(workloads, workloadDesc)
+	}
+
 	fmt.Printf("Debug - Response clusters: %v\n", clusters)
 	fmt.Printf("Debug - Response workloads: %v\n", workloads)
-
 	// Return success with created BP details
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": fmt.Sprintf("Created binding policy '%s' in namespace '%s' successfully", createdBP.Name, createdBP.Namespace),
@@ -457,18 +528,19 @@ func GetBpStatus(ctx *gin.Context) {
 	// Try to get binding policy directly
 	bp, err := c.BindingPolicies().Get(context.TODO(), name, v1.GetOptions{})
 	if err != nil {
-		fmt.Printf("Debug - GetBpStatus - Get error: %v\n", err)
+		fmt.Printf("Debug - GetBpStatus - Direct Get error: %v\n", err)
 
-		// Try to list all binding policies to see if it exists with a different name/namespace
+		// Try to list all binding policies to see if it exists
 		bpList, listErr := c.BindingPolicies().List(context.TODO(), v1.ListOptions{})
 		if listErr != nil {
+			fmt.Printf("Debug - GetBpStatus - List error: %v\n", listErr)
 			ctx.JSON(http.StatusNotFound, gin.H{
 				"error": fmt.Sprintf("Binding policy '%s' not found and failed to list policies: %v", name, listErr),
 			})
 			return
 		}
 
-		// Check if we can find the policy with a different namespace
+		// Check if we can find the policy with the given name
 		var foundBP *v1alpha1.BindingPolicy
 		fmt.Printf("Debug - GetBpStatus - Listing all BPs to find '%s'\n", name)
 		for i, item := range bpList.Items {
@@ -490,14 +562,14 @@ func GetBpStatus(ctx *gin.Context) {
 		fmt.Printf("Debug - GetBpStatus - Found BP with matching name in namespace '%s'\n", bp.Namespace)
 	}
 
-	// Debug: Print the found binding policy details
-	fmt.Printf("Debug - GetBpStatus - Found BP with name '%s' in namespace '%s'\n",
-		bp.Name, bp.Namespace)
-
-	// Print spec details for debugging
-	yamlData, err := yaml.Marshal(bp)
-	if err == nil {
-		fmt.Printf("Debug - BP YAML:\n%s\n", string(yamlData))
+	// Look for this binding policy in the uiCreatedPolicies map
+	storedBP, exists := uiCreatedPolicies[name]
+	if exists {
+		fmt.Printf("Debug - GetBpStatus - Found stored BP in memory with key: %s\n", name)
+		// Debug the stored policy
+		fmt.Printf("Debug - Stored BP ClusterSelectors: %+v\n", storedBP.ClusterSelectors)
+	} else {
+		fmt.Printf("Debug - GetBpStatus - No stored BP found in memory with key: %s\n", name)
 	}
 
 	// Determine if the policy is active based on status fields
@@ -507,12 +579,14 @@ func GetBpStatus(ctx *gin.Context) {
 	hasSync := false
 	hasReady := false
 
-	for _, condition := range bp.Status.Conditions {
-		if condition.Type == "Synced" && condition.Status == "True" {
-			hasSync = true
-		}
-		if condition.Type == "Ready" && condition.Status == "True" {
-			hasReady = true
+	if bp.Status.Conditions != nil {
+		for _, condition := range bp.Status.Conditions {
+			if condition.Type == "Synced" && condition.Status == "True" {
+				hasSync = true
+			}
+			if condition.Type == "Ready" && condition.Status == "True" {
+				hasReady = true
+			}
 		}
 	}
 
@@ -520,50 +594,270 @@ func GetBpStatus(ctx *gin.Context) {
 		status = "active"
 	}
 
-	// Extract clusters directly from the binding policy
+	// Initialize clusters and workloads slices
 	clusters := []string{}
-	for i, selector := range bp.Spec.ClusterSelectors {
-		fmt.Printf("Debug - ClusterSelector #%d: %+v\n", i, selector)
+	workloads := []string{}
 
-		// Check for kubernetes.io/cluster-name label
-		if clusterName, ok := selector.MatchLabels["kubernetes.io/cluster-name"]; ok {
-			fmt.Printf("Debug - Found cluster: %s\n", clusterName)
-			clusters = append(clusters, clusterName)
-		}
-
-		// Add any other labels as additional info
-		for k, v := range selector.MatchLabels {
-			if k != "kubernetes.io/cluster-name" {
-				clusters = append(clusters, fmt.Sprintf("%s:%s", k, v))
+	// If we have a stored policy with cluster selectors, use that
+	if exists && len(storedBP.ClusterSelectors) > 0 {
+		fmt.Printf("Debug - Using cluster selectors from stored policy\n")
+		for i, selector := range storedBP.ClusterSelectors {
+			if clusterName, ok := selector["kubernetes.io/cluster-name"]; ok {
+				fmt.Printf("Debug - Found cluster from stored data: %s\n", clusterName)
+				clusters = append(clusters, clusterName)
+			} else {
+				fmt.Printf("Debug - Selector #%d has no kubernetes.io/cluster-name: %+v\n", i, selector)
 			}
 		}
-	}
 
-	// Extract workloads
-	workloads := []string{}
-	for i, ds := range bp.Spec.Downsync {
-		apiGroupValue := "core" // Default to core
-		if ds.APIGroup != nil && *ds.APIGroup != "" {
-			apiGroupValue = *ds.APIGroup
+		// Use stored API groups and resources
+		for i, apiGroup := range storedBP.APIGroups {
+			if i < len(storedBP.Resources) {
+				// Convert resource to lowercase for consistent handling
+				resourceLower := strings.ToLower(storedBP.Resources[i])
+				workloadType := fmt.Sprintf("%s/%s", apiGroup, resourceLower)
+
+				// Add namespaces if specified
+				if len(storedBP.Namespaces) > 0 {
+					for _, ns := range storedBP.Namespaces {
+						workloads = append(workloads, fmt.Sprintf("%s (ns:%s)", workloadType, ns))
+					}
+				} else {
+					workloads = append(workloads, workloadType)
+				}
+			}
 		}
 
-		fmt.Printf("Debug - Downsync #%d: APIGroup=%s, Resources=%v, Namespaces=%v\n",
-			i, apiGroupValue, ds.Resources, ds.Namespaces)
+		// Add specific workloads from stored data
+		for _, workload := range storedBP.SpecificWorkloads {
+			workloadDesc := fmt.Sprintf("Specific: %s/%s", workload.APIVersion, workload.Kind)
+			if workload.Name != "" {
+				workloadDesc += fmt.Sprintf(": %s", workload.Name)
+			}
+			if workload.Namespace != "" {
+				workloadDesc += fmt.Sprintf(" (ns:%s)", workload.Namespace)
+			}
+			fmt.Printf("Debug - Adding specific workload from storage: %s\n", workloadDesc)
+			workloads = append(workloads, workloadDesc)
+		}
+	} else {
+		// Try to extract from the API response
+		fmt.Printf("Debug - Trying to extract from API response\n")
 
-		for _, resource := range ds.Resources {
-			workloadType := fmt.Sprintf("%s/%s", apiGroupValue, resource)
+		// Extract clusters from BP
+		for i, selector := range bp.Spec.ClusterSelectors {
+			if selector.MatchLabels == nil {
+				continue
+			}
 
-			if len(ds.Namespaces) > 0 {
-				for _, ns := range ds.Namespaces {
-					workloads = append(workloads, fmt.Sprintf("%s (ns:%s)", workloadType, ns))
+			fmt.Printf("Debug - Processing selector #%d for clusters: %+v\n", i, selector.MatchLabels)
+
+			// Check for kubernetes.io/cluster-name label
+			if clusterName, ok := selector.MatchLabels["kubernetes.io/cluster-name"]; ok {
+				fmt.Printf("Debug - Found cluster from API: %s\n", clusterName)
+				clusters = append(clusters, clusterName)
+			}
+		}
+
+		// Extract workloads from BP
+		for i, ds := range bp.Spec.Downsync {
+			apiGroupValue := "core" // Default to core
+			if ds.APIGroup != nil && *ds.APIGroup != "" {
+				apiGroupValue = *ds.APIGroup
+			}
+
+			fmt.Printf("Debug - Downsync #%d: APIGroup=%s, Resources=%v, Namespaces=%v\n",
+				i, apiGroupValue, ds.Resources, ds.Namespaces)
+
+			for _, resource := range ds.Resources {
+				// Convert resource to lowercase for consistent handling
+				resourceLower := strings.ToLower(resource)
+				workloadType := fmt.Sprintf("%s/%s", apiGroupValue, resourceLower)
+
+				if len(ds.Namespaces) > 0 {
+					for _, ns := range ds.Namespaces {
+						workloads = append(workloads, fmt.Sprintf("%s (ns:%s)", workloadType, ns))
+					}
+				} else {
+					workloads = append(workloads, workloadType)
 				}
-			} else {
-				workloads = append(workloads, workloadType)
+			}
+		}
+
+		// Note: We've removed the section that tried to access bp.Spec.Workloads
+		// since that field doesn't exist in the KubeStellar API
+	}
+
+	// If we still don't have clusters or workloads, try to parse the stored rawYAML if available
+	if (len(clusters) == 0 || len(workloads) == 0) && exists && storedBP.RawYAML != "" {
+		fmt.Printf("Debug - Trying to parse stored raw YAML\n")
+		// Parse the raw YAML to extract information
+		var yamlMap map[string]interface{}
+		if err := yaml.Unmarshal([]byte(storedBP.RawYAML), &yamlMap); err != nil {
+			fmt.Printf("Debug - Failed to parse raw YAML: %v\n", err)
+		} else {
+			// Try to extract cluster selectors from YAML
+			if spec, ok := yamlMap["spec"].(map[interface{}]interface{}); ok {
+				if selectors, ok := spec["clusterSelectors"].([]interface{}); ok {
+					fmt.Printf("Debug - Found %d cluster selectors in YAML\n", len(selectors))
+					for _, selectorObj := range selectors {
+						if selector, ok := selectorObj.(map[interface{}]interface{}); ok {
+							if matchLabels, ok := selector["matchLabels"].(map[interface{}]interface{}); ok {
+								for k, v := range matchLabels {
+									if kStr, ok := k.(string); ok && kStr == "kubernetes.io/cluster-name" {
+										if vStr, ok := v.(string); ok {
+											fmt.Printf("Debug - Found cluster from YAML: %s\n", vStr)
+											// Check if already in the list
+											alreadyExists := false
+											for _, c := range clusters {
+												if c == vStr {
+													alreadyExists = true
+													break
+												}
+											}
+											if !alreadyExists {
+												clusters = append(clusters, vStr)
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+
+				// Try to extract downsync resources from YAML
+				if downsyncList, ok := spec["downsync"].([]interface{}); ok {
+					fmt.Printf("Debug - Found %d downsync entries in YAML\n", len(downsyncList))
+					for _, downsyncObj := range downsyncList {
+						if downsync, ok := downsyncObj.(map[interface{}]interface{}); ok {
+							// Extract API group
+							apiGroupValue := "core" // Default
+							if apiGroup, ok := downsync["apiGroup"].(string); ok && apiGroup != "" {
+								apiGroupValue = apiGroup
+							}
+
+							// Extract resources
+							var resources []string
+							if rawResources, ok := downsync["resources"].([]interface{}); ok {
+								for _, r := range rawResources {
+									if resource, ok := r.(string); ok {
+										// Convert resource to lowercase
+										resourceLower := strings.ToLower(resource)
+										resources = append(resources, resourceLower)
+									}
+								}
+							}
+
+							// Extract namespaces
+							var namespaces []string
+							if rawNamespaces, ok := downsync["namespaces"].([]interface{}); ok {
+								for _, n := range rawNamespaces {
+									if ns, ok := n.(string); ok {
+										namespaces = append(namespaces, ns)
+									}
+								}
+							}
+
+							// Create workload entries
+							for _, resource := range resources {
+								workloadType := fmt.Sprintf("%s/%s", apiGroupValue, resource)
+
+								if len(namespaces) > 0 {
+									for _, ns := range namespaces {
+										workloadItem := fmt.Sprintf("%s (ns:%s)", workloadType, ns)
+										// Check if already in the list
+										alreadyExists := false
+										for _, w := range workloads {
+											if w == workloadItem {
+												alreadyExists = true
+												break
+											}
+										}
+										if !alreadyExists {
+											workloads = append(workloads, workloadItem)
+										}
+									}
+								} else {
+									// Check if already in the list
+									alreadyExists := false
+									for _, w := range workloads {
+										if w == workloadType {
+											alreadyExists = true
+											break
+										}
+									}
+									if !alreadyExists {
+										workloads = append(workloads, workloadType)
+									}
+								}
+							}
+						}
+					}
+				}
+
+				// Try to extract specific workloads from YAML
+				if workloadsList, ok := spec["workloads"].([]interface{}); ok {
+					fmt.Printf("Debug - Found %d specific workloads in YAML\n", len(workloadsList))
+					for i, workloadObj := range workloadsList {
+						if workload, ok := workloadObj.(map[interface{}]interface{}); ok {
+							// Extract apiVersion
+							apiVersion := "unknown"
+							if av, ok := workload["apiVersion"].(string); ok {
+								apiVersion = av
+							}
+
+							// Extract kind
+							kind := "unknown"
+							if k, ok := workload["kind"].(string); ok {
+								kind = k
+							}
+
+							// Extract name and namespace from metadata
+							name := ""
+							namespace := ""
+							if metaObj, ok := workload["metadata"].(map[interface{}]interface{}); ok {
+								if n, ok := metaObj["name"].(string); ok {
+									name = n
+								}
+								if ns, ok := metaObj["namespace"].(string); ok {
+									namespace = ns
+								}
+							}
+
+							// Only add if we have at least some identifying information
+							if name != "" || (apiVersion != "unknown" && kind != "unknown") {
+								workloadDesc := fmt.Sprintf("Specific: %s/%s", apiVersion, kind)
+								if name != "" {
+									workloadDesc += fmt.Sprintf(": %s", name)
+								}
+								if namespace != "" {
+									workloadDesc += fmt.Sprintf(" (ns:%s)", namespace)
+								}
+
+								fmt.Printf("Debug - Found specific workload #%d in YAML: %s\n", i, workloadDesc)
+
+								// Check if already in the list
+								alreadyExists := false
+								for _, w := range workloads {
+									if w == workloadDesc {
+										alreadyExists = true
+										break
+									}
+								}
+								if !alreadyExists {
+									workloads = append(workloads, workloadDesc)
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	}
 
 	// Print debug info before returning
+	fmt.Printf("Debug - Returning response - name: %s, namespace: %s\n", bp.Name, bp.Namespace)
 	fmt.Printf("Debug - Returning %d clusters: %v\n", len(clusters), clusters)
 	fmt.Printf("Debug - Returning %d workloads: %v\n", len(workloads), workloads)
 
