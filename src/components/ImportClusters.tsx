@@ -298,7 +298,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
               </Box>
               <Box>
                 <Box sx={{ fontSize: { xs: "1rem", sm: "1.1rem" }, fontWeight: 700, color: textColor }}>
-                  Import Cluster
+          Import Cluster
                 </Box>
                 <Box sx={{ 
                   fontSize: "0.75rem",
@@ -326,44 +326,75 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
             </Button>
           </Box>
           
-          <Tabs
-            value={activeOption}
-            onChange={(_event, newValue) => setActiveOption(newValue)}
-            variant="scrollable"
-            scrollButtons="auto"
-            sx={{
-              mt: 0.25,
-              "& .MuiTabs-flexContainer": {
-                gap: { xs: 0.25, sm: 0.5 },
-              },
-              "& .MuiTab-root": {
-                minHeight: { xs: 36, sm: 40 },
-                px: { xs: 1, sm: 1.5 },
-                py: { xs: 0.5, sm: 0.75 },
-                color: colors.textSecondary,
-                fontSize: { xs: "0.75rem", sm: "0.8rem" },
-                fontWeight: 500,
-                transition: "all 0.2s ease",
-                borderRadius: "8px",
-                "&.Mui-selected": {
-                  color: theme === "dark" ? colors.white : colors.primary,
-                  bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.08)",
-                  fontWeight: 600,
+            <Tabs
+              value={activeOption}
+              onChange={(_event, newValue) => setActiveOption(newValue)}
+              variant="scrollable"
+              scrollButtons="auto"
+              sx={{
+                mt: 0.25,
+                "& .MuiTabs-flexContainer": {
+                  gap: { xs: 0.25, sm: 0.5 },
                 },
-                "&:hover": {
-                  bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.04)",
-                  color: theme === "dark" ? colors.primaryLight : colors.primary,
+                "& .MuiTab-root": {
+                  minHeight: { xs: 36, sm: 40 },
+                  px: { xs: 1, sm: 1.5 },
+                  py: { xs: 0.5, sm: 0.75 },
+                  color: colors.textSecondary,
+                  fontSize: { xs: "0.75rem", sm: "0.8rem" },
+                  fontWeight: 500,
+                  transition: "all 0.2s ease",
+                  borderRadius: "8px",
+                  position: "relative",
+                  overflow: "hidden",
+                  "&:before": {
+                    content: '""',
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: "2px",
+                    backgroundColor: "transparent",
+                    transition: "all 0.2s ease",
+                  },
+                  "&.Mui-selected": {
+                    color: theme === "dark" ? colors.white : colors.primary,
+                    backgroundColor: "transparent",
+                    fontWeight: 600,
+                    "&:before": {
+                      backgroundColor: colors.primary,
+                      height: "3px",
+                      boxShadow: theme === "dark" 
+                        ? `0 2px 8px ${colors.primary}80` 
+                        : `0 2px 8px ${colors.primary}40`,
+                    },
+                    "& $iconContainer": {
+                      backgroundColor: `${colors.primary}20`,
+                      color: colors.primary,
+                    }
+                  },
+                  "&:hover": {
+                    backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.04)",
+                    "&:before": {
+                      backgroundColor: `${colors.primary}30`,
+                      height: "2px",
+                    },
+                    "& $iconContainer": {
+                      backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.08)",
+                      color: theme === "dark" ? colors.primaryLight : colors.primary,
+                    },
+                  },
                 },
-              },
-              "& .MuiTabs-indicator": {
-                display: "none",
-              },
-            }}
-          >
+                "& .MuiTabs-indicator": {
+                  display: "none",
+                },
+              }}
+            >
             <Tab 
               label={
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                   <Box 
+                    className="iconContainer"
                     sx={{ 
                       width: 24, 
                       height: 24, 
@@ -371,7 +402,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                       display: "flex", 
                       alignItems: "center", 
                       justifyContent: "center",
-                      bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.04)",
+                      transition: "all 0.2s ease",
                     }}
                   >
                     <span role="img" aria-label="yaml" style={{ fontSize: "0.9rem" }}>📄</span>
@@ -385,6 +416,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
               label={
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                   <Box 
+                    className="iconContainer"
                     sx={{ 
                       width: 24, 
                       height: 24, 
@@ -392,7 +424,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                       display: "flex", 
                       alignItems: "center", 
                       justifyContent: "center",
-                      bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.04)",
+                      transition: "all 0.2s ease",
                     }}
                   >
                     <span role="img" aria-label="kubeconfig" style={{ fontSize: "0.9rem" }}>📁</span>
@@ -406,6 +438,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
               label={
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                   <Box 
+                    className="iconContainer"
                     sx={{ 
                       width: 24, 
                       height: 24, 
@@ -413,7 +446,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                       display: "flex", 
                       alignItems: "center", 
                       justifyContent: "center",
-                      bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.04)",
+                      transition: "all 0.2s ease",
                     }}
                   >
                     <span role="img" aria-label="api" style={{ fontSize: "0.9rem" }}>🔗</span>
@@ -427,6 +460,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
               label={
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                   <Box 
+                    className="iconContainer"
                     sx={{ 
                       width: 24, 
                       height: 24, 
@@ -434,7 +468,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                       display: "flex", 
                       alignItems: "center", 
                       justifyContent: "center",
-                      bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.04)",
+                      transition: "all 0.2s ease",
                     }}
                   >
                     <span role="img" aria-label="manual" style={{ fontSize: "0.9rem" }}>⚙️</span>
@@ -444,7 +478,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
               } 
               value="option4" 
             />
-          </Tabs>
+            </Tabs>
         </Box>
 
         <DialogContent sx={{ p: 0, flex: 1, overflow: "hidden" }}>
@@ -601,8 +635,8 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                     height: "calc(100% - 8px)",
                   }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
-                      <Box 
-                        sx={{ 
+                  <Box
+                    sx={{
                           width: 36, 
                           height: 36, 
                           borderRadius: "8px", 
@@ -628,11 +662,11 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                     <Box
                       sx={{
                         border: 1,
-                        borderStyle: "dashed",
-                        borderColor: "divider",
+                      borderStyle: "dashed",
+                      borderColor: "divider",
                         borderRadius: { xs: 1.5, sm: 2 },
                         p: { xs: 1.5, sm: 2 },
-                        textAlign: "center",
+                      textAlign: "center",
                         transition: "all 0.3s ease",
                         backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.2)" : "rgba(0, 0, 0, 0.01)",
                         "&:hover": { 
@@ -960,11 +994,11 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                           <Box sx={{ mb: 1, fontWeight: 500, fontSize: "0.85rem", color: textColor }}>
                             Name your cluster
                           </Box>
-                          <TextField
-                            variant="outlined"
-                            name="clusterName"
-                            value={formData.clusterName}
-                            onChange={handleChange}
+                    <TextField
+                      variant="outlined"
+                      name="clusterName"
+                      value={formData.clusterName}
+                      onChange={handleChange}
                             placeholder="e.g., production-cluster, dev-k8s"
                             size="small"
                             InputProps={{
@@ -1005,8 +1039,8 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                                 color: theme === "dark" ? colors.primaryLight : colors.primary,
                               },
                             }}
-                            fullWidth
-                          />
+                      fullWidth
+                    />
                           <Box sx={{ 
                             mt: 1, 
                             fontSize: "0.75rem", 
@@ -1165,11 +1199,11 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                           >
                             Cancel
                           </Button>
-                          <Button
-                            variant="contained"
+                        <Button
+                          variant="contained"
                             size="small"
-                            onClick={handleGenerateCommand}
-                            disabled={!formData.clusterName.trim() || manualLoading}
+                          onClick={handleGenerateCommand}
+                          disabled={!formData.clusterName.trim() || manualLoading}
                             sx={{
                               ...primaryButtonStyles,
                               py: { xs: 0.5, sm: 0.75 },
@@ -1185,7 +1219,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                             }
                           >
                             {manualLoading ? "Generating..." : "Generate Command"}
-                          </Button>
+                        </Button>
                         </Box>
                       </Box>
                     ) : (
@@ -1224,15 +1258,15 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
 
                         {/* Command display with improved styling and text wrapping */}
                         <Box sx={{ position: "relative", mb: 2 }}>
-                          <Box
-                            component="pre"
-                            sx={{
+                        <Box
+                          component="pre"
+                          sx={{
                               flex: "1 1 auto",
                               p: { xs: 1.5, sm: 2 },
                               backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.4)" : "#f5f5f5",
                               color: theme === "dark" ? "#e6e6e6" : "#333",
                               borderRadius: 1.5,
-                              overflowX: "auto",
+                            overflowX: "auto",
                               border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"}`,
                               fontSize: { xs: "0.75rem", sm: "0.8rem" },
                               fontFamily: "'Fira Code', monospace",
@@ -1266,14 +1300,14 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                                 top: { xs: "0.75rem", sm: "1rem" },
                               },
                               paddingLeft: { xs: "1.5rem", sm: "2rem" },
-                            }}
-                          >
-                            {manualCommand.command}
-                          </Box>
+                          }}
+                        >
+                          {manualCommand.command}
+                        </Box>
                           
                           {/* Copy button overlay */}
-                          <Button
-                            variant="contained"
+                        <Button
+                          variant="contained"
                             size="small"
                             onClick={() => {
                               navigator.clipboard.writeText(manualCommand.command);
@@ -1300,14 +1334,14 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                             }}
                           >
                             <span role="img" aria-label="copy" style={{ fontSize: "0.9rem" }}>📋</span>
-                          </Button>
-                        </Box>
+                        </Button>
+                      </Box>
 
                         {/* Instructions section with improved styling */}
                         <Box sx={{ flex: 1 }}>
                           <Box sx={{ fontWeight: 600, fontSize: "0.85rem", mb: 1.5, color: textColor }}>
                             Next steps:
-                          </Box>
+                  </Box>
                           
                           <Box sx={{ 
                             display: "flex", 
@@ -1337,11 +1371,11 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                                 fontWeight: 600,
                               }}>
                                 1
-                              </Box>
+                  </Box>
                               <Box sx={{ fontSize: "0.8rem", color: colors.textSecondary }}>
                                 Copy the command above and run it on your Kubernetes cluster
-                              </Box>
-                            </Box>
+                </Box>
+            </Box>
                             
                             <Box sx={{ 
                               display: "flex", 
@@ -1366,7 +1400,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                                 fontWeight: 600,
                               }}>
                                 2
-                              </Box>
+          </Box>
                               <Box sx={{ fontSize: "0.8rem", color: colors.textSecondary }}>
                                 Wait for the connection to be established (this may take a few moments)
                               </Box>
@@ -1392,7 +1426,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                                 color: theme === "dark" ? colors.primaryLight : colors.primary,
                                 flexShrink: 0,
                                 fontSize: "0.75rem",
-                                fontWeight: 600,
+                  fontWeight: 600,
                               }}>
                                 3
                               </Box>
@@ -1412,14 +1446,14 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                           pt: 2,
                           borderTop: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
                         }}>
-                          <Button
+        <Button
                             variant="outlined"
                             size="small"
                             onClick={() => {
                               setManualCommand(null);
                               setFormData(prev => ({ ...prev, clusterName: "" }));
                             }}
-                            sx={{
+          sx={{
                               ...secondaryButtonStyles,
                               py: { xs: 0.5, sm: 0.75 },
                               px: { xs: 1, sm: 1.5 },
@@ -1428,8 +1462,8 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                             startIcon={<span role="img" aria-label="reset" style={{ fontSize: "0.8rem" }}>🔄</span>}
                           >
                             Start Over
-                          </Button>
-                          <Button
+        </Button>
+        <Button
                             variant="contained"
                             size="small"
                             onClick={() => {
@@ -1440,7 +1474,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                                 severity: "success"
                               });
                             }}
-                            sx={{
+          sx={{
                               ...primaryButtonStyles,
                               py: { xs: 0.5, sm: 0.75 },
                               px: { xs: 1.5, sm: 2 },
@@ -1449,7 +1483,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                             startIcon={<span role="img" aria-label="copy" style={{ fontSize: "0.8rem" }}>📋</span>}
                           >
                             Copy Command
-                          </Button>
+        </Button>
                         </Box>
                       </Box>
                     )}
