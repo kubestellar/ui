@@ -58,10 +58,6 @@ func getClientForBp() (*bpv1alpha1.ControlV1alpha1Client, error) {
 }
 
 // extractWorkloads gets a list of workloads affected by this BP
-// Update the extractWorkloads function in the second file (paste-2.txt)
-// This function is responsible for getting workloads from binding policies
-
-// extractWorkloads gets a list of workloads affected by this BP
 // Now includes both downsync resources and specific workloads
 // extractWorkloads gets a list of workloads affected by this BP
 func extractWorkloads(bp *v1alpha1.BindingPolicy) []string {
@@ -103,9 +99,6 @@ func extractWorkloads(bp *v1alpha1.BindingPolicy) []string {
 			}
 		}
 	}
-
-	// Note: We've removed the section that tried to access bp.Spec.Workloads
-	// since that field doesn't exist in the KubeStellar API
 
 	fmt.Printf("Debug - extractWorkloads - Extracted %d workloads: %v\n", len(workloads), workloads)
 	return workloads

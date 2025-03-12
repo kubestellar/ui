@@ -148,8 +148,6 @@ func GetAllBp(ctx *gin.Context) {
 }
 
 // CreateBp creates a new BindingPolicy
-// CreateBp creates a new BindingPolicy
-// CreateBp creates a new BindingPolicy
 func CreateBp(ctx *gin.Context) {
 	fmt.Printf("Debug - Starting CreateBp handler\n")
 	fmt.Printf("Debug - KUBECONFIG: %s\n", os.Getenv("KUBECONFIG"))
@@ -398,7 +396,6 @@ func CreateBp(ctx *gin.Context) {
 
 	// Extract workloads from stored data
 	workloads := []string{}
-	// 1. First add the downsync workloads
 	for i, apiGroup := range storedBP.APIGroups {
 		if i < len(storedBP.Resources) {
 			// Convert resource to lowercase for consistent handling
@@ -415,8 +412,6 @@ func CreateBp(ctx *gin.Context) {
 			}
 		}
 	}
-
-	// 2. Now add the specific workloads
 	for _, workload := range storedBP.SpecificWorkloads {
 		workloadDesc := fmt.Sprintf("Specific: %s/%s", workload.APIVersion, workload.Kind)
 		if workload.Name != "" {
@@ -684,8 +679,6 @@ func GetBpStatus(ctx *gin.Context) {
 			}
 		}
 
-		// Note: We've removed the section that tried to access bp.Spec.Workloads
-		// since that field doesn't exist in the KubeStellar API
 	}
 
 	// If we still don't have clusters or workloads, try to parse the stored rawYAML if available
