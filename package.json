@@ -26,7 +26,7 @@
     "@tanstack/react-query": "^5.67.1",
     "@tanstack/react-query-devtools": "^5.67.1",
     "@types/js-yaml": "^4.0.9",
-    "axios": "^1.7.9",
+    "axios": "^1.8.2",
     "dagre": "^0.8.5",
     "estimo": "^2.2.9",
     "js-yaml": "^4.1.0",
