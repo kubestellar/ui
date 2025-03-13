@@ -320,11 +320,6 @@ const Profile = () => {
                   textAlign: "center",
                   alignItems: "center",
                 }}>
-                  <img
-                    src={kube}
-                    alt="KubeStellar Small Logo"
-                    style={{ width: "140px", opacity: 0.7 }}
-                  />
                 </Box>
               </CardContent>
             </Card>
