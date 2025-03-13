@@ -14,7 +14,6 @@ import {
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import LoadingFallback from "./LoadingFallback";
-import kube from "../assets/kubestellar.png";
 import "../index.css";
 
 const Profile = () => {
