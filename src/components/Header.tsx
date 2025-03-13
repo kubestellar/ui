@@ -7,17 +7,19 @@ import { menu } from "./menu/data";
 import MenuItem from "./menu/MenuItem";
 import { api } from "../lib/api";
 import useClusterStore from "../stores/clusterStore";
+import { useHeaderQueries } from '../hooks/queries/useHeaderQueries';
+import LoadingFallback from './LoadingFallback';
 
 interface Context {
   name: string;
   cluster: string;
 }
 
-const Header = () => {
+const Header = ({ isLoading }: { isLoading: boolean }) => {
   const [isFullScreen, setIsFullScreen] = React.useState(true);
   const element = document.getElementById("root");
-  const [contexts, setContexts] = React.useState<Context[]>([]);
-  const [currentContext, setCurrentContext] = React.useState("");
+  const { useContexts } = useHeaderQueries();
+  const { data, error } = useContexts();
   const setSelectedCluster = useClusterStore((state) => state.setSelectedCluster)
   const setHasAvailableClusters = useClusterStore((state) => state.setHasAvailableClusters)
 
@@ -41,7 +43,6 @@ const Header = () => {
 
         console.log("Kubeflex contexts:", kubeflexContexts);
 
-        setContexts(kubeflexContexts);
         setHasAvailableClusters(kubeflexContexts.length > 0);
 
         let currentKubeflexContext = "";
@@ -52,7 +53,6 @@ const Header = () => {
         }
 
         console.log("Selected context:", currentKubeflexContext);
-        setCurrentContext(currentKubeflexContext);
         setSelectedCluster(currentKubeflexContext);
       })
       .catch((error) => {
@@ -72,9 +72,14 @@ const Header = () => {
 
   const handleClusterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newCluster = e.target.value;
-    setCurrentContext(newCluster);
     setSelectedCluster(newCluster || null);
   };
+
+  if (isLoading) return <LoadingFallback message="Loading contexts..." size="small" />;
+  if (error) return <div>Error loading contexts: {error.message}</div>;
+
+  const contexts = data?.contexts || [];
+  const currentContext = data?.currentContext || '';
 
   return (
     <div className="fixed z-[3] top-0 left-0 right-0 bg-base-100 w-full flex justify-between px-3 xl:px-4 py-3 xl:py-5 gap-4 xl:gap-0">

@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback,  } from "react";
-import { api } from "../lib/api";
+import { useState } from "react";
+import { useWDSQueries } from "../hooks/queries/useWDSQueries";
 import CreateOptions from "../components/CreateOptions";
 import DeploymentTable from "../components/DeploymentTable";
 import PieChartDisplay from "../components/PieChartDisplay";
@@ -23,38 +23,29 @@ export interface Workload {
 const COLORS = ["#28A745"];
 
 const WDS = () => {
-  const theme = useTheme((state) => state.theme)
-  const [workloads, setWorkloads] = useState<Workload[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const theme = useTheme((state) => state.theme);
+  const navigate = useNavigate();
+  
+  const { useWorkloads } = useWDSQueries();
+  const { data: workloads = [], isLoading, isError } = useWorkloads();
+
   const [showCreateOptions, setShowCreateOptions] = useState(false);
   const [activeOption, setActiveOption] = useState<string | null>("option1");
-  const navigate = useNavigate();
 
-  console.log(loading);
-  console.log(error);
-
-  const fetchWDSData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await api.get<Workload[]>("/api/wds/workloads");
-      if (Array.isArray(response.data)) {
-        setWorkloads(response.data);
-      } else {
-        throw new Error("Invalid data format received from server");
-      }
-      setError(null);
-    } catch (error) {
-      console.error("Error fetching WDS information:", error);
-      setError("Failed to fetch WDS workloads. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchWDSData();
-  }, [fetchWDSData]);
+  if (isLoading) return <LoadingFallback message="Loading WDS Deployments..." size="medium" />;
+  if (isError) {
+    return (
+      <div className="text-center p-4 text-red-600 dark:text-red-400">
+        <p>Failed to fetch WDS workloads. Please try again.</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="mt-4 px-4 py-2 bg-primary rounded-md text-white hover:bg-primary/90 transition-colors duration-200"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   const deployments = workloads.filter(
     (workload) => workload.kind === "Deployment"
@@ -75,19 +66,6 @@ const WDS = () => {
     }
   };
 
-  if (loading) return <LoadingFallback message="Loading Wds Deployments..." size="medium" />;
-  if (error) return (
-    <div className="text-center p-4 text-red-600 dark:text-red-400">
-      <p>{error}</p>
-      <button 
-        onClick={() => window.location.reload()} 
-        className="mt-4 px-4 py-2 bg-primary rounded-md text-white hover:bg-primary/90 transition-colors duration-200"
-      >
-        Retry
-      </button>
-    </div>
-  );
-
   return (
     <div className={`w-full p-4`}>
       <div className="flex justify-between items-center">
@@ -98,7 +76,7 @@ const WDS = () => {
         >
           <span className="text-[#4498FF]">WDS Workloads</span>
           <span className="ml-2 px-3 py-1 bg-primary/10 rounded-full text-sm">
-            {workloads?.length}
+            {workloads.length}
           </span>
         </h1>
 

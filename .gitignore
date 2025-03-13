@@ -136,6 +136,7 @@ bundle-stats.html
 
 backend/secret.yml
 backend/backend
+backend/vendor/
 
 
 # history  file

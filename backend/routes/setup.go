@@ -10,6 +10,7 @@ func SetupRoutes(router *gin.Engine) {
 	setupDeploymentRoutes(router)
 	setupServiceRoutes(router)
 	setupNamespaceRoutes(router)
-	setupBlueprintRoutes(router)
 	SetupAuthRoutes(router)
+	setupBindingPolicyRoutes(router)
+	SetupResourceRoutes(router)
 }
