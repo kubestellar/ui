@@ -45,8 +45,9 @@ func DeployHandler(c *gin.Context) {
 		return
 	}
 
-	// Extract dryRun flag from query parameters
+	// Extract dryRun and dryRunStrategy flags from query parameters
 	dryRun := c.Query("dryRun") == "true"
+	dryRunStrategy := c.Query("dryRunStrategy") // Can be "server" or "client"
 
 	// Store repo & folder path in Redis for future auto-deployments
 	redis.SetFilePath(request.FolderPath)
@@ -70,8 +71,8 @@ func DeployHandler(c *gin.Context) {
 		return
 	}
 
-	// Deploy with dryRun option
-	deploymentTree, err := k8s.DeployManifests(deployPath, dryRun)
+	// Deploy with dryRun and dryRunStrategy option
+	deploymentTree, err := k8s.DeployManifests(deployPath, dryRun, dryRunStrategy)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Deployment failed", "details": err.Error()})
 		return
@@ -81,6 +82,7 @@ func DeployHandler(c *gin.Context) {
 	if dryRun {
 		c.JSON(http.StatusOK, gin.H{
 			"message":         "Dry run successful. No changes applied.",
+			"dryRunStrategy":  dryRunStrategy,
 			"deployment_tree": deploymentTree,
 		})
 		return
@@ -125,16 +127,22 @@ func GitHubWebhookHandler(c *gin.Context) {
 		return
 	}
 
-	// Check for dry run parameter
+	// Extract dryRun and dryRunStrategy parameters
 	dryRun := c.Query("dryRun") == "true"
-	deploymentTree, err := k8s.DeployManifests(deployPath, dryRun)
+	dryRunStrategy := c.Query("dryRunStrategy") // Can be "server" or "client"
+
+	deploymentTree, err := k8s.DeployManifests(deployPath, dryRun, dryRunStrategy)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Deployment failed", "details": err.Error()})
 		return
 	}
 
 	if dryRun {
-		c.JSON(http.StatusOK, gin.H{"message": "Dry run successful", "deployment": deploymentTree})
+		c.JSON(http.StatusOK, gin.H{
+			"message":        "Dry run successful. No changes applied.",
+			"dryRunStrategy": dryRunStrategy,
+			"deployment":     deploymentTree,
+		})
 		return
 	}
 
