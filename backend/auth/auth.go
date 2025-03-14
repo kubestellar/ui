@@ -22,17 +22,17 @@ const (
 
 // Config struct to hold data from ConfigMap
 type Config struct {
-	JWTSecret   string `json:"jwt_secret"`
-	User        string `json:"user"`
-	Password    string `json:"password"`
-	Permissions string `json:"permissions"`
+	JWTSecret   string   `json:"jwt_secret"`
+	User        string   `json:"user"`
+	Password    string   `json:"password"`
+	Permissions []string `json:"permissions"`
 }
 
 // LoadK8sConfigMap checks if the ConfigMap exists, creates it if not, and returns its data.
 func LoadK8sConfigMap() (*Config, error) {
 	// We'll load the JWT secret from ConfigMap first, then initialize other configs
 	// This prevents generating a new random secret on each restart
-	
+
 	// Get the Kubernetes clientset
 	clientset, _, err := k8s.GetClientSetWithContext("its1")
 	if err != nil {
@@ -78,10 +78,10 @@ func LoadK8sConfigMap() (*Config, error) {
 	// Update JWT secret in environment to match the one from ConfigMap
 	// This ensures tokens remain valid after server restarts
 	jwtconfig.SetJWTSecret(configData.JWTSecret)
-	
+
 	// Now we can safely load other configs after ensuring JWT secret is set
 	jwtconfig.LoadConfig()
-	
+
 	log.Println("ConfigMap loaded successfully and JWT secret updated.")
 	return &configData, nil
 }
@@ -90,12 +90,12 @@ func LoadK8sConfigMap() (*Config, error) {
 func CreateConfigMap(clientset *kubernetes.Clientset) error {
 	// Get JWT secret from environment
 	jwtSecret := jwtconfig.GetJWTSecret()
-	
+
 	defaultConfig := Config{
 		JWTSecret:   jwtSecret, // Use JWT secret from environment
 		User:        "admin",
-		Password:    "admin",
-		Permissions: "read,write",
+		Password:    "",
+		Permissions: []string{"read", "write"},
 	}
 
 	log.Printf("Creating admin user with JWT secret from environment")
@@ -105,29 +105,29 @@ func CreateConfigMap(clientset *kubernetes.Clientset) error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal default config: %v", err)
 	}
-		configMap := &corev1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      ConfigMapName,
-				Namespace: Namespace,
-			},
-			Data: map[string]string{
-				"config": string(configDataBytes),
-			},
-		}
-		
-		_, err = clientset.CoreV1().ConfigMaps(Namespace).Create(context.TODO(), configMap, metav1.CreateOptions{})
-		if err != nil {
-			if errors.IsAlreadyExists(err) {
-				log.Println("ConfigMap already exists, skipping creation.")
-				return nil
-			}
-			return fmt.Errorf("error creating ConfigMap: %v", err)
-		}
-	
-		log.Println("ConfigMap created successfully with admin user.")
-		return nil
+	configMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      ConfigMapName,
+			Namespace: Namespace,
+		},
+		Data: map[string]string{
+			"config": string(configDataBytes),
+		},
 	}
-	
+
+	_, err = clientset.CoreV1().ConfigMaps(Namespace).Create(context.TODO(), configMap, metav1.CreateOptions{})
+	if err != nil {
+		if errors.IsAlreadyExists(err) {
+			log.Println("ConfigMap already exists, skipping creation.")
+			return nil
+		}
+		return fmt.Errorf("error creating ConfigMap: %v", err)
+	}
+
+	log.Println("ConfigMap created successfully with admin user.")
+	return nil
+}
+
 // ensureNamespaceExists checks if the namespace exists and creates it if it doesn't
 func ensureNamespaceExists(clientset *kubernetes.Clientset) error {
 	_, err := clientset.CoreV1().Namespaces().Get(context.TODO(), Namespace, metav1.GetOptions{})
