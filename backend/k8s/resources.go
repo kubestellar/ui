@@ -16,7 +16,7 @@ import (
 )
 
 // mapResourceToGVR maps resource types to their GroupVersionResource (GVR)
-func getGVR(discoveryClient discovery.DiscoveryInterface, resourceType string) (schema.GroupVersionResource, error) {
+func getGVR(discoveryClient discovery.DiscoveryInterface, resourceKind string) (schema.GroupVersionResource, error) {
 	resourceList, err := discoveryClient.ServerPreferredResources()
 	if err != nil {
 		return schema.GroupVersionResource{}, err
@@ -24,8 +24,8 @@ func getGVR(discoveryClient discovery.DiscoveryInterface, resourceType string) (
 
 	for _, resourceGroup := range resourceList {
 		for _, resource := range resourceGroup.APIResources {
-			// we are looking for the resourceType
-			if resource.Name == resourceType {
+			// we are looking for the resourceKind
+			if resource.Name == resourceKind {
 				gv, err := schema.ParseGroupVersion(resourceGroup.GroupVersion)
 				if err != nil {
 					return schema.GroupVersionResource{}, err
@@ -37,10 +37,10 @@ func getGVR(discoveryClient discovery.DiscoveryInterface, resourceType string) (
 	return schema.GroupVersionResource{}, fmt.Errorf("resource not found")
 }
 
-func containsClusterWideResourceType(resourceType string) bool {
+func containsClusterWideResourceType(resourceKind string) bool {
 	clusterWideResources := []string{"persistentvolumes", "nodes", "namespaces", "storageclasses"}
 	for _, r := range clusterWideResources {
-		if r == resourceType {
+		if r == resourceKind {
 			return true
 		}
 	}
@@ -54,17 +54,17 @@ func CreateResource(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	resourceType := c.Param("resourceType")
+	resourceKind := c.Param("resourceKind")
 	namespace := c.Param("namespace")
 	discoveryClient := clientset.Discovery()
-	gvr, err := getGVR(discoveryClient, resourceType)
+	gvr, err := getGVR(discoveryClient, resourceKind)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
 		return
 	}
 	var resource dynamic.ResourceInterface
-	isClusterWide := containsClusterWideResourceType(resourceType)
+	isClusterWide := containsClusterWideResourceType(resourceKind)
 	// cluster-wide resouces does not look for namespaces
 	if isClusterWide {
 		resource = dynamicClient.Resource(gvr)
@@ -119,12 +119,12 @@ func GetResource(c *gin.Context) {
 		return
 	}
 
-	resourceType := c.Param("resourceType")
+	resourceKind := c.Param("resourceKind")
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 
 	discoveryClient := clientset.Discovery()
-	gvr, err := getGVR(discoveryClient, resourceType)
+	gvr, err := getGVR(discoveryClient, resourceKind)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
@@ -132,7 +132,7 @@ func GetResource(c *gin.Context) {
 	}
 
 	var resource dynamic.ResourceInterface
-	isClusterWide := containsClusterWideResourceType(resourceType)
+	isClusterWide := containsClusterWideResourceType(resourceKind)
 	if isClusterWide {
 		resource = dynamicClient.Resource(gvr)
 	} else {
@@ -158,6 +158,53 @@ func GetResource(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
+// ListResources lists all resources of a given type in a namespace
+func ListResources(c *gin.Context) {
+	clientset, dynamicClient, err := GetClientSet()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	resourceKind := c.Param("resourceKind")
+	namespace := c.Param("namespace")
+
+	discoveryClient := clientset.Discovery()
+	gvr, err := getGVR(discoveryClient, resourceKind)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
+		return
+	}
+
+	var resource dynamic.ResourceInterface
+	isClusterWide := containsClusterWideResourceType(resourceKind)
+	if isClusterWide {
+		resource = dynamicClient.Resource(gvr)
+	} else {
+		resource = dynamicClient.Resource(gvr).Namespace(namespace)
+	}
+
+	// Retrieve list of resources
+	result, err := resource.List(c, v1.ListOptions{})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	format := c.Query("format")
+	if format == "yaml" || format == "yml" {
+		yamlData, err := yaml.Marshal(result)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to convert to YAML"})
+			return
+		}
+		c.Data(http.StatusOK, "application/x-yaml", yamlData)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
 // UpdateResource updates an existing Kubernetes resource
 func UpdateResource(c *gin.Context) {
 	clientset, dynamicClient, err := GetClientSet()
@@ -166,19 +213,19 @@ func UpdateResource(c *gin.Context) {
 		return
 	}
 
-	resourceType := c.Param("resourceType")
+	resourceKind := c.Param("resourceKind")
 	namespace := c.Param("namespace")
 	name := c.Param("name") // Extract resource name
 
 	discoveryClient := clientset.Discovery()
-	gvr, err := getGVR(discoveryClient, resourceType)
+	gvr, err := getGVR(discoveryClient, resourceKind)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
 		return
 	}
 	var resource dynamic.ResourceInterface
 
-	isClusterWide := containsClusterWideResourceType(resourceType)
+	isClusterWide := containsClusterWideResourceType(resourceKind)
 	if isClusterWide {
 		resource = dynamicClient.Resource(gvr)
 	} else {
@@ -212,18 +259,18 @@ func DeleteResource(c *gin.Context) {
 		return
 	}
 
-	resourceType := c.Param("resourceType")
+	resourceKind := c.Param("resourceKind")
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 
 	discoveryClient := clientset.Discovery()
-	gvr, err := getGVR(discoveryClient, resourceType)
+	gvr, err := getGVR(discoveryClient, resourceKind)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
 		return
 	}
 	var resource dynamic.ResourceInterface
-	isClusterWide := containsClusterWideResourceType(resourceType)
+	isClusterWide := containsClusterWideResourceType(resourceKind)
 	if isClusterWide {
 		resource = dynamicClient.Resource(gvr)
 	} else {
