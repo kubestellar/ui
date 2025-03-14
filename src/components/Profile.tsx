@@ -14,7 +14,6 @@ import {
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import LoadingFallback from "./LoadingFallback";
-import kube from "../assets/kubestellar.png";
 import "../index.css";
 
 const Profile = () => {
@@ -320,11 +319,6 @@ const Profile = () => {
                   textAlign: "center",
                   alignItems: "center",
                 }}>
-                  <img
-                    src={kube}
-                    alt="KubeStellar Small Logo"
-                    style={{ width: "140px", opacity: 0.7 }}
-                  />
                 </Box>
               </CardContent>
             </Card>
