@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -61,6 +62,7 @@ func DeployHandler(c *gin.Context) {
 	redis.SetFilePath(request.FolderPath)
 	redis.SetRepoURL(request.RepoURL)
 	redis.SetBranch(branch)
+	redis.SetGitToken(gitToken)
 
 	tempDir := fmt.Sprintf("/tmp/%d", time.Now().Unix())
 	cloneURL := request.RepoURL
@@ -102,13 +104,24 @@ func DeployHandler(c *gin.Context) {
 }
 
 func GitHubWebhookHandler(c *gin.Context) {
-	var request GitHubWebhookPayload
+	// Create a wrapper for the nested JSON structure
+	var webhookWrapper struct {
+		Payload string `json:"payload"`
+	}
 
-	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid webhook payload", "details": err.Error()})
+	if err := c.ShouldBindJSON(&webhookWrapper); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid webhook wrapper", "details": err.Error()})
 		return
 	}
 
+	// Parse the inner payload JSON string
+	var request GitHubWebhookPayload
+	if err := json.Unmarshal([]byte(webhookWrapper.Payload), &request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse webhook payload", "details": err.Error()})
+		return
+	}
+
+	// Get deployment configuration from Redis
 	folderPath, err := redis.GetFilePath()
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "No deployment configured for this repository"})
@@ -152,17 +165,25 @@ func GitHubWebhookHandler(c *gin.Context) {
 		return
 	}
 
+	// Get repository URL from webhook payload
 	repoUrl := request.Repository.CloneURL
 	tempDir := fmt.Sprintf("/tmp/%d", time.Now().Unix())
-	gitUsername := c.Query("git_username")
-	gitToken := c.Query("git_token")
+	
+	// Get access token from Redis
+	gitToken, _ := redis.GetGitToken()
 
-	if gitUsername != "" && gitToken != "" {
-		repoUrl = fmt.Sprintf("https://%s:%s@%s", gitUsername, gitToken, repoUrl[8:])
+	// Always use false for dryRun and empty string for dryRunStrategy
+	dryRun := false
+	dryRunStrategy := ""
+
+	// Clone the repository using token if available
+	cloneURL := repoUrl
+	if gitToken != "" {
+		cloneURL = fmt.Sprintf("https://x-access-token:%s@%s", gitToken, repoUrl[8:])
 	}
 
 	// Clone the specific branch
-	cmd := exec.Command("git", "clone", "-b", storedBranch, repoUrl, tempDir)
+	cmd := exec.Command("git", "clone", "-b", storedBranch, cloneURL, tempDir)
 	if err := cmd.Run(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to clone repo", "details": err.Error()})
 		return
@@ -179,17 +200,9 @@ func GitHubWebhookHandler(c *gin.Context) {
 		return
 	}
 
-	dryRun := c.Query("dryRun") == "true"
-	dryRunStrategy := c.Query("dryRunStrategy")
-
 	deploymentTree, err := k8s.DeployManifests(deployPath, dryRun, dryRunStrategy)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Deployment failed", "details": err.Error()})
-		return
-	}
-
-	if dryRun {
-		c.JSON(http.StatusOK, gin.H{"message": "Dry run successful. No changes applied.", "dryRunStrategy": dryRunStrategy, "deployment": deploymentTree})
 		return
 	}
 

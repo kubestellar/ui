@@ -95,3 +95,20 @@ func GetBranch() (string, error) {
 	}
 	return val, nil
 }
+
+func SetGitToken(token string) error {
+	if err := rdb.Set(ctx, "gitToken", token, 0).Err(); err != nil {
+		return fmt.Errorf("failed to set gitToken: %v", err)
+	}
+	return nil
+}
+
+func GetGitToken() (string, error) {
+	val, err := rdb.Get(ctx, "gitToken").Result()
+	if err == redis.Nil {
+		return "", nil // Key not found
+	} else if err != nil {
+		return "", fmt.Errorf("failed to get gitToken: %v", err)
+	}
+	return val, nil
+}
