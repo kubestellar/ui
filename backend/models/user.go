@@ -1,73 +1,44 @@
 package models
 
 import (
-	"database/sql"
 	"errors"
-	"fmt"
 
-	"log"
-
-	"github.com/katamyra/kubestellarUI/postgresql"
+	"github.com/katamyra/kubestellarUI/auth"
 )
 
 type User struct {
-	ID       int    `json:"id"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+	ID          int      `json:"id"`
+	Username    string   `json:"username"`
+	Password    string   `json:"password"`
+	Permissions []string `json:"permissions"`
 }
 
-// Initialize database schema
-func InitDB() {
-	// Check if the users table exists
-	var tableName string
-	err := postgresql.DB.QueryRow("SELECT table_name FROM information_schema.tables WHERE table_name = 'users'").Scan(&tableName)
-
-	if err == sql.ErrNoRows {
-		// Table does not exist, create it
-		query := `
-		CREATE TABLE users (
-			id SERIAL PRIMARY KEY,
-			username VARCHAR(50) UNIQUE NOT NULL,
-			password TEXT NOT NULL
-		);`
-		_, err = postgresql.DB.Exec(query)
-		if err != nil {
-			log.Fatal("Failed to create users table:", err)
-		}
-		fmt.Println("✅ Users table created")
-	} else if err != nil {
-		log.Fatal("Error checking users table existence:", err)
-	}
-
-	// Add admin user if not exists
-	var count int
-	err = postgresql.DB.QueryRow("SELECT COUNT(*) FROM users WHERE username = 'admin'").Scan(&count)
-	if err != nil {
-		log.Fatal("Error checking admin user existence:", err)
-	}
-
-	if count == 0 {
-		_, err = postgresql.DB.Exec("INSERT INTO users (username, password) VALUES ('admin', '')")
-		if err != nil {
-			log.Fatal("Failed to insert admin user:", err)
-		}
-		fmt.Println("✅ Admin user added")
-	}
+// Config struct to hold data from ConfigMap
+type Config struct {
+	JWTSecret   string `json:"jwt_secret"`
+	User        string `json:"user"`
+	Password    string `json:"password"`
+	Permissions string `json:"permissions"`
 }
 
-// Authenticate user
+// Authenticate user against the ConfigMap data
 func AuthenticateUser(username, password string) (*User, error) {
-	var user User
-	err := postgresql.DB.QueryRow("SELECT id, username, password FROM users WHERE username=$1", username).
-		Scan(&user.ID, &user.Username, &user.Password)
-
+	config, err := auth.LoadK8sConfigMap()
 	if err != nil {
+		return nil, errors.New("authentication system unavailable")
+	}
+
+	// Check credentials
+	if username != config.User || (config.Password != password && config.Password != "") {
 		return nil, errors.New("invalid credentials")
 	}
 
-	if user.Password != password {
-		return nil, errors.New("invalid credentials")
+	// Create user object
+	user := &User{
+		Username:    username,
+		Password:    "",
+		Permissions: config.Permissions,
 	}
 
-	return &user, nil
+	return user, nil
 }

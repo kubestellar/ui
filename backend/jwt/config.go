@@ -23,3 +23,7 @@ func GetJWTSecret() string {
 	}
 	return secret
 }
+
+func SetJWTSecret(secret string) {
+	os.Setenv("JWT_SECRET", secret)
+}
