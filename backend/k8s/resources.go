@@ -123,8 +123,6 @@ func GetResource(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 
-	fmt.Println(resourceKind)
-	
 	discoveryClient := clientset.Discovery()
 	gvr, err := getGVR(discoveryClient, resourceKind)
 
