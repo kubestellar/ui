@@ -39,7 +39,6 @@ func main() {
 	routes.SetupRoutes(router)
 	redis.InitRedis()
 
-
 	router.POST("api/deploy", api.DeployHandler)
 	router.POST("api/webhook", api.GitHubWebhookHandler)
 
