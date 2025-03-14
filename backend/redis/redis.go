@@ -77,7 +77,6 @@ func GetRepoURL() (string, error) {
 	return val, nil
 }
 
-
 func SetBranch(branch string) error {
 	if err := rdb.Set(ctx,
 		"branch", branch, 0).Err(); err != nil {

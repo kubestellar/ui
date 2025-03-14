@@ -25,7 +25,7 @@ type GitHubWebhookPayload struct {
 	Repository struct {
 		CloneURL string `json:"clone_url"`
 	} `json:"repository"`
-	Ref string `json:"ref"` // Format: "refs/heads/main"
+	Ref     string `json:"ref"` // Format: "refs/heads/main"
 	Commits []struct {
 		ID       string   `json:"id"`
 		Message  string   `json:"message"`
@@ -144,7 +144,7 @@ func GitHubWebhookHandler(c *gin.Context) {
 	// Check if any changes occurred in the specified folder path
 	relevantChanges := false
 	var changedFiles []string
-	
+
 	// If folderPath is empty, any change is relevant
 	if folderPath == "" {
 		relevantChanges = len(request.Commits) > 0
@@ -168,7 +168,7 @@ func GitHubWebhookHandler(c *gin.Context) {
 	// Get repository URL from webhook payload
 	repoUrl := request.Repository.CloneURL
 	tempDir := fmt.Sprintf("/tmp/%d", time.Now().Unix())
-	
+
 	// Get access token from Redis
 	gitToken, _ := redis.GetGitToken()
 
@@ -207,8 +207,8 @@ func GitHubWebhookHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Deployment successful",
-		"deployment": deploymentTree,
+		"message":       "Deployment successful",
+		"deployment":    deploymentTree,
 		"changed_files": changedFiles,
 	})
 }
