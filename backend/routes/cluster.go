@@ -28,7 +28,8 @@ func setupClusterRoutes(router *gin.Engine) {
 	// API for generating command
 	router.POST("/clusters/manual/generateCommand", handlers.GenerateCommandHandler)
 
-	// Endpoint to get available clusters from kubeconfig.
+	router.GET("/clusters/watch-csr", handlers.GetCSRsExecHandler)
+
 	router.GET("/api/clusters/available", handlers.GetAvailableClustersHandler)
 
 }
