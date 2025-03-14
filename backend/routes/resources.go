@@ -12,9 +12,9 @@ func SetupResourceRoutes(router *gin.Engine) {
 	// TODO: add logic to check - is this is core API ? or not and based on this make request on it
 	api := router.Group("/api")
 	{
-		api.POST("/:resourceType/:namespace", k8s.CreateResource)         // Create a new resource
-		api.GET("/:resourceType/:namespace/:name", k8s.GetResource)       // Get a resource
-		api.PUT("/:resourceType/:namespace/:name", k8s.UpdateResource)    // Update a resource
-		api.DELETE("/:resourceType/:namespace/:name", k8s.DeleteResource) // Delete a resource
+		api.POST("/:resourceKind/:namespace", k8s.CreateResource)         // Create a new resource
+		api.GET("/:resourceKind/:namespace/:name", k8s.GetResource)       // Get a resource
+		api.PUT("/:resourceKind/:namespace/:name", k8s.UpdateResource)    // Update a resource
+		api.DELETE("/:resourceKind/:namespace/:name", k8s.DeleteResource) // Delete a resource
 	}
 }
