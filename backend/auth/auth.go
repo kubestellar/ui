@@ -30,11 +30,11 @@ type Config struct {
 
 // LoadK8sConfigMap checks if the ConfigMap exists, creates it if not, and returns its data.
 func LoadK8sConfigMap() (*Config, error) {
-	// Load environment variables
-	jwtconfig.LoadConfig()
+	// We'll load the JWT secret from ConfigMap first, then initialize other configs
+	// This prevents generating a new random secret on each restart
 	
 	// Get the Kubernetes clientset
-	clientset, _, err := k8s.GetClientSet()
+	clientset, _, err := k8s.GetClientSetWithContext("its1")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get Kubernetes clientset: %v", err)
 	}
@@ -75,7 +75,14 @@ func LoadK8sConfigMap() (*Config, error) {
 		return nil, fmt.Errorf("failed to unmarshal ConfigMap data: %v", err)
 	}
 
-	log.Println("ConfigMap loaded successfully.")
+	// Update JWT secret in environment to match the one from ConfigMap
+	// This ensures tokens remain valid after server restarts
+	jwtconfig.SetJWTSecret(configData.JWTSecret)
+	
+	// Now we can safely load other configs after ensuring JWT secret is set
+	jwtconfig.LoadConfig()
+	
+	log.Println("ConfigMap loaded successfully and JWT secret updated.")
 	return &configData, nil
 }
 
