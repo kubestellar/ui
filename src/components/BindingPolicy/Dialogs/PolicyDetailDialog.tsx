@@ -16,6 +16,13 @@ import Editor from "@monaco-editor/react";
 import ContentCopy from "@mui/icons-material/ContentCopy";
 import useTheme from "../../../stores/themeStore";
 
+interface PolicyCondition {
+  type: string;
+  status: string;
+  reason?: string;
+  message?: string;
+}
+
 interface PolicyDetailDialogProps {
   open: boolean;
   onClose: () => void;
@@ -64,9 +71,9 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
           <Box display="flex" alignItems="center" gap={2}>
             <Typography
               variant="h6"
-              className={isDarkTheme ? "text-white" : ""}
+              className={isDarkTheme ? "text-white" : "text-black"}
             >
-              {policy.name}
+              {policy.name} 
             </Typography>
             <Chip
               label={policy.status}
@@ -79,9 +86,10 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
           <Button
             onClick={() => onEdit(policy)}
             sx={{
-              color: isDarkTheme ? "gray.300" : "gray.600",
+              color: isDarkTheme ? "#fff" : "text.primary",
               "&:hover": {
-                color: isDarkTheme ? "white" : "gray.800",
+                color: isDarkTheme ? "#fff" : "text.primary",
+                opacity: 0.8
               },
             }}
           >
@@ -106,14 +114,14 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
                 p: 2,
                 height: "100%",
                 backgroundColor: isDarkTheme ? "#0f172a" : "#fff",
-                color: isDarkTheme ? "#fff" : "inherit",
+                color: isDarkTheme ? "#fff" : "text.primary",
               }}
             >
               <Typography
                 variant="subtitle1"
                 fontWeight="bold"
                 gutterBottom
-                className={isDarkTheme ? "text-white" : ""}
+                sx={{ color: isDarkTheme ? "#fff" : "text.primary" }}
               >
                 Policy Information
               </Typography>
@@ -121,51 +129,51 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
                 <Box>
                   <Typography
                     variant="body2"
-                    className={isDarkTheme ? "text-gray-400" : "text-gray-600"}
+                    sx={{ color: isDarkTheme ? "rgba(255,255,255,0.7)" : "text.secondary" }}
                   >
                     Created
                   </Typography>
-                  <Typography className={isDarkTheme ? "text-white" : ""}>
+                  <Typography sx={{ color: isDarkTheme ? "#fff" : "text.primary" }}>
                     {policy.creationDate}
                   </Typography>
                 </Box>
                 <Box>
                   <Typography
                     variant="body2"
-                    className={isDarkTheme ? "text-gray-400" : "text-gray-600"}
+                    sx={{ color: isDarkTheme ? "rgba(255,255,255,0.7)" : "text.secondary" }}
                   >
                     Last Modified
                   </Typography>
-                  <Typography className={isDarkTheme ? "text-white" : ""}>
+                  <Typography sx={{ color: isDarkTheme ? "#fff" : "text.primary" }}>
                     {policy.lastModifiedDate || "Not available"}
                   </Typography>
                 </Box>
                 <Box>
                   <Typography
                     variant="body2"
-                    className={isDarkTheme ? "text-gray-400" : "text-gray-600"}
+                    sx={{ color: isDarkTheme ? "rgba(255,255,255,0.7)" : "text.secondary" }}
                   >
                     Binding Mode
                   </Typography>
-                  <Typography className={isDarkTheme ? "text-white" : ""}>
+                  <Typography sx={{ color: isDarkTheme ? "#fff" : "text.primary" }}>
                     {bindingMode}
                   </Typography>
                 </Box>
                 <Box>
                   <Typography
                     variant="body2"
-                    className={isDarkTheme ? "text-gray-400" : "text-gray-600"}
+                    sx={{ color: isDarkTheme ? "rgba(255,255,255,0.7)" : "text.secondary" }}
                   >
                     Namespace
                   </Typography>
-                  <Typography className={isDarkTheme ? "text-white" : ""}>
+                  <Typography sx={{ color: isDarkTheme ? "#fff" : "text.primary" }}>
                     {policy.namespace || "default"}
                   </Typography>
                 </Box>
                 <Box>
                   <Typography
                     variant="body2"
-                    className={isDarkTheme ? "text-gray-400" : "text-gray-600"}
+                    sx={{ color: isDarkTheme ? "rgba(255,255,255,0.7)" : "text.secondary" }}
                   >
                     Clusters ({clusterNames.length})
                   </Typography>
@@ -187,7 +195,12 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
                         />
                       ))
                     ) : (
-                      <Typography color="text.secondary" fontSize="0.875rem">
+                      <Typography 
+                        sx={{ 
+                          fontSize: "0.875rem",
+                          color: isDarkTheme ? "rgba(255, 255, 255, 0.99)" : "text.secondary"
+                        }}
+                      >
                         No specific clusters defined
                       </Typography>
                     )}
@@ -196,7 +209,7 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
                 <Box>
                   <Typography
                     variant="body2"
-                    className={isDarkTheme ? "text-gray-400" : "text-gray-600"}
+                    sx={{ color: isDarkTheme ? "rgba(255,255,255,0.7)" : "text.secondary" }}
                   >
                     Workloads
                   </Typography>
@@ -218,7 +231,12 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
                         />
                       ))
                     ) : (
-                      <Typography color="text.secondary" fontSize="0.875rem">
+                      <Typography 
+                        sx={{ 
+                          fontSize: "0.875rem",
+                          color: isDarkTheme ? "rgba(255,255,255,0.7)" : "text.secondary"
+                        }}
+                      >
                         No workloads defined
                       </Typography>
                     )}
@@ -227,7 +245,7 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
                 <Box>
                   <Typography
                     variant="body2"
-                    className={isDarkTheme ? "text-gray-400" : "text-gray-600"}
+                    sx={{ color: isDarkTheme ? "rgba(255,255,255,0.7)" : "text.secondary" }}
                   >
                     Status
                   </Typography>
@@ -255,7 +273,7 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
                       Conditions
                     </Typography>
                     <Box sx={{ mt: 1 }}>
-                      {policy.conditions.map((condition, index) => (
+                      {policy.conditions.map((condition: PolicyCondition, index: number) => (
                         <Box key={index} sx={{ mb: 1 }}>
                           <Typography
                             variant="body2"
@@ -321,11 +339,12 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
                 <Button
                   size="small"
                   startIcon={<ContentCopy />}
-                  onClick={() => navigator.clipboard.writeText(policy.yaml)}
+                  onClick={() => navigator.clipboard.writeText(policy.yaml || '')}
                   sx={{
-                    color: isDarkTheme ? "gray.300" : "gray.600",
+                    color: isDarkTheme ? "#fff" : "text.primary",
                     "&:hover": {
-                      color: isDarkTheme ? "white" : "gray.800",
+                      color: isDarkTheme ? "#fff" : "text.primary",
+                      opacity: 0.8
                     },
                   }}
                 >
@@ -365,7 +384,7 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
           borderColor: "divider",
         }}
       >
-        <Button onClick={onClose} className={isDarkTheme ? "text-white" : ""}>
+        <Button onClick={onClose} sx={{ color: isDarkTheme ? "#fff" : "text.primary" }}>
           Close
         </Button>
       </DialogActions>

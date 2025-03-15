@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/katamyra/kubestellarUI/log"
 	"github.com/kubestellar/kubestellar/api/control/v1alpha1"
@@ -14,51 +15,111 @@ import (
 	"k8s.io/client-go/util/homedir"
 )
 
-// Utility functions for Handlers
+// DefaultWDSContext is the default context to use for the workload distribution service
+const DefaultWDSContext = "kind-kubeflex"
+
+// clientCache caches the BP client to avoid recreating it for each request
+var (
+	clientCache     *bpv1alpha1.ControlV1alpha1Client
+	clientCacheLock sync.Mutex
+)
 
 // getClientForBp creates a new client for BindingPolicy operations
 func getClientForBp() (*bpv1alpha1.ControlV1alpha1Client, error) {
+	clientCacheLock.Lock()
+	defer clientCacheLock.Unlock()
+
+	// Return cached client if available
+	if clientCache != nil {
+		return clientCache, nil
+	}
+
+	// Try to get context from environment variable first
+	wdsContext := os.Getenv("wds_context")
+
+	// If not set in environment, use the default value
+	if wdsContext == "" {
+		wdsContext = DefaultWDSContext
+		log.LogInfo("wds_context not set, using default", zap.String("context", wdsContext))
+	} else {
+		log.LogDebug("Using wds_context from environment", zap.String("context", wdsContext))
+	}
+
+	// Get kubeconfig path
 	kubeconfig := os.Getenv("KUBECONFIG")
 	if kubeconfig == "" {
 		kubeconfig = filepath.Join(homedir.HomeDir(), ".kube", "config")
 	}
-	log.LogDebug("creating client For BP")
-	log.LogDebug("", zap.String("kubeconfig path: ", kubeconfig))
+	log.LogDebug("Creating client for BP", zap.String("kubeconfig path", kubeconfig))
 
+	// Load the kubeconfig file
 	config, err := clientcmd.LoadFromFile(kubeconfig)
 	if err != nil {
 		log.LogError("Failed to load kubeconfig", zap.String("err", err.Error()))
 		return nil, err
 	}
 
-	wds_ctx := os.Getenv("wds_context")
-	if wds_ctx == "" {
-		return nil, fmt.Errorf("env var wds_context not set")
-	}
-	log.LogDebug("", zap.String("wds_contex: ", wds_ctx))
+	// Make sure the specified context exists
+	if _, exists := config.Contexts[wdsContext]; !exists {
+		// If the specified context doesn't exist, try to find any kubestellar or kubeflex context
+		found := false
+		for contextName := range config.Contexts {
+			if containsAny(contextName, []string{"kubestellar", "kubeflex"}) {
+				wdsContext = contextName
+				found = true
+				log.LogInfo("Using available kubestellar/kubeflex context", zap.String("context", wdsContext))
+				break
+			}
+		}
 
+		// If still not found, use the current context
+		if !found && config.CurrentContext != "" {
+			wdsContext = config.CurrentContext
+			log.LogInfo("Using current context", zap.String("context", wdsContext))
+		}
+
+		// If we still don't have a valid context, return an error
+		if _, exists := config.Contexts[wdsContext]; !exists {
+			return nil, fmt.Errorf("no valid Kubernetes context found for KubeStellar operations")
+		}
+	}
+
+	// Set config overrides with our determined context
 	overrides := &clientcmd.ConfigOverrides{
-		CurrentContext: wds_ctx,
+		CurrentContext: wdsContext,
 	}
 	cconfig := clientcmd.NewDefaultClientConfig(*config, overrides)
 
+	// Get REST config
 	restcnfg, err := cconfig.ClientConfig()
 	if err != nil {
-		log.LogError("failed to get rest config", zap.String("error", err.Error()))
+		log.LogError("Failed to get rest config", zap.String("error", err.Error()))
 		return nil, err
 	}
 
+	// Create client
 	c, err := bpv1alpha1.NewForConfig(restcnfg)
 	if err != nil {
-		log.LogError("failed to create bp client", zap.String("error", err.Error()))
+		log.LogError("Failed to create bp client", zap.String("error", err.Error()))
 		return nil, err
 	}
+
+	// Cache the client for future use
+	clientCache = c
 
 	return c, nil
 }
 
-// extractWorkloads gets a list of workloads affected by this BP
-// Now includes both downsync resources and specific workloads
+// Helper function to check if a string contains any of the given substrings
+func containsAny(s string, substrings []string) bool {
+	for _, substr := range substrings {
+		if strings.Contains(s, substr) {
+			return true
+		}
+	}
+	return false
+}
+
 // extractWorkloads gets a list of workloads affected by this BP
 func extractWorkloads(bp *v1alpha1.BindingPolicy) []string {
 	workloads := []string{}

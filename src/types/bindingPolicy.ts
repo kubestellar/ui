@@ -14,21 +14,45 @@ export interface BindingPolicyInfo {
     workloadList?: string[];
     creationDate: string;
     lastModifiedDate?: string;
-    status: "Active" | "Inactive" | "Pending";
-    yaml: string;
-    bindingMode?: string;
-    namespace?: string;
-    conditions?: BindingPolicyCondition[] | null;
+    status: 'Active' | 'Inactive' | 'Pending';
+    bindingMode: string;
+    namespace: string;
+    conditions?: BindingPolicyCondition[];
+    yaml?: string;
+    description?: string;
 }
 
 export interface ManagedCluster {
     name: string;
     labels: Record<string, string>;
     status: string;
+    context?: string;
+    creationTime?: string;
+    location?: string;
+    provider?: string;
+    version?: string;
+    capacity?: Record<string, string | number>;
+    description?: string;
+    metrics?: {
+        cpu: string;
+        memory: string;
+        storage: string;
+    };
 }
 
 export interface Workload {
     name: string;
+    type: string;
     namespace: string;
+    creationTime?: string;
     labels: Record<string, string>;
+    status?: string;
+    replicas?: number;
+    selector?: Record<string, string>;
+    apiVersion?: string;
+    description?: string;
+}
+
+export interface BindingPolicyFilter {
+    status?: "Active" | "Inactive" | "Pending";
 }

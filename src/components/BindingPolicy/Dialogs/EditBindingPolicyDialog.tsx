@@ -29,16 +29,16 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
   onSave,
   policy,
 }) => {
-  const [editorContent, setEditorContent] = useState<string>(policy.yaml);
-  const [policyName, setPolicyName] = useState<string>(policy.name);
+  const [editorContent, setEditorContent] = useState<string>(policy.yaml || "");
+  const [policyName, setPolicyName] = useState<string>(policy.name || "");
   const [error, setError] = useState<string>("");
   const [showUnsavedChanges, setShowUnsavedChanges] = useState(false);
   const theme = useTheme((state) => state.theme)
   const isDarkTheme = theme === "dark";
 
   useEffect(() => {
-    setEditorContent(policy.yaml);
-    setPolicyName(policy.name);
+    setEditorContent(policy.yaml || "");
+    setPolicyName(policy.name || "");
   }, [policy]);
 
   const validateYaml = (content: string): boolean => {
