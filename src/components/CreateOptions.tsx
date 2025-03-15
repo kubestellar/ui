@@ -19,6 +19,7 @@ import {
   FormControl,
   InputLabel,
 } from "@mui/material";
+import axios from "axios"; // Added for TreeView's deployment logic
 import useTheme from "../stores/themeStore";
 import { useWDSQueries } from "../hooks/queries/useWDSQueries";
 import { toast } from "react-hot-toast";
@@ -41,10 +42,10 @@ const CreateOptions = ({
     open: false,
     message: "",
     severity: "success",
-});
+  });
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const theme = useTheme((state) => state.theme)
+  const theme = useTheme((state) => state.theme);
 
   const [formData, setFormData] = useState({
     appName: "",
@@ -61,7 +62,7 @@ const CreateOptions = ({
     value: "",
     imagePullRequest: "",
     githuburl: "",
-    path: ""
+    path: "",
   });
 
   const { useCreateWorkload } = useWDSQueries();
@@ -172,76 +173,81 @@ const CreateOptions = ({
     }
   };
 
+  // Updated handleDeploy using TreeView's logic
   const handleDeploy = async () => {
     if (!formData.githuburl || !formData.path) {
       setSnackbar({
         open: true,
-        message: "Please fill in both fields.",
+        message: "Please fill both GitHub URL and Path fields!",
         severity: "error",
       });
       return;
     }
 
     setLoading(true);
-  
-    const requestData = {
-      url: formData.githuburl,
-      path: formData.path,
-    };
 
     try {
-      const response = await fetch("http://localhost:4000/api/wds/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestData),
+      const response = await axios.post("http://localhost:4000/api/deploy", {
+        repo_url: formData.githuburl,
+        folder_path: formData.path,
       });
 
-      const result = await response.json();
-      console.log(result);
-      
-      if (response.ok) {
-        showSnackbar(`Deployment successfully!` , "success");
-          setFormData((prevState) => ({
-            ...prevState, 
-            githuburl: "", 
-            path: "", 
-          }))
-  
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-  
-        // handleCancel();
-      } else {
-        if (response.status === 409 || response.status === 400 || response.status === 500) {
-          showSnackbar(`Deployment already exists` , "error");
-        } else {
-          showSnackbar(`Deployment failed. Please try again.` , "error");
+      console.log("Deploy response:", response);
 
-        }
+      if (response.status === 200) {
+        setSnackbar({
+          open: true,
+          message: "Deployed successfully!",
+          severity: "success",
+        });
+        setFormData({ ...formData, githuburl: "", path: "" });
+        setTimeout(() => window.location.reload(), 4000); // Matches TreeView's snackbar duration
+      } else {
+        throw new Error("Unexpected response status: " + response.status);
       }
-    } catch (error) {
-      console.log(error);
-      showSnackbar(`An error occurred while creating the deployment.` , "error");
+    } catch (error: unknown) {
+      const err = error as any; // Type assertion for simplicity
+      console.error("Deploy error:", err);
+
+      if (err.response) {
+        if (err.response.status === 500) {
+          setSnackbar({
+            open: true,
+            message: "Deploy already exists!",
+            severity: "error",
+          });
+        } else if (err.response.status === 409) {
+          setSnackbar({
+            open: true,
+            message: "Conflict error: Deployment already in progress!",
+            severity: "error",
+          });
+        } else {
+          setSnackbar({
+            open: true,
+            message: `Deployment failed! (${err.response.status})`,
+            severity: "error",
+          });
+        }
+      } else {
+        setSnackbar({
+          open: true,
+          message: "Deployment failed due to network error!",
+          severity: "error",
+        });
+      }
     } finally {
       setLoading(false);
+      // Removed handleCancel() to keep UI intact as per request
     }
   };
 
-  const handleCancel = () => {
+  const handleCancelClick = () => {
     setSelectedFile(null); // Clear file selection
     setError(""); // Clear error messages
     setActiveOption(null); // Close the modal
+    onCancel(); // Call parent cancel function
   };
-
-  const showSnackbar = (message: string, severity: "success" | "error") => {
-    console.log("Snackbar Triggered:", message, severity);
-    setSnackbar({ open: true, message, severity });
-  };
-  
-  
 
   return (
     <>
@@ -335,7 +341,7 @@ const CreateOptions = ({
                     />
 
                   <DialogActions>
-                    <Button onClick={handleCancel}>Cancel</Button>
+                    <Button onClick={handleCancelClick}>Cancel</Button>
                     <Button
                       variant="contained"
                       onClick={handleRawUpload}
@@ -396,7 +402,7 @@ const CreateOptions = ({
                   </Box>
 
                   <DialogActions>
-                    <Button onClick={handleCancel}>Cancel</Button>
+                    <Button onClick={handleCancelClick}>Cancel</Button>
                     <Button
                       variant="contained"
                       onClick={handleFileUpload}
@@ -453,7 +459,7 @@ const CreateOptions = ({
 
                   {/* Deploy and Cancel Buttons at the Bottom */}
                   <DialogActions>
-                    <Button onClick={handleCancel} sx={{ color: theme === "dark" ? "white" : "black" }}>
+                    <Button onClick={handleCancelClick} sx={{ color: theme === "dark" ? "white" : "black" }}>
                       Cancel
                     </Button>
                     <Button variant="contained" onClick={handleDeploy} disabled={loading}>
