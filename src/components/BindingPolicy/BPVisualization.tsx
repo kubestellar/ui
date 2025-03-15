@@ -85,7 +85,7 @@ const FlowControls: React.FC<FlowControlsProps> = ({ theme, onLayoutChange }) =>
   };
 
   return (
-    <Panel position="top-right">
+    <Panel position="top-right" style={{ zIndex: 10, marginTop:"8rem"}}>
       <Box 
         sx={{
           p: 1,
