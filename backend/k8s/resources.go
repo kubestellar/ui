@@ -16,10 +16,10 @@ import (
 )
 
 // mapResourceToGVR maps resource types to their GroupVersionResource (GVR)
-func getGVR(discoveryClient discovery.DiscoveryInterface, resourceKind string) (schema.GroupVersionResource, error) {
+func getGVR(discoveryClient discovery.DiscoveryInterface, resourceKind string) (schema.GroupVersionResource, bool, error) {
 	resourceList, err := discoveryClient.ServerPreferredResources()
 	if err != nil {
-		return schema.GroupVersionResource{}, err
+		return schema.GroupVersionResource{}, false, err
 	}
 
 	for _, resourceGroup := range resourceList {
@@ -28,23 +28,14 @@ func getGVR(discoveryClient discovery.DiscoveryInterface, resourceKind string) (
 			if resource.Name == resourceKind {
 				gv, err := schema.ParseGroupVersion(resourceGroup.GroupVersion)
 				if err != nil {
-					return schema.GroupVersionResource{}, err
+					return schema.GroupVersionResource{}, false, err
 				}
-				return schema.GroupVersionResource{Group: gv.Group, Version: gv.Version, Resource: resource.Name}, nil
+				isNamespaced := resource.Namespaced
+				return schema.GroupVersionResource{Group: gv.Group, Version: gv.Version, Resource: resource.Name}, isNamespaced, nil
 			}
 		}
 	}
-	return schema.GroupVersionResource{}, fmt.Errorf("resource not found")
-}
-
-func containsClusterWideResourceType(resourceKind string) bool {
-	clusterWideResources := []string{"persistentvolumes", "nodes", "namespaces", "storageclasses"}
-	for _, r := range clusterWideResources {
-		if r == resourceKind {
-			return true
-		}
-	}
-	return false
+	return schema.GroupVersionResource{}, false, fmt.Errorf("resource not found")
 }
 
 // CreateResource creates a Kubernetes resource
@@ -57,19 +48,19 @@ func CreateResource(c *gin.Context) {
 	resourceKind := c.Param("resourceKind")
 	namespace := c.Param("namespace")
 	discoveryClient := clientset.Discovery()
-	gvr, err := getGVR(discoveryClient, resourceKind)
+	gvr, isNamespaced, err := getGVR(discoveryClient, resourceKind)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
 		return
 	}
 	var resource dynamic.ResourceInterface
-	isClusterWide := containsClusterWideResourceType(resourceKind)
+
 	// cluster-wide resouces does not look for namespaces
-	if isClusterWide {
-		resource = dynamicClient.Resource(gvr)
-	} else {
+	if isNamespaced {
 		resource = dynamicClient.Resource(gvr).Namespace(namespace)
+	} else {
+		resource = dynamicClient.Resource(gvr)
 	}
 	var resourceData map[string]interface{}
 
@@ -124,7 +115,7 @@ func GetResource(c *gin.Context) {
 	name := c.Param("name")
 
 	discoveryClient := clientset.Discovery()
-	gvr, err := getGVR(discoveryClient, resourceKind)
+	gvr, isNamespaced, err := getGVR(discoveryClient, resourceKind)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
@@ -132,11 +123,10 @@ func GetResource(c *gin.Context) {
 	}
 
 	var resource dynamic.ResourceInterface
-	isClusterWide := containsClusterWideResourceType(resourceKind)
-	if isClusterWide {
-		resource = dynamicClient.Resource(gvr)
-	} else {
+	if isNamespaced {
 		resource = dynamicClient.Resource(gvr).Namespace(namespace)
+	} else {
+		resource = dynamicClient.Resource(gvr)
 	}
 	result, err := resource.Get(c, name, v1.GetOptions{})
 	if err != nil {
@@ -170,18 +160,17 @@ func ListResources(c *gin.Context) {
 	namespace := c.Param("namespace")
 
 	discoveryClient := clientset.Discovery()
-	gvr, err := getGVR(discoveryClient, resourceKind)
+	gvr, isNamespaced, err := getGVR(discoveryClient, resourceKind)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
 		return
 	}
 
 	var resource dynamic.ResourceInterface
-	isClusterWide := containsClusterWideResourceType(resourceKind)
-	if isClusterWide {
-		resource = dynamicClient.Resource(gvr)
-	} else {
+	if isNamespaced {
 		resource = dynamicClient.Resource(gvr).Namespace(namespace)
+	} else {
+		resource = dynamicClient.Resource(gvr)
 	}
 
 	// Retrieve list of resources
@@ -218,18 +207,17 @@ func UpdateResource(c *gin.Context) {
 	name := c.Param("name") // Extract resource name
 
 	discoveryClient := clientset.Discovery()
-	gvr, err := getGVR(discoveryClient, resourceKind)
+	gvr, isNamespaced, err := getGVR(discoveryClient, resourceKind)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
 		return
 	}
 	var resource dynamic.ResourceInterface
 
-	isClusterWide := containsClusterWideResourceType(resourceKind)
-	if isClusterWide {
-		resource = dynamicClient.Resource(gvr)
-	} else {
+	if isNamespaced {
 		resource = dynamicClient.Resource(gvr).Namespace(namespace)
+	} else {
+		resource = dynamicClient.Resource(gvr)
 	}
 
 	var resourceData map[string]interface{}
@@ -264,17 +252,17 @@ func DeleteResource(c *gin.Context) {
 	name := c.Param("name")
 
 	discoveryClient := clientset.Discovery()
-	gvr, err := getGVR(discoveryClient, resourceKind)
+	gvr, isNamespaced, err := getGVR(discoveryClient, resourceKind)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
 		return
 	}
 	var resource dynamic.ResourceInterface
-	isClusterWide := containsClusterWideResourceType(resourceKind)
-	if isClusterWide {
-		resource = dynamicClient.Resource(gvr)
-	} else {
+
+	if isNamespaced {
 		resource = dynamicClient.Resource(gvr).Namespace(namespace)
+	} else {
+		resource = dynamicClient.Resource(gvr)
 	}
 
 	err = resource.Delete(c, name, v1.DeleteOptions{})
