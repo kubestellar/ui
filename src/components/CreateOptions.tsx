@@ -19,7 +19,7 @@ import {
   FormControl,
   InputLabel,
 } from "@mui/material";
-import axios from "axios"; // Added for TreeView's deployment logic
+import axios, { AxiosError } from "axios"; // Import AxiosError for proper typing
 import useTheme from "../stores/themeStore";
 import { useWDSQueries } from "../hooks/queries/useWDSQueries";
 import { toast } from "react-hot-toast";
@@ -38,7 +38,11 @@ const CreateOptions = ({
   const [fileType, setFileType] = useState<"yaml" | "json">("yaml");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [editorContent, setEditorContent] = useState<string>("");
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "error" | "warning" | "info" }>({
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "warning" | "info";
+  }>({
     open: false,
     message: "",
     severity: "success",
@@ -173,7 +177,7 @@ const CreateOptions = ({
     }
   };
 
-  // Updated handleDeploy using TreeView's logic
+  // Updated handleDeploy with proper AxiosError typing
   const handleDeploy = async () => {
     if (!formData.githuburl || !formData.path) {
       setSnackbar({
@@ -206,7 +210,7 @@ const CreateOptions = ({
         throw new Error("Unexpected response status: " + response.status);
       }
     } catch (error: unknown) {
-      const err = error as any; // Type assertion for simplicity
+      const err = error as AxiosError; // Use AxiosError instead of any
       console.error("Deploy error:", err);
 
       if (err.response) {
@@ -238,7 +242,6 @@ const CreateOptions = ({
       }
     } finally {
       setLoading(false);
-      // Removed handleCancel() to keep UI intact as per request
     }
   };
 
@@ -257,23 +260,21 @@ const CreateOptions = ({
         </div>
       )}
       <Dialog open={!!activeOption} onClose={onCancel} maxWidth="lg" fullWidth>
-        <DialogTitle sx={{color: theme === "dark" ? "white" : "black" , bgcolor: theme === "dark" ? "#1F2937" : "background.paper"}}>Create Deployment</DialogTitle>
-        <DialogContent sx={{ bgcolor: theme === "dark" ? "#1F2937" : "background.paper"}} >
-          <Box sx={{ width: "100%"}}>
+        <DialogTitle sx={{ color: theme === "dark" ? "white" : "black", bgcolor: theme === "dark" ? "#1F2937" : "background.paper" }}>
+          Create Deployment
+        </DialogTitle>
+        <DialogContent sx={{ bgcolor: theme === "dark" ? "#1F2937" : "background.paper" }}>
+          <Box sx={{ width: "100%" }}>
             <Tabs
               value={activeOption}
               onChange={(_event, newValue) => setActiveOption(newValue)}
             >
-              <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Create from Input" value="option1" />
-              <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Create from File" value="option2" />
-              <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Create from Github" value="option3" />
+              <Tab sx={{ color: theme === "dark" ? "white" : "black" }} label="Create from Input" value="option1" />
+              <Tab sx={{ color: theme === "dark" ? "white" : "black" }} label="Create from File" value="option2" />
+              <Tab sx={{ color: theme === "dark" ? "white" : "black" }} label="Create from Github" value="option3" />
             </Tabs>
 
-            <Box 
-            sx={{ 
-              mt: 2,
-            }}
-            >
+            <Box sx={{ mt: 2 }}>
               {activeOption === "option1" && (
                 <Box>
                   <Alert severity="info" sx={{ mb: 2 }}>
@@ -283,62 +284,62 @@ const CreateOptions = ({
                   </Alert>
 
                   <FormControl
-                        fullWidth
-                        sx={{
-                          mb: 2,
-                          input: { color: theme === "dark" ? "white" : "black" },
-                          label: { color: theme === "dark" ? "white" : "black" },
-                          fieldset: {
-                            borderColor: theme === "dark" ? "white" : "black",
-                          },
-                          "& .MuiInputLabel-root.Mui-focused": {
-                            color: theme === "dark" ? "white" : "black",
-                          },
-                        }}
-                      >
-                        <InputLabel>File Type</InputLabel>
-                        <Select
-                          sx={{
+                    fullWidth
+                    sx={{
+                      mb: 2,
+                      input: { color: theme === "dark" ? "white" : "black" },
+                      label: { color: theme === "dark" ? "white" : "black" },
+                      fieldset: {
+                        borderColor: theme === "dark" ? "white" : "black",
+                      },
+                      "& .MuiInputLabel-root.Mui-focused": {
+                        color: theme === "dark" ? "white" : "black",
+                      },
+                    }}
+                  >
+                    <InputLabel>File Type</InputLabel>
+                    <Select
+                      sx={{
+                        bgcolor: theme === "dark" ? "#1F2937" : "background.paper",
+                        color: theme === "dark" ? "white" : "black",
+                      }}
+                      value={fileType}
+                      onChange={(e) => {
+                        setFileType(e.target.value as "yaml" | "json");
+                        setEditorContent("");
+                      }}
+                      label="File Type"
+                      MenuProps={{
+                        PaperProps: {
+                          sx: {
                             bgcolor: theme === "dark" ? "#1F2937" : "background.paper",
-                            color: theme === "dark" ? "white" : "black",
-                          }}
-                          value={fileType}
-                          onChange={(e) => {
-                            setFileType(e.target.value as "yaml" | "json");
-                            setEditorContent(""); 
-                          }}
-                          label="File Type"
-                          MenuProps={{
-                            PaperProps: {
-                              sx: {
-                                bgcolor: theme === "dark" ? "#1F2937" : "background.paper",
-                              },
-                            },
-                          }}
-                        >
-                          <MenuItem sx={{ color: theme === "dark" ? "white" : "black" }} value="yaml">
-                            YAML
-                          </MenuItem>
-                          <MenuItem sx={{ color: theme === "dark" ? "white" : "black" }} value="json">
-                            JSON
-                          </MenuItem>
-                        </Select>
+                          },
+                        },
+                      }}
+                    >
+                      <MenuItem sx={{ color: theme === "dark" ? "white" : "black" }} value="yaml">
+                        YAML
+                      </MenuItem>
+                      <MenuItem sx={{ color: theme === "dark" ? "white" : "black" }} value="json">
+                        JSON
+                      </MenuItem>
+                    </Select>
                   </FormControl>
 
                   <Editor
-                      height="400px"
-                      language={fileType}
-                      value={editorContent}
-                      theme={theme === "dark" ? "vs-dark" : "light"}
-                      options={{
-                        minimap: { enabled: false },
-                        fontSize: 14,
-                        lineNumbers: "on",
-                        scrollBeyondLastLine: false,
-                        automaticLayout: true,
-                      }}
-                      onChange={(value) => setEditorContent(value || "")}
-                    />
+                    height="400px"
+                    language={fileType}
+                    value={editorContent}
+                    theme={theme === "dark" ? "vs-dark" : "light"}
+                    options={{
+                      minimap: { enabled: false },
+                      fontSize: 14,
+                      lineNumbers: "on",
+                      scrollBeyondLastLine: false,
+                      automaticLayout: true,
+                    }}
+                    onChange={(value) => setEditorContent(value || "")}
+                  />
 
                   <DialogActions>
                     <Button onClick={handleCancelClick}>Cancel</Button>
@@ -354,14 +355,15 @@ const CreateOptions = ({
               )}
 
               {activeOption === "option2" && (
-                <Box 
-                sx={{color: theme === "dark" ? "white" : "black",
-                  height: "617px",
-                  display: "flex",           // Added
-                  flexDirection: "column",   // Added
-                  justifyContent: "center"   // Added
-                }}
-                > 
+                <Box
+                  sx={{
+                    color: theme === "dark" ? "white" : "black",
+                    height: "617px",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                  }}
+                >
                   <Alert severity="info" sx={{ mb: 2 }}>
                     <AlertTitle>Info</AlertTitle>
                     Select a YAML or JSON file specifying the resources to deploy to
@@ -375,9 +377,9 @@ const CreateOptions = ({
                       borderRadius: 1,
                       p: 27,
                       textAlign: "center",
-                      display: "flex",         // Added
-                      flexDirection: "column", // Added
-                      alignItems: "center"     // Added
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
                     }}
                   >
                     <Button variant="contained" component="label">
@@ -478,7 +480,11 @@ const CreateOptions = ({
           onClose={() => setSnackbar({ ...snackbar, open: false })}
           anchorOrigin={{ vertical: "top", horizontal: "center" }}
         >
-          <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: "100%" }}>
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            sx={{ width: "100%" }}
+          >
             {snackbar.message}
           </Alert>
         </Snackbar>

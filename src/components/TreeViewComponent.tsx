@@ -320,6 +320,9 @@ const TreeView = () => {
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [selectedNode, setSelectedNode] = useState<SelectedNode | null>(null);
 
+  console.log(formData);
+  
+
   const transformDataToTree = useCallback((data: NamespaceResource[]) => {
     const nodes: CustomNode[] = [];
     const edges: CustomEdge[] = [];

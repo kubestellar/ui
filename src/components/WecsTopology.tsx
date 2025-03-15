@@ -547,7 +547,7 @@ const WecTreeView = () => {
             const endpoints = resourcesMap.endpoints.find(
               (ep: ResourceItem) => ep.metadata.name === item.metadata.name
             );
-            const numSubsets = endpoints?.subsets?.length || 0;
+            // const numSubsets = endpoints?.subsets?.length || 0;
             const endpointSlices = resourcesMap.endpointSlices.filter(
               (es: ResourceItem) => es.metadata.labels?.["kubernetes.io/service-name"] === item.metadata.name
             );
