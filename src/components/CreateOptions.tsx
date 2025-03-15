@@ -19,6 +19,7 @@ import {
   FormControl,
   InputLabel,
 } from "@mui/material";
+import axios, { AxiosError } from "axios"; // Import AxiosError for proper typing
 import useTheme from "../stores/themeStore";
 import { useWDSQueries } from "../hooks/queries/useWDSQueries";
 import { toast } from "react-hot-toast";
@@ -37,14 +38,18 @@ const CreateOptions = ({
   const [fileType, setFileType] = useState<"yaml" | "json">("yaml");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [editorContent, setEditorContent] = useState<string>("");
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "error" | "warning" | "info" }>({
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "warning" | "info";
+  }>({
     open: false,
     message: "",
     severity: "success",
-});
+  });
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const theme = useTheme((state) => state.theme)
+  const theme = useTheme((state) => state.theme);
 
   const [formData, setFormData] = useState({
     appName: "",
@@ -61,7 +66,7 @@ const CreateOptions = ({
     value: "",
     imagePullRequest: "",
     githuburl: "",
-    path: ""
+    path: "",
   });
 
   const { useCreateWorkload } = useWDSQueries();
@@ -172,76 +177,80 @@ const CreateOptions = ({
     }
   };
 
+  // Updated handleDeploy with proper AxiosError typing
   const handleDeploy = async () => {
     if (!formData.githuburl || !formData.path) {
       setSnackbar({
         open: true,
-        message: "Please fill in both fields.",
+        message: "Please fill both GitHub URL and Path fields!",
         severity: "error",
       });
       return;
     }
 
     setLoading(true);
-  
-    const requestData = {
-      url: formData.githuburl,
-      path: formData.path,
-    };
 
     try {
-      const response = await fetch("http://localhost:4000/api/wds/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestData),
+      const response = await axios.post("http://localhost:4000/api/deploy", {
+        repo_url: formData.githuburl,
+        folder_path: formData.path,
       });
 
-      const result = await response.json();
-      console.log(result);
-      
-      if (response.ok) {
-        showSnackbar(`Deployment successfully!` , "success");
-          setFormData((prevState) => ({
-            ...prevState, 
-            githuburl: "", 
-            path: "", 
-          }))
-  
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-  
-        // handleCancel();
-      } else {
-        if (response.status === 409 || response.status === 400 || response.status === 500) {
-          showSnackbar(`Deployment already exists` , "error");
-        } else {
-          showSnackbar(`Deployment failed. Please try again.` , "error");
+      console.log("Deploy response:", response);
 
-        }
+      if (response.status === 200) {
+        setSnackbar({
+          open: true,
+          message: "Deployed successfully!",
+          severity: "success",
+        });
+        setFormData({ ...formData, githuburl: "", path: "" });
+        setTimeout(() => window.location.reload(), 4000); // Matches TreeView's snackbar duration
+      } else {
+        throw new Error("Unexpected response status: " + response.status);
       }
-    } catch (error) {
-      console.log(error);
-      showSnackbar(`An error occurred while creating the deployment.` , "error");
+    } catch (error: unknown) {
+      const err = error as AxiosError; // Use AxiosError instead of any
+      console.error("Deploy error:", err);
+
+      if (err.response) {
+        if (err.response.status === 500) {
+          setSnackbar({
+            open: true,
+            message: "Deploy already exists!",
+            severity: "error",
+          });
+        } else if (err.response.status === 409) {
+          setSnackbar({
+            open: true,
+            message: "Conflict error: Deployment already in progress!",
+            severity: "error",
+          });
+        } else {
+          setSnackbar({
+            open: true,
+            message: `Deployment failed! (${err.response.status})`,
+            severity: "error",
+          });
+        }
+      } else {
+        setSnackbar({
+          open: true,
+          message: "Deployment failed due to network error!",
+          severity: "error",
+        });
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCancel = () => {
+  const handleCancelClick = () => {
     setSelectedFile(null); // Clear file selection
     setError(""); // Clear error messages
     setActiveOption(null); // Close the modal
+    onCancel(); // Call parent cancel function
   };
-
-  const showSnackbar = (message: string, severity: "success" | "error") => {
-    console.log("Snackbar Triggered:", message, severity);
-    setSnackbar({ open: true, message, severity });
-  };
-  
-  
 
   return (
     <>
@@ -251,23 +260,21 @@ const CreateOptions = ({
         </div>
       )}
       <Dialog open={!!activeOption} onClose={onCancel} maxWidth="lg" fullWidth>
-        <DialogTitle sx={{color: theme === "dark" ? "white" : "black" , bgcolor: theme === "dark" ? "#1F2937" : "background.paper"}}>Create Deployment</DialogTitle>
-        <DialogContent sx={{ bgcolor: theme === "dark" ? "#1F2937" : "background.paper"}} >
-          <Box sx={{ width: "100%"}}>
+        <DialogTitle sx={{ color: theme === "dark" ? "white" : "black", bgcolor: theme === "dark" ? "#1F2937" : "background.paper" }}>
+          Create Deployment
+        </DialogTitle>
+        <DialogContent sx={{ bgcolor: theme === "dark" ? "#1F2937" : "background.paper" }}>
+          <Box sx={{ width: "100%" }}>
             <Tabs
               value={activeOption}
               onChange={(_event, newValue) => setActiveOption(newValue)}
             >
-              <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Create from Input" value="option1" />
-              <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Create from File" value="option2" />
-              <Tab sx={{color: theme === "dark" ? "white" : "black"}} label="Create from Github" value="option3" />
+              <Tab sx={{ color: theme === "dark" ? "white" : "black" }} label="Create from Input" value="option1" />
+              <Tab sx={{ color: theme === "dark" ? "white" : "black" }} label="Create from File" value="option2" />
+              <Tab sx={{ color: theme === "dark" ? "white" : "black" }} label="Create from Github" value="option3" />
             </Tabs>
 
-            <Box 
-            sx={{ 
-              mt: 2,
-            }}
-            >
+            <Box sx={{ mt: 2 }}>
               {activeOption === "option1" && (
                 <Box>
                   <Alert severity="info" sx={{ mb: 2 }}>
@@ -277,65 +284,65 @@ const CreateOptions = ({
                   </Alert>
 
                   <FormControl
-                        fullWidth
-                        sx={{
-                          mb: 2,
-                          input: { color: theme === "dark" ? "white" : "black" },
-                          label: { color: theme === "dark" ? "white" : "black" },
-                          fieldset: {
-                            borderColor: theme === "dark" ? "white" : "black",
-                          },
-                          "& .MuiInputLabel-root.Mui-focused": {
-                            color: theme === "dark" ? "white" : "black",
-                          },
-                        }}
-                      >
-                        <InputLabel>File Type</InputLabel>
-                        <Select
-                          sx={{
+                    fullWidth
+                    sx={{
+                      mb: 2,
+                      input: { color: theme === "dark" ? "white" : "black" },
+                      label: { color: theme === "dark" ? "white" : "black" },
+                      fieldset: {
+                        borderColor: theme === "dark" ? "white" : "black",
+                      },
+                      "& .MuiInputLabel-root.Mui-focused": {
+                        color: theme === "dark" ? "white" : "black",
+                      },
+                    }}
+                  >
+                    <InputLabel>File Type</InputLabel>
+                    <Select
+                      sx={{
+                        bgcolor: theme === "dark" ? "#1F2937" : "background.paper",
+                        color: theme === "dark" ? "white" : "black",
+                      }}
+                      value={fileType}
+                      onChange={(e) => {
+                        setFileType(e.target.value as "yaml" | "json");
+                        setEditorContent("");
+                      }}
+                      label="File Type"
+                      MenuProps={{
+                        PaperProps: {
+                          sx: {
                             bgcolor: theme === "dark" ? "#1F2937" : "background.paper",
-                            color: theme === "dark" ? "white" : "black",
-                          }}
-                          value={fileType}
-                          onChange={(e) => {
-                            setFileType(e.target.value as "yaml" | "json");
-                            setEditorContent(""); 
-                          }}
-                          label="File Type"
-                          MenuProps={{
-                            PaperProps: {
-                              sx: {
-                                bgcolor: theme === "dark" ? "#1F2937" : "background.paper",
-                              },
-                            },
-                          }}
-                        >
-                          <MenuItem sx={{ color: theme === "dark" ? "white" : "black" }} value="yaml">
-                            YAML
-                          </MenuItem>
-                          <MenuItem sx={{ color: theme === "dark" ? "white" : "black" }} value="json">
-                            JSON
-                          </MenuItem>
-                        </Select>
+                          },
+                        },
+                      }}
+                    >
+                      <MenuItem sx={{ color: theme === "dark" ? "white" : "black" }} value="yaml">
+                        YAML
+                      </MenuItem>
+                      <MenuItem sx={{ color: theme === "dark" ? "white" : "black" }} value="json">
+                        JSON
+                      </MenuItem>
+                    </Select>
                   </FormControl>
 
                   <Editor
-                      height="400px"
-                      language={fileType}
-                      value={editorContent}
-                      theme={theme === "dark" ? "vs-dark" : "light"}
-                      options={{
-                        minimap: { enabled: false },
-                        fontSize: 14,
-                        lineNumbers: "on",
-                        scrollBeyondLastLine: false,
-                        automaticLayout: true,
-                      }}
-                      onChange={(value) => setEditorContent(value || "")}
-                    />
+                    height="400px"
+                    language={fileType}
+                    value={editorContent}
+                    theme={theme === "dark" ? "vs-dark" : "light"}
+                    options={{
+                      minimap: { enabled: false },
+                      fontSize: 14,
+                      lineNumbers: "on",
+                      scrollBeyondLastLine: false,
+                      automaticLayout: true,
+                    }}
+                    onChange={(value) => setEditorContent(value || "")}
+                  />
 
                   <DialogActions>
-                    <Button onClick={handleCancel}>Cancel</Button>
+                    <Button onClick={handleCancelClick}>Cancel</Button>
                     <Button
                       variant="contained"
                       onClick={handleRawUpload}
@@ -348,14 +355,15 @@ const CreateOptions = ({
               )}
 
               {activeOption === "option2" && (
-                <Box 
-                sx={{color: theme === "dark" ? "white" : "black",
-                  height: "617px",
-                  display: "flex",           // Added
-                  flexDirection: "column",   // Added
-                  justifyContent: "center"   // Added
-                }}
-                > 
+                <Box
+                  sx={{
+                    color: theme === "dark" ? "white" : "black",
+                    height: "617px",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                  }}
+                >
                   <Alert severity="info" sx={{ mb: 2 }}>
                     <AlertTitle>Info</AlertTitle>
                     Select a YAML or JSON file specifying the resources to deploy to
@@ -369,9 +377,9 @@ const CreateOptions = ({
                       borderRadius: 1,
                       p: 27,
                       textAlign: "center",
-                      display: "flex",         // Added
-                      flexDirection: "column", // Added
-                      alignItems: "center"     // Added
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
                     }}
                   >
                     <Button variant="contained" component="label">
@@ -396,7 +404,7 @@ const CreateOptions = ({
                   </Box>
 
                   <DialogActions>
-                    <Button onClick={handleCancel}>Cancel</Button>
+                    <Button onClick={handleCancelClick}>Cancel</Button>
                     <Button
                       variant="contained"
                       onClick={handleFileUpload}
@@ -453,7 +461,7 @@ const CreateOptions = ({
 
                   {/* Deploy and Cancel Buttons at the Bottom */}
                   <DialogActions>
-                    <Button onClick={handleCancel} sx={{ color: theme === "dark" ? "white" : "black" }}>
+                    <Button onClick={handleCancelClick} sx={{ color: theme === "dark" ? "white" : "black" }}>
                       Cancel
                     </Button>
                     <Button variant="contained" onClick={handleDeploy} disabled={loading}>
@@ -472,7 +480,11 @@ const CreateOptions = ({
           onClose={() => setSnackbar({ ...snackbar, open: false })}
           anchorOrigin={{ vertical: "top", horizontal: "center" }}
         >
-          <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: "100%" }}>
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            sx={{ width: "100%" }}
+          >
             {snackbar.message}
           </Alert>
         </Snackbar>

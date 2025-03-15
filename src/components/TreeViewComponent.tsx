@@ -1,19 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  TextField,
-  Button,
   Box,
-  Alert,
-  AlertTitle,
-  CircularProgress,
   Typography,
-  Snackbar,
   Menu,
   MenuItem,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Button,
+  Alert,
+  AlertTitle,
+  Snackbar,
 } from "@mui/material";
 import axios, { AxiosError } from "axios";
 import ReactFlow, { Background, useReactFlow, BackgroundVariant, Position, MarkerType } from "reactflow";
@@ -30,8 +24,9 @@ import { FiMoreVertical } from "react-icons/fi";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import LoadingFallback from "./LoadingFallback";
 import DynamicDetailsPanel from "./DynamicDetailsPanel";
+import NewAppDialog from "./NewAppDialog"; // Import the new component
 
-// Interfaces
+// Interfaces (unchanged)
 interface NodeData {
   label: JSX.Element;
 }
@@ -137,22 +132,33 @@ const nodeStyle: React.CSSProperties = {
 // CustomZoomControls component (unchanged)
 const CustomZoomControls = () => {
   const { getZoom, setViewport } = useReactFlow();
-  const [zoomLevel, setZoomLevel] = useState<number>(200);
+  const [zoomLevel, setZoomLevel] = useState<number>(100);
+
+  const snapToStep = (zoom: number) => {
+    const step = 10;
+    return Math.round(zoom / step) * step;
+  };
 
   useEffect(() => {
-    setZoomLevel(Math.round(getZoom() * 200));
+    const currentZoom = getZoom() * 100;
+    const snappedZoom = snapToStep(currentZoom);
+    setZoomLevel(Math.min(Math.max(snappedZoom, 10), 200));
   }, [getZoom]);
 
   const handleZoomIn = () => {
-    const newZoom = Math.min(getZoom() + 0.1, 2);
+    const currentZoom = getZoom() * 100;
+    const newZoomPercentage = snapToStep(currentZoom + 10);
+    const newZoom = Math.min(newZoomPercentage / 100, 2);
     setViewport({ zoom: newZoom, x: 0, y: 10 });
-    setZoomLevel(Math.round(newZoom * 100));
+    setZoomLevel(newZoomPercentage);
   };
 
   const handleZoomOut = () => {
-    const newZoom = Math.max(getZoom() - 0.1, 0);
+    const currentZoom = getZoom() * 100;
+    const newZoomPercentage = snapToStep(currentZoom - 10);
+    const newZoom = Math.max(newZoomPercentage / 100, 0.1);
     setViewport({ zoom: newZoom, x: 0, y: 10 });
-    setZoomLevel(Math.round(newZoom * 100));
+    setZoomLevel(newZoomPercentage);
   };
 
   return (
@@ -197,6 +203,57 @@ const CustomZoomControls = () => {
 const FlowWithScroll = ({ nodes, edges }: { nodes: CustomNode[]; edges: CustomEdge[] }) => {
   const { setViewport, getViewport } = useReactFlow();
 
+  useEffect(() => {
+    if (nodes.length > 0) {
+      const minX = Math.min(...nodes.map((node) => node.position.x));
+      const maxX = Math.max(
+        ...nodes.map((node) => {
+          const width = typeof node.style?.width === "string" ? parseInt(node.style.width) : node.style?.width || 146;
+          return node.position.x + width;
+        })
+      );
+      const minY = Math.min(...nodes.map((node) => node.position.y));
+      const maxY = Math.max(
+        ...nodes.map((node) => {
+          const height = typeof node.style?.height === "string" ? parseInt(node.style.height) : node.style?.height || 30;
+          return node.position.y + height;
+        })
+      );
+      const treeWidth = maxX - minX;
+      const treeHeight = maxY - minY;
+
+      const reactFlowContainer = document.querySelector(".react-flow") as HTMLElement;
+      const viewportWidth = reactFlowContainer ? reactFlowContainer.offsetWidth : window.innerWidth;
+      const viewportHeight = reactFlowContainer ? reactFlowContainer.offsetHeight : window.innerHeight;
+
+      const padding = 20;
+      const zoomX = (viewportWidth - padding * 2) / treeWidth;
+      const initialZoom = Math.min(Math.max(zoomX, 0.1), 2);
+
+      const zoomedTreeHeight = treeHeight * initialZoom;
+
+      if (reactFlowContainer) {
+        if (zoomedTreeHeight < viewportHeight) {
+          reactFlowContainer.style.minHeight = `${viewportHeight}px`;
+        } else {
+          reactFlowContainer.style.minHeight = `${zoomedTreeHeight + padding * 2}px`;
+        }
+      }
+
+      setViewport({
+        x: -minX * initialZoom + padding,
+        y: 0,
+        zoom: initialZoom,
+      });
+    } else {
+      const reactFlowContainer = document.querySelector(".react-flow") as HTMLElement;
+      if (reactFlowContainer) {
+        const viewportHeight = reactFlowContainer.offsetHeight || window.innerHeight;
+        reactFlowContainer.style.minHeight = `${viewportHeight}px`;
+      }
+    }
+  }, [nodes, edges, setViewport]);
+
   const handleWheel = (event: React.WheelEvent) => {
     const reactFlowContainer = document.querySelector(".react-flow");
     const isInsideTree = reactFlowContainer && reactFlowContainer.contains(event.target as Node);
@@ -208,8 +265,8 @@ const FlowWithScroll = ({ nodes, edges }: { nodes: CustomNode[]; edges: CustomEd
       const minY = Math.min(...nodes.map((node) => node.position.y));
       const maxY = Math.max(
         ...nodes.map((node) => {
-          const height = node.style?.height;
-          return node.position.y + (typeof height === "string" ? parseInt(height) : height || 30);
+          const height = typeof node.style?.height === "string" ? parseInt(node.style.height) : node.style?.height || 30;
+          return node.position.y + height;
         })
       );
       const treeHeight = maxY - minY;
@@ -232,17 +289,15 @@ const FlowWithScroll = ({ nodes, edges }: { nodes: CustomNode[]; edges: CustomEd
     <ReactFlow
       nodes={nodes}
       edges={edges}
-      fitView
+      fitView={false}
       panOnDrag={false}
       zoomOnScroll={false}
       zoomOnDoubleClick={false}
       zoomOnPinch={false}
-      onInit={(instance) => instance.setViewport({ zoom: 2, x: -0, y: 10 })}
       style={{
         background: "rgb(222, 230, 235)",
         width: "100%",
-        minHeight: `${nodes.length * 60}px`,
-        height: "auto",
+        height: "100%",
       }}
       onWheel={handleWheel}
     >
@@ -251,7 +306,7 @@ const FlowWithScroll = ({ nodes, edges }: { nodes: CustomNode[]; edges: CustomEd
   );
 };
 
-// TreeView component
+// Updated TreeView component
 const TreeView = () => {
   const [formData, setFormData] = useState<{ githuburl: string; path: string }>({ githuburl: "", path: "" });
   const [loading, setLoading] = useState<boolean>(false);
@@ -264,6 +319,9 @@ const TreeView = () => {
   const [contextMenu, setContextMenu] = useState<{ nodeId: string | null; x: number; y: number } | null>(null);
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [selectedNode, setSelectedNode] = useState<SelectedNode | null>(null);
+
+  console.log(formData);
+  
 
   const transformDataToTree = useCallback((data: NamespaceResource[]) => {
     const nodes: CustomNode[] = [];
@@ -472,7 +530,6 @@ const TreeView = () => {
       let minY = Infinity;
       let maxY = -Infinity;
 
-      // Preprocess resources into a typed map
       const resourcesMap: ResourcesMap = {
         endpoints: namespace.resources[".v1/endpoints"] || [],
         endpointSlices: namespace.resources["discovery.k8s.io.v1/endpointslices"] || [],
@@ -560,10 +617,10 @@ const TreeView = () => {
       addNode(namespaceId, namespace.name, x, namespaceY, null, "namespace", namespace.status, "", namespace.name, {
         apiVersion: "v1",
         kind: "Namespace",
-        metadata: { 
-          name: namespace.name, 
+        metadata: {
+          name: namespace.name,
           namespace: namespace.name,
-          creationTimestamp: ""
+          creationTimestamp: "",
         },
         status: { phase: namespace.status },
       });
@@ -734,12 +791,6 @@ const TreeView = () => {
 
     setNodes(nodes);
     setEdges(edges);
-
-    const totalHeight = globalY + 50;
-    const reactFlowContainer = document.querySelector(".react-flow") as HTMLElement | null;
-    if (reactFlowContainer) {
-      reactFlowContainer.style.height = `${totalHeight}px`;
-    }
   }, []);
 
   useEffect(() => {
@@ -775,8 +826,8 @@ const TreeView = () => {
     };
   }, [transformDataToTree]);
 
-  const handleDeploy = async () => {
-    if (!formData.githuburl || !formData.path) {
+  const handleDeploy = async (githubUrl: string, path: string) => {
+    if (!githubUrl || !path) {
       setSnackbarMessage("Please fill both GitHub URL and Path fields!");
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
@@ -787,8 +838,8 @@ const TreeView = () => {
 
     try {
       const response = await axios.post("http://localhost:4000/api/deploy", {
-        repo_url: formData.githuburl,
-        folder_path: formData.path,
+        repo_url: githubUrl,
+        folder_path: path,
       });
 
       console.log("Deploy response:", response);
@@ -836,6 +887,7 @@ const TreeView = () => {
 
   const handleMenuOpen = (event: React.MouseEvent, nodeId: string) => {
     event.preventDefault();
+    event.stopPropagation();
     setContextMenu({
       nodeId,
       x: event.clientX,
@@ -851,12 +903,20 @@ const TreeView = () => {
     if (contextMenu?.nodeId) {
       const node = nodes.find((n) => n.id === contextMenu.nodeId);
       if (node) {
+        const nodeType = node.id.split("-")[1];
+        const nodeName = node.data.label.props.children[0].props.children[1].props.children[0];
+        const namespace = nodeType === "namespace" ? nodeName : node.id.split("-")[0].replace("namespace-", "");
+
         switch (action) {
           case "Details":
-            console.log(`Showing details for node ${node.id}`);
-            break;
-          case "Sync":
-            console.log(`Syncing node ${node.id}`);
+            setSelectedNode({
+              namespace: namespace || "default",
+              name: nodeName,
+              type: nodeType,
+              onClose: handleClosePanel,
+              isOpen: true,
+              resourceData: node.data.label.props.children[0].props.resourceData,
+            });
             break;
           case "Delete":
             console.log(`Deleting node ${node.id}`);
@@ -865,12 +925,6 @@ const TreeView = () => {
             break;
           case "Logs":
             console.log(`Showing logs for node ${node.id}`);
-            break;
-          case "Restart":
-            console.log(`Restarting node ${node.id}`);
-            break;
-          case "Resume":
-            console.log(`Resuming node ${node.id}`);
             break;
           default:
             break;
@@ -881,7 +935,6 @@ const TreeView = () => {
   };
 
   const handleSnackbarClose = () => {
-    console.log("Snackbar Closing");
     setSnackbarOpen(false);
   };
 
@@ -897,7 +950,7 @@ const TreeView = () => {
   const handleClosePanel = () => {
     if (selectedNode) {
       setSelectedNode({ ...selectedNode, isOpen: false });
-      setTimeout(() => setSelectedNode(null), 400); // Match transition duration
+      setTimeout(() => setSelectedNode(null), 400);
     }
   };
 
@@ -920,7 +973,7 @@ const TreeView = () => {
         }}
       >
         <Box sx={{ mb: 4, display: "flex", alignItems: "center", gap: 2 }}>
-          <Typography variant="h4">Tree View Deployment</Typography>
+          <Typography variant="h4">Tree-View Workloads</Typography>
           <Button variant="contained" onClick={handleDialogOpen}>
             + New App
           </Button>
@@ -931,7 +984,7 @@ const TreeView = () => {
           Click "+ New App" to deploy your Kubernetes application.
         </Alert>
 
-        <Box mt={3} style={{ width: "82vw", position: "relative" }}>
+        <Box sx={{ width: "100%", height: "100%", position: "relative" }}>
           {(!responseData || responseData.length === 0) ? (
             <LoadingFallback message="Wds Tree-View is Loading..." size="medium" />
           ) : (
@@ -949,58 +1002,18 @@ const TreeView = () => {
               anchorPosition={contextMenu ? { top: contextMenu.y, left: contextMenu.x } : undefined}
             >
               <MenuItem onClick={() => handleMenuAction("Details")}>Details</MenuItem>
-              <MenuItem onClick={() => handleMenuAction("Sync")}>Sync</MenuItem>
               <MenuItem onClick={() => handleMenuAction("Delete")}>Delete</MenuItem>
               <MenuItem onClick={() => handleMenuAction("Logs")}>Logs</MenuItem>
-              <MenuItem onClick={() => handleMenuAction("Restart")}>Restart</MenuItem>
-              <MenuItem onClick={() => handleMenuAction("Resume")}>Resume</MenuItem>
             </Menu>
           )}
         </Box>
 
-        <Dialog
+        <NewAppDialog
           open={dialogOpen}
           onClose={handleDialogClose}
-          sx={{
-            "& .MuiDialog-paper": {
-              position: "fixed",
-              right: 0,
-              top: 0,
-              bottom: 0,
-              margin: 0,
-              maxWidth: "1200px",
-              width: "100%",
-              height: "100%",
-              borderRadius: 0,
-            },
-          }}
-        >
-          <DialogTitle>Create New App</DialogTitle>
-          <DialogContent>
-            <TextField
-              fullWidth
-              label="GitHub URL"
-              value={formData.githuburl}
-              onChange={(e) => setFormData((prev) => ({ ...prev, githuburl: e.target.value }))}
-              sx={{ mt: 2, mb: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="Path"
-              value={formData.path}
-              onChange={(e) => setFormData((prev) => ({ ...prev, path: e.target.value }))}
-              sx={{ mb: 2 }}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleDialogClose} color="secondary">
-              Cancel
-            </Button>
-            <Button variant="contained" onClick={handleDeploy} disabled={loading}>
-              {loading ? <CircularProgress size={24} /> : "Deploy"}
-            </Button>
-          </DialogActions>
-        </Dialog>
+          onDeploy={handleDeploy}
+          loading={loading}
+        />
 
         <Snackbar
           anchorOrigin={{ vertical: "top", horizontal: "center" }}
