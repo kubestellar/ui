@@ -10,6 +10,7 @@ import {
   IconButton,
   Box,
   Tooltip,
+  Checkbox,
 } from "@mui/material";
 import { Info, Trash2, Edit2 } from "lucide-react";
 import { BindingPolicyInfo } from "../../types/bindingPolicy";
@@ -22,6 +23,8 @@ interface BPTableProps {
   onDeletePolicy: (policy: BindingPolicyInfo) => void;
   onEditPolicy: (policy: BindingPolicyInfo) => void;
   activeFilters: { status?: "Active" | "Inactive" | "Pending" };
+  selectedPolicies: string[];
+  onSelectionChange: (selected: string[]) => void;
 }
 
 const BPTable: React.FC<BPTableProps> = ({
@@ -30,6 +33,8 @@ const BPTable: React.FC<BPTableProps> = ({
   onDeletePolicy,
   onEditPolicy,
   activeFilters,
+  selectedPolicies,
+  onSelectionChange,
 }) => {
   const [selectedPolicy, setSelectedPolicy] =
     useState<BindingPolicyInfo | null>(null);
@@ -41,6 +46,21 @@ const BPTable: React.FC<BPTableProps> = ({
   const handleEdit = (policy: BindingPolicyInfo) => {
     setSelectedPolicy(null);
     onEditPolicy(policy);
+  };
+
+  const handleCheckboxChange = (policyName: string) => {
+    const newSelected = selectedPolicies.includes(policyName)
+      ? selectedPolicies.filter(name => name !== policyName)
+      : [...selectedPolicies, policyName];
+    onSelectionChange(newSelected);
+  };
+
+  const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.checked) {
+      onSelectionChange(policies.map(policy => policy.name));
+    } else {
+      onSelectionChange([]);
+    }
   };
 
   const filteredPolicies = policies.filter((policy) => {
@@ -80,19 +100,47 @@ const BPTable: React.FC<BPTableProps> = ({
 
   const renderClusterChip = (policy: BindingPolicyInfo) => {
     if (!policy.clusterList || policy.clusterList.length === 0) {
-      return <Chip label="0" size="small" color="default" />;
+      return <Chip 
+        label="0" 
+        size="small" 
+        color="default"
+        sx={{ 
+          color: theme === "dark" ? "white" : "inherit",
+          "& .MuiChip-label": {
+            color: theme === "dark" ? "white" : "inherit"
+          }
+        }} 
+      />;
     }
 
     return (
       <Tooltip title={policy.clusterList.join(", ")} arrow>
-        <Chip label={policy.clusters} size="small" color="success" />
+        <Chip 
+          label={policy.clusters} 
+          size="small" 
+          color="success"
+          sx={{
+            "& .MuiChip-label": {
+              color: theme === "dark" ? "white" : "inherit"
+            }
+          }}
+        />
       </Tooltip>
     );
   };
 
   const renderWorkloadChip = (policy: BindingPolicyInfo) => {
     if (!policy.workloadList || policy.workloadList.length === 0) {
-      return <Chip label="None" size="small" color="default" />;
+      return <Chip 
+        label="None" 
+        size="small" 
+        color="secondary"
+        sx={{ 
+          "& .MuiChip-label": {
+            color: theme === "dark" ? "white" : "inherit"
+          }
+        }}
+      />;
     }
 
     const displayText =
@@ -102,7 +150,16 @@ const BPTable: React.FC<BPTableProps> = ({
 
     return (
       <Tooltip title={policy.workloadList.join(", ")} arrow>
-        <Chip label={displayText} size="small" color="success" />
+        <Chip 
+          label={displayText} 
+          size="small" 
+          color="success"
+          sx={{
+            "& .MuiChip-label": {
+              color: theme === "dark" ? "white" : "inherit"
+            }
+          }}
+        />
       </Tooltip>
     );
   };
@@ -112,6 +169,25 @@ const BPTable: React.FC<BPTableProps> = ({
       <Table>
         <TableHead>
           <TableRow className={theme === "dark" ? "!text-white" : ""}>
+            <TableCell padding="checkbox">
+              <Checkbox
+                indeterminate={
+                  selectedPolicies.length > 0 &&
+                  selectedPolicies.length < policies.length
+                }
+                checked={
+                  policies.length > 0 &&
+                  selectedPolicies.length === policies.length
+                }
+                onChange={handleSelectAll}
+                sx={{
+                  color: theme === "dark" ? "white" : undefined,
+                  '&.Mui-checked': {
+                    color: theme === "dark" ? "white" : undefined,
+                  },
+                }}
+              />
+            </TableCell>
             <TableCell className="!text-lg !text-inherit">
               Binding Policy Name
             </TableCell>
@@ -129,6 +205,18 @@ const BPTable: React.FC<BPTableProps> = ({
         <TableBody>
           {filteredPolicies.map((policy) => (
             <TableRow key={policy.name}>
+              <TableCell padding="checkbox">
+                <Checkbox
+                  checked={selectedPolicies.includes(policy.name)}
+                  onChange={() => handleCheckboxChange(policy.name)}
+                  sx={{
+                    color: theme === "dark" ? "white" : undefined,
+                    '&.Mui-checked': {
+                      color: theme === "dark" ? "white" : undefined,
+                    },
+                  }}
+                />
+              </TableCell>
               <TableCell>
                 <Button
                   color="primary"
