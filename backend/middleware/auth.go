@@ -9,34 +9,29 @@ import (
 	jwtconfig "github.com/katamyra/kubestellarUI/jwt"
 )
 
-// Middleware to verify JWT token and extract username
+// AuthenticateMiddleware validates JWT token
 func AuthenticateMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString := c.GetHeader("Authorization")
-
 		if tokenString == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing token"})
 			c.Abort()
 			return
 		}
 
-		// Remove "Bearer " prefix
 		tokenString = strings.TrimPrefix(tokenString, "Bearer ")
-
-		// Parse token
 		claims := jwt.MapClaims{}
+
 		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 			return []byte(jwtconfig.GetJWTSecret()), nil
 		})
 
-		// Token verification failed
 		if err != nil || !token.Valid {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			c.Abort()
 			return
 		}
 
-		// Extract username
 		username, exists := claims["username"].(string)
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token payload"})
@@ -44,10 +39,7 @@ func AuthenticateMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// Store username in context
 		c.Set("username", username)
-
-		// Proceed to next handler
 		c.Next()
 	}
 }

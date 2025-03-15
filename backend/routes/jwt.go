@@ -9,7 +9,7 @@ import (
 	"github.com/katamyra/kubestellarUI/utils"
 )
 
-// SetupRoutes initializes all routes
+// SetupAuthRoutes initializes authentication routes
 func SetupAuthRoutes(router *gin.Engine) {
 	router.POST("/login", LoginHandler)
 	protected := router.Group("/protected").Use(middleware.AuthenticateMiddleware())
@@ -18,21 +18,25 @@ func SetupAuthRoutes(router *gin.Engine) {
 	}
 }
 
-// Login handler
+// LoginHandler verifies user credentials and issues JWT
 func LoginHandler(c *gin.Context) {
-	var loginData models.User
+	var loginData struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
 	if err := c.ShouldBindJSON(&loginData); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
 	user, err := models.AuthenticateUser(loginData.Username, loginData.Password)
-	if err != nil {
+	if user == nil || err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
 
-	token, err := utils.GenerateToken(user.Username)
+	token, err := utils.GenerateToken(loginData.Username)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error generating token"})
 		return
@@ -41,21 +45,13 @@ func LoginHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
-// // Protected route
-// func ProtectedHandler(c *gin.Context) {
-// 	username, _ := c.Get("username")
-// 	c.JSON(http.StatusOK, gin.H{"message": "Welcome to the protected route!", "user": username})
-// }
-
-// Protected Route
+// ProtectedHandler validates JWT and returns user info
 func ProtectedHandler(c *gin.Context) {
-	// Get username from context
 	username, exists := c.Get("username")
 	if !exists {
 		username = "Unknown User"
 	}
 
-	// Send response with username
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Welcome to the protected route!",
 		"user":    username,
