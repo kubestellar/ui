@@ -47,7 +47,7 @@ export const generateBindingPolicyYAML = (config: PolicyConfiguration): string =
  * @param obj The object to convert
  * @returns YAML string
  */
-const convertToYAML = (obj: any): string => {
+const convertToYAML = (obj: Record<string, unknown>): string => {
   // This is a simple conversion. In a real app, you'd use a library like js-yaml
   return JSON.stringify(obj, null, 2)
     .replace(/"([^"]+)":/g, '$1:')       // Remove quotes around property names

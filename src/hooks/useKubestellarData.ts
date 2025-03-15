@@ -5,6 +5,7 @@ import { BindingPolicyInfo, ManagedCluster, Workload } from '../types/bindingPol
 interface UseKubestellarDataProps {
   // Optional callback to run after data refresh
   onDataLoaded?: () => void;
+  skipFetch?: boolean;
 }
 
 // Define interfaces for API response types
@@ -32,14 +33,14 @@ interface WorkloadApiData {
   apiVersion?: string;
 }
 
-export function useKubestellarData({ onDataLoaded }: UseKubestellarDataProps = {}) {
-  const [clusters, setClusters] = useState<ManagedCluster[]>([]);
+export function useKubestellarData({ onDataLoaded, skipFetch = false }: UseKubestellarDataProps = {}) {
+    const [clusters, setClusters] = useState<ManagedCluster[]>([]);
   const [workloads, setWorkloads] = useState<Workload[]>([]);
   const [policies, setPolicies] = useState<BindingPolicyInfo[]>([]);
   const [loading, setLoading] = useState({
-    clusters: true,
-    workloads: true,
-    policies: true
+    clusters: !skipFetch,
+    workloads: !skipFetch,
+    policies: !skipFetch
   });
   const [error, setError] = useState<{
     clusters?: string;
@@ -49,6 +50,7 @@ export function useKubestellarData({ onDataLoaded }: UseKubestellarDataProps = {
 
   // Fetch clusters from Inventory Space
   const fetchClusters = useCallback(async () => {
+    if(skipFetch) return;
     try {
       setLoading(prev => ({ ...prev, clusters: true }));
       const response = await api.get('/api/clusters');
@@ -103,10 +105,11 @@ export function useKubestellarData({ onDataLoaded }: UseKubestellarDataProps = {
     } finally {
       setLoading(prev => ({ ...prev, clusters: false }));
     }
-  }, []);
+  }, [skipFetch]);
 
   // Fetch workloads from Workload Description Space
   const fetchWorkloads = useCallback(async () => {
+    if(skipFetch) return;
     try {
       setLoading(prev => ({ ...prev, workloads: true }));
       const response = await api.get('/api/wds/workloads');
@@ -147,10 +150,11 @@ export function useKubestellarData({ onDataLoaded }: UseKubestellarDataProps = {
     } finally {
       setLoading(prev => ({ ...prev, workloads: false }));
     }
-  }, []);
+  }, [skipFetch]);
 
   // Fetch binding policies
   const fetchPolicies = useCallback(async () => {
+    if(skipFetch) return;
     try {
       setLoading(prev => ({ ...prev, policies: true }));
       const response = await api.get('/api/bp');
@@ -216,25 +220,25 @@ export function useKubestellarData({ onDataLoaded }: UseKubestellarDataProps = {
     } finally {
       setLoading(prev => ({ ...prev, policies: false }));
     }
-  }, []);
+  }, [skipFetch]);
 
   // Function to refresh all data
-  const refreshAllData = useCallback(async () => {
-    await Promise.all([
-      fetchClusters(),
-      fetchWorkloads(),
-      fetchPolicies()
-    ]);
+  const refreshAllData = useCallback(() => {
+    fetchClusters();
+    fetchWorkloads();
+    fetchPolicies();
     
     if (onDataLoaded) {
       onDataLoaded();
     }
   }, [fetchClusters, fetchWorkloads, fetchPolicies, onDataLoaded]);
 
-  // Initial data fetch
+  // Fetch all data on initial load
   useEffect(() => {
-    refreshAllData();
-  }, [refreshAllData]);
+    if (!skipFetch) {
+        refreshAllData();
+      }
+    }, [refreshAllData, skipFetch]);
 
   // Function to assign policy to target
   const assignPolicyToTarget = useCallback(async (
@@ -267,12 +271,8 @@ export function useKubestellarData({ onDataLoaded }: UseKubestellarDataProps = {
     },
     loading,
     error,
-    refreshData: {
-      refreshAllData,
-      fetchClusters,
-      fetchWorkloads,
-      fetchPolicies
-    },
+    refreshData: refreshAllData,
+
     actions: {
       assignPolicyToTarget
     }

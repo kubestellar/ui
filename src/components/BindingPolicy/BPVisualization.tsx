@@ -366,7 +366,7 @@ const BPVisualization: React.FC<BPVisualizationProps> = ({ policies, clusters: p
   const [, setSelectedNodeId] = useState<string | null>(null);
   //const [highlightedPath, setHighlightedPath] = useState<string[]>([]);
   const [, setIsDetailsOpen] = useState<boolean>(false);
-  const [, setSelectedEntity] = useState<{type: string; data: any} | null>(null);
+  const [, setSelectedEntity] = useState<{type: string; data: Record<string, unknown>} | null>(null);
  // const reactFlowInstance = useReactFlow();
 
   // Extract unique clusters and workloads from all policies

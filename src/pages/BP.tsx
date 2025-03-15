@@ -246,8 +246,16 @@ const BP = () => {
     }
   ];
 
+  // Define a type for the config parameter
+  interface BindingPolicyConfig {
+    name?: string;
+    namespace?: string;
+    propagationMode?: string;
+    updateStrategy?: string;
+  }
+  
   // Add function to handle simulated binding policy creation
-  const handleCreateSimulatedBindingPolicy = useCallback((clusterId: string, workloadId: string, config?: any) => {
+  const handleCreateSimulatedBindingPolicy = useCallback((clusterId: string, workloadId: string, config?: BindingPolicyConfig) => {
     return new Promise<void>((resolve) => {
       setTimeout(() => {
         // Find the workload and cluster
@@ -276,7 +284,7 @@ const BP = () => {
           workloadList: [workload.name],
           creationDate: new Date().toLocaleString(),
           bindingMode: config?.propagationMode || "DownsyncOnly",
-          conditions: null,
+          conditions: undefined,
           yaml: JSON.stringify({
             apiVersion: "policy.kubestellar.io/v1alpha1",
             kind: "BindingPolicy",
@@ -390,7 +398,7 @@ const fetchBindingPolicies = useCallback(async () => {
             // Store the namespace from the API
             namespace: statusData.namespace || "default",
             // Store any conditions returned by the API
-            conditions: statusData.conditions || null,
+            conditions: statusData.conditions || undefined,
             yaml:
               policy.metadata.annotations?.yaml ||
               JSON.stringify(policy, null, 2),
@@ -464,9 +472,15 @@ const fetchBindingPolicies = useCallback(async () => {
           }));
         }
         
+        // Define interface for ITS cluster data
+        interface ITSCluster {
+          name: string;
+          labels?: Record<string, string>;
+        }
+        
         // Add ITS clusters if available
         if (response.data.itsData && Array.isArray(response.data.itsData)) {
-          const itsClusterData = response.data.itsData.map((cluster: any) => ({
+          const itsClusterData = response.data.itsData.map((cluster: ITSCluster) => ({
             name: cluster.name,
             status: 'Ready', // Default status for ITS clusters
             labels: cluster.labels || { 'kubernetes.io/cluster-name': cluster.name },
@@ -505,8 +519,17 @@ const fetchBindingPolicies = useCallback(async () => {
     try {
       const response = await api.get('/api/wds/workloads');
       
+      // Define interface for API workload data
+      interface ApiWorkload {
+        name: string;
+        kind: string;
+        namespace: string;
+        creationTime: string;
+        labels?: Record<string, string>;
+      }
+      
       // Map the response data directly since it's already in the correct format
-      const workloadData = response.data.map((workload: any) => ({
+      const workloadData = response.data.map((workload: ApiWorkload) => ({
         name: workload.name,
         type: workload.kind,
         namespace: workload.namespace,

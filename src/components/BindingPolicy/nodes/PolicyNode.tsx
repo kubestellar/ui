@@ -5,8 +5,8 @@ import { Box, Typography, Chip } from '@mui/material';
 interface PolicyNodeData {
   policy: {
     status: string;
-    clusterList?: any[];
-    workloadList?: any[];
+    clusterList?: string[];
+    workloadList?: string[];
   };
   label: string;
   isActive: boolean;
