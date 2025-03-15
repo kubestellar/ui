@@ -17,10 +17,10 @@ import {
   Typography,
   CircularProgress,
 } from "@mui/material";
-import useTheme from "../stores/themeStore";
-import { api } from "../lib/api";
+import useTheme from "../../stores/themeStore";
+import { api } from "../../lib/api";
 
-interface PolicyData {
+export interface PolicyData {
   name: string;
   workload: string;
   yaml: string;

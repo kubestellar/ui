@@ -9,9 +9,8 @@ import {
   MenuItem,
   Chip,
 } from "@mui/material";
-import { Search, Filter, Plus, X } from "lucide-react";
-import CreateBindingPolicyDialog from "../../CreateBindingPolicyDialog";
-import { BindingPolicyInfo } from "../../../types/bindingPolicy";
+import { Search, Filter, Plus, X, Trash2 } from "lucide-react";
+import CreateBindingPolicyDialog, {PolicyData} from "../CreateBindingPolicyDialog";
 import useTheme from "../../../stores/themeStore";
 
 interface BPHeaderProps {
@@ -19,13 +18,13 @@ interface BPHeaderProps {
   setSearchQuery: (query: string) => void;
   createDialogOpen: boolean;
   setCreateDialogOpen: (open: boolean) => void;
-  onCreatePolicy: (
-    policyData: Omit<BindingPolicyInfo, "creationDate" | "clusters" | "status">
-  ) => void;
+  onCreatePolicy: (policyData: PolicyData) => void;
   activeFilters: { status?: "Active" | "Inactive" | "Pending" };
   setActiveFilters: (filters: {
     status?: "Active" | "Inactive" | "Pending";
   }) => void;
+  selectedPolicies: string[];
+  onBulkDelete: () => void;
 }
 
 const BPHeader: React.FC<BPHeaderProps> = ({
@@ -36,6 +35,8 @@ const BPHeader: React.FC<BPHeaderProps> = ({
   onCreatePolicy,
   activeFilters,
   setActiveFilters,
+  selectedPolicies,
+  onBulkDelete,
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
@@ -116,6 +117,26 @@ const BPHeader: React.FC<BPHeaderProps> = ({
             onDelete={() => handleStatusFilter(undefined)}
             deleteIcon={<X size={16} />}
           />
+        )}
+
+        {selectedPolicies.length > 0 && (
+          <Button
+            startIcon={<Trash2 size={20} />}
+            variant="outlined"
+            color="error"
+            onClick={onBulkDelete}
+            sx={{
+              ...(theme === "dark" && {
+                borderColor: "error.main",
+                color: "error.main",
+                "&:hover": {
+                  borderColor: "error.main",
+                },
+              }),
+            }}
+          >
+            Delete Selected ({selectedPolicies.length})
+          </Button>
         )}
 
         <Menu
