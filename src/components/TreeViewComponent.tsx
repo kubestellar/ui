@@ -82,10 +82,17 @@ export interface ResourceItem {
     name: string;
     namespace: string;
     creationTimestamp: string;
-    [key: string]: any;
+    labels?: Record<string, string>;
+    [key: string]: string | undefined | Record<string, string>;
   };
-  spec?: any;
-  status?: any;
+  spec?: {
+    ports?: Array<{ name: string; port: number }>;
+    holderIdentity?: string;
+  };
+  status?: {
+    conditions?: Array<{ type: string; status: string }>;
+    phase?: string;
+  };
   data?: Record<string, string>;
   subsets?: Array<{
     addresses?: Array<{ ip: string }>;
@@ -111,6 +118,12 @@ interface SelectedNode {
   onClose: () => void;
   isOpen: boolean;
   resourceData?: ResourceItem;
+}
+
+interface ResourcesMap {
+  endpoints: ResourceItem[];
+  endpointSlices: ResourceItem[];
+  [key: string]: ResourceItem[];
 }
 
 const nodeStyle: React.CSSProperties = {
@@ -283,7 +296,7 @@ const TreeView = () => {
     ) => {
       let icon: string = "";
       let dynamicText: string = "";
-      let heartColor: string = status === "Active" ? "rgb(24, 190, 148)" : "#ff0000";
+      const heartColor: string = status === "Active" ? "rgb(24, 190, 148)" : "#ff0000";
 
       switch (type.toLowerCase()) {
         case "namespace":
@@ -459,9 +472,20 @@ const TreeView = () => {
       let minY = Infinity;
       let maxY = -Infinity;
 
-      const resourceHeights: { [key: string]: number } = {};
+      // Preprocess resources into a typed map
+      const resourcesMap: ResourcesMap = {
+        endpoints: namespace.resources[".v1/endpoints"] || [],
+        endpointSlices: namespace.resources["discovery.k8s.io.v1/endpointslices"] || [],
+      };
+      Object.entries(namespace.resources).forEach(([key, value]) => {
+        if (key !== ".v1/endpoints" && key !== "discovery.k8s.io.v1/endpointslices") {
+          resourcesMap[key] = value;
+        }
+      });
 
-      Object.entries(namespace.resources).forEach(([, resourceItems]) => {
+      const resourceHeights: Record<string, number> = {};
+
+      Object.entries(resourcesMap).forEach(([, resourceItems]) => {
         resourceItems.forEach((item: ResourceItem) => {
           const kindLower = item.kind.toLowerCase();
           const resourceId = `${namespaceId}-${kindLower}-${item.metadata.name}`;
@@ -472,14 +496,14 @@ const TreeView = () => {
             totalHeight = numData > 0 ? numData * verticalSpacing : verticalSpacing;
           } else if (kindLower === "service") {
             const numPorts = item.spec?.ports?.length || 0;
-            const endpoints = namespace.resources[".v1/endpoints"]?.find(
+            const endpoints = resourcesMap.endpoints.find(
               (ep: ResourceItem) => ep.metadata.name === item.metadata.name
             );
             const numSubsets = endpoints?.subsets?.length || 0;
-            const endpointSlices = namespace.resources["discovery.k8s.io.v1/endpointslices"]?.filter(
+            const endpointSlices = resourcesMap.endpointSlices.filter(
               (es: ResourceItem) => es.metadata.labels?.["kubernetes.io/service-name"] === item.metadata.name
             );
-            const numSlices = endpointSlices?.length || 0;
+            const numSlices = endpointSlices.length;
 
             let totalChildren = numPorts;
             if (endpoints) {
@@ -526,32 +550,31 @@ const TreeView = () => {
         });
       });
 
-      if (!Object.keys(namespace.resources).length) {
+      if (!Object.keys(resourcesMap).length) {
         minY = currentY;
         maxY = currentY;
       }
 
       const totalChildHeight = maxY - minY;
       const namespaceY = minY + totalChildHeight / 2;
-      // Pass namespace data with creationTimestamp
       addNode(namespaceId, namespace.name, x, namespaceY, null, "namespace", namespace.status, "", namespace.name, {
         apiVersion: "v1",
         kind: "Namespace",
         metadata: { 
           name: namespace.name, 
           namespace: namespace.name,
-          creationTimestamp: "" // Added empty string as default, adjust if actual timestamp available
+          creationTimestamp: ""
         },
         status: { phase: namespace.status },
       });
 
       currentY = minY;
 
-      Object.entries(namespace.resources).forEach(([, resourceItems]) => {
+      Object.entries(resourcesMap).forEach(([, resourceItems]) => {
         resourceItems.forEach((item: ResourceItem) => {
           const kindLower = item.kind.toLowerCase();
           const resourceId = `${namespaceId}-${kindLower}-${item.metadata.name}`;
-          const status = item.status?.conditions?.some((c: any) => c.type === "Available" && c.status === "True")
+          const status = item.status?.conditions?.some((c) => c.type === "Available" && c.status === "True")
             ? "Active"
             : "Inactive";
 
@@ -571,14 +594,14 @@ const TreeView = () => {
             });
           } else if (kindLower === "service") {
             const numPorts = item.spec?.ports?.length || 0;
-            const endpoints = namespace.resources[".v1/endpoints"]?.find(
+            const endpoints = resourcesMap.endpoints.find(
               (ep: ResourceItem) => ep.metadata.name === item.metadata.name
             );
             const numSubsets = endpoints?.subsets?.length || 0;
-            const endpointSlices = namespace.resources["discovery.k8s.io.v1/endpointslices"]?.filter(
+            const endpointSlices = resourcesMap.endpointSlices.filter(
               (es: ResourceItem) => es.metadata.labels?.["kubernetes.io/service-name"] === item.metadata.name
             );
-            const numSlices = endpointSlices?.length || 0;
+            const numSlices = endpointSlices.length;
 
             let totalServiceChildren = numPorts;
             if (endpoints) totalServiceChildren += 1;
@@ -588,7 +611,7 @@ const TreeView = () => {
 
             addNode(resourceId, item.metadata.name, x + horizontalSpacing, adjustedServiceY, namespaceId, kindLower, status, item.metadata.creationTimestamp, namespace.name, item);
 
-            item.spec?.ports?.forEach((port: any) => {
+            item.spec?.ports?.forEach((port) => {
               const portId = `${resourceId}-port-${port.name}`;
               const portY = numPorts === 1 && !endpoints && !numSlices ? adjustedServiceY : nestedY;
               addNode(portId, `${port.name} (${port.port})`, x + horizontalSpacing * 2, portY, resourceId, "port", status, undefined, namespace.name, item);
@@ -611,14 +634,14 @@ const TreeView = () => {
 
                 addNode(subsetId, `Subset ${idx + 1}`, x + horizontalSpacing * 3, adjustedSubsetY, endpointId, "subset", status, undefined, namespace.name, endpoints);
 
-                subset.addresses?.forEach((addr: any) => {
+                subset.addresses?.forEach((addr) => {
                   const addrId = `${subsetId}-addr-${addr.ip}`;
                   const addrY = totalSubsetChildren === 1 ? adjustedSubsetY : nestedY;
                   addNode(addrId, addr.ip, x + horizontalSpacing * 4, addrY, subsetId, "data", status, undefined, namespace.name, endpoints);
                   nestedY += verticalSpacing;
                 });
 
-                subset.ports?.forEach((port: any) => {
+                subset.ports?.forEach((port) => {
                   const portId = `${subsetId}-port-${port.name}`;
                   const portY = totalSubsetChildren === 1 && !subset.addresses?.length ? adjustedSubsetY : nestedY;
                   addNode(portId, `${port.name} (${port.port})`, x + horizontalSpacing * 4, portY, subsetId, "port", status, undefined, namespace.name, endpoints);
@@ -633,7 +656,7 @@ const TreeView = () => {
               }
             }
 
-            endpointSlices?.forEach((es) => {
+            endpointSlices.forEach((es) => {
               const esId = `${resourceId}-endpointslice-${es.metadata.name}`;
               const numEndpoints = es.endpoints?.length || 0;
               const totalEsChildren = numEndpoints;
@@ -657,7 +680,7 @@ const TreeView = () => {
                   nestedY += verticalSpacing;
                 });
 
-                es.ports?.forEach((port: any) => {
+                es.ports?.forEach((port) => {
                   const portId = `${endpointId}-port-${port.name}`;
                   const portY = totalEndpointChildren === 1 && !endpoint.addresses?.length ? adjustedEndpointY : nestedY;
                   addNode(portId, `${port.name} (${port.port})`, x + horizontalSpacing * 4, portY, endpointId, "port", status, undefined, namespace.name, es);
@@ -728,7 +751,6 @@ const TreeView = () => {
         (namespace) =>
           namespace.name !== "kubestellar-report" &&
           namespace.name !== "kube-node-lease" &&
-          namespace.name !== "kube-public" &&
           namespace.name !== "kube-public" &&
           namespace.name !== "default" &&
           namespace.name !== "kube-system"
