@@ -2,10 +2,8 @@ import {
   HiOutlineHome,
   HiOutlineUser,
   HiOutlineCube,
-  HiOutlineSquares2X2,
   HiOutlineCommandLine,
   HiOutlineCog8Tooth,
-  HiOutlineCubeTransparent,
   HiOutlineCog,
 } from 'react-icons/hi2';
 
@@ -43,16 +41,9 @@ export const menu = [
       },
       {
         isLink: true,
-        url: '/wds',
-        icon: HiOutlineSquares2X2,
-        label: 'Deployments',
-      },
-      {
-        isLink: true,
         url: '/workloads/manage',
         icon: HiOutlineCommandLine,
         label: 'Workloads',
-        marginBottom: '2rem',
       },
     ],
   },
@@ -75,12 +66,6 @@ export const menu = [
     centered: true,
     marginTop: '1rem',
     listItems: [
-      {
-        isLink: true,
-        url: '/wds/treeview',
-        icon: HiOutlineCubeTransparent,
-        label: 'Workload Topology',
-      },
       {
         isLink: true,
         url: '/wecs/treeview',

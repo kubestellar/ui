@@ -42,7 +42,7 @@ export const routesConfig: RouteObject[] = [
         ) 
       },
       { 
-        path: "wds", 
+        path: "workloads/manage", 
         element: (
           <ProtectedRoute>
             <WDS />
