@@ -14,7 +14,7 @@ func SetupResourceRoutes(router *gin.Engine) {
 	api := router.Group("/api")
 	{
 
-		api.GET("/ws", func(ctx *gin.Context) {
+		api.GET("/wds/context", func(ctx *gin.Context) {
 			wds.CreateWDSContextUsingCommand(ctx.Writer, ctx.Request, ctx)
 		})
 		api.POST("/:resourceKind/:namespace", k8s.CreateResource)         // Create a new resource
