@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect,  useState } from 'react';
+import React, { useMemo, useEffect,  useState, useCallback } from 'react';
 import { 
   Box, 
   Typography, 
@@ -10,12 +10,9 @@ import {
   Badge
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import LinkIcon from '@mui/icons-material/Link';
-import StorageIcon from '@mui/icons-material/Storage';
-import DnsIcon from '@mui/icons-material/Dns';
-import AppsIcon from '@mui/icons-material/Apps';
-import PolicyIcon from '@mui/icons-material/Policy';
 import { BindingPolicyInfo, ManagedCluster, Workload } from '../../types/bindingPolicy';
+import KubernetesIcon from './KubernetesIcon';
+import ConnectionIcon from './ConnectionIcon.tsx';
 
 interface ConnectionLine {
   source: string;
@@ -154,17 +151,10 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
     }
   };
 
-  // Get workload icon based on type
-  const getWorkloadIcon = (type: string) => {
-    switch (type.toLowerCase()) {
-      case 'deployment':
-      case 'replicaset':
-        return <DnsIcon fontSize="small" sx={{ color: 'primary.main' }} />;
-      case 'statefulset':
-        return <StorageIcon fontSize="small" sx={{ color: 'secondary.main' }} />;
-      default:
-        return <DnsIcon fontSize="small" sx={{ color: 'info.main' }} />;
-    }
+  // Get workload icon based on type - now using KubernetesIcon
+  const getWorkloadIcon = () => {
+    // Using fixed workload icon type regardless of input type
+    return <KubernetesIcon type="workload" size={20} />;
   };
 
   // Pre-calculate connections for each entity type
@@ -235,19 +225,21 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
     };
   };
 
-  // Handle item click for connection mode
-  const handleItemClick = (itemType: 'cluster' | 'workload' | 'policy', itemId: string) => {
-    if (connectMode && onItemClick) {
-      onItemClick(itemType, itemId);
-    }
-  };
+  // Function to handle clicks and identify the closest parent element with item data
+  // const handleItemClick = useCallback((e: React.MouseEvent, itemType: 'policy' | 'cluster' | 'workload', itemId: string) => {
+  //   e.stopPropagation(); // Stop event bubbling
+  //   console.log(`🎯 Item clicked: ${itemType}-${itemId}`);
+  //   if (onItemClick) {
+  //     onItemClick(itemType, itemId);
+  //   }
+  // }, [onItemClick]);
 
   // Handle item hover for tooltips
-  const handleItemHover = (itemType: 'cluster' | 'workload' | 'policy' | null, itemId: string | null) => {
+  const handleItemHover = useCallback((_e: React.MouseEvent | null, itemType: 'cluster' | 'workload' | 'policy' | null, itemId: string | null) => {
     if (onItemHover) {
       onItemHover(itemType, itemId);
     }
-  };
+  }, [onItemHover]);
 
   // Use this to add a visual indicator to show that an item can be connected
   const isItemConnectable = (itemType: string, itemId: string) => {
@@ -357,6 +349,19 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
     e.preventDefault();
   };
 
+  // Second, add a helper function to ensure all click events within items get captured
+  const captureItemClick = useCallback((e: React.MouseEvent, itemType: 'policy' | 'cluster' | 'workload', itemId: string) => {
+    e.stopPropagation(); // Stop event bubbling
+    e.preventDefault(); // Prevent any default behavior
+    
+    console.log(`🎯 Item clicked (captured): ${itemType}-${itemId}`);
+    
+    // Call the onItemClick handler with the item type and ID
+    if (onItemClick) {
+      onItemClick(itemType, itemId);
+    }
+  }, [onItemClick]);
+
   return (
     <Box 
       sx={{ position: 'relative', zIndex: 2, flexGrow: 1 }}
@@ -386,9 +391,9 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                   elevation={2}
                   draggable
                   onDragStart={(e) => handleDragStart(e, 'policy', policyId)}
-                  onClick={() => handleItemClick('policy', policyId)}
-                  onMouseEnter={() => handleItemHover('policy', policyId)}
-                  onMouseLeave={() => handleItemHover(null, null)}
+                  onClick={(e) => captureItemClick(e, 'policy', policyId)}
+                  onMouseEnter={(e) => handleItemHover(e, 'policy', policyId)}
+                  onMouseLeave={(e) => handleItemHover(e, null, null)}
                   sx={{
                     p: 1,
                     ...getConnectionBorderStyle('policy', policyId, getStatusColor(policy.status)),
@@ -406,7 +411,9 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                     '&:hover': {
                       transform: 'translateY(-2px)',
                       boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
-                    }
+                    },
+                    'data-item-type': 'policy',
+                    'data-item-id': policyId
                   }}
                 >
                   <Box sx={{ 
@@ -417,7 +424,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                     width: '100%'
                   }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <PolicyIcon sx={{ mr: 1, color: getStatusColor(policy.status) }} />
+                      <KubernetesIcon type="policy" size={20} sx={{ mr: 1 }} />
                       <Typography variant="subtitle2" noWrap>
                         {policy.name}
                       </Typography>
@@ -430,7 +437,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                           color="primary" 
                           sx={{ mr: 1 }}
                         >
-                          <LinkIcon fontSize="small" />
+                          <ConnectionIcon size={20} />
                         </Badge>
                       )}
                       <IconButton 
@@ -438,6 +445,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                         color="error"
                         onClick={(e) => {
                           e.stopPropagation();
+                          e.preventDefault();
                           removeFromCanvas('policy', policyId);
                         }}
                       >
@@ -491,9 +499,9 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                   elevation={2}
                   draggable
                   onDragStart={(e) => handleDragStart(e, 'cluster', clusterId)}
-                  onClick={() => handleItemClick('cluster', clusterId)}
-                  onMouseEnter={() => handleItemHover('cluster', clusterId)}
-                  onMouseLeave={() => handleItemHover(null, null)}
+                  onClick={(e) => captureItemClick(e, 'cluster', clusterId)}
+                  onMouseEnter={(e) => handleItemHover(e, 'cluster', clusterId)}
+                  onMouseLeave={(e) => handleItemHover(e, null, null)}
                   sx={{
                     p: 1,
                     ...getConnectionBorderStyle('cluster', clusterId, '#2196f3'),
@@ -514,7 +522,9 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                     '&:hover': {
                       transform: 'translateY(-2px)',
                       boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
-                    }
+                    },
+                    'data-item-type': 'cluster',
+                    'data-item-id': clusterId
                   }}
                 >
                   <Box sx={{ 
@@ -525,7 +535,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                     width: '100%'
                   }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <DnsIcon sx={{ mr: 1, color: '#2196f3' }} />
+                      <KubernetesIcon type="cluster" size={20} sx={{ mr: 1 }} />
                       <Typography variant="subtitle2" noWrap>
                         {cluster.name}
                       </Typography>
@@ -538,7 +548,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                           color="primary" 
                           sx={{ mr: 1 }}
                         >
-                          <LinkIcon fontSize="small" />
+                          <ConnectionIcon size={20} />
                         </Badge>
                       )}
                       <IconButton 
@@ -546,6 +556,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                         color="error"
                         onClick={(e) => {
                           e.stopPropagation();
+                          e.preventDefault();
                           removeFromCanvas('cluster', clusterId);
                         }}
                       >
@@ -599,7 +610,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                   mb: 1
                 }}
               >
-                <AppsIcon fontSize="small" sx={{ mr: 0.5, color: '#4caf50' }} />
+                <KubernetesIcon type="workload" size={16} sx={{ mr: 0.5 }} />
                 <Typography variant="body2" color="text.secondary">
                   Namespace: <strong>{namespace}</strong>
                 </Typography>
@@ -622,9 +633,9 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                       elevation={2}
                       draggable
                       onDragStart={(e) => handleDragStart(e, 'workload', workloadId)}
-                      onClick={() => handleItemClick('workload', workloadId)}
-                      onMouseEnter={() => handleItemHover('workload', workloadId)}
-                      onMouseLeave={() => handleItemHover(null, null)}
+                      onClick={(e) => captureItemClick(e, 'workload', workloadId)}
+                      onMouseEnter={(e) => handleItemHover(e, 'workload', workloadId)}
+                      onMouseLeave={(e) => handleItemHover(e, null, null)}
                       sx={{
                         p: 1,
                         ...getConnectionBorderStyle('workload', workloadId, '#4caf50'),
@@ -645,7 +656,9 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                         '&:hover': {
                           transform: 'translateY(-2px)',
                           boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
-                        }
+                        },
+                        'data-item-type': 'workload',
+                        'data-item-id': workloadId
                       }}
                     >
                       <Box sx={{ 
@@ -656,7 +669,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                         width: '100%'
                       }}>
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          {getWorkloadIcon(workload.type)}
+                          {getWorkloadIcon()}
                           <Typography variant="subtitle2" sx={{ ml: 1 }} noWrap>
                             {workload.name}
                           </Typography>
@@ -669,7 +682,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                               color="primary" 
                               sx={{ mr: 1 }}
                             >
-                              <LinkIcon fontSize="small" />
+                              <ConnectionIcon size={20} />
                             </Badge>
                           )}
                           <IconButton 
@@ -677,6 +690,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                             color="error"
                             onClick={(e) => {
                               e.stopPropagation();
+                              e.preventDefault();
                               removeFromCanvas('workload', workloadId);
                             }}
                           >

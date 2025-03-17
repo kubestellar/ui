@@ -12,7 +12,10 @@ import {
   Chip,
   ToggleButton,
   ToggleButtonGroup,
-  Alert
+  Alert,
+  TextField,
+  InputAdornment,
+  
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -20,11 +23,13 @@ import InfoIcon from '@mui/icons-material/Info';
 import AddLinkIcon from '@mui/icons-material/AddLink';
 import PanToolIcon from '@mui/icons-material/PanTool';
 import GridOnIcon from '@mui/icons-material/GridOn';
-import { BindingPolicyInfo, ManagedCluster, Workload } from '../../types/bindingPolicy';
+import SearchIcon from '@mui/icons-material/Search';
+import KubernetesIcon from './KubernetesIcon';
 import { usePolicyDragDropStore } from '../../stores/policyDragDropStore';
 import { useCanvasStore } from '../../stores/canvasStore';
-import CanvasItems from './CanvasItems';
+import { BindingPolicyInfo, ManagedCluster, Workload } from '../../types/bindingPolicy';
 import StrictModeDroppable from './StrictModeDroppable';
+import CanvasItems from './CanvasItems';
 import ItemTooltip from './ItemTooltip';
 
 interface PolicyCanvasProps {
@@ -51,7 +56,6 @@ interface PolicyCanvasProps {
     targetId: string, 
     targetName: string
   ) => void;
-  connectionMode?: boolean;
   onConnectionComplete?: (workloadId: string, clusterId: string) => void;
 }
 
@@ -61,22 +65,19 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
   workloads,
   loading = false,
   getItemLabels = () => ({}),
-  onConnectionSelect,
-  connectionMode = false,
   onConnectionComplete
 }) => {
   const theme = useTheme();
+  // Add responsive breakpoints
+  // const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  // const isMediumScreen = useMediaQuery(theme.breakpoints.down('md'));
+  
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const elementsRef = useRef<Record<string, HTMLElement>>({});
   const isMounted = useRef<boolean>(true);
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const prevConnectionLinesRef = useRef<typeof connectionLines>([]);
-  
-  // Log when connection mode changes
-  useEffect(() => {
-    console.log(`🌈 PolicyCanvas: Connection mode ${connectionMode ? 'ENABLED' : 'DISABLED'}`);
-  }, [connectionMode]);
   
   // Grid settings for snap-to-grid
   const [snapToGrid, setSnapToGrid] = useState<boolean>(true);
@@ -133,11 +134,15 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
     mouseY: 0
   });
 
-  // Add state for invalid connection warning
+  // State for active connection warning
   const [, setInvalidConnectionWarning] = useState<string | null>(null);
+  
+  // Search/filter states
+  const [clusterFilter, setClusterFilter] = useState<string>('');
+  const [workloadFilter, setWorkloadFilter] = useState<string>('');
 
-  // Helper function to draw a curved connection line
-  const drawConnection = (
+  // Helper function to draw a curved connection line wrapped in useCallback
+  const drawConnection = useCallback((
     ctx: CanvasRenderingContext2D, 
     startX: number, 
     startY: number, 
@@ -189,7 +194,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
       ctx.fillStyle = color;
       ctx.fill();
     }
-  };
+  }, []);
 
   // Draw connections between elements on canvas when data changes
   useEffect(() => {
@@ -315,7 +320,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
       });
       
       // Draw active connection if in connection mode
-      if (connectionMode && activeConnection.source) {
+      if (activeConnection.source) {
         const sourceElement = elementsRef.current[activeConnection.source];
         
         if (sourceElement) {
@@ -390,19 +395,20 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
       }
     };
   }, [
-    // Essential dependencies
     policyCanvasEntities,
     policyAssignmentMap, 
     policies, 
     clusters, 
     workloads, 
     drawingActive, 
-    connectionMode, 
-    activeConnection,
     connectionLines,
     throttledUpdateConnectionLines,
     // Drawing function
-    drawConnection
+    drawConnection,
+    activeConnection.mouseX,
+    activeConnection.mouseY,
+    activeConnection.source,
+    activeConnection.sourceType,
   ]);
 
   // Set isMounted to false when component unmounts
@@ -417,7 +423,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
 
   // Handle mouse movement for active connection
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (connectionMode && activeConnection.source) {
+    if (activeConnection.source) {
       setActiveConnection({
         ...activeConnection,
         mouseX: e.clientX,
@@ -427,16 +433,11 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
   };
   
   // Handle canvas item clicks for connection mode
-  const handleCanvasItemClick = (
+  const handleCanvasItemClick = useCallback((
     itemType: 'policy' | 'cluster' | 'workload', 
-    itemId: string
+    itemId: string  
   ) => {
-    console.log(`⭐ Canvas item clicked: ${itemType}-${itemId}, connectionMode: ${connectionMode}`);
-    
-    if (!connectionMode) {
-      console.log('⭐ Connection mode is OFF - ignoring click');
-      return;
-    }
+    console.log(`⭐ Canvas item clicked: ${itemType}-${itemId}`);
     
     // Skip if clicked on policy - we only connect clusters and workloads
     if (itemType === 'policy') {
@@ -511,7 +512,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
         // Do not reset active connection - let the user try again
       }
     }
-  };
+  }, [activeConnection, setActiveConnection, setInvalidConnectionWarning, onConnectionComplete]);
 
   // Update canvas when window is resized
   useEffect(() => {
@@ -679,26 +680,63 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
     
   }, [renderGrid, snapToGrid, theme]);
 
+  // Add a function to handle clicks globally on the canvas that can identify targets
+  // Add this after the handleMouseMove function
+
+  // Handle global canvas click to detect clicks on items and their children
+  const handleCanvasGlobalClick = useCallback((e: React.MouseEvent) => {
+    // Check if we have an active connection in progress
+    if (activeConnection.source) {
+      console.log('⭐ Global canvas click with active connection:', e.target);
+    }
+
+    // Traverse up from the target to find the closest element with data-item attributes
+    let target = e.target as HTMLElement;
+    let itemType: string | null = null;
+    let itemId: string | null = null;
+    
+    // Traverse up the DOM tree to find a parent with item data attributes
+    while (target && !itemType && !itemId) {
+      itemType = target.getAttribute('data-item-type');
+      itemId = target.getAttribute('data-item-id');
+      
+      if (itemType && itemId) {
+        console.log(`🎯 Found item in click path: ${itemType}-${itemId}`);
+        // Process the click as a canvas item click
+        handleCanvasItemClick(itemType as 'policy' | 'cluster' | 'workload', itemId);
+        return;
+      }
+      
+      // Move up to parent element
+      if (target.parentElement) {
+        target = target.parentElement;
+      } else {
+        break;
+      }
+    }
+  }, [activeConnection.source, handleCanvasItemClick]);
+
   return (
     <Paper
       ref={containerRef}
       sx={{
-        p: 2,
-        minHeight: 600,
+        p: { xs: 1, sm: 2 }, 
+        height: '100%', 
+        minHeight: { xs: 400, sm: 500 },
+        maxHeight: '90vh', 
         position: 'relative',
-        border: connectionMode ? '3px solid #9c27b0' : '1px solid',
-        borderColor: connectionMode ? '#9c27b0' : 'divider',
+        border: '1px solid',
+        borderColor: 'divider',
         backgroundColor: alpha(theme.palette.background.paper, 0.95),
         zIndex: 1,
-        boxShadow: connectionMode ? 3 : 1,
+        boxShadow: 1,
         borderRadius: 2,
-        overflow: 'hidden'
+        display: 'flex',
+        flexDirection: 'column', 
+        overflow: 'hidden' 
       }}
       onMouseMove={handleMouseMove}
-      onClick={(e) => {
-        // Log any clicks on the canvas for debugging
-        console.log('🟢 Canvas clicked at', { x: e.clientX, y: e.clientY, target: e.target });
-      }}
+      onClick={handleCanvasGlobalClick}
     >
       <Box sx={{ 
         position: 'relative',
@@ -720,78 +758,91 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
       {/* Canvas Tools */}
       <Box sx={{ 
         display: 'flex', 
-        justifyContent: 'center', 
+        justifyContent: 'space-between', 
         mb: 2,
         position: 'relative',
-        zIndex: 3
+        zIndex: 3,
+        flexWrap: { xs: 'wrap', sm: 'nowrap' },
+        gap: 1
       }}>
-        <ToggleButtonGroup
-          value={connectionMode ? 'connect' : 'pan'}
-          exclusive
-          onChange={(_, newValue) => {
-            // Since we can't set connectionMode directly (it's a prop),
-            // we need to emit an event that the parent can use
-            if (newValue && newValue === 'connect' && onConnectionSelect) {
-              // We can use onConnectionSelect as a way to notify parent about connection mode change
-              onConnectionSelect('mode', 'change', 'requested', 'connection', newValue, newValue);
-            }
-            // Reset active connection when switching modes
-            setActiveConnection({
-              source: null,
-              sourceType: null,
-              mouseX: 0,
-              mouseY: 0
-            });
-          }}
-          size="small"
-          aria-label="canvas tool"
-          disabled={connectionMode} // Disable when connectionMode is controlled by parent
-        >
-          <ToggleButton value="pan" aria-label="pan mode">
-            <Tooltip title="Pan/Select Mode">
-              <PanToolIcon fontSize="small" />
-            </Tooltip>
-          </ToggleButton>
-          <ToggleButton value="connect" aria-label="connect mode">
-            <Tooltip title="Create Binding Policy: Click a workload then a cluster to connect them">
-              <AddLinkIcon fontSize="small" />
-            </Tooltip>
-          </ToggleButton>
-        </ToggleButtonGroup>
+        <Box>
+          <ToggleButtonGroup
+            value={snapToGrid ? 'grid' : 'free'}
+            exclusive
+            onChange={(_, newValue) => {
+              if (newValue) {
+                setSnapToGrid(newValue === 'grid');
+              }
+            }}
+            size="small"
+            aria-label="grid mode"
+          >
+            <ToggleButton value="grid" aria-label="snap to grid">
+              <Tooltip title="Snap to Grid">
+                <GridOnIcon fontSize="small" />
+              </Tooltip>
+            </ToggleButton>
+            <ToggleButton value="free" aria-label="free movement">
+              <Tooltip title="Free Movement">
+                <PanToolIcon fontSize="small" />
+              </Tooltip>
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
         
-        <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
-        
-        <ToggleButtonGroup
-          value={snapToGrid ? 'grid' : 'free'}
-          exclusive
-          onChange={(_, newValue) => {
-            if (newValue) {
-              setSnapToGrid(newValue === 'grid');
-            }
-          }}
-          size="small"
-          aria-label="grid mode"
-        >
-          <ToggleButton value="grid" aria-label="snap to grid">
-            <Tooltip title="Snap to Grid">
-              <GridOnIcon fontSize="small" />
-            </Tooltip>
-          </ToggleButton>
-          <ToggleButton value="free" aria-label="free movement">
-            <Tooltip title="Free Movement">
-              <PanToolIcon fontSize="small" />
-            </Tooltip>
-          </ToggleButton>
-        </ToggleButtonGroup>
+        {/* Item count indicators */}
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 1, 
+          flexWrap: 'wrap',
+          justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+          width: { xs: '100%', sm: 'auto' }
+        }}>
+          {policyCanvasEntities?.clusters && policyCanvasEntities.clusters.length > 0 && (
+            <Chip 
+              icon={<KubernetesIcon type="cluster" size={16} />} 
+              label={`${policyCanvasEntities.clusters.length} Clusters`} 
+              size="small" 
+              color="primary" 
+              variant="outlined" 
+            />
+          )}
+          {policyCanvasEntities?.workloads && policyCanvasEntities.workloads.length > 0 && (
+            <Chip 
+              icon={<KubernetesIcon type="workload" size={16} />} 
+              label={`${policyCanvasEntities.workloads.length} Workloads`} 
+              size="small" 
+              color="secondary" 
+              variant="outlined" 
+            />
+          )}
+          {connectionLines.length > 0 && (
+            <Chip 
+              icon={<AddLinkIcon sx={{ fontSize: 16 }} />} 
+              label={`${connectionLines.length} Connections`} 
+              size="small" 
+              color="default" 
+              variant="outlined" 
+            />
+          )}
+        </Box>
       </Box>
       
-      {connectionMode && (
-        <Alert 
-          severity="info" 
-          sx={{ mb: 2 }}
-        >
+      <Alert 
+        severity="info" 
+        sx={{ mb: 2 }}
+      >
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 0.5
+        }}>
+          <KubernetesIcon type="workload" size={16} sx={{ mr: 0.5 }} />
+          <Typography variant="body2" sx={{ mr: 0.5 }}>→</Typography>
+          <KubernetesIcon type="cluster" size={16} sx={{ mr: 0.5 }} />
           <Typography variant="body2">
-            <strong>Connection Mode:</strong> Click a workload and then a cluster to create a binding policy connection
+            <strong>Direct Connection:</strong> Click a workload and then a cluster to create a binding policy connection
             {activeConnection.source && (
               <Chip 
                 label={`Selected: ${activeConnection.source.replace(/^(cluster|workload)-/, '')}`}
@@ -801,8 +852,8 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
               />
             )}
           </Typography>
-        </Alert>
-      )}
+        </Box>
+      </Alert>
       
       <StrictModeDroppable droppableId="canvas" type="CLUSTER_OR_WORKLOAD">
         {(provided, snapshot) => (
@@ -811,8 +862,10 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
             ref={provided.innerRef}
             data-rbd-droppable-id="canvas"
             data-rfd-droppable-context-id={provided.droppableProps['data-rfd-droppable-context-id']}
+            onClick={handleCanvasGlobalClick}
             sx={{
-              minHeight: 500,
+              flex: 1, 
+              minHeight: { xs: 200, sm: 300 }, 
               backgroundColor: snapshot.isDraggingOver 
                 ? alpha(theme.palette.primary.main, 0.05) 
                 : alpha(theme.palette.background.default, 0.3),
@@ -823,14 +876,16 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                   : snapshot.draggingFromThisWith?.startsWith('workload-') 
                     ? alpha(theme.palette.success.main, 0.7)
                     : 'primary.main')
-                : alpha(theme.palette.divider, 0.7),
+                : alpha(theme.palette.divider, 0.9),
+              borderWidth: '3px',
               borderRadius: 2,
               transition: 'all 0.2s',
-              p: 3,
+              p: { xs: 1, sm: 2, md: 3 }, 
               position: 'relative',
               display: 'flex',
               flexDirection: 'column',
-              boxShadow: 'inset 0 0 10px rgba(0,0,0,0.05)'
+              boxShadow: 'inset 0 0 10px rgba(0,0,0,0.05)',
+              overflow: 'auto' 
             }}
           >
             {/* Canvas for drawing connections and grid */}
@@ -875,9 +930,21 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
             
             {/* Canvas Content with Clear Sections */}
             {!isCanvasEmpty && (
-              <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', zIndex: 2 }}>
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                height: '100%', 
+                zIndex: 2,
+                minHeight: 0 // Important for flex child
+              }}>
                 {/* Canvas Sections Header */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  mb: 2,
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  gap: { xs: 1, sm: 0 }
+                }}>
                   <Typography variant="subtitle2" sx={{ 
                     color: 'text.secondary',
                     fontWeight: 'medium',
@@ -897,125 +964,352 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                 </Box>
                 
                 {/* Main Canvas Layout */}
-                <Box sx={{ display: 'flex', flexGrow: 1 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexGrow: 1, 
+                  height: 'calc(100% - 40px)',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  gap: 2,
+                  minHeight: 0 // Important for flex child
+                }}>
                   {/* Clusters Section */}
                   <Box sx={{ 
-                    width: '48%', 
-                    mr: 1,
+                    width: { xs: '100%', sm: '48%' }, 
+                    mr: { xs: 0, sm: 1 },
                     p: 1, 
                     border: '1px dashed', 
                     borderColor: alpha(theme.palette.info.main, 0.4),
                     borderRadius: 1,
                     backgroundColor: alpha(theme.palette.info.main, 0.05),
                     boxShadow: 'inset 0 0 5px rgba(25, 118, 210, 0.1)',
-                    minHeight: 150
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: { xs: '200px', sm: 'auto' }, 
+                    minHeight: { xs: '200px', sm: 0 }, 
+                    flex: { xs: 'none', sm: 1 }, 
+                    overflow: 'hidden'
                   }}>
-                    {policyCanvasEntities.clusters.length > 0 ? (
-                      <Box>
-                        {/* Display clusters here with individual styling */}
-                        {policyCanvasEntities.clusters.map((clusterId) => (
-                          <Paper
-                            key={`cluster-section-${clusterId}`}
-                            elevation={2}
-                            sx={{
-                              mb: 1,
-                              p: 1,
-                              borderLeft: '4px solid',
-                              borderColor: theme.palette.info.main,
-                              backgroundColor: alpha(theme.palette.info.main, 0.1),
-                              transition: 'all 0.2s',
-                              '&:hover': { transform: 'translateY(-2px)', boxShadow: 3 }
-                            }}
-                          >
-                            <Typography variant="body2" component="div" sx={{ fontWeight: 'medium' }}>
-                              {clusterId}
-                            </Typography>
-                          </Paper>
-                        ))}
-                      </Box>
-                    ) : (
-                      <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 2 }}>
-                        Drag clusters here
-                      </Typography>
-                    )}
+                    <TextField
+                      placeholder="Search clusters..."
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      value={clusterFilter}
+                      onChange={(e) => setClusterFilter(e.target.value)}
+                      sx={{ mb: 1 }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <SearchIcon fontSize="small" />
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                    <Box sx={{ 
+                      flexGrow: 1, 
+                      overflowY: 'auto',
+                      overflowX: 'hidden',
+                      pb: 1,
+                      pr: 1
+                    }}>
+                      {policyCanvasEntities.clusters.length > 0 ? (
+                        <Box sx={{ 
+                          display: 'grid', 
+                          gridTemplateColumns: {
+                            xs: 'repeat(auto-fill, minmax(120px, 1fr))',
+                            sm: 'repeat(auto-fill, minmax(150px, 1fr))'
+                          },
+                          gap: 1.5,
+                          pt: 0.5
+                        }}>
+                          {/* Display clusters here with individual styling */}
+                          {policyCanvasEntities.clusters
+                            .filter(clusterId => clusterId.toLowerCase().includes(clusterFilter.toLowerCase()))
+                            .map((clusterId) => {
+                            const cluster = clusters.find(c => c.name === clusterId);
+                            return (
+                              <Paper
+                                key={`cluster-section-${clusterId}`}
+                                elevation={2}
+                                ref={(el) => {
+                                  if (el) elementsRef.current[`cluster-${clusterId}`] = el;
+                                }}
+                                sx={{
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  justifyContent: 'space-between',
+                                  p: 1.5,
+                                  mb: 1,
+                                  minHeight: '90px',
+                                  height: '100%',
+                                  borderLeft: '4px solid',
+                                  borderColor: theme.palette.info.main,
+                                  backgroundColor: alpha(theme.palette.info.main, 0.1),
+                                  transition: 'all 0.2s',
+                                  cursor: 'pointer',
+                                  '&:hover': { 
+                                    transform: 'translateY(-2px)', 
+                                    boxShadow: 3 
+                                  }
+                                }}
+                                data-item-type="cluster"
+                                data-item-id={clusterId}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCanvasItemClick('cluster', clusterId);
+                                }}
+                              >
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                  <KubernetesIcon type="cluster" size={16} sx={{ mr: 1 }} />
+                                  <Typography variant="body2" component="div" sx={{ 
+                                    fontWeight: 'medium',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap'
+                                  }}>
+                                    {clusterId}
+                                  </Typography>
+                                </Box>
+                                {cluster && cluster.labels && (
+                                  <Box sx={{ mt: 'auto' }}>
+                                    <Divider sx={{ my: 0.5 }} />
+                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                                      {Object.entries(cluster.labels).slice(0, 2).map(([key, value]) => (
+                                        <Chip 
+                                          key={key} 
+                                          label={`${key.split('/').pop()}: ${value}`} 
+                                          size="small" 
+                                          sx={{ 
+                                            fontSize: '0.6rem', 
+                                            height: 16, 
+                                            '& .MuiChip-label': { px: 0.5, py: 0 } 
+                                          }} 
+                                        />
+                                      ))}
+                                      {Object.keys(cluster.labels).length > 2 && (
+                                        <Chip 
+                                          label={`+${Object.keys(cluster.labels).length - 2}`} 
+                                          size="small" 
+                                          sx={{ 
+                                            fontSize: '0.6rem', 
+                                            height: 16, 
+                                            '& .MuiChip-label': { px: 0.5, py: 0 } 
+                                          }} 
+                                        />
+                                      )}
+                                    </Box>
+                                  </Box>
+                                )}
+                              </Paper>
+                            );
+                          })}
+                        </Box>
+                      ) : (
+                        <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 2 }}>
+                          Drag clusters here
+                        </Typography>
+                      )}
+                    </Box>
                   </Box>
                   
                   {/* Workloads Section */}
                   <Box sx={{ 
-                    width: '48%', 
-                    ml: 1,
+                    width: { xs: '100%', sm: '48%' }, 
+                    ml: { xs: 0, sm: 1 },
                     p: 1, 
                     border: '1px dashed', 
                     borderColor: alpha(theme.palette.success.main, 0.4),
                     borderRadius: 1,
                     backgroundColor: alpha(theme.palette.success.main, 0.05),
                     boxShadow: 'inset 0 0 5px rgba(76, 175, 80, 0.1)',
-                    minHeight: 150
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: { xs: '200px', sm: 'auto' }, 
+                    minHeight: { xs: '200px', sm: 0 }, 
+                    flex: { xs: 'none', sm: 1 }, 
+                    overflow: 'hidden'
                   }}>
-                    {policyCanvasEntities.workloads.length > 0 ? (
-                      <Box>
-                        {/* Display workloads here with individual styling */}
-                        {policyCanvasEntities.workloads.map((workloadId) => (
-                          <Paper
-                            key={`workload-section-${workloadId}`}
-                            elevation={2}
-                            sx={{
-                              mb: 1,
-                              p: 1,
-                              borderLeft: '4px solid',
-                              borderColor: theme.palette.success.main,
-                              backgroundColor: alpha(theme.palette.success.main, 0.1),
-                              transition: 'all 0.2s',
-                              '&:hover': { transform: 'translateY(-2px)', boxShadow: 3 }
-                            }}
-                          >
-                            <Typography variant="body2" component="div" sx={{ fontWeight: 'medium' }}>
-                              {workloadId}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              Type: {workloads.find(w => w.name === workloadId)?.type || 'Unknown'}
-                            </Typography>
-                          </Paper>
-                        ))}
-                      </Box>
-                    ) : (
-                      <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 2 }}>
-                        Drag workloads here
-                      </Typography>
-                    )}
+                    <TextField
+                      placeholder="Search workloads..."
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      value={workloadFilter}
+                      onChange={(e) => setWorkloadFilter(e.target.value)}
+                      sx={{ mb: 1 }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <SearchIcon fontSize="small" />
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                    <Box sx={{ 
+                      flexGrow: 1, 
+                      overflowY: 'auto',
+                      overflowX: 'hidden',
+                      pb: 1,
+                      pr: 1
+                    }}>
+                      {policyCanvasEntities.workloads.length > 0 ? (
+                        <Box sx={{ 
+                          display: 'grid', 
+                          gridTemplateColumns: {
+                            xs: 'repeat(auto-fill, minmax(120px, 1fr))',
+                            sm: 'repeat(auto-fill, minmax(150px, 1fr))'
+                          },
+                          gap: 1.5,
+                          pt: 0.5
+                        }}>
+                          {/* Display workloads here with individual styling */}
+                          {policyCanvasEntities.workloads
+                            .filter(workloadId => workloadId.toLowerCase().includes(workloadFilter.toLowerCase()))
+                            .map((workloadId) => {
+                            const workload = workloads.find(w => w.name === workloadId);
+                            return (
+                              <Paper
+                                key={`workload-section-${workloadId}`}
+                                elevation={2}
+                                ref={(el) => {
+                                  if (el) elementsRef.current[`workload-${workloadId}`] = el;
+                                }}
+                                sx={{
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  justifyContent: 'space-between',
+                                  p: 1.5,
+                                  mb: 1,
+                                  minHeight: '90px',
+                                  height: '100%',
+                                  borderLeft: '4px solid',
+                                  borderColor: theme.palette.success.main,
+                                  backgroundColor: alpha(theme.palette.success.main, 0.1),
+                                  transition: 'all 0.2s',
+                                  cursor: 'pointer',
+                                  '&:hover': { 
+                                    transform: 'translateY(-2px)', 
+                                    boxShadow: 3 
+                                  }
+                                }}
+                                data-item-type="workload"
+                                data-item-id={workloadId}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCanvasItemClick('workload', workloadId);
+                                }}
+                              >
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                  <KubernetesIcon type="workload" size={16} sx={{ mr: 1 }} />
+                                  <Typography variant="body2" component="div" sx={{ 
+                                    fontWeight: 'medium',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap'
+                                  }}>
+                                    {workloadId}
+                                  </Typography>
+                                </Box>
+                                <Typography variant="caption" color="text.secondary" sx={{ 
+                                  display: 'block',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}>
+                                  Type: {workload?.type || 'Unknown'}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary" sx={{ 
+                                  display: 'block',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}>
+                                  Namespace: {workload?.namespace || 'default'}
+                                </Typography>
+                                {workload && workload.labels && Object.keys(workload.labels).length > 0 && (
+                                  <Box sx={{ mt: 'auto' }}>
+                                    <Divider sx={{ my: 0.5 }} />
+                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                                      {Object.entries(workload.labels).slice(0, 2).map(([key, value]) => (
+                                        <Chip 
+                                          key={key} 
+                                          label={`${key}: ${value}`} 
+                                          size="small" 
+                                          sx={{ 
+                                            fontSize: '0.6rem', 
+                                            height: 16, 
+                                            '& .MuiChip-label': { px: 0.5, py: 0 } 
+                                          }} 
+                                        />
+                                      ))}
+                                      {Object.keys(workload.labels).length > 2 && (
+                                        <Chip 
+                                          label={`+${Object.keys(workload.labels).length - 2}`} 
+                                          size="small"
+                                          sx={{ 
+                                            fontSize: '0.6rem', 
+                                            height: 16, 
+                                            '& .MuiChip-label': { px: 0.5, py: 0 } 
+                                          }} 
+                                        />
+                                      )}
+                                    </Box>
+                                  </Box>
+                                )}
+                              </Paper>
+                            );
+                          })}
+                        </Box>
+                      ) : (
+                        <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 2 }}>
+                          Drag workloads here
+                        </Typography>
+                      )}
+                    </Box>
                   </Box>
                 </Box>
               </Box>
             )}
             
-            {/* Canvas Items Component */}
-            <CanvasItems
-              policies={policies}
-              clusters={clusters}
-              workloads={workloads}
-              canvasEntities={policyCanvasEntities}
-              assignmentMap={policyAssignmentMap}
-              getItemLabels={getPolicyItemLabels}
-              removeFromCanvas={removeFromPolicyCanvas}
-              elementsRef={elementsRef}
-              connectionLines={connectionLines}
-              connectMode={connectionMode}
-              selectedItems={activeConnection.source ? [{
-                itemType: activeConnection.sourceType || '',
-                itemId: activeConnection.source.split('-')[1] || ''
-              }] : []}
-              onItemClick={handleCanvasItemClick}
-              onItemHover={handleItemHover}
-              activeConnection={activeConnection.source}
-              snapToGrid={snapToGrid}
-              gridSize={gridSize}
-            />
+            {/* Canvas Items Component - Keep it for references but completely hide it visually */}
+            <Box sx={{ 
+              position: 'absolute', 
+              top: 0, 
+              left: -9999, 
+              visibility: 'hidden', 
+              height: 0, 
+              width: 0, 
+              overflow: 'hidden'
+            }}>
+              <CanvasItems
+                policies={policies}
+                clusters={clusters}
+                workloads={workloads}
+                canvasEntities={policyCanvasEntities}
+                assignmentMap={policyAssignmentMap}
+                getItemLabels={getPolicyItemLabels}
+                removeFromCanvas={removeFromPolicyCanvas}
+                elementsRef={elementsRef}
+                connectionLines={connectionLines}
+                connectMode={activeConnection.source !== null}
+                selectedItems={activeConnection.source ? [{
+                  itemType: activeConnection.sourceType || '',
+                  itemId: activeConnection.source.split('-')[1] || ''
+                }] : []}
+                onItemClick={handleCanvasItemClick}
+                onItemHover={handleItemHover}
+                activeConnection={activeConnection.source}
+                snapToGrid={snapToGrid}
+                gridSize={gridSize}
+              />
+            </Box>
             
             {provided.placeholder}
           </Box>
         )}
       </StrictModeDroppable>
       
+      {/* Footer Area with Clear Canvas Button - Always Visible */}
       <Box sx={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
@@ -1025,15 +1319,25 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
         borderRadius: 1,
         p: 1,
         position: 'relative',
-        zIndex: 2
+        zIndex: 2,
+        flexDirection: { xs: 'column', sm: 'row' },
+        gap: 1
       }}>
         <Tooltip title="After binding policies, you'll need to wait for the propagation to complete">
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 0.5
+          }}>
             <InfoIcon fontSize="small" sx={{ color: 'text.secondary', mr: 0.5 }} />
+            <KubernetesIcon type="workload" size={16} sx={{ mr: 0.5 }} />
+            <Typography variant="caption" color="text.secondary" sx={{ mx: 0.5 }}>
+              →
+            </Typography>
+            <KubernetesIcon type="cluster" size={16} sx={{ mr: 0.5 }} />
             <Typography variant="caption" color="text.secondary">
-              {connectionMode 
-                ? "Click items to create binding policies: workload → cluster" 
-                : "Drag a policy onto a cluster or workload to create a binding"}
+              Click items to create binding policies
             </Typography>
           </Box>
         </Tooltip>
@@ -1044,6 +1348,10 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
           onClick={clearCanvas}
           startIcon={<DeleteIcon />}
           disabled={isCanvasEmpty}
+          sx={{ 
+            alignSelf: { xs: 'flex-end', sm: 'auto' },
+            minWidth: '120px'
+          }}
         >
           Clear Canvas
         </Button>
