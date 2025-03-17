@@ -36,7 +36,7 @@ type NamespaceDetails struct {
 	Name      string                                 `json:"name"`
 	Status    string                                 `json:"status"`
 	Labels    map[string]string                      `json:"labels"`
-	Resources map[string][]unstructured.Unstructured `json:"resources,omitempty"`
+	Resources map[string][]unstructured.Unstructured `json:"resources"`
 }
 
 // CreateNamespace creates a new namespace
@@ -289,11 +289,11 @@ func GetAllNamespacesWithResources() ([]NamespaceDetails, error) {
 	return result, nil
 }
 
-// NamespaceWebSocketHandler handles WebSocket connections
+// NamespaceWebSocketHandler handles WebSocket connections with optimized real-time updates
 func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		http.Error(w, "Could not open websocket connection", http.StatusBadRequest)
+		http.Error(w, "Could not open WebSocket connection", http.StatusBadRequest)
 		return
 	}
 	defer conn.Close()
@@ -309,10 +309,56 @@ func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
+	// Send cached data immediately
+	cachedData, err := redis.GetNamespaceCache(namespaceCacheKey)
+	if err == nil && cachedData != "" {
+		_ = conn.WriteMessage(websocket.TextMessage, []byte(cachedData))
+	}
+
+	// Ticker for periodic updates
 	ticker := time.NewTicker(updateInterval)
 	defer ticker.Stop()
 
-	// Define sensitive namespaces and resource types
+	for {
+		select {
+		case <-done:
+			return // Stop if client disconnects
+		case <-ticker.C:
+			// Fetch live data in a separate goroutine to avoid blocking
+			go func() {
+				data, err := GetAllNamespacesWithResources()
+				var jsonData []byte
+
+				if err != nil {
+					// If fetching fails, use cached data
+					if cachedData != "" {
+						jsonData = []byte(cachedData)
+					} else {
+						_ = conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Error: %v", err)))
+						return
+					}
+				} else {
+					// Process and filter data before sending
+					FilterSensitiveData(data)
+
+					jsonData, err = json.Marshal(data)
+					if err != nil {
+						return
+					}
+
+					// Update cache
+					redis.SetNamespaceCache(namespaceCacheKey, string(jsonData), cacheTTL)
+				}
+
+				// Send data to the client
+				_ = conn.WriteMessage(websocket.TextMessage, jsonData)
+			}()
+		}
+	}
+}
+
+// FilterSensitiveData removes sensitive namespace details and resources
+func FilterSensitiveData(data []NamespaceDetails) {
 	sensitiveNamespaces := map[string]bool{
 		"kube-system":     true,
 		"kube-public":     true,
@@ -325,61 +371,21 @@ func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		"serviceaccounts": true,
 	}
 
-	for {
-		select {
-		case <-done:
-			return // Client disconnected
-		case <-ticker.C:
-			// Try to fetch from Redis cache first
-			cachedData, err := redis.GetNamespaceCache(namespaceCacheKey)
+	for i := range data {
+		// Redact sensitive namespace details
+		if sensitiveNamespaces[data[i].Name] {
+			data[i].Resources = make(map[string][]unstructured.Unstructured)
+			data[i].Labels = map[string]string{"redacted": "true"}
+			continue
+		}
 
-			var jsonData []byte
-			if err != nil || cachedData == "" {
-				// Cache miss, fetch live data
-				data, err := GetAllNamespacesWithResources()
-				if err != nil {
-					if err := conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Error: %v", err))); err != nil {
-						return
-					}
-					continue
+		// Remove sensitive resources
+		for resourceType := range data[i].Resources {
+			for sensitive := range sensitiveResources {
+				if strings.HasSuffix(resourceType, "/"+sensitive) || strings.Contains(resourceType, "certificates") {
+					delete(data[i].Resources, resourceType)
+					break
 				}
-
-				// Filter sensitive information
-				for i := range data {
-					// Redact sensitive namespace details
-					if sensitiveNamespaces[data[i].Name] {
-						// Keep the name and status but remove details
-						data[i].Resources = make(map[string][]unstructured.Unstructured)
-						data[i].Labels = map[string]string{"redacted": "true"}
-						continue
-					}
-					// Filter sensitive resources in non-sensitive namespaces
-					for resourceType := range data[i].Resources {
-						for sensitive := range sensitiveResources {
-							if strings.HasSuffix(resourceType, "/"+sensitive) {
-								delete(data[i].Resources, resourceType)
-								break
-							}
-						}
-						if strings.Contains(resourceType, "certificates") {
-							delete(data[i].Resources, resourceType)
-						}
-					}
-				}
-
-				jsonData, err = json.Marshal(data)
-				if err != nil {
-					continue
-				}
-
-				// Update cache with filtered data
-				redis.SetNamespaceCache(namespaceCacheKey, string(jsonData), cacheTTL)
-			} else {
-				jsonData = []byte(cachedData)
-			}
-
-			if err := conn.WriteMessage(websocket.TextMessage, jsonData); err != nil {
-				return
 			}
 		}
 	}
