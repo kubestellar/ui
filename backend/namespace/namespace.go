@@ -144,7 +144,7 @@ func GetNamespaceResources(namespace string) (*NamespaceDetails, error) {
 					wg.Done()
 					continue
 				}
-				
+
 				resourceKey := fmt.Sprintf("%s.%s/%s", gvr.Group, gvr.Version, gvr.Resource)
 				resultCh <- struct {
 					key   string
@@ -314,14 +314,14 @@ func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Define sensitive namespaces and resource types
 	sensitiveNamespaces := map[string]bool{
-		"kube-system": true,
-		"kube-public": true,
+		"kube-system":     true,
+		"kube-public":     true,
 		"kube-node-lease": true,
 	}
 
 	sensitiveResources := map[string]bool{
-		"secrets": true,
-		"configmaps": true,
+		"secrets":         true,
+		"configmaps":      true,
 		"serviceaccounts": true,
 	}
 
@@ -332,7 +332,7 @@ func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		case <-ticker.C:
 			// Try to fetch from Redis cache first
 			cachedData, err := redis.GetNamespaceCache(namespaceCacheKey)
-			
+
 			var jsonData []byte
 			if err != nil || cachedData == "" {
 				// Cache miss, fetch live data
@@ -365,8 +365,7 @@ func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 							delete(data[i].Resources, resourceType)
 						}
 					}
-					}
-				
+				}
 
 				jsonData, err = json.Marshal(data)
 				if err != nil {
