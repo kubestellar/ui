@@ -56,7 +56,7 @@ const DataPacket = ({ path, speed = 1, color = "#00E396", size = 0.08 }: DataPac
   
   // Calculate position along the path
   const position = useMemo(() => {
-    if (path.length < 2) return [0, 0, 0];
+    if (path.length < 2) return [0, 0, 0] as [number, number, number];
     
     const start = path[0];
     const end = path[1];
@@ -65,7 +65,7 @@ const DataPacket = ({ path, speed = 1, color = "#00E396", size = 0.08 }: DataPac
       start[0] + (end[0] - start[0]) * progress,
       start[1] + (end[1] - start[1]) * progress,
       start[2] + (end[2] - start[2]) * progress
-    ];
+    ] as [number, number, number];
   }, [path, progress]);
   
   return (
