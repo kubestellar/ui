@@ -100,6 +100,18 @@ func writeMessage(conn *websocket.Conn, message string) {
 	}
 }
 func CreateWDSContextUsingCommand(w http.ResponseWriter, r *http.Request, c *gin.Context) {
+	newWdsContext := c.Query("context")
+	version := c.Query("version")
+
+	if version == "" {
+		version = "0.26.0"
+	}
+	if newWdsContext == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "context query must be prestent ?context=<your_new_context>",
+		})
+	}
+	releaseName := "add-" + newWdsContext
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("WebSocket Upgrade Error:", err)
@@ -124,11 +136,11 @@ func CreateWDSContextUsingCommand(w http.ResponseWriter, r *http.Request, c *gin
 	// Step 1: Helm upgrade command
 	helmCmd := "helm"
 	args := []string{
-		"upgrade", "--install", "add-wds6",
+		"upgrade", "--install", releaseName,
 		"oci://ghcr.io/kubestellar/kubestellar/core-chart",
-		"--version", "0.25.0-rc.1",
+		"--version", version,
 		"--set", "kubeflex-operator.install=false,InstallPCHs=false",
-		"--set-json", `WDSes=[{"name":"wds6"}]`,
+		"--set-json", fmt.Sprintf(`WDSes=[{"name":"%s"}]`, newWdsContext),
 	}
 	writeMessage(conn, "Running Helm upgrade...")
 	// Execute the command
@@ -142,30 +154,26 @@ func CreateWDSContextUsingCommand(w http.ResponseWriter, r *http.Request, c *gin
 
 	writeMessage(conn, fmt.Sprintf("Helm command executed successfully:\n%s", string(output)))
 
-	writeMessage(conn, "Deleting Kubernetes context 'wds6' if it exists...")
-	// Step 2: Delete Kubernetes context wds6
-	delCtxCmd := exec.Command("kubectl", "config", "delete-context", "wds6")
+	writeMessage(conn, fmt.Sprintf("Deleting Kubernetes context '%s' if it exists...", newWdsContext))
+	// Step 2: Delete Kubernetes context newContext
+	delCtxCmd := exec.Command("kubectl", "config", "delete-context", newWdsContext)
 	delCtxOutput, delCtxErr := delCtxCmd.CombinedOutput()
 
 	if delCtxErr != nil {
-		writeMessage(conn, fmt.Sprintf("Warning: Failed to delete context 'wds3' (may not exist): %v\nOutput: %s", delCtxErr, string(delCtxOutput)))
+		writeMessage(conn, fmt.Sprintf("Warning: Failed to delete context '%s' (may not exist): %v\nOutput: %s", newWdsContext, delCtxErr, string(delCtxOutput)))
 	} else {
-		if err := conn.WriteMessage(websocket.TextMessage, []byte("Deleted context 'wds6' successfully.")); err != nil {
-			log.Println("Error writing to WebSocket:", err)
-			return
-		}
-		writeMessage(conn, "Deleted context 'wds6' successfully.")
+		writeMessage(conn, fmt.Sprintf("Deleted context '%s' successfully", newWdsContext))
 	}
-	writeMessage(conn, "Setting context 'wds6' using kflex...")
+	writeMessage(conn, fmt.Sprintf("Setting context '%s' using kflex...", newWdsContext))
 	// Step 3: Set the new context using kflex
-	kflexCmd := exec.Command("kflex", "ctx", "wds6")
+	kflexCmd := exec.Command("kflex", "ctx", newWdsContext)
 	kflexOutput, kflexErr := kflexCmd.CombinedOutput()
 
 	if kflexErr != nil {
 		writeMessage(conn, fmt.Sprintf("Failed to set context using kflex: %v\nOutput: %s", kflexErr, string(kflexOutput)))
 	}
 
-	writeMessage(conn, fmt.Sprintf("Context 'wds6' set successfully:\n%s\n", string(kflexOutput)))
+	writeMessage(conn, fmt.Sprintf("Context '%s' set successfully:\n%s\n", newWdsContext, string(kflexOutput)))
 	// keep alive
 	select {}
 
