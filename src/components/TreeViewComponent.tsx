@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, memo } from "react";
 import {
   Box,
   Typography,
@@ -12,19 +12,21 @@ import {
 import axios, { AxiosError } from "axios";
 import ReactFlow, { Background, useReactFlow, BackgroundVariant, Position, MarkerType } from "reactflow";
 import { ReactFlowProvider } from "reactflow";
+import * as dagre from "dagre";
 import "reactflow/dist/style.css";
 import deployicon from "../assets/deploy.svg";
 import ns from "../assets/ns.svg";
 import svc from "../assets/svc.svg";
 import rs from "../assets/rs.svg";
-import config from "../assets/cm.svg";
+import cm from "../assets/cm.svg";
 import ep from "../assets/ep.svg";
 import { ZoomIn, ZoomOut } from "@mui/icons-material";
 import { FiMoreVertical } from "react-icons/fi";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import LoadingFallback from "./LoadingFallback";
 import DynamicDetailsPanel from "./DynamicDetailsPanel";
-import NewAppDialog from "./NewAppDialog"; // Import the new component
+import NewAppDialog from "./NewAppDialog";
+import ReactDOM from "react-dom";
 
 // Interfaces (unchanged)
 interface NodeData {
@@ -129,37 +131,153 @@ const nodeStyle: React.CSSProperties = {
   height: "30px",
 };
 
-// CustomZoomControls component (unchanged)
-const CustomZoomControls = () => {
+// Type definition for NODE_TYPE_CONFIG (unchanged)
+interface NodeTypeConfig {
+  icon: string;
+  dynamicText: string;
+}
+
+const NODE_TYPE_CONFIG: { [key: string]: NodeTypeConfig } = {
+  namespace: { icon: ns, dynamicText: "ns" },
+  deployment: { icon: deployicon, dynamicText: "deploy" },
+  service: { icon: svc, dynamicText: "svc" },
+  replicaset: { icon: rs, dynamicText: "replica" },
+  container: { icon: deployicon, dynamicText: "container" },
+  configmap: { icon: cm, dynamicText: "config" },
+  data: { icon: cm, dynamicText: "data" },
+  endpoints: { icon: ep, dynamicText: "endpoint" },
+  endpointslice: { icon: ep, dynamicText: "slice" },
+  subset: { icon: ep, dynamicText: "subset" },
+  serviceaccount: { icon: cm, dynamicText: "sa" },
+  lease: { icon: cm, dynamicText: "lease" },
+  role: { icon: cm, dynamicText: "role" },
+  rolebinding: { icon: cm, dynamicText: "rb" },
+  subject: { icon: cm, dynamicText: "subject" },
+  ruleref: { icon: cm, dynamicText: "rule" },
+  port: { icon: svc, dynamicText: "port" },
+};
+
+// NodeLabel component (unchanged)
+const NodeLabel = memo(
+  ({
+    label,
+    icon,
+    dynamicText,
+    status,
+    timeAgo,
+    onClick,
+    onMenuClick,
+  }: {
+    label: string;
+    icon: string;
+    dynamicText: string;
+    status: string;
+    timeAgo?: string;
+    onClick: (e: React.MouseEvent) => void;
+    onMenuClick: (e: React.MouseEvent) => void;
+    resourceData?: ResourceItem;
+  }) => {
+    const heartColor = status === "Active" ? "rgb(24, 190, 148)" : "#ff0000";
+
+    return (
+      <div
+        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}
+        onClick={onClick}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginLeft: "-5px" }}>
+          <div>
+            <img src={icon} alt={label} width="18" height="18" />
+            <span style={{ color: "gray", fontWeight: 500 }}>{dynamicText}</span>
+          </div>
+          <div style={{ textAlign: "left" }}>
+            <div>{label}</div>
+            <div style={{ display: "flex", gap: "1px" }}>
+              <i className="fas fa-heart" style={{ color: heartColor, fontSize: "6px" }}></i>
+              {heartColor === "#ff0000" ? (
+                <i className="fa fa-times-circle" style={{ color: "#ff0000", marginRight: "4px" }}></i>
+              ) : (
+                <i className="fa fa-check-circle" style={{ color: "rgb(24, 190, 148)", marginRight: "4px" }}></i>
+              )}
+            </div>
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+          <FiMoreVertical
+            style={{ fontSize: "11px", color: "#34aadc", marginRight: "-10px", cursor: "pointer" }}
+            onClick={onMenuClick}
+          />
+        </div>
+        {timeAgo && (
+          <div
+            style={{
+              position: "absolute",
+              bottom: "-6px",
+              right: "-10px",
+              fontSize: "5px",
+              color: "#495763",
+              background: "#ccd6dd",
+              padding: "0 2px",
+              border: "1px solid #8fa4b1",
+              borderRadius: "3px",
+            }}
+          >
+            {timeAgo}
+          </div>
+        )}
+      </div>
+    );
+  }
+);
+
+// CustomZoomControls (unchanged)
+const CustomZoomControls = memo(() => {
   const { getZoom, setViewport } = useReactFlow();
   const [zoomLevel, setZoomLevel] = useState<number>(100);
 
-  const snapToStep = (zoom: number) => {
+  const snapToStep = useCallback((zoom: number) => {
     const step = 10;
     return Math.round(zoom / step) * step;
-  };
+  }, []);
 
   useEffect(() => {
     const currentZoom = getZoom() * 100;
     const snappedZoom = snapToStep(currentZoom);
     setZoomLevel(Math.min(Math.max(snappedZoom, 10), 200));
-  }, [getZoom]);
+  }, [getZoom, snapToStep]);
 
-  const handleZoomIn = () => {
+  const animateZoom = useCallback((targetZoom: number, duration: number = 200) => {
+    const startZoom = getZoom();
+    const startTime = performance.now();
+
+    const step = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const newZoom = startZoom + (targetZoom - startZoom) * progress;
+      setViewport({ zoom: newZoom, x: 0, y: 10 });
+
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        setZoomLevel(snapToStep(newZoom * 100));
+      }
+    };
+
+    requestAnimationFrame(step);
+  }, [getZoom, setViewport, snapToStep]);
+
+  const handleZoomIn = useCallback(() => {
     const currentZoom = getZoom() * 100;
     const newZoomPercentage = snapToStep(currentZoom + 10);
     const newZoom = Math.min(newZoomPercentage / 100, 2);
-    setViewport({ zoom: newZoom, x: 0, y: 10 });
-    setZoomLevel(newZoomPercentage);
-  };
+    animateZoom(newZoom);
+  }, [animateZoom, getZoom, snapToStep]);
 
-  const handleZoomOut = () => {
+  const handleZoomOut = useCallback(() => {
     const currentZoom = getZoom() * 100;
     const newZoomPercentage = snapToStep(currentZoom - 10);
     const newZoom = Math.max(newZoomPercentage / 100, 0.1);
-    setViewport({ zoom: newZoom, x: 0, y: 10 });
-    setZoomLevel(newZoomPercentage);
-  };
+    animateZoom(newZoom);
+  }, [animateZoom, getZoom, snapToStep]);
 
   return (
     <Box
@@ -197,28 +315,36 @@ const CustomZoomControls = () => {
       </Typography>
     </Box>
   );
-};
+});
 
-// FlowWithScroll component (unchanged)
-const FlowWithScroll = ({ nodes, edges }: { nodes: CustomNode[]; edges: CustomEdge[] }) => {
+// FlowWithScroll (unchanged)
+const FlowWithScroll = memo(({ nodes, edges, renderStartTime }: { nodes: CustomNode[]; edges: CustomEdge[]; renderStartTime: React.MutableRefObject<number> }) => {
   const { setViewport, getViewport } = useReactFlow();
+  const startRenderTime = performance.now();
+  console.log(`FlowWithScroll starting render with ${nodes.length} nodes and ${edges.length} edges at ${startRenderTime - renderStartTime.current}ms`);
+
+  const positions = useMemo(() => {
+    if (nodes.length === 0) return { minX: 0, maxX: 0, minY: 0, maxY: 0 };
+    const minX = Math.min(...nodes.map((node) => node.position.x));
+    const maxX = Math.max(
+      ...nodes.map((node) => {
+        const width = typeof node.style?.width === "string" ? parseInt(node.style.width) : node.style?.width || 146;
+        return node.position.x + width;
+      })
+    );
+    const minY = Math.min(...nodes.map((node) => node.position.y));
+    const maxY = Math.max(
+      ...nodes.map((node) => {
+        const height = typeof node.style?.height === "string" ? parseInt(node.style.height) : node.style?.height || 30;
+        return node.position.y + height;
+      })
+    );
+    return { minX, maxX, minY, maxY };
+  }, [nodes]);
 
   useEffect(() => {
     if (nodes.length > 0) {
-      const minX = Math.min(...nodes.map((node) => node.position.x));
-      const maxX = Math.max(
-        ...nodes.map((node) => {
-          const width = typeof node.style?.width === "string" ? parseInt(node.style.width) : node.style?.width || 146;
-          return node.position.x + width;
-        })
-      );
-      const minY = Math.min(...nodes.map((node) => node.position.y));
-      const maxY = Math.max(
-        ...nodes.map((node) => {
-          const height = typeof node.style?.height === "string" ? parseInt(node.style.height) : node.style?.height || 30;
-          return node.position.y + height;
-        })
-      );
+      const { minX, maxX, minY, maxY } = positions;
       const treeWidth = maxX - minX;
       const treeHeight = maxY - minY;
 
@@ -227,88 +353,117 @@ const FlowWithScroll = ({ nodes, edges }: { nodes: CustomNode[]; edges: CustomEd
       const viewportHeight = reactFlowContainer ? reactFlowContainer.offsetHeight : window.innerHeight;
 
       const padding = 20;
+      const topMargin = 100;
       const zoomX = (viewportWidth - padding * 2) / treeWidth;
-      const initialZoom = Math.min(Math.max(zoomX, 0.1), 2);
+      const zoomY = (viewportHeight - padding * 2 - topMargin) / treeHeight;
+      const initialZoom = Math.min(Math.max(Math.min(zoomX, zoomY), 0.1), 2);
 
-      const zoomedTreeHeight = treeHeight * initialZoom;
+      const centerX = -minX * initialZoom + 50;
+      const centerY = -minY * initialZoom + topMargin;
 
       if (reactFlowContainer) {
-        if (zoomedTreeHeight < viewportHeight) {
-          reactFlowContainer.style.minHeight = `${viewportHeight}px`;
+        reactFlowContainer.style.minHeight = `${Math.max(treeHeight * initialZoom + padding * 2 + topMargin, viewportHeight)}px`;
+      }
+
+      setViewport({ x: centerX, y: centerY, zoom: initialZoom });
+    }
+  }, [nodes, edges, setViewport, positions]);
+
+  const handleWheel = useCallback(
+    (event: React.WheelEvent) => {
+      const reactFlowContainer = document.querySelector(".react-flow");
+      const isInsideTree = reactFlowContainer && reactFlowContainer.contains(event.target as Node);
+
+      if (isInsideTree) {
+        const { zoom, x, y } = getViewport();
+        const scrollSpeed = 0.5;
+        const zoomSpeed = 0.05;
+
+        if (event.shiftKey) {
+          const newX = x - event.deltaY * scrollSpeed;
+          setViewport({ x: newX, y, zoom });
+        } else if (event.ctrlKey) {
+          const newZoom = Math.min(Math.max(zoom + (event.deltaY > 0 ? -zoomSpeed : zoomSpeed), 0.1), 2);
+          setViewport({ x, y, zoom: newZoom });
         } else {
-          reactFlowContainer.style.minHeight = `${zoomedTreeHeight + padding * 2}px`;
+          const { minY, maxY } = positions;
+          const treeHeight = maxY - minY;
+          const zoomedTreeHeight = treeHeight * zoom;
+          const minScrollY = -zoomedTreeHeight + 10;
+          const maxScrollY = 10;
+
+          const newY = y - event.deltaY * scrollSpeed;
+          const clampedY = Math.min(Math.max(newY, minScrollY), maxScrollY);
+          setViewport({ x, y: clampedY, zoom });
         }
       }
+    },
+    [getViewport, setViewport, positions]
+  );
 
-      setViewport({
-        x: -minX * initialZoom + padding,
-        y: 0,
-        zoom: initialZoom,
-      });
-    } else {
-      const reactFlowContainer = document.querySelector(".react-flow") as HTMLElement;
-      if (reactFlowContainer) {
-        const viewportHeight = reactFlowContainer.offsetHeight || window.innerHeight;
-        reactFlowContainer.style.minHeight = `${viewportHeight}px`;
-      }
-    }
-  }, [nodes, edges, setViewport]);
-
-  const handleWheel = (event: React.WheelEvent) => {
-    const reactFlowContainer = document.querySelector(".react-flow");
-    const isInsideTree = reactFlowContainer && reactFlowContainer.contains(event.target as Node);
-
-    if (isInsideTree) {
-      const { zoom, x, y } = getViewport();
-      const scrollSpeed = 0.5;
-
-      const minY = Math.min(...nodes.map((node) => node.position.y));
-      const maxY = Math.max(
-        ...nodes.map((node) => {
-          const height = typeof node.style?.height === "string" ? parseInt(node.style.height) : node.style?.height || 30;
-          return node.position.y + height;
-        })
-      );
-      const treeHeight = maxY - minY;
-      const zoomedTreeHeight = treeHeight * zoom;
-      const minScrollY = -zoomedTreeHeight + 10;
-      const maxScrollY = 10;
-
-      const newY = y - event.deltaY * scrollSpeed;
-      const clampedY = Math.min(Math.max(newY, minScrollY), maxScrollY);
-
-      setViewport({
-        x,
-        y: clampedY,
-        zoom,
-      });
-    }
-  };
+  const endRenderTime = performance.now();
+  console.log(`FlowWithScroll completed render in ${endRenderTime - startRenderTime}ms at ${endRenderTime - renderStartTime.current}ms`);
 
   return (
     <ReactFlow
       nodes={nodes}
       edges={edges}
       fitView={false}
-      panOnDrag={false}
+      panOnDrag={true}
       zoomOnScroll={false}
       zoomOnDoubleClick={false}
       zoomOnPinch={false}
-      style={{
-        background: "rgb(222, 230, 235)",
-        width: "100%",
-        height: "100%",
-      }}
+      style={{ background: "rgb(222, 230, 235)", width: "100%", height: "100%" }}
       onWheel={handleWheel}
     >
       <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
     </ReactFlow>
   );
+});
+
+// getLayoutedElements (unchanged)
+const getLayoutedElements = (nodes: CustomNode[], edges: CustomEdge[], direction = "LR", prevNodes: React.MutableRefObject<CustomNode[]>) => {
+  console.time("getLayoutedElements");
+  const dagreGraph = new dagre.graphlib.Graph();
+  dagreGraph.setDefaultEdgeLabel(() => ({}));
+  dagreGraph.setGraph({ rankdir: direction, nodesep: 40, ranksep: 100 });
+
+  const nodeMap = new Map<string, CustomNode>(prevNodes.current.map(node => [node.id, node]));
+  const newNodes: CustomNode[] = [];
+
+  nodes.forEach((node) => {
+    const cachedNode = nodeMap.get(node.id);
+    if (!cachedNode || JSON.stringify(cachedNode) !== JSON.stringify(node)) {
+      dagreGraph.setNode(node.id, { width: 110, height: 30 });
+      newNodes.push(node);
+    } else {
+      newNodes.push(cachedNode);
+    }
+  });
+
+  edges.forEach((edge) => {
+    dagreGraph.setEdge(edge.source, edge.target);
+  });
+
+  dagre.layout(dagreGraph);
+
+  const layoutedNodes = newNodes.map((node) => {
+    const dagreNode = dagreGraph.node(node.id);
+    return dagreNode ? {
+      ...node,
+      position: {
+        x: dagreNode.x - 73 + 50,
+        y: dagreNode.y - 15 + 50,
+      },
+    } : node;
+  });
+
+  console.timeEnd("getLayoutedElements");
+  return { nodes: layoutedNodes, edges };
 };
 
-// Updated TreeView component
+// TreeView component with fixes
 const TreeView = () => {
-  const [formData, setFormData] = useState<{ githuburl: string; path: string }>({ githuburl: "", path: "" });
   const [loading, setLoading] = useState<boolean>(false);
   const [responseData, setResponseData] = useState<NamespaceResource[] | null>(null);
   const [nodes, setNodes] = useState<CustomNode[]>([]);
@@ -319,514 +474,313 @@ const TreeView = () => {
   const [contextMenu, setContextMenu] = useState<{ nodeId: string | null; x: number; y: number } | null>(null);
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [selectedNode, setSelectedNode] = useState<SelectedNode | null>(null);
+  const nodeCache = useRef<Map<string, CustomNode>>(new Map());
+  const edgeCache = useRef<Map<string, CustomEdge>>(new Map());
+  const prevNodes = useRef<CustomNode[]>([]);
+  const wsRef = useRef<WebSocket | null>(null);
+  const [isWsConnected, setIsWsConnected] = useState<boolean>(false);
+  const renderStartTime = useRef<number>(0);
 
-  console.log(formData);
-  
+  const getTimeAgo = useCallback((timestamp: string | undefined): string => {
+    if (!timestamp) return "Unknown";
+    const now = new Date();
+    const then = new Date(timestamp);
+    const diffMs = now.getTime() - then.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    return diffDays === 0 ? "Today" : `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
+  }, []);
 
-  const transformDataToTree = useCallback((data: NamespaceResource[]) => {
-    const nodes: CustomNode[] = [];
-    const edges: CustomEdge[] = [];
-    const horizontalSpacing = 200;
-    const verticalSpacing = 40;
-    const additionalTopLevelSpacing = verticalSpacing / 2;
-    let globalY = 40;
+  const handleMenuOpen = useCallback((event: React.MouseEvent, nodeId: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setContextMenu({ nodeId, x: event.clientX, y: event.clientY });
+  }, []);
 
-    const getTimeAgo = (timestamp: string | undefined): string => {
-      if (!timestamp) return "Unknown";
-      const now = new Date();
-      const then = new Date(timestamp);
-      const diffMs = now.getTime() - then.getTime();
-      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-      return diffDays === 0 ? "Today" : `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
+  const handleClosePanel = useCallback(() => {
+    if (selectedNode) {
+      setSelectedNode({ ...selectedNode, isOpen: false });
+      setTimeout(() => setSelectedNode(null), 400);
+    }
+  }, [selectedNode]);
+
+  const createNode = useCallback((
+    id: string,
+    label: string,
+    type: string,
+    status: string,
+    timestamp: string | undefined,
+    namespace: string | undefined,
+    resourceData: ResourceItem | undefined,
+    parent: string | null,
+    newNodes: CustomNode[],
+    newEdges: CustomEdge[]
+  ) => {
+    console.log(`Creating node: id=${id}, type=${type}, label=${label}, parent=${parent || "none"} at ${performance.now() - renderStartTime.current}ms`);
+    const config = NODE_TYPE_CONFIG[type.toLowerCase()] || { icon: cm, dynamicText: type.toLowerCase() };
+    const timeAgo = getTimeAgo(timestamp);
+    const cachedNode = nodeCache.current.get(id);
+
+    const node = cachedNode || {
+      id,
+      data: {
+        label: (
+          <NodeLabel
+            label={label}
+            icon={config.icon}
+            dynamicText={config.dynamicText}
+            status={status}
+            timeAgo={timeAgo}
+            onClick={(e) => {
+              if ((e.target as HTMLElement).tagName === "svg" || (e.target as HTMLElement).closest("svg")) return;
+              setSelectedNode({
+                namespace: namespace || "default",
+                name: label,
+                type: type.toLowerCase(),
+                onClose: handleClosePanel,
+                isOpen: true,
+                resourceData,
+              });
+            }}
+            onMenuClick={(e) => handleMenuOpen(e, id)}
+          />
+        ),
+      },
+      position: { x: 0, y: 0 },
+      style: { ...nodeStyle, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "2px 12px" },
+      sourcePosition: Position.Right,
+      targetPosition: Position.Left,
     };
 
-    const addNode = (
-      id: string,
-      label: string,
-      posX: number,
-      posY: number,
-      parent: string | null = null,
-      type: string = "",
-      status: string = "Active",
-      timestamp?: string,
-      namespace?: string,
-      resourceData?: ResourceItem
-    ) => {
-      let icon: string = "";
-      let dynamicText: string = "";
-      const heartColor: string = status === "Active" ? "rgb(24, 190, 148)" : "#ff0000";
+    if (!cachedNode) nodeCache.current.set(id, node);
+    newNodes.push(node);
 
-      switch (type.toLowerCase()) {
-        case "namespace":
-          icon = ns;
-          dynamicText = "ns";
-          break;
-        case "deployment":
-          icon = deployicon;
-          dynamicText = "deploy";
-          break;
-        case "service":
-          icon = svc;
-          dynamicText = "svc";
-          break;
-        case "replicaset":
-          icon = rs;
-          dynamicText = "replica";
-          break;
-        case "container":
-          icon = deployicon;
-          dynamicText = "container";
-          break;
-        case "configmap":
-          icon = config;
-          dynamicText = "config";
-          break;
-        case "data":
-          icon = config;
-          dynamicText = "data";
-          break;
-        case "endpoints":
-          icon = ep;
-          dynamicText = "endpoint";
-          break;
-        case "endpointslice":
-          icon = ep;
-          dynamicText = "slice";
-          break;
-        case "subset":
-          icon = ep;
-          dynamicText = "subset";
-          break;
-        case "serviceaccount":
-          icon = config;
-          dynamicText = "sa";
-          break;
-        case "lease":
-          icon = config;
-          dynamicText = "lease";
-          break;
-        case "role":
-          icon = config;
-          dynamicText = "role";
-          break;
-        case "rolebinding":
-          icon = config;
-          dynamicText = "rb";
-          break;
-        case "subject":
-          icon = config;
-          dynamicText = "subject";
-          break;
-        case "ruleref":
-          icon = config;
-          dynamicText = "rule";
-          break;
-        case "port":
-          icon = svc;
-          dynamicText = "port";
-          break;
-        default:
-          icon = config;
-          dynamicText = type.toLowerCase();
-      }
-
-      const timeAgo = getTimeAgo(timestamp);
-
-      nodes.push({
-        id,
-        data: {
-          label: (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                width: "100%",
-              }}
-              onClick={(e) => {
-                if ((e.target as HTMLElement).tagName === "svg" || (e.target as HTMLElement).closest("svg")) return;
-                setSelectedNode({
-                  namespace: namespace || "default",
-                  name: label,
-                  type: type.toLowerCase(),
-                  onClose: handleClosePanel,
-                  isOpen: true,
-                  resourceData,
-                });
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginLeft: "-5px" }}>
-                <div>
-                  <img src={icon} alt={label} width="18" height="18" />
-                  <span style={{ color: "gray", fontWeight: 500 }}>{dynamicText}</span>
-                </div>
-                <div style={{ textAlign: "left" }}>
-                  <div>{label}</div>
-                  <div style={{ display: "flex", gap: "1px" }}>
-                    <i className="fas fa-heart" style={{ color: heartColor, fontSize: "6px" }}></i>
-                    {heartColor === "#ff0000" ? (
-                      <i className="fa fa-times-circle" style={{ color: "#ff0000", marginRight: "4px" }}></i>
-                    ) : (
-                      <i className="fa fa-check-circle" style={{ color: "rgb(24, 190, 148)", marginRight: "4px" }}></i>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                <FiMoreVertical
-                  style={{ fontSize: "11px", color: "#34aadc", marginRight: "-10px", cursor: "pointer" }}
-                  onClick={(e) => handleMenuOpen(e, id)}
-                />
-              </div>
-              {timeAgo && (
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: "-6px",
-                    right: "-10px",
-                    fontSize: "5px",
-                    color: "#495763",
-                    background: "#ccd6dd",
-                    padding: "0 2px",
-                    border: "1px solid #8fa4b1",
-                    borderRadius: "3px",
-                  }}
-                >
-                  {timeAgo}
-                </div>
-              )}
-            </div>
-          ),
-        },
-        position: { x: posX, y: posY },
-        style: {
-          ...nodeStyle,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "2px 12px",
-        },
-        sourcePosition: Position.Right,
-        targetPosition: Position.Left,
-      });
-
-      if (parent) {
-        edges.push({
-          id: `edge-${parent}-${id}`,
+    if (parent) {
+      const edgeId = `edge-${parent}-${id}`;
+      const cachedEdge = edgeCache.current.get(edgeId);
+      if (!cachedEdge) {
+        const edge = {
+          id: edgeId,
           source: parent,
           target: id,
           type: "step",
           animated: true,
           style: { stroke: "#a3a3a3", strokeDasharray: "2,2" },
           markerEnd: { type: MarkerType.ArrowClosed },
-        });
+        };
+        newEdges.push(edge);
+        edgeCache.current.set(edgeId, edge);
+      } else {
+        newEdges.push(cachedEdge);
       }
-    };
+    }
+  }, [getTimeAgo, handleClosePanel, handleMenuOpen]);
 
-    data.forEach((namespace: NamespaceResource, nsIndex: number) => {
-      const namespaceId = `namespace-${namespace.name}`;
-      const x = 15;
-      let currentY = globalY;
-      let minY = Infinity;
-      let maxY = -Infinity;
+  const transformDataToTree = useCallback(
+    (data: NamespaceResource[]) => {
+      const startTransformTime = performance.now();
+      console.log(`transformDataToTree received ${data.length} namespaces at ${startTransformTime - renderStartTime.current}ms`);
+      if (!data || data.length === 0) {
+        console.log(`Skipping transformDataToTree: no data to process at ${performance.now() - renderStartTime.current}ms`);
+        setNodes([]);
+        setEdges([]);
+        return;
+      }
 
-      const resourcesMap: ResourcesMap = {
-        endpoints: namespace.resources[".v1/endpoints"] || [],
-        endpointSlices: namespace.resources["discovery.k8s.io.v1/endpointslices"] || [],
-      };
-      Object.entries(namespace.resources).forEach(([key, value]) => {
-        if (key !== ".v1/endpoints" && key !== "discovery.k8s.io.v1/endpointslices") {
-          resourcesMap[key] = value;
-        }
-      });
+      const newNodes: CustomNode[] = [];
+      const newEdges: CustomEdge[] = [];
+      const resourceMap = new Map<string, ResourceItem>();
 
-      const resourceHeights: Record<string, number> = {};
-
-      Object.entries(resourcesMap).forEach(([, resourceItems]) => {
-        resourceItems.forEach((item: ResourceItem) => {
-          const kindLower = item.kind.toLowerCase();
-          const resourceId = `${namespaceId}-${kindLower}-${item.metadata.name}`;
-          let totalHeight = 0;
-
-          if (kindLower === "configmap" && item.data) {
-            const numData = Object.keys(item.data).length;
-            totalHeight = numData > 0 ? numData * verticalSpacing : verticalSpacing;
-          } else if (kindLower === "service") {
-            const numPorts = item.spec?.ports?.length || 0;
-            const endpoints = resourcesMap.endpoints.find(
-              (ep: ResourceItem) => ep.metadata.name === item.metadata.name
-            );
-            const numSubsets = endpoints?.subsets?.length || 0;
-            const endpointSlices = resourcesMap.endpointSlices.filter(
-              (es: ResourceItem) => es.metadata.labels?.["kubernetes.io/service-name"] === item.metadata.name
-            );
-            const numSlices = endpointSlices.length;
-
-            let totalChildren = numPorts;
-            if (endpoints) {
-              totalChildren += 1;
-              if (numSubsets) {
-                totalChildren += numSubsets;
-                endpoints.subsets?.forEach((subset) => {
-                  const numAddresses = subset.addresses?.length || 0;
-                  const numSubsetPorts = subset.ports?.length || 0;
-                  totalChildren += numAddresses + numSubsetPorts;
-                });
-              }
-            }
-            if (numSlices) {
-              endpointSlices.forEach((es) => {
-                const numEndpoints = es.endpoints?.length || 0;
-                totalChildren += numEndpoints;
-                es.endpoints?.forEach((endpoint) => {
-                  const numAddresses = endpoint.addresses?.length || 0;
-                  const numEsPorts = es.ports?.length || 0;
-                  totalChildren += numAddresses + numEsPorts;
-                });
-              });
-            }
-
-            totalHeight = totalChildren > 0 ? totalChildren * verticalSpacing : verticalSpacing;
-          } else if (kindLower === "deployment") {
-            totalHeight = verticalSpacing;
-          } else if (kindLower === "lease" && item.spec) {
-            totalHeight = verticalSpacing * 2;
-          } else if (kindLower === "rolebinding") {
-            const numSubjects = item.subjects?.length || 0;
-            totalHeight = (numSubjects + 1) > 0 ? (numSubjects + 1) * verticalSpacing : verticalSpacing;
-          } else if (kindLower === "role") {
-            totalHeight = item.rules?.length ? item.rules.length * verticalSpacing : verticalSpacing;
-          } else {
-            totalHeight = verticalSpacing;
-          }
-
-          resourceHeights[resourceId] = totalHeight;
-          minY = Math.min(minY, currentY);
-          maxY = Math.max(maxY, currentY + totalHeight);
-          currentY += totalHeight + additionalTopLevelSpacing;
+      data.forEach((namespace) => {
+        const resourcesMap: ResourcesMap = {
+          endpoints: namespace.resources[".v1/endpoints"] || [],
+          endpointSlices: namespace.resources["discovery.k8s.io.v1/endpointslices"] || [],
+          ...namespace.resources,
+        };
+        console.log(`Namespace ${namespace.name} has ${Object.values(resourcesMap).flat().length} resources at ${performance.now() - renderStartTime.current}ms`);
+        Object.values(resourcesMap).flat().forEach((item) => {
+          resourceMap.set(`${namespace.name}-${item.kind.toLowerCase()}-${item.metadata.name}`, item);
         });
       });
 
-      if (!Object.keys(resourcesMap).length) {
-        minY = currentY;
-        maxY = currentY;
-      }
+      data.forEach((namespace) => {
+        const namespaceId = `namespace-${namespace.name}`;
+        createNode(
+          namespaceId,
+          namespace.name,
+          "namespace",
+          namespace.status,
+          "",
+          namespace.name,
+          { apiVersion: "v1", kind: "Namespace", metadata: { name: namespace.name, namespace: namespace.name, creationTimestamp: "" }, status: { phase: namespace.status } },
+          null,
+          newNodes,
+          newEdges
+        );
+        console.log(`After creating namespace ${namespace.name}: ${newNodes.length} nodes, ${newEdges.length} edges at ${performance.now() - renderStartTime.current}ms`);
 
-      const totalChildHeight = maxY - minY;
-      const namespaceY = minY + totalChildHeight / 2;
-      addNode(namespaceId, namespace.name, x, namespaceY, null, "namespace", namespace.status, "", namespace.name, {
-        apiVersion: "v1",
-        kind: "Namespace",
-        metadata: {
-          name: namespace.name,
-          namespace: namespace.name,
-          creationTimestamp: "",
-        },
-        status: { phase: namespace.status },
-      });
+        const resourcesMap: ResourcesMap = {
+          endpoints: namespace.resources[".v1/endpoints"] || [],
+          endpointSlices: namespace.resources["discovery.k8s.io.v1/endpointslices"] || [],
+          ...namespace.resources,
+        };
 
-      currentY = minY;
-
-      Object.entries(resourcesMap).forEach(([, resourceItems]) => {
-        resourceItems.forEach((item: ResourceItem) => {
+        Object.values(resourcesMap).flat().forEach((item) => {
           const kindLower = item.kind.toLowerCase();
           const resourceId = `${namespaceId}-${kindLower}-${item.metadata.name}`;
-          const status = item.status?.conditions?.some((c) => c.type === "Available" && c.status === "True")
-            ? "Active"
-            : "Inactive";
+          const status = item.status?.conditions?.some((c) => c.type === "Available" && c.status === "True") ? "Active" : "Inactive";
 
-          const resourceHeight = resourceHeights[resourceId] || verticalSpacing;
-          const resourceY = currentY + resourceHeight / 2;
-          let nestedY = currentY;
+          createNode(resourceId, item.metadata.name, kindLower, status, item.metadata.creationTimestamp, namespace.name, item, namespaceId, newNodes, newEdges);
 
           if (kindLower === "configmap" && item.data) {
-            const numData = Object.keys(item.data).length;
-            const dataHeight = numData > 1 ? numData * verticalSpacing - verticalSpacing : 0;
-            const adjustedY = numData === 1 ? currentY : currentY + dataHeight / 2;
-            addNode(resourceId, item.metadata.name, x + horizontalSpacing, adjustedY, namespaceId, kindLower, status, item.metadata.creationTimestamp, namespace.name, item);
-            Object.keys(item.data).forEach((key, i) => {
-              const dataId = `${resourceId}-data-${key}`;
-              const dataY = numData === 1 ? currentY : currentY + i * verticalSpacing;
-              addNode(dataId, key, x + horizontalSpacing * 2, dataY, resourceId, "data", status, undefined, namespace.name, item);
-            });
+            Object.keys(item.data).forEach((key) => createNode(`${resourceId}-data-${key}`, key, "data", status, undefined, namespace.name, item, resourceId, newNodes, newEdges));
           } else if (kindLower === "service") {
-            const numPorts = item.spec?.ports?.length || 0;
-            const endpoints = resourcesMap.endpoints.find(
-              (ep: ResourceItem) => ep.metadata.name === item.metadata.name
-            );
-            const numSubsets = endpoints?.subsets?.length || 0;
-            const endpointSlices = resourcesMap.endpointSlices.filter(
-              (es: ResourceItem) => es.metadata.labels?.["kubernetes.io/service-name"] === item.metadata.name
-            );
-            const numSlices = endpointSlices.length;
+            item.spec?.ports?.forEach((port) => createNode(`${resourceId}-port-${port.name}`, `${port.name} (${port.port})`, "port", status, undefined, namespace.name, item, resourceId, newNodes, newEdges));
 
-            let totalServiceChildren = numPorts;
-            if (endpoints) totalServiceChildren += 1;
-            if (numSlices) totalServiceChildren += numSlices;
-
-            const adjustedServiceY = totalServiceChildren > 1 ? currentY + ((totalServiceChildren - 1) * verticalSpacing) / 2 : currentY;
-
-            addNode(resourceId, item.metadata.name, x + horizontalSpacing, adjustedServiceY, namespaceId, kindLower, status, item.metadata.creationTimestamp, namespace.name, item);
-
-            item.spec?.ports?.forEach((port) => {
-              const portId = `${resourceId}-port-${port.name}`;
-              const portY = numPorts === 1 && !endpoints && !numSlices ? adjustedServiceY : nestedY;
-              addNode(portId, `${port.name} (${port.port})`, x + horizontalSpacing * 2, portY, resourceId, "port", status, undefined, namespace.name, item);
-              nestedY += verticalSpacing;
-            });
-
+            const endpoints = resourcesMap.endpoints.find((ep) => ep.metadata.name === item.metadata.name);
             if (endpoints) {
               const endpointId = `${resourceId}-endpoints-${endpoints.metadata.name}`;
-              const totalEndpointChildren = numSubsets || 0;
-              const adjustedEndpointY = totalServiceChildren === 1 ? adjustedServiceY : totalEndpointChildren > 1 ? nestedY + ((totalEndpointChildren - 1) * verticalSpacing) / 2 : nestedY;
-
-              addNode(endpointId, endpoints.metadata.name, x + horizontalSpacing * 2, adjustedEndpointY, resourceId, "endpoints", status, undefined, namespace.name, endpoints);
-
-              endpoints.subsets?.forEach((subset, idx: number) => {
+              createNode(endpointId, endpoints.metadata.name, "endpoints", status, undefined, namespace.name, endpoints, resourceId, newNodes, newEdges);
+              endpoints.subsets?.forEach((subset, idx) => {
                 const subsetId = `${endpointId}-subset-${idx}`;
-                const numAddresses = subset.addresses?.length || 0;
-                const numSubsetPorts = subset.ports?.length || 0;
-                const totalSubsetChildren = numAddresses + numSubsetPorts;
-                const adjustedSubsetY = totalEndpointChildren === 1 ? adjustedEndpointY : totalSubsetChildren > 1 ? nestedY + ((totalSubsetChildren - 1) * verticalSpacing) / 2 : nestedY;
-
-                addNode(subsetId, `Subset ${idx + 1}`, x + horizontalSpacing * 3, adjustedSubsetY, endpointId, "subset", status, undefined, namespace.name, endpoints);
-
-                subset.addresses?.forEach((addr) => {
-                  const addrId = `${subsetId}-addr-${addr.ip}`;
-                  const addrY = totalSubsetChildren === 1 ? adjustedSubsetY : nestedY;
-                  addNode(addrId, addr.ip, x + horizontalSpacing * 4, addrY, subsetId, "data", status, undefined, namespace.name, endpoints);
-                  nestedY += verticalSpacing;
-                });
-
-                subset.ports?.forEach((port) => {
-                  const portId = `${subsetId}-port-${port.name}`;
-                  const portY = totalSubsetChildren === 1 && !subset.addresses?.length ? adjustedSubsetY : nestedY;
-                  addNode(portId, `${port.name} (${port.port})`, x + horizontalSpacing * 4, portY, subsetId, "port", status, undefined, namespace.name, endpoints);
-                  nestedY += verticalSpacing;
-                });
+                createNode(subsetId, `Subset ${idx + 1}`, "subset", status, undefined, namespace.name, endpoints, endpointId, newNodes, newEdges);
+                subset.addresses?.forEach((addr) => createNode(`${subsetId}-addr-${addr.ip}`, addr.ip, "data", status, undefined, namespace.name, endpoints, subsetId, newNodes, newEdges));
+                subset.ports?.forEach((port) => createNode(`${subsetId}-port-${port.name || idx}`, `${port.name || "port"} (${port.port})`, "port", status, undefined, namespace.name, endpoints, subsetId, newNodes, newEdges));
               });
-
-              if (totalEndpointChildren > 0) {
-                nestedY += totalEndpointChildren * verticalSpacing;
-              } else {
-                nestedY += verticalSpacing;
-              }
             }
 
+            const endpointSlices = resourcesMap.endpointSlices.filter((es) => es.metadata.labels?.["kubernetes.io/service-name"] === item.metadata.name);
             endpointSlices.forEach((es) => {
               const esId = `${resourceId}-endpointslice-${es.metadata.name}`;
-              const numEndpoints = es.endpoints?.length || 0;
-              const totalEsChildren = numEndpoints;
-              const adjustedEsY = totalServiceChildren === 1 ? adjustedServiceY : totalEsChildren > 1 ? nestedY + ((totalEsChildren - 1) * verticalSpacing) / 2 : nestedY;
-
-              addNode(esId, es.metadata.name, x + horizontalSpacing * 2, adjustedEsY, resourceId, "endpointslice", status, undefined, namespace.name, es);
-
-              es.endpoints?.forEach((endpoint, idx: number) => {
+              createNode(esId, es.metadata.name, "endpointslice", status, undefined, namespace.name, es, resourceId, newNodes, newEdges);
+              es.endpoints?.forEach((endpoint, idx) => {
                 const endpointId = `${esId}-endpoint-${idx}`;
-                const numAddresses = endpoint.addresses?.length || 0;
-                const numEsPorts = es.ports?.length || 0;
-                const totalEndpointChildren = numAddresses + numEsPorts;
-                const adjustedEndpointY = totalEsChildren === 1 ? adjustedEsY : totalEndpointChildren > 1 ? nestedY + ((totalEndpointChildren - 1) * verticalSpacing) / 2 : nestedY;
-
-                addNode(endpointId, `Endpoint ${idx + 1}`, x + horizontalSpacing * 3, adjustedEndpointY, esId, "data", status, undefined, namespace.name, es);
-
-                endpoint.addresses?.forEach((addr: string) => {
-                  const addrId = `${endpointId}-addr-${addr}`;
-                  const addrY = totalEndpointChildren === 1 ? adjustedEndpointY : nestedY;
-                  addNode(addrId, addr, x + horizontalSpacing * 4, addrY, endpointId, "data", status, undefined, namespace.name, es);
-                  nestedY += verticalSpacing;
-                });
-
-                es.ports?.forEach((port) => {
-                  const portId = `${endpointId}-port-${port.name}`;
-                  const portY = totalEndpointChildren === 1 && !endpoint.addresses?.length ? adjustedEndpointY : nestedY;
-                  addNode(portId, `${port.name} (${port.port})`, x + horizontalSpacing * 4, portY, endpointId, "port", status, undefined, namespace.name, es);
-                  nestedY += verticalSpacing;
-                });
+                createNode(endpointId, `Endpoint ${idx + 1}`, "data", status, undefined, namespace.name, es, esId, newNodes, newEdges);
+                endpoint.addresses?.forEach((addr) => createNode(`${endpointId}-addr-${addr}`, addr, "data", status, undefined, namespace.name, es, endpointId, newNodes, newEdges));
+                es.ports?.forEach((port) => createNode(`${endpointId}-port-${port.name || idx}`, `${port.name || "port"} (${port.port})`, "port", status, undefined, namespace.name, es, endpointId, newNodes, newEdges));
               });
-
-              if (totalEsChildren > 0) {
-                nestedY += totalEsChildren * verticalSpacing;
-              } else {
-                nestedY += verticalSpacing;
-              }
             });
           } else if (kindLower === "deployment") {
-            addNode(resourceId, item.metadata.name, x + horizontalSpacing, resourceY, namespaceId, kindLower, status, item.metadata.creationTimestamp, namespace.name, item);
-            const replicasetId = `${resourceId}-replicaset`;
-            addNode(replicasetId, `replicaset-${item.metadata.name}`, x + horizontalSpacing * 2, resourceY, resourceId, "replicaset", status, undefined, namespace.name, item);
+            createNode(`${resourceId}-replicaset`, `replicaset-${item.metadata.name}`, "replicaset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
           } else if (kindLower === "lease" && item.spec) {
-            addNode(resourceId, item.metadata.name, x + horizontalSpacing, resourceY, namespaceId, kindLower, status, item.metadata.creationTimestamp, namespace.name, item);
-            const holderId = `${resourceId}-holder`;
-            addNode(holderId, item.spec.holderIdentity || "Unknown Holder", x + horizontalSpacing * 2, nestedY, resourceId, "data", status, undefined, namespace.name, item);
+            createNode(`${resourceId}-holder`, item.spec.holderIdentity || "Unknown Holder", "data", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
           } else if (kindLower === "rolebinding") {
-            addNode(resourceId, item.metadata.name, x + horizontalSpacing, resourceY, namespaceId, kindLower, status, item.metadata.creationTimestamp, namespace.name, item);
-
-            item.subjects?.forEach((subject, idx: number) => {
-              const subjectId = `${resourceId}-subject-${idx}`;
-              addNode(subjectId, subject.name, x + horizontalSpacing * 2, nestedY, resourceId, "subject", status, undefined, namespace.name, item);
-              nestedY += verticalSpacing;
-            });
-            const roleRefId = `${resourceId}-roleref`;
-            addNode(roleRefId, item.roleRef?.name || "Unknown Role", x + horizontalSpacing * 2, nestedY, resourceId, "ruleref", status, undefined, namespace.name, item);
+            item.subjects?.forEach((subject, idx) => createNode(`${resourceId}-subject-${idx}`, subject.name, "subject", status, undefined, namespace.name, item, resourceId, newNodes, newEdges));
+            createNode(`${resourceId}-roleref`, item.roleRef?.name || "Unknown Role", "ruleref", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
           } else if (kindLower === "role") {
-            addNode(resourceId, item.metadata.name, x + horizontalSpacing, resourceY, namespaceId, kindLower, status, item.metadata.creationTimestamp, namespace.name, item);
-
-            item.rules?.forEach((rule, idx: number) => {
-              const ruleId = `${resourceId}-rule-${idx}`;
+            item.rules?.forEach((rule, idx) => {
               const ruleLabel = `${rule.verbs?.join("/") || ""} ${rule.resources?.join(",") || "all"}`;
-              addNode(ruleId, ruleLabel, x + horizontalSpacing * 2, nestedY, resourceId, "ruleref", status, undefined, namespace.name, item);
-              nestedY += verticalSpacing;
+              createNode(`${resourceId}-rule-${idx}`, ruleLabel, "ruleref", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
             });
-          } else {
-            addNode(resourceId, item.metadata.name, x + horizontalSpacing, resourceY, namespaceId, kindLower, status, item.metadata.creationTimestamp, namespace.name, item);
           }
-
-          currentY += resourceHeight + additionalTopLevelSpacing;
         });
       });
 
-      globalY = currentY + verticalSpacing * (nsIndex + 1);
-    });
+      console.log(`Final transformDataToTree: ${newNodes.length} nodes, ${newEdges.length} edges at ${performance.now() - renderStartTime.current}ms`);
+      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(newNodes, newEdges, "LR", prevNodes);
+      
+      ReactDOM.unstable_batchedUpdates(() => {
+        setNodes(layoutedNodes);
+        setEdges(layoutedEdges);
+      });
+      prevNodes.current = layoutedNodes;
+      console.log(`transformDataToTree completed in ${performance.now() - startTransformTime}ms`);
+    },
+    [createNode]
+  );
 
-    setNodes(nodes);
-    setEdges(edges);
-  }, []);
-
-  useEffect(() => {
+  const connectWebSocket = useCallback((reconnectFunc: () => void): WebSocket => {
     const ws = new WebSocket("ws://localhost:4000/ws/namespaces");
+    wsRef.current = ws;
 
-    ws.onmessage = (event) => {
-      const data: NamespaceResource[] = JSON.parse(event.data);
-      const filteredData = data.filter(
-        (namespace) =>
-          namespace.name !== "kubestellar-report" &&
-          namespace.name !== "kube-node-lease" &&
-          namespace.name !== "kube-public" &&
-          namespace.name !== "default" &&
-          namespace.name !== "kube-system"
-      );
-      console.log("WebSocket data received:", filteredData);
-      setResponseData(filteredData);
-      transformDataToTree(filteredData);
+    ws.onopen = () => {
+      console.log(`WebSocket connected at ${performance.now() - renderStartTime.current}ms`);
+      setIsWsConnected(true);
     };
 
-    ws.onerror = () => {
-      console.log("WebSocket error occurred");
-      setResponseData([]);
+    ws.onmessage = (event) => {
+      const receiveTime = performance.now();
+      console.log(`Raw WebSocket data received at ${receiveTime - renderStartTime.current}ms`);
+
+      const startParseTime = performance.now();
+      let data: NamespaceResource[] = [];
+      try {
+        data = JSON.parse(event.data);
+      } catch (error) {
+        console.error(`Failed to parse WebSocket data at ${performance.now() - renderStartTime.current}ms:`, error);
+        return;
+      }
+      console.log(`Parsed ${data.length} namespaces in ${performance.now() - startParseTime}ms`);
+
+      const startFilterTime = performance.now();
+      const filteredData = data.filter(
+        (namespace) => !["kubestellar-report", "kube-node-lease", "kube-public", "default", "kube-system"].includes(namespace.name)
+      );
+      console.log(`After filtering, ${filteredData.length} namespaces remain in ${performance.now() - startFilterTime}ms at ${performance.now() - renderStartTime.current}ms`);
+
+      requestIdleCallback(() => {
+        setResponseData(filteredData);
+      }, { timeout: 100 });
+
+      if (filteredData.length > 0) {
+        transformDataToTree(filteredData);
+      } else {
+        console.log(`No namespaces to process after filtering at ${performance.now() - renderStartTime.current}ms`);
+        ReactDOM.unstable_batchedUpdates(() => {
+          setNodes([]);
+          setEdges([]);
+        });
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.log(`WebSocket error occurred at ${performance.now() - renderStartTime.current}ms:`, error);
+      setIsWsConnected(false);
     };
 
     ws.onclose = () => {
-      console.log("WebSocket connection closed");
-      if (!responseData) setResponseData([]);
+      console.log(`WebSocket disconnected at ${performance.now() - renderStartTime.current}ms, attempting to reconnect...`);
+      setIsWsConnected(false);
+      wsRef.current = null;
+      reconnectFunc();
     };
 
-    return () => {
-      ws.close();
-    };
+    return ws;
   }, [transformDataToTree]);
 
-  const handleDeploy = async (githubUrl: string, path: string) => {
+  const reconnectWebSocket = useCallback((): void => {
+    let retryCount = 0;
+    const maxBackoff = 500;
+    const initialDelay = 50;
+
+    const attemptReconnect = () => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) return;
+
+      const delay = Math.min(initialDelay * Math.pow(2, retryCount), maxBackoff);
+      retryCount++;
+
+      setTimeout(() => {
+        console.log(`Reconnecting WebSocket (attempt ${retryCount}, delay ${delay}ms) at ${performance.now() - renderStartTime.current}ms...`);
+        connectWebSocket(reconnectWebSocket);
+      }, delay);
+    };
+
+    attemptReconnect();
+  }, [connectWebSocket]);
+
+  useEffect(() => {
+    renderStartTime.current = performance.now();
+    console.log(`TreeView mounted at 0ms`);
+    connectWebSocket(reconnectWebSocket);
+
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+    };
+  }, [connectWebSocket, reconnectWebSocket]);
+
+  const handleDeploy = useCallback(async (githubUrl: string, path: string) => {
     if (!githubUrl || !path) {
       setSnackbarMessage("Please fill both GitHub URL and Path fields!");
       setSnackbarSeverity("error");
@@ -842,7 +796,7 @@ const TreeView = () => {
         folder_path: path,
       });
 
-      console.log("Deploy response:", response);
+      console.log(`Deploy response at ${performance.now() - renderStartTime.current}ms:`, response);
 
       if (response.status === 200) {
         setSnackbarMessage("Deployed successfully!");
@@ -853,15 +807,15 @@ const TreeView = () => {
           setResponseData(response.data);
           transformDataToTree(response.data);
         } else {
-          console.warn("Unexpected data format:", response.data);
+          console.warn(`Unexpected data format at ${performance.now() - renderStartTime.current}ms:`, response.data);
           setResponseData([]);
         }
       } else {
-        throw new Error("Unexpected response status: " + response.status);
+        throw new Error(`Unexpected response status: ${response.status} at ${performance.now() - renderStartTime.current}ms`);
       }
     } catch (error: unknown) {
       const err = error as AxiosError;
-      console.error("Deploy error:", err);
+      console.error(`Deploy error at ${performance.now() - renderStartTime.current}ms:`, err);
 
       if (err.response) {
         if (err.response.status === 500) {
@@ -881,88 +835,66 @@ const TreeView = () => {
     } finally {
       setLoading(false);
       setDialogOpen(false);
-      setFormData({ githuburl: "", path: "" });
     }
-  };
+  }, [transformDataToTree]);
 
-  const handleMenuOpen = (event: React.MouseEvent, nodeId: string) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setContextMenu({
-      nodeId,
-      x: event.clientX,
-      y: event.clientY,
-    });
-  };
-
-  const handleMenuClose = () => {
+  const handleMenuClose = useCallback(() => {
     setContextMenu(null);
-  };
+  }, []);
 
-  const handleMenuAction = (action: string) => {
-    if (contextMenu?.nodeId) {
-      const node = nodes.find((n) => n.id === contextMenu.nodeId);
-      if (node) {
-        const nodeType = node.id.split("-")[1];
-        const nodeName = node.data.label.props.children[0].props.children[1].props.children[0];
-        const namespace = nodeType === "namespace" ? nodeName : node.id.split("-")[0].replace("namespace-", "");
+  const handleMenuAction = useCallback(
+    (action: string) => {
+      if (contextMenu?.nodeId) {
+        const node = nodes.find((n) => n.id === contextMenu.nodeId);
+        if (node) {
+          const nodeType = node.id.split("-")[1];
+          const nodeName = node.data.label.props.label;
+          const namespace = nodeType === "namespace" ? nodeName : node.id.split("-")[0].replace("namespace-", "");
 
-        switch (action) {
-          case "Details":
-            setSelectedNode({
-              namespace: namespace || "default",
-              name: nodeName,
-              type: nodeType,
-              onClose: handleClosePanel,
-              isOpen: true,
-              resourceData: node.data.label.props.children[0].props.resourceData,
-            });
-            break;
-          case "Delete":
-            console.log(`Deleting node ${node.id}`);
-            setNodes(nodes.filter((n) => n.id !== node.id));
-            setEdges(edges.filter((e) => e.source !== node.id && e.target !== node.id));
-            break;
-          case "Logs":
-            console.log(`Showing logs for node ${node.id}`);
-            break;
-          default:
-            break;
+          switch (action) {
+            case "Details":
+              setSelectedNode({
+                namespace: namespace || "default",
+                name: nodeName,
+                type: nodeType,
+                onClose: handleClosePanel,
+                isOpen: true,
+                resourceData: node.data.label.props.resourceData,
+              });
+              break;
+            case "Delete":
+              console.log(`Deleting node ${node.id} at ${performance.now() - renderStartTime.current}ms`);
+              setNodes(nodes.filter((n) => n.id !== node.id));
+              setEdges(edges.filter((e) => e.source !== node.id && e.target !== node.id));
+              nodeCache.current.delete(node.id);
+              break;
+            case "Logs":
+              console.log(`Showing logs for node ${node.id} at ${performance.now() - renderStartTime.current}ms`);
+              break;
+            default:
+              break;
+          }
         }
       }
-    }
-    handleMenuClose();
-  };
+      handleMenuClose();
+    },
+    [contextMenu, nodes, edges, handleMenuClose, handleClosePanel]
+  );
 
-  const handleSnackbarClose = () => {
+  const handleSnackbarClose = useCallback(() => {
     setSnackbarOpen(false);
-  };
+  }, []);
 
-  const handleDialogOpen = () => {
+  const handleDialogOpen = useCallback(() => {
     setDialogOpen(true);
-  };
+  }, []);
 
-  const handleDialogClose = () => {
+  const handleDialogClose = useCallback(() => {
     setDialogOpen(false);
-    setFormData({ githuburl: "", path: "" });
-  };
-
-  const handleClosePanel = () => {
-    if (selectedNode) {
-      setSelectedNode({ ...selectedNode, isOpen: false });
-      setTimeout(() => setSelectedNode(null), 400);
-    }
-  };
+  }, []);
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        height: "100vh",
-        width: "100%",
-        position: "relative",
-      }}
-    >
+    <Box sx={{ display: "flex", height: "100vh", width: "100%", position: "relative" }}>
       <Box
         sx={{
           flex: 1,
@@ -979,17 +911,19 @@ const TreeView = () => {
           </Button>
         </Box>
 
-        <Alert severity="info" sx={{ mb: 4 }}>
-          <AlertTitle>Info</AlertTitle>
-          Click "+ New App" to deploy your Kubernetes application.
+        <Alert severity={isWsConnected ? "info" : "warning"} sx={{ mb: 4 }}>
+          <AlertTitle>{isWsConnected ? "Info" : "Warning"}</AlertTitle>
+          {isWsConnected
+            ? "Click '+ New App' to deploy your Kubernetes application."
+            : "WebSocket disconnected. Reconnecting..."}
         </Alert>
 
         <Box sx={{ width: "100%", height: "100%", position: "relative" }}>
           {(!responseData || responseData.length === 0) ? (
-            <LoadingFallback message="Wds Tree-View is Loading..." size="medium" />
+            <LoadingFallback message={isWsConnected ? "Wds Tree-View is Loading..." : "Waiting for WebSocket connection..."} size="medium" />
           ) : (
             <ReactFlowProvider>
-              <FlowWithScroll nodes={nodes} edges={edges} />
+              <FlowWithScroll nodes={nodes} edges={edges} renderStartTime={renderStartTime} />
               <CustomZoomControls />
             </ReactFlowProvider>
           )}
@@ -1008,12 +942,7 @@ const TreeView = () => {
           )}
         </Box>
 
-        <NewAppDialog
-          open={dialogOpen}
-          onClose={handleDialogClose}
-          onDeploy={handleDeploy}
-          loading={loading}
-        />
+        <NewAppDialog open={dialogOpen} onClose={handleDialogClose} onDeploy={handleDeploy} loading={loading} />
 
         <Snackbar
           anchorOrigin={{ vertical: "top", horizontal: "center" }}
@@ -1039,4 +968,4 @@ const TreeView = () => {
   );
 };
 
-export default TreeView;
+export default memo(TreeView);

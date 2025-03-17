@@ -1,4 +1,4 @@
-import React, { useState, ChangeEvent } from "react";
+import React, { useState, ChangeEvent, useRef, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -38,6 +38,21 @@ export interface CommandResponse {
   clusterName: string;
   token: string;
   command: string;
+}
+
+// Define a proper interface for Axios errors with specific types
+interface AxiosErrorResponse {
+  status: number;
+  data: {
+    error?: string;
+    [key: string]: unknown;
+  };
+}
+
+interface AxiosError extends Error {
+  response?: AxiosErrorResponse;
+  request?: unknown;
+  config?: unknown;
 }
 
 const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCancel }) => {
@@ -89,6 +104,20 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
   const [manualLoading, setManualLoading] = useState<boolean>(false);
   const [manualError, setManualError] = useState<string>("");
 
+  // Add ref for scrolling to success alert
+  const successAlertRef = useRef<HTMLDivElement>(null);
+  
+  // Effect to scroll to success alert when command is generated
+  useEffect(() => {
+    if (manualCommand && successAlertRef.current) {
+      // Scroll the success alert into view with smooth behavior
+      successAlertRef.current.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  }, [manualCommand]);
+
   const handleGenerateCommand = async () => {
     if (!formData.clusterName.trim()) return;
     setManualError("");
@@ -98,9 +127,55 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
         clusterName: formData.clusterName.trim(),
       });
       setManualCommand(response.data);
-    } catch (error: unknown) {
-      const errMsg = error instanceof Error ? error.message : "An unknown error occurred.";
-      setManualError(errMsg);
+    } catch (error) {
+      console.error("Command generation error:", error);
+      let errorMessage = "An unknown error occurred.";
+      
+      // Type guard to check if error is an Error object
+      if (error instanceof Error) {
+        // Check if it's an Axios error with response data
+        const axiosError = error as AxiosError;
+        if (axiosError.response) {
+          // Server responded with an error
+          const status = axiosError.response.status;
+          const responseData = axiosError.response.data;
+          
+          if (status === 500) {
+            if (responseData && responseData.error) {
+              // If there's a specific error message from the server
+              const serverError = responseData.error;
+              
+              if (serverError.includes("Failed to get token")) {
+                errorMessage = "Could not generate token. Please verify that:\n\n" +
+                  "• The ITS hub cluster is running\n" +
+                  "• You have proper permissions\n" +
+                  "• The 'clusteradm' CLI tool is installed";
+              } else if (serverError.includes("context")) {
+                errorMessage = "Could not find the required context 'its1'. Please ensure your kubeconfig is properly set up with the ITS hub context.";
+              } else {
+                // Include the actual server error for specific issues
+                errorMessage = `Server error: ${serverError}`;
+              }
+            } else {
+              errorMessage = "The server encountered an error. Please verify that the ITS hub is running and accessible.";
+            }
+          } else if (status === 404) {
+            errorMessage = "API endpoint not found. Please check if the service is properly deployed.";
+          } else if (status === 401 || status === 403) {
+            errorMessage = "Authorization failed. Please check your credentials and permissions.";
+          } else {
+            errorMessage = `Request failed with status code ${status}. Please try again later.`;
+          }
+        } else if (axiosError.request) {
+          // Request was made but no response received
+          errorMessage = "No response received from server. Please check your network connection and verify the server is running.";
+        } else {
+          // Error in setting up the request
+          errorMessage = `Error: ${error.message}`;
+        }
+      }
+      
+      setManualError(errorMessage);
     } finally {
       setManualLoading(false);
     }
@@ -155,15 +230,18 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
     bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.03)" : "rgba(0, 0, 0, 0.02)",
   };
 
+  // Define a consistent button style object that will be used for all buttons
   const buttonStyles = {
     textTransform: "none",
     fontWeight: 600,
     borderRadius: 1.5,
-    py: { xs: 1, sm: 1.2, md: 1.4 },
-    px: { xs: 2, sm: 3, md: 4 },
+    py: 1.2,
+    px: 3,
     boxShadow: theme === "dark" ? "0 4px 6px -1px rgba(0, 0, 0, 0.2)" : "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
     transition: "all 0.2s ease",
-    fontSize: { xs: "0.875rem", sm: "0.9rem", md: "1rem" },
+    fontSize: "0.875rem",
+    minWidth: "120px",
+    height: "40px",
   };
 
   const primaryButtonStyles = {
@@ -204,7 +282,6 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
       transform: "translateY(0)",
     }
   };
-
 
   return (
     <>
@@ -325,84 +402,90 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
               <Box sx={{ fontSize: "1.1rem" }}>✕</Box>
             </Button>
           </Box>
-          
             <Tabs
               value={activeOption}
               onChange={(_event, newValue) => setActiveOption(newValue)}
               variant="scrollable"
               scrollButtons="auto"
               sx={{
-                mt: 0.25,
+                mt: 1.5,
+                ml: 1.5,
                 "& .MuiTabs-flexContainer": {
-                  gap: { xs: 0.25, sm: 0.5 },
-                },
-                "& .MuiTab-root": {
-                  minHeight: { xs: 36, sm: 40 },
-                  px: { xs: 1, sm: 1.5 },
-                  py: { xs: 0.5, sm: 0.75 },
-                  color: colors.textSecondary,
-                  fontSize: { xs: "0.75rem", sm: "0.8rem" },
-                  fontWeight: 500,
-                  transition: "all 0.2s ease",
-                  borderRadius: "8px",
-                  position: "relative",
-                  overflow: "hidden",
-                  "&:before": {
-                    content: '""',
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: "2px",
-                    backgroundColor: "transparent",
-                    transition: "all 0.2s ease",
-                  },
-                  "&.Mui-selected": {
-                    color: theme === "dark" ? colors.white : colors.primary,
-                    backgroundColor: "transparent",
-                    fontWeight: 600,
-                    "&:before": {
-                      backgroundColor: colors.primary,
-                      height: "3px",
-                      boxShadow: theme === "dark" 
-                        ? `0 2px 8px ${colors.primary}80` 
-                        : `0 2px 8px ${colors.primary}40`,
-                    },
-                    "& $iconContainer": {
-                      backgroundColor: `${colors.primary}20`,
-                      color: colors.primary,
-                    }
-                  },
-                  "&:hover": {
-                    backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.04)",
-                    "&:before": {
-                      backgroundColor: `${colors.primary}30`,
-                      height: "2px",
-                    },
-                    "& $iconContainer": {
-                      backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.08)",
-                      color: theme === "dark" ? colors.primaryLight : colors.primary,
-                    },
-                  },
+                  gap: { xs: 1.5, sm: 2 },
                 },
                 "& .MuiTabs-indicator": {
                   display: "none",
+                },
+                "& .MuiTabs-scroller": {
+                  pl: 0.5,
+                  overflow: "visible", 
+                },
+                "& .MuiTab-root": {
+                  minWidth: "auto",
+                  minHeight: { xs: 36, sm: 40 },
+                  px: { xs: 1.5, sm: 2 },
+                  py: { xs: 0.75, sm: 1 },
+                  mt: 0.5,
+                  mb: 0.5,
+                  color: colors.textSecondary,
+                  fontSize: { xs: "0.8rem", sm: "0.85rem" },
+                  fontWeight: 500,
+                  textTransform: "none",
+                  transition: "all 0.25s ease",
+                  borderRadius: "12px",
+                  position: "relative",
+                  overflow: "visible",
+                  border: "1px solid transparent",
+                  
+                  "&:hover": {
+                    backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.03)",
+                    color: theme === "dark" ? colors.white : colors.primary,
+                    borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.1)", 
+                    "& .iconContainer": {
+                      backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.05)",
+                      transform: "scale(1.05)",
+                    },
+                  },
+                  
+                  "&.Mui-selected": {
+                    color: theme === "dark" ? colors.white : colors.primary,
+                    backgroundColor: theme === "dark" ? "rgba(47, 134, 255, 0.08)" : "rgba(47, 134, 255, 0.05)",
+                    fontWeight: 600,
+                    border: `1px solid ${colors.primary}`,
+                    boxShadow: theme === "dark" 
+                      ? `0 0 8px ${colors.primary}40` 
+                      : `0 0 6px ${colors.primary}30`,
+                    zIndex: 1,
+                    position: "relative",
+                    "&:before": {
+                      display: "none",
+                    },
+                    "&:after": {
+                      display: "none",
+                    },
+                    "& .iconContainer": {
+                      backgroundColor: theme === "dark" ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
+                      transform: "scale(1.1)",
+                      color: colors.primary,
+                    }
+                  },
                 },
               }}
             >
             <Tab 
               label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Box 
                     className="iconContainer"
                     sx={{ 
-                      width: 24, 
-                      height: 24, 
-                      borderRadius: "6px", 
+                      width: 26, 
+                      height: 26, 
+                      borderRadius: "8px", 
                       display: "flex", 
                       alignItems: "center", 
                       justifyContent: "center",
-                      transition: "all 0.2s ease",
+                      bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)",
+                      transition: "all 0.25s ease",
                     }}
                   >
                     <span role="img" aria-label="yaml" style={{ fontSize: "0.9rem" }}>📄</span>
@@ -414,17 +497,18 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
             />
             <Tab 
               label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Box 
                     className="iconContainer"
                     sx={{ 
-                      width: 24, 
-                      height: 24, 
-                      borderRadius: "6px", 
+                      width: 26, 
+                      height: 26, 
+                      borderRadius: "8px", 
                       display: "flex", 
                       alignItems: "center", 
                       justifyContent: "center",
-                      transition: "all 0.2s ease",
+                      bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)",
+                      transition: "all 0.25s ease",
                     }}
                   >
                     <span role="img" aria-label="kubeconfig" style={{ fontSize: "0.9rem" }}>📁</span>
@@ -436,17 +520,18 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
             />
             <Tab 
               label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Box 
                     className="iconContainer"
                     sx={{ 
-                      width: 24, 
-                      height: 24, 
-                      borderRadius: "6px", 
+                      width: 26, 
+                      height: 26, 
+                      borderRadius: "8px", 
                       display: "flex", 
                       alignItems: "center", 
                       justifyContent: "center",
-                      transition: "all 0.2s ease",
+                      bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)",
+                      transition: "all 0.25s ease",
                     }}
                   >
                     <span role="img" aria-label="api" style={{ fontSize: "0.9rem" }}>🔗</span>
@@ -458,17 +543,18 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
             />
             <Tab 
               label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Box 
                     className="iconContainer"
                     sx={{ 
-                      width: 24, 
-                      height: 24, 
-                      borderRadius: "6px", 
+                      width: 26, 
+                      height: 26, 
+                      borderRadius: "8px", 
                       display: "flex", 
                       alignItems: "center", 
                       justifyContent: "center",
-                      transition: "all 0.2s ease",
+                      bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)",
+                      transition: "all 0.25s ease",
                     }}
                   >
                     <span role="img" aria-label="manual" style={{ fontSize: "0.9rem" }}>⚙️</span>
@@ -634,7 +720,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                     flexDirection: "column",
                     height: "calc(100% - 8px)",
                   }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
                   <Box
                     sx={{
                           width: 36, 
@@ -662,11 +748,11 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                     <Box
                       sx={{
                         border: 1,
-                      borderStyle: "dashed",
-                      borderColor: "divider",
+                        borderStyle: "dashed",
+                        borderColor: "divider",
                         borderRadius: { xs: 1.5, sm: 2 },
-                        p: { xs: 1.5, sm: 2 },
-                      textAlign: "center",
+                        p: { xs: 2, sm: 3 },
+                        textAlign: "center",
                         transition: "all 0.3s ease",
                         backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.2)" : "rgba(0, 0, 0, 0.01)",
                         "&:hover": { 
@@ -677,14 +763,15 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                         flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "center",
-                        height: "calc(100% - 160px)",
-                        mb: 1.5,
+                        height: "calc(100% - 130px)",
+                        mb: 2,
+                        minHeight: "250px",
                       }}
                     >
                       <Box 
                         sx={{ 
-                          mb: 2,
-                          p: 1.5,
+                          mb: 3,
+                          p: 2,
                           borderRadius: "50%",
                           backgroundColor: theme === "dark" ? "rgba(47, 134, 255, 0.1)" : "rgba(47, 134, 255, 0.05)",
                           display: "flex",
@@ -692,12 +779,12 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                           justifyContent: "center",
                         }}
                       >
-                        <span role="img" aria-label="upload" style={{ fontSize: "1.5rem" }}>📤</span>
+                        <span role="img" aria-label="upload" style={{ fontSize: "1.75rem" }}>📤</span>
                       </Box>
-                      <Box sx={{ mb: 1.5, fontWeight: 500, fontSize: "0.9rem" }}>
+                      <Box sx={{ mb: 2, fontWeight: 500, fontSize: "1rem" }}>
                         Drag and drop your kubeconfig file here
                       </Box>
-                      <Box sx={{ color: colors.textSecondary, mb: 1.5, fontSize: "0.8rem" }}>
+                      <Box sx={{ color: colors.textSecondary, mb: 2, fontSize: "0.85rem" }}>
                         - or -
                       </Box>
                       <Button 
@@ -994,11 +1081,11 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                           <Box sx={{ mb: 1, fontWeight: 500, fontSize: "0.85rem", color: textColor }}>
                             Name your cluster
                           </Box>
-                    <TextField
-                      variant="outlined"
-                      name="clusterName"
-                      value={formData.clusterName}
-                      onChange={handleChange}
+                          <TextField
+                            variant="outlined"
+                            name="clusterName"
+                            value={formData.clusterName}
+                            onChange={handleChange}
                             placeholder="e.g., production-cluster, dev-k8s"
                             size="small"
                             InputProps={{
@@ -1039,8 +1126,8 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                                 color: theme === "dark" ? colors.primaryLight : colors.primary,
                               },
                             }}
-                      fullWidth
-                    />
+                            fullWidth
+                          />
                           <Box sx={{ 
                             mt: 1, 
                             fontSize: "0.75rem", 
@@ -1062,7 +1149,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                             sx={{ 
                               mb: 2, 
                               borderRadius: 1.5,
-                              py: 1,
+                              py: 1.5,
                               px: 1.5,
                               animation: "fadeIn 0.3s ease-in-out",
                               "@keyframes fadeIn": {
@@ -1075,104 +1162,54 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                               }
                             }}
                           >
-                            <Box sx={{ fontWeight: 600 }}>Error</Box>
-                            {manualError}
+                            <Box sx={{ fontWeight: 600, fontSize: "0.85rem", mb: 0.5 }}>Connection Error</Box>
+                            <Box sx={{ whiteSpace: "pre-line" }}>{manualError}</Box>
+                            {manualError.includes("clusteradm") && (
+                              <Box sx={{ 
+                                mt: 1.5, 
+                                pt: 1, 
+                                borderTop: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"}`,
+                                fontSize: "0.75rem", 
+                                fontStyle: "italic" 
+                              }}>
+                                Tip: To install clusteradm, run: <Box component="span" sx={{ fontFamily: "'Fira Code', monospace" }}>curl -fsSL https://raw.githubusercontent.com/open-cluster-management-io/clusteradm/main/install.sh | bash</Box>
+                              </Box>
+                            )}
                           </Alert>
                         )}
 
-                        {/* Visual guide with steps */}
-                        <Box sx={{ 
-                          flex: 1,
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 1.5,
-                          mt: 1,
+                        {/* Info about generating command */}
+                        <Box sx={{
+                          p: 2,
+                          mt: 2,
+                          borderRadius: 1.5,
+                          backgroundColor: theme === "dark" ? "rgba(47, 134, 255, 0.05)" : "rgba(47, 134, 255, 0.03)",
+                          border: `1px solid ${theme === "dark" ? "rgba(47, 134, 255, 0.1)" : "rgba(47, 134, 255, 0.08)"}`,
                         }}>
                           <Box sx={{ 
                             display: "flex", 
-                            alignItems: "flex-start", 
+                            alignItems: "center", 
                             gap: 1.5,
-                            p: 1.5,
-                            borderRadius: 1.5,
-                            bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.01)",
-                            border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
+                            mb: 1,
                           }}>
                             <Box sx={{ 
-                              width: 24, 
-                              height: 24, 
+                              width: 28, 
+                              height: 28, 
                               borderRadius: "50%", 
                               display: "flex", 
                               alignItems: "center", 
                               justifyContent: "center",
-                              bgcolor: theme === "dark" ? "rgba(103, 192, 115, 0.15)" : "rgba(103, 192, 115, 0.1)",
-                              color: colors.success,
-                              flexShrink: 0,
-                              fontSize: "0.75rem",
-                              fontWeight: 600,
+                              bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.1)",
+                              color: theme === "dark" ? colors.primaryLight : colors.primary,
                             }}>
-                              1
+                              <span role="img" aria-label="info" style={{ fontSize: "0.9rem" }}>ℹ️</span>
                             </Box>
-                            <Box sx={{ fontSize: "0.8rem", color: colors.textSecondary }}>
-                              Enter a unique name for your cluster above
+                            <Box sx={{ fontWeight: 600, fontSize: "0.85rem", color: textColor }}>
+                              Generate a command to connect your cluster
                             </Box>
                           </Box>
-                          
-                          <Box sx={{ 
-                            display: "flex", 
-                            alignItems: "flex-start", 
-                            gap: 1.5,
-                            p: 1.5,
-                            borderRadius: 1.5,
-                            bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.01)",
-                            border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
-                          }}>
-                            <Box sx={{ 
-                              width: 24, 
-                              height: 24, 
-                              borderRadius: "50%", 
-                              display: "flex", 
-                              alignItems: "center", 
-                              justifyContent: "center",
-                              bgcolor: theme === "dark" ? "rgba(103, 192, 115, 0.15)" : "rgba(103, 192, 115, 0.1)",
-                              color: colors.success,
-                              flexShrink: 0,
-                              fontSize: "0.75rem",
-                              fontWeight: 600,
-                            }}>
-                              2
-                            </Box>
-                            <Box sx={{ fontSize: "0.8rem", color: colors.textSecondary }}>
-                              Click "Generate Command" to create a connection command
-                            </Box>
-                          </Box>
-                          
-                          <Box sx={{ 
-                            display: "flex", 
-                            alignItems: "flex-start", 
-                            gap: 1.5,
-                            p: 1.5,
-                            borderRadius: 1.5,
-                            bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.01)",
-                            border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
-                          }}>
-                            <Box sx={{ 
-                              width: 24, 
-                              height: 24, 
-                              borderRadius: "50%", 
-                              display: "flex", 
-                              alignItems: "center", 
-                              justifyContent: "center",
-                              bgcolor: theme === "dark" ? "rgba(103, 192, 115, 0.15)" : "rgba(103, 192, 115, 0.1)",
-                              color: colors.success,
-                              flexShrink: 0,
-                              fontSize: "0.75rem",
-                              fontWeight: 600,
-                            }}>
-                              3
-                            </Box>
-                            <Box sx={{ fontSize: "0.8rem", color: colors.textSecondary }}>
-                              Run the generated command on your cluster to establish the connection
-                            </Box>
+                          <Box sx={{ fontSize: "0.8rem", color: colors.textSecondary, ml: 5 }}>
+                            Enter your cluster name above and click "Generate Command". You'll receive a command to run on your cluster that will establish the connection.
                           </Box>
                         </Box>
 
@@ -1180,36 +1217,26 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                         <Box sx={{ 
                           display: "flex", 
                           justifyContent: "flex-end", 
-                          gap: { xs: 0.75, sm: 1 }, 
+                          gap: 2, 
                           mt: "auto",
                           pt: 2,
                           borderTop: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
                         }}>
                           <Button 
-                            onClick={handleCancel}
                             variant="outlined"
-                            size="small"
-                            sx={{
-                              ...secondaryButtonStyles,
-                              py: { xs: 0.5, sm: 0.75 },
-                              px: { xs: 1, sm: 1.5 },
-                              fontSize: { xs: "0.75rem", sm: "0.8rem" },
-                              minWidth: { xs: "60px", sm: "70px" },
+                            onClick={() => {
+                              setManualCommand(null);
+                              setFormData(prev => ({ ...prev, clusterName: "" }));
                             }}
+                            sx={secondaryButtonStyles}
                           >
-                            Cancel
+                            Reset
                           </Button>
-                        <Button
-                          variant="contained"
-                            size="small"
-                          onClick={handleGenerateCommand}
-                          disabled={!formData.clusterName.trim() || manualLoading}
-                            sx={{
-                              ...primaryButtonStyles,
-                              py: { xs: 0.5, sm: 0.75 },
-                              px: { xs: 1.5, sm: 2 },
-                              fontSize: { xs: "0.75rem", sm: "0.8rem" },
-                            }}
+                          <Button
+                            variant="contained"
+                            onClick={handleGenerateCommand}
+                            disabled={!formData.clusterName.trim() || manualLoading}
+                            sx={primaryButtonStyles}
                             startIcon={
                               manualLoading ? (
                                 <CircularProgress size={14} color="inherit" />
@@ -1219,7 +1246,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                             }
                           >
                             {manualLoading ? "Generating..." : "Generate Command"}
-                        </Button>
+                          </Button>
                         </Box>
                       </Box>
                     ) : (
@@ -1236,37 +1263,39 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                         }}
                       >
                         {/* Success message with improved styling */}
-                        <Alert 
-                          severity="success" 
-                          icon={<span role="img" aria-label="success" style={{ fontSize: "1rem" }}>✅</span>}
-                          sx={{ 
-                            mb: 2, 
-                            borderRadius: 1.5,
-                            py: 1,
-                            px: 1.5,
-                            boxShadow: "0 2px 6px rgba(103,192,115,0.15)",
-                            "& .MuiAlert-message": {
-                              fontSize: "0.8rem",
-                            }
-                          }}
-                        >
-                          <Box sx={{ fontWeight: 600 }}>Command Generated Successfully</Box>
-                          <Box sx={{ mt: 0.5 }}>
-                            Run this command on your cluster <strong>{manualCommand.clusterName}</strong> to connect it to the platform.
-                          </Box>
-                        </Alert>
+                        <Box ref={successAlertRef}>
+                          <Alert 
+                            severity="success" 
+                            icon={<span role="img" aria-label="success" style={{ fontSize: "1rem" }}>✅</span>}
+                            sx={{ 
+                              mb: 2, 
+                              borderRadius: 1.5,
+                              py: 1,
+                              px: 1.5,
+                              boxShadow: "0 2px 6px rgba(103,192,115,0.15)",
+                              "& .MuiAlert-message": {
+                                fontSize: "0.8rem",
+                              }
+                            }}
+                          >
+                            <Box sx={{ fontWeight: 600 }}>Command Generated Successfully</Box>
+                            <Box sx={{ mt: 0.5 }}>
+                              Run this command on your cluster <strong>{manualCommand.clusterName}</strong> to connect it to the platform.
+                            </Box>
+                          </Alert>
+                        </Box>
 
                         {/* Command display with improved styling and text wrapping */}
                         <Box sx={{ position: "relative", mb: 2 }}>
-                        <Box
-                          component="pre"
-                          sx={{
+                          <Box
+                            component="pre"
+                            sx={{
                               flex: "1 1 auto",
                               p: { xs: 1.5, sm: 2 },
                               backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.4)" : "#f5f5f5",
                               color: theme === "dark" ? "#e6e6e6" : "#333",
                               borderRadius: 1.5,
-                            overflowX: "auto",
+                              overflowX: "auto",
                               border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"}`,
                               fontSize: { xs: "0.75rem", sm: "0.8rem" },
                               fontFamily: "'Fira Code', monospace",
@@ -1300,15 +1329,14 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                                 top: { xs: "0.75rem", sm: "1rem" },
                               },
                               paddingLeft: { xs: "1.5rem", sm: "2rem" },
-                          }}
-                        >
-                          {manualCommand.command}
-                        </Box>
+                            }}
+                          >
+                            {manualCommand.command}
+                          </Box>
                           
                           {/* Copy button overlay */}
-                        <Button
-                          variant="contained"
-                            size="small"
+                          <Button
+                            variant="contained"
                             onClick={() => {
                               navigator.clipboard.writeText(manualCommand.command);
                               setSnackbar({
@@ -1321,7 +1349,9 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                               position: "absolute",
                               top: 8,
                               right: 8,
-                              minWidth: "auto",
+                              minWidth: "36px",
+                              width: "36px",
+                              height: "36px",
                               p: 0.5,
                               borderRadius: 1,
                               bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
@@ -1329,25 +1359,25 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                               boxShadow: "none",
                               "&:hover": {
                                 bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.3)" : "rgba(47, 134, 255, 0.2)",
-                                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
                               }
                             }}
                           >
                             <span role="img" aria-label="copy" style={{ fontSize: "0.9rem" }}>📋</span>
-                        </Button>
-                      </Box>
+                          </Button>
+                        </Box>
 
                         {/* Instructions section with improved styling */}
                         <Box sx={{ flex: 1 }}>
                           <Box sx={{ fontWeight: 600, fontSize: "0.85rem", mb: 1.5, color: textColor }}>
                             Next steps:
-                  </Box>
+                          </Box>
                           
                           <Box sx={{ 
                             display: "flex", 
                             flexDirection: "column",
                             gap: 1.5,
                           }}>
+                            {/* New step about ensuring the correct context */}
                             <Box sx={{ 
                               display: "flex", 
                               alignItems: "flex-start", 
@@ -1371,11 +1401,59 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                                 fontWeight: 600,
                               }}>
                                 1
-                  </Box>
-                              <Box sx={{ fontSize: "0.8rem", color: colors.textSecondary }}>
-                                Copy the command above and run it on your Kubernetes cluster
-                </Box>
-            </Box>
+                              </Box>
+                              <Box sx={{ fontSize: "0.8rem", color: colors.textSecondary, width: "100%" }}>
+                                <Box sx={{ mb: 1 }}>
+                                  Before running the command, ensure that you have switched to the correct context:
+                                </Box>
+                                <Box
+                                  sx={{
+                                    position: "relative",
+                                    p: 1.5,
+                                    backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.3)" : "#f0f0f0",
+                                    color: theme === "dark" ? "#e6e6e6" : "#333",
+                                    borderRadius: 1,
+                                    fontFamily: "'Fira Code', monospace",
+                                    fontSize: "0.75rem",
+                                    mb: 1,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"}`,
+                                  }}
+                                >
+                                  <Box component="span" sx={{ width: "100%" }}>kubectl config use-context its1</Box>
+                                  <Button
+                                    onClick={() => {
+                                      navigator.clipboard.writeText("kubectl config use-context its1");
+                                      setSnackbar({
+                                        open: true,
+                                        message: "Context command copied!",
+                                        severity: "success"
+                                      });
+                                    }}
+                                    sx={{
+                                      minWidth: "28px",
+                                      width: "28px",
+                                      height: "28px",
+                                      p: 0,
+                                      ml: 1,
+                                      borderRadius: 0.75,
+                                      bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
+                                      color: theme === "dark" ? colors.primaryLight : colors.primary,
+                                      boxShadow: "none",
+                                      "&:hover": {
+                                        bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.3)" : "rgba(47, 134, 255, 0.2)",
+                                      }
+                                    }}
+                                  >
+                                    <span role="img" aria-label="copy" style={{ fontSize: "0.8rem" }}>📋</span>
+                                  </Button>
+                                </Box>
+                                <Box sx={{ fontSize: "0.75rem", color: colors.textSecondary, fontStyle: "italic" }}>
+                                  This helps avoid running commands on the wrong cluster.
+                                </Box>
+                              </Box>
+                            </Box>
                             
                             <Box sx={{ 
                               display: "flex", 
@@ -1400,7 +1478,36 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                                 fontWeight: 600,
                               }}>
                                 2
-          </Box>
+                              </Box>
+                              <Box sx={{ fontSize: "0.8rem", color: colors.textSecondary }}>
+                                Copy the command above and run it on your Kubernetes cluster
+                              </Box>
+                            </Box>
+                            
+                            <Box sx={{ 
+                              display: "flex", 
+                              alignItems: "flex-start", 
+                              gap: 1.5,
+                              p: 1.5,
+                              borderRadius: 1.5,
+                              bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.01)",
+                              border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
+                            }}>
+                              <Box sx={{ 
+                                width: 24, 
+                                height: 24, 
+                                borderRadius: "50%", 
+                                display: "flex", 
+                                alignItems: "center", 
+                                justifyContent: "center",
+                                bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.1)",
+                                color: theme === "dark" ? colors.primaryLight : colors.primary,
+                                flexShrink: 0,
+                                fontSize: "0.75rem",
+                                fontWeight: 600,
+                              }}>
+                                3
+                              </Box>
                               <Box sx={{ fontSize: "0.8rem", color: colors.textSecondary }}>
                                 Wait for the connection to be established (this may take a few moments)
                               </Box>
@@ -1426,9 +1533,9 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                                 color: theme === "dark" ? colors.primaryLight : colors.primary,
                                 flexShrink: 0,
                                 fontSize: "0.75rem",
-                  fontWeight: 600,
+                                fontWeight: 600,
                               }}>
-                                3
+                                4
                               </Box>
                               <Box sx={{ fontSize: "0.8rem", color: colors.textSecondary }}>
                                 Your cluster will appear in the clusters list when connected
@@ -1441,31 +1548,23 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                         <Box sx={{ 
                           display: "flex", 
                           justifyContent: "space-between", 
-                          gap: { xs: 0.75, sm: 1 }, 
+                          gap: 2, 
                           mt: "auto",
                           pt: 2,
                           borderTop: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
                         }}>
-        <Button
+                          <Button
                             variant="outlined"
-                            size="small"
                             onClick={() => {
                               setManualCommand(null);
                               setFormData(prev => ({ ...prev, clusterName: "" }));
                             }}
-          sx={{
-                              ...secondaryButtonStyles,
-                              py: { xs: 0.5, sm: 0.75 },
-                              px: { xs: 1, sm: 1.5 },
-                              fontSize: { xs: "0.75rem", sm: "0.8rem" },
-                            }}
-                            startIcon={<span role="img" aria-label="reset" style={{ fontSize: "0.8rem" }}>🔄</span>}
+                            sx={secondaryButtonStyles}
                           >
                             Start Over
-        </Button>
-        <Button
+                          </Button>
+                          <Button
                             variant="contained"
-                            size="small"
                             onClick={() => {
                               navigator.clipboard.writeText(manualCommand.command);
                               setSnackbar({
@@ -1474,16 +1573,11 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                                 severity: "success"
                               });
                             }}
-          sx={{
-                              ...primaryButtonStyles,
-                              py: { xs: 0.5, sm: 0.75 },
-                              px: { xs: 1.5, sm: 2 },
-                              fontSize: { xs: "0.75rem", sm: "0.8rem" },
-                            }}
+                            sx={primaryButtonStyles}
                             startIcon={<span role="img" aria-label="copy" style={{ fontSize: "0.8rem" }}>📋</span>}
                           >
                             Copy Command
-        </Button>
+                          </Button>
                         </Box>
                       </Box>
                     )}

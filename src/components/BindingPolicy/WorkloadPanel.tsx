@@ -11,7 +11,7 @@ import {
 import { Draggable } from '@hello-pangea/dnd';
 import { Workload } from '../../types/bindingPolicy';
 import StrictModeDroppable from './StrictModeDroppable';
-import StorageIcon from '@mui/icons-material/Storage';
+import KubernetesIcon from './KubernetesIcon';
 
 interface WorkloadPanelProps {
   workloads: Workload[];
@@ -58,7 +58,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <StorageIcon sx={{ mr: 1, color: theme.palette.success.main }} />
+              <KubernetesIcon type="workload" size={24} sx={{ mr: 1 }} />
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
                 {workload.name}
               </Typography>
@@ -81,7 +81,10 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
       }}
     >
       <Box sx={{ p: 2, backgroundColor: theme.palette.secondary.main, color: 'white' }}>
-        <Typography variant="h6">Workloads</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <KubernetesIcon type="workload" size={24} sx={{ mr: 1, color: 'white' }} />
+          <Typography variant="h6">Workloads</Typography>
+        </Box>
       </Box>
       <Divider />
       

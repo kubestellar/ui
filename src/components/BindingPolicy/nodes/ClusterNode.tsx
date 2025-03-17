@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { Box, Typography } from '@mui/material';
-import { Storage as StorageIcon } from '@mui/icons-material';
+import KubernetesIcon from '../KubernetesIcon';
 
 interface ClusterNodeData {
   label: string;
@@ -35,12 +35,13 @@ const ClusterNode: React.FC<NodeProps<ClusterNodeData>> = ({ data }) => {
             justifyContent: 'center',
             backgroundColor: theme === 'dark' ? '#374151' : '#F3F4F6',
             borderRadius: '50%',
-            width: 40,
-            height: 40,
+            width: 48,
+            height: 48,
             mb: 1,
+            padding: '4px',
           }}
         >
-          <StorageIcon sx={{ color: theme === 'dark' ? '#D1D5DB' : '#4B5563' }} />
+          <KubernetesIcon type="cluster" size={40} />
         </Box>
         
         <Typography 

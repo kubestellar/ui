@@ -64,25 +64,47 @@ const QuickPolicyDialog: React.FC<QuickPolicyDialogProps> = ({ open, onClose, on
   };
 
   const handleSave = () => {
-    if (!name || !namespace) return;
+    if (!name || !namespace) {
+      console.error("❌ Missing required fields (name or namespace)");
+      return;
+    }
     
-    onSave({
-      name,
-      namespace,
-      propagationMode: propagationMode as 'DownsyncOnly' | 'UpsyncOnly' | 'BidirectionalSync',
-      updateStrategy: updateStrategy as 'ServerSideApply' | 'ForceApply' | 'RollingUpdate' | 'BlueGreenDeployment',
+    console.log("🔄 Quick Policy Dialog - saving policy with:", { 
+      name, 
+      namespace, 
+      propagationMode, 
+      updateStrategy,
       customLabels,
-      deploymentType: 'SelectedClusters',
-      schedulingRules: [],
-      tolerations: []
+      connection 
     });
     
-    // Reset form
-    setName('');
-    setNamespace('default');
-    setPropagationMode('DownsyncOnly');
-    setUpdateStrategy('ServerSideApply');
-    setCustomLabels({});
+    try {
+      // Create the policy configuration object
+      const policyConfig = {
+        name,
+        namespace,
+        propagationMode: propagationMode as 'DownsyncOnly' | 'UpsyncOnly' | 'BidirectionalSync',
+        updateStrategy: updateStrategy as 'ServerSideApply' | 'ForceApply' | 'RollingUpdate' | 'BlueGreenDeployment',
+        customLabels,
+        deploymentType: 'SelectedClusters' as 'SelectedClusters' | 'AllClusters',
+        schedulingRules: [],
+        tolerations: []
+      };
+      
+      // Call the onSave callback with the policy configuration
+      onSave(policyConfig);
+      
+      console.log("✅ Quick Policy Dialog - policy saved successfully:", policyConfig);
+      
+      // Reset form
+      setName('');
+      setNamespace('default');
+      setPropagationMode('DownsyncOnly');
+      setUpdateStrategy('ServerSideApply');
+      setCustomLabels({});
+    } catch (error) {
+      console.error("❌ Error saving policy:", error);
+    }
   };
 
   return (

@@ -11,7 +11,7 @@ import {
 import { Draggable } from '@hello-pangea/dnd';
 import { ManagedCluster } from '../../types/bindingPolicy';
 import StrictModeDroppable from './StrictModeDroppable';
-import DnsIcon from '@mui/icons-material/Dns';
+import KubernetesIcon from './KubernetesIcon';
 
 interface ClusterPanelProps {
   clusters: ManagedCluster[];
@@ -58,7 +58,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <DnsIcon sx={{ mr: 1, color: theme.palette.info.main }} />
+              <KubernetesIcon type="cluster" size={24} sx={{ mr: 1 }} />
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
                 {cluster.name}
               </Typography>
@@ -77,11 +77,14 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
         display: 'flex', 
         flexDirection: 'column',
         overflow: 'hidden',
-        borderRadius: 2
+        borderRadius: 2,
       }}
     >
       <Box sx={{ p: 2, backgroundColor: theme.palette.primary.main, color: 'white' }}>
-        <Typography variant="h6">Clusters</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <KubernetesIcon type="cluster" size={24} sx={{ mr: 1, color: 'white' }} />
+          <Typography variant="h6">Clusters</Typography>
+        </Box>
       </Box>
       <Divider />
       

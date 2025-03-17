@@ -13,7 +13,7 @@ import { generateBindingPolicyYAML } from '../../utils/yamlGenerator';
 import { v4 as uuidv4 } from 'uuid';
 import { ClusterPanelContainer, WorkloadPanelContainer } from './PolicyPanels';
 import ConnectionManager from './ConnectionManager';
-import { useConnectionManagerStore } from '../../stores/connectionManagerStore';
+//import { useConnectionManagerStore } from '../../stores/connectionManagerStore';
 
 // StrictMode-compatible DragDropContext wrapper
 const StrictModeDragDropContext: React.FC<React.ComponentProps<typeof DragDropContext>> = ({ children, ...props }) => {
@@ -74,7 +74,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
   } | undefined>(undefined);
   
   // Connection mode comes from the store now
-  const connectionMode = useConnectionManagerStore(state => state.connectionMode);
+  //const connectionMode = useConnectionManagerStore(state => state.connectionMode);
   
   // Use refs to track if mounted and data fetched to prevent unnecessary renders
   const isMounted = useRef(true);
@@ -101,10 +101,9 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     skipFetch: !needsFetchData || dataFetchedRef.current // Use skipFetch parameter instead
   });
 
-  // Use props if provided, otherwise use hook data
-  const policies = propPolicies || hookData.policies || [];
-  const clusters = propClusters || hookData.clusters || [];
-  const workloads = propWorkloads || hookData.workloads || [];
+  const policies = React.useMemo(() => propPolicies || hookData.policies || [], [propPolicies, hookData.policies]);
+  const clusters = React.useMemo(() => propClusters || hookData.clusters || [], [propClusters, hookData.clusters]);
+  const workloads = React.useMemo(() => propWorkloads || hookData.workloads || [], [propWorkloads, hookData.workloads]);
   
   // If props are provided, we're not loading
   const loading = propPolicies && propClusters && propWorkloads 
@@ -133,6 +132,9 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
   const [deploymentLoading, setDeploymentLoading] = useState(false);
   const [deploymentError, setDeploymentError] = useState<string | null>(null);
   const [policiesToDeploy, setPoliciesToDeploy] = useState<DeploymentPolicy[]>([]);
+  
+  // Find the connectionManager section and use a ref
+  const connectionManagerRef = useRef<{ completeConnection: (workloadId: string, clusterId: string) => void }>(null);
   
   // Log component mount/unmount for debugging
   useEffect(() => {
@@ -366,20 +368,14 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     console.log('✅ Drag end processing completed');
   }, [setActiveDragItem, addToCanvas]);
 
-  // Interface for the connection manager element
-  interface ConnectionManagerElement extends HTMLElement {
-    completeConnection?: (workloadId: string, clusterId: string) => void;
-  }
-  
-  // Handle completing a connection in connection mode
+  // Replace the current handleCompleteConnection implementation with this
   const handleCompleteConnection = useCallback((workloadId: string, clusterId: string) => {
-    const connMgr = document.getElementById('connection-manager') as ConnectionManagerElement | null;
-    if (connMgr) {
-      // Find the connection complete handler on the component
-      const completeConnectionHandler = connMgr.completeConnection;
-      if (completeConnectionHandler && typeof completeConnectionHandler === 'function') {
-        completeConnectionHandler(workloadId, clusterId);
-      }
+    console.log(`🚨 handleCompleteConnection called with workloadId=${workloadId}, clusterId=${clusterId}`);
+    
+    if (connectionManagerRef.current && connectionManagerRef.current.completeConnection) {
+      connectionManagerRef.current.completeConnection(workloadId, clusterId);
+    } else {
+      console.error('❌ connectionManagerRef.current.completeConnection is not available!');
     }
   }, []);
 
@@ -548,14 +544,13 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
               flexDirection: 'column'
             }}>
               {/* Connection Manager Component */}
-              <div id="connection-manager">
-                <ConnectionManager
-                  workloads={workloads}
-                  clusters={clusters}
-                  onQuickPolicySave={handleQuickPolicySave}
-                  setSuccessMessage={setSuccessMessage}
-                />
-              </div>
+              <ConnectionManager
+                ref={connectionManagerRef}
+                workloads={workloads}
+                clusters={clusters}
+                onQuickPolicySave={handleQuickPolicySave}
+                setSuccessMessage={setSuccessMessage}
+              />
               
               {/* Canvas Area */}
               <Box sx={{ flexGrow: 1, position: 'relative' }}>
@@ -572,7 +567,6 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
                     // This would trigger saving all binding policies
                     setSuccessMessage("All binding policies saved successfully");
                   }}
-                  connectionMode={connectionMode}
                   onConnectionComplete={handleCompleteConnection}
                 />
               </Box>
@@ -580,10 +574,12 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
               {/* Deploy Button */}
               <Box
                 sx={{
-                  position: 'absolute',
-                  bottom: '24px', 
-                  right: '24px', 
-                  zIndex: 100 
+                  position: 'fixed',
+                  bottom: '40px', 
+                  right: '40px', 
+                  zIndex: 100,
+                  display: 'flex',
+                  gap: 2
                 }}
               >
                 <Button
