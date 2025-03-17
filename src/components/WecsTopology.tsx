@@ -30,13 +30,13 @@ import { ZoomIn, ZoomOut } from "@mui/icons-material";
 import { FiMoreVertical } from "react-icons/fi";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import LoadingFallback from "./LoadingFallback";
+import DynamicDetailsPanel from "./DynamicDetailsPanel";
 
-// Define NodeData interface
+// Interfaces
 interface NodeData {
   label: JSX.Element;
 }
 
-// Base Node type (mimicking reactflow's RFNode structure)
 interface BaseNode {
   id: string;
   data: NodeData;
@@ -44,7 +44,6 @@ interface BaseNode {
   style?: React.CSSProperties;
 }
 
-// Define custom Node type extending BaseNode
 interface CustomNode extends BaseNode {
   sourcePosition?: Position;
   targetPosition?: Position;
@@ -52,14 +51,12 @@ interface CustomNode extends BaseNode {
   showMenu?: boolean;
 }
 
-// Base Edge type (mimicking reactflow's RFEdge structure)
 interface BaseEdge {
   id: string;
   source: string;
   target: string;
 }
 
-// Define custom Edge type extending BaseEdge
 interface CustomEdge extends BaseEdge {
   type?: string;
   animated?: boolean;
@@ -72,37 +69,75 @@ interface CustomEdge extends BaseEdge {
   };
 }
 
-interface Namespace {
+interface NamespaceResource {
   name: string;
-  status?: string;
-  deployments?: Deployment[];
-  services?: Service[];
-  configmaps?: ConfigMap[];
+  status: string;
+  labels: Record<string, string>;
+  resources: Record<string, ResourceItem[]>;
 }
 
-interface Deployment {
-  metadata: { name: string; creationTimestamp?: string };
-  spec: { replicas: number };
-  status?: string;
+export interface ResourceItem {
+  apiVersion: string;
+  kind: string;
+  metadata: {
+    name: string;
+    namespace: string;
+    creationTimestamp: string;
+    labels?: Record<string, string>;
+    [key: string]: string | undefined | Record<string, string>;
+  };
+  spec?: {
+    ports?: Array<{ name: string; port: number }>;
+    replicas?: number;
+    clusterIP?: string;
+    holderIdentity?: string;
+  };
+  status?: {
+    conditions?: Array<{ type: string; status: string }>;
+    phase?: string;
+    loadBalancer?: { ingress?: Array<{ hostname?: string; ip?: string }> };
+  };
+  data?: Record<string, string>;
+  subsets?: Array<{
+    addresses?: Array<{ ip: string }>;
+    ports?: Array<{ name?: string; port?: number }>;
+  }>;
+  endpoints?: Array<{
+    addresses?: string[];
+    ports?: Array<{ name?: string; port?: number }>;
+  }>;
+  subjects?: Array<{ name: string }>;
+  roleRef?: { name: string };
+  rules?: Array<{
+    verbs?: string[];
+    resources?: string[];
+  }>;
 }
 
-interface Service {
-  metadata: { name: string; creationTimestamp?: string };
-  spec?: { clusterIP?: string };
-  status?: { loadBalancer?: { ingress?: { hostname?: string; ip?: string }[] } } & { status?: string };
+interface SelectedNode {
+  namespace: string;
+  name: string;
+  type: string;
+  onClose: () => void;
+  isOpen: boolean;
+  resourceData?: ResourceItem;
 }
 
-interface ConfigMap {
-  metadata: { name: string; creationTimestamp?: string };
+interface ResourcesMap {
+  endpoints: ResourceItem[];
+  endpointSlices: ResourceItem[];
+  [key: string]: ResourceItem[];
 }
 
 const nodeStyle: React.CSSProperties = {
   padding: "2px 12px",
   fontSize: "6px",
   border: "none",
-  width: "135px",
+  width: "146px",
+  height: "30px",
 };
 
+// CustomZoomControls component
 const CustomZoomControls = () => {
   const { getZoom, setViewport } = useReactFlow();
   const [zoomLevel, setZoomLevel] = useState<number>(200);
@@ -161,41 +196,39 @@ const CustomZoomControls = () => {
   );
 };
 
-// Component to handle ReactFlow with scrolling limited to tree height
+// FlowWithScroll component
 const FlowWithScroll = ({ nodes, edges }: { nodes: CustomNode[]; edges: CustomEdge[] }) => {
   const { setViewport, getViewport } = useReactFlow();
 
   const handleWheel = (event: React.WheelEvent) => {
-    event.preventDefault();
-    const { zoom, x, y } = getViewport();
-    const scrollSpeed = 0.5; // Adjust scroll speed as needed
+    const reactFlowContainer = document.querySelector(".react-flow");
+    const isInsideTree = reactFlowContainer && reactFlowContainer.contains(event.target as Node);
 
-    // Calculate tree bounds in unzoomed coordinates
-    const minY = Math.min(...nodes.map((node) => node.position.y));
-    const maxY = Math.max(
-      ...nodes.map((node) => {
-        const height = node.style?.height;
-        return node.position.y + (typeof height === "string" ? parseInt(height) : height || 20);
-      })
-    );
-    const treeHeight = maxY - minY;
+    if (isInsideTree) {
+      const { zoom, x, y } = getViewport();
+      const scrollSpeed = 0.5;
 
-    // Define scroll limits based on tree height in zoomed space
-    const zoomedTreeHeight = treeHeight * zoom;
-    const minScrollY = -zoomedTreeHeight; // Bottom of tree at top of viewport
-    const maxScrollY = 0; // Top of tree at top of viewport
+      const minY = Math.min(...nodes.map((node) => node.position.y));
+      const maxY = Math.max(
+        ...nodes.map((node) => {
+          const height = node.style?.height;
+          return node.position.y + (typeof height === "string" ? parseInt(height) : height || 30);
+        })
+      );
+      const treeHeight = maxY - minY;
+      const zoomedTreeHeight = treeHeight * zoom;
+      const minScrollY = -zoomedTreeHeight + 10;
+      const maxScrollY = 10;
 
-    // Calculate new Y position
-    const newY = y - event.deltaY * scrollSpeed;
+      const newY = y - event.deltaY * scrollSpeed;
+      const clampedY = Math.min(Math.max(newY, minScrollY), maxScrollY);
 
-    // Clamp the new Y position within bounds
-    const clampedY = Math.min(Math.max(newY, minScrollY), maxScrollY);
-
-    setViewport({
-      x,
-      y: clampedY,
-      zoom,
-    });
+      setViewport({
+        x,
+        y: clampedY,
+        zoom,
+      });
+    }
   };
 
   return (
@@ -207,7 +240,7 @@ const FlowWithScroll = ({ nodes, edges }: { nodes: CustomNode[]; edges: CustomEd
       zoomOnScroll={false}
       zoomOnDoubleClick={false}
       zoomOnPinch={false}
-      onInit={(instance) => instance.setViewport({ zoom: 2, x: 0, y: 0 })} // Start at top
+      onInit={(instance) => instance.setViewport({ zoom: 2, x: -0, y: 10 })}
       style={{
         background: "rgb(222, 230, 235)",
         width: "100%",
@@ -221,38 +254,37 @@ const FlowWithScroll = ({ nodes, edges }: { nodes: CustomNode[]; edges: CustomEd
   );
 };
 
-const TreeView = () => {
+// WecTreeView component
+const WecTreeView = () => {
   const [formData, setFormData] = useState<{ githuburl: string; path: string }>({ githuburl: "", path: "" });
   const [loading, setLoading] = useState<boolean>(false);
-  const [responseData, setResponseData] = useState<Namespace[] | null>(null);
+  const [responseData, setResponseData] = useState<NamespaceResource[] | null>(null);
   const [nodes, setNodes] = useState<CustomNode[]>([]);
   const [edges, setEdges] = useState<CustomEdge[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string>("");
   const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
   const [contextMenu, setContextMenu] = useState<{ nodeId: string | null; x: number; y: number } | null>(null);
-  const [dialogOpen, setDialogOpen] = useState<boolean>(false); // State for dialog
+  const [dialogOpen, setDialogOpen] = useState<boolean>(false);
+  const [selectedNode, setSelectedNode] = useState<SelectedNode | null>(null);
 
-  // Wrap transformDataToTree in useCallback to stabilize its reference
-  const transformDataToTree = useCallback((data: Namespace[]) => {
+  const transformDataToTree = useCallback((data: NamespaceResource[]) => {
     const nodes: CustomNode[] = [];
     const edges: CustomEdge[] = [];
     const horizontalSpacing = 200;
     const verticalSpacing = 40;
     const additionalTopLevelSpacing = verticalSpacing / 2;
-    const podVerticalSpacing = verticalSpacing + additionalTopLevelSpacing;
-  
     let globalY = 40;
-  
-    const getDaysAgo = (creationTimestamp: string | undefined): string => {
-      if (!creationTimestamp) return "";
-      const currentDate = new Date("2025-02-25"); // Fixed date for consistency
-      const createdDate = new Date(creationTimestamp);
-      const diffMs = currentDate.getTime() - createdDate.getTime();
+
+    const getTimeAgo = (timestamp: string | undefined): string => {
+      if (!timestamp) return "Unknown";
+      const now = new Date();
+      const then = new Date(timestamp);
+      const diffMs = now.getTime() - then.getTime();
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-      return diffDays > 0 ? `${diffDays} days` : "Today";
+      return diffDays === 0 ? "Today" : `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
     };
-  
+
     const addNode = (
       id: string,
       label: string,
@@ -260,115 +292,93 @@ const TreeView = () => {
       posY: number,
       parent: string | null = null,
       type: string = "",
-      collapsed: boolean = false,
-      parentDeploymentStatus?: string
+      status: string = "Active",
+      timestamp?: string,
+      namespace?: string,
+      resourceData?: ResourceItem
     ) => {
       let icon: string = "";
       let dynamicText: string = "";
-      let heartColor: string = "rgb(24, 190, 148)";
-  
-      if (type === "namespace" && parent === null) {
-        if (!data.find((ns) => ns.name === label)?.status || data.find((ns) => ns.name === label)?.status !== "Active") {
-          heartColor = "#ff0000";
-        }
-      } else if (type === "deployment") {
-        const deployment = data.flatMap((ns) => ns.deployments || []).find((dep) => dep.metadata.name === label);
-        if (!deployment?.status || deployment.status !== "Active") {
-          heartColor = "#ff0000";
-        }
-      } else if (type === "service") {
-        const service = data.flatMap((ns) => ns.services || []).find((svc) => svc.metadata.name === label);
-        if (label === "kubernetes") {
-          if (service?.spec?.clusterIP || (service?.status?.loadBalancer?.ingress && service.status.loadBalancer.ingress.length > 0)) {
-            heartColor = "rgb(24, 190, 148)";
-          } else {
-            heartColor = "#ff0000";
-          }
-        } else if (!service?.status?.status || service.status.status !== "Active") {
-          if (!service?.status?.loadBalancer?.ingress || service.status.loadBalancer.ingress.length === 0) {
-            heartColor = "#ff0000";
-          }
-        }
-      } else if (type === "replicaset" || type === "pod") {
-        if (parentDeploymentStatus && parentDeploymentStatus !== "Active") {
-          heartColor = "#ff0000";
-        }
-      } else if (type === "endpoint") {
-        const service = data.flatMap((ns) => ns.services || []).find((svc) => svc.metadata.name === parent?.replace("service-", ""));
-        if (!service?.status?.status || service.status.status !== "Active") {
-          heartColor = "#ff0000";
-        }
-      } else if (type === "config") {
-        const config = data.flatMap((ns) => ns.configmaps || []).find((cm) => cm.metadata.name === label);
-        if (!config) {
-          heartColor = "#ff0000"; // Indicate missing or inactive config
-        }
+      const heartColor: string = status === "Active" ? "rgb(24, 190, 148)" : "#ff0000";
+
+      switch (type.toLowerCase()) {
+        case "namespace":
+          icon = ns;
+          dynamicText = "ns";
+          break;
+        case "deployment":
+          icon = deployicon;
+          dynamicText = "deploy";
+          break;
+        case "service":
+          icon = svc;
+          dynamicText = "svc";
+          break;
+        case "replicaset":
+          icon = rs;
+          dynamicText = "replica";
+          break;
+        case "pod":
+          icon = pod;
+          dynamicText = "pod";
+          break;
+        case "configmap":
+          icon = config;
+          dynamicText = "config";
+          break;
+        case "data":
+          icon = config;
+          dynamicText = "data";
+          break;
+        case "endpoints":
+          icon = ep;
+          dynamicText = "endpoint";
+          break;
+        case "endpointslice":
+          icon = ep;
+          dynamicText = "slice";
+          break;
+        case "subset":
+          icon = ep;
+          dynamicText = "subset";
+          break;
+        case "port":
+          icon = svc;
+          dynamicText = "port";
+          break;
+        default:
+          icon = config;
+          dynamicText = type.toLowerCase();
       }
-  
-      if (type === "namespace") {
-        icon = ns;
-        dynamicText = "ns";
-      } else if (type === "service") {
-        icon = svc;
-        dynamicText = "svc";
-      } else if (type === "deployment") {
-        icon = deployicon;
-        dynamicText = "deploy";
-      } else if (type === "replicaset") {
-        icon = rs;
-        dynamicText = "replica";
-      } else if (type === "pod") {
-        icon = pod;
-        dynamicText = "pod";
-      } else if (type === "config") {
-        icon = config;
-        dynamicText = "config";
-      } else if (type === "endpoint") {
-        icon = ep;
-        dynamicText = "endpoint";
-      }
-  
-      const iconSrc = icon || "";
-  
-      let creationTimestamp: string | undefined = "";
-      if (type === "namespace") {
-        const ns = data.find((ns) => ns.name === label);
-        creationTimestamp = ns?.name === "default" ? "2025-02-21T14:23:27Z" : ns?.status ? new Date().toISOString() : undefined;
-      } else if (type === "deployment") {
-        const deployment = data.flatMap((ns) => ns.deployments || []).find((dep) => dep.metadata.name === label);
-        creationTimestamp = deployment?.metadata.creationTimestamp || new Date().toISOString();
-      } else if (type === "service") {
-        const service = data.flatMap((ns) => ns.services || []).find((svc) => svc.metadata.name === label);
-        creationTimestamp = service?.metadata.creationTimestamp || new Date().toISOString();
-      } else if (type === "config") {
-        const config = data.flatMap((ns) => ns.configmaps || []).find((cm) => cm.metadata.name === label);
-        creationTimestamp = config?.metadata.creationTimestamp || new Date().toISOString();
-      } else if (type === "replicaset" || type === "pod") {
-        const deployment = data.flatMap((ns) => ns.deployments || []).find((dep) => dep.metadata.name === parent?.replace(/^(deployment|replicaset)-/, ""));
-        creationTimestamp = deployment?.metadata.creationTimestamp || new Date().toISOString();
-      } else if (type === "endpoint") {
-        const service = data.flatMap((ns) => ns.services || []).find((svc) => svc.metadata.name === parent?.replace("service-", ""));
-        creationTimestamp = service?.metadata.creationTimestamp || new Date().toISOString();
-      }
-  
-      const timeAgo = getDaysAgo(creationTimestamp);
-  
+
+      const timeAgo = getTimeAgo(timestamp);
+
       nodes.push({
         id,
         data: {
           label: (
             <div
               style={{
-                position: "relative",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
                 width: "100%",
               }}
+              onClick={(e) => {
+                if ((e.target as HTMLElement).tagName === "svg" || (e.target as HTMLElement).closest("svg")) return;
+                setSelectedNode({
+                  namespace: namespace || "default",
+                  name: label,
+                  type: type.toLowerCase(),
+                  onClose: handleClosePanel,
+                  isOpen: true,
+                  resourceData,
+                });
+              }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "10px", marginLeft: "-5px" }}>
                 <div>
-                  <img src={iconSrc} alt={label} width="15" height="15" />
+                  <img src={icon} alt={label} width="18" height="18" />
                   <span style={{ color: "gray", fontWeight: 500 }}>{dynamicText}</span>
                 </div>
                 <div style={{ textAlign: "left" }}>
@@ -419,9 +429,8 @@ const TreeView = () => {
         },
         sourcePosition: Position.Right,
         targetPosition: Position.Left,
-        collapsed,
       });
-  
+
       if (parent) {
         edges.push({
           id: `edge-${parent}-${id}`,
@@ -434,140 +443,178 @@ const TreeView = () => {
         });
       }
     };
-  
-    data.forEach((namespace: Namespace, nsIndex: number) => {
+
+    data.forEach((namespace: NamespaceResource, nsIndex: number) => {
       const namespaceId = `namespace-${namespace.name}`;
       const x = 15;
-  
       let currentY = globalY;
       let minY = Infinity;
       let maxY = -Infinity;
-  
-      // Calculate vertical space for deployments (including pods)
-      if (namespace.deployments?.length) {
-        namespace.deployments.forEach((deployment: Deployment) => {
-          const numPods = deployment.spec.replicas || 0;
-          const podHeight = numPods > 1 ? (numPods * podVerticalSpacing) - podVerticalSpacing : 0;
-          const deploymentY = numPods === 1 ? currentY : currentY + (podHeight / 2);
-          minY = Math.min(minY, numPods === 1 ? deploymentY : deploymentY - (podHeight / 2));
-          maxY = Math.max(maxY, numPods === 1 ? deploymentY + verticalSpacing : deploymentY + (podHeight / 2));
-          currentY = numPods === 1 ? deploymentY + verticalSpacing : deploymentY + (podHeight / 2) + verticalSpacing;
-          currentY += additionalTopLevelSpacing;
+
+      const resourcesMap: ResourcesMap = {
+        endpoints: namespace.resources[".v1/endpoints"] || [],
+        endpointSlices: namespace.resources["discovery.k8s.io.v1/endpointslices"] || [],
+      };
+      Object.entries(namespace.resources).forEach(([key, value]) => {
+        if (key !== ".v1/endpoints" && key !== "discovery.k8s.io.v1/endpointslices") {
+          resourcesMap[key] = value;
+        }
+      });
+
+      const resourceHeights: Record<string, number> = {};
+
+      Object.entries(resourcesMap).forEach(([, resourceItems]) => {
+        resourceItems.forEach((item: ResourceItem) => {
+          const kindLower = item.kind.toLowerCase();
+          const resourceId = `${namespaceId}-${kindLower}-${item.metadata.name}`;
+          let totalHeight = 0;
+
+          if (kindLower === "configmap" && item.data) {
+            const numData = Object.keys(item.data).length;
+            totalHeight = numData > 0 ? numData * verticalSpacing : verticalSpacing;
+          } else if (kindLower === "service") {
+            const numPorts = item.spec?.ports?.length || 0;
+            const endpoints = resourcesMap.endpoints.find(
+              (ep: ResourceItem) => ep.metadata.name === item.metadata.name
+            );
+            const numSubsets = endpoints?.subsets?.length || 0;
+            const endpointSlices = resourcesMap.endpointSlices.filter(
+              (es: ResourceItem) => es.metadata.labels?.["kubernetes.io/service-name"] === item.metadata.name
+            );
+            const numSlices = endpointSlices.length;
+
+            let totalChildren = numPorts;
+            if (endpoints) {
+              totalChildren += 1 + (numSubsets || 0);
+            }
+            if (numSlices) totalChildren += numSlices;
+
+            totalHeight = totalChildren > 0 ? totalChildren * verticalSpacing : verticalSpacing;
+          } else if (kindLower === "deployment") {
+            const numPods = item.spec?.replicas || 0;
+            totalHeight = numPods > 0 ? (1 + numPods) * verticalSpacing : verticalSpacing; // ReplicaSet + Pods
+          } else {
+            totalHeight = verticalSpacing;
+          }
+
+          resourceHeights[resourceId] = totalHeight;
+          minY = Math.min(minY, currentY);
+          maxY = Math.max(maxY, currentY + totalHeight);
+          currentY += totalHeight + additionalTopLevelSpacing;
         });
-      }
-  
-      // Calculate vertical space for services
-      if (namespace.services?.length) {
-        namespace.services.forEach((service: Service) => {
-          const numEndpoints = service.status?.loadBalancer?.ingress?.length || 0;
-          const endpointHeight = numEndpoints > 1 ? (numEndpoints * verticalSpacing) - verticalSpacing : 0;
-          const serviceY = numEndpoints === 1 ? currentY : currentY + (endpointHeight / 2);
-          minY = Math.min(minY, numEndpoints === 1 ? serviceY : serviceY - (endpointHeight / 2));
-          maxY = Math.max(maxY, numEndpoints === 1 ? serviceY + verticalSpacing : serviceY + (endpointHeight / 2));
-          currentY = numEndpoints === 1 ? serviceY + verticalSpacing : serviceY + (endpointHeight / 2) + verticalSpacing;
-          currentY += additionalTopLevelSpacing;
-        });
-      }
-  
-      // Calculate vertical space for configmaps
-      if (namespace.configmaps?.length) {
-        const numConfigs = namespace.configmaps.length;
-        const configHeight = numConfigs > 1 ? (numConfigs * verticalSpacing) - verticalSpacing : 0;
-        const configStartY = currentY + (configHeight / 2);
-        minY = Math.min(minY, currentY);
-        maxY = Math.max(maxY, configStartY + (configHeight / 2));
-        currentY = configStartY + (configHeight / 2) + verticalSpacing;
-        currentY += additionalTopLevelSpacing;
-      }
-  
-      if (!namespace.deployments?.length && !namespace.services?.length && !namespace.configmaps?.length) {
+      });
+
+      if (!Object.keys(resourcesMap).length) {
         minY = currentY;
         maxY = currentY;
       }
-  
+
       const totalChildHeight = maxY - minY;
-      const namespaceY = minY + (totalChildHeight / 2);
-      addNode(namespaceId, namespace.name, x, namespaceY, null, "namespace", false);
-  
-      currentY = namespaceY - (totalChildHeight / 2);
-  
-      // Add deployments, replicasets, and pods
-      if (namespace.deployments?.length) {
-        namespace.deployments.forEach((deployment: Deployment) => {
-          const deploymentId = `deployment-${deployment.metadata.name}`;
-          const numPods = deployment.spec.replicas || 0;
-          const podHeight = numPods > 1 ? (numPods * podVerticalSpacing) - podVerticalSpacing : 0;
-          const deploymentY = numPods === 1 ? currentY : currentY + (podHeight / 2);
-          addNode(deploymentId, deployment.metadata.name, x + horizontalSpacing, deploymentY, namespaceId, "deployment", false, deployment.status);
-  
-          // Add replicaset as child of deployment
-          if (numPods > 0) {
-            const replicasetId = `replicaset-${deployment.metadata.name}`;
-            addNode(replicasetId, "replica", x + horizontalSpacing * 2, deploymentY, deploymentId, "replicaset", false, deployment.status);
-  
-            // Add pods as children of replicaset
-            for (let j = 0; j < numPods; j++) {
-              const podId = `pod-${deployment.metadata.name}-${j}`;
-              const podY = numPods === 1 ? deploymentY : deploymentY + (j * podVerticalSpacing) - (podHeight / 2);
-              addNode(podId, `Pod ${j + 1}`, x + horizontalSpacing * 3, podY, replicasetId, "pod", false, deployment.status);
-            }
-          }
-  
-          currentY = numPods === 1 ? deploymentY + verticalSpacing : deploymentY + (podHeight / 2) + verticalSpacing;
-          currentY += additionalTopLevelSpacing;
-        });
-      }
-  
-      // Add services and endpoints
-      if (namespace.services?.length) {
-        namespace.services.forEach((service: Service) => {
-          const serviceId = `service-${service.metadata.name}`;
-          const numEndpoints = service.status?.loadBalancer?.ingress?.length || 0;
-          const endpointHeight = numEndpoints > 1 ? (numEndpoints * verticalSpacing) - verticalSpacing : 0;
-          const serviceY = numEndpoints === 1 ? currentY : currentY + (endpointHeight / 2);
-          addNode(serviceId, service.metadata.name, x + horizontalSpacing, serviceY, namespaceId, "service", false);
-  
-          // Add endpoints as children of service
-          if (service.status?.loadBalancer?.ingress) {
-            service.status.loadBalancer.ingress.forEach((endpoint, j: number) => {
-              const endpointId = `endpoint-${service.metadata.name}-${j}`;
-              const endpointY = numEndpoints === 1 ? serviceY : serviceY + (j * verticalSpacing) - (endpointHeight / 2);
-              addNode(endpointId, endpoint.hostname || endpoint.ip || "Endpoint", x + horizontalSpacing * 2, endpointY, serviceId, "endpoint", false);
+      const namespaceY = minY + totalChildHeight / 2;
+      addNode(namespaceId, namespace.name, x, namespaceY, null, "namespace", namespace.status, "", namespace.name, {
+        apiVersion: "v1",
+        kind: "Namespace",
+        metadata: { name: namespace.name, namespace: namespace.name, creationTimestamp: "" },
+        status: { phase: namespace.status },
+      });
+
+      currentY = minY;
+
+      Object.entries(resourcesMap).forEach(([, resourceItems]) => {
+        resourceItems.forEach((item: ResourceItem) => {
+          const kindLower = item.kind.toLowerCase();
+          const resourceId = `${namespaceId}-${kindLower}-${item.metadata.name}`;
+          const status = item.status?.conditions?.some((c) => c.type === "Available" && c.status === "True")
+            ? "Active"
+            : "Inactive";
+
+          const resourceHeight = resourceHeights[resourceId] || verticalSpacing;
+          const resourceY = currentY + resourceHeight / 2;
+          let nestedY = currentY;
+
+          if (kindLower === "configmap" && item.data) {
+            const numData = Object.keys(item.data).length;
+            const dataHeight = numData > 1 ? numData * verticalSpacing - verticalSpacing : 0;
+            const adjustedY = numData === 1 ? currentY : currentY + dataHeight / 2;
+            addNode(resourceId, item.metadata.name, x + horizontalSpacing, adjustedY, namespaceId, kindLower, status, item.metadata.creationTimestamp, namespace.name, item);
+            Object.keys(item.data).forEach((key, i) => {
+              const dataId = `${resourceId}-data-${key}`;
+              const dataY = numData === 1 ? currentY : currentY + i * verticalSpacing;
+              addNode(dataId, key, x + horizontalSpacing * 2, dataY, resourceId, "data", status, undefined, namespace.name, item);
             });
+          } else if (kindLower === "service") {
+            const numPorts = item.spec?.ports?.length || 0;
+            const endpoints = resourcesMap.endpoints.find(
+              (ep: ResourceItem) => ep.metadata.name === item.metadata.name
+            );
+            // const numSubsets = endpoints?.subsets?.length || 0;
+            const endpointSlices = resourcesMap.endpointSlices.filter(
+              (es: ResourceItem) => es.metadata.labels?.["kubernetes.io/service-name"] === item.metadata.name
+            );
+            const numSlices = endpointSlices.length;
+
+            let totalServiceChildren = numPorts;
+            if (endpoints) totalServiceChildren += 1;
+            if (numSlices) totalServiceChildren += numSlices;
+
+            const adjustedServiceY = totalServiceChildren > 1 ? currentY + ((totalServiceChildren - 1) * verticalSpacing) / 2 : currentY;
+
+            addNode(resourceId, item.metadata.name, x + horizontalSpacing, adjustedServiceY, namespaceId, kindLower, status, item.metadata.creationTimestamp, namespace.name, item);
+
+            item.spec?.ports?.forEach((port) => {
+              const portId = `${resourceId}-port-${port.name}`;
+              const portY = numPorts === 1 && !endpoints && !numSlices ? adjustedServiceY : nestedY;
+              addNode(portId, `${port.name} (${port.port})`, x + horizontalSpacing * 2, portY, resourceId, "port", status, undefined, namespace.name, item);
+              nestedY += verticalSpacing;
+            });
+
+            if (endpoints) {
+              const endpointId = `${resourceId}-endpoints-${endpoints.metadata.name}`;
+              const adjustedEndpointY = totalServiceChildren === 1 ? adjustedServiceY : nestedY;
+              addNode(endpointId, endpoints.metadata.name, x + horizontalSpacing * 2, adjustedEndpointY, resourceId, "endpoints", status, undefined, namespace.name, endpoints);
+              nestedY += verticalSpacing;
+            }
+
+            endpointSlices.forEach((es) => {
+              const esId = `${resourceId}-endpointslice-${es.metadata.name}`;
+              const adjustedEsY = totalServiceChildren === 1 ? adjustedServiceY : nestedY;
+              addNode(esId, es.metadata.name, x + horizontalSpacing * 2, adjustedEsY, resourceId, "endpointslice", status, undefined, namespace.name, es);
+              nestedY += verticalSpacing;
+            });
+          } else if (kindLower === "deployment") {
+            const numPods = item.spec?.replicas || 0;
+            const totalDeploymentChildren = numPods > 0 ? 1 + numPods : 1; // ReplicaSet + Pods
+            const adjustedDeploymentY = totalDeploymentChildren > 1 ? currentY + ((totalDeploymentChildren - 1) * verticalSpacing) / 2 : currentY;
+
+            addNode(resourceId, item.metadata.name, x + horizontalSpacing, adjustedDeploymentY, namespaceId, kindLower, status, item.metadata.creationTimestamp, namespace.name, item);
+
+            const replicasetId = `${resourceId}-replicaset`;
+            const replicasetY = totalDeploymentChildren === 1 ? adjustedDeploymentY : nestedY;
+            addNode(replicasetId, `replicaset-${item.metadata.name}`, x + horizontalSpacing * 2, replicasetY, resourceId, "replicaset", status, undefined, namespace.name, item);
+            nestedY += verticalSpacing;
+
+            for (let i = 0; i < numPods; i++) {
+              const podId = `${replicasetId}-pod-${i}`;
+              const podY = totalDeploymentChildren === 1 ? adjustedDeploymentY : nestedY;
+              addNode(podId, `Pod ${i + 1}`, x + horizontalSpacing * 3, podY, replicasetId, "pod", status, undefined, namespace.name, item);
+              nestedY += verticalSpacing;
+            }
+          } else {
+            addNode(resourceId, item.metadata.name, x + horizontalSpacing, resourceY, namespaceId, kindLower, status, item.metadata.creationTimestamp, namespace.name, item);
           }
-  
-          currentY = numEndpoints === 1 ? serviceY + verticalSpacing : serviceY + (endpointHeight / 2) + verticalSpacing;
-          currentY += additionalTopLevelSpacing;
+
+          currentY += resourceHeight + additionalTopLevelSpacing;
         });
-      }
-  
-      // Add configmaps with specific handling for 'kube-ca.crt'
-      if (namespace.configmaps?.length) {
-        const configParentId = `configs-parent-${namespace.name}`;
-        const numConfigs = namespace.configmaps.length;
-        const configHeight = numConfigs > 1 ? (numConfigs * verticalSpacing) - verticalSpacing : 0;
-        const configParentY = currentY + (configHeight / 2);
-        addNode(configParentId, "Configs", x + horizontalSpacing, configParentY, namespaceId, "config", false);
-  
-        namespace.configmaps.forEach((config: ConfigMap, i: number) => {
-          const configId = `config-${config.metadata.name}`;
-          const configY = numConfigs === 1 ? configParentY : configParentY + (i * verticalSpacing) - (configHeight / 2);
-          // Ensure 'kube-ca.crt' is included if present in configmaps
-          addNode(configId, config.metadata.name, x + horizontalSpacing * 2, configY, configParentId, "config", false);
-        });
-  
-        currentY = configParentY + (configHeight / 2) + verticalSpacing;
-        currentY += additionalTopLevelSpacing;
-      }
-  
-      globalY = currentY + verticalSpacing * (nsIndex + 1); // Ensure each namespace is spaced properly
+      });
+
+      globalY = currentY + verticalSpacing * (nsIndex + 1);
     });
-  
+
     setNodes(nodes);
     setEdges(edges);
-  
+
     const totalHeight = globalY + 50;
-    const reactFlowContainer = document.querySelector('.react-flow') as HTMLElement | null;
+    const reactFlowContainer = document.querySelector(".react-flow") as HTMLElement | null;
     if (reactFlowContainer) {
       reactFlowContainer.style.height = `${totalHeight}px`;
     }
@@ -577,7 +624,7 @@ const TreeView = () => {
     const ws = new WebSocket("ws://localhost:4000/ws/namespaces");
 
     ws.onmessage = (event) => {
-      const data: Namespace[] = JSON.parse(event.data);
+      const data: NamespaceResource[] = JSON.parse(event.data);
       const filteredData = data.filter(
         (namespace) =>
           namespace.name !== "kubestellar-report" &&
@@ -592,12 +639,12 @@ const TreeView = () => {
 
     ws.onerror = () => {
       console.log("WebSocket error occurred");
-      setResponseData([]); // Set to empty array on error to show loading text
+      setResponseData([]);
     };
 
     ws.onclose = () => {
       console.log("WebSocket connection closed");
-      if (!responseData) setResponseData([]); // Set to empty array if no data yet
+      if (!responseData) setResponseData([]);
     };
 
     return () => {
@@ -633,7 +680,7 @@ const TreeView = () => {
           transformDataToTree(response.data);
         } else {
           console.warn("Unexpected data format:", response.data);
-          setResponseData([]); // Set to empty array if data format is wrong
+          setResponseData([]);
         }
       } else {
         throw new Error("Unexpected response status: " + response.status);
@@ -656,11 +703,11 @@ const TreeView = () => {
 
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
-      setResponseData([]); // Set to empty array on error
+      setResponseData([]);
     } finally {
       setLoading(false);
-      setDialogOpen(false); // Close dialog after deploy
-      setFormData({ githuburl: "", path: "" }); // Reset form data
+      setDialogOpen(false);
+      setFormData({ githuburl: "", path: "" });
     }
   };
 
@@ -721,117 +768,139 @@ const TreeView = () => {
 
   const handleDialogClose = () => {
     setDialogOpen(false);
-    setFormData({ githuburl: "", path: "" }); // Reset form data on close
+    setFormData({ githuburl: "", path: "" });
+  };
+
+  const handleClosePanel = () => {
+    if (selectedNode) {
+      setSelectedNode({ ...selectedNode, isOpen: false });
+      setTimeout(() => setSelectedNode(null), 400); // Match transition duration
+    }
   };
 
   return (
-    <Box>
-      <Box sx={{ mb: 4, display: "flex", alignItems: "center", gap: 2 }}>
-        <Typography variant="h4">Tree View Deployment</Typography>
-        <Button variant="contained" onClick={handleDialogOpen}>
-          + New App
-        </Button>
-      </Box>
-
-      <Alert severity="info" sx={{ mb: 2 }}>
-        <AlertTitle>Info</AlertTitle>
-        Click "+ New App" to deploy your Kubernetes application.
-      </Alert>
-
-      <Box mt={3} style={{ width: "82vw", position: "relative" }}>
-        {(!responseData || responseData.length === 0) ? (
-          <LoadingFallback message="WCE's Tree-View is Loading..." size="medium" />
-        ) : (
-          <ReactFlowProvider>
-            <FlowWithScroll nodes={nodes} edges={edges} />
-            <CustomZoomControls />
-          </ReactFlowProvider>
-        )}
-
-        {contextMenu && (
-          <Menu
-            open={Boolean(contextMenu)}
-            onClose={handleMenuClose}
-            anchorReference="anchorPosition"
-            anchorPosition={
-              contextMenu
-                ? { top: contextMenu.y, left: contextMenu.x }
-                : undefined
-            }
-          >
-            <MenuItem onClick={() => handleMenuAction("Details")}>Details</MenuItem>
-            <MenuItem onClick={() => handleMenuAction("Sync")}>Sync</MenuItem>
-            <MenuItem onClick={() => handleMenuAction("Delete")}>Delete</MenuItem>
-            <MenuItem onClick={() => handleMenuAction("Logs")}>Logs</MenuItem>
-            <MenuItem onClick={() => handleMenuAction("Restart")}>Restart</MenuItem>
-            <MenuItem onClick={() => handleMenuAction("Resume")}>Resume</MenuItem>
-          </Menu>
-        )}
-      </Box>
-
-      <Dialog
-        open={dialogOpen}
-        onClose={handleDialogClose}
+    <Box
+      sx={{
+        display: "flex",
+        height: "100vh",
+        width: "100%",
+        position: "relative",
+      }}
+    >
+      <Box
         sx={{
-          "& .MuiDialog-paper": {
-            position: "fixed",
-            right: 0,
-            top: 0,
-            bottom: 0,
-            margin: 0,
-            maxWidth: "1200px",
-            width: "100%",
-            height: "100%",
-            borderRadius: 0,
-          },
+          flex: 1,
+          position: "relative",
+          filter: selectedNode?.isOpen ? "blur(5px)" : "none",
+          transition: "filter 0.3s ease-in-out",
+          pointerEvents: selectedNode?.isOpen ? "none" : "auto",
         }}
       >
-        <DialogTitle>Create New App</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            Creation Time: {new Date().toISOString()}
-          </Typography>
-          <TextField
-            fullWidth
-            label="GitHub URL"
-            value={formData.githuburl}
-            onChange={(e) => setFormData((prev) => ({ ...prev, githuburl: e.target.value }))}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Path"
-            value={formData.path}
-            onChange={(e) => setFormData((prev) => ({ ...prev, path: e.target.value }))}
-            sx={{ mb: 2 }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDialogClose} color="secondary">
-            Cancel
+        <Box sx={{ mb: 4, display: "flex", alignItems: "center", gap: 2 }}>
+          <Typography variant="h4">WEC Tree View Deployment</Typography>
+          <Button variant="contained" onClick={handleDialogOpen}>
+            + New App
           </Button>
-          <Button
-            variant="contained"
-            onClick={handleDeploy}
-            disabled={loading}
-          >
-            {loading ? <CircularProgress size={24} /> : "Deploy"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        </Box>
 
-      <Snackbar
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        open={snackbarOpen}
-        autoHideDuration={4000}
-        onClose={handleSnackbarClose}
-      >
-        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: "100%" }}>
-          {snackbarMessage}
+        <Alert severity="info" sx={{ mb: 4 }}>
+          <AlertTitle>Info</AlertTitle>
+          Click "+ New App" to deploy your Kubernetes application.
         </Alert>
-      </Snackbar>
+
+        <Box mt={3} style={{ width: "82vw", position: "relative" }}>
+          {(!responseData || responseData.length === 0) ? (
+            <LoadingFallback message="WEC's Tree-View is Loading..." size="medium" />
+          ) : (
+            <ReactFlowProvider>
+              <FlowWithScroll nodes={nodes} edges={edges} />
+              <CustomZoomControls />
+            </ReactFlowProvider>
+          )}
+
+          {contextMenu && (
+            <Menu
+              open={Boolean(contextMenu)}
+              onClose={handleMenuClose}
+              anchorReference="anchorPosition"
+              anchorPosition={contextMenu ? { top: contextMenu.y, left: contextMenu.x } : undefined}
+            >
+              <MenuItem onClick={() => handleMenuAction("Details")}>Details</MenuItem>
+              <MenuItem onClick={() => handleMenuAction("Sync")}>Sync</MenuItem>
+              <MenuItem onClick={() => handleMenuAction("Delete")}>Delete</MenuItem>
+              <MenuItem onClick={() => handleMenuAction("Logs")}>Logs</MenuItem>
+              <MenuItem onClick={() => handleMenuAction("Restart")}>Restart</MenuItem>
+              <MenuItem onClick={() => handleMenuAction("Resume")}>Resume</MenuItem>
+            </Menu>
+          )}
+        </Box>
+
+        <Dialog
+          open={dialogOpen}
+          onClose={handleDialogClose}
+          sx={{
+            "& .MuiDialog-paper": {
+              position: "fixed",
+              right: 0,
+              top: 0,
+              bottom: 0,
+              margin: 0,
+              maxWidth: "1200px",
+              width: "100%",
+              height: "100%",
+              borderRadius: 0,
+            },
+          }}
+        >
+          <DialogTitle>Create New App</DialogTitle>
+          <DialogContent>
+            <TextField
+              fullWidth
+              label="GitHub URL"
+              value={formData.githuburl}
+              onChange={(e) => setFormData((prev) => ({ ...prev, githuburl: e.target.value }))}
+              sx={{ mt: 2, mb: 2 }}
+            />
+            <TextField
+              fullWidth
+              label="Path"
+              value={formData.path}
+              onChange={(e) => setFormData((prev) => ({ ...prev, path: e.target.value }))}
+              sx={{ mb: 2 }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleDialogClose} color="secondary">
+              Cancel
+            </Button>
+            <Button variant="contained" onClick={handleDeploy} disabled={loading}>
+              {loading ? <CircularProgress size={24} /> : "Deploy"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Snackbar
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+          open={snackbarOpen}
+          autoHideDuration={4000}
+          onClose={handleSnackbarClose}
+        >
+          <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: "100%" }}>
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
+      </Box>
+
+      <DynamicDetailsPanel
+        namespace={selectedNode?.namespace || ""}
+        name={selectedNode?.name || ""}
+        type={selectedNode?.type || ""}
+        resourceData={selectedNode?.resourceData}
+        onClose={handleClosePanel}
+        isOpen={selectedNode?.isOpen || false}
+      />
     </Box>
   );
 };
 
-export default TreeView;
+export default WecTreeView;
