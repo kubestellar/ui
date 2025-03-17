@@ -1,18 +1,22 @@
 package k8s
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"strings"
-
 	"github.com/gin-gonic/gin"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
+	"io"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
 )
 
 // mapResourceToGVR maps resource types to their GroupVersionResource (GVR)
@@ -272,4 +276,102 @@ func DeleteResource(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Deleted successfully"})
+}
+
+// UploadLocalFile uploads any Kubernetes resource to the endpoint `/api/resource/upload`.
+//
+// It is mapped to a dynamic URL for creating a Kubernetes workload.
+//
+// URL Format: `/api/:resourceKind/:namespace`
+func UploadLocalFile(c *gin.Context) {
+	file, header, err := c.Request.FormFile("wds")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	fileExt := filepath.Ext(header.Filename)
+	if fileExt != ".yaml" && fileExt != ".yml" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "file extension must be .yaml or .yml",
+		})
+		return
+	}
+	originalFilename := strings.TrimSuffix(filepath.Base(header.Filename), fileExt)
+	now := time.Now()
+	filename := strings.ReplaceAll(strings.ToLower(originalFilename), " ", "-") + "-" + fmt.Sprintf("%v", now.Unix()) + fileExt
+	tempDir := "/tmp"
+	out, err := os.Create(filepath.Join(tempDir, filename))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	defer out.Close()
+
+	if _, err = io.Copy(out, file); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// read the yaml file
+	yamlData, err := os.ReadFile(filepath.Join(tempDir, filename))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	var resourceData map[string]interface{}
+	if err := yaml.Unmarshal(yamlData, &resourceData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid YAML file", "details": err.Error()})
+		return
+	}
+
+	resourceKind, ok := resourceData["kind"].(string)
+	if !ok || resourceKind == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing or invalid 'kind' parameter"})
+		return
+	}
+	namespace, ok := resourceData["metadata"].(map[string]interface{})["namespace"].(string)
+	if !ok || namespace == "" {
+		namespace = "default"
+	}
+
+	requestBody, err := json.Marshal(resourceData)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	apiURL := fmt.Sprintf("http://localhost:4000/api/%s/%s", strings.ToLower(resourceKind)+"s", namespace)
+	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(requestBody))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create API request"})
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send API request", "details": err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+
+	responseData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read response: " + err.Error()})
+		return
+	}
+	var apiResponse map[string]interface{}
+	if err := json.Unmarshal(responseData, &apiResponse); err != nil {
+		c.JSON(resp.StatusCode, gin.H{"message": "File uploaded but response parsing failed", "response": string(responseData)})
+		return
+	}
+	c.JSON(resp.StatusCode, gin.H{"message": "File uploaded and processed successfully", "response": apiResponse})
 }
