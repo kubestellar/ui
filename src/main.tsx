@@ -6,23 +6,36 @@ import ClientThemeWrapper from "./context/ClientThemeWrapper.tsx";
 import { QueryProvider } from './lib/react-query/QueryProvider'
 import ToastProvider from './components/providers/ToastProvider.tsx'
 
+// Enhanced toast options for better UX
 const customToastOptions = {
-  duration: 5000, // Duration for which the toast will be visible
-  style: {
-    background: '#333', // Custom background color
-    color: '#fff', // Custom text color
+  // Control how many toasts are shown at once (limit to 3 for better UX)
+  maxToasts: 3,
+  
+  // Duration for which the toast will be visible
+  duration: 4000,
+  
+  // Customize each toast type
+  success: {
+    duration: 3000,
+    icon: '🚀',
   },
-  // Add more options as needed
+  error: {
+    duration: 5000,
+    icon: '⚠️',
+  },
+  loading: {
+    duration: Infinity, // Loading toast stays until dismissed or updated
+  },
 };
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryProvider>
-        <ClientThemeWrapper>
-          <ToastProvider toastOptions={customToastOptions}>
-            <App />
-          </ToastProvider>
-        </ClientThemeWrapper>
+      <ClientThemeWrapper>
+        <ToastProvider toastOptions={customToastOptions}>
+          <App />
+        </ToastProvider>
+      </ClientThemeWrapper>
     </QueryProvider>
   </StrictMode>,
 )

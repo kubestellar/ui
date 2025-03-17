@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface ProtectedRouteProps {
   children: JSX.Element;
@@ -8,13 +9,14 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const location = useLocation();
 
   useEffect(() => {
     const verifyToken = async () => {
       const token = localStorage.getItem("jwtToken");
 
       if (!token) {
-        setErrorMessage("Missing token");
+        setErrorMessage("Please sign in to continue");
         setIsAuthenticated(false);
         return;
       }
@@ -31,11 +33,13 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
           setIsAuthenticated(true);
         } else {
           const data = await response.json();
-          setErrorMessage(data.error || "Invalid token");
+          const errorMsg = data.error || "Your session has expired. Please sign in again.";
+          setErrorMessage(errorMsg);
           setIsAuthenticated(false);
         }
       } catch (error) {
-        setErrorMessage("Invalid token");
+        const errorMsg = "Connection error. Please try again.";
+        setErrorMessage(errorMsg);
         setIsAuthenticated(false);
         console.error("Protected route error:", error);
       }
@@ -44,16 +48,40 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     verifyToken();
   }, []);
 
+  // While checking authentication, return nothing or a minimal spinner
+  // This reduces UI flicker and provides a smoother experience
   if (isAuthenticated === null) {
-    return <div>Loading...</div>; // Temporary loading state while verifying
+    return null;
   }
 
-  if (!isAuthenticated) {
-    // Redirect to /profile with error message in state
-    return <Navigate to="/profile" state={{ errorMessage }} replace />;
+  // Redirect to login with error message in state if not authenticated
+  if (isAuthenticated === false) {
+    return (
+      <Navigate 
+        to="/login" 
+        state={{ 
+          errorMessage,
+          from: location.pathname // Store the attempted path for redirect after login
+        }} 
+        replace 
+      />
+    );
   }
 
-  return children; // Render the protected route if authenticated
+  // Render the protected content with a fade-in effect
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key="protected-content"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  );
 };
 
 export default ProtectedRoute;

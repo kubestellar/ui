@@ -1,12 +1,14 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { HiBars3CenterLeft } from "react-icons/hi2";
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { HiBars3CenterLeft, HiArrowRightOnRectangle, HiUserCircle } from "react-icons/hi2";
 import { RxEnterFullScreen, RxExitFullScreen } from "react-icons/rx";
-import ChangeThemes from "./ChangeThemes";
+import { FiLogIn, FiLogOut } from "react-icons/fi";
+import { FiSun, FiMoon } from "react-icons/fi";
 import { menu } from "./menu/data";
 import MenuItem from "./menu/MenuItem";
 import { api } from "../lib/api";
 import useClusterStore from "../stores/clusterStore";
+import useTheme from "../stores/themeStore";
 import { useHeaderQueries } from '../hooks/queries/useHeaderQueries';
 import LoadingFallback from './LoadingFallback';
 
@@ -15,6 +17,12 @@ interface Context {
   cluster: string;
 }
 
+// Array of profile icon components to randomly select from
+const profileIcons = [
+  HiUserCircle,
+  // Add more icon components if desired
+];
+
 const Header = ({ isLoading }: { isLoading: boolean }) => {
   const [isFullScreen, setIsFullScreen] = React.useState(true);
   const element = document.getElementById("root");
@@ -22,13 +30,44 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
   const { data, error } = useContexts();
   const setSelectedCluster = useClusterStore((state) => state.setSelectedCluster)
   const setHasAvailableClusters = useClusterStore((state) => state.setHasAvailableClusters)
+  const navigate = useNavigate();
 
   const [isDrawerOpen, setDrawerOpen] = React.useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  
+  // Randomly select a profile icon
+  const [ProfileIcon] = useState(() => {
+    const randomIndex = Math.floor(Math.random() * profileIcons.length);
+    return profileIcons[randomIndex];
+  });
+
   const toggleDrawer = () => setDrawerOpen(!isDrawerOpen);
 
   const toggleFullScreen = () => {
     setIsFullScreen((prev) => !prev);
   };
+
+  // Check if user is logged in
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+    setIsLoggedIn(!!token);
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    }
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [userMenuRef]);
 
   React.useEffect(() => {
     api
@@ -74,6 +113,26 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
     const newCluster = e.target.value;
     setSelectedCluster(newCluster || null);
   };
+
+  const handleLogout = () => {
+    // Record logout timestamp
+    localStorage.setItem("tokenRemovalTime", Date.now().toString());
+    
+    // Remove JWT token
+    localStorage.removeItem("jwtToken");
+    setIsLoggedIn(false);
+    setShowUserMenu(false);
+    
+    // Navigate to login page
+    navigate("/login", { 
+      state: { 
+        infoMessage: "You have been successfully logged out."
+      }
+    });
+  };
+
+  // Access the theme store
+  const { theme, toggleTheme } = useTheme();
 
   if (isLoading) return <LoadingFallback message="Loading contexts..." size="small" />;
   if (error) return <div>Error loading contexts: {error.message}</div>;
@@ -127,6 +186,22 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
                   listItems={item.listItems}
                 />
               ))}
+              
+              {/* Mobile Logout Button */}
+              {isLoggedIn && (
+                <div className="mt-6 border-t border-base-300 pt-4">
+                  <button 
+                    onClick={() => {
+                      toggleDrawer(); // Close drawer first
+                      handleLogout(); // Then logout
+                    }}
+                    className="btn btn-outline btn-error w-full flex items-center justify-start gap-2"
+                  >
+                    <HiArrowRightOnRectangle size={18} />
+                    <span>Logout</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -143,20 +218,103 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
       </div>
 
       <div className="flex items-center gap-0 xl:gap-1 2xl:gap-2 3xl:gap-5">
-        <select
-          className="select select-bordered w-[200px] mr-4"
-          value={currentContext}
-          onChange={handleClusterChange}
-        >
-          <option value="" disabled>
-            Select cluster
-          </option>
-          {contexts.map((ctx) => (
-            <option key={ctx.name} value={ctx.name}>
-              {ctx.name}
-            </option>
-          ))}
-        </select>
+        {isLoggedIn ? (
+          <>
+            <select
+              className="select select-bordered w-[200px] mr-4"
+              value={currentContext}
+              onChange={handleClusterChange}
+            >
+              <option value="" disabled>
+                Select cluster
+              </option>
+              {contexts.map((ctx) => (
+                <option key={ctx.name} value={ctx.name}>
+                  {ctx.name}
+                </option>
+              ))}
+            </select>
+            
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              className="btn btn-circle btn-ghost hover:bg-base-200 transition-colors duration-200"
+              title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+            >
+              {theme === 'light' ? (
+                <FiMoon className="text-xl text-indigo-500" />
+              ) : (
+                <FiSun className="text-xl text-yellow-500" />
+              )}
+            </button>
+            
+            {/* User Profile Icon with Dropdown */}
+            <div className="relative" ref={userMenuRef}>
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="btn btn-circle btn-ghost border-2 border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all duration-300"
+              >
+                <ProfileIcon className="text-2xl text-primary" />
+              </button>
+              
+              {/* User Dropdown Menu */}
+              {showUserMenu && (
+                <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-800 rounded-xl shadow-xl py-3 z-50
+                  border border-gray-100 dark:border-gray-700 animate-fadeIn">
+                  <button 
+                    onClick={handleLogout}
+                    className="w-full group text-left px-4 py-3 text-sm font-medium 
+                      bg-white dark:bg-transparent
+                      hover:bg-gray-50 dark:hover:bg-gray-700/30 
+                      text-gray-700 dark:text-gray-200
+                      transition-all duration-200 flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-full bg-red-50 dark:bg-red-500/10 
+                        group-hover:bg-red-100 dark:group-hover:bg-red-500/20
+                        transition-colors duration-200">
+                        <FiLogOut className="text-red-500 dark:text-red-400" size={18} />
+                      </div>
+                      <span className="group-hover:text-red-500 dark:group-hover:text-red-400 transition-colors duration-200">
+                        Sign Out
+                      </span>
+                    </div>
+                    <span className="text-gray-400 group-hover:text-red-400 dark:group-hover:text-red-300 text-xs">
+                      Esc
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Theme Toggle Button (for logged out state) */}
+            <button
+              onClick={toggleTheme}
+              className="btn btn-circle btn-ghost hover:bg-base-200 mr-2 transition-colors duration-200"
+              title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+            >
+              {theme === 'light' ? (
+                <FiMoon className="text-xl text-indigo-500" />
+              ) : (
+                <FiSun className="text-xl text-yellow-500" />
+              )}
+            </button>
+            
+            {/* Modern Login Button */}
+            <Link to="/login" className="flex items-center">
+              <button className="btn bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 
+                text-white border-none shadow-lg hover:shadow-blue-500/25 px-5 rounded-full 
+                flex items-center gap-2 transition-all duration-300 transform hover:scale-105">
+                <FiLogIn className="text-lg" />
+                <span className="font-medium">Sign In</span>
+                <span className="hidden md:inline-block ml-1 opacity-75">to KubeStellar</span>
+              </button>
+            </Link>
+          </>
+        )}
+        
         <button
           onClick={toggleFullScreen}
           className="hidden xl:inline-flex btn btn-circle btn-ghost"
@@ -167,11 +325,6 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
             <RxExitFullScreen className="xl:text-xl 2xl:text-2xl 3xl:text-3xl" />
           )}
         </button>
-
-        {/* Theme Switcher */}
-        <div className="px-0 xl:px-auto btn btn-circle btn-ghost xl:mr-1">
-          <ChangeThemes />
-        </div>
       </div>
     </div>
   );

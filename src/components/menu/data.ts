@@ -1,6 +1,5 @@
 import {
   HiOutlineHome,
-  HiOutlineUser,
   HiOutlineCube,
   HiOutlineCommandLine,
   HiOutlineCog8Tooth,
@@ -18,13 +17,6 @@ export const menu = [
         url: '/',
         icon: HiOutlineHome,
         label: 'Home',
-      },
-      {
-        isLink: true,
-        url: '/profile',
-        icon: HiOutlineUser,
-        label: 'Profile',
-        marginBottom: '2rem',
       },
     ],
   },
