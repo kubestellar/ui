@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -17,8 +19,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// timeout duration for Kubernetes API requests
-const requestTimeout = 5 * time.Second
+const (
+	requestTimeout        = 5 * time.Second
+	updateInterval        = 5 * time.Second
+	cacheTTL              = 10 * time.Second
+	namespaceCacheKey     = "namespace_data"
+	maxConcurrentRequests = 5
+)
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(_ *http.Request) bool { return true },
@@ -34,13 +41,13 @@ type NamespaceDetails struct {
 
 // CreateNamespace creates a new namespace
 func CreateNamespace(namespace models.Namespace) error {
-	clientset, _, err := k8s.GetClientSet()
-	if err != nil {
-		return fmt.Errorf("failed to initialize Kubernetes client: %v", err)
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
+
+	clientset, _, err := k8s.GetClientSet()
+	if err != nil {
+		return fmt.Errorf("failed to initialize Kubernetes client: %w", err)
+	}
 
 	_, err = clientset.CoreV1().Namespaces().Create(ctx, &v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -50,64 +57,67 @@ func CreateNamespace(namespace models.Namespace) error {
 	}, metav1.CreateOptions{})
 
 	if err != nil {
-		return fmt.Errorf("failed to create namespace: %v", err)
+		return fmt.Errorf("failed to create namespace: %w", err)
 	}
 	return nil
 }
 
 // GetAllNamespaces fetches all namespaces along with their pods
 func GetAllNamespaces() ([]models.Namespace, error) {
-	clientset, _, err := k8s.GetClientSet()
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize Kubernetes client: %v", err)
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
 
-	namespaces, err := clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
+	clientset, _, err := k8s.GetClientSet()
 	if err != nil {
-		return nil, fmt.Errorf("failed to list namespaces: %v", err)
+		return nil, fmt.Errorf("failed to initialize Kubernetes client: %w", err)
 	}
 
-	var namespaceDetails []models.Namespace
-	for _, ns := range namespaces.Items {
-		pods, _ := clientset.CoreV1().Pods(ns.Name).List(ctx, metav1.ListOptions{})
+	namespaces, err := clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list namespaces: %w", err)
+	}
 
-		var podNames []string
+	result := make([]models.Namespace, 0, len(namespaces.Items))
+	for _, ns := range namespaces.Items {
+		pods, err := clientset.CoreV1().Pods(ns.Name).List(ctx, metav1.ListOptions{})
+		if err != nil {
+			// Log error but continue with empty pod list
+			continue
+		}
+
+		podNames := make([]string, 0, len(pods.Items))
 		for _, pod := range pods.Items {
 			podNames = append(podNames, pod.Name)
 		}
 
-		namespaceDetails = append(namespaceDetails, models.Namespace{
+		result = append(result, models.Namespace{
 			Name:   ns.Name,
 			Status: string(ns.Status.Phase),
 			Pods:   podNames,
 		})
 	}
 
-	return namespaceDetails, nil
+	return result, nil
 }
 
 // GetNamespaceResources fetches resources for a namespace using discovery API
 func GetNamespaceResources(namespace string) (*NamespaceDetails, error) {
-	clientset, dynamicClient, err := k8s.GetClientSet()
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize Kubernetes client: %v", err)
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
 
-	ns, err := clientset.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
+	clientset, dynamicClient, err := k8s.GetClientSet()
 	if err != nil {
-		return nil, fmt.Errorf("namespace '%s' not found: %v", namespace, err)
+		return nil, fmt.Errorf("failed to initialize Kubernetes client: %w", err)
 	}
 
-	// Use discovery API to get available API resources
+	ns, err := clientset.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("namespace '%s' not found: %w", namespace, err)
+	}
+
 	resources, err := clientset.Discovery().ServerPreferredNamespacedResources()
 	if err != nil {
-		return nil, fmt.Errorf("failed to discover resources: %v", err)
+		return nil, fmt.Errorf("failed to discover resources: %w", err)
 	}
 
 	details := &NamespaceDetails{
@@ -117,34 +127,66 @@ func GetNamespaceResources(namespace string) (*NamespaceDetails, error) {
 		Resources: make(map[string][]unstructured.Unstructured),
 	}
 
-	// Fetch resources for the namespace based on discovered API resources
+	// Use worker pool for concurrent resource fetching
+	var wg sync.WaitGroup
+	resourceCh := make(chan schema.GroupVersionResource, 100)
+	resultCh := make(chan struct {
+		key   string
+		items []unstructured.Unstructured
+	}, 100)
+
+	// Start workers
+	for i := 0; i < maxConcurrentRequests; i++ {
+		go func() {
+			for gvr := range resourceCh {
+				list, err := dynamicClient.Resource(gvr).Namespace(namespace).List(ctx, metav1.ListOptions{})
+				if err != nil {
+					wg.Done()
+					continue
+				}
+
+				resourceKey := fmt.Sprintf("%s.%s/%s", gvr.Group, gvr.Version, gvr.Resource)
+				resultCh <- struct {
+					key   string
+					items []unstructured.Unstructured
+				}{key: resourceKey, items: list.Items}
+				wg.Done()
+			}
+		}()
+	}
+
+	// Queue resource requests
 	for _, apiResourceList := range resources {
+		gv, err := schema.ParseGroupVersion(apiResourceList.GroupVersion)
+		if err != nil {
+			continue
+		}
+
 		for _, apiResource := range apiResourceList.APIResources {
-			// Skip resources that can't be listed or watched
 			if !containsVerb(apiResource.Verbs, "list") {
 				continue
 			}
 
-			gv, err := schema.ParseGroupVersion(apiResourceList.GroupVersion)
-			if err != nil {
-				continue
-			}
-
-			gvr := schema.GroupVersionResource{
+			wg.Add(1)
+			resourceCh <- schema.GroupVersionResource{
 				Group:    gv.Group,
 				Version:  gv.Version,
 				Resource: apiResource.Name,
 			}
+		}
+	}
 
-			// Get resources in the namespace
-			list, err := dynamicClient.Resource(gvr).Namespace(namespace).List(ctx, metav1.ListOptions{})
-			if err != nil {
-				// Skip resources that error
-				continue
-			}
+	// Close channels after processing
+	go func() {
+		wg.Wait()
+		close(resourceCh)
+		close(resultCh)
+	}()
 
-			resourceKey := fmt.Sprintf("%s.%s/%s", gv.Group, gv.Version, apiResource.Name)
-			details.Resources[resourceKey] = list.Items
+	// Collect results
+	for result := range resultCh {
+		if len(result.items) > 0 {
+			details.Resources[result.key] = result.items
 		}
 	}
 
@@ -163,23 +205,23 @@ func containsVerb(verbs []string, verb string) bool {
 
 // UpdateNamespace updates namespace labels
 func UpdateNamespace(namespaceName string, labels map[string]string) error {
-	clientset, _, err := k8s.GetClientSet()
-	if err != nil {
-		return fmt.Errorf("failed to initialize Kubernetes client: %v", err)
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
 
+	clientset, _, err := k8s.GetClientSet()
+	if err != nil {
+		return fmt.Errorf("failed to initialize Kubernetes client: %w", err)
+	}
+
 	ns, err := clientset.CoreV1().Namespaces().Get(ctx, namespaceName, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("namespace '%s' not found", namespaceName)
+		return fmt.Errorf("namespace '%s' not found: %w", namespaceName, err)
 	}
 
 	ns.Labels = labels
 	_, err = clientset.CoreV1().Namespaces().Update(ctx, ns, metav1.UpdateOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to update namespace: %v", err)
+		return fmt.Errorf("failed to update namespace: %w", err)
 	}
 
 	return nil
@@ -187,89 +229,164 @@ func UpdateNamespace(namespaceName string, labels map[string]string) error {
 
 // DeleteNamespace removes a namespace
 func DeleteNamespace(name string) error {
-	clientset, _, err := k8s.GetClientSet()
-	if err != nil {
-		return fmt.Errorf("failed to initialize Kubernetes client: %v", err)
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
 
+	clientset, _, err := k8s.GetClientSet()
+	if err != nil {
+		return fmt.Errorf("failed to initialize Kubernetes client: %w", err)
+	}
+
 	err = clientset.CoreV1().Namespaces().Delete(ctx, name, metav1.DeleteOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to delete namespace '%s': %v", name, err)
+		return fmt.Errorf("failed to delete namespace '%s': %w", name, err)
 	}
 	return nil
 }
 
-// GetAllNamespacesWithResources retrieves all namespaces along with their associated resources.
+// GetAllNamespacesWithResources retrieves all namespaces with their resources
 func GetAllNamespacesWithResources() ([]NamespaceDetails, error) {
-	clientset, _, err := k8s.GetClientSet()
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize Kubernetes client: %v", err)
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
 
+	clientset, _, err := k8s.GetClientSet()
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize Kubernetes client: %w", err)
+	}
+
 	namespaces, err := clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to list namespaces: %v", err)
+		return nil, fmt.Errorf("failed to list namespaces: %w", err)
 	}
 
-	var namespaceDetails []NamespaceDetails
+	// Process namespaces concurrently with limited parallelism
+	var (
+		wg     sync.WaitGroup
+		mu     sync.Mutex
+		result = make([]NamespaceDetails, 0, len(namespaces.Items))
+		sem    = make(chan struct{}, maxConcurrentRequests)
+	)
 
 	for _, ns := range namespaces.Items {
-		details, err := GetNamespaceResources(ns.Name)
-		if err != nil {
-			continue
-		}
-		namespaceDetails = append(namespaceDetails, *details)
+		wg.Add(1)
+		go func(nsName string) {
+			defer wg.Done()
+			sem <- struct{}{}        // Acquire semaphore
+			defer func() { <-sem }() // Release semaphore
+
+			details, err := GetNamespaceResources(nsName)
+			if err != nil {
+				return
+			}
+
+			mu.Lock()
+			result = append(result, *details)
+			mu.Unlock()
+		}(ns.Name)
 	}
 
-	return namespaceDetails, nil
+	wg.Wait()
+	return result, nil
 }
 
-// NamespaceWebSocketHandler handles WebSocket connections and streams namespace updates.
+// NamespaceWebSocketHandler handles WebSocket connections with optimized real-time updates
 func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		http.Error(w, "Could not open websocket connection", http.StatusBadRequest)
+		http.Error(w, "Could not open WebSocket connection", http.StatusBadRequest)
 		return
 	}
 	defer conn.Close()
 
+	// Monitor for client disconnections
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		for {
+			if _, _, err := conn.ReadMessage(); err != nil {
+				return // Client disconnected
+			}
+		}
+	}()
+
+	// Send cached data immediately
+	cachedData, err := redis.GetNamespaceCache(namespaceCacheKey)
+	if err == nil && cachedData != "" {
+		_ = conn.WriteMessage(websocket.TextMessage, []byte(cachedData))
+	}
+
+	// Ticker for periodic updates
+	ticker := time.NewTicker(updateInterval)
+	defer ticker.Stop()
+
 	for {
-		// Try to fetch from Redis cache first
-		cachedData, err := redis.GetNamespaceCache("namespace_data")
-		if err != nil {
-			fmt.Println("Redis error:", err)
-		}
+		select {
+		case <-done:
+			return // Stop if client disconnects
+		case <-ticker.C:
+			// Fetch live data in a separate goroutine to avoid blocking
+			go func() {
+				data, err := GetAllNamespacesWithResources()
+				var jsonData []byte
 
-		var jsonData []byte
-		if cachedData == "" {
-			// If cache miss, fetch data from Kubernetes
-			data, err := GetAllNamespacesWithResources()
-			if err != nil {
-				err = conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Error fetching namespaces: %v", err)))
 				if err != nil {
-					fmt.Println("WebSocket error:", err)
+					// If fetching fails, use cached data
+					if cachedData != "" {
+						jsonData = []byte(cachedData)
+					} else {
+						_ = conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Error: %v", err)))
+						return
+					}
+				} else {
+					// Process and filter data before sending
+					FilterSensitiveData(data)
+
+					jsonData, err = json.Marshal(data)
+					if err != nil {
+						return
+					}
+
+					// Update cache
+					redis.SetNamespaceCache(namespaceCacheKey, string(jsonData), cacheTTL)
 				}
-				return
-			}
 
-			jsonData, _ = json.Marshal(data)
-			err = redis.SetNamespaceCache("namespace_data", string(jsonData), 10*time.Second) // Cache data for 10 seconds
+				// Send data to the client
+				_ = conn.WriteMessage(websocket.TextMessage, jsonData)
+			}()
+		}
+	}
+}
 
-			if err != nil {
-				fmt.Println("Redis error:", err)
-			}
-		} else {
-			// Use cached data
-			jsonData = []byte(cachedData)
+// FilterSensitiveData removes sensitive namespace details and resources
+func FilterSensitiveData(data []NamespaceDetails) {
+	sensitiveNamespaces := map[string]bool{
+		"kube-system":     true,
+		"kube-public":     true,
+		"kube-node-lease": true,
+	}
+
+	sensitiveResources := map[string]bool{
+		"secrets":         true,
+		"configmaps":      true,
+		"serviceaccounts": true,
+	}
+
+	for i := range data {
+		// Redact sensitive namespace details
+		if sensitiveNamespaces[data[i].Name] {
+			data[i].Resources = make(map[string][]unstructured.Unstructured)
+			data[i].Labels = map[string]string{"redacted": "true"}
+			continue
 		}
 
-		conn.WriteMessage(websocket.TextMessage, jsonData)
-		time.Sleep(5 * time.Second) // Stream updates every 5 seconds
+		// Remove sensitive resources
+		for resourceType := range data[i].Resources {
+			for sensitive := range sensitiveResources {
+				if strings.HasSuffix(resourceType, "/"+sensitive) || strings.Contains(resourceType, "certificates") {
+					delete(data[i].Resources, resourceType)
+					break
+				}
+			}
+		}
 	}
 }
