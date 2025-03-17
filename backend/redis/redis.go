@@ -5,22 +5,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/katamyra/kubestellarUI/log"
 	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 )
 
 var ctx = context.Background()
 var rdb *redis.Client
 
 const filePathKey = "filepath"
-
-// InitRedis initializes the Redis client
-func InitRedis() {
-	rdb = redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379", // Change if Redis is running on another host
-		Password: "",               // Add password if required
-		DB:       0,                // Use default DB
-	})
-}
 
 // SetNamespaceCache sets a namespace data cache in Redis
 func SetNamespaceCache(key string, value string, expiration time.Duration) error {
@@ -110,4 +103,15 @@ func GetGitToken() (string, error) {
 		return "", fmt.Errorf("failed to get gitToken: %v", err)
 	}
 	return val, nil
+}
+
+// intializes redis client
+func init() {
+	rdb = redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+	})
+	log.LogInfo("initialized redis client")
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		log.LogWarn("pls check if redis is runnnig", zap.String("err", err.Error()))
+	}
 }
