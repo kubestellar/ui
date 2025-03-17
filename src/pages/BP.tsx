@@ -17,11 +17,10 @@ import axios from "axios";
 import { PolicyData } from "../components/BindingPolicy/CreateBindingPolicyDialog";
 import BPVisualization from "../components/BindingPolicy/BPVisualization";
 import PolicyDragDrop from "../components/BindingPolicy/PolicyDragDrop";
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import AddLinkIcon from '@mui/icons-material/AddLink';
-import TouchAppIcon from '@mui/icons-material/TouchApp';
 import EditIcon from '@mui/icons-material/Edit';
 import PublishIcon from '@mui/icons-material/Publish';
+import KubernetesIcon from '../components/BindingPolicy/KubernetesIcon';
+import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 // Define type for the raw binding policy from API
 interface RawBindingPolicy {
   metadata: {
@@ -153,8 +152,8 @@ const BP = () => {
   
   const { matchedClusters, matchedWorkloads } = getMatches();
   
-  // Hardcoded sample data for clusters and workloads
-  const sampleClusters: ManagedCluster[] = [
+  // Hardcoded sample data for clusters and workloads 
+  const sampleClusters = useState<ManagedCluster[]>(() => [
     {
       name: "cluster-east",
       status: "Ready",
@@ -197,9 +196,9 @@ const BP = () => {
         storage: "45%"
       }
     }
-  ];
+  ])[0];
   
-  const sampleWorkloads: Workload[] = [
+  const sampleWorkloads = useState<Workload[]>(() => [
     {
       name: "nginx-frontend",
       type: "Deployment",
@@ -244,7 +243,7 @@ const BP = () => {
         component: "api"
       }
     }
-  ];
+  ])[0];
 
   // Define a type for the config parameter
   interface BindingPolicyConfig {
@@ -448,7 +447,7 @@ const fetchBindingPolicies = useCallback(async () => {
   }
 }, []);
 
-  // Modified fetchClusters to use both regular contexts and ITS data
+  // Modified fetchClusters to only use ITS data
   const fetchClusters = useCallback(async () => {
     try {
       const response = await api.get('/api/clusters');
@@ -456,55 +455,40 @@ const fetchBindingPolicies = useCallback(async () => {
       
       let clusterData: ManagedCluster[] = [];
       
-      // Process the response based on its structure
-      if (response.data && response.data.clusters) {
-        // Add regular clusters
-        if (Array.isArray(response.data.clusters)) {
-          clusterData = response.data.clusters.map((clusterName: string) => ({
-            name: clusterName,
-            status: 'Ready', // Default status
-            labels: { 'kubernetes.io/cluster-name': clusterName },
-            metrics: {
-              cpu: 'N/A',
-              memory: 'N/A',
-              storage: 'N/A'
-            }
-          }));
-        }
-        
-        // Define interface for ITS cluster data
-        interface ITSCluster {
-          name: string;
-          labels?: Record<string, string>;
-        }
-        
-        // Add ITS clusters if available
-        if (response.data.itsData && Array.isArray(response.data.itsData)) {
-          const itsClusterData = response.data.itsData.map((cluster: ITSCluster) => ({
-            name: cluster.name,
-            status: 'Ready', // Default status for ITS clusters
-            labels: cluster.labels || { 'kubernetes.io/cluster-name': cluster.name },
-            metrics: {
-              cpu: 'N/A',
-              memory: 'N/A',
-              storage: 'N/A'
-            }
-          }));
-          
-          // Combine with regular clusters
-          clusterData = [...clusterData, ...itsClusterData];
-        }
+      // Define interface for ITS cluster data with additional fields
+      interface ITSCluster {
+        name: string;
+        labels?: Record<string, string>;
+        creationTime?: string;
+        context?: string;
       }
       
-      // If no clusters found, use sample data
+      // Only process ITS clusters if available
+      if (response.data && response.data.itsData && Array.isArray(response.data.itsData)) {
+        clusterData = response.data.itsData.map((cluster: ITSCluster) => ({
+          name: cluster.name,
+          status: 'Ready', // Default status for ITS clusters
+          labels: cluster.labels || { 'kubernetes.io/cluster-name': cluster.name },
+          metrics: {
+            cpu: 'N/A',
+            memory: 'N/A',
+            storage: 'N/A'
+          },
+          // Include additional fields that might be useful elsewhere
+          creationTime: cluster.creationTime,
+          context: cluster.context
+        }));
+      }
+      
+      // If no ITS clusters found, use sample data
       if (clusterData.length === 0) {
-        console.warn("No clusters found in API response, using sample data");
+        console.warn("No ITS clusters found in API response, using sample data");
         clusterData = sampleClusters;
       }
       
       setClusters(clusterData);
       setAvailableClusters(clusterData);
-      console.log("Fetched clusters:", clusterData);
+      console.log("Fetched ITS clusters:", clusterData);
     } catch (error) {
       console.error('Error fetching clusters:', error);
       // Use sample data if API fails
@@ -512,7 +496,7 @@ const fetchBindingPolicies = useCallback(async () => {
       setClusters(sampleClusters);
       setAvailableClusters(sampleClusters);
     }
-  }, []);
+  }, [sampleClusters]);
   
   // Modified fetchWorkloads to use sample data if API fails
   const fetchWorkloads = useCallback(async () => {
@@ -547,7 +531,7 @@ const fetchBindingPolicies = useCallback(async () => {
       setWorkloads(sampleWorkloads);
       setAvailableWorkloads(sampleWorkloads);
     }
-  }, []);
+  }, [sampleWorkloads]);
 
   useEffect(() => {
     setAvailableClusters([]);
@@ -971,10 +955,10 @@ const fetchBindingPolicies = useCallback(async () => {
               }}
               onCreateBindingPolicy={handleCreateSimulatedBindingPolicy}
             />
-            <Alert severity="info" sx={{ mt: 2 }}>
+            <Alert severity="info" sx={{ mt: 4, mb: 2 }}>
               <Typography variant="body2">
                 This drag-and-drop interface is using simulated responses to create binding policies.
-                Drag clusters and workloads to the canvas, then use the "Create Connection" button to connect them.
+                Drag clusters and workloads to the canvas, then click on a workload and then a cluster to directly create a binding policy connection.
               </Typography>
             </Alert>
           </Box>
@@ -1013,8 +997,8 @@ const fetchBindingPolicies = useCallback(async () => {
       >
         <DialogTitle>
           <Box display="flex" alignItems="center">
-            <AddLinkIcon sx={{ mr: 1, color: 'secondary.main' }} />
-            <Typography variant="h6">How to Create Binding Policies</Typography>
+            <KubernetesIcon type="policy" size={24} sx={{ mr: 1 }} />
+            <Typography variant="h6">Create Binding Policies with Direct Connections</Typography>
           </Box>
         </DialogTitle>
         <DialogContent>
@@ -1023,28 +1007,30 @@ const fetchBindingPolicies = useCallback(async () => {
           </Typography>
           <List>
             <ListItem>
-              <ListItemIcon><DragIndicatorIcon color="primary" /></ListItemIcon>
+              <ListItemIcon><KubernetesIcon type="cluster" size={24} /></ListItemIcon>
               <ListItemText primary="1. Drag clusters from the left panel to the canvas" />
             </ListItem>
             <ListItem>
-              <ListItemIcon><DragIndicatorIcon color="success" /></ListItemIcon>
+              <ListItemIcon><KubernetesIcon type="workload" size={24} /></ListItemIcon>
               <ListItemText primary="2. Drag workloads from the right panel to the canvas" />
             </ListItem>
             <ListItem>
-              <ListItemIcon><AddLinkIcon color="secondary" /></ListItemIcon>
-              <ListItemText primary="3. Click the 'Create Connection' button in the top-right" />
-            </ListItem>
-            <ListItem>
-              <ListItemIcon><TouchAppIcon color="info" /></ListItemIcon>
-              <ListItemText primary="4. Click on a workload and then a cluster to establish a connection" />
+              <ListItemIcon>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <KubernetesIcon type="workload" size={20} />
+                  <ArrowRightAltIcon fontSize="small" sx={{ mx: 0.5 }} />
+                  <KubernetesIcon type="cluster" size={20} />
+                </Box>
+              </ListItemIcon>
+              <ListItemText primary="3. Click on a workload first, then a cluster to create a direct connection" />
             </ListItem>
             <ListItem>
               <ListItemIcon><EditIcon /></ListItemIcon>
-              <ListItemText primary="5. Fill in the policy details in the dialog that appears" />
+              <ListItemText primary="4. Fill in the policy details in the dialog that appears" />
             </ListItem>
             <ListItem>
               <ListItemIcon><PublishIcon color="primary" /></ListItemIcon>
-              <ListItemText primary="6. Use the 'Deploy Binding Policies' button to simulate deployment" />
+              <ListItemText primary="5. Use the 'Deploy Binding Policies' button to simulate deployment" />
             </ListItem>
           </List>
         </DialogContent>

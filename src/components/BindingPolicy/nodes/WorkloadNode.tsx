@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { Box, Typography } from '@mui/material';
-import { Code as CodeIcon } from '@mui/icons-material';
+import KubernetesIcon from '../KubernetesIcon';
 
 interface WorkloadNodeData {
   label: string;
@@ -38,23 +38,24 @@ const WorkloadNode: React.FC<NodeProps<WorkloadNodeData>> = ({ data }) => {
           sx={{
             display: 'flex',
             alignItems: 'center',
-            gap: 1,
-            mb: 0.5,
+            justifyContent: 'center',
+            mb: 1,
           }}
         >
-          <CodeIcon sx={{ fontSize: 16, color: '#3B82F6' }} />
-          <Typography 
-            variant="caption" 
-            sx={{ 
-              color: theme === 'dark' ? '#9CA3AF' : '#4B5563',
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              fontSize: '0.65rem'
-            }}
-          >
-            {workloadType}
-          </Typography>
+          <KubernetesIcon type="workload" size={26} />
         </Box>
+        
+        <Typography 
+          variant="caption" 
+          sx={{ 
+            color: theme === 'dark' ? '#9CA3AF' : '#4B5563',
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            fontSize: '0.65rem'
+          }}
+        >
+          {workloadType}
+        </Typography>
         
         <Typography 
           variant="body2" 
@@ -68,16 +69,18 @@ const WorkloadNode: React.FC<NodeProps<WorkloadNodeData>> = ({ data }) => {
           {workloadName}
         </Typography>
         
-        <Typography 
-          variant="caption" 
-          sx={{ 
-            color: theme === 'dark' ? '#9CA3AF' : '#6B7280',
-            fontSize: '0.65rem',
-            mt: 0.5
-          }}
-        >
-          via {policy}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+          <KubernetesIcon type="policy" size={14} sx={{ mr: 0.5 }} />
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              color: theme === 'dark' ? '#9CA3AF' : '#6B7280',
+              fontSize: '0.65rem',
+            }}
+          >
+            {policy}
+          </Typography>
+        </Box>
       </Box>
       
       <Handle type="target" position={Position.Top} style={{ background: '#3B82F6' }} />

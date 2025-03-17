@@ -1,8 +1,6 @@
 import React from 'react';
 import { Box, Typography, Chip, useTheme, alpha } from '@mui/material';
-import DnsIcon from '@mui/icons-material/Dns';
-import StorageIcon from '@mui/icons-material/Storage';
-import PolicyIcon from '@mui/icons-material/Policy';
+import KubernetesIcon from './KubernetesIcon';
 
 interface ItemTooltipProps {
   title: string;
@@ -35,18 +33,9 @@ const ItemTooltip: React.FC<ItemTooltipProps> = ({
     }
   };
   
-  // Get icon based on type
+  // Get icon based on type - now using KubernetesIcon
   const getIcon = () => {
-    switch (type) {
-      case 'cluster':
-        return <DnsIcon fontSize="small" sx={{ color: getColor() }} />;
-      case 'workload':
-        return <StorageIcon fontSize="small" sx={{ color: getColor() }} />;
-      case 'policy':
-        return <PolicyIcon fontSize="small" sx={{ color: getColor() }} />;
-      default:
-        return null;
-    }
+    return <KubernetesIcon type={type} size={20} />;
   };
   
   return (
