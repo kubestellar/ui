@@ -243,10 +243,18 @@ func DeleteNamespace(name string) error {
 	}
 	return nil
 }
-
 // GetAllNamespacesWithResources retrieves all namespaces with their resources
 func GetAllNamespacesWithResources() ([]NamespaceDetails, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	// Try to get data from cache first
+	cachedData, err := redis.GetNamespaceCache(namespaceCacheKey)
+	if err == nil && cachedData != "" {
+		var result []NamespaceDetails
+		if err := json.Unmarshal([]byte(cachedData), &result); err == nil {
+			return result, nil
+		}
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout*2)
 	defer cancel()
 
 	clientset, _, err := k8s.GetClientSet()
@@ -259,34 +267,214 @@ func GetAllNamespacesWithResources() ([]NamespaceDetails, error) {
 		return nil, fmt.Errorf("failed to list namespaces: %w", err)
 	}
 
-	// Process namespaces concurrently with limited parallelism
+	// Process namespaces with strict rate limiting
 	var (
-		wg     sync.WaitGroup
-		mu     sync.Mutex
-		result = make([]NamespaceDetails, 0, len(namespaces.Items))
-		sem    = make(chan struct{}, maxConcurrentRequests)
+		wg       sync.WaitGroup
+		mu       sync.Mutex
+		result   = make([]NamespaceDetails, 0, len(namespaces.Items))
+		rateLimiter = time.NewTicker(time.Second / 4) // Max 4 requests per second
+		errCount int
 	)
+	defer rateLimiter.Stop()
 
 	for _, ns := range namespaces.Items {
-		wg.Add(1)
-		go func(nsName string) {
-			defer wg.Done()
-			sem <- struct{}{}        // Acquire semaphore
-			defer func() { <-sem }() // Release semaphore
+		// Check if we already have this namespace in Redis cache
+		nsKey := fmt.Sprintf("namespace_%s", ns.Name)
+		cachedNs, err := redis.GetNamespaceCache(nsKey)
+		if err == nil && cachedNs != "" {
+			var details NamespaceDetails
+			if err := json.Unmarshal([]byte(cachedNs), &details); err == nil {
+				mu.Lock()
+				result = append(result, details)
+				mu.Unlock()
+				continue
+			}
+		}
 
-			details, err := GetNamespaceResources(nsName)
-			if err != nil {
-				return
+		wg.Add(1)
+		go func(ns v1.Namespace) {
+			defer wg.Done()
+			<-rateLimiter.C // Wait for rate limiter
+
+			// Create basic namespace details with available data
+			details := NamespaceDetails{
+				Name:      ns.Name,
+				Status:    string(ns.Status.Phase),
+				Labels:    ns.Labels,
+				Resources: make(map[string][]unstructured.Unstructured),
+			}
+
+			// Prioritize non-system namespaces
+			if !strings.HasPrefix(ns.Name, "kube-") {
+				nsDetails, err := fetchNamespaceResourcesWithRetry(ns.Name)
+				if err == nil && nsDetails != nil {
+					details = *nsDetails
+					// Cache individual namespace data
+					if jsonData, err := json.Marshal(details); err == nil {
+						redis.SetNamespaceCache(fmt.Sprintf("namespace_%s", ns.Name), string(jsonData), cacheTTL*2)
+					}
+				} else {
+					mu.Lock()
+					errCount++
+					mu.Unlock()
+				}
 			}
 
 			mu.Lock()
-			result = append(result, *details)
+			result = append(result, details)
 			mu.Unlock()
-		}(ns.Name)
+		}(ns)
 	}
 
 	wg.Wait()
+
+	// Cache the complete result if successful
+	if errCount == 0 {
+		if jsonData, err := json.Marshal(result); err == nil {
+			redis.SetNamespaceCache(namespaceCacheKey, string(jsonData), cacheTTL)
+		}
+	}
+
 	return result, nil
+}
+
+// fetchNamespaceResourcesWithRetry fetches resources with exponential backoff
+func fetchNamespaceResourcesWithRetry(namespace string) (*NamespaceDetails, error) {
+	var (
+		details *NamespaceDetails
+		err     error
+		retries = 3
+		backoff = 100 * time.Millisecond
+	)
+
+	for i := 0; i < retries; i++ {
+		details, err = GetNamespaceResourcesLimited(namespace)
+		if err == nil {
+			return details, nil
+		}
+		time.Sleep(backoff)
+		backoff *= 2 // Exponential backoff
+	}
+
+	return nil, err
+}
+
+// GetNamespaceResourcesLimited fetches limited resources to avoid throttling
+func GetNamespaceResourcesLimited(namespace string) (*NamespaceDetails, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	defer cancel()
+
+	clientset, dynamicClient, err := k8s.GetClientSet()
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize Kubernetes client: %w", err)
+	}
+
+	ns, err := clientset.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("namespace '%s' not found: %w", namespace, err)
+	}
+
+	// Try to get discovery info from cache
+	var resources []*metav1.APIResourceList
+	cachedResources, err := redis.GetNamespaceCache("api_resources")
+	if err == nil && cachedResources != "" {
+		if err := json.Unmarshal([]byte(cachedResources), &resources); err != nil {
+			// If unmarshal fails, fetch from API
+			resources, err = clientset.Discovery().ServerPreferredNamespacedResources()
+			if err != nil {
+				return nil, fmt.Errorf("failed to discover resources: %w", err)
+			}
+			// Cache for future use
+			if jsonData, err := json.Marshal(resources); err == nil {
+				redis.SetNamespaceCache("api_resources", string(jsonData), 30*time.Minute)
+			}
+		}
+	} else {
+		resources, err = clientset.Discovery().ServerPreferredNamespacedResources()
+		if err != nil {
+			return nil, fmt.Errorf("failed to discover resources: %w", err)
+		}
+		// Cache for future use
+		if jsonData, err := json.Marshal(resources); err == nil {
+			redis.SetNamespaceCache("api_resources", string(jsonData), 30*time.Minute)
+		}
+	}
+
+	details := &NamespaceDetails{
+		Name:      ns.Name,
+		Status:    string(ns.Status.Phase),
+		Labels:    ns.Labels,
+		Resources: make(map[string][]unstructured.Unstructured),
+	}
+
+	// Limit to important resources to avoid throttling
+	importantResources := map[string]bool{
+		"pods":       true,
+		"services":   true,
+		"deployments": true,
+		"statefulsets": true,
+	}
+
+	resourceCount := 0
+	for _, apiResourceList := range resources {
+		if resourceCount >= 10 { // Limit number of resource types
+			break
+		}
+		
+		gv, err := schema.ParseGroupVersion(apiResourceList.GroupVersion)
+		if err != nil {
+			continue
+		}
+
+		for _, apiResource := range apiResourceList.APIResources {
+			if !containsVerb(apiResource.Verbs, "list") {
+				continue
+			}
+
+			// Skip less important resources for throttling prevention
+			isImportant := importantResources[apiResource.Name]
+			if !isImportant && resourceCount >= 5 {
+				continue
+			}
+
+			gvr := schema.GroupVersionResource{
+				Group:    gv.Group,
+				Version:  gv.Version,
+				Resource: apiResource.Name,
+			}
+
+			resourceKey := fmt.Sprintf("%s.%s/%s", gvr.Group, gvr.Version, gvr.Resource)
+			
+			// Try from cache first
+			cacheKey := fmt.Sprintf("ns_%s_res_%s", namespace, resourceKey)
+			cachedResource, _ := redis.GetNamespaceCache(cacheKey)
+			if cachedResource != "" {
+				var items []unstructured.Unstructured
+				if err := json.Unmarshal([]byte(cachedResource), &items); err == nil && len(items) > 0 {
+					details.Resources[resourceKey] = items
+					resourceCount++
+					continue
+				}
+			}
+
+			// Fetch from API if not in cache
+			list, err := dynamicClient.Resource(gvr).Namespace(namespace).List(ctx, metav1.ListOptions{})
+			if err != nil {
+				continue
+			}
+
+			if len(list.Items) > 0 {
+				details.Resources[resourceKey] = list.Items
+				// Cache this resource
+				if jsonData, err := json.Marshal(list.Items); err == nil {
+					redis.SetNamespaceCache(cacheKey, string(jsonData), cacheTTL)
+				}
+				resourceCount++
+			}
+		}
+	}
+
+	return details, nil
 }
 
 // NamespaceWebSocketHandler handles WebSocket connections with optimized real-time updates
@@ -309,14 +497,24 @@ func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	// Send cached data immediately
+	// Send initial data immediately - always from cache if available
 	cachedData, err := redis.GetNamespaceCache(namespaceCacheKey)
 	if err == nil && cachedData != "" {
 		_ = conn.WriteMessage(websocket.TextMessage, []byte(cachedData))
+	} else {
+		// If no cache available, send minimal data to client
+		initialData, _ := getMinimalNamespaceData()
+		if initialData != nil {
+			jsonData, _ := json.Marshal(initialData)
+			_ = conn.WriteMessage(websocket.TextMessage, jsonData)
+		}
 	}
 
-	// Ticker for periodic updates
-	ticker := time.NewTicker(updateInterval)
+	// Create a ticker with gradually increasing interval
+	// Start with frequent updates then slow down
+	interval := 3 * time.Second
+	ticker := time.NewTicker(interval)
+	updateCount := 0
 	defer ticker.Stop()
 
 	for {
@@ -324,69 +522,98 @@ func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		case <-done:
 			return // Stop if client disconnects
 		case <-ticker.C:
-			// Fetch live data in a separate goroutine to avoid blocking
-			go func() {
-				data, err := GetAllNamespacesWithResources()
-				var jsonData []byte
+			// Gradually increase update interval to reduce load
+			updateCount++
+			if updateCount == 5 {
+				ticker.Reset(5 * time.Second)
+			} else if updateCount == 10 {
+				ticker.Reset(10 * time.Second)
+			}
 
-				if err != nil {
-					// If fetching fails, use cached data
-					if cachedData != "" {
-						jsonData = []byte(cachedData)
-					} else {
-						_ = conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Error: %v", err)))
-						return
-					}
-				} else {
-					// Process and filter data before sending
-					FilterSensitiveData(data)
+			// Try to get data from cache first, fallback to minimal fetch
+			data, err := getLatestNamespaceData()
+			if err != nil || data == nil {
+				continue // Skip this update if we can't get data
+			}
 
-					jsonData, err = json.Marshal(data)
-					if err != nil {
-						return
-					}
+			jsonData, err := json.Marshal(data)
+			if err != nil {
+				continue
+			}
 
-					// Update cache
-					redis.SetNamespaceCache(namespaceCacheKey, string(jsonData), cacheTTL)
-				}
-
-				// Send data to the client
-				_ = conn.WriteMessage(websocket.TextMessage, jsonData)
-			}()
-		}
-	}
-}
-
-// FilterSensitiveData removes sensitive namespace details and resources
-func FilterSensitiveData(data []NamespaceDetails) {
-	sensitiveNamespaces := map[string]bool{
-		"kube-system":     true,
-		"kube-public":     true,
-		"kube-node-lease": true,
-	}
-
-	sensitiveResources := map[string]bool{
-		"secrets":         true,
-		"configmaps":      true,
-		"serviceaccounts": true,
-	}
-
-	for i := range data {
-		// Redact sensitive namespace details
-		if sensitiveNamespaces[data[i].Name] {
-			data[i].Resources = make(map[string][]unstructured.Unstructured)
-			data[i].Labels = map[string]string{"redacted": "true"}
-			continue
-		}
-
-		// Remove sensitive resources
-		for resourceType := range data[i].Resources {
-			for sensitive := range sensitiveResources {
-				if strings.HasSuffix(resourceType, "/"+sensitive) || strings.Contains(resourceType, "certificates") {
-					delete(data[i].Resources, resourceType)
-					break
+			// Only send if data actually changed (using hash comparison)
+			currentHash := fmt.Sprintf("%d", len(jsonData))
+			lastSentHash, _ := redis.GetNamespaceCache("last_sent_hash")
+			
+			if currentHash != lastSentHash {
+				if err := conn.WriteMessage(websocket.TextMessage, jsonData); err == nil {
+					redis.SetNamespaceCache("last_sent_hash", currentHash, cacheTTL)
 				}
 			}
 		}
 	}
+}
+
+// getLatestNamespaceData tries multiple ways to get namespace data
+func getLatestNamespaceData() ([]NamespaceDetails, error) {
+	// Try cache first
+	cachedData, err := redis.GetNamespaceCache(namespaceCacheKey)
+	if err == nil && cachedData != "" {
+		var result []NamespaceDetails
+		if err := json.Unmarshal([]byte(cachedData), &result); err == nil {
+			return result, nil
+		}
+	}
+
+	// Try live data with timeout
+	dataChan := make(chan []NamespaceDetails, 1)
+	errChan := make(chan error, 1)
+	
+	go func() {
+		data, err := GetAllNamespacesWithResources()
+		if err != nil {
+			errChan <- err
+			return
+		}
+		dataChan <- data
+	}()
+
+	select {
+	case data := <-dataChan:
+		return data, nil
+	case <-time.After(3 * time.Second):
+		// Timeout - get minimal data
+		return getMinimalNamespaceData()
+	case <-errChan:
+		// Error - get minimal data
+		return getMinimalNamespaceData()
+	}
+}
+
+// getMinimalNamespaceData gets just namespace names without heavy resource details
+func getMinimalNamespaceData() ([]NamespaceDetails, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	clientset, _, err := k8s.GetClientSet()
+	if err != nil {
+		return nil, err
+	}
+
+	namespaces, err := clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]NamespaceDetails, 0, len(namespaces.Items))
+	for _, ns := range namespaces.Items {
+		result = append(result, NamespaceDetails{
+			Name:      ns.Name,
+			Status:    string(ns.Status.Phase),
+			Labels:    ns.Labels,
+			Resources: make(map[string][]unstructured.Unstructured),
+		})
+	}
+
+	return result, nil
 }
