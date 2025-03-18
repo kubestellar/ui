@@ -1,6 +1,7 @@
 package bp
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,6 +12,7 @@ import (
 	"github.com/kubestellar/kubestellar/api/control/v1alpha1"
 	bpv1alpha1 "github.com/kubestellar/kubestellar/pkg/generated/clientset/versioned/typed/control/v1alpha1"
 	"go.uber.org/zap"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 )
@@ -231,4 +233,40 @@ func filterBPsByNamespace(bps []BindingPolicyWithStatus, namespace string) []Bin
 		}
 	}
 	return filtered
+}
+
+// watches on all binding policy resources , PROTOTYPE just for now
+func watchOnBps() {
+	c, err := getClientForBp()
+	if err != nil {
+		return
+	}
+	w, err := c.BindingPolicies().Watch(context.TODO(), v1.ListOptions{})
+	if err != nil {
+		return
+	}
+	eventChan := w.ResultChan()
+	for event := range eventChan {
+		switch event.Type {
+		case "MODIFIED":
+			log.LogInfo("bp modfied")
+			_, ok := event.Object.(*v1alpha1.BindingPolicy)
+			if !ok {
+				log.LogInfo("Wrong object type")
+			}
+
+		case "ADDED":
+			log.LogInfo("Added a new bp")
+			_, ok := event.Object.(*v1alpha1.BindingPolicy)
+			if !ok {
+				log.LogInfo("Wrong object type")
+			}
+
+		case "DELETED":
+			log.LogInfo("deleted bp")
+		case "ERROR":
+			log.LogWarn("Some error occured while watching ON BP")
+		}
+	}
+	log.LogWarn("Stopped watching on BP resource")
 }

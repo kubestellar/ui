@@ -11,7 +11,6 @@ import (
 	"github.com/katamyra/kubestellarUI/routes"
 
 	"github.com/katamyra/kubestellarUI/api"
-	"github.com/katamyra/kubestellarUI/redis"
 	"go.uber.org/zap"
 )
 
@@ -37,8 +36,6 @@ func main() {
 	})
 
 	routes.SetupRoutes(router)
-	redis.InitRedis()
-
 	router.POST("api/deploy", api.DeployHandler)
 	router.POST("api/webhook", api.GitHubWebhookHandler)
 
