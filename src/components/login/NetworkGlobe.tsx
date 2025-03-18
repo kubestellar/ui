@@ -165,9 +165,6 @@ const NetworkGlobe = ({ isLoaded = true }: NetworkGlobeProps) => {
     depthWrite: false
   }), []);
   
-  // Create shared geometries
-  const torusGeometry = useMemo(() => new THREE.TorusGeometry(3.5, 0.01, 8, 50), []);
-  
   // Animate data flows - only start when loaded and throttle updates
   useEffect(() => {
     if (!isLoaded || !isDocumentVisible) return;
