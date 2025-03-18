@@ -1,6 +1,6 @@
-import { useRef, useMemo, useState, useEffect } from 'react';
+import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Sphere, Line, Text, Torus, Billboard } from '@react-three/drei';
+import { Sphere, Torus} from '@react-three/drei';
 import * as THREE from 'three';
 import { COLORS } from './globe/colors';
 import CosmicDust from './globe/CosmicDust';
@@ -34,10 +34,29 @@ const NetworkGlobe = ({ isLoaded = true }: NetworkGlobeProps) => {
   const globeRef = useRef<THREE.Mesh>(null);
   const centralNodeRef = useRef<THREE.Group>(null);
   const dataFlowsRef = useRef<THREE.Group>(null);
+  const frameCount = useRef(0);
+  
+  // Track document visibility to pause rendering when tab/page is not active
+  const [isDocumentVisible, setIsDocumentVisible] = useState(true);
   
   // Animation state for data flows
   const [activeFlows, setActiveFlows] = useState<number[]>([]);
   const [animationProgress, setAnimationProgress] = useState(0);
+  
+  // Handle visibility change to pause rendering
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsDocumentVisible(!document.hidden);
+    };
+    
+    // Add event listener for visibility change
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Clean up event listener
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
   
   // Create cluster configurations with updated names and descriptions
   const clusters = useMemo(() => [
@@ -83,7 +102,7 @@ const NetworkGlobe = ({ isLoaded = true }: NetworkGlobeProps) => {
     },
   ], []);
   
-  // Generate data flow paths
+  // Generate data flow paths - optimized to create fewer paths
   const dataFlows = useMemo(() => {
     const flows: { path: [number, number, number][], id: number, type: string }[] = [];
     const centralPos: [number, number, number] = [0, 0, 0];
@@ -112,15 +131,19 @@ const NetworkGlobe = ({ isLoaded = true }: NetworkGlobeProps) => {
       type: "inference"
     });
     
-    // Add some other cross-cluster connections
-    for (let i = 0; i < clusters.length; i++) {
-      for (let j = i + 1; j < clusters.length; j++) {
-        if (Math.random() > 0.7) {
+    // Add fewer cross-cluster connections
+    const maxConnections = 3; // Limit the number of additional connections
+    let connectionCount = 0;
+    
+    for (let i = 0; i < clusters.length && connectionCount < maxConnections; i++) {
+      for (let j = i + 1; j < clusters.length && connectionCount < maxConnections; j++) {
+        if (Math.random() > 0.5) {
           flows.push({
             path: [clusters[i].position, clusters[j].position],
             id: clusters.length + i * 10 + j,
             type: "data"
           });
+          connectionCount++;
         }
       }
     }
@@ -128,91 +151,121 @@ const NetworkGlobe = ({ isLoaded = true }: NetworkGlobeProps) => {
     return flows;
   }, [clusters]);
   
-  // Animate data flows - only start when loaded
+  // Shared materials for better performance
+  const globeMaterial = useMemo(() => new THREE.MeshPhongMaterial({
+    color: COLORS.primary,
+    transparent: true,
+    wireframe: true,
+    depthWrite: false
+  }), []);
+  
+  const gridMaterial = useMemo(() => new THREE.MeshBasicMaterial({ 
+    color: COLORS.primary, 
+    transparent: true,
+    depthWrite: false
+  }), []);
+  
+  // Animate data flows - only start when loaded and throttle updates
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded || !isDocumentVisible) return;
     
     const interval = setInterval(() => {
+      // Activate fewer flows at once
+      const numFlows = Math.min(Math.floor(dataFlows.length / 3), 3);
       const randomFlows = Array.from(
-        { length: Math.floor(dataFlows.length / 2) }, 
+        { length: numFlows }, 
         () => Math.floor(Math.random() * dataFlows.length)
       );
       setActiveFlows(randomFlows);
-    }, 4000);
+    }, 4000); // Longer interval for better performance
     
     return () => clearInterval(interval);
-  }, [dataFlows.length, isLoaded]);
+  }, [dataFlows.length, isLoaded, isDocumentVisible]);
   
-  // Animation frame updates with progressive reveal
-  useFrame((state) => {
-    const time = state.clock.getElapsedTime();
+  // Optimize update function to run less frequently for non-critical animations
+  const updateOpacity = useCallback((material: FlowMaterial, targetOpacity: number, type: string) => {
+    if (!material) return;
     
-    // Update animation progress for reveal effect
+    // Set opacity with damping
+    material.opacity = THREE.MathUtils.lerp(material.opacity, targetOpacity, 0.1);
+    
+    // Set color based on flow type
+    if (type === "model") {
+      material.color.set(COLORS.aiTraining);
+    } else if (type === "inference") {
+      material.color.set(COLORS.aiInference);
+    } else if (type === "control") {
+      material.color.set(COLORS.secondary);
+    } else {
+      material.color.set(COLORS.success);
+    }
+    
+    // Update dash properties if available
+    if (material.dashSize !== undefined) {
+      material.dashSize = type === "control" ? 0.1 : 0.05;
+    }
+    if (material.gapSize !== undefined) {
+      material.gapSize = type === "control" ? 0.05 : 0.1;
+    }
+  }, []);
+  
+  // Animation frame updates with performance optimizations
+  useFrame((state) => {
+    // Skip all rendering when document is not visible
+    if (!isDocumentVisible) return;
+    
+    // Increment frame counter
+    frameCount.current += 1;
+    
+    // Update animation progress for reveal effect - only when loading
     if (isLoaded && animationProgress < 1) {
       setAnimationProgress(Math.min(animationProgress + 0.01, 1));
     }
     
-    // Rotate the globe slowly
-    if (globeRef.current) {
-      globeRef.current.rotation.y = time * 0.05;
-      globeRef.current.rotation.x = Math.sin(time * 0.2) * 0.02;
+    // Rotate the globe slowly - limit updates for better performance
+    if (globeRef.current && frameCount.current % 2 === 0) {
+      globeRef.current.rotation.y = state.clock.getElapsedTime() * 0.05;
+      globeRef.current.rotation.x = Math.sin(state.clock.getElapsedTime() * 0.2) * 0.02;
+      
+      // Update material opacity
+      if (globeMaterial.opacity !== 0.08 * animationProgress) {
+        globeMaterial.opacity = 0.08 * animationProgress;
+      }
       
       // Scale up the globe as it loads
       const scale = isLoaded ? 1 * animationProgress : 0.5;
       globeRef.current.scale.setScalar(scale);
     }
     
-    // Animate central node
-    if (centralNodeRef.current) {
-      centralNodeRef.current.rotation.y = time * 0.2;
-      centralNodeRef.current.scale.setScalar((1 + Math.sin(time * 1.5) * 0.05) * animationProgress);
+    // Animate central node - less frequently
+    if (centralNodeRef.current && frameCount.current % 3 === 0) {
+      centralNodeRef.current.rotation.y = state.clock.getElapsedTime() * 0.2;
+      centralNodeRef.current.scale.setScalar((1 + Math.sin(state.clock.getElapsedTime() * 1.5) * 0.05) * animationProgress);
       
-      // Fade in the central node
+      // Fade in the central node with throttled updates
       centralNodeRef.current.children.forEach((child: CentralNodeChild) => {
         if (child.material && typeof child.material.opacity !== 'undefined') {
-          child.material.opacity = Math.min(child.material.opacity + 0.01, animationProgress);
+          child.material.opacity = THREE.MathUtils.lerp(
+            child.material.opacity || 0, 
+            animationProgress, 
+            0.1
+          );
         }
       });
     }
     
-    // Animate data flows
-    if (dataFlowsRef.current) {
+    // Animate data flows - only every 3 frames
+    if (dataFlowsRef.current && frameCount.current % 3 === 0) {
       dataFlowsRef.current.children.forEach((flow: FlowChild, i) => {
         if (flow.material) {
           const flowData = dataFlows[i];
           const flowType = flowData?.type || "data";
           
-          if (activeFlows.includes(i)) {
-            flow.material.opacity = Math.min(flow.material.opacity + 0.05, 0.8 * animationProgress);
+          const targetOpacity = activeFlows.includes(i) 
+            ? 0.8 * animationProgress 
+            : 0.1 * animationProgress;
             
-            // Set color based on flow type
-            if (flowType === "model") {
-              flow.material.color.set(COLORS.aiTraining);
-            } else if (flowType === "inference") {
-              flow.material.color.set(COLORS.aiInference);
-            } else if (flowType === "control") {
-              flow.material.color.set(COLORS.secondary);
-            } else {
-              flow.material.color.set(COLORS.success);
-            }
-            
-            if (flow.material.dashSize !== undefined) {
-              flow.material.dashSize = 0.1;
-            }
-            if (flow.material.gapSize !== undefined) {
-              flow.material.gapSize = 0.05;
-            }
-          } else {
-            flow.material.opacity = Math.max(flow.material.opacity - 0.02, 0.1 * animationProgress);
-            flow.material.color.set(COLORS.primary);
-            
-            if (flow.material.dashSize !== undefined) {
-              flow.material.dashSize = 0.05;
-            }
-            if (flow.material.gapSize !== undefined) {
-              flow.material.gapSize = 0.1;
-            }
-          }
+          updateOpacity(flow.material, targetOpacity, flowType);
         }
       });
     }
@@ -221,127 +274,79 @@ const NetworkGlobe = ({ isLoaded = true }: NetworkGlobeProps) => {
   return (
     <group>
       {/* Background cosmic dust */}
-      <CosmicDust />
+      <CosmicDust isActive={isDocumentVisible} />
       
       {/* Main globe - represents the global network */}
-      <Sphere ref={globeRef} args={[3.5, 64, 64]}>
-        <meshPhongMaterial
-          color={COLORS.primary}
-          transparent
-          opacity={0.08 * animationProgress}
-          wireframe
-        />
+      <Sphere ref={globeRef} args={[3.5, 32, 32]} frustumCulled>
+        <primitive object={globeMaterial} />
       </Sphere>
       
-      {/* Grid lines for the globe */}
+      {/* Grid lines for the globe - optimized with shared geometry */}
       <group rotation={[0, 0, 0]}>
-        {Array.from({ length: 8 }).map((_, idx) => (
-          <Torus key={idx} args={[3.5, 0.01, 16, 100]} rotation={[0, 0, Math.PI * idx / 8]}>
-            <meshBasicMaterial 
-              color={COLORS.primary} 
-              transparent 
+        {Array.from({ length: 4 }).map((_, idx) => (
+          <Torus 
+            key={`h-${idx}`} 
+            args={[3.5, 0.01, 8, 50]} 
+            rotation={[0, 0, Math.PI * idx / 4]}
+            frustumCulled
+          >
+            <primitive 
+              object={gridMaterial.clone()} 
+              attach="material" 
               opacity={0.1 * animationProgress} 
             />
           </Torus>
         ))}
-        {Array.from({ length: 8 }).map((_, idx) => (
-          <Torus key={idx} args={[3.5, 0.01, 16, 100]} rotation={[Math.PI / 2, Math.PI * idx / 8, 0]}>
-            <meshBasicMaterial 
-              color={COLORS.primary} 
-              transparent 
+        {Array.from({ length: 4 }).map((_, idx) => (
+          <Torus 
+            key={`v-${idx}`} 
+            args={[3.5, 0.01, 8, 50]} 
+            rotation={[Math.PI / 2, Math.PI * idx / 4, 0]}
+            frustumCulled
+          >
+            <primitive 
+              object={gridMaterial.clone()} 
+              attach="material" 
               opacity={0.1 * animationProgress} 
             />
           </Torus>
         ))}
       </group>
       
-      {/* Central KubeStellar control plane */}
+      {/* Central hub - representing the orchestration core */}
       <group ref={centralNodeRef}>
-        <LogoElement position={[0, 0, 0]} rotation={[0, 0, 0]} scale={1} />
-        
-        <Billboard position={[0, 1, 0]}>
-          <Text
-            fontSize={0.2}
-            color={COLORS.highlight}
-            anchorX="center"
-            anchorY="middle"
-            outlineWidth={0.01}
-            outlineColor={COLORS.background}
-            fillOpacity={animationProgress}
-          >
-            KubeStellar
-          </Text>
-          <Text
-            position={[0, -0.25, 0]}
-            fontSize={0.1}
-            color={COLORS.primary}
-            anchorX="center"
-            anchorY="middle"
-            fillOpacity={animationProgress}
-          >
-            Control Plane
-          </Text>
-        </Billboard>
+        <LogoElement animate={isLoaded && isDocumentVisible} />
       </group>
       
-      {/* Clusters with staggered appearance */}
+      {/* Clusters of nodes */}
       {clusters.map((cluster, idx) => (
-        <group 
-          key={idx} 
-          scale={animationProgress > idx * 0.15 ? animationProgress : 0}
-          position={[
-            cluster.position[0] * animationProgress,
-            cluster.position[1] * animationProgress,
-            cluster.position[2] * animationProgress
-          ]}
-        >
-          <Cluster
-            position={[0, 0, 0]}
-            name={cluster.name}
-            nodeCount={cluster.nodeCount}
-            radius={cluster.radius}
-            color={cluster.color}
-            description={cluster.description}
-          />
-        </group>
+        <Cluster key={idx} {...cluster} isActive={isDocumentVisible} />
       ))}
       
-      {/* Data flow connections */}
+      {/* Data flow connections - use reduced detail and memoized materials */}
       <group ref={dataFlowsRef}>
         {dataFlows.map((flow, idx) => (
-          <Line
-            key={idx}
-            points={flow.path}
-            color={activeFlows.includes(idx) ? 
-              (flow.type === "model" ? COLORS.aiTraining : 
-               flow.type === "inference" ? COLORS.aiInference : 
-               flow.type === "control" ? COLORS.secondary : 
-               COLORS.success) : 
-              COLORS.primary}
-            lineWidth={1.5}
-            transparent
-            opacity={(activeFlows.includes(idx) ? 0.8 : 0.1) * animationProgress}
-            dashed
-            dashSize={0.1}
-            gapSize={0.1}
-          />
+          <group key={idx} frustumCulled>
+            {/* Only render active data packets to improve performance */}
+            {activeFlows.includes(idx) && isDocumentVisible && (
+              <DataPacket 
+                path={flow.path}
+                speed={flow.type === "control" ? 1.5 : 1}
+                color={
+                  flow.type === "model" 
+                    ? COLORS.aiTraining 
+                    : flow.type === "inference" 
+                      ? COLORS.aiInference 
+                      : flow.type === "control" 
+                        ? COLORS.secondary 
+                        : COLORS.success
+                }
+                isActive={isDocumentVisible}
+              />
+            )}
+          </group>
         ))}
       </group>
-      
-      {/* Data packets traveling along active connections */}
-      {isLoaded && animationProgress > 0.7 && dataFlows.map((flow, idx) => 
-        activeFlows.includes(idx) && (
-          <DataPacket 
-            key={idx} 
-            path={flow.path} 
-            speed={1 + Math.random()} 
-            color={flow.type === "model" ? COLORS.aiTraining : 
-                  flow.type === "inference" ? COLORS.aiInference : 
-                  flow.type === "control" ? COLORS.secondary : 
-                  idx % 2 === 0 ? COLORS.highlight : COLORS.success}
-          />
-        )
-      )}
     </group>
   );
 };
