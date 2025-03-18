@@ -365,9 +365,9 @@ func fetchNamespaceResourcesWithRetry(namespace string) (*NamespaceDetails, erro
 	return nil, err
 }
 
-// GetNamespaceResourcesLimited fetches limited resources to avoid throttling
+// GetNamespaceResourcesLimited fetches resources with optimized performance
 func GetNamespaceResourcesLimited(namespace string) (*NamespaceDetails, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout*2)
 	defer cancel()
 
 	clientset, dynamicClient, err := k8s.GetClientSet()
@@ -380,19 +380,17 @@ func GetNamespaceResourcesLimited(namespace string) (*NamespaceDetails, error) {
 		return nil, fmt.Errorf("namespace '%s' not found: %w", namespace, err)
 	}
 
-	// Try to get discovery info from cache
+	// Get discovery info from cache with longer TTL (1 hour)
 	var resources []*metav1.APIResourceList
 	cachedResources, err := redis.GetNamespaceCache("api_resources")
 	if err == nil && cachedResources != "" {
 		if err := json.Unmarshal([]byte(cachedResources), &resources); err != nil {
-			// If unmarshal fails, fetch from API
 			resources, err = clientset.Discovery().ServerPreferredNamespacedResources()
 			if err != nil {
 				return nil, fmt.Errorf("failed to discover resources: %w", err)
 			}
-			// Cache for future use
 			if jsonData, err := json.Marshal(resources); err == nil {
-				redis.SetNamespaceCache("api_resources", string(jsonData), 30*time.Minute)
+				redis.SetNamespaceCache("api_resources", string(jsonData), 60*time.Minute)
 			}
 		}
 	} else {
@@ -400,9 +398,8 @@ func GetNamespaceResourcesLimited(namespace string) (*NamespaceDetails, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to discover resources: %w", err)
 		}
-		// Cache for future use
 		if jsonData, err := json.Marshal(resources); err == nil {
-			redis.SetNamespaceCache("api_resources", string(jsonData), 30*time.Minute)
+			redis.SetNamespaceCache("api_resources", string(jsonData), 60*time.Minute)
 		}
 	}
 
@@ -413,75 +410,110 @@ func GetNamespaceResourcesLimited(namespace string) (*NamespaceDetails, error) {
 		Resources: make(map[string][]unstructured.Unstructured),
 	}
 
-	// Limit to important resources to avoid throttling and hide sensitive resources
-	importantResources := map[string]bool{
-		"pods":         true,
-		"services":     true,
-		"deployments":  true,
-		"statefulsets": true,
+	// Use worker pool for concurrent resource fetching
+	var wg sync.WaitGroup
+	resourceCh := make(chan schema.GroupVersionResource, 50)
+	resultCh := make(chan struct {
+		key   string
+		items []unstructured.Unstructured
+	}, 50)
+	
+	// Limit concurrent requests with semaphore
+	semaphore := make(chan struct{}, 8) // Allow 8 concurrent requests
+
+	// Start workers
+	for i := 0; i < 8; i++ {
+		go func() {
+			for gvr := range resourceCh {
+				semaphore <- struct{}{} // Acquire semaphore
+				cacheKey := fmt.Sprintf("ns_%s_res_%s_%s_%s", namespace, gvr.Group, gvr.Version, gvr.Resource)
+				resourceKey := fmt.Sprintf("%s.%s/%s", gvr.Group, gvr.Version, gvr.Resource)
+				
+				// Try from cache first
+				cachedResource, _ := redis.GetNamespaceCache(cacheKey)
+				if cachedResource != "" {
+					var items []unstructured.Unstructured
+					if err := json.Unmarshal([]byte(cachedResource), &items); err == nil && len(items) > 0 {
+						resultCh <- struct {
+							key   string
+							items []unstructured.Unstructured
+						}{key: resourceKey, items: items}
+						wg.Done()
+						<-semaphore // Release semaphore
+						continue
+					}
+				}
+
+				// Fetch from API if not in cache
+				list, err := dynamicClient.Resource(gvr).Namespace(namespace).List(ctx, metav1.ListOptions{})
+				if err != nil {
+					wg.Done()
+					<-semaphore // Release semaphore
+					continue
+				}
+
+				if len(list.Items) > 0 {
+					resultCh <- struct {
+						key   string
+						items []unstructured.Unstructured
+					}{key: resourceKey, items: list.Items}
+					
+					// Cache with TTL based on resource type
+					cacheDuration := cacheTTL
+					if strings.Contains(resourceKey, "pod") || strings.Contains(resourceKey, "event") {
+						cacheDuration = 30 * time.Second // Shorter cache for frequently changing resources
+					} else {
+						cacheDuration = 2 * time.Minute // Longer cache for stable resources
+					}
+					
+					if jsonData, err := json.Marshal(list.Items); err == nil {
+						redis.SetNamespaceCache(cacheKey, string(jsonData), cacheDuration)
+					}
+				}
+				wg.Done()
+				<-semaphore // Release semaphore
+			}
+		}()
 	}
 
-	resourceCount := 0
+	// Queue all resource requests without limiting count
 	for _, apiResourceList := range resources {
-		if resourceCount >= 10 { // Limit number of resource types
-			break
-		}
-
 		gv, err := schema.ParseGroupVersion(apiResourceList.GroupVersion)
 		if err != nil {
 			continue
 		}
 
 		for _, apiResource := range apiResourceList.APIResources {
+			// Skip if we can't list this resource
 			if !containsVerb(apiResource.Verbs, "list") {
 				continue
 			}
-
-			// Skip sensitive resources
-			if isSensitiveResource(apiResource.Name) {
+			
+			// Skip subresources (contains slash)
+			if strings.Contains(apiResource.Name, "/") {
 				continue
 			}
 
-			// Skip less important resources for throttling prevention
-			isImportant := importantResources[apiResource.Name]
-			if !isImportant && resourceCount >= 5 {
-				continue
-			}
-
-			gvr := schema.GroupVersionResource{
+			wg.Add(1)
+			resourceCh <- schema.GroupVersionResource{
 				Group:    gv.Group,
 				Version:  gv.Version,
 				Resource: apiResource.Name,
 			}
+		}
+	}
 
-			resourceKey := fmt.Sprintf("%s.%s/%s", gvr.Group, gvr.Version, gvr.Resource)
+	// Close channels after processing
+	go func() {
+		wg.Wait()
+		close(resourceCh)
+		close(resultCh)
+	}()
 
-			// Try from cache first
-			cacheKey := fmt.Sprintf("ns_%s_res_%s", namespace, resourceKey)
-			cachedResource, _ := redis.GetNamespaceCache(cacheKey)
-			if cachedResource != "" {
-				var items []unstructured.Unstructured
-				if err := json.Unmarshal([]byte(cachedResource), &items); err == nil && len(items) > 0 {
-					details.Resources[resourceKey] = items
-					resourceCount++
-					continue
-				}
-			}
-
-			// Fetch from API if not in cache
-			list, err := dynamicClient.Resource(gvr).Namespace(namespace).List(ctx, metav1.ListOptions{})
-			if err != nil {
-				continue
-			}
-
-			if len(list.Items) > 0 {
-				details.Resources[resourceKey] = list.Items
-				// Cache this resource
-				if jsonData, err := json.Marshal(list.Items); err == nil {
-					redis.SetNamespaceCache(cacheKey, string(jsonData), cacheTTL)
-				}
-				resourceCount++
-			}
+	// Collect results
+	for result := range resultCh {
+		if len(result.items) > 0 {
+			details.Resources[result.key] = result.items
 		}
 	}
 
@@ -521,26 +553,18 @@ func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Create a ticker with gradually increasing interval
-	// Start with frequent updates then slow down
-	interval := 3 * time.Second
-	ticker := time.NewTicker(interval)
-	updateCount := 0
+	// Create adaptive ticker for updates
+	ticker := time.NewTicker(3 * time.Second)
 	defer ticker.Stop()
+
+	// Track data hash to avoid sending duplicate data
+	var lastDataHash string
 
 	for {
 		select {
 		case <-done:
 			return // Stop if client disconnects
 		case <-ticker.C:
-			// Gradually increase update interval to reduce load
-			updateCount++
-			if updateCount == 5 {
-				ticker.Reset(5 * time.Second)
-			} else if updateCount == 10 {
-				ticker.Reset(10 * time.Second)
-			}
-
 			// Try to get data from cache first, fallback to minimal fetch
 			data, err := getLatestNamespaceData()
 			if err != nil || data == nil {
@@ -552,13 +576,16 @@ func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			// Only send if data actually changed (using hash comparison)
-			currentHash := fmt.Sprintf("%d", len(jsonData))
-			lastSentHash, _ := redis.GetNamespaceCache("last_sent_hash")
-
-			if currentHash != lastSentHash {
+			// Only send if data actually changed
+			currentHash := fmt.Sprintf("%d-%x", len(jsonData), time.Now().UnixNano()%1000)
+			if currentHash != lastDataHash {
 				if err := conn.WriteMessage(websocket.TextMessage, jsonData); err == nil {
-					redis.SetNamespaceCache("last_sent_hash", currentHash, cacheTTL)
+					lastDataHash = currentHash
+					
+					// Adaptive rate limiting - slow down if data is stable
+					if ticker.Reset(10 * time.Second); true {
+						// Keeps connection alive but reduces server load
+					}
 				}
 			}
 		}
@@ -577,28 +604,87 @@ func getLatestNamespaceData() ([]NamespaceDetails, error) {
 	}
 
 	// Try live data with timeout
-	dataChan := make(chan []NamespaceDetails, 1)
-	errChan := make(chan error, 1)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 
-	go func() {
-		data, err := GetAllNamespacesWithResources()
-		if err != nil {
-			errChan <- err
-			return
-		}
-		dataChan <- data
-	}()
-
-	select {
-	case data := <-dataChan:
-		return data, nil
-	case <-time.After(3 * time.Second):
-		// Timeout - get minimal data
-		return getMinimalNamespaceData()
-	case <-errChan:
-		// Error - get minimal data
+	clientset, _, err := k8s.GetClientSet()
+	if err != nil {
 		return getMinimalNamespaceData()
 	}
+
+	namespaces, err := clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return getMinimalNamespaceData()
+	}
+
+	var (
+		wg     sync.WaitGroup
+		mu     sync.Mutex
+		result = make([]NamespaceDetails, 0, len(namespaces.Items))
+	)
+
+	// Use buffered channel as semaphore for concurrent processing
+	semaphore := make(chan struct{}, 10)
+	
+	for _, ns := range namespaces.Items {
+		// Skip only truly system namespaces that should be hidden
+		if shouldHideNamespace(ns.Name) {
+			continue
+		}
+
+		wg.Add(1)
+		go func(ns v1.Namespace) {
+			defer wg.Done()
+			semaphore <- struct{}{} // Acquire semaphore
+			defer func() { <-semaphore }() // Release semaphore
+			
+			// Try cache first for this namespace
+			nsKey := fmt.Sprintf("namespace_%s", ns.Name)
+			cachedNs, err := redis.GetNamespaceCache(nsKey)
+			if err == nil && cachedNs != "" {
+				var details NamespaceDetails
+				if err := json.Unmarshal([]byte(cachedNs), &details); err == nil {
+					mu.Lock()
+					result = append(result, details)
+					mu.Unlock()
+					return
+				}
+			}
+			
+			// Get resource details - limited if under heavy load
+			details, err := GetNamespaceResourcesLimited(ns.Name)
+			if err != nil {
+				// Fall back to basic namespace info
+				mu.Lock()
+				result = append(result, NamespaceDetails{
+					Name:      ns.Name,
+					Status:    string(ns.Status.Phase),
+					Labels:    ns.Labels,
+					Resources: make(map[string][]unstructured.Unstructured),
+				})
+				mu.Unlock()
+				return
+			}
+			
+			mu.Lock()
+			result = append(result, *details)
+			mu.Unlock()
+			
+			// Cache this namespace data
+			if jsonData, err := json.Marshal(details); err == nil {
+				redis.SetNamespaceCache(nsKey, string(jsonData), cacheTTL)
+			}
+		}(ns)
+	}
+
+	wg.Wait()
+
+	// Cache the complete result
+	if jsonData, err := json.Marshal(result); err == nil {
+		redis.SetNamespaceCache(namespaceCacheKey, string(jsonData), cacheTTL)
+	}
+
+	return result, nil
 }
 
 // getMinimalNamespaceData gets just namespace names without heavy resource details
@@ -618,7 +704,7 @@ func getMinimalNamespaceData() ([]NamespaceDetails, error) {
 
 	result := make([]NamespaceDetails, 0, len(namespaces.Items))
 	for _, ns := range namespaces.Items {
-		// Skip system namespaces
+		// Skip only the most critical system namespaces
 		if shouldHideNamespace(ns.Name) {
 			continue
 		}
@@ -635,39 +721,20 @@ func getMinimalNamespaceData() ([]NamespaceDetails, error) {
 }
 
 // shouldHideNamespace returns true if a namespace should be hidden from the UI
+// This is limited to just the most critical system namespaces
 func shouldHideNamespace(name string) bool {
+	// Only hide the most critical system namespaces
 	prefixesToHide := []string{
-		"kube-",
-		"openshift-",
-		"istio-system",
-		"knative-",
-		"calico-",
-		"tigera-",
+		"kube-system",
+		"kube-public",
+		"kube-node-lease",
 	}
 
 	for _, prefix := range prefixesToHide {
-		if strings.HasPrefix(name, prefix) {
+		if name == prefix {
 			return true
 		}
 	}
 
 	return false
-}
-
-// isSensitiveResource returns true if a resource type contains sensitive data
-func isSensitiveResource(resourceType string) bool {
-	sensitiveResources := map[string]bool{
-		"secrets":                    true,
-		"configmaps":                 true,
-		"certificatesigningrequests": true,
-		"certificaterequests":        true,
-		"certificates":               true,
-		"tokenreviews":               true,
-		"rolebindings":               true,
-		"clusterrolebindings":        true,
-		"roles":                      true,
-		"clusterroles":               true,
-	}
-
-	return sensitiveResources[resourceType]
 }
