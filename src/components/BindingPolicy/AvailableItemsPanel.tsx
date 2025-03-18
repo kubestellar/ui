@@ -12,12 +12,10 @@ import {
   CircularProgress,
   Alert
 } from '@mui/material';
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import StorageIcon from '@mui/icons-material/Storage';
-import DnsIcon from '@mui/icons-material/Dns';
 import { Draggable } from '@hello-pangea/dnd';
 import { BindingPolicyInfo, ManagedCluster, Workload } from '../../types/bindingPolicy';
 import StrictModeDroppable from './StrictModeDroppable';
+import KubernetesIcon from './KubernetesIcon';
 
 interface AvailableItemsPanelProps {
   policies: BindingPolicyInfo[];
@@ -91,17 +89,9 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
   };
 
   // Get workload icon based on type
-  const getWorkloadIcon = (type: string) => {
-    switch (type.toLowerCase()) {
-      case 'deployment':
-      case 'replicaset':
-        return <DnsIcon fontSize="small" sx={{ color: theme.palette.primary.main }} />;
-      case 'statefulset':
-        return <StorageIcon fontSize="small" sx={{ color: theme.palette.secondary.main }} />;
-      default:
-        return <DnsIcon fontSize="small" sx={{ color: theme.palette.info.main }} />;
-    }
-  };
+  // const getWorkloadIcon = (type: string) => {
+  //   return <KubernetesIcon type="workload" size={20} />;
+  // };
 
   // Render loading state or content for a section
   const renderSection = <T,>(
@@ -117,6 +107,9 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
     return (
       <>
         <Typography variant="subtitle1" sx={{ mt: 2, mb: 1, fontWeight: 'medium', display: 'flex', alignItems: 'center' }}>
+          {title === "Policies" && <KubernetesIcon type="policy" size={20} sx={{ mr: 1 }} />}
+          {title === "Clusters" && <KubernetesIcon type="cluster" size={20} sx={{ mr: 1 }} />}
+          {title === "Workloads" && <KubernetesIcon type="workload" size={20} sx={{ mr: 1 }} />}
           {title}
           {isLoading && <CircularProgress size={16} sx={{ ml: 1 }} />}
         </Typography>
@@ -207,13 +200,7 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
               justifyContent: 'space-between'
             }}>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <DragIndicatorIcon 
-                  fontSize="small" 
-                  sx={{ 
-                    mr: 1, 
-                    color: 'action.active' 
-                  }} 
-                />
+                <KubernetesIcon type="policy" size={20} sx={{ mr: 1 }} />
                 <Box>
                   <Typography variant="body2" noWrap sx={{ fontWeight: 'medium' }}>
                     {policy.name}
@@ -258,11 +245,12 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
             sx={{
               borderBottom: '1px solid',
               borderColor: 'divider',
-              bgcolor: snapshot.isDragging ? alpha(theme.palette.info.main, 0.1) : 'background.paper',
+              bgcolor: snapshot.isDragging ? alpha(theme.palette.primary.main, 0.1) : 'background.paper',
               '&:last-child': { borderBottom: 'none' },
+              borderLeft: `4px solid ${getClusterStatusColor(cluster.status)}`,
               transition: 'all 0.2s',
               '&:hover': {
-                bgcolor: alpha(theme.palette.info.main, 0.05)
+                bgcolor: alpha(theme.palette.primary.main, 0.05)
               }
             }}
             data-rbd-draggable-id={`cluster-${cluster.name}`}
@@ -270,59 +258,27 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
           >
             <Box sx={{ 
               display: 'flex', 
-              flexDirection: 'column',
-              width: '100%'
+              alignItems: 'center',
+              width: '100%',
+              justifyContent: 'space-between'
             }}>
-              <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'space-between',
-                width: '100%'
-              }}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <DragIndicatorIcon 
-                    fontSize="small" 
-                    sx={{ 
-                      mr: 1, 
-                      color: 'action.active' 
-                    }} 
-                  />
-                  <Typography variant="body2" fontWeight="medium" noWrap>
-                    {cluster.name}
-                  </Typography>
-                </Box>
-                <Tooltip title={`Status: ${cluster.status}`}>
-                  <Chip 
-                    label={cluster.status} 
-                    size="small" 
-                    sx={{ 
-                      bgcolor: alpha(getClusterStatusColor(cluster.status), 0.1),
-                      color: getClusterStatusColor(cluster.status),
-                      fontSize: '0.7rem'
-                    }} 
-                  />
-                </Tooltip>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <KubernetesIcon type="cluster" size={20} sx={{ mr: 1 }} />
+                <Typography variant="body2" fontWeight="medium" noWrap>
+                  {cluster.name}
+                </Typography>
               </Box>
-              
-              {/* Show labels if any */}
-              {Object.keys(cluster.labels).length > 0 && (
-                <Box sx={{ ml: 5, mt: 0.5, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {Object.entries(cluster.labels).map(([key, value]) => (
-                    <Tooltip key={key} title={`${key}: ${value}`}>
-                      <Chip 
-                        label={`${key}: ${value}`} 
-                        size="small" 
-                        variant="outlined"
-                        sx={{ 
-                          height: 18, 
-                          fontSize: '0.65rem',
-                          '& .MuiChip-label': { px: 0.8 }
-                        }} 
-                      />
-                    </Tooltip>
-                  ))}
-                </Box>
-              )}
+              <Tooltip title={`Status: ${cluster.status}`}>
+                <Chip 
+                  label={cluster.status} 
+                  size="small" 
+                  sx={{ 
+                    backgroundColor: alpha(getClusterStatusColor(cluster.status), 0.1),
+                    color: getClusterStatusColor(cluster.status),
+                    fontSize: '0.7rem'
+                  }} 
+                />
+              </Tooltip>
             </Box>
           </ListItem>
         );
@@ -347,11 +303,11 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
             sx={{
               borderBottom: '1px solid',
               borderColor: 'divider',
-              bgcolor: snapshot.isDragging ? alpha(theme.palette.success.main, 0.1) : 'background.paper',
+              bgcolor: snapshot.isDragging ? alpha(theme.palette.secondary.main, 0.1) : 'background.paper',
               '&:last-child': { borderBottom: 'none' },
               transition: 'all 0.2s',
               '&:hover': {
-                bgcolor: alpha(theme.palette.success.main, 0.05)
+                bgcolor: alpha(theme.palette.secondary.main, 0.05)
               }
             }}
             data-rbd-draggable-id={`workload-${workload.name}`}
@@ -359,56 +315,26 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
           >
             <Box sx={{ 
               display: 'flex', 
-              flexDirection: 'column',
-              width: '100%'
+              alignItems: 'center',
+              width: '100%',
+              justifyContent: 'space-between'
             }}>
-              <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'space-between',
-                width: '100%'
-              }}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <DragIndicatorIcon 
-                    fontSize="small" 
-                    sx={{ 
-                      mr: 1, 
-                      color: 'action.active' 
-                    }} 
-                  />
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <KubernetesIcon type="workload" size={20} sx={{ mr: 1 }} />
+                <Box>
+                  <Typography variant="body2" fontWeight="medium" noWrap>
+                    {workload.name}
+                  </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    {getWorkloadIcon(workload.type)}
-                    <Box sx={{ ml: 0.5 }}>
-                      <Typography variant="body2" fontWeight="medium" noWrap>
-                        {workload.name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" noWrap>
-                        {workload.namespace}/{workload.type}
-                      </Typography>
-                    </Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>
+                      {workload.type}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      in {workload.namespace || 'default'}
+                    </Typography>
                   </Box>
                 </Box>
               </Box>
-              
-              {/* Show labels if any */}
-              {Object.keys(workload.labels).length > 0 && (
-                <Box sx={{ ml: 5, mt: 0.5, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {Object.entries(workload.labels).map(([key, value]) => (
-                    <Tooltip key={key} title={`${key}: ${value}`}>
-                      <Chip 
-                        label={`${key}: ${value}`} 
-                        size="small" 
-                        variant="outlined"
-                        sx={{ 
-                          height: 18, 
-                          fontSize: '0.65rem',
-                          '& .MuiChip-label': { px: 0.8 }
-                        }} 
-                      />
-                    </Tooltip>
-                  ))}
-                </Box>
-              )}
             </Box>
           </ListItem>
         );

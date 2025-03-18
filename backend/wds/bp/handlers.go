@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/katamyra/kubestellarUI/log"
@@ -112,11 +113,191 @@ func GetAllBp(ctx *gin.Context) {
 		// Extract binding mode
 		bindingMode := "Downsync" // Default to Downsync since KubeStellar currently only supports Downsync
 
-		// Extract target clusters from ClusterSelectors
+		// Extract target clusters from ClusterSelectors and try multiple sources for completeness
 		clusters := extractTargetClusters(&bpList.Items[i])
 
-		// Extract workloads from Downsync
-		workloads := extractWorkloads(&bpList.Items[i])
+		// Check if we have stored data for this policy that might have more details
+		policyName := bpList.Items[i].Name
+		storedBP, exists := uiCreatedPolicies[policyName]
+
+		if exists {
+			fmt.Printf("Debug - GetAllBp - Found stored BP in memory with key: %s\n", policyName)
+			// Use the stored cluster selectors for more detailed information
+			if len(storedBP.ClusterSelectors) > 0 {
+				for _, selector := range storedBP.ClusterSelectors {
+					if clusterName, ok := selector["kubernetes.io/cluster-name"]; ok {
+						// Check if already in the clusters array
+						if !contains(clusters, clusterName) {
+							clusters = append(clusters, clusterName)
+							fmt.Printf("Debug - GetAllBp - Added cluster from stored data: %s\n", clusterName)
+						}
+					}
+				}
+			}
+
+			// If we still have no clusters but have YAML data, try to parse it
+			if len(clusters) == 0 && storedBP.RawYAML != "" {
+				fmt.Printf("Debug - GetAllBp - Trying to parse stored raw YAML for clusters\n")
+				var yamlMap map[string]interface{}
+				if err := yaml.Unmarshal([]byte(storedBP.RawYAML), &yamlMap); err == nil {
+					if spec, ok := yamlMap["spec"].(map[interface{}]interface{}); ok {
+						if selectors, ok := spec["clusterSelectors"].([]interface{}); ok {
+							for _, selectorObj := range selectors {
+								if selector, ok := selectorObj.(map[interface{}]interface{}); ok {
+									if matchLabels, ok := selector["matchLabels"].(map[interface{}]interface{}); ok {
+										for k, v := range matchLabels {
+											if kStr, ok := k.(string); ok && kStr == "kubernetes.io/cluster-name" {
+												if vStr, ok := v.(string); ok && !contains(clusters, vStr) {
+													clusters = append(clusters, vStr)
+													fmt.Printf("Debug - GetAllBp - Added cluster from YAML: %s\n", vStr)
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// Extract workloads from Downsync using a comprehensive approach similar to GetBpStatus
+		workloads := []string{}
+
+		// If we have stored data for workloads, use it first for detailed information
+		if exists {
+			fmt.Printf("Debug - GetAllBp - Using stored policy data for workloads\n")
+			// Try to use stored API groups and resources for more detail
+			for i, apiGroup := range storedBP.APIGroups {
+				if i < len(storedBP.Resources) {
+					resourceLower := strings.ToLower(storedBP.Resources[i])
+					workloadType := fmt.Sprintf("%s/%s", apiGroup, resourceLower)
+
+					// Add namespaces if specified
+					if len(storedBP.Namespaces) > 0 {
+						for _, ns := range storedBP.Namespaces {
+							workloadItem := fmt.Sprintf("%s (ns:%s)", workloadType, ns)
+							if !contains(workloads, workloadItem) {
+								workloads = append(workloads, workloadItem)
+								fmt.Printf("Debug - GetAllBp - Added workload from stored data: %s\n", workloadItem)
+							}
+						}
+					} else if !contains(workloads, workloadType) {
+						workloads = append(workloads, workloadType)
+						fmt.Printf("Debug - GetAllBp - Added workload from stored data: %s\n", workloadType)
+					}
+				}
+			}
+
+			// Add specific workloads from stored data
+			for _, workload := range storedBP.SpecificWorkloads {
+				workloadDesc := fmt.Sprintf("Specific: %s/%s", workload.APIVersion, workload.Kind)
+				if workload.Name != "" {
+					workloadDesc += fmt.Sprintf(": %s", workload.Name)
+				}
+				if workload.Namespace != "" {
+					workloadDesc += fmt.Sprintf(" (ns:%s)", workload.Namespace)
+				}
+				if !contains(workloads, workloadDesc) {
+					workloads = append(workloads, workloadDesc)
+					fmt.Printf("Debug - GetAllBp - Added specific workload from stored data: %s\n", workloadDesc)
+				}
+			}
+		} else {
+			// If no stored data, extract from BP directly
+			fmt.Printf("Debug - GetAllBp - Extracting workloads from API response for %s\n", policyName)
+
+			// Extract from the policy's downsync field
+			for i, ds := range bpList.Items[i].Spec.Downsync {
+				apiGroupValue := "core" // Default to core
+				if ds.APIGroup != nil && *ds.APIGroup != "" {
+					apiGroupValue = *ds.APIGroup
+				}
+
+				fmt.Printf("Debug - GetAllBp - Downsync #%d: APIGroup=%s, Resources=%v, Namespaces=%v\n",
+					i, apiGroupValue, ds.Resources, ds.Namespaces)
+
+				for _, resource := range ds.Resources {
+					// Convert resource to lowercase for consistent handling
+					resourceLower := strings.ToLower(resource)
+					workloadType := fmt.Sprintf("%s/%s", apiGroupValue, resourceLower)
+
+					if len(ds.Namespaces) > 0 {
+						for _, ns := range ds.Namespaces {
+							workloadItem := fmt.Sprintf("%s (ns:%s)", workloadType, ns)
+							if !contains(workloads, workloadItem) {
+								workloads = append(workloads, workloadItem)
+								fmt.Printf("Debug - GetAllBp - Added workload from API: %s\n", workloadItem)
+							}
+						}
+					} else if !contains(workloads, workloadType) {
+						workloads = append(workloads, workloadType)
+						fmt.Printf("Debug - GetAllBp - Added workload from API: %s\n", workloadType)
+					}
+				}
+			}
+
+			// Try to extract from annotations if there's any workload info
+			if annotations := bpList.Items[i].Annotations; annotations != nil {
+				if specificWorkload, ok := annotations["specific-workload-name"]; ok && specificWorkload != "" {
+					// Try to determine API group and kind from annotations
+					apiVersion := annotations["workload-api-version"]
+					if apiVersion == "" {
+						apiVersion = "apps/v1" // Default to apps/v1 if not specified
+					}
+
+					kind := annotations["workload-kind"]
+					if kind == "" {
+						// Try to guess from the specific workload name pattern
+						if strings.Contains(specificWorkload, "-deployment") {
+							kind = "Deployment"
+						} else if strings.Contains(specificWorkload, "-statefulset") {
+							kind = "StatefulSet"
+						} else {
+							kind = "Deployment" // Default
+						}
+					}
+
+					workloadNamespace := annotations["workload-namespace"]
+					if workloadNamespace == "" {
+						workloadNamespace = "default"
+					}
+
+					workloadDesc := fmt.Sprintf("Specific: %s/%s: %s (ns:%s)",
+						apiVersion, kind, specificWorkload, workloadNamespace)
+
+					if !contains(workloads, workloadDesc) {
+						workloads = append(workloads, workloadDesc)
+						fmt.Printf("Debug - GetAllBp - Added specific workload from annotations: %s\n", workloadDesc)
+					}
+				}
+
+				// Check for workload-id annotation (used in quick binding policies)
+				if workloadId, ok := annotations["workload-id"]; ok && workloadId != "" && !contains(workloads, workloadId) {
+					workloads = append(workloads, workloadId)
+					fmt.Printf("Debug - GetAllBp - Added workload from workload-id annotation: %s\n", workloadId)
+				}
+			}
+		}
+
+		// If we still don't have workloads, fallback to a general extraction method
+		if len(workloads) == 0 {
+			workloads = extractWorkloads(&bpList.Items[i])
+		}
+
+		// If still no workloads after all attempts, add a default
+		if len(workloads) == 0 {
+			workloads = append(workloads, "No workload specified")
+			fmt.Printf("Debug - GetAllBp - No workloads found, adding default\n")
+		}
+
+		// Ensure we have cluster count consistent with the array
+		clustersCount := len(clusters)
+
+		// Set explicit cluster count for clarity in logs
+		fmt.Printf("Debug - GetAllBp - Policy %s: Found %d clusters and %d workloads\n",
+			policyName, clustersCount, len(workloads))
 
 		// Create the enhanced policy with status
 		bpWithStatus := BindingPolicyWithStatus{
@@ -141,9 +322,33 @@ func GetAllBp(ctx *gin.Context) {
 		return
 	}
 
+	// Before sending the response, ensure each policy has proper clustersCount and workloadsCount
+	responseArray := make([]map[string]interface{}, len(bpsWithStatus))
+	for i, bp := range bpsWithStatus {
+		// Convert each binding policy to a map for customization
+		policyMap := map[string]interface{}{
+			"name":           bp.Name,
+			"namespace":      bp.Namespace,
+			"status":         bp.Status,
+			"bindingMode":    bp.BindingMode,
+			"clusters":       bp.Clusters,
+			"clusterList":    bp.Clusters, // For backward compatibility
+			"workloads":      bp.Workloads,
+			"workloadList":   bp.Workloads,      // For backward compatibility
+			"clustersCount":  len(bp.Clusters),  // Explicitly set based on clusters array
+			"workloadsCount": len(bp.Workloads), // Explicitly set based on workloads array
+			// Include other fields that might be needed in the response
+			"creationTimestamp": bp.CreationTimestamp,
+			"conditions":        bp.BindingPolicy.Status.Conditions,
+			"yaml":              bp.Annotations["yaml"],
+		}
+
+		responseArray[i] = policyMap
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{
-		"bindingPolicies": bpsWithStatus,
-		"count":           len(bpsWithStatus),
+		"bindingPolicies": responseArray,
+		"count":           len(responseArray),
 	})
 }
 
@@ -429,12 +634,14 @@ func CreateBp(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": fmt.Sprintf("Created binding policy '%s' in namespace '%s' successfully", createdBP.Name, createdBP.Namespace),
 		"bindingPolicy": gin.H{
-			"name":        createdBP.Name,
-			"namespace":   createdBP.Namespace,
-			"status":      "inactive", // New policies start as inactive
-			"bindingMode": "Downsync", // Only Downsync is supported
-			"clusters":    clusters,
-			"workloads":   workloads,
+			"name":           createdBP.Name,
+			"namespace":      createdBP.Namespace,
+			"status":         "inactive", // New policies start as inactive
+			"bindingMode":    "Downsync", // Only Downsync is supported
+			"clusters":       clusters,
+			"workloads":      workloads,
+			"clustersCount":  len(clusters),
+			"workloadsCount": len(workloads),
 		},
 	})
 }
@@ -671,7 +878,18 @@ func GetBpStatus(ctx *gin.Context) {
 
 				if len(ds.Namespaces) > 0 {
 					for _, ns := range ds.Namespaces {
-						workloads = append(workloads, fmt.Sprintf("%s (ns:%s)", workloadType, ns))
+						workloadItem := fmt.Sprintf("%s (ns:%s)", workloadType, ns)
+						// Check if already in the list
+						alreadyExists := false
+						for _, w := range workloads {
+							if w == workloadItem {
+								alreadyExists = true
+								break
+							}
+						}
+						if !alreadyExists {
+							workloads = append(workloads, workloadItem)
+						}
 					}
 				} else {
 					workloads = append(workloads, workloadType)
@@ -855,13 +1073,17 @@ func GetBpStatus(ctx *gin.Context) {
 	fmt.Printf("Debug - Returning %d workloads: %v\n", len(workloads), workloads)
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"name":        bp.Name,
-		"namespace":   bp.Namespace,
-		"status":      status,
-		"conditions":  bp.Status.Conditions,
-		"bindingMode": "Downsync", // KubeStellar only supports Downsync currently
-		"clusters":    clusters,
-		"workloads":   workloads,
+		"name":              bp.Name,
+		"namespace":         bp.Namespace,
+		"status":            status,
+		"conditions":        bp.Status.Conditions,
+		"bindingMode":       "Downsync", // KubeStellar only supports Downsync currently
+		"clusters":          clusters,
+		"workloads":         workloads,
+		"clustersCount":     len(clusters),
+		"workloadsCount":    len(workloads),
+		"creationTimestamp": bp.CreationTimestamp,   // Add creation timestamp for consistency with GetAllBp
+		"yaml":              bp.Annotations["yaml"], // Also include YAML for completeness
 	})
 }
 
@@ -890,4 +1112,811 @@ func UpdateBp(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("updated %s", updatedBp.Name)})
 
+}
+
+// CreateBpFromJson creates a new BindingPolicy from JSON data sent by the UI
+func CreateBpFromJson(ctx *gin.Context) {
+	fmt.Printf("Debug - Starting CreateBpFromJson handler\n")
+	fmt.Printf("Debug - KUBECONFIG: %s\n", os.Getenv("KUBECONFIG"))
+	fmt.Printf("Debug - wds_context: %s\n", os.Getenv("wds_context"))
+
+	// Check Content-Type header
+	contentType := ctx.GetHeader("Content-Type")
+	fmt.Printf("Debug - Content-Type: %s\n", contentType)
+	if !strings.Contains(contentType, "application/json") {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Content-Type must be application/json"})
+		return
+	}
+
+	// Define a struct to parse the incoming JSON data
+	type BindingPolicyRequest struct {
+		Name              string              `json:"name"`
+		Namespace         string              `json:"namespace"`
+		ClusterSelectors  []map[string]string `json:"clusterSelectors"`
+		WorkloadSelectors struct {
+			ApiGroups  []string       `json:"apiGroups"`
+			Resources  []string       `json:"resources"`
+			Namespaces []string       `json:"namespaces"`
+			Workloads  []WorkloadInfo `json:"workloads"`
+		} `json:"workloadSelectors"`
+		PropagationMode string            `json:"propagationMode"`
+		UpdateStrategy  string            `json:"updateStrategy"`
+		SchedulingRules []map[string]any  `json:"schedulingRules"`
+		Tolerations     []map[string]any  `json:"tolerations"`
+		CustomLabels    map[string]string `json:"customLabels"`
+		ClusterId       string            `json:"clusterId"`
+		WorkloadId      string            `json:"workloadId"`
+	}
+
+	var bpRequest BindingPolicyRequest
+	if err := ctx.ShouldBindJSON(&bpRequest); err != nil {
+		fmt.Printf("Debug - JSON binding error: %v\n", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid JSON format: %s", err.Error())})
+		return
+	}
+
+	// Validate required fields
+	if bpRequest.Name == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "name is required"})
+		return
+	}
+
+	if bpRequest.Namespace == "" {
+		bpRequest.Namespace = "default" // Default namespace if not provided
+	}
+
+	fmt.Printf("Debug - Received policy request: %+v\n", bpRequest)
+
+	// Create a KubeStellar BindingPolicy using a generic approach
+	// type policyMatchLabels struct {
+	// 	MatchLabels map[string]string `json:"matchLabels,omitempty"`
+	// }
+
+	// type policyDownsyncRule struct {
+	// 	APIGroup   *string  `json:"apiGroup,omitempty"`
+	// 	Resources  []string `json:"resources,omitempty"`
+	// 	Namespaces []string `json:"namespaces,omitempty"`
+	// }
+
+	// Create a policy as a generic map that we'll convert to YAML
+	policyObj := map[string]interface{}{
+		"apiVersion": "control.kubestellar.io/v1alpha1",
+		"kind":       "BindingPolicy",
+		"metadata": map[string]interface{}{
+			"name":      bpRequest.Name,
+			"namespace": bpRequest.Namespace,
+		},
+		"spec": map[string]interface{}{
+			"clusterSelectors": []interface{}{},
+			"downsync":         []interface{}{},
+		},
+	}
+
+	// Add cluster selectors
+	clusterSelectors := []interface{}{}
+	for _, selector := range bpRequest.ClusterSelectors {
+		clusterSelectors = append(clusterSelectors, map[string]interface{}{
+			"matchLabels": selector,
+		})
+	}
+
+	// If ClusterId is provided directly, add it as a selector
+	if bpRequest.ClusterId != "" {
+		// Check if we already have a selector for this cluster
+		hasClusterSelector := false
+		for _, selector := range clusterSelectors {
+			if s, ok := selector.(map[string]interface{}); ok {
+				if matchLabels, ok := s["matchLabels"].(map[string]string); ok {
+					if clusterName, ok := matchLabels["kubernetes.io/cluster-name"]; ok && clusterName == bpRequest.ClusterId {
+						hasClusterSelector = true
+						break
+					}
+				}
+			}
+		}
+
+		if !hasClusterSelector {
+			clusterSelectors = append(clusterSelectors, map[string]interface{}{
+				"matchLabels": map[string]string{
+					"kubernetes.io/cluster-name": bpRequest.ClusterId,
+				},
+			})
+		}
+	}
+
+	// Set the cluster selectors in the policy object
+	policyObj["spec"].(map[string]interface{})["clusterSelectors"] = clusterSelectors
+
+	// Add downsync rules for API groups and resources
+	downsyncRules := []interface{}{}
+	for i, apiGroup := range bpRequest.WorkloadSelectors.ApiGroups {
+		if i < len(bpRequest.WorkloadSelectors.Resources) {
+			resource := bpRequest.WorkloadSelectors.Resources[i]
+
+			// Create a downsync entry
+			apiGroupCopy := apiGroup // Copy to avoid reference issues
+			namespaces := bpRequest.WorkloadSelectors.Namespaces
+
+			// If no namespaces provided, use the binding policy namespace
+			if len(namespaces) == 0 {
+				namespaces = []string{bpRequest.Namespace}
+			}
+
+			// Make sure apiGroup is never empty
+			if apiGroupCopy == "" {
+				apiGroupCopy = "core"
+			}
+			downsyncRules = append(downsyncRules, map[string]interface{}{
+				"apiGroup":   apiGroupCopy,
+				"resources":  []string{resource},
+				"namespaces": namespaces,
+			})
+		}
+	}
+
+	// Add specific workloads if provided
+	for _, workload := range bpRequest.WorkloadSelectors.Workloads {
+		// Skip if essential fields are missing
+		if workload.APIVersion == "" || workload.Kind == "" || workload.Name == "" {
+			continue
+		}
+
+		// Handle namespace (use the workload's namespace or the binding policy namespace)
+		namespace := workload.Namespace
+		if namespace == "" {
+			namespace = bpRequest.Namespace
+		}
+
+		// Extract API group and version from apiVersion (e.g., "apps/v1" -> "apps")
+		apiGroupValue := "core" // Default for core resources
+		if strings.Contains(workload.APIVersion, "/") {
+			parts := strings.Split(workload.APIVersion, "/")
+			apiGroupValue = parts[0]
+		}
+
+		// Add this to the metadata for tracking
+		metadata := policyObj["metadata"].(map[string]interface{})
+		if metadata["annotations"] == nil {
+			metadata["annotations"] = map[string]string{}
+		}
+		annotations := metadata["annotations"].(map[string]string)
+		annotations["specificWorkloads"] = fmt.Sprintf("%s,%s,%s,%s",
+			workload.APIVersion, workload.Kind, workload.Name, namespace)
+
+		// Create a downsync entry for this specific workload type if not already added
+		resourceName := strings.ToLower(workload.Kind) + "s" // Convert to plural form
+
+		// Check if this resource already exists in the downsync rules
+		resourceExists := false
+		for _, rule := range downsyncRules {
+			if r, ok := rule.(map[string]interface{}); ok {
+				if ag, ok := r["apiGroup"].(string); ok && ag == apiGroupValue {
+					if resources, ok := r["resources"].([]string); ok {
+						for _, res := range resources {
+							if res == resourceName {
+								if ns, ok := r["namespaces"].([]string); ok {
+									for _, n := range ns {
+										if n == namespace {
+											resourceExists = true
+											break
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// If not already added, create a new downsync entry
+		if !resourceExists {
+			// Make sure apiGroup is never empty
+			if apiGroupValue == "" {
+				apiGroupValue = "core"
+			}
+			downsyncRules = append(downsyncRules, map[string]interface{}{
+				"apiGroup":   apiGroupValue,
+				"resources":  []string{resourceName},
+				"namespaces": []string{namespace},
+			})
+		}
+	}
+
+	// Set the downsync rules in the policy object
+	policyObj["spec"].(map[string]interface{})["downsync"] = downsyncRules
+
+	// Add custom labels if provided
+	if len(bpRequest.CustomLabels) > 0 {
+		metadata := policyObj["metadata"].(map[string]interface{})
+		metadata["labels"] = bpRequest.CustomLabels
+	}
+
+	// Add annotations for propagation mode and update strategy if provided
+	if bpRequest.PropagationMode != "" || bpRequest.UpdateStrategy != "" {
+		metadata := policyObj["metadata"].(map[string]interface{})
+		if metadata["annotations"] == nil {
+			metadata["annotations"] = map[string]string{}
+		}
+		annotations := metadata["annotations"].(map[string]string)
+
+		if bpRequest.PropagationMode != "" {
+			annotations["propagationMode"] = bpRequest.PropagationMode
+		}
+		if bpRequest.UpdateStrategy != "" {
+			annotations["updateStrategy"] = bpRequest.UpdateStrategy
+		}
+	}
+
+	// Generate YAML for the policy object
+	yamlData, err := yaml.Marshal(policyObj)
+	if err != nil {
+		fmt.Printf("Debug - YAML marshaling error: %v\n", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to generate YAML: %s", err.Error())})
+		return
+	}
+	rawYAML := string(yamlData)
+	fmt.Printf("Debug - Generated YAML:\n%s\n", rawYAML)
+
+	// Now parse back into a BindingPolicy struct
+	newBP := &v1alpha1.BindingPolicy{}
+	if err := yaml.Unmarshal(yamlData, newBP); err != nil {
+		fmt.Printf("Debug - Error parsing generated YAML back into BindingPolicy: %v\n", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to parse generated YAML: %s", err.Error())})
+		return
+	}
+
+	// Ensure the name is set
+	if newBP.Name == "" {
+		newBP.Name = bpRequest.Name
+		fmt.Printf("Debug - Name was empty, setting to: %s\n", bpRequest.Name)
+	}
+
+	// Ensure each downsync rule has a non-empty apiGroup
+	for i := range newBP.Spec.Downsync {
+		if newBP.Spec.Downsync[i].APIGroup == nil || *newBP.Spec.Downsync[i].APIGroup == "" {
+			coreGroup := "core"
+			newBP.Spec.Downsync[i].APIGroup = &coreGroup
+			fmt.Printf("Debug - Fixed empty APIGroup in downsync[%d] to 'core'\n", i)
+		}
+	}
+
+	// Create a StoredBindingPolicy for cache
+	storedBP := &StoredBindingPolicy{
+		Name:              newBP.Name,
+		Namespace:         newBP.Namespace,
+		ClusterSelectors:  bpRequest.ClusterSelectors,
+		APIGroups:         bpRequest.WorkloadSelectors.ApiGroups,
+		Resources:         bpRequest.WorkloadSelectors.Resources,
+		Namespaces:        bpRequest.WorkloadSelectors.Namespaces,
+		SpecificWorkloads: bpRequest.WorkloadSelectors.Workloads,
+		RawYAML:           rawYAML,
+	}
+
+	// Store policy before API call
+	uiCreatedPolicies[newBP.Name] = storedBP
+	fmt.Printf("Debug - Stored policy in memory cache with key: %s\n", newBP.Name)
+
+	// Get client
+	c, err := getClientForBp()
+	if err != nil {
+		fmt.Printf("Debug - Client creation error: %v\n", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create client: %s", err.Error())})
+		return
+	}
+
+	// Create the binding policy
+	_, err = c.BindingPolicies().Create(context.TODO(), newBP, v1.CreateOptions{})
+	if err != nil {
+		if strings.Contains(err.Error(), "already exists") {
+			ctx.JSON(http.StatusConflict, gin.H{
+				"error":  fmt.Sprintf("BindingPolicy '%s' in namespace '%s' already exists", newBP.Name, newBP.Namespace),
+				"status": "exists",
+			})
+			return
+		}
+		fmt.Printf("Debug - BP creation error: %v\n", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create binding policy: %s", err.Error())})
+		return
+	}
+
+	// Extract clusters for response
+	clusters := []string{}
+	for _, selector := range bpRequest.ClusterSelectors {
+		if clusterName, ok := selector["kubernetes.io/cluster-name"]; ok {
+			clusters = append(clusters, clusterName)
+		}
+	}
+	// Add cluster from direct clusterId if available
+	if bpRequest.ClusterId != "" && !contains(clusters, bpRequest.ClusterId) {
+		clusters = append(clusters, bpRequest.ClusterId)
+	}
+
+	// Extract workloads for response
+	workloads := []string{}
+	for i, apiGroup := range bpRequest.WorkloadSelectors.ApiGroups {
+		if i < len(bpRequest.WorkloadSelectors.Resources) {
+			resourceLower := strings.ToLower(bpRequest.WorkloadSelectors.Resources[i])
+			workloadType := fmt.Sprintf("%s/%s", apiGroup, resourceLower)
+
+			if len(bpRequest.WorkloadSelectors.Namespaces) > 0 {
+				for _, ns := range bpRequest.WorkloadSelectors.Namespaces {
+					workloads = append(workloads, fmt.Sprintf("%s (ns:%s)", workloadType, ns))
+				}
+			} else {
+				workloads = append(workloads, workloadType)
+			}
+		}
+	}
+	for _, workload := range bpRequest.WorkloadSelectors.Workloads {
+		workloadDesc := fmt.Sprintf("Specific: %s/%s", workload.APIVersion, workload.Kind)
+		if workload.Name != "" {
+			workloadDesc += fmt.Sprintf(": %s", workload.Name)
+		}
+		if workload.Namespace != "" {
+			workloadDesc += fmt.Sprintf(" (ns:%s)", workload.Namespace)
+		}
+		workloads = append(workloads, workloadDesc)
+	}
+
+	// Add workload from direct workloadId if available
+	if bpRequest.WorkloadId != "" {
+		workloadDesc := fmt.Sprintf("Specific: %s", bpRequest.WorkloadId)
+		if !contains(workloads, workloadDesc) {
+			workloads = append(workloads, workloadDesc)
+		}
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": fmt.Sprintf("Created binding policy '%s' in namespace '%s' successfully", newBP.Name, newBP.Namespace),
+		"bindingPolicy": gin.H{
+			"name":           newBP.Name,
+			"namespace":      newBP.Namespace,
+			"status":         "inactive", // New policies start as inactive
+			"bindingMode":    "Downsync", // Only Downsync is supported
+			"clusters":       clusters,
+			"workloads":      workloads,
+			"clustersCount":  len(clusters),
+			"workloadsCount": len(workloads),
+			"yaml":           rawYAML,
+		},
+	})
+}
+
+// Helper function to check if a string is in a slice
+func contains(slice []string, str string) bool {
+	for _, item := range slice {
+		if item == str {
+			return true
+		}
+	}
+	return false
+}
+
+// CreateQuickBindingPolicy creates a simple binding policy connecting a workload to a cluster
+func CreateQuickBindingPolicy(ctx *gin.Context) {
+	fmt.Printf("Debug - Starting CreateQuickBindingPolicy handler\n")
+
+	// Define a struct to parse the quick connection request
+	type QuickBindingPolicyRequest struct {
+		WorkloadId string `json:"workloadId"` // The ID of the workload
+		ClusterId  string `json:"clusterId"`  // The ID of the cluster
+		PolicyName string `json:"policyName"` // Optional custom name for the policy
+		Namespace  string `json:"namespace"`  // Optional namespace
+	}
+
+	var request QuickBindingPolicyRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid JSON format: %s", err.Error())})
+		return
+	}
+
+	// Validate required fields
+	if request.WorkloadId == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "workloadId is required"})
+		return
+	}
+
+	if request.ClusterId == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "clusterId is required"})
+		return
+	}
+
+	// Set default namespace if not provided
+	namespace := "default"
+	if request.Namespace != "" {
+		namespace = request.Namespace
+	}
+
+	// Generate a policy name if not provided
+	policyName := request.PolicyName
+	if policyName == "" {
+		// Create a name based on workload and cluster IDs
+		policyName = fmt.Sprintf("%s-to-%s", request.WorkloadId, request.ClusterId)
+		// Clean up the name to be valid for Kubernetes
+		policyName = strings.ReplaceAll(policyName, "/", "-")
+		policyName = strings.ReplaceAll(policyName, ":", "-")
+		policyName = strings.ToLower(policyName)
+	}
+
+	// Create a policy as a generic map that we'll convert to YAML
+	policyObj := map[string]interface{}{
+		"apiVersion": "control.kubestellar.io/v1alpha1",
+		"kind":       "BindingPolicy",
+		"metadata": map[string]interface{}{
+			"name":      policyName,
+			"namespace": namespace,
+			"annotations": map[string]string{
+				"created-by":         "kubestellar-ui-drag-drop",
+				"workload-id":        request.WorkloadId,
+				"cluster-id":         request.ClusterId,
+				"creation-timestamp": time.Now().Format(time.RFC3339),
+			},
+		},
+		"spec": map[string]interface{}{
+			"clusterSelectors": []interface{}{
+				map[string]interface{}{
+					"matchLabels": map[string]string{
+						"kubernetes.io/cluster-name": request.ClusterId,
+					},
+				},
+			},
+			"downsync": []interface{}{},
+		},
+	}
+
+	// Parse workload ID to extract information
+	// Format could be: Deployment/nginx or apps:v1:Deployment/nginx
+	var apiGroup string = "core"
+	var kind string
+	var workloadName string
+
+	if strings.Contains(request.WorkloadId, ":") {
+		// Format: apps:v1:Deployment/nginx
+		parts := strings.Split(request.WorkloadId, ":")
+		if len(parts) >= 3 {
+			apiGroup = parts[0]
+			kind = parts[2]
+			if strings.Contains(kind, "/") {
+				kindParts := strings.Split(kind, "/")
+				kind = kindParts[0]
+				if len(kindParts) > 1 {
+					workloadName = kindParts[1]
+				}
+			}
+		}
+	} else if strings.Contains(request.WorkloadId, "/") {
+		// Format: Deployment/nginx
+		parts := strings.Split(request.WorkloadId, "/")
+		kind = parts[0]
+		if len(parts) > 1 {
+			workloadName = parts[1]
+		}
+
+		// Set default API group based on kind
+		if strings.ToLower(kind) == "deployment" ||
+			strings.ToLower(kind) == "statefulset" ||
+			strings.ToLower(kind) == "daemonset" ||
+			strings.ToLower(kind) == "replicaset" {
+			apiGroup = "apps"
+		} else if strings.ToLower(kind) == "job" || strings.ToLower(kind) == "cronjob" {
+			apiGroup = "batch"
+		}
+	} else {
+		// Just a workload kind
+		kind = request.WorkloadId
+	}
+
+	// Create the downsync rule
+	if kind != "" {
+		// Convert kind to resource (plural)
+		resource := strings.ToLower(kind)
+		if !strings.HasSuffix(resource, "s") {
+			resource += "s"
+		}
+
+		// Make sure apiGroup is never empty
+		if apiGroup == "" {
+			apiGroup = "core"
+		}
+
+		// Create the downsync rule
+		downsyncRule := map[string]interface{}{
+			"apiGroup":   apiGroup,
+			"resources":  []string{resource},
+			"namespaces": []string{namespace},
+		}
+
+		// If specific workload name is available, add it to annotations
+		if workloadName != "" {
+			metadata := policyObj["metadata"].(map[string]interface{})
+			annotations := metadata["annotations"].(map[string]string)
+			annotations["specific-workload-name"] = workloadName
+		}
+
+		// Add the downsync rule
+		downsyncRules := policyObj["spec"].(map[string]interface{})["downsync"].([]interface{})
+		downsyncRules = append(downsyncRules, downsyncRule)
+		policyObj["spec"].(map[string]interface{})["downsync"] = downsyncRules
+	}
+
+	// Generate YAML for the policy object
+	yamlData, err := yaml.Marshal(policyObj)
+	if err != nil {
+		fmt.Printf("Debug - YAML marshaling error: %v\n", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to generate YAML: %s", err.Error())})
+		return
+	}
+	rawYAML := string(yamlData)
+	fmt.Printf("Debug - Generated YAML:\n%s\n", rawYAML)
+
+	// Now parse back into a BindingPolicy struct
+	newBP := &v1alpha1.BindingPolicy{}
+	if err := yaml.Unmarshal(yamlData, newBP); err != nil {
+		fmt.Printf("Debug - Error parsing generated YAML back into BindingPolicy: %v\n", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to parse generated YAML: %s", err.Error())})
+		return
+	}
+
+	// Ensure the name is set
+	if newBP.Name == "" {
+		newBP.Name = policyName
+		fmt.Printf("Debug - Name was empty, setting to: %s\n", policyName)
+	}
+
+	// Ensure each downsync rule has a non-empty apiGroup
+	for i := range newBP.Spec.Downsync {
+		if newBP.Spec.Downsync[i].APIGroup == nil || *newBP.Spec.Downsync[i].APIGroup == "" {
+			coreGroup := "core"
+			newBP.Spec.Downsync[i].APIGroup = &coreGroup
+			fmt.Printf("Debug - Fixed empty APIGroup in downsync[%d] to 'core'\n", i)
+		}
+	}
+
+	// Create a StoredBindingPolicy for cache
+	specificWorkloads := []WorkloadInfo{}
+	if workloadName != "" {
+		specificWorkloads = append(specificWorkloads, WorkloadInfo{
+			APIVersion: fmt.Sprintf("%s/v1", apiGroup),
+			Kind:       kind,
+			Name:       workloadName,
+			Namespace:  namespace,
+		})
+	}
+
+	// Build ClusterSelectors for storage
+	clusterSelectors := []map[string]string{
+		{
+			"kubernetes.io/cluster-name": request.ClusterId,
+		},
+	}
+
+	// Store the policy in memory
+	storedBP := &StoredBindingPolicy{
+		Name:              policyName,
+		Namespace:         namespace,
+		ClusterSelectors:  clusterSelectors,
+		APIGroups:         []string{apiGroup},
+		Resources:         []string{strings.ToLower(kind) + "s"},
+		Namespaces:        []string{namespace},
+		SpecificWorkloads: specificWorkloads,
+		RawYAML:           rawYAML,
+	}
+	uiCreatedPolicies[policyName] = storedBP
+
+	// Get client
+	c, err := getClientForBp()
+	if err != nil {
+		fmt.Printf("Debug - Client creation error: %v\n", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create client: %s", err.Error())})
+		return
+	}
+
+	// Create the binding policy
+	_, err = c.BindingPolicies().Create(context.TODO(), newBP, v1.CreateOptions{})
+	if err != nil {
+		if strings.Contains(err.Error(), "already exists") {
+			ctx.JSON(http.StatusConflict, gin.H{
+				"error":  fmt.Sprintf("BindingPolicy '%s' in namespace '%s' already exists", policyName, namespace),
+				"status": "exists",
+			})
+			return
+		}
+		fmt.Printf("Debug - BP creation error: %v\n", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create binding policy: %s", err.Error())})
+		return
+	}
+
+	// Build the response
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": fmt.Sprintf("Created binding policy '%s' in namespace '%s' successfully", policyName, namespace),
+		"bindingPolicy": gin.H{
+			"name":           policyName,
+			"namespace":      namespace,
+			"status":         "inactive", // New policies start as inactive
+			"bindingMode":    "Downsync", // Only Downsync is supported
+			"clusters":       []string{request.ClusterId},
+			"workloads":      []string{request.WorkloadId},
+			"clustersCount":  1, // Always 1 cluster for quick binding policy
+			"workloadsCount": 1, // Always 1 workload for quick binding policy
+			"yaml":           rawYAML,
+		},
+	})
+}
+
+// GenerateQuickBindingPolicyYAML generates the YAML for a binding policy connecting a workload to a cluster
+// without actually creating the policy
+func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
+	fmt.Printf("Debug - Starting GenerateQuickBindingPolicyYAML handler\n")
+
+	// Define a struct to parse the request - same as in CreateQuickBindingPolicy
+	type QuickBindingPolicyRequest struct {
+		WorkloadId string `json:"workloadId"` // The ID of the workload
+		ClusterId  string `json:"clusterId"`  // The ID of the cluster
+		PolicyName string `json:"policyName"` // Optional custom name for the policy
+		Namespace  string `json:"namespace"`  // Optional namespace
+	}
+
+	var request QuickBindingPolicyRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid JSON format: %s", err.Error())})
+		return
+	}
+
+	// Validate required fields
+	if request.WorkloadId == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "workloadId is required"})
+		return
+	}
+	if request.ClusterId == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "clusterId is required"})
+		return
+	}
+
+	// Set default namespace if not provided
+	namespace := "default"
+	if request.Namespace != "" {
+		namespace = request.Namespace
+	}
+
+	// Generate a policy name if not provided
+	policyName := request.PolicyName
+	if policyName == "" {
+		// Create a name based on workload and cluster IDs
+		policyName = fmt.Sprintf("%s-to-%s", request.WorkloadId, request.ClusterId)
+		// Clean up the name to be valid for Kubernetes
+		policyName = strings.ReplaceAll(policyName, "/", "-")
+		policyName = strings.ReplaceAll(policyName, ":", "-")
+		policyName = strings.ToLower(policyName)
+	}
+
+	// Create a policy as a generic map that we'll convert to YAML
+	policyObj := map[string]interface{}{
+		"apiVersion": "control.kubestellar.io/v1alpha1",
+		"kind":       "BindingPolicy",
+		"metadata": map[string]interface{}{
+			"name":      policyName,
+			"namespace": namespace,
+			"annotations": map[string]string{
+				"created-by":         "kubestellar-ui-yaml-generator",
+				"workload-id":        request.WorkloadId,
+				"cluster-id":         request.ClusterId,
+				"creation-timestamp": time.Now().Format(time.RFC3339),
+			},
+		},
+		"spec": map[string]interface{}{
+			"clusterSelectors": []interface{}{
+				map[string]interface{}{
+					"matchLabels": map[string]string{
+						"kubernetes.io/cluster-name": request.ClusterId,
+					},
+				},
+			},
+			"downsync": []interface{}{},
+		},
+	}
+
+	// Parse workload ID to extract information
+	// Format could be: Deployment/nginx or apps:v1:Deployment/nginx
+	var apiGroup string = "core"
+	var kind string
+	var workloadName string
+
+	if strings.Contains(request.WorkloadId, ":") {
+		// Format: apps:v1:Deployment/nginx
+		parts := strings.Split(request.WorkloadId, ":")
+		if len(parts) >= 3 {
+			apiGroup = parts[0]
+			kind = parts[2]
+			if strings.Contains(kind, "/") {
+				kindParts := strings.Split(kind, "/")
+				kind = kindParts[0]
+				if len(kindParts) > 1 {
+					workloadName = kindParts[1]
+				}
+			}
+		}
+	} else if strings.Contains(request.WorkloadId, "/") {
+		// Format: Deployment/nginx
+		parts := strings.Split(request.WorkloadId, "/")
+		kind = parts[0]
+		if len(parts) > 1 {
+			workloadName = parts[1]
+		}
+
+		// Set default API group based on kind
+		if strings.ToLower(kind) == "deployment" ||
+			strings.ToLower(kind) == "statefulset" ||
+			strings.ToLower(kind) == "daemonset" ||
+			strings.ToLower(kind) == "replicaset" {
+			apiGroup = "apps"
+		} else if strings.ToLower(kind) == "job" || strings.ToLower(kind) == "cronjob" {
+			apiGroup = "batch"
+		}
+	} else {
+		// Just a workload kind
+		kind = request.WorkloadId
+	}
+
+	// Create the downsync rule
+	if kind != "" {
+		// Convert kind to resource (plural)
+		resource := strings.ToLower(kind)
+		if !strings.HasSuffix(resource, "s") {
+			resource += "s"
+		}
+
+		// Make sure apiGroup is never empty
+		if apiGroup == "" {
+			apiGroup = "core"
+		}
+
+		// Create the downsync rule
+		downsyncRule := map[string]interface{}{
+			"apiGroup":   apiGroup,
+			"resources":  []string{resource},
+			"namespaces": []string{namespace},
+		}
+
+		// If specific workload name is available, add it to annotations
+		if workloadName != "" {
+			metadata := policyObj["metadata"].(map[string]interface{})
+			annotations := metadata["annotations"].(map[string]string)
+			annotations["specific-workload-name"] = workloadName
+		}
+
+		// Add the downsync rule
+		downsyncRules := policyObj["spec"].(map[string]interface{})["downsync"].([]interface{})
+		downsyncRules = append(downsyncRules, downsyncRule)
+		policyObj["spec"].(map[string]interface{})["downsync"] = downsyncRules
+	}
+
+	// Generate YAML for the policy object
+	yamlData, err := yaml.Marshal(policyObj)
+	if err != nil {
+		fmt.Printf("Debug - YAML marshaling error: %v\n", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to generate YAML: %s", err.Error())})
+		return
+	}
+	rawYAML := string(yamlData)
+	fmt.Printf("Debug - Generated YAML:\n%s\n", rawYAML)
+
+	// Return the YAML and policy info
+	ctx.JSON(http.StatusOK, gin.H{
+		"yaml": rawYAML,
+		"bindingPolicy": gin.H{
+			"name":           policyName,
+			"namespace":      namespace,
+			"clusterId":      request.ClusterId,
+			"workloadId":     request.WorkloadId,
+			"apiGroup":       apiGroup,
+			"resourceKind":   kind,
+			"status":         "inactive", // Would be inactive if created
+			"bindingMode":    "Downsync", // Only Downsync is supported
+			"clusters":       []string{request.ClusterId},
+			"workloads":      []string{request.WorkloadId},
+			"clustersCount":  1, // Always 1 cluster for quick binding policy
+			"workloadsCount": 1, // Always 1 workload for quick binding policy
+		},
+	})
 }

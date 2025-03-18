@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { Box, Typography, Chip } from '@mui/material';
+import KubernetesIcon from '../KubernetesIcon';
 
 interface PolicyNodeData {
   policy: {
@@ -31,16 +32,25 @@ const PolicyNode: React.FC<NodeProps<PolicyNodeData>> = ({ data }) => {
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
         }}
       >
-        <Typography 
-          variant="subtitle2" 
-          sx={{ 
-            fontWeight: 600, 
-            color: theme === 'dark' ? '#fff' : '#000',
-            mb: 1
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            mb: 1,
           }}
         >
-          {label}
-        </Typography>
+          <KubernetesIcon type="policy" size={30} sx={{ mr: 1 }} />
+          <Typography 
+            variant="subtitle2" 
+            sx={{ 
+              fontWeight: 600, 
+              color: theme === 'dark' ? '#fff' : '#000',
+            }}
+          >
+            {label}
+          </Typography>
+        </Box>
         
         <Chip 
           label={policy.status} 
@@ -54,12 +64,18 @@ const PolicyNode: React.FC<NodeProps<PolicyNodeData>> = ({ data }) => {
         />
         
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
-          <Typography variant="caption" sx={{ color: theme === 'dark' ? '#ccc' : '#666' }}>
-            Clusters: {policy.clusterList?.length || 0}
-          </Typography>
-          <Typography variant="caption" sx={{ color: theme === 'dark' ? '#ccc' : '#666' }}>
-            Workloads: {policy.workloadList?.length || 0}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <KubernetesIcon type="cluster" size={16} sx={{ mr: 0.5 }} />
+            <Typography variant="caption" sx={{ color: theme === 'dark' ? '#ccc' : '#666' }}>
+              {policy.clusterList?.length || 0}
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <KubernetesIcon type="workload" size={16} sx={{ mr: 0.5 }} />
+            <Typography variant="caption" sx={{ color: theme === 'dark' ? '#ccc' : '#666' }}>
+              {policy.workloadList?.length || 0}
+            </Typography>
+          </Box>
         </Box>
       </Box>
       

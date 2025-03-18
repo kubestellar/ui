@@ -9,14 +9,22 @@ import TreeView from "../components/TreeViewComponent";
 import { lazy, Suspense } from "react";
 import LoadingFallback from "../components/LoadingFallback";
 import WecsTreeview from "../components/WecsTopology";
-import Profile from "../components/Profile";
 import ProtectedRoute from "../components/ProtectedRoute";
 import PublicRoute from "../components/PublicRoute";
+import KubeStellarVisualization from "../components/login/index";
 
 const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ "../components/Clusters"));
 const ITSLazy = lazy(() => import(/* webpackPrefetch: true */ "../pages/ITS"));
 
 export const routesConfig: RouteObject[] = [
+  {
+    path: "/login", 
+    element: (
+      <PublicRoute>
+        <KubeStellarVisualization />
+      </PublicRoute>
+    ) 
+  },
   {
     path: "/",
     element: <Layout />, 
@@ -87,14 +95,6 @@ export const routesConfig: RouteObject[] = [
           <ProtectedRoute>
             <WecsTreeview />
           </ProtectedRoute>
-        ) 
-      },
-      { 
-        path: "profile", 
-        element: (
-          <PublicRoute>
-            <Profile />
-          </PublicRoute>
         ) 
       },
       { 

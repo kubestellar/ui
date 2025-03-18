@@ -33,7 +33,7 @@ interface ConnectionManagerState {
 // Create the store
 export const useConnectionManagerStore = create<ConnectionManagerState>((set) => ({
   // Initial state
-  connectionMode: false,
+  connectionMode: true,
   activeConnection: {
     source: null,
     sourceType: null,
@@ -77,7 +77,6 @@ export const useConnectionManagerStore = create<ConnectionManagerState>((set) =>
       mouseX: 0,
       mouseY: 0
     },
-    invalidConnectionWarning: null,
-    quickPolicyDialogOpen: false
+    invalidConnectionWarning: null
   })
 })); 
