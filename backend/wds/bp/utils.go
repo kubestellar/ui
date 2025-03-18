@@ -250,14 +250,14 @@ func watchOnBps() {
 		switch event.Type {
 		case "MODIFIED":
 			log.LogInfo("bp modfied")
-			bp, ok := event.Object.(*v1alpha1.BindingPolicy)
+			_, ok := event.Object.(*v1alpha1.BindingPolicy)
 			if !ok {
 				log.LogInfo("Wrong object type")
 			}
 
 		case "ADDED":
 			log.LogInfo("Added a new bp")
-			bp, ok := event.Object.(*v1alpha1.BindingPolicy)
+			_, ok := event.Object.(*v1alpha1.BindingPolicy)
 			if !ok {
 				log.LogInfo("Wrong object type")
 			}
