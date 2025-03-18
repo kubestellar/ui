@@ -417,7 +417,7 @@ func GetNamespaceResourcesLimited(namespace string) (*NamespaceDetails, error) {
 		key   string
 		items []unstructured.Unstructured
 	}, 50)
-	
+
 	// Limit concurrent requests with semaphore
 	semaphore := make(chan struct{}, 8) // Allow 8 concurrent requests
 
@@ -428,7 +428,7 @@ func GetNamespaceResourcesLimited(namespace string) (*NamespaceDetails, error) {
 				semaphore <- struct{}{} // Acquire semaphore
 				cacheKey := fmt.Sprintf("ns_%s_res_%s_%s_%s", namespace, gvr.Group, gvr.Version, gvr.Resource)
 				resourceKey := fmt.Sprintf("%s.%s/%s", gvr.Group, gvr.Version, gvr.Resource)
-				
+
 				// Try from cache first
 				cachedResource, _ := redis.GetNamespaceCache(cacheKey)
 				if cachedResource != "" {
@@ -457,7 +457,7 @@ func GetNamespaceResourcesLimited(namespace string) (*NamespaceDetails, error) {
 						key   string
 						items []unstructured.Unstructured
 					}{key: resourceKey, items: list.Items}
-					
+
 					// Cache with TTL based on resource type
 					cacheDuration := cacheTTL
 					if strings.Contains(resourceKey, "pod") || strings.Contains(resourceKey, "event") {
@@ -465,7 +465,7 @@ func GetNamespaceResourcesLimited(namespace string) (*NamespaceDetails, error) {
 					} else {
 						cacheDuration = 2 * time.Minute // Longer cache for stable resources
 					}
-					
+
 					if jsonData, err := json.Marshal(list.Items); err == nil {
 						redis.SetNamespaceCache(cacheKey, string(jsonData), cacheDuration)
 					}
@@ -488,7 +488,7 @@ func GetNamespaceResourcesLimited(namespace string) (*NamespaceDetails, error) {
 			if !containsVerb(apiResource.Verbs, "list") {
 				continue
 			}
-			
+
 			// Skip subresources (contains slash)
 			if strings.Contains(apiResource.Name, "/") {
 				continue
@@ -581,7 +581,7 @@ func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			if currentHash != lastDataHash {
 				if err := conn.WriteMessage(websocket.TextMessage, jsonData); err == nil {
 					lastDataHash = currentHash
-					
+
 					// Adaptive rate limiting - slow down if data is stable
 					if ticker.Reset(10 * time.Second); true {
 						// Keeps connection alive but reduces server load
@@ -625,7 +625,7 @@ func getLatestNamespaceData() ([]NamespaceDetails, error) {
 
 	// Use buffered channel as semaphore for concurrent processing
 	semaphore := make(chan struct{}, 10)
-	
+
 	for _, ns := range namespaces.Items {
 		// Skip only truly system namespaces that should be hidden
 		if shouldHideNamespace(ns.Name) {
@@ -635,9 +635,9 @@ func getLatestNamespaceData() ([]NamespaceDetails, error) {
 		wg.Add(1)
 		go func(ns v1.Namespace) {
 			defer wg.Done()
-			semaphore <- struct{}{} // Acquire semaphore
+			semaphore <- struct{}{}        // Acquire semaphore
 			defer func() { <-semaphore }() // Release semaphore
-			
+
 			// Try cache first for this namespace
 			nsKey := fmt.Sprintf("namespace_%s", ns.Name)
 			cachedNs, err := redis.GetNamespaceCache(nsKey)
@@ -650,7 +650,7 @@ func getLatestNamespaceData() ([]NamespaceDetails, error) {
 					return
 				}
 			}
-			
+
 			// Get resource details - limited if under heavy load
 			details, err := GetNamespaceResourcesLimited(ns.Name)
 			if err != nil {
@@ -665,11 +665,11 @@ func getLatestNamespaceData() ([]NamespaceDetails, error) {
 				mu.Unlock()
 				return
 			}
-			
+
 			mu.Lock()
 			result = append(result, *details)
 			mu.Unlock()
-			
+
 			// Cache this namespace data
 			if jsonData, err := json.Marshal(details); err == nil {
 				redis.SetNamespaceCache(nsKey, string(jsonData), cacheTTL)
