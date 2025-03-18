@@ -1,20 +1,15 @@
 apiVersion: control.kubestellar.io/v1alpha1
 kind: BindingPolicy
 metadata:
-  name: nginx
+  name: custom-recent-1
+  namespace: default
 spec:
   clusterSelectors:
-  - matchLabels:
-      location-group: edge
+    - matchLabels:
+        kubernetes.io/cluster-name: cluster1
+    - matchLabels:
+        kubernetes.io/cluster-name: cluster2
   downsync:
-  - objectSelectors:
-    - matchLabels:
-        app.kubernetes.io/name: nginx
-    resources:
-    - namespaces
-  - createOnly: true
-    objectSelectors:
-    - matchLabels:
-        app.kubernetes.io/name: nginx
-    resources:
-    - deployments
+    - apiGroup: "apps"
+      resources: ["Deployment"]
+      namespaces: ["default"]

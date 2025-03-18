@@ -3,6 +3,7 @@ package redis
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/katamyra/kubestellarUI/log"
@@ -12,6 +13,9 @@ import (
 
 var ctx = context.Background()
 var rdb *redis.Client
+
+// mutex for bp operations in redis
+var bpMx sync.RWMutex
 
 const filePathKey = "filepath"
 
@@ -103,6 +107,45 @@ func GetGitToken() (string, error) {
 		return "", fmt.Errorf("failed to get gitToken: %v", err)
 	}
 	return val, nil
+}
+
+// stores binding policy
+func SetBpCmd(name string, bpJson string) error {
+	bpMx.Lock()
+	defer bpMx.Unlock()
+	err := rdb.HSet(ctx, "BPS", name, bpJson).Err()
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+
+// removes binding policy from the hash
+func DeleteBpcmd(name string) error {
+	bpMx.Lock()
+	defer bpMx.Unlock()
+	err := rdb.HDel(ctx, "BPS", name).Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// returns all BPs in the hash
+func GetallBpCmd() ([]string, error) {
+	bpMx.RLock()
+	defer bpMx.RUnlock()
+	v, err := rdb.HGetAll(ctx, "BPS").Result()
+	if err != nil {
+		return nil, err
+	}
+	var bpsSlice []string
+	for _, bp := range v {
+		bpsSlice = append(bpsSlice, bp)
+	}
+	return bpsSlice, nil
+
 }
 
 // intializes redis client
