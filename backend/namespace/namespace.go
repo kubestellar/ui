@@ -243,6 +243,7 @@ func DeleteNamespace(name string) error {
 	}
 	return nil
 }
+
 // GetAllNamespacesWithResources retrieves all namespaces with their resources
 func GetAllNamespacesWithResources() ([]NamespaceDetails, error) {
 	// Try to get data from cache first
@@ -269,11 +270,11 @@ func GetAllNamespacesWithResources() ([]NamespaceDetails, error) {
 
 	// Process namespaces with strict rate limiting
 	var (
-		wg       sync.WaitGroup
-		mu       sync.Mutex
-		result   = make([]NamespaceDetails, 0, len(namespaces.Items))
+		wg          sync.WaitGroup
+		mu          sync.Mutex
+		result      = make([]NamespaceDetails, 0, len(namespaces.Items))
 		rateLimiter = time.NewTicker(time.Second / 4) // Max 4 requests per second
-		errCount int
+		errCount    int
 	)
 	defer rateLimiter.Stop()
 
@@ -414,9 +415,9 @@ func GetNamespaceResourcesLimited(namespace string) (*NamespaceDetails, error) {
 
 	// Limit to important resources to avoid throttling and hide sensitive resources
 	importantResources := map[string]bool{
-		"pods":       true,
-		"services":   true,
-		"deployments": true,
+		"pods":         true,
+		"services":     true,
+		"deployments":  true,
 		"statefulsets": true,
 	}
 
@@ -425,7 +426,7 @@ func GetNamespaceResourcesLimited(namespace string) (*NamespaceDetails, error) {
 		if resourceCount >= 10 { // Limit number of resource types
 			break
 		}
-		
+
 		gv, err := schema.ParseGroupVersion(apiResourceList.GroupVersion)
 		if err != nil {
 			continue
@@ -454,7 +455,7 @@ func GetNamespaceResourcesLimited(namespace string) (*NamespaceDetails, error) {
 			}
 
 			resourceKey := fmt.Sprintf("%s.%s/%s", gvr.Group, gvr.Version, gvr.Resource)
-			
+
 			// Try from cache first
 			cacheKey := fmt.Sprintf("ns_%s_res_%s", namespace, resourceKey)
 			cachedResource, _ := redis.GetNamespaceCache(cacheKey)
@@ -554,7 +555,7 @@ func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			// Only send if data actually changed (using hash comparison)
 			currentHash := fmt.Sprintf("%d", len(jsonData))
 			lastSentHash, _ := redis.GetNamespaceCache("last_sent_hash")
-			
+
 			if currentHash != lastSentHash {
 				if err := conn.WriteMessage(websocket.TextMessage, jsonData); err == nil {
 					redis.SetNamespaceCache("last_sent_hash", currentHash, cacheTTL)
@@ -578,7 +579,7 @@ func getLatestNamespaceData() ([]NamespaceDetails, error) {
 	// Try live data with timeout
 	dataChan := make(chan []NamespaceDetails, 1)
 	errChan := make(chan error, 1)
-	
+
 	go func() {
 		data, err := GetAllNamespacesWithResources()
 		if err != nil {
@@ -636,37 +637,37 @@ func getMinimalNamespaceData() ([]NamespaceDetails, error) {
 // shouldHideNamespace returns true if a namespace should be hidden from the UI
 func shouldHideNamespace(name string) bool {
 	prefixesToHide := []string{
-		"kube-", 
-		"openshift-", 
+		"kube-",
+		"openshift-",
 		"istio-system",
 		"knative-",
 		"calico-",
 		"tigera-",
 	}
-	
+
 	for _, prefix := range prefixesToHide {
 		if strings.HasPrefix(name, prefix) {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
 // isSensitiveResource returns true if a resource type contains sensitive data
 func isSensitiveResource(resourceType string) bool {
 	sensitiveResources := map[string]bool{
-		"secrets":              true,
-		"configmaps":           true,
+		"secrets":                    true,
+		"configmaps":                 true,
 		"certificatesigningrequests": true,
-		"certificaterequests":  true,
-		"certificates":         true,
-		"tokenreviews":         true,
-		"rolebindings":         true,
-		"clusterrolebindings": true,
-		"roles":               true,
-		"clusterroles":        true,
+		"certificaterequests":        true,
+		"certificates":               true,
+		"tokenreviews":               true,
+		"rolebindings":               true,
+		"clusterrolebindings":        true,
+		"roles":                      true,
+		"clusterroles":               true,
 	}
-	
+
 	return sensitiveResources[resourceType]
 }
