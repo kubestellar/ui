@@ -278,6 +278,11 @@ func GetAllNamespacesWithResources() ([]NamespaceDetails, error) {
 	defer rateLimiter.Stop()
 
 	for _, ns := range namespaces.Items {
+		// Skip system namespaces
+		if shouldHideNamespace(ns.Name) {
+			continue
+		}
+
 		// Check if we already have this namespace in Redis cache
 		nsKey := fmt.Sprintf("namespace_%s", ns.Name)
 		cachedNs, err := redis.GetNamespaceCache(nsKey)
@@ -407,7 +412,7 @@ func GetNamespaceResourcesLimited(namespace string) (*NamespaceDetails, error) {
 		Resources: make(map[string][]unstructured.Unstructured),
 	}
 
-	// Limit to important resources to avoid throttling
+	// Limit to important resources to avoid throttling and hide sensitive resources
 	importantResources := map[string]bool{
 		"pods":       true,
 		"services":   true,
@@ -428,6 +433,11 @@ func GetNamespaceResourcesLimited(namespace string) (*NamespaceDetails, error) {
 
 		for _, apiResource := range apiResourceList.APIResources {
 			if !containsVerb(apiResource.Verbs, "list") {
+				continue
+			}
+
+			// Skip sensitive resources
+			if isSensitiveResource(apiResource.Name) {
 				continue
 			}
 
@@ -607,6 +617,11 @@ func getMinimalNamespaceData() ([]NamespaceDetails, error) {
 
 	result := make([]NamespaceDetails, 0, len(namespaces.Items))
 	for _, ns := range namespaces.Items {
+		// Skip system namespaces
+		if shouldHideNamespace(ns.Name) {
+			continue
+		}
+
 		result = append(result, NamespaceDetails{
 			Name:      ns.Name,
 			Status:    string(ns.Status.Phase),
@@ -616,4 +631,42 @@ func getMinimalNamespaceData() ([]NamespaceDetails, error) {
 	}
 
 	return result, nil
+}
+
+// shouldHideNamespace returns true if a namespace should be hidden from the UI
+func shouldHideNamespace(name string) bool {
+	prefixesToHide := []string{
+		"kube-", 
+		"openshift-", 
+		"istio-system",
+		"knative-",
+		"calico-",
+		"tigera-",
+	}
+	
+	for _, prefix := range prefixesToHide {
+		if strings.HasPrefix(name, prefix) {
+			return true
+		}
+	}
+	
+	return false
+}
+
+// isSensitiveResource returns true if a resource type contains sensitive data
+func isSensitiveResource(resourceType string) bool {
+	sensitiveResources := map[string]bool{
+		"secrets":              true,
+		"configmaps":           true,
+		"certificatesigningrequests": true,
+		"certificaterequests":  true,
+		"certificates":         true,
+		"tokenreviews":         true,
+		"rolebindings":         true,
+		"clusterrolebindings": true,
+		"roles":               true,
+		"clusterroles":        true,
+	}
+	
+	return sensitiveResources[resourceType]
 }
