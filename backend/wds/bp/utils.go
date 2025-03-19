@@ -235,6 +235,19 @@ func filterBPsByNamespace(bps []BindingPolicyWithStatus, namespace string) []Bin
 	return filtered
 }
 
+// check if content type is valid
+func contentTypeValid(t string) bool {
+
+	supportedTypes := []string{"application/yaml", "multipart/form-data"}
+	for _, v := range supportedTypes {
+		if t == v {
+			return true
+		}
+	}
+	return false
+
+}
+
 // watches on all binding policy resources , PROTOTYPE just for now
 func watchOnBps() {
 	c, err := getClientForBp()
