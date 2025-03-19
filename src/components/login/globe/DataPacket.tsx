@@ -2,27 +2,56 @@ import { useRef, useState, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
-// Data packet that travels along connections
+// Optimized data packet that travels along connections
 interface DataPacketProps {
   path: [number, number, number][];
   speed?: number;
   color?: string;
   size?: number;
+  isActive?: boolean;
 }
 
-const DataPacket = ({ path, speed = 1, color = "#00E396", size = 0.08 }: DataPacketProps) => {
+const DataPacket = ({ 
+  path, 
+  speed = 1, 
+  color = "#00E396", 
+  size = 0.08,
+  isActive = true
+}: DataPacketProps) => {
   const ref = useRef<THREE.Mesh>(null);
   const [progress, setProgress] = useState(0);
   const trailRef = useRef<THREE.Points>(null);
   
-  // Generate trail points
+  // Generate trail points - reduced particle count
   const trailPositions = useMemo(() => {
-    const count = 20;
+    const count = 10; // Reduced from 20
     const positions = new Float32Array(count * 3);
     return positions;
   }, []);
   
-  useFrame(() => {
+  // Shared geometry for all packets
+  const packetGeometry = useMemo(() => {
+    // Use lower poly count (8x8 instead of 16x16)
+    return new THREE.SphereGeometry(size, 8, 8);
+  }, [size]);
+  
+  // Create material once
+  const packetMaterial = useMemo(() => {
+    return new THREE.MeshBasicMaterial({ 
+      color: color,
+      transparent: true,
+      opacity: 0.9
+    });
+  }, [color]);
+  
+  // Optimize frame updates - only update every other frame
+  useFrame((state) => {
+    // Skip animation entirely when not active
+    if (!isActive) return;
+    
+    // Skip every other frame for better performance
+    if (Math.floor(state.clock.getElapsedTime() * 30) % 2 !== 0) return;
+    
     // Update packet position
     setProgress((prev) => (prev >= 1 ? 0 : prev + 0.005 * speed));
     
@@ -70,8 +99,8 @@ const DataPacket = ({ path, speed = 1, color = "#00E396", size = 0.08 }: DataPac
   
   return (
     <group>
-      {/* Simple trail */}
-      <points ref={trailRef}>
+      {/* Simple trail with optimized settings */}
+      <points ref={trailRef} frustumCulled>
         <bufferGeometry>
           <bufferAttribute
             attach="attributes-position"
@@ -80,18 +109,22 @@ const DataPacket = ({ path, speed = 1, color = "#00E396", size = 0.08 }: DataPac
         </bufferGeometry>
         <pointsMaterial 
           color={color} 
-          size={size * 0.8} 
+          size={size * 0.6} // Reduced size for better performance
           transparent 
-          opacity={0.6}
+          opacity={0.5}
           sizeAttenuation
+          depthWrite={false}
         />
       </points>
       
-      {/* Main data packet */}
-      <mesh ref={ref} position={position}>
-        <sphereGeometry args={[size, 16, 16]} />
-        <meshBasicMaterial color={color} />
-      </mesh>
+      {/* Main data packet - using shared geometry and materials */}
+      <mesh 
+        ref={ref} 
+        position={position} 
+        frustumCulled
+        geometry={packetGeometry}
+        material={packetMaterial}
+      />
     </group>
   );
 };
