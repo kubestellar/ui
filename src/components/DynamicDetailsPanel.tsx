@@ -20,26 +20,7 @@ import {
 import { FiX, FiRefreshCw, FiGitPullRequest, FiTrash2 } from "react-icons/fi";
 import Editor from "@monaco-editor/react";
 import jsyaml from "js-yaml";
-import { ResourceItem } from "./TreeViewComponent";
-
-// Extend the type definitions to include health in status
-interface ResourceStatus {
-  conditions?: { type: string; status: string }[];
-  phase?: string;
-  health?: { status: string }; // Add health property
-}
-
-interface ResourceMetadata {
-  name?: string;
-  namespace?: string;
-  creationTimestamp?: string;
-}
-
-interface ResourceItem {
-  metadata?: ResourceMetadata;
-  kind?: string;
-  status?: ResourceStatus;
-}
+import { ResourceItem } from "./TreeViewComponent"; // Adjust the import path to your TreeView file
 
 interface DynamicDetailsProps {
   namespace: string;
@@ -60,7 +41,7 @@ interface ResourceInfo {
   age: string;
   status: string;
   manifest: string;
-  health: string;
+  // Remove health since it’s not in ResourceItem.status
 }
 
 const DynamicDetailsPanel = ({
@@ -100,7 +81,6 @@ const DynamicDetailsPanel = ({
           resourceData?.status?.conditions?.[0]?.status ??
           resourceData?.status?.phase ??
           "Unknown",
-        health: resourceData?.status?.health?.status ?? "Unknown",
         manifest: resourceData
           ? JSON.stringify(resourceData, null, 2)
           : "No manifest available",
@@ -189,17 +169,7 @@ const DynamicDetailsPanel = ({
                 />
               ),
             },
-            {
-              label: "HEALTH",
-              value: (
-                <Chip
-                  label={resource.health}
-                  color={getStatusColor(resource.health)}
-                  size="small"
-                  variant="outlined"
-                />
-              ),
-            },
+            // Remove HEALTH row since health isn’t available
           ].map((row, index) => (
             <TableRow key={index}>
               <TableCell
