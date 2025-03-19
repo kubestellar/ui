@@ -369,6 +369,7 @@ func CreateBp(ctx *gin.Context) {
 		if err != nil {
 			log.LogError("error reading yaml input", zap.String("error", err.Error()))
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
 		}
 	}
 	if contentType == "multipart/form-data" {
