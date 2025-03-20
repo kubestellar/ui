@@ -42,6 +42,7 @@ import { FlowCanvas } from "../components/Wds_Topology/FlowCanvas";
 import LoadingFallback from "./LoadingFallback";
 import DynamicDetailsPanel from "./DynamicDetailsPanel";
 import ReactDOM from "react-dom";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { isEqual } from "lodash";
 
 // Interfaces (unchanged)
@@ -125,12 +126,6 @@ export interface ResourceItem {
   }>;
 }
 
-interface ResourceIdentifier {
-  namespace: string;
-  kind: string;
-  name: string;
-}
-
 interface SelectedNode {
   namespace: string;
   name: string;
@@ -154,7 +149,7 @@ const nodeStyle: React.CSSProperties = {
   height: "30px",
 };
 
-// Dynamic icon mapping for all imported icons
+// Dynamic icon mapping for all imported icons (unchanged)
 const iconMap: Record<string, string> = {
   ConfigMap: cm,
   ClusterRoleBinding: crb,
@@ -188,13 +183,12 @@ const iconMap: Record<string, string> = {
   Volume: vol,
 };
 
-// Dynamic node config with icon mapping
+// Dynamic node config with icon mapping (unchanged)
 const getNodeConfig = (type: string, label: string) => {
-  const normalizedType = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase(); // Normalize type to match iconMap keys
-  const icon = iconMap[normalizedType] || cm; // Default to cm if no match
+  const normalizedType = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
+  const icon = iconMap[normalizedType] || cm;
   const dynamicText = normalizedType.toLowerCase();
 
-  // Handle special cases where label might indicate a different type
   if (label.toLowerCase().includes("namespace")) {
     return { icon: ns, dynamicText: "ns" };
   } else if (label.toLowerCase().includes("deploy")) {
@@ -215,7 +209,12 @@ const getNodeConfig = (type: string, label: string) => {
 };
 
 // Layout function (unchanged)
-const getLayoutedElements = (nodes: CustomNode[], edges: CustomEdge[], direction = "LR", prevNodes: React.MutableRefObject<CustomNode[]>) => {
+const getLayoutedElements = (
+  nodes: CustomNode[],
+  edges: CustomEdge[],
+  direction = "LR",
+  prevNodes: React.MutableRefObject<CustomNode[]>
+) => {
   const dagreGraph = new dagre.graphlib.Graph();
   dagreGraph.setDefaultEdgeLabel(() => ({}));
   dagreGraph.setGraph({ rankdir: direction, nodesep: 30, ranksep: 60 });
@@ -225,7 +224,7 @@ const getLayoutedElements = (nodes: CustomNode[], edges: CustomEdge[], direction
 
   const shouldRecalculate = true;
   if (!shouldRecalculate && Math.abs(nodes.length - prevNodes.current.length) <= 5) {
-    prevNodes.current.forEach(node => nodeMap.set(node.id, node));
+    prevNodes.current.forEach((node) => nodeMap.set(node.id, node));
   }
 
   nodes.forEach((node) => {
@@ -246,21 +245,21 @@ const getLayoutedElements = (nodes: CustomNode[], edges: CustomEdge[], direction
 
   const layoutedNodes = newNodes.map((node) => {
     const dagreNode = dagreGraph.node(node.id);
-    return dagreNode ? {
-      ...node,
-      position: {
-        x: dagreNode.x - 73 + 50,
-        y: dagreNode.y - 15 + 50,
-      },
-    } : node;
+    return dagreNode
+      ? {
+          ...node,
+          position: {
+            x: dagreNode.x - 73 + 50,
+            y: dagreNode.y - 15 + 50,
+          },
+        }
+      : node;
   });
 
   return { nodes: layoutedNodes, edges };
 };
 
 const WecsTreeview = () => {
-  const [responseData, setResponseData] = useState<NamespaceResource[] | null>(null);
-  const [processedData, setProcessedData] = useState<NamespaceResource[] | null>(null);
   const [nodes, setNodes] = useState<CustomNode[]>([]);
   const [edges, setEdges] = useState<CustomEdge[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
@@ -276,8 +275,23 @@ const WecsTreeview = () => {
   const prevNodes = useRef<CustomNode[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
   const [isWsConnected, setIsWsConnected] = useState<boolean>(false);
+  const [hasReceivedInitialData, setHasReceivedInitialData] = useState<boolean>(false);
   const renderStartTime = useRef<number>(0);
   const panelRef = useRef<HTMLDivElement>(null);
+  const dataReceiveTime = useRef<number | null>(null);
+
+  const queryClient = useQueryClient();
+  const NAMESPACE_QUERY_KEY = ["namespaces"];
+
+  const { data: namespaceData } = useQuery({
+    queryKey: NAMESPACE_QUERY_KEY,
+    queryFn: async () => {
+      const response = await axios.get("http://localhost:4000/api/namespaces");
+      return response.data;
+    },
+    enabled: false,
+    initialData: [],
+  });
 
   const getTimeAgo = useCallback((timestamp: string | undefined): string => {
     if (!timestamp) return "Unknown";
@@ -301,78 +315,83 @@ const WecsTreeview = () => {
     }
   }, [selectedNode]);
 
-  const createNode = useCallback((
-    id: string,
-    label: string,
-    type: string,
-    status: string,
-    timestamp: string | undefined,
-    namespace: string | undefined,
-    resourceData: ResourceItem | undefined,
-    parent: string | null,
-    newNodes: CustomNode[],
-    newEdges: CustomEdge[]
-  ) => {
-    const config = getNodeConfig(type.toLowerCase(), label);
-    const timeAgo = getTimeAgo(timestamp);
-    const cachedNode = nodeCache.current.get(id);
+  const createNode = useCallback(
+    (
+      id: string,
+      label: string,
+      type: string,
+      status: string,
+      timestamp: string | undefined,
+      namespace: string | undefined,
+      resourceData: ResourceItem | undefined,
+      parent: string | null,
+      newNodes: CustomNode[],
+      newEdges: CustomEdge[]
+    ) => {
+      const config = getNodeConfig(type.toLowerCase(), label);
+      const timeAgo = getTimeAgo(timestamp);
+      const cachedNode = nodeCache.current.get(id);
 
-    const node = cachedNode || {
-      id,
-      data: {
-        label: (
-          <NodeLabel
-            label={label}
-            icon={config.icon}
-            dynamicText={config.dynamicText}
-            status={status}
-            timeAgo={timeAgo}
-            resourceData={resourceData} // Ensure resourceData is passed here
-            onClick={(e) => {
-              if ((e.target as HTMLElement).tagName === "svg" || (e.target as HTMLElement).closest("svg")) return;
-              setSelectedNode({
-                namespace: namespace || "default",
-                name: label,
-                type: type.toLowerCase(),
-                onClose: handleClosePanel,
-                isOpen: true,
-                resourceData,
-              });
-            }}
-            onMenuClick={(e) => handleMenuOpen(e, id)}
-          />
-        ),
-      },
-      position: { x: 0, y: 0 },
-      style: { ...nodeStyle, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "2px 12px" },
-      sourcePosition: Position.Right,
-      targetPosition: Position.Left,
-    };
+      const node =
+        cachedNode ||
+        ({
+          id,
+          data: {
+            label: (
+              <NodeLabel
+                label={label}
+                icon={config.icon}
+                dynamicText={config.dynamicText}
+                status={status}
+                timeAgo={timeAgo}
+                resourceData={resourceData}
+                onClick={(e) => {
+                  if ((e.target as HTMLElement).tagName === "svg" || (e.target as HTMLElement).closest("svg")) return;
+                  setSelectedNode({
+                    namespace: namespace || "default",
+                    name: label,
+                    type: type.toLowerCase(),
+                    onClose: handleClosePanel,
+                    isOpen: true,
+                    resourceData,
+                  });
+                }}
+                onMenuClick={(e) => handleMenuOpen(e, id)}
+              />
+            ),
+          },
+          position: { x: 0, y: 0 },
+          style: { ...nodeStyle, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "2px 12px" },
+          sourcePosition: Position.Right,
+          targetPosition: Position.Left,
+        } as CustomNode);
 
-    if (!cachedNode) nodeCache.current.set(id, node);
-    newNodes.push(node);
+      if (!cachedNode) nodeCache.current.set(id, node);
+      newNodes.push(node);
 
-    if (parent) {
-      const uniqueSuffix = resourceData?.metadata?.uid || edgeIdCounter.current++;
-      const edgeId = `edge-${parent}-${id}-${uniqueSuffix}`;
-      const cachedEdge = edgeCache.current.get(edgeId);
-      if (!cachedEdge) {
-        const edge = {
-          id: edgeId,
-          source: parent,
-          target: id,
-          type: "step",
-          animated: true,
-          style: { stroke: "#a3a3a3", strokeDasharray: "2,2" },
-          markerEnd: { type: MarkerType.ArrowClosed },
-        };
-        newEdges.push(edge);
-        edgeCache.current.set(edgeId, edge);
-      } else {
-        newEdges.push(cachedEdge);
+      if (parent) {
+        const uniqueSuffix = resourceData?.metadata?.uid || edgeIdCounter.current++;
+        const edgeId = `edge-${parent}-${id}-${uniqueSuffix}`;
+        const cachedEdge = edgeCache.current.get(edgeId);
+        if (!cachedEdge) {
+          const edge = {
+            id: edgeId,
+            source: parent,
+            target: id,
+            type: "step",
+            animated: true,
+            style: { stroke: "#a3a3a3", strokeDasharray: "2,2" },
+            markerEnd: { type: MarkerType.ArrowClosed },
+          };
+          newEdges.push(edge);
+          edgeCache.current.set(edgeId, edge);
+        } else {
+          newEdges.push(cachedEdge);
+        }
       }
-    }
-  }, [getTimeAgo, handleClosePanel, handleMenuOpen]);
+    },
+    [getTimeAgo, handleClosePanel, handleMenuOpen]
+  );
 
   const transformDataToTree = useCallback(
     (data: NamespaceResource[]) => {
@@ -419,55 +438,126 @@ const WecsTreeview = () => {
           ...namespace.resources,
         };
 
-        Object.values(resourcesMap).flat().forEach((item: ResourceItem, index: number) => {
-          const kindLower = item.kind.toLowerCase();
-          const resourceId = `${namespaceId}-${kindLower}-${item.metadata.name}-${index}`;
-          const status = item.status?.conditions?.some((c) => c.type === "Available" && c.status === "True") ? "Active" : "Inactive";
+        Object.values(resourcesMap)
+          .flat()
+          .forEach((item: ResourceItem, index: number) => {
+            const kindLower = item.kind.toLowerCase();
+            const resourceId = `${namespaceId}-${kindLower}-${item.metadata.name}-${index}`;
+            const status = item.status?.conditions?.some((c) => c.type === "Available" && c.status === "True") ? "Active" : "Inactive";
 
-          createNode(resourceId, item.metadata.name, kindLower, status, item.metadata.creationTimestamp, namespace.name, item, namespaceId, newNodes, newEdges);
+            createNode(resourceId, item.metadata.name, kindLower, status, item.metadata.creationTimestamp, namespace.name, item, namespaceId, newNodes, newEdges);
 
-          if (kindLower === "configmap" && item.data) {
-            Object.keys(item.data).forEach((key) => createNode(`${resourceId}-data-${key}`, key, "data", status, undefined, namespace.name, item, resourceId, newNodes, newEdges));
-          } else if (kindLower === "service") {
-            item.spec?.ports?.forEach((port) => createNode(`${resourceId}-port-${port.name}`, `${port.name} (${port.port})`, "port", status, undefined, namespace.name, item, resourceId, newNodes, newEdges));
+            if (kindLower === "configmap" && item.data) {
+              Object.keys(item.data).forEach((key) =>
+                createNode(`${resourceId}-data-${key}`, key, "data", status, undefined, namespace.name, item, resourceId, newNodes, newEdges)
+              );
+            } else if (kindLower === "service") {
+              item.spec?.ports?.forEach((port) =>
+                createNode(`${resourceId}-port-${port.name}`, `${port.name} (${port.port})`, "port", status, undefined, namespace.name, item, resourceId, newNodes, newEdges)
+              );
 
-            const endpoints = resourcesMap.endpoints.find((ep) => ep.metadata.name === item.metadata.name);
-            if (endpoints) {
-              const endpointId = `${resourceId}-endpoints-${endpoints.metadata.name}`;
-              createNode(endpointId, endpoints.metadata.name, "endpoints", status, undefined, namespace.name, endpoints, resourceId, newNodes, newEdges);
-              endpoints.subsets?.forEach((subset, idx) => {
-                const subsetId = `${endpointId}-subset-${idx}`;
-                createNode(subsetId, `Subset ${idx + 1}`, "subset", status, undefined, namespace.name, endpoints, endpointId, newNodes, newEdges);
-                subset.addresses?.forEach((addr) => createNode(`${subsetId}-addr-${addr.ip}`, addr.ip, "data", status, undefined, namespace.name, endpoints, subsetId, newNodes, newEdges));
-                subset.ports?.forEach((port) => createNode(`${subsetId}-port-${port.name || idx}`, `${port.name || "port"} (${port.port})`, "port", status, undefined, namespace.name, endpoints, subsetId, newNodes, newEdges));
+              const endpoints = resourcesMap.endpoints.find((ep) => ep.metadata.name === item.metadata.name);
+              if (endpoints) {
+                const endpointId = `${resourceId}-endpoints-${endpoints.metadata.name}`;
+                createNode(endpointId, endpoints.metadata.name, "endpoints", status, undefined, namespace.name, endpoints, resourceId, newNodes, newEdges);
+                endpoints.subsets?.forEach((subset, idx) => {
+                  const subsetId = `${endpointId}-subset-${idx}`;
+                  createNode(subsetId, `Subset ${idx + 1}`, "subset", status, undefined, namespace.name, endpoints, endpointId, newNodes, newEdges);
+                  subset.addresses?.forEach((addr) =>
+                    createNode(`${subsetId}-addr-${addr.ip}`, addr.ip, "data", status, undefined, namespace.name, endpoints, subsetId, newNodes, newEdges)
+                  );
+                  subset.ports?.forEach((port) =>
+                    createNode(
+                      `${subsetId}-port-${port.name || idx}`,
+                      `${port.name || "port"} (${port.port})`,
+                      "port",
+                      status,
+                      undefined,
+                      namespace.name,
+                      endpoints,
+                      subsetId,
+                      newNodes,
+                      newEdges
+                    )
+                  );
+                });
+              }
+
+              const endpointSlices = resourcesMap.endpointSlices.filter((es) => es.metadata.labels?.["kubernetes.io/service-name"] === item.metadata.name);
+              endpointSlices.forEach((es) => {
+                const esId = `${resourceId}-endpointslice-${es.metadata.name}`;
+                createNode(esId, es.metadata.name, "endpointslice", status, undefined, namespace.name, es, resourceId, newNodes, newEdges);
+                es.endpoints?.forEach((endpoint, idx) => {
+                  const endpointId = `${esId}-endpoint-${idx}`;
+                  createNode(endpointId, `Endpoint ${idx + 1}`, "data", status, undefined, namespace.name, es, esId, newNodes, newEdges);
+                  endpoint.addresses?.forEach((addr) =>
+                    createNode(`${endpointId}-addr-${addr}`, addr, "data", status, undefined, namespace.name, es, endpointId, newNodes, newEdges)
+                  );
+                  es.ports?.forEach((port) =>
+                    createNode(
+                      `${endpointId}-port-${port.name || idx}`,
+                      `${port.name || "port"} (${port.port})`,
+                      "port",
+                      status,
+                      undefined,
+                      namespace.name,
+                      es,
+                      endpointId,
+                      newNodes,
+                      newEdges
+                    )
+                  );
+                });
+              });
+            } else if (kindLower === "deployment") {
+              createNode(
+                `${resourceId}-replicaset`,
+                `replicaset-${item.metadata.name}`,
+                "replicaset",
+                status,
+                undefined,
+                namespace.name,
+                item,
+                resourceId,
+                newNodes,
+                newEdges
+              );
+            } else if (kindLower === "lease" && item.spec) {
+              createNode(
+                `${resourceId}-holder`,
+                item.spec.holderIdentity || "Unknown Holder",
+                "data",
+                status,
+                undefined,
+                namespace.name,
+                item,
+                resourceId,
+                newNodes,
+                newEdges
+              );
+            } else if (kindLower === "rolebinding") {
+              item.subjects?.forEach((subject, idx) =>
+                createNode(`${resourceId}-subject-${idx}`, subject.name, "subject", status, undefined, namespace.name, item, resourceId, newNodes, newEdges)
+              );
+              createNode(
+                `${resourceId}-roleref`,
+                item.roleRef?.name || "Unknown Role",
+                "ruleref",
+                status,
+                undefined,
+                namespace.name,
+                item,
+                resourceId,
+                newNodes,
+                newEdges
+              );
+            } else if (kindLower === "role") {
+              item.rules?.forEach((rule, idx) => {
+                const ruleLabel = `${rule.verbs?.join("/") || ""} ${rule.resources?.join(",") || "all"}`;
+                createNode(`${resourceId}-rule-${idx}`, ruleLabel, "ruleref", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
               });
             }
-
-            const endpointSlices = resourcesMap.endpointSlices.filter((es) => es.metadata.labels?.["kubernetes.io/service-name"] === item.metadata.name);
-            endpointSlices.forEach((es) => {
-              const esId = `${resourceId}-endpointslice-${es.metadata.name}`;
-              createNode(esId, es.metadata.name, "endpointslice", status, undefined, namespace.name, es, resourceId, newNodes, newEdges);
-              es.endpoints?.forEach((endpoint, idx) => {
-                const endpointId = `${esId}-endpoint-${idx}`;
-                createNode(endpointId, `Endpoint ${idx + 1}`, "data", status, undefined, namespace.name, es, esId, newNodes, newEdges);
-                endpoint.addresses?.forEach((addr) => createNode(`${endpointId}-addr-${addr}`, addr, "data", status, undefined, namespace.name, es, endpointId, newNodes, newEdges));
-                es.ports?.forEach((port) => createNode(`${endpointId}-port-${port.name || idx}`, `${port.name || "port"} (${port.port})`, "port", status, undefined, namespace.name, es, endpointId, newNodes, newEdges));
-              });
-            });
-          } else if (kindLower === "deployment") {
-            createNode(`${resourceId}-replicaset`, `replicaset-${item.metadata.name}`, "replicaset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-          } else if (kindLower === "lease" && item.spec) {
-            createNode(`${resourceId}-holder`, item.spec.holderIdentity || "Unknown Holder", "data", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-          } else if (kindLower === "rolebinding") {
-            item.subjects?.forEach((subject, idx) => createNode(`${resourceId}-subject-${idx}`, subject.name, "subject", status, undefined, namespace.name, item, resourceId, newNodes, newEdges));
-            createNode(`${resourceId}-roleref`, item.roleRef?.name || "Unknown Role", "ruleref", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-          } else if (kindLower === "role") {
-            item.rules?.forEach((rule, idx) => {
-              const ruleLabel = `${rule.verbs?.join("/") || ""} ${rule.resources?.join(",") || "all"}`;
-              createNode(`${resourceId}-rule-${idx}`, ruleLabel, "ruleref", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-            });
-          }
-        });
+          });
       });
 
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(newNodes, newEdges, "LR", prevNodes);
@@ -477,99 +567,95 @@ const WecsTreeview = () => {
         setEdges(layoutedEdges);
       });
       prevNodes.current = layoutedNodes;
-      console.log(`[Transform] Completed transformDataToTree: ${layoutedNodes.length} nodes, ${layoutedEdges.length} edges in ${performance.now() - startTime}ms`);
+
+      const endTime = performance.now();
+      console.log(`[Transform] Completed transformDataToTree: ${layoutedNodes.length} nodes, ${layoutedEdges.length} edges in ${endTime - startTime}ms`);
+      if (dataReceiveTime.current !== null) {
+        const rebuildTime = endTime - dataReceiveTime.current;
+        console.log(`[Transform] Tree rebuilt in ${rebuildTime}ms after data received`);
+        dataReceiveTime.current = null;
+      }
     },
     [createNode]
   );
 
-  const connectWebSocket = useCallback((reconnectFunc: () => void): WebSocket => {
-    const ws = new WebSocket("ws://localhost:4000/ws/namespaces");
-    wsRef.current = ws;
+  const sortNamespaceData = (data: NamespaceResource[]): NamespaceResource[] => {
+    return [...data]
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((ns) => ({
+        ...ns,
+        resources: Object.fromEntries(
+          Object.entries(ns.resources).map(([key, resources]) => [key, [...resources].sort((a, b) => a.metadata.name.localeCompare(b.metadata.name))])
+        ),
+      }));
+  };
 
-    ws.onopen = () => {
-      console.log(`[WebSocket] Connected at ${performance.now() - renderStartTime.current}ms`);
-      setIsWsConnected(true);
-    };
+  const connectWebSocket = useCallback(
+    (reconnectFunc: () => void): WebSocket => {
+      const ws = new WebSocket("ws://localhost:4000/ws/namespaces");
+      wsRef.current = ws;
 
-    ws.onmessage = (event) => {
-      const receiveTime = performance.now();
-      console.log(`[WebSocket] Data received at ${receiveTime - renderStartTime.current}ms, readyState: ${ws.readyState}`);
-
-      let data: NamespaceResource[] = [];
-      try {
-        data = JSON.parse(event.data);
-      } catch (error) {
-        console.error(`[WebSocket] Failed to parse data at ${performance.now() - renderStartTime.current}ms:`, error);
-        return;
-      }
-
-      const filteredData = JSON.parse(JSON.stringify(data)).filter(
-        (namespace: NamespaceResource) => !["kubestellar-report", "kube-node-lease", "kube-public", "kube-system", "default"].includes(namespace.name)
-      );
-      console.log(`[WebSocket] Filtered ${filteredData.length} namespaces from ${data.length} at ${performance.now() - renderStartTime.current}ms`);
-
-      requestIdleCallback(() => {
-        setResponseData(filteredData);
-        console.log(`[State] Stored ${filteredData.length} namespaces in responseData at ${performance.now() - renderStartTime.current}ms`);
-
-        const currentObjects: ResourceIdentifier[] = filteredData
-          .flatMap((ns: NamespaceResource) =>
-            Object.values(ns.resources).flatMap((items: ResourceItem[]) =>
-              items.map((item: ResourceItem) => ({ namespace: ns.name, kind: item.kind, name: item.metadata.name }))
-            )
-          )
-          .sort((a: ResourceIdentifier, b: ResourceIdentifier) =>
-            `${a.namespace}-${a.kind}-${a.name}`.localeCompare(`${b.namespace}-${b.kind}-${b.name}`)
-          );
-        console.log(`[Debug] Current object set (${currentObjects.length} objects):`, currentObjects);
-
-        setProcessedData((prevProcessedData: NamespaceResource[] | null) => {
-          const prevObjects: ResourceIdentifier[] = prevProcessedData
-            ?.flatMap((ns: NamespaceResource) =>
-              Object.values(ns.resources).flatMap((items: ResourceItem[]) =>
-                items.map((item: ResourceItem) => ({ namespace: ns.name, kind: item.kind, name: item.metadata.name }))
-              )
-            )
-            ?.sort((a: ResourceIdentifier, b: ResourceIdentifier) =>
-              `${a.namespace}-${a.kind}-${a.name}`.localeCompare(`${b.namespace}-${b.kind}-${b.name}`)
-            ) || [];
-          console.log(`[Debug] Previous object set (${prevObjects.length} objects):`, prevObjects);
-
-          const isDifferent = !isEqual(currentObjects, prevObjects);
-          if (isDifferent) {
-            console.log(`[Comparison] Object set changed (${currentObjects.length} objects), updating processedData at ${performance.now() - renderStartTime.current}ms`);
-            console.log(`[Comparison] New objects:`, currentObjects);
-            console.log(`[Comparison] Previous objects:`, prevObjects);
-            return JSON.parse(JSON.stringify(filteredData));
-          } else {
-            console.log(`[Comparison] No change in object set (${currentObjects.length} objects), rebuild avoided at ${performance.now() - renderStartTime.current}ms`);
-            return prevProcessedData;
-          }
-        });
-
-        if (filteredData.length === 0) {
-          ReactDOM.unstable_batchedUpdates(() => {
-            setNodes([]);
-            setEdges([]);
-          });
+      const updateCache = (filteredData: NamespaceResource[]) => {
+        const currentData = queryClient.getQueryData<NamespaceResource[]>(NAMESPACE_QUERY_KEY);
+        const sortedFilteredData = sortNamespaceData(filteredData);
+        const sortedCurrentData = currentData ? sortNamespaceData(currentData) : null;
+        if (!sortedCurrentData || !isEqual(sortedFilteredData, sortedCurrentData)) {
+          console.log(`[WebSocket] Data changed, updating cache at ${performance.now() - renderStartTime.current}ms`);
+          queryClient.setQueryData(NAMESPACE_QUERY_KEY, filteredData);
+        } else {
+          console.log(`[WebSocket] Data unchanged, skipping cache update at ${performance.now() - renderStartTime.current}ms`);
         }
-      }, { timeout: 100 });
-    };
+      };
 
-    ws.onerror = (error) => {
-      console.error(`[WebSocket] Error at ${performance.now() - renderStartTime.current}ms:`, error);
-      setIsWsConnected(false);
-    };
+      ws.onopen = () => {
+        console.log(`[WebSocket] Connected at ${performance.now() - renderStartTime.current}ms`);
+        setIsWsConnected(true);
+      };
 
-    ws.onclose = () => {
-      console.log(`[WebSocket] Disconnected at ${performance.now() - renderStartTime.current}ms, attempting reconnect...`);
-      setIsWsConnected(false);
-      wsRef.current = null;
-      reconnectFunc();
-    };
+      ws.onmessage = (event) => {
+        const receiveTime = performance.now();
+        console.log(`[WebSocket] Data received at ${receiveTime - renderStartTime.current}ms, readyState: ${ws.readyState}`);
+        let data: NamespaceResource[] = [];
+        try {
+          data = JSON.parse(event.data);
+        } catch (error) {
+          console.error(`[WebSocket] Failed to parse data at ${performance.now() - renderStartTime.current}ms:`, error);
+          return;
+        }
+        const totalObjects = data.reduce((count, namespace) => {
+          const resourceCount = Object.values(namespace.resources).reduce((sum, resources) => sum + resources.length, 0);
+          return count + resourceCount;
+        }, 0);
+        console.log(`[WebSocket] Received ${totalObjects} objects across ${data.length} namespaces at ${performance.now() - renderStartTime.current}ms`);
+        const filteredData = JSON.parse(JSON.stringify(data)).filter(
+          (namespace: NamespaceResource) => !["kubestellar-report", "kube-node-lease", "kube-public", "kube-system"].includes(namespace.name)
+        );
+        console.log(`[WebSocket] Filtered ${filteredData.length} namespaces from ${data.length} at ${performance.now() - renderStartTime.current}ms`);
+        dataReceiveTime.current = receiveTime;
+        // Batch updates
+        ReactDOM.unstable_batchedUpdates(() => {
+          setHasReceivedInitialData(true);
+          updateCache(filteredData);
+        });
+      };
 
-    return ws;
-  }, []);
+      ws.onerror = (error) => {
+        console.error(`[WebSocket] Error at ${performance.now() - renderStartTime.current}ms:`, error);
+        setIsWsConnected(false);
+      };
+
+      ws.onclose = () => {
+        console.log(`[WebSocket] Disconnected at ${performance.now() - renderStartTime.current}ms, attempting reconnect...`);
+        setIsWsConnected(false);
+        setHasReceivedInitialData(false); // Reset for reconnect
+        wsRef.current = null;
+        reconnectFunc();
+      };
+
+      return ws;
+    },
+    [queryClient]
+  );
 
   const reconnectWebSocket = useCallback((): void => {
     let retryCount = 0;
@@ -605,11 +691,13 @@ const WecsTreeview = () => {
   }, [connectWebSocket, reconnectWebSocket]);
 
   useEffect(() => {
-    if (processedData !== null) {
-      console.log(`[State] processedData updated, triggering transformDataToTree with ${processedData.length} namespaces at ${performance.now() - renderStartTime.current}ms`);
-      transformDataToTree(processedData);
+    if (namespaceData !== undefined) {
+      console.log(
+        `[State] namespaceData updated, triggering transformDataToTree with ${namespaceData.length} namespaces at ${performance.now() - renderStartTime.current}ms`
+      );
+      transformDataToTree(namespaceData);
     }
-  }, [processedData, transformDataToTree]);
+  }, [namespaceData, transformDataToTree]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -623,6 +711,58 @@ const WecsTreeview = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [selectedNode, handleClosePanel]);
+
+  const deleteResourceMutation = useMutation({
+    mutationFn: async ({ namespace, nodeName }: { nodeId: string; nodeType: string; namespace: string; nodeName: string }) => {
+      const endpoint = `http://localhost:4000/api/namespaces/${namespace}/${nodeName}`;
+      await axios.delete(endpoint);
+    },
+    onMutate: async ({ nodeId }) => {
+      await queryClient.cancelQueries({ queryKey: NAMESPACE_QUERY_KEY });
+      const previousData = queryClient.getQueryData<NamespaceResource[]>(NAMESPACE_QUERY_KEY);
+      const node = nodes.find((n) => n.id === nodeId);
+      if (!node) return { previousData };
+
+      const nodeIdParts = node.id.split("-");
+      let namespace = "";
+      const nodeName = node.data.label.props.label;
+
+      if (node.id.startsWith("namespace-") && nodeIdParts.length === 2) {
+        namespace = nodeName;
+      } else {
+        namespace = nodeIdParts[1];
+      }
+
+      const updatedData = previousData?.map((ns) => {
+        if (ns.name !== namespace) return ns;
+        const updatedResources = { ...ns.resources };
+        Object.keys(updatedResources).forEach((key) => {
+          updatedResources[key] = updatedResources[key].filter((item: ResourceItem) => item.metadata.name !== nodeName);
+        });
+        return { ...ns, resources: updatedResources };
+      });
+
+      queryClient.setQueryData(NAMESPACE_QUERY_KEY, updatedData);
+      setNodes((prevNodes) => prevNodes.filter((n) => n.id !== nodeId));
+      setEdges((prevEdges) => prevEdges.filter((e) => e.source !== nodeId && e.target !== nodeId));
+      nodeCache.current.delete(nodeId);
+
+      return { previousData };
+    },
+    onError: (error, variables, context) => {
+      console.error(`[Delete] Failed to delete node ${variables.nodeId}:`, error);
+      setSnackbarMessage(`Failed to delete "${variables.nodeName}"`);
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+      queryClient.setQueryData(NAMESPACE_QUERY_KEY, context?.previousData);
+    },
+    onSuccess: (_, variables) => {
+      setSnackbarMessage(`"${variables.nodeName}" deleted successfully`);
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+      queryClient.invalidateQueries({ queryKey: NAMESPACE_QUERY_KEY });
+    },
+  });
 
   const handleMenuClose = useCallback(() => {
     setContextMenu(null);
@@ -646,7 +786,7 @@ const WecsTreeview = () => {
             nodeType = nodeIdParts[2];
           }
 
-          const resourceData = node.data.label.props.resourceData; // Ensure resourceData is retrieved correctly
+          const resourceData = node.data.label.props.resourceData;
 
           switch (action) {
             case "Details":
@@ -656,29 +796,19 @@ const WecsTreeview = () => {
                 type: nodeType,
                 onClose: handleClosePanel,
                 isOpen: true,
-                resourceData: resourceData, // Pass the full resourceData
+                resourceData,
               });
               break;
             case "Delete":
-              try {
-                const endpoint = `http://localhost:4000/api/${nodeType.toLowerCase()}s/${namespace}/${nodeName}`;
-                await axios.delete(endpoint);
-
-                setNodes(nodes.filter((n) => n.id !== node.id));
-                setEdges(edges.filter((e) => e.source !== node.id && e.target !== node.id));
-                nodeCache.current.delete(node.id);
-
-                setSnackbarMessage(`"${nodeName}" deleted successfully`);
-                setSnackbarSeverity("success");
-                setSnackbarOpen(true);
-              } catch (error) {
-                console.error(`[Delete] Failed to delete node ${node.id} at ${performance.now() - renderStartTime.current}ms:`, error);
-                setSnackbarMessage(`Failed to delete "${nodeName}"`);
-                setSnackbarSeverity("error");
-                setSnackbarOpen(true);
-              }
+              deleteResourceMutation.mutate({
+                nodeId: contextMenu.nodeId,
+                nodeType,
+                namespace,
+                nodeName,
+              });
               break;
             case "Logs":
+              // TODO: Implement logs functionality
               break;
             default:
               break;
@@ -687,7 +817,7 @@ const WecsTreeview = () => {
       }
       handleMenuClose();
     },
-    [contextMenu, nodes, edges, handleMenuClose, handleClosePanel]
+    [contextMenu, nodes, handleClosePanel, deleteResourceMutation]
   );
 
   const handleSnackbarClose = useCallback(() => {
@@ -696,6 +826,11 @@ const WecsTreeview = () => {
 
   const handleCancelCreateOptions = () => {
     setShowCreateOptions(false);
+  };
+
+  const handleCreateWorkloadClick = () => {
+    setShowCreateOptions(true);
+    setActiveOption("option1");
   };
 
   return (
@@ -709,60 +844,72 @@ const WecsTreeview = () => {
           pointerEvents: selectedNode?.isOpen ? "none" : "auto",
         }}
       >
-        <Box sx={{
-          mb: 4,
-          display: "flex",
-          alignItems: "center",
-          gap: 2,
-          flex: 1,
-          justifyContent: "space-between",
-          padding: 2,
-          borderRadius: 1,
-          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-        }}>
-          <Typography variant="h4"
-            sx={{
-              color: "#4498FF",
-              fontWeight: 700,
-              fontSize: "30px",
-              letterSpacing: "0.5px",
-            }}
-          >WDS Workloads</Typography>
+        <Box
+          sx={{
+            mb: 4,
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            flex: 1,
+            justifyContent: "space-between",
+            padding: 2,
+            borderRadius: 1,
+            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+          }}
+        >
+          <Typography variant="h4" sx={{ color: "#4498FF", fontWeight: 700, fontSize: "30px", letterSpacing: "0.5px" }}>
+            Manage Workloads
+          </Typography>
           <Button
             variant="outlined"
             startIcon={<Plus size={20} />}
-            onClick={() => {
-              setShowCreateOptions(true);
-              setActiveOption("option1");
-            }}
-            sx={{
-              borderColor: "#2f86ff",
-              color: "#2f86ff",
-              "&:hover": {
-                borderColor: "#2f86ff",
-              },
-            }}
+            onClick={handleCreateWorkloadClick}
+            sx={{ borderColor: "#2f86ff", color: "#2f86ff", "&:hover": { borderColor: "#2f86ff" } }}
           >
             Create Workload
           </Button>
         </Box>
 
-        {showCreateOptions && (
-          <CreateOptions
-            activeOption={activeOption}
-            setActiveOption={setActiveOption}
-            onCancel={handleCancelCreateOptions}
-          />
-        )}
+        {showCreateOptions && <CreateOptions activeOption={activeOption} setActiveOption={setActiveOption} onCancel={handleCancelCreateOptions} />}
 
-        <Box sx={{ width: "100%", height: "100%", position: "relative" }}>
-          {(!responseData || responseData.length === 0) ? (
-            <LoadingFallback message={isWsConnected ? "WDS Tree-View is Loading..." : "Waiting for WebSocket connection..."} size="medium" />
+        <Box sx={{ width: "100%", height: "calc(100% - 80px)", position: "relative" }}>
+          {(!isWsConnected || !hasReceivedInitialData) ? (
+            <LoadingFallback message="Loading the WDS tree.." size="medium" />
+          ) : namespaceData.length === 0 ? (
+            <Box
+              sx={{
+                width: "100%",
+                height: "100%",
+                backgroundColor: "#fff",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+                <Typography variant="h6" sx={{ color: "#333", fontWeight: 600, fontSize: "20px" }}>
+                  No Workloads Found
+                </Typography>
+                <Typography variant="body2" sx={{ color: "#666", fontSize: "14px", mb: 2 }}>
+                  Get started by creating your first workload
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={<Plus size={20} />}
+                  onClick={handleCreateWorkloadClick}
+                  sx={{ backgroundColor: "#2f86ff", color: "#fff", "&:hover": { backgroundColor: "#1f76e5" } }}
+                >
+                  Create Workload
+                </Button>
+              </Box>
+            </Box>
           ) : (
-            <ReactFlowProvider>
-              <FlowCanvas nodes={nodes} edges={edges} renderStartTime={renderStartTime} />
-              <ZoomControls />
-            </ReactFlowProvider>
+            <Box sx={{ width: "100%", height: "100%", position: "relative" }}>
+              <ReactFlowProvider>
+                <FlowCanvas nodes={nodes} edges={edges} renderStartTime={renderStartTime} />
+                <ZoomControls />
+              </ReactFlowProvider>
+            </Box>
           )}
 
           {contextMenu && (
@@ -779,12 +926,7 @@ const WecsTreeview = () => {
           )}
         </Box>
 
-        <Snackbar
-          anchorOrigin={{ vertical: "top", horizontal: "center" }}
-          open={snackbarOpen}
-          autoHideDuration={4000}
-          onClose={handleSnackbarClose}
-        >
+        <Snackbar anchorOrigin={{ vertical: "top", horizontal: "center" }} open={snackbarOpen} autoHideDuration={4000} onClose={handleSnackbarClose}>
           <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: "100%" }}>
             {snackbarMessage}
           </Alert>
