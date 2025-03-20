@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import LoginForm from './LoginForm';
+import Footer from '../Footer';
 
 interface KubeStellarLayoutProps {
   isLoaded: boolean;
@@ -9,6 +10,8 @@ interface KubeStellarLayoutProps {
 }
 
 const KubeStellarLayout = ({ isLoaded, showLogin, leftSide }: KubeStellarLayoutProps) => {
+  const commitHash = import.meta.env.VITE_GIT_COMMIT_HASH || 'development';
+
   return (
     <>
       {/* Left Side - 3D Visualization */}
@@ -175,12 +178,10 @@ const KubeStellarLayout = ({ isLoaded, showLogin, leftSide }: KubeStellarLayoutP
             <p>Need help? <a href="https://kubernetes.slack.com/archives/C058SUSL5AA" target="_blank" rel="noreferrer" className="text-blue-400 hover:text-blue-300 transition-colors">Contact Support</a></p>
           </motion.div>
         </div>
-        
-        {/* Footer with version info */}
-        <div className="absolute bottom-4 right-4 text-xs text-blue-300/40">
-          v1.0.0
-        </div>
       </div>
+
+      {/* Add the Footer component */}
+      <Footer commitHash={commitHash} />
     </>
   );
 };

@@ -15,9 +15,9 @@ const Footer: React.FC<FooterProps> = ({ commitHash }) => {
         href={`${GITHUB_REPO_URL}/commit/${commitHash}`} 
         target="_blank" 
         rel="noopener noreferrer"
-        className="text-gray-400"
+        className="text-blue-300/40 hover:text-blue-300/60 transition-colors"
       >
-        Commit: {commitHash}
+        Commit: {commitHash.slice(0, 7)}
       </a>
     </div>
   );
