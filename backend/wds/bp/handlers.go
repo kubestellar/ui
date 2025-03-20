@@ -358,8 +358,6 @@ func CreateBp(ctx *gin.Context) {
 
 	log.LogInfo("starting Createbp handler",
 		zap.String("wds_context", os.Getenv("wds_context")))
-	log.LogInfo("starting Createbp handler",
-		zap.String("wds_context", os.Getenv("wds_context")))
 	// Check Content-Type header
 	var bpRawYamlBytes []byte
 	var err error
@@ -389,7 +387,6 @@ func CreateBp(ctx *gin.Context) {
 
 	// First parse YAML into a map to extract basic metadata
 	var yamlMap map[string]interface{}
-	if err := yaml.Unmarshal(bpRawYamlBytes, &yamlMap); err != nil {
 	if err := yaml.Unmarshal(bpRawYamlBytes, &yamlMap); err != nil {
 		fmt.Printf("Debug - Initial YAML parsing error: %v\n", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid YAML format: %s", err.Error())})
