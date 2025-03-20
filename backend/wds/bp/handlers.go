@@ -364,6 +364,7 @@ func CreateBp(ctx *gin.Context) {
 	contentType := ctx.ContentType()
 	if !contentTypeValid(contentType) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "content-type not supported"})
+		return
 	}
 	if contentType == "application/yaml" {
 		bpRawYamlBytes, err = io.ReadAll(ctx.Request.Body)
