@@ -1,4 +1,4 @@
-module github.com/katamyra/kubestellarUI
+module github.com/kubestellar/ui
 
 go 1.23.0
 
