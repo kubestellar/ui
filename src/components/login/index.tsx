@@ -60,6 +60,22 @@ export function KubeStellarVisualization() {
   // State for controlling animations and component visibility
   const [isLoaded, setIsLoaded] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
+  const [isDocumentVisible, setIsDocumentVisible] = useState(true);
+  
+  // Track document visibility to pause rendering when tab/page is not active
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsDocumentVisible(!document.hidden);
+    };
+    
+    // Add event listener for visibility change
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Clean up event listener
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
   
   // Simulate initial loading state - streamlined to reduce unnecessary delay
   useEffect(() => {
@@ -98,6 +114,7 @@ export function KubeStellarVisualization() {
                 camera={{ position: [0, 0, 12], fov: 40 }}
                 gl={{ antialias: true, alpha: false }}
                 dpr={[1, 2]} // Responsive pixel ratio
+                frameloop={isDocumentVisible ? 'always' : 'never'} // Stop the render loop when tab is not visible
               >
                 <color attach="background" args={['#050a15']} />
                 
@@ -121,7 +138,7 @@ export function KubeStellarVisualization() {
                 <OrbitControls 
                   enableZoom={true} 
                   enablePan={false} 
-                  autoRotate 
+                  autoRotate={isDocumentVisible} // Only auto-rotate when tab is visible
                   autoRotateSpeed={0.3}
                   minDistance={8}
                   maxDistance={20}

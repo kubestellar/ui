@@ -1,8 +1,8 @@
-import { useRef } from 'react';
+import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
-// Glowing sphere effect
+// Optimized glowing sphere effect
 interface GlowingSphereProps {
   position?: [number, number, number];
   color: string;
@@ -17,43 +17,55 @@ const GlowingSphere = ({
   intensity = 1.0 
 }: GlowingSphereProps) => {
   const meshRef = useRef<THREE.Mesh>(null);
+  const frameCount = useRef(0);
   
+  // Create shared geometries to reduce draw calls
+  const coreGeometry = useMemo(() => new THREE.SphereGeometry(size, 16, 16), [size]);
+  const outerGeometry = useMemo(() => new THREE.SphereGeometry(size * 1.2, 12, 12), [size]);
+  const innerGeometry = useMemo(() => new THREE.SphereGeometry(size * 0.8, 12, 12), [size]);
+  
+  // Create shared materials
+  const coreMaterial = useMemo(() => new THREE.MeshBasicMaterial({
+    color: color
+  }), [color]);
+  
+  const outerMaterial = useMemo(() => new THREE.MeshBasicMaterial({
+    color: color,
+    transparent: true,
+    opacity: 0.3 * intensity,
+    depthWrite: false
+  }), [color, intensity]);
+  
+  const innerMaterial = useMemo(() => new THREE.MeshBasicMaterial({
+    color: "white",
+    transparent: true,
+    opacity: 0.7 * intensity,
+    depthWrite: false
+  }), [intensity]);
+  
+  // Optimize animation to run less frequently
   useFrame(({ clock }) => {
+    // Skip frames for better performance
+    frameCount.current += 1;
+    if (frameCount.current % 2 !== 0) return;
+    
     if (meshRef.current) {
       const t = clock.getElapsedTime();
+      // Use less intensive math operations
       meshRef.current.scale.setScalar(1 + Math.sin(t * 2) * 0.1 * intensity);
     }
   });
   
   return (
-    <group position={position}>
-      {/* Core sphere */}
-      <mesh ref={meshRef}>
-        <sphereGeometry args={[size, 32, 32]} />
-        <meshBasicMaterial color={color} />
-      </mesh>
+    <group position={position} frustumCulled>
+      {/* Core sphere - reduced polygon count */}
+      <mesh ref={meshRef} geometry={coreGeometry} material={coreMaterial} />
       
-      {/* Outer glow */}
-      <mesh>
-        <sphereGeometry args={[size * 1.2, 32, 32]} />
-        <meshBasicMaterial 
-          color={color} 
-          transparent 
-          opacity={0.3 * intensity} 
-          depthWrite={false}
-        />
-      </mesh>
+      {/* Outer glow - reduced polygon count */}
+      <mesh geometry={outerGeometry} material={outerMaterial} />
       
-      {/* Brightest inner glow */}
-      <mesh>
-        <sphereGeometry args={[size * 0.8, 32, 32]} />
-        <meshBasicMaterial 
-          color="white" 
-          transparent 
-          opacity={0.7 * intensity} 
-          depthWrite={false}
-        />
-      </mesh>
+      {/* Brightest inner glow - reduced polygon count */}
+      <mesh geometry={innerGeometry} material={innerMaterial} />
     </group>
   );
 };

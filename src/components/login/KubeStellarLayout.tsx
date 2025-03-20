@@ -12,7 +12,7 @@ const KubeStellarLayout = ({ isLoaded, showLogin, leftSide }: KubeStellarLayoutP
   return (
     <>
       {/* Left Side - 3D Visualization */}
-      <div className="w-full md:w-1/2 h-[40vh] md:h-screen relative">
+      <div className="w-full md:w-[70%] h-[40vh] md:h-screen relative">
         {leftSide}
         
         {/* Logo and Tagline Overlay - Updated to use local image */}
@@ -64,16 +64,17 @@ const KubeStellarLayout = ({ isLoaded, showLogin, leftSide }: KubeStellarLayoutP
       </div>
 
       {/* Right Side - Login Form */}
-      <div className="w-full md:w-1/2 min-h-[60vh] md:h-screen flex items-center justify-center p-4 md:p-8 relative">
+      <div className="w-full md:w-[30%] min-h-[60vh] md:h-screen flex items-center justify-center p-4 md:p-8 relative">
         {/* Enhanced background with more depth */}
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 overflow-hidden">
+          {/* Base gradient background */}
           <div className="absolute inset-0 bg-gradient-to-br from-blue-900/5 via-purple-900/5 to-blue-900/10" />
           <div className="absolute inset-0 bg-[#050a15]/80" />
           
-          {/* Improved decorative elements */}
-          <div className="absolute top-0 right-0 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-40 right-20 w-48 h-48 bg-cyan-500/5 rounded-full blur-3xl" />
+          {/* Improved decorative elements with consistent blur */}
+          <div className="absolute top-0 right-0 w-72 h-72 bg-blue-500/10 rounded-full blur-[100px] opacity-50" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-500/10 rounded-full blur-[100px] opacity-50" />
+          <div className="absolute bottom-40 right-20 w-48 h-48 bg-cyan-500/5 rounded-full blur-[100px] opacity-50" />
         </div>
         
         {/* Content container with better positioning */}
