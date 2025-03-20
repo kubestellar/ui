@@ -207,9 +207,15 @@ const LoginForm = () => {
             setErrors(prev => ({ ...prev, username: '' }));
           }}
           placeholder="Username"
-          className={`w-full pl-10 pr-4 py-3.5 bg-white/5 backdrop-blur-sm border ${
+          className={`w-full pl-10 pr-4 py-3.5 bg-[#1a1f2e] border ${
             errors.username ? "border-red-400" : "border-blue-300/20"
-          } rounded-xl focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 text-white placeholder-blue-200/70 transition-all duration-200 shadow-sm [&:-webkit-autofill]:bg-white/5 [&:-webkit-autofill]:text-white [&:-webkit-autofill]:border-blue-300/20 [&:-webkit-autofill]:shadow-[0_0_0_30px_rgba(255,255,255,0.05)_inset]`}
+          } rounded-xl focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 text-white placeholder-blue-200/70 
+          transition-all duration-200 shadow-sm
+          [&:-webkit-autofill]:shadow-[inset_0_0_0_1000px_#1a1f2e]
+          [&:-webkit-autofill]:[transition:_background-color_9999s_ease-in-out_0s]
+          [&:-webkit-autofill]:!text-white
+          [&:-webkit-autofill]:!-webkit-text-fill-color-white
+          [-webkit-text-fill-color:white]`}
           required
         />
         {errors.username && (
@@ -238,9 +244,18 @@ const LoginForm = () => {
             setErrors(prev => ({ ...prev, password: '' }));
           }}
           placeholder="Password"
-          className={`w-full pl-10 pr-12 py-3.5 bg-white/5 backdrop-blur-sm border ${
+          className={`w-full pl-10 pr-12 py-3.5 bg-[#1a1f2e] border ${
             errors.password ? "border-red-400" : "border-blue-300/20"
-          } rounded-xl focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 text-white placeholder-blue-200/70 transition-all duration-200 shadow-sm [&:-webkit-autofill]:bg-white/5 [&:-webkit-autofill]:text-white [&:-webkit-autofill]:border-blue-300/20 [&:-webkit-autofill]:shadow-[0_0_0_30px_rgba(255,255,255,0.05)_inset]`}
+          } rounded-xl focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 text-white placeholder-blue-200/70 
+          transition-all duration-200 shadow-sm
+          [&:-webkit-autofill]:shadow-[inset_0_0_0_1000px_#1a1f2e]
+          [&:-webkit-autofill]:[transition:_background-color_9999s_ease-in-out_0s]
+          [&:-webkit-autofill]:!text-white
+          [&:-webkit-autofill]:!-webkit-text-fill-color-white
+          [-webkit-text-fill-color:white]
+          [-ms-reveal]:hidden
+          [&::-ms-reveal]:hidden
+          [&::-ms-clear]:hidden`}
           required
         />
         <button
