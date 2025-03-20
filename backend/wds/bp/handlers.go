@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/katamyra/kubestellarUI/log"
+	"github.com/katamyra/kubestellarUI/utils"
 	"github.com/kubestellar/kubestellar/api/control/v1alpha1"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v2"
@@ -374,29 +375,9 @@ func CreateBp(ctx *gin.Context) {
 	}
 	if contentType == "multipart/form-data" {
 		// Get the form file
-		file, err := ctx.FormFile("bpYaml")
+		bpRawYamlBytes, err := utils.GetFormFileBytes("bpYaml", ctx)
 		if err != nil {
-			log.LogError("failed to get form file", zap.String("err", err.Error()))
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("failed to get form file: %s", err.Error())})
-			return
-		}
-
-		fmt.Printf("Debug - Received file: %s\n", file.Filename)
-
-		// Open and read the file
-		f, err := file.Open()
-		if err != nil {
-			log.LogError("failed to open file", zap.String("err", err.Error()))
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to open file: %s", err.Error())})
-			return
-		}
-		defer f.Close()
-
-		// Read file contents
-		bpRawYamlBytes, err = io.ReadAll(f)
-		if err != nil {
-			log.LogError("failed to read bp yaml file", zap.String("err", err.Error()))
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to read file: %s", err.Error())})
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		log.LogInfo("received bp yaml file")
