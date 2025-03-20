@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/katamyra/kubestellarUI/k8s"
-	"github.com/katamyra/kubestellarUI/models"
-	"github.com/katamyra/kubestellarUI/redis"
+	"github.com/kubestellar/ui/k8s"
+	"github.com/kubestellar/ui/models"
+	"github.com/kubestellar/ui/redis"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"

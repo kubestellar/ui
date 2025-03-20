@@ -3,7 +3,7 @@ package models
 import (
 	"errors"
 
-	"github.com/katamyra/kubestellarUI/auth"
+	"github.com/kubestellar/ui/auth"
 )
 
 type User struct {

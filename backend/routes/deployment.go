@@ -7,8 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/katamyra/kubestellarUI/wds"
-	"github.com/katamyra/kubestellarUI/wds/deployment"
+	"github.com/kubestellar/ui/wds"
+	"github.com/kubestellar/ui/wds/deployment"
 	"k8s.io/client-go/informers"
 )
 

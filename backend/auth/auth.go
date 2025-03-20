@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"log"
 
-	jwtconfig "github.com/katamyra/kubestellarUI/jwt"
-	"github.com/katamyra/kubestellarUI/k8s"
+	jwtconfig "github.com/kubestellar/ui/jwt"
+	"github.com/kubestellar/ui/k8s"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

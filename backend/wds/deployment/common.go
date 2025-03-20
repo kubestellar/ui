@@ -21,8 +21,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	FetchYaml "github.com/katamyra/kubestellarUI/github"
-	"github.com/katamyra/kubestellarUI/wds"
+	FetchYaml "github.com/kubestellar/ui/github"
+	"github.com/kubestellar/ui/wds"
 	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"

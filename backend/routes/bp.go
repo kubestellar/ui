@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/katamyra/kubestellarUI/wds/bp"
+	"github.com/kubestellar/ui/wds/bp"
 )
 
 func setupBindingPolicyRoutes(router *gin.Engine) {

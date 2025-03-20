@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/katamyra/kubestellarUI/wds"
+	"github.com/kubestellar/ui/wds"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
