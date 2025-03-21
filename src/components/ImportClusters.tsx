@@ -437,6 +437,10 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                   overflow: "visible",
                   border: "1px solid transparent",
                   WebkitAppearance: "none",
+                  outline: "none",
+                  "&:focus": {
+                    outline: "none",
+                  },
                   "&::before, &::after": {
                     content: '""',
                     display: "none",
