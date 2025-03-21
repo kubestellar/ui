@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef, memo } from "react";
 import { Box, Typography, Menu, MenuItem, Button, Alert, Snackbar } from "@mui/material";
-import axios from "axios";
 import { ReactFlowProvider, Position, MarkerType } from "reactflow";
 import * as dagre from "dagre";
 import "reactflow/dist/style.css";
@@ -44,8 +43,9 @@ import DynamicDetailsPanel from "./DynamicDetailsPanel";
 import ReactDOM from "react-dom";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { isEqual } from "lodash";
+import { useWebSocket } from "../context/WebSocketProvider"; // Import the WebSocket hook
 
-// Interfaces (unchanged)
+// Interfaces
 export interface NodeData {
   label: JSX.Element;
 }
@@ -80,13 +80,6 @@ export interface CustomEdge extends BaseEdge {
     height?: number;
     color?: string;
   };
-}
-
-export interface NamespaceResource {
-  name: string;
-  status: string;
-  labels: Record<string, string>;
-  resources: Record<string, ResourceItem[]>;
 }
 
 export interface ResourceItem {
@@ -124,6 +117,13 @@ export interface ResourceItem {
     verbs?: string[];
     resources?: string[];
   }>;
+}
+
+export interface NamespaceResource {
+  name: string;
+  status: string;
+  labels: Record<string, string>;
+  resources: Record<string, ResourceItem[]>;
 }
 
 interface SelectedNode {
@@ -259,7 +259,7 @@ const getLayoutedElements = (
   return { nodes: layoutedNodes, edges };
 };
 
-const TreeView = () => {
+const TreeViewComponent = () => {
   const [nodes, setNodes] = useState<CustomNode[]>([]);
   const [edges, setEdges] = useState<CustomEdge[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
@@ -269,29 +269,40 @@ const TreeView = () => {
   const [showCreateOptions, setShowCreateOptions] = useState(false);
   const [activeOption, setActiveOption] = useState<string | null>("option1");
   const [selectedNode, setSelectedNode] = useState<SelectedNode | null>(null);
+  const [hasReceivedInitialData, setHasReceivedInitialData] = useState<boolean>(false); // Track initial data reception
   const nodeCache = useRef<Map<string, CustomNode>>(new Map());
   const edgeCache = useRef<Map<string, CustomEdge>>(new Map());
   const edgeIdCounter = useRef<number>(0);
   const prevNodes = useRef<CustomNode[]>([]);
-  const wsRef = useRef<WebSocket | null>(null);
-  const [isWsConnected, setIsWsConnected] = useState<boolean>(false);
-  const [hasReceivedInitialData, setHasReceivedInitialData] = useState<boolean>(false);
   const renderStartTime = useRef<number>(0);
   const panelRef = useRef<HTMLDivElement>(null);
-  const dataReceiveTime = useRef<number | null>(null);
 
+  const { isConnected, connect } = useWebSocket(); // Use WebSocket context
   const queryClient = useQueryClient();
   const NAMESPACE_QUERY_KEY = ["namespaces"];
 
-  const { data: namespaceData } = useQuery({
+  // UseQuery to manage namespace data, but disable the queryFn since we're using WebSocket
+  const { data: namespaceData } = useQuery<NamespaceResource[]>({
     queryKey: NAMESPACE_QUERY_KEY,
     queryFn: async () => {
-      const response = await axios.get("http://localhost:4000/api/namespaces");
-      return response.data;
+      // This API call is not implemented in the backend, so we'll disable it
+      throw new Error("API not implemented");
     },
-    enabled: false,
+    enabled: false, // Disable the query since we're using WebSocket
     initialData: [],
   });
+
+  // Initiate WebSocket connection on mount
+  useEffect(() => {
+    connect(true); // Start the WebSocket connection
+  }, [connect]);
+
+  // Track if initial data has been received
+  useEffect(() => {
+    if (namespaceData && namespaceData.length > 0 && !hasReceivedInitialData) {
+      setHasReceivedInitialData(true);
+    }
+  }, [namespaceData, hasReceivedInitialData]);
 
   const getTimeAgo = useCallback((timestamp: string | undefined): string => {
     if (!timestamp) return "Unknown";
@@ -396,10 +407,10 @@ const TreeView = () => {
   const transformDataToTree = useCallback(
     (data: NamespaceResource[]) => {
       const startTime = performance.now();
-      console.log(`[Transform] Starting transformDataToTree with ${data?.length || 0} namespaces at ${startTime - renderStartTime.current}ms`);
+      console.log(`[TreeView] Starting transformDataToTree with ${data?.length || 0} namespaces at ${startTime - renderStartTime.current}ms`);
 
       if (!data || data.length === 0) {
-        console.log(`[Transform] No data to process, clearing nodes and edges at ${performance.now() - renderStartTime.current}ms`);
+        console.log(`[TreeView] No data to process, clearing nodes and edges at ${performance.now() - renderStartTime.current}ms`);
         nodeCache.current.clear();
         edgeCache.current.clear();
         edgeIdCounter.current = 0;
@@ -561,7 +572,7 @@ const TreeView = () => {
       });
 
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(newNodes, newEdges, "LR", prevNodes);
-
+      setTimeout(() => { 
       ReactDOM.unstable_batchedUpdates(() => {
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
@@ -569,135 +580,34 @@ const TreeView = () => {
       prevNodes.current = layoutedNodes;
 
       const endTime = performance.now();
-      console.log(`[Transform] Completed transformDataToTree: ${layoutedNodes.length} nodes, ${layoutedEdges.length} edges in ${endTime - startTime}ms`);
-      if (dataReceiveTime.current !== null) {
-        const rebuildTime = endTime - dataReceiveTime.current;
-        console.log(`[Transform] Tree rebuilt in ${rebuildTime}ms after data received`);
-        dataReceiveTime.current = null;
-      }
+      console.log(`[TreeView] Completed transformDataToTree: ${layoutedNodes.length} nodes, ${layoutedEdges.length} edges in ${endTime - startTime}ms`);
+    }, 10000); // 2-second delay for testing
     },
     [createNode]
   );
 
-  const sortNamespaceData = (data: NamespaceResource[]): NamespaceResource[] => {
-    return [...data]
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .map((ns) => ({
-        ...ns,
-        resources: Object.fromEntries(
-          Object.entries(ns.resources).map(([key, resources]) => [key, [...resources].sort((a, b) => a.metadata.name.localeCompare(b.metadata.name))])
-        ),
-      }));
-  };
-
-  const connectWebSocket = useCallback(
-    (reconnectFunc: () => void): WebSocket => {
-      const ws = new WebSocket("ws://localhost:4000/ws/namespaces");
-      wsRef.current = ws;
-
-      const updateCache = (filteredData: NamespaceResource[]) => {
-        const currentData = queryClient.getQueryData<NamespaceResource[]>(NAMESPACE_QUERY_KEY);
-        const sortedFilteredData = sortNamespaceData(filteredData);
-        const sortedCurrentData = currentData ? sortNamespaceData(currentData) : null;
-        if (!sortedCurrentData || !isEqual(sortedFilteredData, sortedCurrentData)) {
-          console.log(`[WebSocket] Data changed, updating cache at ${performance.now() - renderStartTime.current}ms`);
-          queryClient.setQueryData(NAMESPACE_QUERY_KEY, filteredData);
-        } else {
-          console.log(`[WebSocket] Data unchanged, skipping cache update at ${performance.now() - renderStartTime.current}ms`);
-        }
-      };
-
-      ws.onopen = () => {
-        console.log(`[WebSocket] Connected at ${performance.now() - renderStartTime.current}ms`);
-        setIsWsConnected(true);
-      };
-
-      ws.onmessage = (event) => {
-        const receiveTime = performance.now();
-        console.log(`[WebSocket] Data received at ${receiveTime - renderStartTime.current}ms, readyState: ${ws.readyState}`);
-        let data: NamespaceResource[] = [];
-        try {
-          data = JSON.parse(event.data);
-        } catch (error) {
-          console.error(`[WebSocket] Failed to parse data at ${performance.now() - renderStartTime.current}ms:`, error);
-          return;
-        }
-        const totalObjects = data.reduce((count, namespace) => {
-          const resourceCount = Object.values(namespace.resources).reduce((sum, resources) => sum + resources.length, 0);
-          return count + resourceCount;
-        }, 0);
-        console.log(`[WebSocket] Received ${totalObjects} objects across ${data.length} namespaces at ${performance.now() - renderStartTime.current}ms`);
-        const filteredData = JSON.parse(JSON.stringify(data)).filter(
-          (namespace: NamespaceResource) => !["kubestellar-report", "kube-node-lease", "kube-public", "kube-system"].includes(namespace.name)
-        );
-        console.log(`[WebSocket] Filtered ${filteredData.length} namespaces from ${data.length} at ${performance.now() - renderStartTime.current}ms`);
-        dataReceiveTime.current = receiveTime;
-        // Batch updates
-        ReactDOM.unstable_batchedUpdates(() => {
-          setHasReceivedInitialData(true);
-          updateCache(filteredData);
-        });
-      };
-
-      ws.onerror = (error) => {
-        console.error(`[WebSocket] Error at ${performance.now() - renderStartTime.current}ms:`, error);
-        setIsWsConnected(false);
-      };
-
-      ws.onclose = () => {
-        console.log(`[WebSocket] Disconnected at ${performance.now() - renderStartTime.current}ms, attempting reconnect...`);
-        setIsWsConnected(false);
-        setHasReceivedInitialData(false); // Reset for reconnect
-        wsRef.current = null;
-        reconnectFunc();
-      };
-
-      return ws;
-    },
-    [queryClient]
-  );
-
-  const reconnectWebSocket = useCallback((): void => {
-    let retryCount = 0;
-    const maxBackoff = 500;
-    const initialDelay = 10;
-
-    const attemptReconnect = () => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) return;
-
-      const delay = Math.min(initialDelay * Math.pow(2, retryCount), maxBackoff);
-      retryCount++;
-
-      setTimeout(() => {
-        console.log(`[WebSocket] Reconnecting (attempt ${retryCount}, delay ${delay}ms) at ${performance.now() - renderStartTime.current}ms`);
-        connectWebSocket(reconnectWebSocket);
-      }, delay);
-    };
-
-    attemptReconnect();
-  }, [connectWebSocket]);
-
   useEffect(() => {
     renderStartTime.current = performance.now();
-    console.log(`[Lifecycle] TreeView mounted at 0ms`);
-    connectWebSocket(reconnectWebSocket);
-
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
-      }
-    };
-  }, [connectWebSocket, reconnectWebSocket]);
+    console.log(`[TreeView] Component mounted at 0ms`);
+  }, []);
 
   useEffect(() => {
     if (namespaceData !== undefined) {
       console.log(
-        `[State] namespaceData updated, triggering transformDataToTree with ${namespaceData.length} namespaces at ${performance.now() - renderStartTime.current}ms`
+        `[TreeView] namespaceData received with ${namespaceData.length} namespaces at ${performance.now() - renderStartTime.current}ms`
       );
       transformDataToTree(namespaceData);
     }
   }, [namespaceData, transformDataToTree]);
+
+  // Log when rendering is successful
+  useEffect(() => {
+    if (nodes.length > 0 || edges.length > 0) {
+      console.log(
+        `[TreeView] Rendered successfully with ${nodes.length} nodes and ${edges.length} edges at ${performance.now() - renderStartTime.current}ms`
+      );
+    }
+  }, [nodes, edges]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -715,7 +625,8 @@ const TreeView = () => {
   const deleteResourceMutation = useMutation({
     mutationFn: async ({ namespace, nodeName }: { nodeId: string; nodeType: string; namespace: string; nodeName: string }) => {
       const endpoint = `http://localhost:4000/api/namespaces/${namespace}/${nodeName}`;
-      await axios.delete(endpoint);
+      console.log(endpoint);
+      throw new Error("API not implemented"); // Simulate API not being implemented
     },
     onMutate: async ({ nodeId }) => {
       await queryClient.cancelQueries({ queryKey: NAMESPACE_QUERY_KEY });
@@ -750,7 +661,7 @@ const TreeView = () => {
       return { previousData };
     },
     onError: (error, variables, context) => {
-      console.error(`[Delete] Failed to delete node ${variables.nodeId}:`, error);
+      console.error(`[TreeView] Failed to delete node ${variables.nodeId} at ${performance.now() - renderStartTime.current}ms:`, error);
       setSnackbarMessage(`Failed to delete "${variables.nodeName}"`);
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
@@ -761,6 +672,7 @@ const TreeView = () => {
       setSnackbarSeverity("success");
       setSnackbarOpen(true);
       queryClient.invalidateQueries({ queryKey: NAMESPACE_QUERY_KEY });
+      console.log(`[TreeView] Node "${variables.nodeName}" deleted successfully at ${performance.now() - renderStartTime.current}ms`);
     },
   });
 
@@ -833,6 +745,9 @@ const TreeView = () => {
     setActiveOption("option1");
   };
 
+  // Determine if we should show the loading spinner
+  const isLoadingTree = !isConnected || !hasReceivedInitialData || (nodes.length === 0 && edges.length === 0);
+
   return (
     <Box sx={{ display: "flex", height: "100vh", width: "100%", position: "relative" }}>
       <Box
@@ -873,9 +788,9 @@ const TreeView = () => {
         {showCreateOptions && <CreateOptions activeOption={activeOption} setActiveOption={setActiveOption} onCancel={handleCancelCreateOptions} />}
 
         <Box sx={{ width: "100%", height: "calc(100% - 80px)", position: "relative" }}>
-          {(!isWsConnected || !hasReceivedInitialData) ? (
-            <LoadingFallback message="Loading the WDS tree.." size="medium" />
-          ) : namespaceData.length === 0 ? (
+          {isLoadingTree ? (
+            <LoadingFallback message="Loading the tree..." size="medium" />
+          ) : nodes.length === 0 && edges.length === 0 ? (
             <Box
               sx={{
                 width: "100%",
@@ -947,4 +862,4 @@ const TreeView = () => {
   );
 };
 
-export default memo(TreeView);
+export default memo(TreeViewComponent);

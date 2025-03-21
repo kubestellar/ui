@@ -510,8 +510,9 @@ const WecsTreeview = () => {
                 });
               });
             } else if (kindLower === "deployment") {
+              const replicaSetId = `${resourceId}-replicaset`;
               createNode(
-                `${resourceId}-replicaset`,
+                replicaSetId,
                 `replicaset-${item.metadata.name}`,
                 "replicaset",
                 status,
@@ -519,6 +520,21 @@ const WecsTreeview = () => {
                 namespace.name,
                 item,
                 resourceId,
+                newNodes,
+                newEdges
+              );
+              
+              // Add Pod node linked to ReplicaSet
+              const podId = `${replicaSetId}-pod`;
+              createNode(
+                podId,
+                `pod-${item.metadata.name}`,
+                "pod",
+                status,
+                undefined,
+                namespace.name,
+                item,
+                replicaSetId, // Link Pod to ReplicaSet
                 newNodes,
                 newEdges
               );
