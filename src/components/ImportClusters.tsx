@@ -441,12 +441,26 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                   "&:focus": {
                     outline: "none",
                   },
+                  "&:focus-visible": {
+                    outline: "none",
+                  },
+                  WebkitTapHighlightColor: "transparent",
+                  WebkitTouchCallout: "none",
+                  "&::-webkit-focus-ring-color": {
+                    color: "transparent",
+                  },
                   "&::before, &::after": {
                     content: '""',
                     display: "none",
                   },
+                  "@media not all and (min-resolution:.001dpcm)": {
+                    "@supports (-webkit-appearance:none)": {
+                      outline: "none !important", 
+                      boxShadow: "none !important",
+                    }
+                  },
                   
-                  "&:hover": {
+                        "&:hover": { 
                     backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.03)",
                     color: theme === "dark" ? colors.white : colors.primary,
                     borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.1)", 
@@ -466,11 +480,8 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                       : `0 0 6px ${colors.primary}30`,
                     zIndex: 1,
                     position: "relative",
-                    outline: "none",
-                    WebkitAppearance: "none",
-                    WebkitTapHighlightColor: "transparent",
-                    "&:focus": {
-                      outline: "none",
+                    "&:focus, &:focus-visible": {
+                      outline: "none !important",
                     },
                     "&::before, &::after": {
                       display: "none",
