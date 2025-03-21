@@ -466,6 +466,12 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                       : `0 0 6px ${colors.primary}30`,
                     zIndex: 1,
                     position: "relative",
+                    outline: "none",
+                    WebkitAppearance: "none",
+                    WebkitTapHighlightColor: "transparent",
+                    "&:focus": {
+                      outline: "none",
+                    },
                     "&::before, &::after": {
                       display: "none",
                     },
