@@ -287,3 +287,7 @@ func watchOnBps() {
 	}
 	log.LogWarn("Stopped watching on BP resource")
 }
+func init() {
+
+	go watchOnBps()
+}
