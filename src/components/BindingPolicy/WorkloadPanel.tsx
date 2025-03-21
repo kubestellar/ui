@@ -6,12 +6,15 @@ import {
   Paper, 
   Divider,
   useTheme,
-  alpha
+  alpha,
+  Button
 } from '@mui/material';
 import { Draggable } from '@hello-pangea/dnd';
 import { Workload } from '../../types/bindingPolicy';
 import StrictModeDroppable from './StrictModeDroppable';
 import KubernetesIcon from './KubernetesIcon';
+import AddIcon from '@mui/icons-material/Add';
+import { useNavigate } from 'react-router-dom';
 
 interface WorkloadPanelProps {
   workloads: Workload[];
@@ -25,6 +28,11 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
   error
 }) => {
   const theme = useTheme();
+  const navigate = useNavigate();
+
+  const handleCreateWorkload = () => {
+    navigate('/workloads/manage');
+  };
 
   const renderWorkloadItem = (workload: Workload, index: number) => {
     return (
@@ -80,15 +88,39 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
         borderRadius: 2
       }}
     >
-      <Box sx={{ p: 2, backgroundColor: theme.palette.secondary.main, color: 'white' }}>
+      <Box sx={{ p: 2, backgroundColor: theme.palette.secondary.main, color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <KubernetesIcon type="workload" size={24} sx={{ mr: 1, color: 'white' }} />
           <Typography variant="h6">Workloads</Typography>
         </Box>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={handleCreateWorkload}
+          size="small"
+          sx={{ 
+            bgcolor: 'white', 
+            color: theme.palette.secondary.main,
+            '&:hover': {
+              bgcolor: alpha(theme.palette.common.white, 0.9),
+            }
+          }}
+        >
+          Create
+        </Button>
       </Box>
       <Divider />
       
-      <Box sx={{ p: 1, overflow: 'auto', flexGrow: 1 }}>
+      <Box sx={{ 
+        p: 1, 
+        overflow: 'auto', 
+        flexGrow: 1,
+        '&::-webkit-scrollbar': {
+          display: 'none'
+        },
+        scrollbarWidth: 'none',  
+        '-ms-overflow-style': 'none',  
+      }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
             <CircularProgress size={30} />
