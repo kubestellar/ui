@@ -10,6 +10,8 @@ import {
   Chip,
   Paper,
   Grid,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
 import {  BindingPolicyInfo } from "../../../types/bindingPolicy";
 import Editor from "@monaco-editor/react";
@@ -28,6 +30,8 @@ interface PolicyDetailDialogProps {
   onClose: () => void;
   policy: BindingPolicyInfo;
   onEdit: (policy: BindingPolicyInfo) => void;
+  isLoading?: boolean;
+  error?: string;
 }
 
 const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
@@ -35,6 +39,8 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
   onClose,
   policy,
   onEdit,
+  isLoading = false,
+  error
 }) => {
   const theme = useTheme((state) => state.theme)
   const isDarkTheme = theme === "dark";
@@ -47,6 +53,58 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
 
   // Use the workload list directly from the policy object
   const workloads = policy.workloadList || [];
+
+  if (isLoading) {
+    return (
+      <Dialog
+        open={open}
+        onClose={onClose}
+        maxWidth="md"
+        PaperProps={{
+          sx: {
+            backgroundColor: isDarkTheme ? "#1e293b" : "#fff",
+            color: isDarkTheme ? "#fff" : "inherit",
+          },
+        }}
+      >
+        <DialogTitle>Loading Policy Details</DialogTitle>
+        <DialogContent>
+          <Box display="flex" justifyContent="center" alignItems="center" py={4}>
+            <CircularProgress />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
+    );
+  }
+
+  if (error) {
+    return (
+      <Dialog
+        open={open}
+        onClose={onClose}
+        maxWidth="md"
+        PaperProps={{
+          sx: {
+            backgroundColor: isDarkTheme ? "#1e293b" : "#fff",
+            color: isDarkTheme ? "#fff" : "inherit",
+          },
+        }}
+      >
+        <DialogTitle>Error Loading Policy Details</DialogTitle>
+        <DialogContent>
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {error}
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose}>Close</Button>
+        </DialogActions>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog
@@ -134,7 +192,7 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
                     Created
                   </Typography>
                   <Typography sx={{ color: isDarkTheme ? "#fff" : "text.primary" }}>
-                    {policy.creationDate}
+                    {policy.creationDate || 'Not available'}
                   </Typography>
                 </Box>
                 <Box>
@@ -179,21 +237,24 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
                   </Typography>
                   <Box sx={{ mt: 1 }}>
                     {clusterNames.length > 0 ? (
-                      clusterNames.map((name, index) => (
-                        <Chip
-                          key={index}
-                          label={name}
-                          size="small"
-                          sx={{
-                            mr: 1,
-                            mb: 1,
-                            backgroundColor: isDarkTheme
-                              ? "#334155"
-                              : undefined,
-                            color: isDarkTheme ? "#fff" : undefined,
-                          }}
-                        />
-                      ))
+                      <>
+                      
+                        {clusterNames.map((name, index) => (
+                          <Chip
+                            key={index}
+                            label={name}
+                            size="small"
+                            sx={{
+                              mr: 1,
+                              mb: 1,
+                              backgroundColor: isDarkTheme
+                                ? "#334155"
+                                : undefined,
+                              color: isDarkTheme ? "#fff" : undefined,
+                            }}
+                          />
+                        ))}
+                      </>
                     ) : (
                       <Typography 
                         sx={{ 
@@ -215,21 +276,24 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
                   </Typography>
                   <Box sx={{ mt: 1 }}>
                     {workloads && workloads.length > 0 ? (
-                      workloads.map((workload, index) => (
-                        <Chip
-                          key={index}
-                          label={workload}
-                          size="small"
-                          sx={{
-                            mr: 1,
-                            mb: 1,
-                            backgroundColor: isDarkTheme
-                              ? "#334155"
-                              : undefined,
-                            color: isDarkTheme ? "#fff" : undefined,
-                          }}
-                        />
-                      ))
+                      <>
+                       
+                        {workloads.map((workload, index) => (
+                          <Chip
+                            key={index}
+                            label={workload}
+                            size="small"
+                            sx={{
+                              mr: 1,
+                              mb: 1,
+                              backgroundColor: isDarkTheme
+                                ? "#334155"
+                                : undefined,
+                              color: isDarkTheme ? "#fff" : undefined,
+                            }}
+                          />
+                        ))}
+                      </>
                     ) : (
                       <Typography 
                         sx={{ 
