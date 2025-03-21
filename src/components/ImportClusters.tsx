@@ -436,6 +436,11 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                   position: "relative",
                   overflow: "visible",
                   border: "1px solid transparent",
+                  WebkitAppearance: "none",
+                  "&::before, &::after": {
+                    content: '""',
+                    display: "none",
+                  },
                   
                   "&:hover": {
                     backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.03)",
@@ -457,10 +462,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                       : `0 0 6px ${colors.primary}30`,
                     zIndex: 1,
                     position: "relative",
-                    "&:before": {
-                      display: "none",
-                    },
-                    "&:after": {
+                    "&::before, &::after": {
                       display: "none",
                     },
                     "& .iconContainer": {

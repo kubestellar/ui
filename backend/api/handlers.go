@@ -7,9 +7,9 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	"github.com/katamyra/kubestellarUI/models"
-	"github.com/katamyra/kubestellarUI/services"
-	"github.com/katamyra/kubestellarUI/utils"
+	"github.com/kubestellar/ui/models"
+	"github.com/kubestellar/ui/services"
+	"github.com/kubestellar/ui/utils"
 )
 
 var (

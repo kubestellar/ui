@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/katamyra/kubestellarUI/log"
+	"github.com/kubestellar/ui/log"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )

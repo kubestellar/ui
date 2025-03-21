@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	nsresources "github.com/katamyra/kubestellarUI/namespace/resources"
+	nsresources "github.com/kubestellar/ui/namespace/resources"
 )
 
 func setupNamespaceRoutes(router *gin.Engine) {

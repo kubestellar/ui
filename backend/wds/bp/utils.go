@@ -8,9 +8,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/katamyra/kubestellarUI/log"
 	"github.com/kubestellar/kubestellar/api/control/v1alpha1"
 	bpv1alpha1 "github.com/kubestellar/kubestellar/pkg/generated/clientset/versioned/typed/control/v1alpha1"
+	"github.com/kubestellar/ui/log"
 	"go.uber.org/zap"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"

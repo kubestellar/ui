@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/katamyra/kubestellarUI/api"
+	"github.com/kubestellar/ui/api"
 )
 
 func setupGitopsRoutes(router *gin.Engine) {
