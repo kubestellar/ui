@@ -248,7 +248,6 @@ func StreamK8sData(c *gin.Context) {
 	}
 }
 
-
 // StreamPodLogs streams full logs for a specific pod via a dedicated WebSocket.
 // It expects the following query parameters:
 // - cluster: the cluster context name (or identifier)
@@ -316,5 +315,3 @@ func StreamPodLogs(c *gin.Context) {
 		time.Sleep(2 * time.Second)
 	}
 }
-
-
