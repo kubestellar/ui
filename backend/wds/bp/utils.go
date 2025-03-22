@@ -2,6 +2,7 @@ package bp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,6 +12,7 @@ import (
 	"github.com/kubestellar/kubestellar/api/control/v1alpha1"
 	bpv1alpha1 "github.com/kubestellar/kubestellar/pkg/generated/clientset/versioned/typed/control/v1alpha1"
 	"github.com/kubestellar/ui/log"
+	"github.com/kubestellar/ui/redis"
 	"go.uber.org/zap"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
@@ -235,6 +237,23 @@ func filterBPsByNamespace(bps []BindingPolicyWithStatus, namespace string) []Bin
 	return filtered
 }
 
+// Creates Binding policy json from the given bp, Returns Json string
+func createBpJson(bp *v1alpha1.BindingPolicy) (string, error) {
+	if bp == nil {
+		return "", fmt.Errorf("bp is nil")
+	}
+	bpMap := make(map[string]interface{})
+	bpMap["name"] = bp.Name
+	bpMap["workloads"] = extractWorkloads(bp)
+	bpMap["targetClusters"] = extractTargetClusters(bp)
+	// get status of bp TODO
+	bpJson, err := json.Marshal(&bpMap)
+	if err != nil {
+		return "", err
+	}
+	return string(bpJson), nil
+}
+
 // check if content type is valid
 func contentTypeValid(t string) bool {
 
@@ -262,21 +281,33 @@ func watchOnBps() {
 	for event := range eventChan {
 		switch event.Type {
 		case "MODIFIED":
-			log.LogInfo("bp modfied")
-			_, ok := event.Object.(*v1alpha1.BindingPolicy)
-			if !ok {
-				log.LogInfo("Wrong object type")
+			bp, _ := event.Object.(*v1alpha1.BindingPolicy)
+			bpJson, err := createBpJson(bp)
+			if err != nil {
+				log.LogError("Error creating bp json", zap.String("error", err.Error()))
+			}
+			err = redis.SetBpCmd(bp.Name, bpJson)
+			if err != nil {
+				log.LogError("Error setting bp in redis", zap.String("error", err.Error()))
 			}
 
 		case "ADDED":
-			log.LogInfo("Added a new bp")
-			_, ok := event.Object.(*v1alpha1.BindingPolicy)
-			if !ok {
-				log.LogInfo("Wrong object type")
+			bp, _ := event.Object.(*v1alpha1.BindingPolicy)
+			bpJson, err := createBpJson(bp)
+			if err != nil {
+				log.LogError("Error creating bp json", zap.String("error", err.Error()))
+			}
+			err = redis.SetBpCmd(bp.Name, bpJson)
+			if err != nil {
+				log.LogError("Error setting bp in redis", zap.String("error", err.Error()))
 			}
 
 		case "DELETED":
-			log.LogInfo("deleted bp")
+			bp, _ := event.Object.(*v1alpha1.BindingPolicy)
+			err := redis.DeleteBpcmd(bp.Name)
+			if err != nil {
+				log.LogError("Error deleting bp from redis", zap.String("error", err.Error()))
+			}
 		case "ERROR":
 			log.LogWarn("Some error occured while watching ON BP")
 		}
