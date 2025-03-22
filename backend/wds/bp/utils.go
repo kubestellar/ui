@@ -256,15 +256,19 @@ func createBpJson(bp *v1alpha1.BindingPolicy) (string, error) {
 
 // check if content type is valid
 func contentTypeValid(t string) bool {
+	// Extract the base content type (ignore parameters like boundary=...)
+	baseType := t
+	if idx := strings.Index(t, ";"); idx != -1 {
+		baseType = strings.TrimSpace(t[:idx])
+	}
 
 	supportedTypes := []string{"application/yaml", "multipart/form-data"}
 	for _, v := range supportedTypes {
-		if t == v {
+		if baseType == v {
 			return true
 		}
 	}
 	return false
-
 }
 
 // watches on all binding policy resources , PROTOTYPE just for now
@@ -314,7 +318,6 @@ func watchOnBps() {
 	}
 	log.LogWarn("Stopped watching on BP resource")
 }
-
 func init() {
 
 	go watchOnBps()

@@ -45,107 +45,145 @@ func HomeDir() string {
 	return os.Getenv("USERPROFILE") // for Windows
 }
 
-// GetITSInfo retrieves clusters already imported into ITS by querying the managedclusters API.
+func kubeconfigPath() string {
+	if path := os.Getenv("KUBECONFIG"); path != "" {
+		return path
+	}
+	return fmt.Sprintf("%s/.kube/config", HomeDir())
+}
+
 func GetITSInfo() ([]ManagedClusterInfo, error) {
-	kubeconfig := os.Getenv("KUBECONFIG")
-	if kubeconfig == "" {
-		kubeconfig = fmt.Sprintf("%s/.kube/config", HomeDir())
-	}
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	kubeconfig := kubeconfigPath()
+	config, err := clientcmd.LoadFromFile(kubeconfig)
 	if err != nil {
 		return nil, err
-	}
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return nil, err
-	}
-
-	clustersBytes, err := clientset.RESTClient().Get().
-		AbsPath("/apis/cluster.open-cluster-management.io/v1").
-		Resource("managedclusters").
-		DoRaw(context.TODO())
-	if err != nil {
-		return nil, fmt.Errorf("failed to get managed clusters: %w", err)
-	}
-
-	var clusterList struct {
-		Items []struct {
-			Metadata struct {
-				Name              string            `json:"name"`
-				Labels            map[string]string `json:"labels"`
-				CreationTimestamp string            `json:"creationTimestamp"`
-			} `json:"metadata"`
-		} `json:"items"`
-	}
-	if err := json.Unmarshal(clustersBytes, &clusterList); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal clusters: %w", err)
 	}
 
 	var managedClusters []ManagedClusterInfo
-	for _, item := range clusterList.Items {
-		creationTime, err := time.Parse(time.RFC3339, item.Metadata.CreationTimestamp)
-		if err != nil {
-			creationTime = time.Now().UTC()
+
+	// Check all contexts that might be hub clusters
+	for contextName := range config.Contexts {
+		if !strings.HasPrefix(contextName, "its") {
+			continue
 		}
-		managedClusters = append(managedClusters, ManagedClusterInfo{
-			Name:         item.Metadata.Name, // ITS inventory uses this as the unique NAME.
-			Labels:       item.Metadata.Labels,
-			CreationTime: creationTime,
-		})
+
+		clientConfig := clientcmd.NewNonInteractiveClientConfig(
+			*config,
+			contextName,
+			&clientcmd.ConfigOverrides{},
+			nil,
+		)
+
+		restConfig, err := clientConfig.ClientConfig()
+		if err != nil {
+			log.Printf("Skipping context %s: %v", contextName, err)
+			continue
+		}
+
+		clientset, err := kubernetes.NewForConfig(restConfig)
+		if err != nil {
+			log.Printf("Error creating clientset for %s: %v", contextName, err)
+			continue
+		}
+
+		clustersBytes, err := clientset.RESTClient().Get().
+			AbsPath("/apis/cluster.open-cluster-management.io/v1").
+			Resource("managedclusters").
+			DoRaw(context.TODO())
+
+		if err != nil {
+			log.Printf("Error fetching clusters from %s: %v", contextName, err)
+			continue
+		}
+
+		var clusterList struct {
+			Items []struct {
+				Metadata struct {
+					Name              string            `json:"name"`
+					Labels            map[string]string `json:"labels"`
+					CreationTimestamp string            `json:"creationTimestamp"`
+				} `json:"metadata"`
+			} `json:"items"`
+		}
+
+		if err := json.Unmarshal(clustersBytes, &clusterList); err != nil {
+			log.Printf("Error unmarshaling clusters: %v", err)
+			continue
+		}
+
+		for _, item := range clusterList.Items {
+			creationTime, _ := time.Parse(time.RFC3339, item.Metadata.CreationTimestamp)
+			managedClusters = append(managedClusters, ManagedClusterInfo{
+				Name:         item.Metadata.Name,
+				Labels:       item.Metadata.Labels,
+				CreationTime: creationTime,
+				Context:      contextName,
+			})
+		}
 	}
+
 	return managedClusters, nil
 }
 
 // GetAvailableClusters reads the kubeconfig and returns a slice of ContextInfo
 // for clusters that do NOT match the "*-kubeflex" pattern and are not already imported into ITS.
 // It normalizes the underlying cluster name (stripping "k3d-" prefix) before filtering.
+// GetAvailableClusters reads the kubeconfig and returns available clusters
 func GetAvailableClusters() ([]ContextInfo, error) {
-	kubeconfig := os.Getenv("KUBECONFIG")
-	if kubeconfig == "" {
-		kubeconfig = fmt.Sprintf("%s/.kube/config", HomeDir())
-		log.Printf("Using default kubeconfig path: %s", kubeconfig)
-	} else {
-		log.Printf("Using kubeconfig from environment: %s", kubeconfig)
-	}
+	kubeconfig := kubeconfigPath()
+	log.Printf("Using kubeconfig: %s", kubeconfig)
 
 	config, err := clientcmd.LoadFromFile(kubeconfig)
 	if err != nil {
 		return nil, err
 	}
 
-	importedClusters, err := GetITSInfo()
+	// Get managed clusters from OCM
+	managedClusters, err := GetITSInfo()
 	if err != nil {
-		log.Printf("Error retrieving ITS info: %v", err)
-		importedClusters = []ManagedClusterInfo{}
-	}
-	// Build a set of imported cluster names (using the ITS "Name" field)
-	importedSet := make(map[string]bool)
-	for _, ic := range importedClusters {
-		importedSet[ic.Name] = true
+		log.Printf("Error retrieving managed clusters: %v", err)
+		managedClusters = []ManagedClusterInfo{}
 	}
 
-	var availableContexts []ContextInfo
-	for contextName, ctx := range config.Contexts {
-		// Skip contexts that contain "-kubeflex"
-		if strings.Contains(contextName, "-kubeflex") {
+	// Build lookup map with multiple variations
+	managedSet := make(map[string]bool)
+	for _, mc := range managedClusters {
+		baseName := strings.ToLower(mc.Name)
+		managedSet[baseName] = true
+
+		// Add common prefix variations to the managed set
+		managedSet["k3d-"+baseName] = true
+		managedSet["kind-"+baseName] = true
+		managedSet[strings.ToLower(mc.Name+"-kubeflex")] = true
+	}
+
+	var available []ContextInfo
+	for ctxName, ctx := range config.Contexts {
+		lowerCtxName := strings.ToLower(ctxName)
+		lowerCluster := strings.ToLower(ctx.Cluster)
+
+		// Skip system contexts
+		if strings.HasPrefix(lowerCtxName, "its") ||
+			strings.HasPrefix(lowerCtxName, "wds") ||
+			strings.HasPrefix(lowerCtxName, "ar") {
 			continue
 		}
-		// Normalize the underlying cluster name by removing a "k3d-" prefix if present.
-		normalizedCluster := ctx.Cluster
-		if strings.HasPrefix(normalizedCluster, "k3d-") {
-			normalizedCluster = strings.TrimPrefix(normalizedCluster, "k3d-")
-		}
-		// Skip this context if the normalized cluster name is already imported.
-		if importedSet[normalizedCluster] {
+
+		// Check all possible naming variations
+		if managedSet[lowerCtxName] ||
+			managedSet[lowerCluster] ||
+			managedSet[strings.TrimPrefix(lowerCluster, "k3d-")] ||
+			managedSet[strings.TrimPrefix(lowerCluster, "kind-")] {
 			continue
 		}
-		availableContexts = append(availableContexts, ContextInfo{
-			Name:    contextName,
-			Cluster: ctx.Cluster, // original value for display purposes
+
+		available = append(available, ContextInfo{
+			Name:    ctxName,
+			Cluster: ctx.Cluster,
 		})
 	}
 
-	return availableContexts, nil
+	return available, nil
 }
 
 // GetAvailableClustersHandler handles the GET /api/cluster/available endpoint.
@@ -182,11 +220,9 @@ func GetKubeInfoHandler(c *gin.Context) {
 // - The current kubeconfig context
 // - ITS managed cluster data
 func GetKubeInfo() ([]ContextInfo, []string, string, error, []ManagedClusterInfo) {
-	kubeconfig := os.Getenv("KUBECONFIG")
-	if kubeconfig == "" {
-		if home := HomeDir(); home != "" {
-			kubeconfig = fmt.Sprintf("%s/.kube/config", HomeDir())
-		}
+	kubeconfig := kubeconfigPath()
+	// Log which kubeconfig is being used.
+	if os.Getenv("KUBECONFIG") == "" {
 		log.Printf("Using default kubeconfig path: %s", kubeconfig)
 	} else {
 		log.Printf("Using kubeconfig from environment: %s", kubeconfig)

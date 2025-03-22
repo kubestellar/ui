@@ -88,7 +88,16 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
       </Box>
       <Divider />
       
-      <Box sx={{ p: 1, overflow: 'auto', flexGrow: 1 }}>
+      <Box sx={{ 
+        p: 1, 
+        overflow: 'auto', 
+        flexGrow: 1,
+        '&::-webkit-scrollbar': {
+          display: 'none'
+        },
+        scrollbarWidth: 'none',  
+        '-ms-overflow-style': 'none',  
+      }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
             <CircularProgress size={30} />

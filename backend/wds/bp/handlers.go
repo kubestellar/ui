@@ -12,7 +12,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/kubestellar/api/control/v1alpha1"
 	"github.com/kubestellar/ui/log"
-	"github.com/kubestellar/ui/utils"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -366,7 +365,14 @@ func CreateBp(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "content-type not supported"})
 		return
 	}
-	if contentType == "application/yaml" {
+
+	// Extract the base content type
+	baseContentType := contentType
+	if idx := strings.Index(contentType, ";"); idx != -1 {
+		baseContentType = strings.TrimSpace(contentType[:idx])
+	}
+
+	if baseContentType == "application/yaml" {
 		bpRawYamlBytes, err = io.ReadAll(ctx.Request.Body)
 		if err != nil {
 			log.LogError("error reading yaml input", zap.String("error", err.Error()))
@@ -374,11 +380,31 @@ func CreateBp(ctx *gin.Context) {
 			return
 		}
 	}
-	if contentType == "multipart/form-data" {
+	if baseContentType == "multipart/form-data" {
 		// Get the form file
-		bpRawYamlBytes, err := utils.GetFormFileBytes("bpYaml", ctx)
+		file, err := ctx.FormFile("bpYaml")
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			log.LogError("failed to get form file", zap.String("err", err.Error()))
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("failed to get form file: %s", err.Error())})
+			return
+		}
+
+		fmt.Printf("Debug - Received file: %s\n", file.Filename)
+
+		// Open and read the file
+		f, err := file.Open()
+		if err != nil {
+			log.LogError("failed to open file", zap.String("err", err.Error()))
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to open file: %s", err.Error())})
+			return
+		}
+		defer f.Close()
+
+		// Read file contents
+		bpRawYamlBytes, err = io.ReadAll(f)
+		if err != nil {
+			log.LogError("failed to read bp yaml file", zap.String("err", err.Error()))
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to read file: %s", err.Error())})
 			return
 		}
 		log.LogInfo("received bp yaml file")
@@ -395,46 +421,97 @@ func CreateBp(ctx *gin.Context) {
 
 	// Extract specific workloads information if present
 	specificWorkloads := []WorkloadInfo{}
-	if specObj, ok := yamlMap["spec"].(map[interface{}]interface{}); ok {
-		if workloadsList, ok := specObj["workloads"].([]interface{}); ok {
-			fmt.Printf("Debug - Found workloads section with %d entries\n", len(workloadsList))
+	if specRaw, ok := yamlMap["spec"]; ok {
+		// Try to extract spec as map[string]interface{}
+		var specObj map[string]interface{}
+		if spec, ok := specRaw.(map[string]interface{}); ok {
+			specObj = spec
+		} else if spec, ok := specRaw.(map[interface{}]interface{}); ok {
+			// Convert map[interface{}]interface{} to map[string]interface{}
+			specObj = make(map[string]interface{})
+			for k, v := range spec {
+				if kStr, ok := k.(string); ok {
+					specObj[kStr] = v
+				}
+			}
+		}
 
-			for i, workloadObj := range workloadsList {
-				if workload, ok := workloadObj.(map[interface{}]interface{}); ok {
-					// Extract apiVersion
-					apiVersion := ""
-					if av, ok := workload["apiVersion"].(string); ok {
-						apiVersion = av
+		if specObj != nil {
+			// Try to extract workloads
+			if workloadsRaw, exists := specObj["workloads"]; exists {
+				var workloadsList []interface{}
+				if wl, ok := workloadsRaw.([]interface{}); ok {
+					workloadsList = wl
+				}
+
+				fmt.Printf("Debug - Found workloads section with %d entries\n", len(workloadsList))
+
+				for i, workloadObj := range workloadsList {
+					// Try to extract workload as map
+					var workload map[string]interface{}
+					if w, ok := workloadObj.(map[string]interface{}); ok {
+						workload = w
+					} else if w, ok := workloadObj.(map[interface{}]interface{}); ok {
+						// Convert map[interface{}]interface{} to map[string]interface{}
+						workload = make(map[string]interface{})
+						for k, v := range w {
+							if kStr, ok := k.(string); ok {
+								workload[kStr] = v
+							}
+						}
 					}
 
-					// Extract kind
-					kind := ""
-					if k, ok := workload["kind"].(string); ok {
-						kind = k
-					}
+					if workload != nil {
+						// Extract apiVersion
+						apiVersion := ""
+						if av, ok := workload["apiVersion"].(string); ok {
+							apiVersion = av
+						}
 
-					// Extract name and namespace
-					name := ""
-					namespace := ""
-					if metaObj, ok := workload["metadata"].(map[interface{}]interface{}); ok {
-						if n, ok := metaObj["name"].(string); ok {
-							name = n
+						// Extract kind
+						kind := ""
+						if k, ok := workload["kind"].(string); ok {
+							kind = k
 						}
-						if ns, ok := metaObj["namespace"].(string); ok {
-							namespace = ns
-						}
-					}
 
-					if apiVersion != "" && kind != "" {
-						workloadInfo := WorkloadInfo{
-							APIVersion: apiVersion,
-							Kind:       kind,
-							Name:       name,
-							Namespace:  namespace,
+						// Extract name and namespace from metadata
+						name := ""
+						namespace := ""
+						if metaRaw, ok := workload["metadata"]; ok {
+							var metaObj map[string]interface{}
+							if meta, ok := metaRaw.(map[string]interface{}); ok {
+								metaObj = meta
+							} else if meta, ok := metaRaw.(map[interface{}]interface{}); ok {
+								// Convert map[interface{}]interface{} to map[string]interface{}
+								metaObj = make(map[string]interface{})
+								for k, v := range meta {
+									if kStr, ok := k.(string); ok {
+										metaObj[kStr] = v
+									}
+								}
+							}
+
+							if metaObj != nil {
+								if n, ok := metaObj["name"].(string); ok {
+									name = n
+								}
+								if ns, ok := metaObj["namespace"].(string); ok {
+									namespace = ns
+								}
+							}
 						}
-						specificWorkloads = append(specificWorkloads, workloadInfo)
-						fmt.Printf("Debug - Added specific workload #%d: %s/%s: %s (ns:%s)\n",
-							i, apiVersion, kind, name, namespace)
+
+						if apiVersion != "" && kind != "" {
+							workloadInfo := WorkloadInfo{
+								APIVersion: apiVersion,
+								Kind:       kind,
+								Name:       name,
+								Namespace:  namespace,
+							}
+							specificWorkloads = append(specificWorkloads, workloadInfo)
+							fmt.Printf("Debug - Added specific workload #%d: %s/%s: %s (ns:%s)\n",
+								i, apiVersion, kind, name, namespace)
+						}
 					}
 				}
 			}
@@ -442,8 +519,25 @@ func CreateBp(ctx *gin.Context) {
 	}
 
 	// Extract and validate critical fields
-	metadataMap, ok := yamlMap["metadata"].(map[interface{}]interface{})
-	if !ok {
+	var metadataMap map[string]interface{}
+	if metaRaw, ok := yamlMap["metadata"]; ok {
+		// Try to cast to map[string]interface{} first
+		if meta, ok := metaRaw.(map[string]interface{}); ok {
+			metadataMap = meta
+		} else if meta, ok := metaRaw.(map[interface{}]interface{}); ok {
+			// Convert map[interface{}]interface{} to map[string]interface{}
+			metadataMap = make(map[string]interface{})
+			for k, v := range meta {
+				if kStr, ok := k.(string); ok {
+					metadataMap[kStr] = v
+				}
+			}
+		} else {
+			fmt.Printf("Debug - Metadata is not a valid map: %T\n", metaRaw)
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "metadata section is not properly formatted in binding policy"})
+			return
+		}
+	} else {
 		fmt.Printf("Debug - No metadata found in YAML\n")
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "metadata section is required in binding policy"})
 		return

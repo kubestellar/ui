@@ -10,19 +10,14 @@ import {
   CircularProgress,
   Divider,
   Chip,
-  ToggleButton,
-  ToggleButtonGroup,
   Alert,
   TextField,
   InputAdornment,
-  
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import InfoIcon from '@mui/icons-material/Info';
 import AddLinkIcon from '@mui/icons-material/AddLink';
-import PanToolIcon from '@mui/icons-material/PanTool';
-import GridOnIcon from '@mui/icons-material/GridOn';
 import SearchIcon from '@mui/icons-material/Search';
 import KubernetesIcon from './KubernetesIcon';
 import { usePolicyDragDropStore } from '../../stores/policyDragDropStore';
@@ -79,8 +74,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const prevConnectionLinesRef = useRef<typeof connectionLines>([]);
   
-  // Grid settings for snap-to-grid
-  const [snapToGrid, setSnapToGrid] = useState<boolean>(true);
+  // Grid settings - always enabled
   const gridSize = 20; // Size of grid in pixels
   
   // Hover state for tooltips
@@ -320,7 +314,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
       });
       
       // Draw active connection if in connection mode
-      if (activeConnection.source) {
+      if (activeConnection.source && activeConnection.sourceType) {
         const sourceElement = elementsRef.current[activeConnection.source];
         
         if (sourceElement) {
@@ -338,7 +332,10 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
           const endX = activeConnection.mouseX - containerRect.left;
           const endY = activeConnection.mouseY - containerRect.top;
           
-          drawConnection(ctx, startX, startY, endX, endY, '#9c27b0', true);
+          // Only draw if mouse coordinates are valid (not during drag)
+          if (endX > 0 && endY > 0 && endX < canvas.width && endY < canvas.height) {
+            drawConnection(ctx, startX, startY, endX, endY, '#9c27b0', true);
+          }
         }
       }
       
@@ -423,6 +420,9 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
 
   // Handle mouse movement for active connection
   const handleMouseMove = (e: React.MouseEvent) => {
+    // Skip if dragging (checking if drag operation is in progress)
+    if (e.buttons !== 0) return;
+    
     if (activeConnection.source) {
       setActiveConnection({
         ...activeConnection,
@@ -531,12 +531,6 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
     policyCanvasEntities.clusters.length === 0 && 
     policyCanvasEntities.workloads.length === 0;
 
-  // Helper function for snap-to-grid calculation
-  // const snapPositionToGrid = (position: number): number => {
-  //   if (!snapToGrid) return position;
-  //   return Math.round(position / gridSize) * gridSize;
-  // };
-  
   // Group workloads by namespace
   // const groupedWorkloads = useMemo(() => {
   //   const groups: Record<string, Workload[]> = {};
@@ -630,10 +624,8 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
     return null;
   };
 
-  // Draw grid background for snap-to-grid
+  // Draw grid background for the canvas
   const renderGrid = useCallback((ctx: CanvasRenderingContext2D, width: number, height: number) => {
-    if (!snapToGrid) return;
-    
     ctx.save();
     ctx.strokeStyle = theme.palette.mode === 'dark' 
       ? alpha(theme.palette.grey[700], 0.3)
@@ -657,7 +649,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
     }
     
     ctx.restore();
-  }, [snapToGrid, theme, gridSize]);
+  }, [theme, gridSize]);
   
   // Update canvas grid when relevant props change
   useEffect(() => {
@@ -678,7 +670,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
     // Draw grid
     renderGrid(ctx, canvas.width, canvas.height);
     
-  }, [renderGrid, snapToGrid, theme]);
+  }, [renderGrid, theme]);
 
   // Add a function to handle clicks globally on the canvas that can identify targets
   // Add this after the handleMouseMove function
@@ -716,6 +708,19 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
     }
   }, [activeConnection.source, handleCanvasItemClick]);
 
+  // Handle drag start to clear active connection state
+  const handleDragStart = () => {
+    // Clear any active connection when starting to drag
+    if (activeConnection.source) {
+      setActiveConnection({
+        source: null,
+        sourceType: null,
+        mouseX: 0,
+        mouseY: 0
+      });
+    }
+  };
+
   return (
     <Paper
       ref={containerRef}
@@ -737,6 +742,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
       }}
       onMouseMove={handleMouseMove}
       onClick={handleCanvasGlobalClick}
+      onDragStart={handleDragStart}
     >
       <Box sx={{ 
         position: 'relative',
@@ -765,38 +771,15 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
         flexWrap: { xs: 'wrap', sm: 'nowrap' },
         gap: 1
       }}>
-        <Box>
-          <ToggleButtonGroup
-            value={snapToGrid ? 'grid' : 'free'}
-            exclusive
-            onChange={(_, newValue) => {
-              if (newValue) {
-                setSnapToGrid(newValue === 'grid');
-              }
-            }}
-            size="small"
-            aria-label="grid mode"
-          >
-            <ToggleButton value="grid" aria-label="snap to grid">
-              <Tooltip title="Snap to Grid">
-                <GridOnIcon fontSize="small" />
-              </Tooltip>
-            </ToggleButton>
-            <ToggleButton value="free" aria-label="free movement">
-              <Tooltip title="Free Movement">
-                <PanToolIcon fontSize="small" />
-              </Tooltip>
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
+        {/* Grid toggle buttons removed */}
         
         {/* Item count indicators */}
         <Box sx={{ 
           display: 'flex', 
           gap: 1, 
           flexWrap: 'wrap',
-          justifyContent: { xs: 'flex-start', sm: 'flex-end' },
-          width: { xs: '100%', sm: 'auto' }
+          justifyContent: 'flex-start',
+          width: '100%'
         }}>
           {policyCanvasEntities?.clusters && policyCanvasEntities.clusters.length > 0 && (
             <Chip 
@@ -863,6 +846,19 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
             data-rbd-droppable-id="canvas"
             data-rfd-droppable-context-id={provided.droppableProps['data-rfd-droppable-context-id']}
             onClick={handleCanvasGlobalClick}
+            onDragOver={(e) => {
+              // Reset active connection during drag operations
+              if (activeConnection.source) {
+                setActiveConnection({
+                  source: null,
+                  sourceType: null,
+                  mouseX: 0,
+                  mouseY: 0
+                });
+              }
+              // Still need to prevent default for the drop to work
+              e.preventDefault();
+            }}
             sx={{
               flex: 1, 
               minHeight: { xs: 200, sm: 300 }, 
@@ -1299,7 +1295,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                 onItemClick={handleCanvasItemClick}
                 onItemHover={handleItemHover}
                 activeConnection={activeConnection.source}
-                snapToGrid={snapToGrid}
+                snapToGrid={true}
                 gridSize={gridSize}
               />
             </Box>

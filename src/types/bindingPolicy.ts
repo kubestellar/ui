@@ -14,7 +14,7 @@ export interface BindingPolicyInfo {
     workloadList?: string[];
     creationDate: string;
     lastModifiedDate?: string;
-    status: 'Active' | 'Inactive' | 'Pending';
+    status: 'Active' | 'Inactive' | 'Pending' | 'Loading...';
     bindingMode: string;
     namespace: string;
     conditions?: BindingPolicyCondition[];

@@ -11,11 +11,15 @@ import {
   Box,
   Tooltip,
   Checkbox,
+  Typography,
+  TableContainer,
+  Paper,
 } from "@mui/material";
-import { Info, Trash2, Edit2 } from "lucide-react";
+import { Info, Trash2, Edit2, CloudOff } from "lucide-react";
 import { BindingPolicyInfo } from "../../types/bindingPolicy";
 import PolicyDetailDialog from "./Dialogs/PolicyDetailDialog";
 import useTheme from "../../stores/themeStore";
+import { useBPQueries } from "../../hooks/queries/useBPQueries";
 
 interface BPTableProps {
   policies: BindingPolicyInfo[];
@@ -36,15 +40,50 @@ const BPTable: React.FC<BPTableProps> = ({
   selectedPolicies,
   onSelectionChange,
 }) => {
-  const [selectedPolicy, setSelectedPolicy] =
-    useState<BindingPolicyInfo | null>(null);
+  // Add debug log to see the policies structure
+  console.log('BPTable - Received Policies:', policies);
+  
+  const [selectedPolicyName, setSelectedPolicyName] = useState<string | null>(null);
+  const { useBindingPolicyDetails } = useBPQueries();
+  const theme = useTheme((state) => state.theme);
+  const isDark = theme === "dark";
+  
+  // Add colors object similar to ClustersTable
+  const colors = {
+    primary: "#2f86ff",
+    primaryLight: "#9ad6f9",
+    primaryDark: "#1a65cc",
+    secondary: "#67c073",
+    white: "#ffffff",
+    background: isDark ? "#0f172a" : "#ffffff",
+    paper: isDark ? "#1e293b" : "#f8fafc",
+    text: isDark ? "#f1f5f9" : "#1e293b",
+    textSecondary: isDark ? "#94a3b8" : "#64748b",
+    border: isDark ? "#334155" : "#e2e8f0",
+    success: "#67c073",
+    warning: "#ffb347",
+    error: "#ff6b6b",
+    disabled: isDark ? "#475569" : "#94a3b8",
+  };
+  
+  // Fetch detailed policy information when a policy is selected
+  const { 
+    data: selectedPolicyDetails, 
+    isLoading: isLoadingDetails,
+    error: detailsError
+  } = useBindingPolicyDetails(selectedPolicyName || undefined);
 
   const handlePolicyClick = (policy: BindingPolicyInfo) => {
-    setSelectedPolicy(policy);
+    console.log('Requesting details for policy:', policy.name);
+    setSelectedPolicyName(policy.name);
+  };
+
+  const handleCloseDialog = () => {
+    setSelectedPolicyName(null);
   };
 
   const handleEdit = (policy: BindingPolicyInfo) => {
-    setSelectedPolicy(null);
+    setSelectedPolicyName(null);
     onEditPolicy(policy);
   };
 
@@ -55,13 +94,13 @@ const BPTable: React.FC<BPTableProps> = ({
     onSelectionChange(newSelected);
   };
 
-  const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.checked) {
-      onSelectionChange(policies.map(policy => policy.name));
-    } else {
-      onSelectionChange([]);
-    }
-  };
+  // const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   if (event.target.checked) {
+  //     onSelectionChange(policies.map(policy => policy.name));
+  //   } else {
+  //     onSelectionChange([]);
+  //   }
+  // };
 
   const filteredPolicies = policies.filter((policy) => {
     if (!policy) return false;
@@ -70,53 +109,58 @@ const BPTable: React.FC<BPTableProps> = ({
     }
     return true;
   });
-  const theme = useTheme((state) => state.theme)
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "active":
-        return "success";
-      case "pending":
-        return "warning";
-      case "inactive":
-        return "error";
-      default:
-        return "default";
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "active":
-        return <span>✓</span>;
-      case "pending":
-        return <span>⋯</span>;
-      case "inactive":
-        return <span>✗</span>;
-      default:
-        return undefined;
-    }
-  };
 
   const renderClusterChip = (policy: BindingPolicyInfo) => {
-    if (!policy.clusterList || policy.clusterList.length === 0) {
-      return <Chip 
-        label="0" 
-        size="small" 
-        color="default"
-        sx={{ 
-          color: theme === "dark" ? "white" : "inherit",
-          "& .MuiChip-label": {
-            color: theme === "dark" ? "white" : "inherit"
-          }
-        }} 
-      />;
+    // Determine the cluster count 
+    // First try to use the clusters property (which should be a number)
+    // Then fall back to clusterList.length
+    const clusterCount = 
+      typeof policy.clusters === 'number' ? policy.clusters : 
+      policy.clusterList?.length ?? 0;
+
+    // Return a greyed-out chip with "0" for policies with no clusters
+    if (clusterCount === 0 || !policy.clusterList || policy.clusterList.length === 0) {
+      return (
+        <Tooltip title="No target clusters defined">
+          <Chip 
+            label="0" 
+            size="small" 
+            color="default"
+            sx={{ 
+              color: theme === "dark" ? "white" : "inherit",
+              "& .MuiChip-label": {
+                color: theme === "dark" ? "white" : "inherit"
+              }
+            }} 
+          />
+        </Tooltip>
+      );
     }
 
+    // If we have clusters, display the count
     return (
-      <Tooltip title={policy.clusterList.join(", ")} arrow>
+      <Tooltip 
+        title={
+          <React.Fragment>
+            <Typography variant="subtitle2">Target Clusters:</Typography>
+            {policy.clusterList.length > 0 ? (
+              policy.clusterList.map((cluster, index) => (
+                <Typography key={index} variant="body2" component="div">
+                  {index + 1}. {cluster}
+                </Typography>
+              ))
+            ) : (
+              <Typography variant="body2">
+                {clusterCount} cluster{clusterCount !== 1 ? 's' : ''} (details not available)
+              </Typography>
+            )}
+          </React.Fragment>
+        } 
+        arrow
+      >
         <Chip 
-          label={policy.clusters} 
+          label={clusterCount.toString()}
           size="small" 
           color="success"
           sx={{
@@ -130,28 +174,55 @@ const BPTable: React.FC<BPTableProps> = ({
   };
 
   const renderWorkloadChip = (policy: BindingPolicyInfo) => {
-    if (!policy.workloadList || policy.workloadList.length === 0) {
-      return <Chip 
-        label="None" 
-        size="small" 
-        color="secondary"
-        sx={{ 
-          "& .MuiChip-label": {
-            color: theme === "dark" ? "white" : "inherit"
-          }
-        }}
-      />;
+    // Determine the workload count - similar logic to cluster count
+    const workloadCount = 
+      typeof policy.workload === 'number' ? policy.workload : 
+      policy.workloadList?.length ?? 0;
+
+    // Return a different styled chip for policies with no workloads
+    if (workloadCount === 0 || !policy.workloadList || policy.workloadList.length === 0) {
+      return (
+        <Tooltip title="No workloads defined">
+          <Chip 
+            label="None" 
+            size="small" 
+            color="secondary"
+            sx={{ 
+              "& .MuiChip-label": {
+                color: theme === "dark" ? "white" : "inherit"
+              }
+            }}
+          />
+        </Tooltip>
+      );
     }
 
-    const displayText =
-      policy.workloadList.length > 1
-        ? `${policy.workloadList[0]} +${policy.workloadList.length - 1}`
-        : policy.workloadList[0];
+    // Create a formatted display text for workloads
+    let displayText = "";
+    if (policy.workloadList.length === 1) {
+      // If there's just one workload, show it
+      displayText = formatWorkloadName(policy.workloadList[0]);
+    } else {
+      // If there are multiple workloads, show the first one plus a count
+      displayText = `${formatWorkloadName(policy.workloadList[0])} +${policy.workloadList.length - 1}`;
+    }
 
     return (
-      <Tooltip title={policy.workloadList.join(", ")} arrow>
+      <Tooltip 
+        title={
+          <React.Fragment>
+            <Typography variant="subtitle2">Workloads:</Typography>
+            {policy.workloadList.map((workload, index) => (
+              <Typography key={index} variant="body2" component="div">
+                {index + 1}. {workload}
+              </Typography>
+            ))}
+          </React.Fragment>
+        } 
+        arrow
+      >
         <Chip 
-          label={displayText} 
+          label={displayText}
           size="small" 
           color="success"
           sx={{
@@ -164,126 +235,249 @@ const BPTable: React.FC<BPTableProps> = ({
     );
   };
 
+  // Helper function to format workload names for display
+  const formatWorkloadName = (workload: string): string => {
+    // If it's a full resource path with namespace, extract just the main part
+    if (workload.includes(' (ns:')) {
+      const parts = workload.split(' (ns:');
+      return parts[0];
+    }
+    
+    // If it's a "Specific:" workload, extract just the kind and name
+    if (workload.startsWith('Specific:')) {
+      const parts = workload.split(':');
+      if (parts.length >= 3) {
+        // Return just the kind and name, skipping the API version
+        return parts[2].trim();
+      }
+    }
+    
+    return workload;
+  };
+
   return (
     <>
-      <Table>
-        <TableHead>
-          <TableRow className={theme === "dark" ? "!text-white" : ""}>
-            <TableCell padding="checkbox">
-              <Checkbox
-                indeterminate={
-                  selectedPolicies.length > 0 &&
-                  selectedPolicies.length < policies.length
-                }
-                checked={
-                  policies.length > 0 &&
-                  selectedPolicies.length === policies.length
-                }
-                onChange={handleSelectAll}
-                sx={{
-                  color: theme === "dark" ? "white" : undefined,
-                  '&.Mui-checked': {
-                    color: theme === "dark" ? "white" : undefined,
-                  },
-                }}
-              />
-            </TableCell>
-            <TableCell className="!text-lg !text-inherit">
-              Binding Policy Name
-            </TableCell>
-            <TableCell className="!text-lg !text-inherit">Clusters</TableCell>
-            <TableCell className="!text-lg !text-inherit">Workload</TableCell>
-            <TableCell className="!text-lg !text-inherit">
-              Creation Date
-            </TableCell>
-            <TableCell className="!text-lg !text-inherit">Status</TableCell>
-            <TableCell className="!text-lg !text-inherit" align="right">
-              Actions
-            </TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {filteredPolicies.map((policy) => (
-            <TableRow key={policy.name}>
+      <TableContainer 
+        component={Paper}
+        className="overflow-auto"
+        sx={{
+          backgroundColor: colors.paper,
+          boxShadow: isDark
+            ? "0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2)"
+            : "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)",
+          borderRadius: "12px",
+          border: `1px solid ${colors.border}`,
+          mt: 3,
+        }}
+      >
+        <Table>
+          <TableHead>
+            <TableRow
+              sx={{
+                background: colors.primary,
+                "& .MuiTableCell-head": {
+                  color: colors.white,
+                  fontWeight: 600,
+                  padding: "16px",
+                  fontSize: "0.95rem",
+                },
+              }}
+            >
               <TableCell padding="checkbox">
                 <Checkbox
-                  checked={selectedPolicies.includes(policy.name)}
-                  onChange={() => handleCheckboxChange(policy.name)}
+                  indeterminate={
+                    selectedPolicies.length > 0 &&
+                    selectedPolicies.length < policies.length
+                  }
+                  checked={
+                    policies.length > 0 &&
+                    selectedPolicies.length === policies.length
+                  }
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      onSelectionChange(policies.map((policy) => policy.name));
+                    } else {
+                      onSelectionChange([]);
+                    }
+                  }}
                   sx={{
-                    color: theme === "dark" ? "white" : undefined,
+                    color: colors.white,
                     '&.Mui-checked': {
-                      color: theme === "dark" ? "white" : undefined,
+                      color: colors.white,
                     },
                   }}
                 />
               </TableCell>
-              <TableCell>
-                <Button
-                  color="primary"
-                  sx={{ textTransform: "none" }}
-                  onClick={() => handlePolicyClick(policy)}
-                >
-                  {policy.name}
-                </Button>
-              </TableCell>
-              <TableCell>{renderClusterChip(policy)}</TableCell>
-              <TableCell>{renderWorkloadChip(policy)}</TableCell>
-              <TableCell sx={{ color: theme === "dark" ? "white" : "inherit" }}>
-                {policy.creationDate}
-              </TableCell>
-              <TableCell>
-                <Chip
-                  label={policy.status}
-                  size="small"
-                  color={getStatusColor(policy.status)}
-                  sx={{
-                    "& .MuiChip-label": {
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 0.5,
-                    },
-                  }}
-                  icon={getStatusIcon(policy.status)}
-                />
-              </TableCell>
-              <TableCell align="right">
-                <Box
-                  sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}
-                >
-                  <IconButton
-                    sx={{ color: theme === "dark" ? "white" : "inherit" }}
-                    size="small"
-                    onClick={() => onEditPolicy(policy)}
-                  >
-                    <Edit2 />
-                  </IconButton>
-                  <IconButton
-                    sx={{ color: theme === "dark" ? "white" : "inherit" }}
-                    size="small"
-                    onClick={() => onPreviewMatches(policy)}
-                  >
-                    <Info />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={() => onDeletePolicy(policy)}
-                  >
-                    <Trash2 />
-                  </IconButton>
-                </Box>
-              </TableCell>
+              <TableCell>Binding Policy Name</TableCell>
+              <TableCell>Clusters</TableCell>
+              <TableCell>Workload</TableCell>
+              <TableCell>Creation Date</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell align="right">Actions</TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHead>
+          <TableBody>
+            {filteredPolicies.length > 0 ? (
+              filteredPolicies.map((policy) => (
+                <TableRow 
+                  key={policy.name}
+                  sx={{
+                    backgroundColor: colors.paper,
+                    "&:hover": {
+                      backgroundColor: isDark ? "rgba(47, 134, 255, 0.08)" : "rgba(47, 134, 255, 0.04)",
+                    },
+                    "& .MuiTableCell-body": {
+                      color: colors.text,
+                      borderColor: colors.border,
+                      padding: "12px 16px",
+                    },
+                  }}
+                >
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={selectedPolicies.includes(policy.name)}
+                      onChange={() => handleCheckboxChange(policy.name)}
+                      sx={{
+                        color: colors.textSecondary,
+                        '&.Mui-checked': {
+                          color: colors.primary,
+                        },
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      sx={{ 
+                        textTransform: "none",
+                        color: colors.primary,
+                        fontWeight: "500",
+                      }}
+                      onClick={() => handlePolicyClick(policy)}
+                    >
+                      {policy.name}
+                    </Button>
+                  </TableCell>
+                  <TableCell>{renderClusterChip(policy)}</TableCell>
+                  <TableCell>{renderWorkloadChip(policy)}</TableCell>
+                  <TableCell>{policy.creationDate}</TableCell>
+                  <TableCell>
+                    <span
+                      className="px-2 py-1 text-xs font-medium rounded-lg inline-flex items-center gap-1"
+                      style={{
+                        backgroundColor:
+                          policy.status.toLowerCase() === "inactive"
+                            ? isDark
+                              ? "rgba(255, 107, 107, 0.2)"
+                              : "rgba(255, 107, 107, 0.1)"
+                            : policy.status.toLowerCase() === "pending"
+                            ? isDark
+                              ? "rgba(255, 179, 71, 0.2)"
+                              : "rgba(255, 179, 71, 0.1)"
+                            : isDark
+                            ? "rgba(103, 192, 115, 0.2)"
+                            : "rgba(103, 192, 115, 0.1)",
+                        color:
+                          policy.status.toLowerCase() === "inactive"
+                            ? colors.error
+                            : policy.status.toLowerCase() === "pending"
+                            ? colors.warning
+                            : colors.success,
+                        border:
+                          policy.status.toLowerCase() === "inactive"
+                            ? `1px solid ${isDark ? "rgba(255, 107, 107, 0.4)" : "rgba(255, 107, 107, 0.3)"}`
+                            : policy.status.toLowerCase() === "pending"
+                            ? `1px solid ${isDark ? "rgba(255, 179, 71, 0.4)" : "rgba(255, 179, 71, 0.3)"}`
+                            : `1px solid ${isDark ? "rgba(103, 192, 115, 0.4)" : "rgba(103, 192, 115, 0.3)"}`,
+                      }}
+                    >
+                      <span className="w-2 h-2 rounded-full" style={{ 
+                        backgroundColor: policy.status.toLowerCase() === "inactive" 
+                          ? colors.error 
+                          : policy.status.toLowerCase() === "pending" 
+                            ? colors.warning 
+                            : colors.success 
+                      }}></span>
+                      {policy.status}
+                    </span>
+                  </TableCell>
+                  <TableCell align="right">
+                    <Box
+                      sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}
+                    >
+                      <IconButton
+                        sx={{ 
+                          color: colors.textSecondary,
+                          "&:hover": { color: colors.primary }
+                        }}
+                        size="small"
+                        onClick={() => onEditPolicy(policy)}
+                      >
+                        <Edit2 size={18} />
+                      </IconButton>
+                      <IconButton
+                        sx={{ 
+                          color: colors.textSecondary,
+                          "&:hover": { color: colors.primary }
+                        }}
+                        size="small"
+                        onClick={() => onPreviewMatches(policy)}
+                      >
+                        <Info size={18} />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        sx={{
+                          color: colors.error,
+                          opacity: 0.7,
+                          "&:hover": { opacity: 1 }
+                        }}
+                        onClick={() => onDeletePolicy(policy)}
+                      >
+                        <Trash2 size={18} />
+                      </IconButton>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={7} className="py-12">
+                  <div className="flex flex-col items-center justify-center text-center p-6">
+                    <CloudOff size={48} style={{ color: colors.textSecondary, marginBottom: "16px" }} />
+                    <h3 style={{ color: colors.text }} className="text-lg font-semibold mb-2">
+                      No Binding Policies Found
+                    </h3>
+                    <p style={{ color: colors.textSecondary }} className="mb-4 max-w-md">
+                      {activeFilters.status !== undefined
+                        ? `No binding policies match your ${activeFilters.status} filter criteria`
+                        : "No binding policies available"}
+                    </p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
-      {selectedPolicy && (
+      {selectedPolicyName && (
         <PolicyDetailDialog
-          open={Boolean(selectedPolicy)}
-          onClose={() => setSelectedPolicy(null)}
-          policy={selectedPolicy}
+          open={!!selectedPolicyName}
+          onClose={handleCloseDialog}
+          policy={selectedPolicyDetails || {
+            name: selectedPolicyName,
+            status: 'Loading...',
+            clusters: 0,
+            clusterList: [],
+            workloadList: [],
+            workload: 'Loading...',
+            namespace: 'default',
+            bindingMode: 'Unknown',
+            creationDate: ''
+          } as BindingPolicyInfo}
           onEdit={handleEdit}
+          isLoading={isLoadingDetails}
+          error={detailsError?.message}
         />
       )}
     </>
