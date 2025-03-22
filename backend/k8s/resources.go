@@ -2,12 +2,13 @@ package k8s
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"gopkg.in/yaml.v3"
 	"io"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -18,7 +19,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -382,16 +382,39 @@ func UploadLocalFile(c *gin.Context) {
 	c.JSON(resp.StatusCode, gin.H{"message": "File uploaded and processed successfully", "response": apiResponse})
 }
 
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
+func tweakListOptions(name string) dynamicinformer.TweakListOptionsFunc {
+	// Filter by resource name
+	if name != "" {
+		return func(options *metav1.ListOptions) {
+			options.FieldSelector = fmt.Sprintf("metadata.name=%s", name)
+		}
+	}
+	return nil
+}
+
 func LogWorkloads(c *gin.Context) {
 	clientset, dynamicClient, err := GetClientSet()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	// websocket connection
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		log.Println("WebSocket Upgrade Error:", err)
+		return
+	}
+	defer conn.Close()
 
 	resourceKind := c.Param("resourceKind")
 	namespace := c.Param("namespace")
-	//name := c.Param("name")
+	name := c.Query("name")
 
 	if namespace == "" {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("no namespace exists with name %s", namespace)})
@@ -404,7 +427,9 @@ func LogWorkloads(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
 		return
 	}
-	factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynamicClient, time.Minute, namespace, nil)
+	//tweakListOptions := nil
+
+	factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynamicClient, time.Minute, namespace, tweakListOptions(name))
 	//factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynamicClient, time.Minute, namespace, func(options *metav1.ListOptions) {
 	//	options.FieldSelector = fmt.Sprintf("metadata.name=%s", name) // Filter by resource name
 	//})
@@ -432,9 +457,12 @@ func LogWorkloads(c *gin.Context) {
 			//	log.Printf("failed to marshal resource %s: %v", uid, err)
 			//	return
 			//}
-			fmt.Println(gvk)
-			fmt.Println(uid)
-			fmt.Println("AddFunc was called !!!!! %s", item.GetName())
+			timestamp := time.Now().Format(time.RFC3339)
+			message := fmt.Sprintf("[%s] ADDED: Kind=%s, Name=%s, Namespace=%s, UID=%s",
+				timestamp, gvk.Kind, item.GetName(), namespace, uid)
+			if err := conn.WriteMessage(websocket.TextMessage, []byte(message)); err != nil {
+				log.Println("Error writing to WebSocket:", err)
+			}
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			mux.RLock()
@@ -452,10 +480,22 @@ func LogWorkloads(c *gin.Context) {
 				log.Printf("item is not *unstructured.Unstructured")
 				return
 			}
-			fmt.Println("Update was called !!!!! %s", new.GetName())
-			fmt.Println(old.GetResourceVersion())
-			fmt.Println("\n")
-			fmt.Println(new.GetResourceVersion())
+			//data, err := item.MarshalJSON()
+			//if err != nil {
+			//	log.Printf("failed to marshal resource %s: %v", uid, err)
+			//	return
+			//}
+			uid := string(old.GetUID())
+			gvk := old.GroupVersionKind()
+			// TODO: Improve the logs information and add some valuable messages
+			if old.GetResourceVersion() != new.GetResourceVersion() {
+				timestamp := time.Now().Format(time.RFC3339)
+				message := fmt.Sprintf("[%s] UPDATED: Kind=%s, Name=%s, Namespace=%s, UID=%s",
+					timestamp, gvk.Kind, old.GetName(), old.GetNamespace(), uid)
+				if err := conn.WriteMessage(websocket.TextMessage, []byte(message)); err != nil {
+					log.Println("Error writing to WebSocket:", err)
+				}
+			}
 		},
 		DeleteFunc: func(obj interface{}) {
 			mux.RLock()
@@ -463,27 +503,34 @@ func LogWorkloads(c *gin.Context) {
 			if !synced {
 				return
 			}
-			u, ok := obj.(*unstructured.Unstructured)
+			item, ok := obj.(*unstructured.Unstructured)
 			if !ok {
 				log.Printf("item is not *unstructured.Unstructured")
 				return
 			}
-			fmt.Println("Delete was called !!!!! %s", u.GetName())
-			fmt.Println(u)
+			uid := string(item.GetUID())
+			gvk := item.GroupVersionKind()
+			timestamp := time.Now().Format(time.RFC3339)
+			message := fmt.Sprintf("[%s] DELETED: Kind=%s, Name=%s, Namespace=%s, UID=%s",
+				timestamp, gvk.Kind, item.GetName(), namespace, uid)
+			if err := conn.WriteMessage(websocket.TextMessage, []byte(message)); err != nil {
+				log.Println("Error writing to WebSocket:", err)
+			}
 		},
 	})
 
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer cancel()
+	// TODO: Optimize the websocket connection and handle the interrupt properly
+	//ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	//defer cancel()
 
-	go informer.Run(ctx.Done())
+	go informer.Run(c.Done())
 
-	isSynced := cache.WaitForCacheSync(ctx.Done(), informer.HasSynced)
+	isSynced := cache.WaitForCacheSync(c.Done(), informer.HasSynced)
 	mux.Lock()
 	synced = isSynced
 	mux.Unlock()
 	if !isSynced {
 		log.Fatal("failed to sync")
 	}
-	<-ctx.Done()
+	<-c.Done()
 }
