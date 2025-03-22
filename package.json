@@ -18,7 +18,7 @@
     "@emotion/styled": "^11.14.0",
     "@fortawesome/fontawesome-free": "^6.7.2",
     "@hello-pangea/dnd": "^18.0.1",
-    "@monaco-editor/react": "^4.6.0",
+    "@monaco-editor/react": "^4.7.0",
     "@mui/icons-material": "^6.4.7",
     "@mui/lab": "^6.0.0-beta.27",
     "@mui/material": "^6.4.7",

@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef, memo } from "react";
 import { Box, Typography, Menu, MenuItem, Button, Alert, Snackbar } from "@mui/material";
-import axios from "axios";
 import { ReactFlowProvider, Position, MarkerType } from "reactflow";
 import * as dagre from "dagre";
 import "reactflow/dist/style.css";
@@ -19,7 +18,6 @@ import job from "../assets/k8s_resources_logo/job.svg";
 import limits from "../assets/k8s_resources_logo/limits.svg";
 import netpol from "../assets/k8s_resources_logo/netpol.svg";
 import ns from "../assets/k8s_resources_logo/ns.svg";
-import pod from "../assets/k8s_resources_logo/pod.svg";
 import psp from "../assets/k8s_resources_logo/psp.svg";
 import pv from "../assets/k8s_resources_logo/pv.svg";
 import pvc from "../assets/k8s_resources_logo/pvc.svg";
@@ -44,8 +42,9 @@ import DynamicDetailsPanel from "./DynamicDetailsPanel";
 import ReactDOM from "react-dom";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { isEqual } from "lodash";
+import { useWebSocket } from "../context/WebSocketProvider";
 
-// Interfaces (unchanged)
+// Interfaces
 export interface NodeData {
   label: JSX.Element;
 }
@@ -80,13 +79,6 @@ export interface CustomEdge extends BaseEdge {
     height?: number;
     color?: string;
   };
-}
-
-export interface NamespaceResource {
-  name: string;
-  status: string;
-  labels: Record<string, string>;
-  resources: Record<string, ResourceItem[]>;
 }
 
 export interface ResourceItem {
@@ -126,6 +118,13 @@ export interface ResourceItem {
   }>;
 }
 
+export interface NamespaceResource {
+  name: string;
+  status: string;
+  labels: Record<string, string>;
+  resources: Record<string, ResourceItem[]>;
+}
+
 interface SelectedNode {
   namespace: string;
   name: string;
@@ -149,7 +148,7 @@ const nodeStyle: React.CSSProperties = {
   height: "30px",
 };
 
-// Dynamic icon mapping for all imported icons (unchanged)
+// Dynamic icon mapping for all imported icons
 const iconMap: Record<string, string> = {
   ConfigMap: cm,
   ClusterRoleBinding: crb,
@@ -166,7 +165,6 @@ const iconMap: Record<string, string> = {
   LimitRange: limits,
   NetworkPolicy: netpol,
   Namespace: ns,
-  Pod: pod,
   PodSecurityPolicy: psp,
   PersistentVolume: pv,
   PersistentVolumeClaim: pvc,
@@ -183,26 +181,158 @@ const iconMap: Record<string, string> = {
   Volume: vol,
 };
 
-// Dynamic node config with icon mapping (unchanged)
+// Updated getNodeConfig function to support new child node types
 const getNodeConfig = (type: string, label: string) => {
+  // Normalize the type to match the iconMap keys (e.g., "deployment" -> "Deployment")
+  console.log(label);
   const normalizedType = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
-  const icon = iconMap[normalizedType] || cm;
-  const dynamicText = normalizedType.toLowerCase();
+  
+  // Default icon and name based on the type
+  let icon = iconMap[normalizedType] || cm; // Fallback to ConfigMap icon if type not found
+  let dynamicText = type.toLowerCase(); // Use the type as the default name
 
-  if (label.toLowerCase().includes("namespace")) {
-    return { icon: ns, dynamicText: "ns" };
-  } else if (label.toLowerCase().includes("deploy")) {
-    return { icon: deployicon, dynamicText: "deploy" };
-  } else if (label.toLowerCase().includes("svc") || label.toLowerCase().includes("service")) {
-    return { icon: svc, dynamicText: "svc" };
-  } else if (label.toLowerCase().includes("replica")) {
-    return { icon: rs, dynamicText: "replica" };
-  } else if (label.toLowerCase().includes("endpoint")) {
-    return { icon: ep, dynamicText: label.toLowerCase().startsWith("endpoint") ? label.substring(8) : "endpoint" };
-  } else if (label.toLowerCase().includes("port")) {
-    return { icon: svc, dynamicText: "port" };
-  } else if (label.toLowerCase().includes("data")) {
-    return { icon: cm, dynamicText: "data" };
+  // Check the type to assign the icon and name
+  switch (type.toLowerCase()) {
+    case "namespace":
+      icon = ns;
+      dynamicText = "ns";
+      break;
+    case "deployment":
+      icon = deployicon;
+      dynamicText = "deploy";
+      break;
+    case "replicaset":
+      icon = rs;
+      dynamicText = "replica";
+      break;
+    case "service":
+      icon = svc;
+      dynamicText = "svc";
+      break;
+    case "endpoints":
+      icon = ep;
+      dynamicText = "endpoints";
+      break;
+    case "endpointslice":
+      icon = ep;
+      dynamicText = "endpointslice";
+      break;
+    case "configmap":
+      icon = cm;
+      dynamicText = "configmap";
+      break;
+    case "clusterrolebinding":
+      icon = crb;
+      dynamicText = "clusterrolebinding";
+      break;
+    case "customresourcedefinition":
+      icon = crd;
+      dynamicText = "crd";
+      break;
+    case "clusterrole":
+      icon = cRole;
+      dynamicText = "clusterrole";
+      break;
+    case "cronjob":
+      icon = cronjob;
+      dynamicText = "cronjob";
+      break;
+    case "daemonset":
+      icon = ds;
+      dynamicText = "daemonset";
+      break;
+    case "group":
+      icon = group;
+      dynamicText = "group";
+      break;
+    case "horizontalpodautoscaler":
+      icon = hpa;
+      dynamicText = "hpa";
+      break;
+    case "ingress":
+      icon = ing;
+      dynamicText = "ingress";
+      break;
+    case "job":
+      icon = job;
+      dynamicText = "job";
+      break;
+    case "limitrange":
+      icon = limits;
+      dynamicText = "limitrange";
+      break;
+    case "networkpolicy":
+      icon = netpol;
+      dynamicText = "netpol";
+      break;
+    case "podsecuritypolicy":
+      icon = psp;
+      dynamicText = "psp";
+      break;
+    case "persistentvolume":
+      icon = pv;
+      dynamicText = "pv";
+      break;
+    case "persistentvolumeclaim":
+      icon = pvc;
+      dynamicText = "pvc";
+      break;
+    case "resourcequota":
+      icon = quota;
+      dynamicText = "quota";
+      break;
+    case "rolebinding":
+      icon = rb;
+      dynamicText = "rolebinding";
+      break;
+    case "role":
+      icon = role;
+      dynamicText = "role";
+      break;
+    case "serviceaccount":
+      icon = sa;
+      dynamicText = "sa";
+      break;
+    case "storageclass":
+      icon = sc;
+      dynamicText = "storageclass";
+      break;
+    case "secret":
+      icon = secret;
+      dynamicText = "secret";
+      break;
+    case "statefulset":
+      icon = sts;
+      dynamicText = "statefulset";
+      break;
+    case "user":
+      icon = user;
+      dynamicText = "user";
+      break;
+    case "volume":
+      icon = vol;
+      dynamicText = "volume";
+      break;
+    // New child node types
+    case "envvar":
+      icon = cm; // Use ConfigMap icon as a fallback
+      dynamicText = "envvar";
+      break;
+    case "customresource":
+      icon = crd; // Use CRD icon as a fallback
+      dynamicText = "cr";
+      break;
+    case "controller":
+      icon = deployicon; // Use Deployment icon as a fallback
+      dynamicText = "controller";
+      break;
+    case "ingresscontroller":
+      icon = ing; // Use Ingress icon
+      dynamicText = "ingresscontroller";
+      break;
+    default:
+      // If the type is not in the list, keep the default icon and name
+      break;
   }
 
   return { icon, dynamicText };
@@ -259,7 +389,7 @@ const getLayoutedElements = (
   return { nodes: layoutedNodes, edges };
 };
 
-const TreeView = () => {
+const TreeViewComponent = () => {
   const [nodes, setNodes] = useState<CustomNode[]>([]);
   const [edges, setEdges] = useState<CustomEdge[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
@@ -269,29 +399,36 @@ const TreeView = () => {
   const [showCreateOptions, setShowCreateOptions] = useState(false);
   const [activeOption, setActiveOption] = useState<string | null>("option1");
   const [selectedNode, setSelectedNode] = useState<SelectedNode | null>(null);
+  const [hasReceivedInitialData, setHasReceivedInitialData] = useState<boolean>(false);
   const nodeCache = useRef<Map<string, CustomNode>>(new Map());
   const edgeCache = useRef<Map<string, CustomEdge>>(new Map());
   const edgeIdCounter = useRef<number>(0);
   const prevNodes = useRef<CustomNode[]>([]);
-  const wsRef = useRef<WebSocket | null>(null);
-  const [isWsConnected, setIsWsConnected] = useState<boolean>(false);
-  const [hasReceivedInitialData, setHasReceivedInitialData] = useState<boolean>(false);
   const renderStartTime = useRef<number>(0);
   const panelRef = useRef<HTMLDivElement>(null);
-  const dataReceiveTime = useRef<number | null>(null);
 
+  const { isConnected, connect } = useWebSocket();
   const queryClient = useQueryClient();
   const NAMESPACE_QUERY_KEY = ["namespaces"];
 
-  const { data: namespaceData } = useQuery({
+  const { data: namespaceData } = useQuery<NamespaceResource[]>({
     queryKey: NAMESPACE_QUERY_KEY,
     queryFn: async () => {
-      const response = await axios.get("http://localhost:4000/api/namespaces");
-      return response.data;
+      throw new Error("API not implemented");
     },
     enabled: false,
     initialData: [],
   });
+
+  useEffect(() => {
+    connect(true);
+  }, [connect]);
+
+  useEffect(() => {
+    if (namespaceData && namespaceData.length > 0 && !hasReceivedInitialData) {
+      setHasReceivedInitialData(true);
+    }
+  }, [namespaceData, hasReceivedInitialData]);
 
   const getTimeAgo = useCallback((timestamp: string | undefined): string => {
     if (!timestamp) return "Unknown";
@@ -396,10 +533,10 @@ const TreeView = () => {
   const transformDataToTree = useCallback(
     (data: NamespaceResource[]) => {
       const startTime = performance.now();
-      console.log(`[Transform] Starting transformDataToTree with ${data?.length || 0} namespaces at ${startTime - renderStartTime.current}ms`);
+      console.log(`[TreeView] Starting transformDataToTree with ${data?.length || 0} namespaces at ${startTime - renderStartTime.current}ms`);
 
       if (!data || data.length === 0) {
-        console.log(`[Transform] No data to process, clearing nodes and edges at ${performance.now() - renderStartTime.current}ms`);
+        console.log(`[TreeView] No data to process, clearing nodes and edges at ${performance.now() - renderStartTime.current}ms`);
         nodeCache.current.clear();
         edgeCache.current.clear();
         edgeIdCounter.current = 0;
@@ -417,8 +554,10 @@ const TreeView = () => {
       const newNodes: CustomNode[] = [];
       const newEdges: CustomEdge[] = [];
 
+      // Step 1: Iterate over each namespace
       data.forEach((namespace: NamespaceResource) => {
         const namespaceId = `namespace-${namespace.name}`;
+        // Create a node for the namespace
         createNode(
           namespaceId,
           namespace.name,
@@ -427,17 +566,19 @@ const TreeView = () => {
           "",
           namespace.name,
           { apiVersion: "v1", kind: "Namespace", metadata: { name: namespace.name, namespace: namespace.name, creationTimestamp: "" }, status: { phase: namespace.status } },
-          null,
+          null, // No parent for namespace nodes
           newNodes,
           newEdges
         );
 
+        // Step 2: Prepare resources map
         const resourcesMap: ResourcesMap = {
           endpoints: namespace.resources[".v1/endpoints"] || [],
           endpointSlices: namespace.resources["discovery.k8s.io.v1/endpointslices"] || [],
           ...namespace.resources,
         };
 
+        // Step 3: Iterate over each resource in the namespace
         Object.values(resourcesMap)
           .flat()
           .forEach((item: ResourceItem, index: number) => {
@@ -445,123 +586,561 @@ const TreeView = () => {
             const resourceId = `${namespaceId}-${kindLower}-${item.metadata.name}-${index}`;
             const status = item.status?.conditions?.some((c) => c.type === "Available" && c.status === "True") ? "Active" : "Inactive";
 
+            // Create a node for the resource (child of the namespace)
             createNode(resourceId, item.metadata.name, kindLower, status, item.metadata.creationTimestamp, namespace.name, item, namespaceId, newNodes, newEdges);
 
-            if (kindLower === "configmap" && item.data) {
-              Object.keys(item.data).forEach((key) =>
-                createNode(`${resourceId}-data-${key}`, key, "data", status, undefined, namespace.name, item, resourceId, newNodes, newEdges)
-              );
-            } else if (kindLower === "service") {
-              item.spec?.ports?.forEach((port) =>
-                createNode(`${resourceId}-port-${port.name}`, `${port.name} (${port.port})`, "port", status, undefined, namespace.name, item, resourceId, newNodes, newEdges)
-              );
+            // Step 4: Create child nodes based on the specified hierarchy
+            switch (kindLower) {
+              case "configmap":
+                // ConfigMap → Mounted as Volume or Environment Variables
+                createNode(
+                  `${resourceId}-volume`,
+                  `volume-${item.metadata.name}`,
+                  "volume",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  resourceId,
+                  newNodes,
+                  newEdges
+                );
+                createNode(
+                  `${resourceId}-envvar`,
+                  `envvar-${item.metadata.name}`,
+                  "envvar",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  resourceId,
+                  newNodes,
+                  newEdges
+                );
+                break;
 
-              const endpoints = resourcesMap.endpoints.find((ep) => ep.metadata.name === item.metadata.name);
-              if (endpoints) {
-                const endpointId = `${resourceId}-endpoints-${endpoints.metadata.name}`;
-                createNode(endpointId, endpoints.metadata.name, "endpoints", status, undefined, namespace.name, endpoints, resourceId, newNodes, newEdges);
-                endpoints.subsets?.forEach((subset, idx) => {
-                  const subsetId = `${endpointId}-subset-${idx}`;
-                  createNode(subsetId, `Subset ${idx + 1}`, "subset", status, undefined, namespace.name, endpoints, endpointId, newNodes, newEdges);
-                  subset.addresses?.forEach((addr) =>
-                    createNode(`${subsetId}-addr-${addr.ip}`, addr.ip, "data", status, undefined, namespace.name, endpoints, subsetId, newNodes, newEdges)
-                  );
-                  subset.ports?.forEach((port) =>
-                    createNode(
-                      `${subsetId}-port-${port.name || idx}`,
-                      `${port.name || "port"} (${port.port})`,
-                      "port",
-                      status,
-                      undefined,
-                      namespace.name,
-                      endpoints,
-                      subsetId,
-                      newNodes,
-                      newEdges
-                    )
-                  );
-                });
+              case "clusterrolebinding": {
+                // ClusterRoleBinding → ClusterRole → User/ServiceAccount/Group
+                const crbClusterRoleId = `${resourceId}-clusterrole`;
+                createNode(
+                  crbClusterRoleId,
+                  `clusterrole-${item.metadata.name}`,
+                  "clusterrole",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  resourceId,
+                  newNodes,
+                  newEdges
+                );
+                createNode(
+                  `${crbClusterRoleId}-user`,
+                  `user-${item.metadata.name}`,
+                  "user",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  crbClusterRoleId,
+                  newNodes,
+                  newEdges
+                );
+                createNode(
+                  `${crbClusterRoleId}-serviceaccount`,
+                  `serviceaccount-${item.metadata.name}`,
+                  "serviceaccount",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  crbClusterRoleId,
+                  newNodes,
+                  newEdges
+                );
+                createNode(
+                  `${crbClusterRoleId}-group`,
+                  `group-${item.metadata.name}`,
+                  "group",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  crbClusterRoleId,
+                  newNodes,
+                  newEdges
+                );
+                break;
               }
 
-              const endpointSlices = resourcesMap.endpointSlices.filter((es) => es.metadata.labels?.["kubernetes.io/service-name"] === item.metadata.name);
-              endpointSlices.forEach((es) => {
-                const esId = `${resourceId}-endpointslice-${es.metadata.name}`;
-                createNode(esId, es.metadata.name, "endpointslice", status, undefined, namespace.name, es, resourceId, newNodes, newEdges);
-                es.endpoints?.forEach((endpoint, idx) => {
-                  const endpointId = `${esId}-endpoint-${idx}`;
-                  createNode(endpointId, `Endpoint ${idx + 1}`, "data", status, undefined, namespace.name, es, esId, newNodes, newEdges);
-                  endpoint.addresses?.forEach((addr) =>
-                    createNode(`${endpointId}-addr-${addr}`, addr, "data", status, undefined, namespace.name, es, endpointId, newNodes, newEdges)
-                  );
-                  es.ports?.forEach((port) =>
-                    createNode(
-                      `${endpointId}-port-${port.name || idx}`,
-                      `${port.name || "port"} (${port.port})`,
-                      "port",
-                      status,
-                      undefined,
-                      namespace.name,
-                      es,
-                      endpointId,
-                      newNodes,
-                      newEdges
-                    )
-                  );
-                });
-              });
-            } else if (kindLower === "deployment") {
-              createNode(
-                `${resourceId}-replicaset`,
-                `replicaset-${item.metadata.name}`,
-                "replicaset",
-                status,
-                undefined,
-                namespace.name,
-                item,
-                resourceId,
-                newNodes,
-                newEdges
-              );
-            } else if (kindLower === "lease" && item.spec) {
-              createNode(
-                `${resourceId}-holder`,
-                item.spec.holderIdentity || "Unknown Holder",
-                "data",
-                status,
-                undefined,
-                namespace.name,
-                item,
-                resourceId,
-                newNodes,
-                newEdges
-              );
-            } else if (kindLower === "rolebinding") {
-              item.subjects?.forEach((subject, idx) =>
-                createNode(`${resourceId}-subject-${idx}`, subject.name, "subject", status, undefined, namespace.name, item, resourceId, newNodes, newEdges)
-              );
-              createNode(
-                `${resourceId}-roleref`,
-                item.roleRef?.name || "Unknown Role",
-                "ruleref",
-                status,
-                undefined,
-                namespace.name,
-                item,
-                resourceId,
-                newNodes,
-                newEdges
-              );
-            } else if (kindLower === "role") {
-              item.rules?.forEach((rule, idx) => {
-                const ruleLabel = `${rule.verbs?.join("/") || ""} ${rule.resources?.join(",") || "all"}`;
-                createNode(`${resourceId}-rule-${idx}`, ruleLabel, "ruleref", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-              });
+              case "customresourcedefinition": {
+                // CustomResourceDefinition → Custom Resource (CR) → Controller
+                const crdCrId = `${resourceId}-customresource`;
+                createNode(
+                  crdCrId,
+                  `cr-${item.metadata.name}`,
+                  "customresource",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  resourceId,
+                  newNodes,
+                  newEdges
+                );
+                createNode(
+                  `${crdCrId}-controller`,
+                  `controller-${item.metadata.name}`,
+                  "controller",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  crdCrId,
+                  newNodes,
+                  newEdges
+                );
+                break;
+              }
+
+              case "clusterrole": {
+                // ClusterRole → Assigned to Users, Groups, or ServiceAccounts via ClusterRoleBinding
+                const crClusterRoleBindingId = `${resourceId}-clusterrolebinding`;
+                createNode(
+                  crClusterRoleBindingId,
+                  `clusterrolebinding-${item.metadata.name}`,
+                  "clusterrolebinding",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  resourceId,
+                  newNodes,
+                  newEdges
+                );
+                createNode(
+                  `${crClusterRoleBindingId}-user`,
+                  `user-${item.metadata.name}`,
+                  "user",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  crClusterRoleBindingId,
+                  newNodes,
+                  newEdges
+                );
+                createNode(
+                  `${crClusterRoleBindingId}-group`,
+                  `group-${item.metadata.name}`,
+                  "group",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  crClusterRoleBindingId,
+                  newNodes,
+                  newEdges
+                );
+                createNode(
+                  `${crClusterRoleBindingId}-serviceaccount`,
+                  `serviceaccount-${item.metadata.name}`,
+                  "serviceaccount",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  crClusterRoleBindingId,
+                  newNodes,
+                  newEdges
+                );
+                break;
+              }
+
+              case "cronjob":
+                // CronJob → Job
+                createNode(
+                  `${resourceId}-job`,
+                  `job-${item.metadata.name}`,
+                  "job",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  resourceId,
+                  newNodes,
+                  newEdges
+                );
+                break;
+
+              case "deployment":
+                // Deployment → ReplicaSet
+                createNode(
+                  `${resourceId}-replicaset`,
+                  `replicaset-${item.metadata.name}`,
+                  "replicaset",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  resourceId,
+                  newNodes,
+                  newEdges
+                );
+                break;
+
+              case "daemonset":
+                // DaemonSet (no children)
+                break;
+
+              case "service":
+                // Service → Endpoints
+                createNode(
+                  `${resourceId}-endpoints`,
+                  `endpoints-${item.metadata.name}`,
+                  "endpoints",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  resourceId,
+                  newNodes,
+                  newEdges
+                );
+                break;
+
+              case "endpoints":
+                // Endpoints (no children, since Service → Endpoints is handled under Service)
+                break;
+
+              case "group":
+                // Group → Users
+                createNode(
+                  `${resourceId}-user`,
+                  `user-${item.metadata.name}`,
+                  "user",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  resourceId,
+                  newNodes,
+                  newEdges
+                );
+                break;
+
+              case "horizontalpodautoscaler":
+                // HPA → Scales Deployment/ReplicaSet/StatefulSet
+                createNode(
+                  `${resourceId}-deployment`,
+                  `deployment-${item.metadata.name}`,
+                  "deployment",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  resourceId,
+                  newNodes,
+                  newEdges
+                );
+                createNode(
+                  `${resourceId}-replicaset`,
+                  `replicaset-${item.metadata.name}`,
+                  "replicaset",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  resourceId,
+                  newNodes,
+                  newEdges
+                );
+                createNode(
+                  `${resourceId}-statefulset`,
+                  `statefulset-${item.metadata.name}`,
+                  "statefulset",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  resourceId,
+                  newNodes,
+                  newEdges
+                );
+                break;
+
+              case "ingress": {
+                // Ingress → Ingress Controller → Service
+                const ingControllerId = `${resourceId}-ingresscontroller`;
+                createNode(
+                  ingControllerId,
+                  `ingresscontroller-${item.metadata.name}`,
+                  "ingresscontroller",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  resourceId,
+                  newNodes,
+                  newEdges
+                );
+                createNode(
+                  `${ingControllerId}-service`,
+                  `service-${item.metadata.name}`,
+                  "service",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  ingControllerId,
+                  newNodes,
+                  newEdges
+                );
+                break;
+              }
+
+              case "job":
+                // Job (no children)
+                break;
+
+              case "limitrange":
+                // LimitRange → Applied to Namespace
+                createNode(
+                  `${resourceId}-namespace`,
+                  `namespace-${item.metadata.name}`,
+                  "namespace",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  resourceId,
+                  newNodes,
+                  newEdges
+                );
+                break;
+
+              case "networkpolicy":
+                // NetworkPolicy (no children)
+                break;
+
+              case "podsecuritypolicy":
+                // PodSecurityPolicy (no children)
+                break;
+
+              case "persistentvolume":
+                // PersistentVolume → Bound to PersistentVolumeClaim
+                createNode(
+                  `${resourceId}-persistentvolumeclaim`,
+                  `pvc-${item.metadata.name}`,
+                  "persistentvolumeclaim",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  resourceId,
+                  newNodes,
+                  newEdges
+                );
+                break;
+
+              case "persistentvolumeclaim":
+                // PersistentVolumeClaim → Requests PersistentVolume
+                createNode(
+                  `${resourceId}-persistentvolume`,
+                  `pv-${item.metadata.name}`,
+                  "persistentvolume",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  resourceId,
+                  newNodes,
+                  newEdges
+                );
+                break;
+
+              case "resourcequota":
+                // ResourceQuota → Applied to Namespace
+                createNode(
+                  `${resourceId}-namespace`,
+                  `namespace-${item.metadata.name}`,
+                  "namespace",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  resourceId,
+                  newNodes,
+                  newEdges
+                );
+                break;
+
+              case "rolebinding": {
+                // RoleBinding → Role → User/ServiceAccount/Group
+                const rbRoleId = `${resourceId}-role`;
+                createNode(
+                  rbRoleId,
+                  `role-${item.metadata.name}`,
+                  "role",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  resourceId,
+                  newNodes,
+                  newEdges
+                );
+                createNode(
+                  `${rbRoleId}-user`,
+                  `user-${item.metadata.name}`,
+                  "user",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  rbRoleId,
+                  newNodes,
+                  newEdges
+                );
+                createNode(
+                  `${rbRoleId}-serviceaccount`,
+                  `serviceaccount-${item.metadata.name}`,
+                  "serviceaccount",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  rbRoleId,
+                  newNodes,
+                  newEdges
+                );
+                createNode(
+                  `${rbRoleId}-group`,
+                  `group-${item.metadata.name}`,
+                  "group",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  rbRoleId,
+                  newNodes,
+                  newEdges
+                );
+                break;
+              }
+
+              case "role":
+                // Role → Defines Permissions within a Namespace
+                createNode(
+                  `${resourceId}-namespace`,
+                  `namespace-${item.metadata.name}`,
+                  "namespace",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  resourceId,
+                  newNodes,
+                  newEdges
+                );
+                break;
+
+              case "replicaset":
+                // ReplicaSet (no children, since pods are excluded)
+                break;
+
+              case "serviceaccount":
+                // ServiceAccount (no children)
+                break;
+
+              case "storageclass":
+                // StorageClass → Defines Provisioning Rules for PVs
+                createNode(
+                  `${resourceId}-persistentvolume`,
+                  `pv-${item.metadata.name}`,
+                  "persistentvolume",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  resourceId,
+                  newNodes,
+                  newEdges
+                );
+                break;
+
+              case "secret":
+                // Secret → Mounted as Volume or Environment Variables
+                createNode(
+                  `${resourceId}-volume`,
+                  `volume-${item.metadata.name}`,
+                  "volume",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  resourceId,
+                  newNodes,
+                  newEdges
+                );
+                createNode(
+                  `${resourceId}-envvar`,
+                  `envvar-${item.metadata.name}`,
+                  "envvar",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  resourceId,
+                  newNodes,
+                  newEdges
+                );
+                break;
+
+              case "statefulset":
+                // StatefulSet (no children, since pods are excluded)
+                break;
+
+              case "user":
+                // User → Assigned Roles or ClusterRoles
+                createNode(
+                  `${resourceId}-role`,
+                  `role-${item.metadata.name}`,
+                  "role",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  resourceId,
+                  newNodes,
+                  newEdges
+                );
+                createNode(
+                  `${resourceId}-clusterrole`,
+                  `clusterrole-${item.metadata.name}`,
+                  "clusterrole",
+                  status,
+                  undefined,
+                  namespace.name,
+                  item,
+                  resourceId,
+                  newNodes,
+                  newEdges
+                );
+                break;
+
+              case "volume":
+                // Volume (no children)
+                break;
+
+              default:
+                break;
             }
           });
       });
 
+      // Step 5: Layout the nodes and edges
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(newNodes, newEdges, "LR", prevNodes);
-
       ReactDOM.unstable_batchedUpdates(() => {
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
@@ -569,135 +1148,32 @@ const TreeView = () => {
       prevNodes.current = layoutedNodes;
 
       const endTime = performance.now();
-      console.log(`[Transform] Completed transformDataToTree: ${layoutedNodes.length} nodes, ${layoutedEdges.length} edges in ${endTime - startTime}ms`);
-      if (dataReceiveTime.current !== null) {
-        const rebuildTime = endTime - dataReceiveTime.current;
-        console.log(`[Transform] Tree rebuilt in ${rebuildTime}ms after data received`);
-        dataReceiveTime.current = null;
-      }
+      console.log(`[TreeView] Completed transformDataToTree: ${layoutedNodes.length} nodes, ${layoutedEdges.length} edges in ${endTime - startTime}ms`);
     },
     [createNode]
   );
 
-  const sortNamespaceData = (data: NamespaceResource[]): NamespaceResource[] => {
-    return [...data]
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .map((ns) => ({
-        ...ns,
-        resources: Object.fromEntries(
-          Object.entries(ns.resources).map(([key, resources]) => [key, [...resources].sort((a, b) => a.metadata.name.localeCompare(b.metadata.name))])
-        ),
-      }));
-  };
-
-  const connectWebSocket = useCallback(
-    (reconnectFunc: () => void): WebSocket => {
-      const ws = new WebSocket("ws://localhost:4000/ws/namespaces");
-      wsRef.current = ws;
-
-      const updateCache = (filteredData: NamespaceResource[]) => {
-        const currentData = queryClient.getQueryData<NamespaceResource[]>(NAMESPACE_QUERY_KEY);
-        const sortedFilteredData = sortNamespaceData(filteredData);
-        const sortedCurrentData = currentData ? sortNamespaceData(currentData) : null;
-        if (!sortedCurrentData || !isEqual(sortedFilteredData, sortedCurrentData)) {
-          console.log(`[WebSocket] Data changed, updating cache at ${performance.now() - renderStartTime.current}ms`);
-          queryClient.setQueryData(NAMESPACE_QUERY_KEY, filteredData);
-        } else {
-          console.log(`[WebSocket] Data unchanged, skipping cache update at ${performance.now() - renderStartTime.current}ms`);
-        }
-      };
-
-      ws.onopen = () => {
-        console.log(`[WebSocket] Connected at ${performance.now() - renderStartTime.current}ms`);
-        setIsWsConnected(true);
-      };
-
-      ws.onmessage = (event) => {
-        const receiveTime = performance.now();
-        console.log(`[WebSocket] Data received at ${receiveTime - renderStartTime.current}ms, readyState: ${ws.readyState}`);
-        let data: NamespaceResource[] = [];
-        try {
-          data = JSON.parse(event.data);
-        } catch (error) {
-          console.error(`[WebSocket] Failed to parse data at ${performance.now() - renderStartTime.current}ms:`, error);
-          return;
-        }
-        const totalObjects = data.reduce((count, namespace) => {
-          const resourceCount = Object.values(namespace.resources).reduce((sum, resources) => sum + resources.length, 0);
-          return count + resourceCount;
-        }, 0);
-        console.log(`[WebSocket] Received ${totalObjects} objects across ${data.length} namespaces at ${performance.now() - renderStartTime.current}ms`);
-        const filteredData = JSON.parse(JSON.stringify(data)).filter(
-          (namespace: NamespaceResource) => !["kubestellar-report", "kube-node-lease", "kube-public", "kube-system"].includes(namespace.name)
-        );
-        console.log(`[WebSocket] Filtered ${filteredData.length} namespaces from ${data.length} at ${performance.now() - renderStartTime.current}ms`);
-        dataReceiveTime.current = receiveTime;
-        // Batch updates
-        ReactDOM.unstable_batchedUpdates(() => {
-          setHasReceivedInitialData(true);
-          updateCache(filteredData);
-        });
-      };
-
-      ws.onerror = (error) => {
-        console.error(`[WebSocket] Error at ${performance.now() - renderStartTime.current}ms:`, error);
-        setIsWsConnected(false);
-      };
-
-      ws.onclose = () => {
-        console.log(`[WebSocket] Disconnected at ${performance.now() - renderStartTime.current}ms, attempting reconnect...`);
-        setIsWsConnected(false);
-        setHasReceivedInitialData(false); // Reset for reconnect
-        wsRef.current = null;
-        reconnectFunc();
-      };
-
-      return ws;
-    },
-    [queryClient]
-  );
-
-  const reconnectWebSocket = useCallback((): void => {
-    let retryCount = 0;
-    const maxBackoff = 500;
-    const initialDelay = 10;
-
-    const attemptReconnect = () => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) return;
-
-      const delay = Math.min(initialDelay * Math.pow(2, retryCount), maxBackoff);
-      retryCount++;
-
-      setTimeout(() => {
-        console.log(`[WebSocket] Reconnecting (attempt ${retryCount}, delay ${delay}ms) at ${performance.now() - renderStartTime.current}ms`);
-        connectWebSocket(reconnectWebSocket);
-      }, delay);
-    };
-
-    attemptReconnect();
-  }, [connectWebSocket]);
-
   useEffect(() => {
     renderStartTime.current = performance.now();
-    console.log(`[Lifecycle] TreeView mounted at 0ms`);
-    connectWebSocket(reconnectWebSocket);
-
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
-      }
-    };
-  }, [connectWebSocket, reconnectWebSocket]);
+    console.log(`[TreeView] Component mounted at 0ms`);
+  }, []);
 
   useEffect(() => {
     if (namespaceData !== undefined) {
       console.log(
-        `[State] namespaceData updated, triggering transformDataToTree with ${namespaceData.length} namespaces at ${performance.now() - renderStartTime.current}ms`
+        `[TreeView] namespaceData received with ${namespaceData.length} namespaces at ${performance.now() - renderStartTime.current}ms`
       );
       transformDataToTree(namespaceData);
     }
   }, [namespaceData, transformDataToTree]);
+
+  useEffect(() => {
+    if (nodes.length > 0 || edges.length > 0) {
+      console.log(
+        `[TreeView] Rendered successfully with ${nodes.length} nodes and ${edges.length} edges at ${performance.now() - renderStartTime.current}ms`
+      );
+    }
+  }, [nodes, edges]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -715,7 +1191,8 @@ const TreeView = () => {
   const deleteResourceMutation = useMutation({
     mutationFn: async ({ namespace, nodeName }: { nodeId: string; nodeType: string; namespace: string; nodeName: string }) => {
       const endpoint = `http://localhost:4000/api/namespaces/${namespace}/${nodeName}`;
-      await axios.delete(endpoint);
+      console.log(endpoint);
+      throw new Error("API not implemented");
     },
     onMutate: async ({ nodeId }) => {
       await queryClient.cancelQueries({ queryKey: NAMESPACE_QUERY_KEY });
@@ -750,7 +1227,7 @@ const TreeView = () => {
       return { previousData };
     },
     onError: (error, variables, context) => {
-      console.error(`[Delete] Failed to delete node ${variables.nodeId}:`, error);
+      console.error(`[TreeView] Failed to delete node ${variables.nodeId} at ${performance.now() - renderStartTime.current}ms:`, error);
       setSnackbarMessage(`Failed to delete "${variables.nodeName}"`);
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
@@ -761,6 +1238,7 @@ const TreeView = () => {
       setSnackbarSeverity("success");
       setSnackbarOpen(true);
       queryClient.invalidateQueries({ queryKey: NAMESPACE_QUERY_KEY });
+      console.log(`[TreeView] Node "${variables.nodeName}" deleted successfully at ${performance.now() - renderStartTime.current}ms`);
     },
   });
 
@@ -833,6 +1311,8 @@ const TreeView = () => {
     setActiveOption("option1");
   };
 
+  const isLoadingTree = !isConnected || !hasReceivedInitialData || (nodes.length === 0 && edges.length === 0);
+
   return (
     <Box sx={{ display: "flex", height: "100vh", width: "100%", position: "relative" }}>
       <Box
@@ -873,9 +1353,9 @@ const TreeView = () => {
         {showCreateOptions && <CreateOptions activeOption={activeOption} setActiveOption={setActiveOption} onCancel={handleCancelCreateOptions} />}
 
         <Box sx={{ width: "100%", height: "calc(100% - 80px)", position: "relative" }}>
-          {(!isWsConnected || !hasReceivedInitialData) ? (
-            <LoadingFallback message="Loading the WDS tree.." size="medium" />
-          ) : namespaceData.length === 0 ? (
+          {isLoadingTree ? (
+            <LoadingFallback message="Loading the tree..." size="medium" />
+          ) : nodes.length === 0 && edges.length === 0 ? (
             <Box
               sx={{
                 width: "100%",
@@ -947,4 +1427,4 @@ const TreeView = () => {
   );
 };
 
-export default memo(TreeView);
+export default memo(TreeViewComponent);

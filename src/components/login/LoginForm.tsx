@@ -1,126 +1,122 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Eye, EyeOff, Lock, User, Globe } from 'lucide-react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import { useState, useEffect, useRef } from "react"; // Add useRef
+import { motion } from "framer-motion";
+import { Eye, EyeOff, Lock, User, Globe } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { useWebSocket } from "../../context/WebSocketProvider";
 
 const LoginForm = () => {
-  // Form state
   const [showPassword, setShowPassword] = useState(false);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  
-  // UI state
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({
-    username: '',
-    password: ''
+    username: "",
+    password: "",
   });
-  
-  // Hooks for navigation
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const renderStartTime = useRef<number>(performance.now());
+  const hasTriggeredConnection = useRef(false); // Track if connection has been triggered
+
+  const { connect } = useWebSocket();
+
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Load remembered credentials if available
   useEffect(() => {
+    console.log(`[LoginForm] Component mounted at ${performance.now() - renderStartTime.current}ms`);
     const savedUsername = localStorage.getItem("rememberedUsername");
     const savedPassword = localStorage.getItem("rememberedPassword");
-    
+
     if (savedUsername && savedPassword) {
       try {
-        // Decrypt the password (simple decode for this example)
         const decodedPassword = atob(savedPassword);
         setUsername(savedUsername);
         setPassword(decodedPassword);
         setRememberMe(true);
+        console.log(`[LoginForm] Loaded remembered credentials at ${performance.now() - renderStartTime.current}ms`);
       } catch (error) {
-        console.error("Error decoding stored credentials:", error);
-        // Clear potentially corrupted credentials
+        console.error(`[LoginForm] Error decoding stored credentials at ${performance.now() - renderStartTime.current}ms:`, error);
         localStorage.removeItem("rememberedUsername");
         localStorage.removeItem("rememberedPassword");
       }
     }
   }, []);
 
-  // Check for redirects, error messages, or info messages on component mount
   useEffect(() => {
     if (location.state) {
-      const { errorMessage, infoMessage, from } = location.state as { 
+      const { errorMessage, infoMessage, from } = location.state as {
         errorMessage?: string;
         infoMessage?: string;
         from?: string;
       };
-      
-      // Store destination path to redirect after login
+
       if (from) {
         localStorage.setItem("redirectAfterLogin", from);
+        console.log(`[LoginForm] Stored redirect path "${from}" at ${performance.now() - renderStartTime.current}ms`);
       }
-      
-      // Display custom error message
+
       if (errorMessage) {
-        toast.error(errorMessage, {
-          id: 'auth-redirect-error'
-        });
-        
-        // Clear state after showing message to prevent showing it again on refresh
+        toast.error(errorMessage, { id: "auth-redirect-error" });
+        console.log(`[LoginForm] Displayed error message "${errorMessage}" at ${performance.now() - renderStartTime.current}ms`);
         navigate(location.pathname, { replace: true, state: {} });
       }
-      
-      // Display info message (for successful logout, etc.)
+
       if (infoMessage) {
-        toast.success(infoMessage, {
-          id: 'auth-redirect-info'
-        });
-        
-        // Clear state after showing message
+        toast.success(infoMessage, { id: "auth-redirect-info" });
+        console.log(`[LoginForm] Displayed info message "${infoMessage}" at ${performance.now() - renderStartTime.current}ms`);
         navigate(location.pathname, { replace: true, state: {} });
       }
     }
 
-    // Check if there was a recently removed token (indicating logout)
     const tokenRemovalTime = localStorage.getItem("tokenRemovalTime");
     if (tokenRemovalTime) {
       localStorage.removeItem("tokenRemovalTime");
+      console.log(`[LoginForm] Cleared token removal time at ${performance.now() - renderStartTime.current}ms`);
     }
   }, [location, navigate]);
 
+  useEffect(() => {
+    if (isLoggedIn && !hasTriggeredConnection.current) {
+      console.log(`[LoginForm] Triggering WebSocket connection at ${performance.now() - renderStartTime.current}ms`);
+      connect(true);
+      hasTriggeredConnection.current = true; // Prevent further triggers
+    }
+  }, [isLoggedIn, connect]);
+
   const validateForm = () => {
     const newErrors = {
-      username: '',
-      password: ''
+      username: "",
+      password: "",
     };
-    
+
     if (!username.trim()) {
       newErrors.username = "Username is required";
     }
-    
+
     if (!password.trim()) {
       newErrors.password = "Password is required";
     }
-    
+
     setErrors(newErrors);
     return !newErrors.username && !newErrors.password;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate form
+
     if (!validateForm()) {
+      console.log(`[LoginForm] Form validation failed at ${performance.now() - renderStartTime.current}ms`);
       return;
     }
-    
+
     setIsLoading(true);
-    
-    // Dismiss any existing toasts to prevent cluttering
+    console.log(`[LoginForm] Form submission started at ${performance.now() - renderStartTime.current}ms`);
+
     toast.dismiss();
-    
-    // Create loading toast that will be updated
-    const loadingToastId = toast.loading('Signing in...', {
-      id: 'auth-loading'
-    });
-    
+    const loadingToastId = toast.loading("Signing in...", { id: "auth-loading" });
+
     try {
       const loginResponse = await fetch("http://localhost:4000/login", {
         method: "POST",
@@ -133,78 +129,82 @@ const LoginForm = () => {
       const responseData = await loginResponse.json();
 
       if (loginResponse.ok) {
-        // Store token
         localStorage.setItem("jwtToken", responseData.token);
-        
-        // Handle remember me functionality
+        console.log(`[LoginForm] JWT token stored at ${performance.now() - renderStartTime.current}ms`);
+
         if (rememberMe) {
           localStorage.setItem("rememberedUsername", username);
-          // Encrypt password (simple encode for this example)
           localStorage.setItem("rememberedPassword", btoa(password));
+          console.log(`[LoginForm] Saved credentials for "Remember Me" at ${performance.now() - renderStartTime.current}ms`);
         } else {
           localStorage.removeItem("rememberedUsername");
           localStorage.removeItem("rememberedPassword");
+          console.log(`[LoginForm] Cleared remembered credentials at ${performance.now() - renderStartTime.current}ms`);
         }
-        
-        // Verify token is valid
+
         const token = localStorage.getItem("jwtToken");
         const protectedResponse = await fetch("http://localhost:4000/protected", {
           method: "GET",
           headers: {
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         });
 
         const protectedData = await protectedResponse.json();
 
         if (protectedResponse.ok) {
-          // Success! Update the loading toast to success
-          toast.success('Login successful', { id: loadingToastId });
-          
-          // Get redirect path (if any) or default to home
+          toast.success("Login successful", { id: loadingToastId });
+          console.log(`[LoginForm] Login successful at ${performance.now() - renderStartTime.current}ms`);
+
+          setIsLoggedIn(true);
+
           const redirectPath = localStorage.getItem("redirectAfterLogin") || "/";
-          localStorage.removeItem("redirectAfterLogin"); // Clear stored path
-          
+          localStorage.removeItem("redirectAfterLogin");
+          console.log(`[LoginForm] Redirecting to "${redirectPath}" at ${performance.now() - renderStartTime.current}ms`);
+
           setTimeout(() => {
             navigate(redirectPath);
           }, 1000);
         } else {
-          // Token verification failed
           toast.error(protectedData.error || "Authentication failed", { id: loadingToastId });
+          console.log(`[LoginForm] Token verification failed at ${performance.now() - renderStartTime.current}ms: ${protectedData.error}`);
           localStorage.removeItem("jwtToken");
         }
       } else {
-        // Login failed
-        setErrors(prev => ({
+        setErrors((prev) => ({
           ...prev,
-          password: responseData.error || "Invalid credentials"
+          password: responseData.error || "Invalid credentials",
         }));
         toast.error(responseData.error || "Invalid credentials", { id: loadingToastId });
+        console.log(`[LoginForm] Login failed at ${performance.now() - renderStartTime.current}ms: ${responseData.error}`);
       }
     } catch (error) {
-      // Network or other error
       toast.error("Network error. Please check your connection and try again.", { id: loadingToastId });
-      console.error("Login error:", error);
+      console.error(`[LoginForm] Network error at ${performance.now() - renderStartTime.current}ms:`, error);
     } finally {
       setIsLoading(false);
+      console.log(`[LoginForm] Form submission completed at ${performance.now() - renderStartTime.current}ms`);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <motion.div 
+      <motion.div
         className="relative group"
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <User className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-300/80 group-focus-within:text-blue-400 transition-colors duration-200" size={18} />
+        <User
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-300/80 group-focus-within:text-blue-400 transition-colors duration-200"
+          size={18}
+        />
         <input
           type="text"
           value={username}
           onChange={(e) => {
             setUsername(e.target.value);
-            setErrors(prev => ({ ...prev, username: '' }));
+            setErrors((prev) => ({ ...prev, username: "" }));
           }}
           placeholder="Username"
           className={`w-full pl-10 pr-4 py-3.5 bg-[#1a1f2e] border ${
@@ -219,29 +219,33 @@ const LoginForm = () => {
           required
         />
         {errors.username && (
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-red-400 text-xs mt-1.5 ml-2 flex items-center"
           >
-            <span className="mr-1">•</span>{errors.username}
+            <span className="mr-1">•</span>
+            {errors.username}
           </motion.p>
         )}
       </motion.div>
 
-      <motion.div 
+      <motion.div
         className="relative group"
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-300/80 group-focus-within:text-blue-400 transition-colors duration-200" size={18} />
+        <Lock
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-300/80 group-focus-within:text-blue-400 transition-colors duration-200"
+          size={18}
+        />
         <input
-          type={showPassword ? 'text' : 'password'}
+          type={showPassword ? "text" : "password"}
           value={password}
           onChange={(e) => {
             setPassword(e.target.value);
-            setErrors(prev => ({ ...prev, password: '' }));
+            setErrors((prev) => ({ ...prev, password: "" }));
           }}
           placeholder="Password"
           className={`w-full pl-10 pr-12 py-3.5 bg-[#1a1f2e] border ${
@@ -267,17 +271,18 @@ const LoginForm = () => {
           {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>
         {errors.password && (
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-red-400 text-xs mt-1.5 ml-2 flex items-center"
           >
-            <span className="mr-1">•</span>{errors.password}
+            <span className="mr-1">•</span>
+            {errors.password}
           </motion.p>
         )}
       </motion.div>
 
-      <motion.div 
+      <motion.div
         className="flex items-center text-sm mt-2"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -291,7 +296,10 @@ const LoginForm = () => {
             onChange={(e) => setRememberMe(e.target.checked)}
             className="w-4 h-4 rounded-md border-blue-300/30 bg-white/5 text-blue-500 focus:ring-blue-500/50"
           />
-          <label htmlFor="remember" className="ml-2 text-blue-200/80 cursor-pointer">
+          <label
+            htmlFor="remember"
+            className="ml-2 text-blue-200/80 cursor-pointer"
+          >
             Remember me
           </label>
         </div>
@@ -318,8 +326,6 @@ const LoginForm = () => {
             <span>Sign In to KubeStellar</span>
           </>
         )}
-        
-        {/* Add subtle button accents */}
         <span className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-white/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></span>
       </motion.button>
     </form>
