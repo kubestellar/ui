@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -12,10 +13,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/dynamic/dynamicinformer"
+	"k8s.io/client-go/tools/cache"
+	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -374,4 +380,110 @@ func UploadLocalFile(c *gin.Context) {
 		return
 	}
 	c.JSON(resp.StatusCode, gin.H{"message": "File uploaded and processed successfully", "response": apiResponse})
+}
+
+func LogWorkloads(c *gin.Context) {
+	clientset, dynamicClient, err := GetClientSet()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	resourceKind := c.Param("resourceKind")
+	namespace := c.Param("namespace")
+	//name := c.Param("name")
+
+	if namespace == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("no namespace exists with name %s", namespace)})
+		return
+	}
+
+	discoveryClient := clientset.Discovery()
+	gvr, _, err := getGVR(discoveryClient, resourceKind)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
+		return
+	}
+	factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynamicClient, time.Minute, namespace, nil)
+	//factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynamicClient, time.Minute, namespace, func(options *metav1.ListOptions) {
+	//	options.FieldSelector = fmt.Sprintf("metadata.name=%s", name) // Filter by resource name
+	//})
+	informer := factory.ForResource(gvr).Informer()
+
+	mux := &sync.RWMutex{}
+	synced := false
+	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			mux.RLock()
+			defer mux.RUnlock()
+			if !synced {
+				return
+			}
+
+			item, ok := obj.(*unstructured.Unstructured)
+			if !ok {
+				log.Printf("item is not *unstructured.Unstructured")
+				return
+			}
+			uid := string(item.GetUID())
+			gvk := item.GroupVersionKind()
+			//data, err := item.MarshalJSON()
+			//if err != nil {
+			//	log.Printf("failed to marshal resource %s: %v", uid, err)
+			//	return
+			//}
+			fmt.Println(gvk)
+			fmt.Println(uid)
+			fmt.Println("AddFunc was called !!!!! %s", item.GetName())
+		},
+		UpdateFunc: func(oldObj, newObj interface{}) {
+			mux.RLock()
+			defer mux.RUnlock()
+			if !synced {
+				return
+			}
+			old, ok := oldObj.(*unstructured.Unstructured)
+			if !ok {
+				log.Printf("item is not *unstructured.Unstructured")
+				return
+			}
+			new, ok := newObj.(*unstructured.Unstructured)
+			if !ok {
+				log.Printf("item is not *unstructured.Unstructured")
+				return
+			}
+			fmt.Println("Update was called !!!!! %s", new.GetName())
+			fmt.Println(old.GetResourceVersion())
+			fmt.Println("\n")
+			fmt.Println(new.GetResourceVersion())
+		},
+		DeleteFunc: func(obj interface{}) {
+			mux.RLock()
+			defer mux.RUnlock()
+			if !synced {
+				return
+			}
+			u, ok := obj.(*unstructured.Unstructured)
+			if !ok {
+				log.Printf("item is not *unstructured.Unstructured")
+				return
+			}
+			fmt.Println("Delete was called !!!!! %s", u.GetName())
+			fmt.Println(u)
+		},
+	})
+
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+
+	go informer.Run(ctx.Done())
+
+	isSynced := cache.WaitForCacheSync(ctx.Done(), informer.HasSynced)
+	mux.Lock()
+	synced = isSynced
+	mux.Unlock()
+	if !isSynced {
+		log.Fatal("failed to sync")
+	}
+	<-ctx.Done()
 }
