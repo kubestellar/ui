@@ -8,9 +8,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/katamyra/kubestellarUI/log"
 	"github.com/kubestellar/kubestellar/api/control/v1alpha1"
 	bpv1alpha1 "github.com/kubestellar/kubestellar/pkg/generated/clientset/versioned/typed/control/v1alpha1"
+	"github.com/kubestellar/ui/log"
 	"go.uber.org/zap"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
@@ -237,15 +237,19 @@ func filterBPsByNamespace(bps []BindingPolicyWithStatus, namespace string) []Bin
 
 // check if content type is valid
 func contentTypeValid(t string) bool {
+	// Extract the base content type (ignore parameters like boundary=...)
+	baseType := t
+	if idx := strings.Index(t, ";"); idx != -1 {
+		baseType = strings.TrimSpace(t[:idx])
+	}
 
 	supportedTypes := []string{"application/yaml", "multipart/form-data"}
 	for _, v := range supportedTypes {
-		if t == v {
+		if baseType == v {
 			return true
 		}
 	}
 	return false
-
 }
 
 // watches on all binding policy resources , PROTOTYPE just for now
@@ -282,4 +286,8 @@ func watchOnBps() {
 		}
 	}
 	log.LogWarn("Stopped watching on BP resource")
+}
+func init() {
+
+	go watchOnBps()
 }

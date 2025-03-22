@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	jwtconfig "github.com/katamyra/kubestellarUI/jwt"
+	jwtconfig "github.com/kubestellar/ui/jwt"
 )
 
 // AuthenticateMiddleware validates JWT token

@@ -6,14 +6,17 @@ import BPPagination from "../components/BindingPolicy/BPPagination";
 import PreviewDialog from "../components/BindingPolicy/PreviewDialog";
 import DeleteDialog from "../components/BindingPolicy/Dialogs/DeleteDialog";
 import EditBindingPolicyDialog from "../components/BindingPolicy/Dialogs/EditBindingPolicyDialog";
+import yaml from "js-yaml"; // Import yaml parser
 import {
   BindingPolicyInfo,
   ManagedCluster,
   Workload,
 } from "../types/bindingPolicy";
 import useTheme from "../stores/themeStore";
-import { api } from "../lib/api";
-import axios from "axios";
+// Import React Query hooks
+import { useClusterQueries } from "../hooks/queries/useClusterQueries";
+import { useWDSQueries } from "../hooks/queries/useWDSQueries";
+import { useBPQueries } from "../hooks/queries/useBPQueries";
 import { PolicyData } from "../components/BindingPolicy/CreateBindingPolicyDialog";
 import BPVisualization from "../components/BindingPolicy/BPVisualization";
 import PolicyDragDrop from "../components/BindingPolicy/PolicyDragDrop";
@@ -21,25 +24,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import PublishIcon from '@mui/icons-material/Publish';
 import KubernetesIcon from '../components/BindingPolicy/KubernetesIcon';
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
-// Define type for the raw binding policy from API
-interface RawBindingPolicy {
-  metadata: {
-    name: string;
-    creationTimestamp?: string;
-    managedFields?: Array<{
-      time?: string;
-    }>;
-    annotations?: {
-      yaml?: string;
-    };
-  };
-  spec: {
-    clusterSelectors?: Array<unknown>;
-    downsync?: Array<{
-      apiGroup?: string;
-    }>;
-  };
-}
+import { useLocation } from "react-router-dom";
 
 // Define EmptyState component outside of the BP component
 const EmptyState: React.FC<{ onCreateClick: () => void }> = ({ onCreateClick }) => (
@@ -79,6 +64,25 @@ const LoadingIndicator: React.FC = () => (
 const BP = () => {
   console.log('BP component rendering');
   
+  // Add location to get navigation state
+  const location = useLocation();
+  console.log('Location state:', location.state);
+
+  // Initialize the hooks
+  const { useClusters } = useClusterQueries();
+  const { useWorkloads } = useWDSQueries();
+  const { useBindingPolicies, useCreateBindingPolicy, useDeleteBindingPolicy, useDeletePolicies } = useBPQueries();
+  
+  // Set up the queries
+  const { data: bindingPoliciesData, isLoading: bindingPoliciesLoading, error: bindingPoliciesError } = useBindingPolicies();
+  const { data: workloadsData, isLoading: workloadsLoading } = useWorkloads();
+  const { data: clustersData, isLoading: clustersLoading } = useClusters(); 
+  
+  // Set up mutations
+  const createBindingPolicyMutation = useCreateBindingPolicy();
+  const deleteBindingPolicyMutation = useDeleteBindingPolicy();
+  const deleteMultiplePoliciesMutation = useDeletePolicies();
+  
   // Add all state variables first, before any conditional logic
   const theme = useTheme((state) => state.theme);
   const [bindingPolicies, setBindingPolicies] = useState<BindingPolicyInfo[]>([]);
@@ -97,33 +101,71 @@ const BP = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [successMessage, setSuccessMessage] = useState<string>("");
-  const [viewMode, setViewMode] = useState<'table' | 'dragdrop' | 'visualize'>('table');
+  
+  // Check if we need to activate dragdrop view based on location state
+  const initialViewMode = location.state?.activateView === 'dragdrop' ? 'dragdrop' : 'table';
+  const [viewMode, setViewMode] = useState<'table' | 'dragdrop' | 'visualize'>(initialViewMode);
+  const [showDragDropHelp, setShowDragDropHelp] = useState(location.state?.activateView === 'dragdrop');
+  
+  // More forceful effect to ensure viewMode is set properly from location state
+  useEffect(() => {
+    if (location.state?.activateView === 'dragdrop') {
+      console.log('Setting viewMode to dragdrop from location state');
+      setViewMode('dragdrop');
+      setShowDragDropHelp(true);
+    }
+  }, [location.state]);
+  
+  // Clear location state after using it
+  useEffect(() => {
+    if (location.state?.activateView) {
+      // Replace the current state to clear the activateView parameter
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+  
   const [clusters, setClusters] = useState<ManagedCluster[]>([]);
   const [workloads, setWorkloads] = useState<Workload[]>([]);
   const [simulatedPolicies, setSimulatedPolicies] = useState<BindingPolicyInfo[]>([]);
   
-  // State for deployment dialog and process
-  // const [, setDeploymentDialogOpen] = useState(false);
-  // const [, setDeploymentLoading] = useState(false);
-  // const [, setDeploymentError] = useState<string | null>(null);
-  // const [policiesToDeploy, setPoliciesToDeploy] = useState<DeploymentPolicy[]>([]);
-  
-  // Add canvas store for connections - ensure this is at the top level
- // const connectionLines = useCanvasStore(state => state.connectionLines);
+  // Show drag & drop help when the view is activated
+  useEffect(() => {
+    if (viewMode === 'dragdrop') {
+      setShowDragDropHelp(true);
+    }
+  }, [viewMode]);
   
   // Calculate filtered policies at the top level, not in a nested function
   const getFilteredPolicies = useCallback(() => {
+    // Ensure bindingPolicies is an array before calling filter
+    if (!Array.isArray(bindingPolicies) || bindingPolicies.length === 0) {
+      console.warn("bindingPolicies is not an array or is empty:", bindingPolicies);
+      return [];
+    }
+    
     return bindingPolicies.filter((policy) => {
-      const searchLower = searchQuery.toLowerCase();
-      const matchesSearch =
-        policy.name.toLowerCase().includes(searchLower) ||
-        policy.workload.toLowerCase().includes(searchLower) ||
-        policy.status.toLowerCase().includes(searchLower);
+      try {
+        if (!policy) return false;
+        
+        // Safely access properties with null checks
+        const searchLower = searchQuery?.toLowerCase() || '';
+        const policyName = policy?.name?.toLowerCase() || '';
+        const policyWorkload = policy?.workload?.toLowerCase() || '';
+        const policyStatus = policy?.status?.toLowerCase() || '';
+        
+        const matchesSearch =
+          policyName.includes(searchLower) ||
+          policyWorkload.includes(searchLower) ||
+          policyStatus.includes(searchLower);
 
-      const matchesStatus =
-        !activeFilters.status || policy.status === activeFilters.status;
+        const matchesStatus =
+          !activeFilters.status || policy.status === activeFilters.status;
 
-      return matchesSearch && matchesStatus;
+        return matchesSearch && matchesStatus;
+      } catch (error) {
+        console.error("Error filtering policy:", error, policy);
+        return false; // Skip this policy if there's an error
+      }
     });
   }, [bindingPolicies, searchQuery, activeFilters.status]);
   
@@ -327,6 +369,7 @@ const BP = () => {
 
   // Memoize the tab change handler to prevent rerenders
   const handleViewModeChange = useCallback((_: React.SyntheticEvent, newValue: 'table' | 'dragdrop' | 'visualize') => {
+    console.log('Tab change to:', newValue, 'from:', viewMode);
     if (newValue && newValue !== viewMode) {
       setViewMode(newValue);
       if (newValue === 'dragdrop') {
@@ -335,213 +378,88 @@ const BP = () => {
     }
   }, [viewMode]);
 
-  // Extract the fetch binding policies 
- // Updated fetchBindingPolicies function to handle 500 errors gracefully
-const fetchBindingPolicies = useCallback(async () => {
-  try {
-    setLoading(true);
-    const response = await api.get("/api/bp");
-    const data = response.data;
-
-    if (data.error) {
-      throw new Error(data.error);
-    }
-
-    // If there are no binding policies, return an empty array
-    if (!data.bindingPolicies || data.bindingPolicies.length === 0) {
+  // Update methods to use React Query hooks instead of direct API calls
+  
+  // Update useEffect to set state based on React Query results
+  useEffect(() => {
+    // Set overall loading state based on all queries
+    setLoading(bindingPoliciesLoading || workloadsLoading || clustersLoading);
+    
+    // Update bindingPolicies state when bindingPoliciesData changes
+    if (bindingPoliciesData) {
+      // Debug log to see the data structure
+      console.log('Binding Policies Data:', bindingPoliciesData);
+      
+      // Ensure bindingPoliciesData is an array
+      if (Array.isArray(bindingPoliciesData)) {
+        setBindingPolicies(bindingPoliciesData);
+      } else {
+        console.warn("bindingPoliciesData is not an array:", bindingPoliciesData);
+        setBindingPolicies([]);
+      }
+    } else {
+      // If no data, set to empty array
       setBindingPolicies([]);
-      return;
     }
-
-    // Fetch status for each binding policy
-    const policiesWithStatus = await Promise.all(
-      data.bindingPolicies.map(async (policy: RawBindingPolicy) => {
-        try {
-          const statusResponse = await api.get(
-            `/api/bp/status?name=${policy.metadata.name}`
-          );
-
-          // Use the data directly from the status response
-          const statusData = statusResponse.data;
-
-          return {
-            name: policy.metadata.name,
-            // Use clusters from the status API
-            clusters: statusData.clusters?.length || 0,
-            // Use the actual clusters from the API
-            clusterList: statusData.clusters || [],
-            // Use actual workloads from the API
-            workloadList: statusData.workloads || [],
-            // Create a workload display string
-            workload:
-              statusData.workloads?.length > 0
-                ? statusData.workloads[0]
-                : "No workload specified",
-            creationDate: policy.metadata.creationTimestamp
-              ? new Date(policy.metadata.creationTimestamp).toLocaleString()
-              : "Unknown",
-            lastModifiedDate: policy.metadata.managedFields?.[0]?.time
-              ? new Date(
-                  policy.metadata.managedFields[0].time
-                ).toLocaleString()
-              : undefined,
-            // Map status from API to component status with proper capitalization
-            status:
-              statusData.status === "active"
-                ? "Active"
-                : statusData.status === "pending"
-                ? "Pending"
-                : "Inactive",
-            // Store the binding mode from the API
-            bindingMode: statusData.bindingMode || "N/A",
-            // Store the namespace from the API
-            namespace: statusData.namespace || "default",
-            // Store any conditions returned by the API
-            conditions: statusData.conditions || undefined,
-            yaml:
-              policy.metadata.annotations?.yaml ||
-              JSON.stringify(policy, null, 2),
-          };
-        } catch (error) {
-          console.error(
-            `Error fetching status for ${policy.metadata.name}:`,
-            error
-          );
-          return {
-            name: policy.metadata.name,
-            clusters: policy.spec.clusterSelectors?.length || 0,
-            clusterList: [],
-            workloadList: [],
-            workload:
-              policy.spec.downsync?.[0]?.apiGroup || "No workload specified",
-            creationDate: policy.metadata.creationTimestamp
-              ? new Date(policy.metadata.creationTimestamp).toLocaleString()
-              : "Unknown",
-            lastModifiedDate: policy.metadata.managedFields?.[0]?.time
-              ? new Date(
-                  policy.metadata.managedFields[0].time
-                ).toLocaleString()
-              : undefined,
-            status: "Inactive", 
-            bindingMode: "N/A",
-            namespace: "default",
-            conditions: null,
-            yaml:
-              policy.metadata.annotations?.yaml ||
-              JSON.stringify(policy, null, 2),
-          };
+    
+    // Update clusters state when clustersData changes
+    if (clustersData?.itsData) {
+      const clusterData = clustersData.itsData.map(cluster => ({
+        name: cluster.name,
+        status: 'Ready', // Default status for ITS clusters
+        labels: cluster.labels || { 'kubernetes.io/cluster-name': cluster.name },
+        metrics: {
+          cpu: 'N/A',
+          memory: 'N/A',
+          storage: 'N/A'
         }
-      })
-    );
-
-    setBindingPolicies(policiesWithStatus);
-  } catch (error: unknown) {
-    console.error("Error fetching binding policies:", error);
-    // Handle 500 errors gracefully
-    if (axios.isAxiosError(error) && error.response?.status === 500) {
-      console.warn("Server returned 500 error, likely no binding policies exist");
-      setBindingPolicies([]);
-    }
-  } finally {
-    setLoading(false);
-  }
-}, []);
-
-  // Modified fetchClusters to only use ITS data
-  const fetchClusters = useCallback(async () => {
-    try {
-      const response = await api.get('/api/clusters');
-      console.log('API Response:', response.data);
+      }));
       
-      let clusterData: ManagedCluster[] = [];
-      
-      // Define interface for ITS cluster data with additional fields
-      interface ITSCluster {
-        name: string;
-        labels?: Record<string, string>;
-        creationTime?: string;
-        context?: string;
-      }
-      
-      // Only process ITS clusters if available
-      if (response.data && response.data.itsData && Array.isArray(response.data.itsData)) {
-        clusterData = response.data.itsData.map((cluster: ITSCluster) => ({
-          name: cluster.name,
-          status: 'Ready', // Default status for ITS clusters
-          labels: cluster.labels || { 'kubernetes.io/cluster-name': cluster.name },
-          metrics: {
-            cpu: 'N/A',
-            memory: 'N/A',
-            storage: 'N/A'
-          },
-          // Include additional fields that might be useful elsewhere
-          creationTime: cluster.creationTime,
-          context: cluster.context
-        }));
-      }
-      
-      // If no ITS clusters found, use sample data
-      if (clusterData.length === 0) {
-        console.warn("No ITS clusters found in API response, using sample data");
-        clusterData = sampleClusters;
-      }
-      
-      setClusters(clusterData);
-      setAvailableClusters(clusterData);
-      console.log("Fetched ITS clusters:", clusterData);
-    } catch (error) {
-      console.error('Error fetching clusters:', error);
-      // Use sample data if API fails
-      console.log("Using sample cluster data instead");
+      setClusters(clusterData.length > 0 ? clusterData : sampleClusters);
+      setAvailableClusters(clusterData.length > 0 ? clusterData : sampleClusters);
+    } else if (!clustersLoading) {
+      // If no clusters data and not loading, use sample data
       setClusters(sampleClusters);
       setAvailableClusters(sampleClusters);
     }
-  }, [sampleClusters]);
-  
-  // Modified fetchWorkloads to use sample data if API fails
-  const fetchWorkloads = useCallback(async () => {
-    try {
-      const response = await api.get('/api/wds/workloads');
+    
+    // Update workloads state when workloadsData changes
+    if (workloadsData) {
+      const workloadData = workloadsData
+        .filter(workload => workload.name !== "kubernetes")
+        .map(workload => ({
+          name: workload.name,
+          type: workload.kind,
+          namespace: workload.namespace,
+          creationTime: workload.creationTime,
+          labels: workload.label ? JSON.parse(workload.label) : {}
+        }));
       
-      // Define interface for API workload data
-      interface ApiWorkload {
-        name: string;
-        kind: string;
-        namespace: string;
-        creationTime: string;
-        labels?: Record<string, string>;
-      }
-      
-      // Map the response data directly since it's already in the correct format
-      const workloadData = response.data.map((workload: ApiWorkload) => ({
-        name: workload.name,
-        type: workload.kind,
-        namespace: workload.namespace,
-        creationTime: workload.creationTime,
-        labels: workload.labels || {} // Use empty object if labels are not provided
-      }));
-      
-      setWorkloads(workloadData);
-      setAvailableWorkloads(workloadData);
-      console.log("Fetched workloads:", workloadData);
-    } catch (error) {
-      console.error('Error fetching workloads:', error);
-      // Use sample data if API fails
-      console.log("Using sample workload data instead");
+      setWorkloads(workloadData.length > 0 ? workloadData : sampleWorkloads);
+      setAvailableWorkloads(workloadData.length > 0 ? workloadData : sampleWorkloads);
+    } else if (!workloadsLoading) {
+      // If no workloads data and not loading, use sample data
       setWorkloads(sampleWorkloads);
       setAvailableWorkloads(sampleWorkloads);
     }
-  }, [sampleWorkloads]);
-
-  useEffect(() => {
-    setAvailableClusters([]);
-    setAvailableWorkloads([]);
-
-    // Initial data fetch
-    fetchBindingPolicies();
-    fetchClusters();
-    fetchWorkloads();
-  }, [fetchBindingPolicies, fetchClusters, fetchWorkloads]);
+    
+    // Handle errors from binding policies query
+    if (bindingPoliciesError) {
+      console.error("Error fetching binding policies:", bindingPoliciesError);
+      setBindingPolicies([]);
+    }
+    
+  }, [
+    bindingPoliciesData, 
+    bindingPoliciesLoading, 
+    bindingPoliciesError,
+    clustersData, 
+    clustersLoading, 
+    workloadsData, 
+    workloadsLoading,
+    sampleClusters,
+    sampleWorkloads
+  ]);
 
   // Memoize the delete handlers for consistent hook usage
   const handleDeletePolicy = useCallback(async (policy: BindingPolicyInfo) => {
@@ -552,13 +470,10 @@ const fetchBindingPolicies = useCallback(async () => {
   const confirmDelete = useCallback(async () => {
     if (selectedPolicy) {
       try {
-        // Call the API to delete the policy
-        await api.delete(
-          `/api/bp/delete/${selectedPolicy.name}`
-        );
-
+        // Use the mutation instead of direct API call
+        await deleteBindingPolicyMutation.mutateAsync(selectedPolicy.name);
+        
         // Update UI state after successful deletion
-        await fetchBindingPolicies(); // Refresh the list after deletion
         setSuccessMessage(
           `Binding Policy "${selectedPolicy.name}" deleted successfully`
         );
@@ -572,26 +487,84 @@ const fetchBindingPolicies = useCallback(async () => {
         setSelectedPolicy(null);
       }
     }
-  }, [selectedPolicy, fetchBindingPolicies, setSuccessMessage, setDeleteDialogOpen, setSelectedPolicy]);
+  }, [selectedPolicy, deleteBindingPolicyMutation, setSuccessMessage, setDeleteDialogOpen, setSelectedPolicy]);
 
   const handleCreatePolicySubmit = useCallback(async (policyData: PolicyData) => {
     try {
+      // Log the incoming policy data
+      console.log("Creating policy with data:", policyData);
+      
+      // First, try to parse the YAML to extract workload info if possible
+      let workloadType = policyData.workload || "apps/v1";
+      let namespace = "default";
+      
+      try {
+        const yamlContent = policyData.yaml;
+        // Use type assertion to handle the parsed YAML structure
+        interface YamlPolicy {
+          metadata?: {
+            name?: string;
+            namespace?: string;
+          };
+          spec?: {
+            downsync?: Array<{
+              apiGroup?: string;
+              namespaces?: string[];
+            }>;
+          };
+        }
+        
+        const parsedYaml = yaml.load(yamlContent) as YamlPolicy;
+        
+        // Try to extract more specific workload info if available
+        if (parsedYaml?.spec?.downsync?.[0]) {
+          const downsync = parsedYaml.spec.downsync[0];
+          if (downsync.apiGroup) {
+            workloadType = downsync.apiGroup;
+          }
+          if (downsync.namespaces && downsync.namespaces.length > 0) {
+            namespace = downsync.namespaces[0];
+          }
+        }
+        
+        // Extract namespace from metadata if available
+        if (parsedYaml?.metadata?.namespace) {
+          namespace = parsedYaml.metadata.namespace;
+        }
+        
+        console.log("Extracted from YAML - workloadType:", workloadType, "namespace:", namespace);
+      } catch (error) {
+        console.warn("Could not parse YAML to extract additional information:", error);
+      }
+      
+      // Format the data for the API
+      const formattedPolicyData = {
+        name: policyData.name,
+        namespace: namespace,
+        workload: workloadType,
+        yaml: policyData.yaml,
+        bindingMode: "DownsyncOnly", // Add the missing bindingMode property
+        clusterList: [], // Add empty clusterList
+        workloadList: [] // Add empty workloadList
+      };
+      
+      // Use the mutation for creating a binding policy
+      await createBindingPolicyMutation.mutateAsync(formattedPolicyData);
+      
+      // Close the dialog and show success message
       setCreateDialogOpen(false);
-
-      // Set a success message
       setSuccessMessage(
         `Binding Policy "${policyData.name}" created successfully`
       );
-
-      // Refresh the binding policies list
-      await fetchBindingPolicies();
     } catch (error) {
-      console.error("Error refreshing after policy creation:", error);
+      console.error("Error creating binding policy:", error);
+      // Still close the dialog but show error message
+      setCreateDialogOpen(false);
       setSuccessMessage(
-        `Binding Policy "${policyData.name}" created, but there was an error refreshing the list`
+        `Error creating Binding Policy "${policyData.name}": ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
-  }, [fetchBindingPolicies, setSuccessMessage, setCreateDialogOpen]);
+  }, [createBindingPolicyMutation, setSuccessMessage, setCreateDialogOpen]);
 
   const handleEditPolicy = useCallback((policy: BindingPolicyInfo) => {
     setSelectedPolicy(policy);
@@ -600,6 +573,8 @@ const fetchBindingPolicies = useCallback(async () => {
 
   const handleSaveEdit = useCallback(async (updatedPolicy: Partial<BindingPolicyInfo>) => {
     try {
+      // This would need a proper update mutation in useBPQueries
+      // For now, just update the local state
       setBindingPolicies((policies) =>
         policies.map((p) =>
           p.name === updatedPolicy.name ? { ...p, ...updatedPolicy } : p
@@ -639,94 +614,11 @@ const fetchBindingPolicies = useCallback(async () => {
   // Add a memoized function for handling the create dialog open
   const handleCreateDialogOpen = useCallback(() => setCreateDialogOpen(true), [setCreateDialogOpen]);
 
-  // Memoize handlePolicyAssign to ensure consistent hook usage
-  // const handlePolicyAssign = useCallback(async (policyName: string, targetType: 'cluster' | 'workload', targetName: string) => {
-  //   try {
-  //     // Find the policy
-  //     const policy = bindingPolicies.find(p => p.name === policyName);
-  //     if (!policy) {
-  //       console.error(`Policy ${policyName} not found`);
-  //       setSuccessMessage(`Error: Policy ${policyName} not found`);
-  //       return;
-  //     }
-  
-  //     // Prepare the update data based on target type
-  //     let updateData: any = { spec: {} };
-      
-  //     if (targetType === 'cluster') {
-  //       // For cluster assignment
-  //       // First get existing cluster selectors if any
-  //       const existingSelectors = policy.clusterList ? 
-  //         policy.clusterList.map(clusterName => ({
-  //           matchLabels: { 'kubernetes.io/cluster-name': clusterName }
-  //         })) : [];
-        
-  //       // Add the new cluster selector if it doesn't exist already
-  //       if (!policy.clusterList?.includes(targetName)) {
-  //         updateData.spec.clusterSelectors = [
-  //           ...existingSelectors,
-  //           {
-  //             matchLabels: {
-  //               'kubernetes.io/cluster-name': targetName
-  //             }
-  //           }
-  //         ];
-  //       } else {
-  //         // No change needed, cluster already assigned
-  //         setSuccessMessage(`Cluster ${targetName} is already assigned to policy ${policyName}`);
-  //         return;
-  //       }
-  //     } else if (targetType === 'workload') {
-  //       // For workload assignment
-  //       // Parse workload information (format could be "type/name" or just "name")
-  //       let workloadType = 'Deployment'; // Default type
-  //       let workloadName = targetName;
-        
-  //       if (targetName.includes('/')) {
-  //         [workloadType, workloadName] = targetName.split('/');
-  //       }
-        
-  //       // Find the workload to get its namespace
-  //       const workloadObj = workloads.find(w => w.name === workloadName);
-  //       const namespace = workloadObj?.namespace || 'default';
-        
-  //       // Prepare downsync configuration based on your API
-  //       updateData.spec.downsync = [{
-  //         apiGroup: 'apps/v1',
-  //         resources: [workloadType.toLowerCase() + 's'],  // pluralize resource type
-  //         namespace: namespace,
-  //         resourceNames: [workloadName]
-  //       }];
-  //     } else {
-  //       throw new Error(`Unknown target type: ${targetType}`);
-  //     }
-  
-  //     // Use the correct API endpoint from your API list
-  //     // The API endpoint is /api/bp/update/:name 
-  //     await api.patch(`/api/bp/update/${policyName}`, updateData);
-  
-  //     // Show success message
-  //     setSuccessMessage(`Successfully assigned ${policyName} to ${targetType} ${targetName}`);
-  
-  //     // Refresh the binding policies to see the updated assignments
-  //     await fetchBindingPolicies();
-  //   } catch (error) {
-  //     console.error('Error assigning policy:', error);
-  //     setSuccessMessage(`Error assigning policy: ${error instanceof Error ? error.message : String(error)}`);
-  //   }
-  // }, [bindingPolicies, workloads, setSuccessMessage, fetchBindingPolicies]);
-
   const handleBulkDelete = useCallback(async () => {
     try {
-      // Delete each selected policy
-      await Promise.all(
-        selectedPolicies.map(policyName =>
-          api.delete(`/api/bp/delete/${policyName}`)
-        )
-      );
-
-      // Update UI state after successful deletion
-      await fetchBindingPolicies();
+      // Use the mutation for deleting multiple binding policies
+      await deleteMultiplePoliciesMutation.mutateAsync(selectedPolicies);
+      
       setSuccessMessage(
         `Successfully deleted ${selectedPolicies.length} binding policies`
       );
@@ -737,125 +629,8 @@ const fetchBindingPolicies = useCallback(async () => {
         `Error deleting binding policies`
       );
     }
-  }, [selectedPolicies, fetchBindingPolicies, setSuccessMessage, setSelectedPolicies]);
+  }, [selectedPolicies, deleteMultiplePoliciesMutation, setSuccessMessage, setSelectedPolicies]);
 
-  // Properly memoize prepareForDeployment with correct dependencies
-  // const prepareForDeployment = useCallback(() => {
-  //   // Generate policies from connection lines
-  //   const policies = connectionLines.map(line => {
-  //     // Extract workload and cluster IDs from the connection line
-  //     const workloadId = line.source.startsWith('workload-') 
-  //       ? line.source.replace('workload-', '') 
-  //       : line.target.replace('workload-', '');
-      
-  //     const clusterId = line.source.startsWith('cluster-') 
-  //       ? line.source.replace('cluster-', '') 
-  //       : line.target.replace('cluster-', '');
-      
-  //     // Find the workload and cluster
-  //     const workload = workloads.find(w => w.name === workloadId);
-  //     const cluster = clusters.find(c => c.name === clusterId);
-      
-  //     if (!workload || !cluster) {
-  //       console.error('Could not find workload or cluster for connection:', line);
-  //       return null;
-  //     }
-      
-  //     // Create a unique policy name if it doesn't exist
-  //     const policyName = `${workload.name}-to-${cluster.name}`;
-      
-  //     // Create a default configuration
-  //     const config: PolicyConfiguration = {
-  //       name: policyName,
-  //       namespace: workload.namespace || 'default',
-  //       propagationMode: 'DownsyncOnly',
-  //       updateStrategy: line.color === '#2196f3' ? 'RollingUpdate' :
-  //                      line.color === '#009688' ? 'BlueGreenDeployment' :
-  //                      line.color === '#ff9800' ? 'ForceApply' : 'ServerSideApply',
-  //       deploymentType: 'SelectedClusters',
-  //       schedulingRules: [],
-  //       customLabels: {},
-  //       tolerations: []
-  //     };
-      
-  //     // Generate YAML for the policy
-  //     const yaml = generateBindingPolicyYAML(config);
-      
-  //     return {
-  //       id: uuidv4(), // Generate a unique ID
-  //       name: policyName,
-  //       workloadId,
-  //       clusterId,
-  //       workloadName: workload.name,
-  //       clusterName: cluster.name,
-  //       config,
-  //       yaml
-  //     };
-  //   }).filter(Boolean) as DeploymentPolicy[];
-    
-  //   setPoliciesToDeploy(policies);
-  //   setDeploymentDialogOpen(true);
-  // }, [connectionLines, workloads, clusters, setPoliciesToDeploy, setDeploymentDialogOpen]);
-
-  // Properly memoize handleDeploymentConfirm with correct dependencies
-  // const handleDeploymentConfirm = useCallback(async () => {
-  //   if (policiesToDeploy.length === 0) {
-  //     setDeploymentError('No policies to deploy');
-  //     return;
-  //   }
-    
-  //   setDeploymentLoading(true);
-  //   setDeploymentError(null);
-    
-  //   try {
-  //     // Simulate API call delay
-  //     await new Promise(resolve => setTimeout(resolve, 2000));
-      
-  //     // Process all policies - in our simulation we'll assume all succeed
-  //     policiesToDeploy.forEach(policy => {
-  //       // Create a simulated binding policy
-  //       const newPolicy: BindingPolicyInfo = {
-  //         name: policy.name,
-  //         namespace: policy.config.namespace,
-  //         status: "Active",
-  //         clusters: 1,
-  //         workload: `${policy.workloadName}`,
-  //         clusterList: [policy.clusterName],
-  //         workloadList: [policy.workloadName],
-  //         creationDate: new Date().toLocaleString(),
-  //         bindingMode: policy.config.propagationMode,
-  //         conditions: null,
-  //         yaml: policy.yaml
-  //       };
-        
-  //       // Add to our simulated policies
-  //       setSimulatedPolicies(prev => {
-  //         // Check if policy already exists
-  //         const exists = prev.some(p => p.name === newPolicy.name);
-  //         if (exists) {
-  //           return prev.map(p => p.name === newPolicy.name ? newPolicy : p);
-  //         } else {
-  //           return [...prev, newPolicy];
-  //         }
-  //       });
-  //     });
-      
-  //     // Show success message
-  //     setSuccessMessage(`Successfully deployed ${policiesToDeploy.length} binding policies`);
-  //     setDeploymentDialogOpen(false);
-  //   } catch (error) {
-  //     console.error('Error in simulated deployment:', error);
-  //     setDeploymentError(
-  //       error instanceof Error 
-  //         ? error.message 
-  //         : 'Failed to deploy binding policies. Please try again.'
-  //     );
-  //   } finally {
-  //     setDeploymentLoading(false);
-  //   }
-  // }, [policiesToDeploy, setSimulatedPolicies, setSuccessMessage, setDeploymentDialogOpen, setDeploymentError, setDeploymentLoading]);
- //  state variable for the drag & drop help dialog
- const [showDragDropHelp, setShowDragDropHelp] = useState(false);
   // Modify the conditional return for loading to use the component:
   if (loading) {
     return <LoadingIndicator />;
@@ -873,14 +648,13 @@ const fetchBindingPolicies = useCallback(async () => {
       >
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
           <Tabs 
-            value={viewMode} 
+            value={viewMode}
             onChange={handleViewModeChange}
             aria-label="binding policy view mode"
           >
             <Tab label="Table View" value="table" />
             <Tab label="Visualize" value="visualize" />
             <Tab label="Drag & Drop" value="dragdrop" />
-            
           </Tabs>
         </Box>
 
@@ -896,6 +670,7 @@ const fetchBindingPolicies = useCallback(async () => {
               setActiveFilters={setActiveFilters}
               selectedPolicies={selectedPolicies}
               onBulkDelete={handleBulkDelete}
+              policyCount={filteredPolicies.length}
             />
 
             {bindingPolicies.length === 0 ? (

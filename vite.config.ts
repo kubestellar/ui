@@ -1,11 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { visualizer } from "rollup-plugin-visualizer";
 import EnvironmentPlugin from 'vite-plugin-environment'
 import { execSync } from 'child_process';
-
-// DOCS: https://www.npmjs.com/package/rollup-plugin-visualizer
-// https://vitejs.dev/config/
 
 // Utility function to extract the current git commit hash
 // Provides a short 7-character version of the full commit hash
@@ -30,17 +26,6 @@ export default defineConfig({
     EnvironmentPlugin({
       VITE_BASE_URL: process.env.VITE_BASE_URL,
       VITE_GIT_COMMIT_HASH: getGitCommitHash(),
-    }),
-
-    // Bundle size and composition visualization
-    // Helps in understanding application's build characteristics
-    visualizer({
-      filename: "bundle-stats.html", // Output file for the analysis
-      open: true, // Automatically open the file in the browser if true
-      gzipSize: true, // Show gzip sizes
-      brotliSize: true, // Show brotli sizes
-      // template: 'network', // sunburst, treemap, network, raw-data, list, flamegraph
-
     }),
   ],
 

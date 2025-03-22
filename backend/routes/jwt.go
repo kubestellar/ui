@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/katamyra/kubestellarUI/middleware"
-	"github.com/katamyra/kubestellarUI/models"
-	"github.com/katamyra/kubestellarUI/utils"
+	"github.com/kubestellar/ui/middleware"
+	"github.com/kubestellar/ui/models"
+	"github.com/kubestellar/ui/utils"
 )
 
 // SetupAuthRoutes initializes authentication routes

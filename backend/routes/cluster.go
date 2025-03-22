@@ -1,10 +1,11 @@
 package routes
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/katamyra/kubestellarUI/api"
-	"github.com/katamyra/kubestellarUI/its/manual/handlers"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/kubestellar/ui/api"
+	"github.com/kubestellar/ui/its/manual/handlers"
 )
 
 func setupClusterRoutes(router *gin.Engine) {

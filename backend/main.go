@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/katamyra/kubestellarUI/routes"
+	"github.com/kubestellar/ui/routes"
 
-	"github.com/katamyra/kubestellarUI/api"
+	"github.com/kubestellar/ui/api"
 	"go.uber.org/zap"
 )
 

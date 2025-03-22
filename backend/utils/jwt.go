@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	jwtconfig "github.com/katamyra/kubestellarUI/jwt"
+	jwtconfig "github.com/kubestellar/ui/jwt"
 )
 
 type Claims struct {

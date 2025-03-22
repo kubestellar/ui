@@ -170,6 +170,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
             "kubestellar-report",
             "kube-node-lease",
             "kube-public",
+            "default",
             "kube-system",
           ].includes(namespace.name)
       );

@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/katamyra/kubestellarUI/k8s"
-	"github.com/katamyra/kubestellarUI/redis"
+	"github.com/kubestellar/ui/k8s"
+	"github.com/kubestellar/ui/redis"
 )
 
 type DeployRequest struct {
