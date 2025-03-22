@@ -435,14 +435,36 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                   borderRadius: "12px",
                   position: "relative",
                   overflow: "visible",
-                  border: "1px solid transparent",
+                  border: "1px solid transparent !important",
                   WebkitAppearance: "none",
+                  outline: "none !important",
+                  "&:focus": {
+                    outline: "none !important",
+                    boxShadow: "none !important",
+                    border: "1px solid transparent !important",
+                  },
+                  "&:focus-visible": {
+                    outline: "none !important",
+                    boxShadow: "none !important",
+                  },
+                  WebkitTapHighlightColor: "transparent",
+                  WebkitTouchCallout: "none",
+                  "&::-webkit-focus-ring-color": {
+                    color: "transparent",
+                  },
                   "&::before, &::after": {
                     content: '""',
                     display: "none",
                   },
+                  "@media not all and (min-resolution:.001dpcm)": {
+                    "@supports (-webkit-appearance:none)": {
+                      outline: "none !important", 
+                      boxShadow: "none !important",
+                      borderColor: "transparent !important",
+                    }
+                  },
                   
-                  "&:hover": {
+                        "&:hover": { 
                     backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.03)",
                     color: theme === "dark" ? colors.white : colors.primary,
                     borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.1)", 
@@ -456,14 +478,24 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                     color: theme === "dark" ? colors.white : colors.primary,
                     backgroundColor: theme === "dark" ? "rgba(47, 134, 255, 0.08)" : "rgba(47, 134, 255, 0.05)",
                     fontWeight: 600,
-                    border: `1px solid ${colors.primary}`,
+                    border: `1px solid ${colors.primary} !important`,
                     boxShadow: theme === "dark" 
                       ? `0 0 8px ${colors.primary}40` 
                       : `0 0 6px ${colors.primary}30`,
                     zIndex: 1,
                     position: "relative",
+                    "&:focus, &:focus-visible": {
+                      outline: "none !important",
+                      border: `1px solid ${colors.primary} !important`,
+                    },
                     "&::before, &::after": {
-                      display: "none",
+                      display: "none !important",
+                    },
+                    "@media not all and (min-resolution:.001dpcm)": {
+                      "@supports (-webkit-appearance:none)": {
+                        border: `1px solid ${colors.primary} !important`,
+                        outline: "none !important",
+                      }
                     },
                     "& .iconContainer": {
                       backgroundColor: theme === "dark" ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",

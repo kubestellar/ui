@@ -24,7 +24,6 @@ func setupClusterRoutes(router *gin.Engine) {
 	})
 	router.POST("/clusters/onboard", api.OnboardClusterHandler)
 	router.GET("/clusters/status", api.GetClusterStatusHandler)
-	router.POST("/clusters/import", api.ImportClusterHandler)
 
 	// API for generating command
 	router.POST("/clusters/manual/generateCommand", handlers.GenerateCommandHandler)
