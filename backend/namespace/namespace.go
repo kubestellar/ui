@@ -365,6 +365,7 @@ func fetchNamespaceResourcesWithRetry(namespace string) (*NamespaceDetails, erro
 
 	return nil, err
 }
+
 // GetNamespaceResourcesLimited fetches resources with optimized performance
 func GetNamespaceResourcesLimited(namespace string) (*NamespaceDetails, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
@@ -430,9 +431,9 @@ func GetNamespaceResourcesLimited(namespace string) (*NamespaceDetails, error) {
 	for i := 0; i < maxWorkers; i++ {
 		go func() {
 			for gvr := range resourceCh {
-				<-rateLimiter.C       // Wait for rate limiter tick
+				<-rateLimiter.C         // Wait for rate limiter tick
 				semaphore <- struct{}{} // Acquire semaphore
-				
+
 				cacheKey := fmt.Sprintf("ns_%s_res_%s_%s_%s", namespace, gvr.Group, gvr.Version, gvr.Resource)
 				resourceKey := fmt.Sprintf("%s.%s/%s", gvr.Group, gvr.Version, gvr.Resource)
 
@@ -467,7 +468,7 @@ func GetNamespaceResourcesLimited(namespace string) (*NamespaceDetails, error) {
 
 					// Increase cache durations substantially to reduce API calls
 					cacheDuration := 30 * time.Second
-					
+
 					// Higher change frequency resources get shorter TTL, but still longer than before
 					if isHighFrequencyResource(resourceKey) {
 						cacheDuration = 10 * time.Second // Increased from 2s
@@ -507,9 +508,9 @@ func GetNamespaceResourcesLimited(namespace string) (*NamespaceDetails, error) {
 			if strings.Contains(apiResource.Name, "/") {
 				continue
 			}
-			
+
 			resourceKey := fmt.Sprintf("%s.%s/%s", gv.Group, gv.Version, apiResource.Name)
-			
+
 			// Skip resources known to cause throttling issues
 			if shouldSkipResource(resourceKey) {
 				continue
@@ -520,7 +521,7 @@ func GetNamespaceResourcesLimited(namespace string) (*NamespaceDetails, error) {
 				Version:  gv.Version,
 				Resource: apiResource.Name,
 			}
-			
+
 			if isHighFrequencyResource(resourceKey) {
 				highPriorityResources = append(highPriorityResources, gvr)
 			} else {
@@ -534,7 +535,7 @@ func GetNamespaceResourcesLimited(namespace string) (*NamespaceDetails, error) {
 		wg.Add(1)
 		resourceCh <- gvr
 	}
-	
+
 	// Then process normal priority resources
 	for _, gvr := range normalPriorityResources {
 		wg.Add(1)
@@ -562,11 +563,11 @@ func GetNamespaceResourcesLimited(namespace string) (*NamespaceDetails, error) {
 func shouldSkipResource(resourceKey string) bool {
 	// Skip resources with high volume or those causing throttling
 	resourcesToSkip := []string{
-		"coordination.k8s.io", // leases
-		"discovery.k8s.io",    // endpointslices
-		"events",              // high volume
-		"leases",              // high volume
-		"endpointslices",      // high volume
+		"coordination.k8s.io",    // leases
+		"discovery.k8s.io",       // endpointslices
+		"events",                 // high volume
+		"leases",                 // high volume
+		"endpointslices",         // high volume
 		"replicationcontrollers", // often empty but causes throttling
 	}
 
@@ -577,16 +578,17 @@ func shouldSkipResource(resourceKey string) bool {
 	}
 	return false
 }
+
 // getFilteredNamespacedResources returns a filtered list of resources to query
 func getFilteredNamespacedResources(clientset kubernetes.Interface) ([]*metav1.APIResourceList, error) {
 	_, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
-	
+
 	resources, err := clientset.Discovery().ServerPreferredNamespacedResources()
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Filter out API groups that cause throttling
 	filteredResources := make([]*metav1.APIResourceList, 0, len(resources))
 	for _, resList := range resources {
@@ -594,29 +596,29 @@ func getFilteredNamespacedResources(clientset kubernetes.Interface) ([]*metav1.A
 		if err != nil {
 			continue
 		}
-		
+
 		// Skip these API groups entirely
 		if gv.Group == "coordination.k8s.io" || gv.Group == "discovery.k8s.io" {
 			continue
 		}
-		
+
 		// Filter individual resources within groups
 		filteredAPIResources := make([]metav1.APIResource, 0, len(resList.APIResources))
 		for _, res := range resList.APIResources {
 			// Skip these resource types
-			if res.Name == "events" || res.Name == "endpointslices" || 
-			   res.Name == "leases" || res.Name == "replicationcontrollers" {
+			if res.Name == "events" || res.Name == "endpointslices" ||
+				res.Name == "leases" || res.Name == "replicationcontrollers" {
 				continue
 			}
 			filteredAPIResources = append(filteredAPIResources, res)
 		}
-		
+
 		if len(filteredAPIResources) > 0 {
 			resList.APIResources = filteredAPIResources
 			filteredResources = append(filteredResources, resList)
 		}
 	}
-	
+
 	return filteredResources, nil
 }
 
@@ -688,7 +690,7 @@ func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				continue
 			}
-			
+
 			if err := conn.WriteMessage(websocket.TextMessage, jsonData); err != nil {
 				return // Exit if client disconnected
 			}
@@ -716,10 +718,10 @@ func getHighPriorityNamespaceChanges() ([]NamespaceDetails, error) {
 	result := make([]NamespaceDetails, 0)
 	var wg sync.WaitGroup
 	resultCh := make(chan NamespaceDetails, len(namespaces.Items))
-	
+
 	// Reduce concurrency to avoid throttling
 	semaphore := make(chan struct{}, 3) // Reduced from 10 to 3
-	
+
 	// Add rate limiter
 	rateLimiter := time.NewTicker(250 * time.Millisecond) // 4 req/sec
 	defer rateLimiter.Stop()
@@ -733,8 +735,8 @@ func getHighPriorityNamespaceChanges() ([]NamespaceDetails, error) {
 		wg.Add(1)
 		go func(ns v1.Namespace) {
 			defer wg.Done()
-			<-rateLimiter.C           // Wait for rate limiter
-			semaphore <- struct{}{} // Acquire semaphore
+			<-rateLimiter.C                // Wait for rate limiter
+			semaphore <- struct{}{}        // Acquire semaphore
 			defer func() { <-semaphore }() // Release semaphore
 
 			// Get only high-frequency resources for this namespace
@@ -792,7 +794,7 @@ func getHighFrequencyResourcesOnly(namespace string) (*NamespaceDetails, error) 
 
 	var wg sync.WaitGroup
 	mu := sync.Mutex{}
-	
+
 	// Add rate limiter for resource requests
 	rateLimiter := time.NewTicker(300 * time.Millisecond)
 	defer rateLimiter.Stop()
@@ -802,9 +804,9 @@ func getHighFrequencyResourcesOnly(namespace string) (*NamespaceDetails, error) 
 		go func(gvr schema.GroupVersionResource) {
 			defer wg.Done()
 			<-rateLimiter.C // Wait for rate limiter
-			
+
 			resourceKey := fmt.Sprintf("%s.%s/%s", gvr.Group, gvr.Version, gvr.Resource)
-			
+
 			// Try cache first
 			cacheKey := fmt.Sprintf("ns_%s_res_%s_%s_%s", namespace, gvr.Group, gvr.Version, gvr.Resource)
 			cachedResource, _ := redis.GetNamespaceCache(cacheKey)
@@ -817,7 +819,7 @@ func getHighFrequencyResourcesOnly(namespace string) (*NamespaceDetails, error) 
 					return
 				}
 			}
-			
+
 			list, err := dynamicClient.Resource(gvr).Namespace(namespace).List(ctx, metav1.ListOptions{})
 			if err != nil {
 				return
@@ -827,7 +829,7 @@ func getHighFrequencyResourcesOnly(namespace string) (*NamespaceDetails, error) 
 				mu.Lock()
 				details.Resources[resourceKey] = list.Items
 				mu.Unlock()
-				
+
 				// Cache results
 				if jsonData, err := json.Marshal(list.Items); err == nil {
 					redis.SetNamespaceCache(cacheKey, string(jsonData), 5*time.Second) // Shorter cache time
@@ -873,7 +875,7 @@ func getLatestNamespaceData() ([]NamespaceDetails, error) {
 
 	// Reduce concurrent processing to avoid throttling
 	semaphore := make(chan struct{}, 3) // Reduced from 15 to 3
-	
+
 	// Add rate limiter
 	rateLimiter := time.NewTicker(200 * time.Millisecond) // 5 req/sec
 	defer rateLimiter.Stop()
@@ -886,8 +888,8 @@ func getLatestNamespaceData() ([]NamespaceDetails, error) {
 		wg.Add(1)
 		go func(ns v1.Namespace) {
 			defer wg.Done()
-			<-rateLimiter.C             // Wait for rate limiter
-			semaphore <- struct{}{}     // Acquire semaphore
+			<-rateLimiter.C                // Wait for rate limiter
+			semaphore <- struct{}{}        // Acquire semaphore
 			defer func() { <-semaphore }() // Release semaphore
 
 			// Try cache first for this namespace
