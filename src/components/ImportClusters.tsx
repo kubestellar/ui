@@ -290,9 +290,6 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
     }
   };
 
-  // Example for the kubeconfig tab
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [kubeConfigLoading] = useState(false);
 
   return (
     <>
@@ -600,7 +597,8 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                     maxWidth: "100%",
                     display: "flex",
                     flexDirection: "column",
-                    height: "calc(100% - 8px)",
+                    height: "auto",
+                    maxHeight: "calc(100% - 8px)",
                   }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
                   <Box
@@ -645,9 +643,10 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                         flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "center",
-                        height: "calc(100% - 130px)",
-                        mb: 2,
-                        minHeight: "250px",
+                    flex: 1,
+                      mb: 2,
+                        minHeight: { xs: "200px", sm: "220px" },
+                        maxHeight: { xs: "250px", sm: "300px", md: "350px" }
                       }}
                     >
                       <Box 
@@ -715,7 +714,15 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                     )}
                   </Box>
 
-                    <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+                    <Box sx={{ 
+                      display: "flex", 
+                      justifyContent: "flex-end", 
+                      gap: 2,
+                      mt: "auto",
+                      pt: 1,
+                      position: "relative",
+                      zIndex: 2,
+                    }}>
                       <Button 
                         onClick={handleCancel}
                         variant="outlined"
@@ -726,17 +733,10 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                     <Button
                       variant="contained"
                       onClick={handleFileUpload}
-                      disabled={!selectedFile || kubeConfigLoading}
+                      disabled={!selectedFile}
                       sx={primaryButtonStyles}
                     >
-                      {kubeConfigLoading ? (
-                        <>
-                          <CircularProgress size={14} color="inherit" sx={{ mr: 1 }} />
-                          Importing...
-                        </>
-                      ) : (
-                        "Import Cluster"
-                      )}
+                      Import Cluster
                     </Button>
                     </Box>
                   </Box>
