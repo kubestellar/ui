@@ -25,7 +25,6 @@ func setupDeploymentRoutes(router *gin.Engine) {
 	router.GET("/ws", func(ctx *gin.Context) {
 		deployment.HandleDeploymentLogs(ctx.Writer, ctx.Request)
 	})
-
 	router.GET("/api/wds/logs", func(ctx *gin.Context) {
 		var upgrader = websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
