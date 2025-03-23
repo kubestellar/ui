@@ -8,14 +8,9 @@ import {
   Box,
   Alert,
   TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   CircularProgress,
   Snackbar,
 } from "@mui/material";
-import Editor from "@monaco-editor/react";
 import useTheme from "../stores/themeStore";
 import { api } from "../lib/api";
 
@@ -78,10 +73,8 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
     disabled: theme === "dark" ? "#475569" : "#94a3b8",
   };
 
-  // State for non-manual tabs
-  const [fileType, setFileType] = useState<"yaml">("yaml");
+  // State for non-manual tabs - removing fileType and editorContent since YAML tab is being removed
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [editorContent, setEditorContent] = useState<string>("");
 
   // Global form state
   const [formData, setFormData] = useState({
@@ -117,6 +110,14 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
       });
     }
   }, [manualCommand]);
+
+  // Update useEffect to handle initial tab selection with new option names
+  useEffect(() => {
+    // If activeOption is null or invalid, set to first available tab
+    if (!activeOption || (activeOption !== "kubeconfig" && activeOption !== "apiurl" && activeOption !== "manual")) {
+      setActiveOption("kubeconfig");
+    }
+  }, [activeOption, setActiveOption]);
 
   const handleGenerateCommand = async () => {
     if (!formData.clusterName.trim()) return;
@@ -188,9 +189,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
 
   const handleCancel = () => {
     setSelectedFile(null);
-    setEditorContent("");
     setManualCommand(null);
-    setManualError("");
     setFormData((prev) => ({ ...prev, clusterName: "" }));
     setActiveOption(null);
   };
@@ -198,7 +197,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     // Reset manual command if clusterName is modified
-    if (activeOption === "option4") {
+    if (activeOption === "manual") {
       setManualCommand(null);
       setManualError("");
     }
@@ -375,7 +374,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
               </Box>
               <Box>
                 <Box sx={{ fontSize: { xs: "1rem", sm: "1.1rem" }, fontWeight: 700, color: textColor }}>
-          Import Cluster
+                  Import Cluster
                 </Box>
                 <Box sx={{ 
                   fontSize: "0.75rem",
@@ -387,20 +386,26 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                 </Box>
               </Box>
             </Box>
-            <Button 
+            {/* Replace Button with Box for the close (X) icon */}
+            <Box 
               onClick={onCancel}
               sx={{ 
-                minWidth: 'auto', 
-                p: 0.5,
-                borderRadius: "50%",
-                color: theme === "dark" ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.5)",
+                fontSize: "1.1rem",
+                color: theme === "dark" ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.4)",
+                cursor: "pointer",
+                height: 28,
+                width: 28,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "color 0.2s ease",
                 "&:hover": {
-                  backgroundColor: theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
+                  color: theme === "dark" ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.6)",
                 }
               }}
             >
-              <Box sx={{ fontSize: "1.1rem" }}>✕</Box>
-            </Button>
+              ✕
+            </Box>
           </Box>
             <Tabs
               value={activeOption}
@@ -522,35 +527,12 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                       transition: "all 0.25s ease",
                     }}
                   >
-                    <span role="img" aria-label="yaml" style={{ fontSize: "0.9rem" }}>📄</span>
-                  </Box>
-                  YAML
-                </Box>
-              } 
-              value="option1" 
-            />
-            <Tab 
-              label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Box 
-                    className="iconContainer"
-                    sx={{ 
-                      width: 26, 
-                      height: 26, 
-                      borderRadius: "8px", 
-                      display: "flex", 
-                      alignItems: "center", 
-                      justifyContent: "center",
-                      bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)",
-                      transition: "all 0.25s ease",
-                    }}
-                  >
                     <span role="img" aria-label="kubeconfig" style={{ fontSize: "0.9rem" }}>📁</span>
                   </Box>
                   Kubeconfig
                 </Box>
               } 
-              value="option2" 
+              value="kubeconfig" 
             />
             <Tab 
               label={
@@ -573,7 +555,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                   API/URL
                 </Box>
               } 
-              value="option3" 
+              value="apiurl" 
             />
             <Tab 
               label={
@@ -596,7 +578,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                   Manual
                 </Box>
               } 
-              value="option4" 
+              value="manual" 
             />
             </Tabs>
         </Box>
@@ -604,134 +586,8 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
         <DialogContent sx={{ p: 0, flex: 1, overflow: "hidden" }}>
           <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
             <Box sx={{ flex: 1, overflow: "auto", p: { xs: 1, sm: 1.5 } }}>
-              {/* YAML paste option */}
-              {activeOption === "option1" && (
-                <Box sx={{
-                  ...enhancedTabContentStyles,
-                  border: "none",
-                  boxShadow: "none",
-                  bgcolor: "transparent",
-                  p: 0,
-                }}>
-                  <Box sx={{
-                    p: { xs: 1.5, sm: 2, md: 2.5 },
-                    borderRadius: { xs: 1.5, sm: 2 },
-                    backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.8)",
-                    border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"}`,
-                    boxShadow: theme === "dark" 
-                      ? "0 4px 12px rgba(0, 0, 0, 0.3)" 
-                      : "0 4px 12px rgba(0, 0, 0, 0.05)",
-                    mb: 1.5,
-                    width: "100%",
-                    maxWidth: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    height: "calc(100% - 8px)",
-                  }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
-                      <Box 
-                        sx={{ 
-                          width: 36, 
-                          height: 36, 
-                          borderRadius: "8px", 
-                          display: "flex", 
-                          alignItems: "center", 
-                          justifyContent: "center",
-                          bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.1)",
-                          color: theme === "dark" ? colors.primaryLight : colors.primary,
-                        }}
-                      >
-                        <span role="img" aria-label="info" style={{ fontSize: "1.25rem" }}>📄</span>
-                      </Box>
-                      <Box>
-                        <Box sx={{ fontWeight: 600, fontSize: "1rem", color: textColor }}>
-                          Paste your Kubernetes YAML configuration
-                        </Box>
-                        <Box sx={{ color: colors.textSecondary, fontSize: "0.875rem", mt: 0.5 }}>
-                          Import your cluster by pasting a valid Kubernetes YAML configuration
-                        </Box>
-                      </Box>
-                    </Box>
-
-                  <FormControl
-                    sx={{
-                        mb: 3,
-                      "& .MuiOutlinedInput-root": {
-                          borderRadius: 1.5,
-                        "& fieldset": { borderWidth: 1, borderColor: "divider" },
-                        "&:hover fieldset": { borderColor: "primary.main" },
-                      },
-                    }}
-                  >
-                    <InputLabel sx={{ color: textColor }}>File Type</InputLabel>
-                    <Select
-                      value={fileType}
-                      onChange={(e) => {
-                        setFileType(e.target.value as "yaml");
-                        setEditorContent("");
-                      }}
-                      label="File Type"
-                        sx={{ 
-                          bgcolor: theme === "dark" ? "rgba(0, 0, 0, 0.2)" : bgColor, 
-                          color: textColor,
-                          minWidth: 150,
-                        }}
-                    >
-                      <MenuItem value="yaml">YAML</MenuItem>
-                    </Select>
-                  </FormControl>
-
-                    <Box 
-                      sx={{ 
-                        height: { xs: "calc(100% - 160px)", sm: "calc(100% - 170px)", md: "calc(100% - 180px)" },
-                        border: 1, 
-                        borderColor: "divider", 
-                        borderRadius: 1.5,
-                        overflow: "hidden",
-                        boxShadow: "inset 0 1px 3px rgba(0,0,0,0.05)",
-                        mb: 1.5,
-                      }}
-                    >
-                    <Editor
-                      height="100%"
-                      language={fileType}
-                      value={editorContent}
-                      theme={theme === "dark" ? "vs-dark" : "light"}
-                      options={{
-                        minimap: { enabled: false },
-                        fontSize: 14,
-                        lineNumbers: "on",
-                        scrollBeyondLastLine: false,
-                        automaticLayout: true,
-                          padding: { top: 16, bottom: 16 },
-                          fontFamily: "'Fira Code', monospace",
-                      }}
-                      onChange={(value) => setEditorContent(value || "")}
-                    />
-                  </Box>
-
-                    <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
-                      <Button 
-                        onClick={onCancel}
-                        variant="outlined"
-                        sx={secondaryButtonStyles}
-                      >
-                        Cancel
-                      </Button>
-                    <Button
-                      variant="contained"
-                      disabled={!editorContent}
-                        sx={primaryButtonStyles}
-                    >
-                        Import Cluster
-                    </Button>
-                    </Box>
-                  </Box>
-                </Box>
-              )}
-
               {/* Kubeconfig option */}
-              {activeOption === "option2" && (
+              {activeOption === "kubeconfig" && (
                 <Box sx={{
                   ...enhancedTabContentStyles,
                   border: "none",
@@ -889,7 +745,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
               )}
 
               {/* API/URL option */}
-              {activeOption === "option3" && (
+              {activeOption === "apiurl" && (
                 <Box sx={{
                   ...enhancedTabContentStyles,
                   border: "none",
@@ -1043,7 +899,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
               )}
 
               {/* Manual option - Enhanced */}
-              {activeOption === "option4" && (
+              {activeOption === "manual" && (
                 <Box sx={{
                   ...enhancedTabContentStyles,
                   border: "none",
