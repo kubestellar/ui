@@ -1344,7 +1344,7 @@ const TreeViewComponent = () => {
             variant="outlined"
             startIcon={<Plus size={20} />}
             onClick={handleCreateWorkloadClick}
-            sx={{ borderColor: "#2f86ff", color: "#2f86ff", "&:hover": { borderColor: "#2f86ff" } }}
+            sx={{ color: "#FFFFFF" , backgroundColor:"#2F86FF" , padding: "8px 20px" , fontWeight:"600" , borderRadius:"8px"}}
           >
             Create Workload
           </Button>
