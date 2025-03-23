@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient, UseQueryResult } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import { toast } from 'react-hot-toast';
+import { AxiosError } from 'axios';
 
 interface Workload {
   name: string;
@@ -76,6 +77,34 @@ interface WorkloadStatus {
   // other status fields
 }
 
+// Define a more specific type for the workload data in mutations
+interface WorkloadData {
+  kind?: string;
+  metadata?: {
+    namespace?: string;
+    name?: string;
+    [key: string]: unknown;
+  };
+  spec?: {
+    replicas?: number;
+    selector?: Record<string, unknown>;
+    template?: {
+      metadata?: Record<string, unknown>;
+      spec?: {
+        containers?: Array<{
+          name?: string;
+          image?: string;
+          ports?: Array<Record<string, unknown>>;
+          [key: string]: unknown;
+        }>;
+        [key: string]: unknown;
+      };
+    };
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
 export const useWDSQueries = () => {
   const queryClient = useQueryClient();
 
@@ -142,11 +171,18 @@ export const useWDSQueries = () => {
     return query;
   };
 
-  // POST /api/wds/create and POST /api/wds/create/json
+  // POST /api/{resourcekind}/{ns}
   const useCreateWorkload = () =>
     useMutation({
-      mutationFn: async ({ data, isJson = false }: { data: DeploymentConfig | unknown; isJson: boolean }) => {
-        const endpoint = isJson ? '/api/wds/create/json' : '/api/wds/create';
+      mutationFn: async ({ data }: { data: WorkloadData }) => {
+        // Extract 'kind' and 'namespace' from the raw data
+        const kind = data.kind?.toLowerCase() || "deployment"; // Default to 'deployment' if not present
+        const namespace = data.metadata?.namespace || "default"; // Default to 'default' if not present
+
+        // Construct the dynamic endpoint (e.g., /api/deployments/default)
+        const endpoint = `/api/${kind}s/${namespace}`; // Pluralize 'kind' (e.g., 'deployment' -> 'deployments')
+
+        // Send the full raw data to the backend
         const response = await api.post(endpoint, data);
         return response.data;
       },
@@ -157,6 +193,34 @@ export const useWDSQueries = () => {
       onError: (error: Error) => {
         toast.error('Failed to create workload');
         console.error('Error creating workload:', error);
+      },
+    });
+
+  // New mutation for file uploads with custom headers
+  const useUploadWorkloadFile = () =>
+    useMutation({
+      mutationFn: async ({ data }: { data: FormData }) => {
+        const response = await api.post('/api/resource/upload', data, {
+          headers: {
+            // Override the default Content-Type to let Axios handle multipart/form-data
+            'Content-Type': 'multipart/form-data', // Explicitly set to ensure compatibility
+          },
+        });
+        return response.data;
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['workloads'] });
+        toast.success('File uploaded successfully');
+      },
+      onError: (error: AxiosError) => {
+        toast.error('Failed to upload file');
+        console.error('Error uploading file:', {
+          message: error.message,
+          status: error.response?.status,
+          data: error.response?.data,
+          headers: error.response?.headers,
+          config: error.config, // Log the full config for debugging
+        });
       },
     });
 
@@ -255,6 +319,7 @@ export const useWDSQueries = () => {
     useWorkloadDetails,
     useWorkloadStatus,
     useCreateWorkload,
+    useUploadWorkloadFile, 
     useUpdateWorkload,
     useScaleWorkload,
     useDeleteWorkload,
