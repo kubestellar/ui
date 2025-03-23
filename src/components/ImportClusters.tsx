@@ -114,7 +114,10 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
   // Update useEffect to handle initial tab selection with new option names
   useEffect(() => {
     // If activeOption is null or invalid, set to first available tab
-    if (!activeOption || (activeOption !== "kubeconfig" && activeOption !== "apiurl" && activeOption !== "manual")) {
+    if (!activeOption || 
+        (activeOption !== "kubeconfig" && 
+         activeOption !== "apiurl" && 
+         activeOption !== "manual")) {
       setActiveOption("kubeconfig");
     }
   }, [activeOption, setActiveOption]);
@@ -190,8 +193,13 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
   const handleCancel = () => {
     setSelectedFile(null);
     setManualCommand(null);
-    setFormData((prev) => ({ ...prev, clusterName: "" }));
-    setActiveOption(null);
+    setManualError("");
+    setFormData({
+      clusterName: "",
+      token: "",
+      hubApiServer: "",
+    });
+    onCancel();
   };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -281,6 +289,10 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
       transform: "translateY(0)",
     }
   };
+
+  // Example for the kubeconfig tab
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [kubeConfigLoading] = useState(false);
 
   return (
     <>
@@ -385,26 +397,6 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                   Connect your Kubernetes cluster to the platform
                 </Box>
               </Box>
-            </Box>
-            {/* Replace Button with Box for the close (X) icon */}
-            <Box 
-              onClick={onCancel}
-              sx={{ 
-                fontSize: "1.1rem",
-                color: theme === "dark" ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.4)",
-                cursor: "pointer",
-                height: 28,
-                width: 28,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "color 0.2s ease",
-                "&:hover": {
-                  color: theme === "dark" ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.6)",
-                }
-              }}
-            >
-              ✕
             </Box>
           </Box>
             <Tabs
@@ -734,10 +726,17 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                     <Button
                       variant="contained"
                       onClick={handleFileUpload}
-                      disabled={!selectedFile}
-                        sx={primaryButtonStyles}
+                      disabled={!selectedFile || kubeConfigLoading}
+                      sx={primaryButtonStyles}
                     >
-                        Import Cluster
+                      {kubeConfigLoading ? (
+                        <>
+                          <CircularProgress size={14} color="inherit" sx={{ mr: 1 }} />
+                          Importing...
+                        </>
+                      ) : (
+                        "Import Cluster"
+                      )}
                     </Button>
                     </Box>
                   </Box>
@@ -1114,13 +1113,10 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                         }}>
                           <Button 
                             variant="outlined"
-                            onClick={() => {
-                              setManualCommand(null);
-                              setFormData(prev => ({ ...prev, clusterName: "" }));
-                            }}
+                            onClick={onCancel}
                             sx={secondaryButtonStyles}
                           >
-                            Reset
+                            Cancel
                           </Button>
                           <Button
                             variant="contained"
@@ -1445,13 +1441,10 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                         }}>
                           <Button
                             variant="outlined"
-                            onClick={() => {
-                              setManualCommand(null);
-                              setFormData(prev => ({ ...prev, clusterName: "" }));
-                            }}
+                            onClick={onCancel}
                             sx={secondaryButtonStyles}
                           >
-                            Start Over
+                            Cancel
                           </Button>
                           <Button
                             variant="contained"
