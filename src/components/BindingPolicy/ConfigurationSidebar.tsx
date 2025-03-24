@@ -58,18 +58,20 @@ export interface PolicyConfiguration {
 interface ConfigurationSidebarProps {
   open: boolean;
   onClose: () => void;
-  selectedConnection?: {
+  selectedConnection: {
     source: { type: string; id: string; name: string };
     target: { type: string; id: string; name: string };
-  };
+  } | undefined;
   onSaveConfiguration: (config: PolicyConfiguration) => void;
+  dialogMode?: boolean;
 }
 
 const ConfigurationSidebar: React.FC<ConfigurationSidebarProps> = ({
   open,
   onClose,
   selectedConnection,
-  onSaveConfiguration
+  onSaveConfiguration,
+
 }) => {
   // Form state
   const [name, setName] = useState('');

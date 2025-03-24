@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { Paper, Box, Snackbar, Alert, Typography, Button, Tab, Tabs, Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemIcon, ListItemText } from "@mui/material";
+import { Paper, Box, Snackbar, Alert, Typography, Button, Tabs, Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemIcon, ListItemText } from "@mui/material";
 import BPHeader from "../components/BindingPolicy/Dialogs/BPHeader";
 import BPTable from "../components/BindingPolicy/BPTable";
 import BPPagination from "../components/BindingPolicy/BPPagination";
@@ -24,35 +24,68 @@ import EditIcon from '@mui/icons-material/Edit';
 import PublishIcon from '@mui/icons-material/Publish';
 import KubernetesIcon from '../components/BindingPolicy/KubernetesIcon';
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { getTabsStyles, StyledTab } from "../components/BindingPolicy/styles/CreateBindingPolicyStyles";
 
 // Define EmptyState component outside of the BP component
-const EmptyState: React.FC<{ onCreateClick: () => void }> = ({ onCreateClick }) => (
-  <Box 
-    sx={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      py: 8,
-      textAlign: 'center'
-    }}
-  >
-    <Typography variant="h6" color="text.primary" gutterBottom>
-      No Binding Policies Found
-    </Typography>
-    <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-      Get started by creating your first binding policy
-    </Typography>
-    <Button 
-      variant="contained" 
-      color="primary"
-      onClick={onCreateClick}
+const EmptyState: React.FC<{ 
+  onCreateClick: () => void, 
+  type?: 'policies' | 'clusters' | 'workloads' | 'both' 
+}> = ({ onCreateClick, type = 'policies' }) => {
+  let title = '';
+  let description = '';
+  let buttonText = '';
+  
+  switch (type) {
+    case 'clusters':
+      title = 'No Clusters Found';
+      description = 'No clusters are available. Please ensure you have access to clusters.';
+      buttonText = 'Go to Clusters';
+      break;
+    case 'workloads':
+      title = 'No Workloads Found';
+      description = 'No workloads are available. Please ensure you have access to workloads.';
+      buttonText = 'Go to Workloads';
+      break;
+    case 'both':
+      title = 'No Clusters or Workloads Found';
+      description = 'You need both clusters and workloads to create binding policies.';
+      buttonText = 'View Resources';
+      break;
+    case 'policies':
+    default:
+      title = 'No Binding Policies Found';
+      description = 'Get started by creating your first binding policy';
+      buttonText = 'Create Binding Policy';
+  }
+  
+  return (
+    <Box 
+      sx={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        py: 8,
+        textAlign: 'center'
+      }}
     >
-      Create Binding Policy
-    </Button>
-  </Box>
-);
+      <Typography variant="h6" color="text.primary" gutterBottom>
+        {title}
+      </Typography>
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+        {description}
+      </Typography>
+      <Button 
+        variant="contained" 
+        color="primary"
+        onClick={onCreateClick}
+      >
+        {buttonText}
+      </Button>
+    </Box>
+  );
+};
 
 // Create a separate LoadingIndicator component outside of the BP component
 const LoadingIndicator: React.FC = () => (
@@ -64,11 +97,11 @@ const LoadingIndicator: React.FC = () => (
 const BP = () => {
   console.log('BP component rendering');
   
-  // Add location to get navigation state
   const location = useLocation();
-  console.log('Location state:', location.state);
-
-  // Initialize the hooks
+  const navigate = useNavigate();
+  const theme = useTheme((state) => state.theme);
+  
+  // Initialize the React Query hooks
   const { useClusters } = useClusterQueries();
   const { useWorkloads } = useWDSQueries();
   const { useBindingPolicies, useCreateBindingPolicy, useDeleteBindingPolicy, useDeletePolicies } = useBPQueries();
@@ -84,7 +117,6 @@ const BP = () => {
   const deleteMultiplePoliciesMutation = useDeletePolicies();
   
   // Add all state variables first, before any conditional logic
-  const theme = useTheme((state) => state.theme);
   const [bindingPolicies, setBindingPolicies] = useState<BindingPolicyInfo[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -107,8 +139,14 @@ const BP = () => {
   const [viewMode, setViewMode] = useState<'table' | 'dragdrop' | 'visualize'>(initialViewMode);
   const [showDragDropHelp, setShowDragDropHelp] = useState(location.state?.activateView === 'dragdrop');
   
+  const [clusters, setClusters] = useState<ManagedCluster[]>([]);
+  const [workloads, setWorkloads] = useState<Workload[]>([]);
+  const [simulatedPolicies, setSimulatedPolicies] = useState<BindingPolicyInfo[]>([]);
+  
   // More forceful effect to ensure viewMode is set properly from location state
   useEffect(() => {
+    console.log('Location state:', location.state);
+    
     if (location.state?.activateView === 'dragdrop') {
       console.log('Setting viewMode to dragdrop from location state');
       setViewMode('dragdrop');
@@ -123,10 +161,6 @@ const BP = () => {
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
-  
-  const [clusters, setClusters] = useState<ManagedCluster[]>([]);
-  const [workloads, setWorkloads] = useState<Workload[]>([]);
-  const [simulatedPolicies, setSimulatedPolicies] = useState<BindingPolicyInfo[]>([]);
   
   // Show drag & drop help when the view is activated
   useEffect(() => {
@@ -194,98 +228,6 @@ const BP = () => {
   
   const { matchedClusters, matchedWorkloads } = getMatches();
   
-  // Hardcoded sample data for clusters and workloads 
-  const sampleClusters = useState<ManagedCluster[]>(() => [
-    {
-      name: "cluster-east",
-      status: "Ready",
-      labels: {
-        region: "east",
-        environment: "production",
-        "kubernetes.io/cluster-name": "cluster-east"
-      },
-      metrics: {
-        cpu: "65%",
-        memory: "48%",
-        storage: "32%"
-      }
-    },
-    {
-      name: "cluster-west",
-      status: "Ready",
-      labels: {
-        region: "west",
-        environment: "staging",
-        "kubernetes.io/cluster-name": "cluster-west"
-      },
-      metrics: {
-        cpu: "42%",
-        memory: "37%",
-        storage: "28%"
-      }
-    },
-    {
-      name: "cluster-central",
-      status: "Ready",
-      labels: {
-        region: "central",
-        environment: "production",
-        "kubernetes.io/cluster-name": "cluster-central"
-      },
-      metrics: {
-        cpu: "78%",
-        memory: "56%",
-        storage: "45%"
-      }
-    }
-  ])[0];
-  
-  const sampleWorkloads = useState<Workload[]>(() => [
-    {
-      name: "nginx-frontend",
-      type: "Deployment",
-      namespace: "web",
-      creationTime: new Date().toISOString(),
-      labels: {
-        app: "frontend",
-        tier: "web",
-        component: "nginx"
-      }
-    },
-    {
-      name: "redis-cache",
-      type: "StatefulSet",
-      namespace: "data",
-      creationTime: new Date().toISOString(),
-      labels: {
-        app: "cache",
-        tier: "data",
-        component: "redis"
-      }
-    },
-    {
-      name: "postgres-db",
-      type: "StatefulSet",
-      namespace: "data",
-      creationTime: new Date().toISOString(),
-      labels: {
-        app: "database",
-        tier: "data",
-        component: "postgres"
-      }
-    },
-    {
-      name: "backend-api",
-      type: "Deployment",
-      namespace: "api",
-      creationTime: new Date().toISOString(),
-      labels: {
-        app: "backend",
-        tier: "application",
-        component: "api"
-      }
-    }
-  ])[0];
 
   // Define a type for the config parameter
   interface BindingPolicyConfig {
@@ -415,12 +357,12 @@ const BP = () => {
         }
       }));
       
-      setClusters(clusterData.length > 0 ? clusterData : sampleClusters);
-      setAvailableClusters(clusterData.length > 0 ? clusterData : sampleClusters);
-    } else if (!clustersLoading) {
-      // If no clusters data and not loading, use sample data
-      setClusters(sampleClusters);
-      setAvailableClusters(sampleClusters);
+      setClusters(clusterData);
+      setAvailableClusters(clusterData);
+    } else {
+      // If no clusters data, set to empty array
+      setClusters([]);
+      setAvailableClusters([]);
     }
     
     // Update workloads state when workloadsData changes
@@ -435,12 +377,12 @@ const BP = () => {
           labels: workload.label ? JSON.parse(workload.label) : {}
         }));
       
-      setWorkloads(workloadData.length > 0 ? workloadData : sampleWorkloads);
-      setAvailableWorkloads(workloadData.length > 0 ? workloadData : sampleWorkloads);
-    } else if (!workloadsLoading) {
-      // If no workloads data and not loading, use sample data
-      setWorkloads(sampleWorkloads);
-      setAvailableWorkloads(sampleWorkloads);
+      setWorkloads(workloadData);
+      setAvailableWorkloads(workloadData);
+    } else {
+      // If no workloads data or error, set to empty array
+      setWorkloads([]);
+      setAvailableWorkloads([]);
     }
     
     // Handle errors from binding policies query
@@ -456,9 +398,7 @@ const BP = () => {
     clustersData, 
     clustersLoading, 
     workloadsData, 
-    workloadsLoading,
-    sampleClusters,
-    sampleWorkloads
+    workloadsLoading
   ]);
 
   // Memoize the delete handlers for consistent hook usage
@@ -651,10 +591,17 @@ const BP = () => {
             value={viewMode}
             onChange={handleViewModeChange}
             aria-label="binding policy view mode"
+            sx={getTabsStyles(theme)}
+
           >
-            <Tab label="Table View" value="table" />
-            <Tab label="Visualize" value="visualize" />
-            <Tab label="Drag & Drop" value="dragdrop" />
+            <StyledTab 
+                iconPosition="start" 
+                label="Table View" value="table"
+              />
+               <StyledTab 
+                iconPosition="start" 
+                label="Visualize" value="visualize"
+              />
           </Tabs>
         </Box>
 
@@ -671,10 +618,18 @@ const BP = () => {
               selectedPolicies={selectedPolicies}
               onBulkDelete={handleBulkDelete}
               policyCount={filteredPolicies.length}
+              clusters={clusters}
+              workloads={workloads}
             />
-
-            {bindingPolicies.length === 0 ? (
-              <EmptyState onCreateClick={handleCreateDialogOpen} />
+            
+            {clusters.length === 0 && workloads.length === 0 ? (
+              <EmptyState onCreateClick={() => navigate('/resources')} type="both" />
+            ) : clusters.length === 0 ? (
+              <EmptyState onCreateClick={() => navigate('/clusters')} type="clusters" />
+            ) : workloads.length === 0 ? (
+              <EmptyState onCreateClick={() => navigate('/workloads')} type="workloads" />
+            ) : bindingPolicies.length === 0 ? (
+              <EmptyState onCreateClick={handleCreateDialogOpen} type="policies" />
             ) : (
               <>
                 <BPTable
@@ -698,27 +653,55 @@ const BP = () => {
             )}
           </>
         ) : viewMode === 'visualize' ? (
-          <Box 
-            sx={{ 
-              height: 'calc(100vh - 170px)', 
-              minHeight: '600px',
-              position: 'relative',
-              border: '1px solid',
-              borderColor: theme === 'dark' ? '#374151' : '#E5E7EB',
-              borderRadius: '4px',
-              overflow: 'hidden',
-              '& .react-flow__container': {
-                backgroundColor: 'transparent',
-              },
-              mb: 2
-            }}
-          >
-            <BPVisualization 
-              policies={bindingPolicies} 
-              clusters={clusters} 
-              workloads={workloads} 
-            />
-          </Box>
+          <>
+            {clusters.length === 0 || workloads.length === 0 ? (
+              <Box 
+                sx={{ 
+                  height: 'calc(100vh - 170px)', 
+                  minHeight: '600px',
+                  position: 'relative',
+                  border: '1px solid',
+                  borderColor: theme === 'dark' ? '#374151' : '#E5E7EB',
+                  borderRadius: '4px',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mb: 2
+                }}
+              >
+                {clusters.length === 0 && workloads.length === 0 ? (
+                  <EmptyState onCreateClick={() => navigate('/resources')} type="both" />
+                ) : clusters.length === 0 ? (
+                  <EmptyState onCreateClick={() => navigate('/clusters')} type="clusters" />
+                ) : (
+                  <EmptyState onCreateClick={() => navigate('/workloads')} type="workloads" />
+                )}
+              </Box>
+            ) : (
+              <Box 
+                sx={{ 
+                  height: 'calc(100vh - 170px)', 
+                  minHeight: '600px',
+                  position: 'relative',
+                  border: '1px solid',
+                  borderColor: theme === 'dark' ? '#374151' : '#E5E7EB',
+                  borderRadius: '4px',
+                  overflow: 'hidden',
+                  '& .react-flow__container': {
+                    backgroundColor: 'transparent',
+                  },
+                  mb: 2
+                }}
+              >
+                <BPVisualization 
+                  policies={bindingPolicies} 
+                  clusters={clusters} 
+                  workloads={workloads} 
+                />
+              </Box>
+            )}
+          </>
         ) : (
           <Box sx={{ position: 'relative' }}>
             <PolicyDragDrop
