@@ -6,9 +6,10 @@ interface FlowCanvasProps {
   nodes: CustomNode[];
   edges: CustomEdge[];
   renderStartTime: React.MutableRefObject<number>;
+  theme: string; // Add theme prop
 }
 
-export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, renderStartTime }) => {
+export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, renderStartTime, theme }) => {
   const { setViewport, getViewport } = useReactFlow();
   const startRenderTime = performance.now();
   console.log(`FlowCanvas starting render with ${nodes.length} nodes and ${edges.length} edges at ${startRenderTime - renderStartTime.current}ms`);
@@ -35,18 +36,14 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, renderStartTime
   useEffect(() => {
     if (nodes.length > 0) {
       const { minX, minY, maxY } = positions;
-      // const treeWidth = maxX - minX;
       const treeHeight = maxY - minY;
 
       const reactFlowContainer = document.querySelector(".react-flow") as HTMLElement;
-      // const viewportWidth = reactFlowContainer ? reactFlowContainer.offsetWidth : window.innerWidth;
       const viewportHeight = reactFlowContainer ? reactFlowContainer.offsetHeight : window.innerHeight;
 
       const padding = 20;
       const topMargin = 100;
-      // const zoomX = (viewportWidth - padding * 2) / treeWidth;
-      // const zoomY = (viewportHeight - padding * 2 - topMargin) / treeHeight;
-      const initialZoom = 1.6; // Set default zoom to 160% (1.6)
+      const initialZoom = 1.6;
 
       const centerX = -minX * initialZoom + 50;
       const centerY = -minY * initialZoom + topMargin;
@@ -73,7 +70,7 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, renderStartTime
           const newX = x - event.deltaY * scrollSpeed;
           setViewport({ x: newX, y, zoom });
         } else if (event.ctrlKey) {
-          const newZoom = Math.min(Math.max(zoom + (event.deltaY > 0 ? -zoomSpeed : zoomSpeed), 0.1), 2); // Max zoom remains 200% (2)
+          const newZoom = Math.min(Math.max(zoom + (event.deltaY > 0 ? -zoomSpeed : zoomSpeed), 0.1), 2);
           setViewport({ x, y, zoom: newZoom });
         } else {
           const { minY, maxY } = positions;
@@ -103,10 +100,19 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, renderStartTime
       zoomOnScroll={false}
       zoomOnDoubleClick={false}
       zoomOnPinch={false}
-      style={{ background: "rgb(222, 230, 235)", width: "100%", height: "100%" }}
+      style={{ 
+        background: theme === "dark" ? "rgb(15, 23, 42)" : "rgb(222, 230, 235)", 
+        width: "100%", 
+        height: "100%" 
+      }}
       onWheel={handleWheel}
     >
-      <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+      <Background 
+        variant={BackgroundVariant.Dots} 
+        gap={12} 
+        size={1} 
+        color={theme === "dark" ? "#555" : "#bbb"} // Dark mode background dots
+      />
     </ReactFlow>
   );
 });

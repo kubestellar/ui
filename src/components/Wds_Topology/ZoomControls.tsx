@@ -3,7 +3,11 @@ import { Box, Button, Typography } from "@mui/material";
 import { ZoomIn, ZoomOut } from "@mui/icons-material";
 import { useReactFlow } from "reactflow";
 
-export const ZoomControls = memo(() => {
+interface ZoomControlsProps {
+  theme: string; // Add theme prop
+}
+
+export const ZoomControls = memo<ZoomControlsProps>(({ theme }) => {
   const { getZoom, setViewport } = useReactFlow();
   const [zoomLevel, setZoomLevel] = useState<number>(100);
 
@@ -60,22 +64,31 @@ export const ZoomControls = memo(() => {
         left: 20,
         display: "flex",
         gap: 1,
-        background: "#fff",
+        background: theme === "dark" ? "#333" : "#fff", // Dark mode background
         padding: "4px",
         boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
       }}
     >
-      <Button variant="text" onClick={handleZoomIn}>
+      <Button 
+        variant="text" 
+        onClick={handleZoomIn}
+        sx={{ color: theme === "dark" ? "#fff" : "#000" }} // Dark mode icon color
+      >
         <ZoomIn />
       </Button>
-      <Button variant="text" onClick={handleZoomOut}>
+      <Button 
+        variant="text" 
+        onClick={handleZoomOut}
+        sx={{ color: theme === "dark" ? "#fff" : "#000" }} // Dark mode icon color
+      >
         <ZoomOut />
       </Button>
       <Typography
         variant="body1"
         sx={{
-          border: "2px solid #1976d2",
-          backgroundColor: "#e3f2fd",
+          border: `2px solid ${theme === "dark" ? "#ccc" : "#1976d2"}`, // Dark mode border
+          backgroundColor: theme === "dark" ? "#444" : "#e3f2fd", // Dark mode background
+          color: theme === "dark" ? "#fff" : "#000", // Dark mode text
           padding: "4px 8px",
           textAlign: "center",
           display: "flex",
