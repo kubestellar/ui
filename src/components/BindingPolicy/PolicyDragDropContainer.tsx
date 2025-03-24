@@ -46,6 +46,7 @@ interface PolicyDragDropContainerProps {
   workloads?: Workload[];
   onPolicyAssign?: (policyName: string, targetType: 'cluster' | 'workload', targetName: string) => void;
   onCreateBindingPolicy?: (clusterId: string, workloadId: string, configuration?: PolicyConfiguration) => void;
+  dialogMode?: boolean;
 }
 
 const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
@@ -53,7 +54,8 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
   clusters: propClusters,
   workloads: propWorkloads,
   onPolicyAssign,
-  onCreateBindingPolicy
+  onCreateBindingPolicy,
+  dialogMode = false
 }) => {
   console.log('🔄 PolicyDragDropContainer component rendering', {
     hasPropPolicies: !!propPolicies,
@@ -520,18 +522,25 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
 
   // Main layout for the drag and drop interface
   return (
-    <Box sx={{ height: 'calc(100vh - 64px)', overflow: 'hidden', position: 'relative' }}>
+    <Box sx={{ 
+      height: dialogMode ? '100%' : 'calc(100vh - 64px)', 
+      overflow: 'hidden', 
+      position: 'relative' 
+    }}>
       <StrictModeDragDropContext
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <Grid container spacing={2} sx={{ height: '100%', p: 2 }}>
+        <Grid container spacing={dialogMode ? 1 : 2} sx={{ height: '100%', p: dialogMode ? 0 : 2 }}>
           {/* Left Panel - Clusters */}
           <Grid item xs={3} sx={{ height: '100%' }}>
             <ClusterPanelContainer 
-              clusters={clusters}
+              clusters={clusters.filter(cluster => 
+                !canvasEntities.clusters.includes(cluster.name)
+              )}
               loading={loading.clusters}
               error={error.clusters}
+              compact={dialogMode}
             />
           </Grid>
           
@@ -550,6 +559,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
                 clusters={clusters}
                 onQuickPolicySave={handleQuickPolicySave}
                 setSuccessMessage={setSuccessMessage}
+                dialogMode={dialogMode}
               />
               
               {/* Canvas Area */}
@@ -568,45 +578,51 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
                     setSuccessMessage("All binding policies saved successfully");
                   }}
                   onConnectionComplete={handleCompleteConnection}
+                  dialogMode={dialogMode}
                 />
               </Box>
               
-              {/* Deploy Button */}
-              <Box
-                sx={{
-                  position: 'fixed',
-                  bottom: '40px', 
-                  right: '40px', 
-                  zIndex: 100,
-                  display: 'flex',
-                  gap: 2
-                }}
-              >
-                <Button
-                  variant="contained"
-                  color="primary"
-                  size="large"
+              {/* Deploy Button - Hide in dialog mode */}
+              {!dialogMode && (
+                <Box
                   sx={{
-                    px: 4,
-                    py: 1.5,
-                    borderRadius: 4,
-                    boxShadow: 6
+                    position: 'fixed',
+                    bottom: '40px', 
+                    right: '40px', 
+                    zIndex: 100,
+                    display: 'flex',
+                    gap: 2
                   }}
-                  disabled={canvasEntities?.clusters.length === 0 || canvasEntities?.workloads.length === 0 || connectionLines.length === 0}
-                  onClick={prepareForDeployment}
                 >
-                  Deploy Binding Policies
-                </Button>
-              </Box>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    size="large"
+                    sx={{
+                      px: 4,
+                      py: 1.5,
+                      borderRadius: 4,
+                      boxShadow: 6
+                    }}
+                    disabled={canvasEntities?.clusters.length === 0 || canvasEntities?.workloads.length === 0 || connectionLines.length === 0}
+                    onClick={prepareForDeployment}
+                  >
+                    Deploy Binding Policies
+                  </Button>
+                </Box>
+              )}
             </Box>
           </Grid>
 
           {/* Right Panel - Workloads */}
           <Grid item xs={3} sx={{ height: '100%' }}>
             <WorkloadPanelContainer 
-              workloads={workloads}
+              workloads={workloads.filter(workload => 
+                !canvasEntities.workloads.includes(workload.name)
+              )}
               loading={loading.workloads}
               error={error.workloads}
+              compact={dialogMode}
             />
           </Grid>
         </Grid>
@@ -625,24 +641,27 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
         onClose={() => setConfigSidebarOpen(false)}
         selectedConnection={selectedConnection}
         onSaveConfiguration={handleSaveConfiguration}
+        dialogMode={dialogMode}
       />
       
-      {/* Deployment Confirmation Dialog */}
-      <DeploymentConfirmationDialog
-        open={deploymentDialogOpen}
-        onClose={() => {
-          if (!deploymentLoading) {
-            setDeploymentDialogOpen(false);
-            setDeploymentError(null);
-          }
-        }}
-        policies={policiesToDeploy}
-        onConfirm={handleDeploymentConfirm}
-        loading={deploymentLoading}
-        error={deploymentError}
-        clusters={clusters}
-        workloads={workloads}
-      />
+      {/* Deployment Confirmation Dialog - Hide in dialog mode */}
+      {!dialogMode && (
+        <DeploymentConfirmationDialog
+          open={deploymentDialogOpen}
+          onClose={() => {
+            if (!deploymentLoading) {
+              setDeploymentDialogOpen(false);
+              setDeploymentError(null);
+            }
+          }}
+          policies={policiesToDeploy}
+          onConfirm={handleDeploymentConfirm}
+          loading={deploymentLoading}
+          error={deploymentError}
+          clusters={clusters}
+          workloads={workloads}
+        />
+      )}
     </Box>
   );
 };

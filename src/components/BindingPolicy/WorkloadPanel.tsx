@@ -130,7 +130,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
             {error}
           </Typography>
         ) : workloads.length === 0 ? (
-          <Typography sx={{ p: 2, color: 'text.secondary' }}>
+          <Typography sx={{ p: 2, color: 'text.secondary', textAlign: 'center' }}>
             No workloads available
           </Typography>
         ) : (
@@ -143,7 +143,13 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
                 data-rbd-droppable-context-id={provided.droppableProps['data-rfd-droppable-context-id']}
                 sx={{ minHeight: '100%' }}
               >
-                {workloads.map((workload, index) => renderWorkloadItem(workload, index))}
+                {workloads.length === 0 ? (
+                  <Typography sx={{ p: 2, color: 'text.secondary', textAlign: 'center' }}>
+                    All workloads are on the canvas
+                  </Typography>
+                ) : (
+                  workloads.map((workload, index) => renderWorkloadItem(workload, index))
+                )}
                 {provided.placeholder}
               </Box>
             )}

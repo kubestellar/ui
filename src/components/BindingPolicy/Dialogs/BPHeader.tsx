@@ -12,6 +12,7 @@ import {
 import { Search, Filter, Plus, X, Trash2 } from "lucide-react";
 import CreateBindingPolicyDialog, {PolicyData} from "../CreateBindingPolicyDialog";
 import useTheme from "../../../stores/themeStore";
+import { ManagedCluster, Workload } from "../../../types/bindingPolicy";
 
 interface BPHeaderProps {
   searchQuery: string;
@@ -26,6 +27,8 @@ interface BPHeaderProps {
   selectedPolicies: string[];
   onBulkDelete: () => void;
   policyCount: number;
+  clusters?: ManagedCluster[];
+  workloads?: Workload[];
 }
 
 const BPHeader: React.FC<BPHeaderProps> = ({
@@ -39,6 +42,8 @@ const BPHeader: React.FC<BPHeaderProps> = ({
   selectedPolicies,
   onBulkDelete,
   policyCount,
+  clusters = [],
+  workloads = [],
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const theme = useTheme((state) => state.theme);
@@ -317,6 +322,8 @@ const BPHeader: React.FC<BPHeaderProps> = ({
         open={createDialogOpen}
         onClose={() => setCreateDialogOpen(false)}
         onCreatePolicy={onCreatePolicy}
+        clusters={clusters}
+        workloads={workloads}
       />
     </div>
   );

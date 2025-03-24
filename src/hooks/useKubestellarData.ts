@@ -33,6 +33,17 @@ interface WorkloadApiData {
   apiVersion?: string;
 }
 
+interface BindingPolicyApiData {
+  name: string;
+  status?: string;
+  workload?: string;
+  clusterList?: string[];
+  workloadList?: string[];
+  creationTime?: string;
+  bindingMode?: string;
+  namespace?: string;
+}
+
 export function useKubestellarData({ onDataLoaded, skipFetch = false }: UseKubestellarDataProps = {}) {
     const [clusters, setClusters] = useState<ManagedCluster[]>([]);
   const [workloads, setWorkloads] = useState<Workload[]>([]);
@@ -91,17 +102,7 @@ export function useKubestellarData({ onDataLoaded, skipFetch = false }: UseKubes
     } catch (err) {
       console.error('Error fetching clusters:', err);
       setError(prev => ({ ...prev, clusters: 'Failed to fetch clusters' }));
-      // Still provide some demo data in development for UI testing
-      if (process.env.NODE_ENV === 'development') {
-        const demoData: ManagedCluster[] = [
-          { name: 'cluster-east-1', labels: { region: 'east', tier: 'production' }, status: 'Ready', creationTime: new Date().toISOString() },
-          { name: 'cluster-west-1', labels: { region: 'west', tier: 'staging' }, status: 'Ready', creationTime: new Date().toISOString() },
-          { name: 'cluster-central-1', labels: { region: 'central', tier: 'development' }, status: 'NotReady', creationTime: new Date().toISOString() }
-        ];
-        setClusters(demoData);
-      } else {
-        setClusters([]);
-      }
+      setClusters([]);
     } finally {
       setLoading(prev => ({ ...prev, clusters: false }));
     }
@@ -134,19 +135,7 @@ export function useKubestellarData({ onDataLoaded, skipFetch = false }: UseKubes
     } catch (err) {
       console.error('Error fetching workloads:', err);
       setError(prev => ({ ...prev, workloads: 'Failed to fetch workloads' }));
-      // Provide demo data in development for UI testing
-      if (process.env.NODE_ENV === 'development') {
-        const demoData: Workload[] = [
-          { name: 'frontend-app', type: 'Deployment', namespace: 'default', labels: { app: 'frontend' }, creationTime: new Date().toISOString() },
-          { name: 'backend-api', type: 'Deployment', namespace: 'backend', labels: { app: 'backend' }, creationTime: new Date().toISOString() },
-          { name: 'redis-cache', type: 'StatefulSet', namespace: 'cache', labels: { app: 'redis' }, creationTime: new Date().toISOString() },
-          { name: 'mongo-db', type: 'StatefulSet', namespace: 'database', labels: { app: 'mongo' }, creationTime: new Date().toISOString() },
-          { name: 'nginx-ingress', type: 'DaemonSet', namespace: 'ingress', labels: { app: 'nginx' }, creationTime: new Date().toISOString() }
-        ];
-        setWorkloads(demoData);
-      } else {
-        setWorkloads([]);
-      }
+      setWorkloads([]);
     } finally {
       setLoading(prev => ({ ...prev, workloads: false }));
     }
@@ -169,49 +158,19 @@ export function useKubestellarData({ onDataLoaded, skipFetch = false }: UseKubes
         return;
       }
 
-      // Here we would normally process the binding policies
-      // For now, let's assume the BP endpoint already returns the processed data
-      // This should be updated to match your actual API response structure
-
-      // For demo purposes, create some mock policy data
-      const mockPolicies: BindingPolicyInfo[] = [
-        {
-          name: 'policy-prod',
-          status: 'Active',
-          workload: 'frontend-app',
-          clusters: 2,
-          clusterList: ['cluster-east-1', 'cluster-west-1'],
-          workloadList: ['frontend-app'],
-          creationDate: new Date().toLocaleString(),
-          bindingMode: 'AlwaysMatch',
-          namespace: 'default'
-        },
-        {
-          name: 'policy-dev',
-          status: 'Pending',
-          workload: 'backend-api',
-          clusters: 1,
-          clusterList: ['cluster-central-1'],
-          workloadList: ['backend-api'],
-          creationDate: new Date().toLocaleString(),
-          bindingMode: 'BestEffort',
-          namespace: 'default'
-        },
-        {
-          name: 'policy-staging',
-          status: 'Inactive',
-          workload: 'redis-cache',
-          clusters: 0,
-          clusterList: [],
-          workloadList: ['redis-cache'],
-          creationDate: new Date().toLocaleString(),
-          bindingMode: 'AlwaysMatch',
-          namespace: 'default'
-        }
-      ];
+      const policyData = response.data.bindingPolicies.map((policy: BindingPolicyApiData) => ({
+        name: policy.name,
+        status: policy.status || 'Active',
+        workload: policy.workload,
+        clusters: policy.clusterList?.length || 0,
+        clusterList: policy.clusterList || [],
+        workloadList: policy.workloadList || [],
+        creationDate: policy.creationTime || new Date().toLocaleString(),
+        bindingMode: policy.bindingMode || 'AlwaysMatch',
+        namespace: policy.namespace || 'default'
+      }));
       
-      // Use the mock data or process real data as needed
-      setPolicies(mockPolicies);
+      setPolicies(policyData);
       setError(prev => ({ ...prev, policies: undefined }));
     } catch (err) {
       console.error('Error fetching policies:', err);
