@@ -107,7 +107,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
             {error}
           </Typography>
         ) : clusters.length === 0 ? (
-          <Typography sx={{ p: 2, color: 'text.secondary' }}>
+          <Typography sx={{ p: 2, color: 'text.secondary', textAlign: 'center' }}>
             No clusters available
           </Typography>
         ) : (
@@ -120,7 +120,13 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
                 data-rfd-droppable-context-id={provided.droppableProps['data-rfd-droppable-context-id']}
                 sx={{ minHeight: '100%' }}
               >
-                {clusters.map((cluster, index) => renderClusterItem(cluster, index))}
+                {clusters.length === 0 ? (
+                  <Typography sx={{ p: 2, color: 'text.secondary', textAlign: 'center' }}>
+                    All clusters are on the canvas
+                  </Typography>
+                ) : (
+                  clusters.map((cluster, index) => renderClusterItem(cluster, index))
+                )}
                 {provided.placeholder}
               </Box>
             )}

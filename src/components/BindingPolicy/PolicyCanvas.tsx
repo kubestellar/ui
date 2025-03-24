@@ -52,6 +52,7 @@ interface PolicyCanvasProps {
     targetName: string
   ) => void;
   onConnectionComplete?: (workloadId: string, clusterId: string) => void;
+  dialogMode?: boolean;
 }
 
 const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
@@ -60,29 +61,93 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
   workloads,
   loading = false,
   getItemLabels = () => ({}),
-  onConnectionComplete
+  onConnectionComplete,
+  dialogMode
 }) => {
   const theme = useTheme();
-  // Add responsive breakpoints
-  // const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
-  // const isMediumScreen = useMediaQuery(theme.breakpoints.down('md'));
+  const [canvasMode] = useState<'view' | 'connect'>('view');
+  const [, setIsHovered] = useState<string | null>(null);
   
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const elementsRef = useRef<Record<string, HTMLElement>>({});
-  const isMounted = useRef<boolean>(true);
-  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const prevConnectionLinesRef = useRef<typeof connectionLines>([]);
-  
-  // Grid settings - always enabled
-  const gridSize = 20; // Size of grid in pixels
-  
+  // Connection drawing state
+  const [activeConnection, setActiveConnection] = useState<{
+    source: string | null;
+    sourceType: 'cluster' | 'workload' | null;
+    mouseX: number;
+    mouseY: number;
+  }>({
+    source: null,
+    sourceType: null,
+    mouseX: 0,
+    mouseY: 0
+  });
+
   // Hover state for tooltips
   const [hoveredItem, setHoveredItem] = useState<{
     itemType: 'cluster' | 'workload' | 'policy' | null;
     itemId: string | null;
     position: { x: number; y: number } | null;
   }>({ itemType: null, itemId: null, position: null });
+
+ 
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const elementsRef = useRef<Record<string, HTMLElement>>({});
+
+
+ 
+
+  // Function to handle mouse movement for active connection
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (canvasRef.current && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      if (activeConnection.source && canvasMode === 'connect') {
+        setActiveConnection({
+          ...activeConnection,
+          mouseX: x,
+          mouseY: y
+        });
+      }
+    }
+  };
+
+  // Handler for hover events - unified implementation
+  const handleItemHover = (
+    itemType: 'policy' | 'cluster' | 'workload' | null, 
+    itemId: string | null
+  ) => {
+    // Set the hovered state for styling
+    if (itemType && itemId) {
+      setIsHovered(`${itemType}-${itemId}`);
+    } else {
+      setIsHovered(null);
+    }
+    
+    // Set the hovered item for tooltips
+    if (!itemId || !itemType) {
+      setHoveredItem({ itemType: null, itemId: null, position: null });
+      return;
+    }
+    
+    setHoveredItem({
+      itemType,
+      itemId,
+      position: null
+    });
+  };
+
+  // Add responsive breakpoints
+  // const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  // const isMediumScreen = useMediaQuery(theme.breakpoints.down('md'));
+  
+  const isMounted = useRef<boolean>(true);
+  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const prevConnectionLinesRef = useRef<typeof connectionLines>([]);
+  
+  // Grid settings - always enabled
+  const gridSize = 20; // Size of grid in pixels
   
   const { 
     canvasEntities: policyCanvasEntities, 
@@ -115,19 +180,6 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
     }, 100); // 100ms throttle
   }, [setConnectionLines]);
   
-  // Connection drawing state
-  const [activeConnection, setActiveConnection] = useState<{
-    source: string | null;
-    sourceType: 'cluster' | 'workload' | null;
-    mouseX: number;
-    mouseY: number;
-  }>({
-    source: null,
-    sourceType: null,
-    mouseX: 0,
-    mouseY: 0
-  });
-
   // State for active connection warning
   const [, setInvalidConnectionWarning] = useState<string | null>(null);
   
@@ -418,20 +470,6 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
     };
   }, []);
 
-  // Handle mouse movement for active connection
-  const handleMouseMove = (e: React.MouseEvent) => {
-    // Skip if dragging (checking if drag operation is in progress)
-    if (e.buttons !== 0) return;
-    
-    if (activeConnection.source) {
-      setActiveConnection({
-        ...activeConnection,
-        mouseX: e.clientX,
-        mouseY: e.clientY
-      });
-    }
-  };
-  
   // Handle canvas item clicks for connection mode
   const handleCanvasItemClick = useCallback((
     itemType: 'policy' | 'cluster' | 'workload', 
@@ -555,23 +593,6 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
   //   }
   // }, [workloads, clusters]);
   
-  // Handler for hover events
-  const handleItemHover = (
-    itemType: 'policy' | 'cluster' | 'workload' | null, 
-    itemId: string | null
-  ) => {
-    if (!itemId || !itemType) {
-      setHoveredItem({ itemType: null, itemId: null, position: null });
-      return;
-    }
-    
-    setHoveredItem({
-      itemType,
-      itemId,
-      position: null
-    });
-  };
-
   // Function to get tooltip content based on hovered item
   const getTooltipContent = () => {
     if (!hoveredItem.itemType || !hoveredItem.itemId) {
@@ -721,6 +742,56 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
     }
   };
 
+  // Function to render empty canvas state
+  const renderEmptyState = () => {
+    const noWorkloadsOrClusters = clusters.length === 0 || workloads.length === 0;
+    
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          color: 'text.secondary',
+          p: 3,
+          textAlign: 'center',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 1
+        }}
+      >
+        {noWorkloadsOrClusters ? (
+          <>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+              {clusters.length === 0 && workloads.length === 0 
+                ? "No clusters and workloads available"
+                : clusters.length === 0 
+                  ? "No clusters available" 
+                  : "No workloads available"}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Please ensure you have access to clusters and workloads.
+            </Typography>
+          </>
+        ) : (
+          <>
+            <AddIcon sx={{ fontSize: 40, mb: 2, opacity: 0.5 }} />
+            <Typography variant="body1" color="text.secondary" sx={{ opacity: 0.7 }}>
+              Drag clusters and workloads here
+            </Typography>
+          </>
+        )}
+      </Box>
+    );
+  };
+
+
+
   return (
     <Paper
       ref={containerRef}
@@ -728,7 +799,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
         p: { xs: 1, sm: 2 }, 
         height: '100%', 
         minHeight: { xs: 400, sm: 500 },
-        maxHeight: '90vh', 
+        maxHeight: dialogMode ? '65vh' : '90vh', 
         position: 'relative',
         border: '1px solid',
         borderColor: 'divider',
@@ -745,20 +816,22 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
       onDragStart={handleDragStart}
     >
       <Box sx={{ 
-        position: 'relative',
-        zIndex: 2,
-        backgroundColor: alpha(theme.palette.background.paper, 0.8),
-        backdropFilter: 'blur(8px)',
-        borderRadius: 1,
-        p: 1,
-        mb: 2
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        zIndex: 10
       }}>
-        <Typography variant="h6" align="center" gutterBottom fontWeight="medium">
-          Binding Policy Canvas
-        </Typography>
-        <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 1 }}>
-          Drag policies, clusters, and workloads here to visualize binding relationships
-        </Typography>
+        <Tooltip 
+          title={
+            <Box>
+              <Typography variant="body2" fontWeight="bold">Binding Policy Canvas</Typography>
+              <Typography variant="body2">Drag policies, clusters, and workloads here to visualize binding relationships</Typography>
+            </Box>
+          }
+          arrow
+        >
+          <InfoIcon color="info" sx={{ fontSize: 20, opacity: 0.7, cursor: 'pointer', '&:hover': { opacity: 1 } }} />
+        </Tooltip>
       </Box>
       
       {/* Canvas Tools */}
@@ -813,7 +886,20 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
       
       <Alert 
         severity="info" 
-        sx={{ mb: 2 }}
+        sx={{ 
+          mb: 1, 
+          py: 0.5, 
+          '& .MuiAlert-message': { 
+            display: 'flex', 
+            alignItems: 'center',
+            p: 0
+          },
+          '& .MuiAlert-icon': {
+            p: 0.5,
+            mr: 1,
+            alignItems: 'center'
+          }
+        }}
       >
         <Box sx={{ 
           display: 'flex', 
@@ -825,7 +911,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
           <Typography variant="body2" sx={{ mr: 0.5 }}>→</Typography>
           <KubernetesIcon type="cluster" size={16} sx={{ mr: 0.5 }} />
           <Typography variant="body2">
-            <strong>Direct Connection:</strong> Click a workload and then a cluster to create a binding policy connection
+            Click workload then cluster to connect
             {activeConnection.source && (
               <Chip 
                 label={`Selected: ${activeConnection.source.replace(/^(cluster|workload)-/, '')}`}
@@ -900,28 +986,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
             
             {/* Empty state */}
             {isCanvasEmpty && !snapshot.isDraggingOver && (
-              <Box 
-                sx={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  zIndex: 1
-                }}
-              >
-                <AddIcon sx={{ fontSize: 48, color: 'text.secondary', opacity: 0.5, mb: 2 }} />
-                <Typography variant="h6" color="text.secondary" sx={{ opacity: 0.7 }}>
-                  Drag items here
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ opacity: 0.7, mt: 1 }}>
-                  Start by dragging policies, clusters, or workloads to this canvas
-                </Typography>
-              </Box>
+              renderEmptyState()
             )}
             
             {/* Canvas Content with Clear Sections */}
@@ -980,9 +1045,8 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                     boxShadow: 'inset 0 0 5px rgba(25, 118, 210, 0.1)',
                     display: 'flex',
                     flexDirection: 'column',
-                    height: { xs: '200px', sm: 'auto' }, 
-                    minHeight: { xs: '200px', sm: 0 }, 
-                    flex: { xs: 'none', sm: 1 }, 
+                    height: { xs: '250px', sm: '400px' }, 
+                    flex: 'none',
                     overflow: 'hidden'
                   }}>
                     <TextField
@@ -1120,9 +1184,8 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                     boxShadow: 'inset 0 0 5px rgba(76, 175, 80, 0.1)',
                     display: 'flex',
                     flexDirection: 'column',
-                    height: { xs: '200px', sm: 'auto' }, 
-                    minHeight: { xs: '200px', sm: 0 }, 
-                    flex: { xs: 'none', sm: 1 }, 
+                    height: { xs: '250px', sm: '400px' }, 
+                    flex: 'none',
                     overflow: 'hidden'
                   }}>
                     <TextField

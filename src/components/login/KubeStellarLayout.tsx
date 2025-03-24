@@ -50,7 +50,7 @@ const KubeStellarLayout = ({ isLoaded, showLogin, leftSide }: KubeStellarLayoutP
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: isLoaded ? 1.2 : 2.2, duration: 0.6 }}
               >
-                Seamless Multi-Cluster Management,
+                Seamless Multi-Cluster Management
               </motion.span>
               <br />
               <motion.span
