@@ -134,7 +134,7 @@ func ensureNamespaceExists(dynamicClient dynamic.Interface, namespace string) er
 
 	// Get the GVR for Namespace
 	nsGVR := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}
-	
+
 	// Check if namespace exists
 	_, err := dynamicClient.Resource(nsGVR).Get(context.TODO(), namespace, v1.GetOptions{})
 	if err == nil {
@@ -158,7 +158,7 @@ func ensureNamespaceExists(dynamicClient dynamic.Interface, namespace string) er
 	if err != nil {
 		return fmt.Errorf("failed to create namespace %s: %v", namespace, err)
 	}
-	
+
 	return nil
 }
 
