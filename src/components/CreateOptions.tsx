@@ -93,7 +93,7 @@ spec:
     repositoryUrl: "",
     path: "",
     credentials: "none",
-    branchSpecifier: "master",
+    branchSpecifier: "main",
     webhook: "none",
   };
   const [formData, setFormData] = useState<FormData>(initialFormData);
@@ -306,7 +306,7 @@ spec:
       const requestBody = {
         repo_url: formData.repositoryUrl,
         folder_path: formData.path,
-        branch: formData.branchSpecifier || "master",
+        branch: formData.branchSpecifier || "main",
         webhook: formData.webhook !== "none" ? formData.webhook : undefined,
       };
 
@@ -317,7 +317,7 @@ spec:
         const pat = storedCredentials[formData.credentials]?.personalAccessToken;
         queryParams.git_username = git_username;
         queryParams.git_token = pat;
-        queryParams.branch = formData.branchSpecifier || "master";
+        queryParams.branch = formData.branchSpecifier || "main";
       }
 
       const response = await axios.post(
@@ -336,7 +336,7 @@ spec:
           repositoryUrl: "",
           path: "",
           credentials: "none",
-          branchSpecifier: "master",
+          branchSpecifier: "main",
           webhook: "none",
         });
         setTimeout(() => window.location.reload(), 4000);
