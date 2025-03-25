@@ -14,6 +14,7 @@ interface ConnectionManagerProps {
   clusters: ManagedCluster[];
   onQuickPolicySave: (config: PolicyConfiguration) => void;
   setSuccessMessage: (message: string) => void;
+  dialogMode?: boolean;
 }
 
 // Define the QuickPolicyDialogProps type here since it's not exported from the component
@@ -36,7 +37,7 @@ const ConnectionManager = forwardRef<
   workloads,
   clusters,
   onQuickPolicySave,
-  setSuccessMessage
+  setSuccessMessage,
 }, ref) => {
   // Get state and actions from the connection manager store
   const connectionMode = useConnectionManagerStore(state => state.connectionMode);

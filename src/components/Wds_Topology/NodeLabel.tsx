@@ -18,13 +18,10 @@ export const NodeLabel = memo<NodeLabelProps>(({
   label,
   icon,
   dynamicText,
-  status,
   timeAgo,
   onClick,
   onMenuClick,
 }) => {
-  const heartColor = status === "Active" ? "rgb(24, 190, 148)" : "#ff0000";
-
   return (
     <div
       style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}
@@ -38,12 +35,7 @@ export const NodeLabel = memo<NodeLabelProps>(({
         <div style={{ textAlign: "left" }}>
           <div>{label}</div>
           <div style={{ display: "flex", gap: "1px" }}>
-            <i className="fas fa-heart" style={{ color: heartColor, fontSize: "6px" }}></i>
-            {heartColor === "#ff0000" ? (
-              <i className="fa fa-times-circle" style={{ color: "#ff0000", marginRight: "4px" }}></i>
-            ) : (
-              <i className="fa fa-check-circle" style={{ color: "rgb(24, 190, 148)", marginRight: "4px" }}></i>
-            )}
+            {/* Removed heart and check/cross icons */}
           </div>
         </div>
       </div>

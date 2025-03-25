@@ -7,19 +7,22 @@ import WorkloadPanel from './WorkloadPanel';
 interface ClusterPanelContainerProps {
   clusters: ManagedCluster[];
   loading: boolean;
-  error?: string;
+  error: string | undefined;
+  compact?: boolean;
 }
 
 interface WorkloadPanelContainerProps {
   workloads: Workload[];
   loading: boolean;
-  error?: string;
+  error: string | undefined;
+  compact?: boolean;
 }
 
 export const ClusterPanelContainer: React.FC<ClusterPanelContainerProps> = ({
   clusters,
   loading,
-  error
+  error,
+
 }) => {
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -36,7 +39,8 @@ export const ClusterPanelContainer: React.FC<ClusterPanelContainerProps> = ({
 export const WorkloadPanelContainer: React.FC<WorkloadPanelContainerProps> = ({
   workloads,
   loading,
-  error
+  error,
+
 }) => {
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
