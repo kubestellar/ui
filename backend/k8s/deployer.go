@@ -95,6 +95,14 @@ func DeployManifests(deployPath string, dryRun bool, dryRunStrategy string) (*De
 			finalNamespace = "default"
 		}
 
+		// Ensure namespace exists before applying resources
+		if !dryRun && obj.GetKind() != "Namespace" {
+			err = ensureNamespaceExists(dynamicClient, finalNamespace)
+			if err != nil {
+				return nil, fmt.Errorf("failed to ensure namespace %s exists: %v", finalNamespace, err)
+			}
+		}
+
 		// Apply or simulate resource application
 		err = applyOrCreateResource(dynamicClient, gvr, &obj, finalNamespace, dryRun, dryRunStrategy)
 		if err != nil {
@@ -115,6 +123,43 @@ func DeployManifests(deployPath string, dryRun bool, dryRunStrategy string) (*De
 
 	tree.Namespace = detectedNamespace
 	return tree, nil
+}
+
+// ensureNamespaceExists checks if a namespace exists and creates it if it doesn't
+func ensureNamespaceExists(dynamicClient dynamic.Interface, namespace string) error {
+	// Skip for default namespace which always exists
+	if namespace == "default" {
+		return nil
+	}
+
+	// Get the GVR for Namespace
+	nsGVR := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}
+
+	// Check if namespace exists
+	_, err := dynamicClient.Resource(nsGVR).Get(context.TODO(), namespace, v1.GetOptions{})
+	if err == nil {
+		// Namespace exists
+		return nil
+	}
+
+	// Create namespace if it doesn't exist
+	fmt.Printf("Creating namespace: %s\n", namespace)
+	nsObj := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Namespace",
+			"metadata": map[string]interface{}{
+				"name": namespace,
+			},
+		},
+	}
+
+	_, err = dynamicClient.Resource(nsGVR).Create(context.TODO(), nsObj, v1.CreateOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to create namespace %s: %v", namespace, err)
+	}
+
+	return nil
 }
 
 // applyOrCreateResource applies or simulates applying a Kubernetes resource
