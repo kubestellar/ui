@@ -53,6 +53,52 @@ interface DownsyncItem {
   namespaces?: string[];
 }
 
+interface GenerateYamlRequest {
+  workloadId: string;
+  clusterId: string;
+  namespace: string;
+  policyName?: string;
+}
+
+interface QuickConnectRequest {
+  workloadId: string;
+  clusterId: string;
+  policyName: string;
+}
+
+interface GenerateYamlResponse {
+  bindingPolicy: {
+    apiGroup: string;
+    bindingMode: string;
+    clusterId: string;
+    clusters: string[];
+    clustersCount: number;
+    name: string;
+    namespace: string;
+    resourceKind: string;
+    status: string;
+    workloadId: string;
+    workloads: string[];
+    workloadsCount: number;
+  };
+  yaml: string;
+}
+
+interface QuickConnectResponse {
+  bindingPolicy: {
+    bindingMode: string;
+    clusters: string[];
+    clustersCount: number;
+    name: string;
+    namespace: string;
+    status: string;
+    workloads: string[];
+    workloadsCount: number;
+    yaml: string;
+  };
+  message: string;
+}
+
 export const useBPQueries = () => {
   const queryClient = useQueryClient();
 
@@ -336,6 +382,42 @@ export const useBPQueries = () => {
     });
   };
 
+  // Generate YAML for binding policy
+  const useGenerateBindingPolicyYaml = () => {
+    return useMutation<GenerateYamlResponse, Error, GenerateYamlRequest>({
+      mutationFn: async (request) => {
+        console.log("Generating YAML for binding policy:", request);
+        const response = await api.post('/api/bp/generate-yaml', request);
+        console.log("Generated YAML response:", response.data);
+        return response.data;
+      },
+      onError: (error: Error) => {
+        console.error("Error generating binding policy YAML:", error);
+        toast.error('Failed to generate binding policy YAML');
+      }
+    });
+  };
+
+  // Quick connect API for drag and drop
+  const useQuickConnect = () => {
+    return useMutation<QuickConnectResponse, Error, QuickConnectRequest>({
+      mutationFn: async (request) => {
+        console.log("Creating quick connect binding policy:", request);
+        const response = await api.post('/api/bp/quick-connect', request);
+        console.log("Quick connect response:", response.data);
+        return response.data;
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['binding-policies'] });
+        toast.success('Binding policy created successfully');
+      },
+      onError: (error: Error) => {
+        console.error("Error creating quick connect binding policy:", error);
+        toast.error('Failed to create binding policy');
+      }
+    });
+  };
+
   return {
     useBindingPolicies,
     useBindingPolicyDetails,
@@ -343,5 +425,7 @@ export const useBPQueries = () => {
     useDeleteBindingPolicy,
     useDeletePolicies,
     useDeploy,
+    useGenerateBindingPolicyYaml,
+    useQuickConnect,
   };
 };
