@@ -43,6 +43,7 @@ import ReactDOM from "react-dom";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { isEqual } from "lodash";
 import { useWebSocket } from "../context/WebSocketProvider";
+import useTheme from "../stores/themeStore";
 
 // Interfaces
 export interface NodeData {
@@ -183,15 +184,12 @@ const iconMap: Record<string, string> = {
 
 // Updated getNodeConfig function to support new child node types
 const getNodeConfig = (type: string, label: string) => {
-  // Normalize the type to match the iconMap keys (e.g., "deployment" -> "Deployment")
   console.log(label);
   const normalizedType = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
   
-  // Default icon and name based on the type
-  let icon = iconMap[normalizedType] || cm; // Fallback to ConfigMap icon if type not found
-  let dynamicText = type.toLowerCase(); // Use the type as the default name
+  let icon = iconMap[normalizedType] || cm;
+  let dynamicText = type.toLowerCase();
 
-  // Check the type to assign the icon and name
   switch (type.toLowerCase()) {
     case "namespace":
       icon = ns;
@@ -313,25 +311,23 @@ const getNodeConfig = (type: string, label: string) => {
       icon = vol;
       dynamicText = "volume";
       break;
-    // New child node types
     case "envvar":
-      icon = cm; // Use ConfigMap icon as a fallback
+      icon = cm;
       dynamicText = "envvar";
       break;
     case "customresource":
-      icon = crd; // Use CRD icon as a fallback
+      icon = crd;
       dynamicText = "cr";
       break;
     case "controller":
-      icon = deployicon; // Use Deployment icon as a fallback
+      icon = deployicon;
       dynamicText = "controller";
       break;
     case "ingresscontroller":
-      icon = ing; // Use Ingress icon
+      icon = ing;
       dynamicText = "ingresscontroller";
       break;
     default:
-      // If the type is not in the list, keep the default icon and name
       break;
   }
 
@@ -390,6 +386,7 @@ const getLayoutedElements = (
 };
 
 const TreeViewComponent = () => {
+  const theme = useTheme((state) => state.theme); // Get theme from store
   const [nodes, setNodes] = useState<CustomNode[]>([]);
   const [edges, setEdges] = useState<CustomEdge[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
@@ -400,6 +397,9 @@ const TreeViewComponent = () => {
   const [activeOption, setActiveOption] = useState<string | null>("option1");
   const [selectedNode, setSelectedNode] = useState<SelectedNode | null>(null);
   const [hasReceivedInitialData, setHasReceivedInitialData] = useState<boolean>(false);
+  const [isDataTransformed, setIsDataTransformed] = useState<boolean>(false);
+  const [isDataEmpty, setIsDataEmpty] = useState<boolean | null>(null);
+  const [minimumLoadingTimeElapsed, setMinimumLoadingTimeElapsed] = useState<boolean>(false); // New state for minimum loading time
   const nodeCache = useRef<Map<string, CustomNode>>(new Map());
   const edgeCache = useRef<Map<string, CustomEdge>>(new Map());
   const edgeIdCounter = useRef<number>(0);
@@ -420,12 +420,32 @@ const TreeViewComponent = () => {
     initialData: [],
   });
 
+  // Log initial state on mount
   useEffect(() => {
+    renderStartTime.current = performance.now();
+    console.log(`[TreeView] Component mounted at 0ms`);
+    console.log(`[TreeView] Initial state - isConnected: ${isConnected}, hasReceivedInitialData: ${hasReceivedInitialData}, isDataTransformed: ${isDataTransformed}, isDataEmpty: ${isDataEmpty}, nodes: ${nodes.length}, edges: ${edges.length}`);
+  }, []);
+
+  // Set minimum loading time
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMinimumLoadingTimeElapsed(true);
+    }, 1000); // 1 second minimum loading time
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Log WebSocket connection initiation
+  useEffect(() => {
+    console.log(`[TreeView] Initiating WebSocket connection at ${performance.now() - renderStartTime.current}ms`);
     connect(true);
   }, [connect]);
 
+  // Updated logic to set hasReceivedInitialData when namespaceData is defined (even if empty)
   useEffect(() => {
-    if (namespaceData && namespaceData.length > 0 && !hasReceivedInitialData) {
+    if (namespaceData !== undefined && !hasReceivedInitialData) {
+      console.log(`[TreeView] Setting hasReceivedInitialData to true at ${performance.now() - renderStartTime.current}ms`);
+      console.log(`[TreeView] namespaceData length: ${namespaceData?.length || 0}`);
       setHasReceivedInitialData(true);
     }
   }, [namespaceData, hasReceivedInitialData]);
@@ -498,7 +518,15 @@ const TreeViewComponent = () => {
             ),
           },
           position: { x: 0, y: 0 },
-          style: { ...nodeStyle, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "2px 12px" },
+          style: {
+            ...nodeStyle,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "2px 12px",
+            backgroundColor: theme === "dark" ? "#333" : "#fff", // Dark mode node background
+            color: theme === "dark" ? "#fff" : "#000", // Dark mode node text
+          },
           sourcePosition: Position.Right,
           targetPosition: Position.Left,
         } as CustomNode);
@@ -517,8 +545,8 @@ const TreeViewComponent = () => {
             target: id,
             type: "step",
             animated: true,
-            style: { stroke: "#a3a3a3", strokeDasharray: "2,2" },
-            markerEnd: { type: MarkerType.ArrowClosed },
+            style: { stroke: theme === "dark" ? "#ccc" : "#a3a3a3", strokeDasharray: "2,2" }, // Dark mode edge color
+            markerEnd: { type: MarkerType.ArrowClosed, color: theme === "dark" ? "#ccc" : "#a3a3a3" }, // Dark mode arrow
           };
           newEdges.push(edge);
           edgeCache.current.set(edgeId, edge);
@@ -527,7 +555,7 @@ const TreeViewComponent = () => {
         }
       }
     },
-    [getTimeAgo, handleClosePanel, handleMenuOpen]
+    [getTimeAgo, handleClosePanel, handleMenuOpen, theme]
   );
 
   const transformDataToTree = useCallback(
@@ -543,6 +571,8 @@ const TreeViewComponent = () => {
         ReactDOM.unstable_batchedUpdates(() => {
           setNodes([]);
           setEdges([]);
+          setIsDataTransformed(true);
+          setIsDataEmpty(true); // Data is empty
         });
         return;
       }
@@ -554,10 +584,8 @@ const TreeViewComponent = () => {
       const newNodes: CustomNode[] = [];
       const newEdges: CustomEdge[] = [];
 
-      // Step 1: Iterate over each namespace
       data.forEach((namespace: NamespaceResource) => {
         const namespaceId = `namespace-${namespace.name}`;
-        // Create a node for the namespace
         createNode(
           namespaceId,
           namespace.name,
@@ -566,19 +594,17 @@ const TreeViewComponent = () => {
           "",
           namespace.name,
           { apiVersion: "v1", kind: "Namespace", metadata: { name: namespace.name, namespace: namespace.name, creationTimestamp: "" }, status: { phase: namespace.status } },
-          null, // No parent for namespace nodes
+          null,
           newNodes,
           newEdges
         );
 
-        // Step 2: Prepare resources map
         const resourcesMap: ResourcesMap = {
           endpoints: namespace.resources[".v1/endpoints"] || [],
           endpointSlices: namespace.resources["discovery.k8s.io.v1/endpointslices"] || [],
           ...namespace.resources,
         };
 
-        // Step 3: Iterate over each resource in the namespace
         Object.values(resourcesMap)
           .flat()
           .forEach((item: ResourceItem, index: number) => {
@@ -586,551 +612,136 @@ const TreeViewComponent = () => {
             const resourceId = `${namespaceId}-${kindLower}-${item.metadata.name}-${index}`;
             const status = item.status?.conditions?.some((c) => c.type === "Available" && c.status === "True") ? "Active" : "Inactive";
 
-            // Create a node for the resource (child of the namespace)
             createNode(resourceId, item.metadata.name, kindLower, status, item.metadata.creationTimestamp, namespace.name, item, namespaceId, newNodes, newEdges);
 
-            // Step 4: Create child nodes based on the specified hierarchy
             switch (kindLower) {
               case "configmap":
-                // ConfigMap → Mounted as Volume or Environment Variables
-                createNode(
-                  `${resourceId}-volume`,
-                  `volume-${item.metadata.name}`,
-                  "volume",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  resourceId,
-                  newNodes,
-                  newEdges
-                );
-                createNode(
-                  `${resourceId}-envvar`,
-                  `envvar-${item.metadata.name}`,
-                  "envvar",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  resourceId,
-                  newNodes,
-                  newEdges
-                );
+                createNode(`${resourceId}-volume`, `volume-${item.metadata.name}`, "volume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                createNode(`${resourceId}-envvar`, `envvar-${item.metadata.name}`, "envvar", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                 break;
 
               case "clusterrolebinding": {
-                // ClusterRoleBinding → ClusterRole → User/ServiceAccount/Group
                 const crbClusterRoleId = `${resourceId}-clusterrole`;
-                createNode(
-                  crbClusterRoleId,
-                  `clusterrole-${item.metadata.name}`,
-                  "clusterrole",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  resourceId,
-                  newNodes,
-                  newEdges
-                );
-                createNode(
-                  `${crbClusterRoleId}-user`,
-                  `user-${item.metadata.name}`,
-                  "user",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  crbClusterRoleId,
-                  newNodes,
-                  newEdges
-                );
-                createNode(
-                  `${crbClusterRoleId}-serviceaccount`,
-                  `serviceaccount-${item.metadata.name}`,
-                  "serviceaccount",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  crbClusterRoleId,
-                  newNodes,
-                  newEdges
-                );
-                createNode(
-                  `${crbClusterRoleId}-group`,
-                  `group-${item.metadata.name}`,
-                  "group",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  crbClusterRoleId,
-                  newNodes,
-                  newEdges
-                );
+                createNode(crbClusterRoleId, `clusterrole-${item.metadata.name}`, "clusterrole", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                createNode(`${crbClusterRoleId}-user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, crbClusterRoleId, newNodes, newEdges);
+                createNode(`${crbClusterRoleId}-serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, item, crbClusterRoleId, newNodes, newEdges);
+                createNode(`${crbClusterRoleId}-group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, item, crbClusterRoleId, newNodes, newEdges);
                 break;
               }
 
               case "customresourcedefinition": {
-                // CustomResourceDefinition → Custom Resource (CR) → Controller
                 const crdCrId = `${resourceId}-customresource`;
-                createNode(
-                  crdCrId,
-                  `cr-${item.metadata.name}`,
-                  "customresource",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  resourceId,
-                  newNodes,
-                  newEdges
-                );
-                createNode(
-                  `${crdCrId}-controller`,
-                  `controller-${item.metadata.name}`,
-                  "controller",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  crdCrId,
-                  newNodes,
-                  newEdges
-                );
+                createNode(crdCrId, `cr-${item.metadata.name}`, "customresource", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                createNode(`${crdCrId}-controller`, `controller-${item.metadata.name}`, "controller", status, undefined, namespace.name, item, crdCrId, newNodes, newEdges);
                 break;
               }
 
               case "clusterrole": {
-                // ClusterRole → Assigned to Users, Groups, or ServiceAccounts via ClusterRoleBinding
                 const crClusterRoleBindingId = `${resourceId}-clusterrolebinding`;
-                createNode(
-                  crClusterRoleBindingId,
-                  `clusterrolebinding-${item.metadata.name}`,
-                  "clusterrolebinding",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  resourceId,
-                  newNodes,
-                  newEdges
-                );
-                createNode(
-                  `${crClusterRoleBindingId}-user`,
-                  `user-${item.metadata.name}`,
-                  "user",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  crClusterRoleBindingId,
-                  newNodes,
-                  newEdges
-                );
-                createNode(
-                  `${crClusterRoleBindingId}-group`,
-                  `group-${item.metadata.name}`,
-                  "group",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  crClusterRoleBindingId,
-                  newNodes,
-                  newEdges
-                );
-                createNode(
-                  `${crClusterRoleBindingId}-serviceaccount`,
-                  `serviceaccount-${item.metadata.name}`,
-                  "serviceaccount",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  crClusterRoleBindingId,
-                  newNodes,
-                  newEdges
-                );
+                createNode(crClusterRoleBindingId, `clusterrolebinding-${item.metadata.name}`, "clusterrolebinding", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                createNode(`${crClusterRoleBindingId}-user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, crClusterRoleBindingId, newNodes, newEdges);
+                createNode(`${crClusterRoleBindingId}-group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, item, crClusterRoleBindingId, newNodes, newEdges);
+                createNode(`${crClusterRoleBindingId}-serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, item, crClusterRoleBindingId, newNodes, newEdges);
                 break;
               }
 
               case "cronjob":
-                // CronJob → Job
-                createNode(
-                  `${resourceId}-job`,
-                  `job-${item.metadata.name}`,
-                  "job",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  resourceId,
-                  newNodes,
-                  newEdges
-                );
+                createNode(`${resourceId}-job`, `job-${item.metadata.name}`, "job", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                 break;
 
               case "deployment":
-                // Deployment → ReplicaSet
-                createNode(
-                  `${resourceId}-replicaset`,
-                  `replicaset-${item.metadata.name}`,
-                  "replicaset",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  resourceId,
-                  newNodes,
-                  newEdges
-                );
+                createNode(`${resourceId}-replicaset`, `replicaset-${item.metadata.name}`, "replicaset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                 break;
 
               case "daemonset":
-                // DaemonSet (no children)
                 break;
 
               case "service":
-                // Service → Endpoints
-                createNode(
-                  `${resourceId}-endpoints`,
-                  `endpoints-${item.metadata.name}`,
-                  "endpoints",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  resourceId,
-                  newNodes,
-                  newEdges
-                );
+                createNode(`${resourceId}-endpoints`, `endpoints-${item.metadata.name}`, "endpoints", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                 break;
 
               case "endpoints":
-                // Endpoints (no children, since Service → Endpoints is handled under Service)
                 break;
 
               case "group":
-                // Group → Users
-                createNode(
-                  `${resourceId}-user`,
-                  `user-${item.metadata.name}`,
-                  "user",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  resourceId,
-                  newNodes,
-                  newEdges
-                );
+                createNode(`${resourceId}-user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                 break;
 
               case "horizontalpodautoscaler":
-                // HPA → Scales Deployment/ReplicaSet/StatefulSet
-                createNode(
-                  `${resourceId}-deployment`,
-                  `deployment-${item.metadata.name}`,
-                  "deployment",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  resourceId,
-                  newNodes,
-                  newEdges
-                );
-                createNode(
-                  `${resourceId}-replicaset`,
-                  `replicaset-${item.metadata.name}`,
-                  "replicaset",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  resourceId,
-                  newNodes,
-                  newEdges
-                );
-                createNode(
-                  `${resourceId}-statefulset`,
-                  `statefulset-${item.metadata.name}`,
-                  "statefulset",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  resourceId,
-                  newNodes,
-                  newEdges
-                );
+                createNode(`${resourceId}-deployment`, `deployment-${item.metadata.name}`, "deployment", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                createNode(`${resourceId}-replicaset`, `replicaset-${item.metadata.name}`, "replicaset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                createNode(`${resourceId}-statefulset`, `statefulset-${item.metadata.name}`, "statefulset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                 break;
 
               case "ingress": {
-                // Ingress → Ingress Controller → Service
                 const ingControllerId = `${resourceId}-ingresscontroller`;
-                createNode(
-                  ingControllerId,
-                  `ingresscontroller-${item.metadata.name}`,
-                  "ingresscontroller",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  resourceId,
-                  newNodes,
-                  newEdges
-                );
-                createNode(
-                  `${ingControllerId}-service`,
-                  `service-${item.metadata.name}`,
-                  "service",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  ingControllerId,
-                  newNodes,
-                  newEdges
-                );
+                createNode(ingControllerId, `ingresscontroller-${item.metadata.name}`, "ingresscontroller", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                createNode(`${ingControllerId}-service`, `service-${item.metadata.name}`, "service", status, undefined, namespace.name, item, ingControllerId, newNodes, newEdges);
                 break;
               }
 
               case "job":
-                // Job (no children)
                 break;
 
               case "limitrange":
-                // LimitRange → Applied to Namespace
-                createNode(
-                  `${resourceId}-namespace`,
-                  `namespace-${item.metadata.name}`,
-                  "namespace",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  resourceId,
-                  newNodes,
-                  newEdges
-                );
+                createNode(`${resourceId}-namespace`, `namespace-${item.metadata.name}`, "namespace", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                 break;
 
               case "networkpolicy":
-                // NetworkPolicy (no children)
                 break;
 
               case "podsecuritypolicy":
-                // PodSecurityPolicy (no children)
                 break;
 
               case "persistentvolume":
-                // PersistentVolume → Bound to PersistentVolumeClaim
-                createNode(
-                  `${resourceId}-persistentvolumeclaim`,
-                  `pvc-${item.metadata.name}`,
-                  "persistentvolumeclaim",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  resourceId,
-                  newNodes,
-                  newEdges
-                );
+                createNode(`${resourceId}-persistentvolumeclaim`, `pvc-${item.metadata.name}`, "persistentvolumeclaim", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                 break;
 
               case "persistentvolumeclaim":
-                // PersistentVolumeClaim → Requests PersistentVolume
-                createNode(
-                  `${resourceId}-persistentvolume`,
-                  `pv-${item.metadata.name}`,
-                  "persistentvolume",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  resourceId,
-                  newNodes,
-                  newEdges
-                );
+                createNode(`${resourceId}-persistentvolume`, `pv-${item.metadata.name}`, "persistentvolume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                 break;
 
               case "resourcequota":
-                // ResourceQuota → Applied to Namespace
-                createNode(
-                  `${resourceId}-namespace`,
-                  `namespace-${item.metadata.name}`,
-                  "namespace",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  resourceId,
-                  newNodes,
-                  newEdges
-                );
+                createNode(`${resourceId}-namespace`, `namespace-${item.metadata.name}`, "namespace", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                 break;
 
               case "rolebinding": {
-                // RoleBinding → Role → User/ServiceAccount/Group
                 const rbRoleId = `${resourceId}-role`;
-                createNode(
-                  rbRoleId,
-                  `role-${item.metadata.name}`,
-                  "role",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  resourceId,
-                  newNodes,
-                  newEdges
-                );
-                createNode(
-                  `${rbRoleId}-user`,
-                  `user-${item.metadata.name}`,
-                  "user",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  rbRoleId,
-                  newNodes,
-                  newEdges
-                );
-                createNode(
-                  `${rbRoleId}-serviceaccount`,
-                  `serviceaccount-${item.metadata.name}`,
-                  "serviceaccount",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  rbRoleId,
-                  newNodes,
-                  newEdges
-                );
-                createNode(
-                  `${rbRoleId}-group`,
-                  `group-${item.metadata.name}`,
-                  "group",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  rbRoleId,
-                  newNodes,
-                  newEdges
-                );
+                createNode(rbRoleId, `role-${item.metadata.name}`, "role", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                createNode(`${rbRoleId}-user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, rbRoleId, newNodes, newEdges);
+                createNode(`${rbRoleId}-serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, item, rbRoleId, newNodes, newEdges);
+                createNode(`${rbRoleId}-group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, item, rbRoleId, newNodes, newEdges);
                 break;
               }
 
               case "role":
-                // Role → Defines Permissions within a Namespace
-                createNode(
-                  `${resourceId}-namespace`,
-                  `namespace-${item.metadata.name}`,
-                  "namespace",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  resourceId,
-                  newNodes,
-                  newEdges
-                );
+                createNode(`${resourceId}-namespace`, `namespace-${item.metadata.name}`, "namespace", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                 break;
 
               case "replicaset":
-                // ReplicaSet (no children, since pods are excluded)
                 break;
 
               case "serviceaccount":
-                // ServiceAccount (no children)
                 break;
 
               case "storageclass":
-                // StorageClass → Defines Provisioning Rules for PVs
-                createNode(
-                  `${resourceId}-persistentvolume`,
-                  `pv-${item.metadata.name}`,
-                  "persistentvolume",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  resourceId,
-                  newNodes,
-                  newEdges
-                );
+                createNode(`${resourceId}-persistentvolume`, `pv-${item.metadata.name}`, "persistentvolume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                 break;
 
               case "secret":
-                // Secret → Mounted as Volume or Environment Variables
-                createNode(
-                  `${resourceId}-volume`,
-                  `volume-${item.metadata.name}`,
-                  "volume",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  resourceId,
-                  newNodes,
-                  newEdges
-                );
-                createNode(
-                  `${resourceId}-envvar`,
-                  `envvar-${item.metadata.name}`,
-                  "envvar",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  resourceId,
-                  newNodes,
-                  newEdges
-                );
+                createNode(`${resourceId}-volume`, `volume-${item.metadata.name}`, "volume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                createNode(`${resourceId}-envvar`, `envvar-${item.metadata.name}`, "envvar", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                 break;
 
               case "statefulset":
-                // StatefulSet (no children, since pods are excluded)
                 break;
 
               case "user":
-                // User → Assigned Roles or ClusterRoles
-                createNode(
-                  `${resourceId}-role`,
-                  `role-${item.metadata.name}`,
-                  "role",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  resourceId,
-                  newNodes,
-                  newEdges
-                );
-                createNode(
-                  `${resourceId}-clusterrole`,
-                  `clusterrole-${item.metadata.name}`,
-                  "clusterrole",
-                  status,
-                  undefined,
-                  namespace.name,
-                  item,
-                  resourceId,
-                  newNodes,
-                  newEdges
-                );
+                createNode(`${resourceId}-role`, `role-${item.metadata.name}`, "role", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                createNode(`${resourceId}-clusterrole`, `clusterrole-${item.metadata.name}`, "clusterrole", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                 break;
 
               case "volume":
-                // Volume (no children)
                 break;
 
               default:
@@ -1139,11 +750,13 @@ const TreeViewComponent = () => {
           });
       });
 
-      // Step 5: Layout the nodes and edges
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(newNodes, newEdges, "LR", prevNodes);
+      const isEmpty = layoutedNodes.length === 0 && layoutedEdges.length === 0; // Calculate isDataEmpty based on layoutedNodes and layoutedEdges
       ReactDOM.unstable_batchedUpdates(() => {
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
+        setIsDataTransformed(true);
+        setIsDataEmpty(isEmpty);
       });
       prevNodes.current = layoutedNodes;
 
@@ -1153,27 +766,30 @@ const TreeViewComponent = () => {
     [createNode]
   );
 
-  useEffect(() => {
-    renderStartTime.current = performance.now();
-    console.log(`[TreeView] Component mounted at 0ms`);
-  }, []);
-
+  // Log when namespaceData changes and transformDataToTree is called
   useEffect(() => {
     if (namespaceData !== undefined) {
       console.log(
         `[TreeView] namespaceData received with ${namespaceData.length} namespaces at ${performance.now() - renderStartTime.current}ms`
       );
+      setIsDataTransformed(false);
+      setIsDataEmpty(null);
       transformDataToTree(namespaceData);
     }
   }, [namespaceData, transformDataToTree]);
 
+  // Consolidated debugging logs for nodes, edges, isConnected, hasReceivedInitialData, and isDataEmpty
   useEffect(() => {
+    console.log(`[TreeView] State update at ${performance.now() - renderStartTime.current}ms`);
+    console.log(`[TreeView] isConnected: ${isConnected}, hasReceivedInitialData: ${hasReceivedInitialData}, isDataTransformed: ${isDataTransformed}, isDataEmpty: ${isDataEmpty}, nodes: ${nodes.length}, edges: ${edges.length}`);
     if (nodes.length > 0 || edges.length > 0) {
       console.log(
-        `[TreeView] Rendered successfully with ${nodes.length} nodes and ${edges.length} edges at ${performance.now() - renderStartTime.current}ms`
+        `[TreeView] Rendered successfully with ${nodes.length} nodes and ${edges.length} edges`
       );
+    } else {
+      console.log(`[TreeView] Nodes and edges are empty`);
     }
-  }, [nodes, edges]);
+  }, [nodes, edges, isConnected, hasReceivedInitialData, isDataTransformed, isDataEmpty]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1311,7 +927,21 @@ const TreeViewComponent = () => {
     setActiveOption("option1");
   };
 
-  const isLoadingTree = !isConnected || !hasReceivedInitialData || (nodes.length === 0 && edges.length === 0);
+  // Updated isLoadingTree to include minimumLoadingTimeElapsed
+  const isLoadingTree = !isConnected || !hasReceivedInitialData || !isDataTransformed || isDataEmpty === null || !minimumLoadingTimeElapsed;
+
+  // Log the rendering decision
+  useEffect(() => {
+    console.log(`[TreeView] Rendering decision at ${performance.now() - renderStartTime.current}ms`);
+    console.log(`[TreeView] isLoadingTree: ${isLoadingTree}, isDataTransformed: ${isDataTransformed}, isDataEmpty: ${isDataEmpty}, nodes: ${nodes.length}, edges: ${edges.length}`);
+    if (isLoadingTree) {
+      console.log(`[TreeView] Showing loading spinner because isLoadingTree is true`);
+    } else if (isDataEmpty) {
+      console.log(`[TreeView] Showing "No Workloads Found" because isDataEmpty is true`);
+    } else {
+      console.log(`[TreeView] Showing React Flow canvas with ${nodes.length} nodes and ${edges.length} edges`);
+    }
+  }, [isLoadingTree, nodes, edges, isDataTransformed, isDataEmpty]);
 
   return (
     <Box sx={{ display: "flex", height: "100vh", width: "100%", position: "relative" }}>
@@ -1344,7 +974,14 @@ const TreeViewComponent = () => {
             variant="outlined"
             startIcon={<Plus size={20} />}
             onClick={handleCreateWorkloadClick}
-            sx={{ color: "#FFFFFF" , backgroundColor:"#2F86FF" , padding: "8px 20px" , fontWeight:"600" , borderRadius:"8px"}}
+            sx={{
+              color: "#FFFFFF",
+              backgroundColor: "#2F86FF",
+              padding: "8px 20px",
+              fontWeight: "600",
+              borderRadius: "8px",
+              textTransform: "none",
+            }}
           >
             Create Workload
           </Button>
@@ -1355,7 +992,7 @@ const TreeViewComponent = () => {
         <Box sx={{ width: "100%", height: "calc(100% - 80px)", position: "relative" }}>
           {isLoadingTree ? (
             <LoadingFallback message="Loading the tree..." size="medium" />
-          ) : nodes.length === 0 && edges.length === 0 ? (
+          ) : isDataEmpty ? (
             <Box
               sx={{
                 width: "100%",
@@ -1386,8 +1023,8 @@ const TreeViewComponent = () => {
           ) : (
             <Box sx={{ width: "100%", height: "100%", position: "relative" }}>
               <ReactFlowProvider>
-                <FlowCanvas nodes={nodes} edges={edges} renderStartTime={renderStartTime} />
-                <ZoomControls />
+                <FlowCanvas nodes={nodes} edges={edges} renderStartTime={renderStartTime} theme={theme} />
+                <ZoomControls theme={theme} />
               </ReactFlowProvider>
             </Box>
           )}

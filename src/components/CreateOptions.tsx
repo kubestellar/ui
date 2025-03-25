@@ -349,7 +349,7 @@ spec:
 
       if (err.response) {
         if (err.response.status === 500) {
-          toast.error("Workload already exists!");
+          toast.error("Failed to clone repo , fill correc data !");
         } else if (err.response.status === 400) {
           toast.error("Failed to deploy workload!");
         } else {
