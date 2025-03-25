@@ -237,7 +237,7 @@ func filterBPsByNamespace(bps []BindingPolicyWithStatus, namespace string) []Bin
 	return filtered
 }
 
-// Creates Binding policy json from the given bp, Returns Json string
+// Creates Binding policy json for redis  from the given bp, Returns Json string
 func createBpJson(bp *v1alpha1.BindingPolicy) (string, error) {
 	if bp == nil {
 		return "", fmt.Errorf("bp is nil")
@@ -286,25 +286,11 @@ func watchOnBps() {
 		switch event.Type {
 		case "MODIFIED":
 			bp, _ := event.Object.(*v1alpha1.BindingPolicy)
-			bpJson, err := createBpJson(bp)
-			if err != nil {
-				log.LogError("Error creating bp json", zap.String("error", err.Error()))
-			}
-			err = redis.SetBpCmd(bp.Name, bpJson)
-			if err != nil {
-				log.LogError("Error setting bp in redis", zap.String("error", err.Error()))
-			}
+			fmt.Println(extractTargetClusters(bp))
 
 		case "ADDED":
 			bp, _ := event.Object.(*v1alpha1.BindingPolicy)
-			bpJson, err := createBpJson(bp)
-			if err != nil {
-				log.LogError("Error creating bp json", zap.String("error", err.Error()))
-			}
-			err = redis.SetBpCmd(bp.Name, bpJson)
-			if err != nil {
-				log.LogError("Error setting bp in redis", zap.String("error", err.Error()))
-			}
+			fmt.Println(extractTargetClusters(bp))
 
 		case "DELETED":
 			bp, _ := event.Object.(*v1alpha1.BindingPolicy)
