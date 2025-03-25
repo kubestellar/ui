@@ -565,7 +565,7 @@ spec:
               iconPosition="start"
             />
             <StyledTab
-              label="Upload File"
+              label="From File"
               value="option2"
               icon={<span role="img" aria-label="file" style={{ fontSize: "0.9rem" }}>📁</span>}
               iconPosition="start"
@@ -596,6 +596,7 @@ spec:
               <UploadFileTab
                 workloadName={workloadName}
                 selectedFile={selectedFile}
+                setSelectedFile={setSelectedFile} // Pass setSelectedFile prop
                 loading={loading}
                 handleDragOver={handleDragOver}
                 handleDragLeave={handleDragLeave}

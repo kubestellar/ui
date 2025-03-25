@@ -16,10 +16,15 @@ import {
   Tooltip,
   Button,
   Stack,
+  Snackbar,
 } from "@mui/material";
 import { FiX, FiRefreshCw, FiGitPullRequest, FiTrash2 } from "react-icons/fi";
 import Editor from "@monaco-editor/react";
 import jsyaml from "js-yaml";
+import axios from "axios";
+import { Terminal } from "xterm";
+import { FitAddon } from "xterm-addon-fit";
+import "xterm/css/xterm.css";
 import { ResourceItem } from "./TreeViewComponent"; // Adjust the import path to your TreeView file
 
 interface DynamicDetailsProps {
@@ -41,7 +46,6 @@ interface ResourceInfo {
   age: string;
   status: string;
   manifest: string;
-  // Remove health since it’s not in ResourceItem.status
 }
 
 const DynamicDetailsPanel = ({
@@ -59,7 +63,15 @@ const DynamicDetailsPanel = ({
   const [error, setError] = useState<string | null>(null);
   const [tabValue, setTabValue] = useState(0);
   const [isClosing, setIsClosing] = useState(false);
+  const [editFormat, setEditFormat] = useState<"yaml" | "json">("yaml");
+  const [editedManifest, setEditedManifest] = useState<string>("");
+  const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
+  const [snackbarMessage, setSnackbarMessage] = useState<string>("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
   const panelRef = useRef<HTMLDivElement>(null);
+  const terminalRef = useRef<HTMLDivElement>(null);
+  const terminalInstance = useRef<Terminal | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     if (!namespace || !name) {
@@ -70,7 +82,6 @@ const DynamicDetailsPanel = ({
 
     setLoading(true);
     try {
-      // Provide default values to handle undefined cases
       const resourceInfo: ResourceInfo = {
         name: resourceData?.metadata?.name ?? name,
         namespace: resourceData?.metadata?.namespace ?? namespace,
@@ -87,6 +98,7 @@ const DynamicDetailsPanel = ({
       };
 
       setResource(resourceInfo);
+      setEditedManifest(resourceInfo.manifest);
       setError(null);
     } catch (err) {
       console.error(`Error processing ${type} details:`, err);
@@ -95,6 +107,73 @@ const DynamicDetailsPanel = ({
       setLoading(false);
     }
   }, [namespace, name, type, resourceData]);
+
+  // Initialize the terminal and WebSocket when the "LOGS" tab is selected
+  useEffect(() => {
+    if (tabValue !== 2 || !terminalRef.current || !resource) return;
+
+    // Initialize the terminal with a white background
+    const term = new Terminal({
+      theme: {
+        background: "#FFFFFF", // White background
+        foreground: "#222222", // Dark text for readability
+        cursor: "#00FF00", // Green cursor
+      },
+      cursorBlink: true,
+      fontSize: 14,
+      fontFamily: "monospace",
+      scrollback: 1000,
+      disableStdin: true,
+    });
+
+    const fitAddon = new FitAddon();
+    term.loadAddon(fitAddon);
+    term.open(terminalRef.current);
+
+    setTimeout(() => {
+      fitAddon.fit();
+    }, 100);
+
+    terminalInstance.current = term;
+
+    // Extract kind, namespace, and name
+    const kind = resource.kind.toLowerCase();
+    const resourceNamespace = resource.namespace;
+    const resourceName = resource.name;
+
+    // Construct the WebSocket URL
+    const wsUrl = `ws://localhost:4000/api/${kind}s/${resourceNamespace}/log?name=${resourceName}`;
+    console.log(`Connecting to WebSocket: ${wsUrl}`);
+
+    // Initialize WebSocket
+    const socket = new WebSocket(wsUrl);
+    wsRef.current = socket;
+
+    socket.onopen = () => {
+      term.writeln("\x1b[32m✔ Connected to log stream...\x1b[0m");
+    };
+
+    socket.onmessage = (event) => {
+      term.writeln(event.data);
+    };
+
+    socket.onerror = (event) => {
+      console.error("WebSocket encountered an issue:", event);
+      term.writeln("\x1b[31m⚠ WebSocket error occurred.\x1b[0m");
+    };
+
+    socket.onclose = () => {
+      term.writeln("\x1b[31m⚠ Complete Logs. Connection closed.\x1b[0m");
+    };
+
+    // Cleanup on unmount or tab change
+    return () => {
+      socket.close();
+      wsRef.current = null;
+      term.dispose();
+      terminalInstance.current = null;
+    };
+  }, [tabValue, resource]);
 
   const calculateAge = (creationTimestamp: string | undefined): string => {
     if (!creationTimestamp) return "N/A";
@@ -111,7 +190,6 @@ const DynamicDetailsPanel = ({
 
   const handleRefresh = () => {
     setLoading(true);
-    // Trigger a refresh of the resource data (implementation depends on your API)
     setTimeout(() => setLoading(false), 1000); // Simulate API call
   };
 
@@ -122,6 +200,16 @@ const DynamicDetailsPanel = ({
     } catch (error) {
       console.log(error);
       return jsonString;
+    }
+  };
+
+  const yamlToJson = (yamlString: string) => {
+    try {
+      const yamlObj = jsyaml.load(yamlString);
+      return JSON.stringify(yamlObj, null, 2);
+    } catch (error) {
+      console.log(error);
+      return yamlString;
     }
   };
 
@@ -148,6 +236,70 @@ const DynamicDetailsPanel = ({
     }
   };
 
+  const handleFormatChange = (format: "yaml" | "json") => {
+    if (editFormat === "yaml" && format === "json") {
+      const jsonContent = yamlToJson(editedManifest);
+      setEditedManifest(jsonContent);
+    } else if (editFormat === "json" && format === "yaml") {
+      const yamlContent = jsonToYaml(editedManifest);
+      setEditedManifest(yamlContent);
+    }
+    setEditFormat(format);
+  };
+
+  const handleEditorChange = (value: string | undefined) => {
+    if (value !== undefined) {
+      setEditedManifest(value);
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!resource) return;
+
+    const kind = resource.kind.toLowerCase();
+    const resourceNamespace = resource.namespace;
+    const resourceName = resource.name;
+
+    const endpoint = `http://localhost:4000/api/${kind}s/${resourceNamespace}/${resourceName}`;
+    console.log(`Fetching latest resource from: ${endpoint}`);
+
+    try {
+      const response = await axios.get(endpoint);
+      const latestManifest = response.data;
+
+      const editedData = editFormat === "yaml" ? jsyaml.load(editedManifest) : JSON.parse(editedManifest);
+      const updatedManifest = {
+        ...latestManifest,
+        spec: {
+          ...latestManifest.spec,
+          replicas: editedData.spec?.replicas ?? latestManifest.spec.replicas,
+        },
+      };
+
+      console.log(`Updating resource at: ${endpoint}`);
+      await axios.put(endpoint, updatedManifest);
+
+      const newManifestString = JSON.stringify(updatedManifest, null, 2);
+      setResource((prev) => (prev ? { ...prev, manifest: newManifestString } : prev));
+      setEditedManifest(newManifestString);
+
+      setSnackbarMessage(`${resourceName} object scaled successfully`);
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+    } catch (error: unknown) {
+      console.error(`Failed to update ${resourceName}:`, error);
+      setSnackbarMessage(
+          `Failed to update ${resourceName}`
+      );
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    }
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
+
   const renderSummary = () => {
     if (!resource) return null;
     return (
@@ -169,7 +321,6 @@ const DynamicDetailsPanel = ({
                 />
               ),
             },
-            // Remove HEALTH row since health isn’t available
           ].map((row, index) => (
             <TableRow key={index}>
               <TableCell
@@ -302,7 +453,8 @@ const DynamicDetailsPanel = ({
             }}
           >
             <Tab label="SUMMARY" />
-            <Tab label="MANIFEST" />
+            <Tab label="EDIT" />
+            <Tab label="LOGS" />
           </Tabs>
 
           <Paper
@@ -312,24 +464,94 @@ const DynamicDetailsPanel = ({
             <Box sx={{ mt: 1, convictions: "center", p: 1, bgcolor: "#ffffff" }}>
               {tabValue === 0 && renderSummary()}
               {tabValue === 1 && (
-                <Editor
-                  height="500px"
-                  language="yaml"
-                  value={resource.manifest ? jsonToYaml(resource.manifest) : "No manifest available"}
-                  theme="light"
-                  options={{
-                    minimap: { enabled: false },
-                    fontSize: 14,
-                    lineNumbers: "on",
-                    scrollBeyondLastLine: false,
-                    readOnly: true,
-                    automaticLayout: true,
-                    wordWrap: "on",
+                <Box>
+                  <Stack direction="row" spacing={2} mb={2}>
+                    <Button
+                      variant={editFormat === "yaml" ? "contained" : "outlined"}
+                      onClick={() => handleFormatChange("yaml")}
+                      sx={{
+                        textTransform: "none",
+                        bgcolor: editFormat === "yaml" ? "#00b4d8" : "transparent",
+                        "&:hover": { bgcolor: editFormat === "yaml" ? "#009bbd" : "#e0e0e0" },
+                      }}
+                    >
+                      YAML
+                    </Button>
+                    <Button
+                      variant={editFormat === "json" ? "contained" : "outlined"}
+                      onClick={() => handleFormatChange("json")}
+                      sx={{
+                        textTransform: "none",
+                        bgcolor: editFormat === "json" ? "#00b4d8" : "transparent",
+                        "&:hover": { bgcolor: editFormat === "json" ? "#009bbd" : "#e0e0e0" },
+                      }}
+                    >
+                      JSON
+                    </Button>
+                  </Stack>
+                  <Editor
+                    height="500px"
+                    language={editFormat}
+                    value={
+                      editFormat === "yaml"
+                        ? jsonToYaml(editedManifest)
+                        : editedManifest || "No manifest available"
+                    }
+                    onChange={handleEditorChange}
+                    theme="light"
+                    options={{
+                      minimap: { enabled: false },
+                      fontSize: 14,
+                      lineNumbers: "on",
+                      scrollBeyondLastLine: false,
+                      readOnly: false,
+                      automaticLayout: true,
+                      wordWrap: "on",
+                    }}
+                  />
+                  <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+                    <Button
+                      variant="contained"
+                      onClick={handleUpdate}
+                      sx={{
+                        textTransform: "none",
+                        bgcolor: "#4caf50",
+                        "&:hover": { bgcolor: "#388e3c" },
+                      }}
+                    >
+                      Update
+                    </Button>
+                  </Box>
+                </Box>
+              )}
+              {tabValue === 2 && (
+                <Box
+                  sx={{
+                    height: "500px",
+                    bgcolor: "#FFFFFF", // White background for the Box
+                    borderRadius: 1,
+                    p: 1,
                   }}
-                />
+                >
+                  <div
+                    ref={terminalRef}
+                    style={{ height: "100%", width: "100%", overflow: "auto" }}
+                  />
+                </Box>
               )}
             </Box>
           </Paper>
+
+          <Snackbar
+            anchorOrigin={{ vertical: "top", horizontal: "center" }}
+            open={snackbarOpen}
+            autoHideDuration={4000}
+            onClose={handleSnackbarClose}
+          >
+            <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: "100%" }}>
+              {snackbarMessage}
+            </Alert>
+          </Snackbar>
         </Box>
       ) : null}
     </Box>
