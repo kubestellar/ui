@@ -165,7 +165,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
       }
       
       // Filter out the specific cluster names
-      clusters = clusters.filter(cluster => {
+      clusters = clusters.filter((cluster: { name: string }) => {
         const name = cluster.name || "";
         return !name.includes("k3d-kubeflex") && !name.includes("kind-kubeflex");
       });
