@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, memo } from "react";
-import { Box, Typography, Menu, MenuItem, Button, Alert, Snackbar } from "@mui/material";
+import { Box, Typography, Menu, MenuItem, Button, Alert, Snackbar, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
 import { ReactFlowProvider, Position, MarkerType } from "reactflow";
 import * as dagre from "dagre";
 import "reactflow/dist/style.css";
@@ -40,10 +40,13 @@ import { FlowCanvas } from "../components/Wds_Topology/FlowCanvas";
 import LoadingFallback from "./LoadingFallback";
 import DynamicDetailsPanel from "./DynamicDetailsPanel";
 import ReactDOM from "react-dom";
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+// import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useQuery} from "@tanstack/react-query";
 import { isEqual } from "lodash";
 import { useWebSocket } from "../context/WebSocketProvider";
 import useTheme from "../stores/themeStore";
+import axios from "axios";
+import WarningAmberIcon from '@mui/icons-material/WarningAmber'; // Import warning icon
 
 // Interfaces
 export interface NodeData {
@@ -386,7 +389,7 @@ const getLayoutedElements = (
 };
 
 const TreeViewComponent = () => {
-  const theme = useTheme((state) => state.theme); // Get theme from store
+  const theme = useTheme((state) => state.theme);
   const [nodes, setNodes] = useState<CustomNode[]>([]);
   const [edges, setEdges] = useState<CustomEdge[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
@@ -396,19 +399,26 @@ const TreeViewComponent = () => {
   const [showCreateOptions, setShowCreateOptions] = useState(false);
   const [activeOption, setActiveOption] = useState<string | null>("option1");
   const [selectedNode, setSelectedNode] = useState<SelectedNode | null>(null);
-  const [hasReceivedInitialData, setHasReceivedInitialData] = useState<boolean>(false);
-  const [isDataTransformed, setIsDataTransformed] = useState<boolean>(false);
-  const [isDataEmpty, setIsDataEmpty] = useState<boolean | null>(null);
-  const [minimumLoadingTimeElapsed, setMinimumLoadingTimeElapsed] = useState<boolean>(false); // New state for minimum loading time
+  const [isTransforming, setIsTransforming] = useState<boolean>(false);
+  const [dataReceived, setDataReceived] = useState<boolean>(false);
+  const [minimumLoadingTimeElapsed, setMinimumLoadingTimeElapsed] = useState<boolean>(false);
   const nodeCache = useRef<Map<string, CustomNode>>(new Map());
   const edgeCache = useRef<Map<string, CustomEdge>>(new Map());
   const edgeIdCounter = useRef<number>(0);
   const prevNodes = useRef<CustomNode[]>([]);
   const renderStartTime = useRef<number>(0);
   const panelRef = useRef<HTMLDivElement>(null);
+  // State for delete confirmation dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+  const [deleteNodeDetails, setDeleteNodeDetails] = useState<{
+    namespace: string;
+    nodeType: string;
+    nodeName: string;
+    nodeId: string;
+  } | null>(null);
 
   const { isConnected, connect } = useWebSocket();
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
   const NAMESPACE_QUERY_KEY = ["namespaces"];
 
   const { data: namespaceData } = useQuery<NamespaceResource[]>({
@@ -420,35 +430,32 @@ const TreeViewComponent = () => {
     initialData: [],
   });
 
-  // Log initial state on mount
   useEffect(() => {
     renderStartTime.current = performance.now();
     console.log(`[TreeView] Component mounted at 0ms`);
-    console.log(`[TreeView] Initial state - isConnected: ${isConnected}, hasReceivedInitialData: ${hasReceivedInitialData}, isDataTransformed: ${isDataTransformed}, isDataEmpty: ${isDataEmpty}, nodes: ${nodes.length}, edges: ${edges.length}`);
+    console.log(`[TreeView] Initial state - isConnected: ${isConnected}, dataReceived: ${dataReceived}, isTransforming: ${isTransforming}, minimumLoadingTimeElapsed: ${minimumLoadingTimeElapsed}, nodes: ${nodes.length}, edges: ${edges.length}`);
   }, []);
 
-  // Set minimum loading time
   useEffect(() => {
     const timer = setTimeout(() => {
       setMinimumLoadingTimeElapsed(true);
-    }, 1000); // 1 second minimum loading time
+      console.log(`[TreeView] Minimum loading time elapsed at ${performance.now() - renderStartTime.current}ms`);
+    }, 1000);
     return () => clearTimeout(timer);
   }, []);
 
-  // Log WebSocket connection initiation
   useEffect(() => {
     console.log(`[TreeView] Initiating WebSocket connection at ${performance.now() - renderStartTime.current}ms`);
     connect(true);
   }, [connect]);
 
-  // Updated logic to set hasReceivedInitialData when namespaceData is defined (even if empty)
   useEffect(() => {
-    if (namespaceData !== undefined && !hasReceivedInitialData) {
-      console.log(`[TreeView] Setting hasReceivedInitialData to true at ${performance.now() - renderStartTime.current}ms`);
+    if (namespaceData !== undefined && !dataReceived) {
+      console.log(`[TreeView] Setting dataReceived to true at ${performance.now() - renderStartTime.current}ms`);
       console.log(`[TreeView] namespaceData length: ${namespaceData?.length || 0}`);
-      setHasReceivedInitialData(true);
+      setDataReceived(true);
     }
-  }, [namespaceData, hasReceivedInitialData]);
+  }, [namespaceData, dataReceived]);
 
   const getTimeAgo = useCallback((timestamp: string | undefined): string => {
     if (!timestamp) return "Unknown";
@@ -524,8 +531,8 @@ const TreeViewComponent = () => {
             alignItems: "center",
             justifyContent: "space-between",
             padding: "2px 12px",
-            backgroundColor: theme === "dark" ? "#333" : "#fff", // Dark mode node background
-            color: theme === "dark" ? "#fff" : "#000", // Dark mode node text
+            backgroundColor: theme === "dark" ? "#333" : "#fff",
+            color: theme === "dark" ? "#fff" : "#000",
           },
           sourcePosition: Position.Right,
           targetPosition: Position.Left,
@@ -545,8 +552,8 @@ const TreeViewComponent = () => {
             target: id,
             type: "step",
             animated: true,
-            style: { stroke: theme === "dark" ? "#ccc" : "#a3a3a3", strokeDasharray: "2,2" }, // Dark mode edge color
-            markerEnd: { type: MarkerType.ArrowClosed, color: theme === "dark" ? "#ccc" : "#a3a3a3" }, // Dark mode arrow
+            style: { stroke: theme === "dark" ? "#ccc" : "#a3a3a3", strokeDasharray: "2,2" },
+            markerEnd: { type: MarkerType.ArrowClosed, color: theme === "dark" ? "#ccc" : "#a3a3a3" },
           };
           newEdges.push(edge);
           edgeCache.current.set(edgeId, edge);
@@ -563,20 +570,6 @@ const TreeViewComponent = () => {
       const startTime = performance.now();
       console.log(`[TreeView] Starting transformDataToTree with ${data?.length || 0} namespaces at ${startTime - renderStartTime.current}ms`);
 
-      if (!data || data.length === 0) {
-        console.log(`[TreeView] No data to process, clearing nodes and edges at ${performance.now() - renderStartTime.current}ms`);
-        nodeCache.current.clear();
-        edgeCache.current.clear();
-        edgeIdCounter.current = 0;
-        ReactDOM.unstable_batchedUpdates(() => {
-          setNodes([]);
-          setEdges([]);
-          setIsDataTransformed(true);
-          setIsDataEmpty(true); // Data is empty
-        });
-        return;
-      }
-
       nodeCache.current.clear();
       edgeCache.current.clear();
       edgeIdCounter.current = 0;
@@ -584,179 +577,179 @@ const TreeViewComponent = () => {
       const newNodes: CustomNode[] = [];
       const newEdges: CustomEdge[] = [];
 
-      data.forEach((namespace: NamespaceResource) => {
-        const namespaceId = `namespace-${namespace.name}`;
-        createNode(
-          namespaceId,
-          namespace.name,
-          "namespace",
-          namespace.status,
-          "",
-          namespace.name,
-          { apiVersion: "v1", kind: "Namespace", metadata: { name: namespace.name, namespace: namespace.name, creationTimestamp: "" }, status: { phase: namespace.status } },
-          null,
-          newNodes,
-          newEdges
-        );
+      if (data && data.length > 0) {
+        data.forEach((namespace: NamespaceResource) => {
+          const namespaceId = `namespace-${namespace.name}`;
+          createNode(
+            namespaceId,
+            namespace.name,
+            "namespace",
+            namespace.status,
+            "",
+            namespace.name,
+            { apiVersion: "v1", kind: "Namespace", metadata: { name: namespace.name, namespace: namespace.name, creationTimestamp: "" }, status: { phase: namespace.status } },
+            null,
+            newNodes,
+            newEdges
+          );
 
-        const resourcesMap: ResourcesMap = {
-          endpoints: namespace.resources[".v1/endpoints"] || [],
-          endpointSlices: namespace.resources["discovery.k8s.io.v1/endpointslices"] || [],
-          ...namespace.resources,
-        };
+          const resourcesMap: ResourcesMap = {
+            endpoints: namespace.resources[".v1/endpoints"] || [],
+            endpointSlices: namespace.resources["discovery.k8s.io.v1/endpointslices"] || [],
+            ...namespace.resources,
+          };
 
-        Object.values(resourcesMap)
-          .flat()
-          .forEach((item: ResourceItem, index: number) => {
-            const kindLower = item.kind.toLowerCase();
-            const resourceId = `${namespaceId}-${kindLower}-${item.metadata.name}-${index}`;
-            const status = item.status?.conditions?.some((c) => c.type === "Available" && c.status === "True") ? "Active" : "Inactive";
+          Object.values(resourcesMap)
+            .flat()
+            .forEach((item: ResourceItem, index: number) => {
+              const kindLower = item.kind.toLowerCase();
+              const resourceId = `${namespaceId}-${kindLower}-${item.metadata.name}-${index}`;
+              const status = item.status?.conditions?.some((c) => c.type === "Available" && c.status === "True") ? "Active" : "Inactive";
 
-            createNode(resourceId, item.metadata.name, kindLower, status, item.metadata.creationTimestamp, namespace.name, item, namespaceId, newNodes, newEdges);
+              createNode(resourceId, item.metadata.name, kindLower, status, item.metadata.creationTimestamp, namespace.name, item, namespaceId, newNodes, newEdges);
 
-            switch (kindLower) {
-              case "configmap":
-                createNode(`${resourceId}-volume`, `volume-${item.metadata.name}`, "volume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                createNode(`${resourceId}-envvar`, `envvar-${item.metadata.name}`, "envvar", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                break;
+              switch (kindLower) {
+                case "configmap":
+                  createNode(`${resourceId}-volume`, `volume-${item.metadata.name}`, "volume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${resourceId}-envvar`, `envvar-${item.metadata.name}`, "envvar", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  break;
 
-              case "clusterrolebinding": {
-                const crbClusterRoleId = `${resourceId}-clusterrole`;
-                createNode(crbClusterRoleId, `clusterrole-${item.metadata.name}`, "clusterrole", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                createNode(`${crbClusterRoleId}-user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, crbClusterRoleId, newNodes, newEdges);
-                createNode(`${crbClusterRoleId}-serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, item, crbClusterRoleId, newNodes, newEdges);
-                createNode(`${crbClusterRoleId}-group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, item, crbClusterRoleId, newNodes, newEdges);
-                break;
+                case "clusterrolebinding": {
+                  const crbClusterRoleId = `${resourceId}-clusterrole`;
+                  createNode(crbClusterRoleId, `clusterrole-${item.metadata.name}`, "clusterrole", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${crbClusterRoleId}-user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, crbClusterRoleId, newNodes, newEdges);
+                  createNode(`${crbClusterRoleId}-serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, item, crbClusterRoleId, newNodes, newEdges);
+                  createNode(`${crbClusterRoleId}-group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, item, crbClusterRoleId, newNodes, newEdges);
+                  break;
+                }
+
+                case "customresourcedefinition": {
+                  const crdCrId = `${resourceId}-customresource`;
+                  createNode(crdCrId, `cr-${item.metadata.name}`, "customresource", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${crdCrId}-controller`, `controller-${item.metadata.name}`, "controller", status, undefined, namespace.name, item, crdCrId, newNodes, newEdges);
+                  break;
+                }
+
+                case "clusterrole": {
+                  const crClusterRoleBindingId = `${resourceId}-clusterrolebinding`;
+                  createNode(crClusterRoleBindingId, `clusterrolebinding-${item.metadata.name}`, "clusterrolebinding", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${crClusterRoleBindingId}-user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, crClusterRoleBindingId, newNodes, newEdges);
+                  createNode(`${crClusterRoleBindingId}-group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, item, crClusterRoleBindingId, newNodes, newEdges);
+                  createNode(`${crClusterRoleBindingId}-serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, item, crClusterRoleBindingId, newNodes, newEdges);
+                  break;
+                }
+
+                case "cronjob":
+                  createNode(`${resourceId}-job`, `job-${item.metadata.name}`, "job", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  break;
+
+                case "deployment":
+                  createNode(`${resourceId}-replicaset`, `replicaset-${item.metadata.name}`, "replicaset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  break;
+
+                case "daemonset":
+                  break;
+
+                case "service":
+                  createNode(`${resourceId}-endpoints`, `endpoints-${item.metadata.name}`, "endpoints", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  break;
+
+                case "endpoints":
+                  break;
+
+                case "group":
+                  createNode(`${resourceId}-user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  break;
+
+                case "horizontalpodautoscaler":
+                  createNode(`${resourceId}-deployment`, `deployment-${item.metadata.name}`, "deployment", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${resourceId}-replicaset`, `replicaset-${item.metadata.name}`, "replicaset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${resourceId}-statefulset`, `statefulset-${item.metadata.name}`, "statefulset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  break;
+
+                case "ingress": {
+                  const ingControllerId = `${resourceId}-ingresscontroller`;
+                  createNode(ingControllerId, `ingresscontroller-${item.metadata.name}`, "ingresscontroller", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${ingControllerId}-service`, `service-${item.metadata.name}`, "service", status, undefined, namespace.name, item, ingControllerId, newNodes, newEdges);
+                  break;
+                }
+
+                case "job":
+                  break;
+
+                case "limitrange":
+                  createNode(`${resourceId}-namespace`, `namespace-${item.metadata.name}`, "namespace", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  break;
+
+                case "networkpolicy":
+                  break;
+
+                case "podsecuritypolicy":
+                  break;
+
+                case "persistentvolume":
+                  createNode(`${resourceId}-persistentvolumeclaim`, `pvc-${item.metadata.name}`, "persistentvolumeclaim", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  break;
+
+                case "persistentvolumeclaim":
+                  createNode(`${resourceId}-persistentvolume`, `pv-${item.metadata.name}`, "persistentvolume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  break;
+
+                case "resourcequota":
+                  createNode(`${resourceId}-namespace`, `namespace-${item.metadata.name}`, "namespace", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  break;
+
+                case "rolebinding": {
+                  const rbRoleId = `${resourceId}-role`;
+                  createNode(rbRoleId, `role-${item.metadata.name}`, "role", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${rbRoleId}-user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, rbRoleId, newNodes, newEdges);
+                  createNode(`${rbRoleId}-serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, item, rbRoleId, newNodes, newEdges);
+                  createNode(`${rbRoleId}-group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, item, rbRoleId, newNodes, newEdges);
+                  break;
+                }
+
+                case "role":
+                  createNode(`${resourceId}-namespace`, `namespace-${item.metadata.name}`, "namespace", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  break;
+
+                case "replicaset":
+                  break;
+
+                case "serviceaccount":
+                  break;
+
+                case "storageclass":
+                  createNode(`${resourceId}-persistentvolume`, `pv-${item.metadata.name}`, "persistentvolume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  break;
+
+                case "secret":
+                  createNode(`${resourceId}-volume`, `volume-${item.metadata.name}`, "volume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${resourceId}-envvar`, `envvar-${item.metadata.name}`, "envvar", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  break;
+
+                case "statefulset":
+                  break;
+
+                case "user":
+                  createNode(`${resourceId}-role`, `role-${item.metadata.name}`, "role", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${resourceId}-clusterrole`, `clusterrole-${item.metadata.name}`, "clusterrole", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  break;
+
+                case "volume":
+                  break;
+
+                default:
+                  break;
               }
-
-              case "customresourcedefinition": {
-                const crdCrId = `${resourceId}-customresource`;
-                createNode(crdCrId, `cr-${item.metadata.name}`, "customresource", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                createNode(`${crdCrId}-controller`, `controller-${item.metadata.name}`, "controller", status, undefined, namespace.name, item, crdCrId, newNodes, newEdges);
-                break;
-              }
-
-              case "clusterrole": {
-                const crClusterRoleBindingId = `${resourceId}-clusterrolebinding`;
-                createNode(crClusterRoleBindingId, `clusterrolebinding-${item.metadata.name}`, "clusterrolebinding", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                createNode(`${crClusterRoleBindingId}-user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, crClusterRoleBindingId, newNodes, newEdges);
-                createNode(`${crClusterRoleBindingId}-group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, item, crClusterRoleBindingId, newNodes, newEdges);
-                createNode(`${crClusterRoleBindingId}-serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, item, crClusterRoleBindingId, newNodes, newEdges);
-                break;
-              }
-
-              case "cronjob":
-                createNode(`${resourceId}-job`, `job-${item.metadata.name}`, "job", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                break;
-
-              case "deployment":
-                createNode(`${resourceId}-replicaset`, `replicaset-${item.metadata.name}`, "replicaset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                break;
-
-              case "daemonset":
-                break;
-
-              case "service":
-                createNode(`${resourceId}-endpoints`, `endpoints-${item.metadata.name}`, "endpoints", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                break;
-
-              case "endpoints":
-                break;
-
-              case "group":
-                createNode(`${resourceId}-user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                break;
-
-              case "horizontalpodautoscaler":
-                createNode(`${resourceId}-deployment`, `deployment-${item.metadata.name}`, "deployment", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                createNode(`${resourceId}-replicaset`, `replicaset-${item.metadata.name}`, "replicaset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                createNode(`${resourceId}-statefulset`, `statefulset-${item.metadata.name}`, "statefulset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                break;
-
-              case "ingress": {
-                const ingControllerId = `${resourceId}-ingresscontroller`;
-                createNode(ingControllerId, `ingresscontroller-${item.metadata.name}`, "ingresscontroller", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                createNode(`${ingControllerId}-service`, `service-${item.metadata.name}`, "service", status, undefined, namespace.name, item, ingControllerId, newNodes, newEdges);
-                break;
-              }
-
-              case "job":
-                break;
-
-              case "limitrange":
-                createNode(`${resourceId}-namespace`, `namespace-${item.metadata.name}`, "namespace", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                break;
-
-              case "networkpolicy":
-                break;
-
-              case "podsecuritypolicy":
-                break;
-
-              case "persistentvolume":
-                createNode(`${resourceId}-persistentvolumeclaim`, `pvc-${item.metadata.name}`, "persistentvolumeclaim", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                break;
-
-              case "persistentvolumeclaim":
-                createNode(`${resourceId}-persistentvolume`, `pv-${item.metadata.name}`, "persistentvolume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                break;
-
-              case "resourcequota":
-                createNode(`${resourceId}-namespace`, `namespace-${item.metadata.name}`, "namespace", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                break;
-
-              case "rolebinding": {
-                const rbRoleId = `${resourceId}-role`;
-                createNode(rbRoleId, `role-${item.metadata.name}`, "role", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                createNode(`${rbRoleId}-user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, rbRoleId, newNodes, newEdges);
-                createNode(`${rbRoleId}-serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, item, rbRoleId, newNodes, newEdges);
-                createNode(`${rbRoleId}-group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, item, rbRoleId, newNodes, newEdges);
-                break;
-              }
-
-              case "role":
-                createNode(`${resourceId}-namespace`, `namespace-${item.metadata.name}`, "namespace", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                break;
-
-              case "replicaset":
-                break;
-
-              case "serviceaccount":
-                break;
-
-              case "storageclass":
-                createNode(`${resourceId}-persistentvolume`, `pv-${item.metadata.name}`, "persistentvolume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                break;
-
-              case "secret":
-                createNode(`${resourceId}-volume`, `volume-${item.metadata.name}`, "volume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                createNode(`${resourceId}-envvar`, `envvar-${item.metadata.name}`, "envvar", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                break;
-
-              case "statefulset":
-                break;
-
-              case "user":
-                createNode(`${resourceId}-role`, `role-${item.metadata.name}`, "role", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                createNode(`${resourceId}-clusterrole`, `clusterrole-${item.metadata.name}`, "clusterrole", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                break;
-
-              case "volume":
-                break;
-
-              default:
-                break;
-            }
-          });
-      });
+            });
+        });
+      }
 
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(newNodes, newEdges, "LR", prevNodes);
-      const isEmpty = layoutedNodes.length === 0 && layoutedEdges.length === 0; // Calculate isDataEmpty based on layoutedNodes and layoutedEdges
       ReactDOM.unstable_batchedUpdates(() => {
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
-        setIsDataTransformed(true);
-        setIsDataEmpty(isEmpty);
+        setIsTransforming(false);
       });
       prevNodes.current = layoutedNodes;
 
@@ -766,22 +759,19 @@ const TreeViewComponent = () => {
     [createNode]
   );
 
-  // Log when namespaceData changes and transformDataToTree is called
   useEffect(() => {
     if (namespaceData !== undefined) {
       console.log(
         `[TreeView] namespaceData received with ${namespaceData.length} namespaces at ${performance.now() - renderStartTime.current}ms`
       );
-      setIsDataTransformed(false);
-      setIsDataEmpty(null);
+      setIsTransforming(true);
       transformDataToTree(namespaceData);
     }
   }, [namespaceData, transformDataToTree]);
 
-  // Consolidated debugging logs for nodes, edges, isConnected, hasReceivedInitialData, and isDataEmpty
   useEffect(() => {
     console.log(`[TreeView] State update at ${performance.now() - renderStartTime.current}ms`);
-    console.log(`[TreeView] isConnected: ${isConnected}, hasReceivedInitialData: ${hasReceivedInitialData}, isDataTransformed: ${isDataTransformed}, isDataEmpty: ${isDataEmpty}, nodes: ${nodes.length}, edges: ${edges.length}`);
+    console.log(`[TreeView] isConnected: ${isConnected}, dataReceived: ${dataReceived}, isTransforming: ${isTransforming}, minimumLoadingTimeElapsed: ${minimumLoadingTimeElapsed}, nodes: ${nodes.length}, edges: ${edges.length}`);
     if (nodes.length > 0 || edges.length > 0) {
       console.log(
         `[TreeView] Rendered successfully with ${nodes.length} nodes and ${edges.length} edges`
@@ -789,7 +779,7 @@ const TreeViewComponent = () => {
     } else {
       console.log(`[TreeView] Nodes and edges are empty`);
     }
-  }, [nodes, edges, isConnected, hasReceivedInitialData, isDataTransformed, isDataEmpty]);
+  }, [nodes, edges, isConnected, dataReceived, isTransforming, minimumLoadingTimeElapsed]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -804,59 +794,83 @@ const TreeViewComponent = () => {
     };
   }, [selectedNode, handleClosePanel]);
 
-  const deleteResourceMutation = useMutation({
-    mutationFn: async ({ namespace, nodeName }: { nodeId: string; nodeType: string; namespace: string; nodeName: string }) => {
-      const endpoint = `http://localhost:4000/api/namespaces/${namespace}/${nodeName}`;
-      console.log(endpoint);
-      throw new Error("API not implemented");
-    },
-    onMutate: async ({ nodeId }) => {
-      await queryClient.cancelQueries({ queryKey: NAMESPACE_QUERY_KEY });
-      const previousData = queryClient.getQueryData<NamespaceResource[]>(NAMESPACE_QUERY_KEY);
-      const node = nodes.find((n) => n.id === nodeId);
-      if (!node) return { previousData };
+  const handleDeleteNode = useCallback(
+    async (namespace: string, nodeType: string, nodeName: string, nodeId: string) => {
+      try {
+        const endpoint = `${process.env.VITE_BASE_URL}/api/${nodeType.toLowerCase()}s/${namespace}/${nodeName}`;
+        await axios.delete(endpoint);
 
-      const nodeIdParts = node.id.split("-");
-      let namespace = "";
-      const nodeName = node.data.label.props.label;
+        setNodes((prevNodes) => prevNodes.filter((n) => n.id !== nodeId));
+        setEdges((prevEdges) => prevEdges.filter((e) => e.source !== nodeId && e.target !== nodeId));
+        nodeCache.current.delete(nodeId);
 
-      if (node.id.startsWith("namespace-") && nodeIdParts.length === 2) {
-        namespace = nodeName;
-      } else {
-        namespace = nodeIdParts[1];
+        setSnackbarMessage(`"${nodeName}" deleted successfully`);
+        setSnackbarSeverity("success");
+        setSnackbarOpen(true);
+        console.log(`[TreeView] Node "${nodeName}" deleted successfully at ${performance.now() - renderStartTime.current}ms`);
+      } catch (error) {
+        console.error(`[TreeView] Failed to delete node ${nodeId} at ${performance.now() - renderStartTime.current}ms:`, error);
+        setSnackbarMessage(`Failed to delete "${nodeName}"`);
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
       }
-
-      const updatedData = previousData?.map((ns) => {
-        if (ns.name !== namespace) return ns;
-        const updatedResources = { ...ns.resources };
-        Object.keys(updatedResources).forEach((key) => {
-          updatedResources[key] = updatedResources[key].filter((item: ResourceItem) => item.metadata.name !== nodeName);
-        });
-        return { ...ns, resources: updatedResources };
-      });
-
-      queryClient.setQueryData(NAMESPACE_QUERY_KEY, updatedData);
-      setNodes((prevNodes) => prevNodes.filter((n) => n.id !== nodeId));
-      setEdges((prevEdges) => prevEdges.filter((e) => e.source !== nodeId && e.target !== nodeId));
-      nodeCache.current.delete(nodeId);
-
-      return { previousData };
     },
-    onError: (error, variables, context) => {
-      console.error(`[TreeView] Failed to delete node ${variables.nodeId} at ${performance.now() - renderStartTime.current}ms:`, error);
-      setSnackbarMessage(`Failed to delete "${variables.nodeName}"`);
-      setSnackbarSeverity("error");
-      setSnackbarOpen(true);
-      queryClient.setQueryData(NAMESPACE_QUERY_KEY, context?.previousData);
-    },
-    onSuccess: (_, variables) => {
-      setSnackbarMessage(`"${variables.nodeName}" deleted successfully`);
-      setSnackbarSeverity("success");
-      setSnackbarOpen(true);
-      queryClient.invalidateQueries({ queryKey: NAMESPACE_QUERY_KEY });
-      console.log(`[TreeView] Node "${variables.nodeName}" deleted successfully at ${performance.now() - renderStartTime.current}ms`);
-    },
-  });
+    []
+  );
+
+  // const deleteResourceMutation = useMutation({
+  //   mutationFn: async ({ namespace, nodeName }: { nodeId: string; nodeType: string; namespace: string; nodeName: string }) => {
+  //     const endpoint = `http://localhost:4000/api/namespaces/${namespace}/${nodeName}`;
+  //     console.log(endpoint);
+  //     throw new Error("API not implemented");
+  //   },
+  //   onMutate: async ({ nodeId }) => {
+  //     await queryClient.cancelQueries({ queryKey: NAMESPACE_QUERY_KEY });
+  //     const previousData = queryClient.getQueryData<NamespaceResource[]>(NAMESPACE_QUERY_KEY);
+  //     const node = nodes.find((n) => n.id === nodeId);
+  //     if (!node) return { previousData };
+
+  //     const nodeIdParts = node.id.split("-");
+  //     let namespace = "";
+  //     const nodeName = node.data.label.props.label;
+
+  //     if (node.id.startsWith("namespace-") && nodeIdParts.length === 2) {
+  //       namespace = nodeName;
+  //     } else {
+  //       namespace = nodeIdParts[1];
+  //     }
+
+  //     const updatedData = previousData?.map((ns) => {
+  //       if (ns.name !== namespace) return ns;
+  //       const updatedResources = { ...ns.resources };
+  //       Object.keys(updatedResources).forEach((key) => {
+  //         updatedResources[key] = updatedResources[key].filter((item: ResourceItem) => item.metadata.name !== nodeName);
+  //       });
+  //       return { ...ns, resources: updatedResources };
+  //     });
+
+  //     queryClient.setQueryData(NAMESPACE_QUERY_KEY, updatedData);
+  //     setNodes((prevNodes) => prevNodes.filter((n) => n.id !== nodeId));
+  //     setEdges((prevEdges) => prevEdges.filter((e) => e.source !== nodeId && e.target !== nodeId));
+  //     nodeCache.current.delete(nodeId);
+
+  //     return { previousData };
+  //   },
+  //   onError: (error, variables, context) => {
+  //     console.error(`[TreeView] Failed to delete node ${variables.nodeId} at ${performance.now() - renderStartTime.current}ms:`, error);
+  //     setSnackbarMessage(`Failed to delete "${variables.nodeName}"`);
+  //     setSnackbarSeverity("error");
+  //     setSnackbarOpen(true);
+  //     queryClient.setQueryData(NAMESPACE_QUERY_KEY, context?.previousData);
+  //   },
+  //   onSuccess: (_, variables) => {
+  //     setSnackbarMessage(`"${variables.nodeName}" deleted successfully`);
+  //     setSnackbarSeverity("success");
+  //     setSnackbarOpen(true);
+  //     queryClient.invalidateQueries({ queryKey: NAMESPACE_QUERY_KEY });
+  //     console.log(`[TreeView] Node "${variables.nodeName}" deleted successfully at ${performance.now() - renderStartTime.current}ms`);
+  //   },
+  // });
 
   const handleMenuClose = useCallback(() => {
     setContextMenu(null);
@@ -894,12 +908,14 @@ const TreeViewComponent = () => {
               });
               break;
             case "Delete":
-              deleteResourceMutation.mutate({
-                nodeId: contextMenu.nodeId,
-                nodeType,
+              // Show confirmation dialog instead of directly deleting
+              setDeleteNodeDetails({
                 namespace,
+                nodeType,
                 nodeName,
+                nodeId: contextMenu.nodeId,
               });
+              setDeleteDialogOpen(true);
               break;
             case "Logs":
               // TODO: Implement logs functionality
@@ -911,8 +927,22 @@ const TreeViewComponent = () => {
       }
       handleMenuClose();
     },
-    [contextMenu, nodes, handleClosePanel, deleteResourceMutation]
+    [contextMenu, nodes, handleClosePanel]
   );
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (deleteNodeDetails) {
+      const { namespace, nodeType, nodeName, nodeId } = deleteNodeDetails;
+      await handleDeleteNode(namespace, nodeType, nodeName, nodeId);
+    }
+    setDeleteDialogOpen(false);
+    setDeleteNodeDetails(null);
+  }, [deleteNodeDetails, handleDeleteNode]);
+
+  const handleDeleteCancel = useCallback(() => {
+    setDeleteDialogOpen(false);
+    setDeleteNodeDetails(null);
+  }, []);
 
   const handleSnackbarClose = useCallback(() => {
     setSnackbarOpen(false);
@@ -927,24 +957,22 @@ const TreeViewComponent = () => {
     setActiveOption("option1");
   };
 
-  // Updated isLoadingTree to include minimumLoadingTimeElapsed
-  const isLoadingTree = !isConnected || !hasReceivedInitialData || !isDataTransformed || isDataEmpty === null || !minimumLoadingTimeElapsed;
+  const isLoading = !isConnected || !dataReceived || isTransforming || !minimumLoadingTimeElapsed;
 
-  // Log the rendering decision
   useEffect(() => {
     console.log(`[TreeView] Rendering decision at ${performance.now() - renderStartTime.current}ms`);
-    console.log(`[TreeView] isLoadingTree: ${isLoadingTree}, isDataTransformed: ${isDataTransformed}, isDataEmpty: ${isDataEmpty}, nodes: ${nodes.length}, edges: ${edges.length}`);
-    if (isLoadingTree) {
-      console.log(`[TreeView] Showing loading spinner because isLoadingTree is true`);
-    } else if (isDataEmpty) {
-      console.log(`[TreeView] Showing "No Workloads Found" because isDataEmpty is true`);
-    } else {
+    console.log(`[TreeView] isLoading: ${isLoading}, nodes: ${nodes.length}, edges: ${edges.length}`);
+    if (isLoading) {
+      console.log(`[TreeView] Showing loading spinner because isLoading is true`);
+    } else if (nodes.length > 0 || edges.length > 0) {
       console.log(`[TreeView] Showing React Flow canvas with ${nodes.length} nodes and ${edges.length} edges`);
+    } else {
+      console.log(`[TreeView] Showing "No Workloads Found" because nodes and edges are empty`);
     }
-  }, [isLoadingTree, nodes, edges, isDataTransformed, isDataEmpty]);
+  }, [isLoading, nodes, edges]);
 
   return (
-    <Box sx={{ display: "flex", height: "100vh", width: "100%", position: "relative" }}>
+    <Box sx={{ display: "flex", height: "85vh", width: "100%", position: "relative" }}>
       <Box
         sx={{
           flex: 1,
@@ -990,24 +1018,31 @@ const TreeViewComponent = () => {
         {showCreateOptions && <CreateOptions activeOption={activeOption} setActiveOption={setActiveOption} onCancel={handleCancelCreateOptions} />}
 
         <Box sx={{ width: "100%", height: "calc(100% - 80px)", position: "relative" }}>
-          {isLoadingTree ? (
+          {isLoading ? (
             <LoadingFallback message="Loading the tree..." size="medium" />
-          ) : isDataEmpty ? (
+          ) : nodes.length > 0 || edges.length > 0 ? (
+            <Box sx={{ width: "100%", height: "100%", position: "relative" }}>
+              <ReactFlowProvider>
+                <FlowCanvas nodes={nodes} edges={edges} renderStartTime={renderStartTime} theme={theme} />
+                <ZoomControls theme={theme} />
+              </ReactFlowProvider>
+            </Box>
+          ) : (
             <Box
               sx={{
                 width: "100%",
-                height: "100%",
-                backgroundColor: "#fff",
+                backgroundColor: theme === "dark" ? "var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity)))" : "#fff" ,
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
+                marginTop: "250px",
               }}
             >
               <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-                <Typography variant="h6" sx={{ color: "#333", fontWeight: 600, fontSize: "20px" }}>
+                <Typography sx={{ color: theme === "dark" ? "#fff" : "#333" , fontWeight: 600, fontSize: "45px" }}>
                   No Workloads Found
                 </Typography>
-                <Typography variant="body2" sx={{ color: "#666", fontSize: "14px", mb: 2 }}>
+                <Typography variant="body2" sx={{ color: "#666", fontSize: "20px", mb: 2 }}>
                   Get started by creating your first workload
                 </Typography>
                 <Button
@@ -1019,13 +1054,6 @@ const TreeViewComponent = () => {
                   Create Workload
                 </Button>
               </Box>
-            </Box>
-          ) : (
-            <Box sx={{ width: "100%", height: "100%", position: "relative" }}>
-              <ReactFlowProvider>
-                <FlowCanvas nodes={nodes} edges={edges} renderStartTime={renderStartTime} theme={theme} />
-                <ZoomControls theme={theme} />
-              </ReactFlowProvider>
             </Box>
           )}
 
@@ -1048,6 +1076,57 @@ const TreeViewComponent = () => {
             {snackbarMessage}
           </Alert>
         </Snackbar>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog
+          open={deleteDialogOpen}
+          onClose={handleDeleteCancel}
+          aria-labelledby="delete-confirmation-dialog-title"
+          sx={{
+            "& .MuiDialog-paper": {
+              borderRadius: "8px",
+              padding: "16px",
+              width: "400px",
+            },
+          }}
+        >
+          <DialogTitle id="delete-confirmation-dialog-title" sx={{ display: "flex", alignItems: "center", gap: 1, fontSize: "18px", fontWeight: 600 }}>
+            <WarningAmberIcon sx={{ color: "#FFA500", fontSize: "24px" }} />
+            Cancel Resource Deletion
+          </DialogTitle>
+          <DialogContent>
+            <Typography sx={{ fontSize: "14px", color: "#333", mb: 2 }}>
+              Are you sure you want to delete "{deleteNodeDetails?.nodeName}"? This action cannot be undone.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ justifyContent: "space-between", padding: "0 16px 16px 16px" }}>
+            <Button
+              onClick={handleDeleteCancel}
+              sx={{
+                textTransform: "none",
+                color: "#2F86FF",
+                fontWeight: 600,
+                "&:hover": { backgroundColor: "rgba(47, 134, 255, 0.1)" },
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDeleteConfirm}
+              sx={{
+                textTransform: "none",
+                backgroundColor: "#FF4D4F",
+                color: "#FFFFFF",
+                fontWeight: 600,
+                "&:hover": { backgroundColor: "#E64446" },
+                padding: "6px 16px",
+                borderRadius: "4px",
+              }}
+            >
+              Yes, Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
 
       <div ref={panelRef}>

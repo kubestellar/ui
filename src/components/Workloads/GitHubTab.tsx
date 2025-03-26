@@ -1,6 +1,7 @@
 import { Box, Button, FormControl, MenuItem, Select, SelectChangeEvent, TextField, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { StyledContainer } from "../StyledComponents";
+import useTheme from "../../stores/themeStore"; // Import useTheme for dark mode support
 
 interface FormData {
   repositoryUrl: string;
@@ -43,6 +44,8 @@ export const GitHubTab = ({
   handleDeploy,
   handleCancelClick,
 }: Props) => {
+  const theme = useTheme((state) => state.theme); // Get the current theme
+
   return (
     // --- GitHub Tab Section ---
     <StyledContainer>
@@ -66,7 +69,7 @@ export const GitHubTab = ({
             sx={{
               fontWeight: 600,
               fontSize: "13px",
-              color: "#333",
+              color: theme === "dark" ? "#d4d4d4" : "#333",
               mb: 1,
             }}
           >
@@ -82,17 +85,17 @@ export const GitHubTab = ({
             placeholder="e.g., https://github.com/username/repo"
             InputProps={{
               startAdornment: (
-                <span role="img" aria-label="cluster" style={{ fontSize: "0.9rem", marginRight: "8px" }}>
-                  🔶
+                <span style={{ fontSize: "0.9rem", marginRight: "8px" }}>
+                  *
                 </span>
               ),
             }}
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: "8px",
-                backgroundColor: "#fff",
+                backgroundColor: theme === "dark" ? "#252526" : "#fff",
                 "& fieldset": {
-                  borderColor: "#e0e0e0",
+                  borderColor: theme === "dark" ? "#444" : "#e0e0e0",
                   borderWidth: "1px",
                 },
                 "&:hover fieldset": {
@@ -109,10 +112,10 @@ export const GitHubTab = ({
               "& .MuiInputBase-input": {
                 padding: "12px 14px",
                 fontSize: "0.875rem",
-                color: "#666",
+                color: theme === "dark" ? "#d4d4d4" : "#666",
               },
               "& .MuiInputBase-input::placeholder": {
-                color: "#666",
+                color: theme === "dark" ? "#858585" : "#666",
                 opacity: 1,
               },
             }}
@@ -121,7 +124,7 @@ export const GitHubTab = ({
             <span role="img" aria-label="tip" style={{ fontSize: "0.8rem", marginRight: "8px" }}>
               💡
             </span>
-            <Typography variant="caption" sx={{ color: "#666" }}>
+            <Typography variant="caption" sx={{ color: theme === "dark" ? "#858585" : "#666" }}>
               Use a valid GitHub repository URL
             </Typography>
           </Box>
@@ -133,7 +136,7 @@ export const GitHubTab = ({
             sx={{
               fontWeight: 600,
               fontSize: "13px",
-              color: "#333",
+              color: theme === "dark" ? "#d4d4d4" : "#333",
               mb: 1,
             }}
           >
@@ -149,17 +152,17 @@ export const GitHubTab = ({
             placeholder="e.g., /path/to/yaml"
             InputProps={{
               startAdornment: (
-                <span role="img" aria-label="cluster" style={{ fontSize: "0.9rem", marginRight: "8px" }}>
-                  🔶
+                <span style={{ fontSize: "0.9rem", marginRight: "8px" }}>
+                  *
                 </span>
               ),
             }}
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: "8px",
-                backgroundColor: "#fff",
+                backgroundColor: theme === "dark" ? "#252526" : "#fff",
                 "& fieldset": {
-                  borderColor: "#e0e0e0",
+                  borderColor: theme === "dark" ? "#444" : "#e0e0e0",
                   borderWidth: "1px",
                 },
                 "&:hover fieldset": {
@@ -176,10 +179,10 @@ export const GitHubTab = ({
               "& .MuiInputBase-input": {
                 padding: "12px 14px",
                 fontSize: "0.875rem",
-                color: "#666",
+                color: theme === "dark" ? "#d4d4d4" : "#666",
               },
               "& .MuiInputBase-input::placeholder": {
-                color: "#666",
+                color: theme === "dark" ? "#858585" : "#666",
                 opacity: 1,
               },
             }}
@@ -188,7 +191,7 @@ export const GitHubTab = ({
             <span role="img" aria-label="tip" style={{ fontSize: "0.8rem", marginRight: "8px" }}>
               💡
             </span>
-            <Typography variant="caption" sx={{ color: "#666" }}>
+            <Typography variant="caption" sx={{ color: theme === "dark" ? "#858585" : "#666" }}>
               Specify the path to your YAML files in the repository
             </Typography>
           </Box>
@@ -200,7 +203,7 @@ export const GitHubTab = ({
             sx={{
               fontWeight: 600,
               fontSize: "13px",
-              color: "#333",
+              color: theme === "dark" ? "#d4d4d4" : "#333",
               mb: 1,
             }}
           >
@@ -215,17 +218,17 @@ export const GitHubTab = ({
             placeholder="e.g., master, dev-branch"
             InputProps={{
               startAdornment: (
-                <span role="img" aria-label="cluster" style={{ fontSize: "0.9rem", marginRight: "8px" }}>
-                  🔶
+                <span style={{ fontSize: "0.9rem", marginRight: "8px" }}>
+                  *
                 </span>
               ),
             }}
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: "8px",
-                backgroundColor: "#fff",
+                backgroundColor: theme === "dark" ? "#252526" : "#fff",
                 "& fieldset": {
-                  borderColor: "#e0e0e0",
+                  borderColor: theme === "dark" ? "#444" : "#e0e0e0",
                   borderWidth: "1px",
                 },
                 "&:hover fieldset": {
@@ -239,10 +242,10 @@ export const GitHubTab = ({
               "& .MuiInputBase-input": {
                 padding: "12px 14px",
                 fontSize: "0.875rem",
-                color: "#666",
+                color: theme === "dark" ? "#d4d4d4" : "#666",
               },
               "& .MuiInputBase-input::placeholder": {
-                color: "#666",
+                color: theme === "dark" ? "#858585" : "#666",
                 opacity: 1,
               },
             }}
@@ -251,7 +254,7 @@ export const GitHubTab = ({
             <span role="img" aria-label="tip" style={{ fontSize: "0.8rem", marginRight: "8px" }}>
               💡
             </span>
-            <Typography variant="caption" sx={{ color: "#666" }}>
+            <Typography variant="caption" sx={{ color: theme === "dark" ? "#858585" : "#666" }}>
               Specify the branch to deploy from
             </Typography>
           </Box>
@@ -263,7 +266,7 @@ export const GitHubTab = ({
             sx={{
               fontWeight: 600,
               fontSize: "13px",
-              color: "#333",
+              color: theme === "dark" ? "#d4d4d4" : "#333",
               mb: 1,
             }}
           >
@@ -278,9 +281,9 @@ export const GitHubTab = ({
                 selected ? (
                   selected
                 ) : (
-                  <Box sx={{ display: "flex", alignItems: "center", color: "#666" }}>
-                    <span role="img" aria-label="cluster" style={{ fontSize: "0.9rem", marginRight: "8px" }}>
-                      🔶
+                  <Box sx={{ display: "flex", alignItems: "center", color: theme === "dark" ? "#858585" : "#666" }}>
+                    <span style={{ fontSize: "0.9rem", marginRight: "8px" }}>
+                      *
                     </span>
                     <Typography sx={{ fontSize: "0.875rem" }}>
                       e.g., username-pat
@@ -290,10 +293,10 @@ export const GitHubTab = ({
               }
               sx={{
                 borderRadius: "8px",
-                backgroundColor: "#fff",
+                backgroundColor: theme === "dark" ? "#252526" : "#fff",
                 "& .MuiOutlinedInput-root": {
                   "& fieldset": {
-                    borderColor: "#e0e0e0",
+                    borderColor: theme === "dark" ? "#444" : "#e0e0e0",
                     borderWidth: "2px",
                   },
                   "&:hover fieldset": {
@@ -307,13 +310,14 @@ export const GitHubTab = ({
                 "& .MuiSelect-select": {
                   padding: "12px 14px",
                   fontSize: "0.875rem",
-                  color: "#666",
+                  color: theme === "dark" ? "#d4d4d4" : "#666",
                 },
               }}
               MenuProps={{
                 PaperProps: {
                   sx: {
-                    bgcolor: "#fff",
+                    bgcolor: theme === "dark" ? "#252526" : "#fff",
+                    color: theme === "dark" ? "#d4d4d4" : "#333",
                   },
                 },
               }}
@@ -329,7 +333,7 @@ export const GitHubTab = ({
             <span role="img" aria-label="tip" style={{ fontSize: "0.8rem", marginRight: "8px" }}>
               💡
             </span>
-            <Typography variant="caption" sx={{ color: "#666" }}>
+            <Typography variant="caption" sx={{ color: theme === "dark" ? "#858585" : "#666" }}>
               Select or add credentials for private repositories
             </Typography>
           </Box>
@@ -338,7 +342,15 @@ export const GitHubTab = ({
           variant="contained"
           onClick={handleOpenCredentialDialog}
           startIcon={<AddIcon />}
-          sx={{ alignSelf: "flex-start", padding: "1px 8px" }}
+          sx={{
+            alignSelf: "flex-start",
+            padding: "1px 8px",
+            backgroundColor: "#1976d2",
+            color: "#fff",
+            "&:hover": {
+              backgroundColor: "#1565c0",
+            },
+          }}
         >
           Add Cred
         </Button>
@@ -349,7 +361,7 @@ export const GitHubTab = ({
             sx={{
               fontWeight: 600,
               fontSize: "13px",
-              color: "#333",
+              color: theme === "dark" ? "#d4d4d4" : "#333",
               mb: 1,
             }}
           >
@@ -364,9 +376,9 @@ export const GitHubTab = ({
                 selected ? (
                   selected
                 ) : (
-                  <Box sx={{ display: "flex", alignItems: "center", color: "#666" }}>
-                    <span role="img" aria-label="cluster" style={{ fontSize: "0.9rem", marginRight: "8px" }}>
-                      🔶
+                  <Box sx={{ display: "flex", alignItems: "center", color: theme === "dark" ? "#858585" : "#666" }}>
+                    <span style={{ fontSize: "0.9rem", marginRight: "8px" }}>
+                      *
                     </span>
                     <Typography sx={{ fontSize: "0.875rem" }}>
                       e.g., webhook-url-pat
@@ -376,10 +388,10 @@ export const GitHubTab = ({
               }
               sx={{
                 borderRadius: "8px",
-                backgroundColor: "#fff",
+                backgroundColor: theme === "dark" ? "#252526" : "#fff",
                 "& .MuiOutlinedInput-root": {
                   "& fieldset": {
-                    borderColor: "#e0e0e0",
+                    borderColor: theme === "dark" ? "#444" : "#e0e0e0",
                     borderWidth: "2px",
                   },
                   "&:hover fieldset": {
@@ -393,13 +405,14 @@ export const GitHubTab = ({
                 "& .MuiSelect-select": {
                   padding: "12px 14px",
                   fontSize: "0.875rem",
-                  color: "#666",
+                  color: theme === "dark" ? "#d4d4d4" : "#666",
                 },
               }}
               MenuProps={{
                 PaperProps: {
                   sx: {
-                    bgcolor: "#fff",
+                    bgcolor: theme === "dark" ? "#252526" : "#fff",
+                    color: theme === "dark" ? "#d4d4d4" : "#333",
                   },
                 },
               }}
@@ -415,7 +428,7 @@ export const GitHubTab = ({
             <span role="img" aria-label="tip" style={{ fontSize: "0.8rem", marginRight: "8px" }}>
               💡
             </span>
-            <Typography variant="caption" sx={{ color: "#666" }}>
+            <Typography variant="caption" sx={{ color: theme === "dark" ? "#858585" : "#666" }}>
               Select or add a webhook for automated deployments
             </Typography>
           </Box>
@@ -424,7 +437,15 @@ export const GitHubTab = ({
           variant="contained"
           onClick={handleOpenWebhookDialog}
           startIcon={<AddIcon />}
-          sx={{ alignSelf: "flex-start", padding: "1px 6px" }}
+          sx={{
+            alignSelf: "flex-start",
+            padding: "1px 6px",
+            backgroundColor: "#1976d2",
+            color: "#fff",
+            "&:hover": {
+              backgroundColor: "#1565c0",
+            },
+          }}
         >
           Add Webhook
         </Button>
@@ -436,10 +457,10 @@ export const GitHubTab = ({
           sx={{
             textTransform: "none",
             fontWeight: 600,
-            color: "#666",
+            color: theme === "dark" ? "#d4d4d4" : "#666",
             padding: "8px 16px",
             "&:hover": {
-              backgroundColor: "#f5f5f5",
+              backgroundColor: theme === "dark" ? "#333" : "#f5f5f5",
             },
           }}
         >
