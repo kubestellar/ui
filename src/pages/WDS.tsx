@@ -26,7 +26,7 @@ const WDS = () => {
   }
 
   return (
-    <div className={`w-full p-4`}>
+    <div className={`w-full`}>
         <TreeView />
     </div>
   );

@@ -43,23 +43,23 @@ const CreateOptions = ({
 kind: Deployment
 metadata:
   name: example
-  labels:
-    app: nginx
+  namespace: test
 spec:
-  replicas: 3
+  replicas: 2
   selector:
     matchLabels:
-      app: nginx
+      app: my-app
   template:
     metadata:
       labels:
-        app: nginx
+        app: my-app
     spec:
       containers:
-      - name: nginx
-        image: nginx:1.14.2
-        ports:
-        - containerPort: 80`;
+        - name: my-container
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+`;
   const [editorContent, setEditorContent] = useState<string>(initialEditorContent);
   const [workloadName, setWorkloadName] = useState<string>("example");
   const [snackbar, setSnackbar] = useState<{
@@ -98,8 +98,7 @@ spec:
   };
   const [formData, setFormData] = useState<FormData>(initialFormData);
 
-  const { useCreateWorkload, useUploadWorkloadFile } = useWDSQueries();
-  const createWorkloadMutation = useCreateWorkload();
+  const { useUploadWorkloadFile } = useWDSQueries();
   const uploadFileMutation = useUploadWorkloadFile();
 
   const detectContentType = (content: string): "json" | "yaml" => {
@@ -119,15 +118,18 @@ spec:
     }
 
     try {
-      let parsedInput: Workload;
+      let documents: Workload[] = [];
       const contentType = detectContentType(editorContent);
       if (contentType === "json") {
-        parsedInput = JSON.parse(editorContent);
+        const parsed = JSON.parse(editorContent);
+        documents = Array.isArray(parsed) ? parsed : [parsed];
       } else {
-        parsedInput = jsyaml.load(editorContent) as Workload;
+        jsyaml.loadAll(editorContent, (doc) => documents.push(doc as Workload), {});
       }
 
-      const name = parsedInput?.metadata?.name || "";
+      // Find the first document with metadata.name
+      const docWithName = documents.find((doc) => doc?.metadata?.name);
+      const name = docWithName?.metadata?.name || "";
       setWorkloadName(name);
     } catch (error) {
       console.error("Error parsing editor content:", error);
@@ -151,15 +153,17 @@ spec:
       }
 
       try {
-        let parsedInput: Workload;
+        let documents: Workload[] = [];
         const contentType = detectContentType(content);
         if (contentType === "json") {
-          parsedInput = JSON.parse(content);
+          const parsed = JSON.parse(content);
+          documents = Array.isArray(parsed) ? parsed : [parsed];
         } else {
-          parsedInput = jsyaml.load(content) as Workload;
+          jsyaml.loadAll(content, (doc) => documents.push(doc as Workload), {});
         }
 
-        const name = parsedInput?.metadata?.name || "";
+        const docWithName = documents.find((doc) => doc?.metadata?.name);
+        const name = docWithName?.metadata?.name || "";
         setWorkloadName(name);
       } catch (error) {
         console.error("Error parsing uploaded file:", error);
@@ -255,27 +259,33 @@ spec:
       return;
     }
 
-    let parsedInput: Workload;
     try {
+      // Parse all documents into an array
+      let documents: Workload[] = [];
       const contentType = detectContentType(fileContent);
       if (contentType === "json") {
-        parsedInput = JSON.parse(fileContent);
+        const parsed = JSON.parse(fileContent);
+        documents = Array.isArray(parsed) ? parsed : [parsed];
       } else {
-        parsedInput = jsyaml.load(fileContent) as Workload;
+        jsyaml.loadAll(fileContent, (doc) => documents.push(doc as Workload), {});
       }
 
-      if (!parsedInput.kind) {
-        toast.error("Missing required field: 'kind'");
-        return;
-      }
-      if (!parsedInput.metadata?.name) {
-        toast.error("Missing required field: 'metadata.name'");
+      // Validate that at least one document has metadata.name
+      const hasName = documents.some((doc) => doc?.metadata?.name);
+      if (!hasName) {
+        toast.error("At least one document must have 'metadata.name'");
         return;
       }
 
-      await createWorkloadMutation.mutateAsync({ data: parsedInput });
-      toast.success("Deployment successful!");
-      setTimeout(() => window.location.reload(), 500);
+      // Send the array of documents to the API
+      const response = await axios.post("http://localhost:4000/api/resources", documents);
+
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Deployment successful!");
+        setTimeout(() => window.location.reload(), 500);
+      } else {
+        throw new Error(`Unexpected response status: ${response.status}`);
+      }
     } catch (error: unknown) {
       const err = error as AxiosError;
       console.error("Error uploading:", error);
@@ -565,7 +575,7 @@ spec:
               iconPosition="start"
             />
             <StyledTab
-              label="Upload File"
+              label="From File"
               value="option2"
               icon={<span role="img" aria-label="file" style={{ fontSize: "0.9rem" }}>📁</span>}
               iconPosition="start"
@@ -596,6 +606,7 @@ spec:
               <UploadFileTab
                 workloadName={workloadName}
                 selectedFile={selectedFile}
+                setSelectedFile={setSelectedFile}
                 loading={loading}
                 handleDragOver={handleDragOver}
                 handleDragLeave={handleDragLeave}
