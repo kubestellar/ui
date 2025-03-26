@@ -417,8 +417,7 @@ const TreeViewComponent = () => {
     nodeId: string;
   } | null>(null);
 
-
-  const { isConnected, connect } = useWebSocket();
+  const { isConnected, connect, hasValidDatat } = useWebSocket();
   // const queryClient = useQueryClient();
   const NAMESPACE_QUERY_KEY = ["namespaces"];
 
@@ -434,8 +433,7 @@ const TreeViewComponent = () => {
   useEffect(() => {
     renderStartTime.current = performance.now();
     console.log(`[TreeView] Component mounted at 0ms`);
-    console.log(`[TreeView] Initial state - isConnected: ${isConnected}, hasValidData: ${hasValidData}, hasReceivedInitialData: ${hasReceivedInitialData}, isDataTransformed: ${isDataTransformed}, isDataEmpty: ${isDataEmpty}, nodes: ${nodes.length}, edges: ${edges.length}`);
-
+    console.log(`[TreeView] Initial state - isConnected: ${isConnected}, dataReceived: ${dataReceived}, isTransforming: ${isTransforming}, minimumLoadingTimeElapsed: ${minimumLoadingTimeElapsed}, nodes: ${nodes.length}, edges: ${edges.length}`);
   }, []);
 
   useEffect(() => {
@@ -773,7 +771,7 @@ const TreeViewComponent = () => {
 
   useEffect(() => {
     console.log(`[TreeView] State update at ${performance.now() - renderStartTime.current}ms`);
-    console.log(`[TreeView] isConnected: ${isConnected}, dataReceived: ${dataReceived}, isTransforming: ${isTransforming}, minimumLoadingTimeElapsed: ${minimumLoadingTimeElapsed}, nodes: ${nodes.length}, edges: ${edges.length}`);
+    console.log(`[TreeView] isConnected: ${isConnected}, hasValidDatat: ${hasValidDatat}, isTransforming: ${isTransforming}, minimumLoadingTimeElapsed: ${minimumLoadingTimeElapsed}, nodes: ${nodes.length}, edges: ${edges.length}`);
     if (nodes.length > 0 || edges.length > 0) {
       console.log(
         `[TreeView] Rendered successfully with ${nodes.length} nodes and ${edges.length} edges`
@@ -781,7 +779,7 @@ const TreeViewComponent = () => {
     } else {
       console.log(`[TreeView] Nodes and edges are empty`);
     }
-  }, [nodes, edges, isConnected, dataReceived, isTransforming, minimumLoadingTimeElapsed]);
+  }, [nodes, edges, isConnected, hasValidDatat, isTransforming, minimumLoadingTimeElapsed]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -959,22 +957,19 @@ const TreeViewComponent = () => {
     setActiveOption("option1");
   };
 
-  // Updated isLoadingTree to include minimumLoadingTimeElapsed and hasValidData check
-  const isLoadingTree = !isConnected || !hasValidData || !isDataTransformed || isDataEmpty === null || !minimumLoadingTimeElapsed;
+  const isLoading = !isConnected || !hasValidDatat || isTransforming || !minimumLoadingTimeElapsed;
 
   useEffect(() => {
     console.log(`[TreeView] Rendering decision at ${performance.now() - renderStartTime.current}ms`);
-    console.log(`[TreeView] isLoadingTree: ${isLoadingTree}, isConnected: ${isConnected}, hasValidData: ${hasValidData}, isDataTransformed: ${isDataTransformed}, isDataEmpty: ${isDataEmpty}, nodes: ${nodes.length}, edges: ${edges.length}`);
-    if (isLoadingTree) {
-      console.log(`[TreeView] Showing loading spinner because isLoadingTree is true`);
-    } else if (isDataEmpty) {
-      console.log(`[TreeView] Showing "No Workloads Found" because isDataEmpty is true`);
-    } else {
+    console.log(`[TreeView] isLoading: ${isLoading}, nodes: ${nodes.length}, edges: ${edges.length}`);
+    if (isLoading) {
+      console.log(`[TreeView] Showing loading spinner because isLoading is true`);
+    } else if (nodes.length > 0 || edges.length > 0) {
       console.log(`[TreeView] Showing React Flow canvas with ${nodes.length} nodes and ${edges.length} edges`);
     } else {
       console.log(`[TreeView] Showing "No Workloads Found" because nodes and edges are empty`);
     }
-  }, [isLoadingTree, nodes, edges, isDataTransformed, isDataEmpty, isConnected, hasValidData]);
+  }, [isLoading, nodes, edges]);
 
   return (
     <Box sx={{ display: "flex", height: "85vh", width: "100%", position: "relative" }}>
