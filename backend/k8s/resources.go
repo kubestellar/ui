@@ -40,6 +40,13 @@ func getGVR(discoveryClient discovery.DiscoveryInterface, resourceKind string) (
 				}
 				isNamespaced := resource.Namespaced
 				return schema.GroupVersionResource{Group: gv.Group, Version: gv.Version, Resource: resource.Name}, isNamespaced, nil
+			} else if resource.Name == resourceKind {
+				gv, err := schema.ParseGroupVersion(resourceGroup.GroupVersion)
+				if err != nil {
+					return schema.GroupVersionResource{}, false, err
+				}
+				isNamespaced := resource.Namespaced
+				return schema.GroupVersionResource{Group: gv.Group, Version: gv.Version, Resource: resource.Name}, isNamespaced, nil
 			}
 		}
 	}
