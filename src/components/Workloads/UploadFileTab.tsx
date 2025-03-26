@@ -33,7 +33,7 @@ interface YamlDocument {
 }
 
 export const UploadFileTab = ({
-  workloadName,
+  // workloadName,
   selectedFile,
   setSelectedFile,
   loading,
