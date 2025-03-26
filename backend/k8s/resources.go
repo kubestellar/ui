@@ -33,14 +33,14 @@ func getGVR(discoveryClient discovery.DiscoveryInterface, resourceKind string) (
 	for _, resourceGroup := range resourceList {
 		for _, resource := range resourceGroup.APIResources {
 			// we are looking for the resourceKind
-			if resource.Kind == resourceKind {
+			if strings.EqualFold(resource.Kind, resourceKind) {
 				gv, err := schema.ParseGroupVersion(resourceGroup.GroupVersion)
 				if err != nil {
 					return schema.GroupVersionResource{}, false, err
 				}
 				isNamespaced := resource.Namespaced
 				return schema.GroupVersionResource{Group: gv.Group, Version: gv.Version, Resource: resource.Name}, isNamespaced, nil
-			} else if resource.Name == resourceKind {
+			} else if strings.EqualFold(resource.Name, resourceKind) {
 				gv, err := schema.ParseGroupVersion(resourceGroup.GroupVersion)
 				if err != nil {
 					return schema.GroupVersionResource{}, false, err
