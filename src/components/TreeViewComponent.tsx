@@ -407,7 +407,7 @@ const TreeViewComponent = () => {
   const renderStartTime = useRef<number>(0);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const { isConnected, connect } = useWebSocket();
+  const { isConnected, hasValidData, connect } = useWebSocket();
   const queryClient = useQueryClient();
   const NAMESPACE_QUERY_KEY = ["namespaces"];
 
@@ -424,7 +424,7 @@ const TreeViewComponent = () => {
   useEffect(() => {
     renderStartTime.current = performance.now();
     console.log(`[TreeView] Component mounted at 0ms`);
-    console.log(`[TreeView] Initial state - isConnected: ${isConnected}, hasReceivedInitialData: ${hasReceivedInitialData}, isDataTransformed: ${isDataTransformed}, isDataEmpty: ${isDataEmpty}, nodes: ${nodes.length}, edges: ${edges.length}`);
+    console.log(`[TreeView] Initial state - isConnected: ${isConnected}, hasValidData: ${hasValidData}, hasReceivedInitialData: ${hasReceivedInitialData}, isDataTransformed: ${isDataTransformed}, isDataEmpty: ${isDataEmpty}, nodes: ${nodes.length}, edges: ${edges.length}`);
   }, []);
 
   // Set minimum loading time
@@ -927,13 +927,13 @@ const TreeViewComponent = () => {
     setActiveOption("option1");
   };
 
-  // Updated isLoadingTree to include minimumLoadingTimeElapsed
-  const isLoadingTree = !isConnected || !hasReceivedInitialData || !isDataTransformed || isDataEmpty === null || !minimumLoadingTimeElapsed;
+  // Updated isLoadingTree to include minimumLoadingTimeElapsed and hasValidData check
+  const isLoadingTree = !isConnected || !hasValidData || !isDataTransformed || isDataEmpty === null || !minimumLoadingTimeElapsed;
 
   // Log the rendering decision
   useEffect(() => {
     console.log(`[TreeView] Rendering decision at ${performance.now() - renderStartTime.current}ms`);
-    console.log(`[TreeView] isLoadingTree: ${isLoadingTree}, isDataTransformed: ${isDataTransformed}, isDataEmpty: ${isDataEmpty}, nodes: ${nodes.length}, edges: ${edges.length}`);
+    console.log(`[TreeView] isLoadingTree: ${isLoadingTree}, isConnected: ${isConnected}, hasValidData: ${hasValidData}, isDataTransformed: ${isDataTransformed}, isDataEmpty: ${isDataEmpty}, nodes: ${nodes.length}, edges: ${edges.length}`);
     if (isLoadingTree) {
       console.log(`[TreeView] Showing loading spinner because isLoadingTree is true`);
     } else if (isDataEmpty) {
@@ -941,7 +941,7 @@ const TreeViewComponent = () => {
     } else {
       console.log(`[TreeView] Showing React Flow canvas with ${nodes.length} nodes and ${edges.length} edges`);
     }
-  }, [isLoadingTree, nodes, edges, isDataTransformed, isDataEmpty]);
+  }, [isLoadingTree, nodes, edges, isDataTransformed, isDataEmpty, isConnected, hasValidData]);
 
   return (
     <Box sx={{ display: "flex", height: "100vh", width: "100%", position: "relative" }}>

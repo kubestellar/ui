@@ -50,6 +50,7 @@ interface NamespaceData {
 interface WebSocketContextType {
   ws: WebSocket | null;
   isConnected: boolean;
+  hasValidData: boolean;
   connect: (shouldConnect: boolean) => void;
 }
 
@@ -74,6 +75,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   const dataReceiveTime = useRef<number | null>(null);
   const NAMESPACE_QUERY_KEY = ["namespaces"];
   const [isConnected, setIsConnected] = useState(false);
+  const [hasValidData, setHasValidData] = useState(false);
   const [shouldConnect, setShouldConnect] = useState(false);
 
   const sortNamespaceData = (data: NamespaceData[]): NamespaceData[] => {
@@ -152,6 +154,13 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         );
         return;
       }
+
+      // Check if data is empty or undefined
+      if (!data || data.length === 0) {
+        console.log(`[WebSocket] Received empty data, keeping loader active at ${performance.now() - renderStartTime.current}ms`);
+        return;
+      }
+
       const totalObjects = data.reduce((count, namespace) => {
         const resourceCount = Object.values(namespace.resources).reduce(
           (sum, resources) => sum + resources.length,
@@ -180,8 +189,11 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         } at ${performance.now() - renderStartTime.current}ms`
       );
       dataReceiveTime.current = receiveTime;
+      
+      // Mark that we've received valid data (even if filtered data is empty)
       ReactDOM.unstable_batchedUpdates(() => {
         updateCache(filteredData);
+        setHasValidData(true);
       });
     };
 
@@ -249,6 +261,8 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   useEffect(() => {
     if (!shouldConnect) return;
 
+    // Reset hasValidData when starting a new connection
+    setHasValidData(false);
     connectWebSocket(reconnectWebSocket);
 
     return () => {
@@ -261,7 +275,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   }, [shouldConnect]);
 
   return (
-    <WebSocketContext.Provider value={{ ws: wsRef.current, isConnected, connect }}>
+    <WebSocketContext.Provider value={{ ws: wsRef.current, isConnected, hasValidData, connect }}>
       {children}
     </WebSocketContext.Provider>
   );
