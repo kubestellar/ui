@@ -40,7 +40,7 @@ export const YamlTab = ({
   // Track the index of the document from which the workload name was extracted
   const [nameDocumentIndex, setNameDocumentIndex] = useState<number | null>(null);
 
-  // Extract workload name from editorContent when it changes
+  // Extract workload name from editorContent when it changes (supports multiple documents)
   useEffect(() => {
     try {
       // Parse all YAML documents

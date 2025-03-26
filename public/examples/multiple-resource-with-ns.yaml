@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: my-new-namespace
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-new-app
+  namespace: my-new-namespace
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: my-new-app
+  template:
+    metadata:
+      labels:
+        app: my-new-app
+    spec:
+      containers:
+        - name: my-new-app-container
+          image: nginx  # Change to your application image
+          ports:
+            - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-new-service
+  namespace: my-new-namespace
+spec:
+  selector:
+    app: my-new-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP  # Internal service
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-new-ingress
+  namespace: my-new-namespace
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: mynewapp.local  # Change for your domain
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: my-new-service
+                port:
+                  number: 80

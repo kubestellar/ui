@@ -18,8 +18,6 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"log"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -35,7 +33,7 @@ func getGVR(discoveryClient discovery.DiscoveryInterface, resourceKind string) (
 	for _, resourceGroup := range resourceList {
 		for _, resource := range resourceGroup.APIResources {
 			// we are looking for the resourceKind
-			if resource.Name == resourceKind {
+			if resource.Kind == resourceKind {
 				gv, err := schema.ParseGroupVersion(resourceGroup.GroupVersion)
 				if err != nil {
 					return schema.GroupVersionResource{}, false, err
@@ -47,6 +45,98 @@ func getGVR(discoveryClient discovery.DiscoveryInterface, resourceKind string) (
 	}
 	return schema.GroupVersionResource{}, false, fmt.Errorf("resource not found")
 }
+func parseRequestBody(c *gin.Context) ([]map[string]interface{}, error) {
+	contentType := c.GetHeader("Content-Type")
+	// Read request body
+	bodyBytes, err := c.GetRawData()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read request body")
+	}
+
+	var yamlDocs []map[string]interface{}
+
+	if strings.Contains(contentType, "application/json") {
+		if err := json.Unmarshal(bodyBytes, &yamlDocs); err != nil {
+			return nil, fmt.Errorf("invalid JSON format")
+		}
+		return yamlDocs, nil
+	}
+	decoder := yaml.NewDecoder(bytes.NewReader(bodyBytes))
+	for {
+		var doc map[string]interface{}
+		if err := decoder.Decode(&doc); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, fmt.Errorf("invalid YAML format")
+		}
+		yamlDocs = append(yamlDocs, doc)
+	}
+	if len(yamlDocs) == 0 {
+		return nil, fmt.Errorf("empty request body")
+	}
+	return yamlDocs, nil
+}
+func parseYAMLFile(file io.Reader) ([]map[string]interface{}, error) {
+	var yamlDocs []map[string]interface{}
+	decoder := yaml.NewDecoder(file)
+
+	for {
+		var doc map[string]interface{}
+		if err := decoder.Decode(&doc); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, fmt.Errorf("invalid YAML file format")
+		}
+		yamlDocs = append(yamlDocs, doc)
+	}
+
+	if len(yamlDocs) == 0 {
+		return nil, fmt.Errorf("empty YAML file")
+	}
+	return yamlDocs, nil
+}
+
+func applyResources(c *gin.Context, yamlDocs []map[string]interface{},
+	dynamicClient dynamic.Interface,
+	discoveryClient discovery.DiscoveryInterface) ([]interface{}, error) {
+	var results []interface{}
+
+	for _, resourceData := range yamlDocs {
+		resourceKind, ok := resourceData["kind"].(string)
+		if !ok {
+			return results, fmt.Errorf("resource kind not found in YAML")
+		}
+		namespace := "default"
+		if metadata, ok := resourceData["metadata"].(map[string]interface{}); ok {
+			if ns, exists := metadata["namespace"].(string); exists {
+				namespace = ns
+			}
+		}
+		gvr, isNamespaced, err := getGVR(discoveryClient, resourceKind)
+		fmt.Println(gvr)
+		if err != nil {
+			return results, fmt.Errorf("unsupported resource type: %s", resourceKind)
+		}
+
+		var resource dynamic.ResourceInterface
+		if isNamespaced {
+			resource = dynamicClient.Resource(gvr).Namespace(namespace)
+		} else {
+			resource = dynamicClient.Resource(gvr)
+		}
+
+		resourceObj := &unstructured.Unstructured{Object: resourceData}
+		result, err := resource.Create(c, resourceObj, v1.CreateOptions{})
+		if err != nil {
+			return results, fmt.Errorf("failed to create resource %s: %v", resourceKind, err)
+		}
+		results = append(results, result)
+	}
+	return results, nil
+
+}
 
 // CreateResource creates a Kubernetes resource
 func CreateResource(c *gin.Context) {
@@ -55,61 +145,22 @@ func CreateResource(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	resourceKind := c.Param("resourceKind")
-	namespace := c.Param("namespace")
 	discoveryClient := clientset.Discovery()
-	gvr, isNamespaced, err := getGVR(discoveryClient, resourceKind)
 
+	// Parse request (JSON or YAML)
+	yamlDocs, err := parseRequestBody(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
-		return
-	}
-	var resource dynamic.ResourceInterface
-
-	// cluster-wide resouces does not look for namespaces
-	if isNamespaced {
-		resource = dynamicClient.Resource(gvr).Namespace(namespace)
-	} else {
-		resource = dynamicClient.Resource(gvr)
-	}
-	var resourceData map[string]interface{}
-
-	// Detect Content-Type
-	contentType := strings.ToLower(c.Request.Header.Get("Content-Type"))
-	bodyBytes, err := c.GetRawData()
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read request body"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Convert YAML to JSON if needed
-	if strings.Contains(contentType, "yaml") || strings.Contains(contentType, "yml") {
-		err = yaml.Unmarshal(bodyBytes, &resourceData)
-		if err != nil {
-			fmt.Println("YAML Unmarshal Error:", err) // Debugging
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid YAML format"})
-			return
-		}
-	} else {
-		err = json.Unmarshal(bodyBytes, &resourceData) // Use json.Unmarshal instead of c.ShouldBindJSON()
-		if err != nil {
-			fmt.Println("JSON Unmarshal Error:", err) // Debugging
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON format"})
-			return
-		}
-	}
-
-	// Convert the map to an unstructured resource
-	resourceObj := &unstructured.Unstructured{Object: resourceData}
-	// TODO: Retry Logic
-	result, err := resource.Create(c, resourceObj, v1.CreateOptions{})
+	results, err := applyResources(c, yamlDocs, dynamicClient, discoveryClient)
 	if err != nil {
-		fmt.Println("Kubernetes API Error:", err) // Debugging
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	c.JSON(http.StatusCreated, result)
+	// Return all created resources
+	c.JSON(http.StatusCreated, gin.H{"resources": results})
 }
 
 // GetResource retrieves a resource
@@ -284,102 +335,37 @@ func DeleteResource(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Deleted successfully"})
 }
 
-// UploadLocalFile uploads any Kubernetes resource to the endpoint `/api/resource/upload`.
-//
-// It is mapped to a dynamic URL for creating a Kubernetes workload.
-//
-// URL Format: `/api/:resourceKind/:namespace`
-func UploadLocalFile(c *gin.Context) {
-	file, header, err := c.Request.FormFile("wds")
+func UploadYAMLFile(c *gin.Context) {
+	clientset, dynamicClient, err := GetClientSet()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	fileExt := filepath.Ext(header.Filename)
-	if fileExt != ".yaml" && fileExt != ".yml" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "file extension must be .yaml or .yml",
-		})
-		return
-	}
-	originalFilename := strings.TrimSuffix(filepath.Base(header.Filename), fileExt)
-	now := time.Now()
-	filename := strings.ReplaceAll(strings.ToLower(originalFilename), " ", "-") + "-" + fmt.Sprintf("%v", now.Unix()) + fileExt
-	tempDir := "/tmp"
-	out, err := os.Create(filepath.Join(tempDir, filename))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-	defer out.Close()
+	discoveryClient := clientset.Discovery()
 
-	if _, err = io.Copy(out, file); err != nil {
+	// Read uploaded file
+	file, _, err := c.Request.FormFile("wds")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read file"})
+		return
+	}
+	defer file.Close()
+
+	// Parse YAML file
+	yamlDocs, err := parseYAMLFile(file)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// read the yaml file
-	yamlData, err := os.ReadFile(filepath.Join(tempDir, filename))
+	// Apply resources
+	results, err := applyResources(c, yamlDocs, dynamicClient, discoveryClient)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-	var resourceData map[string]interface{}
-	if err := yaml.Unmarshal(yamlData, &resourceData); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid YAML file", "details": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	resourceKind, ok := resourceData["kind"].(string)
-	if !ok || resourceKind == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing or invalid 'kind' parameter"})
-		return
-	}
-	namespace, ok := resourceData["metadata"].(map[string]interface{})["namespace"].(string)
-	if !ok || namespace == "" {
-		namespace = "default"
-	}
-
-	requestBody, err := json.Marshal(resourceData)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
-	apiURL := fmt.Sprintf("http://localhost:4000/api/%s/%s", strings.ToLower(resourceKind)+"s", namespace)
-	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(requestBody))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create API request"})
-		return
-	}
-	req.Header.Set("Content-Type", "application/json")
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send API request", "details": err.Error()})
-		return
-	}
-	defer resp.Body.Close()
-
-	responseData, err := io.ReadAll(resp.Body)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read response: " + err.Error()})
-		return
-	}
-	var apiResponse map[string]interface{}
-	if err := json.Unmarshal(responseData, &apiResponse); err != nil {
-		c.JSON(resp.StatusCode, gin.H{"message": "File uploaded but response parsing failed", "response": string(responseData)})
-		return
-	}
-	c.JSON(resp.StatusCode, gin.H{"message": "File uploaded and processed successfully", "response": apiResponse})
+	c.JSON(http.StatusCreated, gin.H{"resources": results})
 }
 
 var upgrader = websocket.Upgrader{

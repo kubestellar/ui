@@ -1,11 +1,14 @@
 import { Box, Button, TextField, Typography, Dialog, DialogActions, DialogContent, DialogTitle, Snackbar } from "@mui/material";
 import DoneIcon from "@mui/icons-material/Done";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy"; // Import the copy icon
+import EditIcon from "@mui/icons-material/Edit"; // Import the edit icon
 import { StyledContainer, StyledPaper } from "../StyledComponents";
 import yaml from "js-yaml"; // Import js-yaml to parse and update YAML
 import { useState, useEffect } from "react"; // Import useState and useEffect for local state management
 import useTheme from "../../stores/themeStore"; // Import useTheme for dark mode support
 import Editor from "@monaco-editor/react"; // Import Monaco Editor for editable content
+import { toast } from "react-hot-toast"; // Import toast for showing messages
 
 interface Props {
   workloadName: string;
@@ -30,7 +33,7 @@ interface YamlDocument {
 }
 
 export const UploadFileTab = ({
-  // workloadName, // Remove the unused alias initialWorkloadName
+  workloadName,
   selectedFile,
   setSelectedFile,
   loading,
@@ -53,6 +56,10 @@ export const UploadFileTab = ({
   const [editedContent, setEditedContent] = useState<string>("");
   // State to manage the success snackbar
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  // State to manage the snackbar message (for both save and copy actions)
+  const [snackbarMessage, setSnackbarMessage] = useState("Changes saved successfully");
+  // State to manage whether the editor is editable
+  const [isEditable, setIsEditable] = useState(false);
 
   // Read the file content and extract workload name when selectedFile changes
   useEffect(() => {
@@ -65,7 +72,7 @@ export const UploadFileTab = ({
 
         // Parse the content to extract workload name
         try {
-          const yamlObj = yaml.load(content) as YamlDocument; // Use the defined type
+          const yamlObj = yaml.load(content) as YamlDocument;
           if (yamlObj && yamlObj.metadata && yamlObj.metadata.name) {
             setLocalWorkloadName(yamlObj.metadata.name);
           } else {
@@ -97,7 +104,7 @@ export const UploadFileTab = ({
     if (fileContent && selectedFile) {
       // Parse the current file content and update metadata.name
       try {
-        const yamlObj = yaml.load(fileContent) as YamlDocument; // Use the defined type
+        const yamlObj = yaml.load(fileContent) as YamlDocument;
         if (yamlObj && yamlObj.metadata) {
           yamlObj.metadata.name = newName;
           // Convert back to YAML string
@@ -120,12 +127,19 @@ export const UploadFileTab = ({
   // Handle opening the dialog
   const handleOpenDialog = () => {
     setDialogOpen(true);
+    setIsEditable(false); // Reset to non-editable when opening the dialog
   };
 
   // Handle closing the dialog without saving
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setEditedContent(fileContent || ""); // Reset edited content to original
+    setIsEditable(false); // Reset editable state
+  };
+
+  // Handle enabling editing
+  const handleEnableEdit = () => {
+    setIsEditable(true);
   };
 
   // Handle saving the edited content
@@ -141,7 +155,7 @@ export const UploadFileTab = ({
 
       // Re-parse the updated content to extract the new workload name
       try {
-        const yamlObj = yaml.load(editedContent) as YamlDocument; // Use the defined type
+        const yamlObj = yaml.load(editedContent) as YamlDocument;
         if (yamlObj && yamlObj.metadata && yamlObj.metadata.name) {
           setLocalWorkloadName(yamlObj.metadata.name); // Update the workload name
         } else {
@@ -153,13 +167,34 @@ export const UploadFileTab = ({
       }
 
       setDialogOpen(false); // Close the dialog
+      setSnackbarMessage("Changes saved successfully"); // Set message for save action
       setSnackbarOpen(true); // Show success snackbar
+      setIsEditable(false); // Reset editable state after saving
     }
+  };
+
+  // Handle copying the editor content to clipboard
+  const handleCopyContent = () => {
+    navigator.clipboard.writeText(editedContent).then(() => {
+      setSnackbarMessage("Content copied to clipboard"); // Set message for copy action
+      setSnackbarOpen(true); // Show success snackbar
+    }).catch((error) => {
+      console.error("Failed to copy content:", error);
+      setSnackbarMessage("Failed to copy content"); // Set error message
+      setSnackbarOpen(true);
+    });
   };
 
   // Handle closing the snackbar
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
+  };
+
+  // Handle editor change attempt when not editable
+  const handleEditorChangeAttempt = () => {
+    if (!isEditable) {
+      toast.error("Click on Edit to edit");
+    }
   };
 
   return (
@@ -266,7 +301,7 @@ export const UploadFileTab = ({
                   },
                 }}
               >
-                See File
+                See Uploaded File
               </Button>
             </Box>
           )}
@@ -324,8 +359,41 @@ export const UploadFileTab = ({
           },
         }}
       >
-        <DialogTitle sx={{ color: theme === "dark" ? "#d4d4d4" : "#333" }}>
-          Edit File: {selectedFile?.name}
+        <DialogTitle sx={{ color: theme === "dark" ? "#d4d4d4" : "#333", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span>Edit File: {selectedFile?.name}</span>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button
+              onClick={handleEnableEdit}
+              startIcon={<EditIcon />}
+              sx={{
+                textTransform: "none",
+                fontWeight: 600,
+                color: theme === "dark" ? "#d4d4d4" : "#666",
+                padding: "4px 12px",
+                "&:hover": {
+                  backgroundColor: theme === "dark" ? "#333" : "#f5f5f5",
+                },
+              }}
+              disabled={isEditable} // Disable if already editable
+            >
+              Edit
+            </Button>
+            <Button
+              onClick={handleCopyContent}
+              startIcon={<ContentCopyIcon />}
+              sx={{
+                textTransform: "none",
+                fontWeight: 600,
+                color: theme === "dark" ? "#d4d4d4" : "#666",
+                padding: "4px 12px",
+                "&:hover": {
+                  backgroundColor: theme === "dark" ? "#333" : "#f5f5f5",
+                },
+              }}
+            >
+              Copy
+            </Button>
+          </Box>
         </DialogTitle>
         <DialogContent>
           <Box
@@ -349,8 +417,15 @@ export const UploadFileTab = ({
                 scrollBeyondLastLine: false,
                 automaticLayout: true,
                 padding: { top: 27, bottom: 20 },
+                readOnly: !isEditable, // Make editor read-only unless editable
               }}
-              onChange={(value) => setEditedContent(value || "")}
+              onChange={(value) => {
+                if (!isEditable) {
+                  handleEditorChangeAttempt(); // Show message if trying to edit while read-only
+                  return;
+                }
+                setEditedContent(value || "");
+              }}
             />
           </Box>
         </DialogContent>
@@ -369,28 +444,30 @@ export const UploadFileTab = ({
           >
             Cancel
           </Button>
-          <Button
-            variant="contained"
-            onClick={handleSaveChanges}
-            disabled={editedContent === fileContent} // Disable if no changes
-            sx={{
-              textTransform: "none",
-              fontWeight: 600,
-              backgroundColor: "#1976d2",
-              color: "#fff",
-              padding: "8px 16px",
-              borderRadius: "8px",
-              "&:hover": {
-                backgroundColor: "#1565c0",
-              },
-              "&:disabled": {
-                backgroundColor: "#b0bec5",
+          {isEditable && (
+            <Button
+              variant="contained"
+              onClick={handleSaveChanges}
+              disabled={editedContent === fileContent} // Disable if no changes
+              sx={{
+                textTransform: "none",
+                fontWeight: 600,
+                backgroundColor: "#1976d2",
                 color: "#fff",
-              },
-            }}
-          >
-            Save
-          </Button>
+                padding: "8px 16px",
+                borderRadius: "8px",
+                "&:hover": {
+                  backgroundColor: "#1565c0",
+                },
+                "&:disabled": {
+                  backgroundColor: "#b0bec5",
+                  color: "#fff",
+                },
+              }}
+            >
+              Save Changes
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
 
@@ -399,7 +476,7 @@ export const UploadFileTab = ({
         open={snackbarOpen}
         autoHideDuration={3000}
         onClose={handleSnackbarClose}
-        message="Changes saved successfully"
+        message={snackbarMessage} // Use dynamic message
         sx={{
           "& .MuiSnackbarContent-root": {
             backgroundColor: theme === "dark" ? "#333" : "#fff",

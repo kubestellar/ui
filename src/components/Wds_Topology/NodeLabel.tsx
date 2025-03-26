@@ -39,6 +39,7 @@ export const NodeLabel = memo<NodeLabelProps>(({
           <div>{label}</div>
           <div style={{ display: "flex", gap: "1px" }}>
             {/* Removed heart and check/cross icons */}
+            {/* Removed heart and check/cross icons */}
           </div>
         </div>
       </div>

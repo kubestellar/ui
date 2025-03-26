@@ -14,10 +14,6 @@ import (
 
 func setupDeploymentRoutes(router *gin.Engine) {
 	router.GET("/api/wds/workloads", deployment.GetWDSWorkloads)
-	router.POST("/api/wds/create", deployment.CreateDeployment)
-	router.POST("/api/wds/create/json", deployment.HandleCreateDeploymentJson)
-	router.PUT("/api/wds/update", deployment.UpdateDeployment)
-	router.DELETE("/api/wds/delete", deployment.DeleteDeployment)
 	router.GET("/api/wds/:name", deployment.GetDeploymentByName)
 	router.GET("/api/wds/status", deployment.GetDeploymentStatus)
 

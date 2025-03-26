@@ -82,7 +82,7 @@ export const GitHubTab = ({
               setFormData({ ...formData, repositoryUrl: e.target.value })
             }
             error={!!error && !formData.repositoryUrl}
-            placeholder="e.g., https://github.com/username/repo.git"
+            placeholder="e.g., https://github.com/username/repo"
             InputProps={{
               startAdornment: (
                 <span style={{ fontSize: "0.9rem", marginRight: "8px" }}>
@@ -207,7 +207,7 @@ export const GitHubTab = ({
               mb: 1,
             }}
           >
-            Branch (default: master)
+            Branch (default: main)
           </Typography>
           <TextField
             fullWidth
@@ -215,7 +215,7 @@ export const GitHubTab = ({
             onChange={(e) =>
               setFormData({ ...formData, branchSpecifier: e.target.value })
             }
-            placeholder="e.g., main, dev-branch"
+            placeholder="e.g., master, dev-branch"
             InputProps={{
               startAdornment: (
                 <span style={{ fontSize: "0.9rem", marginRight: "8px" }}>
