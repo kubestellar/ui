@@ -51,6 +51,7 @@ interface WebSocketContextType {
   ws: WebSocket | null;
   isConnected: boolean;
   connect: (shouldConnect: boolean) => void;
+  hasValidDatat: boolean;
 }
 
 const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
@@ -75,6 +76,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   const NAMESPACE_QUERY_KEY = ["namespaces"];
   const [isConnected, setIsConnected] = useState(false);
   const [shouldConnect, setShouldConnect] = useState(false);
+  const [hasValidDatat, sethasValidDatat] = useState(false);
 
   const sortNamespaceData = (data: NamespaceData[]): NamespaceData[] => {
     return [...data]
@@ -143,6 +145,15 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
             performance.now() - renderStartTime.current
           }ms`
         );
+        
+        // Check if data is empty or invalid
+        if (!data || data.length === 0) {
+          console.log(`[WebSocket] Empty data received at ${performance.now() - renderStartTime.current}ms`);
+          sethasValidDatat(false);
+          return;
+        }
+        
+        sethasValidDatat(true);
       } catch (error) {
         console.error(
           `[WebSocket] Failed to parse data at ${
@@ -150,6 +161,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
           }ms:`,
           error
         );
+        sethasValidDatat(false);
         return;
       }
       const totalObjects = data.reduce((count, namespace) => {
@@ -261,7 +273,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   }, [shouldConnect]);
 
   return (
-    <WebSocketContext.Provider value={{ ws: wsRef.current, isConnected, connect }}>
+    <WebSocketContext.Provider value={{ ws: wsRef.current, isConnected, connect, hasValidDatat }}>
       {children}
     </WebSocketContext.Provider>
   );
