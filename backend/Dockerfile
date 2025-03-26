@@ -19,8 +19,8 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -o backend main.go
 # Stage 2: Create a lightweight runtime image
 FROM alpine:latest
 
-# Install necessary packages
-RUN apk --no-cache add ca-certificates curl openssl
+# Install necessary packages including git for repo operations
+RUN apk --no-cache add ca-certificates curl openssl git
 
 # Set the working directory
 WORKDIR /root/
@@ -28,6 +28,9 @@ WORKDIR /root/
 # Generate JWT secret and set it as environment variable
 RUN JWT_SECRET=$(openssl rand -base64 32) && \
     echo "export JWT_SECRET=$JWT_SECRET" > /root/.env
+
+# Create temp directory for git operations
+RUN mkdir -p /tmp && chmod 777 /tmp
 
 # Copy the compiled binary from the builder stage
 COPY --from=backend-builder /app/backend .
