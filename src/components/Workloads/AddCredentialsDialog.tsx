@@ -1,5 +1,6 @@
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Typography } from "@mui/material";
 import { getWebhookAndCredentialDialogPaperProps } from "../StyledComponents";
+import useTheme from "../../stores/themeStore"; // Import useTheme for dark mode support
 
 interface Props {
   credentialDialogOpen: boolean;
@@ -16,6 +17,7 @@ export const AddCredentialsDialog = ({
   handleAddCredential,
   handleCloseCredentialDialog,
 }: Props) => {
+  const theme = useTheme((state) => state.theme); // Get the current theme
   return (
     // --- Add Credentials Dialog Section ---
     <Dialog
@@ -26,7 +28,8 @@ export const AddCredentialsDialog = ({
       PaperProps={getWebhookAndCredentialDialogPaperProps()}
     >
       <DialogTitle sx={{ padding: "16px 24px", borderBottom: "1px solid #e0e0e0" }}>
-        <Typography variant="h6" sx={{ fontWeight: 600, color: "#333" }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, color: theme === "dark" ? "#d4d4d4" : "#333",
+ }}>
           Add Credentials
         </Typography>
       </DialogTitle>
@@ -38,7 +41,7 @@ export const AddCredentialsDialog = ({
               sx={{
                 fontWeight: 600,
                 fontSize: "13px",
-                color: "#333",
+                color: theme === "dark" ? "#d4d4d4" : "#333",
                 mb: 1,
               }}
             >
@@ -53,15 +56,15 @@ export const AddCredentialsDialog = ({
               placeholder="e.g., onkar717"
               InputProps={{
                 startAdornment: (
-                  <span role="img" aria-label="cluster" style={{ fontSize: "0.9rem", marginRight: "8px" }}>
-                    🔶
+                  <span role="img" aria-label="asterisk" style={{ fontSize: "0.9rem", marginRight: "8px" }}>
+                    *
                   </span>
                 ),
               }}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "8px",
-                  backgroundColor: "#fff",
+                  backgroundColor: theme === "dark" ? "rgb(15, 23, 42)" : "#fff", // Dark background in dark mode
                   "& fieldset": {
                     borderColor: "#e0e0e0",
                     borderWidth: "1px",
@@ -101,7 +104,7 @@ export const AddCredentialsDialog = ({
               sx={{
                 fontWeight: 600,
                 fontSize: "13px",
-                color: "#333",
+                color: theme === "dark" ? "#d4d4d4" : "#333",
                 mb: 1,
               }}
             >
@@ -117,15 +120,15 @@ export const AddCredentialsDialog = ({
               placeholder="e.g., ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
               InputProps={{
                 startAdornment: (
-                  <span role="img" aria-label="cluster" style={{ fontSize: "0.9rem", marginRight: "8px" }}>
-                    🔶
+                  <span role="img" aria-label="asterisk" style={{ fontSize: "0.9rem", marginRight: "8px" }}>
+                    *
                   </span>
                 ),
               }}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "8px",
-                  backgroundColor: "#fff",
+                  backgroundColor: theme === "dark" ? "rgb(15, 23, 42)" : "#fff", // Dark background in dark mode
                   "& fieldset": {
                     borderColor: "#e0e0e0",
                     borderWidth: "1px",

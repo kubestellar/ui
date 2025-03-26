@@ -978,7 +978,7 @@ const WecsTreeview = () => {
   }, [isLoadingTree, nodes, edges, isDataTransformed, isDataEmpty]);
 
   return (
-    <Box sx={{ display: "flex", height: "100vh", width: "100%", position: "relative" }}>
+    <Box sx={{ display: "flex", height: "85vh", width: "100%", position: "relative" }}>
       <Box
         sx={{
           flex: 1,
@@ -1008,8 +1008,14 @@ const WecsTreeview = () => {
             variant="outlined"
             startIcon={<Plus size={20} />}
             onClick={handleCreateWorkloadClick}
-            sx={{ borderColor: "#2f86ff", color: "#2f86ff", "&:hover": { borderColor: "#2f86ff" } }}
-          >
+            sx={{
+              color: "#FFFFFF",
+              backgroundColor: "#2F86FF",
+              padding: "8px 20px",
+              fontWeight: "600",
+              borderRadius: "8px",
+              textTransform: "none",
+            }}          >
             Create Workload
           </Button>
         </Box>
@@ -1023,18 +1029,19 @@ const WecsTreeview = () => {
             <Box
               sx={{
                 width: "100%",
-                height: "100%",
-                backgroundColor: theme === "dark" ? "#1a1a1a" : "#fff", // Dark mode background
+                // height: "100%",
+                backgroundColor: theme === "dark" ? "var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity)))" : "#fff" ,
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
+                marginTop: "250px",
               }}
             >
               <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-                <Typography variant="h6" sx={{ color: theme === "dark" ? "#fff" : "#333", fontWeight: 600, fontSize: "20px" }}>
+                <Typography sx={{ color: theme === "dark" ? "#fff" : "#333" , fontWeight: 600, fontSize: "40px" }}>
                   No Workloads Found
                 </Typography>
-                <Typography variant="body2" sx={{ color: theme === "dark" ? "#ccc" : "#666", fontSize: "14px", mb: 2 }}>
+                <Typography variant="body2" sx={{ color: "#666", fontSize: "20px", mb: 2 }}>
                   Get started by creating your first workload
                 </Typography>
                 <Button

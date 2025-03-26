@@ -1039,7 +1039,7 @@ const TreeViewComponent = () => {
               }}
             >
               <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-                <Typography sx={{ color: theme === "dark" ? "#fff" : "#333" , fontWeight: 600, fontSize: "45px" }}>
+                <Typography sx={{ color: theme === "dark" ? "#fff" : "#333" , fontWeight: 600, fontSize: "40px" }}>
                   No Workloads Found
                 </Typography>
                 <Typography variant="body2" sx={{ color: "#666", fontSize: "20px", mb: 2 }}>
@@ -1084,18 +1084,23 @@ const TreeViewComponent = () => {
           aria-labelledby="delete-confirmation-dialog-title"
           sx={{
             "& .MuiDialog-paper": {
-              borderRadius: "8px",
               padding: "16px",
-              width: "400px",
+              width: "500px",
+              backgroundColor: theme === "dark" ? "rgb(15, 23, 42)" : "#fff", // Dark background in dark mode
+              borderRadius: "4px",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+              maxWidth: "480px",
+              height: "250px",
             },
           }}
         >
-          <DialogTitle id="delete-confirmation-dialog-title" sx={{ display: "flex", alignItems: "center", gap: 1, fontSize: "18px", fontWeight: 600 }}>
-            <WarningAmberIcon sx={{ color: "#FFA500", fontSize: "24px" }} />
-            Cancel Resource Deletion
+          <DialogTitle id="delete-confirmation-dialog-title" sx={{ display: "flex", alignItems: "center", gap: 1, fontSize: "18px", fontWeight: 600  , color: theme === "dark" ? "#fff" : "333" }}>
+            <WarningAmberIcon sx={{ color: "#FFA500", fontSize: "34px" }} />
+    
+            Confirm Resource Deletion
           </DialogTitle>
           <DialogContent>
-            <Typography sx={{ fontSize: "14px", color: "#333", mb: 2 }}>
+            <Typography sx={{ fontSize: "16px", color: theme === "dark" ? "#fff" : "333",mt:2 }}>
               Are you sure you want to delete "{deleteNodeDetails?.nodeName}"? This action cannot be undone.
             </Typography>
           </DialogContent>
@@ -1115,12 +1120,14 @@ const TreeViewComponent = () => {
               onClick={handleDeleteConfirm}
               sx={{
                 textTransform: "none",
-                backgroundColor: "#FF4D4F",
-                color: "#FFFFFF",
-                fontWeight: 600,
-                "&:hover": { backgroundColor: "#E64446" },
+                fontWeight: 500,
+                backgroundColor: "#d32f2f",
+                color: "#fff",
                 padding: "6px 16px",
                 borderRadius: "4px",
+                "&:hover": {
+                  backgroundColor: "#b71c1c",
+                },
               }}
             >
               Yes, Delete

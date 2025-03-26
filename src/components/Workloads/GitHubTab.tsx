@@ -85,7 +85,7 @@ export const GitHubTab = ({
             placeholder="e.g., https://github.com/username/repo"
             InputProps={{
               startAdornment: (
-                <span style={{ fontSize: "0.9rem", marginRight: "8px" }}>
+                <span style={{ fontSize: "0.9rem", marginRight: "8px" , color: theme === "dark" ? "#fff" : "#000" }}>
                   *
                 </span>
               ),
@@ -93,7 +93,7 @@ export const GitHubTab = ({
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: "8px",
-                backgroundColor: theme === "dark" ? "#252526" : "#fff",
+                // backgroundColor: theme === "dark" ? "#252526" : "#fff",
                 "& fieldset": {
                   borderColor: theme === "dark" ? "#444" : "#e0e0e0",
                   borderWidth: "1px",
@@ -152,7 +152,7 @@ export const GitHubTab = ({
             placeholder="e.g., /path/to/yaml"
             InputProps={{
               startAdornment: (
-                <span style={{ fontSize: "0.9rem", marginRight: "8px" }}>
+                <span style={{ fontSize: "0.9rem", marginRight: "8px", color: theme === "dark" ? "#fff" : "#000" }}>
                   *
                 </span>
               ),
@@ -160,7 +160,7 @@ export const GitHubTab = ({
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: "8px",
-                backgroundColor: theme === "dark" ? "#252526" : "#fff",
+                // backgroundColor: theme === "dark" ? "#252526" : "#fff",
                 "& fieldset": {
                   borderColor: theme === "dark" ? "#444" : "#e0e0e0",
                   borderWidth: "1px",
@@ -218,7 +218,7 @@ export const GitHubTab = ({
             placeholder="e.g., master, dev-branch"
             InputProps={{
               startAdornment: (
-                <span style={{ fontSize: "0.9rem", marginRight: "8px" }}>
+                <span style={{ fontSize: "0.9rem", marginRight: "8px" ,color: theme === "dark" ? "#fff" : "#000" }}>
                   *
                 </span>
               ),
@@ -226,7 +226,7 @@ export const GitHubTab = ({
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: "8px",
-                backgroundColor: theme === "dark" ? "#252526" : "#fff",
+                // backgroundColor: theme === "dark" ? "#252526" : "#fff",
                 "& fieldset": {
                   borderColor: theme === "dark" ? "#444" : "#e0e0e0",
                   borderWidth: "1px",
@@ -293,10 +293,9 @@ export const GitHubTab = ({
               }
               sx={{
                 borderRadius: "8px",
-                backgroundColor: theme === "dark" ? "#252526" : "#fff",
+                // backgroundColor: theme === "dark" ? "#252526" : "#fff",
                 "& .MuiOutlinedInput-root": {
                   "& fieldset": {
-                    borderColor: theme === "dark" ? "#444" : "#e0e0e0",
                     borderWidth: "2px",
                   },
                   "&:hover fieldset": {
@@ -388,10 +387,9 @@ export const GitHubTab = ({
               }
               sx={{
                 borderRadius: "8px",
-                backgroundColor: theme === "dark" ? "#252526" : "#fff",
+                // backgroundColor: theme === "dark" ? "#252526" : "#fff",
                 "& .MuiOutlinedInput-root": {
                   "& fieldset": {
-                    borderColor: theme === "dark" ? "#444" : "#e0e0e0",
                     borderWidth: "2px",
                   },
                   "&:hover fieldset": {

@@ -80,16 +80,36 @@ export const YamlTab = ({
       const documents: YamlDocument[] = []; // Use the defined type
       yaml.loadAll(editorContent, (doc) => documents.push(doc as YamlDocument), {});
 
-      // Update the metadata.name in the correct document
-      if (nameDocumentIndex !== null && documents[nameDocumentIndex] && documents[nameDocumentIndex].metadata) {
+      // If a document with metadata.name was previously found and still exists, update it
+      if (
+        nameDocumentIndex !== null &&
+        documents[nameDocumentIndex] &&
+        documents[nameDocumentIndex].metadata
+      ) {
         documents[nameDocumentIndex].metadata!.name = newName;
-
-        // Convert all documents back to a multi-document YAML string
-        const updatedYaml = documents
-          .map((doc) => yaml.dump(doc))
-          .join("---\n");
-        setEditorContent(updatedYaml);
+      } else {
+        // If no document with metadata.name exists or the previous document is invalid,
+        // add metadata.name to the first document
+        if (documents.length === 0) {
+          // If there are no documents, create a new one
+          documents.push({ metadata: { name: newName } });
+        } else {
+          // Add metadata to the first document if it doesn't exist
+          if (!documents[0].metadata) {
+            documents[0].metadata = { name: newName };
+          } else {
+            documents[0].metadata.name = newName;
+          }
+          // Update the nameDocumentIndex to point to the first document
+          setNameDocumentIndex(0);
+        }
       }
+
+      // Convert all documents back to a multi-document YAML string
+      const updatedYaml = documents
+        .map((doc) => yaml.dump(doc))
+        .join("---\n");
+      setEditorContent(updatedYaml);
     } catch (error) {
       console.error("Error updating YAML:", error);
     }
@@ -118,7 +138,6 @@ export const YamlTab = ({
             input: { color: theme === "dark" ? "#d4d4d4" : "#333" },
             label: { color: theme === "dark" ? "#858585" : "#666" },
             "& .MuiOutlinedInput-root": {
-              backgroundColor: theme === "dark" ? "#252526" : "#fff",
               "& fieldset": {
                 borderColor: theme === "dark" ? "#444" : "#e0e0e0",
               },
@@ -146,7 +165,6 @@ export const YamlTab = ({
             mt: 1,
             width: "98.5%",
             margin: "0 auto",
-            backgroundColor: theme === "dark" ? "#1e1e1e" : "#fff",
           }}
         >
           <Editor

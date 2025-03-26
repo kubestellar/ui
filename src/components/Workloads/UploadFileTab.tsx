@@ -220,7 +220,7 @@ export const UploadFileTab = ({
             input: { color: theme === "dark" ? "#d4d4d4" : "#333" },
             label: { color: theme === "dark" ? "#858585" : "#666" },
             "& .MuiOutlinedInput-root": {
-              backgroundColor: theme === "dark" ? "#252526" : "#fff",
+              // backgroundColor: theme === "dark" ? "#252526" : "#fff",
               "& fieldset": {
                 borderColor: theme === "dark" ? "#444" : "#e0e0e0",
               },
@@ -244,8 +244,8 @@ export const UploadFileTab = ({
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           sx={{
-            backgroundColor: theme === "dark" ? "#252526" : "#fff",
-            border: theme === "dark" ? "1px dashed #444" : "1px dashed #e0e0e0",
+            // backgroundColor: theme === "dark" ? "#00000033" : "#fff",
+            border: theme === "dark" ? "2px dashed #444" : "2px dashed #e0e0e0",
           }}
         >
           <span role="img" aria-label="upload" style={{ fontSize: "1.75rem" }}>
@@ -294,14 +294,15 @@ export const UploadFileTab = ({
                 sx={{
                   textTransform: "none",
                   fontWeight: 600,
-                  color: theme === "dark" ? "#d4d4d4" : "#666",
+                  color: theme === "dark" ? "#d4d4d4" : "#fff",
                   padding: "4px 12px",
-                  "&:hover": {
-                    backgroundColor: theme === "dark" ? "#333" : "#f5f5f5",
-                  },
+                  marginTop:"10px",
+                  // "&:hover": {
+                  backgroundColor: theme === "dark" ? "#333" : "#1976d2",
+                  // },
                 }}
               >
-                See Uploaded File
+                View {selectedFile.name} File
               </Button>
             </Box>
           )}

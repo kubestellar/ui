@@ -12,6 +12,7 @@ import { GitHubTab } from "./Workloads/GitHubTab";
 import { AddCredentialsDialog } from "../components/Workloads/AddCredentialsDialog";
 import { AddWebhookDialog } from "../components/Workloads/AddWebhookDialog";
 import { CancelConfirmationDialog } from "../components/Workloads/CancelConfirmationDialog";
+import useTheme from "../stores/themeStore"; // Import useTheme for dark mode support
 
 interface Props {
   activeOption: string | null;
@@ -38,6 +39,7 @@ const CreateOptions = ({
   setActiveOption,
   onCancel,
 }: Props) => {
+  const theme = useTheme((state) => state.theme); // Get the current theme
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const initialEditorContent = `apiVersion: apps/v1
 kind: Deployment
@@ -549,13 +551,22 @@ spec:
         onClose={onCancel}
         maxWidth="lg"
         fullWidth
-        PaperProps={getDialogPaperProps()}
+        PaperProps={getDialogPaperProps(theme)} // Pass the theme to the function
       >
-        <DialogTitle sx={{ padding: "16px 16px", borderBottom: "1px solid #e0e0e0" }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, color: "black" }}>
+        <DialogTitle sx={{ 
+          padding: "16px 16px", 
+          borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
+        }}>
+          <Typography variant="h6" sx={{ 
+            fontWeight: 600, 
+            color: theme === "dark" ? "#d4d4d4" : "black",
+          }}>
             Create Workload
           </Typography>
-          <Typography sx={{ fontSize: "13px", color: "gray" }}>
+          <Typography sx={{ 
+            fontSize: "13px", 
+            color: theme === "dark" ? "#858585" : "gray",
+          }}>
             Create Workloads
           </Typography>
           <Tabs
@@ -565,6 +576,9 @@ spec:
               mt: 2,
               ".MuiTabs-indicator": {
                 display: "none",
+              },
+              "& .MuiTab-root": {
+                color: theme === "dark" ? "#d4d4d4" : "#333",
               },
             }}
           >
@@ -588,7 +602,12 @@ spec:
             />
           </Tabs>
         </DialogTitle>
-        <DialogContent sx={{ padding: "17px", backgroundColor: "#fff", height: "64.5vh", overflow: "hidden" }}>
+        <DialogContent sx={{ 
+          padding: "17px", 
+          // backgroundColor: theme === "dark" ? "#1A2526" : "#fff",
+          height: "64.5vh", 
+          overflow: "hidden",
+        }}>
           <Box sx={{ width: "100%", mt: 2, height: "100%" }}>
             {activeOption === "option1" && (
               <YamlTab
@@ -647,7 +666,11 @@ spec:
           <Alert
             onClose={() => setSnackbar({ ...snackbar, open: false })}
             severity={snackbar.severity}
-            sx={{ width: "100%" }}
+            sx={{ 
+              width: "100%",
+              backgroundColor: theme === "dark" ? "#333" : "#fff",
+              color: theme === "dark" ? "#d4d4d4" : "#333",
+            }}
           >
             {snackbar.message}
           </Alert>
