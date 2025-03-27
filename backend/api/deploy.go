@@ -218,7 +218,6 @@ func GitHubWebhookHandler(c *gin.Context) {
 
 // createHelmActionConfig initializes the Helm action configuration using WDS1 context
 func CreateHelmActionConfig(namespace string) (*action.Configuration, error) {
-	
 
 	actionConfig := new(action.Configuration)
 	helmSettings := cli.New()
