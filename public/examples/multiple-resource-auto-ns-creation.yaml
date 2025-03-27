@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-auto-app
+  namespace: my-auto-namespace
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: my-auto-app
+  template:
+    metadata:
+      labels:
+        app: my-auto-app
+    spec:
+      containers:
+        - name: my-auto-app-container
+          image: nginx  # Change to your application image
+          ports:
+            - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-auto-service
+  namespace: my-auto-namespace
+spec:
+  selector:
+    app: my-auto-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP  # Internal service
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-auto-ingress
+  namespace: my-auto-namespace
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: myautoapp.local  # Change for your domain
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: my-auto-service
+                port:
+                  number: 80

@@ -116,7 +116,7 @@ func DeployManifests(deployPath string, dryRun bool, dryRunStrategy string) (*De
 
 		// Ensure namespace exists before applying resources
 		if !dryRun && obj.GetKind() != "Namespace" {
-			err = ensureNamespaceExists(dynamicClient, finalNamespace)
+			err = EnsureNamespaceExists(dynamicClient, finalNamespace)
 			if err != nil {
 				return nil, fmt.Errorf("failed to ensure namespace %s exists: %v", finalNamespace, err)
 			}
@@ -144,8 +144,8 @@ func DeployManifests(deployPath string, dryRun bool, dryRunStrategy string) (*De
 	return tree, nil
 }
 
-// ensureNamespaceExists checks if a namespace exists and creates it if it doesn't
-func ensureNamespaceExists(dynamicClient dynamic.Interface, namespace string) error {
+// EnsureNamespaceExists checks if a namespace exists and creates it if it doesn't
+func EnsureNamespaceExists(dynamicClient dynamic.Interface, namespace string) error {
 	// Skip for default namespace which always exists
 	if namespace == "default" {
 		return nil
