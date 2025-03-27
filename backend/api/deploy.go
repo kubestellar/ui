@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -13,6 +14,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/k8s"
 	"github.com/kubestellar/ui/redis"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/cli"
 )
 
 type DeployRequest struct {
@@ -211,4 +214,17 @@ func GitHubWebhookHandler(c *gin.Context) {
 		"deployment":    deploymentTree,
 		"changed_files": changedFiles,
 	})
+}
+
+// createHelmActionConfig initializes the Helm action configuration using WDS1 context
+func CreateHelmActionConfig(namespace string) (*action.Configuration, error) {
+
+	actionConfig := new(action.Configuration)
+	helmSettings := cli.New()
+
+	if err := actionConfig.Init(helmSettings.RESTClientGetter(), namespace, "secret", log.Printf); err != nil {
+		return nil, fmt.Errorf("failed to initialize Helm: %v", err)
+	}
+
+	return actionConfig, nil
 }
