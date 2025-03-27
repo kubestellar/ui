@@ -25,7 +25,7 @@ export const AddCredentialsDialog = ({
       onClose={handleCloseCredentialDialog}
       maxWidth="sm"
       fullWidth
-      PaperProps={getWebhookAndCredentialDialogPaperProps()}
+      PaperProps={getWebhookAndCredentialDialogPaperProps(theme)}
     >
       <DialogTitle sx={{ padding: "16px 24px", borderBottom: "1px solid #e0e0e0" }}>
         <Typography variant="h6" sx={{ fontWeight: 600, color: theme === "dark" ? "#d4d4d4" : "#333",
@@ -45,7 +45,7 @@ export const AddCredentialsDialog = ({
                 mb: 1,
               }}
             >
-              GitHub Username
+              Github Username *
             </Typography>
             <TextField
               fullWidth
@@ -54,13 +54,6 @@ export const AddCredentialsDialog = ({
                 setNewCredential({ ...newCredential, githubUsername: e.target.value })
               }
               placeholder="e.g., onkar717"
-              InputProps={{
-                startAdornment: (
-                  <span role="img" aria-label="asterisk" style={{ fontSize: "0.9rem", marginRight: "8px" }}>
-                    *
-                  </span>
-                ),
-              }}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "8px",
@@ -92,7 +85,7 @@ export const AddCredentialsDialog = ({
               <span role="img" aria-label="tip" style={{ fontSize: "0.8rem", marginRight: "8px" }}>
                 💡
               </span>
-              <Typography variant="caption" sx={{ color: "#666" }}>
+              <Typography variant="caption" sx={{ color: theme === "dark" ? "#fff" :"#666" }}>
                 Enter your GitHub username
               </Typography>
             </Box>
@@ -108,7 +101,7 @@ export const AddCredentialsDialog = ({
                 mb: 1,
               }}
             >
-              Personal Access Token (PAT)
+              Personal Access Token (PAT) *
             </Typography>
             <TextField
               fullWidth
@@ -118,13 +111,6 @@ export const AddCredentialsDialog = ({
                 setNewCredential({ ...newCredential, personalAccessToken: e.target.value })
               }
               placeholder="e.g., ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-              InputProps={{
-                startAdornment: (
-                  <span role="img" aria-label="asterisk" style={{ fontSize: "0.9rem", marginRight: "8px" }}>
-                    *
-                  </span>
-                ),
-              }}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "8px",
@@ -156,7 +142,7 @@ export const AddCredentialsDialog = ({
               <span role="img" aria-label="tip" style={{ fontSize: "0.8rem", marginRight: "8px" }}>
                 💡
               </span>
-              <Typography variant="caption" sx={{ color: "#666" }}>
+              <Typography variant="caption" sx={{ color: theme === "dark" ? "#fff" :"#666" }}>
                 Enter your GitHub Personal Access Token
               </Typography>
             </Box>

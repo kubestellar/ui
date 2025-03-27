@@ -7,19 +7,18 @@ export const StyledTab = styled(Tab)(({ theme }) => {
     textTransform: "none",
     fontWeight: 500,
     fontSize: "0.8rem",
-    color: appTheme === "dark" ? "#d4d4d4" : theme.palette.grey[600], // Light text in dark mode
+    color: appTheme === "dark" ? "#fff" : theme.palette.grey[600], // Light text in dark mode
     padding: "10px 17px",
     minHeight: "40px",
     marginLeft: "16px",
     marginTop: "4px",
-    // backgroundColor: appTheme === "dark" ? "#00000033" : "#fff", // Dark background in dark mode
     borderRadius: "12px 12px 12px 12px",
     border: "1px solid transparent",
     transition: "background-color 0.2s ease, border-color 0.2s ease",
     "&.Mui-selected": {
-      color: "#1976d2", // Keep the selected color consistent
+      // color: "#1976d2", // Keep the selected color consistent
+      color: appTheme === "dark" ? "#fff" : "#1976d2", // Keep the selected color consistent
       fontWeight: 600,
-      backgroundColor: appTheme === "dark" ? "rgba(47, 134, 255, 0.1)" : "rgba(47, 134, 255, 0.05)", // Slightly darker in dark mode
       border: "1px solid rgba(25, 118, 210, 0.7)",
       boxShadow: `
         -2px 0 6px rgba(47, 134, 255, 0.2),
@@ -66,7 +65,7 @@ export const StyledPaper = styled(Paper)(({ theme }) => {
 export const StyledContainer = styled(Box)(({ theme }) => {
   const appTheme = useTheme((state) => state.theme); // Get the current theme
   return {
-    backgroundColor: appTheme === "dark" ? "rgb(15, 23, 42)" : "rgba(255, 255, 255, 0.8)", // Dark background in dark mode
+    backgroundColor: appTheme === "dark" ? "#00000033" : "rgba(255, 255, 255, 0.8)", // Dark background in dark mode
     borderRadius: "8px",
     boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
     border: appTheme === "dark" ? "1px solid #444" : "1px solid rgba(0, 0, 0, 0.1)", // Darker border in dark mode
@@ -79,7 +78,7 @@ export const StyledContainer = styled(Box)(({ theme }) => {
 
 export const getDialogPaperProps = (theme: string) => ({
   style: {
-    backgroundColor: theme === "dark" ? "rgb(15, 23, 42)" : "#fff",
+    backgroundColor: theme === "dark" ? "#1F2937" : "#fff",
     borderRadius: "12px",
     boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
     border: "none",
@@ -99,15 +98,29 @@ export const getConfirmationDialogPaperProps = (theme: string) => ({
   },
 });
 
-export const getWebhookAndCredentialDialogPaperProps = () => {
+export const getWebhookAndCredentialDialogPaperProps = (theme: string) => {
   return {
     style: {
-      // backgroundColor: appTheme === "dark" ? "rgb(15, 23, 42)" : "#fff", // Dark background in dark mode
+      backgroundColor: theme === "dark" ? "#1F2937" : "fff",
       borderRadius: "6px",
       boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
       border: "none",
       maxWidth: "650px",
       width: "100%",
+    },
+  };
+};
+
+export const getWebhookDialogPaperProps = () => {
+  return {
+    style: {
+      // backgroundColor: theme === "dark" ? "rgb(15, 23, 42)" : "fff",
+      borderRadius: "6px",
+      boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+      border: "none",
+      maxWidth: "950px",
+      width: "100%",
+      height:"64vh"
     },
   };
 };

@@ -103,7 +103,8 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, renderStartTime
       style={{ 
         background: theme === "dark" ? "rgb(15, 23, 42)" : "rgb(222, 230, 235)", 
         width: "100%", 
-        height: "100%" 
+        height: "100%", 
+        borderRadius:"4px"
       }}
       onWheel={handleWheel}
     >

@@ -9,6 +9,7 @@ import { StyledTab, getDialogPaperProps } from "./StyledComponents";
 import { YamlTab } from "./Workloads/YamlTab";
 import { UploadFileTab } from "./Workloads/UploadFileTab";
 import { GitHubTab } from "./Workloads/GitHubTab";
+import { HelmTab } from "./Workloads/HelmTab"; // Import the new HelmTab
 import { AddCredentialsDialog } from "../components/Workloads/AddCredentialsDialog";
 import { AddWebhookDialog } from "../components/Workloads/AddWebhookDialog";
 import { CancelConfirmationDialog } from "../components/Workloads/CancelConfirmationDialog";
@@ -28,10 +29,29 @@ interface FormData {
   webhook: string;
 }
 
+interface HelmFormData {
+  repoName: string;
+  repoUrl: string;
+  chartName: string;
+  releaseName: string;
+  version: string;
+  namespace: string;
+}
+
 interface Workload {
   kind?: string;
   metadata?: { name?: string };
   [key: string]: unknown;
+}
+
+function generateRandomString(length: number) {
+  const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  const charactersLength = characters.length;
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
 }
 
 const CreateOptions = ({
@@ -41,11 +61,12 @@ const CreateOptions = ({
 }: Props) => {
   const theme = useTheme((state) => state.theme); // Get the current theme
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const randomStrings = generateRandomString(5);
   const initialEditorContent = `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: example
-  namespace: test
+  name: example-${randomStrings}
+  namespace: test-${randomStrings}
 spec:
   replicas: 2
   selector:
@@ -99,6 +120,17 @@ spec:
     webhook: "none",
   };
   const [formData, setFormData] = useState<FormData>(initialFormData);
+
+  // State for Helm tab
+  const initialHelmFormData: HelmFormData = {
+    repoName: "",
+    repoUrl: "",
+    chartName: "",
+    releaseName: "",
+    version: "latest",
+    namespace: "default",
+  };
+  const [helmFormData, setHelmFormData] = useState<HelmFormData>(initialHelmFormData);
 
   const { useUploadWorkloadFile } = useWDSQueries();
   const uploadFileMutation = useUploadWorkloadFile();
@@ -208,10 +240,18 @@ spec:
         formData.credentials !== initialFormData.credentials ||
         formData.branchSpecifier !== initialFormData.branchSpecifier ||
         formData.webhook !== initialFormData.webhook;
+    } else if (activeOption === "option4") {
+      changesDetected =
+        helmFormData.repoName !== initialHelmFormData.repoName ||
+        helmFormData.repoUrl !== initialHelmFormData.repoUrl ||
+        helmFormData.chartName !== initialHelmFormData.chartName ||
+        helmFormData.releaseName !== initialHelmFormData.releaseName ||
+        helmFormData.version !== initialHelmFormData.version ||
+        helmFormData.namespace !== initialHelmFormData.namespace;
     }
 
     setHasChanges(changesDetected);
-  }, [activeOption, editorContent, selectedFile, formData]);
+  }, [activeOption, editorContent, selectedFile, formData, helmFormData]);
 
   // --- Handle File Upload (Upload File Tab) ---
   const handleFileUpload = async () => {
@@ -361,7 +401,7 @@ spec:
 
       if (err.response) {
         if (err.response.status === 500) {
-          toast.error("Failed to clone repo , fill correc data !");
+          toast.error("Failed to clone repository, fill correct url and path !");
         } else if (err.response.status === 400) {
           toast.error("Failed to deploy workload!");
         } else {
@@ -369,6 +409,70 @@ spec:
         }
       } else {
         toast.error("Deployment failed due to network error!");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- Handle Deploy (Helm Tab) ---
+  const handleHelmDeploy = async () => {
+    if (!validateHelmForm()) {
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const requestBody = {
+        repo_name: helmFormData.repoName,
+        repo_url: helmFormData.repoUrl,
+        chart_name: helmFormData.chartName,
+        release_name: helmFormData.releaseName,
+        version: helmFormData.version || "latest",
+        namespace: helmFormData.namespace || "default",
+      };
+
+      const response = await axios.post(
+        "http://localhost:4000/deploy/helm",
+        requestBody,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Helm Deploy response:", response);
+
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Helm chart deployed successfully!");
+        setHelmFormData({
+          repoName: "",
+          repoUrl: "",
+          chartName: "",
+          releaseName: "",
+          version: "latest",
+          namespace: "default",
+        });
+        setTimeout(() => window.location.reload(), 4000);
+      } else {
+        throw new Error("Unexpected response status: " + response.status);
+      }
+    } catch (error: unknown) {
+      const err = error as AxiosError;
+      console.error("Helm Deploy error:", err);
+
+      if (err.response) {
+        if (err.response.status === 500) {
+          toast.error("Failed to deploy Helm chart, check repository details!");
+        } else if (err.response.status === 400) {
+          toast.error("Failed to deploy Helm chart!");
+        } else {
+          toast.error(`Helm deployment failed! (${err.response.status})`);
+        }
+      } else {
+        toast.error("Helm deployment failed due to network error!");
       }
     } finally {
       setLoading(false);
@@ -411,6 +515,29 @@ spec:
       isValid = false;
     } else if (!formData.path) {
       errorMessage = "Please enter Path.";
+      isValid = false;
+    }
+
+    setError(errorMessage);
+    return isValid;
+  };
+
+  // --- Validate Form (Helm Tab) ---
+  const validateHelmForm = () => {
+    let isValid = true;
+    let errorMessage = "";
+
+    if (!helmFormData.repoName) {
+      errorMessage = "Please enter Repository Name.";
+      isValid = false;
+    } else if (!helmFormData.repoUrl) {
+      errorMessage = "Please enter Repository URL.";
+      isValid = false;
+    } else if (!helmFormData.chartName) {
+      errorMessage = "Please enter Chart Name.";
+      isValid = false;
+    } else if (!helmFormData.releaseName) {
+      errorMessage = "Please enter Release Name.";
       isValid = false;
     }
 
@@ -600,6 +727,12 @@ spec:
               icon={<GitHubIcon sx={{ fontSize: "0.9rem" }} />}
               iconPosition="start"
             />
+            <StyledTab
+              label="Helm"
+              value="option4"
+              icon={<span role="img" aria-label="helm" style={{ fontSize: "0.9rem" }}>⛵</span>}
+              iconPosition="start"
+            />
           </Tabs>
         </DialogTitle>
         <DialogContent sx={{ 
@@ -651,6 +784,18 @@ spec:
                 handleOpenWebhookDialog={handleOpenWebhookDialog}
                 validateForm={validateForm}
                 handleDeploy={handleDeploy}
+                handleCancelClick={handleCancelClick}
+              />
+            )}
+            {activeOption === "option4" && (
+              <HelmTab
+                formData={helmFormData}
+                setFormData={setHelmFormData}
+                error={error}
+                loading={loading}
+                hasChanges={hasChanges}
+                validateForm={validateHelmForm}
+                handleDeploy={handleHelmDeploy}
                 handleCancelClick={handleCancelClick}
               />
             )}
