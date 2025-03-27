@@ -32,18 +32,27 @@ interface Workload {
   metadata?: { name?: string };
   [key: string]: unknown;
 }
-
+function generateRandomString(length:number) {
+  const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  const charactersLength = characters.length;
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+}
 const CreateOptions = ({
   activeOption,
   setActiveOption,
   onCancel,
 }: Props) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const randomStrings = generateRandomString(5)
   const initialEditorContent = `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: example
-  namespace: test
+  name: example-${randomStrings}
+  namespace: test-${randomStrings}
 spec:
   replicas: 2
   selector:
@@ -359,7 +368,7 @@ spec:
 
       if (err.response) {
         if (err.response.status === 500) {
-          toast.error("Failed to clone repo , fill correc data !");
+          toast.error("Failed to clone repository, fill correct url and path !");
         } else if (err.response.status === 400) {
           toast.error("Failed to deploy workload!");
         } else {
