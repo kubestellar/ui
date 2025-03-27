@@ -47,11 +47,12 @@ const CreateOptions = ({
   onCancel,
 }: Props) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const randomStrings = generateRandomString(5)
   const initialEditorContent = `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: example-${generateRandomString(5)}
-  namespace: test-${generateRandomString(5)}
+  name: example-${randomStrings}
+  namespace: test-${randomStrings}
 spec:
   replicas: 2
   selector:
@@ -367,7 +368,7 @@ spec:
 
       if (err.response) {
         if (err.response.status === 500) {
-          toast.error("Failed to clone repo , fill correc data !");
+          toast.error("Failed to clone repository, fill correct url and path !");
         } else if (err.response.status === 400) {
           toast.error("Failed to deploy workload!");
         } else {
