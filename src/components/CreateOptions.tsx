@@ -32,7 +32,15 @@ interface Workload {
   metadata?: { name?: string };
   [key: string]: unknown;
 }
-
+function generateRandomString(length:number) {
+  const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  const charactersLength = characters.length;
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+}
 const CreateOptions = ({
   activeOption,
   setActiveOption,
@@ -42,8 +50,8 @@ const CreateOptions = ({
   const initialEditorContent = `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: example
-  namespace: test
+  name: example-${generateRandomString(5)}
+  namespace: test-${generateRandomString(5)}
 spec:
   replicas: 2
   selector:
