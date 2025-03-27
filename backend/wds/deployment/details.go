@@ -43,7 +43,6 @@ func GetDeploymentByName(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Deployment not found", "details": err.Error()})
 		return
 	}
-	logDeployments(deployment)
 	status := make(map[string]interface{})
 	if deployment.Status.AvailableReplicas > 0 {
 		status["availableReplicas"] = deployment.Status.AvailableReplicas

@@ -2,6 +2,7 @@ import { memo } from "react";
 import { FiMoreVertical } from "react-icons/fi";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import { ResourceItem } from "../TreeViewComponent";
+import useTheme from "../../stores/themeStore"; // Import useTheme for dark mode support
 
 interface NodeLabelProps {
   label: string;
@@ -22,6 +23,8 @@ export const NodeLabel = memo<NodeLabelProps>(({
   onClick,
   onMenuClick,
 }) => {
+    const theme = useTheme((state) => state.theme); // Get the current theme
+  
   return (
     <div
       style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}
@@ -35,6 +38,7 @@ export const NodeLabel = memo<NodeLabelProps>(({
         <div style={{ textAlign: "left" }}>
           <div>{label}</div>
           <div style={{ display: "flex", gap: "1px" }}>
+            {/* Removed heart and check/cross icons */}
             {/* Removed heart and check/cross icons */}
           </div>
         </div>
@@ -52,8 +56,9 @@ export const NodeLabel = memo<NodeLabelProps>(({
             bottom: "-6px",
             right: "-10px",
             fontSize: "5px",
-            color: "#495763",
-            background: "#ccd6dd",
+            color: theme === "dark" ? "#fff" : "#495763",
+            // background: "#ccd6dd",
+            backgroundColor: theme === "dark" ? "#333333" : "#ccd6dd",
             padding: "0 2px",
             border: "1px solid #8fa4b1",
             borderRadius: "3px",

@@ -34,9 +34,9 @@ import { DEFAULT_BINDING_POLICY_TEMPLATE } from "./constants/index"
 import PolicyDragDrop from "./PolicyDragDrop";
 import {  ManagedCluster, Workload } from "../../types/bindingPolicy";
 import { PolicyConfiguration } from "./ConfigurationSidebar";
-import { v4 as uuidv4 } from 'uuid';
 import { useCanvasStore } from "../../stores/canvasStore";
 import { usePolicyDragDropStore } from "../../stores/policyDragDropStore";
+import { useBPQueries } from "../../hooks/queries/useBPQueries";
 
 export interface PolicyData {
   name: string;
@@ -44,19 +44,32 @@ export interface PolicyData {
   yaml: string;
 }
 
-interface YamlMetadata {
+// Add interface for YAML structure
+interface YamlPolicySpec {
+  downsync?: Array<{
+    apiGroup?: string;
+    namespaces?: string[];
+  }>;
+}
+
+interface YamlPolicy {
   metadata?: {
     name?: string;
+    namespace?: string;
   };
+  spec?: YamlPolicySpec;
 }
-// interface BindingPolicyYaml extends YamlMetadata {
-//   kind?: string;
-//   spec?: {
-//     downsync?: Array<{
-//       apiGroup?: string;
-//     }>;
-//   };
-// }
+
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+    status?: number;
+  };
+  message: string;
+}
+
 interface CreateBindingPolicyDialogProps {
   open: boolean;
   onClose: () => void;
@@ -65,50 +78,7 @@ interface CreateBindingPolicyDialogProps {
   workloads?: Workload[];
 }
 
-// Helper function to generate binding policy YAML
-const generateBindingPolicyYAML = (config: PolicyConfiguration): string => {
-  const bindingPolicyYaml = {
-    apiVersion: "policy.kubestellar.io/v1alpha1",
-    kind: "BindingPolicy",
-    metadata: {
-      name: config.name,
-      namespace: config.namespace || "default"
-    },
-    spec: {
-      clusterSelectors: [
-        {
-          matchLabels: {
-            'kubernetes.io/cluster-name': config.deploymentType === 'SelectedClusters' ? '' : '*'
-          }
-        }
-      ],
-      downsync: [
-        {
-          apiGroup: "apps/v1",
-          resources: ["deployments"],
-          namespace: config.namespace || "default",
-          resourceNames: []
-        }
-      ],
-      propagationMode: config.propagationMode || "DownsyncOnly",
-      updateStrategy: config.updateStrategy || "ServerSideApply"
-    }
-  };
-  
-  return yaml.dump(bindingPolicyYaml);
-};
 
-// Deployment policy interface
-interface DeploymentPolicy {
-  id: string;
-  name: string;
-  workloadId: string;
-  clusterId: string;
-  workloadName: string;
-  clusterName: string;
-  config: PolicyConfiguration;
-  yaml: string;
-}
 
 const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   open,
@@ -133,11 +103,18 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragDropYaml, setDragDropYaml] = useState<string>("");
-
+  const [previewYaml, setPreviewYaml] = useState<string>("");
+  const [, setSuccessMessage] = useState<string>("");
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
 
   // Get the connection lines and canvas entities from their respective stores
   const connectionLines = useCanvasStore(state => state.connectionLines);
   const policyCanvasEntities = usePolicyDragDropStore(state => state.canvasEntities);
+
+  // Get the mutations
+  const { useGenerateBindingPolicyYaml, useQuickConnect } = useBPQueries();
+  const generateYamlMutation = useGenerateBindingPolicyYaml();
+  const quickConnectMutation = useQuickConnect();
 
   const handleTabChange = (_event: React.SyntheticEvent, value: string) => {
     setActiveTab(value);
@@ -164,7 +141,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
       if (typeof result === "string") {
         setFileContent(result);
         try {
-          const parsedYaml = yaml.load(result) as YamlMetadata;
+          const parsedYaml = yaml.load(result) as YamlPolicy;
           if (parsedYaml?.metadata?.name) {
             setPolicyName(parsedYaml.metadata.name);
           }
@@ -307,85 +284,124 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   // };
 
   // Function to prepare policies for deployment
-  const prepareForDeployment = () => {
+  const prepareForDeployment = async () => {
     if (!connectionLines || connectionLines.length === 0) {
       setError("No connections found between workloads and clusters");
       return;
     }
     
-    // Generate policies from connection lines
-    const policies = connectionLines.map(line => {
-      // Extract workload and cluster IDs from the connection line
-      const workloadId = line.source.startsWith('workload-') 
-        ? line.source.replace('workload-', '') 
-        : line.target.replace('workload-', '');
+    setIsLoading(true);
+    setError("");
+    
+    try {
+      // Process each connection line
+      const promises = connectionLines.map(async line => {
+        // Extract workload and cluster IDs
+        const workloadId = line.source.startsWith('workload-') 
+          ? line.source.replace('workload-', '') 
+          : line.target.replace('workload-', '');
+        
+        const clusterId = line.source.startsWith('cluster-') 
+          ? line.source.replace('cluster-', '') 
+          : line.target.replace('cluster-', '');
+        
+        // Generate a unique policy name using both IDs and a timestamp
+        const timestamp = Date.now();
+        const policyName = `${workloadId}-${clusterId}-${timestamp}`;
+        
+        try {
+          // Call quick-connect API
+          return await quickConnectMutation.mutateAsync({
+            workloadId,
+            clusterId,
+            policyName
+          });
+        } catch (error: unknown) {
+          const apiError = error as ApiError;
+          // Extract error message from response if available
+          const errorMessage = apiError.response?.data?.message || apiError.message || 'Unknown error occurred';
+          console.error("Error creating quick connect binding policy:", error);
+          
+          // If it's a conflict error, provide more specific message
+          if (apiError.response?.status === 409) {
+            throw new Error(`A binding policy already exists for workload "${workloadId}" and cluster "${clusterId}". Please delete the existing policy first.`);
+          }
+          
+          throw new Error(`Failed to create binding policy: ${errorMessage}`);
+        }
+      });
       
-      const clusterId = line.source.startsWith('cluster-') 
-        ? line.source.replace('cluster-', '') 
-        : line.target.replace('cluster-', '');
+      // Wait for all policies to be created
+      const results = await Promise.all(promises);
       
-      // Find the workload and cluster
-      const workload = workloads.find(w => w.name === workloadId);
-      const cluster = clusters.find(c => c.name === clusterId);
+      // Show success message
+      setSuccessMessage(`Successfully created ${results.length} binding policies`);
       
-      if (!workload || !cluster) {
-        console.error('Could not find workload or cluster for connection:', line);
-        return null;
+      // Close dialog
+      onClose();
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      console.error("Error creating binding policies:", error);
+      setError(apiError.message || "Failed to create binding policies");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Function to handle file upload binding policy creation
+  const handleCreateFromFile = () => {
+    // Validate input based on the active tab
+    if (activeTab === "file") {
+      if (!fileContent) {
+        setError("Please select a YAML file first");
+        return;
       }
       
-      // Create a unique policy name if it doesn't exist
-      const policyName = `${workload.name}-to-${cluster.name}`;
+      if (!policyName) {
+        setError("Could not extract policy name from YAML. Please ensure your YAML has metadata.name");
+        return;
+      }
+    } else if (activeTab === "yaml") {
+      if (!editorContent) {
+        setError("YAML content is required");
+        return;
+      }
       
-      // Create a default configuration
-      const config: PolicyConfiguration = {
-        name: policyName,
-        namespace: workload.namespace || 'default',
-        propagationMode: 'DownsyncOnly',
-        updateStrategy: line.color === '#2196f3' ? 'RollingUpdate' :
-                      line.color === '#009688' ? 'BlueGreenDeployment' :
-                      line.color === '#ff9800' ? 'ForceApply' : 'ServerSideApply',
-        deploymentType: 'SelectedClusters',
-        schedulingRules: [],
-        customLabels: {},
-        tolerations: []
-      };
-      
-      // Generate YAML for the policy
-      const yaml = generateBindingPolicyYAML(config);
-      
-      return {
-        id: uuidv4(), // Generate a unique ID
-        name: policyName,
-        workloadId,
-        clusterId,
-        workloadName: workload.name,
-        clusterName: cluster.name,
-        config,
-        yaml
-      };
-    }).filter(Boolean) as DeploymentPolicy[];
-    
-    // For each policy, generate the YAML and process it through handleCreate
-    if (policies.length === 0) {
-      setError("No valid connections between workloads and clusters found");
-      return;
+      if (!policyName) {
+        setError("Could not extract policy name from YAML. Please ensure your YAML has metadata.name");
+        return;
+      }
     }
     
     // Set loading state
     setIsLoading(true);
     setError(""); // Clear any previous errors
     
-    // Process all policies
     try {
-      // Create combined YAML document with all policies
-      const allPolicyYamls = policies.map(policy => policy.yaml).join("\n---\n");
-      const combinedPolicyName = `binding-policies-${new Date().getTime()}`;
+      // Determine which content to use based on active tab
+      let content = "";
+      if (activeTab === "yaml") {
+        content = editorContent;
+      } else if (activeTab === "file") {
+        content = fileContent;
+      }
+
+      // Extract workload info for better categorization
+      let workloadInfo = "default-workload";
+      try {
+        const parsedYaml = yaml.load(content) as YamlPolicy;
+        if (parsedYaml?.spec?.downsync?.[0]?.apiGroup) {
+          workloadInfo = parsedYaml.spec.downsync[0].apiGroup;
+        }
+      } catch (e) {
+        console.error("Error parsing YAML for workload info:", e);
+      }
       
-      // Call the onCreatePolicy callback with the combined policy data
+      // Call the onCreatePolicy callback with the policy data
       onCreatePolicy({
-        name: combinedPolicyName,
-        workload: "combined-workloads",
-        yaml: allPolicyYamls
+        name: policyName,
+        workload: workloadInfo,
+        yaml: content
       });
       
       // Reset form (will only happen if no errors occur)
@@ -397,11 +413,11 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
         setDragDropYaml("");
       }, 500);
     } catch (error) {
-      console.error("Error preparing binding policy data:", error);
+      console.error("Error creating binding policy:", error);
       setError(
         error instanceof Error
           ? `Error: ${error.message}`
-          : "Failed to prepare binding policy data"
+          : "Failed to create binding policy"
       );
       setIsLoading(false);
     }
@@ -430,7 +446,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   useEffect(() => {
     if (activeTab === "yaml" && editorContent) {
       try {
-        const parsedYaml = yaml.load(editorContent) as YamlMetadata;
+        const parsedYaml = yaml.load(editorContent) as YamlPolicy;
         if (parsedYaml?.metadata?.name) {
           setPolicyName(parsedYaml.metadata.name);
         }
@@ -462,56 +478,30 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   };
 
   // Handler for when a binding policy is created from drag and drop
-  const handleCreateBindingPolicy = (clusterId: string, workloadId: string, config?: PolicyConfiguration) => {
+  const handleCreateBindingPolicy = async (clusterId: string, workloadId: string, config?: PolicyConfiguration) => {
     if (!config) return;
     
-    // Generate YAML from config
-    const bindingPolicyYaml = {
-      apiVersion: "policy.kubestellar.io/v1alpha1",
-      kind: "BindingPolicy",
-      metadata: {
-        name: config.name,
-        namespace: config.namespace || "default"
-      },
-      spec: {
-        clusterSelectors: [
-          {
-            matchLabels: {
-              'kubernetes.io/cluster-name': clusterId
-            }
-          }
-        ],
-        downsync: [
-          {
-            apiGroup: "apps/v1",
-            resources: ["deployments"],
-            namespace: config.namespace || "default",
-            resourceNames: [workloadId]
-          }
-        ],
-        propagationMode: config.propagationMode || "DownsyncOnly",
-        updateStrategy: config.updateStrategy || "ServerSideApply"
-      }
-    };
-
-    // Convert to YAML string
-    const yamlString = yaml.dump(bindingPolicyYaml);
-    setDragDropYaml(yamlString);
-    setPolicyName(config.name);
-    
-    // Return a promise that resolves immediately for compatibility with existing code
-    return Promise.resolve();
+    try {
+      // First generate the YAML preview
+      const generateYamlResponse = await generateYamlMutation.mutateAsync({
+        workloadId,
+        clusterId,
+        namespace: config.namespace || "default",
+        policyName: config.name
+      });
+      
+      // Update the preview YAML and show dialog
+      setPreviewYaml(generateYamlResponse.yaml);
+      setShowPreviewDialog(true);
+      
+      // Return a promise that resolves immediately for compatibility
+      return Promise.resolve();
+    } catch (error) {
+      console.error("Error generating binding policy YAML:", error);
+      setError("Failed to generate binding policy YAML");
+      return Promise.reject(error);
+    }
   };
-
-  // Function to generate YAML preview for all connections
- 
-  
-  // // Update generated YAML when connections change
-  // useEffect(() => {
-  //   if (activeTab === "previewYaml") {
-  //     updateGeneratedYaml();
-  //   }
-  // }, [connectionLines, activeTab]);
 
   const isDarkTheme = theme === "dark";
 
@@ -588,7 +578,6 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                   }
                 }}
               />
-              
             </Tabs>
             </DialogTitle>
         <DialogContent
@@ -795,7 +784,6 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                 </Box>
               )}
 
-             
             </Box>
 
             <DialogActions
@@ -824,13 +812,17 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
               </Button>
               <Button
                 variant="contained"
-                onClick={prepareForDeployment}
+                onClick={activeTab === "dragdrop" ? prepareForDeployment : handleCreateFromFile}
                 color="primary"
                 disabled={
                   isLoading ||
-                  !connectionLines?.length ||
-                  !policyCanvasEntities?.clusters?.length || 
-                  !policyCanvasEntities?.workloads?.length
+                  (activeTab === "dragdrop" && (
+                    !connectionLines?.length ||
+                    !policyCanvasEntities?.clusters?.length || 
+                    !policyCanvasEntities?.workloads?.length
+                  )) ||
+                  (activeTab === "file" && !fileContent) ||
+                  (activeTab === "yaml" && !editorContent)
                 }
                 sx={{
                   bgcolor: "#1976d2 !important",
@@ -858,7 +850,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                     Deploying...
                   </Box>
                 ) : (
-                  "Deploy Binding Policies"
+                  activeTab === "dragdrop" ? "Deploy Binding Policies" : "Create Binding Policy"
                 )}
               </Button>
             </DialogActions>
@@ -892,6 +884,61 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
           {error}
         </Alert>
       </Snackbar>
+
+      <Dialog
+        open={showPreviewDialog}
+        onClose={() => setShowPreviewDialog(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            height: "80vh",
+            maxHeight: "80vh"
+          }
+        }}
+      >
+        <DialogTitle>
+          <Typography variant="h6">Preview Generated YAML</Typography>
+        </DialogTitle>
+        <DialogContent sx={{ p: 2 }}>
+          <StyledPaper elevation={0} sx={{ height: 'calc(100% - 32px)', overflow: 'hidden' }}>
+            <Editor
+              height="100%"
+              language="yaml"
+              value={previewYaml}
+              theme={isDarkTheme ? "vs-dark" : "light"}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 14,
+                lineNumbers: "on",
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                fontFamily: "'JetBrains Mono', monospace",
+                padding: { top: 10 },
+                readOnly: true
+              }}
+            />
+          </StyledPaper>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowPreviewDialog(false)}>Close</Button>
+          <Button 
+            variant="contained" 
+            color="primary"
+            onClick={prepareForDeployment}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <CircularProgress size={20} sx={{ mr: 1 }} />
+                Deploying...
+              </Box>
+            ) : (
+              "Deploy Binding Policy"
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };

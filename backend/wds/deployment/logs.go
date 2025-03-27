@@ -135,69 +135,6 @@ func updateHandler(conn *websocket.Conn, oldDeployment, newDeployment *v1.Deploy
 	}
 }
 
-// Watches deployment changes and sends updates
-// Keeping it for reference - NOT USEFUL
-func watchDeploymentChanges(conn *websocket.Conn, clientset *kubernetes.Clientset, namespace, deploymentName string) {
-	options := metav1.ListOptions{
-		// remove this line it will become universal for all the deployment
-		// it will listen for all deployment inside namespace
-		FieldSelector: fmt.Sprintf("metadata.name=%s", deploymentName),
-	}
-	watcher, err := clientset.AppsV1().Deployments(namespace).Watch(context.Background(), options)
-	if err != nil {
-		if err := conn.WriteMessage(websocket.TextMessage, []byte("Error: Failed to watch deployment - "+err.Error())); err != nil {
-			log.Printf("Failed to send WebSocket message: %v", err)
-		}
-		return
-	}
-
-	defer watcher.Stop()
-
-	// preserving the replicas and image for next call
-	var lastReplicas *int32
-	var lastImage string
-
-	for event := range watcher.ResultChan() {
-		deployment, ok := event.Object.(*v1.Deployment)
-		if !ok {
-			continue
-		}
-
-		var logs []DeploymentUpdate
-		message := fmt.Sprintf("Deployment %s changed: %s", deployment.Name, event.Type)
-		log.Println(message)
-
-		if lastReplicas == nil || *lastReplicas != *deployment.Spec.Replicas {
-			message = fmt.Sprintf("Deployment %s updated - Replicas changed: %d", deployment.Name, *deployment.Spec.Replicas)
-			lastReplicas = deployment.Spec.Replicas
-			logs = append(logs, DeploymentUpdate{
-				Timestamp: time.Now().Format(time.RFC3339),
-				Message:   message,
-			})
-		}
-
-		if len(deployment.Spec.Template.Spec.Containers) > 0 {
-			currentImage := deployment.Spec.Template.Spec.Containers[0].Image
-			if lastImage == "" || lastImage != currentImage {
-				message = fmt.Sprintf("Deployment %s updated - Image changed: %s", deployment.Name, currentImage)
-				logs = append(logs, DeploymentUpdate{
-					Timestamp: time.Now().Format(time.RFC3339),
-					Message:   message,
-				})
-				lastImage = currentImage
-			}
-		}
-
-		for _, logLine := range logs {
-			jsonMessage, _ := json.Marshal(logLine)
-			if err := conn.WriteMessage(websocket.TextMessage, jsonMessage); err != nil {
-				log.Println("Error writing to WebSocket:", err)
-				return
-			}
-		}
-	}
-}
-
 func getDeploymentLogs(deployment *v1.Deployment) []string {
 	baseTime := time.Now().Format(time.RFC3339)
 
