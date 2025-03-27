@@ -85,7 +85,6 @@ func parseRequestBody(c *gin.Context) ([]map[string]interface{}, error) {
 	return yamlDocs, nil
 }
 
-// ensureNamespaceExists checks if a namespace exists and creates it if it doesn't
 func parseYAMLFile(file io.Reader) ([]map[string]interface{}, error) {
 	var yamlDocs []map[string]interface{}
 	decoder := yaml.NewDecoder(file)
