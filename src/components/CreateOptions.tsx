@@ -43,8 +43,8 @@ interface Workload {
   kind?: string;
   metadata?: {
     name?: string;
-    namespace?: string; // Add namespace to the metadata type
-    [key: string]: unknown; // Keep the index signature for other properties
+    namespace?: string;
+    [key: string]: unknown;
   };
   [key: string]: unknown;
 }
@@ -131,7 +131,7 @@ spec:
     repoUrl: "",
     chartName: "",
     releaseName: "",
-    version: "latest",
+    version: "", // Changed from "latest" to "" to make it empty by default
     namespace: "default",
   };
   const [helmFormData, setHelmFormData] = useState<HelmFormData>(initialHelmFormData);
@@ -251,7 +251,7 @@ spec:
     setHasChanges(changesDetected);
   }, [activeOption, editorContent, selectedFile, formData, helmFormData]);
 
-  const handleFileUpload = async (autoNs: boolean) => { // Updated to accept autoNs parameter
+  const handleFileUpload = async (autoNs: boolean) => {
     if (!selectedFile) {
       toast.error("No file selected.");
       return;
@@ -262,7 +262,7 @@ spec:
     console.log("FormData Entries:", [...formData.entries()]);
 
     try {
-      const response = await uploadFileMutation.mutateAsync({ data: formData, autoNs }); // Pass autoNs to mutation
+      const response = await uploadFileMutation.mutateAsync({ data: formData, autoNs });
       console.log("Mutation Response:", response);
       toast.success("Workload Deploy successful!");
       setTimeout(() => window.location.reload(), 1000);
@@ -279,39 +279,38 @@ spec:
           ? JSON.stringify(axiosError.response.data)
           : axiosError.message || "Unknown error";
 
-          if (axiosError.response?.status === 500) {
-            // Extract kind from the selected file content
-            const reader = new FileReader();
-            reader.onload = (e) => {
-              const content = e.target?.result as string;
-              if (content) {
-                try {
-                  let documents: Workload[] = [];
-                  const contentType = detectContentType(content);
-                  if (contentType === "json") {
-                    const parsed = JSON.parse(content);
-                    documents = Array.isArray(parsed) ? parsed : [parsed];
-                  } else {
-                    jsyaml.loadAll(content, (doc) => documents.push(doc as Workload), {});
-                  }
-                  const docWithKind = documents.find((doc) => doc?.kind);
-                  const kind = docWithKind?.kind || "Unknown";
-                  const namespace = docWithKind?.metadata?.namespace || "default";
-                  toast.error(`Failed to create ${kind} ${workloadName} in namespace ${namespace}, workload already exists or Namespace ${namespace} not Found`);
-                } catch (parseError) {
-                  console.error("Error parsing file for kind:", parseError);
-                  toast.error(`Failed to create Unknown ${workloadName} workload is already exists`);
-                }
+      if (axiosError.response?.status === 500) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const content = e.target?.result as string;
+          if (content) {
+            try {
+              let documents: Workload[] = [];
+              const contentType = detectContentType(content);
+              if (contentType === "json") {
+                const parsed = JSON.parse(content);
+                documents = Array.isArray(parsed) ? parsed : [parsed];
               } else {
-                toast.error(`Failed to create Unknown ${workloadName} workload is already exists`);
+                jsyaml.loadAll(content, (doc) => documents.push(doc as Workload), {});
               }
-            };
-            reader.readAsText(selectedFile);
-          } else if (axiosError.response?.status === 409) {
-            toast.error("Conflict error: Deployment already in progress!");
+              const docWithKind = documents.find((doc) => doc?.kind);
+              const kind = docWithKind?.kind || "Unknown";
+              const namespace = docWithKind?.metadata?.namespace || "default";
+              toast.error(`Failed to create ${kind} ${workloadName} in namespace ${namespace}, workload is already exists or Namspace ${namespace} not Found`);
+            } catch (parseError) {
+              console.error("Error parsing file for kind:", parseError);
+              toast.error(`Failed to create Unknown ${workloadName} workload is already exists`);
+            }
           } else {
-            toast.error(`Upload failed: ${errorMessage}`);
+            toast.error(`Failed to create Unknown ${workloadName} workload is already exists`);
           }
+        };
+        reader.readAsText(selectedFile);
+      } else if (axiosError.response?.status === 409) {
+        toast.error("Conflict error: Deployment already in progress!");
+      } else {
+        toast.error(`Upload failed: ${errorMessage}`);
+      }
     }
   };
 
@@ -356,7 +355,6 @@ spec:
 
       if (err.response) {
         if (err.response.status === 500) {
-          // Extract kind and namespace from the editor content
           let documents: Workload[] = [];
           const contentType = detectContentType(fileContent);
           if (contentType === "json") {
@@ -367,7 +365,7 @@ spec:
           }
           const docWithKind = documents.find((doc) => doc?.kind);
           const kind = docWithKind?.kind || "Unknown";
-          const namespace = docWithKind?.metadata?.namespace || "default"; // Updated extraction
+          const namespace = docWithKind?.metadata?.namespace || "default";
           toast.error(`Failed to create ${kind}: ${workloadName} in namespace ${namespace}, workload is already exists or Namspace ${namespace} not Found`);
         } else if (err.response.status === 409) {
           toast.error("Conflict error: Deployment already in progress!");
@@ -456,14 +454,19 @@ spec:
     setLoading(true);
 
     try {
-      const requestBody = {
+      // Conditionally build the requestBody, excluding the version field if it's empty
+      const requestBody: { [key: string]: string } = {
         repoName: helmFormData.repoName,
         repoURL: helmFormData.repoUrl,
         chartName: helmFormData.chartName,
         releaseName: helmFormData.releaseName,
-        version: helmFormData.version || "latest",
         namespace: helmFormData.namespace || "default",
       };
+
+      // Only include the version field if it's not empty
+      if (helmFormData.version) {
+        requestBody.version = helmFormData.version;
+      }
 
       const response = await axios.post(
         "http://localhost:4000/deploy/helm",
@@ -484,7 +487,7 @@ spec:
           repoUrl: "",
           chartName: "",
           releaseName: "",
-          version: "latest",
+          version: "", // Reset to empty string
           namespace: "default",
         });
         setTimeout(() => window.location.reload(), 4000);
@@ -746,7 +749,6 @@ spec:
               icon={<img src={helmicon} alt="Helm" width={24} height={24} />}
               iconPosition="start"
             />
-
           </Tabs>
         </DialogTitle>
         <DialogContent sx={{ 
