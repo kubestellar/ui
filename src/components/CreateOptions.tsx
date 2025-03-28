@@ -9,11 +9,12 @@ import { StyledTab, getDialogPaperProps } from "./StyledComponents";
 import { YamlTab } from "./Workloads/YamlTab";
 import { UploadFileTab } from "./Workloads/UploadFileTab";
 import { GitHubTab } from "./Workloads/GitHubTab";
-import { HelmTab } from "./Workloads/HelmTab"; // Import the new HelmTab
+import { HelmTab } from "./Workloads/HelmTab";
 import { AddCredentialsDialog } from "../components/Workloads/AddCredentialsDialog";
 import { AddWebhookDialog } from "../components/Workloads/AddWebhookDialog";
 import { CancelConfirmationDialog } from "../components/Workloads/CancelConfirmationDialog";
-import useTheme from "../stores/themeStore"; // Import useTheme for dark mode support
+import useTheme from "../stores/themeStore";
+import helmicon from "../assets/Helm.png"
 
 interface Props {
   activeOption: string | null;
@@ -40,7 +41,11 @@ interface HelmFormData {
 
 interface Workload {
   kind?: string;
-  metadata?: { name?: string };
+  metadata?: {
+    name?: string;
+    namespace?: string; // Add namespace to the metadata type
+    [key: string]: unknown; // Keep the index signature for other properties
+  };
   [key: string]: unknown;
 }
 
@@ -59,7 +64,7 @@ const CreateOptions = ({
   setActiveOption,
   onCancel,
 }: Props) => {
-  const theme = useTheme((state) => state.theme); // Get the current theme
+  const theme = useTheme((state) => state.theme);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const randomStrings = generateRandomString(5);
   const initialEditorContent = `apiVersion: apps/v1
@@ -121,7 +126,6 @@ spec:
   };
   const [formData, setFormData] = useState<FormData>(initialFormData);
 
-  // State for Helm tab
   const initialHelmFormData: HelmFormData = {
     repoName: "",
     repoUrl: "",
@@ -144,7 +148,6 @@ spec:
     }
   };
 
-  // --- Extract Workload Name from Editor Content (YAML Tab) ---
   useEffect(() => {
     if (!editorContent) {
       setWorkloadName("");
@@ -161,7 +164,6 @@ spec:
         jsyaml.loadAll(editorContent, (doc) => documents.push(doc as Workload), {});
       }
 
-      // Find the first document with metadata.name
       const docWithName = documents.find((doc) => doc?.metadata?.name);
       const name = docWithName?.metadata?.name || "";
       setWorkloadName(name);
@@ -171,7 +173,6 @@ spec:
     }
   }, [editorContent]);
 
-  // --- Extract Workload Name from Uploaded File (Upload File Tab) ---
   useEffect(() => {
     if (!selectedFile) {
       setWorkloadName("");
@@ -207,12 +208,10 @@ spec:
     reader.readAsText(selectedFile);
   }, [selectedFile]);
 
-  // --- Track Editor Content Changes ---
   useEffect(() => {
     setIsEditorContentEdited(editorContent !== initialEditorContent);
   }, [editorContent, initialEditorContent]);
 
-  // --- Load Stored Credentials and Webhooks ---
   useEffect(() => {
     const storedCredentials = localStorage.getItem("credentialsList");
     const storedWebhooks = localStorage.getItem("webhooksList");
@@ -225,7 +224,6 @@ spec:
     }
   }, []);
 
-  // --- Track Changes Across Tabs ---
   useEffect(() => {
     let changesDetected = false;
 
@@ -253,8 +251,7 @@ spec:
     setHasChanges(changesDetected);
   }, [activeOption, editorContent, selectedFile, formData, helmFormData]);
 
-  // --- Handle File Upload (Upload File Tab) ---
-  const handleFileUpload = async () => {
+  const handleFileUpload = async (autoNs: boolean) => { // Updated to accept autoNs parameter
     if (!selectedFile) {
       toast.error("No file selected.");
       return;
@@ -265,7 +262,7 @@ spec:
     console.log("FormData Entries:", [...formData.entries()]);
 
     try {
-      const response = await uploadFileMutation.mutateAsync({ data: formData });
+      const response = await uploadFileMutation.mutateAsync({ data: formData, autoNs }); // Pass autoNs to mutation
       console.log("Mutation Response:", response);
       toast.success("Workload Deploy successful!");
       setTimeout(() => window.location.reload(), 1000);
@@ -282,18 +279,43 @@ spec:
           ? JSON.stringify(axiosError.response.data)
           : axiosError.message || "Unknown error";
 
-      if (axiosError.response?.status === 500) {
-        toast.error("Workload is already exist!");
-      } else if (axiosError.response?.status === 409) {
-        toast.error("Conflict error: Deployment already in progress!");
-      } else {
-        toast.error(`Upload failed: ${errorMessage}`);
-      }
+          if (axiosError.response?.status === 500) {
+            // Extract kind from the selected file content
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const content = e.target?.result as string;
+              if (content) {
+                try {
+                  let documents: Workload[] = [];
+                  const contentType = detectContentType(content);
+                  if (contentType === "json") {
+                    const parsed = JSON.parse(content);
+                    documents = Array.isArray(parsed) ? parsed : [parsed];
+                  } else {
+                    jsyaml.loadAll(content, (doc) => documents.push(doc as Workload), {});
+                  }
+                  const docWithKind = documents.find((doc) => doc?.kind);
+                  const kind = docWithKind?.kind || "Unknown";
+                  const namespace = docWithKind?.metadata?.namespace || "default";
+                  toast.error(`Failed to create ${kind} ${workloadName} in namespace ${namespace}, workload is already exists or Namspace ${namespace} not Found`);
+                } catch (parseError) {
+                  console.error("Error parsing file for kind:", parseError);
+                  toast.error(`Failed to create Unknown ${workloadName} workload is already exists`);
+                }
+              } else {
+                toast.error(`Failed to create Unknown ${workloadName} workload is already exists`);
+              }
+            };
+            reader.readAsText(selectedFile);
+          } else if (axiosError.response?.status === 409) {
+            toast.error("Conflict error: Deployment already in progress!");
+          } else {
+            toast.error(`Upload failed: ${errorMessage}`);
+          }
     }
   };
 
-  // --- Handle Raw Upload (YAML Tab) ---
-  const handleRawUpload = async () => {
+  const handleRawUpload = async (autoNs: boolean) => {
     const fileContent = editorContent.trim();
 
     if (!fileContent) {
@@ -302,7 +324,6 @@ spec:
     }
 
     try {
-      // Parse all documents into an array
       let documents: Workload[] = [];
       const contentType = detectContentType(fileContent);
       if (contentType === "json") {
@@ -312,15 +333,16 @@ spec:
         jsyaml.loadAll(fileContent, (doc) => documents.push(doc as Workload), {});
       }
 
-      // Validate that at least one document has metadata.name
       const hasName = documents.some((doc) => doc?.metadata?.name);
       if (!hasName) {
         toast.error("At least one document must have 'metadata.name'");
         return;
       }
 
-      // Send the array of documents to the API
-      const response = await axios.post("http://localhost:4000/api/resources", documents);
+      const response = await axios.post(
+        `http://localhost:4000/api/resources?auto_ns=${autoNs}`,
+        documents
+      );
 
       if (response.status === 200 || response.status === 201) {
         toast.success("Deployment successful!");
@@ -334,7 +356,19 @@ spec:
 
       if (err.response) {
         if (err.response.status === 500) {
-          toast.error("Deploy already exists!");
+          // Extract kind and namespace from the editor content
+          let documents: Workload[] = [];
+          const contentType = detectContentType(fileContent);
+          if (contentType === "json") {
+            const parsed = JSON.parse(fileContent);
+            documents = Array.isArray(parsed) ? parsed : [parsed];
+          } else {
+            jsyaml.loadAll(fileContent, (doc) => documents.push(doc as Workload), {});
+          }
+          const docWithKind = documents.find((doc) => doc?.kind);
+          const kind = docWithKind?.kind || "Unknown";
+          const namespace = docWithKind?.metadata?.namespace || "default"; // Updated extraction
+          toast.error(`Failed to create ${kind}: ${workloadName} in namespace ${namespace}, workload is already exists or Namspace ${namespace} not Found`);
         } else if (err.response.status === 409) {
           toast.error("Conflict error: Deployment already in progress!");
         } else {
@@ -346,7 +380,6 @@ spec:
     }
   };
 
-  // --- Handle Deploy (GitHub Tab) ---
   const handleDeploy = async () => {
     if (!validateForm()) {
       return;
@@ -415,7 +448,6 @@ spec:
     }
   };
 
-  // --- Handle Deploy (Helm Tab) ---
   const handleHelmDeploy = async () => {
     if (!validateHelmForm()) {
       return;
@@ -425,10 +457,10 @@ spec:
 
     try {
       const requestBody = {
-        repo_name: helmFormData.repoName,
-        repo_url: helmFormData.repoUrl,
-        chart_name: helmFormData.chartName,
-        release_name: helmFormData.releaseName,
+        repoName: helmFormData.repoName,
+        repoURL: helmFormData.repoUrl,
+        chartName: helmFormData.chartName,
+        releaseName: helmFormData.releaseName,
         version: helmFormData.version || "latest",
         namespace: helmFormData.namespace || "default",
       };
@@ -465,7 +497,7 @@ spec:
 
       if (err.response) {
         if (err.response.status === 500) {
-          toast.error("Failed to deploy Helm chart, check repository details!");
+          toast.error("Deployment failed: failed to install chart: cannot re-use a name that is still in use!");
         } else if (err.response.status === 400) {
           toast.error("Failed to deploy Helm chart!");
         } else {
@@ -479,7 +511,6 @@ spec:
     }
   };
 
-  // --- Handle Cancel Click ---
   const handleCancelClick = () => {
     if (hasChanges) {
       setCancelConfirmationOpen(true);
@@ -491,7 +522,6 @@ spec:
     }
   };
 
-  // --- Handle Confirm Cancel ---
   const handleConfirmCancel = () => {
     setSelectedFile(null);
     setError("");
@@ -500,12 +530,10 @@ spec:
     onCancel();
   };
 
-  // --- Handle Close Cancel Confirmation ---
   const handleCloseCancelConfirmation = () => {
     setCancelConfirmationOpen(false);
   };
 
-  // --- Validate Form (GitHub Tab) ---
   const validateForm = () => {
     let isValid = true;
     let errorMessage = "";
@@ -522,7 +550,6 @@ spec:
     return isValid;
   };
 
-  // --- Validate Form (Helm Tab) ---
   const validateHelmForm = () => {
     let isValid = true;
     let errorMessage = "";
@@ -545,17 +572,14 @@ spec:
     return isValid;
   };
 
-  // --- Handle Credential Change (GitHub Tab) ---
   const handleCredentialChange = (event: SelectChangeEvent<string>) => {
     setFormData({ ...formData, credentials: event.target.value });
   };
 
-  // --- Handle Open Credential Dialog ---
   const handleOpenCredentialDialog = () => {
     setCredentialDialogOpen(true);
   };
 
-  // --- Handle Add Credential ---
   const handleAddCredential = () => {
     if (newCredential.githubUsername && newCredential.personalAccessToken) {
       const credentialId = `${newCredential.githubUsername}-pat`;
@@ -578,24 +602,20 @@ spec:
     }
   };
 
-  // --- Handle Close Credential Dialog ---
   const handleCloseCredentialDialog = () => {
     setCredentialDialogOpen(false);
     setNewCredential({ githubUsername: "", personalAccessToken: "" });
     setFormData({ ...formData, credentials: "none" });
   };
 
-  // --- Handle Webhook Change (GitHub Tab) ---
   const handleWebhookChange = (event: SelectChangeEvent<string>) => {
     setFormData({ ...formData, webhook: event.target.value });
   };
 
-  // --- Handle Open Webhook Dialog ---
   const handleOpenWebhookDialog = () => {
     setWebhookDialogOpen(true);
   };
 
-  // --- Handle Add Webhook ---
   const handleAddWebhook = () => {
     if (newWebhook.webhookUrl && newWebhook.personalAccessToken) {
       const webhookId = `${newWebhook.webhookUrl}-pat`;
@@ -619,26 +639,22 @@ spec:
     }
   };
 
-  // --- Handle Close Webhook Dialog ---
   const handleCloseWebhookDialog = () => {
     setWebhookDialogOpen(false);
     setNewWebhook({ webhookUrl: "", personalAccessToken: "" });
     setFormData({ ...formData, webhook: "none" });
   };
 
-  // --- Handle Drag Over (Upload File Tab) ---
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.currentTarget.style.borderColor = "#1976d2";
   };
 
-  // --- Handle Drag Leave (Upload File Tab) ---
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.currentTarget.style.borderColor = "#bdbdbd";
   };
 
-  // --- Handle Drop (Upload File Tab) ---
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.currentTarget.style.borderColor = "#bdbdbd";
@@ -650,7 +666,6 @@ spec:
     }
   };
 
-  // --- Handle File Change (Upload File Tab) ---
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     if (file) {
@@ -658,7 +673,6 @@ spec:
     }
   };
 
-  // --- Format File Size (Upload File Tab) ---
   const formatFileSize = (size: number): string => {
     if (size < 1024) return `${size} B`;
     const kb = size / 1024;
@@ -668,7 +682,6 @@ spec:
   };
 
   return (
-    // --- Main Dialog Section ---
     <>
       {error && (
         <Box sx={{ color: "red", mb: 1, textAlign: "center" }}>{error}</Box>
@@ -678,7 +691,7 @@ spec:
         onClose={onCancel}
         maxWidth="lg"
         fullWidth
-        PaperProps={getDialogPaperProps(theme)} // Pass the theme to the function
+        PaperProps={getDialogPaperProps(theme)}
       >
         <DialogTitle sx={{ 
           padding: "16px 16px", 
@@ -730,15 +743,15 @@ spec:
             <StyledTab
               label="Helm"
               value="option4"
-              icon={<span role="img" aria-label="helm" style={{ fontSize: "0.9rem" }}>⛵</span>}
+              icon={<img src={helmicon} alt="Helm" width={24} height={24} />}
               iconPosition="start"
             />
+
           </Tabs>
         </DialogTitle>
         <DialogContent sx={{ 
           padding: "17px", 
-          // backgroundColor: theme === "dark" ? "#1A2526" : "#fff",
-          height: "64.5vh", 
+          height: "100vh", 
           overflow: "hidden",
         }}>
           <Box sx={{ width: "100%", mt: 2, height: "100%" }}>

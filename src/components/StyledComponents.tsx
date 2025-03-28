@@ -10,6 +10,7 @@ export const StyledTab = styled(Tab)(({ theme }) => {
     color: appTheme === "dark" ? "#fff" : theme.palette.grey[600], // Light text in dark mode
     padding: "10px 17px",
     minHeight: "40px",
+    marginBottom:"3px",
     marginLeft: "16px",
     marginTop: "4px",
     borderRadius: "12px 12px 12px 12px",
@@ -48,7 +49,7 @@ export const StyledPaper = styled(Paper)(({ theme }) => {
     alignItems: "center",
     justifyContent: "center",
     transition: "all 0.2s ease",
-    height: "359px",
+    height: "450px",
     width: "98.5%",
     margin: "0 auto",
     gap: theme.spacing(1.5),
@@ -82,7 +83,7 @@ export const getDialogPaperProps = (theme: string) => ({
     borderRadius: "12px",
     boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
     border: "none",
-    maxWidth: "1000px",
+    maxWidth: "1665px",
     width: "100%",
   },
 });
@@ -107,6 +108,7 @@ export const getWebhookAndCredentialDialogPaperProps = (theme: string) => {
       border: "none",
       maxWidth: "650px",
       width: "100%",
+      height:"410px"
     },
   };
 };

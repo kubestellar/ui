@@ -33,14 +33,14 @@ func getGVR(discoveryClient discovery.DiscoveryInterface, resourceKind string) (
 	for _, resourceGroup := range resourceList {
 		for _, resource := range resourceGroup.APIResources {
 			// we are looking for the resourceKind
-			if resource.Kind == resourceKind {
+			if strings.EqualFold(resource.Kind, resourceKind) {
 				gv, err := schema.ParseGroupVersion(resourceGroup.GroupVersion)
 				if err != nil {
 					return schema.GroupVersionResource{}, false, err
 				}
 				isNamespaced := resource.Namespaced
 				return schema.GroupVersionResource{Group: gv.Group, Version: gv.Version, Resource: resource.Name}, isNamespaced, nil
-			} else if resource.Name == resourceKind {
+			} else if strings.EqualFold(resource.Name, resourceKind) {
 				gv, err := schema.ParseGroupVersion(resourceGroup.GroupVersion)
 				if err != nil {
 					return schema.GroupVersionResource{}, false, err
@@ -84,6 +84,7 @@ func parseRequestBody(c *gin.Context) ([]map[string]interface{}, error) {
 	}
 	return yamlDocs, nil
 }
+
 func parseYAMLFile(file io.Reader) ([]map[string]interface{}, error) {
 	var yamlDocs []map[string]interface{}
 	decoder := yaml.NewDecoder(file)
@@ -115,14 +116,21 @@ func applyResources(c *gin.Context, yamlDocs []map[string]interface{},
 		if !ok {
 			return results, fmt.Errorf("resource kind not found in YAML")
 		}
+		autoNs := c.Query("auto_ns")
 		namespace := "default"
 		if metadata, ok := resourceData["metadata"].(map[string]interface{}); ok {
 			if ns, exists := metadata["namespace"].(string); exists {
 				namespace = ns
+				if strings.EqualFold(autoNs, "true") || autoNs == "1" {
+					err := EnsureNamespaceExists(dynamicClient, namespace)
+					if err != nil {
+						return nil, fmt.Errorf("failed to ensure namespace %s exists: %v", namespace, err)
+					}
+				}
+
 			}
 		}
 		gvr, isNamespaced, err := getGVR(discoveryClient, resourceKind)
-		fmt.Println(gvr)
 		if err != nil {
 			return results, fmt.Errorf("unsupported resource type: %s", resourceKind)
 		}

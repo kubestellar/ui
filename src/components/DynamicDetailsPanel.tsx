@@ -26,6 +26,7 @@ import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 import { ResourceItem } from "./TreeViewComponent"; // Adjust the import path to your TreeView file
 import useTheme from "../stores/themeStore"; // Import the useTheme hook
+import '@fortawesome/fontawesome-free/css/all.min.css';
 
 interface DynamicDetailsProps {
   namespace: string;
@@ -553,7 +554,7 @@ const DynamicDetailsPanel = ({
         top: 0,
         bottom: 0,
         width: "80vw",
-        bgcolor: theme === "dark" ? "#1F2937" : "#e5f6fd", // Dark or light background
+        bgcolor: theme === "dark" ? "#1F2937" : "#eff3f5", // Dark or light background
         boxShadow: "-2px 0 10px rgba(0,0,0,0.2)",
         transition: "right 0.4s ease-in-out",
         zIndex: 1001,
@@ -581,15 +582,17 @@ const DynamicDetailsPanel = ({
             mb={3}
           >
             <Typography
-              variant="h4"
-              fontWeight="bold"
-              sx={{
-                color: theme === "dark" ? "#FFFFFF" : "#000000",
-                fontSize: "24px",
-              }}
-            >
-              {name} ({type})
-            </Typography>
+            variant="h4"
+            fontWeight="bold"
+            sx={{
+              color: theme === "dark" ? "#FFFFFF" : "#000000",
+              fontSize: "30px",
+              marginLeft: "4px"
+            }}
+          >
+            {type.toUpperCase()} :-{" "}
+            <span style={{ color: "#2F86FF" }}>{name}</span>
+          </Typography>
             <Stack direction="row" spacing={1}>
               {onSync && (
                 <Tooltip title="Sync Resource">
@@ -643,9 +646,9 @@ const DynamicDetailsPanel = ({
               },
             }}
           >
-            <StyledTab label="SUMMARY" />
-            <StyledTab label="EDIT" />
-            <StyledTab label="LOGS" />
+           <StyledTab label={<span><i className="fa fa-file-alt" style={{ marginRight: "8px" }}></i>SUMMARY</span>} />
+            <StyledTab label={<span><i className="fa fa-edit" style={{ marginRight: "8px" }}></i>EDIT</span>} />
+            <StyledTab label={<span><i className="fa fa-align-left" style={{ marginRight: "8px" }}></i>LOGS</span>} />
           </Tabs>
 
           <Box
@@ -665,13 +668,13 @@ const DynamicDetailsPanel = ({
               {tabValue === 0 && renderSummary()}
               {tabValue === 1 && (
                 <Box sx={{ display: "flex", flexDirection: "column" }}>
-                  <Stack direction="row" spacing={2} mb={2}>
+                  <Stack direction="row" spacing={4} mb={3} ml={4}>
                     <Button
                       variant={editFormat === "yaml" ? "contained" : "outlined"}
                       onClick={() => handleFormatChange("yaml")}
                       sx={{
                         textTransform: "none",
-                        backgroundColor: "#1976d2",
+                        backgroundColor: "#2F86FF",
                         borderRadius: "8px",
                         color: "#fff",
                         "&:hover": {
@@ -686,7 +689,7 @@ const DynamicDetailsPanel = ({
                       onClick={() => handleFormatChange("json")}
                       sx={{
                         textTransform: "none",
-                        backgroundColor: "#1976d2",
+                        backgroundColor: "#2F86FF",
                         borderRadius: "8px",
                         color: "#fff",
                         "&:hover": {
@@ -725,7 +728,7 @@ const DynamicDetailsPanel = ({
                       onClick={handleUpdate}
                       sx={{
                         textTransform: "none",
-                        backgroundColor: "#1976d2",
+                        backgroundColor: "#2F86FF",
                         borderRadius: "8px",
                         color: "#fff",
                         "&:hover": {

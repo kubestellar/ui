@@ -1089,7 +1089,8 @@ const TreeViewComponent = () => {
             justifyContent: "space-between",
             padding: 2,
             borderRadius: 1,
-            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+            boxShadow: "0 6px 6px rgba(0,0,0,0.1)",
+            background: theme === "dark" ? "rgb(15, 23, 42)" : "#fff", 
           }}
         >
           <Typography variant="h4" sx={{ color: "#4498FF", fontWeight: 700, fontSize: "30px", letterSpacing: "0.5px" }}>
