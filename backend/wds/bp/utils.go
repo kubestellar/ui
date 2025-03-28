@@ -2,7 +2,6 @@ package bp
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/kubestellar/kubestellar/api/control/v1alpha1"
+	"github.com/kubestellar/kubestellar/pkg/generated/clientset/versioned/scheme"
 	bpv1alpha1 "github.com/kubestellar/kubestellar/pkg/generated/clientset/versioned/typed/control/v1alpha1"
 	"github.com/kubestellar/ui/log"
 	"github.com/kubestellar/ui/redis"
@@ -112,6 +112,20 @@ func getClientForBp() (*bpv1alpha1.ControlV1alpha1Client, error) {
 	clientCache = c
 
 	return c, nil
+}
+
+// get BP struct from YAML
+func getBpObjFromYaml(bpRawYamlBytes []byte) (*v1alpha1.BindingPolicy, error) {
+	obj, _, err := scheme.Codecs.UniversalDeserializer().Decode(bpRawYamlBytes, nil, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to detect object type: %v", err.Error())
+	}
+	bp, ok := obj.(*v1alpha1.BindingPolicy)
+	if !ok {
+		return nil, fmt.Errorf("wrong object type ,yaml type not supported: %s", err.Error())
+	}
+	return bp, nil
+
 }
 
 // Helper function to check if a string contains any of the given substrings
@@ -237,23 +251,6 @@ func filterBPsByNamespace(bps []BindingPolicyWithStatus, namespace string) []Bin
 	return filtered
 }
 
-// Creates Binding policy json for redis  from the given bp, Returns Json string
-func createBpJson(bp *v1alpha1.BindingPolicy) (string, error) {
-	if bp == nil {
-		return "", fmt.Errorf("bp is nil")
-	}
-	bpMap := make(map[string]interface{})
-	bpMap["name"] = bp.Name
-	bpMap["workloads"] = extractWorkloads(bp)
-	bpMap["targetClusters"] = extractTargetClusters(bp)
-	// get status of bp TODO
-	bpJson, err := json.Marshal(&bpMap)
-	if err != nil {
-		return "", err
-	}
-	return string(bpJson), nil
-}
-
 // check if content type is valid
 func contentTypeValid(t string) bool {
 	// Extract the base content type (ignore parameters like boundary=...)
@@ -275,34 +272,41 @@ func contentTypeValid(t string) bool {
 func watchOnBps() {
 	c, err := getClientForBp()
 	if err != nil {
+		log.LogError("failed to watch on BP", zap.String("error", err.Error()))
 		return
 	}
-	w, err := c.BindingPolicies().Watch(context.TODO(), v1.ListOptions{})
-	if err != nil {
-		return
-	}
-	eventChan := w.ResultChan()
-	for event := range eventChan {
-		switch event.Type {
-		case "MODIFIED":
-			bp, _ := event.Object.(*v1alpha1.BindingPolicy)
-			fmt.Println(extractTargetClusters(bp))
 
-		case "ADDED":
-			bp, _ := event.Object.(*v1alpha1.BindingPolicy)
-			fmt.Println(extractTargetClusters(bp))
+	for {
 
-		case "DELETED":
-			bp, _ := event.Object.(*v1alpha1.BindingPolicy)
-			err := redis.DeleteBpcmd(bp.Name)
-			if err != nil {
-				log.LogError("Error deleting bp from redis", zap.String("error", err.Error()))
-			}
-		case "ERROR":
-			log.LogWarn("Some error occured while watching ON BP")
+		w, err := c.BindingPolicies().Watch(context.TODO(), v1.ListOptions{})
+		if err != nil {
+			log.LogError("failed to watch on BP", zap.String("error", err.Error()))
+			return
 		}
+		eventChan := w.ResultChan()
+		for event := range eventChan {
+			switch event.Type {
+			case "MODIFIED":
+				bp, _ := event.Object.(*v1alpha1.BindingPolicy)
+				log.LogInfo("BP modified: ", zap.String("name", bp.Name))
+
+			case "ADDED":
+				bp, _ := event.Object.(*v1alpha1.BindingPolicy)
+				log.LogInfo("BP added: ", zap.String("name", bp.Name))
+
+			case "DELETED":
+				bp, _ := event.Object.(*v1alpha1.BindingPolicy)
+				err := redis.DeleteBpcmd(bp.Name)
+				if err != nil {
+					log.LogError("Error deleting bp from redis", zap.String("error", err.Error()))
+				}
+				log.LogInfo("BP deleted: ", zap.String("name", bp.Name))
+			case "ERROR":
+				log.LogWarn("Some error occured while watching ON BP")
+			}
+		}
+
 	}
-	log.LogWarn("Stopped watching on BP resource")
 }
 func init() {
 
