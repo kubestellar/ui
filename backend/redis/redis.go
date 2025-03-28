@@ -3,7 +3,6 @@ package redis
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/kubestellar/ui/log"
@@ -13,9 +12,6 @@ import (
 
 var ctx = context.Background()
 var rdb *redis.Client
-
-// mutex for bp operations in redis
-var bpMx sync.RWMutex
 
 const filePathKey = "filepath"
 
@@ -111,8 +107,6 @@ func GetGitToken() (string, error) {
 
 // stores binding policy
 func SetBpCmd(name string, bpJson string) error {
-	bpMx.Lock()
-	defer bpMx.Unlock()
 	err := rdb.HSet(ctx, "BPS", name, bpJson).Err()
 	if err != nil {
 		return err
@@ -123,8 +117,6 @@ func SetBpCmd(name string, bpJson string) error {
 
 // removes binding policy from the hash
 func DeleteBpcmd(name string) error {
-	bpMx.Lock()
-	defer bpMx.Unlock()
 	err := rdb.HDel(ctx, "BPS", name).Err()
 	if err != nil {
 		return err
@@ -134,8 +126,6 @@ func DeleteBpcmd(name string) error {
 
 // returns all BPs in the hash
 func GetallBpCmd() ([]string, error) {
-	bpMx.RLock()
-	defer bpMx.RUnlock()
 	v, err := rdb.HGetAll(ctx, "BPS").Result()
 	if err != nil {
 		return nil, err
