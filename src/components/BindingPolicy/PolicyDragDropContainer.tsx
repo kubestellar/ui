@@ -1,19 +1,19 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Box, Grid, Button } from '@mui/material';
+import { Box, Grid, Button, Dialog, DialogTitle, DialogContent, DialogActions, Typography,  Paper, Chip } from '@mui/material';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import { BindingPolicyInfo, ManagedCluster, Workload } from '../../types/bindingPolicy';
 import { usePolicyDragDropStore, DragTypes } from '../../stores/policyDragDropStore';
-import { useCanvasStore } from '../../stores/canvasStore';
 import PolicyCanvas from './PolicyCanvas';
 import SuccessNotification from './SuccessNotification';
 import ConfigurationSidebar, { PolicyConfiguration } from './ConfigurationSidebar';
 import { useKubestellarData } from '../../hooks/useKubestellarData';
 import DeploymentConfirmationDialog, { DeploymentPolicy } from './DeploymentConfirmationDialog';
-import { generateBindingPolicyYAML } from '../../utils/yamlGenerator';
 import { v4 as uuidv4 } from 'uuid';
 import { ClusterPanelContainer, WorkloadPanelContainer } from './PolicyPanels';
-import ConnectionManager from './ConnectionManager';
-//import { useConnectionManagerStore } from '../../stores/connectionManagerStore';
+import { useBPQueries } from '../../hooks/queries/useBPQueries';
+import Editor from "@monaco-editor/react";
+import useTheme from "../../stores/themeStore";
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 // StrictMode-compatible DragDropContext wrapper
 const StrictModeDragDropContext: React.FC<React.ComponentProps<typeof DragDropContext>> = ({ children, ...props }) => {
@@ -45,7 +45,7 @@ interface PolicyDragDropContainerProps {
   clusters?: ManagedCluster[];
   workloads?: Workload[];
   onPolicyAssign?: (policyName: string, targetType: 'cluster' | 'workload', targetName: string) => void;
-  onCreateBindingPolicy?: (clusterId: string, workloadId: string, configuration?: PolicyConfiguration) => void;
+  onCreateBindingPolicy?: (clusterIds: string[], workloadIds: string[], configuration?: PolicyConfiguration) => void;
   dialogMode?: boolean;
 }
 
@@ -65,18 +65,27 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     hasOnCreateBindingPolicy: !!onCreateBindingPolicy
   });
 
+  const theme = useTheme(state => state.theme);
+
   // State for success notification
   const [successMessage, setSuccessMessage] = useState<string>("");
   
   // State for the configuration sidebar
   const [configSidebarOpen, setConfigSidebarOpen] = useState(false);
-  const [selectedConnection,] = useState<{
+  const [selectedConnection, ] = useState<{
     source: { type: string; id: string; name: string };
     target: { type: string; id: string; name: string };
   } | undefined>(undefined);
   
-  // Connection mode comes from the store now
-  //const connectionMode = useConnectionManagerStore(state => state.connectionMode);
+  // Add state for YAML preview
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
+  const [previewYaml, setPreviewYaml] = useState<string>("");
+  const [currentConfig, setCurrentConfig] = useState<PolicyConfiguration | null>(null);
+  const [currentWorkloadId, setCurrentWorkloadId] = useState<string>("");
+  const [currentClusterId, setCurrentClusterId] = useState<string>("");
+  
+  // Add state to store the edited YAML for deployment
+  const [, setEditedPolicyYaml] = useState<Record<string, string>>({});
   
   // Use refs to track if mounted and data fetched to prevent unnecessary renders
   const isMounted = useRef(true);
@@ -115,19 +124,12 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
   const error = hookError;
   
   // Use individual store values to prevent recreating objects on each render
-  const initializeAssignmentMap = usePolicyDragDropStore(state => state.initializeAssignmentMap);
   const setActiveDragItem = usePolicyDragDropStore(state => state.setActiveDragItem);
   const addToCanvas = usePolicyDragDropStore(state => state.addToCanvas);
   const canvasEntities = usePolicyDragDropStore(state => state.canvasEntities);
-  const assignLabelsToItem = usePolicyDragDropStore(state => state.assignLabelsToItem);
-  const setStoreSuccessMessage = usePolicyDragDropStore(state => state.setSuccessMessage);
+  const onClearCanvas = usePolicyDragDropStore(state => state.clearCanvas);
   
-  // Canvas store for connections
-  const connectionLines = useCanvasStore(state => state.connectionLines);
-  const addConnectionLine = useCanvasStore(state => state.addConnectionLine);
-  
-  // Add a ref to track previous policies
-  const prevPoliciesRef = useRef<BindingPolicyInfo[]>([]);
+
   
   // Add state for deployment confirmation dialog
   const [deploymentDialogOpen, setDeploymentDialogOpen] = useState(false);
@@ -135,8 +137,11 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
   const [deploymentError, setDeploymentError] = useState<string | null>(null);
   const [policiesToDeploy, setPoliciesToDeploy] = useState<DeploymentPolicy[]>([]);
   
-  // Find the connectionManager section and use a ref
-  const connectionManagerRef = useRef<{ completeConnection: (workloadId: string, clusterId: string) => void }>(null);
+  // Import the generate YAML mutation
+  const { useGenerateBindingPolicyYaml,  useQuickConnect } = useBPQueries();
+  const generateYamlMutation = useGenerateBindingPolicyYaml();
+  const quickConnectMutation = useQuickConnect();
+
   
   // Log component mount/unmount for debugging
   useEffect(() => {
@@ -148,140 +153,187 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     };
   }, []);
   
-  // Initialize assignment map based on existing policy configurations
-  useEffect(() => {
-    console.log('🔄 Assignment map effect running with policies:', policies?.length);
+  // Function to generate YAML preview wrapped in useCallback
+  const generateBindingPolicyPreview = useCallback(async (clusterIds: string[], workloadIds: string[], config?: PolicyConfiguration) => {
+    if (!config) return;
     
-    if (!initializeAssignmentMap || !policies || policies.length === 0) {
-      console.log('⏭️ Skipping assignment map initialization - missing data');
-      return;
-    }
-    
-    // Check if policies have changed to avoid unnecessary updates
-    const hasChanged = () => {
-      if (!prevPoliciesRef.current || prevPoliciesRef.current.length !== policies.length) {
-        console.log('✅ Policies changed - different count');
-        return true;
-      }
-      
-      const changed = policies.some((policy, i) => {
-        const prevPolicy = prevPoliciesRef.current[i];
-        const changed = !prevPolicy || 
-               prevPolicy.name !== policy.name ||
-               (prevPolicy.clusterList?.length !== policy.clusterList?.length) ||
-               (prevPolicy.workloadList?.length !== policy.workloadList?.length);
-        if (changed) {
-          console.log(`✅ Policy changed: ${policy.name}`);
-        }
-        return changed;
+    try {
+      // Generate the YAML preview using the updated API that accepts arrays
+      const generateYamlResponse = await generateYamlMutation.mutateAsync({
+        workloadIds,
+        clusterIds,
+        namespace: config.namespace || "default",
+        policyName: config.name
       });
       
-      return changed;
+      // Update the preview YAML
+      setPreviewYaml(generateYamlResponse.yaml);
+      setShowPreviewDialog(true);
+      
+      return generateYamlResponse.yaml;
+    } catch (error) {
+      console.error("Error generating binding policy YAML:", error);
+      setDeploymentError("Failed to generate binding policy YAML");
+      return null;
+    }
+  }, [generateYamlMutation, setPreviewYaml, setShowPreviewDialog, setDeploymentError]);
+  
+  // Update the prepareForDeployment function to work without connections
+  const prepareForDeployment = useCallback(() => {
+    console.log('🔍 DEBUG - prepareForDeployment called');
+
+    // Check if we have clusters and workloads
+    if (canvasEntities.clusters.length === 0 || canvasEntities.workloads.length === 0) {
+      console.log('🔍 DEBUG - No clusters or workloads available');
+      setDeploymentError('Both clusters and workloads are required to create binding policies');
+      return;
+    }
+
+    // Create a single policy for all workloads and clusters
+    const clusterIdsString = canvasEntities.clusters.join(', ');
+    const workloadIdsString = canvasEntities.workloads.join(', ');
+
+    console.log('🔍 DEBUG - Creating single policy for:', {
+      workloadIds: canvasEntities.workloads,
+      clusterIds: canvasEntities.clusters,
+    });
+    
+    // Create a unique policy name that includes all workloads
+    const timestamp = Date.now();
+    const workloadNames = canvasEntities.workloads.join("-");
+    const policyName = `${workloadNames}-binding-${timestamp}`;
+    
+    // Create a default configuration
+    const config: PolicyConfiguration = {
+      name: policyName,
+      namespace: 'default',
+      propagationMode: 'DownsyncOnly',
+      updateStrategy: 'ServerSideApply',
+      deploymentType: 'SelectedClusters',
+      schedulingRules: [],
+      customLabels: {},
+      tolerations: []
     };
     
-    if (hasChanged()) {
-      console.log('🔄 Initializing assignment map with policies:', policies.map(p => p.name).join(', '));
-      initializeAssignmentMap(policies);
-      prevPoliciesRef.current = [...policies];
-    } else {
-      console.log('⏭️ Assignment map unchanged - skipping update');
-    }
-  }, [policies, initializeAssignmentMap]);
+    // Create a single policy that includes all workloads and clusters
+    const policy: DeploymentPolicy = {
+      id: uuidv4(), // Generate a unique ID
+      name: policyName,
+      workloadIds: canvasEntities.workloads,
+      clusterIds: canvasEntities.clusters,
+      workloadName: workloadIdsString, // For display purposes
+      clusterName: clusterIdsString, // For display purposes
+      config,
+      yaml: "" // Will be generated during deployment
+    };
+    
+    console.log('🔍 DEBUG - Final policy to deploy:', policy);
+    
+    setPoliciesToDeploy([policy]);
+    setDeploymentDialogOpen(true);
+  }, [canvasEntities]);
+
+  // Update the handleCreatePolicy function
+  const handleCreatePolicy = useCallback(() => {
+    if (canvasEntities.clusters.length === 0 || canvasEntities.workloads.length === 0) return;
+    
+    const workloadIds = canvasEntities.workloads;
+    const clusterIds = canvasEntities.clusters;
+    
+    console.log('🔍 DEBUG - handleCreatePolicy called:', {
+      workloadIds,
+      clusterIds
+    });
+    
+    // Generate a name for the policy that includes all workloads
+    const workloadNames = workloadIds.join("-");
+    const policyName = `${workloadNames}-to-clusters-${Date.now()}`;
+    
+    // Create default configuration
+    const defaultConfig: PolicyConfiguration = {
+      name: policyName,
+      namespace: 'default',
+      propagationMode: 'DownsyncOnly',
+      updateStrategy: 'ServerSideApply',
+      deploymentType: 'SelectedClusters',
+      schedulingRules: [],
+      customLabels: {},
+      tolerations: []
+    };
+    
+    // For display purposes only - we'll use the actual arrays in the API call
+    const firstWorkloadId = workloadIds[0];
+    const clusterIdsStr = clusterIds.join(", ");
+    
+    // Store IDs for UI display (maintain backward compatibility)
+    setCurrentWorkloadId(firstWorkloadId); 
+    setCurrentClusterId(clusterIdsStr);   
+    setCurrentConfig(defaultConfig);
+    
+    // Generate YAML preview using all workload and cluster IDs
+    generateBindingPolicyPreview(clusterIds, workloadIds, defaultConfig);
+  }, [canvasEntities, generateBindingPolicyPreview]);
 
   // Handle saving configuration from the sidebar
-  const handleSaveConfiguration = useCallback((config: PolicyConfiguration) => {
-    console.log('Saving policy configuration:', config);
+  const handleSaveConfiguration = useCallback(async (config: PolicyConfiguration) => {
+    console.log('🔍 DEBUG - handleSaveConfiguration called with config:', config);
     
     if (!selectedConnection) {
       console.error('No connection selected for configuration');
       return;
     }
     
-    if (!onCreateBindingPolicy) {
-      console.error('onCreateBindingPolicy function not provided');
-      return;
-    }
-    
     let workloadId = '';
-    let clusterId = '';
+    // Instead of a single cluster, we'll use all clusters from the canvas
+    const clusterIdsString = canvasEntities.clusters.join(', ');
     
-    // Find the workload and cluster IDs from the connection
+    // Find the workload from the connection
     if (selectedConnection.source.type === 'workload') {
       workloadId = selectedConnection.source.id;
-      clusterId = selectedConnection.target.id;
     } else {
       workloadId = selectedConnection.target.id;
-      clusterId = selectedConnection.source.id;
-    }
-      
-    // Create binding policy with the configuration
-    onCreateBindingPolicy(clusterId, workloadId, config);
-    
-    // Show success message with details about scheduling rules
-    let detailedMessage = `Successfully created binding policy: ${config.name}`;
-    if (config.schedulingRules && config.schedulingRules.length > 0) {
-      detailedMessage += ` with ${config.schedulingRules.length} scheduling rules`;
     }
     
-    setSuccessMessage(detailedMessage);
-    if (setStoreSuccessMessage) {
-      setStoreSuccessMessage(detailedMessage);
-    }
-    
-    // Assign any custom labels to the workload and cluster
-    if (assignLabelsToItem && Object.keys(config.customLabels).length > 0) {
-      assignLabelsToItem('workload', workloadId, config.customLabels);
-      assignLabelsToItem('cluster', clusterId, config.customLabels);
-    }
-    
-    // Create a connection line to represent this new policy
-    if (addConnectionLine) {
-      // The color can be based on the update strategy
-      const connectionColor = 
-        config.updateStrategy === 'RollingUpdate' ? '#2196f3' : // Blue for rolling updates
-        config.updateStrategy === 'BlueGreenDeployment' ? '#009688' : // Teal for blue-green
-        config.updateStrategy === 'ForceApply' ? '#ff9800' : // Orange for force apply
-        '#9c27b0'; // Default purple for standard updates
-        
-      addConnectionLine(
-        `workload-${workloadId}`, 
-        `cluster-${clusterId}`, 
-        connectionColor
-      );
-    }
-    
-    // Close the sidebar
-    setConfigSidebarOpen(false);
-    
-    console.log('✅ Binding policy created with advanced configuration:', {
+    console.log('🔍 DEBUG - Processing connection in handleSaveConfiguration:', {
       workloadId,
-      clusterId,
-      name: config.name,
-      namespace: config.namespace,
-      propagationMode: config.propagationMode,
-      updateStrategy: config.updateStrategy,
-      deploymentType: config.deploymentType,
-      schedulingRules: config.schedulingRules,
-      tolerations: config.tolerations,
-      labels: config.customLabels
+      clusterIdsString,
+      selectedConnection
     });
-  }, [selectedConnection, onCreateBindingPolicy, assignLabelsToItem, setStoreSuccessMessage, addConnectionLine]);
-
-  // Handle quick policy creation
-  const handleQuickPolicySave = useCallback((config: PolicyConfiguration) => {
-    console.log(`🔄 handleQuickPolicySave called with config:`, config);
     
-    // Call the API to create the binding policy
-    if (onCreateBindingPolicy) {
-      console.log(`🔄 Calling onCreateBindingPolicy with config:`, config);
+    setCurrentWorkloadId(workloadId);
+    setCurrentClusterId(clusterIdsString);
+    setCurrentConfig(config);
       
-      // In this demo, we'll simulate the API call
-      setTimeout(() => {
-        // Show success message
-        setSuccessMessage(`Successfully created binding policy "${config.name}"`);
-      }, 500);
+    // Generate YAML preview with all clusters as a comma-separated string
+    const yaml = await generateBindingPolicyPreview(canvasEntities.clusters.map(String), canvasEntities.workloads.map(String), config);
+    
+    if (yaml) {
+      // Store the edited YAML with a key based on the workload (since we're using all clusters)
+      const connectionKey = `${workloadId}-all-clusters`;
+      setEditedPolicyYaml(prev => ({
+        ...prev,
+        [connectionKey]: yaml
+      }));
+      
+      // Close the sidebar
+      setConfigSidebarOpen(false);
+      
+      console.log('✅ Binding policy YAML generated with configuration:', {
+        workloadId,
+        clusterIdsString,
+        name: config.name,
+        namespace: config.namespace,
+        propagationMode: config.propagationMode,
+        updateStrategy: config.updateStrategy,
+        deploymentType: config.deploymentType,
+        schedulingRules: config.schedulingRules,
+        tolerations: config.tolerations,
+        labels: config.customLabels
+      });
     }
-  }, [onCreateBindingPolicy]);
+  }, [selectedConnection, generateBindingPolicyPreview, canvasEntities.clusters, canvasEntities.workloads]);
+
+ 
 
   // Handle tracking the active drag item
   const handleDragStart = useCallback((start: {draggableId: string}) => {
@@ -324,7 +376,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     
     console.log('✅ Active drag item set successfully');
   }, [setActiveDragItem]);
-  
+
   // Handle when a drag operation is completed
   const handleDragEnd = useCallback((result: DropResult) => {
     console.log('🔄 DRAG END EVENT', result);
@@ -370,145 +422,71 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     console.log('✅ Drag end processing completed');
   }, [setActiveDragItem, addToCanvas]);
 
-  // Replace the current handleCompleteConnection implementation with this
-  const handleCompleteConnection = useCallback((workloadId: string, clusterId: string) => {
-    console.log(`🚨 handleCompleteConnection called with workloadId=${workloadId}, clusterId=${clusterId}`);
-    
-    if (connectionManagerRef.current && connectionManagerRef.current.completeConnection) {
-      connectionManagerRef.current.completeConnection(workloadId, clusterId);
-    } else {
-      console.error('❌ connectionManagerRef.current.completeConnection is not available!');
-    }
-  }, []);
-
-  // Function to prepare policies for deployment
-  const prepareForDeployment = useCallback(() => {
-    // Generate policies from connection lines
-    const policies: DeploymentPolicy[] = connectionLines.map(line => {
-      // Extract workload and cluster IDs from the connection line
-      const workloadId = line.source.startsWith('workload-') 
-        ? line.source.replace('workload-', '') 
-        : line.target.replace('workload-', '');
-      
-      const clusterId = line.source.startsWith('cluster-') 
-        ? line.source.replace('cluster-', '') 
-        : line.target.replace('cluster-', '');
-      
-      // Find the workload and cluster
-      const workload = workloads.find(w => w.name === workloadId);
-      const cluster = clusters.find(c => c.name === clusterId);
-      
-      if (!workload || !cluster) {
-        console.error('Could not find workload or cluster for connection:', line);
-        return null;
-      }
-      
-      // Create a unique policy name if it doesn't exist
-      const policyName = `${workload.name}-to-${cluster.name}`;
-      
-      // Create a default configuration
-      const config: PolicyConfiguration = {
-        name: policyName,
-        namespace: workload.namespace || 'default',
-        propagationMode: 'DownsyncOnly',
-        updateStrategy: line.color === '#2196f3' ? 'RollingUpdate' :
-                      line.color === '#009688' ? 'BlueGreenDeployment' :
-                      line.color === '#ff9800' ? 'ForceApply' : 'ServerSideApply',
-        deploymentType: 'SelectedClusters',
-        schedulingRules: [],
-        customLabels: {},
-        tolerations: []
-      };
-      
-      // Generate YAML for the policy
-      const yaml = generateBindingPolicyYAML(config);
-      
-      return {
-        id: uuidv4(), // Generate a unique ID
-        name: policyName,
-        workloadId,
-        clusterId,
-        workloadName: workload.name,
-        clusterName: cluster.name,
-        config,
-        yaml
-      };
-    }).filter(Boolean) as DeploymentPolicy[];
-    
-    setPoliciesToDeploy(policies);
-    setDeploymentDialogOpen(true);
-  }, [connectionLines, workloads, clusters]);
-
-  // Handle deployment confirmation
+  // Update the handleDeploymentConfirm function
   const handleDeploymentConfirm = useCallback(async () => {
     if (policiesToDeploy.length === 0) {
       setDeploymentError('No policies to deploy');
       return;
     }
     
+    console.log('🔍 DEBUG - handleDeploymentConfirm called with policies:', policiesToDeploy);
+    
     setDeploymentLoading(true);
     setDeploymentError(null);
     
     try {
-      // Call the API for each policy in the list
-      if (onCreateBindingPolicy) {
-        // Process all policies in parallel
-        const results = await Promise.allSettled(
-          policiesToDeploy.map(async policy => {
-            try {
-              // Call the provided callback to create the binding policy
-              await onCreateBindingPolicy(
-                policy.clusterId, 
-                policy.workloadId, 
-                policy.config
-              );
-              return { success: true, policyName: policy.name };
-            } catch (error) {
-              // Capture individual policy errors
-              return { 
-                success: false, 
-                policyName: policy.name, 
-                error: error instanceof Error ? error.message : String(error) 
-              };
-            }
-          })
-        );
+      // Create a single policy with all workloads and clusters
+      // Instead of processing each policy separately, combine them
+      const allWorkloadIds = policiesToDeploy.flatMap(policy => policy.workloadIds);
+      const allClusterIds = canvasEntities.clusters;
+      
+      // Create a unique policy name that includes all workloads
+      const timestamp = Date.now();
+      const workloadNames = allWorkloadIds.join("-");
+      const policyName = `${workloadNames}-binding-${timestamp}`;
+      
+      console.log('🔍 DEBUG - Creating single policy for all workloads and clusters:', {
+        workloadIds: allWorkloadIds,
+        clusterIds: allClusterIds,
+        policyName
+      });
+      
+      // Format workload IDs properly if needed
+      const formattedWorkloadIds = allWorkloadIds.map(id => {
+        // Check if workload exists in the workloads array
+        const workload = workloads.find(w => w.name === id);
+        // Return the properly formatted ID with required metadata
+        return workload ? id : id;
+      });
+      
+      try {
+        // Call the quick-connect API with all workloads and clusters in a single call
+        const result = await quickConnectMutation.mutateAsync({
+          workloadIds: formattedWorkloadIds,
+          clusterIds: allClusterIds,
+          policyName,
+          namespace: 'default'
+        });
+        console.log(result)
+        // Show success message
+        setSuccessMessage(`Successfully created binding policy "${policyName}" connecting ${formattedWorkloadIds.length} workloads to ${allClusterIds.length} clusters`);
         
-        // Check if any policies failed
-        const failedPolicies = results.filter(
-          result => result.status === 'rejected' || 
-          (result.status === 'fulfilled' && !result.value.success)
-        );
-        
-        if (failedPolicies.length > 0) {
-          // Report errors for failed policies
-          const errorMessages = failedPolicies
-            .map(result => {
-              if (result.status === 'rejected') {
-                return `Failed to deploy policy: ${result.reason}`;
-              } else if (result.status === 'fulfilled') {
-                return `Failed to deploy policy "${result.value.policyName}": ${result.value.error}`;
-              }
-              return null;
-            })
-            .filter(Boolean)
-            .join('\n');
-            
-          setDeploymentError(errorMessages || 'Failed to deploy some policies');
-        } else {
-          // All policies deployed successfully
-          setSuccessMessage(`Successfully deployed ${policiesToDeploy.length} binding policies`);
-          
-          // Close the dialog after successful deployment
-          setDeploymentDialogOpen(false);
-        }
-      } else {
-        // If there's no callback provided, show a mock success (for demo purposes)
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        setSuccessMessage(`Successfully deployed ${policiesToDeploy.length} binding policies (demo mode)`);
+        // Close the dialog after successful deployment
         setDeploymentDialogOpen(false);
+        
+        // Clear the canvas to avoid duplication
+        if (onClearCanvas) {
+          onClearCanvas();
+        }
+      } catch (error) {
+        console.error('❌ Failed to deploy policy:', error);
+        setDeploymentError(
+          error instanceof Error 
+            ? error.message 
+            : 'Failed to deploy binding policy. Please try again.'
+        );
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error deploying binding policies:', error);
       setDeploymentError(
         error instanceof Error 
@@ -518,7 +496,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     } finally {
       setDeploymentLoading(false);
     }
-  }, [policiesToDeploy, onCreateBindingPolicy, setSuccessMessage]);
+  }, [policiesToDeploy, quickConnectMutation, canvasEntities.clusters, workloads, setSuccessMessage, onClearCanvas]);
 
   // Main layout for the drag and drop interface
   return (
@@ -552,16 +530,6 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
               display: 'flex', 
               flexDirection: 'column'
             }}>
-              {/* Connection Manager Component */}
-              <ConnectionManager
-                ref={connectionManagerRef}
-                workloads={workloads}
-                clusters={clusters}
-                onQuickPolicySave={handleQuickPolicySave}
-                setSuccessMessage={setSuccessMessage}
-                dialogMode={dialogMode}
-              />
-              
               {/* Canvas Area */}
               <Box sx={{ flexGrow: 1, position: 'relative' }}>
                 <PolicyCanvas
@@ -572,14 +540,40 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
                   assignmentMap={usePolicyDragDropStore(state => state.assignmentMap)}
                   getItemLabels={usePolicyDragDropStore(state => state.getItemLabels)}
                   removeFromCanvas={usePolicyDragDropStore(state => state.removeFromCanvas)}
-                  onClearCanvas={usePolicyDragDropStore(state => state.clearCanvas)}
+                  onClearCanvas={onClearCanvas}
                   onSaveBindingPolicies={() => {
                     // This would trigger saving all binding policies
                     setSuccessMessage("All binding policies saved successfully");
                   }}
-                  onConnectionComplete={handleCompleteConnection}
                   dialogMode={dialogMode}
                 />
+                
+                {/* Add Edit Policy button when both cluster and workload are present */}
+                {canvasEntities?.clusters.length > 0 && canvasEntities?.workloads.length > 0 && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: '10px',
+                      right: '40px',
+                      zIndex: 10
+                    }}
+                  >
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleCreatePolicy}
+                      sx={{
+                        bgcolor: theme === "dark" ? "#2563eb" : undefined,
+                        color: theme === "dark" ? "#FFFFFF" : undefined,
+                        '&:hover': {
+                          bgcolor: theme === "dark" ? "#1d4ed8" : undefined,
+                        }
+                      }}
+                    >
+                      Edit Policy
+                    </Button>
+                  </Box>
+                )}
               </Box>
               
               {/* Deploy Button - Hide in dialog mode */}
@@ -602,9 +596,20 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
                       px: 4,
                       py: 1.5,
                       borderRadius: 4,
-                      boxShadow: 6
+                      boxShadow: 6,
+                      bgcolor: theme === "dark" ? "#2563eb !important" : undefined,
+                      color: theme === "dark" ? "#FFFFFF !important" : undefined,
+                      '&:hover': {
+                        bgcolor: theme === "dark" ? "#1d4ed8 !important" : undefined,
+                        transform: 'translateY(-2px)',
+                        boxShadow: theme === "dark" ? '0 4px 20px rgba(37, 99, 235, 0.5)' : 6
+                      },
+                      '&:disabled': {
+                        bgcolor: theme === "dark" ? "rgba(37, 99, 235, 0.5) !important" : undefined,
+                        color: theme === "dark" ? "rgba(255, 255, 255, 0.5) !important" : undefined
+                      }
                     }}
-                    disabled={canvasEntities?.clusters.length === 0 || canvasEntities?.workloads.length === 0 || connectionLines.length === 0}
+                    disabled={canvasEntities?.clusters.length === 0 || canvasEntities?.workloads.length === 0}
                     onClick={prepareForDeployment}
                   >
                     Deploy Binding Policies
@@ -644,6 +649,190 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
         dialogMode={dialogMode}
       />
       
+      {/* Preview YAML Dialog - Now with only Close button */}
+      <Dialog
+        open={showPreviewDialog}
+        onClose={() => setShowPreviewDialog(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            height: "80vh",
+            maxHeight: "80vh",
+            bgcolor: theme === "dark" ? "rgba(17, 25, 40, 0.95)" : undefined,
+            color: theme === "dark" ? "#FFFFFF" : undefined,
+            border: theme === "dark" ? '1px solid rgba(255, 255, 255, 0.15)' : undefined,
+            backdropFilter: 'blur(10px)'
+          }
+        }}
+      >
+        <DialogTitle sx={{
+          bgcolor: theme === "dark" ? "rgba(17, 25, 40, 0.95)" : undefined,
+          color: theme === "dark" ? "rgba(255, 255, 255, 0.9)" : undefined,
+        }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', mb: 1 }}>
+            <Typography variant="h6" sx={{
+              color: theme === "dark" ? "rgba(255, 255, 255, 0.9)" : undefined
+            }}>Preview Binding Policy YAML</Typography>
+            {currentWorkloadId && currentClusterId && (
+              <Box
+                sx={{
+                  mt: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}
+              >
+                <Typography variant="body2" color={theme === "dark" ? "rgba(255, 255, 255, 0.7)" : "text.secondary"}>
+                  Creating connection:
+                </Typography>
+                <Chip 
+                  size="small" 
+                  label={currentWorkloadId} 
+                  color="success"
+                  sx={{
+                    bgcolor: theme === "dark" ? "rgba(74, 222, 128, 0.2)" : undefined,
+                    color: theme === "dark" ? "#4ade80" : undefined,
+                    borderColor: theme === "dark" ? "rgba(74, 222, 128, 0.3)" : undefined
+                  }}
+                />
+                <ArrowForwardIcon fontSize="small" sx={{ color: theme === "dark" ? "rgba(255, 255, 255, 0.5)" : undefined }} />
+                <Chip 
+                  size="small" 
+                  label={currentClusterId}
+                  color="info"
+                  sx={{
+                    bgcolor: theme === "dark" ? "rgba(37, 99, 235, 0.2)" : undefined,
+                    color: theme === "dark" ? "#60a5fa" : undefined,
+                    borderColor: theme === "dark" ? "rgba(37, 99, 235, 0.3)" : undefined
+                  }}
+                />
+              </Box>
+            )}
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ 
+          p: 2,
+          bgcolor: theme === "dark" ? "rgba(17, 25, 40, 0.95)" : undefined
+        }}>
+          <Paper elevation={0} sx={{ 
+            height: 'calc(100% - 32px)', 
+            overflow: 'hidden',
+            bgcolor: theme === "dark" ? "rgba(17, 25, 40, 0.95)" : undefined,
+            border: theme === "dark" ? '1px solid rgba(255, 255, 255, 0.15)' : undefined,
+            borderRadius: 2,
+            backdropFilter: 'blur(10px)'
+          }}>
+            <Editor
+              height="100%"
+              language="yaml"
+              value={previewYaml}
+              theme={theme === "dark" ? "vs-dark" : "light"}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 14,
+                lineNumbers: "on",
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                fontFamily: "'JetBrains Mono', monospace",
+                padding: { top: 10 },
+                readOnly: false // Allow editing the YAML
+              }}
+              onChange={(value) => {
+                // Update preview YAML
+                setPreviewYaml(value || "");
+                
+                // Store the edited YAML for deployment
+                if (currentWorkloadId && value) {
+                  // Use a consistent key format for all clusters
+                  const connectionKey = `${currentWorkloadId}-${currentClusterId}`;
+                  setEditedPolicyYaml(prev => ({
+                    ...prev,
+                    [connectionKey]: value
+                  }));
+                }
+              }}
+            />
+          </Paper>
+        </DialogContent>
+        <DialogActions sx={{
+          bgcolor: theme === "dark" ? "rgba(17, 25, 40, 0.95)" : undefined, 
+          borderTop: theme === "dark" ? '1px solid rgba(255, 255, 255, 0.15)' : undefined
+        }}>
+          <Button 
+            onClick={() => {
+              // Save current edits before closing
+              if (currentWorkloadId && previewYaml) {
+                const connectionKey = `${currentWorkloadId}-${currentClusterId}`;
+                setEditedPolicyYaml(prev => ({
+                  ...prev,
+                  [connectionKey]: previewYaml
+                }));
+              }
+              setShowPreviewDialog(false);
+            }}
+            sx={{
+              color: theme === "dark" ? "rgba(255, 255, 255, 0.9)" : undefined
+            }}
+          >
+            Close
+          </Button>
+          <Button 
+            variant="contained"
+            color="primary"
+            onClick={async () => {
+              if (previewYaml) {
+                try {
+                  // Prepare policy data using the edited YAML
+                  const policyName = currentConfig?.name || `multi-binding-${Date.now()}`;
+                  
+                  // Log all workload and cluster IDs that will be sent
+                  console.log('Creating a single binding policy with:', {
+                    workloadIds: canvasEntities.workloads,
+                    clusterIds: canvasEntities.clusters,
+                    policyName
+                  });
+                  
+                  // Use the quick connect API with all workloads and all clusters in a single call
+                  // Make sure we're explicitly passing arrays to the API
+                  const response = await quickConnectMutation.mutateAsync({
+                    workloadIds: canvasEntities.workloads,
+                    clusterIds: canvasEntities.clusters,
+                    policyName: policyName,
+                    namespace: 'default'
+                  });
+                  
+                  console.log('API Response:', response);
+                  
+                  // Show success message with count of workloads and clusters
+                  setSuccessMessage(`Binding policy "${policyName}" created successfully connecting ${canvasEntities.workloads.length} workloads to ${canvasEntities.clusters.length} clusters`);
+                  
+                  // Close the dialog
+                  setShowPreviewDialog(false);
+                  
+                  // Clear the canvas
+                  if (onClearCanvas) {
+                    onClearCanvas();
+                  }
+                } catch (error) {
+                  console.error('Failed to create binding policy:', error);
+                  setDeploymentError(error instanceof Error ? error.message : 'Failed to create binding policy');
+                }
+              }
+            }}
+            sx={{
+              bgcolor: theme === "dark" ? "#2563eb" : undefined,
+              color: theme === "dark" ? "#FFFFFF" : undefined,
+              '&:hover': {
+                bgcolor: theme === "dark" ? "#1d4ed8" : undefined,
+              }
+            }}
+          >
+            Save & Create Policy
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
       {/* Deployment Confirmation Dialog - Hide in dialog mode */}
       {!dialogMode && (
         <DeploymentConfirmationDialog
@@ -660,6 +849,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
           error={deploymentError}
           clusters={clusters}
           workloads={workloads}
+          darkMode={theme === "dark"}
         />
       )}
     </Box>

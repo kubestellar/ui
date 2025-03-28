@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -44,6 +44,59 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
 }) => {
   const theme = useTheme((state) => state.theme)
   const isDarkTheme = theme === "dark";
+  const [yamlContent, setYamlContent] = useState<string>("");
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [fetchLoading, setFetchLoading] = useState<boolean>(false);
+
+  // Debug log the incoming policy object
+  useEffect(() => {
+    console.log("PolicyDetailDialog - Received policy:", policy);
+    console.log("PolicyDetailDialog - YAML property:", policy.yaml);
+  }, [policy]);
+
+  // Process YAML content when policy changes
+  useEffect(() => {
+    const processYaml = async () => {
+      console.log("Processing YAML, current value:", policy.yaml);
+      
+      if (!policy.yaml) {
+        console.log("No YAML content found in policy object");
+        setYamlContent("");
+        return;
+      }
+
+      setFetchLoading(true);
+      setFetchError(null);
+
+      try {
+        // Check if policy.yaml is a URL
+        if (typeof policy.yaml === 'string' && policy.yaml.trim().startsWith('http')) {
+          console.log("YAML appears to be a URL, fetching...");
+          const response = await fetch(policy.yaml);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch YAML: ${response.statusText}`);
+          }
+          
+          const content = await response.text();
+          console.log("Fetched YAML content:", content.substring(0, 100) + "...");
+          setYamlContent(content);
+        } else {
+          // The yaml field contains the actual content
+          console.log("Using direct YAML content, length:", 
+            typeof policy.yaml === 'string' ? policy.yaml.length : 'not a string');
+          setYamlContent(policy.yaml);
+        }
+      } catch (err) {
+        console.error("Error processing YAML:", err);
+        setFetchError(`Failed to process YAML: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        setYamlContent("");
+      } finally {
+        setFetchLoading(false);
+      }
+    };
+
+    processYaml();
+  }, [policy.yaml]);
 
   // Use the binding mode directly from the policy object
   const bindingMode = policy.bindingMode || "N/A";
@@ -53,6 +106,11 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
 
   // Use the workload list directly from the policy object
   const workloads = policy.workloadList || [];
+
+  // Add creation timestamp formatting if available
+  const formattedCreationDate = policy.creationTimestamp 
+    ? new Date(policy.creationTimestamp).toLocaleString() 
+    : 'Not available';
 
   if (isLoading) {
     return (
@@ -192,7 +250,7 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
                     Created
                   </Typography>
                   <Typography sx={{ color: isDarkTheme ? "#fff" : "text.primary" }}>
-                    {policy.creationDate || 'Not available'}
+                    {formattedCreationDate || policy.creationDate || 'Not available'}
                   </Typography>
                 </Box>
                 <Box>
@@ -403,7 +461,7 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
                 <Button
                   size="small"
                   startIcon={<ContentCopy />}
-                  onClick={() => navigator.clipboard.writeText(policy.yaml || '')}
+                  onClick={() => navigator.clipboard.writeText(yamlContent || '')}
                   sx={{
                     color: isDarkTheme ? "#fff" : "text.primary",
                     "&:hover": {
@@ -422,20 +480,41 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
                   borderColor: isDarkTheme ? "gray.700" : "divider",
                 }}
               >
-                <Editor
-                  height="400px"
-                  language="yaml"
-                  value={policy.yaml}
-                  theme={isDarkTheme ? "vs-dark" : "light"}
-                  options={{
-                    readOnly: true,
-                    minimap: { enabled: false },
-                    fontSize: 14,
-                    lineNumbers: "on",
-                    scrollBeyondLastLine: false,
-                    automaticLayout: true,
-                  }}
-                />
+                {fetchLoading ? (
+                  <Box display="flex" justifyContent="center" alignItems="center" height="400px">
+                    <CircularProgress />
+                  </Box>
+                ) : fetchError ? (
+                  <Box display="flex" justifyContent="center" alignItems="center" height="400px">
+                    <Alert severity="error" sx={{ width: "100%" }}>
+                      {fetchError}
+                    </Alert>
+                  </Box>
+                ) : !yamlContent ? (
+                  <Box display="flex" justifyContent="center" alignItems="center" height="400px">
+                    <Alert severity="warning" sx={{ width: "100%" }}>
+                      No YAML content available
+                    </Alert>
+                  </Box>
+                ) : (
+                  <Editor
+                    height="400px"
+                    language="yaml"
+                    value={yamlContent}
+                    theme={isDarkTheme ? "vs-dark" : "light"}
+                    options={{
+                      readOnly: true,
+                      minimap: { enabled: false },
+                      fontSize: 14,
+                      lineNumbers: "on",
+                      scrollBeyondLastLine: false,
+                      automaticLayout: true,
+                    }}
+                    onMount={() => {
+                      console.log("Editor mounted. YAML content:", yamlContent);
+                    }}
+                  />
+                )}
               </Box>
             </Paper>
           </Grid>

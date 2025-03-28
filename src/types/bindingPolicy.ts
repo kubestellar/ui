@@ -13,6 +13,7 @@ export interface BindingPolicyInfo {
     workload: string;
     workloadList?: string[];
     creationDate: string;
+    creationTimestamp?: string;
     lastModifiedDate?: string;
     status: 'Active' | 'Inactive' | 'Pending' | 'Loading...';
     bindingMode: string;

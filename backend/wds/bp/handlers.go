@@ -1575,16 +1575,16 @@ func contains(slice []string, str string) bool {
 	return false
 }
 
-// CreateQuickBindingPolicy creates a simple binding policy connecting a workload to a cluster
+// CreateQuickBindingPolicy creates a simple binding policy connecting workload(s) to cluster(s)
 func CreateQuickBindingPolicy(ctx *gin.Context) {
 	fmt.Printf("Debug - Starting CreateQuickBindingPolicy handler\n")
 
 	// Define a struct to parse the quick connection request
 	type QuickBindingPolicyRequest struct {
-		WorkloadId string `json:"workloadId"` // The ID of the workload
-		ClusterId  string `json:"clusterId"`  // The ID of the cluster
-		PolicyName string `json:"policyName"` // Optional custom name for the policy
-		Namespace  string `json:"namespace"`  // Optional namespace
+		WorkloadIds []string `json:"workloadIds"` // Array of workload IDs
+		ClusterIds  []string `json:"clusterIds"`  // Array of cluster IDs
+		PolicyName  string   `json:"policyName"`  // Optional custom name for the policy
+		Namespace   string   `json:"namespace"`   // Optional namespace
 	}
 
 	var request QuickBindingPolicyRequest
@@ -1594,13 +1594,13 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 	}
 
 	// Validate required fields
-	if request.WorkloadId == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "workloadId is required"})
+	if len(request.WorkloadIds) == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "at least one workloadId is required"})
 		return
 	}
 
-	if request.ClusterId == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "clusterId is required"})
+	if len(request.ClusterIds) == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "at least one clusterId is required"})
 		return
 	}
 
@@ -1613,8 +1613,11 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 	// Generate a policy name if not provided
 	policyName := request.PolicyName
 	if policyName == "" {
-		// Create a name based on workload and cluster IDs
-		policyName = fmt.Sprintf("%s-to-%s", request.WorkloadId, request.ClusterId)
+		// Create a name based on the first workload and first cluster ID
+		policyName = fmt.Sprintf("%s-to-%s", request.WorkloadIds[0], request.ClusterIds[0])
+		if len(request.WorkloadIds) > 1 || len(request.ClusterIds) > 1 {
+			policyName += "-multi"
+		}
 		// Clean up the name to be valid for Kubernetes
 		policyName = strings.ReplaceAll(policyName, "/", "-")
 		policyName = strings.ReplaceAll(policyName, ":", "-")
@@ -1630,71 +1633,122 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 			"namespace": namespace,
 			"annotations": map[string]string{
 				"created-by":         "kubestellar-ui-drag-drop",
-				"workload-id":        request.WorkloadId,
-				"cluster-id":         request.ClusterId,
 				"creation-timestamp": time.Now().Format(time.RFC3339),
 			},
 		},
 		"spec": map[string]interface{}{
-			"clusterSelectors": []interface{}{
-				map[string]interface{}{
-					"matchLabels": map[string]string{
-						"kubernetes.io/cluster-name": request.ClusterId,
-					},
-				},
-			},
-			"downsync": []interface{}{},
+			"clusterSelectors": []interface{}{},
+			"downsync":         []interface{}{},
 		},
 	}
 
-	// Parse workload ID to extract information
-	// Format could be: Deployment/nginx or apps:v1:Deployment/nginx
-	var apiGroup string = "core"
-	var kind string
-	var workloadName string
+	// Add all cluster selectors
+	clusterSelectors := []interface{}{}
+	for _, clusterId := range request.ClusterIds {
+		clusterSelectors = append(clusterSelectors, map[string]interface{}{
+			"matchLabels": map[string]string{
+				"kubernetes.io/cluster-name": clusterId,
+			},
+		})
 
-	if strings.Contains(request.WorkloadId, ":") {
-		// Format: apps:v1:Deployment/nginx
-		parts := strings.Split(request.WorkloadId, ":")
-		if len(parts) >= 3 {
-			apiGroup = parts[0]
-			kind = parts[2]
-			if strings.Contains(kind, "/") {
-				kindParts := strings.Split(kind, "/")
-				kind = kindParts[0]
-				if len(kindParts) > 1 {
-					workloadName = kindParts[1]
+		// Save the cluster ID in annotations
+		metadata := policyObj["metadata"].(map[string]interface{})
+		annotations := metadata["annotations"].(map[string]string)
+		annotations["cluster-ids"] += clusterId + ","
+	}
+	policyObj["spec"].(map[string]interface{})["clusterSelectors"] = clusterSelectors
+
+	// Process each workload ID
+	workloadAnnotations := ""
+	apiGroups := make(map[string]bool)
+	resources := make(map[string]bool)
+	specificWorkloads := []WorkloadInfo{}
+
+	for _, workloadId := range request.WorkloadIds {
+		workloadAnnotations += workloadId + ","
+
+		// Parse workload ID to extract information
+		// Format could be: Deployment/nginx or apps:v1:Deployment/nginx
+		var apiGroup string = "core"
+		var kind string
+		var workloadName string
+
+		if strings.Contains(workloadId, ":") {
+			// Format: apps:v1:Deployment/nginx
+			parts := strings.Split(workloadId, ":")
+			if len(parts) >= 3 {
+				apiGroup = parts[0]
+				kind = parts[2]
+				if strings.Contains(kind, "/") {
+					kindParts := strings.Split(kind, "/")
+					kind = kindParts[0]
+					if len(kindParts) > 1 {
+						workloadName = kindParts[1]
+					}
 				}
 			}
-		}
-	} else if strings.Contains(request.WorkloadId, "/") {
-		// Format: Deployment/nginx
-		parts := strings.Split(request.WorkloadId, "/")
-		kind = parts[0]
-		if len(parts) > 1 {
-			workloadName = parts[1]
+		} else if strings.Contains(workloadId, "/") {
+			// Format: Deployment/nginx
+			parts := strings.Split(workloadId, "/")
+			kind = parts[0]
+			if len(parts) > 1 {
+				workloadName = parts[1]
+			}
+
+			// Set default API group based on kind
+			if strings.ToLower(kind) == "deployment" ||
+				strings.ToLower(kind) == "statefulset" ||
+				strings.ToLower(kind) == "daemonset" ||
+				strings.ToLower(kind) == "replicaset" {
+				apiGroup = "apps"
+			} else if strings.ToLower(kind) == "job" || strings.ToLower(kind) == "cronjob" {
+				apiGroup = "batch"
+			}
+		} else {
+			// Just a workload kind
+			kind = workloadId
 		}
 
-		// Set default API group based on kind
-		if strings.ToLower(kind) == "deployment" ||
-			strings.ToLower(kind) == "statefulset" ||
-			strings.ToLower(kind) == "daemonset" ||
-			strings.ToLower(kind) == "replicaset" {
-			apiGroup = "apps"
-		} else if strings.ToLower(kind) == "job" || strings.ToLower(kind) == "cronjob" {
-			apiGroup = "batch"
+		// Convert kind to resource (plural)
+		if kind != "" {
+			resource := strings.ToLower(kind)
+			if !strings.HasSuffix(resource, "s") {
+				resource += "s"
+			}
+
+			// Make sure apiGroup is never empty
+			if apiGroup == "" {
+				apiGroup = "core"
+			}
+
+			// Store the API group and resource for downsync rules
+			apiGroups[apiGroup] = true
+			resources[resource] = true
+
+			// If specific workload name is available, store it
+			if workloadName != "" {
+				specificWorkloads = append(specificWorkloads, WorkloadInfo{
+					APIVersion: fmt.Sprintf("%s/v1", apiGroup),
+					Kind:       kind,
+					Name:       workloadName,
+					Namespace:  namespace,
+				})
+			}
 		}
-	} else {
-		// Just a workload kind
-		kind = request.WorkloadId
 	}
 
-	// Create the downsync rule
-	if kind != "" {
-		// Convert kind to resource (plural)
-		resource := strings.ToLower(kind)
-		if !strings.HasSuffix(resource, "s") {
-			resource += "s"
+	// Add workload IDs to annotations
+	metadata := policyObj["metadata"].(map[string]interface{})
+	annotations := metadata["annotations"].(map[string]string)
+	annotations["workload-ids"] = strings.TrimSuffix(workloadAnnotations, ",")
+
+	// Create downsync rules from collected API groups and resources
+	downsyncRules := []interface{}{}
+	for apiGroup := range apiGroups {
+		// Get resources for this API group
+		resourcesForGroup := []string{}
+		for resource := range resources {
+			resourcesForGroup = append(resourcesForGroup, resource)
 		}
 
 		// Make sure apiGroup is never empty
@@ -1702,24 +1756,29 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 			apiGroup = "core"
 		}
 
-		// Create the downsync rule
-		downsyncRule := map[string]interface{}{
+		downsyncRules = append(downsyncRules, map[string]interface{}{
 			"apiGroup":   apiGroup,
-			"resources":  []string{resource},
+			"resources":  resourcesForGroup,
 			"namespaces": []string{namespace},
-		}
+		})
+	}
+	policyObj["spec"].(map[string]interface{})["downsync"] = downsyncRules
 
-		// If specific workload name is available, add it to annotations
-		if workloadName != "" {
-			metadata := policyObj["metadata"].(map[string]interface{})
-			annotations := metadata["annotations"].(map[string]string)
-			annotations["specific-workload-name"] = workloadName
+	// Add specific workloads section if needed
+	if len(specificWorkloads) > 0 {
+		workloadsSection := []interface{}{}
+		for _, workload := range specificWorkloads {
+			workloadObj := map[string]interface{}{
+				"apiVersion": workload.APIVersion,
+				"kind":       workload.Kind,
+				"metadata": map[string]interface{}{
+					"name":      workload.Name,
+					"namespace": workload.Namespace,
+				},
+			}
+			workloadsSection = append(workloadsSection, workloadObj)
 		}
-
-		// Add the downsync rule
-		downsyncRules := policyObj["spec"].(map[string]interface{})["downsync"].([]interface{})
-		downsyncRules = append(downsyncRules, downsyncRule)
-		policyObj["spec"].(map[string]interface{})["downsync"] = downsyncRules
+		policyObj["spec"].(map[string]interface{})["workloads"] = workloadsSection
 	}
 
 	// Generate YAML for the policy object
@@ -1755,35 +1814,35 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 		}
 	}
 
-	// Create a StoredBindingPolicy for cache
-	specificWorkloads := []WorkloadInfo{}
-	if workloadName != "" {
-		specificWorkloads = append(specificWorkloads, WorkloadInfo{
-			APIVersion: fmt.Sprintf("%s/v1", apiGroup),
-			Kind:       kind,
-			Name:       workloadName,
-			Namespace:  namespace,
+	// Build ClusterSelectors for storage
+	clusterSelectorsStore := []map[string]string{}
+	for _, clusterId := range request.ClusterIds {
+		clusterSelectorsStore = append(clusterSelectorsStore, map[string]string{
+			"kubernetes.io/cluster-name": clusterId,
 		})
 	}
 
-	// Build ClusterSelectors for storage
-	clusterSelectors := []map[string]string{
-		{
-			"kubernetes.io/cluster-name": request.ClusterId,
-		},
-	}
-
-	// Store the policy in memory
+	// Create a StoredBindingPolicy for cache
 	storedBP := &StoredBindingPolicy{
 		Name:              policyName,
 		Namespace:         namespace,
-		ClusterSelectors:  clusterSelectors,
-		APIGroups:         []string{apiGroup},
-		Resources:         []string{strings.ToLower(kind) + "s"},
+		ClusterSelectors:  clusterSelectorsStore,
+		APIGroups:         []string{},
+		Resources:         []string{},
 		Namespaces:        []string{namespace},
 		SpecificWorkloads: specificWorkloads,
 		RawYAML:           rawYAML,
 	}
+
+	// Extract API groups and resources for storage
+	for apiGroup := range apiGroups {
+		storedBP.APIGroups = append(storedBP.APIGroups, apiGroup)
+	}
+	for resource := range resources {
+		storedBP.Resources = append(storedBP.Resources, resource)
+	}
+
+	// Store policy in memory
 	uiCreatedPolicies[policyName] = storedBP
 
 	// Get client
@@ -1817,26 +1876,26 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 			"namespace":      namespace,
 			"status":         "inactive", // New policies start as inactive
 			"bindingMode":    "Downsync", // Only Downsync is supported
-			"clusters":       []string{request.ClusterId},
-			"workloads":      []string{request.WorkloadId},
-			"clustersCount":  1, // Always 1 cluster for quick binding policy
-			"workloadsCount": 1, // Always 1 workload for quick binding policy
+			"clusters":       request.ClusterIds,
+			"workloads":      request.WorkloadIds,
+			"clustersCount":  len(request.ClusterIds),
+			"workloadsCount": len(request.WorkloadIds),
 			"yaml":           rawYAML,
 		},
 	})
 }
 
-// GenerateQuickBindingPolicyYAML generates the YAML for a binding policy connecting a workload to a cluster
+// GenerateQuickBindingPolicyYAML generates the YAML for a binding policy connecting workload(s) to cluster(s)
 // without actually creating the policy
 func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 	fmt.Printf("Debug - Starting GenerateQuickBindingPolicyYAML handler\n")
 
-	// Define a struct to parse the request - same as in CreateQuickBindingPolicy
+	// Define a struct to parse the request - similar to CreateQuickBindingPolicy
 	type QuickBindingPolicyRequest struct {
-		WorkloadId string `json:"workloadId"` // The ID of the workload
-		ClusterId  string `json:"clusterId"`  // The ID of the cluster
-		PolicyName string `json:"policyName"` // Optional custom name for the policy
-		Namespace  string `json:"namespace"`  // Optional namespace
+		WorkloadIds []string `json:"workloadIds"` // Array of workload IDs
+		ClusterIds  []string `json:"clusterIds"`  // Array of cluster IDs
+		PolicyName  string   `json:"policyName"`  // Optional custom name for the policy
+		Namespace   string   `json:"namespace"`   // Optional namespace
 	}
 
 	var request QuickBindingPolicyRequest
@@ -1846,12 +1905,12 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 	}
 
 	// Validate required fields
-	if request.WorkloadId == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "workloadId is required"})
+	if len(request.WorkloadIds) == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "at least one workloadId is required"})
 		return
 	}
-	if request.ClusterId == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "clusterId is required"})
+	if len(request.ClusterIds) == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "at least one clusterId is required"})
 		return
 	}
 
@@ -1864,8 +1923,11 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 	// Generate a policy name if not provided
 	policyName := request.PolicyName
 	if policyName == "" {
-		// Create a name based on workload and cluster IDs
-		policyName = fmt.Sprintf("%s-to-%s", request.WorkloadId, request.ClusterId)
+		// Create a name based on the first workload and first cluster ID
+		policyName = fmt.Sprintf("%s-to-%s", request.WorkloadIds[0], request.ClusterIds[0])
+		if len(request.WorkloadIds) > 1 || len(request.ClusterIds) > 1 {
+			policyName += "-multi"
+		}
 		// Clean up the name to be valid for Kubernetes
 		policyName = strings.ReplaceAll(policyName, "/", "-")
 		policyName = strings.ReplaceAll(policyName, ":", "-")
@@ -1881,71 +1943,122 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 			"namespace": namespace,
 			"annotations": map[string]string{
 				"created-by":         "kubestellar-ui-yaml-generator",
-				"workload-id":        request.WorkloadId,
-				"cluster-id":         request.ClusterId,
 				"creation-timestamp": time.Now().Format(time.RFC3339),
 			},
 		},
 		"spec": map[string]interface{}{
-			"clusterSelectors": []interface{}{
-				map[string]interface{}{
-					"matchLabels": map[string]string{
-						"kubernetes.io/cluster-name": request.ClusterId,
-					},
-				},
-			},
-			"downsync": []interface{}{},
+			"clusterSelectors": []interface{}{},
+			"downsync":         []interface{}{},
 		},
 	}
 
-	// Parse workload ID to extract information
-	// Format could be: Deployment/nginx or apps:v1:Deployment/nginx
-	var apiGroup string = "core"
-	var kind string
-	var workloadName string
+	// Add all cluster selectors
+	clusterSelectors := []interface{}{}
+	for _, clusterId := range request.ClusterIds {
+		clusterSelectors = append(clusterSelectors, map[string]interface{}{
+			"matchLabels": map[string]string{
+				"kubernetes.io/cluster-name": clusterId,
+			},
+		})
 
-	if strings.Contains(request.WorkloadId, ":") {
-		// Format: apps:v1:Deployment/nginx
-		parts := strings.Split(request.WorkloadId, ":")
-		if len(parts) >= 3 {
-			apiGroup = parts[0]
-			kind = parts[2]
-			if strings.Contains(kind, "/") {
-				kindParts := strings.Split(kind, "/")
-				kind = kindParts[0]
-				if len(kindParts) > 1 {
-					workloadName = kindParts[1]
+		// Save the cluster ID in annotations
+		metadata := policyObj["metadata"].(map[string]interface{})
+		annotations := metadata["annotations"].(map[string]string)
+		annotations["cluster-ids"] += clusterId + ","
+	}
+	policyObj["spec"].(map[string]interface{})["clusterSelectors"] = clusterSelectors
+
+	// Process each workload ID
+	workloadAnnotations := ""
+	apiGroups := make(map[string]bool)
+	resources := make(map[string]bool)
+	specificWorkloads := []WorkloadInfo{}
+
+	for _, workloadId := range request.WorkloadIds {
+		workloadAnnotations += workloadId + ","
+
+		// Parse workload ID to extract information
+		// Format could be: Deployment/nginx or apps:v1:Deployment/nginx
+		var apiGroup string = "core"
+		var kind string
+		var workloadName string
+
+		if strings.Contains(workloadId, ":") {
+			// Format: apps:v1:Deployment/nginx
+			parts := strings.Split(workloadId, ":")
+			if len(parts) >= 3 {
+				apiGroup = parts[0]
+				kind = parts[2]
+				if strings.Contains(kind, "/") {
+					kindParts := strings.Split(kind, "/")
+					kind = kindParts[0]
+					if len(kindParts) > 1 {
+						workloadName = kindParts[1]
+					}
 				}
 			}
-		}
-	} else if strings.Contains(request.WorkloadId, "/") {
-		// Format: Deployment/nginx
-		parts := strings.Split(request.WorkloadId, "/")
-		kind = parts[0]
-		if len(parts) > 1 {
-			workloadName = parts[1]
+		} else if strings.Contains(workloadId, "/") {
+			// Format: Deployment/nginx
+			parts := strings.Split(workloadId, "/")
+			kind = parts[0]
+			if len(parts) > 1 {
+				workloadName = parts[1]
+			}
+
+			// Set default API group based on kind
+			if strings.ToLower(kind) == "deployment" ||
+				strings.ToLower(kind) == "statefulset" ||
+				strings.ToLower(kind) == "daemonset" ||
+				strings.ToLower(kind) == "replicaset" {
+				apiGroup = "apps"
+			} else if strings.ToLower(kind) == "job" || strings.ToLower(kind) == "cronjob" {
+				apiGroup = "batch"
+			}
+		} else {
+			// Just a workload kind
+			kind = workloadId
 		}
 
-		// Set default API group based on kind
-		if strings.ToLower(kind) == "deployment" ||
-			strings.ToLower(kind) == "statefulset" ||
-			strings.ToLower(kind) == "daemonset" ||
-			strings.ToLower(kind) == "replicaset" {
-			apiGroup = "apps"
-		} else if strings.ToLower(kind) == "job" || strings.ToLower(kind) == "cronjob" {
-			apiGroup = "batch"
+		// Convert kind to resource (plural)
+		if kind != "" {
+			resource := strings.ToLower(kind)
+			if !strings.HasSuffix(resource, "s") {
+				resource += "s"
+			}
+
+			// Make sure apiGroup is never empty
+			if apiGroup == "" {
+				apiGroup = "core"
+			}
+
+			// Store the API group and resource for downsync rules
+			apiGroups[apiGroup] = true
+			resources[resource] = true
+
+			// If specific workload name is available, store it
+			if workloadName != "" {
+				specificWorkloads = append(specificWorkloads, WorkloadInfo{
+					APIVersion: fmt.Sprintf("%s/v1", apiGroup),
+					Kind:       kind,
+					Name:       workloadName,
+					Namespace:  namespace,
+				})
+			}
 		}
-	} else {
-		// Just a workload kind
-		kind = request.WorkloadId
 	}
 
-	// Create the downsync rule
-	if kind != "" {
-		// Convert kind to resource (plural)
-		resource := strings.ToLower(kind)
-		if !strings.HasSuffix(resource, "s") {
-			resource += "s"
+	// Add workload IDs to annotations
+	metadata := policyObj["metadata"].(map[string]interface{})
+	annotations := metadata["annotations"].(map[string]string)
+	annotations["workload-ids"] = strings.TrimSuffix(workloadAnnotations, ",")
+
+	// Create downsync rules from collected API groups and resources
+	downsyncRules := []interface{}{}
+	for apiGroup := range apiGroups {
+		// Get resources for this API group
+		resourcesForGroup := []string{}
+		for resource := range resources {
+			resourcesForGroup = append(resourcesForGroup, resource)
 		}
 
 		// Make sure apiGroup is never empty
@@ -1953,24 +2066,29 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 			apiGroup = "core"
 		}
 
-		// Create the downsync rule
-		downsyncRule := map[string]interface{}{
+		downsyncRules = append(downsyncRules, map[string]interface{}{
 			"apiGroup":   apiGroup,
-			"resources":  []string{resource},
+			"resources":  resourcesForGroup,
 			"namespaces": []string{namespace},
-		}
+		})
+	}
+	policyObj["spec"].(map[string]interface{})["downsync"] = downsyncRules
 
-		// If specific workload name is available, add it to annotations
-		if workloadName != "" {
-			metadata := policyObj["metadata"].(map[string]interface{})
-			annotations := metadata["annotations"].(map[string]string)
-			annotations["specific-workload-name"] = workloadName
+	// Add specific workloads section if needed
+	if len(specificWorkloads) > 0 {
+		workloadsSection := []interface{}{}
+		for _, workload := range specificWorkloads {
+			workloadObj := map[string]interface{}{
+				"apiVersion": workload.APIVersion,
+				"kind":       workload.Kind,
+				"metadata": map[string]interface{}{
+					"name":      workload.Name,
+					"namespace": workload.Namespace,
+				},
+			}
+			workloadsSection = append(workloadsSection, workloadObj)
 		}
-
-		// Add the downsync rule
-		downsyncRules := policyObj["spec"].(map[string]interface{})["downsync"].([]interface{})
-		downsyncRules = append(downsyncRules, downsyncRule)
-		policyObj["spec"].(map[string]interface{})["downsync"] = downsyncRules
+		policyObj["spec"].(map[string]interface{})["workloads"] = workloadsSection
 	}
 
 	// Generate YAML for the policy object
@@ -1989,16 +2107,14 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 		"bindingPolicy": gin.H{
 			"name":           policyName,
 			"namespace":      namespace,
-			"clusterId":      request.ClusterId,
-			"workloadId":     request.WorkloadId,
-			"apiGroup":       apiGroup,
-			"resourceKind":   kind,
+			"clusterIds":     request.ClusterIds,
+			"workloadIds":    request.WorkloadIds,
 			"status":         "inactive", // Would be inactive if created
 			"bindingMode":    "Downsync", // Only Downsync is supported
-			"clusters":       []string{request.ClusterId},
-			"workloads":      []string{request.WorkloadId},
-			"clustersCount":  1, // Always 1 cluster for quick binding policy
-			"workloadsCount": 1, // Always 1 workload for quick binding policy
+			"clusters":       request.ClusterIds,
+			"workloads":      request.WorkloadIds,
+			"clustersCount":  len(request.ClusterIds),
+			"workloadsCount": len(request.WorkloadIds),
 		},
 	})
 }

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableHead,
@@ -15,7 +15,7 @@ import {
   TableContainer,
   Paper,
 } from "@mui/material";
-import { Info, Trash2, Edit2, CloudOff } from "lucide-react";
+import { Info, Trash2,  CloudOff } from "lucide-react";
 import { BindingPolicyInfo } from "../../types/bindingPolicy";
 import PolicyDetailDialog from "./Dialogs/PolicyDetailDialog";
 import useTheme from "../../stores/themeStore";
@@ -72,6 +72,14 @@ const BPTable: React.FC<BPTableProps> = ({
     isLoading: isLoadingDetails,
     error: detailsError
   } = useBindingPolicyDetails(selectedPolicyName || undefined);
+
+  // Add debugging for policy details
+  useEffect(() => {
+    if (selectedPolicyDetails) {
+      console.log('Selected policy details:', selectedPolicyDetails);
+      console.log('YAML property present:', !!selectedPolicyDetails.yaml);
+    }
+  }, [selectedPolicyDetails]);
 
   const handlePolicyClick = (policy: BindingPolicyInfo) => {
     console.log('Requesting details for policy:', policy.name);
@@ -404,7 +412,7 @@ const BPTable: React.FC<BPTableProps> = ({
                     <Box
                       sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}
                     >
-                      <IconButton
+                      {/* <IconButton
                         sx={{ 
                           color: colors.textSecondary,
                           "&:hover": { color: colors.primary }
@@ -413,7 +421,7 @@ const BPTable: React.FC<BPTableProps> = ({
                         onClick={() => onEditPolicy(policy)}
                       >
                         <Edit2 size={18} />
-                      </IconButton>
+                      </IconButton> */}
                       <IconButton
                         sx={{ 
                           color: colors.textSecondary,
