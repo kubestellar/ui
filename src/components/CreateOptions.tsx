@@ -746,7 +746,15 @@ spec:
             <StyledTab
               label="Helm"
               value="option4"
-              icon={<img src={helmicon} alt="Helm" width={24} height={24} />}
+              icon={
+                <img 
+                  src={helmicon} 
+                  alt="Helm" 
+                  width={24} 
+                  height={24} 
+                  style={{ filter: theme === "dark" ? "brightness(0) saturate(100%) invert(1)" : "none" }} 
+                />
+              }              
               iconPosition="start"
             />
           </Tabs>
