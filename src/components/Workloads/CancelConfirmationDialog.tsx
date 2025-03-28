@@ -1,6 +1,7 @@
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { getConfirmationDialogPaperProps } from "../StyledComponents";
+import useTheme from "../../stores/themeStore"; // Import useTheme for dark mode support
 
 interface Props {
   cancelConfirmationOpen: boolean;
@@ -13,17 +14,18 @@ export const CancelConfirmationDialog = ({
   handleCloseCancelConfirmation,
   handleConfirmCancel,
 }: Props) => {
+  const theme = useTheme((state) => state.theme); // Get the current theme
   return (
     // --- Cancel Confirmation Dialog Section ---
     <Dialog
       open={cancelConfirmationOpen}
       onClose={handleCloseCancelConfirmation}
-      PaperProps={getConfirmationDialogPaperProps()}
+      PaperProps={getConfirmationDialogPaperProps(theme)}
     >
       <DialogTitle sx={{ padding: "16px 24px", borderBottom: "1px solid #e0e0e0" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <WarningAmberIcon sx={{ color: "#f5c518", fontSize: "1.5rem" }} />
-          <Typography variant="h6" sx={{ fontWeight: 500, color: "#333" }}>
+          <Typography variant="h6" sx={{ fontWeight: 500, color: theme === "dark" ? "#fff" : "#333" }}>
             Cancel Workload Creation
           </Typography>
         </Box>
@@ -33,17 +35,17 @@ export const CancelConfirmationDialog = ({
           sx={{ border: "1px solid #ff9800", py: 1.5, mt: 2, borderRadius: "8px" }}
         >
           <Box sx={{ display: "flex", marginLeft: "-9px", gap: 2, alignItems: "center" }}>
-            <WarningAmberIcon sx={{ color: "#f5c518", fontSize: "1.4rem" }} />
+            <WarningAmberIcon sx={{ color: theme === "dark" ? "#fff" : "#f5c518", fontSize: "1.4rem" }} />
             <Box sx={{ alignItems: "center", marginLeft: "-6px", mb: 0.5 }}>
               <Typography
                 variant="subtitle1"
-                sx={{ fontWeight: 500, color: "rgb(102, 60, 0)" }}
+                sx={{ fontWeight: 500, color: theme === "dark" ? "#fff" : "rgb(102, 60, 0)" }}
               >
                 Warning
               </Typography>
               <Typography
                 variant="body1"
-                sx={{ color: "rgb(102, 60, 0)", fontSize: "14px" }}
+                sx={{ color: theme === "dark" ? "#fff" : "rgb(102, 60, 0)", fontSize: "14px" }}
               >
                 Are you sure you want to cancel? Any changes will lost.
               </Typography>

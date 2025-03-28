@@ -196,11 +196,11 @@ export const useWDSQueries = () => {
       },
     });
 
-  // New mutation for file uploads with custom headers
+  // Updated mutation for file uploads with custom headers and auto_ns query parameter
   const useUploadWorkloadFile = () =>
     useMutation({
-      mutationFn: async ({ data }: { data: FormData }) => {
-        const response = await api.post('/api/resource/upload', data, {
+      mutationFn: async ({ data, autoNs }: { data: FormData; autoNs: boolean }) => { // Added autoNs parameter
+        const response = await api.post(`/api/resource/upload?auto_ns=${autoNs}`, data, {
           headers: {
             // Override the default Content-Type to let Axios handle multipart/form-data
             'Content-Type': 'multipart/form-data', // Explicitly set to ensure compatibility

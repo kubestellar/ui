@@ -9,9 +9,12 @@ import { StyledTab, getDialogPaperProps } from "./StyledComponents";
 import { YamlTab } from "./Workloads/YamlTab";
 import { UploadFileTab } from "./Workloads/UploadFileTab";
 import { GitHubTab } from "./Workloads/GitHubTab";
+import { HelmTab } from "./Workloads/HelmTab";
 import { AddCredentialsDialog } from "../components/Workloads/AddCredentialsDialog";
 import { AddWebhookDialog } from "../components/Workloads/AddWebhookDialog";
 import { CancelConfirmationDialog } from "../components/Workloads/CancelConfirmationDialog";
+import useTheme from "../stores/themeStore";
+import helmicon from "../assets/Helm.png"
 
 interface Props {
   activeOption: string | null;
@@ -27,12 +30,26 @@ interface FormData {
   webhook: string;
 }
 
+interface HelmFormData {
+  repoName: string;
+  repoUrl: string;
+  chartName: string;
+  releaseName: string;
+  version: string;
+  namespace: string;
+}
+
 interface Workload {
   kind?: string;
-  metadata?: { name?: string };
+  metadata?: {
+    name?: string;
+    namespace?: string;
+    [key: string]: unknown;
+  };
   [key: string]: unknown;
 }
-function generateRandomString(length:number) {
+
+function generateRandomString(length: number) {
   const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
   const charactersLength = characters.length;
@@ -41,13 +58,15 @@ function generateRandomString(length:number) {
   }
   return result;
 }
+
 const CreateOptions = ({
   activeOption,
   setActiveOption,
   onCancel,
 }: Props) => {
+  const theme = useTheme((state) => state.theme);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const randomStrings = generateRandomString(5)
+  const randomStrings = generateRandomString(5);
   const initialEditorContent = `apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -107,6 +126,16 @@ spec:
   };
   const [formData, setFormData] = useState<FormData>(initialFormData);
 
+  const initialHelmFormData: HelmFormData = {
+    repoName: "",
+    repoUrl: "",
+    chartName: "",
+    releaseName: "",
+    version: "", // Changed from "latest" to "" to make it empty by default
+    namespace: "default",
+  };
+  const [helmFormData, setHelmFormData] = useState<HelmFormData>(initialHelmFormData);
+
   const { useUploadWorkloadFile } = useWDSQueries();
   const uploadFileMutation = useUploadWorkloadFile();
 
@@ -119,7 +148,6 @@ spec:
     }
   };
 
-  // --- Extract Workload Name from Editor Content (YAML Tab) ---
   useEffect(() => {
     if (!editorContent) {
       setWorkloadName("");
@@ -136,7 +164,6 @@ spec:
         jsyaml.loadAll(editorContent, (doc) => documents.push(doc as Workload), {});
       }
 
-      // Find the first document with metadata.name
       const docWithName = documents.find((doc) => doc?.metadata?.name);
       const name = docWithName?.metadata?.name || "";
       setWorkloadName(name);
@@ -146,7 +173,6 @@ spec:
     }
   }, [editorContent]);
 
-  // --- Extract Workload Name from Uploaded File (Upload File Tab) ---
   useEffect(() => {
     if (!selectedFile) {
       setWorkloadName("");
@@ -182,12 +208,10 @@ spec:
     reader.readAsText(selectedFile);
   }, [selectedFile]);
 
-  // --- Track Editor Content Changes ---
   useEffect(() => {
     setIsEditorContentEdited(editorContent !== initialEditorContent);
   }, [editorContent, initialEditorContent]);
 
-  // --- Load Stored Credentials and Webhooks ---
   useEffect(() => {
     const storedCredentials = localStorage.getItem("credentialsList");
     const storedWebhooks = localStorage.getItem("webhooksList");
@@ -200,7 +224,6 @@ spec:
     }
   }, []);
 
-  // --- Track Changes Across Tabs ---
   useEffect(() => {
     let changesDetected = false;
 
@@ -215,13 +238,20 @@ spec:
         formData.credentials !== initialFormData.credentials ||
         formData.branchSpecifier !== initialFormData.branchSpecifier ||
         formData.webhook !== initialFormData.webhook;
+    } else if (activeOption === "option4") {
+      changesDetected =
+        helmFormData.repoName !== initialHelmFormData.repoName ||
+        helmFormData.repoUrl !== initialHelmFormData.repoUrl ||
+        helmFormData.chartName !== initialHelmFormData.chartName ||
+        helmFormData.releaseName !== initialHelmFormData.releaseName ||
+        helmFormData.version !== initialHelmFormData.version ||
+        helmFormData.namespace !== initialHelmFormData.namespace;
     }
 
     setHasChanges(changesDetected);
-  }, [activeOption, editorContent, selectedFile, formData]);
+  }, [activeOption, editorContent, selectedFile, formData, helmFormData]);
 
-  // --- Handle File Upload (Upload File Tab) ---
-  const handleFileUpload = async () => {
+  const handleFileUpload = async (autoNs: boolean) => {
     if (!selectedFile) {
       toast.error("No file selected.");
       return;
@@ -232,7 +262,7 @@ spec:
     console.log("FormData Entries:", [...formData.entries()]);
 
     try {
-      const response = await uploadFileMutation.mutateAsync({ data: formData });
+      const response = await uploadFileMutation.mutateAsync({ data: formData, autoNs });
       console.log("Mutation Response:", response);
       toast.success("Workload Deploy successful!");
       setTimeout(() => window.location.reload(), 1000);
@@ -250,7 +280,32 @@ spec:
           : axiosError.message || "Unknown error";
 
       if (axiosError.response?.status === 500) {
-        toast.error("Workload is already exist!");
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const content = e.target?.result as string;
+          if (content) {
+            try {
+              let documents: Workload[] = [];
+              const contentType = detectContentType(content);
+              if (contentType === "json") {
+                const parsed = JSON.parse(content);
+                documents = Array.isArray(parsed) ? parsed : [parsed];
+              } else {
+                jsyaml.loadAll(content, (doc) => documents.push(doc as Workload), {});
+              }
+              const docWithKind = documents.find((doc) => doc?.kind);
+              const kind = docWithKind?.kind || "Unknown";
+              const namespace = docWithKind?.metadata?.namespace || "default";
+              toast.error(`Failed to create ${kind} ${workloadName} in namespace ${namespace}, workload is already exists or Namspace ${namespace} not Found`);
+            } catch (parseError) {
+              console.error("Error parsing file for kind:", parseError);
+              toast.error(`Failed to create Unknown ${workloadName} workload is already exists`);
+            }
+          } else {
+            toast.error(`Failed to create Unknown ${workloadName} workload is already exists`);
+          }
+        };
+        reader.readAsText(selectedFile);
       } else if (axiosError.response?.status === 409) {
         toast.error("Conflict error: Deployment already in progress!");
       } else {
@@ -259,8 +314,7 @@ spec:
     }
   };
 
-  // --- Handle Raw Upload (YAML Tab) ---
-  const handleRawUpload = async () => {
+  const handleRawUpload = async (autoNs: boolean) => {
     const fileContent = editorContent.trim();
 
     if (!fileContent) {
@@ -269,7 +323,6 @@ spec:
     }
 
     try {
-      // Parse all documents into an array
       let documents: Workload[] = [];
       const contentType = detectContentType(fileContent);
       if (contentType === "json") {
@@ -279,15 +332,16 @@ spec:
         jsyaml.loadAll(fileContent, (doc) => documents.push(doc as Workload), {});
       }
 
-      // Validate that at least one document has metadata.name
       const hasName = documents.some((doc) => doc?.metadata?.name);
       if (!hasName) {
         toast.error("At least one document must have 'metadata.name'");
         return;
       }
 
-      // Send the array of documents to the API
-      const response = await axios.post("http://localhost:4000/api/resources", documents);
+      const response = await axios.post(
+        `http://localhost:4000/api/resources?auto_ns=${autoNs}`,
+        documents
+      );
 
       if (response.status === 200 || response.status === 201) {
         toast.success("Deployment successful!");
@@ -301,7 +355,18 @@ spec:
 
       if (err.response) {
         if (err.response.status === 500) {
-          toast.error("Deploy already exists!");
+          let documents: Workload[] = [];
+          const contentType = detectContentType(fileContent);
+          if (contentType === "json") {
+            const parsed = JSON.parse(fileContent);
+            documents = Array.isArray(parsed) ? parsed : [parsed];
+          } else {
+            jsyaml.loadAll(fileContent, (doc) => documents.push(doc as Workload), {});
+          }
+          const docWithKind = documents.find((doc) => doc?.kind);
+          const kind = docWithKind?.kind || "Unknown";
+          const namespace = docWithKind?.metadata?.namespace || "default";
+          toast.error(`Failed to create ${kind}: ${workloadName} in namespace ${namespace}, workload is already exists or Namspace ${namespace} not Found`);
         } else if (err.response.status === 409) {
           toast.error("Conflict error: Deployment already in progress!");
         } else {
@@ -313,7 +378,6 @@ spec:
     }
   };
 
-  // --- Handle Deploy (GitHub Tab) ---
   const handleDeploy = async () => {
     if (!validateForm()) {
       return;
@@ -382,7 +446,74 @@ spec:
     }
   };
 
-  // --- Handle Cancel Click ---
+  const handleHelmDeploy = async () => {
+    if (!validateHelmForm()) {
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Conditionally build the requestBody, excluding the version field if it's empty
+      const requestBody: { [key: string]: string } = {
+        repoName: helmFormData.repoName,
+        repoURL: helmFormData.repoUrl,
+        chartName: helmFormData.chartName,
+        releaseName: helmFormData.releaseName,
+        namespace: helmFormData.namespace || "default",
+      };
+
+      // Only include the version field if it's not empty
+      if (helmFormData.version) {
+        requestBody.version = helmFormData.version;
+      }
+
+      const response = await axios.post(
+        "http://localhost:4000/deploy/helm",
+        requestBody,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Helm Deploy response:", response);
+
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Helm chart deployed successfully!");
+        setHelmFormData({
+          repoName: "",
+          repoUrl: "",
+          chartName: "",
+          releaseName: "",
+          version: "", // Reset to empty string
+          namespace: "default",
+        });
+        setTimeout(() => window.location.reload(), 4000);
+      } else {
+        throw new Error("Unexpected response status: " + response.status);
+      }
+    } catch (error: unknown) {
+      const err = error as AxiosError;
+      console.error("Helm Deploy error:", err);
+
+      if (err.response) {
+        if (err.response.status === 500) {
+          toast.error("Deployment failed: failed to install chart: cannot re-use a name that is still in use!");
+        } else if (err.response.status === 400) {
+          toast.error("Failed to deploy Helm chart!");
+        } else {
+          toast.error(`Helm deployment failed! (${err.response.status})`);
+        }
+      } else {
+        toast.error("Helm deployment failed due to network error!");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleCancelClick = () => {
     if (hasChanges) {
       setCancelConfirmationOpen(true);
@@ -394,7 +525,6 @@ spec:
     }
   };
 
-  // --- Handle Confirm Cancel ---
   const handleConfirmCancel = () => {
     setSelectedFile(null);
     setError("");
@@ -403,12 +533,10 @@ spec:
     onCancel();
   };
 
-  // --- Handle Close Cancel Confirmation ---
   const handleCloseCancelConfirmation = () => {
     setCancelConfirmationOpen(false);
   };
 
-  // --- Validate Form (GitHub Tab) ---
   const validateForm = () => {
     let isValid = true;
     let errorMessage = "";
@@ -425,17 +553,36 @@ spec:
     return isValid;
   };
 
-  // --- Handle Credential Change (GitHub Tab) ---
+  const validateHelmForm = () => {
+    let isValid = true;
+    let errorMessage = "";
+
+    if (!helmFormData.repoName) {
+      errorMessage = "Please enter Repository Name.";
+      isValid = false;
+    } else if (!helmFormData.repoUrl) {
+      errorMessage = "Please enter Repository URL.";
+      isValid = false;
+    } else if (!helmFormData.chartName) {
+      errorMessage = "Please enter Chart Name.";
+      isValid = false;
+    } else if (!helmFormData.releaseName) {
+      errorMessage = "Please enter Release Name.";
+      isValid = false;
+    }
+
+    setError(errorMessage);
+    return isValid;
+  };
+
   const handleCredentialChange = (event: SelectChangeEvent<string>) => {
     setFormData({ ...formData, credentials: event.target.value });
   };
 
-  // --- Handle Open Credential Dialog ---
   const handleOpenCredentialDialog = () => {
     setCredentialDialogOpen(true);
   };
 
-  // --- Handle Add Credential ---
   const handleAddCredential = () => {
     if (newCredential.githubUsername && newCredential.personalAccessToken) {
       const credentialId = `${newCredential.githubUsername}-pat`;
@@ -458,24 +605,20 @@ spec:
     }
   };
 
-  // --- Handle Close Credential Dialog ---
   const handleCloseCredentialDialog = () => {
     setCredentialDialogOpen(false);
     setNewCredential({ githubUsername: "", personalAccessToken: "" });
     setFormData({ ...formData, credentials: "none" });
   };
 
-  // --- Handle Webhook Change (GitHub Tab) ---
   const handleWebhookChange = (event: SelectChangeEvent<string>) => {
     setFormData({ ...formData, webhook: event.target.value });
   };
 
-  // --- Handle Open Webhook Dialog ---
   const handleOpenWebhookDialog = () => {
     setWebhookDialogOpen(true);
   };
 
-  // --- Handle Add Webhook ---
   const handleAddWebhook = () => {
     if (newWebhook.webhookUrl && newWebhook.personalAccessToken) {
       const webhookId = `${newWebhook.webhookUrl}-pat`;
@@ -499,26 +642,22 @@ spec:
     }
   };
 
-  // --- Handle Close Webhook Dialog ---
   const handleCloseWebhookDialog = () => {
     setWebhookDialogOpen(false);
     setNewWebhook({ webhookUrl: "", personalAccessToken: "" });
     setFormData({ ...formData, webhook: "none" });
   };
 
-  // --- Handle Drag Over (Upload File Tab) ---
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.currentTarget.style.borderColor = "#1976d2";
   };
 
-  // --- Handle Drag Leave (Upload File Tab) ---
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.currentTarget.style.borderColor = "#bdbdbd";
   };
 
-  // --- Handle Drop (Upload File Tab) ---
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.currentTarget.style.borderColor = "#bdbdbd";
@@ -530,7 +669,6 @@ spec:
     }
   };
 
-  // --- Handle File Change (Upload File Tab) ---
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     if (file) {
@@ -538,7 +676,6 @@ spec:
     }
   };
 
-  // --- Format File Size (Upload File Tab) ---
   const formatFileSize = (size: number): string => {
     if (size < 1024) return `${size} B`;
     const kb = size / 1024;
@@ -548,7 +685,6 @@ spec:
   };
 
   return (
-    // --- Main Dialog Section ---
     <>
       {error && (
         <Box sx={{ color: "red", mb: 1, textAlign: "center" }}>{error}</Box>
@@ -558,13 +694,22 @@ spec:
         onClose={onCancel}
         maxWidth="lg"
         fullWidth
-        PaperProps={getDialogPaperProps()}
+        PaperProps={getDialogPaperProps(theme)}
       >
-        <DialogTitle sx={{ padding: "16px 16px", borderBottom: "1px solid #e0e0e0" }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, color: "black" }}>
+        <DialogTitle sx={{ 
+          padding: "16px 16px", 
+          borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
+        }}>
+          <Typography variant="h6" sx={{ 
+            fontWeight: 600, 
+            color: theme === "dark" ? "#d4d4d4" : "black",
+          }}>
             Create Workload
           </Typography>
-          <Typography sx={{ fontSize: "13px", color: "gray" }}>
+          <Typography sx={{ 
+            fontSize: "13px", 
+            color: theme === "dark" ? "#858585" : "gray",
+          }}>
             Create Workloads
           </Typography>
           <Tabs
@@ -574,6 +719,9 @@ spec:
               mt: 2,
               ".MuiTabs-indicator": {
                 display: "none",
+              },
+              "& .MuiTab-root": {
+                color: theme === "dark" ? "#d4d4d4" : "#333",
               },
             }}
           >
@@ -595,9 +743,27 @@ spec:
               icon={<GitHubIcon sx={{ fontSize: "0.9rem" }} />}
               iconPosition="start"
             />
+            <StyledTab
+              label="Helm"
+              value="option4"
+               icon={
+                <img 
+                  src={helmicon} 
+                  alt="Helm" 
+                  width={24} 
+                  height={24} 
+                  style={{ filter: theme === "dark" ? "brightness(0) saturate(100%) invert(1)" : "none" }} 
+                />
+              }        
+              iconPosition="start"
+            />
           </Tabs>
         </DialogTitle>
-        <DialogContent sx={{ padding: "17px", backgroundColor: "#fff", height: "64.5vh", overflow: "hidden" }}>
+        <DialogContent sx={{ 
+          padding: "17px", 
+          height: "100vh", 
+          overflow: "hidden",
+        }}>
           <Box sx={{ width: "100%", mt: 2, height: "100%" }}>
             {activeOption === "option1" && (
               <YamlTab
@@ -644,6 +810,18 @@ spec:
                 handleCancelClick={handleCancelClick}
               />
             )}
+            {activeOption === "option4" && (
+              <HelmTab
+                formData={helmFormData}
+                setFormData={setHelmFormData}
+                error={error}
+                loading={loading}
+                hasChanges={hasChanges}
+                validateForm={validateHelmForm}
+                handleDeploy={handleHelmDeploy}
+                handleCancelClick={handleCancelClick}
+              />
+            )}
           </Box>
         </DialogContent>
 
@@ -656,7 +834,11 @@ spec:
           <Alert
             onClose={() => setSnackbar({ ...snackbar, open: false })}
             severity={snackbar.severity}
-            sx={{ width: "100%" }}
+            sx={{ 
+              width: "100%",
+              backgroundColor: theme === "dark" ? "#333" : "#fff",
+              color: theme === "dark" ? "#d4d4d4" : "#333",
+            }}
           >
             {snackbar.message}
           </Alert>

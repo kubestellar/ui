@@ -40,13 +40,12 @@ import { FlowCanvas } from "../components/Wds_Topology/FlowCanvas";
 import LoadingFallback from "./LoadingFallback";
 import DynamicDetailsPanel from "./DynamicDetailsPanel";
 import ReactDOM from "react-dom";
-// import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { useQuery} from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { isEqual } from "lodash";
 import { useWebSocket } from "../context/WebSocketProvider";
 import useTheme from "../stores/themeStore";
 import axios from "axios";
-import WarningAmberIcon from '@mui/icons-material/WarningAmber'; // Import warning icon
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
 // Interfaces
 export interface NodeData {
@@ -136,6 +135,7 @@ interface SelectedNode {
   onClose: () => void;
   isOpen: boolean;
   resourceData?: ResourceItem;
+  initialTab?: number; // Add initialTab to specify which tab to open
 }
 
 interface ResourcesMap {
@@ -150,6 +150,72 @@ const nodeStyle: React.CSSProperties = {
   border: "none",
   width: "146px",
   height: "30px",
+};
+
+// Mapping of kind to the correct plural form for API endpoints
+const kindToPluralMap: Record<string, string> = {
+  Binding: "bindings",
+  ComponentStatus: "componentstatuses",
+  ConfigMap: "configmaps",
+  Endpoints: "endpoints",
+  Event: "events",
+  LimitRange: "limitranges",
+  Namespace: "namespaces",
+  Node: "nodes",
+  PersistentVolumeClaim: "persistentvolumeclaims",
+  PersistentVolume: "persistentvolumes",
+  Pod: "pods",
+  PodTemplate: "podtemplates",
+  ReplicationController: "replicationcontrollers",
+  ResourceQuota: "resourcequotas",
+  Secret: "secrets",
+  ServiceAccount: "serviceaccounts",
+  Service: "services",
+  MutatingWebhookConfiguration: "mutatingwebhookconfigurations",
+  ValidatingWebhookConfiguration: "validatingwebhookconfigurations",
+  CustomResourceDefinition: "customresourcedefinitions",
+  APIService: "apiservices",
+  ControllerRevision: "controllerrevisions",
+  DaemonSet: "daemonsets",
+  Deployment: "deployments",
+  ReplicaSet: "replicasets",
+  StatefulSet: "statefulsets",
+  Application: "applications",
+  ApplicationSet: "applicationsets",
+  AppProject: "appprojects",
+  SelfSubjectReview: "selfsubjectreviews",
+  TokenReview: "tokenreviews",
+  LocalSubjectAccessReview: "localsubjectaccessreviews",
+  SelfSubjectAccessReview: "selfsubjectaccessreviews",
+  SelfSubjectRulesReview: "selfsubjectrulesreviews",
+  SubjectAccessReview: "subjectaccessreviews",
+  HorizontalPodAutoscaler: "horizontalpodautoscalers",
+  CronJob: "cronjobs",
+  Job: "jobs",
+  CertificateSigningRequest: "certificatesigningrequests",
+  BindingPolicy: "bindingpolicies",
+  CombinedStatus: "combinedstatuses",
+  CustomTransform: "customtransforms",
+  StatusCollector: "statuscollectors",
+  Lease: "leases",
+  EndpointSlice: "endpointslices",
+  FlowSchema: "flowschemas",
+  PriorityLevelConfiguration: "prioritylevelconfigurations",
+  IngressClass: "ingressclasses",
+  Ingress: "ingresses",
+  NetworkPolicy: "networkpolicies",
+  RuntimeClass: "runtimeclasses",
+  PodDisruptionBudget: "poddisruptionbudgets",
+  ClusterRoleBinding: "clusterrolebindings",
+  ClusterRole: "clusterroles",
+  RoleBinding: "rolebindings",
+  Role: "roles",
+  PriorityClass: "priorityclasses",
+  CSIDriver: "csidrivers",
+  CSINode: "csinodes",
+  CSIStorageCapacity: "csistoragecapacities",
+  StorageClass: "storageclasses",
+  VolumeAttachment: "volumeattachments",
 };
 
 // Dynamic icon mapping for all imported icons
@@ -408,7 +474,6 @@ const TreeViewComponent = () => {
   const prevNodes = useRef<CustomNode[]>([]);
   const renderStartTime = useRef<number>(0);
   const panelRef = useRef<HTMLDivElement>(null);
-  // State for delete confirmation dialog
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [deleteNodeDetails, setDeleteNodeDetails] = useState<{
     namespace: string;
@@ -418,7 +483,6 @@ const TreeViewComponent = () => {
   } | null>(null);
 
   const { isConnected, connect, hasValidDatat } = useWebSocket();
-  // const queryClient = useQueryClient();
   const NAMESPACE_QUERY_KEY = ["namespaces"];
 
   const { data: namespaceData } = useQuery<NamespaceResource[]>({
@@ -579,7 +643,7 @@ const TreeViewComponent = () => {
 
       if (data && data.length > 0) {
         data.forEach((namespace: NamespaceResource) => {
-          const namespaceId = `namespace-${namespace.name}`;
+          const namespaceId = `ns:${namespace.name}`;
           createNode(
             namespaceId,
             namespace.name,
@@ -603,74 +667,74 @@ const TreeViewComponent = () => {
             .flat()
             .forEach((item: ResourceItem, index: number) => {
               const kindLower = item.kind.toLowerCase();
-              const resourceId = `${namespaceId}-${kindLower}-${item.metadata.name}-${index}`;
+              const resourceId = `ns:${namespace.name}:${kindLower}:${item.metadata.name}:${index}`;
               const status = item.status?.conditions?.some((c) => c.type === "Available" && c.status === "True") ? "Active" : "Inactive";
 
               createNode(resourceId, item.metadata.name, kindLower, status, item.metadata.creationTimestamp, namespace.name, item, namespaceId, newNodes, newEdges);
 
               switch (kindLower) {
                 case "configmap":
-                  createNode(`${resourceId}-volume`, `volume-${item.metadata.name}`, "volume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  createNode(`${resourceId}-envvar`, `envvar-${item.metadata.name}`, "envvar", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${resourceId}:volume`, `volume-${item.metadata.name}`, "volume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${resourceId}:envvar`, `envvar-${item.metadata.name}`, "envvar", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                   break;
 
                 case "clusterrolebinding": {
-                  const crbClusterRoleId = `${resourceId}-clusterrole`;
+                  const crbClusterRoleId = `${resourceId}:clusterrole`;
                   createNode(crbClusterRoleId, `clusterrole-${item.metadata.name}`, "clusterrole", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  createNode(`${crbClusterRoleId}-user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, crbClusterRoleId, newNodes, newEdges);
-                  createNode(`${crbClusterRoleId}-serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, item, crbClusterRoleId, newNodes, newEdges);
-                  createNode(`${crbClusterRoleId}-group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, item, crbClusterRoleId, newNodes, newEdges);
+                  createNode(`${crbClusterRoleId}:user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, crbClusterRoleId, newNodes, newEdges);
+                  createNode(`${crbClusterRoleId}:serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, item, crbClusterRoleId, newNodes, newEdges);
+                  createNode(`${crbClusterRoleId}:group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, item, crbClusterRoleId, newNodes, newEdges);
                   break;
                 }
 
                 case "customresourcedefinition": {
-                  const crdCrId = `${resourceId}-customresource`;
+                  const crdCrId = `${resourceId}:customresource`;
                   createNode(crdCrId, `cr-${item.metadata.name}`, "customresource", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  createNode(`${crdCrId}-controller`, `controller-${item.metadata.name}`, "controller", status, undefined, namespace.name, item, crdCrId, newNodes, newEdges);
+                  createNode(`${crdCrId}:controller`, `controller-${item.metadata.name}`, "controller", status, undefined, namespace.name, item, crdCrId, newNodes, newEdges);
                   break;
                 }
 
                 case "clusterrole": {
-                  const crClusterRoleBindingId = `${resourceId}-clusterrolebinding`;
+                  const crClusterRoleBindingId = `${resourceId}:clusterrolebinding`;
                   createNode(crClusterRoleBindingId, `clusterrolebinding-${item.metadata.name}`, "clusterrolebinding", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  createNode(`${crClusterRoleBindingId}-user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, crClusterRoleBindingId, newNodes, newEdges);
-                  createNode(`${crClusterRoleBindingId}-group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, item, crClusterRoleBindingId, newNodes, newEdges);
-                  createNode(`${crClusterRoleBindingId}-serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, item, crClusterRoleBindingId, newNodes, newEdges);
+                  createNode(`${crClusterRoleBindingId}:user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, crClusterRoleBindingId, newNodes, newEdges);
+                  createNode(`${crClusterRoleBindingId}:group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, item, crClusterRoleBindingId, newNodes, newEdges);
+                  createNode(`${crClusterRoleBindingId}:serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, item, crClusterRoleBindingId, newNodes, newEdges);
                   break;
                 }
 
                 case "cronjob":
-                  createNode(`${resourceId}-job`, `job-${item.metadata.name}`, "job", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${resourceId}:job`, `job-${item.metadata.name}`, "job", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                   break;
 
                 case "deployment":
-                  createNode(`${resourceId}-replicaset`, `replicaset-${item.metadata.name}`, "replicaset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${resourceId}:replicaset`, `replicaset-${item.metadata.name}`, "replicaset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                   break;
 
                 case "daemonset":
                   break;
 
                 case "service":
-                  createNode(`${resourceId}-endpoints`, `endpoints-${item.metadata.name}`, "endpoints", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${resourceId}:endpoints`, `endpoints-${item.metadata.name}`, "endpoints", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                   break;
 
                 case "endpoints":
                   break;
 
                 case "group":
-                  createNode(`${resourceId}-user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${resourceId}:user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                   break;
 
                 case "horizontalpodautoscaler":
-                  createNode(`${resourceId}-deployment`, `deployment-${item.metadata.name}`, "deployment", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  createNode(`${resourceId}-replicaset`, `replicaset-${item.metadata.name}`, "replicaset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  createNode(`${resourceId}-statefulset`, `statefulset-${item.metadata.name}`, "statefulset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${resourceId}:deployment`, `deployment-${item.metadata.name}`, "deployment", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${resourceId}:replicaset`, `replicaset-${item.metadata.name}`, "replicaset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${resourceId}:statefulset`, `statefulset-${item.metadata.name}`, "statefulset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                   break;
 
                 case "ingress": {
-                  const ingControllerId = `${resourceId}-ingresscontroller`;
+                  const ingControllerId = `${resourceId}:ingresscontroller`;
                   createNode(ingControllerId, `ingresscontroller-${item.metadata.name}`, "ingresscontroller", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  createNode(`${ingControllerId}-service`, `service-${item.metadata.name}`, "service", status, undefined, namespace.name, item, ingControllerId, newNodes, newEdges);
+                  createNode(`${ingControllerId}:service`, `service-${item.metadata.name}`, "service", status, undefined, namespace.name, item, ingControllerId, newNodes, newEdges);
                   break;
                 }
 
@@ -678,7 +742,7 @@ const TreeViewComponent = () => {
                   break;
 
                 case "limitrange":
-                  createNode(`${resourceId}-namespace`, `namespace-${item.metadata.name}`, "namespace", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${resourceId}:namespace`, `namespace-${item.metadata.name}`, "namespace", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                   break;
 
                 case "networkpolicy":
@@ -688,28 +752,28 @@ const TreeViewComponent = () => {
                   break;
 
                 case "persistentvolume":
-                  createNode(`${resourceId}-persistentvolumeclaim`, `pvc-${item.metadata.name}`, "persistentvolumeclaim", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${resourceId}:persistentvolumeclaim`, `pvc-${item.metadata.name}`, "persistentvolumeclaim", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                   break;
 
                 case "persistentvolumeclaim":
-                  createNode(`${resourceId}-persistentvolume`, `pv-${item.metadata.name}`, "persistentvolume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${resourceId}:persistentvolume`, `pv-${item.metadata.name}`, "persistentvolume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                   break;
 
                 case "resourcequota":
-                  createNode(`${resourceId}-namespace`, `namespace-${item.metadata.name}`, "namespace", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${resourceId}:namespace`, `namespace-${item.metadata.name}`, "namespace", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                   break;
 
                 case "rolebinding": {
-                  const rbRoleId = `${resourceId}-role`;
+                  const rbRoleId = `${resourceId}:role`;
                   createNode(rbRoleId, `role-${item.metadata.name}`, "role", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  createNode(`${rbRoleId}-user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, rbRoleId, newNodes, newEdges);
-                  createNode(`${rbRoleId}-serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, item, rbRoleId, newNodes, newEdges);
-                  createNode(`${rbRoleId}-group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, item, rbRoleId, newNodes, newEdges);
+                  createNode(`${rbRoleId}:user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, rbRoleId, newNodes, newEdges);
+                  createNode(`${rbRoleId}:serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, item, rbRoleId, newNodes, newEdges);
+                  createNode(`${rbRoleId}:group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, item, rbRoleId, newNodes, newEdges);
                   break;
                 }
 
                 case "role":
-                  createNode(`${resourceId}-namespace`, `namespace-${item.metadata.name}`, "namespace", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${resourceId}:namespace`, `namespace-${item.metadata.name}`, "namespace", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                   break;
 
                 case "replicaset":
@@ -719,20 +783,20 @@ const TreeViewComponent = () => {
                   break;
 
                 case "storageclass":
-                  createNode(`${resourceId}-persistentvolume`, `pv-${item.metadata.name}`, "persistentvolume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${resourceId}:persistentvolume`, `pv-${item.metadata.name}`, "persistentvolume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                   break;
 
                 case "secret":
-                  createNode(`${resourceId}-volume`, `volume-${item.metadata.name}`, "volume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  createNode(`${resourceId}-envvar`, `envvar-${item.metadata.name}`, "envvar", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${resourceId}:volume`, `volume-${item.metadata.name}`, "volume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${resourceId}:envvar`, `envvar-${item.metadata.name}`, "envvar", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                   break;
 
                 case "statefulset":
                   break;
 
                 case "user":
-                  createNode(`${resourceId}-role`, `role-${item.metadata.name}`, "role", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  createNode(`${resourceId}-clusterrole`, `clusterrole-${item.metadata.name}`, "clusterrole", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${resourceId}:role`, `role-${item.metadata.name}`, "role", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                  createNode(`${resourceId}:clusterrole`, `clusterrole-${item.metadata.name}`, "clusterrole", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                   break;
 
                 case "volume":
@@ -794,20 +858,85 @@ const TreeViewComponent = () => {
     };
   }, [selectedNode, handleClosePanel]);
 
+  // Function to find all descendant nodes of a given node
+  const findDescendantNodes = useCallback((nodeId: string, edges: CustomEdge[]): string[] => {
+    const descendants: string[] = [];
+    const queue: string[] = [nodeId];
+    const visited = new Set<string>();
+
+    while (queue.length > 0) {
+      const currentNodeId = queue.shift()!;
+      if (visited.has(currentNodeId)) continue;
+      visited.add(currentNodeId);
+
+      // Find all direct children of the current node
+      const children = edges
+        .filter((edge) => edge.source === currentNodeId)
+        .map((edge) => edge.target);
+
+      // Add children to descendants and queue for further traversal
+      children.forEach((childId) => {
+        if (!visited.has(childId)) {
+          descendants.push(childId);
+          queue.push(childId);
+        }
+      });
+    }
+
+    return descendants;
+  }, []);
+
   const handleDeleteNode = useCallback(
     async (namespace: string, nodeType: string, nodeName: string, nodeId: string) => {
       try {
-        const endpoint = `${process.env.VITE_BASE_URL}/api/${nodeType.toLowerCase()}s/${namespace}/${nodeName}`;
+        let endpoint: string;
+
+        // Use a different endpoint for namespace deletion
+        if (nodeType.toLowerCase() === "namespace") {
+          endpoint = `${process.env.VITE_BASE_URL}/api/namespaces/delete/${namespace}`;
+        } else {
+          // For all other resource types, use the existing endpoint pattern
+          const kind = nodeType.charAt(0).toUpperCase() + nodeType.slice(1); // e.g., "ingress" → "Ingress"
+          const pluralForm = kindToPluralMap[kind] || `${nodeType.toLowerCase()}s`; // Fallback to adding "s" if not found
+          endpoint = `${process.env.VITE_BASE_URL}/api/${pluralForm}/${namespace}/${nodeName}`;
+        }
+
+        // Send DELETE request to the backend
         await axios.delete(endpoint);
 
-        setNodes((prevNodes) => prevNodes.filter((n) => n.id !== nodeId));
-        setEdges((prevEdges) => prevEdges.filter((e) => e.source !== nodeId && e.target !== nodeId));
-        nodeCache.current.delete(nodeId);
+        // Find all descendant nodes of the node being deleted
+        const descendantNodeIds = findDescendantNodes(nodeId, edges);
+        // Include the node itself in the list of nodes to delete
+        const nodesToDelete = [nodeId, ...descendantNodeIds];
 
-        setSnackbarMessage(`"${nodeName}" deleted successfully`);
+        // Remove the node and its descendants from the nodes state
+        setNodes((prevNodes) => {
+          const remainingNodes = prevNodes.filter((n) => !nodesToDelete.includes(n.id));
+          return remainingNodes;
+        });
+
+        // Remove edges that reference any of the deleted nodes (as source or target)
+        setEdges((prevEdges) => {
+          const remainingEdges = prevEdges.filter(
+            (e) => !nodesToDelete.includes(e.source) && !nodesToDelete.includes(e.target)
+          );
+          return remainingEdges;
+        });
+
+        // Update caches
+        nodesToDelete.forEach((id) => {
+          nodeCache.current.delete(id);
+        });
+        edgeCache.current.forEach((edge, edgeId) => {
+          if (nodesToDelete.includes(edge.source) || nodesToDelete.includes(edge.target)) {
+            edgeCache.current.delete(edgeId);
+          }
+        });
+
+        setSnackbarMessage(`"${nodeName}" and its children deleted successfully`);
         setSnackbarSeverity("success");
         setSnackbarOpen(true);
-        console.log(`[TreeView] Node "${nodeName}" deleted successfully at ${performance.now() - renderStartTime.current}ms`);
+        console.log(`[TreeView] Node "${nodeName}" and its ${descendantNodeIds.length} descendants deleted successfully at ${performance.now() - renderStartTime.current}ms`);
       } catch (error) {
         console.error(`[TreeView] Failed to delete node ${nodeId} at ${performance.now() - renderStartTime.current}ms:`, error);
         setSnackbarMessage(`Failed to delete "${nodeName}"`);
@@ -815,62 +944,8 @@ const TreeViewComponent = () => {
         setSnackbarOpen(true);
       }
     },
-    []
+    [edges, findDescendantNodes]
   );
-
-  // const deleteResourceMutation = useMutation({
-  //   mutationFn: async ({ namespace, nodeName }: { nodeId: string; nodeType: string; namespace: string; nodeName: string }) => {
-  //     const endpoint = `http://localhost:4000/api/namespaces/${namespace}/${nodeName}`;
-  //     console.log(endpoint);
-  //     throw new Error("API not implemented");
-  //   },
-  //   onMutate: async ({ nodeId }) => {
-  //     await queryClient.cancelQueries({ queryKey: NAMESPACE_QUERY_KEY });
-  //     const previousData = queryClient.getQueryData<NamespaceResource[]>(NAMESPACE_QUERY_KEY);
-  //     const node = nodes.find((n) => n.id === nodeId);
-  //     if (!node) return { previousData };
-
-  //     const nodeIdParts = node.id.split("-");
-  //     let namespace = "";
-  //     const nodeName = node.data.label.props.label;
-
-  //     if (node.id.startsWith("namespace-") && nodeIdParts.length === 2) {
-  //       namespace = nodeName;
-  //     } else {
-  //       namespace = nodeIdParts[1];
-  //     }
-
-  //     const updatedData = previousData?.map((ns) => {
-  //       if (ns.name !== namespace) return ns;
-  //       const updatedResources = { ...ns.resources };
-  //       Object.keys(updatedResources).forEach((key) => {
-  //         updatedResources[key] = updatedResources[key].filter((item: ResourceItem) => item.metadata.name !== nodeName);
-  //       });
-  //       return { ...ns, resources: updatedResources };
-  //     });
-
-  //     queryClient.setQueryData(NAMESPACE_QUERY_KEY, updatedData);
-  //     setNodes((prevNodes) => prevNodes.filter((n) => n.id !== nodeId));
-  //     setEdges((prevEdges) => prevEdges.filter((e) => e.source !== nodeId && e.target !== nodeId));
-  //     nodeCache.current.delete(nodeId);
-
-  //     return { previousData };
-  //   },
-  //   onError: (error, variables, context) => {
-  //     console.error(`[TreeView] Failed to delete node ${variables.nodeId} at ${performance.now() - renderStartTime.current}ms:`, error);
-  //     setSnackbarMessage(`Failed to delete "${variables.nodeName}"`);
-  //     setSnackbarSeverity("error");
-  //     setSnackbarOpen(true);
-  //     queryClient.setQueryData(NAMESPACE_QUERY_KEY, context?.previousData);
-  //   },
-  //   onSuccess: (_, variables) => {
-  //     setSnackbarMessage(`"${variables.nodeName}" deleted successfully`);
-  //     setSnackbarSeverity("success");
-  //     setSnackbarOpen(true);
-  //     queryClient.invalidateQueries({ queryKey: NAMESPACE_QUERY_KEY });
-  //     console.log(`[TreeView] Node "${variables.nodeName}" deleted successfully at ${performance.now() - renderStartTime.current}ms`);
-  //   },
-  // });
 
   const handleMenuClose = useCallback(() => {
     setContextMenu(null);
@@ -881,17 +956,20 @@ const TreeViewComponent = () => {
       if (contextMenu?.nodeId) {
         const node = nodes.find((n) => n.id === contextMenu.nodeId);
         if (node) {
-          const nodeIdParts = node.id.split("-");
+          const nodeIdParts = node.id.split(":");
           const nodeName = node.data.label.props.label;
           let namespace = "";
           let nodeType = "";
 
-          if (node.id.startsWith("namespace-") && nodeIdParts.length === 2) {
+          if (node.id.startsWith("ns:") && nodeIdParts.length === 2) {
             nodeType = "namespace";
-            namespace = nodeName;
-          } else {
+            namespace = nodeIdParts[1];
+          } else if (nodeIdParts.length >= 4) {
             namespace = nodeIdParts[1];
             nodeType = nodeIdParts[2];
+          } else {
+            console.error(`[TreeView] Invalid node ID format: ${node.id}`);
+            return;
           }
 
           const resourceData = node.data.label.props.resourceData;
@@ -905,10 +983,10 @@ const TreeViewComponent = () => {
                 onClose: handleClosePanel,
                 isOpen: true,
                 resourceData,
+                initialTab: 0, // Open with "SUMMARY" tab (default)
               });
               break;
             case "Delete":
-              // Show confirmation dialog instead of directly deleting
               setDeleteNodeDetails({
                 namespace,
                 nodeType,
@@ -917,8 +995,27 @@ const TreeViewComponent = () => {
               });
               setDeleteDialogOpen(true);
               break;
+            case "Edit": // Handle the "Edit" action
+              setSelectedNode({
+                namespace: namespace || "default",
+                name: nodeName,
+                type: nodeType,
+                onClose: handleClosePanel,
+                isOpen: true,
+                resourceData,
+                initialTab: 1, // Open with "EDIT" tab
+              });
+              break;
             case "Logs":
-              // TODO: Implement logs functionality
+              setSelectedNode({
+                namespace: namespace || "default",
+                name: nodeName,
+                type: nodeType,
+                onClose: handleClosePanel,
+                isOpen: true,
+                resourceData,
+                initialTab: 2, // Open with "LOGS" tab
+              });
               break;
             default:
               break;
@@ -992,7 +1089,8 @@ const TreeViewComponent = () => {
             justifyContent: "space-between",
             padding: 2,
             borderRadius: 1,
-            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+            boxShadow: "0 6px 6px rgba(0,0,0,0.1)",
+            background: theme === "dark" ? "rgb(15, 23, 42)" : "#fff", 
           }}
         >
           <Typography variant="h4" sx={{ color: "#4498FF", fontWeight: 700, fontSize: "30px", letterSpacing: "0.5px" }}>
@@ -1031,7 +1129,7 @@ const TreeViewComponent = () => {
             <Box
               sx={{
                 width: "100%",
-                backgroundColor: theme === "dark" ? "var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity)))" : "#fff" ,
+                backgroundColor: theme === "dark" ? "var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity)))" : "#fff",
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
@@ -1039,7 +1137,7 @@ const TreeViewComponent = () => {
               }}
             >
               <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-                <Typography sx={{ color: theme === "dark" ? "#fff" : "#333" , fontWeight: 600, fontSize: "45px" }}>
+                <Typography sx={{ color: theme === "dark" ? "#fff" : "#333", fontWeight: 600, fontSize: "45px" }}>
                   No Workloads Found
                 </Typography>
                 <Typography variant="body2" sx={{ color: "#666", fontSize: "20px", mb: 2 }}>
@@ -1066,6 +1164,7 @@ const TreeViewComponent = () => {
             >
               <MenuItem onClick={() => handleMenuAction("Details")}>Details</MenuItem>
               <MenuItem onClick={() => handleMenuAction("Delete")}>Delete</MenuItem>
+              <MenuItem onClick={() => handleMenuAction("Edit")}>Edit</MenuItem> {/* Added Edit option */}
               <MenuItem onClick={() => handleMenuAction("Logs")}>Logs</MenuItem>
             </Menu>
           )}
@@ -1077,25 +1176,28 @@ const TreeViewComponent = () => {
           </Alert>
         </Snackbar>
 
-        {/* Delete Confirmation Dialog */}
         <Dialog
           open={deleteDialogOpen}
           onClose={handleDeleteCancel}
           aria-labelledby="delete-confirmation-dialog-title"
           sx={{
             "& .MuiDialog-paper": {
-              borderRadius: "8px",
               padding: "16px",
-              width: "400px",
+              width: "500px",
+              backgroundColor: theme === "dark" ? "rgb(15, 23, 42)" : "#fff",
+              borderRadius: "4px",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+              maxWidth: "480px",
+              height: "250px",
             },
           }}
         >
-          <DialogTitle id="delete-confirmation-dialog-title" sx={{ display: "flex", alignItems: "center", gap: 1, fontSize: "18px", fontWeight: 600 }}>
-            <WarningAmberIcon sx={{ color: "#FFA500", fontSize: "24px" }} />
-            Cancel Resource Deletion
+          <DialogTitle id="delete-confirmation-dialog-title" sx={{ display: "flex", alignItems: "center", gap: 1, fontSize: "18px", fontWeight: 600, color: theme === "dark" ? "#fff" : "333" }}>
+            <WarningAmberIcon sx={{ color: "#FFA500", fontSize: "34px" }} />
+            Confirm Resource Deletion
           </DialogTitle>
           <DialogContent>
-            <Typography sx={{ fontSize: "14px", color: "#333", mb: 2 }}>
+            <Typography sx={{ fontSize: "16px", color: theme === "dark" ? "#fff" : "333", mt: 2 }}>
               Are you sure you want to delete "{deleteNodeDetails?.nodeName}"? This action cannot be undone.
             </Typography>
           </DialogContent>
@@ -1115,12 +1217,14 @@ const TreeViewComponent = () => {
               onClick={handleDeleteConfirm}
               sx={{
                 textTransform: "none",
-                backgroundColor: "#FF4D4F",
-                color: "#FFFFFF",
-                fontWeight: 600,
-                "&:hover": { backgroundColor: "#E64446" },
+                fontWeight: 500,
+                backgroundColor: "#d32f2f",
+                color: "#fff",
                 padding: "6px 16px",
                 borderRadius: "4px",
+                "&:hover": {
+                  backgroundColor: "#b71c1c",
+                },
               }}
             >
               Yes, Delete
@@ -1137,6 +1241,13 @@ const TreeViewComponent = () => {
           resourceData={selectedNode?.resourceData}
           onClose={handleClosePanel}
           isOpen={selectedNode?.isOpen || false}
+          initialTab={selectedNode?.initialTab} // Pass initialTab to DynamicDetailsPanel
+          onDelete={deleteNodeDetails ? () => handleDeleteNode(
+            deleteNodeDetails.namespace,
+            deleteNodeDetails.nodeType,
+            deleteNodeDetails.nodeName,
+            deleteNodeDetails.nodeId
+          ) : undefined}
         />
       </div>
     </Box>

@@ -1,5 +1,6 @@
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Typography } from "@mui/material";
 import { getWebhookAndCredentialDialogPaperProps } from "../StyledComponents";
+import useTheme from "../../stores/themeStore"; // Import useTheme for dark mode support
 
 interface Props {
   credentialDialogOpen: boolean;
@@ -16,6 +17,7 @@ export const AddCredentialsDialog = ({
   handleAddCredential,
   handleCloseCredentialDialog,
 }: Props) => {
+  const theme = useTheme((state) => state.theme); // Get the current theme
   return (
     // --- Add Credentials Dialog Section ---
     <Dialog
@@ -23,10 +25,11 @@ export const AddCredentialsDialog = ({
       onClose={handleCloseCredentialDialog}
       maxWidth="sm"
       fullWidth
-      PaperProps={getWebhookAndCredentialDialogPaperProps()}
+      PaperProps={getWebhookAndCredentialDialogPaperProps(theme)}
     >
       <DialogTitle sx={{ padding: "16px 24px", borderBottom: "1px solid #e0e0e0" }}>
-        <Typography variant="h6" sx={{ fontWeight: 600, color: "#333" }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, color: theme === "dark" ? "#d4d4d4" : "#333",
+ }}>
           Add Credentials
         </Typography>
       </DialogTitle>
@@ -38,11 +41,11 @@ export const AddCredentialsDialog = ({
               sx={{
                 fontWeight: 600,
                 fontSize: "13px",
-                color: "#333",
+                color: theme === "dark" ? "#d4d4d4" : "#333",
                 mb: 1,
               }}
             >
-              GitHub Username
+              Github Username *
             </Typography>
             <TextField
               fullWidth
@@ -51,17 +54,10 @@ export const AddCredentialsDialog = ({
                 setNewCredential({ ...newCredential, githubUsername: e.target.value })
               }
               placeholder="e.g., onkar717"
-              InputProps={{
-                startAdornment: (
-                  <span role="img" aria-label="cluster" style={{ fontSize: "0.9rem", marginRight: "8px" }}>
-                    🔶
-                  </span>
-                ),
-              }}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "8px",
-                  backgroundColor: "#fff",
+                  backgroundColor: theme === "dark" ? "rgb(15, 23, 42)" : "#fff", // Dark background in dark mode
                   "& fieldset": {
                     borderColor: "#e0e0e0",
                     borderWidth: "1px",
@@ -89,7 +85,7 @@ export const AddCredentialsDialog = ({
               <span role="img" aria-label="tip" style={{ fontSize: "0.8rem", marginRight: "8px" }}>
                 💡
               </span>
-              <Typography variant="caption" sx={{ color: "#666" }}>
+              <Typography variant="caption" sx={{ color: theme === "dark" ? "#fff" :"#666" }}>
                 Enter your GitHub username
               </Typography>
             </Box>
@@ -101,11 +97,11 @@ export const AddCredentialsDialog = ({
               sx={{
                 fontWeight: 600,
                 fontSize: "13px",
-                color: "#333",
+                color: theme === "dark" ? "#d4d4d4" : "#333",
                 mb: 1,
               }}
             >
-              Personal Access Token (PAT)
+              Personal Access Token (PAT) *
             </Typography>
             <TextField
               fullWidth
@@ -115,17 +111,10 @@ export const AddCredentialsDialog = ({
                 setNewCredential({ ...newCredential, personalAccessToken: e.target.value })
               }
               placeholder="e.g., ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-              InputProps={{
-                startAdornment: (
-                  <span role="img" aria-label="cluster" style={{ fontSize: "0.9rem", marginRight: "8px" }}>
-                    🔶
-                  </span>
-                ),
-              }}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "8px",
-                  backgroundColor: "#fff",
+                  backgroundColor: theme === "dark" ? "rgb(15, 23, 42)" : "#fff", // Dark background in dark mode
                   "& fieldset": {
                     borderColor: "#e0e0e0",
                     borderWidth: "1px",
@@ -153,7 +142,7 @@ export const AddCredentialsDialog = ({
               <span role="img" aria-label="tip" style={{ fontSize: "0.8rem", marginRight: "8px" }}>
                 💡
               </span>
-              <Typography variant="caption" sx={{ color: "#666" }}>
+              <Typography variant="caption" sx={{ color: theme === "dark" ? "#fff" :"#666" }}>
                 Enter your GitHub Personal Access Token
               </Typography>
             </Box>

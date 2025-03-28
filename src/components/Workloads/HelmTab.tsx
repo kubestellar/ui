@@ -1,45 +1,33 @@
-import { Box, Button, FormControl, MenuItem, Select, SelectChangeEvent, TextField, Typography } from "@mui/material";
-// import AddIcon from "@mui/icons-material/Add";
+import { Box, Button, TextField, Typography } from "@mui/material";
 import { StyledContainer } from "../StyledComponents";
 import useTheme from "../../stores/themeStore"; // Import useTheme for dark mode support
 
-interface FormData {
-  repositoryUrl: string;
-  path: string;
-  credentials: string;
-  branchSpecifier: string;
-  webhook: string;
+interface HelmFormData {
+  repoName: string;
+  repoUrl: string;
+  chartName: string;
+  releaseName: string;
+  version: string;
+  namespace: string;
 }
 
 interface Props {
-  formData: FormData;
-  setFormData: (data: FormData) => void;
+  formData: HelmFormData;
+  setFormData: (data: HelmFormData) => void;
   error: string;
-  credentialsList: string[];
-  webhooksList: string[];
   loading: boolean;
   hasChanges: boolean;
-  handleCredentialChange: (event: SelectChangeEvent<string>) => void;
-  handleOpenCredentialDialog: () => void;
-  handleWebhookChange: (event: SelectChangeEvent<string>) => void;
-  handleOpenWebhookDialog: () => void;
   validateForm: () => boolean;
   handleDeploy: () => void;
   handleCancelClick: () => void;
 }
 
-export const GitHubTab = ({
+export const HelmTab = ({
   formData,
   setFormData,
   error,
-  credentialsList,
-  // webhooksList,
   loading,
   hasChanges,
-  handleCredentialChange,
-  handleOpenCredentialDialog,
-  // handleWebhookChange,
-  handleOpenWebhookDialog,
   validateForm,
   handleDeploy,
   handleCancelClick,
@@ -47,7 +35,6 @@ export const GitHubTab = ({
   const theme = useTheme((state) => state.theme); // Get the current theme
 
   return (
-    // --- GitHub Tab Section ---
     <StyledContainer>
       <Box
         sx={{
@@ -73,20 +60,78 @@ export const GitHubTab = ({
               mb: 1,
             }}
           >
+            Repository Name *
+          </Typography>
+          <TextField
+            fullWidth
+            value={formData.repoName}
+            onChange={(e) =>
+              setFormData({ ...formData, repoName: e.target.value })
+            }
+            error={!!error && !formData.repoName}
+            placeholder="e.g., my-helm-repo"
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
+                "& fieldset": {
+                  borderColor: theme === "dark" ? "#444" : "#e0e0e0",
+                  borderWidth: "1px",
+                },
+                "&:hover fieldset": {
+                  borderColor: "#1976d2",
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: "#1976d2",
+                  borderWidth: "1px",
+                },
+                "&.Mui-error fieldset": {
+                  borderColor: "red",
+                },
+              },
+              "& .MuiInputBase-input": {
+                padding: "12px 14px",
+                fontSize: "0.875rem",
+                color: theme === "dark" ? "#d4d4d4" : "#666",
+              },
+              "& .MuiInputBase-input::placeholder": {
+                color: theme === "dark" ? "#858585" : "#666",
+                opacity: 1,
+              },
+            }}
+          />
+          <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+            <span role="img" aria-label="tip" style={{ fontSize: "0.8rem", marginRight: "8px" }}>
+              💡
+            </span>
+            <Typography variant="caption" sx={{ color: theme === "dark" ? "#858585" : "#666" }}>
+              Specify the name of the Helm repository
+            </Typography>
+          </Box>
+        </Box>
+
+        <Box>
+          <Typography
+            variant="subtitle1"
+            sx={{
+              fontWeight: 600,
+              fontSize: "13px",
+              color: theme === "dark" ? "#d4d4d4" : "#333",
+              mb: 1,
+            }}
+          >
             Repository URL *
           </Typography>
           <TextField
             fullWidth
-            value={formData.repositoryUrl}
+            value={formData.repoUrl}
             onChange={(e) =>
-              setFormData({ ...formData, repositoryUrl: e.target.value })
+              setFormData({ ...formData, repoUrl: e.target.value })
             }
-            error={!!error && !formData.repositoryUrl}
-            placeholder="e.g., https://github.com/username/repo"
+            error={!!error && !formData.repoUrl}
+            placeholder="e.g., https://charts.helm.sh/stable"
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: "8px",
-                // backgroundColor: theme === "dark" ? "#252526" : "#fff",
                 "& fieldset": {
                   borderColor: theme === "dark" ? "#444" : "#e0e0e0",
                   borderWidth: "1px",
@@ -118,7 +163,7 @@ export const GitHubTab = ({
               💡
             </span>
             <Typography variant="caption" sx={{ color: theme === "dark" ? "#858585" : "#666" }}>
-              Use a valid GitHub repository URL
+              Use a valid Helm repository URL
             </Typography>
           </Box>
         </Box>
@@ -133,20 +178,19 @@ export const GitHubTab = ({
               mb: 1,
             }}
           >
-            Path *
+            Chart Name *
           </Typography>
           <TextField
             fullWidth
-            value={formData.path}
+            value={formData.chartName}
             onChange={(e) =>
-              setFormData({ ...formData, path: e.target.value })
+              setFormData({ ...formData, chartName: e.target.value })
             }
-            error={!!error && !formData.path}
-            placeholder="e.g., /path/to/yaml"
+            error={!!error && !formData.chartName}
+            placeholder="e.g., nginx"
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: "8px",
-                // backgroundColor: theme === "dark" ? "#252526" : "#fff",
                 "& fieldset": {
                   borderColor: theme === "dark" ? "#444" : "#e0e0e0",
                   borderWidth: "1px",
@@ -178,7 +222,7 @@ export const GitHubTab = ({
               💡
             </span>
             <Typography variant="caption" sx={{ color: theme === "dark" ? "#858585" : "#666" }}>
-              Specify the path to your YAML files in the repository
+              Specify the name of the Helm chart to deploy
             </Typography>
           </Box>
         </Box>
@@ -193,19 +237,77 @@ export const GitHubTab = ({
               mb: 1,
             }}
           >
-            Branch (default: main) *
+            Release Name *
           </Typography>
           <TextField
             fullWidth
-            value={formData.branchSpecifier}
+            value={formData.releaseName}
             onChange={(e) =>
-              setFormData({ ...formData, branchSpecifier: e.target.value })
+              setFormData({ ...formData, releaseName: e.target.value })
             }
-            placeholder="e.g., master, dev-branch"
+            error={!!error && !formData.releaseName}
+            placeholder="e.g., my-release"
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: "8px",
-                // backgroundColor: theme === "dark" ? "#252526" : "#fff",
+                "& fieldset": {
+                  borderColor: theme === "dark" ? "#444" : "#e0e0e0",
+                  borderWidth: "1px",
+                },
+                "&:hover fieldset": {
+                  borderColor: "#1976d2",
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: "#1976d2",
+                  borderWidth: "1px",
+                },
+                "&.Mui-error fieldset": {
+                  borderColor: "red",
+                },
+              },
+              "& .MuiInputBase-input": {
+                padding: "12px 14px",
+                fontSize: "0.875rem",
+                color: theme === "dark" ? "#d4d4d4" : "#666",
+              },
+              "& .MuiInputBase-input::placeholder": {
+                color: theme === "dark" ? "#858585" : "#666",
+                opacity: 1,
+              },
+            }}
+          />
+          <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+            <span role="img" aria-label="tip" style={{ fontSize: "0.8rem", marginRight: "8px" }}>
+              💡
+            </span>
+            <Typography variant="caption" sx={{ color: theme === "dark" ? "#858585" : "#666" }}>
+              Specify the release name for this Helm deployment
+            </Typography>
+          </Box>
+        </Box>
+
+        <Box>
+          <Typography
+            variant="subtitle1"
+            sx={{
+              fontWeight: 600,
+              fontSize: "13px",
+              color: theme === "dark" ? "#d4d4d4" : "#333",
+              mb: 1,
+            }}
+          >
+            Version (default: latest)
+          </Typography>
+          <TextField
+            fullWidth
+            value={formData.version}
+            onChange={(e) =>
+              setFormData({ ...formData, version: e.target.value })
+            }
+            placeholder="e.g., 1.2.3"
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
                 "& fieldset": {
                   borderColor: theme === "dark" ? "#444" : "#e0e0e0",
                   borderWidth: "1px",
@@ -234,7 +336,7 @@ export const GitHubTab = ({
               💡
             </span>
             <Typography variant="caption" sx={{ color: theme === "dark" ? "#858585" : "#666" }}>
-              Specify the branch to deploy from
+              Specify the chart version to deploy
             </Typography>
           </Box>
         </Box>
@@ -249,171 +351,50 @@ export const GitHubTab = ({
               mb: 1,
             }}
           >
-            Credentials
+            Namespace (default: default)
           </Typography>
-          <FormControl fullWidth>
-            <Select
-              value={formData.credentials}
-              onChange={handleCredentialChange}
-              displayEmpty
-              renderValue={(selected) =>
-                selected ? (
-                  selected
-                ) : (
-                  <Typography sx={{ fontSize: "0.875rem", color: theme === "dark" ? "#858585" : "#666" }}>
-                    e.g., username-pat
-                  </Typography>
-                )
-              }
-              sx={{
+          <TextField
+            fullWidth
+            value={formData.namespace}
+            onChange={(e) =>
+              setFormData({ ...formData, namespace: e.target.value })
+            }
+            placeholder="e.g., kube-system"
+            sx={{
+              "& .MuiOutlinedInput-root": {
                 borderRadius: "8px",
-                // backgroundColor: theme === "dark" ? "#252526" : "#fff",
-                "& .MuiOutlinedInput-notchedOutline": {
-                  borderColor: theme === "dark" ? "#444" : "#e0e0e0", // Correct selector for borderColor
+                "& fieldset": {
+                  borderColor: theme === "dark" ? "#444" : "#e0e0e0",
                   borderWidth: "1px",
                 },
-                "&:hover .MuiOutlinedInput-notchedOutline": {
+                "&:hover fieldset": {
                   borderColor: "#1976d2",
                 },
-                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                "&.Mui-focused fieldset": {
                   borderColor: "#1976d2",
-                  borderWidth: "1x",
+                  borderWidth: "1px",
                 },
-                "& .MuiSelect-select": {
-                  padding: "12px 14px",
-                  fontSize: "0.875rem",
-                  color: theme === "dark" ? "#d4d4d4" : "#666",
-                },
-              }}
-              MenuProps={{
-                PaperProps: {
-                  sx: {
-                    bgcolor: theme === "dark" ? "#252526" : "#fff",
-                    color: theme === "dark" ? "#d4d4d4" : "#333",
-                  },
-                },
-              }}
-            >
-              {credentialsList.map((credential) => (
-                <MenuItem key={credential} value={credential}>
-                  {credential}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
-            <span role="img" aria-label="tip" style={{ fontSize: "0.8rem", marginRight: "8px" }}>
-              💡
-            </span>
-            <Typography variant="caption" sx={{ color: theme === "dark" ? "#858585" : "#666" }}>
-              Select or add credentials for private repositories
-            </Typography>
-          </Box>
-        </Box>
-        <Button
-          variant="contained"
-          onClick={handleOpenCredentialDialog}
-          // startIcon={<AddIcon />}
-          sx={{
-            alignSelf: "flex-start",
-            padding: "1px 8px",
-            backgroundColor: "#1976d2",
-            color: "#fff",
-            "&:hover": {
-              backgroundColor: "#1565c0",
-            },
-          }}
-        >
-          Add Cred
-        </Button>
-
-        <Box>
-          <Typography
-            variant="subtitle1"
-            sx={{
-              fontWeight: 600,
-              fontSize: "13px",
-              color: theme === "dark" ? "#d4d4d4" : "#333",
-              // mb: 1,
+              },
+              "& .MuiInputBase-input": {
+                padding: "12px 14px",
+                fontSize: "0.875rem",
+                color: theme === "dark" ? "#d4d4d4" : "#666",
+              },
+              "& .MuiInputBase-input::placeholder": {
+                color: theme === "dark" ? "#858585" : "#666",
+                opacity: 1,
+              },
             }}
-          >
-            Webhooks
-          </Typography>
-          {/* <FormControl fullWidth>
-            <Select
-              value={formData.webhook}
-              onChange={handleWebhookChange}
-              displayEmpty
-              renderValue={(selected) =>
-                selected ? (
-                  selected
-                ) : (
-                  <Typography sx={{ fontSize: "0.875rem", color: theme === "dark" ? "#858585" : "#666" }}>
-                    e.g., webhook-url-pat
-                  </Typography>
-                )
-              }
-              sx={{
-                borderRadius: "8px",
-                // backgroundColor: theme === "dark" ? "#252526" : "#fff",
-                "& .MuiOutlinedInput-notchedOutline": {
-                  borderColor: theme === "dark" ? "#444" : "#e0e0e0", // Correct selector for borderColor
-                  borderWidth: "1x",
-                },
-                "&:hover .MuiOutlinedInput-notchedOutline": {
-                  borderColor: "#1976d2",
-                },
-                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                  borderColor: "#1976d2",
-                  borderWidth: "1x",
-                },
-                "& .MuiSelect-select": {
-                  padding: "12px 14px",
-                  fontSize: "0.875rem",
-                  color: theme === "dark" ? "#d4d4d4" : "#666",
-                },
-              }}
-              MenuProps={{
-                PaperProps: {
-                  sx: {
-                    bgcolor: theme === "dark" ? "#252526" : "#fff",
-                    color: theme === "dark" ? "#d4d4d4" : "#333",
-                  },
-                },
-              }}
-            >
-              {webhooksList.map((webhook) => (
-                <MenuItem key={webhook} value={webhook}>
-                  {webhook}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl> */}
+          />
           <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
             <span role="img" aria-label="tip" style={{ fontSize: "0.8rem", marginRight: "8px" }}>
               💡
             </span>
             <Typography variant="caption" sx={{ color: theme === "dark" ? "#858585" : "#666" }}>
-              Select or add a webhook for automated deployments
+              Specify the namespace for the Helm deployment
             </Typography>
           </Box>
         </Box>
-        <Button
-          variant="contained"
-          onClick={handleOpenWebhookDialog}
-          // startIcon={<AddIcon />}
-          sx={{
-            alignSelf: "flex-start",
-            padding: "1px 6px",
-            backgroundColor: "#1976d2",
-            color: "#fff",
-            "&:hover": {
-              backgroundColor: "#1565c0",
-            },
-          }}
-        >
-          Add Webhook
-        </Button>
       </Box>
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2 }}>
         <Button

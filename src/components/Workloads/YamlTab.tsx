@@ -1,22 +1,21 @@
 import Editor from "@monaco-editor/react";
-import { Box, Button, TextField } from "@mui/material";
+import { Box, Button, TextField, FormControlLabel, Checkbox } from "@mui/material"; // Added Checkbox and FormControlLabel
 import { StyledContainer } from "../StyledComponents";
-import yaml from "js-yaml"; // Import js-yaml to parse and update YAML
-import { useState, useEffect } from "react"; // Import useState and useEffect for local state management
-import useTheme from "../../stores/themeStore"; // Import useTheme for dark mode support
+import yaml from "js-yaml";
+import { useState, useEffect } from "react";
+import useTheme from "../../stores/themeStore";
 
 interface Props {
   editorContent: string;
   setEditorContent: (value: string) => void;
-  workloadName: string; // We'll still accept this prop but not rely on it
+  workloadName: string;
   detectContentType: (content: string) => "json" | "yaml";
   isEditorContentEdited: boolean;
   loading: boolean;
-  handleRawUpload: () => void;
+  handleRawUpload: (autoNs: boolean) => void; // Updated to accept autoNs parameter
   handleCancelClick: () => void;
 }
 
-// Define the type for the YAML document
 interface YamlDocument {
   metadata?: {
     name?: string;
@@ -27,27 +26,22 @@ interface YamlDocument {
 export const YamlTab = ({
   editorContent,
   setEditorContent,
-  // workloadName, // Remove the unused alias initialWorkloadName
   detectContentType,
   isEditorContentEdited,
   loading,
   handleRawUpload,
   handleCancelClick,
 }: Props) => {
-  const theme = useTheme((state) => state.theme); // Get the current theme
-  // Local state to manage the workload name
+  const theme = useTheme((state) => state.theme);
   const [localWorkloadName, setLocalWorkloadName] = useState("");
-  // Track the index of the document from which the workload name was extracted
   const [nameDocumentIndex, setNameDocumentIndex] = useState<number | null>(null);
+  const [autoNs, setAutoNs] = useState(false); // Added state for checkbox
 
-  // Extract workload name from editorContent when it changes (supports multiple documents)
   useEffect(() => {
     try {
-      // Parse all YAML documents
-      const documents: YamlDocument[] = []; // Use the defined type
+      const documents: YamlDocument[] = [];
       yaml.loadAll(editorContent, (doc) => documents.push(doc as YamlDocument), {});
 
-      // Find the first document with metadata.name
       let foundIndex: number | null = null;
       for (let i = 0; i < documents.length; i++) {
         const doc = documents[i];
@@ -61,42 +55,52 @@ export const YamlTab = ({
       if (foundIndex !== null) {
         setNameDocumentIndex(foundIndex);
       } else {
-        setLocalWorkloadName(""); // Reset if no name is found
+        setLocalWorkloadName("");
         setNameDocumentIndex(null);
       }
     } catch (error) {
       console.error("Error parsing YAML:", error);
-      setLocalWorkloadName(""); // Reset on error
+      setLocalWorkloadName("");
       setNameDocumentIndex(null);
     }
   }, [editorContent]);
 
-  // Handle workload name change from the input box
   const handleWorkloadNameChange = (newName: string) => {
-    setLocalWorkloadName(newName); // Update local state
+    setLocalWorkloadName(newName);
 
-    // Parse all YAML documents
     try {
-      const documents: YamlDocument[] = []; // Use the defined type
+      const documents: YamlDocument[] = [];
       yaml.loadAll(editorContent, (doc) => documents.push(doc as YamlDocument), {});
 
-      // Update the metadata.name in the correct document
-      if (nameDocumentIndex !== null && documents[nameDocumentIndex] && documents[nameDocumentIndex].metadata) {
+      if (
+        nameDocumentIndex !== null &&
+        documents[nameDocumentIndex] &&
+        documents[nameDocumentIndex].metadata
+      ) {
         documents[nameDocumentIndex].metadata!.name = newName;
-
-        // Convert all documents back to a multi-document YAML string
-        const updatedYaml = documents
-          .map((doc) => yaml.dump(doc))
-          .join("---\n");
-        setEditorContent(updatedYaml);
+      } else {
+        if (documents.length === 0) {
+          documents.push({ metadata: { name: newName } });
+        } else {
+          if (!documents[0].metadata) {
+            documents[0].metadata = { name: newName };
+          } else {
+            documents[0].metadata.name = newName;
+          }
+          setNameDocumentIndex(0);
+        }
       }
+
+      const updatedYaml = documents
+        .map((doc) => yaml.dump(doc))
+        .join("---\n");
+      setEditorContent(updatedYaml);
     } catch (error) {
       console.error("Error updating YAML:", error);
     }
   };
 
   return (
-    // --- YAML Tab Section ---
     <StyledContainer>
       <Box
         sx={{
@@ -109,16 +113,15 @@ export const YamlTab = ({
         <TextField
           fullWidth
           label="Workload Name *"
-          value={localWorkloadName} // Use local state instead of prop
-          onChange={(e) => handleWorkloadNameChange(e.target.value)} // Add onChange handler
+          value={localWorkloadName}
+          onChange={(e) => handleWorkloadNameChange(e.target.value)}
           sx={{
-            mb: 2,
+            // mb: 20,
             width: "98.5%",
-            margin: "0 auto 25px auto",
+            margin: "0 auto 10px auto",
             input: { color: theme === "dark" ? "#d4d4d4" : "#333" },
             label: { color: theme === "dark" ? "#858585" : "#666" },
             "& .MuiOutlinedInput-root": {
-              backgroundColor: theme === "dark" ? "#252526" : "#fff",
               "& fieldset": {
                 borderColor: theme === "dark" ? "#444" : "#e0e0e0",
               },
@@ -138,6 +141,27 @@ export const YamlTab = ({
           }}
           helperText="Workload name is extracted from YAML/JSON metadata.name"
         />
+        {/* Added Checkbox */}
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={autoNs}
+              onChange={(e) => setAutoNs(e.target.checked)}
+              sx={{
+                color: theme === "dark" ? "#858585" : "#666",
+                "&.Mui-checked": {
+                  color: "#1976d2",
+                },
+              }}
+            />
+          }
+          label="Create Namespace Automatically"
+          sx={{
+            mb: 2,
+            ml: 0.1,
+            color: theme === "dark" ? "#d4d4d4" : "#333",
+          }}
+        />
         <Box
           sx={{
             border: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
@@ -146,14 +170,14 @@ export const YamlTab = ({
             mt: 1,
             width: "98.5%",
             margin: "0 auto",
-            backgroundColor: theme === "dark" ? "#1e1e1e" : "#fff",
+            // mb:4
           }}
         >
           <Editor
-            height="335px"
+            height="435px"
             language={detectContentType(editorContent)}
             value={editorContent}
-            theme={theme === "dark" ? "vs-dark" : "light"} // Switch editor theme based on the app theme
+            theme={theme === "dark" ? "vs-dark" : "light"}
             options={{
               minimap: { enabled: false },
               fontSize: 14,
@@ -184,7 +208,7 @@ export const YamlTab = ({
         </Button>
         <Button
           variant="contained"
-          onClick={handleRawUpload}
+          onClick={() => handleRawUpload(autoNs)} // Pass autoNs to handleRawUpload
           disabled={!isEditorContentEdited || loading}
           sx={{
             textTransform: "none",
