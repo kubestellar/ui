@@ -84,6 +84,7 @@ func parseRequestBody(c *gin.Context) ([]map[string]interface{}, error) {
 	}
 	return yamlDocs, nil
 }
+
 func parseYAMLFile(file io.Reader) ([]map[string]interface{}, error) {
 	var yamlDocs []map[string]interface{}
 	decoder := yaml.NewDecoder(file)
@@ -115,14 +116,21 @@ func applyResources(c *gin.Context, yamlDocs []map[string]interface{},
 		if !ok {
 			return results, fmt.Errorf("resource kind not found in YAML")
 		}
+		autoNs := c.Query("auto_ns")
 		namespace := "default"
 		if metadata, ok := resourceData["metadata"].(map[string]interface{}); ok {
 			if ns, exists := metadata["namespace"].(string); exists {
 				namespace = ns
+				if strings.EqualFold(autoNs, "true") || autoNs == "1" {
+					err := EnsureNamespaceExists(dynamicClient, namespace)
+					if err != nil {
+						return nil, fmt.Errorf("failed to ensure namespace %s exists: %v", namespace, err)
+					}
+				}
+
 			}
 		}
 		gvr, isNamespaced, err := getGVR(discoveryClient, resourceKind)
-		fmt.Println(gvr)
 		if err != nil {
 			return results, fmt.Errorf("unsupported resource type: %s", resourceKind)
 		}
