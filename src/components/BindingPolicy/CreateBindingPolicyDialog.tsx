@@ -14,7 +14,6 @@ import {
   Snackbar,
   Typography,
   CircularProgress,
-  useTheme as useMuiTheme,
 } from "@mui/material";
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
@@ -34,17 +33,17 @@ import { DEFAULT_BINDING_POLICY_TEMPLATE } from "./constants/index"
 import PolicyDragDrop from "./PolicyDragDrop";
 import {  ManagedCluster, Workload } from "../../types/bindingPolicy";
 import { PolicyConfiguration } from "./ConfigurationSidebar";
-import { useCanvasStore } from "../../stores/canvasStore";
 import { usePolicyDragDropStore } from "../../stores/policyDragDropStore";
 import { useBPQueries } from "../../hooks/queries/useBPQueries";
 
 export interface PolicyData {
   name: string;
-  workload: string;
+  workloads: string[];
+  clusters: string[];
+  namespace: string;
   yaml: string;
 }
 
-// Add interface for YAML structure
 interface YamlPolicySpec {
   downsync?: Array<{
     apiGroup?: string;
@@ -87,13 +86,12 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   clusters = [],
   workloads = [],
 }) => {
-  const muiTheme = useMuiTheme();
   const theme = useTheme((state) => state.theme);
   const {  textColor, helperTextColor } = getBaseStyles(theme);
   //const tabContentStyles = getTabContentStyles(theme);
   const enhancedTabContentStyles = getEnhancedTabContentStyles(theme);
   
-  const [activeTab, setActiveTab] = useState<string>("dragdrop");
+  const [activeTab, setActiveTab] = useState<string>("yaml");
   const [editorContent, setEditorContent] = useState<string>(DEFAULT_BINDING_POLICY_TEMPLATE);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileContent, setFileContent] = useState<string>("");
@@ -108,13 +106,14 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
 
   // Get the connection lines and canvas entities from their respective stores
-  const connectionLines = useCanvasStore(state => state.connectionLines);
+
   const policyCanvasEntities = usePolicyDragDropStore(state => state.canvasEntities);
 
   // Get the mutations
   const { useGenerateBindingPolicyYaml, useQuickConnect } = useBPQueries();
   const generateYamlMutation = useGenerateBindingPolicyYaml();
   const quickConnectMutation = useQuickConnect();
+
 
   const handleTabChange = (_event: React.SyntheticEvent, value: string) => {
     setActiveTab(value);
@@ -179,114 +178,11 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
     }
   };
 
-  // const validateYaml = (content: string): boolean => {
-  //   try {
-  //     const parsedYaml = yaml.load(content) as YamlMetadata;
-
-  //     // Check for required fields
-  //     if (!parsedYaml) {
-  //       setError("YAML content is empty or invalid");
-  //       return false;
-  //     }
-
-  //     if (!parsedYaml.metadata) {
-  //       setError("YAML must include metadata section");
-  //       return false;
-  //     }
-
-  //     if (!parsedYaml.metadata.name) {
-  //       setError("YAML must include metadata.name field");
-  //       return false;
-  //     }
-
-  //     // Update policy name from YAML if needed
-  //     if (parsedYaml.metadata.name !== policyName) {
-  //       setPolicyName(parsedYaml.metadata.name);
-  //     }
-
-  //     return true;
-  //   } catch (e) {
-  //     if (e instanceof Error) {
-  //       setError(`Invalid YAML format: ${e.message}`);
-  //     } else {
-  //       setError("Invalid YAML format");
-  //     }
-  //     return false;
-  //   }
-  // };
-
-  // const handleCreate = async () => {
-  //   // Determine which content to use based on active tab
-  //   let content = "";
-  //   if (activeTab === "yaml") {
-  //     content = editorContent;
-  //   } else if (activeTab === "file") {
-  //     content = fileContent;
-  //   } else if (activeTab === "dragdrop") {
-  //     content = dragDropYaml;
-  //   }
-
-  //   if (!content) {
-  //     setError("YAML content is required");
-  //     return;
-  //   }
-
-  //   if (!validateYaml(content)) {
-  //     return;
-  //   }
-
-  //   setIsLoading(true);
-  //   setError(""); // Clear any previous errors
-    
-  //   try {
-  //     // Extract additional info from YAML if needed
-  //     let workloadInfo = "default-workload";
-  //     try {
-  //       const parsedYaml = yaml.load(content) as BindingPolicyYaml;
-  //       // Try to extract workload info from downsync if available
-  //       if (parsedYaml?.spec?.downsync?.[0]?.apiGroup) {
-  //         workloadInfo = parsedYaml.spec.downsync[0].apiGroup;
-  //       } else if (parsedYaml?.kind) {
-  //         // If no downsync, try to use the kind
-  //         workloadInfo = parsedYaml.kind;
-  //       }
-  //     } catch (e) {
-  //       console.error("Error parsing YAML for workload info:", e);
-  //     }
-
-  //     // Call the onCreatePolicy callback with the created policy data
-  //     onCreatePolicy({
-  //       name: policyName,
-  //       workload: workloadInfo,
-  //       yaml: content
-  //     });
-
-  //     // Reset form (will only happen if no errors occur)
-  //     setTimeout(() => {
-  //       setEditorContent(DEFAULT_BINDING_POLICY_TEMPLATE);
-  //       setPolicyName("");
-  //       setSelectedFile(null);
-  //       setFileContent("");
-  //       setDragDropYaml("");
-  //     }, 500);
-      
-  //   } catch (error) {
-  //     console.error("Error preparing binding policy data:", error);
-  //     setError(
-  //       error instanceof Error
-  //         ? `Error: ${error.message}`
-  //         : "Failed to prepare binding policy data"
-  //     );
-  //     setIsLoading(false); // Only reset loading state on error
-  //   }
-  //   // Note: We don't set loading to false or close the dialog here
-  //   // This will be handled by the parent component based on API response
-  // };
-
   // Function to prepare policies for deployment
   const prepareForDeployment = async () => {
-    if (!connectionLines || connectionLines.length === 0) {
-      setError("No connections found between workloads and clusters");
+    // Check if we have clusters and workloads
+    if (policyCanvasEntities.clusters.length === 0 || policyCanvasEntities.workloads.length === 0) {
+      setError("Both clusters and workloads are required to create binding policies");
       return;
     }
     
@@ -294,55 +190,45 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
     setError("");
     
     try {
-      // Process each connection line
-      const promises = connectionLines.map(async line => {
-        // Extract workload and cluster IDs
-        const workloadId = line.source.startsWith('workload-') 
-          ? line.source.replace('workload-', '') 
-          : line.target.replace('workload-', '');
+      // Create a single binding policy with all workloads and all clusters
+      // Generate a unique policy name using timestamp
+      const timestamp = Date.now();
+      const workloadNames = policyCanvasEntities.workloads.join("-");
+      const policyName = `${workloadNames}-binding-${timestamp}`;
+      
+      console.log(`Creating a single policy with workloads: ${policyCanvasEntities.workloads} and clusters: ${policyCanvasEntities.clusters}`);
+      
+      try {
+        // Call quick-connect API with all workloads and all clusters
+        const result = await quickConnectMutation.mutateAsync({
+          workloadIds: policyCanvasEntities.workloads,
+          clusterIds: policyCanvasEntities.clusters,
+          policyName,
+          namespace: 'default'
+        });
+        console.log(result);
+        // Show success message
+        setSuccessMessage(`Successfully created binding policy "${policyName}"`);
         
-        const clusterId = line.source.startsWith('cluster-') 
-          ? line.source.replace('cluster-', '') 
-          : line.target.replace('cluster-', '');
+        // Close dialog
+        onClose();
+      } catch (error: unknown) {
+        const apiError = error as ApiError;
+        // Extract error message from response if available
+        const errorMessage = apiError.response?.data?.message || apiError.message || 'Unknown error occurred';
+        console.error("Error creating binding policy:", error);
         
-        // Generate a unique policy name using both IDs and a timestamp
-        const timestamp = Date.now();
-        const policyName = `${workloadId}-${clusterId}-${timestamp}`;
-        
-        try {
-          // Call quick-connect API
-          return await quickConnectMutation.mutateAsync({
-            workloadId,
-            clusterId,
-            policyName
-          });
-        } catch (error: unknown) {
-          const apiError = error as ApiError;
-          // Extract error message from response if available
-          const errorMessage = apiError.response?.data?.message || apiError.message || 'Unknown error occurred';
-          console.error("Error creating quick connect binding policy:", error);
-          
-          // If it's a conflict error, provide more specific message
-          if (apiError.response?.status === 409) {
-            throw new Error(`A binding policy already exists for workload "${workloadId}" and cluster "${clusterId}". Please delete the existing policy first.`);
-          }
-          
-          throw new Error(`Failed to create binding policy: ${errorMessage}`);
+        // If it's a conflict error, provide more specific message
+        if (apiError.response?.status === 409) {
+          throw new Error(`A binding policy with this name already exists. Please try again.`);
         }
-      });
-      
-      // Wait for all policies to be created
-      const results = await Promise.all(promises);
-      
-      // Show success message
-      setSuccessMessage(`Successfully created ${results.length} binding policies`);
-      
-      // Close dialog
-      onClose();
+        
+        throw new Error(`Failed to create binding policy: ${errorMessage}`);
+      }
     } catch (error: unknown) {
       const apiError = error as ApiError;
-      console.error("Error creating binding policies:", error);
-      setError(apiError.message || "Failed to create binding policies");
+      console.error("Error creating binding policy:", error);
+      setError(apiError.message || "Failed to create binding policy");
     } finally {
       setIsLoading(false);
     }
@@ -400,7 +286,9 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
       // Call the onCreatePolicy callback with the policy data
       onCreatePolicy({
         name: policyName,
-        workload: workloadInfo,
+        workloads: [workloadInfo],
+        clusters: policyCanvasEntities.clusters,
+        namespace: 'default',
         yaml: content
       });
       
@@ -449,6 +337,9 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
         const parsedYaml = yaml.load(editorContent) as YamlPolicy;
         if (parsedYaml?.metadata?.name) {
           setPolicyName(parsedYaml.metadata.name);
+          console.log("Detected policy name:", parsedYaml.metadata.name);
+        } else {
+          console.debug("No metadata.name found in YAML");
         }
       } catch (e) {
         // Don't show error here, just don't update the policy name
@@ -456,6 +347,20 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
       }
     }
   }, [activeTab, editorContent]);
+
+  // Also extract policy name on initial load
+  useEffect(() => {
+    if (open && activeTab === "yaml" && editorContent) {
+      try {
+        const parsedYaml = yaml.load(editorContent) as YamlPolicy;
+        if (parsedYaml?.metadata?.name) {
+          setPolicyName(parsedYaml.metadata.name);
+        }
+      } catch (e) {
+        console.debug("Error parsing initial YAML:", e);
+      }
+    }
+  }, [open, activeTab, editorContent]);
 
   const handleCancelClick = () => {
     if (
@@ -478,14 +383,22 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   };
 
   // Handler for when a binding policy is created from drag and drop
-  const handleCreateBindingPolicy = async (clusterId: string, workloadId: string, config?: PolicyConfiguration) => {
+  const handleCreateBindingPolicy = async (clusterIds: string[], workloadIds: string[], config?: PolicyConfiguration) => {
     if (!config) return;
     
     try {
+      const clusterId = clusterIds[0]; // For backward compatibility
+      const workloadId = workloadIds[0]; // For backward compatibility
+      
+      if (!clusterId || !workloadId) {
+        console.error('Missing cluster or workload ID');
+        return;
+      }
+      
       // First generate the YAML preview
       const generateYamlResponse = await generateYamlMutation.mutateAsync({
-        workloadId,
-        clusterId,
+        workloadIds: [workloadId],
+        clusterIds: [clusterId],
         namespace: config.namespace || "default",
         policyName: config.name
       });
@@ -504,6 +417,8 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   };
 
   const isDarkTheme = theme === "dark";
+
+
 
   return (
     <>
@@ -538,7 +453,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
           </Typography>
           <Typography variant="caption" component="div" sx={{ 
                   fontSize: "0.75rem",
-                  color: muiTheme.palette.text.secondary, 
+                  color: theme === "dark" ? "rgba(255, 255, 255, 0.9)" : "rgba(0, 0, 0, 0.9)", 
                   mt: 0.25,
                   display: { xs: "none", sm: "block" } 
                 }}>
@@ -554,25 +469,31 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
             >
               
             <StyledTab 
-                icon={<span role="img" aria-label="yaml" style={{ fontSize: "0.9rem" }}>📄</span>} 
+                icon={<span role="img" aria-label="yaml" style={{ 
+                  fontSize: "0.9rem", 
+                  color: isDarkTheme ? '#FFFFFF' : 'inherit' 
+                }}>📄</span>} 
                 iconPosition="start" 
                 label="YAML" 
                 value="yaml" 
               />
               <StyledTab 
-                icon={<span role="img" aria-label="file" style={{ fontSize: "0.9rem" }}>📁</span>
+                icon={<span role="img" aria-label="file" style={{ 
+                  fontSize: "0.9rem", 
+                  color: isDarkTheme ? '#FFFFFF' : 'inherit' 
+                }}>📁</span>
               } 
                 iconPosition="start" 
                 label="Upload File" 
                 value="file" 
               />
               <StyledTab 
-                icon={<DragIndicatorIcon />}
+                icon={<DragIndicatorIcon sx={{ color: isDarkTheme ? '#FFFFFF' : 'inherit' }} />}
                 iconPosition="start" 
                 label="Drag & Drop" 
                 value="dragdrop" 
                 sx={{ 
-                  color: "primary.main",
+                  color: isDarkTheme ? '#FFFFFF' : "primary.main",
                   "&:hover": {
                     bgcolor: "rgba(25, 118, 210, 0.04)",
                   }
@@ -586,7 +507,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
             flex: 1,
             overflow: "hidden",
             mt: 2,
-            height: "calc(95vh - 140px)" // Adjust to account for title and actions
+            height: "calc(95vh - 140px)" 
           }}
         >
           <Box
@@ -594,10 +515,10 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
               height: "100%",
               display: "flex",
               flexDirection: "column",
-              border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"}`,
-              backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.8)",
+              border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.1)"}`,
+              backgroundColor: theme === "dark" ? "rgba(17, 25, 40, 0.8)" : "rgba(255, 255, 255, 0.8)",
               boxShadow: theme === "dark" 
-                ? "0 4px 12px rgba(0, 0, 0, 0.3)" 
+                ? "0 4px 12px rgba(0, 0, 0, 0.5)" 
                 : "0 4px 12px rgba(0, 0, 0, 0.05)",
               mb: 1,
               borderRadius: { xs: 1.5, sm: 2 },
@@ -613,26 +534,46 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                   required
                   sx={{
                     my: 1,
-                    "& .MuiInputBase-input": { color: textColor },
-                    "& .MuiInputLabel-root": { color: textColor },
+                    "& .MuiInputBase-input": { 
+                      color: textColor,
+                      backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.1)" : "transparent" 
+                    },
+                    "& .MuiInputLabel-root": { 
+                      color: theme === "dark" ? "rgba(255, 255, 255, 0.9)" : textColor,
+                      ...(policyName && { 
+                        color: theme === "dark" ? "rgba(255, 255, 255, 0.9)" : "rgba(0, 0, 0, 0.9)" 
+                      })
+                    },
                     "& .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "divider",
+                      borderColor: policyName 
+                        ? theme === "dark" ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)" 
+                        : theme === "dark" ? "rgba(255, 255, 255, 0.23)" : "divider",
                       borderRadius: '8px',
                     },
                     "& .MuiFormHelperText-root": {
-                      color: helperTextColor,
+                      color: policyName 
+                        ? theme === "dark" ? "rgba(255, 255, 255, 0.9)" : "rgba(0, 0, 0, 0.9)" 
+                        : theme === "dark" ? "rgba(255, 255, 255, 0.7)" : helperTextColor,
                       marginTop: 0.5,
                     },
                     "& .MuiOutlinedInput-root": {
                       "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: 'primary.main',
+                        borderColor: policyName 
+                          ? theme === "dark" ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)" 
+                          : theme === "dark" ? "rgba(255, 255, 255, 0.5)" : 'primary.main',
+                      },
+                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                        borderColor: policyName 
+                          ? theme === "dark" ? "" : "" 
+                          : theme === "dark" ? "#2563eb" : 'primary.main',
+                        borderWidth: 2,
                       },
                     },
                   }}
                   InputProps={{
                     readOnly: true,
                   }}
-                  helperText="Policy name is extracted from YAML metadata.name"
+                  
                 />
               )}
             </Box>
@@ -652,9 +593,19 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                   bgcolor: "transparent",
                   p: 0,
                   flex: 1,
-                  height: "65vh",
+                  height: "75vh",
+                  display: "flex",
+                  flexDirection: "column"
                 }} >
-                <StyledPaper elevation={0} sx={{ height: '100%', overflow: 'hidden' }}>
+                <StyledPaper elevation={0} sx={{ 
+                  height: '100%', 
+                  overflow: 'auto', 
+                  flexGrow: 1,
+                  border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.12)"}`,
+                  borderRadius: '8px',
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}>
                   <Editor
                     height="100%"
                     language="yaml"
@@ -664,12 +615,25 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                       minimap: { enabled: false },
                       fontSize: 14,
                       lineNumbers: "on",
-                      scrollBeyondLastLine: false,
+                      scrollBeyondLastLine: true,
                       automaticLayout: true,
                       fontFamily: "'JetBrains Mono', monospace",
-                      padding: { top: 10 },
+                      padding: { top: 10, bottom: 10 },
                     }}
-                    onChange={(value) => setEditorContent(value || "")}
+                    onChange={(value) => {
+                      setEditorContent(value || "");
+                      // Try to extract policy name immediately on change
+                      if (value) {
+                        try {
+                          const parsedYaml = yaml.load(value) as YamlPolicy;
+                          if (parsedYaml?.metadata?.name) {
+                            setPolicyName(parsedYaml.metadata.name);
+                          }
+                        } catch (e) {
+                          console.log("Error parsing YAML on change:", e);
+                        }
+                      }
+                    }}
                   />
                 </StyledPaper>
                 </Box>
@@ -678,91 +642,150 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
               {activeTab === "file" && (
                 <Box sx={{
                   ...enhancedTabContentStyles,
+                  height: "75vh",
                   border: "none",
                   boxShadow: "none",
                   bgcolor: "transparent",
                   p: 0,
+                  overflow: "hidden"
                 }}>
-  
-                <StyledPaper
-                  elevation={0}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  sx={{
-                    height: "100%",
-                    border: "2px dashed",
-                    borderColor: isDragging ? 'primary.main' : "divider",
-                    borderRadius: '8px',
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    transition: 'all 0.2s ease',
-                    
-                    backgroundColor: isDragging 
-                      ? (isDarkTheme ? 'rgba(25, 118, 210, 0.08)' : 'rgba(25, 118, 210, 0.04)') 
-                      : 'transparent',
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                      backgroundColor: isDarkTheme ? 'rgba(25, 118, 210, 0.04)' : 'rgba(25, 118, 210, 0.04)'
-                    }
-                  }}
-                >
-                  <Box sx={{ textAlign: "center" }}>
-                    <span role="img" aria-label="upload" style={{ fontSize: "1.75rem" }}>📤</span>
-                    <Typography variant="h6" gutterBottom>
-                      {selectedFile 
-                        ? 'YAML File Selected' 
-                        : isDragging 
-                          ? 'Drop YAML File Here' 
-                          : 'Choose or Drag & Drop a YAML File'}
-                    </Typography>
-                   <Box sx={{ color: muiTheme.palette.text.secondary, mb: 2, fontSize: "0.85rem" }}>
-                        - or -
-                      </Box>
-                    <Button
-                      variant="contained"
-                      component="label"
-                      sx={{ 
-                        mb: 2,
-                        textTransform: 'none',
+                  {!selectedFile ? (
+                    <StyledPaper
+                      elevation={0}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      sx={{
+                        height: "100%",
+                        border: "2px dashed",
+                        borderColor: isDragging ? 'primary.main' : theme === "dark" ? "rgba(255, 255, 255, 0.2)" : "divider",
                         borderRadius: '8px',
-                        fontWeight: 500,
-                        px: 3,
-                        py: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                         transition: 'all 0.2s ease',
+                        
+                        backgroundColor: isDragging 
+                          ? (isDarkTheme ? 'rgba(25, 118, 210, 0.12)' : 'rgba(25, 118, 210, 0.04)') 
+                          : 'transparent',
                         '&:hover': {
-                          transform: 'translateY(-2px)',
-                          boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                          borderColor: 'primary.main',
+                          backgroundColor: isDarkTheme ? 'rgba(25, 118, 210, 0.08)' : 'rgba(25, 118, 210, 0.04)'
                         }
                       }}
-                      startIcon={<FileUploadIcon />}
                     >
-                      {selectedFile ? 'Choose Different File' : 'Choose YAML File'}
-                      <input
-                        type="file"
-                        hidden
-                        accept=".yaml,.yml"
-                        onChange={handleFileChange}
-                      />
-                    </Button>
-                    {selectedFile && (
+                      <Box sx={{ textAlign: "center" }}>
+                        <span role="img" aria-label="upload" style={{ fontSize: "1.75rem" }}>📤</span>
+                        <Typography variant="h6" gutterBottom sx={{ color: theme === "dark" ? "#d4d4d4" : "#333" }}>
+                          {isDragging ? 'Drop YAML File Here' : 'Choose or Drag & Drop a YAML File'}
+                        </Typography>
+                        <Box sx={{ color: theme === "dark" ? "#d4d4d4" : "#333", mb: 2, fontSize: "0.85rem" }}>
+                          - or -
+                        </Box>
+                        <Button
+                          variant="contained"
+                          component="label"
+                          sx={{ 
+                            mb: 2,
+                            textTransform: 'none',
+                            borderRadius: '8px',
+                            fontWeight: 500,
+                            px: 3,
+                            py: 1,
+                            transition: 'all 0.2s ease',
+                            '&:hover': {
+                              transform: 'translateY(-2px)',
+                              boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                            }
+                          }}
+                          startIcon={<FileUploadIcon />}
+                        >
+                          Choose YAML File
+                          <input
+                            type="file"
+                            hidden
+                            accept=".yaml,.yml"
+                            onChange={handleFileChange}
+                          />
+                        </Button>
+                      </Box>
+                    </StyledPaper>
+                  ) : (
+                    <Box sx={{ 
+                      height: '100%', 
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 2
+                    }}>
                       <Box sx={{
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        mt: 1
+                        justifyContent: 'space-between',
+                        mb: 2,
+                        p: 2,
+                        borderRadius: '8px',
+                        bgcolor: isDarkTheme ? 'rgba(25, 118, 210, 0.08)' : 'rgba(25, 118, 210, 0.04)',
+                        border: '1px solid',
+                        borderColor: isDarkTheme ? 'rgba(25, 118, 210, 0.2)' : 'rgba(25, 118, 210, 0.1)',
                       }}>
-                        <CheckCircleIcon color="success" sx={{ mr: 1 }} />
-                        <Typography variant="body2" color="text.secondary">
-                          Selected: <strong>{selectedFile.name}</strong> ({(selectedFile.size / 1024).toFixed(1)} KB)
-                        </Typography>
+                        <Box sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                        }}>
+                          <CheckCircleIcon color="success" sx={{ mr: 1 }} />
+                          <Typography variant="body1">
+                            <strong>{selectedFile.name}</strong> ({(selectedFile.size / 1024).toFixed(1)} KB)
+                          </Typography>
+                        </Box>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => {
+                            setSelectedFile(null);
+                            setFileContent("");
+                            setPolicyName("");
+                          }}
+                          sx={{ 
+                            textTransform: 'none',
+                            borderRadius: '8px'
+                          }}
+                        >
+                          Choose Different File
+                        </Button>
                       </Box>
-                    )}
-                  </Box>
-                </StyledPaper>
+                      <Typography variant="subtitle1" fontWeight={500} sx={{ mb: 1 }}>
+                        File Preview:
+                      </Typography>
+                      <StyledPaper elevation={0} sx={{ 
+                        flexGrow: 1, 
+                        height: 'calc(100% - 90px)', 
+                        overflow: 'auto',
+                        border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.12)"}`,
+                        borderRadius: '8px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        mb: 2 
+                      }}>
+                        <Editor
+                          height="100%"
+                          language="yaml"
+                          value={fileContent}
+                          theme={isDarkTheme ? "vs-dark" : "light"}
+                          options={{
+                            minimap: { enabled: false },
+                            fontSize: 14,
+                            lineNumbers: "on",
+                            scrollBeyondLastLine: true,
+                            automaticLayout: true,
+                            fontFamily: "'JetBrains Mono', monospace",
+                            padding: { top: 10, bottom: 10 },
+                            readOnly: true
+                          }}
+                        />
+                      </StyledPaper>
+                    </Box>
+                  )}
                 </Box>
-                
               )}
 
               {activeTab === "dragdrop" && (
@@ -789,9 +812,9 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
             <DialogActions
               sx={{
                 p: 1.5,
-                bgcolor: isDarkTheme ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+                bgcolor: isDarkTheme ? 'rgba(17, 25, 40, 0.9)' : 'rgba(255, 255, 255, 0.8)',
                 backdropFilter: 'blur(10px)',
-                borderTop: `1px solid transparent`,
+                borderTop: `1px solid ${isDarkTheme ? 'rgba(255, 255, 255, 0.12)' : 'transparent'}`,
               }}
             >
               <Button 
@@ -803,8 +826,9 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                   textTransform: 'none',
                   fontWeight: 500,
                   borderRadius: '8px',
+                  color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
                   '&:hover': {
-                    backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)'
+                    backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.04)'
                   }
                 }}
               >
@@ -817,7 +841,6 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                 disabled={
                   isLoading ||
                   (activeTab === "dragdrop" && (
-                    !connectionLines?.length ||
                     !policyCanvasEntities?.clusters?.length || 
                     !policyCanvasEntities?.workloads?.length
                   )) ||
@@ -825,15 +848,15 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                   (activeTab === "yaml" && !editorContent)
                 }
                 sx={{
-                  bgcolor: "#1976d2 !important",
+                  bgcolor: isDarkTheme ? "#2563eb !important" : "#1976d2 !important",
                   color: "#fff !important",
                   "&:hover": {
-                    bgcolor: "#1565c0 !important",
+                    bgcolor: isDarkTheme ? "#1d4ed8 !important" : "#1565c0 !important",
                     transform: 'translateY(-2px)',
                     boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
                   },
                   "&:disabled": {
-                    bgcolor: "rgba(25, 118, 210, 0.5) !important",
+                    bgcolor: isDarkTheme ? "rgba(37, 99, 235, 0.5) !important" : "rgba(25, 118, 210, 0.5) !important",
                     color: "rgba(255, 255, 255, 0.7) !important",
                   },
                   textTransform: 'none',
@@ -893,15 +916,25 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
         PaperProps={{
           sx: {
             height: "80vh",
-            maxHeight: "80vh"
+            maxHeight: "80vh",
+            bgcolor: isDarkTheme ? "#1A2231" : undefined,
+            color: isDarkTheme ? "#FFFFFF" : undefined,
+            border: isDarkTheme ? '1px solid rgba(255, 255, 255, 0.12)' : undefined,
           }
         }}
       >
         <DialogTitle>
-          <Typography variant="h6">Preview Generated YAML</Typography>
+          <Typography variant="h6" sx={{ color: isDarkTheme ? "#FFFFFF" : undefined }}>
+            Preview Generated YAML
+          </Typography>
         </DialogTitle>
         <DialogContent sx={{ p: 2 }}>
-          <StyledPaper elevation={0} sx={{ height: 'calc(100% - 32px)', overflow: 'hidden' }}>
+          <StyledPaper elevation={0} sx={{ 
+            height: 'calc(100% - 32px)', 
+            overflow: 'hidden',
+            bgcolor: isDarkTheme ? 'rgba(30, 41, 59, 0.8)' : undefined,
+            border: isDarkTheme ? '1px solid rgba(255, 255, 255, 0.12)' : undefined,
+          }}>
             <Editor
               height="100%"
               language="yaml"
@@ -920,13 +953,36 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
             />
           </StyledPaper>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowPreviewDialog(false)}>Close</Button>
+        <DialogActions sx={{ 
+          p: 2,
+          bgcolor: isDarkTheme ? 'rgba(17, 25, 40, 0.9)' : undefined,
+          borderTop: isDarkTheme ? '1px solid rgba(255, 255, 255, 0.12)' : undefined,
+        }}>
+          <Button 
+            onClick={() => setShowPreviewDialog(false)}
+            sx={{ 
+              color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
+              '&:hover': {
+                backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : undefined
+              }
+            }}
+          >
+            Close
+          </Button>
           <Button 
             variant="contained" 
             color="primary"
             onClick={prepareForDeployment}
             disabled={isLoading}
+            sx={{
+              bgcolor: isDarkTheme ? "#2563eb" : undefined,
+              '&:hover': {
+                bgcolor: isDarkTheme ? "#1d4ed8" : undefined,
+              },
+              '&:disabled': {
+                bgcolor: isDarkTheme ? "rgba(37, 99, 235, 0.5)" : undefined,
+              },
+            }}
           >
             {isLoading ? (
               <Box sx={{ display: "flex", alignItems: "center" }}>

@@ -54,30 +54,29 @@ interface DownsyncItem {
 }
 
 interface GenerateYamlRequest {
-  workloadId: string;
-  clusterId: string;
+  workloadIds: string[];
+  clusterIds: string[];
   namespace: string;
   policyName?: string;
 }
 
 interface QuickConnectRequest {
-  workloadId: string;
-  clusterId: string;
-  policyName: string;
+  workloadIds: string[];
+  clusterIds: string[];
+  policyName?: string;
+  namespace?: string;
 }
 
 interface GenerateYamlResponse {
   bindingPolicy: {
-    apiGroup: string;
     bindingMode: string;
-    clusterId: string;
+    clusterIds: string[];
     clusters: string[];
     clustersCount: number;
     name: string;
     namespace: string;
-    resourceKind: string;
     status: string;
-    workloadId: string;
+    workloadIds: string[];
     workloads: string[];
     workloadsCount: number;
   };
@@ -239,25 +238,31 @@ export const useBPQueries = () => {
         const policyDetails = response.data;
         
         console.log('Received policy details:', policyDetails);
+        console.log('YAML in response:', policyDetails.yaml);
         
         // The response format is now more aligned with GetAllBp endpoint
         // The API now directly returns the formatted data we need
-        return {
+        const formattedPolicy = {
           name: policyDetails.name,
           namespace: policyDetails.namespace || 'default',
           status: policyDetails.status.charAt(0).toUpperCase() + policyDetails.status.slice(1).toLowerCase(),
           clusters: policyDetails.clustersCount,
           workload: policyDetails.workloads && policyDetails.workloads.length > 0 ? policyDetails.workloads[0] : 'No workload specified',
-          clusterList: policyDetails.clusters || [],
-          workloadList: policyDetails.workloads || [],
-          creationDate: policyDetails.creationTimestamp ? new Date(policyDetails.creationTimestamp).toLocaleString() : 'N/A',
+          clusterList: policyDetails.clusterList || policyDetails.clusters || [],
+          workloadList: policyDetails.workloadList || policyDetails.workloads || [],
+          creationDate: policyDetails.creationTimestamp ? new Date(policyDetails.creationTimestamp).toLocaleString() : 'Not available',
           bindingMode: policyDetails.bindingMode || 'DownsyncOnly',
-          conditions: policyDetails.conditions,
-          yaml: policyDetails.yaml || ''
+          conditions: policyDetails.conditions || [],
+          creationTimestamp: policyDetails.creationTimestamp,
+          yaml: policyDetails.yaml || JSON.stringify(policyDetails, null, 2)
         } as BindingPolicyInfo;
+        
+        console.log('Formatted policy:', formattedPolicy);
+        console.log('YAML in formatted policy:', formattedPolicy.yaml?.substring(0, 100) + '...');
+        
+        return formattedPolicy;
       },
       enabled: !!policyName,
-      staleTime: 30000, // Consider data fresh for 30 seconds
     });
   };
 

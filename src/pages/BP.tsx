@@ -32,6 +32,7 @@ const EmptyState: React.FC<{
   onCreateClick: () => void, 
   type?: 'policies' | 'clusters' | 'workloads' | 'both' 
 }> = ({ onCreateClick, type = 'policies' }) => {
+  const theme = useTheme(state => state.theme);
   let title = '';
   let description = '';
   let buttonText = '';
@@ -70,10 +71,22 @@ const EmptyState: React.FC<{
         textAlign: 'center'
       }}
     >
-      <Typography variant="h6" color="text.primary" gutterBottom>
+      <Typography 
+        variant="h6" 
+        sx={{ 
+          color: theme === "dark" ? "#E5E7EB" : "text.primary",
+          mb: 1 
+        }}
+      >
         {title}
       </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+      <Typography 
+        variant="body1" 
+        sx={{ 
+          color: theme === "dark" ? "#AEBEDF" : "text.secondary",
+          mb: 3 
+        }}
+      >
         {description}
       </Typography>
       <Button 
@@ -88,11 +101,18 @@ const EmptyState: React.FC<{
 };
 
 // Create a separate LoadingIndicator component outside of the BP component
-const LoadingIndicator: React.FC = () => (
-  <Box sx={{ textAlign: "center", color: "text.secondary", py: 3 }}>
-    Loading KubeStellar Binding Policies...
-  </Box>
-);
+const LoadingIndicator: React.FC = () => {
+  const theme = useTheme(state => state.theme);
+  return (
+    <Box sx={{ 
+      textAlign: "center", 
+      color: theme === "dark" ? "#E5E7EB" : "text.secondary", 
+      py: 3 
+    }}>
+      Loading KubeStellar Binding Policies...
+    </Box>
+  );
+};
 
 const BP = () => {
   console.log('BP component rendering');
@@ -238,12 +258,12 @@ const BP = () => {
   }
   
   // Add function to handle simulated binding policy creation
-  const handleCreateSimulatedBindingPolicy = useCallback((clusterId: string, workloadId: string, config?: BindingPolicyConfig) => {
+  const handleCreateSimulatedBindingPolicy = useCallback((clusterIds: string[], workloadIds: string[], config?: BindingPolicyConfig) => {
     return new Promise<void>((resolve) => {
       setTimeout(() => {
         // Find the workload and cluster
-        const workload = workloads.find(w => w.name === workloadId);
-        const cluster = clusters.find(c => c.name === clusterId);
+        const workload = workloads.find(w => w.name === workloadIds[0]);
+        const cluster = clusters.find(c => c.name === clusterIds[0]);
         
         if (!workload || !cluster) {
           console.error("Could not find workload or cluster");
@@ -263,8 +283,8 @@ const BP = () => {
           status: "Active",
           clusters: 1,
           workload: `${workload.type}/${workload.name}`,
-          clusterList: [cluster.name],
-          workloadList: [workload.name],
+          clusterList: clusterIds,
+          workloadList: workloadIds,
           creationDate: new Date().toLocaleString(),
           bindingMode: config?.propagationMode || "DownsyncOnly",
           conditions: undefined,
@@ -435,7 +455,7 @@ const BP = () => {
       console.log("Creating policy with data:", policyData);
       
       // First, try to parse the YAML to extract workload info if possible
-      let workloadType = policyData.workload || "apps/v1";
+      let workloadType = policyData.workloads || "apps/v1";
       let namespace = "default";
       
       try {
@@ -460,7 +480,10 @@ const BP = () => {
         if (parsedYaml?.spec?.downsync?.[0]) {
           const downsync = parsedYaml.spec.downsync[0];
           if (downsync.apiGroup) {
-            workloadType = downsync.apiGroup;
+            // Convert apiGroup to string if it's an array
+            workloadType = Array.isArray(downsync.apiGroup) 
+              ? downsync.apiGroup[0] 
+              : downsync.apiGroup;
           }
           if (downsync.namespaces && downsync.namespaces.length > 0) {
             namespace = downsync.namespaces[0];
@@ -481,11 +504,11 @@ const BP = () => {
       const formattedPolicyData = {
         name: policyData.name,
         namespace: namespace,
-        workload: workloadType,
+        workload: Array.isArray(workloadType) ? workloadType[0] : workloadType, // Ensure workload is a string
         yaml: policyData.yaml,
-        bindingMode: "DownsyncOnly", // Add the missing bindingMode property
-        clusterList: [], // Add empty clusterList
-        workloadList: [] // Add empty workloadList
+        bindingMode: "DownsyncOnly",
+        clusterList: [],
+        workloadList: []
       };
       
       // Use the mutation for creating a binding policy
@@ -583,27 +606,44 @@ const BP = () => {
           maxWidth: "100%",
           margin: "auto",
           p: 3,
-          backgroundColor: theme === "dark" ? "#1F2937" : "#fff",
+          backgroundColor: theme === "dark" ? "#1A1E2A" : "#fff",
+          boxShadow: theme === "dark" ? "0px 4px 10px rgba(0, 0, 0, 0.6)" : undefined,
+          color: theme === "dark" ? "#E5E7EB" : "inherit",
+          '& .MuiTypography-root': {
+            color: theme === "dark" ? "#E5E7EB" : undefined,
+          },
+          '& .MuiTypography-body2, & .MuiTypography-caption, & .MuiTypography-subtitle2': {
+            color: theme === "dark" ? "#AEBEDF" : undefined,
+          },
         }}
       >
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+        <Box sx={{ borderBottom: 1, borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : 'divider', mb: 2 }}>
           <Tabs 
             value={viewMode}
             onChange={handleViewModeChange}
             aria-label="binding policy view mode"
             sx={getTabsStyles(theme)}
-
           >
             <StyledTab 
-                iconPosition="start" 
-                label="Table View" value="table"
-              />
-               <StyledTab 
-                iconPosition="start" 
-                label="Visualize" value="visualize"
-              />
+              iconPosition="start" 
+              label="Table View" 
+              value="table" 
+              sx={{
+                color: theme === "dark" ? "#E5E7EB" : undefined,  
+              }}
+            />
+            <StyledTab
+              iconPosition="start"
+              label="Visualize"
+              value="visualize"
+              sx={{
+                color: theme === "dark" ? "#E5E7EB" : undefined,
+              }}
+            />
+           
           </Tabs>
         </Box>
+      
 
         {viewMode === 'table' ? (
           <>
@@ -661,12 +701,13 @@ const BP = () => {
                   minHeight: '600px',
                   position: 'relative',
                   border: '1px solid',
-                  borderColor: theme === 'dark' ? '#374151' : '#E5E7EB',
+                  borderColor: theme === 'dark' ? '#3B4252' : '#E5E7EB',
                   borderRadius: '4px',
                   overflow: 'hidden',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  backgroundColor: theme === 'dark' ? '#212633' : 'transparent',
+                  '& .react-flow__container': {
+                    backgroundColor: 'transparent',
+                  },
                   mb: 2
                 }}
               >
@@ -685,9 +726,10 @@ const BP = () => {
                   minHeight: '600px',
                   position: 'relative',
                   border: '1px solid',
-                  borderColor: theme === 'dark' ? '#374151' : '#E5E7EB',
+                  borderColor: theme === 'dark' ? '#3B4252' : '#E5E7EB',
                   borderRadius: '4px',
                   overflow: 'hidden',
+                  backgroundColor: theme === 'dark' ? '#212633' : 'transparent',
                   '& .react-flow__container': {
                     backgroundColor: 'transparent',
                   },
@@ -713,7 +755,21 @@ const BP = () => {
               }}
               onCreateBindingPolicy={handleCreateSimulatedBindingPolicy}
             />
-            <Alert severity="info" sx={{ mt: 4, mb: 2 }}>
+            <Alert 
+              severity="info" 
+              sx={{ 
+                mt: 4, 
+                mb: 2,
+                backgroundColor: theme === "dark" ? "rgba(41, 98, 255, 0.15)" : undefined,
+                color: theme === "dark" ? "#E5E7EB" : undefined,
+                "& .MuiAlert-icon": {
+                  color: theme === "dark" ? "#90CAF9" : undefined
+                },
+                "& .MuiTypography-root": {
+                  color: theme === "dark" ? "#E5E7EB" : undefined
+                }
+              }}
+            >
               <Typography variant="body2">
                 This drag-and-drop interface is using simulated responses to create binding policies.
                 Drag clusters and workloads to the canvas, then click on a workload and then a cluster to directly create a binding policy connection.
@@ -752,18 +808,39 @@ const BP = () => {
         onClose={() => setShowDragDropHelp(false)}
         maxWidth="sm"
         fullWidth
+        PaperProps={{
+          sx: {
+            backgroundColor: theme === "dark" ? "#1E2130" : undefined,
+            color: theme === "dark" ? "#E5E7EB" : undefined,
+          }
+        }}
       >
-        <DialogTitle>
+        <DialogTitle sx={{ 
+          borderBottom: theme === "dark" ? "1px solid rgba(255,255,255,0.1)" : undefined,
+          backgroundColor: theme === "dark" ? "#1A1E2A" : undefined,
+        }}>
           <Box display="flex" alignItems="center">
-            <KubernetesIcon type="policy" size={24} sx={{ mr: 1 }} />
-            <Typography variant="h6">Create Binding Policies with Direct Connections</Typography>
+            <KubernetesIcon type="policy" size={24} sx={{ mr: 1, color: theme === "dark" ? "#90CAF9" : undefined }} />
+            <Typography variant="h6" sx={{ color: theme === "dark" ? "#E5E7EB" : undefined }}>
+              Create Binding Policies with Direct Connections
+            </Typography>
           </Box>
         </DialogTitle>
-        <DialogContent>
-          <Typography paragraph>
+        <DialogContent sx={{ 
+          py: 3,
+          backgroundColor: theme === "dark" ? "#1E2130" : undefined 
+        }}>
+          <Typography paragraph sx={{ color: theme === "dark" ? "#E5E7EB" : undefined }}>
             Follow these steps to create binding policies using drag and drop:
           </Typography>
-          <List>
+          <List sx={{ 
+            "& .MuiListItemIcon-root": { 
+              color: theme === "dark" ? "#90CAF9" : undefined
+            },
+            "& .MuiListItemText-primary": {
+              color: theme === "dark" ? "#E5E7EB" : undefined
+            }
+          }}>
             <ListItem>
               <ListItemIcon><KubernetesIcon type="cluster" size={24} /></ListItemIcon>
               <ListItemText primary="1. Drag clusters from the left panel to the canvas" />
@@ -792,7 +869,11 @@ const BP = () => {
             </ListItem>
           </List>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ 
+          backgroundColor: theme === "dark" ? "#1A1E2A" : undefined,
+          borderTop: theme === "dark" ? "1px solid rgba(255,255,255,0.1)" : undefined,
+          py: 2
+        }}>
           <Button 
             onClick={() => setShowDragDropHelp(false)}
             variant="contained" 
@@ -812,7 +893,14 @@ const BP = () => {
         <Alert
           onClose={() => setSuccessMessage("")}
           severity="success"
-          sx={{ width: "100%" }}
+          sx={{ 
+            width: "100%",
+            backgroundColor: theme === "dark" ? "#1E4620" : undefined,
+            color: theme === "dark" ? "#E5E7EB" : undefined,
+            "& .MuiAlert-icon": {
+              color: theme === "dark" ? "#81C784" : undefined
+            }
+          }}
         >
           {successMessage}
         </Alert>

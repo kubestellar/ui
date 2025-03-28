@@ -10,7 +10,6 @@ import {
   CircularProgress,
   Divider,
   Chip,
-  Alert,
   TextField,
   InputAdornment,
 } from '@mui/material';
@@ -45,13 +44,13 @@ interface PolicyCanvasProps {
   onCreateBindingPolicy?: (clusterId: string, workloadId: string) => void;
   onConnectionSelect?: (
     sourceType: string, 
-    sourceId: string, 
+    sourceIds: string[], 
     sourceName: string, 
     targetType: string, 
-    targetId: string, 
+    targetIds: string[], 
     targetName: string
   ) => void;
-  onConnectionComplete?: (workloadId: string, clusterId: string) => void;
+  onConnectionComplete?: (workloadIds: string[], clusterIds: string[]) => void;
   dialogMode?: boolean;
 }
 
@@ -530,7 +529,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
         // Call onConnectionComplete if provided
         if (onConnectionComplete) {
           console.log(`🔄 Calling onConnectionComplete(${workloadId}, ${clusterId})`);
-          onConnectionComplete(workloadId, clusterId);
+          onConnectionComplete([workloadId], [clusterId]);
         } else {
           console.error('❌ onConnectionComplete callback is not defined!');
         }
@@ -884,45 +883,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
         </Box>
       </Box>
       
-      <Alert 
-        severity="info" 
-        sx={{ 
-          mb: 1, 
-          py: 0.5, 
-          '& .MuiAlert-message': { 
-            display: 'flex', 
-            alignItems: 'center',
-            p: 0
-          },
-          '& .MuiAlert-icon': {
-            p: 0.5,
-            mr: 1,
-            alignItems: 'center'
-          }
-        }}
-      >
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 0.5
-        }}>
-          <KubernetesIcon type="workload" size={16} sx={{ mr: 0.5 }} />
-          <Typography variant="body2" sx={{ mr: 0.5 }}>→</Typography>
-          <KubernetesIcon type="cluster" size={16} sx={{ mr: 0.5 }} />
-          <Typography variant="body2">
-            Click workload then cluster to connect
-            {activeConnection.source && (
-              <Chip 
-                label={`Selected: ${activeConnection.source.replace(/^(cluster|workload)-/, '')}`}
-                size="small"
-                color="primary"
-                sx={{ ml: 1 }}
-              />
-            )}
-          </Typography>
-        </Box>
-      </Alert>
+ 
       
       <StrictModeDroppable droppableId="canvas" type="CLUSTER_OR_WORKLOAD">
         {(provided, snapshot) => (
