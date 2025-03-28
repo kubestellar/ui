@@ -247,17 +247,17 @@ func deployHelmChart(req HelmDeploymentRequest) (*release.Release, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get current context: %v", err)
 	}
-	
+
 	currentContext := strings.TrimSpace(string(output))
 	needsContextSwitch := currentContext != "wds1"
-	
+
 	// Only switch if needed
 	if needsContextSwitch {
 		cmd = exec.CommandContext(ctx, "kubectl", "config", "use-context", "wds1")
 		if err := cmd.Run(); err != nil {
 			return nil, fmt.Errorf("failed to switch to wds1 context: %v", err)
 		}
-		
+
 		// Ensure the original context is restored after execution
 		defer func() {
 			restoreCmd := exec.CommandContext(ctx, "kubectl", "config", "use-context", currentContext)
@@ -285,7 +285,7 @@ func deployHelmChart(req HelmDeploymentRequest) (*release.Release, error) {
 	// Use concurrent initialization where possible
 	initDone := make(chan error, 1)
 	go func() {
-		initDone <- actionConfig.Init(settings.RESTClientGetter(), req.Namespace, os.Getenv("HELM_DRIVER"), 
+		initDone <- actionConfig.Init(settings.RESTClientGetter(), req.Namespace, os.Getenv("HELM_DRIVER"),
 			func(format string, v ...interface{}) {})
 	}()
 
@@ -297,7 +297,7 @@ func deployHelmChart(req HelmDeploymentRequest) (*release.Release, error) {
 	// Check if repo already exists to avoid redundant adds
 	repoFile := settings.RepositoryConfig
 	repoExists := false
-	
+
 	if _, err := os.Stat(repoFile); err == nil {
 		b, err := os.ReadFile(repoFile)
 		if err == nil {
@@ -312,7 +312,7 @@ func deployHelmChart(req HelmDeploymentRequest) (*release.Release, error) {
 			}
 		}
 	}
-	
+
 	// Only add repo if it doesn't exist
 	if !repoExists {
 		addRepoCmd := exec.CommandContext(ctx, "helm", "repo", "add", req.RepoName, req.RepoURL, "--force-update")
@@ -327,25 +327,25 @@ func deployHelmChart(req HelmDeploymentRequest) (*release.Release, error) {
 	install.Namespace = req.Namespace
 	install.Version = req.Version
 	install.Wait = false // Don't wait for resources to be ready to speed up deployment
-	
+
 	// Locate and load chart concurrently
 	type chartResult struct {
 		chartObj *chart.Chart
 		err      error
 	}
 	chartChan := make(chan chartResult, 1)
-	
+
 	go func() {
 		chartPath, err := install.ChartPathOptions.LocateChart(fmt.Sprintf("%s/%s", req.RepoName, req.ChartName), settings)
 		if err != nil {
 			chartChan <- chartResult{nil, fmt.Errorf("failed to locate chart: %v", err)}
 			return
 		}
-		
+
 		chartObj, err := loader.Load(chartPath)
 		chartChan <- chartResult{chartObj, err}
 	}()
-	
+
 	// Get chart result
 	chartRes := <-chartChan
 	if chartRes.err != nil {
