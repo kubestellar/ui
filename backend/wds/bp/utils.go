@@ -20,7 +20,7 @@ import (
 )
 
 // DefaultWDSContext is the default context to use for the workload distribution service
-const DefaultWDSContext = "kind-kubeflex"
+const DefaultWDSContext = "wds1"
 
 // clientCache caches the BP client to avoid recreating it for each request
 var (
@@ -38,16 +38,9 @@ func getClientForBp() (*bpv1alpha1.ControlV1alpha1Client, error) {
 		return clientCache, nil
 	}
 
-	// Try to get context from environment variable first
-	wdsContext := os.Getenv("wds_context")
-
-	// If not set in environment, use the default value
-	if wdsContext == "" {
-		wdsContext = DefaultWDSContext
-		log.LogInfo("wds_context not set, using default", zap.String("context", wdsContext))
-	} else {
-		log.LogDebug("Using wds_context from environment", zap.String("context", wdsContext))
-	}
+	// Set wds context to "wds1"
+	wdsContext := "wds1"
+	log.LogDebug("Using wds context", zap.String("context", wdsContext))
 
 	// Get kubeconfig path
 	kubeconfig := os.Getenv("KUBECONFIG")
@@ -122,7 +115,7 @@ func getBpObjFromYaml(bpRawYamlBytes []byte) (*v1alpha1.BindingPolicy, error) {
 	}
 	bp, ok := obj.(*v1alpha1.BindingPolicy)
 	if !ok {
-		return nil, fmt.Errorf("wrong object type ,yaml type not supported: %s", err.Error())
+		return nil, fmt.Errorf("wrong object type, yaml type not supported")
 	}
 	return bp, nil
 
