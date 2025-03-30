@@ -382,7 +382,8 @@ func CreateBp(ctx *gin.Context) {
 		}
 	}
 	if baseContentType == "multipart/form-data" {
-		bpRawYamlBytes, err := utils.GetFormFileBytes("bpYaml", ctx)
+		var err error
+		bpRawYamlBytes, err = utils.GetFormFileBytes("bpYaml", ctx)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			log.LogError(err.Error())
@@ -392,12 +393,63 @@ func CreateBp(ctx *gin.Context) {
 		log.LogInfo(string(bpRawYamlBytes))
 	}
 
+	// Add debug for byte length
+	fmt.Printf("Debug - YAML byte length: %d\n", len(bpRawYamlBytes))
+	fmt.Printf("Debug - YAML content: %s\n", string(bpRawYamlBytes))
+
 	// First parse YAML into a map to extract basic metadata
 	var yamlMap map[string]interface{}
 	if err := yaml.Unmarshal(bpRawYamlBytes, &yamlMap); err != nil {
 		fmt.Printf("Debug - Initial YAML parsing error: %v\n", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid YAML format: %s", err.Error())})
 		return
+	}
+
+	// Debug print the top-level keys in the YAML
+	fmt.Printf("Debug - YAML top-level keys: %v\n", getMapKeys(yamlMap))
+
+	// Extract and validate critical fields
+	var metadataMap map[string]interface{}
+	if metaRaw, ok := yamlMap["metadata"]; ok {
+		// Try to cast to map[string]interface{} first
+		if meta, ok := metaRaw.(map[string]interface{}); ok {
+			metadataMap = meta
+			fmt.Printf("Debug - Found metadata as map[string]interface{}\n")
+		} else if meta, ok := metaRaw.(map[interface{}]interface{}); ok {
+			// Convert map[interface{}]interface{} to map[string]interface{}
+			metadataMap = make(map[string]interface{})
+			for k, v := range meta {
+				if kStr, ok := k.(string); ok {
+					metadataMap[kStr] = v
+				}
+			}
+			fmt.Printf("Debug - Found metadata as map[interface{}]interface{}, converted to map[string]interface{}\n")
+		} else {
+			fmt.Printf("Debug - Metadata is not a valid map: %T\n", metaRaw)
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "metadata section is not properly formatted in binding policy"})
+			return
+		}
+	} else {
+		// Try alternate parsing approach with struct
+		var bp struct {
+			Metadata struct {
+				Name      string `yaml:"name"`
+				Namespace string `yaml:"namespace"`
+			} `yaml:"metadata"`
+		}
+		if err := yaml.Unmarshal(bpRawYamlBytes, &bp); err == nil && bp.Metadata.Name != "" {
+			// Found metadata through struct parsing
+			metadataMap = map[string]interface{}{
+				"name":      bp.Metadata.Name,
+				"namespace": bp.Metadata.Namespace,
+			}
+			fmt.Printf("Debug - Found metadata through struct parsing: name=%s namespace=%s\n",
+				bp.Metadata.Name, bp.Metadata.Namespace)
+		} else {
+			fmt.Printf("Debug - No metadata found in YAML and alternate parsing failed\n")
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "metadata section is required in binding policy"})
+			return
+		}
 	}
 
 	// Extract specific workloads information if present
@@ -499,31 +551,6 @@ func CreateBp(ctx *gin.Context) {
 		}
 	}
 
-	// Extract and validate critical fields
-	var metadataMap map[string]interface{}
-	if metaRaw, ok := yamlMap["metadata"]; ok {
-		// Try to cast to map[string]interface{} first
-		if meta, ok := metaRaw.(map[string]interface{}); ok {
-			metadataMap = meta
-		} else if meta, ok := metaRaw.(map[interface{}]interface{}); ok {
-			// Convert map[interface{}]interface{} to map[string]interface{}
-			metadataMap = make(map[string]interface{})
-			for k, v := range meta {
-				if kStr, ok := k.(string); ok {
-					metadataMap[kStr] = v
-				}
-			}
-		} else {
-			fmt.Printf("Debug - Metadata is not a valid map: %T\n", metaRaw)
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "metadata section is not properly formatted in binding policy"})
-			return
-		}
-	} else {
-		fmt.Printf("Debug - No metadata found in YAML\n")
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "metadata section is required in binding policy"})
-		return
-	}
-
 	// Extract name - this is required
 	name, ok := metadataMap["name"].(string)
 	if !ok || name == "" {
@@ -556,6 +583,16 @@ func CreateBp(ctx *gin.Context) {
 	if err := yaml.Unmarshal(bpRawYamlBytes, newBP); err != nil {
 		fmt.Printf("Debug - Full YAML parsing error: %v\n", err)
 		// Continue anyway, we'll fix what we can
+	}
+
+	// Try using the more robust Kubernetes deserializer
+	parsedBP, err := getBpObjFromYaml(bpRawYamlBytes)
+	if err == nil && parsedBP != nil {
+		// Successfully parsed with Kubernetes deserializer
+		fmt.Printf("Debug - Successfully parsed BP with Kubernetes deserializer\n")
+		newBP = parsedBP
+	} else {
+		fmt.Printf("Debug - Kubernetes deserializer failed: %v, continuing with plain yaml parse\n", err)
 	}
 
 	// Double-check that we didn't lose the name/namespace during unmarshal
@@ -2098,4 +2135,13 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 			"workloadsCount": len(request.WorkloadIds),
 		},
 	})
+}
+
+// Helper function to get map keys
+func getMapKeys(m map[string]interface{}) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
 }
