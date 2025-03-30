@@ -504,6 +504,7 @@ export const HelmTab = ({
         flexDirection: "column",
         flex: 1,
         overflow: "hidden", // Prevent outer container from scrolling
+        
       }}
     >
       {/* Sticky Header */}
@@ -512,12 +513,14 @@ export const HelmTab = ({
           position: "sticky",
           top: 0,
           zIndex: 1,
-          backgroundColor: theme === "dark" ? "#121212" : "#fff", // Match the background to avoid transparency issues
+          // backgroundColor: theme === "dark" ? "#00000033" : "#fff", // Match the background to avoid transparency issues
+          borderRadius: "4px"
         }}
       >
           <Typography
           variant="subtitle1"
           sx={{
+            // backgroundColor: theme === "dark" ? "#fff" : "rgba(255, 255, 255, 0.8)", // Dark background in dark mode
             fontWeight: 600,
             fontSize: "20px",
             color: theme === "dark" ? "#d4d4d4" : "#333",
@@ -541,6 +544,7 @@ export const HelmTab = ({
               borderRadius: "4px",
               border: "1px solid",
               borderColor: theme === "dark" ? "#444" : "#e0e0e0",
+              // backgroundColor: theme === "dark" ? "#fff" : "rgba(255, 255, 255, 0.8)", // Dark background in dark mode
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", borderColor: theme === "dark" ? "rgba(25, 118, 210, 0.2)" : "rgba(25, 118, 210, 0.1)" }}>
@@ -576,9 +580,9 @@ export const HelmTab = ({
               alignItems: "center",
               padding: "8px",
               borderRadius: "4px",
-              backgroundColor: theme === "dark" ? "#2a2a2a" : "#f9f9f9",
+              backgroundColor: theme === "dark" ? "#00000033" : "#f9f9f9",
               "&:hover": {
-                backgroundColor: theme === "dark" ? "#333" : "#f1f1f1",
+                backgroundColor: theme === "dark" ? "#2a2a2a" : "#f1f1f1",
               },
             }}
           >
