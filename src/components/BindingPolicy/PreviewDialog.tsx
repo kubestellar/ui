@@ -99,7 +99,7 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
           )}
 
           {tabValue === 1 && (
-            <Box className={isDarkTheme ? 'text-white' : ''}>
+            <Box className={isDarkTheme ? 'text-white' : 'text-black'}>
               <Typography variant="h6" gutterBottom>
                 Matching Details
               </Typography>

@@ -83,7 +83,7 @@ const BPHeader: React.FC<BPHeaderProps> = ({
   };
 
   return (
-    <div style={{ backgroundColor: colors.background, color: colors.text }}>
+    <div style={{  color: colors.text }}>
       <div className="mb-8 ">
         <h1 className="text-3xl font-bold mb-2 flex items-center gap-2" style={{ color: colors.primary }}>
           <div>Manage Binding Policies</div>
@@ -134,7 +134,7 @@ const BPHeader: React.FC<BPHeaderProps> = ({
               ...(isDark && {
                 input: { color: "white" },
                 "& .MuiOutlinedInput-root": {
-                  "& fieldset": { borderColor: "white" },
+                  "& fieldset": {borderColor: colors.primaryLight },
                   "&:hover fieldset": { borderColor: colors.primaryLight },
                   "&.Mui-focused fieldset": { borderColor: colors.primary },
                 },

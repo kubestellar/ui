@@ -9,12 +9,13 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli"
-	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/repo"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -237,100 +238,126 @@ func PrettyPrint(tree *DeploymentTree) {
 }
 
 func deployHelmChart(req HelmDeploymentRequest) (*release.Release, error) {
-	// Save the current Kubernetes context
-	cmd := exec.Command("kubectl", "config", "current-context")
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	// Check current context first to avoid unnecessary switching
+	cmd := exec.CommandContext(ctx, "kubectl", "config", "current-context")
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get current context: %v", err)
 	}
-	originalContext := strings.TrimSpace(string(output))
 
-	// Switch to wds1 context
-	cmd = exec.Command("kubectl", "config", "use-context", "wds1")
-	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("failed to switch to wds1 context: %v", err)
+	currentContext := strings.TrimSpace(string(output))
+	needsContextSwitch := currentContext != "wds1"
+
+	// Only switch if needed
+	if needsContextSwitch {
+		cmd = exec.CommandContext(ctx, "kubectl", "config", "use-context", "wds1")
+		if err := cmd.Run(); err != nil {
+			return nil, fmt.Errorf("failed to switch to wds1 context: %v", err)
+		}
+
+		// Ensure the original context is restored after execution
+		defer func() {
+			restoreCmd := exec.CommandContext(ctx, "kubectl", "config", "use-context", currentContext)
+			if restoreErr := restoreCmd.Run(); restoreErr != nil {
+				fmt.Printf("Warning: failed to restore original context: %v\n", restoreErr)
+			}
+		}()
 	}
 
-	// Ensure the original context is restored after execution
-	defer func() {
-		restoreCmd := exec.Command("kubectl", "config", "use-context", originalContext)
-		if restoreErr := restoreCmd.Run(); restoreErr != nil {
-			fmt.Printf("Warning: failed to restore original context: %v\n", restoreErr)
-		} else {
-			fmt.Printf("Successfully restored original context: %s\n", originalContext)
-		}
-	}()
+	// Get Kubernetes client to check/create namespace
+	_, dynamicClient, err := GetClientSet()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Kubernetes client: %v", err)
+	}
+
+	// Ensure namespace exists before proceeding
+	if err := EnsureNamespaceExists(dynamicClient, req.Namespace); err != nil {
+		return nil, fmt.Errorf("failed to ensure namespace exists: %v", err)
+	}
 
 	// Initialize Helm action configuration
 	actionConfig := new(action.Configuration)
 	settings := cli.New()
 
-	if err := actionConfig.Init(settings.RESTClientGetter(), req.Namespace, os.Getenv("HELM_DRIVER"), func(format string, v ...interface{}) {
-		fmt.Printf("[Helm Debug] "+format+"\n", v...)
-	}); err != nil {
+	// Use concurrent initialization where possible
+	initDone := make(chan error, 1)
+	go func() {
+		initDone <- actionConfig.Init(settings.RESTClientGetter(), req.Namespace, os.Getenv("HELM_DRIVER"),
+			func(format string, v ...interface{}) {})
+	}()
+
+	// Wait for Helm initialization to complete
+	if err := <-initDone; err != nil {
 		return nil, fmt.Errorf("failed to initialize Helm: %v", err)
 	}
 
-	// Add Helm repository using Helm SDK (in-memory update)
-	repoEntry := repo.Entry{
-		Name: req.RepoName,
-		URL:  req.RepoURL,
-	}
-	repoFile := repo.NewFile()
-	repoFile.Update(&repoEntry)
+	// Check if repo already exists to avoid redundant adds
+	repoFile := settings.RepositoryConfig
+	repoExists := false
 
-	// Initialize Helm repo client
-	providers := getter.All(settings)
-	repoClient, err := repo.NewChartRepository(&repoEntry, providers)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create chart repository client: %v", err)
-	}
-	repoClient.CachePath = settings.RepositoryCache
-
-	// Download repository index (using the SDK)
-	if _, err := repoClient.DownloadIndexFile(); err != nil {
-		return nil, fmt.Errorf("failed to download repository index: %v", err)
+	if _, err := os.Stat(repoFile); err == nil {
+		b, err := os.ReadFile(repoFile)
+		if err == nil {
+			var repos repo.File
+			if err := yaml.Unmarshal(b, &repos); err == nil {
+				for _, r := range repos.Repositories {
+					if r.Name == req.RepoName && r.URL == req.RepoURL {
+						repoExists = true
+						break
+					}
+				}
+			}
+		}
 	}
 
-	// **Add the repository via Helm CLI so that the CLI configuration is updated**
-	addRepoCmd := exec.Command("helm", "repo", "add", req.RepoName, req.RepoURL)
-	addRepoOutput, err := addRepoCmd.CombinedOutput()
-	if err != nil {
-		return nil, fmt.Errorf("failed to add helm repository: %v, output: %s", err, string(addRepoOutput))
+	// Only add repo if it doesn't exist
+	if !repoExists {
+		addRepoCmd := exec.CommandContext(ctx, "helm", "repo", "add", req.RepoName, req.RepoURL, "--force-update")
+		if out, err := addRepoCmd.CombinedOutput(); err != nil {
+			return nil, fmt.Errorf("failed to add helm repository: %v, output: %s", err, string(out))
+		}
 	}
 
-	// **Update Helm repositories before locating the chart**
-	updateCmd := exec.Command("helm", "repo", "update")
-	updateOutput, err := updateCmd.CombinedOutput()
-	if err != nil {
-		return nil, fmt.Errorf("failed to update Helm repositories: %v, output: %s", err, string(updateOutput))
-	}
-
-	// Run Helm install
+	// Run Helm install with optimized configuration
 	install := action.NewInstall(actionConfig)
 	install.ReleaseName = req.ReleaseName
 	install.Namespace = req.Namespace
 	install.Version = req.Version
+	install.Wait = false // Don't wait for resources to be ready to speed up deployment
 
-	// Locate the chart
-	chartPath, err := install.ChartPathOptions.LocateChart(fmt.Sprintf("%s/%s", req.RepoName, req.ChartName), settings)
-	if err != nil {
-		return nil, fmt.Errorf("failed to locate chart: %v", err)
+	// Locate and load chart concurrently
+	type chartResult struct {
+		chartObj *chart.Chart
+		err      error
 	}
+	chartChan := make(chan chartResult, 1)
 
-	// Load the chart
-	chart, err := loader.Load(chartPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load chart: %v", err)
+	go func() {
+		chartPath, err := install.ChartPathOptions.LocateChart(fmt.Sprintf("%s/%s", req.RepoName, req.ChartName), settings)
+		if err != nil {
+			chartChan <- chartResult{nil, fmt.Errorf("failed to locate chart: %v", err)}
+			return
+		}
+
+		chartObj, err := loader.Load(chartPath)
+		chartChan <- chartResult{chartObj, err}
+	}()
+
+	// Get chart result
+	chartRes := <-chartChan
+	if chartRes.err != nil {
+		return nil, chartRes.err
 	}
 
 	// Install the chart
-	release, err := install.Run(chart, nil)
+	release, err := install.Run(chartRes.chartObj, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to install chart: %v", err)
 	}
 
-	fmt.Printf("Successfully deployed Helm chart: %s\n", req.ReleaseName)
 	return release, nil
 }
 
