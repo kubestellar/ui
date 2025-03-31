@@ -319,3 +319,4 @@ func StreamPodLogs(c *gin.Context) {
 		time.Sleep(2 * time.Second)
 	}
 }
+
