@@ -190,7 +190,18 @@ export const YamlTab = ({
           />
         </Box>
       </Box>
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2 }}>
+      <Box sx={{ 
+        display: "flex", 
+        justifyContent: "flex-end", 
+        gap: 1, 
+        mt: 2,
+        position: "relative",
+        width: "100%",
+        height: "auto",
+        minHeight: "40px",
+        padding: "8px 0",
+        zIndex: 1
+      }}>
         <Button
           onClick={handleCancelClick}
           disabled={loading}

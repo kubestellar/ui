@@ -74,6 +74,17 @@ export const StyledContainer = styled(Box)(({ theme }) => {
     display: "flex",
     flexDirection: "column",
     height: "97.5%",
+    position: "relative",
+    minHeight: "400px",
+    overflow: "visible",
+    "@media screen and (min-width: 0\0)": { 
+      height: "auto",
+      minHeight: "400px",
+    },
+    "@supports (-webkit-touch-callout: none)": { 
+      height: "auto",
+      minHeight: "400px",
+    },
   };
 });
 
