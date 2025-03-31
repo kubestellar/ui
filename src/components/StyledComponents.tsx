@@ -16,17 +16,18 @@ export const StyledTab = styled(Tab)(({ theme }) => {
     borderRadius: "12px 12px 12px 12px",
     border: "1px solid transparent",
     transition: "background-color 0.2s ease, border-color 0.2s ease",
+    overflow: "hidden", // Added to fix Safari rendering
+    WebkitAppearance: "none", // Added to fix Safari rendering
     "&.Mui-selected": {
       // color: "#1976d2", // Keep the selected color consistent
       color: appTheme === "dark" ? "#fff" : "#1976d2", // Keep the selected color consistent
       fontWeight: 600,
       border: "1px solid rgba(25, 118, 210, 0.7)",
-      boxShadow: `
-        -2px 0 6px rgba(47, 134, 255, 0.2),
-        2px 0 6px rgba(47, 134, 255, 0.2),
-        0 -2px 6px rgba(47, 134, 255, 0.2),
-        0 2px 6px rgba(47, 134, 255, 0.2)
-      `,
+      // Replaced complex box-shadow with simpler alternative for Safari
+      boxShadow: "none", 
+      WebkitBoxShadow: appTheme === "dark" 
+        ? "0 0 0 1px rgba(47, 134, 255, 0.7)" 
+        : "0 0 0 1px rgba(25, 118, 210, 0.7)",
       zIndex: 1,
       position: "relative",
     },
@@ -74,6 +75,18 @@ export const StyledContainer = styled(Box)(({ theme }) => {
     display: "flex",
     flexDirection: "column",
     height: "97.5%",
+    position: "relative",
+    minHeight: "400px",
+    WebkitOverflowScrolling: "touch", // Improves scrolling performance in Safari
+    "@media screen and (min-width: 0\0)": { 
+      height: "auto",
+      minHeight: "400px",
+    },
+    "@supports (-webkit-touch-callout: none)": { 
+      height: "auto",
+      minHeight: "400px",
+      WebkitBorderRadius: "8px", // Explicitly set for Safari
+    },
   };
 });
 
@@ -81,10 +94,13 @@ export const getDialogPaperProps = (theme: string) => ({
   style: {
     backgroundColor: theme === "dark" ? "#1F2937" : "#fff",
     borderRadius: "12px",
+    WebkitBorderRadius: "12px", // Explicitly set for Safari
     boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+    WebkitBoxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)", // Explicitly set for Safari
     border: "none",
     maxWidth: "1665px",
     width: "100%",
+    overflow: "hidden", // Prevent any border rendering issues
   },
 });
 

@@ -18,6 +18,9 @@ export const StyledTab = styled(Tab)(({ theme }) => ({
   '& .MuiSvgIcon-root': {
     color: theme.palette.mode === 'dark' ? '#FFFFFF' : 'inherit',
   },
+  WebkitAppearance: 'none',
+  borderRadius: '8px',
+  overflow: 'hidden',
 }));
 
 export const StyledPaper = styled(Paper)(({ theme }) => ({
@@ -99,7 +102,7 @@ export const getTabsStyles = (theme: string) => ({
     transition: "all 0.25s ease",
     borderRadius: "12px",
     position: "relative",
-    overflow: "visible",
+    overflow: "hidden",
     border: "1px solid transparent",
     
     "& svg": {
@@ -123,9 +126,10 @@ export const getTabsStyles = (theme: string) => ({
       border: theme === "dark" 
         ? "1px solid rgba(47, 134, 255, 0.7)" 
         : "1px solid rgba(25, 118, 210, 0.7)",
-      boxShadow: theme === "dark" 
-        ? "0 0 8px rgba(47, 134, 255, 0.4)" 
-        : "0 0 6px rgba(47, 134, 255, 0.3)",
+      boxShadow: "none",
+      WebkitBoxShadow: theme === "dark" 
+        ? "0 0 0 1px rgba(47, 134, 255, 0.7)" 
+        : "0 0 0 1px rgba(25, 118, 210, 0.7)",
       zIndex: 1,
       position: "relative",
       "&:before": {

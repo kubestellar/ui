@@ -761,10 +761,18 @@ spec:
         </DialogTitle>
         <DialogContent sx={{ 
           padding: "17px", 
-          height: "100vh", 
+          height: "auto", 
+          maxHeight: "100vh", 
           overflow: "hidden",
+          overflowY: "auto",
         }}>
-          <Box sx={{ width: "100%", mt: 2, height: "100%" }}>
+          <Box sx={{ 
+            width: "100%", 
+            mt: 2, 
+            minHeight: "400px",
+            display: "flex",
+            flexDirection: "column",
+          }}>
             {activeOption === "option1" && (
               <YamlTab
                 editorContent={editorContent}
