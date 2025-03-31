@@ -128,17 +128,17 @@ func StreamK8sData(c *gin.Context) {
 
 	// Namespaces to filter out
 	excludedNamespaces := map[string]bool{
-		"open-cluster-management-hub": true,
-		"open-cluster-management":     true,
-		"kube-system":                 true,
-		"kube-node-lease":           true,
-		"kube-public":                true,
-		"gatekeeper-system":           true,
+		"open-cluster-management-hub":          true,
+		"open-cluster-management":              true,
+		"kube-system":                          true,
+		"kube-node-lease":                      true,
+		"kube-public":                          true,
+		"gatekeeper-system":                    true,
 		"openshift-operator-lifecycle-manager": true,
-		"openshift-apiserver":         true,
-		"openshift-controller-manager": true,
-		"open-cluster-management-agent-addon": true,
-		"open-cluster-management-agent": true,
+		"openshift-apiserver":                  true,
+		"openshift-controller-manager":         true,
+		"open-cluster-management-agent-addon":  true,
+		"open-cluster-management-agent":        true,
 	}
 
 	// Main loop to continuously send updates.
