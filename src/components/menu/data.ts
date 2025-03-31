@@ -37,6 +37,12 @@ export const menu = [
         icon: HiOutlineCommandLine,
         label: 'Workloads',
       },
+      {
+        isLink: true,
+        url: '/wecs/treeview',
+        icon: HiOutlineCog,
+        label: `WEC'S Topology`,
+      },
     ],
   },
   {
@@ -53,17 +59,17 @@ export const menu = [
     ],
   },
   // treeview 
-  {
-    catalog: 'KubeStellar Topology',
-    centered: true,
-    marginTop: '1rem',
-    listItems: [
-      {
-        isLink: true,
-        url: '/wecs/treeview',
-        icon: HiOutlineCog,
-        label: `WEC'S Topology`,
-      },
-    ],
-  },
+  // {
+  //   catalog: 'KubeStellar Topology',
+  //   centered: true,
+  //   marginTop: '1rem',
+  //   listItems: [
+  //     {
+  //       isLink: true,
+  //       url: '/wecs/treeview',
+  //       icon: HiOutlineCog,
+  //       label: `WEC'S Topology`,
+  //     },
+  //   ],
+  // },
 ];
