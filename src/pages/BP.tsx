@@ -192,8 +192,13 @@ const BP = () => {
   // Calculate filtered policies at the top level, not in a nested function
   const getFilteredPolicies = useCallback(() => {
     // Ensure bindingPolicies is an array before calling filter
-    if (!Array.isArray(bindingPolicies) || bindingPolicies.length === 0) {
-      console.warn("bindingPolicies is not an array or is empty:", bindingPolicies);
+    if (!Array.isArray(bindingPolicies)) {
+      console.warn("bindingPolicies is not an array:", bindingPolicies);
+      return [];
+    }
+    
+    // Empty array is valid, just return it with no warning
+    if (bindingPolicies.length === 0) {
       return [];
     }
     
