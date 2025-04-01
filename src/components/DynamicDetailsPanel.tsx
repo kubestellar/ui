@@ -354,25 +354,21 @@ const DynamicDetailsPanel = ({
     if (resource.kind === "Namespace") {
       term.writeln("No logs available for Namespace");
     } else {
+      // Write existing logs once
       logs.forEach((log) => {
         term.writeln(log);
       });
 
-      const handleNewLog = (newLogs: string[]) => {
-        const latestLog = newLogs[newLogs.length - 1];
-        if (latestLog) {
-          term.writeln(latestLog);
-        }
-      };
+      // Keep track of the last log index we've written
+      let lastLogIndex = logs.length - 1;
 
-      const logsCopy = [...logs];
-      handleNewLog(logsCopy);
-
+      // Watch for new logs
       const logsWatcher = setInterval(() => {
-        if (logs.length > logsCopy.length) {
-          const newLogs = logs.slice(logsCopy.length);
+        if (logs.length > lastLogIndex + 1) {
+          // Only write new logs that haven't been displayed yet
+          const newLogs = logs.slice(lastLogIndex + 1);
           newLogs.forEach((log) => term.writeln(log));
-          logsCopy.push(...newLogs);
+          lastLogIndex = logs.length - 1;
         }
       }, 100);
 

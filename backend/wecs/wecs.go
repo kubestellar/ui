@@ -116,8 +116,8 @@ func getITSData() ([]handlers.ManagedClusterInfo, error) {
 	return managedClusters, nil
 }
 
-// StreamK8sDatastreams hierarchical raw pod data via WebSocket, optimized
-// for speed by using concurrency. (Pod logs are omitted here for performance.)
+// StreamK8sData streams hierarchical cluster, namespace, and pod names via WebSocket,
+// filtering out specified system namespaces.
 func StreamK8sData(c *gin.Context) {
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
@@ -125,6 +125,21 @@ func StreamK8sData(c *gin.Context) {
 		return
 	}
 	defer conn.Close()
+
+	// Namespaces to filter out
+	excludedNamespaces := map[string]bool{
+		"open-cluster-management-hub":          true,
+		"open-cluster-management":              true,
+		"kube-system":                          true,
+		"kube-node-lease":                      true,
+		"kube-public":                          true,
+		"gatekeeper-system":                    true,
+		"openshift-operator-lifecycle-manager": true,
+		"openshift-apiserver":                  true,
+		"openshift-controller-manager":         true,
+		"open-cluster-management-agent-addon":  true,
+		"open-cluster-management-agent":        true,
+	}
 
 	// Main loop to continuously send updates.
 	for {
@@ -145,9 +160,9 @@ func StreamK8sData(c *gin.Context) {
 				defer clusterWg.Done()
 
 				// Obtain a clientset using the cluster's context.
-				clientset, _, err := k8s.GetClientSetWithContext(ci.Context)
+				clientset, _, err := k8s.GetClientSetWithContext(ci.Name)
 				if err != nil {
-					log.Printf("Error getting clientset for context %s: %v", ci.Context, err)
+					log.Printf("Error getting clientset for context %s: %v", ci.Name, err)
 					return
 				}
 
@@ -168,6 +183,11 @@ func StreamK8sData(c *gin.Context) {
 
 				// Process each namespace concurrently.
 				for _, ns := range namespaceList.Items {
+					// Skip excluded namespaces
+					if excludedNamespaces[ns.Name] {
+						continue
+					}
+
 					nsWg.Add(1)
 					go func(nsName string) {
 						defer nsWg.Done()
@@ -178,49 +198,33 @@ func StreamK8sData(c *gin.Context) {
 							return
 						}
 
+						// Include namespace even if it has no pods
 						nsData := NamespaceData{
 							Name: nsName,
 							Pods: []PodData{},
 						}
 
-						var podWg sync.WaitGroup
-						var podMu sync.Mutex
-
-						// Process each pod concurrently.
-						for _, pod := range podList.Items {
-							podWg.Add(1)
-							go func(podName string) {
-								defer podWg.Done()
-
-								// Fetch raw pod JSON.
-								rawPod, err := clientset.CoreV1().RESTClient().Get().
-									Namespace(nsName).
-									Resource("pods").
-									Name(podName).
-									DoRaw(context.TODO())
+						// Collect full pod data if there are any
+						if len(podList.Items) > 0 {
+							for _, pod := range podList.Items {
+								// Marshal the pod to get raw JSON
+								rawPod, err := json.Marshal(pod)
 								if err != nil {
-									log.Printf("Error fetching raw pod data for %s in %s: %v", podName, nsName, err)
-									return
+									log.Printf("Error marshalling pod %s: %v", pod.Name, err)
+									continue
 								}
 
-								pd := PodData{
-									Name: podName,
-									Raw:  json.RawMessage(rawPod),
-									Logs: "", // logs omitted for faster response
-								}
-								podMu.Lock()
-								nsData.Pods = append(nsData.Pods, pd)
-								podMu.Unlock()
-							}(pod.Name)
+								nsData.Pods = append(nsData.Pods, PodData{
+									Name: pod.Name,
+									Raw:  rawPod, // Include full pod JSON data
+									Logs: "",     // No logs needed initially
+								})
+							}
 						}
-						podWg.Wait()
 
-						// Add namespace only if it has pods.
-						if len(nsData.Pods) > 0 {
-							nsMu.Lock()
-							clusterData.Namespaces = append(clusterData.Namespaces, nsData)
-							nsMu.Unlock()
-						}
+						nsMu.Lock()
+						clusterData.Namespaces = append(clusterData.Namespaces, nsData)
+						nsMu.Unlock()
 					}(ns.Name)
 				}
 				nsWg.Wait()

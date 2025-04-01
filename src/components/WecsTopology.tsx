@@ -1163,10 +1163,10 @@ const WecsTreeview = () => {
               }}
             >
               <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-                <Typography sx={{ color: theme === "dark" ? "#fff" : "#333", fontWeight: 600, fontSize: "45px" }}>
+                <Typography sx={{ color: theme === "dark" ? "#fff" : "#333", fontWeight: 500, fontSize: "22px" }}>
                   No Workloads Found
                 </Typography>
-                <Typography variant="body2" sx={{ color: "#666", fontSize: "20px", mb: 2 }}>
+                <Typography variant="body2" sx={{ color: "#00000099", fontSize: "17px", mb: 2 }}>
                   Get started by creating your first workload
                 </Typography>
                 <Button
