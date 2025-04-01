@@ -281,6 +281,10 @@ func watchOnBps() {
 			switch event.Type {
 			case "MODIFIED":
 				bp, _ := event.Object.(*v1alpha1.BindingPolicy)
+				// display condition status
+				for _, c := range bp.Status.Conditions {
+					log.LogInfo("", zap.String("st", string(c.Status)), zap.String("type", string(c.Type)))
+				}
 				log.LogInfo("BP modified: ", zap.String("name", bp.Name))
 
 			case "ADDED":
