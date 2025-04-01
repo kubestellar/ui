@@ -121,7 +121,7 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
         PaperProps={{
           sx: {
             backgroundColor: isDarkTheme ? "#1e293b" : "#fff",
-            color: isDarkTheme ? "#fff" : "inherit",
+            color: isDarkTheme ? "#fff" : "#000",
           },
         }}
       >

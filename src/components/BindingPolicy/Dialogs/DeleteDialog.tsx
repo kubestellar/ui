@@ -7,6 +7,7 @@ import {
   Button,
   Typography,
 } from "@mui/material";
+import useTheme from "../../../stores/themeStore";
 
 interface DeleteDialogProps {
   open: boolean;
@@ -21,15 +22,19 @@ const DeleteDialog: React.FC<DeleteDialogProps> = ({
   onConfirm,
   policyName,
 }) => {
+  const theme = useTheme((state) => state.theme)
+  const isDarkTheme = theme === "dark";
   return (
     <Dialog 
       open={open} 
       onClose={onClose}
       PaperProps={{
         sx: {
-          width: '500px', // Fixed width
-          minHeight: '200px', // Minimum height
-          m: 2, // Consistent margin
+          width: '500px', 
+          minHeight: '200px', 
+          m: 2, 
+          backgroundColor: isDarkTheme ? "#1e293b" : "#fff",
+          color: isDarkTheme ? "#fff" : "#000",
         }
       }}
     >
