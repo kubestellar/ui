@@ -266,6 +266,26 @@ export const useBPQueries = () => {
     });
   };
 
+  // GET /api/bp/status?name=policyName - Fetch only status for a specific binding policy
+  const useBindingPolicyStatus = (policyName: string | undefined) => {
+    return useQuery<{status: string}, Error>({
+      queryKey: ['binding-policy-status', policyName],
+      queryFn: async () => {
+        if (!policyName) throw new Error('Policy name is required');
+        
+        console.log(`Fetching status for binding policy: ${policyName}`);
+        const response = await api.get(`/api/bp/status?name=${encodeURIComponent(policyName)}`);
+        
+        // Extract just the status from the response
+        const status = response.data.status || 'Inactive';
+        return { 
+          status: status.charAt(0).toUpperCase() + status.slice(1).toLowerCase() 
+        };
+      },
+      enabled: !!policyName,
+    });
+  };
+
   // POST /api/bp/create - Create binding policy
   const useCreateBindingPolicy = () => {
     return useMutation({
@@ -426,6 +446,7 @@ export const useBPQueries = () => {
   return {
     useBindingPolicies,
     useBindingPolicyDetails,
+    useBindingPolicyStatus,
     useCreateBindingPolicy,
     useDeleteBindingPolicy,
     useDeletePolicies,

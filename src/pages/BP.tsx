@@ -6,6 +6,7 @@ import BPPagination from "../components/BindingPolicy/BPPagination";
 import PreviewDialog from "../components/BindingPolicy/PreviewDialog";
 import DeleteDialog from "../components/BindingPolicy/Dialogs/DeleteDialog";
 import EditBindingPolicyDialog from "../components/BindingPolicy/Dialogs/EditBindingPolicyDialog";
+import CreateBindingPolicyDialog from "../components/BindingPolicy/CreateBindingPolicyDialog";
 import yaml from "js-yaml"; // Import yaml parser
 import {
   BindingPolicyInfo,
@@ -393,7 +394,7 @@ const BP = () => {
     // Update workloads state when workloadsData changes
     if (workloadsData) {
       const workloadData = workloadsData
-        .filter(workload => workload.name !== "kubernetes")
+        .filter(workload => workload.namespace !== "default")
         .map(workload => ({
           name: workload.name,
           type: workload.kind,
@@ -741,11 +742,15 @@ const BP = () => {
                   mb: 2
                 }}
               >
-                <BPVisualization 
-                  policies={bindingPolicies} 
-                  clusters={clusters} 
-                  workloads={workloads} 
-                />
+                {bindingPolicies.length === 0 ? (
+                  <EmptyState onCreateClick={handleCreateDialogOpen} type="policies" />
+                ) : (
+                  <BPVisualization 
+                    policies={bindingPolicies} 
+                    clusters={clusters} 
+                    workloads={workloads} 
+                  />
+                )}
               </Box>
             )}
           </>
@@ -805,6 +810,14 @@ const BP = () => {
           onClose={handleDeleteDialogClose}
           onConfirm={confirmDelete}
           policyName={selectedPolicy?.name}
+        />
+        
+        <CreateBindingPolicyDialog
+          open={createDialogOpen}
+          onClose={() => setCreateDialogOpen(false)}
+          onCreatePolicy={handleCreatePolicySubmit}
+          clusters={clusters}
+          workloads={workloads}
         />
       </Paper>
        {/* Drag & Drop Help Dialog */}
