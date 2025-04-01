@@ -876,26 +876,9 @@ func GetBpStatus(ctx *gin.Context) {
 
 	// Determine if the policy is active based on status fields
 	status := "inactive"
-
-	// Check if any conditions are present and if Synced and Ready are True
-	hasSync := false
-	hasReady := false
-
-	if bp.Status.Conditions != nil {
-		for _, condition := range bp.Status.Conditions {
-			if condition.Type == "Synced" && condition.Status == "True" {
-				hasSync = true
-			}
-			if condition.Type == "Ready" && condition.Status == "True" {
-				hasReady = true
-			}
-		}
-	}
-
-	if hasSync && hasReady {
+	if bp.ObjectMeta.Generation == bp.Status.ObservedGeneration {
 		status = "active"
 	}
-
 	// Initialize clusters and workloads slices
 	clusters := []string{}
 	workloads := []string{}
