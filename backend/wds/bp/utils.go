@@ -285,6 +285,11 @@ func watchOnBps() {
 				for _, c := range bp.Status.Conditions {
 					log.LogInfo("", zap.String("st", string(c.Status)), zap.String("type", string(c.Type)))
 				}
+				if bp.ObjectMeta.Generation == bp.Status.ObservedGeneration {
+					log.LogInfo("reconciled successfully")
+				} else {
+					log.LogInfo("reconciling...")
+				}
 				log.LogInfo("BP modified: ", zap.String("name", bp.Name))
 
 			case "ADDED":
