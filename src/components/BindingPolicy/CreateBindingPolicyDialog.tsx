@@ -199,9 +199,21 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
       console.log(`Creating a single policy with workloads: ${policyCanvasEntities.workloads} and clusters: ${policyCanvasEntities.clusters}`);
       
       try {
+        // Format workload IDs to include namespace information
+        const formattedWorkloadIds = policyCanvasEntities.workloads.map(workloadId => {
+          const workload = workloads.find(w => w.name === workloadId);
+          if (workload) {
+            // Use kind/name/namespace format which is supported by parseWorkloadIdentifier
+            return `${workload.type}/${workload.name}/${workload.namespace || 'default'}`;
+          }
+          return workloadId;
+        });
+        
+        console.log(`Creating a single policy with formatted workload IDs:`, formattedWorkloadIds);
+        
         // Call quick-connect API with all workloads and all clusters
         const result = await quickConnectMutation.mutateAsync({
-          workloadIds: policyCanvasEntities.workloads,
+          workloadIds: formattedWorkloadIds,
           clusterIds: policyCanvasEntities.clusters,
           policyName,
           namespace: 'default'

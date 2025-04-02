@@ -451,13 +451,17 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
         policyName
       });
       
-      // Format workload IDs properly if needed
-      const formattedWorkloadIds = allWorkloadIds.map(id => {
-        // Check if workload exists in the workloads array
-        const workload = workloads.find(w => w.name === id);
-        // Return the properly formatted ID with required metadata
-        return workload ? id : id;
+      // Format workload IDs to include namespace information for backend parsing
+      const formattedWorkloadIds = allWorkloadIds.map(workloadId => {
+        const workload = workloads.find(w => w.name === workloadId);
+        if (workload) {
+          // Use kind/name/namespace format which is supported by parseWorkloadIdentifier
+          return `${workload.type}/${workload.name}/${workload.namespace || 'default'}`;
+        }
+        return workloadId;
       });
+      
+      console.log('Using formatted workload IDs with namespaces:', formattedWorkloadIds);
       
       try {
         // Call the quick-connect API with all workloads and clusters in a single call
@@ -793,10 +797,22 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
                     policyName
                   });
                   
+                  // Format workload IDs to include namespace information
+                  const formattedCanvasWorkloadIds = canvasEntities.workloads.map(workloadId => {
+                    const workload = workloads.find(w => w.name === workloadId);
+                    if (workload) {
+                      // Use kind/name/namespace format which is supported by parseWorkloadIdentifier
+                      return `${workload.type}/${workload.name}/${workload.namespace || 'default'}`;
+                    }
+                    return workloadId;
+                  });
+                  
+                  console.log('Using formatted workload IDs with namespaces:', formattedCanvasWorkloadIds);
+                  
                   // Use the quick connect API with all workloads and all clusters in a single call
                   // Make sure we're explicitly passing arrays to the API
                   const response = await quickConnectMutation.mutateAsync({
-                    workloadIds: canvasEntities.workloads,
+                    workloadIds: formattedCanvasWorkloadIds,
                     clusterIds: canvasEntities.clusters,
                     policyName: policyName,
                     namespace: 'default'

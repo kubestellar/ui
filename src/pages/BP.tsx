@@ -365,8 +365,9 @@ const BP = () => {
         console.warn("bindingPoliciesData is not an array:", bindingPoliciesData);
         setBindingPolicies([]);
       }
-    } else {
-      // If no data, set to empty array
+    } else if (!bindingPoliciesLoading) {
+      // If no data and not loading, set to empty array
+      console.log('No binding policies data and not loading, clearing state');
       setBindingPolicies([]);
     }
     
@@ -439,6 +440,11 @@ const BP = () => {
         // Use the mutation instead of direct API call
         await deleteBindingPolicyMutation.mutateAsync(selectedPolicy.name);
         
+        // Immediately update the local state to remove the deleted policy
+        setBindingPolicies(current => 
+          current.filter(policy => policy.name !== selectedPolicy.name)
+        );
+        
         // Update UI state after successful deletion
         setSuccessMessage(
           `Binding Policy "${selectedPolicy.name}" deleted successfully`
@@ -453,7 +459,7 @@ const BP = () => {
         setSelectedPolicy(null);
       }
     }
-  }, [selectedPolicy, deleteBindingPolicyMutation, setSuccessMessage, setDeleteDialogOpen, setSelectedPolicy]);
+  }, [selectedPolicy, deleteBindingPolicyMutation, setSuccessMessage, setDeleteDialogOpen, setSelectedPolicy, setBindingPolicies]);
 
   const handleCreatePolicySubmit = useCallback(async (policyData: PolicyData) => {
     try {
@@ -588,6 +594,11 @@ const BP = () => {
       // Use the mutation for deleting multiple binding policies
       await deleteMultiplePoliciesMutation.mutateAsync(selectedPolicies);
       
+      // Immediately update the local state to remove the deleted policies
+      setBindingPolicies(current => 
+        current.filter(policy => !selectedPolicies.includes(policy.name))
+      );
+      
       setSuccessMessage(
         `Successfully deleted ${selectedPolicies.length} binding policies`
       );
@@ -598,7 +609,7 @@ const BP = () => {
         `Error deleting binding policies`
       );
     }
-  }, [selectedPolicies, deleteMultiplePoliciesMutation, setSuccessMessage, setSelectedPolicies]);
+  }, [selectedPolicies, deleteMultiplePoliciesMutation, setSuccessMessage, setSelectedPolicies, setBindingPolicies]);
 
   // Modify the conditional return for loading to use the component:
   if (loading) {
@@ -671,9 +682,9 @@ const BP = () => {
             {clusters.length === 0 && workloads.length === 0 ? (
               <EmptyState onCreateClick={() => navigate('/resources')} type="both" />
             ) : clusters.length === 0 ? (
-              <EmptyState onCreateClick={() => navigate('/clusters')} type="clusters" />
+              <EmptyState onCreateClick={() => navigate('/its')} type="clusters" />
             ) : workloads.length === 0 ? (
-              <EmptyState onCreateClick={() => navigate('/workloads')} type="workloads" />
+              <EmptyState onCreateClick={() => navigate('/workloads/manage')} type="workloads" />
             ) : bindingPolicies.length === 0 ? (
               <EmptyState onCreateClick={handleCreateDialogOpen} type="policies" />
             ) : (

@@ -43,13 +43,6 @@ export const menu = [
         icon: HiOutlineCog,
         label: `WEC'S Topology`,
       },
-    ],
-  },
-  {
-    catalog: 'Binding Policies',
-    centered: true,
-    marginTop: '1rem',
-    listItems: [
       {
         isLink: true,
         url: '/bp/manage',

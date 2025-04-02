@@ -8,6 +8,7 @@ import (
 func setupBindingPolicyRoutes(router *gin.Engine) {
 	router.GET("/api/bp", bp.GetAllBp)
 	router.GET("/api/bp/status", bp.GetBpStatus)
+	router.GET("/api/bp/workload-sync-status", bp.GetWorkloadSyncStatus)
 	router.POST("/api/bp/create", bp.CreateBp)
 	router.POST("/api/bp/create-json", bp.CreateBpFromJson)
 	router.POST("/api/bp/quick-connect", bp.CreateQuickBindingPolicy)

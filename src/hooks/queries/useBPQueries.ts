@@ -12,6 +12,7 @@ interface RawBindingPolicy {
     resourceVersion: string;
     generation: number;
     creationTimestamp: string;
+    namespace?: string;
     annotations?: {
       yaml?: string;
     };
@@ -138,6 +139,10 @@ export const useBPQueries = () => {
           const creationTimestamp = policy.creationTimestamp || (policy.metadata?.creationTimestamp || new Date().toISOString());
           const yaml = policy.yaml || (policy.metadata?.annotations?.yaml || JSON.stringify(policy, null, 2));
           
+          // Extract namespace - explicitly log to debug
+          const namespace = policy.namespace || (policy.metadata?.namespace || 'default');
+          console.log(`Policy ${policyName} - Namespace: ${namespace}`);
+          
           // Extract clusters information - use already processed data if available
           let clusterList: string[] = [];
           if (Array.isArray(policy.clusterList)) {
@@ -191,13 +196,10 @@ export const useBPQueries = () => {
           // Determine main workload for display in the table
           const mainWorkload = workloadList.length > 0 ? workloadList[0] : 'No workload specified';
           
-          // Get namespace or use default
-          const namespace = policy.namespace || 'default';
-          
           // Get binding mode
           const bindingMode = policy.bindingMode || 'DownsyncOnly';
           
-          console.log(`Policy ${policyName} - Clusters: ${clustersCount}, Workloads: ${workloadsCount}`);
+          console.log(`Policy ${policyName} - Clusters: ${clustersCount}, Workloads: ${workloadsCount}, Namespace: ${namespace}`);
           
           return {
             name: policyName,
@@ -210,7 +212,8 @@ export const useBPQueries = () => {
             creationDate: new Date(creationTimestamp).toLocaleString(),
             bindingMode: bindingMode,
             conditions: policy.conditions || undefined,
-            yaml: yaml
+            yaml: yaml,
+            creationTimestamp: creationTimestamp
           } as BindingPolicyInfo;
         });
       },
@@ -231,7 +234,9 @@ export const useBPQueries = () => {
     return useQuery<BindingPolicyInfo, Error>({
       queryKey: ['binding-policy-details', policyName],
       queryFn: async () => {
-        if (!policyName) throw new Error('Policy name is required');
+        if (!policyName || policyName.trim() === '') {
+          throw new Error('Policy name is required and cannot be empty');
+        }
         
         console.log(`Fetching details for binding policy: ${policyName}`);
         const response = await api.get(`/api/bp/status?name=${encodeURIComponent(policyName)}`);
@@ -240,11 +245,44 @@ export const useBPQueries = () => {
         console.log('Received policy details:', policyDetails);
         console.log('YAML in response:', policyDetails.yaml);
         
+        // Extract namespace, ensuring we don't default empty strings to 'default'
+        // Use null check instead of falsy check to preserve empty strings
+        const namespace = policyDetails.namespace !== undefined && policyDetails.namespace !== null
+          ? policyDetails.namespace
+          : 'default';
+        console.log('Namespace from policy details (raw):', JSON.stringify(policyDetails.namespace));
+        console.log('Namespace from policy details (processed):', namespace);
+        
+        // If the namespace from API is empty but we can find it in the YAML, try to extract it
+        let extractedNamespace = namespace;
+        try {
+          // If the namespace is empty and we have YAML, try to extract from YAML
+          if ((namespace === '' || namespace === 'default') && typeof policyDetails.yaml === 'string') {
+            const yamlObj = JSON.parse(policyDetails.yaml);
+            if (yamlObj && yamlObj.namespace && yamlObj.namespace !== '') {
+              extractedNamespace = yamlObj.namespace;
+              console.log('Extracted namespace from YAML:', extractedNamespace);
+            }
+          }
+        } catch (error) {
+          console.warn('Error parsing YAML to extract namespace:', error);
+        }
+        
+        // Get the namespace from localStorage that was set when the policy was clicked in the table
+        const storedNamespace = localStorage.getItem('selectedPolicyNamespace');
+        console.log('Namespace from localStorage:', storedNamespace);
+        
+        // Use the stored namespace if it exists and is not empty
+        if (storedNamespace && storedNamespace !== '' && storedNamespace !== 'default') {
+          extractedNamespace = storedNamespace;
+          console.log('Using namespace from localStorage:', extractedNamespace);
+        }
+        
         // The response format is now more aligned with GetAllBp endpoint
         // The API now directly returns the formatted data we need
         const formattedPolicy = {
           name: policyDetails.name,
-          namespace: policyDetails.namespace || 'default',
+          namespace: extractedNamespace,
           status: policyDetails.status.charAt(0).toUpperCase() + policyDetails.status.slice(1).toLowerCase(),
           clusters: policyDetails.clustersCount,
           workload: policyDetails.workloads && policyDetails.workloads.length > 0 ? policyDetails.workloads[0] : 'No workload specified',
@@ -259,6 +297,7 @@ export const useBPQueries = () => {
         
         console.log('Formatted policy:', formattedPolicy);
         console.log('YAML in formatted policy:', formattedPolicy.yaml?.substring(0, 100) + '...');
+        console.log('Namespace in formatted policy:', formattedPolicy.namespace);
         
         return formattedPolicy;
       },

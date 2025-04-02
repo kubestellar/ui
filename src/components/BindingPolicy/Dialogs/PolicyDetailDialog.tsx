@@ -52,7 +52,144 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
   useEffect(() => {
     console.log("PolicyDetailDialog - Received policy:", policy);
     console.log("PolicyDetailDialog - YAML property:", policy.yaml);
+    console.log("PolicyDetailDialog - Namespace property:", policy.namespace);
   }, [policy]);
+
+  // Define interfaces for YAML object structure
+  interface YAMLMetadata {
+    namespace?: string | null;
+    [key: string]: unknown;
+  }
+  
+  interface YAMLAnnotations {
+    yaml?: string;
+    [key: string]: unknown;
+  }
+  
+  interface YAMLObjectMeta {
+    namespace?: string | null;
+    annotations?: YAMLAnnotations;
+    [key: string]: unknown;
+  }
+  
+  interface YAMLObject {
+    namespace?: string | null;
+    metadata?: YAMLMetadata;
+    objectmeta?: YAMLObjectMeta;
+    annotations?: YAMLAnnotations;
+    [key: string]: unknown;
+  }
+
+  // Function to recursively update all namespace fields in a YAML object
+  const updateNamespaceInYaml = (yamlObj: unknown, namespace: string): unknown => {
+    if (!yamlObj || typeof yamlObj !== 'object') return yamlObj;
+    
+    // Clone the object to avoid modifying the original
+    const updatedObj = Array.isArray(yamlObj) 
+      ? [...yamlObj] 
+      : {...yamlObj as Record<string, unknown>};
+    
+    // If it's an array, process each item
+    if (Array.isArray(updatedObj)) {
+      return updatedObj.map(item => updateNamespaceInYaml(item, namespace));
+    }
+
+    // Cast to our interface for type safety
+    const typedObj = updatedObj as YAMLObject;
+    
+    // Update top-level namespace
+    if ('namespace' in typedObj && (typedObj.namespace === '' || typedObj.namespace === null)) {
+      typedObj.namespace = namespace;
+    }
+    
+    // Update namespace in metadata if present
+    if (typedObj.metadata && 'namespace' in typedObj.metadata && 
+        (typedObj.metadata.namespace === '' || typedObj.metadata.namespace === null)) {
+      typedObj.metadata.namespace = namespace;
+    }
+    
+    // Update namespace in objectmeta if present (common in YAML responses)
+    if (typedObj.objectmeta && 'namespace' in typedObj.objectmeta && 
+        (typedObj.objectmeta.namespace === '' || typedObj.objectmeta.namespace === null)) {
+      typedObj.objectmeta.namespace = namespace;
+    }
+    
+    // Check for annotations that might contain embedded YAML
+    if (typedObj.annotations?.yaml && typeof typedObj.annotations.yaml === 'string') {
+      try {
+        // Try to parse and update the embedded YAML
+        const embeddedYaml = typedObj.annotations.yaml;
+        if (embeddedYaml.trim().startsWith('{') || embeddedYaml.trim().startsWith('typemeta:')) {
+          try {
+            // For JSON format
+            const embeddedObj = JSON.parse(embeddedYaml);
+            const updatedEmbedded = updateNamespaceInYaml(embeddedObj, namespace);
+            typedObj.annotations.yaml = JSON.stringify(updatedEmbedded, null, 2);
+          } catch (e) {
+            // If it's not valid JSON, it might be regular YAML format - we'd need a more complex parser for that
+            console.warn("Could not parse embedded YAML in annotations:", e);
+          }
+        }
+      } catch (e) {
+        console.warn("Error updating namespace in embedded YAML:", e);
+      }
+    }
+    
+    // Similarly for objectmeta.annotations
+    if (typedObj.objectmeta?.annotations?.yaml && 
+        typeof typedObj.objectmeta.annotations.yaml === 'string') {
+      try {
+        // Try to parse and update the embedded YAML
+        const embeddedYaml = typedObj.objectmeta.annotations.yaml;
+        // Look for the namespace field pattern in the YAML string and replace it
+        const namespacePattern = /namespace:\s*["']?["']?/g;
+        if (embeddedYaml.match(namespacePattern)) {
+          const updatedYaml = embeddedYaml.replace(namespacePattern, `namespace: "${namespace}"`);
+          typedObj.objectmeta.annotations.yaml = updatedYaml;
+        }
+      } catch (e) {
+        console.warn("Error updating namespace in objectmeta embedded YAML:", e);
+      }
+    }
+    
+    // Recursively process nested objects and arrays
+    for (const key in typedObj) {
+      if (typeof typedObj[key] === 'object' && typedObj[key] !== null) {
+        typedObj[key] = updateNamespaceInYaml(typedObj[key], namespace);
+      }
+    }
+    
+    return typedObj;
+  };
+
+  // Function to update namespace in YAML string using regex
+  const updateNamespaceInYamlString = (yamlString: string, namespace: string): string => {
+    if (!yamlString || typeof yamlString !== 'string') return yamlString;
+    
+    try {
+      // Try to handle YAML formatted strings that aren't JSON parseable
+      
+      // Pattern 1: Matches 'namespace: ""' or 'namespace: ' or 'namespace:'
+      let updatedYaml = yamlString.replace(/namespace:\s*["']?["']?/g, `namespace: "${namespace}"`);
+      
+      // Pattern 2: Matches '"namespace": ""' or '"namespace": ' or '"namespace":'
+      updatedYaml = updatedYaml.replace(/"namespace":\s*["']?["']?/g, `"namespace": "${namespace}"`);
+      
+      // Pattern 3: Matches specific indentation patterns for YAML
+      // This handles common indentation patterns in YAML/JSON
+      const indentedPattern = /(\s+)namespace:\s*["']?["']?/g;
+      updatedYaml = updatedYaml.replace(indentedPattern, `$1namespace: "${namespace}"`);
+      
+      // Pattern 4: Matches patterns inside embedded YAML with typical indentation
+      const embeddedPattern = /(\s+)["']?namespace["']?:\s*["']?["']?/g;
+      updatedYaml = updatedYaml.replace(embeddedPattern, `$1"namespace": "${namespace}"`);
+      
+      return updatedYaml;
+    } catch (e) {
+      console.warn("Error updating namespace with regex:", e);
+      return yamlString;
+    }
+  };
 
   // Process YAML content when policy changes
   useEffect(() => {
@@ -79,11 +216,70 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
           
           const content = await response.text();
           console.log("Fetched YAML content:", content.substring(0, 100) + "...");
+          
+          // Update the namespace in the fetched YAML if it's JSON
+          if (content.trim().startsWith('{')) {
+            try {
+              const yamlObj = JSON.parse(content);
+              if (yamlObj && policy.namespace) {
+                const updatedYaml = updateNamespaceInYaml(yamlObj, policy.namespace);
+                setYamlContent(JSON.stringify(updatedYaml, null, 2));
+                return;
+              }
+            } catch (e) {
+              console.warn("Failed to parse and update YAML JSON:", e);
+              // Try regex-based approach for non-JSON YAML
+              if (typeof content === 'string' && policy.namespace) {
+                const updatedYaml = updateNamespaceInYamlString(content, policy.namespace);
+                setYamlContent(updatedYaml);
+                return;
+              }
+            }
+          } else {
+            // Handle YAML string that's not JSON
+            if (typeof content === 'string' && policy.namespace) {
+              const updatedYaml = updateNamespaceInYamlString(content, policy.namespace);
+              setYamlContent(updatedYaml);
+              return;
+            }
+          }
+          
           setYamlContent(content);
         } else {
           // The yaml field contains the actual content
           console.log("Using direct YAML content, length:", 
             typeof policy.yaml === 'string' ? policy.yaml.length : 'not a string');
+          
+          // If it's JSON, update the namespace
+          if (typeof policy.yaml === 'string' && policy.yaml.trim().startsWith('{')) {
+            try {
+              const yamlObj = JSON.parse(policy.yaml);
+              if (yamlObj && policy.namespace) {
+                console.log("Updating namespace in YAML content from", yamlObj.namespace, "to", policy.namespace);
+                const updatedYaml = updateNamespaceInYaml(yamlObj, policy.namespace);
+                setYamlContent(JSON.stringify(updatedYaml, null, 2));
+                return;
+              }
+            } catch (e) {
+              console.warn("Failed to parse and update YAML JSON:", e);
+              // Try regex-based approach for non-JSON YAML
+              if (typeof policy.yaml === 'string' && policy.namespace) {
+                console.log("Using regex to update namespace in YAML string");
+                const updatedYaml = updateNamespaceInYamlString(policy.yaml, policy.namespace);
+                setYamlContent(updatedYaml);
+                return;
+              }
+            }
+          } else if (typeof policy.yaml === 'string') {
+            // Handle YAML string that's not JSON
+            if (policy.namespace) {
+              console.log("Using regex to update namespace in YAML string");
+              const updatedYaml = updateNamespaceInYamlString(policy.yaml, policy.namespace);
+              setYamlContent(updatedYaml);
+              return;
+            }
+          }
+          
           setYamlContent(policy.yaml);
         }
       } catch (err) {
@@ -96,7 +292,7 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
     };
 
     processYaml();
-  }, [policy.yaml]);
+  }, [policy.yaml, policy.namespace]);
 
   // Use the binding mode directly from the policy object
   const bindingMode = policy.bindingMode || "N/A";

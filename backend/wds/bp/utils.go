@@ -2,9 +2,11 @@ package bp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -14,6 +16,7 @@ import (
 	"github.com/kubestellar/ui/log"
 	"github.com/kubestellar/ui/redis"
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v3"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
@@ -35,6 +38,7 @@ func getClientForBp() (*bpv1alpha1.ControlV1alpha1Client, error) {
 
 	// Return cached client if available
 	if clientCache != nil {
+		log.LogDebug("Using cached client for BP operations")
 		return clientCache, nil
 	}
 
@@ -81,6 +85,14 @@ func getClientForBp() (*bpv1alpha1.ControlV1alpha1Client, error) {
 		}
 	}
 
+	fmt.Printf("Debug - getClientForBp - Available contexts: %v\n", getMapKeys(config.Contexts))
+	fmt.Printf("Debug - getClientForBp - Using context: %s\n", wdsContext)
+
+	// If context exists, print namespace info for that context
+	if ctx, exists := config.Contexts[wdsContext]; exists && ctx != nil {
+		fmt.Printf("Debug - getClientForBp - Context namespace: %s\n", ctx.Namespace)
+	}
+
 	// Set config overrides with our determined context
 	overrides := &clientcmd.ConfigOverrides{
 		CurrentContext: wdsContext,
@@ -94,6 +106,12 @@ func getClientForBp() (*bpv1alpha1.ControlV1alpha1Client, error) {
 		return nil, err
 	}
 
+	// Log REST config settings for debugging
+	fmt.Printf("Debug - getClientForBp - REST Config Host: %s\n", restcnfg.Host)
+	if restcnfg.Impersonate.UserName != "" {
+		fmt.Printf("Debug - getClientForBp - Impersonating user: %s\n", restcnfg.Impersonate.UserName)
+	}
+
 	// Create client
 	c, err := bpv1alpha1.NewForConfig(restcnfg)
 	if err != nil {
@@ -103,8 +121,32 @@ func getClientForBp() (*bpv1alpha1.ControlV1alpha1Client, error) {
 
 	// Cache the client for future use
 	clientCache = c
+	fmt.Printf("Debug - getClientForBp - Successfully created and cached client\n")
 
 	return c, nil
+}
+
+// Helper function to get map keys for debugging
+func getMapKeys(m interface{}) []string {
+	keys := []string{}
+
+	// Handle generic map types
+	switch typedMap := m.(type) {
+	case map[string]interface{}:
+		for k := range typedMap {
+			keys = append(keys, k)
+		}
+	case map[interface{}]interface{}:
+		for k := range typedMap {
+			if s, ok := k.(string); ok {
+				keys = append(keys, s)
+			}
+		}
+	default:
+		return keys
+	}
+
+	return keys
 }
 
 // get BP struct from YAML
@@ -117,8 +159,21 @@ func getBpObjFromYaml(bpRawYamlBytes []byte) (*v1alpha1.BindingPolicy, error) {
 	if !ok {
 		return nil, fmt.Errorf("wrong object type, yaml type not supported")
 	}
-	return bp, nil
 
+	// Make sure namespace is preserved from the YAML
+	if bp.Namespace == "" {
+		var tempObj struct {
+			Metadata struct {
+				Namespace string `yaml:"namespace"`
+			} `yaml:"metadata"`
+		}
+		if err := yaml.Unmarshal(bpRawYamlBytes, &tempObj); err == nil && tempObj.Metadata.Namespace != "" {
+			bp.Namespace = tempObj.Metadata.Namespace
+			fmt.Printf("Debug - Extracted namespace from YAML: %s\n", bp.Namespace)
+		}
+	}
+
+	return bp, nil
 }
 
 // Helper function to check if a string contains any of the given substrings
@@ -131,6 +186,73 @@ func containsAny(s string, substrings []string) bool {
 	return false
 }
 
+func parseWorkloadIdentifier(workloadId string) (apiGroup string, kind string, name string, namespace string) {
+	apiGroup = "core" // Default API group
+	namespace = ""    // Will be empty if not specified
+
+	// Check if namespace is included in format "kind/name/namespace"
+	if strings.Count(workloadId, "/") == 2 {
+		parts := strings.Split(workloadId, "/")
+		kind = parts[0]
+		name = parts[1]
+		namespace = parts[2]
+
+		// Set default API group based on kind
+		if strings.ToLower(kind) == "deployment" ||
+			strings.ToLower(kind) == "statefulset" ||
+			strings.ToLower(kind) == "daemonset" ||
+			strings.ToLower(kind) == "replicaset" {
+			apiGroup = "apps"
+		} else if strings.ToLower(kind) == "job" || strings.ToLower(kind) == "cronjob" {
+			apiGroup = "batch"
+		}
+		return
+	}
+
+	// Parse format with API group and version: "apps:v1:Deployment/nginx"
+	if strings.Contains(workloadId, ":") {
+		parts := strings.Split(workloadId, ":")
+		if len(parts) >= 3 {
+			apiGroup = parts[0]
+			kind = parts[2]
+			if strings.Contains(kind, "/") {
+				kindParts := strings.Split(kind, "/")
+				kind = kindParts[0]
+				if len(kindParts) > 1 {
+					name = kindParts[1]
+				}
+			}
+		}
+	} else if strings.Contains(workloadId, "/") {
+		// Format: "Deployment/nginx"
+		parts := strings.Split(workloadId, "/")
+		kind = parts[0]
+		if len(parts) > 1 {
+			name = parts[1]
+		}
+
+		// Set default API group based on kind
+		if strings.ToLower(kind) == "deployment" ||
+			strings.ToLower(kind) == "statefulset" ||
+			strings.ToLower(kind) == "daemonset" ||
+			strings.ToLower(kind) == "replicaset" {
+			apiGroup = "apps"
+		} else if strings.ToLower(kind) == "job" || strings.ToLower(kind) == "cronjob" {
+			apiGroup = "batch"
+		}
+	} else {
+		// Just a workload kind
+		kind = workloadId
+	}
+
+	// Make sure apiGroup is never empty
+	if apiGroup == "" {
+		apiGroup = "core"
+	}
+
+	return
+}
+
 // extractWorkloads gets a list of workloads affected by this BP
 func extractWorkloads(bp *v1alpha1.BindingPolicy) []string {
 	workloads := []string{}
@@ -141,7 +263,8 @@ func extractWorkloads(bp *v1alpha1.BindingPolicy) []string {
 		return workloads
 	}
 
-	fmt.Printf("Debug - extractWorkloads - Processing %d Downsync rules\n", len(bp.Spec.Downsync))
+	fmt.Printf("Debug - extractWorkloads - Processing %d Downsync rules for BP %s (namespace: '%s')\n",
+		len(bp.Spec.Downsync), bp.Name, bp.Namespace)
 
 	// Process downsync resources
 	for _, ds := range bp.Spec.Downsync {
@@ -167,7 +290,37 @@ func extractWorkloads(bp *v1alpha1.BindingPolicy) []string {
 					workloads = append(workloads, fmt.Sprintf("%s (ns:%s)", workloadType, ns))
 				}
 			} else {
-				workloads = append(workloads, workloadType)
+				// Use the binding policy's namespace if no namespace specified in downsync rule
+				// Make sure namespace is not empty
+				namespace := bp.Namespace
+				if namespace == "" {
+					namespace = "default" // Fallback to default if namespace is empty
+					fmt.Printf("Debug - extractWorkloads - BP namespace is empty, using default\n")
+				}
+				workloads = append(workloads, fmt.Sprintf("%s (ns:%s)", workloadType, namespace))
+			}
+		}
+	}
+
+	// Check annotations for any specific workloads
+	if bp.Annotations != nil {
+		if specificWorkloads, ok := bp.Annotations["specificWorkloads"]; ok && specificWorkloads != "" {
+			parts := strings.Split(specificWorkloads, ",")
+			if len(parts) >= 4 {
+				apiVersion := parts[0]
+				kind := parts[1]
+				name := parts[2]
+				namespace := parts[3]
+
+				if namespace == "" {
+					namespace = bp.Namespace
+				}
+
+				workloadInfo := fmt.Sprintf("%s/%s/%s (ns:%s)",
+					apiVersion, kind, name, namespace)
+
+				workloads = append(workloads, workloadInfo)
+				fmt.Printf("Debug - extractWorkloads - Added workload from annotations: %s\n", workloadInfo)
 			}
 		}
 	}
@@ -309,4 +462,80 @@ func watchOnBps() {
 func init() {
 
 	go watchOnBps()
+}
+
+// ensureCorrectNamespace ensures the namespace in a binding policy is set correctly.
+func ensureCorrectNamespace(bp *v1alpha1.BindingPolicy, namespace string) {
+	if namespace == "" {
+		return
+	}
+
+	// Update the top-level namespace
+	bp.Namespace = namespace
+	fmt.Printf("Debug - ensureCorrectNamespace - Updated BP top-level namespace to: %s\n", namespace)
+
+	// If there are annotations with embedded YAML, update those too
+	if bp.Annotations != nil {
+		if yamlStr, ok := bp.Annotations["yaml"]; ok && yamlStr != "" {
+			// Update YAML string with embedded namespace
+			updatedYaml := updateNamespaceInYaml(yamlStr, namespace)
+			if updatedYaml != yamlStr {
+				bp.Annotations["yaml"] = updatedYaml
+				fmt.Printf("Debug - ensureCorrectNamespace - Updated namespace in YAML annotation\n")
+			}
+		}
+	}
+}
+
+// updateNamespaceInYaml updates namespace references in a YAML string
+func updateNamespaceInYaml(yamlStr string, namespace string) string {
+	if yamlStr == "" || namespace == "" {
+		return yamlStr
+	}
+	// For structured YAML beginning with "typemeta:"
+	if strings.HasPrefix(yamlStr, "typemeta:") {
+		// Update namespace: field followed by empty or quoted empty string
+		yamlStr = regexp.MustCompile(`namespace:\s*["']?["']?`).
+			ReplaceAllString(yamlStr, fmt.Sprintf(`namespace: "%s"`, namespace))
+
+		// Also handle when namespace is in objectmeta section
+		yamlStr = regexp.MustCompile(`objectmeta:(?:[^{}]*)namespace:\s*["']?["']?`).
+			ReplaceAllString(yamlStr, fmt.Sprintf(`objectmeta:$1namespace: "%s"`, namespace))
+
+		fmt.Printf("Debug - updateNamespaceInYaml - Updated structured YAML with namespace: %s\n", namespace)
+		return yamlStr
+	}
+
+	// For JSON-formatted data
+	if strings.HasPrefix(yamlStr, "{") {
+		try := func() bool {
+			var jsonObj map[string]interface{}
+			if err := json.Unmarshal([]byte(yamlStr), &jsonObj); err != nil {
+				return false
+			}
+
+			// Set namespace directly in top-level object
+			jsonObj["namespace"] = namespace
+			if metadata, ok := jsonObj["metadata"].(map[string]interface{}); ok {
+				metadata["namespace"] = namespace
+			}
+			newJsonBytes, err := json.Marshal(jsonObj)
+			if err != nil {
+				return false
+			}
+
+			yamlStr = string(newJsonBytes)
+			return true
+		}
+
+		if try() {
+			fmt.Printf("Debug - updateNamespaceInYaml - Updated JSON with namespace: %s\n", namespace)
+			return yamlStr
+		}
+	}
+	yamlStr = regexp.MustCompile(`"namespace"\s*:\s*["']?["']?`).
+		ReplaceAllString(yamlStr, fmt.Sprintf(`"namespace": "%s"`, namespace))
+
+	fmt.Printf("Debug - updateNamespaceInYaml - Applied regex replacement with namespace: %s\n", namespace)
+	return yamlStr
 }
