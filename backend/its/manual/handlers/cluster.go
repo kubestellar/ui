@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -25,6 +26,13 @@ type ManagedClusterInfo struct {
 	Labels       map[string]string `json:"labels"`
 	CreationTime time.Time         `json:"creationTime"`
 	Context      string            `json:"context,omitempty"`
+}
+
+// UpdateLabelsRequest defines the expected JSON payload for updating labels.
+type UpdateLabelsRequest struct {
+	Context string            `json:"context"` // kubeconfig context to use
+	Cluster string            `json:"cluster"` // name of the managed cluster to update
+	Labels  map[string]string `json:"labels"`  // new labels to set on the cluster
 }
 
 // ContextInfo holds basic info for a kubeconfig context.
@@ -308,4 +316,67 @@ func GetKubeInfo() ([]ContextInfo, []string, string, error, []ManagedClusterInfo
 	}
 
 	return contexts, clusters, currentContext, nil, managedClusters
+}
+
+// UpdateManagedClusterLabelsHandler updates the labels on a managed cluster.
+func UpdateManagedClusterLabelsHandler(c *gin.Context) {
+	var req UpdateLabelsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Load kubeconfig from file using the existing utility.
+	kubeconfig := kubeconfigPath()
+	config, err := clientcmd.LoadFromFile(kubeconfig)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Build a client configuration for the provided context.
+	clientConfig := clientcmd.NewNonInteractiveClientConfig(
+		*config,
+		req.Context,
+		&clientcmd.ConfigOverrides{},
+		nil,
+	)
+	restConfig, err := clientConfig.ClientConfig()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	clientset, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Build the patch payload to update metadata.labels.
+	patchPayload := map[string]interface{}{
+		"metadata": map[string]interface{}{
+			"labels": req.Labels,
+		},
+	}
+	patchBytes, err := json.Marshal(patchPayload)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Patch the managed cluster resource.
+	// Note: ManagedCluster is a cluster-scoped resource, so namespace is not needed.
+	result := clientset.RESTClient().Patch(types.MergePatchType).
+		AbsPath("/apis/cluster.open-cluster-management.io/v1").
+		Resource("managedclusters").
+		Name(req.Cluster).
+		Body(patchBytes).
+		Do(context.Background())
+	if result.Error() != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error().Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Labels updated successfully"})
 }
