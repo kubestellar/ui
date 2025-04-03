@@ -16,56 +16,32 @@ const KubeStellarLayout = ({ isLoaded, showLogin, leftSide }: KubeStellarLayoutP
   // Check if browser is in full screen mode
   useEffect(() => {
     const handleFullScreenChange = () => {
-      setIsFullScreen(
-        document.fullscreenElement ||
-        document.webkitFullscreenElement ||
-        document.mozFullScreenElement ||
-        document.msFullscreenElement
-        ? true : false
-      );
+      setIsFullScreen(!!document.fullscreenElement);
     };
 
     document.addEventListener('fullscreenchange', handleFullScreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullScreenChange);
-    document.addEventListener('mozfullscreenchange', handleFullScreenChange);
-    document.addEventListener('MSFullscreenChange', handleFullScreenChange);
 
     return () => {
       document.removeEventListener('fullscreenchange', handleFullScreenChange);
-      document.removeEventListener('webkitfullscreenchange', handleFullScreenChange);
-      document.removeEventListener('mozfullscreenchange', handleFullScreenChange);
-      document.removeEventListener('MSFullscreenChange', handleFullScreenChange);
     };
   }, []);
 
   // Toggle full screen function
-  const toggleFullScreen = () => {
-    if (!document.fullscreenElement) {
-      // Enter full screen
-      if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen();
-      } else if (document.documentElement.webkitRequestFullscreen) {
-        document.documentElement.webkitRequestFullscreen();
-      } else if (document.documentElement.mozRequestFullScreen) {
-        document.documentElement.mozRequestFullScreen();
-      } else if (document.documentElement.msRequestFullscreen) {
-        document.documentElement.msRequestFullscreen();
+  const toggleFullScreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        // Enter full screen
+        await document.documentElement.requestFullscreen();
+      } else {
+        // Exit full screen
+        await document.exitFullscreen();
       }
-    } else {
-      // Exit full screen
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-      } else if (document.mozCancelFullScreen) {
-        document.mozCancelFullScreen();
-      } else if (document.msExitFullscreen) {
-        document.msExitFullscreen();
-      }
+    } catch (err) {
+      console.error('Error toggling fullscreen:', err);
     }
   };
 
-  // Add keyboard shortcut for full screen (F11 or Esc)
+  // Add keyboard shortcut for full screen (F11)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'F11') {
