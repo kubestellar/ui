@@ -31,13 +31,18 @@ interface ResourceItem {
     addresses?: string[];
     ports?: Array<{ name?: string; port?: number }>;
   }>;
-  ports?: Array<{ name?: string; port?: number }>;
+  ports?: Array<{ name: string; port: number }>;
   subjects?: Array<{ name: string }>;
   roleRef?: { name: string };
   rules?: Array<{
     verbs?: string[];
     resources?: string[];
   }>;
+}
+
+interface PodItem {
+  name: string;
+  raw: ResourceItem;
 }
 
 interface NamespaceData {
@@ -47,11 +52,26 @@ interface NamespaceData {
   resources: Record<string, ResourceItem[]>;
 }
 
+interface WecsNamespaceData {
+  namespace: string;
+  pods: PodItem[];
+}
+
+interface WecsClusterData {
+  cluster: string;
+  namespaces: WecsNamespaceData[];
+}
+
 interface WebSocketContextType {
   ws: WebSocket | null;
+  wecsWs: WebSocket | null;
   isConnected: boolean;
+  wecsIsConnected: boolean;
   connect: (shouldConnect: boolean) => void;
-  hasValidDatat: boolean;
+  connectWecs: (shouldConnect: boolean) => void;
+  hasValidData: boolean;
+  hasValidWecsData: boolean;
+  wecsData: WecsClusterData[] | null;
 }
 
 const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
@@ -70,13 +90,18 @@ interface WebSocketProviderProps {
 
 export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }) => {
   const wsRef = useRef<WebSocket | null>(null);
+  const wecsWsRef = useRef<WebSocket | null>(null);
   const queryClient = useQueryClient();
   const renderStartTime = useRef<number>(performance.now());
   const dataReceiveTime = useRef<number | null>(null);
   const NAMESPACE_QUERY_KEY = ["namespaces"];
   const [isConnected, setIsConnected] = useState(false);
+  const [wecsIsConnected, setWecsIsConnected] = useState(false);
   const [shouldConnect, setShouldConnect] = useState(false);
-  const [hasValidDatat, sethasValidDatat] = useState(false);
+  const [shouldConnectWecs, setShouldConnectWecs] = useState(false);
+  const [hasValidData, setHasValidData] = useState(false);
+  const [hasValidWecsData, setHasValidWecsData] = useState(false);
+  const [wecsData, setWecsData] = useState<WecsClusterData[] | null>(null);
 
   const sortNamespaceData = (data: NamespaceData[]): NamespaceData[] => {
     return [...data]
@@ -94,15 +119,14 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       }));
   };
 
-  const connectWebSocket = (reconnectFunc: () => void): WebSocket => {
-    console.log(`[WebSocket] Starting connection at ${performance.now() - renderStartTime.current}ms`);
-    const ws = new WebSocket("ws://localhost:4000/ws/namespaces");
-    wsRef.current = ws;
+  const connectWebSocket = (reconnectFunc: () => void, url: string, isWecs: boolean = false): WebSocket => {
+    console.log(`[WebSocket] Starting connection to ${url} at ${performance.now() - renderStartTime.current}ms`);
+    const ws = new WebSocket(url);
+    const ref = isWecs ? wecsWsRef : wsRef;
+    ref.current = ws;
 
     const updateCache = (filteredData: NamespaceData[]) => {
-      const currentData = queryClient.getQueryData<NamespaceData[]>(
-        NAMESPACE_QUERY_KEY
-      );
+      const currentData = queryClient.getQueryData<NamespaceData[]>(NAMESPACE_QUERY_KEY);
       const sortedFilteredData = sortNamespaceData(filteredData);
       const sortedCurrentData = currentData ? sortNamespaceData(currentData) : null;
       if (!sortedCurrentData || !isEqual(sortedFilteredData, sortedCurrentData)) {
@@ -123,122 +147,127 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
 
     ws.onopen = () => {
       console.log(
-        `[WebSocket] Connection established at ${
+        `[WebSocket] Connection established to ${url} at ${
           performance.now() - renderStartTime.current
         }ms`
       );
-      setIsConnected(true);
+      if (isWecs) setWecsIsConnected(true);
+      else setIsConnected(true);
     };
 
     ws.onmessage = (event) => {
       const receiveTime = performance.now();
       console.log(
-        `[WebSocket] Data arrived at ${
+        `[WebSocket] Data arrived from ${url} at ${
           receiveTime - renderStartTime.current
         }ms, readyState: ${ws.readyState}`
       );
-      let data: NamespaceData[];
+      let data: NamespaceData[] | WecsClusterData[];
       try {
-        data = JSON.parse(event.data) as NamespaceData[];
+        data = JSON.parse(event.data);
         console.log(
-          `[WebSocket] Data received and parsed: ${data.length} namespaces at ${
-            performance.now() - renderStartTime.current
-          }ms`
+          `[WebSocket] Data received and parsed from ${url}: ${
+            isWecs ? (data as WecsClusterData[]).length + " clusters" : (data as NamespaceData[]).length + " namespaces"
+          } at ${performance.now() - renderStartTime.current}ms`
         );
-        
-        // Check if data is empty or invalid
+
         if (!data || data.length === 0) {
-          console.log(`[WebSocket] Empty data received at ${performance.now() - renderStartTime.current}ms`);
-          sethasValidDatat(false);
+          console.log(`[WebSocket] Empty data received from ${url} at ${performance.now() - renderStartTime.current}ms`);
+          if (isWecs) setHasValidWecsData(false);
+          else setHasValidData(false);
           return;
         }
-        
-        sethasValidDatat(true);
+
+        if (isWecs) {
+          // Filter namespaces in wecsData
+          const filteredWecsData = (data as WecsClusterData[]).map((cluster) => ({
+            ...cluster,
+            namespaces: cluster.namespaces.filter(
+              (ns) =>
+                !["kubestellar-report", "kube-node-lease", "kube-public", "default", "kube-system", "open-cluster-management-hub","open-cluster-management","local-path-storage"].includes(ns.namespace)
+            ),
+          }));
+          console.log(
+            `[WebSocket] Filtered wecsData: ${filteredWecsData.length} clusters with filtered namespaces at ${
+              performance.now() - renderStartTime.current
+            }ms`
+          );
+          setWecsData(filteredWecsData);
+          setHasValidWecsData(true);
+        } else {
+          const filteredData = (data as NamespaceData[]).filter(
+            (namespace) =>
+              !["kubestellar-report", "kube-node-lease", "kube-public", "default", "kube-system"].includes(namespace.name)
+          );
+          console.log(
+            `[WebSocket] Filtered ${filteredData.length} namespaces from ${
+              data.length
+            } at ${performance.now() - renderStartTime.current}ms`
+          );
+          dataReceiveTime.current = receiveTime;
+          ReactDOM.unstable_batchedUpdates(() => {
+            updateCache(filteredData);
+          });
+          setHasValidData(true);
+        }
       } catch (error) {
         console.error(
-          `[WebSocket] Failed to parse data at ${
+          `[WebSocket] Failed to parse data from ${url} at ${
             performance.now() - renderStartTime.current
           }ms:`,
           error
         );
-        sethasValidDatat(false);
+        if (isWecs) setHasValidWecsData(false);
+        else setHasValidData(false);
         return;
       }
-      const totalObjects = data.reduce((count, namespace) => {
-        const resourceCount = Object.values(namespace.resources).reduce(
-          (sum, resources) => sum + resources.length,
-          0
-        );
-        return count + resourceCount;
-      }, 0);
-      console.log(
-        `[WebSocket] Processed ${totalObjects} objects across ${
-          data.length
-        } namespaces at ${performance.now() - renderStartTime.current}ms`
-      );
-      const filteredData = JSON.parse(JSON.stringify(data)).filter(
-        (namespace: NamespaceData) =>
-          ![
-            "kubestellar-report",
-            "kube-node-lease",
-            "kube-public",
-            "default",
-            "kube-system",
-          ].includes(namespace.name)
-      );
-      console.log(
-        `[WebSocket] Filtered ${filteredData.length} namespaces from ${
-          data.length
-        } at ${performance.now() - renderStartTime.current}ms`
-      );
-      dataReceiveTime.current = receiveTime;
-      ReactDOM.unstable_batchedUpdates(() => {
-        updateCache(filteredData);
-      });
     };
 
     ws.onerror = (error) => {
       console.error(
-        `[WebSocket] Error at ${
+        `[WebSocket] Error at ${url} at ${
           performance.now() - renderStartTime.current
         }ms:`,
         error
       );
-      setIsConnected(false);
+      if (isWecs) setWecsIsConnected(false);
+      else setIsConnected(false);
     };
 
     ws.onclose = () => {
       console.log(
-        `[WebSocket] Disconnected at ${
+        `[WebSocket] Disconnected from ${url} at ${
           performance.now() - renderStartTime.current
         }ms, attempting reconnect...`
       );
-      wsRef.current = null;
-      setIsConnected(false);
+      ref.current = null;
+      if (isWecs) setWecsIsConnected(false);
+      else setIsConnected(false);
       reconnectFunc();
     };
 
     return ws;
   };
 
-  const reconnectWebSocket = (): void => {
+  const reconnectWebSocket = (url: string, isWecs: boolean = false): void => {
     let retryCount = 0;
     const maxBackoff = 500;
     const initialDelay = 10;
 
     const attemptReconnect = () => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) return;
+      const ref = isWecs ? wecsWsRef : wsRef;
+      if (ref.current?.readyState === WebSocket.OPEN) return;
 
       const delay = Math.min(initialDelay * Math.pow(2, retryCount), maxBackoff);
       retryCount++;
 
       setTimeout(() => {
         console.log(
-          `[WebSocket] Reconnecting (attempt ${retryCount}, delay ${delay}ms) at ${
+          `[WebSocket] Reconnecting to ${url} (attempt ${retryCount}, delay ${delay}ms) at ${
             performance.now() - renderStartTime.current
           }ms`
         );
-        connectWebSocket(reconnectWebSocket);
+        connectWebSocket(() => reconnectWebSocket(url, isWecs), url, isWecs);
       }, delay);
     };
 
@@ -249,31 +278,64 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     setShouldConnect(shouldConnect);
   };
 
+  const connectWecs = (shouldConnect: boolean) => {
+    setShouldConnectWecs(shouldConnect);
+  };
+
   useEffect(() => {
-    // Check if the user is authenticated by looking for the JWT token
     const token = localStorage.getItem("jwtToken");
     if (token && !shouldConnect) {
-      console.log(`[WebSocket] User is authenticated, initiating connection at ${performance.now() - renderStartTime.current}ms`);
+      console.log(`[WebSocket] User is authenticated, initiating namespaces connection at ${performance.now() - renderStartTime.current}ms`);
       setShouldConnect(true);
+    }
+    if (token && !shouldConnectWecs) {
+      console.log(`[WebSocket] User is authenticated, initiating wecs connection at ${performance.now() - renderStartTime.current}ms`);
+      setShouldConnectWecs(true);
     }
   }, []);
 
   useEffect(() => {
     if (!shouldConnect) return;
 
-    connectWebSocket(reconnectWebSocket);
+    connectWebSocket(() => reconnectWebSocket("ws://localhost:4000/ws/namespaces"), "ws://localhost:4000/ws/namespaces");
 
     return () => {
       if (wsRef.current) {
         wsRef.current.close();
         wsRef.current = null;
-        console.log(`[WebSocket] Connection closed at ${performance.now() - renderStartTime.current}ms`);
+        console.log(`[WebSocket] Namespaces connection closed at ${performance.now() - renderStartTime.current}ms`);
       }
     };
   }, [shouldConnect]);
 
+  useEffect(() => {
+    if (!shouldConnectWecs) return;
+
+    connectWebSocket(() => reconnectWebSocket("ws://localhost:4000/ws/wecs", true), "ws://localhost:4000/ws/wecs", true);
+
+    return () => {
+      if (wecsWsRef.current) {
+        wecsWsRef.current.close();
+        wecsWsRef.current = null;
+        console.log(`[WebSocket] WECS connection closed at ${performance.now() - renderStartTime.current}ms`);
+      }
+    };
+  }, [shouldConnectWecs]);
+
   return (
-    <WebSocketContext.Provider value={{ ws: wsRef.current, isConnected, connect, hasValidDatat }}>
+    <WebSocketContext.Provider
+      value={{
+        ws: wsRef.current,
+        wecsWs: wecsWsRef.current,
+        isConnected,
+        wecsIsConnected,
+        connect,
+        connectWecs,
+        hasValidData,
+        hasValidWecsData,
+        wecsData,
+      }}
+    >
       {children}
     </WebSocketContext.Provider>
   );

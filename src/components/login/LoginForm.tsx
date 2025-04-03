@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"; // Add useRef
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Lock, User, Globe } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -17,9 +17,9 @@ const LoginForm = () => {
   });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const renderStartTime = useRef<number>(performance.now());
-  const hasTriggeredConnection = useRef(false); // Track if connection has been triggered
+  const hasTriggeredConnection = useRef(false);
 
-  const { connect } = useWebSocket();
+  const { connect, connectWecs } = useWebSocket();
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -79,11 +79,12 @@ const LoginForm = () => {
 
   useEffect(() => {
     if (isLoggedIn && !hasTriggeredConnection.current) {
-      console.log(`[LoginForm] Triggering WebSocket connection at ${performance.now() - renderStartTime.current}ms`);
-      connect(true);
-      hasTriggeredConnection.current = true; // Prevent further triggers
+      console.log(`[LoginForm] Triggering WebSocket connections at ${performance.now() - renderStartTime.current}ms`);
+      connect(true); // Namespaces WebSocket
+      connectWecs(true); // WECS WebSocket
+      hasTriggeredConnection.current = true;
     }
-  }, [isLoggedIn, connect]);
+  }, [isLoggedIn, connect, connectWecs]);
 
   const validateForm = () => {
     const newErrors = {
@@ -187,6 +188,7 @@ const LoginForm = () => {
     }
   };
 
+  // JSX remains unchanged
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <motion.div
