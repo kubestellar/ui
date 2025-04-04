@@ -58,8 +58,8 @@ func setupDeploymentRoutes(router *gin.Engine) {
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{
-			"context":         context,
-			"current-context": currentContext,
+			"wds-context":     context,        // this only contains wds named context
+			"current-context": currentContext, // current context can be anything
 		})
 	})
 
