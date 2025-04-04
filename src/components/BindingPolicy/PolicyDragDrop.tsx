@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BindingPolicyInfo, Workload, ManagedCluster } from '../../types/bindingPolicy';
 import { PolicyConfiguration } from './ConfigurationSidebar';
 import PolicyDragDropContainer from './PolicyDragDropContainer';
@@ -193,9 +193,19 @@ const HelpDialog: React.FC<{open: boolean, onClose: () => void}> = ({open, onClo
 };
 
 const PolicyDragDrop: React.FC<PolicyDragDropProps> = (props) => {
-  const [helpDialogOpen, setHelpDialogOpen] = useState(props.dialogMode ? true : false);
+  const [helpDialogOpen, setHelpDialogOpen] = useState(false);
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
+
+  useEffect(() => {
+    const hasSeenToolbox = localStorage.getItem("hasSeenToolbox");
+
+    if (!hasSeenToolbox) {
+      setHelpDialogOpen(true);
+      localStorage.setItem("hasSeenToolbox", "true");
+    }  
+  }, [])
+  
   
   return (
     <Box sx={{ position: 'relative' }}>
