@@ -2,9 +2,9 @@ import {
   HiOutlineHome,
   HiOutlineCube,
   HiOutlineCommandLine,
-  HiOutlineCog8Tooth,
-  HiOutlineCog,
 } from 'react-icons/hi2';
+
+import { MdPolicy, MdAssuredWorkload } from "react-icons/md";
 
 export const menu = [
   {
@@ -40,13 +40,13 @@ export const menu = [
       {
         isLink: true,
         url: '/bp/manage',
-        icon: HiOutlineCog8Tooth,
+        icon: MdPolicy,
         label: 'Binding Policies',
       },
       {
         isLink: true,
         url: '/wecs/treeview',
-        icon: HiOutlineCog,
+        icon: MdAssuredWorkload,
         label: `Deployed Workloads`,
       },
     ],
