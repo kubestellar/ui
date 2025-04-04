@@ -24,7 +24,7 @@ const profileIcons = [
 ];
 
 const Header = ({ isLoading }: { isLoading: boolean }) => {
-  const [isFullScreen, setIsFullScreen] = React.useState(true);
+  const [isFullScreen, setIsFullScreen] = React.useState(false);
   const element = document.getElementById("root");
   const { useContexts } = useHeaderQueries();
   const { data, error } = useContexts();
@@ -102,10 +102,14 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
   }, [setSelectedCluster, setHasAvailableClusters]);
 
   React.useEffect(() => {
-    if (isFullScreen) {
-      document.exitFullscreen();
-    } else {
-      element?.requestFullscreen({ navigationUI: "auto" });
+    if (!isFullScreen && document.fullscreenElement) {
+      document.exitFullscreen().catch((err) => {
+        console.error("Error exiting full screen:", err.message);
+      });
+    } else if (isFullScreen && !document.fullscreenElement) {
+      element?.requestFullscreen({ navigationUI: "auto" }).catch((err) => {
+        console.error("Error entering full screen:", err.message);
+      });
     }
   }, [element, isFullScreen]);
 
@@ -259,7 +263,7 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
               
               {/* User Dropdown Menu */}
               {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-800 rounded-xl shadow-xl py-3 z-50
+                <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-950 rounded-xl shadow-xl py-3 z-50
                   border border-gray-100 dark:border-gray-700 animate-fadeIn">
                   <button 
                     onClick={handleLogout}
@@ -319,7 +323,7 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
           onClick={toggleFullScreen}
           className="hidden xl:inline-flex btn btn-circle btn-ghost"
         >
-          {isFullScreen ? (
+          {!isFullScreen ? (
             <RxEnterFullScreen className="xl:text-xl 2xl:text-2xl 3xl:text-3xl" />
           ) : (
             <RxExitFullScreen className="xl:text-xl 2xl:text-2xl 3xl:text-3xl" />

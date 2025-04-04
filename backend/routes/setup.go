@@ -15,4 +15,5 @@ func SetupRoutes(router *gin.Engine) {
 	getWecsResources(router)
 	helmDeploy(router)
 	setupInstallerRoutes(router)
+	setupWdsCookiesRoute(router)
 }
