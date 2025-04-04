@@ -16,7 +16,10 @@ import {
   ListItemText,
   IconButton,
   Tooltip,
-  useTheme
+  useTheme,
+  FormGroup,
+  FormControlLabel,
+  Checkbox
 } from '@mui/material';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
@@ -37,7 +40,9 @@ interface PolicyDragDropProps {
 const HelpDialog: React.FC<{open: boolean, onClose: () => void}> = ({open, onClose}) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
-
+  const [isChecked, setIsChekcked] = useState(!!localStorage.getItem("donot_show_again"));
+  console.log(!!localStorage.getItem("donot_show_again"));
+  
   return (
     <Dialog 
       open={open} 
@@ -174,8 +179,33 @@ const HelpDialog: React.FC<{open: boolean, onClose: () => void}> = ({open, onClo
         bgcolor: isDarkMode ? "rgba(17, 25, 40, 0.95)" : undefined,
         borderTop: isDarkMode ? '1px solid rgba(255, 255, 255, 0.15)' : undefined
       }}>
-        <Button 
-          onClick={onClose} 
+        <Box display="flex" alignItems="center" justifyContent="space-between" width="100%">
+          <Box display="flex" alignItems="center">
+          <FormGroup>
+          <FormControlLabel 
+            control={
+            <Checkbox 
+            checked={isChecked}
+              onChange={(event) => setIsChekcked(event.target.checked)}
+            />
+            } 
+            label={
+            <Typography sx={{ color: isDarkMode ? "rgba(255, 255, 255, 0.9)" : undefined }}>
+              Don't Show Again
+            </Typography>
+            }
+          />
+          </FormGroup>
+          </Box>
+            <Button 
+            onClick={()=>{
+            if (isChecked) {
+              localStorage.setItem("donot_show_again", "true");
+            } else {
+              localStorage.removeItem("donot_show_again");
+            }
+            onClose();
+          }} 
           variant="contained"
           sx={{
             bgcolor: isDarkMode ? "#2563eb" : undefined,
@@ -184,9 +214,10 @@ const HelpDialog: React.FC<{open: boolean, onClose: () => void}> = ({open, onClo
               bgcolor: isDarkMode ? "#1d4ed8" : undefined,
             }
           }}
-        >
-          Got it
-        </Button>
+          >
+        Got it
+          </Button>
+        </Box>
       </DialogActions>
     </Dialog>
   );
@@ -198,13 +229,13 @@ const PolicyDragDrop: React.FC<PolicyDragDropProps> = (props) => {
   const isDarkMode = theme.palette.mode === 'dark';
 
   useEffect(() => {
-    const hasSeenToolbox = localStorage.getItem("hasSeenToolbox");
-
-    if (!hasSeenToolbox) {
+    const donot_show_again = !!localStorage.getItem("donot_show_again");
+    if (donot_show_again) {
+      setHelpDialogOpen(false);
+    }  else {
       setHelpDialogOpen(true);
-      localStorage.setItem("hasSeenToolbox", "true");
-    }  
-  }, [])
+    }
+  }, []);
   
   
   return (
