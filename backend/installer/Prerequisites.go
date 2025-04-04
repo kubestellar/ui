@@ -458,39 +458,39 @@ func extractYqVersion(output string) string {
 // DisplayPrerequisitesStatus formats and displays the prerequisites status
 func DisplayPrerequisitesStatus(response PrerequisitesResponse) string {
 	var sb strings.Builder
-	
+
 	sb.WriteString("Checking pre-requisites for using KubeStellar:\n\n")
-	
+
 	// Group prerequisites by category
 	coreTools := []string{"Docker", "kubectl", "Kubeflex", "OCM CLI", "Helm"}
 	exampleTools := []string{"Kind", "k3d", "ArgoCD CLI"}
 	buildTools := []string{"Make", "Go", "KO"}
 	otherTools := []string{"jq", "yq"}
-	
+
 	// Display core tools
 	sb.WriteString("Core Prerequisites:\n")
 	for _, name := range coreTools {
 		writePrereqStatus(&sb, response, name)
 	}
-	
+
 	// Display example tools
 	sb.WriteString("\nPrerequisites for running examples:\n")
 	for _, name := range exampleTools {
 		writePrereqStatus(&sb, response, name)
 	}
-	
+
 	// Display build tools
 	sb.WriteString("\nPrerequisites for building KubeStellar:\n")
 	for _, name := range buildTools {
 		writePrereqStatus(&sb, response, name)
 	}
-	
+
 	// Display other tools
 	sb.WriteString("\nAdditional tools:\n")
 	for _, name := range otherTools {
 		writePrereqStatus(&sb, response, name)
 	}
-	
+
 	// Display sysctl checks if available
 	if len(response.SysctlChecks) > 0 {
 		sb.WriteString("\nLinux kernel parameters:\n")
@@ -499,11 +499,11 @@ func DisplayPrerequisitesStatus(response PrerequisitesResponse) string {
 			if !sysctl.Valid {
 				status = "✗"
 			}
-			sb.WriteString(fmt.Sprintf("%s %s = %d (required: ≥ %d)\n", 
+			sb.WriteString(fmt.Sprintf("%s %s = %d (required: ≥ %d)\n",
 				status, sysctl.Name, sysctl.Current, sysctl.Required))
 		}
 	}
-	
+
 	// Overall status
 	sb.WriteString("\nOverall status: ")
 	if response.AllInstalled {
@@ -511,7 +511,7 @@ func DisplayPrerequisitesStatus(response PrerequisitesResponse) string {
 	} else {
 		sb.WriteString("❌ Some prerequisites are missing or need to be updated. Please check the details above.\n")
 	}
-	
+
 	return sb.String()
 }
 

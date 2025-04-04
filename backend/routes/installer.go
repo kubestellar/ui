@@ -5,7 +5,6 @@ import (
 	"github.com/kubestellar/ui/api"
 )
 
-
 func setupInstallerRoutes(router *gin.Engine) {
 	// API Routes
 	router.GET("/api/prerequisites", api.CheckPrerequisitesHandler)

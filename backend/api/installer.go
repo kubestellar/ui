@@ -16,19 +16,19 @@ type InstallationRequest struct {
 
 // InstallationResponse represents the response after installation request
 type InstallationResponse struct {
-	Success      bool              `json:"success"`
-	InstallID    string            `json:"installId,omitempty"`
-	Environment  map[string]string `json:"environment,omitempty"`
-	ErrorMessage string            `json:"errorMessage,omitempty"`
+	Success      bool                 `json:"success"`
+	InstallID    string               `json:"installId,omitempty"`
+	Environment  map[string]string    `json:"environment,omitempty"`
+	ErrorMessage string               `json:"errorMessage,omitempty"`
 	Windows      *WindowsInstructions `json:"windows,omitempty"`
 }
 
 // WindowsInstructions represents instructions for Windows users
 type WindowsInstructions struct {
-	Steps       []string            `json:"steps"`
-	Commands    []string            `json:"commands"`
-	Links       map[string]string   `json:"links"`
-	Environment map[string]string   `json:"environment"`
+	Steps       []string          `json:"steps"`
+	Commands    []string          `json:"commands"`
+	Links       map[string]string `json:"links"`
+	Environment map[string]string `json:"environment"`
 }
 
 // CheckPrerequisitesHandler checks if all prerequisites are installed
@@ -74,19 +74,18 @@ func InstallHandler(c *gin.Context) {
 // GetLogsHandler returns the logs for a specific installation
 func GetLogsHandler(c *gin.Context) {
 	installID := c.Param("id")
-	
+
 	logs, ok := installer.GetLogs(installID)
 	if !ok {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Installation ID not found"})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, gin.H{
 		"id":   installID,
 		"logs": logs,
 	})
 }
-
 
 // handleWindowsInstall provides instructions for Windows users
 func handleWindowsInstall(c *gin.Context, req InstallationRequest) {
@@ -110,10 +109,10 @@ func handleWindowsInstall(c *gin.Context, req InstallationRequest) {
 			"bash <(curl -s https://raw.githubusercontent.com/kubestellar/kubestellar/refs/tags/v0.26.0/scripts/create-kubestellar-demo-env.sh) --platform " + req.Platform,
 		},
 		Links: map[string]string{
-			"WSL Installation Guide": "https://docs.microsoft.com/en-us/windows/wsl/install",
+			"WSL Installation Guide":    "https://docs.microsoft.com/en-us/windows/wsl/install",
 			"KubeStellar Documentation": "https://kubestellar.io/kubestellar/main/",
-			"KubeFlex Documentation": "https://github.com/kubestellar/kubeflex/blob/main/docs/users.md",
-			"OCM Documentation": "https://open-cluster-management.io/",
+			"KubeFlex Documentation":    "https://github.com/kubestellar/kubeflex/blob/main/docs/users.md",
+			"OCM Documentation":         "https://open-cluster-management.io/",
 		},
 		Environment: map[string]string{
 			"PATH": "$HOME/ocm:$HOME/.kubeflex/bin:$PATH",

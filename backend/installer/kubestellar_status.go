@@ -8,12 +8,12 @@ import (
 
 // KubeStellarStatus holds the check results
 type KubeStellarStatus struct {
-	Context        string `json:"context"`
-	ContextFound   bool   `json:"contextFound"`
-	WDS1Namespace  bool   `json:"wds1Namespace"`
-	ITS1Namespace  bool   `json:"its1Namespace"`
-	AllReady       bool   `json:"allReady"`
-	Message        string `json:"message"`
+	Context       string `json:"context"`
+	ContextFound  bool   `json:"contextFound"`
+	WDS1Namespace bool   `json:"wds1Namespace"`
+	ITS1Namespace bool   `json:"its1Namespace"`
+	AllReady      bool   `json:"allReady"`
+	Message       string `json:"message"`
 }
 
 // CheckKubeStellarStatus checks for a context containing "kubestellar" and required namespaces
