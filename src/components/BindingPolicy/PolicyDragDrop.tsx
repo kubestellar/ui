@@ -41,7 +41,6 @@ const HelpDialog: React.FC<{open: boolean, onClose: () => void}> = ({open, onClo
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
   const [isChecked, setIsChekcked] = useState(!!localStorage.getItem("donot_show_again"));
-  console.log(!!localStorage.getItem("donot_show_again"));
   
   return (
     <Dialog 
