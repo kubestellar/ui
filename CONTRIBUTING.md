@@ -1,47 +1,38 @@
-# **📜 Contribution Guide - Setting Up PostgreSQL, JWT Authentication, and Testing**  
+# **📜 Contribution Guide - Setting Up Redis, JWT Authentication, Testing, and Loggin into Kubestellar UI**  
 
-This guide will help you set up a **PostgreSQL container**, configure **JWT authentication**, and test the authentication flow using different tools.  
+This guide will help you set up a **Redis container**, configure **JWT authentication**, test the authentication flow using different tools, and log into Kubestellar UI.  
 
 ---
 
 ## **1️⃣ Prerequisites**  
-Before proceeding, ensure you have the following installed:  
-- **Docker** 🐳 (For running PostgreSQL in a container)  
+Before proceeding, ensure you have the following installed: 
+- **Redis** 
+- **Docker** 🐳 (For running Redis in a container)  
 - **Postman or cURL** (For API testing)  
 - **Go** (For running the backend)  
 - **OpenSSL** (For generating JWT secrets securely)  
 
 ---
 
-## **2️⃣ Setup PostgreSQL Container with Docker**  
+## **2️⃣ Setup Redis Container with Docker**  
 
-🔹 **Run the following command to start a PostgreSQL container:**  
+🔹 **Run Redis using Docker if you haven't already**  
 ```sh
-docker run --name jwt-auth-db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password -e POSTGRES_DB=jwt_db -p 5432:5432 -d postgres
+docker run --name redis -d -p 6379:6379 redis
 ```
 ### **Breakdown of Flags:**  
-- `--name jwt-auth-db` → Container name  
-- `-e POSTGRES_USER=admin` → Set the default PostgreSQL user  
-- `-e POSTGRES_PASSWORD=admin` → Set the default PostgreSQL password  
-- `-e POSTGRES_DB=jwt_db` → Set the default database name  
-- `-p 5432:5432` → Expose PostgreSQL on port **5432**  
-- `-d postgres` → Run the container in detached mode  
+- `--name redis` → Container name  
+- `-p 5432:5432` → Expose Redis on port **6379**  
+- `-d` → Run the container in detached mode  
+- `redis` → Image name 
 
 ---
 
-## **3️⃣ Verify PostgreSQL is Running**  
+## **3️⃣ Verify Redis is Running**  
 
 🔹 **Check running containers:**  
 ```sh
-docker ps
-```
-🔹 **Access the PostgreSQL shell:**  
-```sh
-docker exec -it jwt-auth-db psql -U admin -d jwt_auth
-```
-🔹 **List tables (after the Go app runs the migrations):**  
-```sql
-\dt
+docker ps | grep redis
 ```
 
 ---
@@ -71,14 +62,11 @@ JWT_SECRET=mysecurekeygeneratedhere
 
 ## **5️⃣ Set Up Environment Variables**  
 
-🔹 Create a **`.env`** file in the project root directory:  
+🔹 Create a **`.env`** file in the **`/backend`** directory (where `main.go` is located):  
 ```ini
-# PostgreSQL Database Configuration
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=admin
-DB_PASSWORD=password
-DB_NAME=jwt_db
+# Redis Configuration
+REDIS_HOST=localhost
+REDIS_PORT=6379
 
 # JWT Secret Key (Replace with your generated key)
 JWT_SECRET=mysecurekeygeneratedhere
@@ -90,11 +78,8 @@ JWT_SECRET=mysecurekeygeneratedhere
 If you prefer not to use a `.env` file, you can export variables manually in your terminal:
 
 ```sh
-export DB_HOST=localhost
-export DB_PORT=5432
-export DB_USER=admin
-export DB_PASSWORD=password
-export DB_NAME=jwt_db
+export REDIS_HOST=localhost
+export REDIS_PORT=6379
 export JWT_SECRET=mysecurekeygeneratedhere
 ```
 
@@ -113,6 +98,9 @@ go run main.go
 
 ## **8️⃣ Testing JWT Authentication**  
 
+You can either generate your JWT Token with **Postman** or **cURL.**
+
+### ***With Postman***
 ### **🔹 Step 1: Login and Get JWT Token**
 #### **Request:**
 - **Method:** `POST`
@@ -171,7 +159,7 @@ go run main.go
 
 ---
 
-## **9️⃣ Testing with Postman**  
+### **🔹 Step 3: Testing with Postman**   
 
 1. **Login and Get a Token**
    - Open **Postman** and make a `POST` request to `http://localhost:4000/login`
@@ -194,7 +182,7 @@ go run main.go
 
 ---
 
-## **🔟 Alternative: Testing with cURL**  
+### ***With cURL***
 If you prefer the terminal, you can use `cURL`:
 
 ### **Login**
@@ -212,25 +200,44 @@ curl -X GET http://localhost:4000/protected -H "Authorization: Bearer <your_toke
 
 ---
 
-## **1️⃣1️⃣ Stopping and Removing PostgreSQL Container**  
+## **9️⃣ Stopping and Removing Redis Container**  
 
 🔹 **Stop the container:**  
 ```sh
-docker stop jwt-auth-db
+docker stop redis
 ```
 🔹 **Remove the container:**  
 ```sh
-docker rm jwt-auth-db
+docker docker rm redis
 ```
+
+---
+
+ ## **🔟 Login to Kubestellar UI**
+
+🔹 Run the Frontend if you haven't already
+```sh
+npm install
+
+npm run dev
+```
+
+🔹 Login with these credentials
+* **Username: admin**
+* **Password: admin**
+
+*Note: You can input any word or strings of letters and numbers. Just as long as you have the username **admin.***
 
 ---
 
 ## **🎯 Conclusion**
 You have successfully:
-✅ Set up a PostgreSQL container using Docker  
+
+✅ Set up a Redis container using Docker  
 ✅ Created and managed environment variables  
 ✅ Configured JWT authentication in your Go backend  
-✅ Tested the authentication process using Postman and cURL  
+✅ Tested the authentication process using Postman and or cURL   
+✅ Logged into the Kubestellar UI 
 
 ---
 
