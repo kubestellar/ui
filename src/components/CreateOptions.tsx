@@ -72,6 +72,8 @@ kind: Deployment
 metadata:
   name: example-${randomStrings}
   namespace: test-${randomStrings}
+  labels:
+    app.kubernetes.io/name: example
 spec:
   replicas: 2
   selector:

@@ -16,10 +16,11 @@ import (
 )
 
 type WorkloadInfo struct {
-	Name         string    `json:"name"`
-	Kind         string    `json:"kind"` // 'Deployment' or 'Service'
-	Namespace    string    `json:"namespace"`
-	CreationTime time.Time `json:"creationTime"`
+	Name         string            `json:"name"`
+	Kind         string            `json:"kind"` // 'Deployment' or 'Service'
+	Namespace    string            `json:"namespace"`
+	CreationTime time.Time         `json:"creationTime"`
+	Labels       map[string]string `json:"labels"`
 }
 
 func GetDeploymentByName(c *gin.Context) {
@@ -100,6 +101,7 @@ func GetWDSWorkloads(c *gin.Context) {
 			Kind:         "Deployment",
 			Namespace:    deployment.Namespace,
 			CreationTime: deployment.CreationTimestamp.Time,
+			Labels:       deployment.Labels,
 		})
 	}
 
@@ -110,6 +112,7 @@ func GetWDSWorkloads(c *gin.Context) {
 			Kind:         "Service",
 			Namespace:    service.Namespace,
 			CreationTime: service.CreationTimestamp.Time,
+			Labels:       service.Labels,
 		})
 	}
 	c.JSON(http.StatusOK, workloads)
