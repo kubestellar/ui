@@ -57,11 +57,13 @@ func DeployHandler(c *gin.Context) {
 	gitUsername := c.Query("git_username")
 	gitToken := c.Query("git_token")
 	branch := c.Query("branch")
+	createdByMe := c.Query("created_by_me") == "true"
+
 	if branch == "" {
 		branch = "main" // Default branch
 	}
 
-	// Store repo, folder path & branch in Redis for future auto-deployments
+	// Save deployment configuration in Redis for webhook usage
 	redis.SetFilePath(request.FolderPath)
 	redis.SetRepoURL(request.RepoURL)
 	redis.SetBranch(branch)
@@ -92,18 +94,92 @@ func DeployHandler(c *gin.Context) {
 		return
 	}
 
+	// Deploy the manifests
 	deploymentTree, err := k8s.DeployManifests(deployPath, dryRun, dryRunStrategy)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Deployment failed", "details": err.Error()})
 		return
 	}
 
+	// Store deployment data in ConfigMap if it's created by the user
+	if createdByMe {
+		// Create timestamp for deployment ID
+		timestamp := time.Now().Format("20060102150405")
+		deploymentID := fmt.Sprintf("github-%s-%s", filepath.Base(request.RepoURL), timestamp)
+
+		// Prepare deployment data for ConfigMap
+		deploymentData := map[string]string{
+			"id":               deploymentID,
+			"timestamp":        time.Now().Format(time.RFC3339),
+			"repo_url":         request.RepoURL,
+			"folder_path":      request.FolderPath,
+			"branch":           branch,
+			"dry_run":          fmt.Sprintf("%v", dryRun),
+			"dry_run_strategy": dryRunStrategy,
+			"created_by_me":    "true",
+		}
+
+		// Convert deployment tree to JSON string for storage
+		deploymentTreeJSON, _ := json.Marshal(deploymentTree)
+		deploymentData["deployment_tree"] = string(deploymentTreeJSON)
+
+		// Get existing deployments
+		existingDeployments, err := k8s.GetGithubDeployments("its1")
+		if err != nil {
+			// If error, start with empty deployments array
+			existingDeployments = []any{}
+		}
+
+		// Add new deployment to existing ones
+		newDeployment := map[string]interface{}{
+			"id":            deploymentID,
+			"timestamp":     deploymentData["timestamp"],
+			"repo_url":      deploymentData["repo_url"],
+			"folder_path":   deploymentData["folder_path"],
+			"branch":        deploymentData["branch"],
+			"dry_run":       deploymentData["dry_run"],
+			"created_by_me": deploymentData["created_by_me"],
+		}
+
+		existingDeployments = append(existingDeployments, newDeployment)
+		deploymentsJSON, _ := json.Marshal(existingDeployments)
+
+		// Store in ConfigMap
+		cmData := map[string]string{
+			"deployments": string(deploymentsJSON),
+		}
+
+		err = k8s.StoreGitHubDeployment(cmData)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to store deployment data", "details": err.Error()})
+			return
+		}
+	}
+
 	if dryRun {
-		c.JSON(http.StatusOK, gin.H{"message": "Dry run successful. No changes applied.", "dryRunStrategy": dryRunStrategy, "deployment_tree": deploymentTree})
+		c.JSON(http.StatusOK, gin.H{
+			"message":         "Dry run successful. No changes applied.",
+			"dryRunStrategy":  dryRunStrategy,
+			"deployment_tree": deploymentTree,
+			"stored":          createdByMe,
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, deploymentTree)
+	// Include information about storage in the response
+	response := gin.H{
+		"message":         "Deployment successful",
+		"deployment_tree": deploymentTree,
+		"stored":          createdByMe,
+	}
+
+	if createdByMe {
+		response["storage_details"] = "Deployment data stored in ConfigMap for future reference"
+	} else {
+		response["storage_details"] = "Deployment data not stored (created_by_me=false)"
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 func GitHubWebhookHandler(c *gin.Context) {
@@ -203,22 +279,64 @@ func GitHubWebhookHandler(c *gin.Context) {
 		return
 	}
 
+	// For webhook deployments, always deploy and store the data
 	deploymentTree, err := k8s.DeployManifests(deployPath, dryRun, dryRunStrategy)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Deployment failed", "details": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message":       "Deployment successful",
-		"deployment":    deploymentTree,
+	// Create timestamp for deployment ID
+	timestamp := time.Now().Format("20060102150405")
+	deploymentID := fmt.Sprintf("github-webhook-%s-%s", filepath.Base(repoUrl), timestamp)
+
+	// Convert deployment tree to JSON string for storage
+	deploymentTreeJSON, _ := json.Marshal(deploymentTree)
+
+	// Get existing deployments
+	existingDeployments, err := k8s.GetGithubDeployments("its1")
+	if err != nil {
+		// If error, start with empty deployments array
+		existingDeployments = []any{}
+	}
+
+	// Add new deployment to existing ones
+	newDeployment := map[string]interface{}{
+		"id":            deploymentID,
+		"timestamp":     time.Now().Format(time.RFC3339),
+		"repo_url":      repoUrl,
+		"folder_path":   folderPath,
+		"branch":        storedBranch,
 		"changed_files": changedFiles,
+		"webhook":       true,
+		"commit_refs":   request.Commits[0].ID,
+	}
+
+	existingDeployments = append(existingDeployments, newDeployment)
+	deploymentsJSON, _ := json.Marshal(existingDeployments)
+
+	// Store in ConfigMap
+	cmData := map[string]string{
+		"deployments":          string(deploymentsJSON),
+		"last_deployment_tree": string(deploymentTreeJSON),
+	}
+
+	err = k8s.StoreGitHubDeployment(cmData)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to store deployment data", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":         "Webhook deployment successful",
+		"deployment":      deploymentTree,
+		"changed_files":   changedFiles,
+		"storage_details": "Deployment data stored in ConfigMap",
 	})
 }
 
 // createHelmActionConfig initializes the Helm action configuration using WDS1 context
 func CreateHelmActionConfig(namespace string) (*action.Configuration, error) {
-
 	actionConfig := new(action.Configuration)
 	helmSettings := cli.New()
 
