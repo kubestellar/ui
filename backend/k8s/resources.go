@@ -143,6 +143,7 @@ func applyResources(c *gin.Context, yamlDocs []map[string]interface{},
 		}
 
 		resourceObj := &unstructured.Unstructured{Object: resourceData}
+		autoLabelling(resourceObj)
 		result, err := resource.Create(c, resourceObj, v1.CreateOptions{})
 		if err != nil {
 			return results, fmt.Errorf("failed to create resource %s: %v", resourceKind, err)
@@ -151,6 +152,19 @@ func applyResources(c *gin.Context, yamlDocs []map[string]interface{},
 	}
 	return results, nil
 
+}
+
+func autoLabelling(obj *unstructured.Unstructured) {
+	labels := obj.GetLabels()
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	labelKey := "kubernetes.io/name"
+
+	if _, exists := labels[labelKey]; !exists {
+		labels[labelKey] = obj.GetName()
+		obj.SetLabels(labels)
+	}
 }
 
 // CreateResource creates a Kubernetes resource
