@@ -14,4 +14,6 @@ func SetupRoutes(router *gin.Engine) {
 	SetupResourceRoutes(router)
 	getWecsResources(router)
 	helmDeploy(router)
+
+	GetDeploymentHistory(router)
 }
