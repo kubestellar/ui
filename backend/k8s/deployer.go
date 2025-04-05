@@ -278,7 +278,6 @@ func PrettyPrint(tree *DeploymentTree) {
 	fmt.Println(string(jsonData))
 }
 
-
 // Store Manifests deployment data to a ConfigMap
 func StoreManifestsDeployment(data map[string]string) error {
 	return storeConfigMapData("kubestellar-manifests", data)
@@ -772,7 +771,6 @@ func deployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 
 	}
 
-	
 	return release, nil
 }
 
@@ -787,7 +785,7 @@ func HelmDeployHandler(c *gin.Context) {
 	// Parse the "store" parameter from the query string
 	storeQuery := c.Query("store")
 	store := false
-	if  storeQuery == "true" {
+	if storeQuery == "true" {
 		store = true
 	}
 
@@ -824,8 +822,8 @@ func ListGithubDeployments(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "GitHub deployments retrieved successfully",
-		"count": len(deployments),
+		"message":     "GitHub deployments retrieved successfully",
+		"count":       len(deployments),
 		"deployments": deployments,
 	})
 }
@@ -833,32 +831,32 @@ func ListGithubDeployments(c *gin.Context) {
 // ListHelmDeploymentsHandler handles API requests to list all Helm deployments
 func ListHelmDeploymentsHandler(c *gin.Context) {
 	contextName := c.DefaultQuery("context", "its1")
-	
+
 	deployments, err := GetHelmDeployments(contextName)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve deployments: %v", err)})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Helm deployments retrieved successfully",
-		"count": len(deployments),
+		"message":     "Helm deployments retrieved successfully",
+		"count":       len(deployments),
 		"deployments": deployments,
 	})
 }
 
 func ListGithubDeploymentsHandler(c *gin.Context) {
 	contextName := c.DefaultQuery("context", "its1")
-	
+
 	deployments, err := GetGithubDeployments(contextName)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve deployments: %v", err)})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, gin.H{
-		"message": "GitHub deployments retrieved successfully",
-		"count": len(deployments),
+		"message":     "GitHub deployments retrieved successfully",
+		"count":       len(deployments),
 		"deployments": deployments,
 	})
 }
@@ -867,20 +865,20 @@ func ListGithubDeploymentsHandler(c *gin.Context) {
 func GetHelmDeploymentHandler(c *gin.Context) {
 	contextName := c.DefaultQuery("context", "its1")
 	deploymentID := c.Param("id")
-	
+
 	if deploymentID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Deployment ID is required"})
 		return
 	}
-	
+
 	deployment, err := GetHelmDeploymentByID(contextName, deploymentID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("Deployment not found: %v", err)})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Helm deployment retrieved successfully",
+		"message":    "Helm deployment retrieved successfully",
 		"deployment": deployment,
 	})
 }
@@ -889,22 +887,22 @@ func GetHelmDeploymentHandler(c *gin.Context) {
 func ListHelmDeploymentsByNamespaceHandler(c *gin.Context) {
 	contextName := c.DefaultQuery("context", "its1")
 	namespace := c.Param("namespace")
-	
+
 	if namespace == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Namespace is required"})
 		return
 	}
-	
+
 	deployments, err := GetHelmDeploymentsByNamespace(contextName, namespace)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve deployments: %v", err)})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf("Helm deployments in namespace %s retrieved successfully", namespace),
-		"count": len(deployments),
-		"namespace": namespace,
+		"message":     fmt.Sprintf("Helm deployments in namespace %s retrieved successfully", namespace),
+		"count":       len(deployments),
+		"namespace":   namespace,
 		"deployments": deployments,
 	})
 }
@@ -913,22 +911,22 @@ func ListHelmDeploymentsByNamespaceHandler(c *gin.Context) {
 func ListHelmDeploymentsByReleaseHandler(c *gin.Context) {
 	contextName := c.DefaultQuery("context", "its1")
 	releaseName := c.Param("release")
-	
+
 	if releaseName == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Release name is required"})
 		return
 	}
-	
+
 	deployments, err := GetHelmDeploymentsByRelease(contextName, releaseName)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve deployments: %v", err)})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf("Helm deployments for release %s retrieved successfully", releaseName),
-		"count": len(deployments),
-		"release": releaseName,
+		"message":     fmt.Sprintf("Helm deployments for release %s retrieved successfully", releaseName),
+		"count":       len(deployments),
+		"release":     releaseName,
 		"deployments": deployments,
 	})
 }
