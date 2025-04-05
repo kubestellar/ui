@@ -6,7 +6,6 @@ import BPPagination from "../components/BindingPolicy/BPPagination";
 import PreviewDialog from "../components/BindingPolicy/PreviewDialog";
 import DeleteDialog from "../components/BindingPolicy/Dialogs/DeleteDialog";
 import EditBindingPolicyDialog from "../components/BindingPolicy/Dialogs/EditBindingPolicyDialog";
-import CreateBindingPolicyDialog from "../components/BindingPolicy/CreateBindingPolicyDialog";
 import yaml from "js-yaml"; // Import yaml parser
 import {
   BindingPolicyInfo,
@@ -812,13 +811,6 @@ const BP = () => {
           policyName={selectedPolicy?.name}
         />
         
-        <CreateBindingPolicyDialog
-          open={createDialogOpen}
-          onClose={() => setCreateDialogOpen(false)}
-          onCreatePolicy={handleCreatePolicySubmit}
-          clusters={clusters}
-          workloads={workloads}
-        />
       </Paper>
        {/* Drag & Drop Help Dialog */}
        <Dialog 

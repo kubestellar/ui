@@ -91,7 +91,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   //const tabContentStyles = getTabContentStyles(theme);
   const enhancedTabContentStyles = getEnhancedTabContentStyles(theme);
   
-  const [activeTab, setActiveTab] = useState<string>("yaml");
+  const [activeTab, setActiveTab] = useState<string>("dragdrop");
   const [editorContent, setEditorContent] = useState<string>(DEFAULT_BINDING_POLICY_TEMPLATE);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileContent, setFileContent] = useState<string>("");
