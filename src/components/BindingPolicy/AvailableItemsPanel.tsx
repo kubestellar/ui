@@ -327,7 +327,7 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>
-                      {workload.type}
+                      {workload.kind}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       in {workload.namespace || 'default'}

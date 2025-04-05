@@ -7,7 +7,8 @@ import {
   Divider,
   useTheme,
   alpha,
-  Button
+  Button,
+  Chip
 } from '@mui/material';
 import { Draggable } from '@hello-pangea/dnd';
 import { Workload } from '../../types/bindingPolicy';
@@ -71,6 +72,36 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
                 {workload.name}
               </Typography>
             </Box>
+            
+            {/* Display workload type and namespace */}
+            <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                Type: {workload.kind}
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                Namespace: {workload.namespace}
+              </Typography>
+            </Box>
+            
+            {/* Display workload labels */}
+            {workload.labels && Object.keys(workload.labels).length > 0 && (
+              <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                {Object.entries(workload.labels).map(([key, value]) => (
+                  <Chip
+                    key={key}
+                    size="small"
+                    label={`${key}: ${value}`}
+                    sx={{ 
+                      fontSize: '0.625rem',
+                      height: 20,
+                      '& .MuiChip-label': { px: 1 },
+                      bgcolor: alpha(theme.palette.secondary.main, 0.1),
+                      color: theme.palette.secondary.main
+                    }}
+                  />
+                ))}
+              </Box>
+            )}
           </Box>
         )}
       </Draggable>
