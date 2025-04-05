@@ -70,10 +70,10 @@ const CreateOptions = ({
   const initialEditorContent = `apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: example-${randomStrings}
+  name: test-${randomStrings}
   namespace: test-${randomStrings}
   labels:
-    app.kubernetes.io/name: example
+    kubernetes.io/metadata.name: example-${randomStrings}
 spec:
   replicas: 2
   selector:

@@ -700,7 +700,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                       </Box>
                       
                       <Typography variant="caption" color="text.secondary" noWrap>
-                        Type: {workload.type}
+                        Type: {workload.kind}
                       </Typography>
                       
                       {Object.keys(getItemLabels('workload', workloadId)).length > 0 && (

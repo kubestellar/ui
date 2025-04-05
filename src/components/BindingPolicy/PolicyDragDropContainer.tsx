@@ -154,17 +154,22 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
   }, []);
   
   // Function to generate YAML preview wrapped in useCallback
-  const generateBindingPolicyPreview = useCallback(async (clusterIds: string[], workloadIds: string[], config?: PolicyConfiguration) => {
+  const generateBindingPolicyPreview = useCallback(async (
+    requestData: {
+      workloadLabels: Record<string, string>,
+      clusterLabels: Record<string, string>,
+      resources: Array<{type: string, createOnly: boolean}>,
+      namespacesToSync?: string[],
+      namespace?: string,
+      policyName?: string
+    },
+    config?: PolicyConfiguration
+  ) => {
     if (!config) return;
     
     try {
-      // Generate the YAML preview using the updated API that accepts arrays
-      const generateYamlResponse = await generateYamlMutation.mutateAsync({
-        workloadIds,
-        clusterIds,
-        namespace: config.namespace || "default",
-        policyName: config.name
-      });
+      // Generate the YAML preview using the updated API format
+      const generateYamlResponse = await generateYamlMutation.mutateAsync(requestData);
       
       // Update the preview YAML
       setPreviewYaml(generateYamlResponse.yaml);
@@ -245,6 +250,17 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
       clusterIds
     });
     
+    // Find the workload object to get its namespace
+    const firstWorkloadId = workloadIds[0];
+    const workloadObj = workloads.find(w => w.name === firstWorkloadId);
+    
+    if (!workloadObj) {
+      console.error('Workload not found:', firstWorkloadId);
+      return;
+    }
+    
+    const workloadNamespace = workloadObj.namespace || 'default';
+    
     // Generate a name for the policy that includes all workloads
     const workloadNames = workloadIds.join("-");
     const policyName = `${workloadNames}-to-clusters-${Date.now()}`;
@@ -252,7 +268,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     // Create default configuration
     const defaultConfig: PolicyConfiguration = {
       name: policyName,
-      namespace: 'default',
+      namespace: workloadNamespace, // Use the namespace from the workload
       propagationMode: 'DownsyncOnly',
       updateStrategy: 'ServerSideApply',
       deploymentType: 'SelectedClusters',
@@ -262,7 +278,6 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     };
     
     // For display purposes only - we'll use the actual arrays in the API call
-    const firstWorkloadId = workloadIds[0];
     const clusterIdsStr = clusterIds.join(", ");
     
     // Store IDs for UI display (maintain backward compatibility)
@@ -270,10 +285,75 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     setCurrentClusterId(clusterIdsStr);   
     setCurrentConfig(defaultConfig);
     
-    // Generate YAML preview using all workload and cluster IDs
-    generateBindingPolicyPreview(clusterIds, workloadIds, defaultConfig);
-  }, [canvasEntities, generateBindingPolicyPreview]);
+    // Convert workload IDs to workload labels - use proper app label format
+    const workloadLabels = {
+      'kubernetes.io/metadata.name': firstWorkloadId
+    };
+    
+    // Convert cluster IDs to cluster labels - use 'name' as the key based on actual data
+    const clusterLabels = {
+      'name': clusterIds[0]
+    };
+    
+    // Dynamically generate resources based on workload kind
+    const resources = generateResourcesFromWorkload(workloadObj);
+    
+    // Generate YAML preview using the new format
+    generateBindingPolicyPreview({
+      workloadLabels,
+      clusterLabels,
+      resources,
+      namespacesToSync: [workloadNamespace], // Use the namespace from the workload
+      namespace: workloadNamespace, // Use the namespace from the workload
+      policyName
+    }, defaultConfig);
+  }, [canvasEntities, generateBindingPolicyPreview, workloads]);
 
+  // Helper function to generate resources array from workload
+  const generateResourcesFromWorkload = useCallback((workload: Workload) => {
+    console.log('🔍 DEBUG - Generating resources from workload:', workload);
+    
+    const resources = [
+      // Always include namespaces
+      { type: 'namespaces', createOnly: false }
+    ];
+    
+    // Convert the workload kind to lowercase and pluralize
+    if (workload.kind) {
+      const kindLower = workload.kind.toLowerCase();
+      let resourceType = kindLower;
+      
+      // Simple pluralization - add 's' if not already ending with 's'
+      if (!resourceType.endsWith('s')) {
+        resourceType += 's';
+      }
+      
+      console.log(`🔍 DEBUG - Adding resource from kind: ${resourceType}`);
+      
+      // Add the workload's resource type
+      resources.push({ type: resourceType, createOnly: false });
+      
+      // For deployments, add dependent resources
+      if (kindLower === 'deployment') {
+        resources.push({ type: 'replicasets', createOnly: false });
+        // Don't include pods as they should be managed by controllers
+        resources.push({ type: 'services', createOnly: false });
+      } else if (kindLower === 'statefulset') {
+        resources.push({ type: 'services', createOnly: false });
+        // Don't include pods as they should be managed by controllers
+      }
+    } else {
+      console.warn("🔍 DEBUG - Workload kind missing, adding deployment as default resource type");
+      // If workload kind is missing, default to deployment
+      resources.push({ type: 'deployments', createOnly: false });
+      resources.push({ type: 'replicasets', createOnly: false });
+      resources.push({ type: 'services', createOnly: false });
+    }
+    
+    console.log('🔍 DEBUG - Final resources array:', resources);
+    return resources;
+  }, []);
+  
   // Handle saving configuration from the sidebar
   const handleSaveConfiguration = useCallback(async (config: PolicyConfiguration) => {
     console.log('🔍 DEBUG - handleSaveConfiguration called with config:', config);
@@ -294,10 +374,21 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
       workloadId = selectedConnection.target.id;
     }
     
+    // Find the workload object to get its namespace
+    const workloadObj = workloads.find(w => w.name === workloadId);
+    
+    if (!workloadObj) {
+      console.error('Workload not found:', workloadId);
+      return;
+    }
+    
+    const workloadNamespace = workloadObj.namespace || 'default';
+    
     console.log('🔍 DEBUG - Processing connection in handleSaveConfiguration:', {
       workloadId,
       clusterIdsString,
-      selectedConnection
+      selectedConnection,
+      workloadNamespace
     });
     
     setCurrentWorkloadId(workloadId);
@@ -305,7 +396,24 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     setCurrentConfig(config);
       
     // Generate YAML preview with all clusters as a comma-separated string
-    const yaml = await generateBindingPolicyPreview(canvasEntities.clusters.map(String), canvasEntities.workloads.map(String), config);
+    const yaml = await generateBindingPolicyPreview({
+      workloadLabels: {
+        'kubernetes.io/metadata.name': workloadId
+      },
+      clusterLabels: {
+        'name': canvasEntities.clusters[0] // Use 'name' as key
+      },
+      resources: [
+        { type: 'deployments', createOnly: false },
+        { type: 'pods', createOnly: false },
+        { type: 'services', createOnly: false },
+        { type: 'replicasets', createOnly: false },
+        { type: 'namespaces', createOnly: false }
+      ],
+      namespacesToSync: [workloadNamespace], // Use the namespace from the workload
+      namespace: workloadNamespace, // Use the namespace from the workload
+      policyName: config.name
+    }, config);
     
     if (yaml) {
       // Store the edited YAML with a key based on the workload (since we're using all clusters)
@@ -331,7 +439,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
         labels: config.customLabels
       });
     }
-  }, [selectedConnection, generateBindingPolicyPreview, canvasEntities.clusters, canvasEntities.workloads]);
+  }, [selectedConnection, generateBindingPolicyPreview, canvasEntities.clusters, canvasEntities.workloads, workloads]);
 
  
 
@@ -435,68 +543,148 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     setDeploymentError(null);
     
     try {
-      // Create a single policy with all workloads and clusters
-      // Instead of processing each policy separately, combine them
-      const allWorkloadIds = policiesToDeploy.flatMap(policy => policy.workloadIds);
-      const allClusterIds = canvasEntities.clusters;
+      // Get the first workload and cluster
+      const workloadId = policiesToDeploy[0].workloadIds[0];
+      const clusterId = policiesToDeploy[0].clusterIds[0];
       
-      // Create a unique policy name that includes all workloads
-      const timestamp = Date.now();
-      const workloadNames = allWorkloadIds.join("-");
-      const policyName = `${workloadNames}-binding-${timestamp}`;
+      // Find the workload object to get its namespace
+      const workloadObj = workloads.find(w => w.name === workloadId);
       
-      console.log('🔍 DEBUG - Creating single policy for all workloads and clusters:', {
-        workloadIds: allWorkloadIds,
-        clusterIds: allClusterIds,
-        policyName
-      });
-      
-      // Format workload IDs properly if needed
-      const formattedWorkloadIds = allWorkloadIds.map(id => {
-        // Check if workload exists in the workloads array
-        const workload = workloads.find(w => w.name === id);
-        // Return the properly formatted ID with required metadata
-        return workload ? id : id;
-      });
-      
-      try {
-        // Call the quick-connect API with all workloads and clusters in a single call
-        const result = await quickConnectMutation.mutateAsync({
-          workloadIds: formattedWorkloadIds,
-          clusterIds: allClusterIds,
-          policyName,
-          namespace: 'default'
-        });
-        console.log(result)
-        // Show success message
-        setSuccessMessage(`Successfully created binding policy "${policyName}" connecting ${formattedWorkloadIds.length} workloads to ${allClusterIds.length} clusters`);
-        
-        // Close the dialog after successful deployment
-        setDeploymentDialogOpen(false);
-        
-        // Clear the canvas to avoid duplication
-        if (onClearCanvas) {
-          onClearCanvas();
-        }
-      } catch (error) {
-        console.error('❌ Failed to deploy policy:', error);
-        setDeploymentError(
-          error instanceof Error 
-            ? error.message 
-            : 'Failed to deploy binding policy. Please try again.'
-        );
+      if (!workloadObj) {
+        setDeploymentError(`Workload not found: ${workloadId}`);
+        setDeploymentLoading(false);
+        return;
       }
-    } catch (error: unknown) {
-      console.error('Error deploying binding policies:', error);
+      
+      const workloadNamespace = workloadObj.namespace || 'default';
+      
+      // Create a unique policy name
+      const timestamp = Date.now();
+      const policyName = `${workloadId}-to-${clusterId}-${timestamp}`;
+      
+      console.log('🔍 DEBUG - Creating binding policy:', {
+        workloadId,
+        clusterId,
+        policyName,
+        namespace: workloadNamespace
+      });
+      
+      // Generate resources based on workload kind
+      const resources = generateResourcesFromWorkload(workloadObj);
+      
+      // Convert to the format with correct labels that match actual data
+      const requestData = {
+        workloadLabels: {
+          'kubernetes.io/metadata.name': workloadId
+        },
+        clusterLabels: {
+          'name': clusterId // Use 'name' as key based on actual data
+        },
+        resources,
+        namespacesToSync: [workloadNamespace],
+        policyName: policyName,
+        namespace: workloadNamespace
+      };
+      
+      // Call the quick-connect API with the new format
+      const result = await quickConnectMutation.mutateAsync(requestData);
+      console.log('API response:', result);
+      
+      // Show success message
+      setSuccessMessage(`Successfully created binding policy "${policyName}" connecting ${workloadId} to ${clusterId}`);
+      
+      // Close the dialog after successful deployment
+      setDeploymentDialogOpen(false);
+      
+      // Clear the canvas to avoid duplication
+      if (onClearCanvas) {
+        onClearCanvas();
+      }
+      
+      // Reset loading state after successful completion
+      setDeploymentLoading(false);
+    } catch (error) {
+      console.error('❌ Failed to deploy policy:', error);
       setDeploymentError(
         error instanceof Error 
           ? error.message 
-          : 'Failed to deploy binding policies. Please try again.'
+          : 'Failed to deploy binding policy. Please try again.'
       );
-    } finally {
+      // Ensure loading state is reset on error
       setDeploymentLoading(false);
     }
-  }, [policiesToDeploy, quickConnectMutation, canvasEntities.clusters, workloads, setSuccessMessage, onClearCanvas]);
+  }, [policiesToDeploy, quickConnectMutation, setSuccessMessage, onClearCanvas, workloads, generateResourcesFromWorkload]);
+
+  // Update the handleCreateFromPreview function
+  const handleCreateFromPreview = useCallback(async () => {
+    if (!previewYaml) return;
+    
+    // Set loading state
+    setDeploymentLoading(true);
+    setDeploymentError(null);
+    
+    try {
+      // Get current workload and cluster IDs
+      const workloadId = currentWorkloadId;
+      const clusterId = currentClusterId.split(', ')[0]; // Get first cluster if multiple
+      
+      // Find the workload object to get its namespace
+      const workloadObj = workloads.find(w => w.name === workloadId);
+      
+      if (!workloadObj) {
+        console.error('Workload not found:', workloadId);
+        setDeploymentError(`Workload not found: ${workloadId}`);
+        setDeploymentLoading(false); // Reset loading on error
+        return;
+      }
+      
+      const workloadNamespace = workloadObj.namespace || 'default';
+      
+      // Generate resources based on workload kind
+      const resources = generateResourcesFromWorkload(workloadObj);
+      
+      // Prepare request with correct label keys from actual data
+      const requestData = {
+        workloadLabels: {
+          'kubernetes.io/metadata.name': workloadId
+        },
+        clusterLabels: {
+          'name': clusterId // Use 'name' as key
+        },
+        resources,
+        namespacesToSync: [workloadNamespace],
+        policyName: currentConfig?.name || `${workloadId}-to-${clusterId}`,
+        namespace: workloadNamespace
+      };
+      
+      console.log('Creating binding policy with:', requestData);
+      
+      // Use the quick connect API with the new format
+      const response = await quickConnectMutation.mutateAsync(requestData);
+      
+      console.log('API Response:', response);
+      
+      // Show success message
+      setSuccessMessage(`Binding policy "${requestData.policyName}" created successfully`);
+      
+      // Close the dialog
+      setShowPreviewDialog(false);
+      
+      // Clear the canvas
+      if (onClearCanvas) {
+        onClearCanvas();
+      }
+      
+      // Reset loading state after successful completion
+      setDeploymentLoading(false);
+    } catch (error) {
+      console.error('Failed to create binding policy:', error);
+      setDeploymentError(error instanceof Error ? error.message : 'Failed to create binding policy');
+      
+      // Reset loading state on error
+      setDeploymentLoading(false);
+    }
+  }, [previewYaml, currentWorkloadId, currentClusterId, currentConfig, quickConnectMutation, setSuccessMessage, onClearCanvas, setDeploymentError, workloads, generateResourcesFromWorkload]);
 
   // Main layout for the drag and drop interface
   return (
@@ -609,10 +797,34 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
                         color: theme === "dark" ? "rgba(255, 255, 255, 0.5) !important" : undefined
                       }
                     }}
-                    disabled={canvasEntities?.clusters.length === 0 || canvasEntities?.workloads.length === 0}
+                    disabled={canvasEntities?.clusters.length === 0 || canvasEntities?.workloads.length === 0 || deploymentLoading}
                     onClick={prepareForDeployment}
                   >
-                    Deploy Binding Policies
+                    {deploymentLoading ? (
+                      <>
+                        <Box component="span" sx={{ display: 'inline-flex', mr: 1, alignItems: 'center' }}>
+                          <Box
+                            component="span"
+                            sx={{
+                              width: 16,
+                              height: 16,
+                              borderRadius: '50%',
+                              border: '2px solid currentColor',
+                              borderRightColor: 'transparent',
+                              animation: 'spin 1s linear infinite',
+                              display: 'inline-block',
+                              '@keyframes spin': {
+                                '0%': { transform: 'rotate(0deg)' },
+                                '100%': { transform: 'rotate(360deg)' }
+                              }
+                            }}
+                          />
+                        </Box>
+                        Deploying...
+                      </>
+                    ) : (
+                      'Deploy Binding Policies'
+                    )}
                   </Button>
                 </Box>
               )}
@@ -649,7 +861,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
         dialogMode={dialogMode}
       />
       
-      {/* Preview YAML Dialog - Now with only Close button */}
+      {/* Preview YAML Dialog - Now with save functionality */}
       <Dialog
         open={showPreviewDialog}
         onClose={() => setShowPreviewDialog(false)}
@@ -761,14 +973,6 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
         }}>
           <Button 
             onClick={() => {
-              // Save current edits before closing
-              if (currentWorkloadId && previewYaml) {
-                const connectionKey = `${currentWorkloadId}-${currentClusterId}`;
-                setEditedPolicyYaml(prev => ({
-                  ...prev,
-                  [connectionKey]: previewYaml
-                }));
-              }
               setShowPreviewDialog(false);
             }}
             sx={{
@@ -780,46 +984,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
           <Button 
             variant="contained"
             color="primary"
-            onClick={async () => {
-              if (previewYaml) {
-                try {
-                  // Prepare policy data using the edited YAML
-                  const policyName = currentConfig?.name || `multi-binding-${Date.now()}`;
-                  
-                  // Log all workload and cluster IDs that will be sent
-                  console.log('Creating a single binding policy with:', {
-                    workloadIds: canvasEntities.workloads,
-                    clusterIds: canvasEntities.clusters,
-                    policyName
-                  });
-                  
-                  // Use the quick connect API with all workloads and all clusters in a single call
-                  // Make sure we're explicitly passing arrays to the API
-                  const response = await quickConnectMutation.mutateAsync({
-                    workloadIds: canvasEntities.workloads,
-                    clusterIds: canvasEntities.clusters,
-                    policyName: policyName,
-                    namespace: 'default'
-                  });
-                  
-                  console.log('API Response:', response);
-                  
-                  // Show success message with count of workloads and clusters
-                  setSuccessMessage(`Binding policy "${policyName}" created successfully connecting ${canvasEntities.workloads.length} workloads to ${canvasEntities.clusters.length} clusters`);
-                  
-                  // Close the dialog
-                  setShowPreviewDialog(false);
-                  
-                  // Clear the canvas
-                  if (onClearCanvas) {
-                    onClearCanvas();
-                  }
-                } catch (error) {
-                  console.error('Failed to create binding policy:', error);
-                  setDeploymentError(error instanceof Error ? error.message : 'Failed to create binding policy');
-                }
-              }
-            }}
+            onClick={handleCreateFromPreview}
             sx={{
               bgcolor: theme === "dark" ? "#2563eb" : undefined,
               color: theme === "dark" ? "#FFFFFF" : undefined,

@@ -43,15 +43,13 @@ export interface ManagedCluster {
 
 export interface Workload {
     name: string;
-    type: string;
+    kind: string;
     namespace: string;
     creationTime?: string;
-    labels: Record<string, string>;
-    status?: string;
+    image?: string;
+    labels?: Record<string, string>;
     replicas?: number;
-    selector?: Record<string, string>;
-    apiVersion?: string;
-    description?: string;
+    status?: string;
 }
 
 export interface BindingPolicyFilter {

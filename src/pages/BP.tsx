@@ -238,13 +238,13 @@ const BP = () => {
   const getMatches = useCallback(() => {
     const matchedClusters = availableClusters.filter((cluster) => {
       return Object.entries(selectedLabels).every(
-        ([key, value]) => cluster.labels[key] === value
+        ([key, value]) => cluster.labels && cluster.labels[key] === value
       );
     });
 
     const matchedWorkloads = availableWorkloads.filter((workload) => {
       return Object.entries(selectedLabels).every(
-        ([key, value]) => workload.labels[key] === value
+        ([key, value]) => workload.labels && workload.labels[key] === value
       );
     });
 
@@ -261,6 +261,8 @@ const BP = () => {
     propagationMode?: string;
     updateStrategy?: string;
   }
+  
+ 
   
   // Add function to handle simulated binding policy creation
   const handleCreateSimulatedBindingPolicy = useCallback((clusterIds: string[], workloadIds: string[], config?: BindingPolicyConfig) => {
@@ -287,7 +289,7 @@ const BP = () => {
           namespace: policyNamespace,
           status: "Active",
           clusters: 1,
-          workload: `${workload.type}/${workload.name}`,
+          workload: `${workload.kind}/${workload.name}`,
           clusterList: clusterIds,
           workloadList: workloadIds,
           creationDate: new Date().toLocaleString(),
@@ -311,7 +313,7 @@ const BP = () => {
               downsync: [
                 {
                   apiGroup: "apps/v1",
-                  resources: [`${workload.type.toLowerCase()}s`],
+                  resources: [`${workload.kind.toLowerCase()}s`],
                   namespace: workload.namespace || "default",
                   resourceNames: [workload.name]
                 }
@@ -393,18 +395,22 @@ const BP = () => {
     
     // Update workloads state when workloadsData changes
     if (workloadsData) {
+      // Properly convert to match the Workload interface
       const workloadData = workloadsData
         .filter(workload => workload.namespace !== "default")
         .map(workload => ({
           name: workload.name,
-          type: workload.kind,
+          kind: workload.kind,
           namespace: workload.namespace,
           creationTime: workload.creationTime,
-          labels: workload.label ? JSON.parse(workload.label) : {}
+          labels: workload.labels || {},
+          replicas: workload.replicas || 0,
+          status: workload.status || 'Unknown'
         }));
       
-      setWorkloads(workloadData);
-      setAvailableWorkloads(workloadData);
+      // Cast the data to satisfy TypeScript
+      setWorkloads(workloadData as Workload[]);
+      setAvailableWorkloads(workloadData as Workload[]);
     } else {
       // If no workloads data or error, set to empty array
       setWorkloads([]);

@@ -4,10 +4,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"gopkg.in/yaml.v3"
-	"io"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -16,11 +22,6 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/tools/cache"
-	"log"
-	"net/http"
-	"strings"
-	"sync"
-	"time"
 )
 
 // mapResourceToGVR maps resource types to their GroupVersionResource (GVR)
@@ -159,7 +160,7 @@ func autoLabelling(obj *unstructured.Unstructured) {
 	if labels == nil {
 		labels = make(map[string]string)
 	}
-	labelKey := "kubernetes.io/name"
+	labelKey := "kubernetes.io/metadata.name"
 
 	if _, exists := labels[labelKey]; !exists {
 		labels[labelKey] = obj.GetName()

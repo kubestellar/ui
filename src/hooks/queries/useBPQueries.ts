@@ -53,30 +53,44 @@ interface DownsyncItem {
   namespaces?: string[];
 }
 
+// Resource configuration with createOnly option
+interface ResourceConfig {
+  type: string;
+  createOnly: boolean;
+}
+
 interface GenerateYamlRequest {
-  workloadIds: string[];
-  clusterIds: string[];
-  namespace: string;
+  workloadLabels: Record<string, string>;
+  clusterLabels: Record<string, string>;
+  resources: ResourceConfig[];
+  namespacesToSync?: string[];
+  namespace?: string;
   policyName?: string;
+  // For backward compatibility
+  workloadIds?: string[];
+  clusterIds?: string[];
 }
 
 interface QuickConnectRequest {
-  workloadIds: string[];
-  clusterIds: string[];
+  workloadLabels: Record<string, string>;
+  clusterLabels: Record<string, string>;
+  resources: ResourceConfig[];
+  namespacesToSync?: string[];
   policyName?: string;
   namespace?: string;
+  // For backward compatibility
+  workloadIds?: string[];
+  clusterIds?: string[];
 }
 
 interface GenerateYamlResponse {
   bindingPolicy: {
     bindingMode: string;
-    clusterIds: string[];
     clusters: string[];
     clustersCount: number;
     name: string;
     namespace: string;
     status: string;
-    workloadIds: string[];
     workloads: string[];
     workloadsCount: number;
   };
@@ -407,28 +421,58 @@ export const useBPQueries = () => {
     });
   };
 
-  // Generate YAML for binding policy
-  const useGenerateBindingPolicyYaml = () => {
-    return useMutation<GenerateYamlResponse, Error, GenerateYamlRequest>({
-      mutationFn: async (request) => {
-        console.log("Generating YAML for binding policy:", request);
-        const response = await api.post('/api/bp/generate-yaml', request);
-        console.log("Generated YAML response:", response.data);
-        return response.data;
-      },
-      onError: (error: Error) => {
-        console.error("Error generating binding policy YAML:", error);
-        toast.error('Failed to generate binding policy YAML');
-      }
-    });
-  };
-
   // Quick connect API for drag and drop
   const useQuickConnect = () => {
     return useMutation<QuickConnectResponse, Error, QuickConnectRequest>({
       mutationFn: async (request) => {
         console.log("Creating quick connect binding policy:", request);
-        const response = await api.post('/api/bp/quick-connect', request);
+        
+        // Check if we need to convert from legacy format
+        const formattedRequest = { ...request };
+        
+        // Convert workloadIds to workloadLabels if needed for backward compatibility
+        if (request.workloadIds && request.workloadIds.length > 0 && !request.workloadLabels) {
+          // For backward compatibility, assume app.kubernetes.io/name label
+          formattedRequest.workloadLabels = {
+            'app.kubernetes.io/name': request.workloadIds[0]
+          };
+        }
+        
+        // Convert clusterIds to clusterLabels if needed for backward compatibility
+        if (request.clusterIds && request.clusterIds.length > 0 && !request.clusterLabels) {
+          // Use 'name' as the key based on actual cluster label format
+          formattedRequest.clusterLabels = {
+            'name': request.clusterIds[0]
+          };
+        }
+        
+        // Validate and enhance resources if needed
+        if (!formattedRequest.resources || formattedRequest.resources.length === 0) {
+          console.warn("No resources provided, adding default resources");
+          formattedRequest.resources = [
+            { type: 'namespaces', createOnly: false },
+            { type: 'deployments', createOnly: false },
+            { type: 'services', createOnly: false }, 
+            { type: 'replicasets', createOnly: false }
+          ];
+        } else if (formattedRequest.resources.length === 1 && 
+                  formattedRequest.resources[0].type === 'namespaces') {
+          console.warn("Only namespaces resource provided, adding default workload resources");
+          formattedRequest.resources.push(
+            { type: 'deployments', createOnly: false },
+            { type: 'services', createOnly: false },
+            { type: 'replicasets', createOnly: false }
+          );
+        }
+        
+        // Ensure namespacesToSync is set if not provided
+        if (!formattedRequest.namespacesToSync || formattedRequest.namespacesToSync.length === 0) {
+          // Use the provided namespace or default to 'default'
+          formattedRequest.namespacesToSync = [formattedRequest.namespace || 'default'];
+        }
+        
+        console.log("Final formatted request:", JSON.stringify(formattedRequest, null, 2));
+        const response = await api.post('/api/bp/quick-connect', formattedRequest);
         console.log("Quick connect response:", response.data);
         return response.data;
       },
@@ -439,6 +483,66 @@ export const useBPQueries = () => {
       onError: (error: Error) => {
         console.error("Error creating quick connect binding policy:", error);
         toast.error('Failed to create binding policy');
+      }
+    });
+  };
+
+  // Generate YAML for binding policy - Updated for new format
+  const useGenerateBindingPolicyYaml = () => {
+    return useMutation<GenerateYamlResponse, Error, GenerateYamlRequest>({
+      mutationFn: async (request) => {
+        console.log("Generating YAML for binding policy:", request);
+        
+        // Handle both new and legacy formats
+        const formattedRequest = { ...request };
+        
+        // Convert workloadIds to workloadLabels if needed
+        if (request.workloadIds && request.workloadIds.length > 0 && !request.workloadLabels) {
+          formattedRequest.workloadLabels = {
+            'app.kubernetes.io/name': request.workloadIds[0]
+          };
+        }
+        
+        // Convert clusterIds to clusterLabels if needed
+        if (request.clusterIds && request.clusterIds.length > 0 && !request.clusterLabels) {
+          formattedRequest.clusterLabels = {
+            'name': request.clusterIds[0]
+          };
+        }
+        
+        // Validate and enhance resources if needed
+        if (!formattedRequest.resources || formattedRequest.resources.length === 0) {
+          console.warn("No resources provided for YAML generation, adding default resources");
+          formattedRequest.resources = [
+            { type: 'namespaces', createOnly: false },
+            { type: 'deployments', createOnly: false },
+            { type: 'services', createOnly: false }, 
+            { type: 'replicasets', createOnly: false }
+          ];
+        } else if (formattedRequest.resources.length === 1 && 
+                  formattedRequest.resources[0].type === 'namespaces') {
+          console.warn("Only namespaces resource provided for YAML generation, adding default workload resources");
+          formattedRequest.resources.push(
+            { type: 'deployments', createOnly: false },
+            { type: 'services', createOnly: false },
+            { type: 'replicasets', createOnly: false }
+          );
+        }
+        
+        // Ensure namespacesToSync is set if not provided
+        if (!formattedRequest.namespacesToSync || formattedRequest.namespacesToSync.length === 0) {
+          // Use the provided namespace or default to 'default'
+          formattedRequest.namespacesToSync = [formattedRequest.namespace || 'default'];
+        }
+        
+        console.log("Final YAML generation request:", JSON.stringify(formattedRequest, null, 2));
+        const response = await api.post('/api/bp/generate-yaml', formattedRequest);
+        console.log("Generated YAML response:", response.data);
+        return response.data;
+      },
+      onError: (error: Error) => {
+        console.error("Error generating binding policy YAML:", error);
+        toast.error('Failed to generate binding policy YAML');
       }
     });
   };
