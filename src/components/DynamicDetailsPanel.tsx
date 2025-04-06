@@ -505,6 +505,15 @@ const DynamicDetailsPanel = ({
 
   const renderSummary = () => {
     if (!resource) return null;
+
+    // Extract labels from resourceData.metadata.labels and format them
+    const labels = resourceData?.metadata?.labels;
+    const labelsString = labels
+      ? Object.entries(labels)
+          .map(([key, value]) => `${key}=${value}`)
+          .join(", ")
+      : "None";
+
     return (
       <Table sx={{ borderRadius: 1 }}>
         <TableBody>
@@ -513,13 +522,13 @@ const DynamicDetailsPanel = ({
             { label: "NAME", value: resource.name },
             { label: "NAMESPACE", value: resource.namespace },
             { label: "CREATED AT", value: `${resource.createdAt} (${resource.age})` },
+            { label: "LABELS", value: labelsString }, // New row for labels
           ].map((row, index) => (
             <TableRow key={index}>
               <TableCell
                 sx={{
                   borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
                   color: theme === "dark" ? "#D4D4D4" : "#333333",
-                  // width: "200px",
                   fontSize: "14px",
                   fontWeight: 500,
                 }}

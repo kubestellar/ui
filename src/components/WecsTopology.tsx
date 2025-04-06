@@ -30,8 +30,8 @@ import sc from "../assets/k8s_resources_logo/sc.svg";
 import secret from "../assets/k8s_resources_logo/secret.svg";
 import sts from "../assets/k8s_resources_logo/sts.svg";
 import svc from "../assets/k8s_resources_logo/svc.svg";
-import cluster from "../assets/k8s_resources_logo/kubernetes-logo.svg"
-import pod from "../assets/k8s_resources_logo/pod.png"
+import cluster from "../assets/k8s_resources_logo/kubernetes-logo.svg";
+import pod from "../assets/k8s_resources_logo/pod.png";
 import user from "../assets/k8s_resources_logo/user.svg";
 import vol from "../assets/k8s_resources_logo/vol.svg";
 import { Plus } from "lucide-react";
@@ -46,11 +46,9 @@ import { useWebSocket } from "../context/WebSocketProvider";
 import useTheme from "../stores/themeStore";
 import axios from "axios";
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-
-// Import the new WecsDetailsPanel
 import WecsDetailsPanel from "./WecsDetailsPanel";
 
-// Interfaces
+// Interfaces (unchanged)
 export interface NodeData {
   label: JSX.Element;
 }
@@ -137,7 +135,28 @@ interface SelectedNode {
   isOpen: boolean;
   resourceData?: ResourceItem;
   initialTab?: number;
-  cluster?: string; // Added to store cluster name for pods
+  cluster?: string;
+}
+
+interface WecsResource {
+  name: string;
+  raw: ResourceItem;
+}
+
+interface WecsResourceType {
+  kind: string;
+  version: string;
+  resources: WecsResource[];
+}
+
+interface WecsNamespace {
+  namespace: string;
+  resourceTypes: WecsResourceType[];
+}
+
+interface WecsCluster {
+  cluster: string;
+  namespaces: WecsNamespace[];
 }
 
 const nodeStyle: React.CSSProperties = {
@@ -148,7 +167,7 @@ const nodeStyle: React.CSSProperties = {
   height: "30px",
 };
 
-// Mapping of kind to the correct plural form for API endpoints
+// kindToPluralMap and iconMap (unchanged)
 const kindToPluralMap: Record<string, string> = {
   Binding: "bindings",
   ComponentStatus: "componentstatuses",
@@ -214,7 +233,6 @@ const kindToPluralMap: Record<string, string> = {
   VolumeAttachment: "volumeattachments",
 };
 
-// Dynamic icon mapping for all imported icons
 const iconMap: Record<string, string> = {
   ConfigMap: cm,
   ClusterRoleBinding: crb,
@@ -249,7 +267,7 @@ const iconMap: Record<string, string> = {
   Cluster: group,
 };
 
-// Updated getNodeConfig function to support cluster and pod
+// getNodeConfig and getLayoutedElements (unchanged)
 const getNodeConfig = (type: string) => {
   const normalizedType = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
   
@@ -276,7 +294,6 @@ const getNodeConfig = (type: string) => {
   return { icon, dynamicText };
 };
 
-// Layout function (unchanged)
 const getLayoutedElements = (
   nodes: CustomNode[],
   edges: CustomEdge[],
@@ -354,6 +371,7 @@ const WecsTreeview = () => {
     nodeName: string;
     nodeId: string;
   } | null>(null);
+  const prevWecsData = useRef<WecsCluster[] | null>(null); // To track previous wecsData
 
   const { wecsIsConnected, hasValidWecsData, wecsData } = useWebSocket();
 
@@ -428,7 +446,6 @@ const WecsTreeview = () => {
                 resourceData={resourceData}
                 onClick={(e) => {
                   if ((e.target as HTMLElement).tagName === "svg" || (e.target as HTMLElement).closest("svg")) return;
-                  // Only open the panel for pod nodes, not cluster or namespace
                   if (type.toLowerCase() === "cluster" || type.toLowerCase() === "namespace") return;
                   const nodeIdParts = id.split(":");
                   let cluster = "";
@@ -444,7 +461,7 @@ const WecsTreeview = () => {
                     onClose: handleClosePanel,
                     isOpen: true,
                     resourceData,
-                    cluster, // Pass the cluster name for pods
+                    cluster,
                   });
                 }}
                 onMenuClick={(e) => handleMenuOpen(e, id)}
@@ -493,14 +510,14 @@ const WecsTreeview = () => {
   );
 
   const transformDataToTree = useCallback(
-    (data: { cluster: string; namespaces: { namespace: string; pods: PodItem[] }[] }[]) => {
+    (data: WecsCluster[]) => {
       nodeCache.current.clear();
       edgeCache.current.clear();
       edgeIdCounter.current = 0;
-  
+
       const newNodes: CustomNode[] = [];
       const newEdges: CustomEdge[] = [];
-  
+
       if (data && data.length > 0) {
         data.forEach((cluster) => {
           const clusterId = `cluster:${cluster.cluster}`;
@@ -516,7 +533,7 @@ const WecsTreeview = () => {
             newNodes,
             newEdges
           );
-  
+
           cluster.namespaces.forEach((namespace) => {
             const namespaceId = `ns:${cluster.cluster}:${namespace.namespace}`;
             createNode(
@@ -531,54 +548,65 @@ const WecsTreeview = () => {
               newNodes,
               newEdges
             );
-  
-            const pods = namespace.pods || [];
-            if (pods.length > 0) {
-              pods.forEach((pod, index) => {
-                if (!pod || typeof pod !== "object" || !pod.raw) {
-                  return;
-                }
-  
-                const rawPod = pod.raw;
-                if (!rawPod.metadata || typeof rawPod.metadata !== "object" || !rawPod.metadata.name) {
-                  return;
-                }
-  
-                const podId = `pod:${cluster.cluster}:${namespace.namespace}:${rawPod.metadata.name}:${index}`;
-                const status = rawPod.status?.phase || "Unknown";
+
+            namespace.resourceTypes.forEach((resourceType) => {
+              const kindLower = resourceType.kind.toLowerCase();
+              const resourceTypeId = `resourcetype:${cluster.cluster}:${namespace.namespace}:${kindLower}`;
+              createNode(
+                resourceTypeId,
+                resourceType.kind,
+                kindLower,
+                "Active",
+                "",
+                namespace.namespace,
+                { apiVersion: resourceType.version, kind: resourceType.kind, metadata: { name: resourceType.kind, namespace: namespace.namespace, creationTimestamp: "" }, status: { phase: "Active" } },
+                namespaceId,
+                newNodes,
+                newEdges
+              );
+
+              resourceType.resources.forEach((resource, index) => {
+                if (!resource || typeof resource !== "object" || !resource.raw) return;
+                const rawResource = resource.raw;
+                if (!rawResource.metadata || typeof rawResource.metadata !== "object" || !rawResource.metadata.name) return;
+
+                const resourceId = `${kindLower}:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}:${index}`;
+                const status = rawResource.status?.phase || "Active";
                 createNode(
-                  podId,
-                  rawPod.metadata.name,
-                  "pod",
+                  resourceId,
+                  rawResource.metadata.name,
+                  kindLower,
                   status,
-                  rawPod.metadata.creationTimestamp,
+                  rawResource.metadata.creationTimestamp,
                   namespace.namespace,
-                  rawPod,
-                  namespaceId,
+                  rawResource,
+                  resourceTypeId,
                   newNodes,
                   newEdges
                 );
               });
-            }
+            });
           });
         });
       }
-  
+
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(newNodes, newEdges, "LR", prevNodes);
       ReactDOM.unstable_batchedUpdates(() => {
-        setNodes(layoutedNodes);
-        setEdges(layoutedEdges);
+        if (!isEqual(nodes, layoutedNodes)) setNodes(layoutedNodes);
+        if (!isEqual(edges, layoutedEdges)) setEdges(layoutedEdges);
         setIsTransforming(false);
       });
       prevNodes.current = layoutedNodes;
     },
-    [createNode]
+    [createNode, nodes, edges]
   );
 
+  // Optimized useEffect for wecsData
   useEffect(() => {
-    if (wecsData !== null) {
+    if (wecsData !== null && !isEqual(wecsData, prevWecsData.current)) {
       setIsTransforming(true);
-      transformDataToTree(wecsData);
+      transformDataToTree(wecsData as WecsCluster[]);
+      prevWecsData.current = wecsData as WecsCluster[];
     }
   }, [wecsData, transformDataToTree]);
 
@@ -588,11 +616,8 @@ const WecsTreeview = () => {
         handleClosePanel();
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [selectedNode, handleClosePanel]);
 
   const findDescendantNodes = useCallback((nodeId: string, edges: CustomEdge[]): string[] => {
@@ -624,7 +649,6 @@ const WecsTreeview = () => {
     async (namespace: string, nodeType: string, nodeName: string, nodeId: string) => {
       try {
         if (nodeType.toLowerCase() === "pod") {
-          // For pods, show "API not implemented" in snackbar
           setSnackbarMessage(`API not implemented for deleting pod "${nodeName}"`);
           setSnackbarSeverity("error");
           setSnackbarOpen(true);
@@ -632,7 +656,6 @@ const WecsTreeview = () => {
         }
 
         let endpoint: string;
-
         if (nodeType.toLowerCase() === "namespace") {
           endpoint = `${process.env.VITE_BASE_URL}/api/namespaces/delete/${namespace}`;
         } else {
@@ -646,21 +669,10 @@ const WecsTreeview = () => {
         const descendantNodeIds = findDescendantNodes(nodeId, edges);
         const nodesToDelete = [nodeId, ...descendantNodeIds];
 
-        setNodes((prevNodes) => {
-          const remainingNodes = prevNodes.filter((n) => !nodesToDelete.includes(n.id));
-          return remainingNodes;
-        });
+        setNodes((prevNodes) => prevNodes.filter((n) => !nodesToDelete.includes(n.id)));
+        setEdges((prevEdges) => prevEdges.filter((e) => !nodesToDelete.includes(e.source) && !nodesToDelete.includes(e.target)));
 
-        setEdges((prevEdges) => {
-          const remainingEdges = prevEdges.filter(
-            (e) => !nodesToDelete.includes(e.source) && !nodesToDelete.includes(e.target)
-          );
-          return remainingEdges;
-        });
-
-        nodesToDelete.forEach((id) => {
-          nodeCache.current.delete(id);
-        });
+        nodesToDelete.forEach((id) => nodeCache.current.delete(id));
         edgeCache.current.forEach((edge, edgeId) => {
           if (nodesToDelete.includes(edge.source) || nodesToDelete.includes(edge.target)) {
             edgeCache.current.delete(edgeId);
@@ -680,9 +692,7 @@ const WecsTreeview = () => {
     [edges, findDescendantNodes]
   );
 
-  const handleMenuClose = useCallback(() => {
-    setContextMenu(null);
-  }, []);
+  const handleMenuClose = useCallback(() => setContextMenu(null), []);
 
   const handleMenuAction = useCallback(
     async (action: string) => {
@@ -711,7 +721,6 @@ const WecsTreeview = () => {
             return;
           }
 
-          // Do not open the panel or perform actions for cluster nodes
           if (nodeType === "cluster") {
             handleMenuClose();
             return;
@@ -733,12 +742,7 @@ const WecsTreeview = () => {
               });
               break;
             case "Delete":
-              setDeleteNodeDetails({
-                namespace,
-                nodeType,
-                nodeName,
-                nodeId: contextMenu.nodeId,
-              });
+              setDeleteNodeDetails({ namespace, nodeType, nodeName, nodeId: contextMenu.nodeId });
               setDeleteDialogOpen(true);
               break;
             case "Edit":
@@ -789,13 +793,9 @@ const WecsTreeview = () => {
     setDeleteNodeDetails(null);
   }, []);
 
-  const handleSnackbarClose = useCallback(() => {
-    setSnackbarOpen(false);
-  }, []);
+  const handleSnackbarClose = useCallback(() => setSnackbarOpen(false), []);
 
-  const handleCancelCreateOptions = () => {
-    setShowCreateOptions(false);
-  };
+  const handleCancelCreateOptions = () => setShowCreateOptions(false);
 
   const handleCreateWorkloadClick = () => {
     setShowCreateOptions(true);
@@ -826,7 +826,7 @@ const WecsTreeview = () => {
             padding: 2,
             borderRadius: 1,
             boxShadow: "0 6px 6px rgba(0,0,0,0.1)",
-            background: theme === "dark" ? "rgb(15, 23, 42)" : "#fff", 
+            background: theme === "dark" ? "rgb(15, 23, 42)" : "#fff",
           }}
         >
           <Typography variant="h4" sx={{ color: "#4498FF", fontWeight: 700, fontSize: "30px", letterSpacing: "0.5px" }}>
@@ -858,7 +858,7 @@ const WecsTreeview = () => {
             <Box sx={{ width: "100%", height: "100%", position: "relative" }}>
               <ReactFlowProvider>
                 <FlowCanvas nodes={nodes} edges={edges} renderStartTime={renderStartTime} theme={theme} />
-                <ZoomControls theme={theme} />
+                <ZoomControls theme={theme}/>
               </ReactFlowProvider>
             </Box>
           ) : (
@@ -958,9 +958,7 @@ const WecsTreeview = () => {
                 color: "#fff",
                 padding: "6px 16px",
                 borderRadius: "4px",
-                "&:hover": {
-                  backgroundColor: "#b71c1c",
-                },
+                "&:hover": { backgroundColor: "#b71c1c" },
               }}
             >
               Yes, Delete

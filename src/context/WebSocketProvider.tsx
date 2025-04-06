@@ -40,11 +40,6 @@ interface ResourceItem {
   }>;
 }
 
-interface PodItem {
-  name: string;
-  raw: ResourceItem;
-}
-
 interface NamespaceData {
   name: string;
   status: string;
@@ -52,14 +47,25 @@ interface NamespaceData {
   resources: Record<string, ResourceItem[]>;
 }
 
-interface WecsNamespaceData {
-  namespace: string;
-  pods: PodItem[];
+interface WecsResource {
+  name: string;
+  raw: ResourceItem;
 }
 
-interface WecsClusterData {
+interface WecsResourceType {
+  kind: string;
+  version: string;
+  resources: WecsResource[];
+}
+
+interface WecsNamespace {
+  namespace: string;
+  resourceTypes: WecsResourceType[];
+}
+
+interface WecsCluster {
   cluster: string;
-  namespaces: WecsNamespaceData[];
+  namespaces: WecsNamespace[];
 }
 
 interface WebSocketContextType {
@@ -71,7 +77,7 @@ interface WebSocketContextType {
   connectWecs: (shouldConnect: boolean) => void;
   hasValidData: boolean;
   hasValidWecsData: boolean;
-  wecsData: WecsClusterData[] | null;
+  wecsData: WecsCluster[] | null; // Updated from WecsClusterData[] to WecsCluster[]
 }
 
 const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
@@ -101,7 +107,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   const [shouldConnectWecs, setShouldConnectWecs] = useState(false);
   const [hasValidData, setHasValidData] = useState(false);
   const [hasValidWecsData, setHasValidWecsData] = useState(false);
-  const [wecsData, setWecsData] = useState<WecsClusterData[] | null>(null);
+  const [wecsData, setWecsData] = useState<WecsCluster[] | null>(null); // Updated from WecsClusterData[] to WecsCluster[]
 
   const sortNamespaceData = (data: NamespaceData[]): NamespaceData[] => {
     return [...data]
@@ -162,12 +168,12 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
           receiveTime - renderStartTime.current
         }ms, readyState: ${ws.readyState}`
       );
-      let data: NamespaceData[] | WecsClusterData[];
+      let data: NamespaceData[] | WecsCluster[]; // Updated to WecsCluster[]
       try {
         data = JSON.parse(event.data);
         console.log(
           `[WebSocket] Data received and parsed from ${url}: ${
-            isWecs ? (data as WecsClusterData[]).length + " clusters" : (data as NamespaceData[]).length + " namespaces"
+            isWecs ? (data as WecsCluster[]).length + " clusters" : (data as NamespaceData[]).length + " namespaces"
           } at ${performance.now() - renderStartTime.current}ms`
         );
 
@@ -180,7 +186,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
 
         if (isWecs) {
           // Filter namespaces in wecsData
-          const filteredWecsData = (data as WecsClusterData[]).map((cluster) => ({
+          const filteredWecsData = (data as WecsCluster[]).map((cluster) => ({
             ...cluster,
             namespaces: cluster.namespaces.filter(
               (ns) =>
@@ -339,4 +345,4 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       {children}
     </WebSocketContext.Provider>
   );
-};
+}; 

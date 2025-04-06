@@ -4,10 +4,12 @@ import { ZoomIn, ZoomOut } from "@mui/icons-material";
 import { useReactFlow } from "reactflow";
 
 interface ZoomControlsProps {
-  theme: string; // Add theme prop
+  theme: string;
+  onToggleCollapse: () => void;
+  isCollapsed: boolean;
 }
 
-export const ZoomControls = memo<ZoomControlsProps>(({ theme }) => {
+export const ZoomControls = memo<ZoomControlsProps>(({ theme, onToggleCollapse, isCollapsed }) => {
   const { getZoom, setViewport } = useReactFlow();
   const [zoomLevel, setZoomLevel] = useState<number>(100);
 
@@ -64,31 +66,60 @@ export const ZoomControls = memo<ZoomControlsProps>(({ theme }) => {
         left: 20,
         display: "flex",
         gap: 1,
-        background: theme === "dark" ? "#333" : "#fff", // Dark mode background
+        background: theme === "dark" ? "#333" : "#fff",
         padding: "4px",
         boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
       }}
     >
-      <Button 
-        variant="text" 
+      <Button
+        variant="text"
+        onClick={onToggleCollapse}
+        sx={{
+          color: theme === "dark" ? "#fff" : "#6d7f8b",
+          backgroundColor: isCollapsed ? (theme === "dark" ? "#555" : "#e3f2fd") : "transparent",
+          "&:hover": {
+            backgroundColor: theme === "dark" ? "#555" : "#e3f2fd",
+          },
+          minWidth: "36px",
+          padding: "4px",
+        }}
+      >
+        <i className="fa fa-object-group fa-fw" style={{ fontSize: "17px" }} />
+      </Button>
+      <Button
+        variant="text"
         onClick={handleZoomIn}
-        sx={{ color: theme === "dark" ? "#fff" : "#000" }} // Dark mode icon color
+        sx={{
+          color: theme === "dark" ? "#fff" : "#6d7f8b",
+          "&:hover": {
+            backgroundColor: theme === "dark" ? "#555" : "#e3f2fd",
+          },
+          minWidth: "36px",
+          padding: "4px",
+        }}
       >
         <ZoomIn />
       </Button>
-      <Button 
-        variant="text" 
+      <Button
+        variant="text"
         onClick={handleZoomOut}
-        sx={{ color: theme === "dark" ? "#fff" : "#000" }} // Dark mode icon color
+        sx={{
+          color: theme === "dark" ? "#fff" : "#6d7f8b",
+          "&:hover": {
+            backgroundColor: theme === "dark" ? "#555" : "#e3f2fd",
+          },
+          minWidth: "36px",
+          padding: "4px",
+        }}
       >
         <ZoomOut />
       </Button>
       <Typography
         variant="body1"
         sx={{
-          border: `2px solid ${theme === "dark" ? "#ccc" : "#1976d2"}`, // Dark mode border
-          backgroundColor: theme === "dark" ? "#444" : "#e3f2fd", // Dark mode background
-          color: theme === "dark" ? "#fff" : "#000", // Dark mode text
+          border: `2px solid ${theme === "dark" ? "#ccc" : "#1976d2"}`,
+          backgroundColor: theme === "dark" ? "#444" : "#e3f2fd",
+          color: theme === "dark" ? "#fff" : "#000",
           padding: "4px 8px",
           textAlign: "center",
           display: "flex",
