@@ -1,15 +1,21 @@
 package api
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/models"
 	"github.com/kubestellar/ui/services"
 	"github.com/kubestellar/ui/utils"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 var (
@@ -109,4 +115,96 @@ func ImportClusterHandler(c *gin.Context) {
 
 	services.ImportCluster(cluster)
 	c.JSON(http.StatusAccepted, gin.H{"message": "Cluster import initiated"})
+}
+
+// kubeconfigPath returns the path to the kubeconfig file.
+func kubeconfigPath() string {
+	if path := os.Getenv("KUBECONFIG"); path != "" {
+		return path
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatalf("Unable to get user home directory: %v", err)
+	}
+	return fmt.Sprintf("%s/.kube/config", home)
+}
+
+// UpdateManagedClusterLabels patches the labels on a managedcluster object in ITS.
+// contextName identifies the ITS hub cluster (as defined in your kubeconfig),
+// and clusterName is the name of the managed cluster resource to update.
+func UpdateManagedClusterLabels(contextName, clusterName string, newLabels map[string]string) error {
+	kubeconfig := kubeconfigPath()
+	config, err := clientcmd.LoadFromFile(kubeconfig)
+	if err != nil {
+		return fmt.Errorf("loading kubeconfig: %v", err)
+	}
+
+	clientConfig := clientcmd.NewNonInteractiveClientConfig(
+		*config,
+		contextName,
+		&clientcmd.ConfigOverrides{},
+		nil,
+	)
+	restConfig, err := clientConfig.ClientConfig()
+	if err != nil {
+		return fmt.Errorf("getting client config: %v", err)
+	}
+
+	clientset, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		return fmt.Errorf("creating clientset: %v", err)
+	}
+
+	// Build the patch payload to update only the labels field.
+	patchPayload := map[string]interface{}{
+		"metadata": map[string]interface{}{
+			"labels": newLabels,
+		},
+	}
+
+	patchBytes, err := json.Marshal(patchPayload)
+	if err != nil {
+		return fmt.Errorf("marshaling patch payload: %v", err)
+	}
+
+	// Issue a JSON merge patch request to update the managed cluster.
+	result := clientset.RESTClient().Patch(types.MergePatchType).
+		AbsPath("/apis/cluster.open-cluster-management.io/v1").
+		Resource("managedclusters").
+		Name(clusterName).
+		Body(patchBytes).
+		Do(context.TODO())
+
+	if err := result.Error(); err != nil {
+		return fmt.Errorf("patching managed cluster: %v", err)
+	}
+
+	log.Printf("Updated labels for managed cluster '%s' in context '%s'", clusterName, contextName)
+	return nil
+}
+
+func UpdateManagedClusterLabelsHandler(c *gin.Context) {
+	var req struct {
+		ContextName string            `json:"contextName"`
+		ClusterName string            `json:"clusterName"`
+		Labels      map[string]string `json:"labels"`
+	}
+
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+
+	if req.ContextName == "" || req.ClusterName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "contextName and clusterName are required"})
+		return
+	}
+
+	if err := UpdateManagedClusterLabels(req.ContextName, req.ClusterName, req.Labels); err != nil {
+		log.Printf("Error updating labels: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Labels updated successfully"})
 }
