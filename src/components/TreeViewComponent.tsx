@@ -671,6 +671,7 @@ const TreeViewComponent = () => {
             Object.entries(resourcesMap).forEach(([key, items]) => {
               items.forEach((item: ResourceItem) => {
                 const kindLower = item.kind.toLowerCase();
+                console.log(key);
                 if (!resourceGroups[kindLower]) {
                   resourceGroups[kindLower] = [];
                 }

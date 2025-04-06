@@ -122,10 +122,6 @@ export interface ResourceItem {
   }>;
 }
 
-interface PodItem {
-  name: string;
-  raw: ResourceItem;
-}
 
 interface SelectedNode {
   namespace: string;
