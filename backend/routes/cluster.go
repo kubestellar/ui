@@ -22,14 +22,19 @@ func setupClusterRoutes(router *gin.Engine) {
 			"itsData":        itsData,
 		})
 	})
+	// Cluster onboarding and status endpoints.
 	router.POST("/clusters/onboard", api.OnboardClusterHandler)
 	router.GET("/clusters/status", api.GetClusterStatusHandler)
 
-	// API for generating command
+	// API for generating command.
 	router.POST("/clusters/manual/generateCommand", handlers.GenerateCommandHandler)
 
+	// Watch CSR endpoint.
 	router.GET("/clusters/watch-csr", handlers.GetCSRsExecHandler)
 
+	// Get available clusters endpoint.
 	router.GET("/api/clusters/available", handlers.GetAvailableClustersHandler)
 
+	// New PATCH endpoint for updating managed cluster labels in ITS.
+	router.PATCH("/api/managedclusters/labels", api.UpdateManagedClusterLabelsHandler)
 }
