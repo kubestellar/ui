@@ -31,14 +31,14 @@ var upgrader = websocket.Upgrader{
 
 // Cache expiration durations
 const (
-	// Cache all cluster data for 60 seconds
-	ClusterDataCacheDuration = 60 * time.Second
+	// Cache all cluster data for 25 seconds
+	ClusterDataCacheDuration = 25 * time.Second
 
-	// Cache individual namespace data for 30 seconds
-	NamespaceCacheDuration = 30 * time.Second
+	// Cache individual namespace data for 15 seconds
+	NamespaceCacheDuration = 15 * time.Second
 
 	// Cache pod logs for a shorter duration as they change frequently
-	PodLogsCacheDuration = 10 * time.Second
+	PodLogsCacheDuration = 5 * time.Second
 )
 
 // ResourceData contains data for a Kubernetes resource.
