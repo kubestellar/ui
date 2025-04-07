@@ -87,7 +87,6 @@ func getITSData() ([]handlers.ManagedClusterInfo, error) {
 	if err != nil {
 		log.Printf("Error retrieving ITS data from cache: %v", err)
 	} else if found && len(cachedClusters) > 0 {
-		log.Printf("Using cached ITS data (%d clusters)", len(cachedClusters))
 		return cachedClusters, nil
 	}
 
@@ -228,12 +227,10 @@ func StreamK8sDataChronologically(c *gin.Context) {
 			firstCluster := allClusters[0]
 			if time.Since(firstCluster.LastUpdated) > ClusterDataCacheDuration {
 				needsRefresh = true
-				log.Printf("Cache expired for cluster data, refreshing...")
 			}
 		}
 
 		if needsRefresh {
-			log.Printf("Fetching fresh cluster data...")
 			clustersInfo, err := getITSData()
 			if err != nil {
 				log.Printf("Error fetching ITS data: %v", err)
@@ -267,7 +264,6 @@ func StreamK8sDataChronologically(c *gin.Context) {
 					}
 
 					if needsRefresh {
-						log.Printf("Refreshing data for cluster %s", ci.Name)
 						clusterData = ClusterData{
 							Name:        ci.Name,
 							LastUpdated: time.Now(),
