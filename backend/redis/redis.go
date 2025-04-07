@@ -166,7 +166,6 @@ func SetJSONValue(key string, value interface{}, expiration time.Duration) error
 		return fmt.Errorf("failed to set JSON value: %v", err)
 	}
 
-	log.LogInfo("stored JSON value", zap.String("key", key))
 	return nil
 }
 
@@ -189,7 +188,6 @@ func GetJSONValue(key string, dest interface{}) (bool, error) {
 		return true, fmt.Errorf("failed to unmarshal JSON: %v", err)
 	}
 
-	log.LogInfo("retrieved JSON value", zap.String("key", key))
 	return true, nil
 }
 
@@ -209,9 +207,6 @@ func SetJSONHash(hashKey string, field string, value interface{}) error {
 		return fmt.Errorf("failed to set JSON hash value: %v", err)
 	}
 
-	log.LogInfo("stored JSON hash value",
-		zap.String("hash", hashKey),
-		zap.String("field", field))
 	return nil
 }
 
@@ -235,9 +230,6 @@ func GetJSONHash(hashKey string, field string, dest interface{}) (bool, error) {
 		return true, fmt.Errorf("failed to unmarshal JSON from hash: %v", err)
 	}
 
-	log.LogInfo("retrieved JSON hash value",
-		zap.String("hash", hashKey),
-		zap.String("field", field))
 	return true, nil
 }
 
@@ -256,6 +248,5 @@ func GetAllJSONHash(hashKey string) (map[string]json.RawMessage, error) {
 		result[field] = json.RawMessage(jsonString)
 	}
 
-	log.LogInfo("retrieved all JSON hash values", zap.String("hash", hashKey))
 	return result, nil
 }
