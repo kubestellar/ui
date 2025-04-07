@@ -9,7 +9,6 @@ import (
 	"github.com/kubestellar/ui/k8s"
 )
 
-
 // setupGitopsRoutes registers general GitOps deployment routes
 func setupGitopsRoutes(router *gin.Engine) {
 	router.POST("api/deploy", api.DeployHandler)
@@ -25,7 +24,7 @@ func setupHelmRoutes(router *gin.Engine) {
 	router.GET("/api/deployments/helm/:id", k8s.GetHelmDeploymentHandler)
 	router.GET("/api/deployments/helm/namespace/:namespace", k8s.ListHelmDeploymentsByNamespaceHandler)
 	router.GET("/api/deployments/helm/release/:release", k8s.ListHelmDeploymentsByReleaseHandler)
-	
+
 	// Route for deleting Helm deployments
 	router.DELETE("/api/deployments/helm/:id", k8s.DeleteHelmDeploymentHandler)
 }
@@ -34,7 +33,7 @@ func setupHelmRoutes(router *gin.Engine) {
 func setupGitHubRoutes(router *gin.Engine) {
 	// Route for listing GitHub deployments
 	router.GET("/api/deployments/github/list", k8s.ListGithubDeployments)
-	
+
 	// Route for deleting GitHub deployments
 	router.DELETE("/api/deployments/github/:id", k8s.DeleteGitHubDeploymentHandler)
 }
