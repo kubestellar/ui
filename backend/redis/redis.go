@@ -209,8 +209,8 @@ func SetJSONHash(hashKey string, field string, value interface{}) error {
 		return fmt.Errorf("failed to set JSON hash value: %v", err)
 	}
 
-	log.LogInfo("stored JSON hash value", 
-		zap.String("hash", hashKey), 
+	log.LogInfo("stored JSON hash value",
+		zap.String("hash", hashKey),
 		zap.String("field", field))
 	return nil
 }
@@ -235,8 +235,8 @@ func GetJSONHash(hashKey string, field string, dest interface{}) (bool, error) {
 		return true, fmt.Errorf("failed to unmarshal JSON from hash: %v", err)
 	}
 
-	log.LogInfo("retrieved JSON hash value", 
-		zap.String("hash", hashKey), 
+	log.LogInfo("retrieved JSON hash value",
+		zap.String("hash", hashKey),
 		zap.String("field", field))
 	return true, nil
 }
