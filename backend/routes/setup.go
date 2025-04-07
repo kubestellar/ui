@@ -13,8 +13,10 @@ func SetupRoutes(router *gin.Engine) {
 	setupBindingPolicyRoutes(router)
 	setupResourceRoutes(router)
 	getWecsResources(router)
-	helmDeploy(router)
-	GetDeploymentHistory(router)
 	setupInstallerRoutes(router)
 	setupWdsCookiesRoute(router)
+	setupGitopsRoutes(router)
+	setupHelmRoutes(router)
+	setupGitHubRoutes(router)
+	setupDeploymentHistoryRoutes(router)
 }
