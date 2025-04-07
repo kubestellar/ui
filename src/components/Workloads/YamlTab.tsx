@@ -19,6 +19,8 @@ interface Props {
 interface YamlDocument {
   metadata?: {
     name?: string;
+    namespace?: string;
+    labels?: Record<string, unknown>;
   };
   [key: string]: unknown;
 }
@@ -78,14 +80,34 @@ export const YamlTab = ({
         documents[nameDocumentIndex].metadata
       ) {
         documents[nameDocumentIndex].metadata!.name = newName;
+        documents[nameDocumentIndex].metadata!.namespace = newName;
+        if (!documents[nameDocumentIndex].metadata!.labels) {
+          documents[nameDocumentIndex].metadata!.labels = {};
+        }
+        (documents[nameDocumentIndex].metadata!.labels as Record<string, unknown>)["kubernetes.io/metadata.name"] = newName;
       } else {
         if (documents.length === 0) {
-          documents.push({ metadata: { name: newName } });
+          documents.push({ 
+            metadata: { 
+              name: newName,
+              namespace: newName,
+              labels: { "kubernetes.io/metadata.name": newName }
+            } 
+          });
         } else {
           if (!documents[0].metadata) {
-            documents[0].metadata = { name: newName };
+            documents[0].metadata = { 
+              name: newName,
+              namespace: newName,
+              labels: { "kubernetes.io/metadata.name": newName }
+            };
           } else {
             documents[0].metadata.name = newName;
+            documents[0].metadata.namespace = newName;
+            if (!documents[0].metadata.labels) {
+              documents[0].metadata.labels = {};
+            }
+            (documents[0].metadata.labels as Record<string, unknown>)["kubernetes.io/metadata.name"] = newName;
           }
           setNameDocumentIndex(0);
         }
@@ -190,7 +212,18 @@ export const YamlTab = ({
           />
         </Box>
       </Box>
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2 }}>
+      <Box sx={{ 
+        display: "flex", 
+        justifyContent: "flex-end", 
+        gap: 1, 
+        mt: 2,
+        position: "relative",
+        width: "100%",
+        height: "auto",
+        minHeight: "40px",
+        padding: "8px 0",
+        zIndex: 1
+      }}>
         <Button
           onClick={handleCancelClick}
           disabled={loading}

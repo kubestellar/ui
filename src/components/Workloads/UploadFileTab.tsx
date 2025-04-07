@@ -11,6 +11,8 @@ import Editor from "@monaco-editor/react";
 interface YamlDocument {
   metadata?: {
     name?: string;
+    namespace?: string;
+    labels?: Record<string, unknown>;
   };
   [key: string]: unknown;
 }
@@ -96,6 +98,15 @@ export const UploadFileTab = ({
         const yamlObj = yaml.load(fileContent) as YamlDocument;
         if (yamlObj && yamlObj.metadata) {
           yamlObj.metadata.name = newName;
+          // Set namespace to match the name
+          yamlObj.metadata.namespace = newName;
+          // Ensure labels object exists
+          if (!yamlObj.metadata.labels) {
+            yamlObj.metadata.labels = {};
+          }
+          // Set kubernetes.io/metadata.name label to match the name
+          yamlObj.metadata.labels["kubernetes.io/metadata.name"] = newName;
+          
           const updatedYaml = yaml.dump(yamlObj);
           const updatedFile = new File([updatedYaml], selectedFile.name, {
             type: selectedFile.type,
@@ -291,7 +302,18 @@ export const UploadFileTab = ({
           </StyledPaper>
         )}
       </Box>
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2 }}>
+      <Box sx={{ 
+        display: "flex", 
+        justifyContent: "flex-end", 
+        gap: 1, 
+        mt: 2,
+        position: "relative",
+        width: "100%",
+        height: "auto",
+        minHeight: "40px",
+        padding: "8px 0",
+        zIndex: 1
+      }}>
         <Button
           onClick={handleCancelClick}
           disabled={loading}
