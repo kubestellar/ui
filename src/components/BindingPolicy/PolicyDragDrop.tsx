@@ -238,7 +238,7 @@ const PolicyDragDrop: React.FC<PolicyDragDropProps> = (props) => {
   
   
   return (
-    <Box sx={{ position: 'relative' }}>
+    <Box sx={{ position: 'relative',height:"100%" }}>
       <Box sx={{ 
         position: 'fixed', 
         top: 40, 

@@ -141,51 +141,56 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
         </Button>
       </Box>
       <Divider />
-      
-      <Box sx={{ 
-        p: 1, 
-        overflow: 'auto', 
-        flexGrow: 1,
-        '&::-webkit-scrollbar': {
-          display: 'none'
+      <Box sx={{
+        flex: 1, overflow: 'auto', position: 'relative', height: "100%",'&::-webkit-scrollbar': {
         },
-        scrollbarWidth: 'none',  
-        '-ms-overflow-style': 'none',  
-      }}>
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-            <CircularProgress size={30} />
-          </Box>
-        ) : error ? (
-          <Typography color="error" sx={{ p: 2 }}>
-            {error}
-          </Typography>
-        ) : workloads.length === 0 ? (
-          <Typography sx={{ p: 2, color: 'text.secondary', textAlign: 'center' }}>
-            No workloads available
-          </Typography>
-        ) : (
-          <StrictModeDroppable droppableId="workload-panel" type="CLUSTER_OR_WORKLOAD">
-            {(provided) => (
-              <Box
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-                data-rbd-droppable-id="workload-panel"
-                data-rbd-droppable-context-id={provided.droppableProps['data-rfd-droppable-context-id']}
-                sx={{ minHeight: '100%' }}
-              >
-                {workloads.length === 0 ? (
-                  <Typography sx={{ p: 2, color: 'text.secondary', textAlign: 'center' }}>
-                    All workloads are on the canvas
-                  </Typography>
-                ) : (
-                  workloads.map((workload, index) => renderWorkloadItem(workload, index))
-                )}
-                {provided.placeholder}
-              </Box>
-            )}
-          </StrictModeDroppable>
-        )}
+        scrollbarWidth: 'none',
+        '-ms-overflow-style': 'none',
+        
+}}>
+        <Box sx={{ 
+          p: 1, 
+          position: 'absolute',
+          left:'0',
+          right:'0',
+          overflow: 'auto', 
+          flexGrow: 1, 
+        }}>
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+              <CircularProgress size={30} />
+            </Box>
+          ) : error ? (
+            <Typography color="error" sx={{ p: 2 }}>
+              {error}
+            </Typography>
+          ) : workloads.length === 0 ? (
+            <Typography sx={{ p: 2, color: 'text.secondary', textAlign: 'center' }}>
+              No workloads available
+            </Typography>
+          ) : (
+            <StrictModeDroppable droppableId="workload-panel" type="CLUSTER_OR_WORKLOAD">
+              {(provided) => (
+                <Box
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  data-rbd-droppable-id="workload-panel"
+                  data-rbd-droppable-context-id={provided.droppableProps['data-rfd-droppable-context-id']}
+                  sx={{ minHeight: '100%' }}
+                >
+                  {workloads.length === 0 ? (
+                    <Typography sx={{ p: 2, color: 'text.secondary', textAlign: 'center' }}>
+                      All workloads are on the canvas
+                    </Typography>
+                  ) : (
+                    workloads.map((workload, index) => renderWorkloadItem(workload, index))
+                  )}
+                  {provided.placeholder}
+                </Box>
+              )}
+            </StrictModeDroppable>
+          )}
+        </Box>
       </Box>
     </Paper>
   );
