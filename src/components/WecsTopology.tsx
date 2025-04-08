@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, memo } from "react";
-import { Box, Typography, Menu, MenuItem, Button, Alert, Snackbar, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import { Box, Typography, Menu, MenuItem, Button, Alert, Snackbar} from "@mui/material";
 import { ReactFlowProvider, Position, MarkerType } from "reactflow";
 import * as dagre from "dagre";
 import "reactflow/dist/style.css";
@@ -38,17 +38,17 @@ import { Plus } from "lucide-react";
 import CreateOptions from "../components/CreateOptions";
 import { NodeLabel } from "../components/Wds_Topology/NodeLabel";
 import { ZoomControls } from "../components/Wds_Topology/ZoomControls";
-import { FlowCanvas } from "../components/Wds_Topology/FlowCanvas";
 import LoadingFallback from "./LoadingFallback";
 import ReactDOM from "react-dom";
 import { isEqual } from "lodash";
 import { useWebSocket } from "../context/WebSocketProvider";
 import useTheme from "../stores/themeStore";
-import axios from "axios";
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+// import axios from "axios";
+// import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import WecsDetailsPanel from "./WecsDetailsPanel";
+import { FlowCanvas } from "./Wds_Topology/FlowCanvas";
 
-// Interfaces (unchanged)
+// Updated Interfaces
 export interface NodeData {
   label: JSX.Element;
 }
@@ -122,6 +122,38 @@ export interface ResourceItem {
   }>;
 }
 
+export interface WecsResource {
+  name: string;
+  raw: ResourceItem;
+  replicaSets?: Array<{
+    name: string;
+    kind: string;
+    raw: ResourceItem;
+    pods?: Array<{
+      name: string;
+      kind: string;
+      raw: ResourceItem;
+      creationTimestamp?: string;
+    }>;
+    creationTimestamp?: string;
+  }>;
+}
+
+export interface WecsResourceType {
+  kind: string;
+  version: string;
+  resources: WecsResource[];
+}
+
+export interface WecsNamespace {
+  namespace: string;
+  resourceTypes: WecsResourceType[];
+}
+
+export interface WecsCluster {
+  cluster: string;
+  namespaces: WecsNamespace[];
+}
 
 interface SelectedNode {
   namespace: string;
@@ -134,27 +166,6 @@ interface SelectedNode {
   cluster?: string;
 }
 
-interface WecsResource {
-  name: string;
-  raw: ResourceItem;
-}
-
-interface WecsResourceType {
-  kind: string;
-  version: string;
-  resources: WecsResource[];
-}
-
-interface WecsNamespace {
-  namespace: string;
-  resourceTypes: WecsResourceType[];
-}
-
-interface WecsCluster {
-  cluster: string;
-  namespaces: WecsNamespace[];
-}
-
 const nodeStyle: React.CSSProperties = {
   padding: "2px 12px",
   fontSize: "6px",
@@ -163,71 +174,70 @@ const nodeStyle: React.CSSProperties = {
   height: "30px",
 };
 
-// kindToPluralMap and iconMap (unchanged)
-const kindToPluralMap: Record<string, string> = {
-  Binding: "bindings",
-  ComponentStatus: "componentstatuses",
-  ConfigMap: "configmaps",
-  Endpoints: "endpoints",
-  Event: "events",
-  LimitRange: "limitranges",
-  Namespace: "namespaces",
-  Node: "nodes",
-  PersistentVolumeClaim: "persistentvolumeclaims",
-  PersistentVolume: "persistentvolumes",
-  Pod: "pods",
-  PodTemplate: "podtemplates",
-  ReplicationController: "replicationcontrollers",
-  ResourceQuota: "resourcequotas",
-  Secret: "secrets",
-  ServiceAccount: "serviceaccounts",
-  Service: "services",
-  MutatingWebhookConfiguration: "mutatingwebhookconfigurations",
-  ValidatingWebhookConfiguration: "validatingwebhookconfigurations",
-  CustomResourceDefinition: "customresourcedefinitions",
-  APIService: "apiservices",
-  ControllerRevision: "controllerrevisions",
-  DaemonSet: "daemonsets",
-  Deployment: "deployments",
-  ReplicaSet: "replicasets",
-  StatefulSet: "statefulsets",
-  Application: "applications",
-  ApplicationSet: "applicationsets",
-  AppProject: "appprojects",
-  SelfSubjectReview: "selfsubjectreviews",
-  TokenReview: "tokenreviews",
-  LocalSubjectAccessReview: "localsubjectaccessreviews",
-  SelfSubjectAccessReview: "selfsubjectaccessreviews",
-  SelfSubjectRulesReview: "selfsubjectrulesreviews",
-  SubjectAccessReview: "subjectaccessreviews",
-  HorizontalPodAutoscaler: "horizontalpodautoscalers",
-  CronJob: "cronjobs",
-  Job: "jobs",
-  CertificateSigningRequest: "certificatesigningrequests",
-  BindingPolicy: "bindingpolicies",
-  CombinedStatus: "combinedstatuses",
-  CustomTransform: "customtransforms",
-  StatusCollector: "statuscollectors",
-  Lease: "leases",
-  EndpointSlice: "endpointslices",
-  FlowSchema: "flowschemas",
-  PriorityLevelConfiguration: "prioritylevelconfigurations",
-  IngressClass: "ingressclasses",
-  Ingress: "ingresses",
-  NetworkPolicy: "networkpolicies",
-  RuntimeClass: "runtimeclasses",
-  PodDisruptionBudget: "poddisruptionbudgets",
-  ClusterRoleBinding: "clusterrolebindings",
-  ClusterRole: "clusterroles",
-  RoleBinding: "rolebindings",
-  Role: "roles",
-  PriorityClass: "priorityclasses",
-  CSIDriver: "csidrivers",
-  CSINode: "csinodes",
-  CSIStorageCapacity: "csistoragecapacities",
-  StorageClass: "storageclasses",
-  VolumeAttachment: "volumeattachments",
-};
+// const kindToPluralMap: Record<string, string> = {
+//   Binding: "bindings",
+//   ComponentStatus: "componentstatuses",
+//   ConfigMap: "configmaps",
+//   Endpoints: "endpoints",
+//   Event: "events",
+//   LimitRange: "limitranges",
+//   Namespace: "namespaces",
+//   Node: "nodes",
+//   PersistentVolumeClaim: "persistentvolumeclaims",
+//   PersistentVolume: "persistentvolumes",
+//   Pod: "pods",
+//   PodTemplate: "podtemplates",
+//   ReplicationController: "replicationcontrollers",
+//   ResourceQuota: "resourcequotas",
+//   Secret: "secrets",
+//   ServiceAccount: "serviceaccounts",
+//   Service: "services",
+//   MutatingWebhookConfiguration: "mutatingwebhookconfigurations",
+//   ValidatingWebhookConfiguration: "validatingwebhookconfigurations",
+//   CustomResourceDefinition: "customresourcedefinitions",
+//   APIService: "apiservices",
+//   ControllerRevision: "controllerrevisions",
+//   DaemonSet: "daemonsets",
+//   Deployment: "deployments",
+//   ReplicaSet: "replicasets",
+//   StatefulSet: "statefulsets",
+//   Application: "applications",
+//   ApplicationSet: "applicationsets",
+//   AppProject: "appprojects",
+//   SelfSubjectReview: "selfsubjectreviews",
+//   TokenReview: "tokenreviews",
+//   LocalSubjectAccessReview: "localsubjectaccessreviews",
+//   SelfSubjectAccessReview: "selfsubjectaccessreviews",
+//   SelfSubjectRulesReview: "selfsubjectrulesreviews",
+//   SubjectAccessReview: "subjectaccessreviews",
+//   HorizontalPodAutoscaler: "horizontalpodautoscalers",
+//   CronJob: "cronjobs",
+//   Job: "jobs",
+//   CertificateSigningRequest: "certificatesigningrequests",
+//   BindingPolicy: "bindingpolicies",
+//   CombinedStatus: "combinedstatuses",
+//   CustomTransform: "customtransforms",
+//   StatusCollector: "statuscollectors",
+//   Lease: "leases",
+//   EndpointSlice: "endpointslices",
+//   FlowSchema: "flowschemas",
+//   PriorityLevelConfiguration: "prioritylevelconfigurations",
+//   IngressClass: "ingressclasses",
+//   Ingress: "ingresses",
+//   NetworkPolicy: "networkpolicies",
+//   RuntimeClass: "runtimeclasses",
+//   PodDisruptionBudget: "poddisruptionbudgets",
+//   ClusterRoleBinding: "clusterrolebindings",
+//   ClusterRole: "clusterroles",
+//   RoleBinding: "rolebindings",
+//   Role: "roles",
+//   PriorityClass: "priorityclasses",
+//   CSIDriver: "csidrivers",
+//   CSINode: "csinodes",
+//   CSIStorageCapacity: "csistoragecapacities",
+//   StorageClass: "storageclasses",
+//   VolumeAttachment: "volumeattachments",
+// };
 
 const iconMap: Record<string, string> = {
   ConfigMap: cm,
@@ -263,7 +273,6 @@ const iconMap: Record<string, string> = {
   Cluster: group,
 };
 
-// getNodeConfig and getLayoutedElements (unchanged)
 const getNodeConfig = (type: string) => {
   const normalizedType = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
   
@@ -360,17 +369,12 @@ const WecsTreeview = () => {
   const prevNodes = useRef<CustomNode[]>([]);
   const renderStartTime = useRef<number>(0);
   const panelRef = useRef<HTMLDivElement>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
-  const [deleteNodeDetails, setDeleteNodeDetails] = useState<{
-    namespace: string;
-    nodeType: string;
-    nodeName: string;
-    nodeId: string;
-  } | null>(null);
-  const prevWecsData = useRef<WecsCluster[] | null>(null); // To track previous wecsData
+  const prevWecsData = useRef<WecsCluster[] | null>(null);
 
   const { wecsIsConnected, hasValidWecsData, wecsData } = useWebSocket();
-
+  console.log(setSnackbarMessage);
+  console.log(setSnackbarSeverity);
+  
   useEffect(() => {
     renderStartTime.current = performance.now();
   }, []);
@@ -547,20 +551,6 @@ const WecsTreeview = () => {
 
             namespace.resourceTypes.forEach((resourceType) => {
               const kindLower = resourceType.kind.toLowerCase();
-              const resourceTypeId = `resourcetype:${cluster.cluster}:${namespace.namespace}:${kindLower}`;
-              createNode(
-                resourceTypeId,
-                resourceType.kind,
-                kindLower,
-                "Active",
-                "",
-                namespace.namespace,
-                { apiVersion: resourceType.version, kind: resourceType.kind, metadata: { name: resourceType.kind, namespace: namespace.namespace, creationTimestamp: "" }, status: { phase: "Active" } },
-                namespaceId,
-                newNodes,
-                newEdges
-              );
-
               resourceType.resources.forEach((resource, index) => {
                 if (!resource || typeof resource !== "object" || !resource.raw) return;
                 const rawResource = resource.raw;
@@ -576,10 +566,71 @@ const WecsTreeview = () => {
                   rawResource.metadata.creationTimestamp,
                   namespace.namespace,
                   rawResource,
-                  resourceTypeId,
+                  namespaceId,
                   newNodes,
                   newEdges
                 );
+
+                if (kindLower === "deployment" && rawResource.spec) {
+                  const replicaSetId = `replicaset:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}:0`;
+                  createNode(
+                    replicaSetId,
+                    `${rawResource.metadata.name}-replicaset`,
+                    "replicaset",
+                    status,
+                    rawResource.metadata.creationTimestamp,
+                    namespace.namespace,
+                    {
+                      apiVersion: "apps/v1",
+                      kind: "ReplicaSet",
+                      metadata: { name: `${rawResource.metadata.name}-replicaset`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                      status: { phase: status }
+                    },
+                    resourceId,
+                    newNodes,
+                    newEdges
+                  );
+
+                  if (resource.replicaSets && resource.replicaSets.length > 0) {
+                    resource.replicaSets[0].pods.forEach((pod: { name: string; kind: string; raw: ResourceItem; creationTimestamp?: string }, podIndex: number) => {
+                      const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
+                      createNode(
+                        podId,
+                        pod.name,
+                        "pod",
+                        pod.raw.status?.phase || status,
+                        pod.raw.metadata.creationTimestamp,
+                        namespace.namespace,
+                        pod.raw,
+                        replicaSetId,
+                        newNodes,
+                        newEdges
+                      );
+                    });
+                  }
+                } else if (kindLower === "service" && rawResource.spec && rawResource.spec.ports) {
+                  const podCount = 2;
+                  for (let i = 0; i < podCount; i++) {
+                    const podId = `pod:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-pod-${i}:${i}`;
+                    createNode(
+                      podId,
+                      `${rawResource.metadata.name}-pod-${i}`,
+                      "pod",
+                      status,
+                      rawResource.metadata.creationTimestamp,
+                      namespace.namespace,
+                      {
+                        apiVersion: "v1",
+                        kind: "Pod",
+                        metadata: { name: `${rawResource.metadata.name}-pod-${i}`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                        status: { phase: status }
+                      },
+                      resourceId,
+                      newNodes,
+                      newEdges
+                    );
+                  }
+                }
               });
             });
           });
@@ -597,7 +648,6 @@ const WecsTreeview = () => {
     [createNode, nodes, edges]
   );
 
-  // Optimized useEffect for wecsData
   useEffect(() => {
     if (wecsData !== null && !isEqual(wecsData, prevWecsData.current)) {
       setIsTransforming(true);
@@ -615,78 +665,6 @@ const WecsTreeview = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [selectedNode, handleClosePanel]);
-
-  const findDescendantNodes = useCallback((nodeId: string, edges: CustomEdge[]): string[] => {
-    const descendants: string[] = [];
-    const queue: string[] = [nodeId];
-    const visited = new Set<string>();
-
-    while (queue.length > 0) {
-      const currentNodeId = queue.shift()!;
-      if (visited.has(currentNodeId)) continue;
-      visited.add(currentNodeId);
-
-      const children = edges
-        .filter((edge) => edge.source === currentNodeId)
-        .map((edge) => edge.target);
-
-      children.forEach((childId) => {
-        if (!visited.has(childId)) {
-          descendants.push(childId);
-          queue.push(childId);
-        }
-      });
-    }
-
-    return descendants;
-  }, []);
-
-  const handleDeleteNode = useCallback(
-    async (namespace: string, nodeType: string, nodeName: string, nodeId: string) => {
-      try {
-        if (nodeType.toLowerCase() === "pod") {
-          setSnackbarMessage(`API not implemented for deleting pod "${nodeName}"`);
-          setSnackbarSeverity("error");
-          setSnackbarOpen(true);
-          return;
-        }
-
-        let endpoint: string;
-        if (nodeType.toLowerCase() === "namespace") {
-          endpoint = `${process.env.VITE_BASE_URL}/api/namespaces/delete/${namespace}`;
-        } else {
-          const kind = nodeType.charAt(0).toUpperCase() + nodeType.slice(1);
-          const pluralForm = kindToPluralMap[kind] || `${nodeType.toLowerCase()}s`;
-          endpoint = `${process.env.VITE_BASE_URL}/api/${pluralForm}/${namespace}/${nodeName}`;
-        }
-
-        await axios.delete(endpoint);
-
-        const descendantNodeIds = findDescendantNodes(nodeId, edges);
-        const nodesToDelete = [nodeId, ...descendantNodeIds];
-
-        setNodes((prevNodes) => prevNodes.filter((n) => !nodesToDelete.includes(n.id)));
-        setEdges((prevEdges) => prevEdges.filter((e) => !nodesToDelete.includes(e.source) && !nodesToDelete.includes(e.target)));
-
-        nodesToDelete.forEach((id) => nodeCache.current.delete(id));
-        edgeCache.current.forEach((edge, edgeId) => {
-          if (nodesToDelete.includes(edge.source) || nodesToDelete.includes(edge.target)) {
-            edgeCache.current.delete(edgeId);
-          }
-        });
-
-        setSnackbarMessage(`"${nodeName}" and its children deleted successfully`);
-        setSnackbarSeverity("success");
-        setSnackbarOpen(true);
-      } catch (error) {
-        setSnackbarMessage(`Failed to delete "${nodeName}"`);
-        setSnackbarSeverity("error");
-        console.log(error);
-        setSnackbarOpen(true);
-      }
-    },
-    [edges, findDescendantNodes]
-  );
 
   const handleMenuClose = useCallback(() => setContextMenu(null), []);
 
@@ -737,10 +715,6 @@ const WecsTreeview = () => {
                 cluster,
               });
               break;
-            case "Delete":
-              setDeleteNodeDetails({ namespace, nodeType, nodeName, nodeId: contextMenu.nodeId });
-              setDeleteDialogOpen(true);
-              break;
             case "Edit":
               setSelectedNode({
                 namespace: namespace || "default",
@@ -775,20 +749,6 @@ const WecsTreeview = () => {
     [contextMenu, nodes, handleClosePanel]
   );
 
-  const handleDeleteConfirm = useCallback(async () => {
-    if (deleteNodeDetails) {
-      const { namespace, nodeType, nodeName, nodeId } = deleteNodeDetails;
-      await handleDeleteNode(namespace, nodeType, nodeName, nodeId);
-    }
-    setDeleteDialogOpen(false);
-    setDeleteNodeDetails(null);
-  }, [deleteNodeDetails, handleDeleteNode]);
-
-  const handleDeleteCancel = useCallback(() => {
-    setDeleteDialogOpen(false);
-    setDeleteNodeDetails(null);
-  }, []);
-
   const handleSnackbarClose = useCallback(() => setSnackbarOpen(false), []);
 
   const handleCancelCreateOptions = () => setShowCreateOptions(false);
@@ -799,6 +759,9 @@ const WecsTreeview = () => {
   };
 
   const isLoading = !wecsIsConnected || !hasValidWecsData || isTransforming || !minimumLoadingTimeElapsed;
+
+  const handleToggleCollapse = () => {};
+  const isCollapsed = false;
 
   return (
     <Box sx={{ display: "flex", height: "85vh", width: "100%", position: "relative" }}>
@@ -854,7 +817,7 @@ const WecsTreeview = () => {
             <Box sx={{ width: "100%", height: "100%", position: "relative" }}>
               <ReactFlowProvider>
                 <FlowCanvas nodes={nodes} edges={edges} renderStartTime={renderStartTime} theme={theme} />
-                <ZoomControls theme={theme}/>
+                <ZoomControls theme={theme} onToggleCollapse={handleToggleCollapse} isCollapsed={isCollapsed} />
               </ReactFlowProvider>
             </Box>
           ) : (
@@ -895,7 +858,6 @@ const WecsTreeview = () => {
               anchorPosition={contextMenu ? { top: contextMenu.y, left: contextMenu.x } : undefined}
             >
               <MenuItem onClick={() => handleMenuAction("Details")}>Details</MenuItem>
-              <MenuItem onClick={() => handleMenuAction("Delete")}>Delete</MenuItem>
               <MenuItem onClick={() => handleMenuAction("Edit")}>Edit</MenuItem>
               <MenuItem onClick={() => handleMenuAction("Logs")}>Logs</MenuItem>
             </Menu>
@@ -907,60 +869,6 @@ const WecsTreeview = () => {
             {snackbarMessage}
           </Alert>
         </Snackbar>
-
-        <Dialog
-          open={deleteDialogOpen}
-          onClose={handleDeleteCancel}
-          aria-labelledby="delete-confirmation-dialog-title"
-          sx={{
-            "& .MuiDialog-paper": {
-              padding: "16px",
-              width: "500px",
-              backgroundColor: theme === "dark" ? "rgb(15, 23, 42)" : "#fff",
-              borderRadius: "4px",
-              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
-              maxWidth: "480px",
-              height: "250px",
-            },
-          }}
-        >
-          <DialogTitle id="delete-confirmation-dialog-title" sx={{ display: "flex", alignItems: "center", gap: 1, fontSize: "18px", fontWeight: 600, color: theme === "dark" ? "#fff" : "333" }}>
-            <WarningAmberIcon sx={{ color: "#FFA500", fontSize: "34px" }} />
-            Confirm Resource Deletion
-          </DialogTitle>
-          <DialogContent>
-            <Typography sx={{ fontSize: "16px", color: theme === "dark" ? "#fff" : "333", mt: 2 }}>
-              Are you sure you want to delete "{deleteNodeDetails?.nodeName}"? This action cannot be undone.
-            </Typography>
-          </DialogContent>
-          <DialogActions sx={{ justifyContent: "space-between", padding: "0 16px 16px 16px" }}>
-            <Button
-              onClick={handleDeleteCancel}
-              sx={{
-                textTransform: "none",
-                color: "#2F86FF",
-                fontWeight: 600,
-                "&:hover": { backgroundColor: "rgba(47, 134, 255, 0.1)" },
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleDeleteConfirm}
-              sx={{
-                textTransform: "none",
-                fontWeight: 500,
-                backgroundColor: "#d32f2f",
-                color: "#fff",
-                padding: "6px 16px",
-                borderRadius: "4px",
-                "&:hover": { backgroundColor: "#b71c1c" },
-              }}
-            >
-              Yes, Delete
-            </Button>
-          </DialogActions>
-        </Dialog>
       </Box>
 
       <div ref={panelRef}>
@@ -973,12 +881,6 @@ const WecsTreeview = () => {
           isOpen={selectedNode?.isOpen || false}
           initialTab={selectedNode?.initialTab}
           cluster={selectedNode?.cluster || ""}
-          onDelete={deleteNodeDetails ? () => handleDeleteNode(
-            deleteNodeDetails.namespace,
-            deleteNodeDetails.nodeType,
-            deleteNodeDetails.nodeName,
-            deleteNodeDetails.nodeId
-          ) : undefined}
         />
       </div>
     </Box>

@@ -6,6 +6,6 @@ import (
 )
 
 func getWecsResources(router *gin.Engine) {
-	router.GET("/ws/wecs", wecs.StreamK8sData)
+	router.GET("/ws/wecs", wecs.StreamK8sDataChronologically)
 	router.GET("/ws/logs", wecs.StreamPodLogs)
 }

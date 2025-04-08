@@ -20,6 +20,7 @@ import { BindingPolicyInfo } from "../../types/bindingPolicy";
 import PolicyDetailDialog from "./Dialogs/PolicyDetailDialog";
 import useTheme from "../../stores/themeStore";
 import { useBPQueries } from "../../hooks/queries/useBPQueries";
+import { api } from "../../lib/api";
 
 interface BPTableProps {
   policies: BindingPolicyInfo[];
@@ -39,7 +40,7 @@ const BPTable: React.FC<BPTableProps> = ({
   activeFilters,
   selectedPolicies,
   onSelectionChange,
-}) => {
+}): JSX.Element => {
   // Add debug log to see the policies structure
   console.log('BPTable - Received Policies:', policies);
   
@@ -47,6 +48,9 @@ const BPTable: React.FC<BPTableProps> = ({
   const { useBindingPolicyDetails } = useBPQueries();
   const theme = useTheme((state) => state.theme);
   const isDark = theme === "dark";
+  
+  // Map to store policy statuses from API
+  const [policyStatuses, setPolicyStatuses] = useState<Record<string, string>>({});
   
   // Add colors object similar to ClustersTable
   const colors = {
@@ -73,6 +77,70 @@ const BPTable: React.FC<BPTableProps> = ({
     error: detailsError
   } = useBindingPolicyDetails(selectedPolicyName || undefined);
 
+  // Fetch status for each policy
+  useEffect(() => {
+    // Create a map to store statuses
+    const newPolicyStatuses: Record<string, string> = {};
+    
+    // Only fetch statuses if we have valid policies
+    if (!policies || policies.length === 0) {
+      return; // Exit early if no policies exist
+    }
+    
+    // Fetch status for each policy using the API directly
+    const fetchStatuses = async () => {
+      // First, get the current list of valid policies from the backend
+      try {
+        const validPoliciesResponse = await api.get('/api/bp');
+        let validPolicies: string[] = [];
+        
+        // Extract policy names from the response
+        if (validPoliciesResponse.data && validPoliciesResponse.data.bindingPolicies) {
+          validPolicies = validPoliciesResponse.data.bindingPolicies
+            .map((p: { name?: string; metadata?: { name?: string } }) => p.name || p.metadata?.name)
+            .filter((name: string | undefined): name is string => name !== undefined);
+        } else if (Array.isArray(validPoliciesResponse.data)) {
+          validPolicies = validPoliciesResponse.data
+            .map((p: { name?: string; metadata?: { name?: string } }) => p.name || p.metadata?.name)
+            .filter((name: string | undefined): name is string => name !== undefined);
+        }
+        
+        // Filter out any policies that don't exist in the backend
+        const existingPolicies = policies.filter(policy => 
+          policy && policy.name && validPolicies.includes(policy.name)
+        );
+        
+        // Now only fetch status for policies that actually exist
+        for (const policy of existingPolicies) {
+          try {
+            // Skip if policy is invalid or missing name
+            if (!policy || !policy.name) {
+              continue;
+            }
+            
+            const response = await api.get(`/api/bp/status?name=${encodeURIComponent(policy.name)}`);
+            if (response.data?.status) {
+              // Capitalize the first letter of the status
+              const status = response.data.status.charAt(0).toUpperCase() + 
+                             response.data.status.slice(1).toLowerCase();
+              newPolicyStatuses[policy.name] = status;
+            }
+          } catch (error) {
+            console.error(`Error fetching status for policy ${policy.name}:`, error);
+          }
+        }
+        
+      } catch (error) {
+        console.error("Error fetching valid policies:", error);
+      }
+      
+      // Update state with all fetched statuses
+      setPolicyStatuses(newPolicyStatuses);
+    };
+    
+    fetchStatuses();
+  }, [policies]);
+
   // Add debugging for policy details
   useEffect(() => {
     if (selectedPolicyDetails) {
@@ -82,12 +150,21 @@ const BPTable: React.FC<BPTableProps> = ({
   }, [selectedPolicyDetails]);
 
   const handlePolicyClick = (policy: BindingPolicyInfo) => {
+    if (!policy || !policy.name) {
+      console.warn('Attempted to view details for invalid policy');
+      return;
+    }
+    
     console.log('Requesting details for policy:', policy.name);
+    console.log('Policy namespace:', policy.namespace);
+    localStorage.setItem('selectedPolicyNamespace', policy.namespace || 'default');
+    
     setSelectedPolicyName(policy.name);
   };
 
   const handleCloseDialog = () => {
     setSelectedPolicyName(null);
+    localStorage.removeItem('selectedPolicyNamespace');
   };
 
   const handleEdit = (policy: BindingPolicyInfo) => {
@@ -102,17 +179,13 @@ const BPTable: React.FC<BPTableProps> = ({
     onSelectionChange(newSelected);
   };
 
-  // const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   if (event.target.checked) {
-  //     onSelectionChange(policies.map(policy => policy.name));
-  //   } else {
-  //     onSelectionChange([]);
-  //   }
-  // };
-
   const filteredPolicies = policies.filter((policy) => {
     if (!policy) return false;
-    if (activeFilters.status && policy.status !== activeFilters.status) {
+    
+    // Get the API-provided status if available, otherwise use the policy's default status
+    const currentStatus = policyStatuses[policy.name] || policy.status;
+    
+    if (activeFilters.status && currentStatus !== activeFilters.status) {
       return false;
     }
     return true;
@@ -120,9 +193,7 @@ const BPTable: React.FC<BPTableProps> = ({
 
 
   const renderClusterChip = (policy: BindingPolicyInfo) => {
-    // Determine the cluster count 
-    // First try to use the clusters property (which should be a number)
-    // Then fall back to clusterList.length
+  
     const clusterCount = 
       typeof policy.clusters === 'number' ? policy.clusters : 
       policy.clusterList?.length ?? 0;
@@ -369,15 +440,16 @@ const BPTable: React.FC<BPTableProps> = ({
                   <TableCell>{renderWorkloadChip(policy)}</TableCell>
                   <TableCell>{policy.creationDate}</TableCell>
                   <TableCell>
+                    {/* Use the API status if available, otherwise use the policy's original status */}
                     <span
                       className="px-2 py-1 text-xs font-medium rounded-lg inline-flex items-center gap-1"
                       style={{
                         backgroundColor:
-                          policy.status.toLowerCase() === "inactive"
+                          (policyStatuses[policy.name] || policy.status).toLowerCase() === "inactive"
                             ? isDark
                               ? "rgba(255, 107, 107, 0.2)"
                               : "rgba(255, 107, 107, 0.1)"
-                            : policy.status.toLowerCase() === "pending"
+                            : (policyStatuses[policy.name] || policy.status).toLowerCase() === "pending"
                             ? isDark
                               ? "rgba(255, 179, 71, 0.2)"
                               : "rgba(255, 179, 71, 0.1)"
@@ -385,43 +457,33 @@ const BPTable: React.FC<BPTableProps> = ({
                             ? "rgba(103, 192, 115, 0.2)"
                             : "rgba(103, 192, 115, 0.1)",
                         color:
-                          policy.status.toLowerCase() === "inactive"
+                          (policyStatuses[policy.name] || policy.status).toLowerCase() === "inactive"
                             ? colors.error
-                            : policy.status.toLowerCase() === "pending"
+                            : (policyStatuses[policy.name] || policy.status).toLowerCase() === "pending"
                             ? colors.warning
                             : colors.success,
                         border:
-                          policy.status.toLowerCase() === "inactive"
+                          (policyStatuses[policy.name] || policy.status).toLowerCase() === "inactive"
                             ? `1px solid ${isDark ? "rgba(255, 107, 107, 0.4)" : "rgba(255, 107, 107, 0.3)"}`
-                            : policy.status.toLowerCase() === "pending"
+                            : (policyStatuses[policy.name] || policy.status).toLowerCase() === "pending"
                             ? `1px solid ${isDark ? "rgba(255, 179, 71, 0.4)" : "rgba(255, 179, 71, 0.3)"}`
                             : `1px solid ${isDark ? "rgba(103, 192, 115, 0.4)" : "rgba(103, 192, 115, 0.3)"}`,
                       }}
                     >
                       <span className="w-2 h-2 rounded-full" style={{ 
-                        backgroundColor: policy.status.toLowerCase() === "inactive" 
+                        backgroundColor: (policyStatuses[policy.name] || policy.status).toLowerCase() === "inactive" 
                           ? colors.error 
-                          : policy.status.toLowerCase() === "pending" 
+                          : (policyStatuses[policy.name] || policy.status).toLowerCase() === "pending" 
                             ? colors.warning 
                             : colors.success 
                       }}></span>
-                      {policy.status}
+                      {policyStatuses[policy.name] || policy.status}
                     </span>
                   </TableCell>
                   <TableCell align="right">
                     <Box
                       sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}
                     >
-                      {/* <IconButton
-                        sx={{ 
-                          color: colors.textSecondary,
-                          "&:hover": { color: colors.primary }
-                        }}
-                        size="small"
-                        onClick={() => onEditPolicy(policy)}
-                      >
-                        <Edit2 size={18} />
-                      </IconButton> */}
                       <IconButton
                         sx={{ 
                           color: colors.textSecondary,
@@ -437,7 +499,12 @@ const BPTable: React.FC<BPTableProps> = ({
                         sx={{
                           color: colors.error,
                           opacity: 0.7,
-                          "&:hover": { opacity: 1 }
+                       "&:hover": { opacity: 1 },
+                          border: 'none',
+                          outline: 'none',
+                          backgroundColor: 'transparent',
+                          transition: 'opacity 0.2s ease',
+                          WebkitAppearance: 'none'
                         }}
                         onClick={() => onDeletePolicy(policy)}
                       >
@@ -449,7 +516,7 @@ const BPTable: React.FC<BPTableProps> = ({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={7} className="py-12">
+                <TableCell colSpan={8} className="py-12">
                   <div className="flex flex-col items-center justify-center text-center p-6">
                     <CloudOff size={48} style={{ color: colors.textSecondary, marginBottom: "16px" }} />
                     <h3 style={{ color: colors.text }} className="text-lg font-semibold mb-2">

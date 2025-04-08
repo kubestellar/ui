@@ -1124,8 +1124,10 @@ const BPVisualization: React.FC<BPVisualizationProps> = ({ policies, clusters: p
         
         setNodes(newNodes);
         setEdges(newEdges);
-        setLoading(false);
       }
+      
+
+      setLoading(false);
     };
 
     generateGraph();

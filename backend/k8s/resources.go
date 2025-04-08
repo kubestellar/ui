@@ -4,10 +4,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"gopkg.in/yaml.v3"
-	"io"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -16,11 +22,6 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/tools/cache"
-	"log"
-	"net/http"
-	"strings"
-	"sync"
-	"time"
 )
 
 // mapResourceToGVR maps resource types to their GroupVersionResource (GVR)
@@ -143,6 +144,7 @@ func applyResources(c *gin.Context, yamlDocs []map[string]interface{},
 		}
 
 		resourceObj := &unstructured.Unstructured{Object: resourceData}
+		autoLabelling(resourceObj)
 		result, err := resource.Create(c, resourceObj, v1.CreateOptions{})
 		if err != nil {
 			return results, fmt.Errorf("failed to create resource %s: %v", resourceKind, err)
@@ -151,6 +153,19 @@ func applyResources(c *gin.Context, yamlDocs []map[string]interface{},
 	}
 	return results, nil
 
+}
+
+func autoLabelling(obj *unstructured.Unstructured) {
+	labels := obj.GetLabels()
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	labelKey := "kubernetes.io/metadata.name"
+
+	if _, exists := labels[labelKey]; !exists {
+		labels[labelKey] = obj.GetName()
+		obj.SetLabels(labels)
+	}
 }
 
 // CreateResource creates a Kubernetes resource

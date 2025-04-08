@@ -9,7 +9,7 @@ interface Workload {
   namespace: string;
   creationTime: string;
   image: string;
-  label: string;
+  labels: Record<string, string>;
   replicas: number;
   status?: string;
 }

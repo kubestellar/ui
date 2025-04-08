@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
-
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/tools/clientcmd/api"
+	"strings"
 )
 
 /*
@@ -74,7 +74,7 @@ func GetClientSetKubeConfig() (*kubernetes.Clientset, error) {
 	return clientset, nil
 }
 
-// listContexts lists all available contexts in the kubeconfig
+// listContexts lists all available contexts in the kubeconfig (Only look for wds context)
 func ListContexts() (string, []string, error) {
 	config, err := getKubeConfig()
 	if err != nil {
@@ -83,7 +83,9 @@ func ListContexts() (string, []string, error) {
 	currentContext := config.CurrentContext
 	var contexts []string
 	for name := range config.Contexts {
-		contexts = append(contexts, name)
+		if strings.Contains(name, "wds") {
+			contexts = append(contexts, name)
+		}
 	}
 	return currentContext, contexts, nil
 }
@@ -98,6 +100,43 @@ func writeMessage(conn *websocket.Conn, message string) {
 	if err := conn.WriteMessage(websocket.TextMessage, []byte(message)); err != nil {
 		log.Println("Error writing to WebSocket:", err)
 	}
+}
+func SetWdsContextCookies(c *gin.Context) {
+	var request struct {
+		Context string `json:"context"`
+	}
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+	c.SetCookie("ui-wds-context", request.Context, 3600, "/", "", false, true)
+	c.JSON(http.StatusOK, gin.H{
+		"message":            "Context updated successfully",
+		"current-ui-context": request.Context,
+	})
+}
+
+func GetWdsContextCookies(c *gin.Context) {
+	// currentContext : is system context (may be differnet from wds)
+	// TODO: improve this ListContexts function
+	currentContext, context, err := ListContexts()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	cookieContext, err := c.Cookie("ui-wds-context")
+	if err != nil {
+		if strings.Contains("wds", currentContext) {
+			cookieContext = currentContext // Default to Kubernetes API context
+		} else {
+			cookieContext = "wds1"
+		}
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"ui-wds-context":    cookieContext,
+		"system-context":    currentContext,
+		"other-wds-context": context,
+	})
 }
 func CreateWDSContextUsingCommand(w http.ResponseWriter, r *http.Request, c *gin.Context) {
 	newWdsContext := c.Query("context")

@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -147,4 +148,114 @@ func init() {
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		log.LogWarn("pls check if redis is runnnig", zap.String("err", err.Error()))
 	}
+}
+
+// SetJSONValue sets a JSON value in Redis with an optional expiration
+// key: Redis key to store the JSON under
+// value: Any Go struct or map that can be marshalled to JSON
+// expiration: Time until the key expires (0 for no expiration)
+func SetJSONValue(key string, value interface{}, expiration time.Duration) error {
+	// Marshal the value to JSON
+	jsonData, err := json.Marshal(value)
+	if err != nil {
+		return fmt.Errorf("failed to marshal JSON: %v", err)
+	}
+
+	// Store the JSON string in Redis
+	if err := rdb.Set(ctx, key, string(jsonData), expiration).Err(); err != nil {
+		return fmt.Errorf("failed to set JSON value: %v", err)
+	}
+
+	log.LogInfo("stored JSON value", zap.String("key", key))
+	return nil
+}
+
+// GetJSONValue retrieves a JSON value from Redis and unmarshals it into the provided destination
+// key: Redis key to retrieve
+// dest: Pointer to a struct or map where the unmarshaled JSON will be stored
+// Returns true if the key was found, false if it was a cache miss
+func GetJSONValue(key string, dest interface{}) (bool, error) {
+	// Get the JSON string from Redis
+	val, err := rdb.Get(ctx, key).Result()
+	if err == redis.Nil {
+		// Key doesn't exist (cache miss)
+		return false, nil
+	} else if err != nil {
+		return false, fmt.Errorf("failed to get JSON value: %v", err)
+	}
+
+	// Unmarshal the JSON into the destination
+	if err := json.Unmarshal([]byte(val), dest); err != nil {
+		return true, fmt.Errorf("failed to unmarshal JSON: %v", err)
+	}
+
+	log.LogInfo("retrieved JSON value", zap.String("key", key))
+	return true, nil
+}
+
+// SetJSONHash stores a JSON value in a Redis hash
+// hashKey: The Redis hash key
+// field: The field within the hash
+// value: Any Go struct or map that can be marshalled to JSON
+func SetJSONHash(hashKey string, field string, value interface{}) error {
+	// Marshal the value to JSON
+	jsonData, err := json.Marshal(value)
+	if err != nil {
+		return fmt.Errorf("failed to marshal JSON: %v", err)
+	}
+
+	// Store the JSON string in Redis hash
+	if err := rdb.HSet(ctx, hashKey, field, string(jsonData)).Err(); err != nil {
+		return fmt.Errorf("failed to set JSON hash value: %v", err)
+	}
+
+	log.LogInfo("stored JSON hash value",
+		zap.String("hash", hashKey),
+		zap.String("field", field))
+	return nil
+}
+
+// GetJSONHash retrieves a JSON value from a Redis hash and unmarshals it
+// hashKey: The Redis hash key
+// field: The field within the hash
+// dest: Pointer to a struct or map where the unmarshaled JSON will be stored
+// Returns true if the field was found, false if it was not found
+func GetJSONHash(hashKey string, field string, dest interface{}) (bool, error) {
+	// Get the JSON string from Redis hash
+	val, err := rdb.HGet(ctx, hashKey, field).Result()
+	if err == redis.Nil {
+		// Field doesn't exist
+		return false, nil
+	} else if err != nil {
+		return false, fmt.Errorf("failed to get JSON hash value: %v", err)
+	}
+
+	// Unmarshal the JSON into the destination
+	if err := json.Unmarshal([]byte(val), dest); err != nil {
+		return true, fmt.Errorf("failed to unmarshal JSON from hash: %v", err)
+	}
+
+	log.LogInfo("retrieved JSON hash value",
+		zap.String("hash", hashKey),
+		zap.String("field", field))
+	return true, nil
+}
+
+// GetAllJSONHash retrieves all JSON values from a Redis hash
+// hashKey: The Redis hash key
+// Returns a map of field names to unmarshaled JSON values
+func GetAllJSONHash(hashKey string) (map[string]json.RawMessage, error) {
+	// Get all fields and values from the hash
+	values, err := rdb.HGetAll(ctx, hashKey).Result()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get all JSON hash values: %v", err)
+	}
+
+	result := make(map[string]json.RawMessage)
+	for field, jsonString := range values {
+		result[field] = json.RawMessage(jsonString)
+	}
+
+	log.LogInfo("retrieved all JSON hash values", zap.String("hash", hashKey))
+	return result, nil
 }

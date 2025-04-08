@@ -243,7 +243,6 @@ const WecsDetailsPanel = ({
     };
   }, [isOpen, type]); // Removed dependency on wsParamsRef.current to prevent unnecessary reconnections
 
-  // Initialize terminal only once when the logs tab is opened
   useEffect(() => {
     if (!terminalRef.current || type.toLowerCase() !== "pod" || tabValue !== 2) return;
 
@@ -266,8 +265,6 @@ const WecsDetailsPanel = ({
 
     setTimeout(() => fitAddon.fit(), 100);
     terminalInstance.current = term;
-
-    // Write initial logs
     term.clear();
     logs.forEach((log) => {
       term.writeln(log);
@@ -290,6 +287,7 @@ const WecsDetailsPanel = ({
       });
     }
   }, [logs, tabValue]); // Update terminal content without re-initializing
+
 
   const calculateAge = (creationTimestamp: string | undefined): string => {
     if (!creationTimestamp) return "N/A";

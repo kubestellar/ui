@@ -39,6 +39,7 @@ import { ZoomControls } from "../components/Wds_Topology/ZoomControls";
 import { FlowCanvas } from "../components/Wds_Topology/FlowCanvas";
 import LoadingFallback from "./LoadingFallback";
 import DynamicDetailsPanel from "./DynamicDetailsPanel";
+import GroupPanel from "./GroupPanel";
 import ReactDOM from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { isEqual } from "lodash";
@@ -64,6 +65,7 @@ export interface CustomNode extends BaseNode {
   targetPosition?: Position;
   collapsed?: boolean;
   showMenu?: boolean;
+  isGroup?: boolean;
 }
 
 export interface BaseEdge {
@@ -112,7 +114,7 @@ export interface ResourceItem {
     addresses?: string[];
     ports?: Array<{ name?: string; port?: number }>;
   }>;
-  ports?: Array<{ name?: string; port?: number }>;
+  ports?: Array<{ name: string; port: number }>;
   subjects?: Array<{ name: string }>;
   roleRef?: { name: string };
   rules?: Array<{
@@ -138,6 +140,13 @@ interface SelectedNode {
   initialTab?: number;
 }
 
+interface GroupPanelState {
+  isOpen: boolean;
+  namespace: string;
+  groupType: string;
+  groupItems: ResourceItem[];
+}
+
 interface ResourcesMap {
   endpoints: ResourceItem[];
   endpointSlices: ResourceItem[];
@@ -152,7 +161,6 @@ const nodeStyle: React.CSSProperties = {
   height: "30px",
 };
 
-// Mapping of kind to the correct plural form for API endpoints
 const kindToPluralMap: Record<string, string> = {
   Binding: "bindings",
   ComponentStatus: "componentstatuses",
@@ -218,7 +226,6 @@ const kindToPluralMap: Record<string, string> = {
   VolumeAttachment: "volumeattachments",
 };
 
-// Dynamic icon mapping for all imported icons
 const iconMap: Record<string, string> = {
   ConfigMap: cm,
   ClusterRoleBinding: crb,
@@ -251,11 +258,9 @@ const iconMap: Record<string, string> = {
   Volume: vol,
 };
 
-// Updated getNodeConfig function to support new child node types
 const getNodeConfig = (type: string, label: string) => {
   console.log(label);
   const normalizedType = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
-  
   let icon = iconMap[normalizedType] || cm;
   let dynamicText = type.toLowerCase();
 
@@ -403,7 +408,6 @@ const getNodeConfig = (type: string, label: string) => {
   return { icon, dynamicText };
 };
 
-// Layout function (unchanged)
 const getLayoutedElements = (
   nodes: CustomNode[],
   edges: CustomEdge[],
@@ -468,7 +472,8 @@ const TreeViewComponent = () => {
   const [isTransforming, setIsTransforming] = useState<boolean>(false);
   const [dataReceived, setDataReceived] = useState<boolean>(false);
   const [minimumLoadingTimeElapsed, setMinimumLoadingTimeElapsed] = useState<boolean>(false);
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(false); // New state for collapse/expand
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const [groupPanel, setGroupPanel] = useState<GroupPanelState | null>(null);
   const nodeCache = useRef<Map<string, CustomNode>>(new Map());
   const edgeCache = useRef<Map<string, CustomEdge>>(new Map());
   const edgeIdCounter = useRef<number>(0);
@@ -542,7 +547,10 @@ const TreeViewComponent = () => {
       setSelectedNode({ ...selectedNode, isOpen: false });
       setTimeout(() => setSelectedNode(null), 400);
     }
-  }, [selectedNode]);
+    if (groupPanel) {
+      setGroupPanel(null);
+    }
+  }, [selectedNode, groupPanel]);
 
   const createNode = useCallback(
     (
@@ -555,11 +563,14 @@ const TreeViewComponent = () => {
       resourceData: ResourceItem | undefined,
       parent: string | null,
       newNodes: CustomNode[],
-      newEdges: CustomEdge[]
+      newEdges: CustomEdge[],
+      groupItems?: ResourceItem[] // Add optional groupItems parameter for collapsed mode
     ) => {
       const config = getNodeConfig(type.toLowerCase(), label);
       const timeAgo = getTimeAgo(timestamp);
       const cachedNode = nodeCache.current.get(id);
+
+      const isGroupNode = id.includes(":group");
 
       const node =
         cachedNode ||
@@ -576,14 +587,23 @@ const TreeViewComponent = () => {
                 resourceData={resourceData}
                 onClick={(e) => {
                   if ((e.target as HTMLElement).tagName === "svg" || (e.target as HTMLElement).closest("svg")) return;
-                  setSelectedNode({
-                    namespace: namespace || "default",
-                    name: label,
-                    type: type.toLowerCase(),
-                    onClose: handleClosePanel,
-                    isOpen: true,
-                    resourceData,
-                  });
+                  if (isGroupNode && groupItems) {
+                    setGroupPanel({
+                      isOpen: true,
+                      namespace: namespace || "default",
+                      groupType: type.toLowerCase(),
+                      groupItems: groupItems, // Pass all group items
+                    });
+                  } else {
+                    setSelectedNode({
+                      namespace: namespace || "default",
+                      name: label,
+                      type: type.toLowerCase(),
+                      onClose: handleClosePanel,
+                      isOpen: true,
+                      resourceData,
+                    });
+                  }
                 }}
                 onMenuClick={(e) => handleMenuOpen(e, id)}
               />
@@ -601,6 +621,7 @@ const TreeViewComponent = () => {
           },
           sourcePosition: Position.Right,
           targetPosition: Position.Left,
+          isGroup: isGroupNode,
         } as CustomNode);
 
       if (!cachedNode) nodeCache.current.set(id, node);
@@ -665,13 +686,12 @@ const TreeViewComponent = () => {
           };
 
           if (isCollapsed) {
-            // Collapsed view: Group resources by type under each namespace
             const resourceGroups: Record<string, ResourceItem[]> = {};
 
             Object.entries(resourcesMap).forEach(([key, items]) => {
+              console.log(key);
               items.forEach((item: ResourceItem) => {
                 const kindLower = item.kind.toLowerCase();
-                console.log(key);
                 if (!resourceGroups[kindLower]) {
                   resourceGroups[kindLower] = [];
                 }
@@ -692,14 +712,14 @@ const TreeViewComponent = () => {
                 status,
                 items[0]?.metadata.creationTimestamp,
                 namespace.name,
-                items[0], // Use the first item as representative resource data
+                items[0], // Representative resource data
                 namespaceId,
                 newNodes,
-                newEdges
+                newEdges,
+                items // Pass all items for the group
               );
             });
           } else {
-            // Expanded view: Show all resources and their children as before
             Object.values(resourcesMap)
               .flat()
               .forEach((item: ResourceItem, index: number) => {
@@ -885,7 +905,7 @@ const TreeViewComponent = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (selectedNode?.isOpen && panelRef.current && !panelRef.current.contains(event.target as Node)) {
+      if ((selectedNode?.isOpen || groupPanel?.isOpen) && panelRef.current && !panelRef.current.contains(event.target as Node)) {
         handleClosePanel();
       }
     };
@@ -894,9 +914,8 @@ const TreeViewComponent = () => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [selectedNode, handleClosePanel]);
+  }, [selectedNode, groupPanel, handleClosePanel]);
 
-  // Function to find all descendant nodes of a given node
   const findDescendantNodes = useCallback((nodeId: string, edges: CustomEdge[]): string[] => {
     const descendants: string[] = [];
     const queue: string[] = [nodeId];
@@ -907,12 +926,10 @@ const TreeViewComponent = () => {
       if (visited.has(currentNodeId)) continue;
       visited.add(currentNodeId);
 
-      // Find all direct children of the current node
       const children = edges
         .filter((edge) => edge.source === currentNodeId)
         .map((edge) => edge.target);
 
-      // Add children to descendants and queue for further traversal
       children.forEach((childId) => {
         if (!visited.has(childId)) {
           descendants.push(childId);
@@ -929,31 +946,24 @@ const TreeViewComponent = () => {
       try {
         let endpoint: string;
 
-        // Use a different endpoint for namespace deletion
         if (nodeType.toLowerCase() === "namespace") {
           endpoint = `${process.env.VITE_BASE_URL}/api/namespaces/delete/${namespace}`;
         } else {
-          // For all other resource types, use the existing endpoint pattern
-          const kind = nodeType.charAt(0).toUpperCase() + nodeType.slice(1); // e.g., "ingress" → "Ingress"
-          const pluralForm = kindToPluralMap[kind] || `${nodeType.toLowerCase()}s`; // Fallback to adding "s" if not found
+          const kind = nodeType.charAt(0).toUpperCase() + nodeType.slice(1);
+          const pluralForm = kindToPluralMap[kind] || `${nodeType.toLowerCase()}s`;
           endpoint = `${process.env.VITE_BASE_URL}/api/${pluralForm}/${namespace}/${nodeName}`;
         }
 
-        // Send DELETE request to the backend
         await axios.delete(endpoint);
 
-        // Find all descendant nodes of the node being deleted
         const descendantNodeIds = findDescendantNodes(nodeId, edges);
-        // Include the node itself in the list of nodes to delete
         const nodesToDelete = [nodeId, ...descendantNodeIds];
 
-        // Remove the node and its descendants from the nodes state
         setNodes((prevNodes) => {
           const remainingNodes = prevNodes.filter((n) => !nodesToDelete.includes(n.id));
           return remainingNodes;
         });
 
-        // Remove edges that reference any of the deleted nodes (as source or target)
         setEdges((prevEdges) => {
           const remainingEdges = prevEdges.filter(
             (e) => !nodesToDelete.includes(e.source) && !nodesToDelete.includes(e.target)
@@ -961,7 +971,6 @@ const TreeViewComponent = () => {
           return remainingEdges;
         });
 
-        // Update caches
         nodesToDelete.forEach((id) => {
           nodeCache.current.delete(id);
         });
@@ -1014,15 +1023,24 @@ const TreeViewComponent = () => {
 
           switch (action) {
             case "Details":
-              setSelectedNode({
-                namespace: namespace || "default",
-                name: nodeName,
-                type: nodeType,
-                onClose: handleClosePanel,
-                isOpen: true,
-                resourceData,
-                initialTab: 0, // Open with "SUMMARY" tab (default)
-              });
+              if (node.isGroup && resourceData) {
+                setGroupPanel({
+                  isOpen: true,
+                  namespace: namespace || "default",
+                  groupType: nodeType,
+                  groupItems: nodeCache.current.get(node.id)?.data.label.props.resourceData ? [resourceData] : [], // Fallback, should be handled by groupItems
+                });
+              } else {
+                setSelectedNode({
+                  namespace: namespace || "default",
+                  name: nodeName,
+                  type: nodeType,
+                  onClose: handleClosePanel,
+                  isOpen: true,
+                  resourceData,
+                  initialTab: 0,
+                });
+              }
               break;
             case "Delete":
               setDeleteNodeDetails({
@@ -1033,7 +1051,7 @@ const TreeViewComponent = () => {
               });
               setDeleteDialogOpen(true);
               break;
-            case "Edit": // Handle the "Edit" action
+            case "Edit":
               setSelectedNode({
                 namespace: namespace || "default",
                 name: nodeName,
@@ -1041,7 +1059,7 @@ const TreeViewComponent = () => {
                 onClose: handleClosePanel,
                 isOpen: true,
                 resourceData,
-                initialTab: 1, // Open with "EDIT" tab
+                initialTab: 1,
               });
               break;
             case "Logs":
@@ -1052,7 +1070,7 @@ const TreeViewComponent = () => {
                 onClose: handleClosePanel,
                 isOpen: true,
                 resourceData,
-                initialTab: 2, // Open with "LOGS" tab
+                initialTab: 2,
               });
               break;
             default:
@@ -1118,9 +1136,9 @@ const TreeViewComponent = () => {
         sx={{
           flex: 1,
           position: "relative",
-          filter: selectedNode?.isOpen ? "blur(5px)" : "none",
+          filter: (selectedNode?.isOpen || groupPanel?.isOpen) ? "blur(5px)" : "none",
           transition: "filter 0.2s ease-in-out",
-          pointerEvents: selectedNode?.isOpen ? "none" : "auto",
+          pointerEvents: (selectedNode?.isOpen || groupPanel?.isOpen) ? "none" : "auto",
         }}
       >
         <Box
@@ -1134,7 +1152,7 @@ const TreeViewComponent = () => {
             padding: 2,
             borderRadius: 1,
             boxShadow: "0 6px 6px rgba(0,0,0,0.1)",
-            background: theme === "dark" ? "rgb(15, 23, 42)" : "#fff", 
+            background: theme === "dark" ? "rgb(15, 23, 42)" : "#fff",
           }}
         >
           <Typography variant="h4" sx={{ color: "#4498FF", fontWeight: 700, fontSize: "30px", letterSpacing: "0.5px" }}>
@@ -1278,21 +1296,42 @@ const TreeViewComponent = () => {
       </Box>
 
       <div ref={panelRef}>
-        <DynamicDetailsPanel
-          namespace={selectedNode?.namespace || ""}
-          name={selectedNode?.name || ""}
-          type={selectedNode?.type || ""}
-          resourceData={selectedNode?.resourceData}
-          onClose={handleClosePanel}
-          isOpen={selectedNode?.isOpen || false}
-          initialTab={selectedNode?.initialTab}
-          onDelete={deleteNodeDetails ? () => handleDeleteNode(
-            deleteNodeDetails.namespace,
-            deleteNodeDetails.nodeType,
-            deleteNodeDetails.nodeName,
-            deleteNodeDetails.nodeId
-          ) : undefined}
-        />
+        {selectedNode && (
+          <DynamicDetailsPanel
+            namespace={selectedNode.namespace}
+            name={selectedNode.name}
+            type={selectedNode.type}
+            resourceData={selectedNode.resourceData}
+            onClose={handleClosePanel}
+            isOpen={selectedNode.isOpen}
+            initialTab={selectedNode.initialTab}
+            onDelete={deleteNodeDetails ? () => handleDeleteNode(
+              deleteNodeDetails.namespace,
+              deleteNodeDetails.nodeType,
+              deleteNodeDetails.nodeName,
+              deleteNodeDetails.nodeId
+            ) : undefined}
+          />
+        )}
+        {groupPanel && groupPanel.isOpen && (
+          <GroupPanel
+            namespace={groupPanel.namespace}
+            groupType={groupPanel.groupType}
+            groupItems={groupPanel.groupItems}
+            onClose={handleClosePanel}
+            onItemSelect={(item) => {
+              setSelectedNode({
+                namespace: groupPanel.namespace,
+                name: item.metadata.name,
+                type: groupPanel.groupType,
+                onClose: handleClosePanel,
+                isOpen: true,
+                resourceData: item,
+              });
+              setGroupPanel(null);
+            }}
+          />
+        )}
       </div>
     </Box>
   );

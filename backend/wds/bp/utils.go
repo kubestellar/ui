@@ -281,6 +281,11 @@ func watchOnBps() {
 			switch event.Type {
 			case "MODIFIED":
 				bp, _ := event.Object.(*v1alpha1.BindingPolicy)
+				if bp.ObjectMeta.Generation == bp.Status.ObservedGeneration {
+					log.LogInfo("reconciled successfully", zap.String("name", bp.Name))
+				} else {
+					log.LogInfo("reconciling...", zap.String("name", bp.Name))
+				}
 				log.LogInfo("BP modified: ", zap.String("name", bp.Name))
 
 			case "ADDED":
