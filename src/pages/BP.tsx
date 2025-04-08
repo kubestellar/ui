@@ -573,10 +573,6 @@ const BP = () => {
     }
   }, [setBindingPolicies, setEditDialogOpen, setSelectedPolicy, setSuccessMessage]);
 
-  const handlePreviewPolicy = useCallback((policy: BindingPolicyInfo) => {
-    setSelectedPolicy(policy);
-    setPreviewDialogOpen(true);
-  }, []);
 
   // Create a memoized function for the policy assignment simulation used in the JSX
   const handleSimulatedPolicyAssign = useCallback((policyName: string, targetType: string, targetName: string) => {
@@ -696,7 +692,6 @@ const BP = () => {
               <>
                 <BPTable
                   policies={paginatedPolicies}
-                  onPreviewMatches={(policy) => handlePreviewPolicy(policy)}
                   onDeletePolicy={handleDeletePolicy}
                   onEditPolicy={handleEditPolicy}
                   activeFilters={activeFilters}

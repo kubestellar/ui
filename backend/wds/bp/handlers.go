@@ -309,6 +309,138 @@ func GetAllBp(ctx *gin.Context) {
 			Workloads:     workloads,
 		}
 
+		// Store the YAML content in annotations if not already present
+		if bpWithStatus.Annotations == nil {
+			bpWithStatus.Annotations = make(map[string]string)
+		}
+		if _, exists := bpWithStatus.Annotations["yaml"]; !exists {
+			// Check if this is a quick connect policy by looking for the annotation
+			if storedBP, exists := uiCreatedPolicies[bpWithStatus.Name]; exists && storedBP.RawYAML != "" {
+				// Use the original YAML for quick connect policies
+				bpWithStatus.Annotations["yaml"] = storedBP.RawYAML
+			} else {
+				// Create a minimal version of the binding policy for YAML
+				cleanBP := map[string]interface{}{
+					"apiVersion": "control.kubestellar.io/v1alpha1",
+					"kind":       "BindingPolicy",
+					"metadata": map[string]interface{}{
+						"name": bpWithStatus.Name,
+					},
+					"spec": map[string]interface{}{},
+				}
+
+				// Add namespace if not empty
+				if bpWithStatus.Namespace != "" {
+					cleanBP["metadata"].(map[string]interface{})["namespace"] = bpWithStatus.Namespace
+				}
+
+				// Add only essential annotations
+				if len(bpWithStatus.Annotations) > 0 {
+					relevantAnnotations := map[string]string{}
+					for k, v := range bpWithStatus.Annotations {
+						if k == "created-by" || k == "creation-timestamp" ||
+							(!strings.HasPrefix(k, "kubectl.kubernetes.io/") &&
+								!strings.HasPrefix(k, "kubernetes.io/") &&
+								k != "yaml" &&
+								!strings.Contains(k, "managedFields")) {
+							relevantAnnotations[k] = v
+						}
+					}
+					if len(relevantAnnotations) > 0 {
+						cleanBP["metadata"].(map[string]interface{})["annotations"] = relevantAnnotations
+					}
+				}
+
+				// Add non-empty labels only
+				if len(bpWithStatus.Labels) > 0 {
+					relevantLabels := map[string]string{}
+					for k, v := range bpWithStatus.Labels {
+						if v != "" {
+							relevantLabels[k] = v
+						}
+					}
+					if len(relevantLabels) > 0 {
+						cleanBP["metadata"].(map[string]interface{})["labels"] = relevantLabels
+					}
+				}
+
+				// Add cluster selectors (properly formatted)
+				if len(bpWithStatus.Spec.ClusterSelectors) > 0 {
+					cleanSelectors := []map[string]interface{}{}
+					for _, selector := range bpWithStatus.Spec.ClusterSelectors {
+						if len(selector.MatchLabels) > 0 {
+							cleanSelector := map[string]interface{}{
+								"matchLabels": selector.MatchLabels,
+							}
+							cleanSelectors = append(cleanSelectors, cleanSelector)
+						}
+					}
+					if len(cleanSelectors) > 0 {
+						specMap := cleanBP["spec"].(map[string]interface{})
+						specMap["clusterSelectors"] = cleanSelectors
+					}
+				}
+
+				// Add downsync rules (properly formatted)
+				if len(bpWithStatus.Spec.Downsync) > 0 {
+					cleanDownsync := []map[string]interface{}{}
+					for _, ds := range bpWithStatus.Spec.Downsync {
+						cleanDs := map[string]interface{}{}
+
+						// Add resources
+						if len(ds.Resources) > 0 {
+							cleanDs["resources"] = ds.Resources
+						}
+
+						// Add API group only if not empty
+						if ds.APIGroup != nil && *ds.APIGroup != "" {
+							cleanDs["apiGroup"] = *ds.APIGroup
+						}
+
+						// Add namespaces only if not empty
+						if len(ds.Namespaces) > 0 {
+							cleanDs["namespaces"] = ds.Namespaces
+						}
+
+						// Add object selectors only if they have matchLabels
+						if len(ds.ObjectSelectors) > 0 {
+							cleanObjSelectors := []map[string]interface{}{}
+							for _, objSelector := range ds.ObjectSelectors {
+								if len(objSelector.MatchLabels) > 0 {
+									cleanObjSelectors = append(cleanObjSelectors, map[string]interface{}{
+										"matchLabels": objSelector.MatchLabels,
+									})
+								}
+							}
+							if len(cleanObjSelectors) > 0 {
+								cleanDs["objectSelectors"] = cleanObjSelectors
+							}
+						}
+
+						// Add createOnly flag only if true
+						if ds.CreateOnly {
+							cleanDs["createOnly"] = true
+						}
+
+						if len(cleanDs) > 0 {
+							cleanDownsync = append(cleanDownsync, cleanDs)
+						}
+					}
+
+					if len(cleanDownsync) > 0 {
+						specMap := cleanBP["spec"].(map[string]interface{})
+						specMap["downsync"] = cleanDownsync
+					}
+				}
+
+				// Convert to YAML
+				yamlBytes, err := yaml.Marshal(cleanBP)
+				if err == nil {
+					bpWithStatus.Annotations["yaml"] = string(yamlBytes)
+				}
+			}
+		}
+
 		bpsWithStatus = append(bpsWithStatus, bpWithStatus)
 	}
 
@@ -341,7 +473,13 @@ func GetAllBp(ctx *gin.Context) {
 			// Include other fields that might be needed in the response
 			"creationTimestamp": bp.CreationTimestamp,
 			"conditions":        bp.BindingPolicy.Status.Conditions,
-			"yaml":              bp.Annotations["yaml"],
+		}
+
+		// Check if this is a quick connect policy and use its original YAML
+		if storedBP, exists := uiCreatedPolicies[bp.Name]; exists && storedBP.RawYAML != "" {
+			policyMap["yaml"] = storedBP.RawYAML
+		} else {
+			policyMap["yaml"] = bp.Annotations["yaml"]
 		}
 
 		responseArray[i] = policyMap
