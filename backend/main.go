@@ -36,7 +36,6 @@ func main() {
 	})
 
 	routes.SetupRoutes(router)
-	router.POST("api/deploy", api.DeployHandler)
 	router.POST("api/webhook", api.GitHubWebhookHandler)
 
 	if err := router.Run(":4000"); err != nil {
