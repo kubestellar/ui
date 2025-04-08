@@ -121,6 +121,7 @@ export const useBPQueries = () => {
       queryKey: ['binding-policies'],
       queryFn: async () => {
         const response = await api.get('/api/bp');
+        console.log("Response:", response.data);
         
         // Check if data exists and has bindingPolicies property
         let rawPolicies: RawBindingPolicy[] = [];
@@ -147,84 +148,33 @@ export const useBPQueries = () => {
             return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
           };
           
-          // Handle both the new flattened format and the old nested format
-          const policyName = policy.name || (policy.metadata?.name || 'Unknown');
-          const creationTimestamp = policy.creationTimestamp || (policy.metadata?.creationTimestamp || new Date().toISOString());
-          const yaml = policy.yaml || (policy.metadata?.annotations?.yaml || JSON.stringify(policy, null, 2));
+          // Use the raw YAML content directly from the response
+          const yamlContent = policy.yaml || '';
           
           // Extract clusters information - use already processed data if available
-          let clusterList: string[] = [];
-          if (Array.isArray(policy.clusterList)) {
-            clusterList = [...policy.clusterList];
-          } else if (Array.isArray(policy.clusters)) {
-            clusterList = [...policy.clusters];
-          } else if (policy.spec?.clusterSelectors) {
-            // Fall back to old format if needed
-            policy.spec.clusterSelectors.forEach((selector: ClusterSelector) => {
-              if (selector.matchLabels && selector.matchLabels['kubernetes.io/cluster-name']) {
-                clusterList.push(selector.matchLabels['kubernetes.io/cluster-name']);
-              }
-            });
-          }
+          const clusterList = policy.clusterList || policy.clusters || [];
           
-          // Determine clusters count - use clustersCount field if available, otherwise use list length
-          const clustersCount = policy.clustersCount !== undefined 
-            ? policy.clustersCount 
-            : clusterList.length;
-          
-          // Extract workloads information
-          let workloadList: string[] = [];
-          if (Array.isArray(policy.workloadList) && policy.workloadList.length > 0) {
-            workloadList = [...policy.workloadList];
-          } else if (Array.isArray(policy.workloads) && policy.workloads.length > 0) {
-            workloadList = [...policy.workloads];
-          } else if (policy.spec?.downsync && policy.spec.downsync.length > 0) {
-            // Fall back to old format if needed
-            policy.spec.downsync.forEach((ds: DownsyncItem) => {
-              const apiGroup = ds.apiGroup || 'core';
-              if (ds.namespaces && ds.namespaces.length > 0) {
-                ds.namespaces.forEach((ns: string) => {
-                  workloadList.push(`${apiGroup} (ns:${ns})`);
-                });
-              } else {
-                workloadList.push(`${apiGroup}`);
-              }
-            });
-          }
-          
-          // If still no workloads, add a default placeholder
-          if (workloadList.length === 0) {
-            workloadList = ['No workload specified'];
-          }
-          
-          // Determine workloads count - use workloadsCount field if available, otherwise use list length
-          const workloadsCount = policy.workloadsCount !== undefined
-            ? policy.workloadsCount
-            : workloadList.length;
+          // Extract workloads information - use already processed data if available
+          const workloadList = policy.workloadList || policy.workloads || ['No workload specified'];
           
           // Determine main workload for display in the table
           const mainWorkload = workloadList.length > 0 ? workloadList[0] : 'No workload specified';
           
-          // Get namespace or use default
-          const namespace = policy.namespace || 'default';
-          
-          // Get binding mode
-          const bindingMode = policy.bindingMode || 'DownsyncOnly';
-          
-          console.log(`Policy ${policyName} - Clusters: ${clustersCount}, Workloads: ${workloadsCount}`);
+          console.log(`Policy ${policy.name} YAML exists: ${!!yamlContent}`);
           
           return {
-            name: policyName,
-            namespace: namespace,
+            name: policy.name || 'Unknown',
+            namespace: policy.namespace || 'default',
             status: capitalizeStatus(policy.status || 'inactive'),
-            clusters: clustersCount,
+            clusters: policy.clustersCount || clusterList.length,
             workload: mainWorkload,
             clusterList: clusterList,
             workloadList: workloadList,
-            creationDate: new Date(creationTimestamp).toLocaleString(),
-            bindingMode: bindingMode,
+            creationDate: policy.creationTimestamp ? new Date(policy.creationTimestamp).toLocaleString() : 'Not available',
+            bindingMode: policy.bindingMode || 'DownsyncOnly',
             conditions: policy.conditions || undefined,
-            yaml: yaml
+            yaml: yamlContent,  // Use the raw YAML content directly
+            creationTimestamp: policy.creationTimestamp
           } as BindingPolicyInfo;
         });
       },
@@ -240,43 +190,127 @@ export const useBPQueries = () => {
     return queryResult;
   };
 
-  // GET /api/bp/status?name=policyName - Fetch details for a specific binding policy
+  // GET policy details with YAML from /api/bp and status from /api/bp/status
   const useBindingPolicyDetails = (policyName: string | undefined) => {
     return useQuery<BindingPolicyInfo, Error>({
       queryKey: ['binding-policy-details', policyName],
       queryFn: async () => {
         if (!policyName) throw new Error('Policy name is required');
         
-        console.log(`Fetching details for binding policy: ${policyName}`);
-        const response = await api.get(`/api/bp/status?name=${encodeURIComponent(policyName)}`);
-        const policyDetails = response.data;
+        console.log(`Fetching complete details for binding policy: ${policyName}`);
         
-        console.log('Received policy details:', policyDetails);
-        console.log('YAML in response:', policyDetails.yaml);
+        // Fetch data from both endpoints in parallel for efficiency
+        const [mainResponse, statusResponse] = await Promise.all([
+          // Get full policy data including YAML from main BP endpoint
+          api.get('/api/bp', {
+            params: { _t: new Date().getTime() } // Cache-busting
+          }),
+          
+          // Get latest status from the status endpoint
+          api.get(`/api/bp/status?name=${encodeURIComponent(policyName)}`, {
+            params: { _t: new Date().getTime() } // Cache-busting
+          })
+        ]);
         
-        // The response format is now more aligned with GetAllBp endpoint
-        // The API now directly returns the formatted data we need
+        console.log('Received responses from both API endpoints');
+        
+        // Process main response to get the policy details with YAML
+        let rawPolicies = [];
+        if (mainResponse.data && mainResponse.data.bindingPolicies) {
+          rawPolicies = mainResponse.data.bindingPolicies;
+        } else if (Array.isArray(mainResponse.data)) {
+          rawPolicies = mainResponse.data;
+        } else {
+          console.warn("Unexpected main API response format:", mainResponse.data);
+          throw new Error('Unable to parse binding policies response');
+        }
+        
+        // Find the specific policy by name
+        const policyDetails = rawPolicies.find((p: RawBindingPolicy) => p.name === policyName);
+        
+        if (!policyDetails) {
+          console.error(`Policy ${policyName} not found in the main response`);
+          throw new Error(`Policy ${policyName} not found`);
+        }
+        
+        console.log('Found policy details in main BP response:', policyDetails);
+        
+        // Get the status from the status endpoint
+        const statusData = statusResponse.data;
+        console.log('Received status data:', statusData);
+        
+        // Extract the YAML content with proper priority
+        let yamlContent = '';
+        
+        // Check if the response has a non-empty yaml field as a string directly (this should be first priority)
+        if (typeof policyDetails.yaml === 'string' && policyDetails.yaml.trim() !== '') {
+          console.log('Using YAML directly from response root');
+          yamlContent = policyDetails.yaml;
+        } 
+        // Check if annotations contain yaml
+        else if (policyDetails.metadata?.annotations?.yaml) {
+          console.log('Using YAML from metadata.annotations.yaml');
+          yamlContent = policyDetails.metadata.annotations.yaml;
+        }
+        
+        // Log the extracted YAML content status
+        if (yamlContent) {
+          console.log(`Extracted YAML content for policy ${policyName} is available (${yamlContent.length} chars)`);
+        } else {
+          console.log(`No YAML content found for policy ${policyName}`);
+        }
+        
+        // Use the status from the status API, not from the main API
+        const statusFromStatusApi = statusData.status || 'unknown';
+        const capitalizedStatus = statusFromStatusApi.charAt(0).toUpperCase() + statusFromStatusApi.slice(1).toLowerCase();
+        
+        console.log(`Using status "${capitalizedStatus}" from status API endpoint`);
+        
+        // Format the final policy object using YAML from main API and status from status API
         const formattedPolicy = {
           name: policyDetails.name,
           namespace: policyDetails.namespace || 'default',
-          status: policyDetails.status.charAt(0).toUpperCase() + policyDetails.status.slice(1).toLowerCase(),
+          status: capitalizedStatus,
           clusters: policyDetails.clustersCount,
           workload: policyDetails.workloads && policyDetails.workloads.length > 0 ? policyDetails.workloads[0] : 'No workload specified',
           clusterList: policyDetails.clusterList || policyDetails.clusters || [],
           workloadList: policyDetails.workloadList || policyDetails.workloads || [],
           creationDate: policyDetails.creationTimestamp ? new Date(policyDetails.creationTimestamp).toLocaleString() : 'Not available',
           bindingMode: policyDetails.bindingMode || 'DownsyncOnly',
-          conditions: policyDetails.conditions || [],
+          conditions: statusData.conditions || policyDetails.conditions || [],
           creationTimestamp: policyDetails.creationTimestamp,
-          yaml: policyDetails.yaml || JSON.stringify(policyDetails, null, 2)
+          yaml: yamlContent
         } as BindingPolicyInfo;
         
-        console.log('Formatted policy:', formattedPolicy);
-        console.log('YAML in formatted policy:', formattedPolicy.yaml?.substring(0, 100) + '...');
+        console.log('Final policy object:', { 
+          name: formattedPolicy.name,
+          status: formattedPolicy.status,
+          yamlExists: !!formattedPolicy.yaml, 
+          yamlLength: formattedPolicy.yaml?.length
+        });
         
         return formattedPolicy;
       },
       enabled: !!policyName,
+      // Provide initial data for when the query is loading
+      placeholderData: (currentData) => {
+        // If we already have data, return it
+        if (currentData) return currentData;
+        
+        // Otherwise, return a loading placeholder that includes the policy name
+        return {
+          name: policyName || 'Loading...',
+          namespace: 'default',
+          status: 'Loading...' as const,
+          clusters: 0,
+          workload: 'Loading...',
+          clusterList: [],
+          workloadList: [],
+          creationDate: '',
+          bindingMode: 'Unknown',
+          yaml: '' // Initialize with empty string instead of undefined
+        } as BindingPolicyInfo;
+      },
     });
   };
 
