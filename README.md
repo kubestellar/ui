@@ -42,6 +42,12 @@ Before you begin, ensure that your system meets the following requirements:
 - Ensure you have access to a Kubernetes clusters setup with Kubestellar Getting Started Guide & Kubestellar prerequisites installed
 
 - **Kubestellar guide**: [Guide](https://docs.kubestellar.io/release-0.25.1/direct/get-started/)
+ 
+- ### 5. Make and Air
+
+- Make sure you have "make" installed to directly execute the backend script via makefile
+- Air helps in hot reloading of the backend
+- **Air guide**: [Guide](https://github.com/air-verse/air#installation)
 
 ## Installation Steps
 
@@ -115,7 +121,7 @@ cd backend
 
 go mod download
 
-go run main.go
+make dev
 ```
 
 You should see output indicating the server is running on port `4000`.
