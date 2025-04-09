@@ -73,7 +73,7 @@ metadata:
   name: test-${randomStrings}
   namespace: test-${randomStrings}
   labels:
-    kubernetes.io/metadata.name: test-${randomStrings}
+    kubernetes.io/kubestellar.workload.name: test-${randomStrings}
 spec:
   replicas: 2
   selector:
