@@ -121,7 +121,11 @@ cd backend
 
 go mod download
 
+# Option 1 : Start backend with hot reloading (recommended)
 make dev
+
+# Option 2 : Start backend without hot reloading
+go run main.go
 ```
 
 You should see output indicating the server is running on port `4000`.
