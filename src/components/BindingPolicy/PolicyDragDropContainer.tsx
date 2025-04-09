@@ -238,6 +238,49 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     setDeploymentDialogOpen(true);
   }, [canvasEntities]);
 
+  // Helper function to generate resources array from workload
+  const generateResourcesFromWorkload = useCallback((workload: Workload) => {
+    console.log('🔍 DEBUG - Generating resources from workload:', workload);
+    
+    const resources = [];
+    
+    // Add namespaces as a separate resource with createOnly=true
+    resources.push({ type: 'namespaces', createOnly: true });
+    
+    // Convert the workload kind to lowercase and pluralize
+    if (workload.kind) {
+      const kindLower = workload.kind.toLowerCase();
+      let resourceType = kindLower;
+      
+      // Simple pluralization - add 's' if not already ending with 's'
+      if (!resourceType.endsWith('s')) {
+        resourceType += 's';
+      }
+      
+      console.log(`🔍 DEBUG - Adding resource from kind: ${resourceType}`);
+      
+      // Add the workload's resource type with createOnly set to false for updates
+      resources.push({ type: resourceType, createOnly: false });
+      
+      // For deployments, add dependent resources
+      if (kindLower === 'deployment') {
+        resources.push({ type: 'replicasets', createOnly: false });
+        resources.push({ type: 'services', createOnly: false });
+      } else if (kindLower === 'statefulset') {
+        resources.push({ type: 'services', createOnly: false });
+      }
+    } else {
+      console.warn("🔍 DEBUG - Workload kind missing, adding deployment as default resource type");
+      // If workload kind is missing, default to deployment
+      resources.push({ type: 'deployments', createOnly: false });
+      resources.push({ type: 'replicasets', createOnly: false });
+      resources.push({ type: 'services', createOnly: false });
+    }
+    
+    console.log('🔍 DEBUG - Final resources array:', resources);
+    return resources;
+  }, []);
+  
   // Update the handleCreatePolicy function
   const handleCreatePolicy = useCallback(() => {
     if (canvasEntities.clusters.length === 0 || canvasEntities.workloads.length === 0) return;
@@ -250,7 +293,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
       clusterIds
     });
     
-    // Find the workload object to get its namespace
+    // Find the workload object to get its details
     const firstWorkloadId = workloadIds[0];
     const workloadObj = workloads.find(w => w.name === firstWorkloadId);
     
@@ -268,7 +311,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     // Create default configuration
     const defaultConfig: PolicyConfiguration = {
       name: policyName,
-      namespace: workloadNamespace, // Use the namespace from the workload
+      namespace: workloadNamespace,
       propagationMode: 'DownsyncOnly',
       updateStrategy: 'ServerSideApply',
       deploymentType: 'SelectedClusters',
@@ -280,80 +323,176 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     // For display purposes only - we'll use the actual arrays in the API call
     const clusterIdsStr = clusterIds.join(", ");
     
-    // Store IDs for UI display (maintain backward compatibility)
+    // Store IDs for UI display
     setCurrentWorkloadId(firstWorkloadId); 
     setCurrentClusterId(clusterIdsStr);   
     setCurrentConfig(defaultConfig);
     
-    // Convert workload IDs to workload labels - use proper app label format
-    const workloadLabels = {
-      'kubernetes.io/metadata.name': firstWorkloadId
-    };
+    // Find the cluster object to get its labels
+    const firstClusterId = clusterIds[0];
+    const clusterObj = clusters.find(c => c.name === firstClusterId);
     
-    // Convert cluster IDs to cluster labels - use 'name' as the key based on actual data
-    const clusterLabels = {
-      'name': clusterIds[0]
-    };
+    if (!clusterObj) {
+      console.error('Cluster not found:', firstClusterId);
+      return;
+    }
+    
+    // Extract workload labels properly - using actual labels from the workload object
+    const workloadLabels: Record<string, string> = {};
+    
+    // Directly use the workload's existing labels as the primary source
+    if (workloadObj.labels && Object.keys(workloadObj.labels).length > 0) {
+      // Copy all existing labels
+      Object.assign(workloadLabels, workloadObj.labels);
+    } 
+    // Only if no labels exist, fallback to using the name
+    else {
+      workloadLabels['kubernetes.io/kubestellar.workload.name'] = workloadObj.name;
+    }
+    
+    // Extract cluster labels properly - using actual labels from the cluster object
+    const clusterLabels: Record<string, string> = {};
+    
+    // If the cluster has labels, use them
+    if (clusterObj.labels && Object.keys(clusterObj.labels).length > 0) {
+      Object.assign(clusterLabels, clusterObj.labels);
+    }
+    
+    // If no labels were found, use the name as a label
+    if (Object.keys(clusterLabels).length === 0) {
+      clusterLabels['name'] = firstClusterId;
+    }
     
     // Dynamically generate resources based on workload kind
     const resources = generateResourcesFromWorkload(workloadObj);
     
-    // Generate YAML preview using the new format
+    // Generate YAML preview using the updated format with correct labels
     generateBindingPolicyPreview({
       workloadLabels,
       clusterLabels,
       resources,
-      namespacesToSync: [workloadNamespace], // Use the namespace from the workload
-      namespace: workloadNamespace, // Use the namespace from the workload
+      namespacesToSync: [workloadNamespace],
+      namespace: workloadNamespace,
       policyName
     }, defaultConfig);
-  }, [canvasEntities, generateBindingPolicyPreview, workloads]);
+  }, [canvasEntities, generateBindingPolicyPreview, workloads, clusters, generateResourcesFromWorkload]);
 
-  // Helper function to generate resources array from workload
-  const generateResourcesFromWorkload = useCallback((workload: Workload) => {
-    console.log('🔍 DEBUG - Generating resources from workload:', workload);
+  // Update the handleCreateFromPreview function
+  const handleCreateFromPreview = useCallback(async () => {
+    if (!previewYaml) return;
     
-    const resources = [
-      // Always include namespaces
-      { type: 'namespaces', createOnly: false }
-    ];
+    // Set loading state
+    setDeploymentLoading(true);
+    setDeploymentError(null);
     
-    // Convert the workload kind to lowercase and pluralize
-    if (workload.kind) {
-      const kindLower = workload.kind.toLowerCase();
-      let resourceType = kindLower;
+    try {
+      // Get current workload and cluster IDs
+      const workloadId = currentWorkloadId;
+      const clusterId = currentClusterId.split(', ')[0]; // Get first cluster if multiple
       
-      // Simple pluralization - add 's' if not already ending with 's'
-      if (!resourceType.endsWith('s')) {
-        resourceType += 's';
+      // Find the workload object to get its details
+      const workloadObj = workloads.find(w => w.name === workloadId);
+      
+      if (!workloadObj) {
+        console.error('Workload not found:', workloadId);
+        setDeploymentError(`Workload not found: ${workloadId}`);
+        setDeploymentLoading(false); // Reset loading on error
+        return;
       }
       
-      console.log(`🔍 DEBUG - Adding resource from kind: ${resourceType}`);
+      // Find the cluster object to get its labels
+      const clusterObj = clusters.find(c => c.name === clusterId);
       
-      // Add the workload's resource type
-      resources.push({ type: resourceType, createOnly: false });
-      
-      // For deployments, add dependent resources
-      if (kindLower === 'deployment') {
-        resources.push({ type: 'replicasets', createOnly: false });
-        // Don't include pods as they should be managed by controllers
-        resources.push({ type: 'services', createOnly: false });
-      } else if (kindLower === 'statefulset') {
-        resources.push({ type: 'services', createOnly: false });
-        // Don't include pods as they should be managed by controllers
+      if (!clusterObj) {
+        console.error('Cluster not found:', clusterId);
+        setDeploymentError(`Cluster not found: ${clusterId}`);
+        setDeploymentLoading(false); // Reset loading on error
+        return;
       }
-    } else {
-      console.warn("🔍 DEBUG - Workload kind missing, adding deployment as default resource type");
-      // If workload kind is missing, default to deployment
-      resources.push({ type: 'deployments', createOnly: false });
-      resources.push({ type: 'replicasets', createOnly: false });
-      resources.push({ type: 'services', createOnly: false });
+      
+      const workloadNamespace = workloadObj.namespace || 'default';
+      
+      // Extract workload labels - using actual labels from the workload object
+      const workloadLabels: Record<string, string> = {};
+      
+      // Directly use the workload's existing labels as the primary source
+      if (workloadObj.labels && Object.keys(workloadObj.labels).length > 0) {
+        // Copy all existing labels
+        Object.assign(workloadLabels, workloadObj.labels);
+      } 
+      // Only if no labels exist, fallback to using the name
+      else {
+        workloadLabels['kubernetes.io/kubestellar.workload.name'] = workloadObj.name;
+      }
+      
+      // Extract cluster labels - using actual labels from the cluster object
+      const clusterLabels: Record<string, string> = {};
+      
+      // If the cluster has labels, use them
+      if (clusterObj.labels && Object.keys(clusterObj.labels).length > 0) {
+        Object.assign(clusterLabels, clusterObj.labels);
+      }
+      
+      // If no labels were found, use the name as a label
+      if (Object.keys(clusterLabels).length === 0) {
+        clusterLabels['name'] = clusterId;
+      }
+      
+      // Generate resources based on workload kind
+      const resources = generateResourcesFromWorkload(workloadObj);
+      
+      // Prepare request with correct label keys from actual data
+      const requestData = {
+        workloadLabels,
+        clusterLabels,
+        resources,
+        namespacesToSync: [workloadNamespace],
+        policyName: currentConfig?.name || `${workloadId}-to-${clusterId}`,
+        namespace: workloadNamespace
+      };
+      
+      // Add detailed console logging
+      console.log('📤 SENDING REQUEST TO QUICK-CONNECT API (handleCreateFromPreview):');
+      console.log(JSON.stringify(requestData, null, 2));
+      console.log('🔍 workloadObj:', JSON.stringify({
+        name: workloadObj.name,
+        namespace: workloadObj.namespace,
+        kind: workloadObj.kind,
+        labels: workloadObj.labels
+      }, null, 2));
+      console.log('🔍 clusterObj:', JSON.stringify({
+        name: clusterObj.name,
+        labels: clusterObj.labels
+      }, null, 2));
+      
+      // Use the quick connect API with the updated format
+      const response = await quickConnectMutation.mutateAsync(requestData);
+      
+      console.log('API Response:', response);
+      
+      // Show success message
+      setSuccessMessage(`Binding policy "${requestData.policyName}" created successfully`);
+      
+      // Close the dialog
+      setShowPreviewDialog(false);
+      
+      // Clear the canvas
+      if (onClearCanvas) {
+        onClearCanvas();
+      }
+      
+      // Reset loading state after successful completion
+      setDeploymentLoading(false);
+    } catch (error) {
+      console.error('Failed to create binding policy:', error);
+      setDeploymentError(error instanceof Error ? error.message : 'Failed to create binding policy');
+      
+      // Reset loading state on error
+      setDeploymentLoading(false);
     }
-    
-    console.log('🔍 DEBUG - Final resources array:', resources);
-    return resources;
-  }, []);
-  
+  }, [previewYaml, currentWorkloadId, currentClusterId, currentConfig, quickConnectMutation, 
+      setSuccessMessage, onClearCanvas, setDeploymentError, workloads, clusters, generateResourcesFromWorkload]);
+
   // Handle saving configuration from the sidebar
   const handleSaveConfiguration = useCallback(async (config: PolicyConfiguration) => {
     console.log('🔍 DEBUG - handleSaveConfiguration called with config:', config);
@@ -547,11 +686,20 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
       const workloadId = policiesToDeploy[0].workloadIds[0];
       const clusterId = policiesToDeploy[0].clusterIds[0];
       
-      // Find the workload object to get its namespace
+      // Find the workload object to get its details
       const workloadObj = workloads.find(w => w.name === workloadId);
       
       if (!workloadObj) {
         setDeploymentError(`Workload not found: ${workloadId}`);
+        setDeploymentLoading(false);
+        return;
+      }
+      
+      // Find the cluster object to get its labels
+      const clusterObj = clusters.find(c => c.name === clusterId);
+      
+      if (!clusterObj) {
+        setDeploymentError(`Cluster not found: ${clusterId}`);
         setDeploymentLoading(false);
         return;
       }
@@ -569,24 +717,60 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
         namespace: workloadNamespace
       });
       
+      // Extract workload labels - using actual labels from the workload object
+      const workloadLabels: Record<string, string> = {};
+      
+      // Directly use the workload's existing labels as the primary source
+      if (workloadObj.labels && Object.keys(workloadObj.labels).length > 0) {
+        // Copy all existing labels
+        Object.assign(workloadLabels, workloadObj.labels);
+      } 
+      // Only if no labels exist, fallback to using the name
+      else {
+        workloadLabels['kubernetes.io/kubestellar.workload.name'] = workloadObj.name;
+      }
+      
+      // Extract cluster labels - using actual labels from the cluster object
+      const clusterLabels: Record<string, string> = {};
+      
+      // If the cluster has labels, use them
+      if (clusterObj.labels && Object.keys(clusterObj.labels).length > 0) {
+        Object.assign(clusterLabels, clusterObj.labels);
+      }
+      
+      // If no labels were found, use the name as a label
+      if (Object.keys(clusterLabels).length === 0) {
+        clusterLabels['name'] = clusterId;
+      }
+      
       // Generate resources based on workload kind
       const resources = generateResourcesFromWorkload(workloadObj);
       
-      // Convert to the format with correct labels that match actual data
+      // Convert to the format with correct labels
       const requestData = {
-        workloadLabels: {
-          'kubernetes.io/metadata.name': workloadId
-        },
-        clusterLabels: {
-          'name': clusterId // Use 'name' as key based on actual data
-        },
+        workloadLabels,
+        clusterLabels,
         resources,
         namespacesToSync: [workloadNamespace],
         policyName: policyName,
         namespace: workloadNamespace
       };
       
-      // Call the quick-connect API with the new format
+      // Add detailed console logging
+      console.log('📤 SENDING REQUEST TO QUICK-CONNECT API (handleDeploymentConfirm):');
+      console.log(JSON.stringify(requestData, null, 2));
+      console.log('🔍 workloadObj:', JSON.stringify({
+        name: workloadObj.name,
+        namespace: workloadObj.namespace,
+        kind: workloadObj.kind,
+        labels: workloadObj.labels
+      }, null, 2));
+      console.log('🔍 clusterObj:', JSON.stringify({
+        name: clusterObj.name,
+        labels: clusterObj.labels
+      }, null, 2));
+      
+      // Call the quick-connect API with the updated format
       const result = await quickConnectMutation.mutateAsync(requestData);
       console.log('API response:', result);
       
@@ -613,78 +797,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
       // Ensure loading state is reset on error
       setDeploymentLoading(false);
     }
-  }, [policiesToDeploy, quickConnectMutation, setSuccessMessage, onClearCanvas, workloads, generateResourcesFromWorkload]);
-
-  // Update the handleCreateFromPreview function
-  const handleCreateFromPreview = useCallback(async () => {
-    if (!previewYaml) return;
-    
-    // Set loading state
-    setDeploymentLoading(true);
-    setDeploymentError(null);
-    
-    try {
-      // Get current workload and cluster IDs
-      const workloadId = currentWorkloadId;
-      const clusterId = currentClusterId.split(', ')[0]; // Get first cluster if multiple
-      
-      // Find the workload object to get its namespace
-      const workloadObj = workloads.find(w => w.name === workloadId);
-      
-      if (!workloadObj) {
-        console.error('Workload not found:', workloadId);
-        setDeploymentError(`Workload not found: ${workloadId}`);
-        setDeploymentLoading(false); // Reset loading on error
-        return;
-      }
-      
-      const workloadNamespace = workloadObj.namespace || 'default';
-      
-      // Generate resources based on workload kind
-      const resources = generateResourcesFromWorkload(workloadObj);
-      
-      // Prepare request with correct label keys from actual data
-      const requestData = {
-        workloadLabels: {
-          'kubernetes.io/metadata.name': workloadId
-        },
-        clusterLabels: {
-          'name': clusterId // Use 'name' as key
-        },
-        resources,
-        namespacesToSync: [workloadNamespace],
-        policyName: currentConfig?.name || `${workloadId}-to-${clusterId}`,
-        namespace: workloadNamespace
-      };
-      
-      console.log('Creating binding policy with:', requestData);
-      
-      // Use the quick connect API with the new format
-      const response = await quickConnectMutation.mutateAsync(requestData);
-      
-      console.log('API Response:', response);
-      
-      // Show success message
-      setSuccessMessage(`Binding policy "${requestData.policyName}" created successfully`);
-      
-      // Close the dialog
-      setShowPreviewDialog(false);
-      
-      // Clear the canvas
-      if (onClearCanvas) {
-        onClearCanvas();
-      }
-      
-      // Reset loading state after successful completion
-      setDeploymentLoading(false);
-    } catch (error) {
-      console.error('Failed to create binding policy:', error);
-      setDeploymentError(error instanceof Error ? error.message : 'Failed to create binding policy');
-      
-      // Reset loading state on error
-      setDeploymentLoading(false);
-    }
-  }, [previewYaml, currentWorkloadId, currentClusterId, currentConfig, quickConnectMutation, setSuccessMessage, onClearCanvas, setDeploymentError, workloads, generateResourcesFromWorkload]);
+  }, [policiesToDeploy, quickConnectMutation, setSuccessMessage, onClearCanvas, workloads, clusters, generateResourcesFromWorkload]);
 
   // Main layout for the drag and drop interface
   return (

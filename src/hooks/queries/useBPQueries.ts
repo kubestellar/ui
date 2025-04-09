@@ -461,30 +461,14 @@ export const useBPQueries = () => {
       mutationFn: async (request) => {
         console.log("Creating quick connect binding policy:", request);
         
-        // Check if we need to convert from legacy format
+        // Only copy the request, don't modify unless absolutely necessary
         const formattedRequest = { ...request };
-        
-        // Convert workloadIds to workloadLabels if needed for backward compatibility
-        if (request.workloadIds && request.workloadIds.length > 0 && !request.workloadLabels) {
-          // For backward compatibility, assume app.kubernetes.io/name label
-          formattedRequest.workloadLabels = {
-            'app.kubernetes.io/name': request.workloadIds[0]
-          };
-        }
-        
-        // Convert clusterIds to clusterLabels if needed for backward compatibility
-        if (request.clusterIds && request.clusterIds.length > 0 && !request.clusterLabels) {
-          // Use 'name' as the key based on actual cluster label format
-          formattedRequest.clusterLabels = {
-            'name': request.clusterIds[0]
-          };
-        }
         
         // Validate and enhance resources if needed
         if (!formattedRequest.resources || formattedRequest.resources.length === 0) {
           console.warn("No resources provided, adding default resources");
           formattedRequest.resources = [
-            { type: 'namespaces', createOnly: false },
+            { type: 'namespaces', createOnly: true },
             { type: 'deployments', createOnly: false },
             { type: 'services', createOnly: false }, 
             { type: 'replicasets', createOnly: false }
@@ -499,13 +483,48 @@ export const useBPQueries = () => {
           );
         }
         
+        // Make sure the request has workloadLabels - only set defaults if they're missing
+        if (!formattedRequest.workloadLabels || Object.keys(formattedRequest.workloadLabels).length === 0) {
+          if (request.workloadIds && request.workloadIds.length > 0) {
+            formattedRequest.workloadLabels = {
+              'kubernetes.io/kubestellar.workload.name': request.workloadIds[0]
+            };
+          } else {
+            console.warn("No workload labels or IDs provided");
+            formattedRequest.workloadLabels = {
+              'kubernetes.io/kubestellar.workload.name': 'unknown' // Fallback default
+            };
+          }
+        }
+        
+        // Make sure the request has clusterLabels - only set defaults if they're missing
+        if (!formattedRequest.clusterLabels || Object.keys(formattedRequest.clusterLabels).length === 0) {
+          if (request.clusterIds && request.clusterIds.length > 0) {
+            formattedRequest.clusterLabels = {
+              'name': request.clusterIds[0]
+            };
+          } else {
+            console.warn("No cluster labels or IDs provided");
+            formattedRequest.clusterLabels = {
+              'location-group': 'unknown' // Fallback default
+            };
+          }
+        }
+        
         // Ensure namespacesToSync is set if not provided
         if (!formattedRequest.namespacesToSync || formattedRequest.namespacesToSync.length === 0) {
           // Use the provided namespace or default to 'default'
           formattedRequest.namespacesToSync = [formattedRequest.namespace || 'default'];
         }
         
-        console.log("Final formatted request:", JSON.stringify(formattedRequest, null, 2));
+        // Add detailed console logging with pretty printing
+        console.log("📤 SENDING REQUEST TO QUICK-CONNECT API:");
+        console.log(JSON.stringify(formattedRequest, null, 2));
+        console.log("🔍 workloadLabels:", JSON.stringify(formattedRequest.workloadLabels, null, 2));
+        console.log("🔍 clusterLabels:", JSON.stringify(formattedRequest.clusterLabels, null, 2));
+        console.log("🔍 resources:", JSON.stringify(formattedRequest.resources, null, 2));
+        console.log("🔍 namespacesToSync:", JSON.stringify(formattedRequest.namespacesToSync, null, 2));
+        
         const response = await api.post('/api/bp/quick-connect', formattedRequest);
         console.log("Quick connect response:", response.data);
         return response.data;
@@ -527,28 +546,42 @@ export const useBPQueries = () => {
       mutationFn: async (request) => {
         console.log("Generating YAML for binding policy:", request);
         
-        // Handle both new and legacy formats
+        // Only copy the request, don't modify existing labels
         const formattedRequest = { ...request };
         
-        // Convert workloadIds to workloadLabels if needed
-        if (request.workloadIds && request.workloadIds.length > 0 && !request.workloadLabels) {
-          formattedRequest.workloadLabels = {
-            'app.kubernetes.io/name': request.workloadIds[0]
-          };
+        // Make sure the request has workloadLabels - only set defaults if they're missing
+        if (!formattedRequest.workloadLabels || Object.keys(formattedRequest.workloadLabels).length === 0) {
+          if (request.workloadIds && request.workloadIds.length > 0) {
+            formattedRequest.workloadLabels = {
+              'kubernetes.io/kubestellar.workload.name': request.workloadIds[0]
+            };
+          } else {
+            console.warn("No workload labels or IDs provided for YAML generation");
+            formattedRequest.workloadLabels = {
+              'kubernetes.io/kubestellar.workload.name': 'unknown' // Fallback default
+            };
+          }
         }
         
-        // Convert clusterIds to clusterLabels if needed
-        if (request.clusterIds && request.clusterIds.length > 0 && !request.clusterLabels) {
-          formattedRequest.clusterLabels = {
-            'name': request.clusterIds[0]
-          };
+        // Make sure the request has clusterLabels - only set defaults if they're missing
+        if (!formattedRequest.clusterLabels || Object.keys(formattedRequest.clusterLabels).length === 0) {
+          if (request.clusterIds && request.clusterIds.length > 0) {
+            formattedRequest.clusterLabels = {
+              'name': request.clusterIds[0]
+            };
+          } else {
+            console.warn("No cluster labels or IDs provided for YAML generation");
+            formattedRequest.clusterLabels = {
+              'location-group': 'unknown' // Fallback default
+            };
+          }
         }
         
         // Validate and enhance resources if needed
         if (!formattedRequest.resources || formattedRequest.resources.length === 0) {
           console.warn("No resources provided for YAML generation, adding default resources");
           formattedRequest.resources = [
-            { type: 'namespaces', createOnly: false },
+            { type: 'namespaces', createOnly: true },
             { type: 'deployments', createOnly: false },
             { type: 'services', createOnly: false }, 
             { type: 'replicasets', createOnly: false }
