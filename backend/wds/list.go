@@ -11,25 +11,6 @@ import (
 	"strings"
 )
 
-/*
-*
-// TODO: Explain how this works
-// Inside the cluster
-// => /api/wds/list
-
-	{
-	 => ClusterScoped : {
-				-> It will contain resources like CRD or other
-	   }
-	 => Namespace : {
-				-> All Popular Resources
-				-> It will include the namespaced details
-	     }
-	}
-
-// => /api/wds/list/:namespace (:namespace => namespace-name)
-all the workloads inside the namespace
-*/
 var popularKinds = map[string]bool{
 	"Deployment":               true,
 	"StatefulSet":              true,
@@ -55,8 +36,11 @@ var popularKinds = map[string]bool{
 	"ControllerRevision": true,
 }
 
+// ListAllResourcesDetails api/wds/list
 func ListAllResourcesDetails(c *gin.Context) {
 	// TODO: add the cookies context
+	// TODO: Optimize the endpoint response time
+	// TODO: Redis Integration
 	clientset, dynamicClient, err := k8s.GetClientSetWithContext("wds1")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
