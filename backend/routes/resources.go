@@ -17,6 +17,8 @@ func setupResourceRoutes(router *gin.Engine) {
 		api.GET("/wds/context", func(ctx *gin.Context) {
 			wds.CreateWDSContextUsingCommand(ctx.Writer, ctx.Request, ctx)
 		})
+		api.GET("/wds/list", wds.ListAllResourcesDetails)
+		api.GET("/wds/list/:namespace", wds.ListAllResourcesByNamespace)
 		api.GET("/:resourceKind/:namespace/log", k8s.LogWorkloads)
 		api.POST("/resources", k8s.CreateResource)                        // Create a new resource
 		api.POST("/resource/upload", k8s.UploadYAMLFile)                  // Upload any k8s resource file with "wds" key
