@@ -47,7 +47,6 @@ func ListAllResourcesDetails(c *gin.Context) {
 		return
 	}
 	discoveryClient := clientset.Discovery()
-	// Popular resources
 
 	reqNamespace := []string{}
 	nsList, err := dynamicClient.Resource(schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}).List(c, metav1.ListOptions{})
