@@ -171,8 +171,6 @@ func autoLabelling(obj *unstructured.Unstructured) {
 // CreateResource creates a Kubernetes resource
 func CreateResource(c *gin.Context) {
 	cookieContext, err := c.Cookie("ui-wds-context")
-	fmt.Println("cookieContext ")
-	fmt.Println(cookieContext)
 	if err != nil {
 		cookieContext = "wds1"
 	}
