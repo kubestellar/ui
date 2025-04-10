@@ -930,3 +930,173 @@ func ListHelmDeploymentsByReleaseHandler(c *gin.Context) {
 		"deployments": deployments,
 	})
 }
+
+// DeleteHelmDeploymentByID deletes a specific Helm deployment by its ID
+func DeleteHelmDeploymentByID(contextName, deploymentID string) error {
+	clientset, _, err := GetClientSetWithContext(contextName)
+	if err != nil {
+		return fmt.Errorf("failed to get Kubernetes client: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Use retry for resilience against transient errors
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		// Try to get existing ConfigMap
+		configMap, err := clientset.CoreV1().ConfigMaps(KubeStellarNamespace).Get(ctx, HelmConfigMapName, v1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to get ConfigMap: %v", err)
+		}
+
+		// Get current deployments
+		deploymentsJSON, ok := configMap.Data[HelmDeploymentsKey]
+		if !ok || deploymentsJSON == "" {
+			return fmt.Errorf("no deployments found in ConfigMap")
+		}
+
+		var deployments []HelmDeploymentData
+		if err := json.Unmarshal([]byte(deploymentsJSON), &deployments); err != nil {
+			return fmt.Errorf("failed to parse deployments data: %v", err)
+		}
+
+		// Find and remove the deployment with the given ID
+		foundIndex := -1
+		for i, deployment := range deployments {
+			if deployment.ID == deploymentID {
+				foundIndex = i
+				break
+			}
+		}
+
+		if foundIndex == -1 {
+			return fmt.Errorf("deployment with ID %s not found", deploymentID)
+		}
+
+		// Remove the deployment from the slice
+		deployments = append(deployments[:foundIndex], deployments[foundIndex+1:]...)
+
+		// Marshal updated deployments array
+		updatedDeploymentsJSON, err := json.Marshal(deployments)
+		if err != nil {
+			return fmt.Errorf("failed to marshal updated deployments: %v", err)
+		}
+
+		// Update ConfigMap
+		configMap.Data[HelmDeploymentsKey] = string(updatedDeploymentsJSON)
+
+		_, err = clientset.CoreV1().ConfigMaps(KubeStellarNamespace).Update(ctx, configMap, v1.UpdateOptions{})
+		return err
+	})
+}
+
+// DeleteGitHubDeploymentByID deletes a specific GitHub deployment by its ID
+func DeleteGitHubDeploymentByID(contextName, deploymentID string) error {
+	clientset, _, err := GetClientSetWithContext(contextName)
+	if err != nil {
+		return fmt.Errorf("failed to get Kubernetes client: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Use retry for resilience against transient errors
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		// Try to get existing ConfigMap
+		configMap, err := clientset.CoreV1().ConfigMaps(KubeStellarNamespace).Get(ctx, GitHubConfigMapName, v1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to get ConfigMap: %v", err)
+		}
+
+		// Get current deployments
+		deploymentsJSON, ok := configMap.Data["deployments"]
+		if !ok || deploymentsJSON == "" {
+			return fmt.Errorf("no deployments found in ConfigMap")
+		}
+
+		var deployments []map[string]interface{}
+		if err := json.Unmarshal([]byte(deploymentsJSON), &deployments); err != nil {
+			return fmt.Errorf("failed to parse deployments data: %v", err)
+		}
+
+		// Find and remove the deployment with the given ID
+		foundIndex := -1
+		for i, deployment := range deployments {
+			if id, ok := deployment["id"].(string); ok && id == deploymentID {
+				foundIndex = i
+				break
+			}
+		}
+
+		if foundIndex == -1 {
+			return fmt.Errorf("deployment with ID %s not found", deploymentID)
+		}
+
+		// Remove the deployment from the slice
+		deployments = append(deployments[:foundIndex], deployments[foundIndex+1:]...)
+
+		// Marshal updated deployments array
+		updatedDeploymentsJSON, err := json.Marshal(deployments)
+		if err != nil {
+			return fmt.Errorf("failed to marshal updated deployments: %v", err)
+		}
+
+		// Update ConfigMap
+		configMap.Data["deployments"] = string(updatedDeploymentsJSON)
+
+		_, err = clientset.CoreV1().ConfigMaps(KubeStellarNamespace).Update(ctx, configMap, v1.UpdateOptions{})
+		return err
+	})
+}
+
+// DeleteHelmDeploymentHandler handles API requests to delete a specific Helm deployment by ID
+func DeleteHelmDeploymentHandler(c *gin.Context) {
+	contextName := c.DefaultQuery("context", "its1")
+	deploymentID := c.Param("id")
+
+	if deploymentID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Deployment ID is required"})
+		return
+	}
+
+	err := DeleteHelmDeploymentByID(contextName, deploymentID)
+	if err != nil {
+		status := http.StatusInternalServerError
+		if strings.Contains(err.Error(), "not found") {
+			status = http.StatusNotFound
+		}
+		c.JSON(status, gin.H{"error": fmt.Sprintf("Failed to delete deployment: %v", err)})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": fmt.Sprintf("Helm deployment %s deleted successfully", deploymentID),
+		"id":      deploymentID,
+	})
+}
+
+// DeleteGitHubDeploymentHandler handles API requests to delete a specific GitHub deployment by ID
+func DeleteGitHubDeploymentHandler(c *gin.Context) {
+	contextName := c.DefaultQuery("context", "its1")
+	deploymentID := c.Param("id")
+
+	if deploymentID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Deployment ID is required"})
+		return
+	}
+
+	err := DeleteGitHubDeploymentByID(contextName, deploymentID)
+	if err != nil {
+		status := http.StatusInternalServerError
+		if strings.Contains(err.Error(), "not found") {
+			status = http.StatusNotFound
+		}
+		c.JSON(status, gin.H{"error": fmt.Sprintf("Failed to delete deployment: %v", err)})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": fmt.Sprintf("GitHub deployment %s deleted successfully", deploymentID),
+		"id":      deploymentID,
+	})
+}

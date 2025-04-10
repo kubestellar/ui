@@ -7,9 +7,11 @@ interface ZoomControlsProps {
   theme: string;
   onToggleCollapse: () => void;
   isCollapsed: boolean;
+  onExpandAll: () => void;
+  onCollapseAll: () => void;
 }
 
-export const ZoomControls = memo<ZoomControlsProps>(({ theme, onToggleCollapse, isCollapsed }) => {
+export const ZoomControls = memo<ZoomControlsProps>(({ theme, onToggleCollapse, isCollapsed, onExpandAll, onCollapseAll }) => {
   const { getZoom, setViewport } = useReactFlow();
   const [zoomLevel, setZoomLevel] = useState<number>(100);
 
@@ -74,6 +76,7 @@ export const ZoomControls = memo<ZoomControlsProps>(({ theme, onToggleCollapse, 
       <Button
         variant="text"
         onClick={onToggleCollapse}
+        title="Group Nodes"
         sx={{
           color: theme === "dark" ? "#fff" : "#6d7f8b",
           backgroundColor: isCollapsed ? (theme === "dark" ? "#555" : "#e3f2fd") : "transparent",
@@ -88,7 +91,38 @@ export const ZoomControls = memo<ZoomControlsProps>(({ theme, onToggleCollapse, 
       </Button>
       <Button
         variant="text"
+        onClick={onExpandAll}
+        title="Expand all the child nodes of all parent nodes"
+        sx={{
+          color: theme === "dark" ? "#fff" : "#6d7f8b",
+          "&:hover": {
+            backgroundColor: theme === "dark" ? "#555" : "#e3f2fd",
+          },
+          minWidth: "36px",
+          padding: "4px",
+        }}
+      >
+        <i className="fa fa-plus fa-fw" style={{ fontSize: "17px" }} />
+      </Button>
+      <Button
+        variant="text"
+        onClick={onCollapseAll}
+        title="Collapse all the child nodes of all parent nodes"
+        sx={{
+          color: theme === "dark" ? "#fff" : "#6d7f8b",
+          "&:hover": {
+            backgroundColor: theme === "dark" ? "#555" : "#e3f2fd",
+          },
+          minWidth: "36px",
+          padding: "4px",
+        }}
+      >
+        <i className="fa fa-minus fa-fw" style={{ fontSize: "17px" }} />
+      </Button>
+      <Button
+        variant="text"
         onClick={handleZoomIn}
+        title="Zoom In"
         sx={{
           color: theme === "dark" ? "#fff" : "#6d7f8b",
           "&:hover": {
@@ -103,6 +137,7 @@ export const ZoomControls = memo<ZoomControlsProps>(({ theme, onToggleCollapse, 
       <Button
         variant="text"
         onClick={handleZoomOut}
+        title="Zoom Out"
         sx={{
           color: theme === "dark" ? "#fff" : "#6d7f8b",
           "&:hover": {

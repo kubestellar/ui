@@ -406,7 +406,7 @@ spec:
       }
 
       const response = await axios.post(
-        "http://localhost:4000/api/deploy",
+        "http://localhost:4000/api/deploy?created_by_me=true",
         requestBody,
         {
           params: queryParams,

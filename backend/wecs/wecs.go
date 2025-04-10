@@ -31,14 +31,14 @@ var upgrader = websocket.Upgrader{
 
 // Cache expiration durations
 const (
-	// Cache all cluster data for 60 seconds
-	ClusterDataCacheDuration = 60 * time.Second
+	// Cache all cluster data for 25 seconds
+	ClusterDataCacheDuration = 25 * time.Second
 
-	// Cache individual namespace data for 30 seconds
-	NamespaceCacheDuration = 30 * time.Second
+	// Cache individual namespace data for 15 seconds
+	NamespaceCacheDuration = 15 * time.Second
 
 	// Cache pod logs for a shorter duration as they change frequently
-	PodLogsCacheDuration = 10 * time.Second
+	PodLogsCacheDuration = 5 * time.Second
 )
 
 // ResourceData contains data for a Kubernetes resource.
@@ -87,7 +87,6 @@ func getITSData() ([]handlers.ManagedClusterInfo, error) {
 	if err != nil {
 		log.Printf("Error retrieving ITS data from cache: %v", err)
 	} else if found && len(cachedClusters) > 0 {
-		log.Printf("Using cached ITS data (%d clusters)", len(cachedClusters))
 		return cachedClusters, nil
 	}
 
@@ -166,29 +165,24 @@ func getITSData() ([]handlers.ManagedClusterInfo, error) {
 	return managedClusters, nil
 }
 
-// StreamK8sDataChronologically streams hierarchical cluster data chronologically.
+// StreamK8sDataChronologically streams Kubernetes data over WebSocket, with Redis caching to prevent disconnections
 func StreamK8sDataChronologically(c *gin.Context) {
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		log.Printf("WebSocket upgrade error: %v", err)
 		return
 	}
 	defer conn.Close()
 
-	// Setup a ping/pong mechanism to keep the connection alive
 	conn.SetPingHandler(func(pingMsg string) error {
 		return conn.WriteControl(websocket.PongMessage, []byte(pingMsg), time.Now().Add(5*time.Second))
 	})
 
-	// Start a ticker to send ping messages
 	pingTicker := time.NewTicker(30 * time.Second)
 	defer pingTicker.Stop()
 
-	// Run ping handler in separate goroutine
 	go func() {
 		for range pingTicker.C {
 			if err := conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(5*time.Second)); err != nil {
-				log.Printf("Ping error: %v", err)
 				return
 			}
 		}
@@ -208,35 +202,26 @@ func StreamK8sDataChronologically(c *gin.Context) {
 		"open-cluster-management-agent":        true,
 	}
 
-	// Main data refresh loop
 	fetchTicker := time.NewTicker(1 * time.Second)
 	defer fetchTicker.Stop()
 
 	for range fetchTicker.C {
-		// Try to fetch from cache first
 		var allClusters []ClusterData
 		allClustersCacheKey := getCacheKey("allclusters")
 
-		cacheHit, err := redis.GetJSONValue(allClustersCacheKey, &allClusters)
-		if err != nil {
-			log.Printf("Error retrieving cluster data from cache: %v", err)
-		}
+		cacheHit, _ := redis.GetJSONValue(allClustersCacheKey, &allClusters)
 
-		// Check if we need to refresh the data
 		needsRefresh := !cacheHit
 		if !needsRefresh && len(allClusters) > 0 {
 			firstCluster := allClusters[0]
 			if time.Since(firstCluster.LastUpdated) > ClusterDataCacheDuration {
 				needsRefresh = true
-				log.Printf("Cache expired for cluster data, refreshing...")
 			}
 		}
 
 		if needsRefresh {
-			log.Printf("Fetching fresh cluster data...")
 			clustersInfo, err := getITSData()
 			if err != nil {
-				log.Printf("Error fetching ITS data: %v", err)
 				continue
 			}
 
@@ -249,16 +234,11 @@ func StreamK8sDataChronologically(c *gin.Context) {
 				go func(i int, ci handlers.ManagedClusterInfo) {
 					defer clusterWg.Done()
 
-					// Try to get cached cluster data first
 					var clusterData ClusterData
 					clusterCacheKey := getCacheKey("cluster", ci.Name)
 
-					cacheHit, err := redis.GetJSONValue(clusterCacheKey, &clusterData)
-					if err != nil {
-						log.Printf("Error retrieving cluster %s data from cache: %v", ci.Name, err)
-					}
+					cacheHit, _ := redis.GetJSONValue(clusterCacheKey, &clusterData)
 
-					// Check if we need to refresh this cluster's data
 					needsRefresh := !cacheHit
 					if !needsRefresh && len(clusterData.Namespaces) > 0 {
 						if time.Since(clusterData.LastUpdated) > ClusterDataCacheDuration {
@@ -267,7 +247,6 @@ func StreamK8sDataChronologically(c *gin.Context) {
 					}
 
 					if needsRefresh {
-						log.Printf("Refreshing data for cluster %s", ci.Name)
 						clusterData = ClusterData{
 							Name:        ci.Name,
 							LastUpdated: time.Now(),
@@ -275,13 +254,11 @@ func StreamK8sDataChronologically(c *gin.Context) {
 
 						clientset, _, err := k8s.GetClientSetWithContext(ci.Name)
 						if err != nil {
-							log.Printf("Error getting clientset for context %s: %v", ci.Name, err)
 							return
 						}
 
 						namespaceList, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 						if err != nil {
-							log.Printf("Error listing namespaces in cluster %s: %v", ci.Name, err)
 							return
 						}
 
@@ -297,66 +274,150 @@ func StreamK8sDataChronologically(c *gin.Context) {
 							go func(nsName string) {
 								defer nsWg.Done()
 
-								// Try to get cached namespace data first
 								var nsData NamespaceData
 								nsCacheKey := getCacheKey("namespace", ci.Name, nsName)
 
-								cacheHit, err := redis.GetJSONValue(nsCacheKey, &nsData)
-								if err != nil {
-									log.Printf("Error retrieving namespace %s data from cache: %v", nsName, err)
-								}
+								cacheHit, _ := redis.GetJSONValue(nsCacheKey, &nsData)
 
-								// Check if we need to refresh this namespace data
-								nsNeedsRefresh := !cacheHit
-								if !nsNeedsRefresh && len(nsData.ResourceTypes) > 0 {
-									// We'll force refresh even if cached to ensure consistency
-									// Could optimize by checking timestamps on deployments
-									nsNeedsRefresh = true
-								}
-
+								nsNeedsRefresh := !cacheHit || true
 								if nsNeedsRefresh {
 									nsData = NamespaceData{Name: nsName}
+									var resourceTypes []ResourceTypeData
 
-									// Get deployments
-									deployments, err := clientset.AppsV1().Deployments(nsName).List(context.TODO(), metav1.ListOptions{})
-									if err != nil {
-										log.Printf("Error listing deployments in namespace %s: %v", nsName, err)
-									} else {
-										deploymentResources := make([]ResourceData, 0, len(deployments.Items))
-										for _, deployment := range deployments.Items {
-											replicaSets, err := getReplicaSetsForDeployment(clientset, deployment, nsName)
-											if err != nil {
-												log.Printf("Error getting replica sets for deployment %s: %v", deployment.Name, err)
-											}
-
-											rawDeployment, _ := json.Marshal(deployment)
-											deploymentResources = append(deploymentResources, ResourceData{
-												Name:              deployment.Name,
-												Kind:              "Deployment",
-												Raw:               rawDeployment,
-												ReplicaSets:       replicaSets,
-												CreationTimestamp: deployment.CreationTimestamp.Time,
-											})
+									// Helper function to fetch and process resources
+									processResources := func(
+										listFunc func(namespace string) (interface{}, error), 
+										kind, group, version string,
+										getReplicaFunc func(clientset *kubernetes.Clientset, resource interface{}, namespace string) ([]ResourceData, error),
+									) []ResourceData {
+										resources, err := listFunc(nsName)
+										if err != nil {
+											return nil
 										}
 
-										// Sort deployments by creation timestamp
-										sort.Slice(deploymentResources, func(i, j int) bool {
-											return deploymentResources[i].CreationTimestamp.Before(deploymentResources[j].CreationTimestamp)
+										var resourceData []ResourceData
+										switch typed := resources.(type) {
+										case *appsv1.DeploymentList:
+											for _, res := range typed.Items {
+												replicaSets, _ := getReplicaSetsForDeployment(clientset, res, nsName)
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													ReplicaSets:       replicaSets,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *appsv1.StatefulSetList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *appsv1.DaemonSetList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *corev1.ServiceList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										}
+
+										// Sort resources by creation timestamp
+										sort.Slice(resourceData, func(i, j int) bool {
+											return resourceData[i].CreationTimestamp.Before(resourceData[j].CreationTimestamp)
 										})
 
-										nsData.ResourceTypes = append(nsData.ResourceTypes, ResourceTypeData{
-											Kind:      "Deployment",
-											Group:     "apps",
-											Version:   "v1",
-											Resources: deploymentResources,
-										})
+										return resourceData
 									}
 
-									// Cache this namespace data
-									err = redis.SetJSONValue(nsCacheKey, nsData, NamespaceCacheDuration)
-									if err != nil {
-										log.Printf("Error caching namespace %s data: %v", nsName, err)
+									// Define resource type list functions
+									resourceFuncs := []struct {
+										listFunc   func(namespace string) (interface{}, error)
+										kind       string
+										group      string
+										version    string
+										getReplicaFunc func(clientset *kubernetes.Clientset, resource interface{}, namespace string) ([]ResourceData, error)
+									}{
+										{
+											listFunc:       func(ns string) (interface{}, error) { return clientset.AppsV1().Deployments(ns).List(context.TODO(), metav1.ListOptions{}) },
+											kind:           "Deployment",
+											group:          "apps",
+											version:        "v1",
+											getReplicaFunc: func(cs *kubernetes.Clientset, res interface{}, ns string) ([]ResourceData, error) {
+												deployment, ok := res.(appsv1.Deployment)
+												if !ok {
+													return nil, fmt.Errorf("invalid type")
+												}
+												return getReplicaSetsForDeployment(cs, deployment, ns)
+											},
+										},
+										{
+											listFunc:    func(ns string) (interface{}, error) { return clientset.AppsV1().StatefulSets(ns).List(context.TODO(), metav1.ListOptions{}) },
+											kind:        "StatefulSet",
+											group:       "apps",
+											version:     "v1",
+										},
+										{
+											listFunc:    func(ns string) (interface{}, error) { return clientset.AppsV1().DaemonSets(ns).List(context.TODO(), metav1.ListOptions{}) },
+											kind:        "DaemonSet",
+											group:       "apps",
+											version:     "v1",
+										},
+										{
+											listFunc:    func(ns string) (interface{}, error) { return clientset.CoreV1().Services(ns).List(context.TODO(), metav1.ListOptions{}) },
+											kind:        "Service",
+											group:       "core",
+											version:     "v1",
+										},
 									}
+
+									for _, resourceFunc := range resourceFuncs {
+										resourceData := processResources(
+											resourceFunc.listFunc, 
+											resourceFunc.kind, 
+											resourceFunc.group, 
+											resourceFunc.version,
+											resourceFunc.getReplicaFunc,
+										)
+
+										if len(resourceData) > 0 {
+											resourceTypes = append(resourceTypes, ResourceTypeData{
+												Kind:      resourceFunc.kind,
+												Group:     resourceFunc.group,
+												Version:   resourceFunc.version,
+												Resources: resourceData,
+											})
+										}
+									}
+
+									// Sort resource types to maintain consistent order
+									sort.Slice(resourceTypes, func(i, j int) bool {
+										return resourceTypes[i].Kind < resourceTypes[j].Kind
+									})
+
+									nsData.ResourceTypes = resourceTypes
+
+									// Cache namespace data
+									redis.SetJSONValue(nsCacheKey, nsData, NamespaceCacheDuration)
 								}
 
 								nsChan <- nsData
@@ -374,10 +435,7 @@ func StreamK8sDataChronologically(c *gin.Context) {
 						clusterData.Namespaces = namespaces
 
 						// Cache the cluster data
-						err = redis.SetJSONValue(clusterCacheKey, clusterData, ClusterDataCacheDuration)
-						if err != nil {
-							log.Printf("Error caching cluster %s data: %v", ci.Name, err)
-						}
+						redis.SetJSONValue(clusterCacheKey, clusterData, ClusterDataCacheDuration)
 					}
 
 					clusterDataMutex.Lock()
@@ -391,26 +449,20 @@ func StreamK8sDataChronologically(c *gin.Context) {
 			allClusters = newAllClusters
 
 			// Cache all clusters data
-			err = redis.SetJSONValue(allClustersCacheKey, allClusters, ClusterDataCacheDuration)
-			if err != nil {
-				log.Printf("Error caching all clusters data: %v", err)
-			}
+			redis.SetJSONValue(allClustersCacheKey, allClusters, ClusterDataCacheDuration)
 		}
 
 		// Send the data over websocket
 		message, err := json.Marshal(allClusters)
 		if err != nil {
-			log.Printf("Error marshalling JSON: %v", err)
 			continue
 		}
 
 		if err := conn.WriteMessage(websocket.TextMessage, message); err != nil {
-			log.Printf("WebSocket write error: %v", err)
 			return
 		}
 	}
 }
-
 // getReplicaSetsForDeployment returns replica sets owned by a deployment with their pods
 func getReplicaSetsForDeployment(clientset *kubernetes.Clientset, deployment appsv1.Deployment, namespace string) ([]ResourceData, error) {
 	// Try to get from cache first

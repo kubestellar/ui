@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, memo } from "react";
-import { Box, Typography, Menu, MenuItem, Button, Alert, Snackbar} from "@mui/material";
+import { Box, Typography, Menu, MenuItem, Button, Alert, Snackbar } from "@mui/material";
 import { ReactFlowProvider, Position, MarkerType } from "reactflow";
 import * as dagre from "dagre";
 import "reactflow/dist/style.css";
@@ -43,8 +43,6 @@ import ReactDOM from "react-dom";
 import { isEqual } from "lodash";
 import { useWebSocket } from "../context/WebSocketProvider";
 import useTheme from "../stores/themeStore";
-// import axios from "axios";
-// import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import WecsDetailsPanel from "./WecsDetailsPanel";
 import { FlowCanvas } from "./Wds_Topology/FlowCanvas";
 
@@ -99,6 +97,12 @@ export interface ResourceItem {
   spec?: {
     ports?: Array<{ name: string; port: number }>;
     holderIdentity?: string;
+    replicas?: number; // Added for StatefulSet, ReplicationController, etc.
+    scaleTargetRef?: { // Added for HorizontalPodAutoscaler
+      apiVersion?: string;
+      kind?: string;
+      name?: string;
+    };
   };
   status?: {
     conditions?: Array<{ type: string; status: string }>;
@@ -173,71 +177,6 @@ const nodeStyle: React.CSSProperties = {
   width: "146px",
   height: "30px",
 };
-
-// const kindToPluralMap: Record<string, string> = {
-//   Binding: "bindings",
-//   ComponentStatus: "componentstatuses",
-//   ConfigMap: "configmaps",
-//   Endpoints: "endpoints",
-//   Event: "events",
-//   LimitRange: "limitranges",
-//   Namespace: "namespaces",
-//   Node: "nodes",
-//   PersistentVolumeClaim: "persistentvolumeclaims",
-//   PersistentVolume: "persistentvolumes",
-//   Pod: "pods",
-//   PodTemplate: "podtemplates",
-//   ReplicationController: "replicationcontrollers",
-//   ResourceQuota: "resourcequotas",
-//   Secret: "secrets",
-//   ServiceAccount: "serviceaccounts",
-//   Service: "services",
-//   MutatingWebhookConfiguration: "mutatingwebhookconfigurations",
-//   ValidatingWebhookConfiguration: "validatingwebhookconfigurations",
-//   CustomResourceDefinition: "customresourcedefinitions",
-//   APIService: "apiservices",
-//   ControllerRevision: "controllerrevisions",
-//   DaemonSet: "daemonsets",
-//   Deployment: "deployments",
-//   ReplicaSet: "replicasets",
-//   StatefulSet: "statefulsets",
-//   Application: "applications",
-//   ApplicationSet: "applicationsets",
-//   AppProject: "appprojects",
-//   SelfSubjectReview: "selfsubjectreviews",
-//   TokenReview: "tokenreviews",
-//   LocalSubjectAccessReview: "localsubjectaccessreviews",
-//   SelfSubjectAccessReview: "selfsubjectaccessreviews",
-//   SelfSubjectRulesReview: "selfsubjectrulesreviews",
-//   SubjectAccessReview: "subjectaccessreviews",
-//   HorizontalPodAutoscaler: "horizontalpodautoscalers",
-//   CronJob: "cronjobs",
-//   Job: "jobs",
-//   CertificateSigningRequest: "certificatesigningrequests",
-//   BindingPolicy: "bindingpolicies",
-//   CombinedStatus: "combinedstatuses",
-//   CustomTransform: "customtransforms",
-//   StatusCollector: "statuscollectors",
-//   Lease: "leases",
-//   EndpointSlice: "endpointslices",
-//   FlowSchema: "flowschemas",
-//   PriorityLevelConfiguration: "prioritylevelconfigurations",
-//   IngressClass: "ingressclasses",
-//   Ingress: "ingresses",
-//   NetworkPolicy: "networkpolicies",
-//   RuntimeClass: "runtimeclasses",
-//   PodDisruptionBudget: "poddisruptionbudgets",
-//   ClusterRoleBinding: "clusterrolebindings",
-//   ClusterRole: "clusterroles",
-//   RoleBinding: "rolebindings",
-//   Role: "roles",
-//   PriorityClass: "priorityclasses",
-//   CSIDriver: "csidrivers",
-//   CSINode: "csinodes",
-//   CSIStorageCapacity: "csistoragecapacities",
-//   StorageClass: "storageclasses",
-//   VolumeAttachment: "volumeattachments",
-// };
 
 const iconMap: Record<string, string> = {
   ConfigMap: cm,
@@ -363,6 +302,8 @@ const WecsTreeview = () => {
   const [isTransforming, setIsTransforming] = useState<boolean>(false);
   const [dataReceived, setDataReceived] = useState<boolean>(false);
   const [minimumLoadingTimeElapsed, setMinimumLoadingTimeElapsed] = useState<boolean>(false);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const [isExpanded, setIsExpanded] = useState<boolean>(true);
   const nodeCache = useRef<Map<string, CustomNode>>(new Map());
   const edgeCache = useRef<Map<string, CustomEdge>>(new Map());
   const edgeIdCounter = useRef<number>(0);
@@ -485,7 +426,7 @@ const WecsTreeview = () => {
       if (!cachedNode) nodeCache.current.set(id, node);
       newNodes.push(node);
 
-      if (parent) {
+      if (parent && isExpanded) {
         const uniqueSuffix = resourceData?.metadata?.uid || edgeIdCounter.current++;
         const edgeId = `edge-${parent}-${id}-${uniqueSuffix}`;
         const cachedEdge = edgeCache.current.get(edgeId);
@@ -506,19 +447,40 @@ const WecsTreeview = () => {
         }
       }
     },
-    [getTimeAgo, handleClosePanel, handleMenuOpen, theme]
+    [getTimeAgo, handleClosePanel, handleMenuOpen, theme, isExpanded]
   );
 
   const transformDataToTree = useCallback(
     (data: WecsCluster[]) => {
-      nodeCache.current.clear();
-      edgeCache.current.clear();
-      edgeIdCounter.current = 0;
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        ReactDOM.unstable_batchedUpdates(() => {
+          setNodes([]);
+          setEdges([]);
+          setIsTransforming(false);
+        });
+        return;
+      }
 
       const newNodes: CustomNode[] = [];
       const newEdges: CustomEdge[] = [];
 
-      if (data && data.length > 0) {
+      if (!isExpanded) {
+        data.forEach((cluster) => {
+          const clusterId = `cluster:${cluster.cluster}`;
+          createNode(
+            clusterId,
+            cluster.cluster,
+            "cluster",
+            "Active",
+            "",
+            undefined,
+            { apiVersion: "v1", kind: "Cluster", metadata: { name: cluster.cluster, namespace: "", creationTimestamp: "" }, status: { phase: "Active" } },
+            null,
+            newNodes,
+            newEdges
+          );
+        });
+      } else {
         data.forEach((cluster) => {
           const clusterId = `cluster:${cluster.cluster}`;
           createNode(
@@ -534,106 +496,437 @@ const WecsTreeview = () => {
             newEdges
           );
 
-          cluster.namespaces.forEach((namespace) => {
-            const namespaceId = `ns:${cluster.cluster}:${namespace.namespace}`;
-            createNode(
-              namespaceId,
-              namespace.namespace,
-              "namespace",
-              "Active",
-              "",
-              namespace.namespace,
-              { apiVersion: "v1", kind: "Namespace", metadata: { name: namespace.namespace, namespace: namespace.namespace, creationTimestamp: "" }, status: { phase: "Active" } },
-              clusterId,
-              newNodes,
-              newEdges
-            );
+          if (cluster.namespaces && Array.isArray(cluster.namespaces)) {
+            cluster.namespaces.forEach((namespace) => {
+              const namespaceId = `ns:${cluster.cluster}:${namespace.namespace}`;
+              createNode(
+                namespaceId,
+                namespace.namespace,
+                "namespace",
+                "Active",
+                "",
+                namespace.namespace,
+                { apiVersion: "v1", kind: "Namespace", metadata: { name: namespace.namespace, namespace: namespace.namespace, creationTimestamp: "" }, status: { phase: "Active" } },
+                clusterId,
+                newNodes,
+                newEdges
+              );
 
-            namespace.resourceTypes.forEach((resourceType) => {
-              const kindLower = resourceType.kind.toLowerCase();
-              resourceType.resources.forEach((resource, index) => {
-                if (!resource || typeof resource !== "object" || !resource.raw) return;
-                const rawResource = resource.raw;
-                if (!rawResource.metadata || typeof rawResource.metadata !== "object" || !rawResource.metadata.name) return;
+              if (namespace.resourceTypes && Array.isArray(namespace.resourceTypes)) {
+                if (isCollapsed) {
+                  const resourceGroups: Record<string, ResourceItem[]> = {};
 
-                const resourceId = `${kindLower}:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}:${index}`;
-                const status = rawResource.status?.phase || "Active";
-                createNode(
-                  resourceId,
-                  rawResource.metadata.name,
-                  kindLower,
-                  status,
-                  rawResource.metadata.creationTimestamp,
-                  namespace.namespace,
-                  rawResource,
-                  namespaceId,
-                  newNodes,
-                  newEdges
-                );
-
-                if (kindLower === "deployment" && rawResource.spec) {
-                  const replicaSetId = `replicaset:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}:0`;
-                  createNode(
-                    replicaSetId,
-                    `${rawResource.metadata.name}-replicaset`,
-                    "replicaset",
-                    status,
-                    rawResource.metadata.creationTimestamp,
-                    namespace.namespace,
-                    {
-                      apiVersion: "apps/v1",
-                      kind: "ReplicaSet",
-                      metadata: { name: `${rawResource.metadata.name}-replicaset`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                      status: { phase: status }
-                    },
-                    resourceId,
-                    newNodes,
-                    newEdges
-                  );
-
-                  if (resource.replicaSets && resource.replicaSets.length > 0) {
-                    resource.replicaSets[0].pods.forEach((pod: { name: string; kind: string; raw: ResourceItem; creationTimestamp?: string }, podIndex: number) => {
-                      const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
-                      createNode(
-                        podId,
-                        pod.name,
-                        "pod",
-                        pod.raw.status?.phase || status,
-                        pod.raw.metadata.creationTimestamp,
-                        namespace.namespace,
-                        pod.raw,
-                        replicaSetId,
-                        newNodes,
-                        newEdges
-                      );
+                  namespace.resourceTypes.forEach((resourceType) => {
+                    resourceType.resources.forEach((resource) => {
+                      const kindLower = resourceType.kind.toLowerCase();
+                      if (!resourceGroups[kindLower]) {
+                        resourceGroups[kindLower] = [];
+                      }
+                      resourceGroups[kindLower].push(resource.raw);
                     });
-                  }
-                } else if (kindLower === "service" && rawResource.spec && rawResource.spec.ports) {
-                  const podCount = 2;
-                  for (let i = 0; i < podCount; i++) {
-                    const podId = `pod:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-pod-${i}:${i}`;
+                  });
+
+                  Object.entries(resourceGroups).forEach(([kindLower, items]) => {
+                    const count = items.length;
+                    const groupId = `ns:${cluster.cluster}:${namespace.namespace}:${kindLower}:group`;
+                    const status = items.some(item => item.status?.phase === "Running") ? "Active" : "Inactive";
+                    const label = `${count} ${kindLower}${count !== 1 ? "s" : ""}`;
+
                     createNode(
-                      podId,
-                      `${rawResource.metadata.name}-pod-${i}`,
-                      "pod",
+                      groupId,
+                      label,
+                      kindLower,
                       status,
-                      rawResource.metadata.creationTimestamp,
+                      items[0]?.metadata.creationTimestamp,
                       namespace.namespace,
-                      {
-                        apiVersion: "v1",
-                        kind: "Pod",
-                        metadata: { name: `${rawResource.metadata.name}-pod-${i}`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                        status: { phase: status }
-                      },
-                      resourceId,
+                      items[0],
+                      namespaceId,
                       newNodes,
                       newEdges
                     );
-                  }
+                  });
+                } else {
+                  namespace.resourceTypes.forEach((resourceType) => {
+                    const kindLower = resourceType.kind.toLowerCase();
+                    resourceType.resources.forEach((resource, index) => {
+                      if (!resource || typeof resource !== "object" || !resource.raw) return;
+                      const rawResource = resource.raw;
+                      if (!rawResource.metadata || typeof rawResource.metadata !== "object" || !rawResource.metadata.name) return;
+
+                      const resourceId = `${kindLower}:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}:${index}`;
+                      const status = rawResource.status?.phase || "Active";
+                      createNode(
+                        resourceId,
+                        rawResource.metadata.name,
+                        kindLower,
+                        status,
+                        rawResource.metadata.creationTimestamp,
+                        namespace.namespace,
+                        rawResource,
+                        namespaceId,
+                        newNodes,
+                        newEdges
+                      );
+
+                      if (kindLower === "deployment" && rawResource.spec) {
+                        if (resource.replicaSets && Array.isArray(resource.replicaSets)) {
+                          resource.replicaSets.forEach((rs, rsIndex) => {
+                            const replicaSetId = `replicaset:${cluster.cluster}:${namespace.namespace}:${rs.name}:${rsIndex}`;
+                            createNode(
+                              replicaSetId,
+                              rs.name,
+                              "replicaset",
+                              rs.raw.status?.phase || status,
+                              rs.raw.metadata.creationTimestamp,
+                              namespace.namespace,
+                              rs.raw,
+                              resourceId,
+                              newNodes,
+                              newEdges
+                            );
+                            if (rs.pods && Array.isArray(rs.pods)) {
+                              rs.pods.forEach((pod, podIndex) => {
+                                const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
+                                createNode(
+                                  podId,
+                                  pod.name,
+                                  "pod",
+                                  pod.raw.status?.phase || status,
+                                  pod.raw.metadata.creationTimestamp,
+                                  namespace.namespace,
+                                  pod.raw,
+                                  replicaSetId,
+                                  newNodes,
+                                  newEdges
+                                );
+                              });
+                            }
+                          });
+                        }
+                      } else if (kindLower === "replicaset" && rawResource.spec) {
+                        if (resource.replicaSets && Array.isArray(resource.replicaSets) && resource.replicaSets.length > 0) {
+                          const pods = resource.replicaSets[0].pods;
+                          if (pods && Array.isArray(pods)) {
+                            pods.forEach((pod, podIndex) => {
+                              const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
+                              createNode(
+                                podId,
+                                pod.name,
+                                "pod",
+                                pod.raw.status?.phase || status,
+                                pod.raw.metadata.creationTimestamp,
+                                namespace.namespace,
+                                pod.raw,
+                                resourceId,
+                                newNodes,
+                                newEdges
+                              );
+                            });
+                          }
+                        }
+                      } else if (kindLower === "statefulset" && rawResource.spec) {
+                        const podCount = rawResource.spec.replicas || 2;
+                        for (let i = 0; i < podCount; i++) {
+                          const podId = `pod:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-${i}:${i}`;
+                          createNode(
+                            podId,
+                            `${rawResource.metadata.name}-${i}`,
+                            "pod",
+                            status,
+                            rawResource.metadata.creationTimestamp,
+                            namespace.namespace,
+                            {
+                              apiVersion: "v1",
+                              kind: "Pod",
+                              metadata: { name: `${rawResource.metadata.name}-${i}`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                              status: { phase: status }
+                            },
+                            resourceId,
+                            newNodes,
+                            newEdges
+                          );
+                        }
+                        createNode(
+                          `${resourceId}:pvc`,
+                          `pvc-${rawResource.metadata.name}`,
+                          "persistentvolumeclaim",
+                          status,
+                          rawResource.metadata.creationTimestamp,
+                          namespace.namespace,
+                          {
+                            apiVersion: "v1",
+                            kind: "PersistentVolumeClaim",
+                            metadata: { name: `pvc-${rawResource.metadata.name}`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                            status: { phase: status }
+                          },
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                      } else if (kindLower === "daemonset" && rawResource.spec) {
+                        const podCount = 2;
+                        for (let i = 0; i < podCount; i++) {
+                          const podId = `pod:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-node${i}:${i}`;
+                          createNode(
+                            podId,
+                            `${rawResource.metadata.name}-node${i}`,
+                            "pod",
+                            status,
+                            rawResource.metadata.creationTimestamp,
+                            namespace.namespace,
+                            {
+                              apiVersion: "v1",
+                              kind: "Pod",
+                              metadata: { name: `${rawResource.metadata.name}-node${i}`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                              status: { phase: status }
+                            },
+                            resourceId,
+                            newNodes,
+                            newEdges
+                          );
+                        }
+                      } else if (kindLower === "replicationcontroller" && rawResource.spec) {
+                        const podCount = rawResource.spec.replicas || 2;
+                        for (let i = 0; i < podCount; i++) {
+                          const podId = `pod:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-${i}:${i}`;
+                          createNode(
+                            podId,
+                            `${rawResource.metadata.name}-${i}`,
+                            "pod",
+                            status,
+                            rawResource.metadata.creationTimestamp,
+                            namespace.namespace,
+                            {
+                              apiVersion: "v1",
+                              kind: "Pod",
+                              metadata: { name: `${rawResource.metadata.name}-${i}`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                              status: { phase: status }
+                            },
+                            resourceId,
+                            newNodes,
+                            newEdges
+                          );
+                        }
+                      } else if (kindLower === "cronjob" && rawResource.spec) {
+                        const jobId = `job:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}:0`;
+                        createNode(
+                          jobId,
+                          `${rawResource.metadata.name}-job`,
+                          "job",
+                          status,
+                          rawResource.metadata.creationTimestamp,
+                          namespace.namespace,
+                          {
+                            apiVersion: "batch/v1",
+                            kind: "Job",
+                            metadata: { name: `${rawResource.metadata.name}-job`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                            status: { phase: status }
+                          },
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                        const podId = `pod:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-job-pod:0`;
+                        createNode(
+                          podId,
+                          `${rawResource.metadata.name}-job-pod`,
+                          "pod",
+                          status,
+                          rawResource.metadata.creationTimestamp,
+                          namespace.namespace,
+                          {
+                            apiVersion: "v1",
+                            kind: "Pod",
+                            metadata: { name: `${rawResource.metadata.name}-job-pod`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                            status: { phase: status }
+                          },
+                          jobId,
+                          newNodes,
+                          newEdges
+                        );
+                      } else if (kindLower === "job" && rawResource.spec) {
+                        const podId = `pod:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-pod:0`;
+                        createNode(
+                          podId,
+                          `${rawResource.metadata.name}-pod`,
+                          "pod",
+                          status,
+                          rawResource.metadata.creationTimestamp,
+                          namespace.namespace,
+                          {
+                            apiVersion: "v1",
+                            kind: "Pod",
+                            metadata: { name: `${rawResource.metadata.name}-pod`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                            status: { phase: status }
+                          },
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                      } else if (kindLower === "service" && rawResource.spec) {
+                        const endpointsId = `endpoints:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}:0`;
+                        createNode(
+                          endpointsId,
+                          `${rawResource.metadata.name}-endpoints`,
+                          "endpoints",
+                          status,
+                          rawResource.metadata.creationTimestamp,
+                          namespace.namespace,
+                          {
+                            apiVersion: "v1",
+                            kind: "Endpoints",
+                            metadata: { name: `${rawResource.metadata.name}-endpoints`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                            status: { phase: status }
+                          },
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                      } else if (kindLower === "ingress" && rawResource.spec) {
+                        const serviceId = `service:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-svc:0`;
+                        createNode(
+                          serviceId,
+                          `${rawResource.metadata.name}-svc`,
+                          "service",
+                          status,
+                          rawResource.metadata.creationTimestamp,
+                          namespace.namespace,
+                          {
+                            apiVersion: "v1",
+                            kind: "Service",
+                            metadata: { name: `${rawResource.metadata.name}-svc`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                            status: { phase: status }
+                          },
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                      } else if (kindLower === "configmap" || kindLower === "secret") {
+                        createNode(
+                          `${resourceId}:volume`,
+                          `volume-${rawResource.metadata.name}`,
+                          "volume",
+                          status,
+                          rawResource.metadata.creationTimestamp,
+                          namespace.namespace,
+                          {
+                            apiVersion: "v1",
+                            kind: "Volume",
+                            metadata: { name: `volume-${rawResource.metadata.name}`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                            status: { phase: status }
+                          },
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                      } else if (kindLower === "persistentvolumeclaim" && rawResource.spec) {
+                        createNode(
+                          `${resourceId}:pv`,
+                          `pv-${rawResource.metadata.name}`,
+                          "persistentvolume",
+                          status,
+                          rawResource.metadata.creationTimestamp,
+                          namespace.namespace,
+                          {
+                            apiVersion: "v1",
+                            kind: "PersistentVolume",
+                            metadata: { name: `pv-${rawResource.metadata.name}`, namespace: "", creationTimestamp: rawResource.metadata.creationTimestamp },
+                            status: { phase: status }
+                          },
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                      } else if (kindLower === "storageclass" && rawResource.spec) {
+                        createNode(
+                          `${resourceId}:pv`,
+                          `pv-${rawResource.metadata.name}`,
+                          "persistentvolume",
+                          status,
+                          rawResource.metadata.creationTimestamp,
+                          namespace.namespace,
+                          {
+                            apiVersion: "v1",
+                            kind: "PersistentVolume",
+                            metadata: { name: `pv-${rawResource.metadata.name}`, namespace: "", creationTimestamp: rawResource.metadata.creationTimestamp },
+                            status: { phase: status }
+                          },
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                      } else if (kindLower === "horizontalpodautoscaler" && rawResource.spec) {
+                        const targetKind = rawResource.spec.scaleTargetRef?.kind?.toLowerCase() || "deployment";
+                        const targetName = rawResource.spec.scaleTargetRef?.name || `${rawResource.metadata.name}-target`;
+                        const targetId = `${targetKind}:${cluster.cluster}:${namespace.namespace}:${targetName}:0`;
+                        createNode(
+                          targetId,
+                          targetName,
+                          targetKind,
+                          status,
+                          rawResource.metadata.creationTimestamp,
+                          namespace.namespace,
+                          {
+                            apiVersion: rawResource.spec.scaleTargetRef?.apiVersion || "apps/v1",
+                            kind: rawResource.spec.scaleTargetRef?.kind || "Deployment",
+                            metadata: { name: targetName, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                            status: { phase: status }
+                          },
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                      } else if (kindLower === "rolebinding" && rawResource.roleRef) {
+                        const roleId = `role:${cluster.cluster}:${namespace.namespace}:${rawResource.roleRef.name}:0`;
+                        createNode(
+                          roleId,
+                          rawResource.roleRef.name,
+                          "role",
+                          status,
+                          rawResource.metadata.creationTimestamp,
+                          namespace.namespace,
+                          {
+                            apiVersion: "rbac.authorization.k8s.io/v1",
+                            kind: "Role",
+                            metadata: { name: rawResource.roleRef.name, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                            status: { phase: status }
+                          },
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                      } else if (kindLower === "clusterrolebinding" && rawResource.roleRef) {
+                        const clusterRoleId = `clusterrole:${cluster.cluster}:${rawResource.roleRef.name}:0`;
+                        createNode(
+                          clusterRoleId,
+                          rawResource.roleRef.name,
+                          "clusterrole",
+                          status,
+                          rawResource.metadata.creationTimestamp,
+                          namespace.namespace,
+                          {
+                            apiVersion: "rbac.authorization.k8s.io/v1",
+                            kind: "ClusterRole",
+                            metadata: { name: rawResource.roleRef.name, namespace: "", creationTimestamp: rawResource.metadata.creationTimestamp },
+                            status: { phase: status }
+                          },
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                      } else if (kindLower === "poddisruptionbudget" && rawResource.spec) {
+                        // Intentionally empty
+                      } else if (kindLower === "networkpolicy" && rawResource.spec) {
+                        // Intentionally empty
+                      } else if (kindLower === "ingressclass" || kindLower === "mutatingwebhookconfiguration" || kindLower === "validatingwebhookconfiguration") {
+                        // Intentionally empty
+                      }
+                    });
+                  });
                 }
-              });
+              }
             });
-          });
+          }
         });
       }
 
@@ -645,7 +938,7 @@ const WecsTreeview = () => {
       });
       prevNodes.current = layoutedNodes;
     },
-    [createNode, nodes, edges]
+    [createNode, nodes, edges, isCollapsed, isExpanded]
   );
 
   useEffect(() => {
@@ -758,10 +1051,25 @@ const WecsTreeview = () => {
     setActiveOption("option1");
   };
 
-  const isLoading = !wecsIsConnected || !hasValidWecsData || isTransforming || !minimumLoadingTimeElapsed;
+  const handleToggleCollapse = useCallback(() => {
+    setIsCollapsed((prev) => !prev);
+    setIsTransforming(true);
+    transformDataToTree(wecsData as WecsCluster[]);
+  }, [wecsData, transformDataToTree]);
 
-  const handleToggleCollapse = () => {};
-  const isCollapsed = false;
+  const handleExpandAll = useCallback(() => {
+    setIsExpanded(true);
+    setIsTransforming(true);
+    transformDataToTree(wecsData as WecsCluster[]);
+  }, [wecsData, transformDataToTree]);
+
+  const handleCollapseAll = useCallback(() => {
+    setIsExpanded(false);
+    setIsTransforming(true);
+    transformDataToTree(wecsData as WecsCluster[]);
+  }, [wecsData, transformDataToTree]);
+
+  const isLoading = !wecsIsConnected || !hasValidWecsData || isTransforming || !minimumLoadingTimeElapsed;
 
   return (
     <Box sx={{ display: "flex", height: "85vh", width: "100%", position: "relative" }}>
@@ -817,7 +1125,7 @@ const WecsTreeview = () => {
             <Box sx={{ width: "100%", height: "100%", position: "relative" }}>
               <ReactFlowProvider>
                 <FlowCanvas nodes={nodes} edges={edges} renderStartTime={renderStartTime} theme={theme} />
-                <ZoomControls theme={theme} onToggleCollapse={handleToggleCollapse} isCollapsed={isCollapsed} />
+                <ZoomControls theme={theme} onToggleCollapse={handleToggleCollapse} isCollapsed={isCollapsed} onExpandAll={handleExpandAll} onCollapseAll={handleCollapseAll} />
               </ReactFlowProvider>
             </Box>
           ) : (
