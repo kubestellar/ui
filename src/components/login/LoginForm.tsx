@@ -192,34 +192,35 @@ const LoginForm = () => {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <motion.div
-        className="relative group"
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <User
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-300/80 group-focus-within:text-blue-400 transition-colors duration-200"
-          size={18}
-        />
-        <input
-          type="text"
-          value={username}
-          onChange={(e) => {
-            setUsername(e.target.value);
-            setErrors((prev) => ({ ...prev, username: "" }));
-          }}
-          placeholder="Username"
-          className={`w-full pl-10 pr-4 py-3.5 bg-[#1a1f2e] border ${
-            errors.username ? "border-red-400" : "border-blue-300/20"
-          } rounded-xl focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 text-white placeholder-blue-200/70 
-          transition-all duration-200 shadow-sm
-          [&:-webkit-autofill]:shadow-[inset_0_0_0_1000px_#1a1f2e]
-          [&:-webkit-autofill]:[transition:_background-color_9999s_ease-in-out_0s]
-          [&:-webkit-autofill]:!text-white
-          [&:-webkit-autofill]:!-webkit-text-fill-color-white
-          [-webkit-text-fill-color:white]`}
-          required
-        />
+        <div className="relative group">
+          <User
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-300/80 group-focus-within:text-blue-400 transition-colors duration-200"
+            size={18}
+          />
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => {
+              setUsername(e.target.value);
+              setErrors((prev) => ({ ...prev, username: "" }));
+            }}
+            placeholder="Username"
+            className={`w-full pl-10 pr-4 py-3.5 bg-[#1a1f2e] border ${
+              errors.username ? "border-red-400" : "border-blue-300/20"
+            } rounded-xl focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 text-white placeholder-blue-200/70 
+            transition-all duration-200 shadow-sm
+            [&:-webkit-autofill]:shadow-[inset_0_0_0_1000px_#1a1f2e]
+            [&:-webkit-autofill]:[transition:_background-color_9999s_ease-in-out_0s]
+            [&:-webkit-autofill]:!text-white
+            [&:-webkit-autofill]:!-webkit-text-fill-color-white
+            [-webkit-text-fill-color:white]`}
+            required
+          />
+        </div>
         {errors.username && (
           <motion.p
             initial={{ opacity: 0, y: -5 }}
@@ -233,45 +234,46 @@ const LoginForm = () => {
       </motion.div>
 
       <motion.div
-        className="relative group"
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <Lock
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-300/80 group-focus-within:text-blue-400 transition-colors duration-200"
-          size={18}
-        />
-        <input
-          type={showPassword ? "text" : "password"}
-          value={password}
-          onChange={(e) => {
-            setPassword(e.target.value);
-            setErrors((prev) => ({ ...prev, password: "" }));
-          }}
-          placeholder="Password"
-          className={`w-full pl-10 pr-12 py-3.5 bg-[#1a1f2e] border ${
-            errors.password ? "border-red-400" : "border-blue-300/20"
-          } rounded-xl focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 text-white placeholder-blue-200/70 
-          transition-all duration-200 shadow-sm
-          [&:-webkit-autofill]:shadow-[inset_0_0_0_1000px_#1a1f2e]
-          [&:-webkit-autofill]:[transition:_background-color_9999s_ease-in-out_0s]
-          [&:-webkit-autofill]:!text-white
-          [&:-webkit-autofill]:!-webkit-text-fill-color-white
-          [-webkit-text-fill-color:white]
-          [-ms-reveal]:hidden
-          [&::-ms-reveal]:hidden
-          [&::-ms-clear]:hidden`}
-          required
-        />
-        <button
-          type="button"
-          onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-300/70 hover:text-blue-300 transition-colors duration-200 bg-transparent"
-          aria-label={showPassword ? "Hide password" : "Show password"}
-        >
-          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-        </button>
+        <div className="relative group">
+          <Lock
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-300/80 group-focus-within:text-blue-400 transition-colors duration-200"
+            size={18}
+          />
+          <input
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setErrors((prev) => ({ ...prev, password: "" }));
+            }}
+            placeholder="Password"
+            className={`w-full pl-10 pr-12 py-3.5 bg-[#1a1f2e] border ${
+              errors.password ? "border-red-400" : "border-blue-300/20"
+            } rounded-xl focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 text-white placeholder-blue-200/70 
+            transition-all duration-200 shadow-sm
+            [&:-webkit-autofill]:shadow-[inset_0_0_0_1000px_#1a1f2e]
+            [&:-webkit-autofill]:[transition:_background-color_9999s_ease-in-out_0s]
+            [&:-webkit-autofill]:!text-white
+            [&:-webkit-autofill]:!-webkit-text-fill-color-white
+            [-webkit-text-fill-color:white]
+            [-ms-reveal]:hidden
+            [&::-ms-reveal]:hidden
+            [&::-ms-clear]:hidden`}
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-300/70 hover:text-blue-300 transition-colors duration-200 bg-transparent"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        </div>
         {errors.password && (
           <motion.p
             initial={{ opacity: 0, y: -5 }}
