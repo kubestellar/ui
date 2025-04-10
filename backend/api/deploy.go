@@ -19,8 +19,8 @@ import (
 )
 
 type DeployRequest struct {
-	RepoURL    string `json:"repo_url"`
-	FolderPath string `json:"folder_path"`
+	RepoURL       string `json:"repo_url"`
+	FolderPath    string `json:"folder_path"`
 	WorkloadLabel string `json:"workload_label"`
 }
 
@@ -64,7 +64,7 @@ func DeployHandler(c *gin.Context) {
 	if branch == "" {
 		branch = "main" // Default branch
 	}
-	
+
 	// If workload label is not provided, use the GitHub project name from the repo URL
 	if request.WorkloadLabel == "" {
 		// Extract project name from repo URL
