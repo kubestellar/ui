@@ -170,7 +170,11 @@ func autoLabelling(obj *unstructured.Unstructured) {
 
 // CreateResource creates a Kubernetes resource
 func CreateResource(c *gin.Context) {
-	clientset, dynamicClient, err := GetClientSet()
+	cookieContext, err := c.Cookie("ui-wds-context")
+	if err != nil {
+		cookieContext = "wds1"
+	}
+	clientset, dynamicClient, err := GetClientSetWithContext(cookieContext)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -195,7 +199,11 @@ func CreateResource(c *gin.Context) {
 
 // GetResource retrieves a resource
 func GetResource(c *gin.Context) {
-	clientset, dynamicClient, err := GetClientSet()
+	cookieContext, err := c.Cookie("ui-wds-context")
+	if err != nil {
+		cookieContext = "wds1"
+	}
+	clientset, dynamicClient, err := GetClientSetWithContext(cookieContext)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -241,7 +249,11 @@ func GetResource(c *gin.Context) {
 
 // ListResources lists all resources of a given type in a namespace
 func ListResources(c *gin.Context) {
-	clientset, dynamicClient, err := GetClientSet()
+	cookieContext, err := c.Cookie("ui-wds-context")
+	if err != nil {
+		cookieContext = "wds1"
+	}
+	clientset, dynamicClient, err := GetClientSetWithContext(cookieContext)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -287,7 +299,11 @@ func ListResources(c *gin.Context) {
 
 // UpdateResource updates an existing Kubernetes resource
 func UpdateResource(c *gin.Context) {
-	clientset, dynamicClient, err := GetClientSet()
+	cookieContext, err := c.Cookie("ui-wds-context")
+	if err != nil {
+		cookieContext = "wds1"
+	}
+	clientset, dynamicClient, err := GetClientSetWithContext(cookieContext)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -332,7 +348,11 @@ func UpdateResource(c *gin.Context) {
 
 // DeleteResource deletes a resource
 func DeleteResource(c *gin.Context) {
-	clientset, dynamicClient, err := GetClientSet()
+	cookieContext, err := c.Cookie("ui-wds-context")
+	if err != nil {
+		cookieContext = "wds1"
+	}
+	clientset, dynamicClient, err := GetClientSetWithContext(cookieContext)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -366,7 +386,11 @@ func DeleteResource(c *gin.Context) {
 }
 
 func UploadYAMLFile(c *gin.Context) {
-	clientset, dynamicClient, err := GetClientSet()
+	cookieContext, err := c.Cookie("ui-wds-context")
+	if err != nil {
+		cookieContext = "wds1"
+	}
+	clientset, dynamicClient, err := GetClientSetWithContext(cookieContext)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -415,7 +439,11 @@ func tweakListOptions(name string) dynamicinformer.TweakListOptionsFunc {
 }
 
 func LogWorkloads(c *gin.Context) {
-	clientset, dynamicClient, err := GetClientSet()
+	cookieContext, err := c.Cookie("ui-wds-context")
+	if err != nil {
+		cookieContext = "wds1"
+	}
+	clientset, dynamicClient, err := GetClientSetWithContext(cookieContext)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
