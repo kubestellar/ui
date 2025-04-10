@@ -731,9 +731,9 @@ const BP = () => {
                 {clusters.length === 0 && workloads.length === 0 ? (
                   <EmptyState onCreateClick={() => navigate('/resources')} type="both" />
                 ) : clusters.length === 0 ? (
-                  <EmptyState onCreateClick={() => navigate('/clusters')} type="clusters" />
+                  <EmptyState onCreateClick={() => navigate('/its')} type="clusters" />
                 ) : (
-                  <EmptyState onCreateClick={() => navigate('/workloads')} type="workloads" />
+                  <EmptyState onCreateClick={() => navigate('/workloads/manage')} type="workloads" />
                 )}
               </Box>
             ) : (
