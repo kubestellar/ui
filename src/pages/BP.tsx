@@ -681,7 +681,7 @@ const BP = () => {
         {viewMode === 'table' ? (
           <>
             {clusters.length === 0 && workloads.length === 0 ? (
-              <EmptyState onCreateClick={() => navigate('/resources')} type="both" />
+              <EmptyState onCreateClick={() => navigate('/its')} type="both" />
             ) : clusters.length === 0 ? (
               <EmptyState onCreateClick={() => navigate('/its')} type="clusters" />
             ) : workloads.length === 0 ? (
@@ -729,7 +729,7 @@ const BP = () => {
                 }}
               >
                 {clusters.length === 0 && workloads.length === 0 ? (
-                  <EmptyState onCreateClick={() => navigate('/resources')} type="both" />
+                  <EmptyState onCreateClick={() => navigate('/its')} type="both" />
                 ) : clusters.length === 0 ? (
                   <EmptyState onCreateClick={() => navigate('/its')} type="clusters" />
                 ) : (
