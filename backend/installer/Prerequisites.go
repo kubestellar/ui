@@ -21,11 +21,20 @@ type PrerequisiteStatus struct {
 	InstallGuide string `json:"installGuide,omitempty"`
 }
 
+// ArchitectureStatus represents CPU architecture compatibility status
+type ArchitectureStatus struct {
+	Current     string   `json:"current"`
+	Supported   []string `json:"supported"`
+	Compatible  bool     `json:"compatible"`
+	Description string   `json:"description,omitempty"`
+}
+
 // PrerequisitesResponse represents the response for prerequisites check
 type PrerequisitesResponse struct {
 	Prerequisites []PrerequisiteStatus `json:"prerequisites"`
 	AllInstalled  bool                 `json:"allInstalled"`
 	OS            string               `json:"os"`
+	Architecture  ArchitectureStatus   `json:"architecture"`
 	SysctlChecks  []SysctlStatus       `json:"sysctlChecks,omitempty"`
 }
 
@@ -167,10 +176,19 @@ func CheckAllPrerequisites() PrerequisitesResponse {
 		},
 	}
 
+	// Check architecture compatibility
+	archStatus := checkArchitecture()
+
 	response := PrerequisitesResponse{
 		Prerequisites: make([]PrerequisiteStatus, 0, len(prereqs)),
 		AllInstalled:  true,
 		OS:            runtime.GOOS,
+		Architecture:  archStatus,
+	}
+
+	// If architecture is not compatible, mark all installed as false
+	if !archStatus.Compatible {
+		response.AllInstalled = false
 	}
 
 	for _, prereq := range prereqs {
@@ -192,6 +210,38 @@ func CheckAllPrerequisites() PrerequisitesResponse {
 	}
 
 	return response
+}
+
+// checkArchitecture verifies if the current CPU architecture is supported
+func checkArchitecture() ArchitectureStatus {
+	currentArch := runtime.GOARCH
+
+	// Define supported architectures for KubeStellar
+	supportedArchs := []string{"amd64", "x86_64", "arm64"}
+
+	// Check if current architecture is supported
+	isCompatible := false
+	for _, arch := range supportedArchs {
+		if currentArch == arch ||
+			(currentArch == "amd64" && arch == "x86_64") ||
+			(currentArch == "x86_64" && arch == "amd64") {
+			isCompatible = true
+			break
+		}
+	}
+
+	description := ""
+	if !isCompatible {
+		description = fmt.Sprintf("KubeStellar requires one of these CPU architectures: %s. Your current architecture (%s) is not supported.",
+			strings.Join(supportedArchs, ", "), currentArch)
+	}
+
+	return ArchitectureStatus{
+		Current:     currentArch,
+		Supported:   supportedArchs,
+		Compatible:  isCompatible,
+		Description: description,
+	}
 }
 
 // checkPrerequisite checks if a specific prerequisite is installed and valid
@@ -460,6 +510,23 @@ func DisplayPrerequisitesStatus(response PrerequisitesResponse) string {
 	var sb strings.Builder
 
 	sb.WriteString("Checking pre-requisites for using KubeStellar:\n\n")
+
+	// Display system architecture
+	sb.WriteString(fmt.Sprintf("System Information:\n"))
+	sb.WriteString(fmt.Sprintf("- Operating System: %s\n", response.OS))
+	archStatus := "✓"
+	archDetails := response.Architecture.Current
+	if !response.Architecture.Compatible {
+		archStatus = "✗"
+		archDetails = fmt.Sprintf("%s (supported: %s)",
+			response.Architecture.Current,
+			strings.Join(response.Architecture.Supported, ", "))
+	}
+	sb.WriteString(fmt.Sprintf("%s CPU Architecture: %s\n", archStatus, archDetails))
+	if !response.Architecture.Compatible && response.Architecture.Description != "" {
+		sb.WriteString(fmt.Sprintf("  Note: %s\n", response.Architecture.Description))
+	}
+	sb.WriteString("\n")
 
 	// Group prerequisites by category
 	coreTools := []string{"Docker", "kubectl", "Kubeflex", "OCM CLI", "Helm"}
