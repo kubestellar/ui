@@ -545,11 +545,16 @@ const TreeViewComponent = () => {
 
   const handleClosePanel = useCallback(() => {
     if (selectedNode) {
-      setSelectedNode({ ...selectedNode, isOpen: false });
-      setTimeout(() => setSelectedNode(null), 400);
+      setSelectedNode((prev) => (prev ? { ...prev, isOpen: false } : null));
+      setTimeout(() => {
+        setSelectedNode(null);
+      }, 400);
     }
     if (groupPanel) {
-      setGroupPanel(null);
+      setGroupPanel((prev) => (prev ? { ...prev, isOpen: false } : null));
+      setTimeout(() => {
+        setGroupPanel(null);
+      }, 400);
     }
   }, [selectedNode, groupPanel]);
 
@@ -910,7 +915,18 @@ const TreeViewComponent = () => {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if ((selectedNode?.isOpen || groupPanel?.isOpen) && panelRef.current && !panelRef.current.contains(event.target as Node)) {
-        handleClosePanel();
+        if (selectedNode?.isOpen) {
+          setSelectedNode((prev) => (prev ? { ...prev, isOpen: false } : null));
+          setTimeout(() => {
+            setSelectedNode(null);
+          }, 400);
+        }
+        if (groupPanel?.isOpen) {
+          setGroupPanel((prev) => (prev ? { ...prev, isOpen: false } : null));
+          setTimeout(() => {
+            setGroupPanel(null);
+          }, 400);
+        }
       }
     };
 
@@ -918,7 +934,7 @@ const TreeViewComponent = () => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [selectedNode, groupPanel, handleClosePanel]);
+  }, [selectedNode, groupPanel]);
 
   const findDescendantNodes = useCallback((nodeId: string, edges: CustomEdge[]): string[] => {
     const descendants: string[] = [];
@@ -1329,12 +1345,13 @@ const TreeViewComponent = () => {
             ) : undefined}
           />
         )}
-        {groupPanel && groupPanel.isOpen && (
+        {groupPanel && (
           <GroupPanel
             namespace={groupPanel.namespace}
             groupType={groupPanel.groupType}
             groupItems={groupPanel.groupItems}
             onClose={handleClosePanel}
+            isOpen={groupPanel.isOpen}
             onItemSelect={(item) => {
               setSelectedNode({
                 namespace: groupPanel.namespace,
@@ -1344,7 +1361,10 @@ const TreeViewComponent = () => {
                 isOpen: true,
                 resourceData: item,
               });
-              setGroupPanel(null);
+              setGroupPanel((prev) => (prev ? { ...prev, isOpen: false } : null));
+              setTimeout(() => {
+                setGroupPanel(null);
+              }, 400);
             }}
           />
         )}

@@ -23,7 +23,13 @@ func main() {
 
 	// CORS Middleware
 	router.Use(func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		origin := c.Request.Header.Get("Origin")
+
+		if origin == "http://localhost:5173" {
+			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+			c.Writer.Header().Set("Access-Control-Allow-Credentials", "true") // for cookies/auth
+		}
+
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
@@ -36,7 +42,6 @@ func main() {
 	})
 
 	routes.SetupRoutes(router)
-	// router.POST("api/deploy", api.DeployHandler)
 	router.POST("api/webhook", api.GitHubWebhookHandler)
 
 	if err := router.Run(":4000"); err != nil {

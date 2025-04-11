@@ -101,8 +101,13 @@ func GetAllNamespaces() ([]models.Namespace, error) {
 	return result, nil
 }
 
+type ExtendedNamespaceDetails struct {
+	*NamespaceDetails
+	CreationTimestamp time.Time `json:"creationTimestamp"`
+}
+
 // GetNamespaceResources fetches resources for a namespace using discovery API
-func GetNamespaceResources(namespace string) (*NamespaceDetails, error) {
+func GetNamespaceResources(namespace string) (*ExtendedNamespaceDetails, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
 
@@ -191,7 +196,10 @@ func GetNamespaceResources(namespace string) (*NamespaceDetails, error) {
 		}
 	}
 
-	return details, nil
+	return &ExtendedNamespaceDetails{
+		NamespaceDetails:  details,
+		CreationTimestamp: ns.CreationTimestamp.Time,
+	}, nil
 }
 
 // containsVerb checks if a verb is in the list of verbs

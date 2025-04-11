@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import  { FC, useEffect, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -13,10 +13,10 @@ import {
   CircularProgress,
   Alert,
 } from "@mui/material";
-import {  BindingPolicyInfo } from "../../../types/bindingPolicy";
-import Editor from "@monaco-editor/react";
+import { Editor } from '@monaco-editor/react';
 import ContentCopy from "@mui/icons-material/ContentCopy";
 import useTheme from "../../../stores/themeStore";
+import { PolicyDetailDialogProps } from '../../../types/bindingPolicy';
 
 interface PolicyCondition {
   type: string;
@@ -25,16 +25,7 @@ interface PolicyCondition {
   message?: string;
 }
 
-interface PolicyDetailDialogProps {
-  open: boolean;
-  onClose: () => void;
-  policy: BindingPolicyInfo;
-  onEdit: (policy: BindingPolicyInfo) => void;
-  isLoading?: boolean;
-  error?: string;
-}
-
-const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
+const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
   open,
   onClose,
   policy,
@@ -51,40 +42,38 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
   // Debug log the incoming policy object
   useEffect(() => {
     console.log("PolicyDetailDialog - Received policy:", policy);
-    console.log("PolicyDetailDialog - YAML property:", policy.yaml);
+    console.log("PolicyDetailDialog - YAML property:", policy.yaml || '<empty string>');
   }, [policy]);
 
   // Process YAML content when policy changes
   useEffect(() => {
     const processYaml = async () => {
-      console.log("Processing YAML, current value:", policy.yaml);
-      
-      if (!policy.yaml) {
-        console.log("No YAML content found in policy object");
-        setYamlContent("");
-        return;
-      }
-
       setFetchLoading(true);
       setFetchError(null);
-
+      
+      console.log("Processing YAML for policy:", policy?.name);
+      
+      // Don't process if we're still in the initial loading state
+      if (policy.status === 'Loading...') {
+        console.log("Policy is still loading, deferring YAML processing");
+        setFetchLoading(false);
+        return;
+      }
+      
       try {
-        // Check if policy.yaml is a URL
-        if (typeof policy.yaml === 'string' && policy.yaml.trim().startsWith('http')) {
-          console.log("YAML appears to be a URL, fetching...");
-          const response = await fetch(policy.yaml);
-          if (!response.ok) {
-            throw new Error(`Failed to fetch YAML: ${response.statusText}`);
-          }
-          
-          const content = await response.text();
-          console.log("Fetched YAML content:", content.substring(0, 100) + "...");
-          setYamlContent(content);
-        } else {
-          // The yaml field contains the actual content
-          console.log("Using direct YAML content, length:", 
-            typeof policy.yaml === 'string' ? policy.yaml.length : 'not a string');
+        // Use the YAML content directly from the policy object
+        if (policy?.yaml) {
+          console.log(`Using YAML content from policy object (${policy.yaml.length} chars)`);
           setYamlContent(policy.yaml);
+        } else {
+          console.log("No YAML content found in policy object");
+          
+          // Log additional debug info
+          console.log("Policy object keys:", Object.keys(policy));
+          console.log("Policy yaml property type:", typeof policy.yaml);
+          
+          setFetchError("No YAML content available. The policy may have been created before YAML tracking was implemented or the YAML content may not be available from the API.");
+          setYamlContent("");
         }
       } catch (err) {
         console.error("Error processing YAML:", err);
@@ -94,9 +83,11 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
         setFetchLoading(false);
       }
     };
-
-    processYaml();
-  }, [policy.yaml]);
+    
+    if (policy) {
+      processYaml();
+    }
+  }, [policy]);
 
   // Use the binding mode directly from the policy object
   const bindingMode = policy.bindingMode || "N/A";
@@ -195,22 +186,28 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
               label={policy.status}
               size="small"
               color={
-                policy.status.toLowerCase() === "active" ? "success" : "error"
+                policy.status.toLowerCase() === "active" 
+                  ? "success" 
+                  : policy.status.toLowerCase() === "pending"
+                    ? "warning"
+                    : "error"
               }
             />
           </Box>
-          <Button
-            onClick={() => onEdit(policy)}
-            sx={{
-              color: isDarkTheme ? "#fff" : "text.primary",
-              "&:hover": {
+          {onEdit && (
+            <Button
+              onClick={() => onEdit(policy)}
+              sx={{
                 color: isDarkTheme ? "#fff" : "text.primary",
-                opacity: 0.8
-              },
-            }}
-          >
-            Edit
-          </Button>
+                "&:hover": {
+                  color: isDarkTheme ? "#fff" : "text.primary",
+                  opacity: 0.8
+                },
+              }}
+            >
+              Edit
+            </Button>
+          )}
         </Box>
       </DialogTitle>
       <DialogContent
@@ -280,17 +277,6 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
                     variant="body2"
                     sx={{ color: isDarkTheme ? "rgba(255,255,255,0.7)" : "text.secondary" }}
                   >
-                    Namespace
-                  </Typography>
-                  <Typography sx={{ color: isDarkTheme ? "#fff" : "text.primary" }}>
-                    {policy.namespace || "default"}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: isDarkTheme ? "rgba(255,255,255,0.7)" : "text.secondary" }}
-                  >
                     Clusters ({clusterNames.length})
                   </Typography>
                   <Box sx={{ mt: 1 }}>
@@ -330,7 +316,7 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
                     variant="body2"
                     sx={{ color: isDarkTheme ? "rgba(255,255,255,0.7)" : "text.secondary" }}
                   >
-                    Workloads
+                    Workloads ({workloads.length})
                   </Typography>
                   <Box sx={{ mt: 1 }}>
                     {workloads && workloads.length > 0 ? (
@@ -369,7 +355,7 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
                     variant="body2"
                     sx={{ color: isDarkTheme ? "rgba(255,255,255,0.7)" : "text.secondary" }}
                   >
-                    Status
+                    Status 
                   </Typography>
                   <Box sx={{ mt: 1 }}>
                     <Chip
@@ -378,7 +364,9 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
                       color={
                         policy.status.toLowerCase() === "active"
                           ? "success"
-                          : "error"
+                          : policy.status.toLowerCase() === "pending"
+                            ? "warning"
+                            : "error"
                       }
                     />
                   </Box>
@@ -480,14 +468,52 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
                   borderColor: isDarkTheme ? "gray.700" : "divider",
                 }}
               >
-                {fetchLoading ? (
+                {policy.status === 'Loading...' ? (
+                  <Box display="flex" justifyContent="center" alignItems="center" height="400px">
+                    <CircularProgress />
+                    <Typography sx={{ ml: 2 }}>Loading policy details...</Typography>
+                  </Box>
+                ) : fetchLoading ? (
                   <Box display="flex" justifyContent="center" alignItems="center" height="400px">
                     <CircularProgress />
                   </Box>
                 ) : fetchError ? (
-                  <Box display="flex" justifyContent="center" alignItems="center" height="400px">
-                    <Alert severity="error" sx={{ width: "100%" }}>
+                  <Box display="flex" justifyContent="center" alignItems="center" height="400px" p={3}>
+                    <Alert severity="warning" sx={{ width: "100%" }}>
                       {fetchError}
+                      <Box mt={2}>
+                        <Typography variant="body2">
+                          Policy Name: {policy.name}
+                        </Typography>
+                        <Typography variant="body2">
+                          Status: {policy.status} (from status API)
+                        </Typography>
+                        <Typography variant="body2">
+                          Created: {policy.creationDate}
+                        </Typography>
+                        <Button 
+                          variant="outlined" 
+                          size="small" 
+                          sx={{ mt: 2 }}
+                          onClick={() => {
+                            // Re-process the YAML if the user clicks retry
+                            setFetchLoading(true);
+                            setFetchError(null);
+                            
+                            setTimeout(() => {
+                              if (policy?.yaml) {
+                                setYamlContent(policy.yaml);
+                                setFetchLoading(false);
+                              } else {
+                                setFetchError("YAML content still not available after retry. The YAML data is retrieved from the main API, while status comes from the status API.");
+                                setFetchLoading(false);
+                              }
+                            }, 1000);
+                          }}
+                        >
+                          Retry
+                        </Button>
+                      </Box>
                     </Alert>
                   </Box>
                 ) : !yamlContent ? (
@@ -511,7 +537,7 @@ const PolicyDetailDialog: React.FC<PolicyDetailDialogProps> = ({
                       automaticLayout: true,
                     }}
                     onMount={() => {
-                      console.log("Editor mounted. YAML content:", yamlContent);
+                      console.log("Editor mounted. YAML content length:", yamlContent?.length || 0);
                     }}
                   />
                 )}

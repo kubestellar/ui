@@ -55,3 +55,12 @@ export interface Workload {
 export interface BindingPolicyFilter {
     status?: "Active" | "Inactive" | "Pending";
 }
+
+export interface PolicyDetailDialogProps {
+    open: boolean;
+    onClose: () => void;
+    policy: BindingPolicyInfo;
+    onEdit?: (policy: BindingPolicyInfo) => void;
+    isLoading?: boolean;
+    error?: string;
+}

@@ -179,6 +179,19 @@ const DynamicDetailsPanel = ({
   const wsRef = useRef<WebSocket | null>(null);
   const [logs, setLogs] = useState<string[]>([]); // New state to store logs
   const wsParamsRef = useRef<{ kind: string; namespace: string; name: string } | null>(null); // Store WebSocket parameters
+  const [isPanelVisible, setIsPanelVisible] = useState(false);
+
+  // Update panel visibility with a slight delay when isOpen changes to create proper transition
+  useEffect(() => {
+    if (isOpen) {
+      // Small delay to ensure CSS transition works properly
+      setTimeout(() => {
+        setIsPanelVisible(true);
+      }, 50);
+    } else {
+      setIsPanelVisible(false);
+    }
+  }, [isOpen]);
 
   // Update tabValue when the panel opens with a new initialTab
   useEffect(() => {
@@ -420,6 +433,7 @@ const DynamicDetailsPanel = ({
 
   const handleClose = () => {
     setIsClosing(true);
+    setIsPanelVisible(false);
     setTimeout(() => {
       setIsClosing(false);
       onClose();
@@ -555,7 +569,7 @@ const DynamicDetailsPanel = ({
     <Box
       sx={{
         position: "fixed",
-        right: isOpen ? 0 : "-80vw",
+        right: isPanelVisible ? 0 : "-80vw",
         top: 0,
         bottom: 0,
         width: "80vw",

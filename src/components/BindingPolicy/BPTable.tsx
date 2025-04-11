@@ -15,7 +15,7 @@ import {
   TableContainer,
   Paper,
 } from "@mui/material";
-import { Info, Trash2,  CloudOff } from "lucide-react";
+import {  Trash2,  CloudOff } from "lucide-react";
 import { BindingPolicyInfo } from "../../types/bindingPolicy";
 import PolicyDetailDialog from "./Dialogs/PolicyDetailDialog";
 import useTheme from "../../stores/themeStore";
@@ -24,7 +24,6 @@ import { api } from "../../lib/api";
 
 interface BPTableProps {
   policies: BindingPolicyInfo[];
-  onPreviewMatches: (policy: BindingPolicyInfo) => void;
   onDeletePolicy: (policy: BindingPolicyInfo) => void;
   onEditPolicy: (policy: BindingPolicyInfo) => void;
   activeFilters: { status?: "Active" | "Inactive" | "Pending" };
@@ -34,7 +33,6 @@ interface BPTableProps {
 
 const BPTable: React.FC<BPTableProps> = ({
   policies,
-  onPreviewMatches,
   onDeletePolicy,
   onEditPolicy,
   activeFilters,
@@ -157,7 +155,16 @@ const BPTable: React.FC<BPTableProps> = ({
     
     console.log('Requesting details for policy:', policy.name);
     console.log('Policy namespace:', policy.namespace);
+    console.log('Policy YAML availability:', policy.yaml ? 'Available' : 'Not available');
+    
+    // Store both name and namespace for API request
     localStorage.setItem('selectedPolicyNamespace', policy.namespace || 'default');
+    
+    // If the policy already has YAML content, we can log it for debugging
+    if (policy.yaml) {
+      console.log('Policy has YAML content of length:', policy.yaml.length);
+      console.log('YAML content starts with:', policy.yaml.substring(0, 50));
+    }
     
     setSelectedPolicyName(policy.name);
   };
@@ -484,16 +491,6 @@ const BPTable: React.FC<BPTableProps> = ({
                     <Box
                       sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}
                     >
-                      <IconButton
-                        sx={{ 
-                          color: colors.textSecondary,
-                          "&:hover": { color: colors.primary }
-                        }}
-                        size="small"
-                        onClick={() => onPreviewMatches(policy)}
-                      >
-                        <Info size={18} />
-                      </IconButton>
                       <IconButton
                         size="small"
                         sx={{

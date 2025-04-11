@@ -178,8 +178,8 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
     console.log("Generating resources from workload:", workloadObj);
     
     const resources = [
-      // Always include namespaces
-      { type: 'namespaces', createOnly: false }
+      // Always include namespaces with createOnly=true
+      { type: 'namespaces', createOnly: true }
     ];
     
     if (workloadObj?.kind) {
@@ -199,11 +199,9 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
       // For deployments, add dependent resources
       if (kindLower === 'deployment') {
         resources.push({ type: 'replicasets', createOnly: false });
-        // Don't include pods as they should be managed by controllers
         resources.push({ type: 'services', createOnly: false });
       } else if (kindLower === 'statefulset') {
         resources.push({ type: 'services', createOnly: false });
-        // Don't include pods as they should be managed by controllers
       }
     } else {
       console.warn("Workload kind missing, adding deployment as default resource type");
@@ -244,23 +242,73 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
         return;
       }
       
+      // Find the cluster object to get its labels
+      const clusterId = policyCanvasEntities.clusters[0];
+      const clusterObj = clusters.find(c => c.name === clusterId);
+      
+      if (!clusterObj) {
+        console.error('Cluster not found:', clusterId);
+        setError(`Cluster not found: ${clusterId}`);
+        setIsLoading(false); // Reset loading state on error
+        return;
+      }
+      
       const workloadNamespace = workloadObj.namespace || 'default';
+      
+      // Extract workload labels from the workload object
+      const workloadLabels: Record<string, string> = {};
+      
+      // Directly use the workload's existing labels as the primary source
+      if (workloadObj.labels && Object.keys(workloadObj.labels).length > 0) {
+        // Copy all existing labels
+        Object.assign(workloadLabels, workloadObj.labels);
+      } 
+      // Only if no labels exist, fallback to using the name
+      else {
+        workloadLabels['kubernetes.io/kubestellar.workload.name'] = workloadObj.name;
+      }
+      
+      // Extract cluster labels from the cluster object
+      const clusterLabels: Record<string, string> = {};
+      
+      // Directly use the cluster's existing labels as the primary source
+      if (clusterObj.labels && Object.keys(clusterObj.labels).length > 0) {
+        // Copy all existing labels
+        Object.assign(clusterLabels, clusterObj.labels);
+      } 
+      // Only if no labels exist, fallback to using the name
+      else {
+        clusterLabels['name'] = clusterId;
+      }
 
       try {
-        // Call quick-connect API with all workloads and all clusters
-        const result = await quickConnectMutation.mutateAsync({
-          workloadLabels: {
-            'kubernetes.io/metadata.name': policyCanvasEntities.workloads[0]
-          },
-          clusterLabels: {
-            'name': policyCanvasEntities.clusters[0]
-          },
+        // Call quick-connect API with the correct labels
+        const requestData = {
+          workloadLabels,
+          clusterLabels,
           resources: generateResourcesFromWorkload(workloadObj),
           namespacesToSync: [workloadNamespace],
           policyName,
           namespace: workloadNamespace
-        });
+        };
+        
+        // Add detailed console logging
+        console.log('📤 SENDING REQUEST TO QUICK-CONNECT API (prepareForDeployment):');
+        console.log(JSON.stringify(requestData, null, 2));
+        console.log('🔍 workloadObj:', JSON.stringify({
+          name: workloadObj.name,
+          namespace: workloadObj.namespace,
+          kind: workloadObj.kind,
+          labels: workloadObj.labels
+        }, null, 2));
+        console.log('🔍 clusterObj:', JSON.stringify({
+          name: clusterObj.name,
+          labels: clusterObj.labels
+        }, null, 2));
+        
+        const result = await quickConnectMutation.mutateAsync(requestData);
         console.log(result);
+        
         // Show success message
         setSuccessMessage(`Successfully created binding policy "${policyName}"`);
         
@@ -461,19 +509,69 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
     const workloadNamespace = workloadObj.namespace || 'default';
     
     try {
-      // First generate the YAML preview
-      const generateYamlResponse = await generateYamlMutation.mutateAsync({
-        workloadLabels: {
-          'kubernetes.io/metadata.name': workloadId
-        },
-        clusterLabels: {
-          'name': clusterId
-        },
-        resources: generateResourcesFromWorkload(workloadObj),
+      // Find the cluster object to get its labels
+      const clusterObj = clusters.find(c => c.name === clusterId);
+      
+      if (!clusterObj) {
+        console.error('Cluster not found:', clusterId);
+        toast.error(`Cluster not found: ${clusterId}`);
+        return;
+      }
+      
+      // Extract workload labels from the workload object
+      const workloadLabels: Record<string, string> = {};
+      
+      // Directly use the workload's existing labels as the primary source
+      if (workloadObj.labels && Object.keys(workloadObj.labels).length > 0) {
+        // Copy all existing labels
+        Object.assign(workloadLabels, workloadObj.labels);
+      } 
+      // Only if no labels exist, fallback to using the name
+      else {
+        workloadLabels['kubernetes.io/kubestellar.workload.name'] = workloadObj.name;
+      }
+      
+      // Extract cluster labels from the cluster object
+      const clusterLabels: Record<string, string> = {};
+      
+      // If the cluster has labels, use them
+      if (clusterObj.labels && Object.keys(clusterObj.labels).length > 0) {
+        Object.assign(clusterLabels, clusterObj.labels);
+      }
+      
+      // If no labels were found, use the name as a label
+      if (Object.keys(clusterLabels).length === 0) {
+        clusterLabels['name'] = clusterId;
+      }
+      
+      const resources = generateResourcesFromWorkload(workloadObj);
+      
+      // Prepare the request data
+      const requestData = {
+        workloadLabels,
+        clusterLabels,
+        resources,
         namespacesToSync: [workloadNamespace],
         namespace: workloadNamespace,
         policyName: config?.name || `${workloadId}-to-${clusterId}`
-      });
+      };
+      
+      // Add detailed console logging
+      console.log('📤 SENDING REQUEST TO GENERATE-YAML API (CreateBindingPolicyDialog):');
+      console.log(JSON.stringify(requestData, null, 2));
+      console.log('🔍 workloadObj:', JSON.stringify({
+        name: workloadObj.name,
+        namespace: workloadObj.namespace,
+        kind: workloadObj.kind,
+        labels: workloadObj.labels
+      }, null, 2));
+      console.log('🔍 clusterObj:', JSON.stringify({
+        name: clusterObj.name,
+        labels: clusterObj.labels
+      }, null, 2));
+      
+      // First generate the YAML preview
+      const generateYamlResponse = await generateYamlMutation.mutateAsync(requestData);
       
       // Update the preview YAML and show dialog
       setPreviewYaml(generateYamlResponse.yaml);
@@ -556,6 +654,18 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
               scrollButtons="auto"
               sx={getTabsStyles(theme)}
             >
+            <StyledTab 
+            icon={<DragIndicatorIcon sx={{ color: isDarkTheme ? '#FFFFFF' : 'inherit' }} />}
+            iconPosition="start" 
+            label="Drag & Drop" 
+            value="dragdrop" 
+            sx={{ 
+              color: isDarkTheme ? '#FFFFFF' : "primary.main",
+              "&:hover": {
+                bgcolor: "rgba(25, 118, 210, 0.04)",
+              }
+            }}
+          />
               
             <StyledTab 
                 icon={<span role="img" aria-label="yaml" style={{ 
@@ -576,18 +686,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                 label="Upload File" 
                 value="file" 
               />
-              <StyledTab 
-                icon={<DragIndicatorIcon sx={{ color: isDarkTheme ? '#FFFFFF' : 'inherit' }} />}
-                iconPosition="start" 
-                label="Drag & Drop" 
-                value="dragdrop" 
-                sx={{ 
-                  color: isDarkTheme ? '#FFFFFF' : "primary.main",
-                  "&:hover": {
-                    bgcolor: "rgba(25, 118, 210, 0.04)",
-                  }
-                }}
-              />
+             
             </Tabs>
             </DialogTitle>
         <DialogContent

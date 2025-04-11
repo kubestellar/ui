@@ -311,6 +311,7 @@ const WecsTreeview = () => {
   const renderStartTime = useRef<number>(0);
   const panelRef = useRef<HTMLDivElement>(null);
   const prevWecsData = useRef<WecsCluster[] | null>(null);
+  const stateRef = useRef({ isCollapsed, isExpanded }); // Ref to track latest state
 
   const { wecsIsConnected, hasValidWecsData, wecsData } = useWebSocket();
   console.log(setSnackbarMessage);
@@ -332,6 +333,10 @@ const WecsTreeview = () => {
       setDataReceived(true);
     }
   }, [wecsData, dataReceived]);
+
+  useEffect(() => {
+    stateRef.current = { isCollapsed, isExpanded }; // Sync ref with state
+  }, [isCollapsed, isExpanded]);
 
   const getTimeAgo = useCallback((timestamp: string | undefined): string => {
     if (!timestamp) return "Unknown";
@@ -426,7 +431,7 @@ const WecsTreeview = () => {
       if (!cachedNode) nodeCache.current.set(id, node);
       newNodes.push(node);
 
-      if (parent && isExpanded) {
+      if (parent && stateRef.current.isExpanded) {
         const uniqueSuffix = resourceData?.metadata?.uid || edgeIdCounter.current++;
         const edgeId = `edge-${parent}-${id}-${uniqueSuffix}`;
         const cachedEdge = edgeCache.current.get(edgeId);
@@ -447,7 +452,7 @@ const WecsTreeview = () => {
         }
       }
     },
-    [getTimeAgo, handleClosePanel, handleMenuOpen, theme, isExpanded]
+    [getTimeAgo, handleClosePanel, handleMenuOpen, theme]
   );
 
   const transformDataToTree = useCallback(
@@ -464,7 +469,7 @@ const WecsTreeview = () => {
       const newNodes: CustomNode[] = [];
       const newEdges: CustomEdge[] = [];
 
-      if (!isExpanded) {
+      if (!stateRef.current.isExpanded) {
         data.forEach((cluster) => {
           const clusterId = `cluster:${cluster.cluster}`;
           createNode(
@@ -513,7 +518,7 @@ const WecsTreeview = () => {
               );
 
               if (namespace.resourceTypes && Array.isArray(namespace.resourceTypes)) {
-                if (isCollapsed) {
+                if (stateRef.current.isCollapsed) {
                   const resourceGroups: Record<string, ResourceItem[]> = {};
 
                   namespace.resourceTypes.forEach((resourceType) => {
@@ -938,7 +943,7 @@ const WecsTreeview = () => {
       });
       prevNodes.current = layoutedNodes;
     },
-    [createNode, nodes, edges, isCollapsed, isExpanded]
+    [createNode, nodes, edges]
   );
 
   useEffect(() => {
@@ -1052,21 +1057,33 @@ const WecsTreeview = () => {
   };
 
   const handleToggleCollapse = useCallback(() => {
-    setIsCollapsed((prev) => !prev);
-    setIsTransforming(true);
-    transformDataToTree(wecsData as WecsCluster[]);
+    setIsCollapsed((prev) => {
+      const newCollapsed = !prev;
+      stateRef.current.isCollapsed = newCollapsed;
+      setIsTransforming(true);
+      transformDataToTree(wecsData as WecsCluster[]);
+      return newCollapsed;
+    });
   }, [wecsData, transformDataToTree]);
 
   const handleExpandAll = useCallback(() => {
-    setIsExpanded(true);
-    setIsTransforming(true);
-    transformDataToTree(wecsData as WecsCluster[]);
+    setIsExpanded(() => {
+      const newExpanded = true;
+      stateRef.current.isExpanded = newExpanded;
+      setIsTransforming(true);
+      transformDataToTree(wecsData as WecsCluster[]);
+      return newExpanded;
+    });
   }, [wecsData, transformDataToTree]);
 
   const handleCollapseAll = useCallback(() => {
-    setIsExpanded(false);
-    setIsTransforming(true);
-    transformDataToTree(wecsData as WecsCluster[]);
+    setIsExpanded(() => {
+      const newExpanded = false;
+      stateRef.current.isExpanded = newExpanded;
+      setIsTransforming(true);
+      transformDataToTree(wecsData as WecsCluster[]);
+      return newExpanded;
+    });
   }, [wecsData, transformDataToTree]);
 
   const isLoading = !wecsIsConnected || !hasValidWecsData || isTransforming || !minimumLoadingTimeElapsed;

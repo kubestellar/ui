@@ -286,7 +286,7 @@ func StreamK8sDataChronologically(c *gin.Context) {
 
 									// Helper function to fetch and process resources
 									processResources := func(
-										listFunc func(namespace string) (interface{}, error), 
+										listFunc func(namespace string) (interface{}, error),
 										kind, group, version string,
 										getReplicaFunc func(clientset *kubernetes.Clientset, resource interface{}, namespace string) ([]ResourceData, error),
 									) []ResourceData {
@@ -351,17 +351,19 @@ func StreamK8sDataChronologically(c *gin.Context) {
 
 									// Define resource type list functions
 									resourceFuncs := []struct {
-										listFunc   func(namespace string) (interface{}, error)
-										kind       string
-										group      string
-										version    string
+										listFunc       func(namespace string) (interface{}, error)
+										kind           string
+										group          string
+										version        string
 										getReplicaFunc func(clientset *kubernetes.Clientset, resource interface{}, namespace string) ([]ResourceData, error)
 									}{
 										{
-											listFunc:       func(ns string) (interface{}, error) { return clientset.AppsV1().Deployments(ns).List(context.TODO(), metav1.ListOptions{}) },
-											kind:           "Deployment",
-											group:          "apps",
-											version:        "v1",
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.AppsV1().Deployments(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "Deployment",
+											group:   "apps",
+											version: "v1",
 											getReplicaFunc: func(cs *kubernetes.Clientset, res interface{}, ns string) ([]ResourceData, error) {
 												deployment, ok := res.(appsv1.Deployment)
 												if !ok {
@@ -371,30 +373,36 @@ func StreamK8sDataChronologically(c *gin.Context) {
 											},
 										},
 										{
-											listFunc:    func(ns string) (interface{}, error) { return clientset.AppsV1().StatefulSets(ns).List(context.TODO(), metav1.ListOptions{}) },
-											kind:        "StatefulSet",
-											group:       "apps",
-											version:     "v1",
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.AppsV1().StatefulSets(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "StatefulSet",
+											group:   "apps",
+											version: "v1",
 										},
 										{
-											listFunc:    func(ns string) (interface{}, error) { return clientset.AppsV1().DaemonSets(ns).List(context.TODO(), metav1.ListOptions{}) },
-											kind:        "DaemonSet",
-											group:       "apps",
-											version:     "v1",
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.AppsV1().DaemonSets(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "DaemonSet",
+											group:   "apps",
+											version: "v1",
 										},
 										{
-											listFunc:    func(ns string) (interface{}, error) { return clientset.CoreV1().Services(ns).List(context.TODO(), metav1.ListOptions{}) },
-											kind:        "Service",
-											group:       "core",
-											version:     "v1",
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.CoreV1().Services(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "Service",
+											group:   "core",
+											version: "v1",
 										},
 									}
 
 									for _, resourceFunc := range resourceFuncs {
 										resourceData := processResources(
-											resourceFunc.listFunc, 
-											resourceFunc.kind, 
-											resourceFunc.group, 
+											resourceFunc.listFunc,
+											resourceFunc.kind,
+											resourceFunc.group,
 											resourceFunc.version,
 											resourceFunc.getReplicaFunc,
 										)

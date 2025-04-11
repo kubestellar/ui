@@ -58,6 +58,7 @@ func DeployHandler(c *gin.Context) {
 	gitToken := c.Query("git_token")
 	branch := c.Query("branch")
 	createdByMe := c.Query("created_by_me") == "true"
+	deploymentID := c.Query("id")
 
 	if branch == "" {
 		branch = "main" // Default branch
@@ -103,9 +104,11 @@ func DeployHandler(c *gin.Context) {
 
 	// Store deployment data in ConfigMap if it's created by the user
 	if createdByMe {
-		// Create timestamp for deployment ID
+		// Create timestamp for deployment ID if not provided
 		timestamp := time.Now().Format("20060102150405")
-		deploymentID := fmt.Sprintf("github-%s-%s", filepath.Base(request.RepoURL), timestamp)
+		if deploymentID == "" {
+			deploymentID = fmt.Sprintf("github-%s-%s", filepath.Base(request.RepoURL), timestamp)
+		}
 
 		// Prepare deployment data for ConfigMap
 		deploymentData := map[string]string{
@@ -162,6 +165,7 @@ func DeployHandler(c *gin.Context) {
 			"dryRunStrategy":  dryRunStrategy,
 			"deployment_tree": deploymentTree,
 			"stored":          createdByMe,
+			"id":              deploymentID, // Include the deployment ID in response
 		})
 		return
 	}
@@ -171,6 +175,7 @@ func DeployHandler(c *gin.Context) {
 		"message":         "Deployment successful",
 		"deployment_tree": deploymentTree,
 		"stored":          createdByMe,
+		"id":              deploymentID, // Include the deployment ID in response
 	}
 
 	if createdByMe {
