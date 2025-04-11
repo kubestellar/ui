@@ -1,10 +1,12 @@
-import { Box, Button, TextField, Typography, FormControlLabel, Radio, RadioGroup, Checkbox } from "@mui/material";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle"; // Added import for CheckCircleIcon
+import { Box, Button, TextField, Typography, FormControlLabel, Radio, RadioGroup, Checkbox, MenuItem, Menu, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { StyledContainer } from "../StyledComponents";
-import useTheme from "../../stores/themeStore"; // Import useTheme for dark mode support
-import { useState } from "react";
+import useTheme from "../../stores/themeStore";
+import { useState, useEffect, useCallback } from "react";
 import axios, { AxiosError } from "axios";
 import { toast } from "react-hot-toast";
+import { MoreVerticalIcon } from "lucide-react";
 
 interface HelmFormData {
   repoName: string;
@@ -24,6 +26,20 @@ interface Props {
   validateForm: () => boolean;
   handleDeploy: () => void;
   handleCancelClick: () => void;
+}
+
+interface Deployment {
+  id: string;
+  timestamp: string;
+  repoName: string;
+  repoURL: string;
+  chartName: string;
+  releaseName: string;
+  namespace: string;
+  version: string;
+  releaseInfo: string;
+  chartVersion: string;
+  values: Record<string, unknown>;
 }
 
 // Define CreateOwnHelmForm as a separate component
@@ -53,13 +69,10 @@ const CreateOwnHelmForm = ({ formData, setFormData, error, theme }: {
         fontWeight: 600,
         fontSize: "20px",
         color: theme === "dark" ? "#d4d4d4" : "#333",
-        // mb: 2,
         mt: 1,
-        // ml:1
-        // textAlign: "center",
       }}
     >
-      Create our Own  Helm Chart and deploy!
+      Create our Own Helm Chart and deploy!
     </Typography>
     <Box>
       <Typography
@@ -419,10 +432,12 @@ export const HelmTab = ({
   handleDeploy,
   handleCancelClick,
 }: Props) => {
-  const theme = useTheme((state) => state.theme); // Get the current theme
+  const theme = useTheme((state) => state.theme);
   const [selectedOption, setSelectedOption] = useState("createOwn");
   const [selectedChart, setSelectedChart] = useState<string | null>(null);
   const [popularLoading, setPopularLoading] = useState(false);
+  const [userCharts, setUserCharts] = useState<Deployment[]>([]);
+  const [userLoading, setUserLoading] = useState(false);
 
   const popularHelmCharts = [
     "airflow", "apache", "apisix", "appsmith", "argo-cd", "argo-workflows", "aspnet-core", "cassandra",
@@ -434,13 +449,43 @@ export const HelmTab = ({
     "valkey", "vault", "victoriametrics", "whereabouts", "wildfly", "wordpress", "zipkin"
   ];
 
+  // Fetch user-created charts
+  useEffect(() => {
+    const fetchUserCharts = async () => {
+      setUserLoading(true);
+      try {
+        const response = await axios.get("http://localhost:4000/api/deployments/helm/list");
+        if (response.status === 200) {
+          const deployments = response.data.deployments;
+          setUserCharts(deployments);
+        } else {
+          throw new Error("Failed to fetch user-created charts");
+        }
+      } catch (error: unknown) {
+        const err = error as AxiosError;
+        console.error("User Charts Fetch error:", err);
+        toast.error("Failed to load user-created charts!");
+      } finally {
+        setUserLoading(false);
+      }
+    };
+
+    if (selectedOption === "userCharts") {
+      fetchUserCharts();
+    }
+  }, [selectedOption]);
+
   const handleOptionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedOption(event.target.value);
-    setSelectedChart(null); // Reset selected chart when switching options
+    setSelectedChart(null);
   };
 
-  const handleChartSelection = (chart: string) => {
-    setSelectedChart(selectedChart === chart ? null : chart);
+  const handleChartSelection = (chartValue: string) => {
+    // For userCharts, use id to find chartName; for popularCharts, use the chart name directly
+    const chart = selectedOption === "userCharts"
+      ? userCharts.find(c => c.id === chartValue)?.chartName || null
+      : chartValue;
+    setSelectedChart(chart === selectedChart ? null : chart);
   };
 
   const handlePopularHelmDeploy = async () => {
@@ -461,7 +506,7 @@ export const HelmTab = ({
       };
 
       const response = await axios.post(
-        "http://localhost:4000/deploy/helm",
+        "http://localhost:4000/deploy/helm?store=true",
         requestBody,
         {
           headers: {
@@ -503,8 +548,7 @@ export const HelmTab = ({
         display: "flex",
         flexDirection: "column",
         flex: 1,
-        overflow: "hidden", // Prevent outer container from scrolling
-        
+        overflow: "hidden",
       }}
     >
       {/* Sticky Header */}
@@ -513,21 +557,16 @@ export const HelmTab = ({
           position: "sticky",
           top: 0,
           zIndex: 1,
-          // backgroundColor: theme === "dark" ? "#00000033" : "#fff", // Match the background to avoid transparency issues
-          borderRadius: "4px"
         }}
       >
-          <Typography
+        <Typography
           variant="subtitle1"
           sx={{
-            // backgroundColor: theme === "dark" ? "#fff" : "rgba(255, 255, 255, 0.8)", // Dark background in dark mode
             fontWeight: 600,
             fontSize: "20px",
             color: theme === "dark" ? "#d4d4d4" : "#333",
             mb: 3,
             mt: 1,
-            // textAlign: "center",
-            // ml:1
           }}
         >
           Select a Popular Helm Chart to deploy!
@@ -544,10 +583,9 @@ export const HelmTab = ({
               borderRadius: "4px",
               border: "1px solid",
               borderColor: theme === "dark" ? "#444" : "#e0e0e0",
-              // backgroundColor: theme === "dark" ? "#fff" : "rgba(255, 255, 255, 0.8)", // Dark background in dark mode
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", borderColor: theme === "dark" ? "rgba(25, 118, 210, 0.2)" : "rgba(25, 118, 210, 0.1)" }}>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
               <CheckCircleIcon color="success" sx={{ mr: 1 }} />
               <Typography variant="body1" sx={{ color: theme === "dark" ? "#fff" : "#333" }}>
                 <strong>{selectedChart}</strong>
@@ -567,9 +605,9 @@ export const HelmTab = ({
           },
           scrollbarWidth: "none",
           "-ms-overflow-style": "none",
-          display: "flex", // Added to apply gap correctly
+          display: "flex",
           flexDirection: "column",
-          gap: 2, // Restored the original gap between Helm charts
+          gap: 2,
         }}
       >
         {popularHelmCharts.map((chart) => (
@@ -610,6 +648,259 @@ export const HelmTab = ({
     </Box>
   );
 
+// ... (previous imports and code remain unchanged until UserCreatedChartsForm)
+
+const UserCreatedChartsForm = () => {
+  const [contextMenu, setContextMenu] = useState<{ chartId: string; x: number; y: number } | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+  const [deleteChartId, setDeleteChartId] = useState<string | null>(null);
+
+  const handleMenuOpen = useCallback((event: React.MouseEvent, chartId: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setContextMenu({ chartId, x: event.clientX, y: event.clientY });
+  }, []);
+
+  const handleMenuClose = useCallback(() => {
+    setContextMenu(null);
+  }, []);
+
+  const handleDeleteChart = useCallback(async (chartId: string) => {
+    try {
+      const response = await axios.delete(`http://localhost:4000/api/deployments/helm/${chartId}`);
+      if (response.status === 200) {
+        setUserCharts(userCharts.filter(chart => chart.id !== chartId));
+        toast.success(`Chart ${chartId} deleted successfully!`);
+      } else {
+        toast.error(`Chart ${chartId} not deleted!`);
+      }
+    } catch (error: unknown) {
+      const err = error as AxiosError;
+      console.error("Delete Chart error:", err);
+      toast.error(`Chart ${chartId} not deleted!`);
+    } finally {
+      setDeleteDialogOpen(false);
+      setDeleteChartId(null);
+    }
+  }, [userCharts]);
+
+  const handleDeleteClick = useCallback(() => {
+    if (contextMenu?.chartId) {
+      setDeleteChartId(contextMenu.chartId);
+      setDeleteDialogOpen(true);
+    }
+    handleMenuClose();
+  }, [contextMenu]);
+
+  const handleDeleteConfirm = useCallback(() => {
+    if (deleteChartId) {
+      handleDeleteChart(deleteChartId);
+    }
+  }, [deleteChartId, handleDeleteChart]);
+
+  const handleDeleteCancel = useCallback(() => {
+    setDeleteDialogOpen(false);
+    setDeleteChartId(null);
+  }, []);
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        flex: 1,
+        overflow: "hidden",
+      }}
+      onClick={handleMenuClose} // Close menu when clicking outside
+    >
+      {/* Sticky Header */}
+      <Box
+        sx={{
+          position: "sticky",
+          top: 0,
+          zIndex: 1,
+        }}
+      >
+        <Typography
+          variant="subtitle1"
+          sx={{
+            fontWeight: 600,
+            fontSize: "20px",
+            color: theme === "dark" ? "#d4d4d4" : "#333",
+            mb: 3,
+            mt: 1,
+          }}
+        >
+          List of User Created Charts
+        </Typography>
+        {selectedChart && (
+          <Box
+            sx={{
+              width: "100%",
+              margin: "0 auto 25px auto",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              p: 1.6,
+              borderRadius: "4px",
+              border: "1px solid",
+              borderColor: theme === "dark" ? "#444" : "#e0e0e0",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <CheckCircleIcon color="success" sx={{ mr: 1 }} />
+              <Typography variant="body1" sx={{ color: theme === "dark" ? "#fff" : "#333" }}>
+                <strong>{selectedChart}</strong>
+              </Typography>
+            </Box>
+          </Box>
+        )}
+      </Box>
+
+      {/* Scrollable List */}
+      <Box
+        sx={{
+          flex: 1,
+          overflowY: "auto",
+          "&::-webkit-scrollbar": {
+            display: "none",
+          },
+          scrollbarWidth: "none",
+          "-ms-overflow-style": "none",
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+        }}
+      >
+        {userLoading ? (
+          <Typography sx={{ color: theme === "dark" ? "#d4d4d4" : "#333", textAlign: "center" }}>
+            Loading user charts...
+          </Typography>
+        ) : userCharts.length > 0 ? (
+          userCharts.map((chart) => (
+            <Box
+              key={chart.id}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "8px",
+                borderRadius: "4px",
+                backgroundColor: theme === "dark" ? "#00000033" : "#f9f9f9",
+                "&:hover": {
+                  backgroundColor: theme === "dark" ? "#2a2a2a" : "#f1f1f1",
+                },
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center" }} onClick={(e) => e.stopPropagation()}>
+                <Checkbox
+                  checked={selectedChart === chart.chartName}
+                  onChange={() => handleChartSelection(chart.id)}
+                  sx={{
+                    color: theme === "dark" ? "#d4d4d4" : "#666",
+                    "&.Mui-checked": {
+                      color: "#1976d2",
+                    },
+                  }}
+                />
+                <Typography
+                  sx={{
+                    fontSize: "0.875rem",
+                    color: theme === "dark" ? "#d4d4d4" : "#333",
+                  }}
+                >
+                  {chart.id}
+                </Typography>
+              </Box>
+              <Box
+                sx={{ cursor: "pointer" }}
+                onClick={(e) => handleMenuOpen(e, chart.id)}
+              >
+                <MoreVerticalIcon
+                  style={{ color: theme === "dark" ? "#d4d4d4" : "#666" }}
+                />
+              </Box>
+            </Box>
+          ))
+        ) : (
+          <Typography sx={{ color: theme === "dark" ? "#d4d4d4" : "#333", textAlign: "center" }}>
+            No user-created charts available.
+          </Typography>
+        )}
+      </Box>
+
+      {contextMenu && (
+        <Menu
+          open={Boolean(contextMenu)}
+          onClose={handleMenuClose}
+          anchorReference="anchorPosition"
+          anchorPosition={contextMenu ? { top: contextMenu.y, left: contextMenu.x } : undefined}
+        >
+          <MenuItem onClick={handleDeleteClick}>Delete</MenuItem>
+        </Menu>
+      )}
+
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        aria-labelledby="delete-confirmation-dialog-title"
+        sx={{
+          "& .MuiDialog-paper": {
+            padding: "16px",
+            width: "500px",
+            backgroundColor: theme === "dark" ? "rgb(15, 23, 42)" : "#fff",
+            borderRadius: "4px",
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+            maxWidth: "480px",
+            height: "250px",
+          },
+        }}
+      >
+        <DialogTitle id="delete-confirmation-dialog-title" sx={{ display: "flex", alignItems: "center", gap: 1, fontSize: "18px", fontWeight: 600, color: theme === "dark" ? "#fff" : "333" }}>
+          <WarningAmberIcon sx={{ color: "#FFA500", fontSize: "34px" }} />
+          Confirm Resource Deletion
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ fontSize: "16px", color: theme === "dark" ? "#fff" : "333", mt: 2 }}>
+            Are you sure you want to delete "{deleteChartId}"? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: "space-between", padding: "0 16px 16px 16px" }}>
+          <Button
+            onClick={handleDeleteCancel}
+            sx={{
+              textTransform: "none",
+              color: "#2F86FF",
+              fontWeight: 600,
+              "&:hover": { backgroundColor: "rgba(47, 134, 255, 0.1)" },
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            sx={{
+              textTransform: "none",
+              fontWeight: 500,
+              backgroundColor: "#d32f2f",
+              color: "#fff",
+              padding: "6px 16px",
+              borderRadius: "4px",
+              "&:hover": {
+                backgroundColor: "#b71c1c",
+              },
+            }}
+          >
+            Yes, Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
+};
+
+// ... (rest of the HelmTab code remains unchanged)
+
   return (
     <StyledContainer>
       <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 1 }}>
@@ -617,7 +908,7 @@ export const HelmTab = ({
           row
           value={selectedOption}
           onChange={handleOptionChange}
-          sx={{ gap: 4 }} // Added gap to create space between radio buttons
+          sx={{ gap: 4 }}
         >
           <FormControlLabel
             value="createOwn"
@@ -641,6 +932,17 @@ export const HelmTab = ({
               },
             }}
           />
+          <FormControlLabel
+            value="userCharts"
+            control={<Radio />}
+            label="List of user created Charts"
+            sx={{
+              "& .MuiTypography-root": {
+                color: theme === "dark" ? "#d4d4d4" : "#333",
+                fontSize: "0.875rem",
+              },
+            }}
+          />
         </RadioGroup>
       </Box>
 
@@ -651,8 +953,10 @@ export const HelmTab = ({
           error={error}
           theme={theme}
         />
-      ) : (
+      ) : selectedOption === "popularCharts" ? (
         <PopularHelmChartsForm />
+      ) : (
+        <UserCreatedChartsForm />
       )}
 
       <Box sx={{ 
@@ -669,7 +973,7 @@ export const HelmTab = ({
       }}>
         <Button
           onClick={handleCancelClick}
-          disabled={loading || popularLoading}
+          disabled={loading || popularLoading || userLoading}
           sx={{
             textTransform: "none",
             fontWeight: 600,
@@ -693,7 +997,8 @@ export const HelmTab = ({
           }}
           disabled={
             (selectedOption === "createOwn" && (!hasChanges || loading)) ||
-            (selectedOption === "popularCharts" && (!selectedChart || popularLoading))
+            (selectedOption === "popularCharts" && (!selectedChart || popularLoading)) ||
+            (selectedOption === "userCharts" && (!selectedChart || userLoading))
           }
           sx={{
             textTransform: "none",
@@ -711,11 +1016,11 @@ export const HelmTab = ({
             },
           }}
         >
-          {(selectedOption === "createOwn" && loading) || (selectedOption === "popularCharts" && popularLoading)
+          {(selectedOption === "createOwn" && loading) || (selectedOption === "popularCharts" && popularLoading) || (selectedOption === "userCharts" && userLoading)
             ? "Deploying..."
             : "Apply"}
         </Button>
       </Box>
     </StyledContainer>
   );
-};
+};  

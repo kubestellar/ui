@@ -179,6 +179,19 @@ const DynamicDetailsPanel = ({
   const wsRef = useRef<WebSocket | null>(null);
   const [logs, setLogs] = useState<string[]>([]); // New state to store logs
   const wsParamsRef = useRef<{ kind: string; namespace: string; name: string } | null>(null); // Store WebSocket parameters
+  const [isPanelVisible, setIsPanelVisible] = useState(false);
+
+  // Update panel visibility with a slight delay when isOpen changes to create proper transition
+  useEffect(() => {
+    if (isOpen) {
+      // Small delay to ensure CSS transition works properly
+      setTimeout(() => {
+        setIsPanelVisible(true);
+      }, 50);
+    } else {
+      setIsPanelVisible(false);
+    }
+  }, [isOpen]);
 
   // Update tabValue when the panel opens with a new initialTab
   useEffect(() => {
@@ -420,6 +433,7 @@ const DynamicDetailsPanel = ({
 
   const handleClose = () => {
     setIsClosing(true);
+    setIsPanelVisible(false);
     setTimeout(() => {
       setIsClosing(false);
       onClose();
@@ -505,6 +519,15 @@ const DynamicDetailsPanel = ({
 
   const renderSummary = () => {
     if (!resource) return null;
+
+    // Extract labels from resourceData.metadata.labels and format them
+    const labels = resourceData?.metadata?.labels;
+    const labelsString = labels
+      ? Object.entries(labels)
+          .map(([key, value]) => `${key}=${value}`)
+          .join(", ")
+      : "None";
+
     return (
       <Table sx={{ borderRadius: 1 }}>
         <TableBody>
@@ -513,13 +536,13 @@ const DynamicDetailsPanel = ({
             { label: "NAME", value: resource.name },
             { label: "NAMESPACE", value: resource.namespace },
             { label: "CREATED AT", value: `${resource.createdAt} (${resource.age})` },
+            { label: "LABELS", value: labelsString }, // New row for labels
           ].map((row, index) => (
             <TableRow key={index}>
               <TableCell
                 sx={{
                   borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
                   color: theme === "dark" ? "#D4D4D4" : "#333333",
-                  // width: "200px",
                   fontSize: "14px",
                   fontWeight: 500,
                 }}
@@ -546,7 +569,7 @@ const DynamicDetailsPanel = ({
     <Box
       sx={{
         position: "fixed",
-        right: isOpen ? 0 : "-80vw",
+        right: isPanelVisible ? 0 : "-80vw",
         top: 0,
         bottom: 0,
         width: "80vw",

@@ -39,6 +39,7 @@ import { ZoomControls } from "../components/Wds_Topology/ZoomControls";
 import { FlowCanvas } from "../components/Wds_Topology/FlowCanvas";
 import LoadingFallback from "./LoadingFallback";
 import DynamicDetailsPanel from "./DynamicDetailsPanel";
+import GroupPanel from "./GroupPanel";
 import ReactDOM from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { isEqual } from "lodash";
@@ -64,6 +65,7 @@ export interface CustomNode extends BaseNode {
   targetPosition?: Position;
   collapsed?: boolean;
   showMenu?: boolean;
+  isGroup?: boolean;
 }
 
 export interface BaseEdge {
@@ -112,7 +114,7 @@ export interface ResourceItem {
     addresses?: string[];
     ports?: Array<{ name?: string; port?: number }>;
   }>;
-  ports?: Array<{ name?: string; port?: number }>;
+  ports?: Array<{ name: string; port: number }>;
   subjects?: Array<{ name: string }>;
   roleRef?: { name: string };
   rules?: Array<{
@@ -135,7 +137,14 @@ interface SelectedNode {
   onClose: () => void;
   isOpen: boolean;
   resourceData?: ResourceItem;
-  initialTab?: number; // Add initialTab to specify which tab to open
+  initialTab?: number;
+}
+
+interface GroupPanelState {
+  isOpen: boolean;
+  namespace: string;
+  groupType: string;
+  groupItems: ResourceItem[];
 }
 
 interface ResourcesMap {
@@ -152,7 +161,6 @@ const nodeStyle: React.CSSProperties = {
   height: "30px",
 };
 
-// Mapping of kind to the correct plural form for API endpoints
 const kindToPluralMap: Record<string, string> = {
   Binding: "bindings",
   ComponentStatus: "componentstatuses",
@@ -218,7 +226,6 @@ const kindToPluralMap: Record<string, string> = {
   VolumeAttachment: "volumeattachments",
 };
 
-// Dynamic icon mapping for all imported icons
 const iconMap: Record<string, string> = {
   ConfigMap: cm,
   ClusterRoleBinding: crb,
@@ -251,11 +258,9 @@ const iconMap: Record<string, string> = {
   Volume: vol,
 };
 
-// Updated getNodeConfig function to support new child node types
 const getNodeConfig = (type: string, label: string) => {
   console.log(label);
   const normalizedType = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
-  
   let icon = iconMap[normalizedType] || cm;
   let dynamicText = type.toLowerCase();
 
@@ -403,7 +408,6 @@ const getNodeConfig = (type: string, label: string) => {
   return { icon, dynamicText };
 };
 
-// Layout function (unchanged)
 const getLayoutedElements = (
   nodes: CustomNode[],
   edges: CustomEdge[],
@@ -468,6 +472,9 @@ const TreeViewComponent = () => {
   const [isTransforming, setIsTransforming] = useState<boolean>(false);
   const [dataReceived, setDataReceived] = useState<boolean>(false);
   const [minimumLoadingTimeElapsed, setMinimumLoadingTimeElapsed] = useState<boolean>(false);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const [isExpanded, setIsExpanded] = useState<boolean>(true); // New state to track expansion of child nodes
+  const [groupPanel, setGroupPanel] = useState<GroupPanelState | null>(null);
   const nodeCache = useRef<Map<string, CustomNode>>(new Map());
   const edgeCache = useRef<Map<string, CustomEdge>>(new Map());
   const edgeIdCounter = useRef<number>(0);
@@ -538,10 +545,18 @@ const TreeViewComponent = () => {
 
   const handleClosePanel = useCallback(() => {
     if (selectedNode) {
-      setSelectedNode({ ...selectedNode, isOpen: false });
-      setTimeout(() => setSelectedNode(null), 400);
+      setSelectedNode((prev) => (prev ? { ...prev, isOpen: false } : null));
+      setTimeout(() => {
+        setSelectedNode(null);
+      }, 400);
     }
-  }, [selectedNode]);
+    if (groupPanel) {
+      setGroupPanel((prev) => (prev ? { ...prev, isOpen: false } : null));
+      setTimeout(() => {
+        setGroupPanel(null);
+      }, 400);
+    }
+  }, [selectedNode, groupPanel]);
 
   const createNode = useCallback(
     (
@@ -554,11 +569,14 @@ const TreeViewComponent = () => {
       resourceData: ResourceItem | undefined,
       parent: string | null,
       newNodes: CustomNode[],
-      newEdges: CustomEdge[]
+      newEdges: CustomEdge[],
+      groupItems?: ResourceItem[] // Add optional groupItems parameter for collapsed mode
     ) => {
       const config = getNodeConfig(type.toLowerCase(), label);
       const timeAgo = getTimeAgo(timestamp);
       const cachedNode = nodeCache.current.get(id);
+
+      const isGroupNode = id.includes(":group");
 
       const node =
         cachedNode ||
@@ -575,14 +593,23 @@ const TreeViewComponent = () => {
                 resourceData={resourceData}
                 onClick={(e) => {
                   if ((e.target as HTMLElement).tagName === "svg" || (e.target as HTMLElement).closest("svg")) return;
-                  setSelectedNode({
-                    namespace: namespace || "default",
-                    name: label,
-                    type: type.toLowerCase(),
-                    onClose: handleClosePanel,
-                    isOpen: true,
-                    resourceData,
-                  });
+                  if (isGroupNode && groupItems) {
+                    setGroupPanel({
+                      isOpen: true,
+                      namespace: namespace || "default",
+                      groupType: type.toLowerCase(),
+                      groupItems: groupItems, // Pass all group items
+                    });
+                  } else {
+                    setSelectedNode({
+                      namespace: namespace || "default",
+                      name: label,
+                      type: type.toLowerCase(),
+                      onClose: handleClosePanel,
+                      isOpen: true,
+                      resourceData,
+                    });
+                  }
                 }}
                 onMenuClick={(e) => handleMenuOpen(e, id)}
               />
@@ -600,12 +627,13 @@ const TreeViewComponent = () => {
           },
           sourcePosition: Position.Right,
           targetPosition: Position.Left,
+          isGroup: isGroupNode,
         } as CustomNode);
 
       if (!cachedNode) nodeCache.current.set(id, node);
       newNodes.push(node);
 
-      if (parent) {
+      if (parent && isExpanded) { // Only create edges if expanded
         const uniqueSuffix = resourceData?.metadata?.uid || edgeIdCounter.current++;
         const edgeId = `edge-${parent}-${id}-${uniqueSuffix}`;
         const cachedEdge = edgeCache.current.get(edgeId);
@@ -626,7 +654,7 @@ const TreeViewComponent = () => {
         }
       }
     },
-    [getTimeAgo, handleClosePanel, handleMenuOpen, theme]
+    [getTimeAgo, handleClosePanel, handleMenuOpen, theme, isExpanded]
   );
 
   const transformDataToTree = useCallback(
@@ -663,149 +691,188 @@ const TreeViewComponent = () => {
             ...namespace.resources,
           };
 
-          Object.values(resourcesMap)
-            .flat()
-            .forEach((item: ResourceItem, index: number) => {
-              const kindLower = item.kind.toLowerCase();
-              const resourceId = `ns:${namespace.name}:${kindLower}:${item.metadata.name}:${index}`;
-              const status = item.status?.conditions?.some((c) => c.type === "Available" && c.status === "True") ? "Active" : "Inactive";
+          // Only process child nodes if expanded
+          if (isExpanded) {
+            if (isCollapsed) {
+              const resourceGroups: Record<string, ResourceItem[]> = {};
 
-              createNode(resourceId, item.metadata.name, kindLower, status, item.metadata.creationTimestamp, namespace.name, item, namespaceId, newNodes, newEdges);
+              Object.entries(resourcesMap).forEach(([key, items]) => {
+                console.log(key);
+                items.forEach((item: ResourceItem) => {
+                  const kindLower = item.kind.toLowerCase();
+                  if (!resourceGroups[kindLower]) {
+                    resourceGroups[kindLower] = [];
+                  }
+                  resourceGroups[kindLower].push(item);
+                });
+              });
 
-              switch (kindLower) {
-                case "configmap":
-                  createNode(`${resourceId}:volume`, `volume-${item.metadata.name}`, "volume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  createNode(`${resourceId}:envvar`, `envvar-${item.metadata.name}`, "envvar", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  break;
+              Object.entries(resourceGroups).forEach(([kindLower, items]) => {
+                const count = items.length;
+                const groupId = `ns:${namespace.name}:${kindLower}:group`;
+                const status = items.some(item => item.status?.conditions?.some((c) => c.type === "Available" && c.status === "True")) ? "Active" : "Inactive";
+                const label = `${count} ${kindLower}${count !== 1 ? "s" : ""}`;
 
-                case "clusterrolebinding": {
-                  const crbClusterRoleId = `${resourceId}:clusterrole`;
-                  createNode(crbClusterRoleId, `clusterrole-${item.metadata.name}`, "clusterrole", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  createNode(`${crbClusterRoleId}:user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, crbClusterRoleId, newNodes, newEdges);
-                  createNode(`${crbClusterRoleId}:serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, item, crbClusterRoleId, newNodes, newEdges);
-                  createNode(`${crbClusterRoleId}:group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, item, crbClusterRoleId, newNodes, newEdges);
-                  break;
-                }
+                createNode(
+                  groupId,
+                  label,
+                  kindLower,
+                  status,
+                  items[0]?.metadata.creationTimestamp,
+                  namespace.name,
+                  items[0], // Representative resource data
+                  namespaceId,
+                  newNodes,
+                  newEdges,
+                  items // Pass all items for the group
+                );
+              });
+            } else {
+              Object.values(resourcesMap)
+                .flat()
+                .forEach((item: ResourceItem, index: number) => {
+                  const kindLower = item.kind.toLowerCase();
+                  const resourceId = `ns:${namespace.name}:${kindLower}:${item.metadata.name}:${index}`;
+                  const status = item.status?.conditions?.some((c) => c.type === "Available" && c.status === "True") ? "Active" : "Inactive";
 
-                case "customresourcedefinition": {
-                  const crdCrId = `${resourceId}:customresource`;
-                  createNode(crdCrId, `cr-${item.metadata.name}`, "customresource", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  createNode(`${crdCrId}:controller`, `controller-${item.metadata.name}`, "controller", status, undefined, namespace.name, item, crdCrId, newNodes, newEdges);
-                  break;
-                }
+                  createNode(resourceId, item.metadata.name, kindLower, status, item.metadata.creationTimestamp, namespace.name, item, namespaceId, newNodes, newEdges);
 
-                case "clusterrole": {
-                  const crClusterRoleBindingId = `${resourceId}:clusterrolebinding`;
-                  createNode(crClusterRoleBindingId, `clusterrolebinding-${item.metadata.name}`, "clusterrolebinding", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  createNode(`${crClusterRoleBindingId}:user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, crClusterRoleBindingId, newNodes, newEdges);
-                  createNode(`${crClusterRoleBindingId}:group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, item, crClusterRoleBindingId, newNodes, newEdges);
-                  createNode(`${crClusterRoleBindingId}:serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, item, crClusterRoleBindingId, newNodes, newEdges);
-                  break;
-                }
+                  switch (kindLower) {
+                    case "configmap":
+                      createNode(`${resourceId}:volume`, `volume-${item.metadata.name}`, "volume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      createNode(`${resourceId}:envvar`, `envvar-${item.metadata.name}`, "envvar", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      break;
 
-                case "cronjob":
-                  createNode(`${resourceId}:job`, `job-${item.metadata.name}`, "job", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  break;
+                    case "clusterrolebinding": {
+                      const crbClusterRoleId = `${resourceId}:clusterrole`;
+                      createNode(crbClusterRoleId, `clusterrole-${item.metadata.name}`, "clusterrole", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      createNode(`${crbClusterRoleId}:user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, crbClusterRoleId, newNodes, newEdges);
+                      createNode(`${crbClusterRoleId}:serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, item, crbClusterRoleId, newNodes, newEdges);
+                      createNode(`${crbClusterRoleId}:group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, item, crbClusterRoleId, newNodes, newEdges);
+                      break;
+                    }
 
-                case "deployment":
-                  createNode(`${resourceId}:replicaset`, `replicaset-${item.metadata.name}`, "replicaset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  break;
+                    case "customresourcedefinition": {
+                      const crdCrId = `${resourceId}:customresource`;
+                      createNode(crdCrId, `cr-${item.metadata.name}`, "customresource", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      createNode(`${crdCrId}:controller`, `controller-${item.metadata.name}`, "controller", status, undefined, namespace.name, item, crdCrId, newNodes, newEdges);
+                      break;
+                    }
 
-                case "daemonset":
-                  break;
+                    case "clusterrole": {
+                      const crClusterRoleBindingId = `${resourceId}:clusterrolebinding`;
+                      createNode(crClusterRoleBindingId, `clusterrolebinding-${item.metadata.name}`, "clusterrolebinding", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      createNode(`${crClusterRoleBindingId}:user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, crClusterRoleBindingId, newNodes, newEdges);
+                      createNode(`${crClusterRoleBindingId}:group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, item, crClusterRoleBindingId, newNodes, newEdges);
+                      createNode(`${crClusterRoleBindingId}:serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, item, crClusterRoleBindingId, newNodes, newEdges);
+                      break;
+                    }
 
-                case "service":
-                  createNode(`${resourceId}:endpoints`, `endpoints-${item.metadata.name}`, "endpoints", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  break;
+                    case "cronjob":
+                      createNode(`${resourceId}:job`, `job-${item.metadata.name}`, "job", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      break;
 
-                case "endpoints":
-                  break;
+                    case "deployment":
+                      createNode(`${resourceId}:replicaset`, `replicaset-${item.metadata.name}`, "replicaset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      break;
 
-                case "group":
-                  createNode(`${resourceId}:user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  break;
+                    case "daemonset":
+                      break;
 
-                case "horizontalpodautoscaler":
-                  createNode(`${resourceId}:deployment`, `deployment-${item.metadata.name}`, "deployment", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  createNode(`${resourceId}:replicaset`, `replicaset-${item.metadata.name}`, "replicaset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  createNode(`${resourceId}:statefulset`, `statefulset-${item.metadata.name}`, "statefulset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  break;
+                    case "service":
+                      createNode(`${resourceId}:endpoints`, `endpoints-${item.metadata.name}`, "endpoints", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      break;
 
-                case "ingress": {
-                  const ingControllerId = `${resourceId}:ingresscontroller`;
-                  createNode(ingControllerId, `ingresscontroller-${item.metadata.name}`, "ingresscontroller", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  createNode(`${ingControllerId}:service`, `service-${item.metadata.name}`, "service", status, undefined, namespace.name, item, ingControllerId, newNodes, newEdges);
-                  break;
-                }
+                    case "endpoints":
+                      break;
 
-                case "job":
-                  break;
+                    case "group":
+                      createNode(`${resourceId}:user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      break;
 
-                case "limitrange":
-                  createNode(`${resourceId}:namespace`, `namespace-${item.metadata.name}`, "namespace", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  break;
+                    case "horizontalpodautoscaler":
+                      createNode(`${resourceId}:deployment`, `deployment-${item.metadata.name}`, "deployment", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      createNode(`${resourceId}:replicaset`, `replicaset-${item.metadata.name}`, "replicaset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      createNode(`${resourceId}:statefulset`, `statefulset-${item.metadata.name}`, "statefulset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      break;
 
-                case "networkpolicy":
-                  break;
+                    case "ingress": {
+                      const ingControllerId = `${resourceId}:ingresscontroller`;
+                      createNode(ingControllerId, `ingresscontroller-${item.metadata.name}`, "ingresscontroller", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      createNode(`${ingControllerId}:service`, `service-${item.metadata.name}`, "service", status, undefined, namespace.name, item, ingControllerId, newNodes, newEdges);
+                      break;
+                    }
 
-                case "podsecuritypolicy":
-                  break;
+                    case "job":
+                      break;
 
-                case "persistentvolume":
-                  createNode(`${resourceId}:persistentvolumeclaim`, `pvc-${item.metadata.name}`, "persistentvolumeclaim", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  break;
+                    case "limitrange":
+                      createNode(`${resourceId}:namespace`, `namespace-${item.metadata.name}`, "namespace", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      break;
 
-                case "persistentvolumeclaim":
-                  createNode(`${resourceId}:persistentvolume`, `pv-${item.metadata.name}`, "persistentvolume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  break;
+                    case "networkpolicy":
+                      break;
 
-                case "resourcequota":
-                  createNode(`${resourceId}:namespace`, `namespace-${item.metadata.name}`, "namespace", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  break;
+                    case "podsecuritypolicy":
+                      break;
 
-                case "rolebinding": {
-                  const rbRoleId = `${resourceId}:role`;
-                  createNode(rbRoleId, `role-${item.metadata.name}`, "role", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  createNode(`${rbRoleId}:user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, rbRoleId, newNodes, newEdges);
-                  createNode(`${rbRoleId}:serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, item, rbRoleId, newNodes, newEdges);
-                  createNode(`${rbRoleId}:group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, item, rbRoleId, newNodes, newEdges);
-                  break;
-                }
+                    case "persistentvolume":
+                      createNode(`${resourceId}:persistentvolumeclaim`, `pvc-${item.metadata.name}`, "persistentvolumeclaim", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      break;
 
-                case "role":
-                  createNode(`${resourceId}:namespace`, `namespace-${item.metadata.name}`, "namespace", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  break;
+                    case "persistentvolumeclaim":
+                      createNode(`${resourceId}:persistentvolume`, `pv-${item.metadata.name}`, "persistentvolume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      break;
 
-                case "replicaset":
-                  break;
+                    case "resourcequota":
+                      createNode(`${resourceId}:namespace`, `namespace-${item.metadata.name}`, "namespace", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      break;
 
-                case "serviceaccount":
-                  break;
+                    case "rolebinding": {
+                      const rbRoleId = `${resourceId}:role`;
+                      createNode(rbRoleId, `role-${item.metadata.name}`, "role", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      createNode(`${rbRoleId}:user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, rbRoleId, newNodes, newEdges);
+                      createNode(`${rbRoleId}:serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, item, rbRoleId, newNodes, newEdges);
+                      createNode(`${rbRoleId}:group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, item, rbRoleId, newNodes, newEdges);
+                      break;
+                    }
 
-                case "storageclass":
-                  createNode(`${resourceId}:persistentvolume`, `pv-${item.metadata.name}`, "persistentvolume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  break;
+                    case "role":
+                      createNode(`${resourceId}:namespace`, `namespace-${item.metadata.name}`, "namespace", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      break;
 
-                case "secret":
-                  createNode(`${resourceId}:volume`, `volume-${item.metadata.name}`, "volume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  createNode(`${resourceId}:envvar`, `envvar-${item.metadata.name}`, "envvar", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  break;
+                    case "replicaset":
+                      break;
 
-                case "statefulset":
-                  break;
+                    case "serviceaccount":
+                      break;
 
-                case "user":
-                  createNode(`${resourceId}:role`, `role-${item.metadata.name}`, "role", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  createNode(`${resourceId}:clusterrole`, `clusterrole-${item.metadata.name}`, "clusterrole", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                  break;
+                    case "storageclass":
+                      createNode(`${resourceId}:persistentvolume`, `pv-${item.metadata.name}`, "persistentvolume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      break;
 
-                case "volume":
-                  break;
+                    case "secret":
+                      createNode(`${resourceId}:volume`, `volume-${item.metadata.name}`, "volume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      createNode(`${resourceId}:envvar`, `envvar-${item.metadata.name}`, "envvar", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      break;
 
-                default:
-                  break;
-              }
-            });
+                    case "statefulset":
+                      break;
+
+                    case "user":
+                      createNode(`${resourceId}:role`, `role-${item.metadata.name}`, "role", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      createNode(`${resourceId}:clusterrole`, `clusterrole-${item.metadata.name}`, "clusterrole", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      break;
+
+                    case "volume":
+                      break;
+
+                    default:
+                      break;
+                  }
+                });
+            }
+          }
         });
       }
 
@@ -820,7 +887,7 @@ const TreeViewComponent = () => {
       const endTime = performance.now();
       console.log(`[TreeView] Completed transformDataToTree: ${layoutedNodes.length} nodes, ${layoutedEdges.length} edges in ${endTime - startTime}ms`);
     },
-    [createNode]
+    [createNode, isCollapsed, isExpanded]
   );
 
   useEffect(() => {
@@ -847,8 +914,19 @@ const TreeViewComponent = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (selectedNode?.isOpen && panelRef.current && !panelRef.current.contains(event.target as Node)) {
-        handleClosePanel();
+      if ((selectedNode?.isOpen || groupPanel?.isOpen) && panelRef.current && !panelRef.current.contains(event.target as Node)) {
+        if (selectedNode?.isOpen) {
+          setSelectedNode((prev) => (prev ? { ...prev, isOpen: false } : null));
+          setTimeout(() => {
+            setSelectedNode(null);
+          }, 400);
+        }
+        if (groupPanel?.isOpen) {
+          setGroupPanel((prev) => (prev ? { ...prev, isOpen: false } : null));
+          setTimeout(() => {
+            setGroupPanel(null);
+          }, 400);
+        }
       }
     };
 
@@ -856,9 +934,8 @@ const TreeViewComponent = () => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [selectedNode, handleClosePanel]);
+  }, [selectedNode, groupPanel]);
 
-  // Function to find all descendant nodes of a given node
   const findDescendantNodes = useCallback((nodeId: string, edges: CustomEdge[]): string[] => {
     const descendants: string[] = [];
     const queue: string[] = [nodeId];
@@ -869,12 +946,10 @@ const TreeViewComponent = () => {
       if (visited.has(currentNodeId)) continue;
       visited.add(currentNodeId);
 
-      // Find all direct children of the current node
       const children = edges
         .filter((edge) => edge.source === currentNodeId)
         .map((edge) => edge.target);
 
-      // Add children to descendants and queue for further traversal
       children.forEach((childId) => {
         if (!visited.has(childId)) {
           descendants.push(childId);
@@ -891,31 +966,24 @@ const TreeViewComponent = () => {
       try {
         let endpoint: string;
 
-        // Use a different endpoint for namespace deletion
         if (nodeType.toLowerCase() === "namespace") {
           endpoint = `${process.env.VITE_BASE_URL}/api/namespaces/delete/${namespace}`;
         } else {
-          // For all other resource types, use the existing endpoint pattern
-          const kind = nodeType.charAt(0).toUpperCase() + nodeType.slice(1); // e.g., "ingress" → "Ingress"
-          const pluralForm = kindToPluralMap[kind] || `${nodeType.toLowerCase()}s`; // Fallback to adding "s" if not found
+          const kind = nodeType.charAt(0).toUpperCase() + nodeType.slice(1);
+          const pluralForm = kindToPluralMap[kind] || `${nodeType.toLowerCase()}s`;
           endpoint = `${process.env.VITE_BASE_URL}/api/${pluralForm}/${namespace}/${nodeName}`;
         }
 
-        // Send DELETE request to the backend
         await axios.delete(endpoint);
 
-        // Find all descendant nodes of the node being deleted
         const descendantNodeIds = findDescendantNodes(nodeId, edges);
-        // Include the node itself in the list of nodes to delete
         const nodesToDelete = [nodeId, ...descendantNodeIds];
 
-        // Remove the node and its descendants from the nodes state
         setNodes((prevNodes) => {
           const remainingNodes = prevNodes.filter((n) => !nodesToDelete.includes(n.id));
           return remainingNodes;
         });
 
-        // Remove edges that reference any of the deleted nodes (as source or target)
         setEdges((prevEdges) => {
           const remainingEdges = prevEdges.filter(
             (e) => !nodesToDelete.includes(e.source) && !nodesToDelete.includes(e.target)
@@ -923,7 +991,6 @@ const TreeViewComponent = () => {
           return remainingEdges;
         });
 
-        // Update caches
         nodesToDelete.forEach((id) => {
           nodeCache.current.delete(id);
         });
@@ -976,15 +1043,24 @@ const TreeViewComponent = () => {
 
           switch (action) {
             case "Details":
-              setSelectedNode({
-                namespace: namespace || "default",
-                name: nodeName,
-                type: nodeType,
-                onClose: handleClosePanel,
-                isOpen: true,
-                resourceData,
-                initialTab: 0, // Open with "SUMMARY" tab (default)
-              });
+              if (node.isGroup && resourceData) {
+                setGroupPanel({
+                  isOpen: true,
+                  namespace: namespace || "default",
+                  groupType: nodeType,
+                  groupItems: nodeCache.current.get(node.id)?.data.label.props.resourceData ? [resourceData] : [], // Fallback, should be handled by groupItems
+                });
+              } else {
+                setSelectedNode({
+                  namespace: namespace || "default",
+                  name: nodeName,
+                  type: nodeType,
+                  onClose: handleClosePanel,
+                  isOpen: true,
+                  resourceData,
+                  initialTab: 0,
+                });
+              }
               break;
             case "Delete":
               setDeleteNodeDetails({
@@ -995,7 +1071,7 @@ const TreeViewComponent = () => {
               });
               setDeleteDialogOpen(true);
               break;
-            case "Edit": // Handle the "Edit" action
+            case "Edit":
               setSelectedNode({
                 namespace: namespace || "default",
                 name: nodeName,
@@ -1003,7 +1079,7 @@ const TreeViewComponent = () => {
                 onClose: handleClosePanel,
                 isOpen: true,
                 resourceData,
-                initialTab: 1, // Open with "EDIT" tab
+                initialTab: 1,
               });
               break;
             case "Logs":
@@ -1014,7 +1090,7 @@ const TreeViewComponent = () => {
                 onClose: handleClosePanel,
                 isOpen: true,
                 resourceData,
-                initialTab: 2, // Open with "LOGS" tab
+                initialTab: 2,
               });
               break;
             default:
@@ -1054,6 +1130,24 @@ const TreeViewComponent = () => {
     setActiveOption("option1");
   };
 
+  const handleToggleCollapse = useCallback(() => {
+    setIsCollapsed((prev) => !prev);
+    setIsTransforming(true);
+    transformDataToTree(namespaceData);
+  }, [namespaceData, transformDataToTree]);
+
+  const handleExpandAll = useCallback(() => {
+    setIsExpanded(true);
+    setIsTransforming(true);
+    transformDataToTree(namespaceData);
+  }, [namespaceData, transformDataToTree]);
+
+  const handleCollapseAll = useCallback(() => {
+    setIsExpanded(false);
+    setIsTransforming(true);
+    transformDataToTree(namespaceData);
+  }, [namespaceData, transformDataToTree]);
+
   const isLoading = !isConnected || !hasValidData || isTransforming || !minimumLoadingTimeElapsed;
 
   useEffect(() => {
@@ -1074,9 +1168,9 @@ const TreeViewComponent = () => {
         sx={{
           flex: 1,
           position: "relative",
-          filter: selectedNode?.isOpen ? "blur(5px)" : "none",
+          filter: (selectedNode?.isOpen || groupPanel?.isOpen) ? "blur(5px)" : "none",
           transition: "filter 0.2s ease-in-out",
-          pointerEvents: selectedNode?.isOpen ? "none" : "auto",
+          pointerEvents: (selectedNode?.isOpen || groupPanel?.isOpen) ? "none" : "auto",
         }}
       >
         <Box
@@ -1090,7 +1184,7 @@ const TreeViewComponent = () => {
             padding: 2,
             borderRadius: 1,
             boxShadow: "0 6px 6px rgba(0,0,0,0.1)",
-            background: theme === "dark" ? "rgb(15, 23, 42)" : "#fff", 
+            background: theme === "dark" ? "rgb(15, 23, 42)" : "#fff",
           }}
         >
           <Typography variant="h4" sx={{ color: "#4498FF", fontWeight: 700, fontSize: "30px", letterSpacing: "0.5px" }}>
@@ -1122,7 +1216,7 @@ const TreeViewComponent = () => {
             <Box sx={{ width: "100%", height: "100%", position: "relative" }}>
               <ReactFlowProvider>
                 <FlowCanvas nodes={nodes} edges={edges} renderStartTime={renderStartTime} theme={theme} />
-                <ZoomControls theme={theme} />
+                <ZoomControls theme={theme} onToggleCollapse={handleToggleCollapse} isCollapsed={isCollapsed} onExpandAll={handleExpandAll} onCollapseAll={handleCollapseAll} />
               </ReactFlowProvider>
             </Box>
           ) : (
@@ -1164,7 +1258,7 @@ const TreeViewComponent = () => {
             >
               <MenuItem onClick={() => handleMenuAction("Details")}>Details</MenuItem>
               <MenuItem onClick={() => handleMenuAction("Delete")}>Delete</MenuItem>
-              <MenuItem onClick={() => handleMenuAction("Edit")}>Edit</MenuItem> {/* Added Edit option */}
+              <MenuItem onClick={() => handleMenuAction("Edit")}>Edit</MenuItem>
               <MenuItem onClick={() => handleMenuAction("Logs")}>Logs</MenuItem>
             </Menu>
           )}
@@ -1234,21 +1328,46 @@ const TreeViewComponent = () => {
       </Box>
 
       <div ref={panelRef}>
-        <DynamicDetailsPanel
-          namespace={selectedNode?.namespace || ""}
-          name={selectedNode?.name || ""}
-          type={selectedNode?.type || ""}
-          resourceData={selectedNode?.resourceData}
-          onClose={handleClosePanel}
-          isOpen={selectedNode?.isOpen || false}
-          initialTab={selectedNode?.initialTab} // Pass initialTab to DynamicDetailsPanel
-          onDelete={deleteNodeDetails ? () => handleDeleteNode(
-            deleteNodeDetails.namespace,
-            deleteNodeDetails.nodeType,
-            deleteNodeDetails.nodeName,
-            deleteNodeDetails.nodeId
-          ) : undefined}
-        />
+        {selectedNode && (
+          <DynamicDetailsPanel
+            namespace={selectedNode.namespace}
+            name={selectedNode.name}
+            type={selectedNode.type}
+            resourceData={selectedNode.resourceData}
+            onClose={handleClosePanel}
+            isOpen={selectedNode.isOpen}
+            initialTab={selectedNode.initialTab}
+            onDelete={deleteNodeDetails ? () => handleDeleteNode(
+              deleteNodeDetails.namespace,
+              deleteNodeDetails.nodeType,
+              deleteNodeDetails.nodeName,
+              deleteNodeDetails.nodeId
+            ) : undefined}
+          />
+        )}
+        {groupPanel && (
+          <GroupPanel
+            namespace={groupPanel.namespace}
+            groupType={groupPanel.groupType}
+            groupItems={groupPanel.groupItems}
+            onClose={handleClosePanel}
+            isOpen={groupPanel.isOpen}
+            onItemSelect={(item) => {
+              setSelectedNode({
+                namespace: groupPanel.namespace,
+                name: item.metadata.name,
+                type: groupPanel.groupType,
+                onClose: handleClosePanel,
+                isOpen: true,
+                resourceData: item,
+              });
+              setGroupPanel((prev) => (prev ? { ...prev, isOpen: false } : null));
+              setTimeout(() => {
+                setGroupPanel(null);
+              }, 400);
+            }}
+          />
+        )}
       </div>
     </Box>
   );

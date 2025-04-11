@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, memo } from "react";
-import { Box, Typography, Menu, MenuItem, Button, Alert, Snackbar, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import { Box, Typography, Menu, MenuItem, Button, Alert, Snackbar } from "@mui/material";
 import { ReactFlowProvider, Position, MarkerType } from "reactflow";
 import * as dagre from "dagre";
 import "reactflow/dist/style.css";
@@ -30,27 +30,23 @@ import sc from "../assets/k8s_resources_logo/sc.svg";
 import secret from "../assets/k8s_resources_logo/secret.svg";
 import sts from "../assets/k8s_resources_logo/sts.svg";
 import svc from "../assets/k8s_resources_logo/svc.svg";
-import cluster from "../assets/k8s_resources_logo/kubernetes-logo.svg"
-import pod from "../assets/k8s_resources_logo/pod.png"
+import cluster from "../assets/k8s_resources_logo/kubernetes-logo.svg";
+import pod from "../assets/k8s_resources_logo/pod.png";
 import user from "../assets/k8s_resources_logo/user.svg";
 import vol from "../assets/k8s_resources_logo/vol.svg";
 import { Plus } from "lucide-react";
 import CreateOptions from "../components/CreateOptions";
 import { NodeLabel } from "../components/Wds_Topology/NodeLabel";
 import { ZoomControls } from "../components/Wds_Topology/ZoomControls";
-import { FlowCanvas } from "../components/Wds_Topology/FlowCanvas";
 import LoadingFallback from "./LoadingFallback";
 import ReactDOM from "react-dom";
 import { isEqual } from "lodash";
 import { useWebSocket } from "../context/WebSocketProvider";
 import useTheme from "../stores/themeStore";
-import axios from "axios";
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-
-// Import the new WecsDetailsPanel
 import WecsDetailsPanel from "./WecsDetailsPanel";
+import { FlowCanvas } from "./Wds_Topology/FlowCanvas";
 
-// Interfaces
+// Updated Interfaces
 export interface NodeData {
   label: JSX.Element;
 }
@@ -101,6 +97,12 @@ export interface ResourceItem {
   spec?: {
     ports?: Array<{ name: string; port: number }>;
     holderIdentity?: string;
+    replicas?: number; // Added for StatefulSet, ReplicationController, etc.
+    scaleTargetRef?: { // Added for HorizontalPodAutoscaler
+      apiVersion?: string;
+      kind?: string;
+      name?: string;
+    };
   };
   status?: {
     conditions?: Array<{ type: string; status: string }>;
@@ -124,9 +126,37 @@ export interface ResourceItem {
   }>;
 }
 
-interface PodItem {
+export interface WecsResource {
   name: string;
   raw: ResourceItem;
+  replicaSets?: Array<{
+    name: string;
+    kind: string;
+    raw: ResourceItem;
+    pods?: Array<{
+      name: string;
+      kind: string;
+      raw: ResourceItem;
+      creationTimestamp?: string;
+    }>;
+    creationTimestamp?: string;
+  }>;
+}
+
+export interface WecsResourceType {
+  kind: string;
+  version: string;
+  resources: WecsResource[];
+}
+
+export interface WecsNamespace {
+  namespace: string;
+  resourceTypes: WecsResourceType[];
+}
+
+export interface WecsCluster {
+  cluster: string;
+  namespaces: WecsNamespace[];
 }
 
 interface SelectedNode {
@@ -137,7 +167,7 @@ interface SelectedNode {
   isOpen: boolean;
   resourceData?: ResourceItem;
   initialTab?: number;
-  cluster?: string; // Added to store cluster name for pods
+  cluster?: string;
 }
 
 const nodeStyle: React.CSSProperties = {
@@ -148,73 +178,6 @@ const nodeStyle: React.CSSProperties = {
   height: "30px",
 };
 
-// Mapping of kind to the correct plural form for API endpoints
-const kindToPluralMap: Record<string, string> = {
-  Binding: "bindings",
-  ComponentStatus: "componentstatuses",
-  ConfigMap: "configmaps",
-  Endpoints: "endpoints",
-  Event: "events",
-  LimitRange: "limitranges",
-  Namespace: "namespaces",
-  Node: "nodes",
-  PersistentVolumeClaim: "persistentvolumeclaims",
-  PersistentVolume: "persistentvolumes",
-  Pod: "pods",
-  PodTemplate: "podtemplates",
-  ReplicationController: "replicationcontrollers",
-  ResourceQuota: "resourcequotas",
-  Secret: "secrets",
-  ServiceAccount: "serviceaccounts",
-  Service: "services",
-  MutatingWebhookConfiguration: "mutatingwebhookconfigurations",
-  ValidatingWebhookConfiguration: "validatingwebhookconfigurations",
-  CustomResourceDefinition: "customresourcedefinitions",
-  APIService: "apiservices",
-  ControllerRevision: "controllerrevisions",
-  DaemonSet: "daemonsets",
-  Deployment: "deployments",
-  ReplicaSet: "replicasets",
-  StatefulSet: "statefulsets",
-  Application: "applications",
-  ApplicationSet: "applicationsets",
-  AppProject: "appprojects",
-  SelfSubjectReview: "selfsubjectreviews",
-  TokenReview: "tokenreviews",
-  LocalSubjectAccessReview: "localsubjectaccessreviews",
-  SelfSubjectAccessReview: "selfsubjectaccessreviews",
-  SelfSubjectRulesReview: "selfsubjectrulesreviews",
-  SubjectAccessReview: "subjectaccessreviews",
-  HorizontalPodAutoscaler: "horizontalpodautoscalers",
-  CronJob: "cronjobs",
-  Job: "jobs",
-  CertificateSigningRequest: "certificatesigningrequests",
-  BindingPolicy: "bindingpolicies",
-  CombinedStatus: "combinedstatuses",
-  CustomTransform: "customtransforms",
-  StatusCollector: "statuscollectors",
-  Lease: "leases",
-  EndpointSlice: "endpointslices",
-  FlowSchema: "flowschemas",
-  PriorityLevelConfiguration: "prioritylevelconfigurations",
-  IngressClass: "ingressclasses",
-  Ingress: "ingresses",
-  NetworkPolicy: "networkpolicies",
-  RuntimeClass: "runtimeclasses",
-  PodDisruptionBudget: "poddisruptionbudgets",
-  ClusterRoleBinding: "clusterrolebindings",
-  ClusterRole: "clusterroles",
-  RoleBinding: "rolebindings",
-  Role: "roles",
-  PriorityClass: "priorityclasses",
-  CSIDriver: "csidrivers",
-  CSINode: "csinodes",
-  CSIStorageCapacity: "csistoragecapacities",
-  StorageClass: "storageclasses",
-  VolumeAttachment: "volumeattachments",
-};
-
-// Dynamic icon mapping for all imported icons
 const iconMap: Record<string, string> = {
   ConfigMap: cm,
   ClusterRoleBinding: crb,
@@ -249,7 +212,6 @@ const iconMap: Record<string, string> = {
   Cluster: group,
 };
 
-// Updated getNodeConfig function to support cluster and pod
 const getNodeConfig = (type: string) => {
   const normalizedType = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
   
@@ -276,7 +238,6 @@ const getNodeConfig = (type: string) => {
   return { icon, dynamicText };
 };
 
-// Layout function (unchanged)
 const getLayoutedElements = (
   nodes: CustomNode[],
   edges: CustomEdge[],
@@ -341,22 +302,21 @@ const WecsTreeview = () => {
   const [isTransforming, setIsTransforming] = useState<boolean>(false);
   const [dataReceived, setDataReceived] = useState<boolean>(false);
   const [minimumLoadingTimeElapsed, setMinimumLoadingTimeElapsed] = useState<boolean>(false);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const [isExpanded, setIsExpanded] = useState<boolean>(true);
   const nodeCache = useRef<Map<string, CustomNode>>(new Map());
   const edgeCache = useRef<Map<string, CustomEdge>>(new Map());
   const edgeIdCounter = useRef<number>(0);
   const prevNodes = useRef<CustomNode[]>([]);
   const renderStartTime = useRef<number>(0);
   const panelRef = useRef<HTMLDivElement>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
-  const [deleteNodeDetails, setDeleteNodeDetails] = useState<{
-    namespace: string;
-    nodeType: string;
-    nodeName: string;
-    nodeId: string;
-  } | null>(null);
+  const prevWecsData = useRef<WecsCluster[] | null>(null);
+  const stateRef = useRef({ isCollapsed, isExpanded }); // Ref to track latest state
 
   const { wecsIsConnected, hasValidWecsData, wecsData } = useWebSocket();
-
+  console.log(setSnackbarMessage);
+  console.log(setSnackbarSeverity);
+  
   useEffect(() => {
     renderStartTime.current = performance.now();
   }, []);
@@ -373,6 +333,10 @@ const WecsTreeview = () => {
       setDataReceived(true);
     }
   }, [wecsData, dataReceived]);
+
+  useEffect(() => {
+    stateRef.current = { isCollapsed, isExpanded }; // Sync ref with state
+  }, [isCollapsed, isExpanded]);
 
   const getTimeAgo = useCallback((timestamp: string | undefined): string => {
     if (!timestamp) return "Unknown";
@@ -428,7 +392,6 @@ const WecsTreeview = () => {
                 resourceData={resourceData}
                 onClick={(e) => {
                   if ((e.target as HTMLElement).tagName === "svg" || (e.target as HTMLElement).closest("svg")) return;
-                  // Only open the panel for pod nodes, not cluster or namespace
                   if (type.toLowerCase() === "cluster" || type.toLowerCase() === "namespace") return;
                   const nodeIdParts = id.split(":");
                   let cluster = "";
@@ -444,7 +407,7 @@ const WecsTreeview = () => {
                     onClose: handleClosePanel,
                     isOpen: true,
                     resourceData,
-                    cluster, // Pass the cluster name for pods
+                    cluster,
                   });
                 }}
                 onMenuClick={(e) => handleMenuOpen(e, id)}
@@ -468,7 +431,7 @@ const WecsTreeview = () => {
       if (!cachedNode) nodeCache.current.set(id, node);
       newNodes.push(node);
 
-      if (parent) {
+      if (parent && stateRef.current.isExpanded) {
         const uniqueSuffix = resourceData?.metadata?.uid || edgeIdCounter.current++;
         const edgeId = `edge-${parent}-${id}-${uniqueSuffix}`;
         const cachedEdge = edgeCache.current.get(edgeId);
@@ -493,15 +456,20 @@ const WecsTreeview = () => {
   );
 
   const transformDataToTree = useCallback(
-    (data: { cluster: string; namespaces: { namespace: string; pods: PodItem[] }[] }[]) => {
-      nodeCache.current.clear();
-      edgeCache.current.clear();
-      edgeIdCounter.current = 0;
-  
+    (data: WecsCluster[]) => {
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        ReactDOM.unstable_batchedUpdates(() => {
+          setNodes([]);
+          setEdges([]);
+          setIsTransforming(false);
+        });
+        return;
+      }
+
       const newNodes: CustomNode[] = [];
       const newEdges: CustomEdge[] = [];
-  
-      if (data && data.length > 0) {
+
+      if (!stateRef.current.isExpanded) {
         data.forEach((cluster) => {
           const clusterId = `cluster:${cluster.cluster}`;
           createNode(
@@ -516,69 +484,473 @@ const WecsTreeview = () => {
             newNodes,
             newEdges
           );
-  
-          cluster.namespaces.forEach((namespace) => {
-            const namespaceId = `ns:${cluster.cluster}:${namespace.namespace}`;
-            createNode(
-              namespaceId,
-              namespace.namespace,
-              "namespace",
-              "Active",
-              "",
-              namespace.namespace,
-              { apiVersion: "v1", kind: "Namespace", metadata: { name: namespace.namespace, namespace: namespace.namespace, creationTimestamp: "" }, status: { phase: "Active" } },
-              clusterId,
-              newNodes,
-              newEdges
-            );
-  
-            const pods = namespace.pods || [];
-            if (pods.length > 0) {
-              pods.forEach((pod, index) => {
-                if (!pod || typeof pod !== "object" || !pod.raw) {
-                  return;
+        });
+      } else {
+        data.forEach((cluster) => {
+          const clusterId = `cluster:${cluster.cluster}`;
+          createNode(
+            clusterId,
+            cluster.cluster,
+            "cluster",
+            "Active",
+            "",
+            undefined,
+            { apiVersion: "v1", kind: "Cluster", metadata: { name: cluster.cluster, namespace: "", creationTimestamp: "" }, status: { phase: "Active" } },
+            null,
+            newNodes,
+            newEdges
+          );
+
+          if (cluster.namespaces && Array.isArray(cluster.namespaces)) {
+            cluster.namespaces.forEach((namespace) => {
+              const namespaceId = `ns:${cluster.cluster}:${namespace.namespace}`;
+              createNode(
+                namespaceId,
+                namespace.namespace,
+                "namespace",
+                "Active",
+                "",
+                namespace.namespace,
+                { apiVersion: "v1", kind: "Namespace", metadata: { name: namespace.namespace, namespace: namespace.namespace, creationTimestamp: "" }, status: { phase: "Active" } },
+                clusterId,
+                newNodes,
+                newEdges
+              );
+
+              if (namespace.resourceTypes && Array.isArray(namespace.resourceTypes)) {
+                if (stateRef.current.isCollapsed) {
+                  const resourceGroups: Record<string, ResourceItem[]> = {};
+
+                  namespace.resourceTypes.forEach((resourceType) => {
+                    resourceType.resources.forEach((resource) => {
+                      const kindLower = resourceType.kind.toLowerCase();
+                      if (!resourceGroups[kindLower]) {
+                        resourceGroups[kindLower] = [];
+                      }
+                      resourceGroups[kindLower].push(resource.raw);
+                    });
+                  });
+
+                  Object.entries(resourceGroups).forEach(([kindLower, items]) => {
+                    const count = items.length;
+                    const groupId = `ns:${cluster.cluster}:${namespace.namespace}:${kindLower}:group`;
+                    const status = items.some(item => item.status?.phase === "Running") ? "Active" : "Inactive";
+                    const label = `${count} ${kindLower}${count !== 1 ? "s" : ""}`;
+
+                    createNode(
+                      groupId,
+                      label,
+                      kindLower,
+                      status,
+                      items[0]?.metadata.creationTimestamp,
+                      namespace.namespace,
+                      items[0],
+                      namespaceId,
+                      newNodes,
+                      newEdges
+                    );
+                  });
+                } else {
+                  namespace.resourceTypes.forEach((resourceType) => {
+                    const kindLower = resourceType.kind.toLowerCase();
+                    resourceType.resources.forEach((resource, index) => {
+                      if (!resource || typeof resource !== "object" || !resource.raw) return;
+                      const rawResource = resource.raw;
+                      if (!rawResource.metadata || typeof rawResource.metadata !== "object" || !rawResource.metadata.name) return;
+
+                      const resourceId = `${kindLower}:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}:${index}`;
+                      const status = rawResource.status?.phase || "Active";
+                      createNode(
+                        resourceId,
+                        rawResource.metadata.name,
+                        kindLower,
+                        status,
+                        rawResource.metadata.creationTimestamp,
+                        namespace.namespace,
+                        rawResource,
+                        namespaceId,
+                        newNodes,
+                        newEdges
+                      );
+
+                      if (kindLower === "deployment" && rawResource.spec) {
+                        if (resource.replicaSets && Array.isArray(resource.replicaSets)) {
+                          resource.replicaSets.forEach((rs, rsIndex) => {
+                            const replicaSetId = `replicaset:${cluster.cluster}:${namespace.namespace}:${rs.name}:${rsIndex}`;
+                            createNode(
+                              replicaSetId,
+                              rs.name,
+                              "replicaset",
+                              rs.raw.status?.phase || status,
+                              rs.raw.metadata.creationTimestamp,
+                              namespace.namespace,
+                              rs.raw,
+                              resourceId,
+                              newNodes,
+                              newEdges
+                            );
+                            if (rs.pods && Array.isArray(rs.pods)) {
+                              rs.pods.forEach((pod, podIndex) => {
+                                const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
+                                createNode(
+                                  podId,
+                                  pod.name,
+                                  "pod",
+                                  pod.raw.status?.phase || status,
+                                  pod.raw.metadata.creationTimestamp,
+                                  namespace.namespace,
+                                  pod.raw,
+                                  replicaSetId,
+                                  newNodes,
+                                  newEdges
+                                );
+                              });
+                            }
+                          });
+                        }
+                      } else if (kindLower === "replicaset" && rawResource.spec) {
+                        if (resource.replicaSets && Array.isArray(resource.replicaSets) && resource.replicaSets.length > 0) {
+                          const pods = resource.replicaSets[0].pods;
+                          if (pods && Array.isArray(pods)) {
+                            pods.forEach((pod, podIndex) => {
+                              const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
+                              createNode(
+                                podId,
+                                pod.name,
+                                "pod",
+                                pod.raw.status?.phase || status,
+                                pod.raw.metadata.creationTimestamp,
+                                namespace.namespace,
+                                pod.raw,
+                                resourceId,
+                                newNodes,
+                                newEdges
+                              );
+                            });
+                          }
+                        }
+                      } else if (kindLower === "statefulset" && rawResource.spec) {
+                        const podCount = rawResource.spec.replicas || 2;
+                        for (let i = 0; i < podCount; i++) {
+                          const podId = `pod:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-${i}:${i}`;
+                          createNode(
+                            podId,
+                            `${rawResource.metadata.name}-${i}`,
+                            "pod",
+                            status,
+                            rawResource.metadata.creationTimestamp,
+                            namespace.namespace,
+                            {
+                              apiVersion: "v1",
+                              kind: "Pod",
+                              metadata: { name: `${rawResource.metadata.name}-${i}`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                              status: { phase: status }
+                            },
+                            resourceId,
+                            newNodes,
+                            newEdges
+                          );
+                        }
+                        createNode(
+                          `${resourceId}:pvc`,
+                          `pvc-${rawResource.metadata.name}`,
+                          "persistentvolumeclaim",
+                          status,
+                          rawResource.metadata.creationTimestamp,
+                          namespace.namespace,
+                          {
+                            apiVersion: "v1",
+                            kind: "PersistentVolumeClaim",
+                            metadata: { name: `pvc-${rawResource.metadata.name}`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                            status: { phase: status }
+                          },
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                      } else if (kindLower === "daemonset" && rawResource.spec) {
+                        const podCount = 2;
+                        for (let i = 0; i < podCount; i++) {
+                          const podId = `pod:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-node${i}:${i}`;
+                          createNode(
+                            podId,
+                            `${rawResource.metadata.name}-node${i}`,
+                            "pod",
+                            status,
+                            rawResource.metadata.creationTimestamp,
+                            namespace.namespace,
+                            {
+                              apiVersion: "v1",
+                              kind: "Pod",
+                              metadata: { name: `${rawResource.metadata.name}-node${i}`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                              status: { phase: status }
+                            },
+                            resourceId,
+                            newNodes,
+                            newEdges
+                          );
+                        }
+                      } else if (kindLower === "replicationcontroller" && rawResource.spec) {
+                        const podCount = rawResource.spec.replicas || 2;
+                        for (let i = 0; i < podCount; i++) {
+                          const podId = `pod:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-${i}:${i}`;
+                          createNode(
+                            podId,
+                            `${rawResource.metadata.name}-${i}`,
+                            "pod",
+                            status,
+                            rawResource.metadata.creationTimestamp,
+                            namespace.namespace,
+                            {
+                              apiVersion: "v1",
+                              kind: "Pod",
+                              metadata: { name: `${rawResource.metadata.name}-${i}`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                              status: { phase: status }
+                            },
+                            resourceId,
+                            newNodes,
+                            newEdges
+                          );
+                        }
+                      } else if (kindLower === "cronjob" && rawResource.spec) {
+                        const jobId = `job:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}:0`;
+                        createNode(
+                          jobId,
+                          `${rawResource.metadata.name}-job`,
+                          "job",
+                          status,
+                          rawResource.metadata.creationTimestamp,
+                          namespace.namespace,
+                          {
+                            apiVersion: "batch/v1",
+                            kind: "Job",
+                            metadata: { name: `${rawResource.metadata.name}-job`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                            status: { phase: status }
+                          },
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                        const podId = `pod:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-job-pod:0`;
+                        createNode(
+                          podId,
+                          `${rawResource.metadata.name}-job-pod`,
+                          "pod",
+                          status,
+                          rawResource.metadata.creationTimestamp,
+                          namespace.namespace,
+                          {
+                            apiVersion: "v1",
+                            kind: "Pod",
+                            metadata: { name: `${rawResource.metadata.name}-job-pod`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                            status: { phase: status }
+                          },
+                          jobId,
+                          newNodes,
+                          newEdges
+                        );
+                      } else if (kindLower === "job" && rawResource.spec) {
+                        const podId = `pod:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-pod:0`;
+                        createNode(
+                          podId,
+                          `${rawResource.metadata.name}-pod`,
+                          "pod",
+                          status,
+                          rawResource.metadata.creationTimestamp,
+                          namespace.namespace,
+                          {
+                            apiVersion: "v1",
+                            kind: "Pod",
+                            metadata: { name: `${rawResource.metadata.name}-pod`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                            status: { phase: status }
+                          },
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                      } else if (kindLower === "service" && rawResource.spec) {
+                        const endpointsId = `endpoints:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}:0`;
+                        createNode(
+                          endpointsId,
+                          `${rawResource.metadata.name}-endpoints`,
+                          "endpoints",
+                          status,
+                          rawResource.metadata.creationTimestamp,
+                          namespace.namespace,
+                          {
+                            apiVersion: "v1",
+                            kind: "Endpoints",
+                            metadata: { name: `${rawResource.metadata.name}-endpoints`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                            status: { phase: status }
+                          },
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                      } else if (kindLower === "ingress" && rawResource.spec) {
+                        const serviceId = `service:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-svc:0`;
+                        createNode(
+                          serviceId,
+                          `${rawResource.metadata.name}-svc`,
+                          "service",
+                          status,
+                          rawResource.metadata.creationTimestamp,
+                          namespace.namespace,
+                          {
+                            apiVersion: "v1",
+                            kind: "Service",
+                            metadata: { name: `${rawResource.metadata.name}-svc`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                            status: { phase: status }
+                          },
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                      } else if (kindLower === "configmap" || kindLower === "secret") {
+                        createNode(
+                          `${resourceId}:volume`,
+                          `volume-${rawResource.metadata.name}`,
+                          "volume",
+                          status,
+                          rawResource.metadata.creationTimestamp,
+                          namespace.namespace,
+                          {
+                            apiVersion: "v1",
+                            kind: "Volume",
+                            metadata: { name: `volume-${rawResource.metadata.name}`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                            status: { phase: status }
+                          },
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                      } else if (kindLower === "persistentvolumeclaim" && rawResource.spec) {
+                        createNode(
+                          `${resourceId}:pv`,
+                          `pv-${rawResource.metadata.name}`,
+                          "persistentvolume",
+                          status,
+                          rawResource.metadata.creationTimestamp,
+                          namespace.namespace,
+                          {
+                            apiVersion: "v1",
+                            kind: "PersistentVolume",
+                            metadata: { name: `pv-${rawResource.metadata.name}`, namespace: "", creationTimestamp: rawResource.metadata.creationTimestamp },
+                            status: { phase: status }
+                          },
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                      } else if (kindLower === "storageclass" && rawResource.spec) {
+                        createNode(
+                          `${resourceId}:pv`,
+                          `pv-${rawResource.metadata.name}`,
+                          "persistentvolume",
+                          status,
+                          rawResource.metadata.creationTimestamp,
+                          namespace.namespace,
+                          {
+                            apiVersion: "v1",
+                            kind: "PersistentVolume",
+                            metadata: { name: `pv-${rawResource.metadata.name}`, namespace: "", creationTimestamp: rawResource.metadata.creationTimestamp },
+                            status: { phase: status }
+                          },
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                      } else if (kindLower === "horizontalpodautoscaler" && rawResource.spec) {
+                        const targetKind = rawResource.spec.scaleTargetRef?.kind?.toLowerCase() || "deployment";
+                        const targetName = rawResource.spec.scaleTargetRef?.name || `${rawResource.metadata.name}-target`;
+                        const targetId = `${targetKind}:${cluster.cluster}:${namespace.namespace}:${targetName}:0`;
+                        createNode(
+                          targetId,
+                          targetName,
+                          targetKind,
+                          status,
+                          rawResource.metadata.creationTimestamp,
+                          namespace.namespace,
+                          {
+                            apiVersion: rawResource.spec.scaleTargetRef?.apiVersion || "apps/v1",
+                            kind: rawResource.spec.scaleTargetRef?.kind || "Deployment",
+                            metadata: { name: targetName, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                            status: { phase: status }
+                          },
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                      } else if (kindLower === "rolebinding" && rawResource.roleRef) {
+                        const roleId = `role:${cluster.cluster}:${namespace.namespace}:${rawResource.roleRef.name}:0`;
+                        createNode(
+                          roleId,
+                          rawResource.roleRef.name,
+                          "role",
+                          status,
+                          rawResource.metadata.creationTimestamp,
+                          namespace.namespace,
+                          {
+                            apiVersion: "rbac.authorization.k8s.io/v1",
+                            kind: "Role",
+                            metadata: { name: rawResource.roleRef.name, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
+                            status: { phase: status }
+                          },
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                      } else if (kindLower === "clusterrolebinding" && rawResource.roleRef) {
+                        const clusterRoleId = `clusterrole:${cluster.cluster}:${rawResource.roleRef.name}:0`;
+                        createNode(
+                          clusterRoleId,
+                          rawResource.roleRef.name,
+                          "clusterrole",
+                          status,
+                          rawResource.metadata.creationTimestamp,
+                          namespace.namespace,
+                          {
+                            apiVersion: "rbac.authorization.k8s.io/v1",
+                            kind: "ClusterRole",
+                            metadata: { name: rawResource.roleRef.name, namespace: "", creationTimestamp: rawResource.metadata.creationTimestamp },
+                            status: { phase: status }
+                          },
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                      } else if (kindLower === "poddisruptionbudget" && rawResource.spec) {
+                        // Intentionally empty
+                      } else if (kindLower === "networkpolicy" && rawResource.spec) {
+                        // Intentionally empty
+                      } else if (kindLower === "ingressclass" || kindLower === "mutatingwebhookconfiguration" || kindLower === "validatingwebhookconfiguration") {
+                        // Intentionally empty
+                      }
+                    });
+                  });
                 }
-  
-                const rawPod = pod.raw;
-                if (!rawPod.metadata || typeof rawPod.metadata !== "object" || !rawPod.metadata.name) {
-                  return;
-                }
-  
-                const podId = `pod:${cluster.cluster}:${namespace.namespace}:${rawPod.metadata.name}:${index}`;
-                const status = rawPod.status?.phase || "Unknown";
-                createNode(
-                  podId,
-                  rawPod.metadata.name,
-                  "pod",
-                  status,
-                  rawPod.metadata.creationTimestamp,
-                  namespace.namespace,
-                  rawPod,
-                  namespaceId,
-                  newNodes,
-                  newEdges
-                );
-              });
-            }
-          });
+              }
+            });
+          }
         });
       }
-  
+
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(newNodes, newEdges, "LR", prevNodes);
       ReactDOM.unstable_batchedUpdates(() => {
-        setNodes(layoutedNodes);
-        setEdges(layoutedEdges);
+        if (!isEqual(nodes, layoutedNodes)) setNodes(layoutedNodes);
+        if (!isEqual(edges, layoutedEdges)) setEdges(layoutedEdges);
         setIsTransforming(false);
       });
       prevNodes.current = layoutedNodes;
     },
-    [createNode]
+    [createNode, nodes, edges]
   );
 
   useEffect(() => {
-    if (wecsData !== null) {
+    if (wecsData !== null && !isEqual(wecsData, prevWecsData.current)) {
       setIsTransforming(true);
-      transformDataToTree(wecsData);
+      transformDataToTree(wecsData as WecsCluster[]);
+      prevWecsData.current = wecsData as WecsCluster[];
     }
   }, [wecsData, transformDataToTree]);
 
@@ -588,101 +960,11 @@ const WecsTreeview = () => {
         handleClosePanel();
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [selectedNode, handleClosePanel]);
 
-  const findDescendantNodes = useCallback((nodeId: string, edges: CustomEdge[]): string[] => {
-    const descendants: string[] = [];
-    const queue: string[] = [nodeId];
-    const visited = new Set<string>();
-
-    while (queue.length > 0) {
-      const currentNodeId = queue.shift()!;
-      if (visited.has(currentNodeId)) continue;
-      visited.add(currentNodeId);
-
-      const children = edges
-        .filter((edge) => edge.source === currentNodeId)
-        .map((edge) => edge.target);
-
-      children.forEach((childId) => {
-        if (!visited.has(childId)) {
-          descendants.push(childId);
-          queue.push(childId);
-        }
-      });
-    }
-
-    return descendants;
-  }, []);
-
-  const handleDeleteNode = useCallback(
-    async (namespace: string, nodeType: string, nodeName: string, nodeId: string) => {
-      try {
-        if (nodeType.toLowerCase() === "pod") {
-          // For pods, show "API not implemented" in snackbar
-          setSnackbarMessage(`API not implemented for deleting pod "${nodeName}"`);
-          setSnackbarSeverity("error");
-          setSnackbarOpen(true);
-          return;
-        }
-
-        let endpoint: string;
-
-        if (nodeType.toLowerCase() === "namespace") {
-          endpoint = `${process.env.VITE_BASE_URL}/api/namespaces/delete/${namespace}`;
-        } else {
-          const kind = nodeType.charAt(0).toUpperCase() + nodeType.slice(1);
-          const pluralForm = kindToPluralMap[kind] || `${nodeType.toLowerCase()}s`;
-          endpoint = `${process.env.VITE_BASE_URL}/api/${pluralForm}/${namespace}/${nodeName}`;
-        }
-
-        await axios.delete(endpoint);
-
-        const descendantNodeIds = findDescendantNodes(nodeId, edges);
-        const nodesToDelete = [nodeId, ...descendantNodeIds];
-
-        setNodes((prevNodes) => {
-          const remainingNodes = prevNodes.filter((n) => !nodesToDelete.includes(n.id));
-          return remainingNodes;
-        });
-
-        setEdges((prevEdges) => {
-          const remainingEdges = prevEdges.filter(
-            (e) => !nodesToDelete.includes(e.source) && !nodesToDelete.includes(e.target)
-          );
-          return remainingEdges;
-        });
-
-        nodesToDelete.forEach((id) => {
-          nodeCache.current.delete(id);
-        });
-        edgeCache.current.forEach((edge, edgeId) => {
-          if (nodesToDelete.includes(edge.source) || nodesToDelete.includes(edge.target)) {
-            edgeCache.current.delete(edgeId);
-          }
-        });
-
-        setSnackbarMessage(`"${nodeName}" and its children deleted successfully`);
-        setSnackbarSeverity("success");
-        setSnackbarOpen(true);
-      } catch (error) {
-        setSnackbarMessage(`Failed to delete "${nodeName}"`);
-        setSnackbarSeverity("error");
-        console.log(error);
-        setSnackbarOpen(true);
-      }
-    },
-    [edges, findDescendantNodes]
-  );
-
-  const handleMenuClose = useCallback(() => {
-    setContextMenu(null);
-  }, []);
+  const handleMenuClose = useCallback(() => setContextMenu(null), []);
 
   const handleMenuAction = useCallback(
     async (action: string) => {
@@ -711,7 +993,6 @@ const WecsTreeview = () => {
             return;
           }
 
-          // Do not open the panel or perform actions for cluster nodes
           if (nodeType === "cluster") {
             handleMenuClose();
             return;
@@ -731,15 +1012,6 @@ const WecsTreeview = () => {
                 initialTab: 0,
                 cluster,
               });
-              break;
-            case "Delete":
-              setDeleteNodeDetails({
-                namespace,
-                nodeType,
-                nodeName,
-                nodeId: contextMenu.nodeId,
-              });
-              setDeleteDialogOpen(true);
               break;
             case "Edit":
               setSelectedNode({
@@ -775,32 +1047,44 @@ const WecsTreeview = () => {
     [contextMenu, nodes, handleClosePanel]
   );
 
-  const handleDeleteConfirm = useCallback(async () => {
-    if (deleteNodeDetails) {
-      const { namespace, nodeType, nodeName, nodeId } = deleteNodeDetails;
-      await handleDeleteNode(namespace, nodeType, nodeName, nodeId);
-    }
-    setDeleteDialogOpen(false);
-    setDeleteNodeDetails(null);
-  }, [deleteNodeDetails, handleDeleteNode]);
+  const handleSnackbarClose = useCallback(() => setSnackbarOpen(false), []);
 
-  const handleDeleteCancel = useCallback(() => {
-    setDeleteDialogOpen(false);
-    setDeleteNodeDetails(null);
-  }, []);
-
-  const handleSnackbarClose = useCallback(() => {
-    setSnackbarOpen(false);
-  }, []);
-
-  const handleCancelCreateOptions = () => {
-    setShowCreateOptions(false);
-  };
+  const handleCancelCreateOptions = () => setShowCreateOptions(false);
 
   const handleCreateWorkloadClick = () => {
     setShowCreateOptions(true);
     setActiveOption("option1");
   };
+
+  const handleToggleCollapse = useCallback(() => {
+    setIsCollapsed((prev) => {
+      const newCollapsed = !prev;
+      stateRef.current.isCollapsed = newCollapsed;
+      setIsTransforming(true);
+      transformDataToTree(wecsData as WecsCluster[]);
+      return newCollapsed;
+    });
+  }, [wecsData, transformDataToTree]);
+
+  const handleExpandAll = useCallback(() => {
+    setIsExpanded(() => {
+      const newExpanded = true;
+      stateRef.current.isExpanded = newExpanded;
+      setIsTransforming(true);
+      transformDataToTree(wecsData as WecsCluster[]);
+      return newExpanded;
+    });
+  }, [wecsData, transformDataToTree]);
+
+  const handleCollapseAll = useCallback(() => {
+    setIsExpanded(() => {
+      const newExpanded = false;
+      stateRef.current.isExpanded = newExpanded;
+      setIsTransforming(true);
+      transformDataToTree(wecsData as WecsCluster[]);
+      return newExpanded;
+    });
+  }, [wecsData, transformDataToTree]);
 
   const isLoading = !wecsIsConnected || !hasValidWecsData || isTransforming || !minimumLoadingTimeElapsed;
 
@@ -826,7 +1110,7 @@ const WecsTreeview = () => {
             padding: 2,
             borderRadius: 1,
             boxShadow: "0 6px 6px rgba(0,0,0,0.1)",
-            background: theme === "dark" ? "rgb(15, 23, 42)" : "#fff", 
+            background: theme === "dark" ? "rgb(15, 23, 42)" : "#fff",
           }}
         >
           <Typography variant="h4" sx={{ color: "#4498FF", fontWeight: 700, fontSize: "30px", letterSpacing: "0.5px" }}>
@@ -858,7 +1142,7 @@ const WecsTreeview = () => {
             <Box sx={{ width: "100%", height: "100%", position: "relative" }}>
               <ReactFlowProvider>
                 <FlowCanvas nodes={nodes} edges={edges} renderStartTime={renderStartTime} theme={theme} />
-                <ZoomControls theme={theme} />
+                <ZoomControls theme={theme} onToggleCollapse={handleToggleCollapse} isCollapsed={isCollapsed} onExpandAll={handleExpandAll} onCollapseAll={handleCollapseAll} />
               </ReactFlowProvider>
             </Box>
           ) : (
@@ -899,7 +1183,6 @@ const WecsTreeview = () => {
               anchorPosition={contextMenu ? { top: contextMenu.y, left: contextMenu.x } : undefined}
             >
               <MenuItem onClick={() => handleMenuAction("Details")}>Details</MenuItem>
-              <MenuItem onClick={() => handleMenuAction("Delete")}>Delete</MenuItem>
               <MenuItem onClick={() => handleMenuAction("Edit")}>Edit</MenuItem>
               <MenuItem onClick={() => handleMenuAction("Logs")}>Logs</MenuItem>
             </Menu>
@@ -911,62 +1194,6 @@ const WecsTreeview = () => {
             {snackbarMessage}
           </Alert>
         </Snackbar>
-
-        <Dialog
-          open={deleteDialogOpen}
-          onClose={handleDeleteCancel}
-          aria-labelledby="delete-confirmation-dialog-title"
-          sx={{
-            "& .MuiDialog-paper": {
-              padding: "16px",
-              width: "500px",
-              backgroundColor: theme === "dark" ? "rgb(15, 23, 42)" : "#fff",
-              borderRadius: "4px",
-              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
-              maxWidth: "480px",
-              height: "250px",
-            },
-          }}
-        >
-          <DialogTitle id="delete-confirmation-dialog-title" sx={{ display: "flex", alignItems: "center", gap: 1, fontSize: "18px", fontWeight: 600, color: theme === "dark" ? "#fff" : "333" }}>
-            <WarningAmberIcon sx={{ color: "#FFA500", fontSize: "34px" }} />
-            Confirm Resource Deletion
-          </DialogTitle>
-          <DialogContent>
-            <Typography sx={{ fontSize: "16px", color: theme === "dark" ? "#fff" : "333", mt: 2 }}>
-              Are you sure you want to delete "{deleteNodeDetails?.nodeName}"? This action cannot be undone.
-            </Typography>
-          </DialogContent>
-          <DialogActions sx={{ justifyContent: "space-between", padding: "0 16px 16px 16px" }}>
-            <Button
-              onClick={handleDeleteCancel}
-              sx={{
-                textTransform: "none",
-                color: "#2F86FF",
-                fontWeight: 600,
-                "&:hover": { backgroundColor: "rgba(47, 134, 255, 0.1)" },
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleDeleteConfirm}
-              sx={{
-                textTransform: "none",
-                fontWeight: 500,
-                backgroundColor: "#d32f2f",
-                color: "#fff",
-                padding: "6px 16px",
-                borderRadius: "4px",
-                "&:hover": {
-                  backgroundColor: "#b71c1c",
-                },
-              }}
-            >
-              Yes, Delete
-            </Button>
-          </DialogActions>
-        </Dialog>
       </Box>
 
       <div ref={panelRef}>
@@ -979,12 +1206,6 @@ const WecsTreeview = () => {
           isOpen={selectedNode?.isOpen || false}
           initialTab={selectedNode?.initialTab}
           cluster={selectedNode?.cluster || ""}
-          onDelete={deleteNodeDetails ? () => handleDeleteNode(
-            deleteNodeDetails.namespace,
-            deleteNodeDetails.nodeType,
-            deleteNodeDetails.nodeName,
-            deleteNodeDetails.nodeId
-          ) : undefined}
         />
       </div>
     </Box>
