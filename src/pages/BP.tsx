@@ -635,6 +635,21 @@ const BP = () => {
           },
         }}
       >
+        <BPHeader
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          createDialogOpen={createDialogOpen}
+          setCreateDialogOpen={setCreateDialogOpen}
+          onCreatePolicy={handleCreatePolicySubmit}
+          activeFilters={activeFilters}
+          setActiveFilters={setActiveFilters}
+          selectedPolicies={selectedPolicies}
+          onBulkDelete={handleBulkDelete}
+          policyCount={filteredPolicies.length}
+          clusters={clusters}
+          workloads={workloads}
+        />
+
         <Box sx={{ borderBottom: 1, borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : 'divider', mb: 2 }}>
           <Tabs 
             value={viewMode}
@@ -665,23 +680,8 @@ const BP = () => {
 
         {viewMode === 'table' ? (
           <>
-            <BPHeader
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              createDialogOpen={createDialogOpen}
-              setCreateDialogOpen={setCreateDialogOpen}
-              onCreatePolicy={handleCreatePolicySubmit}
-              activeFilters={activeFilters}
-              setActiveFilters={setActiveFilters}
-              selectedPolicies={selectedPolicies}
-              onBulkDelete={handleBulkDelete}
-              policyCount={filteredPolicies.length}
-              clusters={clusters}
-              workloads={workloads}
-            />
-            
             {clusters.length === 0 && workloads.length === 0 ? (
-              <EmptyState onCreateClick={() => navigate('/resources')} type="both" />
+              <EmptyState onCreateClick={() => navigate('/its')} type="both" />
             ) : clusters.length === 0 ? (
               <EmptyState onCreateClick={() => navigate('/its')} type="clusters" />
             ) : workloads.length === 0 ? (
@@ -729,11 +729,11 @@ const BP = () => {
                 }}
               >
                 {clusters.length === 0 && workloads.length === 0 ? (
-                  <EmptyState onCreateClick={() => navigate('/resources')} type="both" />
+                  <EmptyState onCreateClick={() => navigate('/its')} type="both" />
                 ) : clusters.length === 0 ? (
-                  <EmptyState onCreateClick={() => navigate('/clusters')} type="clusters" />
+                  <EmptyState onCreateClick={() => navigate('/its')} type="clusters" />
                 ) : (
-                  <EmptyState onCreateClick={() => navigate('/workloads')} type="workloads" />
+                  <EmptyState onCreateClick={() => navigate('/workloads/manage')} type="workloads" />
                 )}
               </Box>
             ) : (

@@ -250,3 +250,13 @@ func GetAllJSONHash(hashKey string) (map[string]json.RawMessage, error) {
 
 	return result, nil
 }
+
+// SetWorkloadLabel stores the workload label in Redis
+func SetWorkloadLabel(label string) error {
+	return rdb.Set(ctx, "workload_label", label, 0).Err()
+}
+
+// GetWorkloadLabel gets the workload label from Redis
+func GetWorkloadLabel() (string, error) {
+	return rdb.Get(ctx, "workload_label").Result()
+}

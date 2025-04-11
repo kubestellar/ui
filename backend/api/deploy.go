@@ -19,8 +19,9 @@ import (
 )
 
 type DeployRequest struct {
-	RepoURL    string `json:"repo_url"`
-	FolderPath string `json:"folder_path"`
+	RepoURL       string `json:"repo_url"`
+	FolderPath    string `json:"folder_path"`
+	WorkloadLabel string `json:"workload_label"`
 }
 
 // GitHubWebhookPayload defines the expected structure of the webhook request
@@ -64,11 +65,21 @@ func DeployHandler(c *gin.Context) {
 		branch = "main" // Default branch
 	}
 
+	// If workload label is not provided, use the GitHub project name from the repo URL
+	if request.WorkloadLabel == "" {
+		// Extract project name from repo URL
+		// Example: from https://github.com/org/project.git to project
+		repoBase := filepath.Base(request.RepoURL)
+		projectName := strings.TrimSuffix(repoBase, filepath.Ext(repoBase))
+		request.WorkloadLabel = projectName
+	}
+
 	// Save deployment configuration in Redis for webhook usage
 	redis.SetFilePath(request.FolderPath)
 	redis.SetRepoURL(request.RepoURL)
 	redis.SetBranch(branch)
 	redis.SetGitToken(gitToken)
+	redis.SetWorkloadLabel(request.WorkloadLabel) // Store workload label in Redis
 
 	tempDir := fmt.Sprintf("/tmp/%d", time.Now().Unix())
 	cloneURL := request.RepoURL
@@ -95,8 +106,8 @@ func DeployHandler(c *gin.Context) {
 		return
 	}
 
-	// Deploy the manifests
-	deploymentTree, err := k8s.DeployManifests(deployPath, dryRun, dryRunStrategy)
+	// Deploy the manifests with workload label
+	deploymentTree, err := k8s.DeployManifests(deployPath, dryRun, dryRunStrategy, request.WorkloadLabel)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Deployment failed", "details": err.Error()})
 		return
@@ -120,6 +131,7 @@ func DeployHandler(c *gin.Context) {
 			"dry_run":          fmt.Sprintf("%v", dryRun),
 			"dry_run_strategy": dryRunStrategy,
 			"created_by_me":    "true",
+			"workload_label":   request.WorkloadLabel, // Store workload label in deployment data
 		}
 
 		// Convert deployment tree to JSON string for storage
@@ -135,13 +147,14 @@ func DeployHandler(c *gin.Context) {
 
 		// Add new deployment to existing ones
 		newDeployment := map[string]interface{}{
-			"id":            deploymentID,
-			"timestamp":     deploymentData["timestamp"],
-			"repo_url":      deploymentData["repo_url"],
-			"folder_path":   deploymentData["folder_path"],
-			"branch":        deploymentData["branch"],
-			"dry_run":       deploymentData["dry_run"],
-			"created_by_me": deploymentData["created_by_me"],
+			"id":             deploymentID,
+			"timestamp":      deploymentData["timestamp"],
+			"repo_url":       deploymentData["repo_url"],
+			"folder_path":    deploymentData["folder_path"],
+			"branch":         deploymentData["branch"],
+			"dry_run":        deploymentData["dry_run"],
+			"created_by_me":  deploymentData["created_by_me"],
+			"workload_label": deploymentData["workload_label"], // Include workload label
 		}
 
 		existingDeployments = append(existingDeployments, newDeployment)
@@ -159,23 +172,18 @@ func DeployHandler(c *gin.Context) {
 		}
 	}
 
-	if dryRun {
-		c.JSON(http.StatusOK, gin.H{
-			"message":         "Dry run successful. No changes applied.",
-			"dryRunStrategy":  dryRunStrategy,
-			"deployment_tree": deploymentTree,
-			"stored":          createdByMe,
-			"id":              deploymentID, // Include the deployment ID in response
-		})
-		return
-	}
-
-	// Include information about storage in the response
 	response := gin.H{
-		"message":         "Deployment successful",
+		"message": func() string {
+			if dryRun {
+				return "Dry run successful. No changes applied."
+			}
+			return "Deployment successful"
+		}(),
+		"dryRunStrategy":  dryRunStrategy,
 		"deployment_tree": deploymentTree,
 		"stored":          createdByMe,
-		"id":              deploymentID, // Include the deployment ID in response
+		"id":              deploymentID,
+		"workload_label":  request.WorkloadLabel,
 	}
 
 	if createdByMe {
@@ -186,7 +194,6 @@ func DeployHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response)
 }
-
 func GitHubWebhookHandler(c *gin.Context) {
 	// Create a wrapper for the nested JSON structure
 	var webhookWrapper struct {
@@ -223,6 +230,16 @@ func GitHubWebhookHandler(c *gin.Context) {
 	if branchFromRef != storedBranch {
 		c.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("Ignoring push to branch '%s'. Configured branch is '%s'", branchFromRef, storedBranch)})
 		return
+	}
+
+	// Get workload label from Redis
+	workloadLabel, err := redis.GetWorkloadLabel()
+	if err != nil || workloadLabel == "" {
+		// If no workload label is stored, extract project name from repository URL
+		repoUrl := request.Repository.CloneURL
+		repoBase := filepath.Base(repoUrl)
+		projectName := strings.TrimSuffix(repoBase, filepath.Ext(repoBase))
+		workloadLabel = projectName
 	}
 
 	// Check if any changes occurred in the specified folder path
@@ -285,7 +302,7 @@ func GitHubWebhookHandler(c *gin.Context) {
 	}
 
 	// For webhook deployments, always deploy and store the data
-	deploymentTree, err := k8s.DeployManifests(deployPath, dryRun, dryRunStrategy)
+	deploymentTree, err := k8s.DeployManifests(deployPath, dryRun, dryRunStrategy, workloadLabel)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Deployment failed", "details": err.Error()})
 		return
@@ -307,14 +324,15 @@ func GitHubWebhookHandler(c *gin.Context) {
 
 	// Add new deployment to existing ones
 	newDeployment := map[string]interface{}{
-		"id":            deploymentID,
-		"timestamp":     time.Now().Format(time.RFC3339),
-		"repo_url":      repoUrl,
-		"folder_path":   folderPath,
-		"branch":        storedBranch,
-		"changed_files": changedFiles,
-		"webhook":       true,
-		"commit_refs":   request.Commits[0].ID,
+		"id":             deploymentID,
+		"timestamp":      time.Now().Format(time.RFC3339),
+		"repo_url":       repoUrl,
+		"folder_path":    folderPath,
+		"branch":         storedBranch,
+		"changed_files":  changedFiles,
+		"webhook":        true,
+		"commit_refs":    request.Commits[0].ID,
+		"workload_label": workloadLabel,
 	}
 
 	existingDeployments = append(existingDeployments, newDeployment)
@@ -337,6 +355,7 @@ func GitHubWebhookHandler(c *gin.Context) {
 		"deployment":      deploymentTree,
 		"changed_files":   changedFiles,
 		"storage_details": "Deployment data stored in ConfigMap",
+		"workload_label":  workloadLabel,
 	})
 }
 
