@@ -792,7 +792,8 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                   border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.12)"}`,
                   borderRadius: '8px',
                   display: 'flex',
-                  flexDirection: 'column'
+                  flexDirection: 'column',
+                  bgcolor: theme === "dark" ? "#1e1e1e" : "#fff"
                 }}>
                   <Editor
                     height="100%"
