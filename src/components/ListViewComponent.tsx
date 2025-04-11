@@ -50,6 +50,7 @@ const ListViewComponent = () => {
 
         // Process cluster-scoped resources with type assertion
         (Object.entries(data.clusterScoped) as [string, ResourceItem[]][]).forEach(([kind, items]) => {
+          console.log(kind);
           items.forEach((item) => {
             resourceList.push({
               createdAt: item.createdAt,
@@ -65,6 +66,7 @@ const ListViewComponent = () => {
 
         // Process namespaced resources with type assertion
         Object.entries(data.namespaced).forEach(([namespace, resourcesByKind]) => {
+          console.log(namespace);
           (Object.entries(resourcesByKind) as [string, ResourceItem[]][]).forEach(([kind, items]) => {
             if (kind !== "__namespaceMetaData") {
               items.forEach((item) => {
