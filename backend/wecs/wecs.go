@@ -471,6 +471,7 @@ func StreamK8sDataChronologically(c *gin.Context) {
 		}
 	}
 }
+
 // getReplicaSetsForDeployment returns replica sets owned by a deployment with their pods
 func getReplicaSetsForDeployment(clientset *kubernetes.Clientset, deployment appsv1.Deployment, namespace string) ([]ResourceData, error) {
 	// Try to get from cache first
