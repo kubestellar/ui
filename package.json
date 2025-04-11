@@ -3,6 +3,12 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "main": "electron.cjs",
+  "author": {
+    "name": "Rishi Mondal",
+    "email": "mavrickrishi@gmail.com"
+  },
+  "description": "KubeStellar UI – a sleek Electron-based interface for KubeStellar applications.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -11,7 +17,15 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "prepare": "husky"
+    "prepare": "husky",
+    "setup:icon": "node scripts/create-icon-robust.cjs",
+    "electron:dev": "npm run setup:icon && ./scripts/check-redis.sh && concurrently \"cross-env ELECTRON_SERVE=true vite\" \"cross-env ELECTRON_SERVE=true electron .\"",
+    "setup": "npm run setup:icon && npm run setup:docker && npm run setup:backend",
+    "build:backend": "./scripts/build-backend-all.sh",
+    "electron:build": "npm run build:backend && vite build && electron-builder build --publish never",
+    "electron:build:win": "npm run build:backend && vite build && electron-builder build --win --publish never",
+    "electron:build:mac": "npm run build:backend && vite build && electron-builder build --mac --publish never",
+    "electron:build:linux": "npm run build:backend && vite build && electron-builder build --linux deb AppImage --publish never"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -75,8 +89,11 @@
     "@types/xterm": "^3.0.0",
     "@vitejs/plugin-react": "^4.3.2",
     "autoprefixer": "^10.4.20",
+    "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",
     "daisyui": "^4.12.14",
+    "electron": "^35.1.5",
+    "electron-builder": "^26.0.12",
     "eslint": "^9.11.1",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.12",
@@ -91,6 +108,54 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.7.0",
-    "vite": "^6.2.6"
+    "vite": "^6.2.6",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.kubestellar.ui",
+    "productName": "KubeStellar UI",
+    "files": [
+      "dist/**/*",
+      "electron.cjs",
+      "preload.cjs",
+      "package.json"
+    ],
+    "directories": {
+      "buildResources": "assets",
+      "output": "release"
+    },
+    "asarUnpack": [
+      "dist/assets/**/*"
+    ],
+    "icon": "assets/icons/icon.png",
+    "extraResources": [
+      {
+        "from": "./backend/bin/",
+        "to": "resources/backend",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "assets/",
+        "to": "assets/",
+        "filter": ["**/*"]
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": ["dmg", "zip"],
+      "icon": "assets/icons/icon.png"
+    },
+    "win": {
+      "target": ["nsis", "portable"],
+      "icon": "assets/icons/icon.png"
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],  
+      "category": "Development",
+      "maintainer": "KubeStellar Team mavrickrishi@gmail.com",
+      "icon": "assets/icons/icon.png",
+      "synopsis": "UI for KubeStellar apps",
+      "description": "KubeStellar UI - Electron interface for KubeStellar applications."
+    }
   }
 }
