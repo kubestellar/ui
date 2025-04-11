@@ -6,6 +6,7 @@ import useTheme from "../../stores/themeStore";
 import { useState, useEffect, useCallback } from "react";
 import axios, { AxiosError } from "axios";
 import { toast } from "react-hot-toast";
+import { MoreVerticalIcon } from "lucide-react";
 
 interface FormData {
   repositoryUrl: string;
@@ -761,12 +762,10 @@ export const GitHubTab = ({
                 sx={{ cursor: "pointer" }}
                 onClick={(e) => handleMenuOpen(e, deployment)}
               >
-                <svg width="12" height="12" viewBox="0 0 12 12">
-                  <circle cx="6" cy="2" r="2" fill={theme === "dark" ? "#d4d4d4" : "#666"} />
-                  <circle cx="6" cy="6" r="2" fill={theme === "dark" ? "#d4d4d4" : "#666"} />
-                  <circle cx="6" cy="10" r="2" fill={theme === "dark" ? "#d4d4d4" : "#666"} />
-                </svg>
-              </Box>
+                    <MoreVerticalIcon
+                    style={{ color: theme === "dark" ? "#d4d4d4" : "#666" }}
+                    />
+              </Box> 
             </Box>
           ))
         ) : (
