@@ -35,6 +35,7 @@ import {  ManagedCluster, Workload } from "../../types/bindingPolicy";
 import { PolicyConfiguration } from "./ConfigurationSidebar";
 import { usePolicyDragDropStore } from "../../stores/policyDragDropStore";
 import { useBPQueries } from "../../hooks/queries/useBPQueries";
+import { toast } from "react-hot-toast";
 
 export interface PolicyData {
   name: string;
@@ -59,15 +60,7 @@ interface YamlPolicy {
   spec?: YamlPolicySpec;
 }
 
-interface ApiError {
-  response?: {
-    data?: {
-      message?: string;
-    };
-    status?: number;
-  };
-  message: string;
-}
+
 
 interface CreateBindingPolicyDialogProps {
   open: boolean;
@@ -91,7 +84,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   //const tabContentStyles = getTabContentStyles(theme);
   const enhancedTabContentStyles = getEnhancedTabContentStyles(theme);
   
-  const [activeTab, setActiveTab] = useState<string>("yaml");
+  const [activeTab, setActiveTab] = useState<string>("dragdrop");
   const [editorContent, setEditorContent] = useState<string>(DEFAULT_BINDING_POLICY_TEMPLATE);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileContent, setFileContent] = useState<string>("");
@@ -104,6 +97,8 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   const [previewYaml, setPreviewYaml] = useState<string>("");
   const [, setSuccessMessage] = useState<string>("");
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
+  const [, setDeploymentError] = useState<string>("");
+  const [, setShowDeployDialog] = useState(false);
 
   // Get the connection lines and canvas entities from their respective stores
 
@@ -178,6 +173,48 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
     }
   };
 
+  // Add this helper function to generate resources based on workload kind
+  const generateResourcesFromWorkload = (workloadObj: Workload) => {
+    console.log("Generating resources from workload:", workloadObj);
+    
+    const resources = [
+      // Always include namespaces with createOnly=true
+      { type: 'namespaces', createOnly: true }
+    ];
+    
+    if (workloadObj?.kind) {
+      const kindLower = workloadObj.kind.toLowerCase();
+      let resourceType = kindLower;
+      
+      // Simple pluralization - add 's' if not already ending with 's'
+      if (!resourceType.endsWith('s')) {
+        resourceType += 's';
+      }
+      
+      console.log(`Adding resource type from workload kind: ${resourceType}`);
+      
+      // Add the workload's resource type
+      resources.push({ type: resourceType, createOnly: false });
+      
+      // For deployments, add dependent resources
+      if (kindLower === 'deployment') {
+        resources.push({ type: 'replicasets', createOnly: false });
+        resources.push({ type: 'services', createOnly: false });
+      } else if (kindLower === 'statefulset') {
+        resources.push({ type: 'services', createOnly: false });
+      }
+    } else {
+      console.warn("Workload kind missing, adding deployment as default resource type");
+      // If workload kind is missing, default to deployment
+      resources.push({ type: 'deployments', createOnly: false });
+      resources.push({ type: 'replicasets', createOnly: false });
+      resources.push({ type: 'services', createOnly: false });
+    }
+    
+    console.log("Final resources:", resources);
+    return resources;
+  };
+
   // Function to prepare policies for deployment
   const prepareForDeployment = async () => {
     // Check if we have clusters and workloads
@@ -189,47 +226,113 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
     setIsLoading(true);
     setError("");
     
-    try {
-      // Create a single binding policy with all workloads and all clusters
-      // Generate a unique policy name using timestamp
+    if (policyCanvasEntities.clusters.length > 0 && policyCanvasEntities.workloads.length > 0) {
       const timestamp = Date.now();
       const workloadNames = policyCanvasEntities.workloads.join("-");
       const policyName = `${workloadNames}-binding-${timestamp}`;
+
+      // Find the workload object to get its namespace
+      const workloadId = policyCanvasEntities.workloads[0];
+      const workloadObj = workloads.find(w => w.name === workloadId);
       
-      console.log(`Creating a single policy with workloads: ${policyCanvasEntities.workloads} and clusters: ${policyCanvasEntities.clusters}`);
+      if (!workloadObj) {
+        console.error('Workload not found:', workloadId);
+        setError(`Workload not found: ${workloadId}`);
+        setIsLoading(false); // Reset loading state on error
+        return;
+      }
       
+      // Find the cluster object to get its labels
+      const clusterId = policyCanvasEntities.clusters[0];
+      const clusterObj = clusters.find(c => c.name === clusterId);
+      
+      if (!clusterObj) {
+        console.error('Cluster not found:', clusterId);
+        setError(`Cluster not found: ${clusterId}`);
+        setIsLoading(false); // Reset loading state on error
+        return;
+      }
+      
+      const workloadNamespace = workloadObj.namespace || 'default';
+      
+      // Extract workload labels from the workload object
+      const workloadLabels: Record<string, string> = {};
+      
+      // Directly use the workload's existing labels as the primary source
+      if (workloadObj.labels && Object.keys(workloadObj.labels).length > 0) {
+        // Copy all existing labels
+        Object.assign(workloadLabels, workloadObj.labels);
+      } 
+      // Only if no labels exist, fallback to using the name
+      else {
+        workloadLabels['kubernetes.io/kubestellar.workload.name'] = workloadObj.name;
+      }
+      
+      // Extract cluster labels from the cluster object
+      const clusterLabels: Record<string, string> = {};
+      
+      // Directly use the cluster's existing labels as the primary source
+      if (clusterObj.labels && Object.keys(clusterObj.labels).length > 0) {
+        // Copy all existing labels
+        Object.assign(clusterLabels, clusterObj.labels);
+      } 
+      // Only if no labels exist, fallback to using the name
+      else {
+        clusterLabels['name'] = clusterId;
+      }
+
       try {
-        // Call quick-connect API with all workloads and all clusters
-        const result = await quickConnectMutation.mutateAsync({
-          workloadIds: policyCanvasEntities.workloads,
-          clusterIds: policyCanvasEntities.clusters,
+        // Call quick-connect API with the correct labels
+        const requestData = {
+          workloadLabels,
+          clusterLabels,
+          resources: generateResourcesFromWorkload(workloadObj),
+          namespacesToSync: [workloadNamespace],
           policyName,
-          namespace: 'default'
-        });
+          namespace: workloadNamespace
+        };
+        
+        // Add detailed console logging
+        console.log('📤 SENDING REQUEST TO QUICK-CONNECT API (prepareForDeployment):');
+        console.log(JSON.stringify(requestData, null, 2));
+        console.log('🔍 workloadObj:', JSON.stringify({
+          name: workloadObj.name,
+          namespace: workloadObj.namespace,
+          kind: workloadObj.kind,
+          labels: workloadObj.labels
+        }, null, 2));
+        console.log('🔍 clusterObj:', JSON.stringify({
+          name: clusterObj.name,
+          labels: clusterObj.labels
+        }, null, 2));
+        
+        const result = await quickConnectMutation.mutateAsync(requestData);
         console.log(result);
+        
         // Show success message
         setSuccessMessage(`Successfully created binding policy "${policyName}"`);
         
-        // Close dialog
+        // Close dialog and clear canvas
+        setShowDeployDialog(false);
+        handleClearPolicyCanvas();
+        
+        // Reset loading state after successful completion
+        setIsLoading(false);
+        
+        // Close the dialog
         onClose();
-      } catch (error: unknown) {
-        const apiError = error as ApiError;
-        // Extract error message from response if available
-        const errorMessage = apiError.response?.data?.message || apiError.message || 'Unknown error occurred';
-        console.error("Error creating binding policy:", error);
-        
-        // If it's a conflict error, provide more specific message
-        if (apiError.response?.status === 409) {
-          throw new Error(`A binding policy with this name already exists. Please try again.`);
-        }
-        
-        throw new Error(`Failed to create binding policy: ${errorMessage}`);
+      } catch (error) {
+        console.error("Failed to create binding policy:", error);
+        setDeploymentError(
+          error instanceof Error 
+            ? error.message 
+            : "Failed to create binding policy. Please try again."
+        );
+        // Reset loading state on error
+        setIsLoading(false);
       }
-    } catch (error: unknown) {
-      const apiError = error as ApiError;
-      console.error("Error creating binding policy:", error);
-      setError(apiError.message || "Failed to create binding policy");
-    } finally {
+    } else {
+      // Reset loading state if no action was taken
       setIsLoading(false);
     }
   };
@@ -384,41 +487,125 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
 
   // Handler for when a binding policy is created from drag and drop
   const handleCreateBindingPolicy = async (clusterIds: string[], workloadIds: string[], config?: PolicyConfiguration) => {
-    if (!config) return;
+    console.log('Creating binding policy with:', { clusterIds, workloadIds, config });
+    
+    if (clusterIds.length === 0 || workloadIds.length === 0) {
+      toast.error('Both cluster and workload are required');
+      return;
+    }
+    
+    const clusterId = clusterIds[0];
+    const workloadId = workloadIds[0];
+    
+    // Find the workload object to get its namespace
+    const workloadObj = workloads.find(w => w.name === workloadId);
+    
+    if (!workloadObj) {
+      console.error('Workload not found:', workloadId);
+      toast.error(`Workload not found: ${workloadId}`);
+      return;
+    }
+    
+    const workloadNamespace = workloadObj.namespace || 'default';
     
     try {
-      const clusterId = clusterIds[0]; // For backward compatibility
-      const workloadId = workloadIds[0]; // For backward compatibility
+      // Find the cluster object to get its labels
+      const clusterObj = clusters.find(c => c.name === clusterId);
       
-      if (!clusterId || !workloadId) {
-        console.error('Missing cluster or workload ID');
+      if (!clusterObj) {
+        console.error('Cluster not found:', clusterId);
+        toast.error(`Cluster not found: ${clusterId}`);
         return;
       }
       
+      // Extract workload labels from the workload object
+      const workloadLabels: Record<string, string> = {};
+      
+      // Directly use the workload's existing labels as the primary source
+      if (workloadObj.labels && Object.keys(workloadObj.labels).length > 0) {
+        // Copy all existing labels
+        Object.assign(workloadLabels, workloadObj.labels);
+      } 
+      // Only if no labels exist, fallback to using the name
+      else {
+        workloadLabels['kubernetes.io/kubestellar.workload.name'] = workloadObj.name;
+      }
+      
+      // Extract cluster labels from the cluster object
+      const clusterLabels: Record<string, string> = {};
+      
+      // If the cluster has labels, use them
+      if (clusterObj.labels && Object.keys(clusterObj.labels).length > 0) {
+        Object.assign(clusterLabels, clusterObj.labels);
+      }
+      
+      // If no labels were found, use the name as a label
+      if (Object.keys(clusterLabels).length === 0) {
+        clusterLabels['name'] = clusterId;
+      }
+      
+      const resources = generateResourcesFromWorkload(workloadObj);
+      
+      // Prepare the request data
+      const requestData = {
+        workloadLabels,
+        clusterLabels,
+        resources,
+        namespacesToSync: [workloadNamespace],
+        namespace: workloadNamespace,
+        policyName: config?.name || `${workloadId}-to-${clusterId}`
+      };
+      
+      // Add detailed console logging
+      console.log('📤 SENDING REQUEST TO GENERATE-YAML API (CreateBindingPolicyDialog):');
+      console.log(JSON.stringify(requestData, null, 2));
+      console.log('🔍 workloadObj:', JSON.stringify({
+        name: workloadObj.name,
+        namespace: workloadObj.namespace,
+        kind: workloadObj.kind,
+        labels: workloadObj.labels
+      }, null, 2));
+      console.log('🔍 clusterObj:', JSON.stringify({
+        name: clusterObj.name,
+        labels: clusterObj.labels
+      }, null, 2));
+      
       // First generate the YAML preview
-      const generateYamlResponse = await generateYamlMutation.mutateAsync({
-        workloadIds: [workloadId],
-        clusterIds: [clusterId],
-        namespace: config.namespace || "default",
-        policyName: config.name
-      });
+      const generateYamlResponse = await generateYamlMutation.mutateAsync(requestData);
       
       // Update the preview YAML and show dialog
       setPreviewYaml(generateYamlResponse.yaml);
-      setShowPreviewDialog(true);
       
-      // Return a promise that resolves immediately for compatibility
-      return Promise.resolve();
+      // Create a policy object for the dialog
+      const policyData: PolicyData = {
+        name: config?.name || `${workloadId}-to-${clusterId}`,
+        workloads: workloadIds,
+        clusters: clusterIds,
+        namespace: workloadNamespace,
+        yaml: generateYamlResponse.yaml
+      };
+      
+      // Pass the policy data to the parent component
+      if (onCreatePolicy) {
+        onCreatePolicy(policyData);
+      }
+      
+      setSuccessMessage('Binding policy created successfully');
+      handleClearPolicyCanvas();
+      onClose();
     } catch (error) {
-      console.error("Error generating binding policy YAML:", error);
-      setError("Failed to generate binding policy YAML");
-      return Promise.reject(error);
+      console.error('Error creating binding policy:', error);
+      toast.error('Failed to create binding policy');
     }
   };
 
   const isDarkTheme = theme === "dark";
 
-
+  // Add handleClearPolicyCanvas function to clear the canvas
+  const handleClearPolicyCanvas = () => {
+    // Clear the canvas using the store's clearCanvas function
+    usePolicyDragDropStore.getState().clearCanvas();
+  };
 
   return (
     <>
@@ -467,6 +654,18 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
               scrollButtons="auto"
               sx={getTabsStyles(theme)}
             >
+            <StyledTab 
+            icon={<DragIndicatorIcon sx={{ color: isDarkTheme ? '#FFFFFF' : 'inherit' }} />}
+            iconPosition="start" 
+            label="Drag & Drop" 
+            value="dragdrop" 
+            sx={{ 
+              color: isDarkTheme ? '#FFFFFF' : "primary.main",
+              "&:hover": {
+                bgcolor: "rgba(25, 118, 210, 0.04)",
+              }
+            }}
+          />
               
             <StyledTab 
                 icon={<span role="img" aria-label="yaml" style={{ 
@@ -487,18 +686,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                 label="Upload File" 
                 value="file" 
               />
-              <StyledTab 
-                icon={<DragIndicatorIcon sx={{ color: isDarkTheme ? '#FFFFFF' : 'inherit' }} />}
-                iconPosition="start" 
-                label="Drag & Drop" 
-                value="dragdrop" 
-                sx={{ 
-                  color: isDarkTheme ? '#FFFFFF' : "primary.main",
-                  "&:hover": {
-                    bgcolor: "rgba(25, 118, 210, 0.04)",
-                  }
-                }}
-              />
+             
             </Tabs>
             </DialogTitle>
         <DialogContent
@@ -817,10 +1005,10 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                 borderTop: `1px solid ${isDarkTheme ? 'rgba(255, 255, 255, 0.12)' : 'transparent'}`,
               }}
             >
-              <Button 
+              <Button
                 onClick={handleCancelClick} 
                 disabled={isLoading}
-                sx={{ 
+                sx={{
                   px: 3,
                   py: 1,
                   textTransform: 'none',
@@ -869,8 +1057,24 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
               >
                 {isLoading ? (
                   <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <CircularProgress size={20} sx={{ mr: 1 }} />
-                    Deploying...
+                    <Box
+                      component="span"
+                      sx={{
+                        width: 16,
+                        height: 16,
+                        borderRadius: '50%',
+                        border: '2px solid currentColor',
+                        borderRightColor: 'transparent',
+                        animation: 'spin 1s linear infinite',
+                        display: 'inline-block',
+                        mr: 1,
+                        '@keyframes spin': {
+                          '0%': { transform: 'rotate(0deg)' },
+                          '100%': { transform: 'rotate(360deg)' }
+                        }
+                      }}
+                    />
+                    Creating...
                   </Box>
                 ) : (
                   activeTab === "dragdrop" ? "Deploy Binding Policies" : "Create Binding Policy"

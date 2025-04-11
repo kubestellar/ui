@@ -15,7 +15,7 @@ import {
   TableContainer,
   Paper,
 } from "@mui/material";
-import { Info, Trash2,  CloudOff } from "lucide-react";
+import {  Trash2,  CloudOff } from "lucide-react";
 import { BindingPolicyInfo } from "../../types/bindingPolicy";
 import PolicyDetailDialog from "./Dialogs/PolicyDetailDialog";
 import useTheme from "../../stores/themeStore";
@@ -24,7 +24,6 @@ import { api } from "../../lib/api";
 
 interface BPTableProps {
   policies: BindingPolicyInfo[];
-  onPreviewMatches: (policy: BindingPolicyInfo) => void;
   onDeletePolicy: (policy: BindingPolicyInfo) => void;
   onEditPolicy: (policy: BindingPolicyInfo) => void;
   activeFilters: { status?: "Active" | "Inactive" | "Pending" };
@@ -34,13 +33,12 @@ interface BPTableProps {
 
 const BPTable: React.FC<BPTableProps> = ({
   policies,
-  onPreviewMatches,
   onDeletePolicy,
   onEditPolicy,
   activeFilters,
   selectedPolicies,
   onSelectionChange,
-}) => {
+}): JSX.Element => {
   // Add debug log to see the policies structure
   console.log('BPTable - Received Policies:', policies);
   
@@ -82,20 +80,56 @@ const BPTable: React.FC<BPTableProps> = ({
     // Create a map to store statuses
     const newPolicyStatuses: Record<string, string> = {};
     
+    // Only fetch statuses if we have valid policies
+    if (!policies || policies.length === 0) {
+      return; // Exit early if no policies exist
+    }
+    
     // Fetch status for each policy using the API directly
     const fetchStatuses = async () => {
-      for (const policy of policies) {
-        try {
-          const response = await api.get(`/api/bp/status?name=${encodeURIComponent(policy.name)}`);
-          if (response.data?.status) {
-            // Capitalize the first letter of the status
-            const status = response.data.status.charAt(0).toUpperCase() + 
-                           response.data.status.slice(1).toLowerCase();
-            newPolicyStatuses[policy.name] = status;
-          }
-        } catch (error) {
-          console.error(`Error fetching status for policy ${policy.name}:`, error);
+      // First, get the current list of valid policies from the backend
+      try {
+        const validPoliciesResponse = await api.get('/api/bp');
+        let validPolicies: string[] = [];
+        
+        // Extract policy names from the response
+        if (validPoliciesResponse.data && validPoliciesResponse.data.bindingPolicies) {
+          validPolicies = validPoliciesResponse.data.bindingPolicies
+            .map((p: { name?: string; metadata?: { name?: string } }) => p.name || p.metadata?.name)
+            .filter((name: string | undefined): name is string => name !== undefined);
+        } else if (Array.isArray(validPoliciesResponse.data)) {
+          validPolicies = validPoliciesResponse.data
+            .map((p: { name?: string; metadata?: { name?: string } }) => p.name || p.metadata?.name)
+            .filter((name: string | undefined): name is string => name !== undefined);
         }
+        
+        // Filter out any policies that don't exist in the backend
+        const existingPolicies = policies.filter(policy => 
+          policy && policy.name && validPolicies.includes(policy.name)
+        );
+        
+        // Now only fetch status for policies that actually exist
+        for (const policy of existingPolicies) {
+          try {
+            // Skip if policy is invalid or missing name
+            if (!policy || !policy.name) {
+              continue;
+            }
+            
+            const response = await api.get(`/api/bp/status?name=${encodeURIComponent(policy.name)}`);
+            if (response.data?.status) {
+              // Capitalize the first letter of the status
+              const status = response.data.status.charAt(0).toUpperCase() + 
+                             response.data.status.slice(1).toLowerCase();
+              newPolicyStatuses[policy.name] = status;
+            }
+          } catch (error) {
+            console.error(`Error fetching status for policy ${policy.name}:`, error);
+          }
+        }
+        
+      } catch (error) {
+        console.error("Error fetching valid policies:", error);
       }
       
       // Update state with all fetched statuses
@@ -114,12 +148,30 @@ const BPTable: React.FC<BPTableProps> = ({
   }, [selectedPolicyDetails]);
 
   const handlePolicyClick = (policy: BindingPolicyInfo) => {
+    if (!policy || !policy.name) {
+      console.warn('Attempted to view details for invalid policy');
+      return;
+    }
+    
     console.log('Requesting details for policy:', policy.name);
+    console.log('Policy namespace:', policy.namespace);
+    console.log('Policy YAML availability:', policy.yaml ? 'Available' : 'Not available');
+    
+    // Store both name and namespace for API request
+    localStorage.setItem('selectedPolicyNamespace', policy.namespace || 'default');
+    
+    // If the policy already has YAML content, we can log it for debugging
+    if (policy.yaml) {
+      console.log('Policy has YAML content of length:', policy.yaml.length);
+      console.log('YAML content starts with:', policy.yaml.substring(0, 50));
+    }
+    
     setSelectedPolicyName(policy.name);
   };
 
   const handleCloseDialog = () => {
     setSelectedPolicyName(null);
+    localStorage.removeItem('selectedPolicyNamespace');
   };
 
   const handleEdit = (policy: BindingPolicyInfo) => {
@@ -440,16 +492,6 @@ const BPTable: React.FC<BPTableProps> = ({
                       sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}
                     >
                       <IconButton
-                        sx={{ 
-                          color: colors.textSecondary,
-                          "&:hover": { color: colors.primary }
-                        }}
-                        size="small"
-                        onClick={() => onPreviewMatches(policy)}
-                      >
-                        <Info size={18} />
-                      </IconButton>
-                      <IconButton
                         size="small"
                         sx={{
                           color: colors.error,
@@ -471,7 +513,7 @@ const BPTable: React.FC<BPTableProps> = ({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={7} className="py-12">
+                <TableCell colSpan={8} className="py-12">
                   <div className="flex flex-col items-center justify-center text-center p-6">
                     <CloudOff size={48} style={{ color: colors.textSecondary, marginBottom: "16px" }} />
                     <h3 style={{ color: colors.text }} className="text-lg font-semibold mb-2">

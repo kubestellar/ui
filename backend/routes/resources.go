@@ -7,7 +7,7 @@ import (
 )
 
 // SetupRoutes initializes all API routes
-func SetupResourceRoutes(router *gin.Engine) {
+func setupResourceRoutes(router *gin.Engine) {
 	// TODO: make it to support the custom API Resource
 	// TODO: make it to support the core API Resource in namespace / without namespace (wide-cluster resource)
 	// TODO: add logic to check - is this is core API ? or not and based on this make request on it
@@ -17,6 +17,8 @@ func SetupResourceRoutes(router *gin.Engine) {
 		api.GET("/wds/context", func(ctx *gin.Context) {
 			wds.CreateWDSContextUsingCommand(ctx.Writer, ctx.Request, ctx)
 		})
+		api.GET("/wds/list", wds.ListAllResourcesDetails)
+		api.GET("/wds/list/:namespace", wds.ListAllResourcesByNamespace)
 		api.GET("/:resourceKind/:namespace/log", k8s.LogWorkloads)
 		api.POST("/resources", k8s.CreateResource)                        // Create a new resource
 		api.POST("/resource/upload", k8s.UploadYAMLFile)                  // Upload any k8s resource file with "wds" key

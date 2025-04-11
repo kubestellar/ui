@@ -42,6 +42,12 @@ Before you begin, ensure that your system meets the following requirements:
 - Ensure you have access to a Kubernetes clusters setup with Kubestellar Getting Started Guide & Kubestellar prerequisites installed
 
 - **Kubestellar guide**: [Guide](https://docs.kubestellar.io/release-0.25.1/direct/get-started/)
+ 
+- ### 5. Make and Air
+
+- Make sure you have "make" installed to directly execute the backend script via makefile
+- Air helps in hot reloading of the backend
+- **Air guide**: [Guide](https://github.com/air-verse/air#installation)
 
 ## Installation Steps
 
@@ -115,6 +121,10 @@ cd backend
 
 go mod download
 
+# Option 1 : Start backend with hot reloading (recommended)
+make dev
+
+# Option 2 : Start backend without hot reloading
 go run main.go
 ```
 

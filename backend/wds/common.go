@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
-
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/tools/clientcmd/api"
+	"strings"
 )
 
 /*
@@ -74,7 +74,7 @@ func GetClientSetKubeConfig() (*kubernetes.Clientset, error) {
 	return clientset, nil
 }
 
-// listContexts lists all available contexts in the kubeconfig
+// listContexts lists all available contexts in the kubeconfig (Only look for wds context)
 func ListContexts() (string, []string, error) {
 	config, err := getKubeConfig()
 	if err != nil {
@@ -83,7 +83,9 @@ func ListContexts() (string, []string, error) {
 	currentContext := config.CurrentContext
 	var contexts []string
 	for name := range config.Contexts {
-		contexts = append(contexts, name)
+		if strings.Contains(name, "wds") {
+			contexts = append(contexts, name)
+		}
 	}
 	return currentContext, contexts, nil
 }
@@ -99,12 +101,52 @@ func writeMessage(conn *websocket.Conn, message string) {
 		log.Println("Error writing to WebSocket:", err)
 	}
 }
+func SetWdsContextCookies(c *gin.Context) {
+	var request struct {
+		Context string `json:"context"`
+	}
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+	c.SetCookie("ui-wds-context", request.Context, 3600, "/", "", false, true)
+	c.JSON(http.StatusOK, gin.H{
+		"message":            "Context updated successfully",
+		"current-ui-context": request.Context,
+	})
+}
+
+func GetWdsContextCookies(c *gin.Context) {
+	// currentContext : is system context (may be differnet from wds)
+	// TODO: improve this ListContexts function
+	currentContext, context, err := ListContexts()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	cookieContext, err := c.Cookie("ui-wds-context")
+	if err != nil {
+		if strings.Contains("wds", currentContext) {
+			cookieContext = currentContext // Default to Kubernetes API context
+		} else {
+			cookieContext = "wds1"
+		}
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"ui-wds-context":    cookieContext,
+		"system-context":    currentContext,
+		"other-wds-context": context,
+	})
+}
+
+// CreateWDSContextUsingCommand TODO: Replicate this using the helm go-sdk
+// DOCS: https://github.com/kubestellar/kubestellar/blob/main/docs/content/direct/core-chart.md
 func CreateWDSContextUsingCommand(w http.ResponseWriter, r *http.Request, c *gin.Context) {
 	newWdsContext := c.Query("context")
 	version := c.Query("version")
 
 	if version == "" {
-		version = "0.26.0"
+		version = "0.27.2" // newer version
 	}
 	if newWdsContext == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -121,16 +163,14 @@ func CreateWDSContextUsingCommand(w http.ResponseWriter, r *http.Request, c *gin
 	defer conn.Close()
 	// Step 0: Switch to "kind-kubeflex" context
 	writeMessage(conn, "Switching to kind-kubeflex context")
-	// TODO: Test this SwitchKubeConfigContext is it working or not
-	_, err = SwitchKubeConfigContext("kind-kubeflex")
+	flexCmd := exec.Command("kubectl", "config", "use-context", "kind-kubeflex")
+	output, err := flexCmd.CombinedOutput()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "Failed to create Kubernetes clientset",
-			"error":   err.Error(),
-		})
-		return
+		message := fmt.Sprintf("Failed to execute kubectl command: %v\nOutput: %s", err.Error(), string(output))
+		writeMessage(conn, message)
+	} else {
+		writeMessage(conn, "Successfully switched context to kind-kubeflex\n")
 	}
-
 	writeMessage(conn, "Starting upgrade --install for helm chart")
 
 	// Step 1: Helm upgrade command
@@ -145,7 +185,7 @@ func CreateWDSContextUsingCommand(w http.ResponseWriter, r *http.Request, c *gin
 	writeMessage(conn, "Running Helm upgrade...")
 	// Execute the command
 	cmd := exec.Command(helmCmd, args...)
-	output, err := cmd.CombinedOutput()
+	output, err = cmd.CombinedOutput()
 
 	if err != nil {
 		message := fmt.Sprintf("Failed to execute Helm command: %v\n%s", err.Error(), string(output))
@@ -166,7 +206,7 @@ func CreateWDSContextUsingCommand(w http.ResponseWriter, r *http.Request, c *gin
 	}
 	writeMessage(conn, fmt.Sprintf("Setting context '%s' using kflex...", newWdsContext))
 	// Step 3: Set the new context using kflex
-	kflexCmd := exec.Command("kflex", "ctx", newWdsContext)
+	kflexCmd := exec.Command("kflex", "ctx", "--overwrite-existing-context", newWdsContext)
 	kflexOutput, kflexErr := kflexCmd.CombinedOutput()
 
 	if kflexErr != nil {
@@ -177,43 +217,4 @@ func CreateWDSContextUsingCommand(w http.ResponseWriter, r *http.Request, c *gin
 	// keep alive
 	select {}
 
-}
-
-func SwitchKubeConfigContext(newContext string) (*kubernetes.Clientset, error) {
-	config, err := getKubeConfig()
-	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load kubeconfig"})
-		return nil, fmt.Errorf("failed to load kubeconfig")
-	}
-
-	// Check if the context exists
-	if _, exists := config.Contexts[newContext]; !exists {
-		return nil, fmt.Errorf("context %s not found", newContext)
-	}
-
-	// Use WDS1 context specifically
-	ctxContext := config.Contexts[newContext]
-	if ctxContext == nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create ctxConfig"})
-		return nil, fmt.Errorf("failed to create ctxConfig")
-	}
-
-	// Create config for WDS cluster
-	clientConfig := clientcmd.NewDefaultClientConfig(
-		*config,
-		&clientcmd.ConfigOverrides{
-			CurrentContext: newContext, // wds1, wds2
-		},
-	)
-
-	restConfig, err := clientConfig.ClientConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create restconfig")
-	}
-
-	clientset, err := kubernetes.NewForConfig(restConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Kubernetes client")
-	}
-	return clientset, nil
 }

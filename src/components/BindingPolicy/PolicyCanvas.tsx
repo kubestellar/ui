@@ -620,9 +620,9 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
       return (
         <ItemTooltip 
           title={workload.name}
-          subtitle={`${workload.namespace}/${workload.type}`}
+          subtitle={`${workload.namespace}/${workload.kind}`}
           labels={getItemLabels('workload', itemId)}
-          description={workload.description || `${workload.type} workload`}
+          description={`${workload.kind} workload`}
           type="workload"
         />
       );
@@ -1236,7 +1236,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                   textOverflow: 'ellipsis',
                                   whiteSpace: 'nowrap'
                                 }}>
-                                  Type: {workload?.type || 'Unknown'}
+                                  Type: {workload?.kind || 'Unknown'}
                                 </Typography>
                                 <Typography variant="caption" color="text.secondary" sx={{ 
                                   display: 'block',

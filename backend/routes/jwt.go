@@ -10,7 +10,7 @@ import (
 )
 
 // SetupAuthRoutes initializes authentication routes
-func SetupAuthRoutes(router *gin.Engine) {
+func setupAuthRoutes(router *gin.Engine) {
 	router.POST("/login", LoginHandler)
 	protected := router.Group("/protected").Use(middleware.AuthenticateMiddleware())
 	{

@@ -6,7 +6,6 @@ import BPPagination from "../components/BindingPolicy/BPPagination";
 import PreviewDialog from "../components/BindingPolicy/PreviewDialog";
 import DeleteDialog from "../components/BindingPolicy/Dialogs/DeleteDialog";
 import EditBindingPolicyDialog from "../components/BindingPolicy/Dialogs/EditBindingPolicyDialog";
-import CreateBindingPolicyDialog from "../components/BindingPolicy/CreateBindingPolicyDialog";
 import yaml from "js-yaml"; // Import yaml parser
 import {
   BindingPolicyInfo,
@@ -239,13 +238,13 @@ const BP = () => {
   const getMatches = useCallback(() => {
     const matchedClusters = availableClusters.filter((cluster) => {
       return Object.entries(selectedLabels).every(
-        ([key, value]) => cluster.labels[key] === value
+        ([key, value]) => cluster.labels && cluster.labels[key] === value
       );
     });
 
     const matchedWorkloads = availableWorkloads.filter((workload) => {
       return Object.entries(selectedLabels).every(
-        ([key, value]) => workload.labels[key] === value
+        ([key, value]) => workload.labels && workload.labels[key] === value
       );
     });
 
@@ -262,6 +261,8 @@ const BP = () => {
     propagationMode?: string;
     updateStrategy?: string;
   }
+  
+ 
   
   // Add function to handle simulated binding policy creation
   const handleCreateSimulatedBindingPolicy = useCallback((clusterIds: string[], workloadIds: string[], config?: BindingPolicyConfig) => {
@@ -288,7 +289,7 @@ const BP = () => {
           namespace: policyNamespace,
           status: "Active",
           clusters: 1,
-          workload: `${workload.type}/${workload.name}`,
+          workload: `${workload.kind}/${workload.name}`,
           clusterList: clusterIds,
           workloadList: workloadIds,
           creationDate: new Date().toLocaleString(),
@@ -312,7 +313,7 @@ const BP = () => {
               downsync: [
                 {
                   apiGroup: "apps/v1",
-                  resources: [`${workload.type.toLowerCase()}s`],
+                  resources: [`${workload.kind.toLowerCase()}s`],
                   namespace: workload.namespace || "default",
                   resourceNames: [workload.name]
                 }
@@ -365,8 +366,9 @@ const BP = () => {
         console.warn("bindingPoliciesData is not an array:", bindingPoliciesData);
         setBindingPolicies([]);
       }
-    } else {
-      // If no data, set to empty array
+    } else if (!bindingPoliciesLoading) {
+      // If no data and not loading, set to empty array
+      console.log('No binding policies data and not loading, clearing state');
       setBindingPolicies([]);
     }
     
@@ -393,18 +395,22 @@ const BP = () => {
     
     // Update workloads state when workloadsData changes
     if (workloadsData) {
+      // Properly convert to match the Workload interface
       const workloadData = workloadsData
         .filter(workload => workload.namespace !== "default")
         .map(workload => ({
           name: workload.name,
-          type: workload.kind,
+          kind: workload.kind,
           namespace: workload.namespace,
           creationTime: workload.creationTime,
-          labels: workload.label ? JSON.parse(workload.label) : {}
+          labels: workload.labels || {},
+          replicas: workload.replicas || 0,
+          status: workload.status || 'Unknown'
         }));
       
-      setWorkloads(workloadData);
-      setAvailableWorkloads(workloadData);
+      // Cast the data to satisfy TypeScript
+      setWorkloads(workloadData as Workload[]);
+      setAvailableWorkloads(workloadData as Workload[]);
     } else {
       // If no workloads data or error, set to empty array
       setWorkloads([]);
@@ -439,6 +445,11 @@ const BP = () => {
         // Use the mutation instead of direct API call
         await deleteBindingPolicyMutation.mutateAsync(selectedPolicy.name);
         
+        // Immediately update the local state to remove the deleted policy
+        setBindingPolicies(current => 
+          current.filter(policy => policy.name !== selectedPolicy.name)
+        );
+        
         // Update UI state after successful deletion
         setSuccessMessage(
           `Binding Policy "${selectedPolicy.name}" deleted successfully`
@@ -453,7 +464,7 @@ const BP = () => {
         setSelectedPolicy(null);
       }
     }
-  }, [selectedPolicy, deleteBindingPolicyMutation, setSuccessMessage, setDeleteDialogOpen, setSelectedPolicy]);
+  }, [selectedPolicy, deleteBindingPolicyMutation, setSuccessMessage, setDeleteDialogOpen, setSelectedPolicy, setBindingPolicies]);
 
   const handleCreatePolicySubmit = useCallback(async (policyData: PolicyData) => {
     try {
@@ -562,10 +573,6 @@ const BP = () => {
     }
   }, [setBindingPolicies, setEditDialogOpen, setSelectedPolicy, setSuccessMessage]);
 
-  const handlePreviewPolicy = useCallback((policy: BindingPolicyInfo) => {
-    setSelectedPolicy(policy);
-    setPreviewDialogOpen(true);
-  }, []);
 
   // Create a memoized function for the policy assignment simulation used in the JSX
   const handleSimulatedPolicyAssign = useCallback((policyName: string, targetType: string, targetName: string) => {
@@ -588,6 +595,11 @@ const BP = () => {
       // Use the mutation for deleting multiple binding policies
       await deleteMultiplePoliciesMutation.mutateAsync(selectedPolicies);
       
+      // Immediately update the local state to remove the deleted policies
+      setBindingPolicies(current => 
+        current.filter(policy => !selectedPolicies.includes(policy.name))
+      );
+      
       setSuccessMessage(
         `Successfully deleted ${selectedPolicies.length} binding policies`
       );
@@ -598,7 +610,7 @@ const BP = () => {
         `Error deleting binding policies`
       );
     }
-  }, [selectedPolicies, deleteMultiplePoliciesMutation, setSuccessMessage, setSelectedPolicies]);
+  }, [selectedPolicies, deleteMultiplePoliciesMutation, setSuccessMessage, setSelectedPolicies, setBindingPolicies]);
 
   // Modify the conditional return for loading to use the component:
   if (loading) {
@@ -671,16 +683,15 @@ const BP = () => {
             {clusters.length === 0 && workloads.length === 0 ? (
               <EmptyState onCreateClick={() => navigate('/resources')} type="both" />
             ) : clusters.length === 0 ? (
-              <EmptyState onCreateClick={() => navigate('/clusters')} type="clusters" />
+              <EmptyState onCreateClick={() => navigate('/its')} type="clusters" />
             ) : workloads.length === 0 ? (
-              <EmptyState onCreateClick={() => navigate('/workloads')} type="workloads" />
+              <EmptyState onCreateClick={() => navigate('/workloads/manage')} type="workloads" />
             ) : bindingPolicies.length === 0 ? (
               <EmptyState onCreateClick={handleCreateDialogOpen} type="policies" />
             ) : (
               <>
                 <BPTable
                   policies={paginatedPolicies}
-                  onPreviewMatches={(policy) => handlePreviewPolicy(policy)}
                   onDeletePolicy={handleDeletePolicy}
                   onEditPolicy={handleEditPolicy}
                   activeFilters={activeFilters}
@@ -810,14 +821,6 @@ const BP = () => {
           onClose={handleDeleteDialogClose}
           onConfirm={confirmDelete}
           policyName={selectedPolicy?.name}
-        />
-        
-        <CreateBindingPolicyDialog
-          open={createDialogOpen}
-          onClose={() => setCreateDialogOpen(false)}
-          onCreatePolicy={handleCreatePolicySubmit}
-          clusters={clusters}
-          workloads={workloads}
         />
       </Paper>
        {/* Drag & Drop Help Dialog */}
