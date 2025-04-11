@@ -1,10 +1,12 @@
-import { Box, Button, FormControl, MenuItem, Select, SelectChangeEvent, TextField, Typography, FormControlLabel, Radio, RadioGroup, Checkbox } from "@mui/material";
+import { Box, Button, FormControl, MenuItem, Select, SelectChangeEvent, TextField, Typography, FormControlLabel, Radio, RadioGroup, Checkbox, Menu, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { StyledContainer } from "../StyledComponents";
 import useTheme from "../../stores/themeStore";
-import { useState } from "react";
-import axios from "axios";
+import { useState, useEffect, useCallback } from "react";
+import axios, { AxiosError } from "axios";
 import { toast } from "react-hot-toast";
+import { MoreVerticalIcon } from "lucide-react";
 
 interface FormData {
   repositoryUrl: string;
@@ -385,6 +387,11 @@ export const GitHubTab = ({
   const [selectedOption, setSelectedOption] = useState("createOwn");
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [popularLoading, setPopularLoading] = useState(false);
+  const [previousDeployments, setPreviousDeployments] = useState<string[]>([]);
+  const [previousLoading, setPreviousLoading] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ deploymentId: string | null; x: number; y: number } | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+  const [deleteDeploymentId, setDeleteDeploymentId] = useState<string | null>(null);
 
   const popularRepositories = [
     { 
@@ -404,9 +411,35 @@ export const GitHubTab = ({
     }
   ];
 
+  // Fetch previous deployments
+  useEffect(() => {
+    const fetchPreviousDeployments = async () => {
+      setPreviousLoading(true);
+      try {
+        const response = await axios.get("http://localhost:4000/api/deployments/github/list");
+        if (response.status === 200) {
+          const deployments = response.data.deployments.map((deployment: { id: string }) => deployment.id);
+          setPreviousDeployments(deployments);
+        } else {
+          throw new Error("Failed to fetch previous deployments");
+        }
+      } catch (error: unknown) {
+        const err = error as AxiosError;
+        console.error("Previous Deployments Fetch error:", err);
+        toast.error("Failed to load previous deployments!");
+      } finally {
+        setPreviousLoading(false);
+      }
+    };
+
+    if (selectedOption === "previousDeployments") {
+      fetchPreviousDeployments();
+    }
+  }, [selectedOption]);
+
   const handleOptionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedOption(event.target.value);
-    setSelectedRepo(null);
+    setSelectedRepo(null); // Reset selected repo when switching options
   };
 
   const extractRepoName = (url: string) => {
@@ -433,7 +466,7 @@ export const GitHubTab = ({
       }
 
       const response = await axios.post(
-        `http://localhost:4000/api/deploy?branch=${selectedRepoData.branch}`,
+        `http://localhost:4000/api/deploy?created_by_me=true&branch=${selectedRepoData.branch}`,
         {
           repo_url: selectedRepoData.repo_url,
           folder_path: selectedRepoData.folder_path
@@ -459,6 +492,59 @@ export const GitHubTab = ({
       setPopularLoading(false);
     }
   };
+
+  const handleMenuOpen = useCallback((event: React.MouseEvent, deploymentId: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+    // Use fixed positioning instead of mouse position to make menu more stable
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    setContextMenu({ 
+      deploymentId, 
+      x: rect.right, 
+      y: rect.top 
+    });
+  }, []);
+
+  const handleMenuClose = useCallback(() => {
+    setContextMenu(null);
+  }, []);
+
+  const handleDeleteDeployment = useCallback(async (deploymentId: string) => {
+    try {
+      const response = await axios.delete(`http://localhost:4000/api/deployments/github/${deploymentId}`);
+      if (response.status === 200) {
+        setPreviousDeployments((prev) => prev.filter((id) => id !== deploymentId));
+        toast.success(`Deployment "${deploymentId}" deleted successfully!`);
+      } else {
+        throw new Error("Failed to delete deployment");
+      }
+    } catch (error) {
+      console.error("Delete Deployment error:", error);
+      toast.error(`Failed to delete deployment "${deploymentId}"!`);
+    } finally {
+      setDeleteDialogOpen(false);
+      setDeleteDeploymentId(null);
+    }
+  }, []);
+
+  const handleDeleteClick = useCallback(() => {
+    if (contextMenu?.deploymentId) {
+      setDeleteDeploymentId(contextMenu.deploymentId);
+      setDeleteDialogOpen(true);
+    }
+    handleMenuClose();
+  }, [contextMenu]);
+
+  const handleDeleteConfirm = useCallback(() => {
+    if (deleteDeploymentId) {
+      handleDeleteDeployment(deleteDeploymentId);
+    }
+  }, [deleteDeploymentId, handleDeleteDeployment]);
+
+  const handleDeleteCancel = useCallback(() => {
+    setDeleteDialogOpen(false);
+    setDeleteDeploymentId(null);
+  }, []);
 
   const PopularRepositoriesForm = () => (
     <Box
@@ -565,6 +651,207 @@ export const GitHubTab = ({
     </Box>
   );
 
+  const PreviousDeploymentsForm = () => (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        flex: 1,
+        overflow: "hidden",
+      }}
+    >
+      <Box
+        sx={{
+          position: "sticky",
+          top: 0,
+          zIndex: 1,
+          borderRadius: "4px"
+        }}
+      >
+        <Typography
+          variant="subtitle1"
+          sx={{
+            fontWeight: 600,
+            fontSize: "20px",
+            color: theme === "dark" ? "#d4d4d4" : "#333",
+            mb: 3,
+            mt: 1,
+          }}
+        >
+          List of Previous Deployments
+        </Typography>
+        {selectedRepo && (
+          <Box
+            sx={{
+              width: "100%",
+              margin: "0 auto 25px auto",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              p: 1.6,
+              borderRadius: "4px",
+              border: "1px solid",
+              borderColor: theme === "dark" ? "#444" : "#e0e0e0",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <CheckCircleIcon color="success" sx={{ mr: 1 }} />
+              <Typography variant="body1" sx={{ color: theme === "dark" ? "#fff" : "#333" }}>
+                <strong>{selectedRepo}</strong>
+              </Typography>
+            </Box>
+          </Box>
+        )}
+      </Box>
+
+      <Box
+        sx={{
+          flex: 1,
+          overflowY: "auto",
+          "&::-webkit-scrollbar": {
+            display: "none",
+          },
+          scrollbarWidth: "none",
+          "-ms-overflow-style": "none",
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+        }}
+      >
+        {previousLoading ? (
+          <Typography sx={{ color: theme === "dark" ? "#d4d4d4" : "#333", textAlign: "center" }}>
+            Loading previous deployments...
+          </Typography>
+        ) : previousDeployments.length > 0 ? (
+          previousDeployments.map((deployment) => (
+            <Box
+              key={deployment}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "8px",
+                borderRadius: "4px",
+                backgroundColor: theme === "dark" ? "#00000033" : "#f9f9f9",
+                "&:hover": {
+                  backgroundColor: theme === "dark" ? "#2a2a2a" : "#f1f1f1",
+                },
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Checkbox
+                  checked={selectedRepo === deployment}
+                  onChange={() => handleRepoSelection(deployment)}
+                  sx={{
+                    color: theme === "dark" ? "#d4d4d4" : "#666",
+                    "&.Mui-checked": {
+                      color: "#1976d2",
+                    },
+                  }}
+                />
+                <Typography
+                  sx={{
+                    fontSize: "0.875rem",
+                    color: theme === "dark" ? "#d4d4d4" : "#333",
+                  }}
+                >
+                  {deployment}
+                </Typography>
+              </Box>
+              <Box
+                sx={{ cursor: "pointer" }}
+                onClick={(e) => handleMenuOpen(e, deployment)}
+              >
+                    <MoreVerticalIcon
+                    style={{ color: theme === "dark" ? "#d4d4d4" : "#666" }}
+                    />
+              </Box> 
+            </Box>
+          ))
+        ) : (
+          <Typography sx={{ color: theme === "dark" ? "#d4d4d4" : "#333", textAlign: "center" }}>
+            No previous deployments available.
+          </Typography>
+        )}
+      </Box>
+
+      {contextMenu && (
+        <Menu
+          open={Boolean(contextMenu)}
+          onClose={handleMenuClose}
+          anchorReference="anchorPosition"
+          anchorPosition={contextMenu ? { top: contextMenu.y, left: contextMenu.x } : undefined}
+          // Adding these properties to make the menu more stable and prevent flickering
+          keepMounted
+          disablePortal
+          slotProps={{
+            paper: {
+              elevation: 3
+            }
+          }}
+        >
+          <MenuItem onClick={handleDeleteClick}>Delete</MenuItem>
+        </Menu>
+      )}
+
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        aria-labelledby="delete-confirmation-dialog-title"
+        sx={{
+          "& .MuiDialog-paper": {
+            padding: "16px",
+            width: "500px",
+            backgroundColor: theme === "dark" ? "rgb(15, 23, 42)" : "#fff",
+            borderRadius: "4px",
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+            maxWidth: "480px",
+            height: "260px",
+          },
+        }}
+      >
+        <DialogTitle id="delete-confirmation-dialog-title" sx={{ display: "flex", alignItems: "center", gap: 1, fontSize: "18px", fontWeight: 600, color: theme === "dark" ? "#fff" : "333" }}>
+          <WarningAmberIcon sx={{ color: "#FFA500", fontSize: "34px" }} />
+          Confirm Resource Deletion
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ fontSize: "16px", color: theme === "dark" ? "#fff" : "333", mt: 2 }}>
+            Are you sure you want to delete "{deleteDeploymentId}"? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: "space-between", padding: "0 16px 16px 16px" }}>
+          <Button
+            onClick={handleDeleteCancel}
+            sx={{
+              textTransform: "none",
+              color: "#2F86FF",
+              fontWeight: 600,
+              "&:hover": { backgroundColor: "rgba(47, 134, 255, 0.1)" },
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            sx={{
+              textTransform: "none",
+              fontWeight: 500,
+              backgroundColor: "#d32f2f",
+              color: "#fff",
+              padding: "6px 16px",
+              borderRadius: "4px",
+              "&:hover": {
+                backgroundColor: "#b71c1c",
+              },
+            }}
+          >
+            Yes, Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
+
   return (
     <StyledContainer>
       <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 1 }}>
@@ -596,6 +883,17 @@ export const GitHubTab = ({
               },
             }}
           />
+          <FormControlLabel
+            value="previousDeployments"
+            control={<Radio />}
+            label="List of Previous Deployments"
+            sx={{
+              "& .MuiTypography-root": {
+                color: theme === "dark" ? "#d4d4d4" : "#333",
+                fontSize: "0.875rem",
+              },
+            }}
+          />
         </RadioGroup>
       </Box>
 
@@ -612,8 +910,10 @@ export const GitHubTab = ({
           handleOpenWebhookDialog={handleOpenWebhookDialog}
           theme={theme}
         />
-      ) : (
+      ) : selectedOption === "popularRepos" ? (
         <PopularRepositoriesForm />
+      ) : (
+        <PreviousDeploymentsForm />
       )}
 
       <Box sx={{ 
@@ -630,7 +930,7 @@ export const GitHubTab = ({
       }}>
         <Button
           onClick={handleCancelClick}
-          disabled={loading || popularLoading}
+          disabled={loading || popularLoading || previousLoading}
           sx={{
             textTransform: "none",
             fontWeight: 600,
@@ -654,7 +954,8 @@ export const GitHubTab = ({
           }}
           disabled={
             (selectedOption === "createOwn" && (!hasChanges || loading)) ||
-            (selectedOption === "popularRepos" && (!selectedRepo || popularLoading))
+            (selectedOption === "popularRepos" && (!selectedRepo || popularLoading)) ||
+            (selectedOption === "previousDeployments" && (!selectedRepo || previousLoading))
           }
           sx={{
             textTransform: "none",
@@ -672,7 +973,7 @@ export const GitHubTab = ({
             },
           }}
         >
-          {(selectedOption === "createOwn" && loading) || (selectedOption === "popularRepos" && popularLoading)
+          {(selectedOption === "createOwn" && loading) || (selectedOption === "popularRepos" && popularLoading) || (selectedOption === "previousDeployments" && previousLoading)
             ? "Deploying..."
             : "Apply"}
         </Button>

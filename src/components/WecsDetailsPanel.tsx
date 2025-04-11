@@ -219,6 +219,7 @@ const WecsDetailsPanel = ({
     };
   };
 
+  // Initialize WebSocket connection only once when the panel opens
   useEffect(() => {
     if (!isOpen || type.toLowerCase() !== "pod") {
       if (wsRef.current) {
@@ -230,7 +231,7 @@ const WecsDetailsPanel = ({
       return;
     }
 
-    if (wsRef.current?.readyState !== WebSocket.OPEN && wsParamsRef.current) {
+    if (!wsRef.current && wsParamsRef.current) {
       connectWebSocket();
     }
 
@@ -240,7 +241,7 @@ const WecsDetailsPanel = ({
         wsRef.current = null;
       }
     };
-  }, [isOpen, type]);
+  }, [isOpen, type]); // Removed dependency on wsParamsRef.current to prevent unnecessary reconnections
 
   useEffect(() => {
     if (!terminalRef.current || type.toLowerCase() !== "pod" || tabValue !== 2) return;
@@ -264,31 +265,29 @@ const WecsDetailsPanel = ({
 
     setTimeout(() => fitAddon.fit(), 100);
     terminalInstance.current = term;
-
     term.clear();
     logs.forEach((log) => {
       term.writeln(log);
     });
 
-    const writtenLogs = new Set(logs);
-    const logsWatcher = setInterval(() => {
-      if (logs.length > writtenLogs.size) {
-        const newLogs = logs.slice(writtenLogs.size);
-        newLogs.forEach((log) => {
-          if (!writtenLogs.has(log)) {
-            term.writeln(log);
-            writtenLogs.add(log);
-          }
-        });
-      }
-    }, 100);
-
     return () => {
-      clearInterval(logsWatcher);
       term.dispose();
       terminalInstance.current = null;
     };
-  }, [tabValue, theme, type, logs]);
+  }, [tabValue, theme, type]); // Removed logs from dependencies to prevent re-initialization
+
+  // Update terminal content when logs change
+  useEffect(() => {
+    if (terminalInstance.current && tabValue === 2) {
+      const term = terminalInstance.current;
+      const lastLogIndex = term.buffer.active.length - 1; // Approximate last written log
+      const newLogs = logs.slice(lastLogIndex > 0 ? lastLogIndex : 0);
+      newLogs.forEach((log) => {
+        term.writeln(log);
+      });
+    }
+  }, [logs, tabValue]); // Update terminal content without re-initializing
+
 
   const calculateAge = (creationTimestamp: string | undefined): string => {
     if (!creationTimestamp) return "N/A";
