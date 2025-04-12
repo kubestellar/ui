@@ -7,6 +7,7 @@ GetDeploymentByName, GetWDSWorkloads
 
 import (
 	"context"
+	"github.com/kubestellar/ui/k8s"
 	"net/http"
 	"time"
 
@@ -64,7 +65,11 @@ func GetDeploymentByName(c *gin.Context) {
 }
 
 func GetWDSWorkloads(c *gin.Context) {
-	clientset, err := wds.GetClientSetKubeConfig()
+	cookieContext, err := c.Cookie("ui-wds-context")
+	if err != nil {
+		cookieContext = "wds1"
+	}
+	clientset, _, err := k8s.GetClientSetWithContext(cookieContext)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "failed to create Kubernetes clientset",

@@ -38,10 +38,13 @@ var popularKinds = map[string]bool{
 
 // ListAllResourcesDetails api/wds/list
 func ListAllResourcesDetails(c *gin.Context) {
-	// TODO: add the cookies context
 	// TODO: Optimize the endpoint response time
 	// TODO: Redis Integration
-	clientset, dynamicClient, err := k8s.GetClientSetWithContext("wds1")
+	cookieContext, err := c.Cookie("ui-wds-context")
+	if err != nil {
+		cookieContext = "wds1"
+	}
+	clientset, dynamicClient, err := k8s.GetClientSetWithContext(cookieContext)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -121,8 +124,11 @@ func ListAllResourcesDetails(c *gin.Context) {
 
 // ListAllResourcesByNamespace api/wds/list/:namespace
 func ListAllResourcesByNamespace(c *gin.Context) {
-	// TODO: add the cookies context
-	clientset, dynamicClient, err := k8s.GetClientSetWithContext("wds1")
+	cookieContext, err := c.Cookie("ui-wds-context")
+	if err != nil {
+		cookieContext = "wds1"
+	}
+	clientset, dynamicClient, err := k8s.GetClientSetWithContext(cookieContext)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
