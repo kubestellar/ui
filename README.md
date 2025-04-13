@@ -1,10 +1,9 @@
 # KubestellarUI Setup Guide
 
-Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI application on your local machine after cloning the repository for development. The application consists of three main parts:
+Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI application on your local machine after cloning the repository for development. The application consists of two main parts:
 
 1. **Frontend**: Built with React and TypeScript
-2. **Backend**: Built with Golang using the Gin framework
-3. **Electron App**: Desktop application wrapper (currently in development)
+2. **Backend**: Built with Golang using the Gin framework.
 
 ## Contents
 
@@ -12,10 +11,8 @@ Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI 
 - [Installation Steps](#installation-steps)
   - [Local Setup](#local-setup)
   - [Local Setup with Docker Compose](#local-setup-with-docker-compose)
-- [Electron Application](#electron-application)
 - [Docker Image Versioning and Pulling](#docker-image-versioning-and-pulling)
 - [Accessing the Application](#accessing-the-application)
-- [Code Linting](#code-linting)
 
 ## Prerequisites
 
@@ -43,9 +40,10 @@ Before you begin, ensure that your system meets the following requirements:
 ### 4. Kubernetes Clusters
 
 - Ensure you have access to a Kubernetes clusters setup with Kubestellar Getting Started Guide & Kubestellar prerequisites installed
+
 - **Kubestellar guide**: [Guide](https://docs.kubestellar.io/release-0.25.1/direct/get-started/)
  
-### 5. Make and Air
+- ### 5. Make and Air
 
 - Make sure you have "make" installed to directly execute the backend script via makefile
 - Air helps in hot reloading of the backend
@@ -196,50 +194,11 @@ This will:
 - Pull the latest source code changes.
 - Rebuild and restart the application.
 
-## Electron Application
-
-KubestellarUI now supports an Electron application wrapper which is currently in development. This allows KubestellarUI to run as a desktop application.
-
-### Running the Electron App in Development Mode
-
-To run the Electron application in development mode:
-
-```bash
-npm run electron:dev
-```
-
-This command will:
-1. Check for Redis availability
-2. Start the Vite development server
-3. Launch the Electron application
-
-### Building the Electron Application
-
-The Electron build process is currently in development. To build the application for different platforms, you can use the following commands:
-
-```bash
-# Build for all platforms
-npm run electron:build
-
-# Build for Windows
-npm run electron:build:win
-
-# Build for macOS
-npm run electron:build:mac
-
-# Build for Linux
-npm run electron:build:linux
-```
-
-Note: The icon setup process is still in development and should be skipped for now.
-
-## Code Linting
-
-### **🚀 Install GolangCI-Lint**
+## **🚀 Install GolangCI-Lint**
 
 To install **GolangCI-Lint**, follow these steps:
 
-#### **🔹 Linux & macOS**
+### **🔹 Linux & macOS**
 Run the following command:
 ```sh
 curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.54.2
@@ -249,7 +208,7 @@ Ensure `$(go env GOPATH)/bin` is in your `PATH`:
 export PATH=$(go env GOPATH)/bin:$PATH
 ```
 
-#### **🔹 Windows**
+### **🔹 Windows**
 Use **scoop** (recommended):
 ```powershell
 scoop install golangci-lint
@@ -259,27 +218,29 @@ Or **Go install**:
 go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 ```
 
-#### **🔹 Verify Installation**
+### **🔹 Verify Installation**
 Run:
 ```sh
 golangci-lint --version
 ```
 
-### **🛠 Linting & Fixing Code**
-#### **🔹 Check for Issues**
+---
+
+## **🛠 Linting & Fixing Code**
+### **🔹 Check for Issues**
 ```sh
 make check-lint
 ```
-#### **🔹 Auto-Fix Issues**
+### **🔹 Auto-Fix Issues**
 ```sh
 make fix-lint
 ```
-#### **🔹 Run Both**
+### **🔹 Run Both**
 ```sh
 make lint
 ```
 
-## Docker Image Versioning and Pulling
+### Docker Image Versioning and Pulling
 
 If you'd like to work with the Docker images for the **KubestellarUI** project, here's how you can use the `latest` and versioned tags:
 
@@ -293,7 +254,7 @@ If you'd like to work with the Docker images for the **KubestellarUI** project, 
    - Latest Version: `latest`
    - Specific Version (Commit Hash): `backend-<commit-hash>`
 
-### How to Pull the Latest Images:
+#### How to Pull the Latest Images:
 
 - **Frontend Image**:
   ```bash
@@ -305,7 +266,7 @@ If you'd like to work with the Docker images for the **KubestellarUI** project, 
   docker pull quay.io/kubestellar/ui:backend
   ```
 
-### How to Pull Specific Version (Commit Hash):
+#### How to Pull Specific Version (Commit Hash):
 
 If you want to pull an image for a specific version (e.g., commit hash), use:
 
@@ -319,11 +280,12 @@ If you want to pull an image for a specific version (e.g., commit hash), use:
   docker pull quay.io/kubestellar/ui:backend-abcd1234
   ```
 
-## Accessing the Application
+
+### Accessing the Application
 
 1. **Backend API**: [http://localhost:4000](http://localhost:4000)
 2. **Frontend UI**: [http://localhost:5173](http://localhost:5173)
-3. **Electron App**: Runs as a desktop application when launched with `npm run electron:dev`
+
 
 <div>
 <h2><font size="6"><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Red%20Heart.png" alt="Red Heart" width="40" height="40" /> Contributors </font></h2>
