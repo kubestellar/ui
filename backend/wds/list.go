@@ -1,14 +1,19 @@
 package wds
 
 import (
+	"context"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/k8s"
+	"github.com/kubestellar/ui/redis"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"log"
 	"net/http"
 	"strings"
+	"sync"
+	"time"
 )
 
 var popularKinds = map[string]bool{
@@ -36,40 +41,80 @@ var popularKinds = map[string]bool{
 	"ControllerRevision": true,
 }
 
+func getCacheKey(context, dataType string, parts ...string) string {
+	return fmt.Sprintf("%s:%s:%s", context, dataType, strings.Join(parts, ":"))
+}
+
+var cachedResources []*metav1.APIResourceList
+var cachedResourcesKey = "preferredResources-list"
+
 // ListAllResourcesDetails api/wds/list
+const MaxConcurrentCalls = 20
+
 func ListAllResourcesDetails(c *gin.Context) {
-	// TODO: add the cookies context
-	// TODO: Optimize the endpoint response time
-	// TODO: Redis Integration
-	clientset, dynamicClient, err := k8s.GetClientSetWithContext("wds1")
+	cookieContext, err := c.Cookie("ui-wds-context")
+	if err != nil {
+		cookieContext = "wds1"
+	}
+	cacheKey := getCacheKey(cookieContext, "list")
+
+	type ResourceListResponse struct {
+		Namespaced    map[string]map[string][]map[string]interface{} `json:"namespaced"`
+		ClusterScoped map[string][]map[string]interface{}            `json:"clusterScoped"`
+	}
+	result := ResourceListResponse{
+		Namespaced:    make(map[string]map[string][]map[string]interface{}),
+		ClusterScoped: make(map[string][]map[string]interface{}),
+	}
+
+	found, err := redis.GetJSONValue(cacheKey, &result)
+	if err == nil && found && len(result.Namespaced) > 0 {
+		c.JSON(http.StatusOK, gin.H{"data": result})
+		return
+	}
+
+	clientset, dynamicClient, err := k8s.GetClientSetWithContext(cookieContext)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	discoveryClient := clientset.Discovery()
 
-	reqNamespace := []string{}
-	nsList, err := dynamicClient.Resource(schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}).List(c, metav1.ListOptions{})
+	found, err = redis.GetJSONValue(cachedResourcesKey, &cachedResources)
+	if err != nil {
+		log.Printf("Error fetching API resource cache: %v", err)
+	}
+	if !found {
+		cachedResources, err = discoveryClient.ServerPreferredResources()
+		if err != nil {
+			log.Fatalf("Failed to fetch API resources: %v", err)
+		}
+		err = redis.SetJSONValue(cachedResourcesKey, cachedResources, 5*time.Minute)
+	}
+
+	resourceList := cachedResources
+
+	nsList, err := dynamicClient.Resource(schema.GroupVersionResource{
+		Group: "", Version: "v1", Resource: "namespaces",
+	}).List(c, metav1.ListOptions{})
 	if err != nil {
 		log.Fatalf("Failed to list namespaces: %v", err)
 	}
+
+	namespaceMeta := make(map[string]map[string]interface{})
+	var namespaces []string
 	for _, ns := range nsList.Items {
 		nsName := ns.GetName()
-
 		if strings.HasPrefix(nsName, "kube-") {
 			continue
 		}
-		reqNamespace = append(reqNamespace, nsName)
+		namespaces = append(namespaces, nsName)
+		namespaceMeta[nsName] = extractNamespaceDetails(nsName, nsList.Items)
 	}
-	result := map[string]interface{}{
-		"namespaced":    map[string]map[string][]map[string]interface{}{},
-		"clusterScoped": map[string][]map[string]interface{}{},
-	}
-	// give you all the resources
-	resourceList, err := discoveryClient.ServerPreferredResources()
-	if err != nil {
-		log.Fatalf("Failed to fetch API resources: %v", err)
-	}
+
+	var wg sync.WaitGroup
+	var mutex sync.Mutex
+	sem := make(chan struct{}, MaxConcurrentCalls)
 
 	for _, resList := range resourceList {
 		gv, err := schema.ParseGroupVersion(resList.GroupVersion)
@@ -77,52 +122,83 @@ func ListAllResourcesDetails(c *gin.Context) {
 			continue
 		}
 		for _, res := range resList.APIResources {
-			if !popularKinds[res.Kind] || strings.Contains(res.Name, "/") || !contains(res.Verbs, "list") {
+			if _, ok := popularKinds[res.Kind]; !ok || strings.Contains(res.Name, "/") || !contains(res.Verbs, "list") {
 				continue
 			}
+
 			gvr := schema.GroupVersionResource{Group: gv.Group, Version: gv.Version, Resource: res.Name}
 
 			if res.Namespaced {
-				for _, ns := range reqNamespace {
-					objs, err := dynamicClient.Resource(gvr).Namespace(ns).List(c, metav1.ListOptions{})
-					if err != nil || len(objs.Items) == 0 {
-						continue
-					}
-					nsMap := result["namespaced"].(map[string]map[string][]map[string]interface{})
-					if nsMap[ns] == nil {
-						nsMetaData := extractNamespaceDetails(ns, nsList.Items)
-						nsMap[ns] = map[string][]map[string]interface{}{
-							"__namespaceMetaData": {nsMetaData},
-						}
-					}
+				for _, ns := range namespaces {
+					wg.Add(1)
+					sem <- struct{}{}
+					go func(ns string, gvr schema.GroupVersionResource, kind string) {
+						defer func() {
+							<-sem
+							wg.Done()
+						}()
 
-					for _, obj := range objs.Items {
-						objDetails := extractObjDetails(&obj)
-						nsMap[ns][res.Kind] = append(nsMap[ns][res.Kind], objDetails)
-					}
+						ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+						defer cancel()
+
+						objs, err := dynamicClient.Resource(gvr).Namespace(ns).List(ctx, metav1.ListOptions{})
+						if err != nil || len(objs.Items) == 0 {
+							return
+						}
+						mutex.Lock()
+						defer mutex.Unlock()
+						nsMap := result.Namespaced
+						if nsMap[ns] == nil {
+							nsMap[ns] = map[string][]map[string]interface{}{
+								"__namespaceMetaData": {extractNamespaceDetails(ns, nsList.Items)},
+							}
+						}
+						for _, obj := range objs.Items {
+							nsMap[ns][res.Kind] = append(nsMap[ns][res.Kind], extractObjDetails(&obj))
+						}
+					}(ns, gvr, res.Kind)
 				}
 			} else {
-				objs, err := dynamicClient.Resource(gvr).List(c, metav1.ListOptions{})
-				if err != nil || len(objs.Items) == 0 {
-					continue
-				}
-				clusterMap := result["clusterScoped"].(map[string][]map[string]interface{})
-				for _, obj := range objs.Items {
-					detail := extractObjDetails(&obj)
-					clusterMap[res.Kind] = append(clusterMap[res.Kind], detail)
-				}
+				wg.Add(1)
+				sem <- struct{}{}
+				go func(gvr schema.GroupVersionResource, kind string) {
+					defer func() {
+						<-sem
+						wg.Done()
+					}()
+
+					ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+					defer cancel()
+
+					objs, err := dynamicClient.Resource(gvr).List(ctx, metav1.ListOptions{})
+					if err != nil || len(objs.Items) == 0 {
+						return
+					}
+					mutex.Lock()
+					defer mutex.Unlock()
+					for _, obj := range objs.Items {
+						result.ClusterScoped[res.Kind] = append(result.ClusterScoped[res.Kind], extractObjDetails(&obj))
+					}
+				}(gvr, res.Kind)
 			}
 		}
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"data": result,
-	})
+	wg.Wait()
+
+	err = redis.SetJSONValue(cacheKey, result, 2*time.Minute)
+	if err != nil {
+		log.Printf("Error caching list view details data: %v", err)
+	}
+	c.JSON(http.StatusOK, gin.H{"data": result})
 }
 
 // ListAllResourcesByNamespace api/wds/list/:namespace
 func ListAllResourcesByNamespace(c *gin.Context) {
-	// TODO: add the cookies context
-	clientset, dynamicClient, err := k8s.GetClientSetWithContext("wds1")
+	cookieContext, err := c.Cookie("ui-wds-context")
+	if err != nil {
+		cookieContext = "wds1"
+	}
+	clientset, dynamicClient, err := k8s.GetClientSetWithContext(cookieContext)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -135,13 +211,37 @@ func ListAllResourcesByNamespace(c *gin.Context) {
 			"error": "namespace is required param",
 		})
 	}
-	result := map[string]interface{}{
-		"namespaced": map[string]map[string][]map[string]interface{}{},
+	type ResourceListResponse struct {
+		Namespaced map[string]map[string][]map[string]interface{} `json:"namespaced"`
 	}
-	resourceList, err := discoveryClient.ServerPreferredResources()
+	result := ResourceListResponse{
+		Namespaced: make(map[string]map[string][]map[string]interface{}),
+	}
+	cacheKey := getCacheKey(cookieContext, "list", nsName)
+	found, err := redis.GetJSONValue(cacheKey, &result)
 	if err != nil {
-		log.Fatalf("Failed to fetch API resources: %v", err)
+		log.Printf("Error retrieving list view ns details data from cache: %v", err)
+	} else if found && len(result.Namespaced) > 0 {
+		c.JSON(http.StatusOK, gin.H{
+			"data": result,
+		})
+		return
 	}
+	found, err = redis.GetJSONValue(cachedResourcesKey, &cachedResources)
+	if err != nil {
+		log.Printf("Error fetching API resource cache: %v", err)
+	}
+	if !found {
+		cachedResources, err = discoveryClient.ServerPreferredResources()
+		if err != nil {
+			log.Fatalf("Failed to fetch API resources: %v", err)
+		}
+		err = redis.SetJSONValue(cachedResourcesKey, cachedResources, 5*time.Minute)
+		if err != nil {
+			log.Printf("Failed to set API resource cache: %v", err)
+		}
+	}
+	resourceList := cachedResources
 
 	for _, resList := range resourceList {
 		gv, err := schema.ParseGroupVersion(resList.GroupVersion)
@@ -149,7 +249,7 @@ func ListAllResourcesByNamespace(c *gin.Context) {
 			continue
 		}
 		for _, res := range resList.APIResources {
-			if !popularKinds[res.Kind] || strings.Contains(res.Name, "/") || !contains(res.Verbs, "list") {
+			if _, ok := popularKinds[res.Kind]; !ok || strings.Contains(res.Name, "/") || !contains(res.Verbs, "list") {
 				continue
 			}
 			gvr := schema.GroupVersionResource{Group: gv.Group, Version: gv.Version, Resource: res.Name}
@@ -158,7 +258,7 @@ func ListAllResourcesByNamespace(c *gin.Context) {
 				if err != nil {
 					continue
 				}
-				nsMap := result["namespaced"].(map[string]map[string][]map[string]interface{})
+				nsMap := result.Namespaced
 				if nsMap[nsName] == nil {
 					nsMap[nsName] = map[string][]map[string]interface{}{}
 				}
@@ -169,6 +269,10 @@ func ListAllResourcesByNamespace(c *gin.Context) {
 
 			}
 		}
+	}
+	err = redis.SetJSONValue(cacheKey, result, 2*time.Minute)
+	if err != nil {
+		log.Printf("Error caching list view namespaces details data: %v", err)
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"data": result,
