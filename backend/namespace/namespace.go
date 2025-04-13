@@ -111,7 +111,7 @@ func GetNamespaceResources(namespace string) (*ExtendedNamespaceDetails, error) 
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
 
-	clientset, dynamicClient, err := k8s.GetClientSet()
+	clientset, _, err := k8s.GetClientSet()
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize Kubernetes client: %w", err)
 	}
@@ -121,79 +121,11 @@ func GetNamespaceResources(namespace string) (*ExtendedNamespaceDetails, error) 
 		return nil, fmt.Errorf("namespace '%s' not found: %w", namespace, err)
 	}
 
-	resources, err := clientset.Discovery().ServerPreferredNamespacedResources()
-	if err != nil {
-		return nil, fmt.Errorf("failed to discover resources: %w", err)
-	}
-
 	details := &NamespaceDetails{
-		Name:      ns.Name,
-		Status:    string(ns.Status.Phase),
-		Labels:    ns.Labels,
-		Resources: make(map[string][]unstructured.Unstructured),
-	}
-
-	// Use worker pool for concurrent resource fetching
-	var wg sync.WaitGroup
-	resourceCh := make(chan schema.GroupVersionResource, 100)
-	resultCh := make(chan struct {
-		key   string
-		items []unstructured.Unstructured
-	}, 100)
-
-	// Start workers
-	for i := 0; i < maxConcurrentRequests; i++ {
-		go func() {
-			for gvr := range resourceCh {
-				list, err := dynamicClient.Resource(gvr).Namespace(namespace).List(ctx, metav1.ListOptions{})
-				if err != nil {
-					wg.Done()
-					continue
-				}
-
-				resourceKey := fmt.Sprintf("%s.%s/%s", gvr.Group, gvr.Version, gvr.Resource)
-				resultCh <- struct {
-					key   string
-					items []unstructured.Unstructured
-				}{key: resourceKey, items: list.Items}
-				wg.Done()
-			}
-		}()
-	}
-
-	// Queue resource requests
-	for _, apiResourceList := range resources {
-		gv, err := schema.ParseGroupVersion(apiResourceList.GroupVersion)
-		if err != nil {
-			continue
-		}
-
-		for _, apiResource := range apiResourceList.APIResources {
-			if !containsVerb(apiResource.Verbs, "list") {
-				continue
-			}
-
-			wg.Add(1)
-			resourceCh <- schema.GroupVersionResource{
-				Group:    gv.Group,
-				Version:  gv.Version,
-				Resource: apiResource.Name,
-			}
-		}
-	}
-
-	// Close channels after processing
-	go func() {
-		wg.Wait()
-		close(resourceCh)
-		close(resultCh)
-	}()
-
-	// Collect results
-	for result := range resultCh {
-		if len(result.items) > 0 {
-			details.Resources[result.key] = result.items
-		}
+		Name:   ns.Name,
+		Status: string(ns.Status.Phase),
+		Labels: ns.Labels,
+		//Resources: make(map[string][]unstructured.Unstructured),
 	}
 
 	return &ExtendedNamespaceDetails{

@@ -205,6 +205,7 @@ export const useWDSQueries = () => {
             // Override the default Content-Type to let Axios handle multipart/form-data
             'Content-Type': 'multipart/form-data', // Explicitly set to ensure compatibility
           },
+          withCredentials: true, // Added to enable sending credentials with the request
         });
         return response.data;
       },

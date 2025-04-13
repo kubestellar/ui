@@ -50,14 +50,15 @@ type DeploymentTree struct {
 
 // HelmDeploymentRequest represents the request payload for deploying a Helm chart
 type HelmDeploymentRequest struct {
-	RepoName    string            `json:"repoName"`
-	RepoURL     string            `json:"repoURL"`
-	ChartName   string            `json:"chartName"`
-	Namespace   string            `json:"namespace"`
-	ReleaseName string            `json:"releaseName"`
-	Version     string            `json:"version"`
-	Values      map[string]string `json:"values,omitempty"`
-	ConfigMaps  []ConfigMapRef    `json:"configMaps,omitempty"`
+	RepoName      string            `json:"repoName"`
+	RepoURL       string            `json:"repoURL"`
+	ChartName     string            `json:"chartName"`
+	Namespace     string            `json:"namespace"`
+	WorkloadLabel string            `json:"workloadLabel,omitempty"`
+	ReleaseName   string            `json:"releaseName"`
+	Version       string            `json:"version"`
+	Values        map[string]string `json:"values,omitempty"`
+	ConfigMaps    []ConfigMapRef    `json:"configMaps,omitempty"`
 }
 
 // HelmDeploymentData represents data about a Helm deployment to be stored
@@ -103,7 +104,8 @@ func getResourceGVR(discoveryClient discovery.DiscoveryInterface, kind string) (
 }
 
 // DeployManifests applies Kubernetes manifests from a directory with optional dry-run mode
-func DeployManifests(deployPath string, dryRun bool, dryRunStrategy string) (*DeploymentTree, error) {
+// and adds the specified workload label to all resources
+func DeployManifests(deployPath string, dryRun bool, dryRunStrategy string, workloadLabel string) (*DeploymentTree, error) {
 	clientSet, dynamicClient, err := GetClientSet()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get Kubernetes client: %v", err)
@@ -133,6 +135,25 @@ func DeployManifests(deployPath string, dryRun bool, dryRunStrategy string) (*De
 		var obj unstructured.Unstructured
 		if err := yaml.Unmarshal(data, &obj); err != nil {
 			return nil, fmt.Errorf("failed to parse YAML %s: %v", filePath, err)
+		}
+
+		// Apply workload label to all resources if provided
+		if workloadLabel != "" {
+			// Get existing labels or initialize new map
+			metadata, exists := obj.Object["metadata"].(map[string]interface{})
+			if !exists {
+				metadata = make(map[string]interface{})
+				obj.Object["metadata"] = metadata
+			}
+
+			labels, exists := metadata["labels"].(map[string]interface{})
+			if !exists {
+				labels = make(map[string]interface{})
+				metadata["labels"] = labels
+			}
+
+			// Add kubestellar.io/workload label
+			labels["kubestellar.io/workload"] = workloadLabel
 		}
 
 		// Get correct resource GVR using Discovery API
@@ -608,6 +629,11 @@ func deployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	// If workload label is not provided, use the chart name as the default label
+	if req.WorkloadLabel == "" {
+		req.WorkloadLabel = req.ChartName
+	}
+
 	// Check current context first to avoid unnecessary switching
 	cmd := exec.CommandContext(ctx, "kubectl", "config", "current-context")
 	output, err := cmd.Output()
@@ -737,6 +763,93 @@ func deployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 		}
 	}
 
+	// Add workload label - multiple approaches to ensure it gets applied
+
+	// Approach 1: Add to global.labels
+	globalVal, exists := chartValues["global"]
+	var globalMap map[string]interface{}
+
+	if exists {
+		if convertedMap, ok := globalVal.(map[string]interface{}); ok {
+			globalMap = convertedMap
+		} else {
+			globalMap = make(map[string]interface{})
+		}
+	} else {
+		globalMap = make(map[string]interface{})
+	}
+
+	labelsVal, exists := globalMap["labels"]
+	var labelsMap map[string]interface{}
+
+	if exists {
+		if convertedMap, ok := labelsVal.(map[string]interface{}); ok {
+			labelsMap = convertedMap
+		} else {
+			labelsMap = make(map[string]interface{})
+		}
+	} else {
+		labelsMap = make(map[string]interface{})
+	}
+
+	// Add workload label
+	labelsMap["kubestellar.io/workload"] = req.WorkloadLabel
+	globalMap["labels"] = labelsMap
+	chartValues["global"] = globalMap
+
+	// Approach 2: Add to commonLabels if chart supports it
+	commonLabelsVal, exists := chartValues["commonLabels"]
+	var commonLabelsMap map[string]interface{}
+
+	if exists {
+		if convertedMap, ok := commonLabelsVal.(map[string]interface{}); ok {
+			commonLabelsMap = convertedMap
+		} else {
+			commonLabelsMap = make(map[string]interface{})
+		}
+	} else {
+		commonLabelsMap = make(map[string]interface{})
+	}
+
+	// Add workload label to commonLabels
+	commonLabelsMap["kubestellar.io/workload"] = req.WorkloadLabel
+	chartValues["commonLabels"] = commonLabelsMap
+
+	// Approach 3: Add to podLabels if chart supports it
+	podLabelsVal, exists := chartValues["podLabels"]
+	var podLabelsMap map[string]interface{}
+
+	if exists {
+		if convertedMap, ok := podLabelsVal.(map[string]interface{}); ok {
+			podLabelsMap = convertedMap
+		} else {
+			podLabelsMap = make(map[string]interface{})
+		}
+	} else {
+		podLabelsMap = make(map[string]interface{})
+	}
+
+	// Add workload label to podLabels
+	podLabelsMap["kubestellar.io/workload"] = req.WorkloadLabel
+	chartValues["podLabels"] = podLabelsMap
+
+	// Approach 4: Add as a top-level label
+	labels, exists := chartValues["labels"]
+	var topLevelLabels map[string]interface{}
+
+	if exists {
+		if convertedMap, ok := labels.(map[string]interface{}); ok {
+			topLevelLabels = convertedMap
+		} else {
+			topLevelLabels = make(map[string]interface{})
+		}
+	} else {
+		topLevelLabels = make(map[string]interface{})
+	}
+
+	topLevelLabels["kubestellar.io/workload"] = req.WorkloadLabel
+	chartValues["labels"] = topLevelLabels
+
 	// Set a reasonable timeout for the installation
 	install.Timeout = 4 * time.Minute
 
@@ -747,20 +860,21 @@ func deployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 	}
 
 	if store {
-
 		// Store deployment information in ConfigMap
 		helmDeployData := map[string]string{
-			"timestamp":    time.Now().Format(time.RFC3339),
-			"repoName":     req.RepoName,
-			"repoURL":      req.RepoURL,
-			"chartName":    req.ChartName,
-			"releaseName":  req.ReleaseName,
-			"namespace":    req.Namespace,
-			"version":      req.Version,
-			"releaseInfo":  release.Info.Status.String(),
-			"chartVersion": release.Chart.Metadata.Version,
-			"values":       mustMarshalToString(release.Chart.Values),
+			"timestamp":      time.Now().Format(time.RFC3339),
+			"repoName":       req.RepoName,
+			"repoURL":        req.RepoURL,
+			"chartName":      req.ChartName,
+			"releaseName":    req.ReleaseName,
+			"namespace":      req.Namespace,
+			"version":        req.Version,
+			"releaseInfo":    release.Info.Status.String(),
+			"chartVersion":   release.Chart.Metadata.Version,
+			"values":         mustMarshalToString(release.Chart.Values),
+			"workload_label": req.WorkloadLabel,
 		}
+
 		// Store deployment data in ConfigMap
 		err = StoreHelmDeployment(helmDeployData)
 		if err != nil {
@@ -768,7 +882,6 @@ func deployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 		} else {
 			fmt.Printf("Helm deployment data stored in ConfigMap: %s\n", HelmConfigMapName)
 		}
-
 	}
 
 	return release, nil
@@ -780,6 +893,11 @@ func HelmDeployHandler(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
 		return
+	}
+
+	// If workload label is not provided, use the chart name as default
+	if req.WorkloadLabel == "" {
+		req.WorkloadLabel = req.ChartName
 	}
 
 	// Parse the "store" parameter from the query string
@@ -797,11 +915,12 @@ func HelmDeployHandler(c *gin.Context) {
 	}
 
 	response := gin.H{
-		"message":   "Helm chart deployed successfully",
-		"release":   release.Name,
-		"namespace": release.Namespace,
-		"version":   release.Chart.Metadata.Version,
-		"status":    release.Info.Status.String(),
+		"message":        "Helm chart deployed successfully",
+		"release":        release.Name,
+		"namespace":      release.Namespace,
+		"version":        release.Chart.Metadata.Version,
+		"status":         release.Info.Status.String(),
+		"workload_label": req.WorkloadLabel, // Include workload label in response
 	}
 
 	// Include storage information in the response if "store" is true

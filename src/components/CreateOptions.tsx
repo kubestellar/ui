@@ -342,7 +342,9 @@ spec:
 
       const response = await axios.post(
         `http://localhost:4000/api/resources?auto_ns=${autoNs}`,
-        documents
+        documents,{
+          withCredentials: true,
+        }
       );
 
       if (response.status === 200 || response.status === 201) {
