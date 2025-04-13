@@ -304,7 +304,7 @@ const CreateFromYourGitHub = ({ formData, setFormData, error, credentialsList, h
           ))}
         </Select>
       </FormControl>
-      <Box sx={{ display: "alignItems: center", mt: 1 }}>
+      <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
         <span role="img" aria-label="tip" style={{ fontSize: "0.8rem", marginRight: "8px" }}>
           💡
         </span>
