@@ -187,7 +187,7 @@ func ListAllResourcesDetails(c *gin.Context) {
 
 	err = redis.SetJSONValue(cacheKey, result, 2*time.Minute)
 	if err != nil {
-		log.Printf("Error caching ITS data: %v", err)
+		log.Printf("Error caching list view details data: %v", err)
 	}
 	c.JSON(http.StatusOK, gin.H{"data": result})
 }
@@ -220,7 +220,7 @@ func ListAllResourcesByNamespace(c *gin.Context) {
 	cacheKey := getCacheKey(cookieContext, "list", nsName)
 	found, err := redis.GetJSONValue(cacheKey, &result)
 	if err != nil {
-		log.Printf("Error retrieving ITS data from cache: %v", err)
+		log.Printf("Error retrieving list view ns details data from cache: %v", err)
 	} else if found && len(result.Namespaced) > 0 {
 		c.JSON(http.StatusOK, gin.H{
 			"data": result,
@@ -272,7 +272,7 @@ func ListAllResourcesByNamespace(c *gin.Context) {
 	}
 	err = redis.SetJSONValue(cacheKey, result, 2*time.Minute)
 	if err != nil {
-		log.Printf("Error caching ITS data: %v", err)
+		log.Printf("Error caching list view namespaces details data: %v", err)
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"data": result,
