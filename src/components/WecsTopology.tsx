@@ -1122,14 +1122,24 @@ const WecsTreeview = () => {
             <IconButton
               color={viewMode === 'tiles' ? "primary" : "default"}
               onClick={() => setViewMode('tiles')}
-              sx={{ padding: 1 }}
+              sx={{ 
+                padding: 1,
+                borderRadius: "50%", // Ensures a perfect circle
+                width: 40,          // Optional: Fixed width for consistency
+                height: 40,         // Optional: Fixed height for consistency
+              }}
             >
               <span><i className="fa fa-th menu_icon" title="Tiles"></i></span>
             </IconButton>
             <IconButton
               color={viewMode === 'list' ? "primary" : "default"}
               onClick={() => setViewMode('list')}
-              sx={{ padding: 1 }}
+              sx={{ 
+                padding: 1,
+                borderRadius: "50%", // Ensures a perfect circle
+                width: 40,          // Optional: Fixed width for consistency
+                height: 40,         // Optional: Fixed height for consistency
+              }}
             >
               <span><i className="fa fa-th-list selected menu_icon" title="List"></i></span>
             </IconButton>
