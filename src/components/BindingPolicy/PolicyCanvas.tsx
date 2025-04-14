@@ -92,10 +92,6 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const elementsRef = useRef<Record<string, HTMLElement>>({});
 
-
- 
-
-  // Function to handle mouse movement for active connection
   const handleMouseMove = (e: React.MouseEvent) => {
     if (canvasRef.current && containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
@@ -112,19 +108,15 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
     }
   };
 
-  // Handler for hover events - unified implementation
   const handleItemHover = (
     itemType: 'policy' | 'cluster' | 'workload' | null, 
     itemId: string | null
   ) => {
-    // Set the hovered state for styling
     if (itemType && itemId) {
       setIsHovered(`${itemType}-${itemId}`);
     } else {
       setIsHovered(null);
     }
-    
-    // Set the hovered item for tooltips
     if (!itemId || !itemType) {
       setHoveredItem({ itemType: null, itemId: null, position: null });
       return;
@@ -137,23 +129,20 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
     });
   };
 
-  // Add responsive breakpoints
-  // const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
-  // const isMediumScreen = useMediaQuery(theme.breakpoints.down('md'));
+
   
   const isMounted = useRef<boolean>(true);
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const prevConnectionLinesRef = useRef<typeof connectionLines>([]);
   
-  // Grid settings - always enabled
-  const gridSize = 20; // Size of grid in pixels
+
+  const gridSize = 20; 
   
   const { 
     canvasEntities: policyCanvasEntities, 
     assignmentMap: policyAssignmentMap, 
     removeFromCanvas: removeFromPolicyCanvas, 
     clearCanvas,
-    getItemLabels: getPolicyItemLabels,
   } = usePolicyDragDropStore();
   
   const {
@@ -162,31 +151,21 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
     drawingActive,
   } = useCanvasStore();
   
-  // Throttle the update to prevent multiple state updates in rapid succession
   const throttledUpdateConnectionLines = useCallback((newLines: typeof connectionLines) => {
-    // Clear any pending updates
     if (updateTimeoutRef.current) {
       clearTimeout(updateTimeoutRef.current);
     }
     
-    // Schedule a new update
     updateTimeoutRef.current = setTimeout(() => {
       if (isMounted.current) {
-        // Just update the connection lines directly
-        // The checks to prevent unnecessary updates are already in the useEffect
         setConnectionLines(newLines);
       }
-    }, 100); // 100ms throttle
+    }, 100); 
   }, [setConnectionLines]);
   
-  // State for active connection warning
   const [, setInvalidConnectionWarning] = useState<string | null>(null);
-  
-  // Search/filter states
   const [clusterFilter, setClusterFilter] = useState<string>('');
   const [workloadFilter, setWorkloadFilter] = useState<string>('');
-
-  // Helper function to draw a curved connection line wrapped in useCallback
   const drawConnection = useCallback((
     ctx: CanvasRenderingContext2D, 
     startX: number, 
@@ -198,8 +177,6 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
   ) => {
     ctx.beginPath();
     ctx.moveTo(startX, startY);
-    
-    // Calculate control points for the curve
     const controlX = (startX + endX) / 2;
     
     // Create a bezier curve
@@ -212,7 +189,6 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
     ctx.strokeStyle = color;
     ctx.lineWidth = 2;
     
-    // Use dashed line for active connections being drawn
     if (isDashed) {
       ctx.setLineDash([5, 3]);
     } else {
@@ -221,9 +197,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
     
     ctx.stroke();
     
-    // Only draw arrow for completed connections
     if (!isDashed) {
-      // Draw arrow at the end
       const angle = Math.atan2(endY - ((startY + endY) / 2), endX - controlX);
       ctx.beginPath();
       ctx.moveTo(endX, endY);
@@ -241,7 +215,6 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
     }
   }, []);
 
-  // Draw connections between elements on canvas when data changes
   useEffect(() => {
     if (!canvasRef.current || !containerRef.current || !drawingActive || !isMounted.current) return;
     
@@ -253,15 +226,9 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
       
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-      
-      // Set canvas dimensions to match container
       canvas.width = container.offsetWidth;
       canvas.height = container.offsetHeight;
-      
-      // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      // Store new connections for canvasStore
       const newConnectionLines: { source: string; target: string; color: string }[] = [];
       
       // Draw connections for each policy in the canvas
@@ -592,6 +559,89 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
   //   }
   // }, [workloads, clusters]);
   
+  // Helper function to extract label information from a label ID
+  const extractLabelInfo = (labelId: string): { key: string, value: string } | null => {
+    if (!labelId.startsWith('label-')) return null;
+    
+    // Handle special cases directly with exact string matching first
+    if (labelId === "label-location-group-edge") {
+      return { key: "location-group", value: "edge" };
+    }
+    
+    // Remove the 'label-' prefix
+    const labelPart = labelId.substring(6);
+    
+    // Handle kubernetes standard labels with / in the key (e.g. kubernetes.io/role)
+    // This is a more generic approach to catch labels like cluster.open-cluster-management.io/clusterset-default
+    const slashMatch = labelPart.match(/^(.+\/.+?)-(.+)$/);
+    if (slashMatch) {
+      const [, key, value] = slashMatch;
+      return { key, value };
+    }
+    
+    // Check for formats with equals or colon
+    if (labelPart.includes('=')) {
+      const [key, value] = labelPart.split('=');
+      return { key, value };
+    }
+    
+    if (labelPart.includes(':')) {
+      const [key, value] = labelPart.split(':');
+      return { key, value };
+    }
+    
+    // Special handling for known label patterns
+    const knownLabelPatterns = [
+      { pattern: 'location-group-edge', key: 'location-group', value: 'edge' },
+      { pattern: 'cluster.open-cluster-management.io/clusterset-default', key: 'cluster.open-cluster-management.io/clusterset', value: 'default' },
+      { pattern: 'feature.open-cluster-management.io/addon-addon-status-available', key: 'feature.open-cluster-management.io/addon-addon-status', value: 'available' }
+    ];
+    
+    for (const pattern of knownLabelPatterns) {
+      if (labelPart === pattern.pattern) {
+        return { key: pattern.key, value: pattern.value };
+      }
+    }
+    
+    // Check for known prefixes with dashes
+    const knownKeyPrefixes = ["app.kubernetes.io", "kubernetes.io", "location-group", "feature.open-cluster-management.io", "cluster.open-cluster-management.io"];
+    
+    for (const prefix of knownKeyPrefixes) {
+      if (labelPart.startsWith(`${prefix}-`)) {
+        const key = prefix;
+        const value = labelPart.substring(prefix.length + 1);
+        return { key, value };
+      }
+    }
+    
+    // For labels that have name as a key (the simplest case)
+    if (labelPart.startsWith('name-')) {
+      const value = labelPart.substring(5); // 'name-'.length
+      return { key: 'name', value };
+    }
+    
+    // Fallback to basic parsing - the key is the part after 'label-' and the value is everything else
+    const parts = labelId.split('-');
+    const key = parts[1];
+    const value = parts.slice(2).join('-');
+    
+    return { key, value };
+  };
+
+  // Find all workloads that match a given label
+  const getWorkloadsForLabel = (workloads: Workload[], key: string, value: string): Workload[] => {
+    return workloads.filter(workload => 
+      workload.labels && workload.labels[key] === value
+    );
+  };
+
+  // Find all clusters that match a given label
+  const getClustersForLabel = (clusters: ManagedCluster[], key: string, value: string): ManagedCluster[] => {
+    return clusters.filter(cluster => 
+      cluster.labels && cluster.labels[key] === value
+    );
+  };
+
   // Function to get tooltip content based on hovered item
   const getTooltipContent = () => {
     if (!hoveredItem.itemType || !hoveredItem.itemId) {
@@ -601,31 +651,71 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
     const { itemType, itemId } = hoveredItem;
     
     if (itemType === 'cluster') {
-      const cluster = clusters.find(c => c.name === itemId);
-      if (!cluster) return null;
+      // Check if this is a label-based item
+      const labelInfo = extractLabelInfo(itemId);
       
-      return (
-        <ItemTooltip 
-          title={cluster.name}
-          subtitle={`Status: ${cluster.status || 'Ready'}`}
-          labels={cluster.labels}
-          description={cluster.description || 'Kubernetes cluster'}
-          type="cluster"
-        />
-      );
+      if (labelInfo) {
+        // For label-based cluster items
+        const matchingClusters = getClustersForLabel(clusters, labelInfo.key, labelInfo.value);
+        if (matchingClusters.length === 0) return null;
+        
+        return (
+          <ItemTooltip 
+            title={`${labelInfo.key}: ${labelInfo.value}`}
+            subtitle={`Matching ${matchingClusters.length} cluster(s)`}
+            labels={{ [labelInfo.key]: labelInfo.value }}
+            description={`Label selector for Kubernetes clusters`}
+            type="cluster"
+          />
+        );
+      } else {
+        // For legacy cluster items
+        const cluster = clusters.find(c => c.name === itemId);
+        if (!cluster) return null;
+        
+        return (
+          <ItemTooltip 
+            title={cluster.name}
+            subtitle={`Status: ${cluster.status || 'Ready'}`}
+            labels={cluster.labels}
+            description={cluster.description || 'Kubernetes cluster'}
+            type="cluster"
+          />
+        );
+      }
     } else if (itemType === 'workload') {
-      const workload = workloads.find(w => w.name === itemId);
-      if (!workload) return null;
+      // Check if this is a label-based item
+      const labelInfo = extractLabelInfo(itemId);
       
-      return (
-        <ItemTooltip 
-          title={workload.name}
-          subtitle={`${workload.namespace}/${workload.kind}`}
-          labels={getItemLabels('workload', itemId)}
-          description={`${workload.kind} workload`}
-          type="workload"
-        />
-      );
+      if (labelInfo) {
+        // For label-based workload items
+        const matchingWorkloads = getWorkloadsForLabel(workloads, labelInfo.key, labelInfo.value);
+        if (matchingWorkloads.length === 0) return null;
+        
+        return (
+          <ItemTooltip 
+            title={`${labelInfo.key}: ${labelInfo.value}`}
+            subtitle={`Matching ${matchingWorkloads.length} workload(s)`}
+            labels={{ [labelInfo.key]: labelInfo.value }}
+            description={`Label selector for Kubernetes workloads`}
+            type="workload"
+          />
+        );
+      } else {
+        // For legacy workload items
+        const workload = workloads.find(w => w.name === itemId);
+        if (!workload) return null;
+        
+        return (
+          <ItemTooltip 
+            title={workload.name}
+            subtitle={`${workload.namespace}/${workload.kind}`}
+            labels={getItemLabels('workload', itemId)}
+            description={`${workload.kind} workload`}
+            type="workload"
+          />
+        );
+      }
     } else if (itemType === 'policy') {
       const policy = policies.find(p => p.name === itemId);
       if (!policy) return null;
@@ -824,7 +914,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
           title={
             <Box>
               <Typography variant="body2" fontWeight="bold">Binding Policy Canvas</Typography>
-              <Typography variant="body2">Drag policies, clusters, and workloads here to visualize binding relationships</Typography>
+              <Typography variant="body2">Drag, cluster labels, and workload labels here to visualize binding relationships</Typography>
             </Box>
           }
           arrow
@@ -1047,83 +1137,120 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                           {policyCanvasEntities.clusters
                             .filter(clusterId => clusterId.toLowerCase().includes(clusterFilter.toLowerCase()))
                             .map((clusterId) => {
-                            const cluster = clusters.find(c => c.name === clusterId);
-                            return (
-                              <Paper
-                                key={`cluster-section-${clusterId}`}
-                                elevation={2}
-                                ref={(el) => {
-                                  if (el) elementsRef.current[`cluster-${clusterId}`] = el;
-                                }}
-                                sx={{
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  justifyContent: 'space-between',
-                                  p: 1.5,
-                                  mb: 1,
-                                  minHeight: '90px',
-                                  height: '100%',
-                                  borderLeft: '4px solid',
-                                  borderColor: theme.palette.info.main,
-                                  backgroundColor: alpha(theme.palette.info.main, 0.1),
-                                  transition: 'all 0.2s',
-                                  cursor: 'pointer',
-                                  '&:hover': { 
-                                    transform: 'translateY(-2px)', 
-                                    boxShadow: 3 
-                                  }
-                                }}
-                                data-item-type="cluster"
-                                data-item-id={clusterId}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleCanvasItemClick('cluster', clusterId);
-                                }}
-                              >
-                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                  <KubernetesIcon type="cluster" size={16} sx={{ mr: 1 }} />
-                                  <Typography variant="body2" component="div" sx={{ 
-                                    fontWeight: 'medium',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap'
-                                  }}>
-                                    {clusterId}
-                                  </Typography>
-                                </Box>
-                                {cluster && cluster.labels && (
-                                  <Box sx={{ mt: 'auto' }}>
-                                    <Divider sx={{ my: 0.5 }} />
-                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
-                                      {Object.entries(cluster.labels).slice(0, 2).map(([key, value]) => (
-                                        <Chip 
-                                          key={key} 
-                                          label={`${key.split('/').pop()}: ${value}`} 
-                                          size="small" 
-                                          sx={{ 
-                                            fontSize: '0.6rem', 
-                                            height: 16, 
-                                            '& .MuiChip-label': { px: 0.5, py: 0 } 
-                                          }} 
-                                        />
-                                      ))}
-                                      {Object.keys(cluster.labels).length > 2 && (
-                                        <Chip 
-                                          label={`+${Object.keys(cluster.labels).length - 2}`} 
-                                          size="small" 
-                                          sx={{ 
-                                            fontSize: '0.6rem', 
-                                            height: 16, 
-                                            '& .MuiChip-label': { px: 0.5, py: 0 } 
-                                          }} 
-                                        />
-                                      )}
-                                    </Box>
+                              // Extract label information if this is a label-based item
+                              const labelInfo = extractLabelInfo(clusterId);
+                              
+                              // Find matching clusters if this is a label
+                              const matchingClusters = labelInfo 
+                                ? getClustersForLabel(clusters, labelInfo.key, labelInfo.value) 
+                                : clusters.filter(c => c.name === clusterId);
+                                
+                              if (matchingClusters.length === 0) return null;
+                              
+                              return (
+                                <Paper
+                                  key={`cluster-section-${clusterId}`}
+                                  elevation={2}
+                                  ref={(el) => {
+                                    if (el) elementsRef.current[`cluster-${clusterId}`] = el;
+                                  }}
+                                  sx={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'space-between',
+                                    p: 1.5,
+                                    mb: 1,
+                                    minHeight: '90px',
+                                    height: '100%',
+                                    borderLeft: '4px solid',
+                                    borderColor: theme.palette.info.main,
+                                    backgroundColor: alpha(theme.palette.info.main, 0.1),
+                                    transition: 'all 0.2s',
+                                    cursor: 'pointer',
+                                    '&:hover': { 
+                                      transform: 'translateY(-2px)', 
+                                      boxShadow: 3 
+                                    }
+                                  }}
+                                  data-item-type="cluster"
+                                  data-item-id={clusterId}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCanvasItemClick('cluster', clusterId);
+                                  }}
+                                >
+                                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                    <KubernetesIcon type="cluster" size={16} sx={{ mr: 1 }} />
+                                    <Typography variant="body2" component="div" sx={{ 
+                                      fontWeight: 'medium',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap'
+                                    }}>
+                                      {labelInfo ? `${labelInfo.key}` : clusterId}
+                                    </Typography>
                                   </Box>
-                                )}
-                              </Paper>
-                            );
-                          })}
+                                  
+                                  {/* For label-based items, show the value */}
+                                  {labelInfo && (
+                                    <Box sx={{ mb: 1 }}>
+                                      <Chip 
+                                        label={labelInfo.value}
+                                        size="small"
+                                        variant="outlined"
+                                        sx={{ 
+                                          fontSize: '0.75rem',
+                                          maxWidth: '100%',
+                                          '& .MuiChip-label': { 
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis'
+                                          }
+                                        }}
+                                      />
+                                    </Box>
+                                  )}
+                                  
+                                  {/* Show count of matching clusters */}
+                                  {labelInfo && (
+                                    <Typography variant="caption" color="text.secondary">
+                                      Matches: {matchingClusters.length} cluster(s)
+                                    </Typography>
+                                  )}
+                                  
+                                  {/* For individual clusters, show labels */}
+                                  {!labelInfo && matchingClusters[0]?.labels && (
+                                    <Box sx={{ mt: 'auto' }}>
+                                      <Divider sx={{ my: 0.5 }} />
+                                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                                        {Object.entries(matchingClusters[0].labels).slice(0, 2).map(([key, value]) => (
+                                          <Chip 
+                                            key={key} 
+                                            label={`${key.split('/').pop()}: ${value}`} 
+                                            size="small" 
+                                            sx={{ 
+                                              fontSize: '0.6rem', 
+                                              height: 16, 
+                                              '& .MuiChip-label': { px: 0.5, py: 0 } 
+                                            }} 
+                                          />
+                                        ))}
+                                        {Object.keys(matchingClusters[0].labels).length > 2 && (
+                                          <Chip 
+                                            label={`+${Object.keys(matchingClusters[0].labels).length - 2}`} 
+                                            size="small" 
+                                            sx={{ 
+                                              fontSize: '0.6rem', 
+                                              height: 16, 
+                                              '& .MuiChip-label': { px: 0.5, py: 0 } 
+                                            }} 
+                                          />
+                                        )}
+                                      </Box>
+                                    </Box>
+                                  )}
+                                </Paper>
+                              );
+                            })}
                         </Box>
                       ) : (
                         <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 2 }}>
@@ -1186,99 +1313,140 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                           {policyCanvasEntities.workloads
                             .filter(workloadId => workloadId.toLowerCase().includes(workloadFilter.toLowerCase()))
                             .map((workloadId) => {
-                            const workload = workloads.find(w => w.name === workloadId);
-                            return (
-                              <Paper
-                                key={`workload-section-${workloadId}`}
-                                elevation={2}
-                                ref={(el) => {
-                                  if (el) elementsRef.current[`workload-${workloadId}`] = el;
-                                }}
-                                sx={{
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  justifyContent: 'space-between',
-                                  p: 1.5,
-                                  mb: 1,
-                                  minHeight: '90px',
-                                  height: '100%',
-                                  borderLeft: '4px solid',
-                                  borderColor: theme.palette.success.main,
-                                  backgroundColor: alpha(theme.palette.success.main, 0.1),
-                                  transition: 'all 0.2s',
-                                  cursor: 'pointer',
-                                  '&:hover': { 
-                                    transform: 'translateY(-2px)', 
-                                    boxShadow: 3 
-                                  }
-                                }}
-                                data-item-type="workload"
-                                data-item-id={workloadId}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleCanvasItemClick('workload', workloadId);
-                                }}
-                              >
-                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                  <KubernetesIcon type="workload" size={16} sx={{ mr: 1 }} />
-                                  <Typography variant="body2" component="div" sx={{ 
-                                    fontWeight: 'medium',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap'
-                                  }}>
-                                    {workloadId}
-                                  </Typography>
-                                </Box>
-                                <Typography variant="caption" color="text.secondary" sx={{ 
-                                  display: 'block',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap'
-                                }}>
-                                  Type: {workload?.kind || 'Unknown'}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary" sx={{ 
-                                  display: 'block',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap'
-                                }}>
-                                  Namespace: {workload?.namespace || 'default'}
-                                </Typography>
-                                {workload && workload.labels && Object.keys(workload.labels).length > 0 && (
-                                  <Box sx={{ mt: 'auto' }}>
-                                    <Divider sx={{ my: 0.5 }} />
-                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
-                                      {Object.entries(workload.labels).slice(0, 2).map(([key, value]) => (
-                                        <Chip 
-                                          key={key} 
-                                          label={`${key}: ${value}`} 
-                                          size="small" 
-                                          sx={{ 
-                                            fontSize: '0.6rem', 
-                                            height: 16, 
-                                            '& .MuiChip-label': { px: 0.5, py: 0 } 
-                                          }} 
-                                        />
-                                      ))}
-                                      {Object.keys(workload.labels).length > 2 && (
-                                        <Chip 
-                                          label={`+${Object.keys(workload.labels).length - 2}`} 
-                                          size="small"
-                                          sx={{ 
-                                            fontSize: '0.6rem', 
-                                            height: 16, 
-                                            '& .MuiChip-label': { px: 0.5, py: 0 } 
-                                          }} 
-                                        />
-                                      )}
-                                    </Box>
+                              // Extract label information if this is a label-based item
+                              const labelInfo = extractLabelInfo(workloadId);
+                              
+                              // Find matching workloads if this is a label
+                              const matchingWorkloads = labelInfo 
+                                ? getWorkloadsForLabel(workloads, labelInfo.key, labelInfo.value) 
+                                : workloads.filter(w => w.name === workloadId);
+                                
+                              if (matchingWorkloads.length === 0) return null;
+                              
+                              return (
+                                <Paper
+                                  key={`workload-section-${workloadId}`}
+                                  elevation={2}
+                                  ref={(el) => {
+                                    if (el) elementsRef.current[`workload-${workloadId}`] = el;
+                                  }}
+                                  sx={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'space-between',
+                                    p: 1.5,
+                                    mb: 1,
+                                    minHeight: '90px',
+                                    height: '100%',
+                                    borderLeft: '4px solid',
+                                    borderColor: theme.palette.success.main,
+                                    backgroundColor: alpha(theme.palette.success.main, 0.1),
+                                    transition: 'all 0.2s',
+                                    cursor: 'pointer',
+                                    '&:hover': { 
+                                      transform: 'translateY(-2px)', 
+                                      boxShadow: 3 
+                                    }
+                                  }}
+                                  data-item-type="workload"
+                                  data-item-id={workloadId}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCanvasItemClick('workload', workloadId);
+                                  }}
+                                >
+                                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                    <KubernetesIcon type="workload" size={16} sx={{ mr: 1 }} />
+                                    <Typography variant="body2" component="div" sx={{ 
+                                      fontWeight: 'medium',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap'
+                                    }}>
+                                      {labelInfo ? `${labelInfo.key}` : workloadId}
+                                    </Typography>
                                   </Box>
-                                )}
-                              </Paper>
-                            );
-                          })}
+                                  
+                                  {/* For label-based items, show the value */}
+                                  {labelInfo && (
+                                    <Box sx={{ mb: 1 }}>
+                                      <Chip 
+                                        label={labelInfo.value}
+                                        size="small"
+                                        variant="outlined"
+                                        sx={{ 
+                                          fontSize: '0.75rem',
+                                          maxWidth: '100%',
+                                          '& .MuiChip-label': { 
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis'
+                                          }
+                                        }}
+                                      />
+                                    </Box>
+                                  )}
+                                  
+                                  {/* Show count of matching workloads */}
+                                  {labelInfo && (
+                                    <Typography variant="caption" color="text.secondary">
+                                      Matches: {matchingWorkloads.length} workload(s)
+                                    </Typography>
+                                  )}
+                                  
+                                  {/* For individual workloads, show details */}
+                                  {!labelInfo && matchingWorkloads[0] && (
+                                    <>
+                                      <Typography variant="caption" color="text.secondary" sx={{ 
+                                        display: 'block',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap'
+                                      }}>
+                                        Type: {matchingWorkloads[0]?.kind || 'Unknown'}
+                                      </Typography>
+                                      <Typography variant="caption" color="text.secondary" sx={{ 
+                                        display: 'block',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap'
+                                      }}>
+                                        Namespace: {matchingWorkloads[0]?.namespace || 'default'}
+                                      </Typography>
+                                      {matchingWorkloads[0]?.labels && Object.keys(matchingWorkloads[0].labels).length > 0 && (
+                                        <Box sx={{ mt: 'auto' }}>
+                                          <Divider sx={{ my: 0.5 }} />
+                                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                                            {Object.entries(matchingWorkloads[0].labels).slice(0, 2).map(([key, value]) => (
+                                              <Chip 
+                                                key={key} 
+                                                label={`${key}: ${value}`} 
+                                                size="small" 
+                                                sx={{ 
+                                                  fontSize: '0.6rem', 
+                                                  height: 16, 
+                                                  '& .MuiChip-label': { px: 0.5, py: 0 } 
+                                                }} 
+                                              />
+                                            ))}
+                                            {Object.keys(matchingWorkloads[0].labels).length > 2 && (
+                                              <Chip 
+                                                label={`+${Object.keys(matchingWorkloads[0].labels).length - 2}`} 
+                                                size="small"
+                                                sx={{ 
+                                                  fontSize: '0.6rem', 
+                                                  height: 16, 
+                                                  '& .MuiChip-label': { px: 0.5, py: 0 } 
+                                                }} 
+                                              />
+                                            )}
+                                          </Box>
+                                        </Box>
+                                      )}
+                                    </>
+                                  )}
+                                </Paper>
+                              );
+                            })}
                         </Box>
                       ) : (
                         <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 2 }}>
@@ -1307,7 +1475,6 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                 workloads={workloads}
                 canvasEntities={policyCanvasEntities}
                 assignmentMap={policyAssignmentMap}
-                getItemLabels={getPolicyItemLabels}
                 removeFromCanvas={removeFromPolicyCanvas}
                 elementsRef={elementsRef}
                 connectionLines={connectionLines}

@@ -23,9 +23,6 @@ import {
 } from '@mui/material';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import TuneIcon from '@mui/icons-material/Tune';
-import SaveIcon from '@mui/icons-material/Save';
 import PublishIcon from '@mui/icons-material/Publish';
 
 interface PolicyDragDropProps {
@@ -74,7 +71,7 @@ const HelpDialog: React.FC<{open: boolean, onClose: () => void}> = ({open, onClo
         <Typography paragraph sx={{ 
           color: isDarkMode ? "rgba(255, 255, 255, 0.9)" : undefined 
         }}>
-          Follow these steps to create binding policies using the drag & drop interface:
+          Follow these steps to create binding policies using the label-based drag & drop interface:
         </Typography>
         <List>
           <ListItem>
@@ -84,63 +81,12 @@ const HelpDialog: React.FC<{open: boolean, onClose: () => void}> = ({open, onClo
             <ListItemText 
               primary={
                 <Typography sx={{ color: isDarkMode ? "rgba(255, 255, 255, 0.9)" : undefined }}>
-                  1. Drag clusters and workloads
+                  1. Drag labels to the canvas
                 </Typography>
               }
               secondary={
                 <Typography variant="body2" sx={{ color: isDarkMode ? "rgba(255, 255, 255, 0.7)" : undefined }}>
-                  Drag clusters from the left panel and workloads from the right panel onto the canvas area
-                </Typography>
-              }
-            />
-          </ListItem>
-          <ListItem>
-            <ListItemIcon>
-              <ArrowForwardIcon color={isDarkMode ? "info" : "primary"} />
-            </ListItemIcon>
-            <ListItemText 
-              primary={
-                <Typography sx={{ color: isDarkMode ? "rgba(255, 255, 255, 0.9)" : undefined }}>
-                  2. Create connections
-                </Typography>
-              }
-              secondary={
-                <Typography variant="body2" sx={{ color: isDarkMode ? "rgba(255, 255, 255, 0.7)" : undefined }}>
-                  Click on a workload first, then click on a cluster to create a direct connection between them
-                </Typography>
-              }
-            />
-          </ListItem>
-          <ListItem>
-            <ListItemIcon>
-              <TuneIcon color={isDarkMode ? "info" : "primary"} />
-            </ListItemIcon>
-            <ListItemText 
-              primary={
-                <Typography sx={{ color: isDarkMode ? "rgba(255, 255, 255, 0.9)" : undefined }}>
-                  3. Configure your policy
-                </Typography>
-              }
-              secondary={
-                <Typography variant="body2" sx={{ color: isDarkMode ? "rgba(255, 255, 255, 0.7)" : undefined }}>
-                  Fill in the details like name, namespace, propagation mode, and update strategy
-                </Typography>
-              }
-            />
-          </ListItem>
-          <ListItem>
-            <ListItemIcon>
-              <SaveIcon color={isDarkMode ? "info" : "primary"} />
-            </ListItemIcon>
-            <ListItemText 
-              primary={
-                <Typography sx={{ color: isDarkMode ? "rgba(255, 255, 255, 0.9)" : undefined }}>
-                  4. Create each policy
-                </Typography>
-              }
-              secondary={
-                <Typography variant="body2" sx={{ color: isDarkMode ? "rgba(255, 255, 255, 0.7)" : undefined }}>
-                  Click 'Create Policy' to save individual connections
+                  Drag cluster labels from the left panel and workload labels from the right panel onto the binding policy canvas
                 </Typography>
               }
             />
@@ -152,12 +98,12 @@ const HelpDialog: React.FC<{open: boolean, onClose: () => void}> = ({open, onClo
             <ListItemText 
               primary={
                 <Typography sx={{ color: isDarkMode ? "rgba(255, 255, 255, 0.9)" : undefined }}>
-                  5. Deploy your policies
+                  2. Deploy your policies
                 </Typography>
               }
               secondary={
                 <Typography variant="body2" sx={{ color: isDarkMode ? "rgba(255, 255, 255, 0.7)" : undefined }}>
-                  When done creating all connections, click 'Deploy Binding Policies' to deploy all connections at once
+                  Click 'Deploy Binding Policies' to create and deploy binding policies that connect workloads to clusters based on the labels
                 </Typography>
               }
             />
@@ -171,7 +117,7 @@ const HelpDialog: React.FC<{open: boolean, onClose: () => void}> = ({open, onClo
             color: isDarkMode ? "rgba(255, 255, 255, 0.7)" : "text.secondary"
           }}
         >
-          Tip: You can preview the YAML for each connection by switching to the 'Preview YAML' tab in the policy creation dialog.
+          Tip: The label-based approach allows you to create powerful binding policies that automatically apply to all resources matching the selected labels, both now and in the future.
         </Typography>
       </DialogContent>
       <DialogActions sx={{
