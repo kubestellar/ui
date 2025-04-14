@@ -34,12 +34,12 @@ var watcherCount atomic.Int32
 
 // WatchEvent represents a change event from the Kubernetes API
 type WatchEvent struct {
-	Type      string      `json:"type"`
-	Object    interface{} `json:"object"`
-	Namespace string      `json:"namespace,omitempty"`
-	Resource  string      `json:"resource,omitempty"`
-	Labels    map[string]string `json:"labels,omitempty"`
-	LabelCount int         `json:"labelCount,omitempty"`
+	Type       string            `json:"type"`
+	Object     interface{}       `json:"object"`
+	Namespace  string            `json:"namespace,omitempty"`
+	Resource   string            `json:"resource,omitempty"`
+	Labels     map[string]string `json:"labels,omitempty"`
+	LabelCount int               `json:"labelCount,omitempty"`
 }
 
 // Key function to fix event processing
@@ -50,23 +50,23 @@ func sendEvent(conn *websocket.Conn, event WatchEvent) bool {
 		log.Printf("Error marshaling event: %v", err)
 		return true
 	}
-	
+
 	// Set write deadline to prevent blocking
 	conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
-	
+
 	// Send the event to the WebSocket client
 	if err := conn.WriteMessage(websocket.TextMessage, jsonData); err != nil {
 		log.Printf("Error sending event to WebSocket: %v", err)
 		return false
 	}
-	
+
 	return true
 }
 
 // NamespaceWebSocketHandler handles WebSocket connections with real-time updates
 func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("WebSocket connection requested")
-	
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("Failed to upgrade connection: %v", err)
@@ -74,7 +74,7 @@ func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer conn.Close()
-	
+
 	log.Println("WebSocket connection established")
 
 	// Create context for the connection
@@ -115,7 +115,7 @@ func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Buffer channel for events
 	eventCh := make(chan WatchEvent, 500)
-	
+
 	// Start namespace watcher
 	go watchNamespaces(ctx, eventCh)
 
@@ -125,10 +125,10 @@ func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		for _, ns := range namespaces {
 			if !shouldHideNamespace(ns) {
 				go watchNamespaceResources(ctx, eventCh, ns)
-				
+
 				// Send immediate resource data for this namespace
 				go sendInitialResourceData(ctx, eventCh, ns)
-				
+
 				// Small delay to avoid overwhelming the client
 				time.Sleep(200 * time.Millisecond)
 			}
@@ -138,33 +138,33 @@ func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	// Set up heartbeat ticker
 	heartbeatTicker := time.NewTicker(15 * time.Second)
 	defer heartbeatTicker.Stop()
-	
+
 	// Counter for processed events
 	var eventCount atomic.Int32
-	
+
 	// Main event loop
 	for {
 		select {
 		case <-ctx.Done():
 			return
-			
+
 		case event := <-eventCh:
 			// Process the event
 			eventCount.Add(1)
-			
+
 			// Send the event to the client
 			if !sendEvent(conn, event) {
 				return
 			}
-			
+
 		case <-heartbeatTicker.C:
 			// Send heartbeat with stats
 			if !sendEvent(conn, WatchEvent{
 				Type: "STATUS",
 				Object: map[string]interface{}{
-					"activeWatchers": watcherCount.Load(),
+					"activeWatchers":  watcherCount.Load(),
 					"eventsProcessed": eventCount.Load(),
-					"timestamp": time.Now().Unix(),
+					"timestamp":       time.Now().Unix(),
 				},
 			}) {
 				return
@@ -176,14 +176,14 @@ func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 // Key function to immediately send resource data
 func sendInitialResourceData(ctx context.Context, eventCh chan<- WatchEvent, namespace string) {
 	log.Printf("Sending initial resource data for namespace: %s", namespace)
-	
+
 	// Get client
 	_, dynamicClient, err := k8s.GetClientSet()
 	if err != nil {
 		log.Printf("Failed to get client for namespace %s: %v", namespace, err)
 		return
 	}
-	
+
 	// Get high priority resources
 	resources, err := getWatchableResources()
 	if err != nil {
@@ -194,7 +194,7 @@ func sendInitialResourceData(ctx context.Context, eventCh chan<- WatchEvent, nam
 			{Group: "", Version: "v1", Resource: "services"},
 		}
 	}
-	
+
 	// Only use high priority resources for initial data
 	highPriorityResources := []schema.GroupVersionResource{}
 	for _, gvr := range resources {
@@ -203,46 +203,46 @@ func sendInitialResourceData(ctx context.Context, eventCh chan<- WatchEvent, nam
 			highPriorityResources = append(highPriorityResources, gvr)
 		}
 	}
-	
+
 	// List resources and send them directly
 	for _, gvr := range highPriorityResources {
 		// Skip if context is canceled
 		if ctx.Err() != nil {
 			return
 		}
-		
+
 		resourceKey := fmt.Sprintf("%s.%s/%s", gvr.Group, gvr.Version, gvr.Resource)
-		
+
 		// List resources
 		list, err := dynamicClient.Resource(gvr).Namespace(namespace).List(ctx, metav1.ListOptions{})
 		if err != nil {
 			log.Printf("Failed to list %s in %s: %v", resourceKey, namespace, err)
 			continue
 		}
-		
+
 		// Skip if empty
 		if len(list.Items) == 0 {
 			continue
 		}
-		
+
 		log.Printf("Found %d %s in namespace %s", len(list.Items), resourceKey, namespace)
-		
+
 		// Send each item as an ADDED event
 		for _, item := range list.Items {
 			labels := item.GetLabels()
 			if labels == nil {
 				labels = make(map[string]string)
 			}
-			
+
 			event := WatchEvent{
-				Type:      "ADDED",
-				Object:    item.Object,
-				Namespace: namespace,
-				Resource:  resourceKey,
-				Labels:    labels,
+				Type:       "ADDED",
+				Object:     item.Object,
+				Namespace:  namespace,
+				Resource:   resourceKey,
+				Labels:     labels,
 				LabelCount: len(labels),
 			}
-			
+
 			// Try to send the event
 			select {
 			case eventCh <- event:
@@ -253,36 +253,36 @@ func sendInitialResourceData(ctx context.Context, eventCh chan<- WatchEvent, nam
 				// Channel full, discard
 				log.Printf("Event channel full, discarding event for %s in %s", resourceKey, namespace)
 			}
-			
+
 			// Small delay to avoid flooding
 			time.Sleep(10 * time.Millisecond)
 		}
-		
+
 		// Delay between resource types
 		time.Sleep(100 * time.Millisecond)
 	}
-	
+
 	log.Printf("Completed initial data for namespace: %s", namespace)
 }
 
 // watchNamespaces watches for namespace changes
 func watchNamespaces(ctx context.Context, eventCh chan<- WatchEvent) {
 	watcherKey := "namespaces-watcher"
-	
+
 	if _, exists := activeWatchers.LoadOrStore(watcherKey, true); exists {
 		<-ctx.Done()
 		return
 	}
-	
+
 	defer activeWatchers.Delete(watcherKey)
 	watcherCount.Add(1)
 	defer watcherCount.Add(-1)
-	
+
 	log.Println("Starting namespace watcher")
-	
+
 	backoff := 1 * time.Second
 	maxBackoff := 30 * time.Second
-	
+
 	for {
 		if ctx.Err() != nil {
 			return
@@ -294,7 +294,7 @@ func watchNamespaces(ctx context.Context, eventCh chan<- WatchEvent) {
 			backoff = min(backoff*2, maxBackoff)
 			continue
 		}
-		
+
 		backoff = 1 * time.Second
 
 		watcher, err := clientset.CoreV1().Namespaces().Watch(ctx, metav1.ListOptions{
@@ -315,14 +315,14 @@ func watchNamespaces(ctx context.Context, eventCh chan<- WatchEvent) {
 			if ns, ok := event.Object.(*corev1.Namespace); ok {
 				nsName := ns.GetName()
 				labels := ns.GetLabels()
-				
+
 				select {
 				case eventCh <- WatchEvent{
-					Type:      string(event.Type),
-					Object:    ns,
-					Namespace: nsName,
-					Resource:  "v1/namespaces",
-					Labels:    labels,
+					Type:       string(event.Type),
+					Object:     ns,
+					Namespace:  nsName,
+					Resource:   "v1/namespaces",
+					Labels:     labels,
 					LabelCount: len(labels),
 				}:
 					// Event sent
@@ -351,14 +351,14 @@ func watchNamespaces(ctx context.Context, eventCh chan<- WatchEvent) {
 // watchNamespaceResources watches for resource changes in a specific namespace
 func watchNamespaceResources(ctx context.Context, eventCh chan<- WatchEvent, namespace string) {
 	watcherKey := "namespace-resources-" + namespace
-	
+
 	if _, exists := activeWatchers.LoadOrStore(watcherKey, true); exists {
 		<-ctx.Done()
 		return
 	}
-	
+
 	defer activeWatchers.Delete(watcherKey)
-	
+
 	log.Printf("Starting resource watchers for namespace: %s", namespace)
 
 	_, dynamicClient, err := k8s.GetClientSet()
@@ -379,10 +379,10 @@ func watchNamespaceResources(ctx context.Context, eventCh chan<- WatchEvent, nam
 	// Process in batches to avoid throttling
 	highPriorityResources := []schema.GroupVersionResource{}
 	mediumPriorityResources := []schema.GroupVersionResource{}
-	
+
 	for _, gvr := range resources {
 		resourceKey := fmt.Sprintf("%s.%s/%s", gvr.Group, gvr.Version, gvr.Resource)
-		
+
 		if isHighPriorityResource(resourceKey) {
 			highPriorityResources = append(highPriorityResources, gvr)
 		} else if isMediumFrequencyResource(resourceKey) {
@@ -393,15 +393,15 @@ func watchNamespaceResources(ctx context.Context, eventCh chan<- WatchEvent, nam
 	// Create resource watchers limited by semaphore
 	maxConcurrentWatches := 3
 	semaphore := make(chan struct{}, maxConcurrentWatches)
-	
+
 	// Start high priority watchers first
 	for _, gvr := range highPriorityResources {
 		if ctx.Err() != nil {
 			return
 		}
-		
+
 		resourceKey := fmt.Sprintf("%s.%s/%s", gvr.Group, gvr.Version, gvr.Resource)
-		
+
 		// Acquire semaphore
 		select {
 		case semaphore <- struct{}{}:
@@ -409,22 +409,22 @@ func watchNamespaceResources(ctx context.Context, eventCh chan<- WatchEvent, nam
 		case <-ctx.Done():
 			return
 		}
-		
+
 		watcherCount.Add(1)
-		
+
 		go func(g schema.GroupVersionResource, rKey string) {
 			defer func() {
 				<-semaphore
 				watcherCount.Add(-1)
 			}()
-			
+
 			watchSingleResource(ctx, dynamicClient, eventCh, namespace, g)
 		}(gvr, resourceKey)
-		
+
 		// Small delay between watchers
 		time.Sleep(200 * time.Millisecond)
 	}
-	
+
 	// Wait before starting medium priority watchers
 	select {
 	case <-ctx.Done():
@@ -432,15 +432,15 @@ func watchNamespaceResources(ctx context.Context, eventCh chan<- WatchEvent, nam
 	case <-time.After(2 * time.Second):
 		// Continue
 	}
-	
+
 	// Start medium priority watchers
 	for _, gvr := range mediumPriorityResources {
 		if ctx.Err() != nil {
 			return
 		}
-		
+
 		resourceKey := fmt.Sprintf("%s.%s/%s", gvr.Group, gvr.Version, gvr.Resource)
-		
+
 		// Acquire semaphore
 		select {
 		case semaphore <- struct{}{}:
@@ -448,18 +448,18 @@ func watchNamespaceResources(ctx context.Context, eventCh chan<- WatchEvent, nam
 		case <-ctx.Done():
 			return
 		}
-		
+
 		watcherCount.Add(1)
-		
+
 		go func(g schema.GroupVersionResource, rKey string) {
 			defer func() {
 				<-semaphore
 				watcherCount.Add(-1)
 			}()
-			
+
 			watchSingleResource(ctx, dynamicClient, eventCh, namespace, g)
 		}(gvr, resourceKey)
-		
+
 		// Larger delay for medium priority
 		time.Sleep(500 * time.Millisecond)
 	}
@@ -479,10 +479,10 @@ func watchSingleResource(
 	gvr schema.GroupVersionResource,
 ) {
 	resourceKey := fmt.Sprintf("%s.%s/%s", gvr.Group, gvr.Version, gvr.Resource)
-	
+
 	// Track resource labels to detect changes
 	resourceLabels := make(map[string]map[string]string)
-	
+
 	backoff := 1 * time.Second
 	maxBackoff := 30 * time.Second
 
@@ -498,17 +498,17 @@ func watchSingleResource(
 		watcher, err := resourceClient.Watch(ctx, metav1.ListOptions{
 			TimeoutSeconds: pointer(int64(60)),
 		})
-		
+
 		if err != nil {
 			if isPermissionError(err) || isNotSupportedError(err) {
 				return
 			}
-			
+
 			time.Sleep(backoff)
 			backoff = min(backoff*2, maxBackoff)
 			continue
 		}
-		
+
 		log.Printf("Watch established for %s in namespace %s", resourceKey, namespace)
 		backoff = 1 * time.Second
 
@@ -517,32 +517,32 @@ func watchSingleResource(
 				watcher.Stop()
 				return
 			}
-			
+
 			// Process the event
 			obj, ok := event.Object.(*unstructured.Unstructured)
 			if !ok {
 				continue
 			}
-			
+
 			resourceName := obj.GetName()
 			labels := obj.GetLabels()
 			if labels == nil {
 				labels = make(map[string]string)
 			}
-			
+
 			// Check for label changes
 			if event.Type == watch.Modified || event.Type == watch.Added {
 				previousLabels, exists := resourceLabels[resourceName]
-				
+
 				if exists && event.Type == watch.Modified && labelsChanged(previousLabels, labels) {
 					// Send label change event
 					select {
 					case eventCh <- WatchEvent{
-						Type:      "RESOURCE_LABEL_CHANGED",
-						Object:    labels,
-						Namespace: namespace,
-						Resource:  fmt.Sprintf("%s/%s", resourceKey, resourceName),
-						Labels:    labels,
+						Type:       "RESOURCE_LABEL_CHANGED",
+						Object:     labels,
+						Namespace:  namespace,
+						Resource:   fmt.Sprintf("%s/%s", resourceKey, resourceName),
+						Labels:     labels,
 						LabelCount: len(labels),
 					}:
 						// Label event sent
@@ -553,7 +553,7 @@ func watchSingleResource(
 						// Channel full, skip
 					}
 				}
-				
+
 				resourceLabels[resourceName] = labels
 			} else if event.Type == watch.Deleted {
 				delete(resourceLabels, resourceName)
@@ -562,11 +562,11 @@ func watchSingleResource(
 			// Send standard event
 			select {
 			case eventCh <- WatchEvent{
-				Type:      string(event.Type),
-				Object:    obj.Object,  // Important: use obj.Object, not just obj
-				Namespace: namespace,
-				Resource:  resourceKey,
-				Labels:    labels,
+				Type:       string(event.Type),
+				Object:     obj.Object, // Important: use obj.Object, not just obj
+				Namespace:  namespace,
+				Resource:   resourceKey,
+				Labels:     labels,
 				LabelCount: len(labels),
 			}:
 				// Event sent
@@ -587,70 +587,70 @@ func watchSingleResource(
 // watchNamespaceLabels watches for label changes on a specific namespace
 func watchNamespaceLabels(ctx context.Context, eventCh chan<- WatchEvent, namespace string) {
 	watcherKey := "namespace-labels-" + namespace
-	
+
 	if _, exists := activeWatchers.LoadOrStore(watcherKey, true); exists {
 		<-ctx.Done()
 		return
 	}
-	
+
 	defer activeWatchers.Delete(watcherKey)
 	watcherCount.Add(1)
 	defer watcherCount.Add(-1)
-	
+
 	var previousLabels map[string]string
-	
+
 	backoff := 1 * time.Second
 	maxBackoff := 30 * time.Second
-	
+
 	for {
 		if ctx.Err() != nil {
 			return
 		}
-		
+
 		clientset, _, err := k8s.GetClientSet()
 		if err != nil {
 			time.Sleep(backoff)
 			backoff = min(backoff*2, maxBackoff)
 			continue
 		}
-		
+
 		backoff = 1 * time.Second
-		
+
 		watcher, err := clientset.CoreV1().Namespaces().Watch(ctx, metav1.ListOptions{
 			FieldSelector:  "metadata.name=" + namespace,
 			TimeoutSeconds: pointer(int64(300)),
 		})
-		
+
 		if err != nil {
 			time.Sleep(backoff)
 			backoff = min(backoff*2, maxBackoff)
 			continue
 		}
-		
+
 		backoff = 1 * time.Second
-		
+
 		for event := range watcher.ResultChan() {
 			if ctx.Err() != nil {
 				watcher.Stop()
 				return
 			}
-			
+
 			if ns, ok := event.Object.(*v1.Namespace); ok {
 				if ns.GetName() != namespace {
 					continue
 				}
-				
+
 				currentLabels := ns.GetLabels()
-				
+
 				if previousLabels != nil && event.Type == watch.Modified {
 					if labelsChanged(previousLabels, currentLabels) {
 						select {
 						case eventCh <- WatchEvent{
-							Type:      "LABEL_CHANGED",
-							Object:    currentLabels,
-							Namespace: namespace,
-							Resource:  "namespace.labels",
-							Labels:    currentLabels,
+							Type:       "LABEL_CHANGED",
+							Object:     currentLabels,
+							Namespace:  namespace,
+							Resource:   "namespace.labels",
+							Labels:     currentLabels,
 							LabelCount: len(currentLabels),
 						}:
 							// Event sent
@@ -662,15 +662,15 @@ func watchNamespaceLabels(ctx context.Context, eventCh chan<- WatchEvent, namesp
 						}
 					}
 				}
-				
+
 				previousLabels = currentLabels
-				
+
 				if event.Type == watch.Deleted {
 					return
 				}
 			}
 		}
-		
+
 		time.Sleep(2 * time.Second)
 	}
 }
@@ -682,7 +682,7 @@ func getWatchableResources() ([]schema.GroupVersionResource, error) {
 	if err == nil {
 		return cachedGVRs, nil
 	}
-	
+
 	clientset, _, err := k8s.GetClientSet()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get clientset: %w", err)
@@ -725,7 +725,7 @@ func getWatchableResources() ([]schema.GroupVersionResource, error) {
 			}
 
 			resourceKey := fmt.Sprintf("%s.%s/%s", gv.Group, gv.Version, apiResource.Name)
-			
+
 			// Skip resources known to cause issues
 			if shouldSkipResource(resourceKey) {
 				continue
@@ -748,9 +748,9 @@ func getWatchableResources() ([]schema.GroupVersionResource, error) {
 	}
 
 	// Combine with high priority first
-	result := make([]schema.GroupVersionResource, 0, 
-		len(highPriorityResources) + len(normalPriorityResources) + len(lowPriorityResources))
-	
+	result := make([]schema.GroupVersionResource, 0,
+		len(highPriorityResources)+len(normalPriorityResources)+len(lowPriorityResources))
+
 	result = append(result, highPriorityResources...)
 	result = append(result, normalPriorityResources...)
 	result = append(result, lowPriorityResources...)
@@ -768,12 +768,12 @@ func getResourcesFromCache() ([]schema.GroupVersionResource, error) {
 	if err != nil || cachedResources == "" {
 		return nil, fmt.Errorf("resources not in cache")
 	}
-	
+
 	var result []schema.GroupVersionResource
 	if err := json.Unmarshal([]byte(cachedResources), &result); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal cached resources: %w", err)
 	}
-	
+
 	return result, nil
 }
 
@@ -783,7 +783,7 @@ func cacheResources(resources []schema.GroupVersionResource) {
 	if err != nil {
 		return
 	}
-	
+
 	// Cache for 15 minutes using Redis
 	redis.SetNamespaceCache("watchable_resources", string(jsonData), 15*time.Minute)
 }
@@ -804,21 +804,21 @@ func labelsChanged(oldLabels, newLabels map[string]string) bool {
 	if len(oldLabels) != len(newLabels) {
 		return true
 	}
-	
+
 	// Check if any label value changed
 	for k, v := range newLabels {
 		if oldVal, exists := oldLabels[k]; !exists || oldVal != v {
 			return true
 		}
 	}
-	
+
 	// Check for removed labels
 	for k := range oldLabels {
 		if _, exists := newLabels[k]; !exists {
 			return true
 		}
 	}
-	
+
 	// No changes detected
 	return false
 }
@@ -840,7 +840,7 @@ func getLatestNamespaceData() (*WatchEvent, error) {
 
 	// Filter out system namespaces
 	visibleNamespaces := make([]corev1.Namespace, 0)
-	
+
 	for _, ns := range namespaces.Items {
 		if !shouldHideNamespace(ns.Name) {
 			visibleNamespaces = append(visibleNamespaces, ns)

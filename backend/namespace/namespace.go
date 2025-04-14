@@ -26,7 +26,6 @@ const (
 	maxConcurrentRequests = 5
 )
 
-
 // NamespaceDetails holds namespace information and resources
 type NamespaceDetails struct {
 	Name      string                                 `json:"name"`
@@ -128,7 +127,6 @@ func GetNamespaceResources(namespace string) (*ExtendedNamespaceDetails, error) 
 		CreationTimestamp: ns.CreationTimestamp.Time,
 	}, nil
 }
-
 
 // UpdateNamespace updates namespace labels
 func UpdateNamespace(namespaceName string, labels map[string]string) error {
@@ -528,7 +526,6 @@ func getFilteredNamespacedResources(clientset kubernetes.Interface) ([]*metav1.A
 	return filteredResources, nil
 }
 
-
 // NamespaceWebSocketHandler handles WebSocket connections with real-time updates
 // func NamespaceWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 // 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -562,7 +559,7 @@ func getFilteredNamespacedResources(clientset kubernetes.Interface) ([]*metav1.A
 
 // 	for {
 // 		select {var wg sync.WaitGroup
- // Ensure this is called on a valid WaitGroup
+// Ensure this is called on a valid WaitGroup
 // 		case <-done:
 // 			return // Stop if client disconnects
 // 		case <-ticker.C:
@@ -869,5 +866,3 @@ func containsVerb(verbs []string, verb string) bool {
 	}
 	return false
 }
-
-
