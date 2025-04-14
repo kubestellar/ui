@@ -375,7 +375,7 @@ const WecsTreeview = () => {
       newNodes: CustomNode[],
       newEdges: CustomEdge[]
     ) => {
-      const configquiz = getNodeConfig(type.toLowerCase());
+      const config = getNodeConfig(type.toLowerCase());
       const timeAgo = getTimeAgo(timestamp);
       const cachedNode = nodeCache.current.get(id);
 
@@ -387,8 +387,8 @@ const WecsTreeview = () => {
             label: (
               <NodeLabel
                 label={label}
-                icon={configquiz.icon}
-                dynamicText={configquiz.dynamicText}
+                icon={config.icon}
+                dynamicText={config.dynamicText}
                 status={status}
                 timeAgo={timeAgo}
                 resourceData={resourceData}
