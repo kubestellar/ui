@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Box, Grid, Button, Dialog, DialogTitle, DialogContent, DialogActions, Typography,  Paper, Chip } from '@mui/material';
-import { DragDropContext, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, DropResult, DragStart } from '@hello-pangea/dnd';
 import { BindingPolicyInfo, ManagedCluster, Workload } from '../../types/bindingPolicy';
 import { usePolicyDragDropStore, DragTypes } from '../../stores/policyDragDropStore';
 import PolicyCanvas from './PolicyCanvas';
@@ -20,7 +20,6 @@ const StrictModeDragDropContext: React.FC<React.ComponentProps<typeof DragDropCo
   const [enabled, setEnabled] = useState(false);
   
   useEffect(() => {
-    // Use requestAnimationFrame to delay rendering until after the first animation frame
     const animation = requestAnimationFrame(() => {
       setEnabled(true);
       console.log("🔄 DragDropContext enabled after animation frame");
@@ -66,57 +65,41 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
   });
 
   const theme = useTheme(state => state.theme);
-
-  // State for success notification
   const [successMessage, setSuccessMessage] = useState<string>("");
-  
-  // State for the configuration sidebar
   const [configSidebarOpen, setConfigSidebarOpen] = useState(false);
   const [selectedConnection, ] = useState<{
     source: { type: string; id: string; name: string };
     target: { type: string; id: string; name: string };
   } | undefined>(undefined);
-  
-  // Add state for YAML preview
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
   const [previewYaml, setPreviewYaml] = useState<string>("");
   const [currentConfig, setCurrentConfig] = useState<PolicyConfiguration | null>(null);
   const [currentWorkloadId, setCurrentWorkloadId] = useState<string>("");
   const [currentClusterId, setCurrentClusterId] = useState<string>("");
-  
-  // Add state to store the edited YAML for deployment
   const [, setEditedPolicyYaml] = useState<Record<string, string>>({});
   
   // Use refs to track if mounted and data fetched to prevent unnecessary renders
   const isMounted = useRef(true);
   const dataFetchedRef = useRef<boolean>(false);
-  
-  // Determine if we need to fetch data
   const needsFetchData = !propPolicies || !propClusters || !propWorkloads;
-  
-  // Memoize the onDataLoaded callback
   const handleDataLoaded = useCallback(() => {
     if (isMounted.current) {
       dataFetchedRef.current = true;
       console.log('🔄 Data loaded from hook');
     }
   }, []);
-  
-  // Always call the hook unconditionally
   const { 
     data: hookData,
     loading: hookLoading,
     error: hookError
   } = useKubestellarData({ 
     onDataLoaded: handleDataLoaded, 
-    skipFetch: !needsFetchData || dataFetchedRef.current // Use skipFetch parameter instead
+    skipFetch: !needsFetchData || dataFetchedRef.current 
   });
 
   const policies = React.useMemo(() => propPolicies || hookData.policies || [], [propPolicies, hookData.policies]);
   const clusters = React.useMemo(() => propClusters || hookData.clusters || [], [propClusters, hookData.clusters]);
   const workloads = React.useMemo(() => propWorkloads || hookData.workloads || [], [propWorkloads, hookData.workloads]);
-  
-  // If props are provided, we're not loading
   const loading = propPolicies && propClusters && propWorkloads 
     ? { policies: false, workloads: false, clusters: false }
     : hookLoading;
@@ -128,22 +111,14 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
   const addToCanvas = usePolicyDragDropStore(state => state.addToCanvas);
   const canvasEntities = usePolicyDragDropStore(state => state.canvasEntities);
   const onClearCanvas = usePolicyDragDropStore(state => state.clearCanvas);
-  
-
-  
-  // Add state for deployment confirmation dialog
   const [deploymentDialogOpen, setDeploymentDialogOpen] = useState(false);
   const [deploymentLoading, setDeploymentLoading] = useState(false);
   const [deploymentError, setDeploymentError] = useState<string | null>(null);
   const [policiesToDeploy, setPoliciesToDeploy] = useState<DeploymentPolicy[]>([]);
-  
-  // Import the generate YAML mutation
   const { useGenerateBindingPolicyYaml,  useQuickConnect } = useBPQueries();
   const generateYamlMutation = useGenerateBindingPolicyYaml();
   const quickConnectMutation = useQuickConnect();
 
-  
-  // Log component mount/unmount for debugging
   useEffect(() => {
     console.log('🔵 PolicyDragDropContainer component mounted');
     
@@ -153,7 +128,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     };
   }, []);
   
-  // Function to generate YAML preview wrapped in useCallback
+  // Function to generate YAML preview 
   const generateBindingPolicyPreview = useCallback(async (
     requestData: {
       workloadLabels: Record<string, string>,
@@ -168,10 +143,8 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     if (!config) return;
     
     try {
-      // Generate the YAML preview using the updated API format
       const generateYamlResponse = await generateYamlMutation.mutateAsync(requestData);
-      
-      // Update the preview YAML
+
       setPreviewYaml(generateYamlResponse.yaml);
       setShowPreviewDialog(true);
       
@@ -182,36 +155,197 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
       return null;
     }
   }, [generateYamlMutation, setPreviewYaml, setShowPreviewDialog, setDeploymentError]);
+
+  const extractLabelInfo = useCallback((labelId: string): { key: string, value: string } | null => {
+    if (!labelId.startsWith('label-')) return null;
+    
+    console.log(`Parsing label ID: ${labelId}`);
+    const labelPart = labelId.substring(6);
+    if (labelId === "label-location-group-edge") {
+      console.log(`Found known label "location-group-edge", returning key="location-group", value="edge"`);
+      return { key: "location-group", value: "edge" };
+    }
   
-  // Update the prepareForDeployment function to work without connections
+    const slashMatch = labelPart.match(/^(.+\/.+?)-(.+)$/);
+    if (slashMatch) {
+      const [, key, value] = slashMatch;
+      console.log(`Found label with slash in key: key="${key}", value="${value}"`);
+      return { key, value };
+    }
+    
+    if (labelPart.includes('=')) {
+      const [key, value] = labelPart.split('=');
+      console.log(`Found equals format "${key}=${value}"`);
+      return { key, value };
+    }
+    
+    if (labelPart.includes(':')) {
+      const [key, value] = labelPart.split(':');
+      console.log(`Found colon format "${key}:${value}"`);
+      return { key, value };
+    }
+    
+    const knownLabelPatterns = [
+      { pattern: 'location-group-edge', key: 'location-group', value: 'edge' },
+      { pattern: 'cluster.open-cluster-management.io/clusterset-default', key: 'cluster.open-cluster-management.io/clusterset', value: 'default' },
+      { pattern: 'feature.open-cluster-management.io/addon-addon-status-available', key: 'feature.open-cluster-management.io/addon-addon-status', value: 'available' }
+    ];
+    
+    for (const pattern of knownLabelPatterns) {
+      if (labelPart === pattern.pattern) {
+        console.log(`Matched known pattern "${pattern.pattern}", returning key="${pattern.key}", value="${pattern.value}"`);
+        return { key: pattern.key, value: pattern.value };
+      }
+    }
+    
+    const knownKeyPrefixes = ["app.kubernetes.io", "kubernetes.io", "location-group", "feature.open-cluster-management.io", "cluster.open-cluster-management.io"];
+    
+    for (const prefix of knownKeyPrefixes) {
+      if (labelPart.startsWith(`${prefix}-`)) {
+        const key = prefix;
+        const value = labelPart.substring(prefix.length + 1);
+        console.log(`Found known prefix "${prefix}", parsed as key="${key}", value="${value}"`);
+        return { key, value };
+      }
+    }
+    
+    if (labelPart.startsWith('name-')) {
+      const value = labelPart.substring(5);
+      console.log(`Found name label, returning key="name", value="${value}"`);
+      return { key: 'name', value };
+    }
+    const firstDashIndex = labelPart.indexOf('-');
+    if (firstDashIndex === -1) {
+      console.log(`No dash found in "${labelPart}", can't parse`);
+      return null;
+    }
+    
+    const key = labelPart.substring(0, firstDashIndex);
+    const value = labelPart.substring(firstDashIndex + 1);
+    
+    console.log(`Parsed using first dash: key="${key}", value="${value}"`);
+    return { key, value };
+  }, []);
+
+  // Helper function to find workloads matching a label
+  const findWorkloadsByLabel = useCallback((labelInfo: { key: string, value: string }): Workload[] => {
+    if (!labelInfo) return [];
+    
+    return workloads.filter(workload => 
+      workload.labels && 
+      workload.labels[labelInfo.key] === labelInfo.value
+    );
+  }, [workloads]);
+
+  // Helper function to find clusters matching a label
+  const findClustersByLabel = useCallback((labelInfo: { key: string, value: string }): ManagedCluster[] => {
+    if (!labelInfo) return [];
+    
+    console.log(`Looking for clusters with label: ${labelInfo.key}=${labelInfo.value}`);
+    console.log(`Available clusters:`, clusters.map(c => ({ name: c.name, labels: c.labels })));
+    
+    const matchingClusters = clusters.filter(cluster => {
+      const hasMatchingLabel = cluster.labels && 
+        cluster.labels[labelInfo.key] === labelInfo.value;
+      
+      console.log(`Cluster ${cluster.name} ${hasMatchingLabel ? 'MATCHES' : 'does NOT match'} label ${labelInfo.key}=${labelInfo.value}`);
+      
+      return hasMatchingLabel;
+    });
+    
+    console.log(`Found ${matchingClusters.length} matching clusters:`, matchingClusters.map(c => c.name));
+    
+    return matchingClusters;
+  }, [clusters]);
+
+  // Helper function to generate resources array from workload
+  const generateResourcesFromWorkload = useCallback((workload: Workload) => {
+    console.log('🔍 DEBUG - Generating resources from workload:', workload);
+    
+    const resources = [];
+    resources.push({ type: 'namespaces', createOnly: true });
+    
+    if (workload.kind) {
+      const kindLower = workload.kind.toLowerCase();
+      let resourceType = kindLower;
+      
+      if (!resourceType.endsWith('s')) {
+        resourceType += 's';
+      }
+      
+      console.log(`🔍 DEBUG - Adding resource from kind: ${resourceType}`);
+      resources.push({ type: resourceType, createOnly: false });
+      
+      if (kindLower === 'deployment') {
+        resources.push({ type: 'replicasets', createOnly: false });
+        resources.push({ type: 'services', createOnly: false });
+      } else if (kindLower === 'statefulset') {
+        resources.push({ type: 'services', createOnly: false });
+      }
+    } else {
+      console.warn("🔍 DEBUG - Workload kind missing, adding deployment as default resource type");
+      resources.push({ type: 'deployments', createOnly: false });
+      resources.push({ type: 'replicasets', createOnly: false });
+      resources.push({ type: 'services', createOnly: false });
+    }
+    
+    console.log('🔍 DEBUG - Final resources array:', resources);
+    return resources;
+  }, []);
+
   const prepareForDeployment = useCallback(() => {
     console.log('🔍 DEBUG - prepareForDeployment called');
-
-    // Check if we have clusters and workloads
     if (canvasEntities.clusters.length === 0 || canvasEntities.workloads.length === 0) {
       console.log('🔍 DEBUG - No clusters or workloads available');
       setDeploymentError('Both clusters and workloads are required to create binding policies');
       return;
     }
 
-    // Create a single policy for all workloads and clusters
-    const clusterIdsString = canvasEntities.clusters.join(', ');
-    const workloadIdsString = canvasEntities.workloads.join(', ');
+    // Get the first workload and cluster IDs
+    const workloadLabelId = canvasEntities.workloads[0];
+    const clusterLabelId = canvasEntities.clusters[0];
+    
+    // Extract label information
+    const workloadLabelInfo = extractLabelInfo(workloadLabelId);
+    const clusterLabelInfo = extractLabelInfo(clusterLabelId);
+    
+    if (!workloadLabelInfo || !clusterLabelInfo) {
+      console.error('Invalid label format');
+      setDeploymentError('Invalid label format for workload or cluster');
+      return;
+    }
+    
+    // Find matching workloads and clusters
+    const matchingWorkloads = findWorkloadsByLabel(workloadLabelInfo);
+    const matchingClusters = findClustersByLabel(clusterLabelInfo);
+    
+    if (matchingWorkloads.length === 0 || matchingClusters.length === 0) {
+      console.error('No matching workloads or clusters found for the selected labels');
+      setDeploymentError('No matching workloads or clusters found for the selected labels');
+      return;
+    }
+    
+    const workloadObj = matchingWorkloads[0];
+    const clusterObj = matchingClusters[0];
+    const workloadNamespace = workloadObj.namespace || 'default';
+    const policyName = `${workloadObj.name}-to-${clusterObj.labels?.name || clusterObj.name}`;
+    
+    // For display purposes - show the labels instead of IDs
+    const workloadDisplay = `${workloadLabelInfo.key}:${workloadLabelInfo.value}`;
+    const clusterDisplay = `${clusterLabelInfo.key}:${clusterLabelInfo.value}`;
 
     console.log('🔍 DEBUG - Creating single policy for:', {
-      workloadIds: canvasEntities.workloads,
-      clusterIds: canvasEntities.clusters,
+      workload: workloadObj.name,
+      cluster: clusterObj.name,
+      policyName,
+      workloadLabel: workloadLabelInfo,
+      clusterLabel: clusterLabelInfo
     });
-    
-    // Create a unique policy name that includes all workloads
-    const timestamp = Date.now();
-    const workloadNames = canvasEntities.workloads.join("-");
-    const policyName = `${workloadNames}-binding-${timestamp}`;
     
     // Create a default configuration
     const config: PolicyConfiguration = {
       name: policyName,
-      namespace: 'default',
+      namespace: workloadNamespace,
       propagationMode: 'DownsyncOnly',
       updateStrategy: 'ServerSideApply',
       deploymentType: 'SelectedClusters',
@@ -226,8 +360,8 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
       name: policyName,
       workloadIds: canvasEntities.workloads,
       clusterIds: canvasEntities.clusters,
-      workloadName: workloadIdsString, // For display purposes
-      clusterName: clusterIdsString, // For display purposes
+      workloadName: workloadDisplay, // For display purposes
+      clusterName: clusterDisplay, // For display purposes
       config,
       yaml: "" // Will be generated during deployment
     };
@@ -236,77 +370,46 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     
     setPoliciesToDeploy([policy]);
     setDeploymentDialogOpen(true);
-  }, [canvasEntities]);
+  }, [canvasEntities, extractLabelInfo, findWorkloadsByLabel, findClustersByLabel]);
 
-  // Helper function to generate resources array from workload
-  const generateResourcesFromWorkload = useCallback((workload: Workload) => {
-    console.log('🔍 DEBUG - Generating resources from workload:', workload);
-    
-    const resources = [];
-    
-    // Add namespaces as a separate resource with createOnly=true
-    resources.push({ type: 'namespaces', createOnly: true });
-    
-    // Convert the workload kind to lowercase and pluralize
-    if (workload.kind) {
-      const kindLower = workload.kind.toLowerCase();
-      let resourceType = kindLower;
-      
-      // Simple pluralization - add 's' if not already ending with 's'
-      if (!resourceType.endsWith('s')) {
-        resourceType += 's';
-      }
-      
-      console.log(`🔍 DEBUG - Adding resource from kind: ${resourceType}`);
-      
-      // Add the workload's resource type with createOnly set to false for updates
-      resources.push({ type: resourceType, createOnly: false });
-      
-      // For deployments, add dependent resources
-      if (kindLower === 'deployment') {
-        resources.push({ type: 'replicasets', createOnly: false });
-        resources.push({ type: 'services', createOnly: false });
-      } else if (kindLower === 'statefulset') {
-        resources.push({ type: 'services', createOnly: false });
-      }
-    } else {
-      console.warn("🔍 DEBUG - Workload kind missing, adding deployment as default resource type");
-      // If workload kind is missing, default to deployment
-      resources.push({ type: 'deployments', createOnly: false });
-      resources.push({ type: 'replicasets', createOnly: false });
-      resources.push({ type: 'services', createOnly: false });
-    }
-    
-    console.log('🔍 DEBUG - Final resources array:', resources);
-    return resources;
-  }, []);
-  
-  // Update the handleCreatePolicy function
+  // Update the handleCreatePolicy function to work with labels
   const handleCreatePolicy = useCallback(() => {
     if (canvasEntities.clusters.length === 0 || canvasEntities.workloads.length === 0) return;
     
-    const workloadIds = canvasEntities.workloads;
-    const clusterIds = canvasEntities.clusters;
+    // Get the first workload and cluster label IDs
+    const workloadLabelId = canvasEntities.workloads[0];
+    const clusterLabelId = canvasEntities.clusters[0];
     
-    console.log('🔍 DEBUG - handleCreatePolicy called:', {
-      workloadIds,
-      clusterIds
+    console.log('🔍 DEBUG - handleCreatePolicy called with label IDs:', {
+      workloadLabelId,
+      clusterLabelId
     });
     
-    // Find the workload object to get its details
-    const firstWorkloadId = workloadIds[0];
-    const workloadObj = workloads.find(w => w.name === firstWorkloadId);
+    // Extract label information
+    const workloadLabelInfo = extractLabelInfo(workloadLabelId);
+    const clusterLabelInfo = extractLabelInfo(clusterLabelId);
     
-    if (!workloadObj) {
-      console.error('Workload not found:', firstWorkloadId);
+    if (!workloadLabelInfo || !clusterLabelInfo) {
+      console.error('Invalid label format');
       return;
     }
     
+    // Find all workloads and clusters that match these labels
+    const matchingWorkloads = findWorkloadsByLabel(workloadLabelInfo);
+    const matchingClusters = findClustersByLabel(clusterLabelInfo);
+    
+    if (matchingWorkloads.length === 0 || matchingClusters.length === 0) {
+      console.error('No matching workloads or clusters found for the selected labels');
+      return;
+    }
+    
+    // Use the first matching workload and cluster for namespace info
+    const workloadObj = matchingWorkloads[0];
+    const clusterObj = matchingClusters[0];
     const workloadNamespace = workloadObj.namespace || 'default';
     
-    // Generate a name for the policy that includes all workloads
-    const workloadNames = workloadIds.join("-");
-    const policyName = `${workloadNames}-to-clusters-${Date.now()}`;
+    // Generate a simpler policy name using workload and cluster names
+    const policyName = `${workloadObj.name}-to-${clusterObj.name}`;
     
     // Create default configuration
     const defaultConfig: PolicyConfiguration = {
@@ -320,53 +423,28 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
       tolerations: []
     };
     
-    // For display purposes only - we'll use the actual arrays in the API call
-    const clusterIdsStr = clusterIds.join(", ");
+    // For display purposes - show the labels instead of IDs
+    const workloadDisplay = `${workloadLabelInfo.key}:${workloadLabelInfo.value}`;
+    const clusterDisplay = `${clusterLabelInfo.key}:${clusterLabelInfo.value}`;
     
-    // Store IDs for UI display
-    setCurrentWorkloadId(firstWorkloadId); 
-    setCurrentClusterId(clusterIdsStr);   
+    // Store info for UI display
+    setCurrentWorkloadId(workloadDisplay);
+    setCurrentClusterId(clusterDisplay);
     setCurrentConfig(defaultConfig);
     
-    // Find the cluster object to get its labels
-    const firstClusterId = clusterIds[0];
-    const clusterObj = clusters.find(c => c.name === firstClusterId);
+    // Use ONLY the specific dragged label for the API request
+    const workloadLabels: Record<string, string> = {
+      [workloadLabelInfo.key]: workloadLabelInfo.value
+    };
     
-    if (!clusterObj) {
-      console.error('Cluster not found:', firstClusterId);
-      return;
-    }
-    
-    // Extract workload labels properly - using actual labels from the workload object
-    const workloadLabels: Record<string, string> = {};
-    
-    // Directly use the workload's existing labels as the primary source
-    if (workloadObj.labels && Object.keys(workloadObj.labels).length > 0) {
-      // Copy all existing labels
-      Object.assign(workloadLabels, workloadObj.labels);
-    } 
-    // Only if no labels exist, fallback to using the name
-    else {
-      workloadLabels['kubernetes.io/kubestellar.workload.name'] = workloadObj.name;
-    }
-    
-    // Extract cluster labels properly - using actual labels from the cluster object
-    const clusterLabels: Record<string, string> = {};
-    
-    // If the cluster has labels, use them
-    if (clusterObj.labels && Object.keys(clusterObj.labels).length > 0) {
-      Object.assign(clusterLabels, clusterObj.labels);
-    }
-    
-    // If no labels were found, use the name as a label
-    if (Object.keys(clusterLabels).length === 0) {
-      clusterLabels['name'] = firstClusterId;
-    }
+    const clusterLabels: Record<string, string> = {
+      [clusterLabelInfo.key]: clusterLabelInfo.value
+    };
     
     // Dynamically generate resources based on workload kind
     const resources = generateResourcesFromWorkload(workloadObj);
     
-    // Generate YAML preview using the updated format with correct labels
+    // Generate YAML preview using the label-based selection
     generateBindingPolicyPreview({
       workloadLabels,
       clusterLabels,
@@ -375,7 +453,8 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
       namespace: workloadNamespace,
       policyName
     }, defaultConfig);
-  }, [canvasEntities, generateBindingPolicyPreview, workloads, clusters, generateResourcesFromWorkload]);
+  }, [canvasEntities, extractLabelInfo, findWorkloadsByLabel, findClustersByLabel, 
+      generateResourcesFromWorkload, generateBindingPolicyPreview]);
 
   // Update the handleCreateFromPreview function
   const handleCreateFromPreview = useCallback(async () => {
@@ -386,92 +465,92 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     setDeploymentError(null);
     
     try {
-      // Get current workload and cluster IDs
-      const workloadId = currentWorkloadId;
-      const clusterId = currentClusterId.split(', ')[0]; // Get first cluster if multiple
+      // Get current workload and cluster information
+      // Now these might be in the format "key:value" if we're using labels
+      const workloadInfo = currentWorkloadId;
+      const clusterInfo = currentClusterId;
       
-      // Find the workload object to get its details
-      const workloadObj = workloads.find(w => w.name === workloadId);
-      
-      if (!workloadObj) {
-        console.error('Workload not found:', workloadId);
-        setDeploymentError(`Workload not found: ${workloadId}`);
-        setDeploymentLoading(false); // Reset loading on error
-        return;
-      }
-      
-      // Find the cluster object to get its labels
-      const clusterObj = clusters.find(c => c.name === clusterId);
-      
-      if (!clusterObj) {
-        console.error('Cluster not found:', clusterId);
-        setDeploymentError(`Cluster not found: ${clusterId}`);
-        setDeploymentLoading(false); // Reset loading on error
-        return;
-      }
-      
-      const workloadNamespace = workloadObj.namespace || 'default';
-      
-      // Extract workload labels - using actual labels from the workload object
+      // Parse the workload and cluster info to extract label key and value
       const workloadLabels: Record<string, string> = {};
-      
-      // Directly use the workload's existing labels as the primary source
-      if (workloadObj.labels && Object.keys(workloadObj.labels).length > 0) {
-        // Copy all existing labels
-        Object.assign(workloadLabels, workloadObj.labels);
-      } 
-      // Only if no labels exist, fallback to using the name
-      else {
-        workloadLabels['kubernetes.io/kubestellar.workload.name'] = workloadObj.name;
-      }
-      
-      // Extract cluster labels - using actual labels from the cluster object
       const clusterLabels: Record<string, string> = {};
       
-      // If the cluster has labels, use them
-      if (clusterObj.labels && Object.keys(clusterObj.labels).length > 0) {
-        Object.assign(clusterLabels, clusterObj.labels);
+      // Extract labels from the format "key:value"
+      if (workloadInfo.includes(':')) {
+        const [key, value] = workloadInfo.split(':');
+        // Only include the specific label that was dragged
+        workloadLabels[key.trim()] = value.trim();
+      } else {
+        // Legacy fallback - should rarely happen with the updated UI
+        console.warn('Workload info not in expected label format:', workloadInfo);
+        workloadLabels['kubernetes.io/kubestellar.workload.name'] = workloadInfo;
       }
       
-      // If no labels were found, use the name as a label
-      if (Object.keys(clusterLabels).length === 0) {
-        clusterLabels['name'] = clusterId;
+      // Similar for clusters
+      if (clusterInfo.includes(':')) {
+        const [key, value] = clusterInfo.split(':');
+        // Only include the specific label that was dragged
+        clusterLabels[key.trim()] = value.trim();
+      } else {
+        // Legacy fallback - should rarely happen with the updated UI
+        console.warn('Cluster info not in expected label format:', clusterInfo);
+        clusterLabels['name'] = clusterInfo;
       }
+      
+      // Find matching workloads and clusters based on labels
+      const matchingWorkloads = workloads.filter(w => 
+        w.labels && 
+        Object.entries(workloadLabels).every(([k, v]) => w.labels?.[k] === v)
+      );
+      
+      const matchingClusters = clusters.filter(c => 
+        c.labels && 
+        Object.entries(clusterLabels).every(([k, v]) => c.labels?.[k] === v)
+      );
+      
+      if (matchingWorkloads.length === 0) {
+        throw new Error(`No workloads match the label criteria: ${JSON.stringify(workloadLabels)}`);
+      }
+      
+      if (matchingClusters.length === 0) {
+        throw new Error(`No clusters match the label criteria: ${JSON.stringify(clusterLabels)}`);
+      }
+      
+      // Use the first matching workload for namespace info
+      const workloadObj = matchingWorkloads[0];
+      const workloadNamespace = workloadObj.namespace || 'default';
       
       // Generate resources based on workload kind
       const resources = generateResourcesFromWorkload(workloadObj);
       
-      // Prepare request with correct label keys from actual data
+      // Create a simple policy name based on the actual workload and cluster names
+      const policyName = currentConfig?.name || `${workloadObj.name}-to-${matchingClusters[0].name}`;
+      
+      // Prepare request data with only the specific dragged labels
       const requestData = {
         workloadLabels,
         clusterLabels,
         resources,
         namespacesToSync: [workloadNamespace],
-        policyName: currentConfig?.name || `${workloadId}-to-${clusterId}`,
+        policyName,
         namespace: workloadNamespace
       };
       
       // Add detailed console logging
       console.log('📤 SENDING REQUEST TO QUICK-CONNECT API (handleCreateFromPreview):');
       console.log(JSON.stringify(requestData, null, 2));
-      console.log('🔍 workloadObj:', JSON.stringify({
-        name: workloadObj.name,
-        namespace: workloadObj.namespace,
-        kind: workloadObj.kind,
-        labels: workloadObj.labels
-      }, null, 2));
-      console.log('🔍 clusterObj:', JSON.stringify({
-        name: clusterObj.name,
-        labels: clusterObj.labels
-      }, null, 2));
+      console.log('🔍 Using only the specific dragged labels:');
+      console.log('🔍 Workload labels:', JSON.stringify(workloadLabels, null, 2));
+      console.log('🔍 Cluster labels:', JSON.stringify(clusterLabels, null, 2));
+      console.log('🔍 Matching workloads:', matchingWorkloads.length);
+      console.log('🔍 Matching clusters:', matchingClusters.length);
       
-      // Use the quick connect API with the updated format
+      // Use the quick connect API
       const response = await quickConnectMutation.mutateAsync(requestData);
       
       console.log('API Response:', response);
       
       // Show success message
-      setSuccessMessage(`Binding policy "${requestData.policyName}" created successfully`);
+      setSuccessMessage(`Binding policy "${policyName}" created successfully for ${Object.entries(workloadLabels).map(([k,v]) => `${k}:${v}`).join(', ')} to ${Object.entries(clusterLabels).map(([k,v]) => `${k}:${v}`).join(', ')}`);
       
       // Close the dialog
       setShowPreviewDialog(false);
@@ -502,6 +581,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
       return;
     }
     
+    // Initialize variables to store IDs or labels
     let workloadId = '';
     // Instead of a single cluster, we'll use all clusters from the canvas
     const clusterIdsString = canvasEntities.clusters.join(', ');
@@ -513,8 +593,31 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
       workloadId = selectedConnection.target.id;
     }
     
-    // Find the workload object to get its namespace
-    const workloadObj = workloads.find(w => w.name === workloadId);
+    console.log('🔍 DEBUG - Looking for workload with ID:', workloadId);
+    
+    // Check if this is a label-based ID
+    let workloadObj;
+    if (workloadId.startsWith('label-')) {
+      // For label-based items, extract the label info and find matching workloads
+      const labelInfo = extractLabelInfo(workloadId);
+      if (labelInfo) {
+        const matchingWorkloads = findWorkloadsByLabel(labelInfo);
+        if (matchingWorkloads.length > 0) {
+          workloadObj = matchingWorkloads[0];
+          console.log('🔍 DEBUG - Found workload by label:', workloadObj);
+        } else {
+          console.error('Workload not found for label:', labelInfo);
+          return;
+        }
+      } else {
+        console.error('Invalid label format:', workloadId);
+        return;
+      }
+    } else {
+      // For direct name references (legacy format)
+      workloadObj = workloads.find(w => w.name === workloadId);
+      console.log('🔍 DEBUG - Looking for workload by direct name:', workloadId);
+    }
     
     if (!workloadObj) {
       console.error('Workload not found:', workloadId);
@@ -533,24 +636,39 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     setCurrentWorkloadId(workloadId);
     setCurrentClusterId(clusterIdsString);
     setCurrentConfig(config);
+
+    // Handle cluster labels in a similar way
+    let clusterLabels: Record<string, string> = {};
+    if (canvasEntities.clusters.length > 0) {
+      const clusterId = canvasEntities.clusters[0];
+      if (clusterId.startsWith('label-')) {
+        const clusterLabelInfo = extractLabelInfo(clusterId);
+        if (clusterLabelInfo) {
+          clusterLabels = { [clusterLabelInfo.key]: clusterLabelInfo.value };
+        }
+      } else {
+        clusterLabels = { 'name': clusterId };
+      }
+    }
+    
+    // For workload labels, use the extracted label info if available
+    let workloadLabels: Record<string, string> = {};
+    if (workloadId.startsWith('label-')) {
+      const workloadLabelInfo = extractLabelInfo(workloadId);
+      if (workloadLabelInfo) {
+        workloadLabels = { [workloadLabelInfo.key]: workloadLabelInfo.value };
+      }
+    } else {
+      workloadLabels = { 'kubernetes.io/metadata.name': workloadId };
+    }
       
     // Generate YAML preview with all clusters as a comma-separated string
     const yaml = await generateBindingPolicyPreview({
-      workloadLabels: {
-        'kubernetes.io/metadata.name': workloadId
-      },
-      clusterLabels: {
-        'name': canvasEntities.clusters[0] // Use 'name' as key
-      },
-      resources: [
-        { type: 'deployments', createOnly: false },
-        { type: 'pods', createOnly: false },
-        { type: 'services', createOnly: false },
-        { type: 'replicasets', createOnly: false },
-        { type: 'namespaces', createOnly: false }
-      ],
-      namespacesToSync: [workloadNamespace], // Use the namespace from the workload
-      namespace: workloadNamespace, // Use the namespace from the workload
+      workloadLabels,
+      clusterLabels,
+      resources: generateResourcesFromWorkload(workloadObj),
+      namespacesToSync: [workloadNamespace], 
+      namespace: workloadNamespace,
       policyName: config.name
     }, config);
     
@@ -578,12 +696,13 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
         labels: config.customLabels
       });
     }
-  }, [selectedConnection, generateBindingPolicyPreview, canvasEntities.clusters, canvasEntities.workloads, workloads]);
+  }, [selectedConnection, generateBindingPolicyPreview, canvasEntities.clusters, extractLabelInfo, 
+      findWorkloadsByLabel, workloads, generateResourcesFromWorkload]);
 
  
 
   // Handle tracking the active drag item
-  const handleDragStart = useCallback((start: {draggableId: string}) => {
+  const handleDragStart = useCallback((start: DragStart) => {
     console.log('🔄 DRAG START EVENT', start);
     
     if (!setActiveDragItem) {
@@ -594,30 +713,60 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     const draggedItemId = start.draggableId;
     console.log('🔄 Drag started with item:', draggedItemId);
     
-    // Extract the item type and ID properly, handling names with dashes
-    const itemTypeMatch = draggedItemId.match(/^(policy|cluster|workload)-(.+)$/);
-    if (!itemTypeMatch) {
-      console.error('❌ Invalid draggable ID format:', draggedItemId);
-      return;
-    }
+    // Extract the item type and ID properly, handling the new label format
+    // Format is now "label-${key}-${value}" for label-based items
+    let itemType, itemId, dragType;
     
-    const itemType = itemTypeMatch[1];
-    const itemId = itemTypeMatch[2];
-    
-    let dragType = '';
-    
-    if (itemType === 'policy') {
-      dragType = DragTypes.POLICY;
-    } else if (itemType === 'cluster') {
-      dragType = DragTypes.CLUSTER;
-    } else if (itemType === 'workload') {
-      dragType = DragTypes.WORKLOAD;
+    if (draggedItemId.startsWith('label-')) {
+      // Handle new label format from the updated panels
+      const labelParts = draggedItemId.split('-');
+      if (labelParts.length >= 3) {
+        // Determine if it's a cluster or workload label based on source droppableId
+        const sourceId = start.source?.droppableId || '';
+        if (sourceId === 'cluster-panel') {
+          itemType = 'cluster';
+          dragType = DragTypes.CLUSTER;
+        } else if (sourceId === 'workload-panel') {
+          itemType = 'workload';
+          dragType = DragTypes.WORKLOAD;
+        } else {
+          console.error('❌ Unknown source for label:', sourceId);
+          return;
+        }
+        
+        // For label-based items, we use the entire draggableId as the itemId
+        // This preserves the full label information
+        itemId = draggedItemId;
+      } else {
+        console.error('❌ Invalid label format:', draggedItemId);
+        return;
+      }
+    } else {
+      // Handle legacy format (e.g., for policies which might not have been updated)
+      const itemTypeMatch = draggedItemId.match(/^(policy|cluster|workload)-(.+)$/);
+      if (!itemTypeMatch) {
+        console.error('❌ Invalid draggable ID format:', draggedItemId);
+        return;
+      }
+      
+      itemType = itemTypeMatch[1];
+      itemId = itemTypeMatch[2];
+      
+      if (itemType === 'policy') {
+        dragType = DragTypes.POLICY;
+      } else if (itemType === 'cluster') {
+        dragType = DragTypes.CLUSTER;
+      } else if (itemType === 'workload') {
+        dragType = DragTypes.WORKLOAD;
+      } else {
+        dragType = '';
+      }
     }
     
     console.log(`🔄 Drag item type identified: ${dragType}`);
     
     setActiveDragItem({ 
-      type: dragType, 
+      type: dragType || '', 
       id: itemId 
     });
     
@@ -640,34 +789,76 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     }
 
     // Determine the source and destination
-    const { destination, draggableId } = result;
-    
-    // Identify the item being dragged
-    const itemTypeMatch = draggableId.match(/^(policy|cluster|workload)-(.+)$/);
-    if (!itemTypeMatch) {
-      console.error('❌ Invalid draggable ID format:', draggableId);
-      return;
-    }
-    
-    const itemType = itemTypeMatch[1];
-    const itemId = itemTypeMatch[2];
-    
-    console.log(`🔄 Item type: ${itemType}, Item ID: ${itemId}`);
+    const { destination, draggableId, source } = result;
     
     // From panel to canvas
     if (destination.droppableId === 'canvas') {
-      console.log(`🔄 Adding ${itemType} ${itemId} to canvas`);
+      console.log(`🔄 Adding item to canvas: ${draggableId}`);
       
       if (addToCanvas) {
         // Determine item type for adding to canvas
-        if (itemType === 'cluster' || itemType === 'workload') {
-          addToCanvas(itemType, itemId);
+        if (draggableId.startsWith('label-')) {
+          // For label-based items, determine type from the source droppableId
+          const sourceId = source?.droppableId || '';
+          
+          console.log(`Source panel: ${sourceId}, draggableId: ${draggableId}`);
+          
+          if (sourceId === 'cluster-panel') {
+            // Verify this is a valid cluster label before adding
+            const labelInfo = extractLabelInfo(draggableId);
+            console.log(`Extracted label info:`, labelInfo);
+            
+            if (labelInfo) {
+              const matchingClusters = findClustersByLabel(labelInfo);
+              console.log(`Found ${matchingClusters.length} matching clusters for ${labelInfo.key}=${labelInfo.value}`);
+              
+              if (matchingClusters.length > 0) {
+                console.log(`Adding cluster label ${draggableId} to canvas, matches ${matchingClusters.length} clusters`);
+                addToCanvas('cluster', draggableId);
+                console.log(`✅ Added cluster label ${draggableId} to canvas`);
+              } else {
+                console.error(`No clusters match label: ${labelInfo.key}=${labelInfo.value}`);
+              }
+            } else {
+              console.error('Invalid cluster label format:', draggableId);
+            }
+          } else if (sourceId === 'workload-panel') {
+            // Verify this is a valid workload label before adding
+            const labelInfo = extractLabelInfo(draggableId);
+            console.log(`Extracted workload label info:`, labelInfo);
+            
+            if (labelInfo) {
+              const matchingWorkloads = findWorkloadsByLabel(labelInfo);
+              console.log(`Found ${matchingWorkloads.length} matching workloads for ${labelInfo.key}=${labelInfo.value}`);
+              
+              if (matchingWorkloads.length > 0) {
+                console.log(`Adding workload label ${draggableId} to canvas, matches ${matchingWorkloads.length} workloads`);
+                addToCanvas('workload', draggableId);
+                console.log(`✅ Added workload label ${draggableId} to canvas`);
+              } else {
+                console.error(`No workloads match label: ${labelInfo.key}=${labelInfo.value}`);
+              }
+            } else {
+              console.error('Invalid workload label format:', draggableId);
+            }
+          }
+        } else {
+          // Legacy format handling
+          const itemTypeMatch = draggableId.match(/^(policy|cluster|workload)-(.+)$/);
+          if (itemTypeMatch) {
+            const itemType = itemTypeMatch[1];
+            const itemId = itemTypeMatch[2];
+            
+            if (itemType === 'cluster' || itemType === 'workload') {
+              addToCanvas(itemType, itemId);
+            }
+          }
         }
       }
     }
     
     console.log('✅ Drag end processing completed');
-  }, [setActiveDragItem, addToCanvas]);
+  }, [setActiveDragItem, addToCanvas, extractLabelInfo, findClustersByLabel, findWorkloadsByLabel]);
 
   // Update the handleDeploymentConfirm function
   const handleDeploymentConfirm = useCallback(async () => {
@@ -682,110 +873,74 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     setDeploymentError(null);
     
     try {
-      // Get the first workload and cluster
-      const workloadId = policiesToDeploy[0].workloadIds[0];
-      const clusterId = policiesToDeploy[0].clusterIds[0];
+      // Get the first policy to deploy
+      // const policyToDeploy = policiesToDeploy[0];
       
-      // Find the workload object to get its details
-      const workloadObj = workloads.find(w => w.name === workloadId);
+      // Extract workload and cluster labels from the canvas entities
+      const workloadLabelId = canvasEntities.workloads[0];
+      const clusterLabelId = canvasEntities.clusters[0];
       
-      if (!workloadObj) {
-        setDeploymentError(`Workload not found: ${workloadId}`);
-        setDeploymentLoading(false);
-        return;
+      // Extract label information
+      const workloadLabelInfo = extractLabelInfo(workloadLabelId);
+      const clusterLabelInfo = extractLabelInfo(clusterLabelId);
+      
+      if (!workloadLabelInfo || !clusterLabelInfo) {
+        throw new Error('Invalid label format');
       }
       
-      // Find the cluster object to get its labels
-      const clusterObj = clusters.find(c => c.name === clusterId);
+      const workloadLabelsObj: Record<string, string> = {
+        [workloadLabelInfo.key]: workloadLabelInfo.value
+      };
       
-      if (!clusterObj) {
-        setDeploymentError(`Cluster not found: ${clusterId}`);
-        setDeploymentLoading(false);
-        return;
+      const clusterLabelsObj: Record<string, string> = {
+        [clusterLabelInfo.key]: clusterLabelInfo.value
+      };
+      
+      // Find all workloads and clusters that match these labels
+      const matchingWorkloads = findWorkloadsByLabel(workloadLabelInfo);
+      const matchingClusters = findClustersByLabel(clusterLabelInfo);
+      
+      if (matchingWorkloads.length === 0 || matchingClusters.length === 0) {
+        throw new Error('No matching workloads or clusters found for the selected labels');
       }
       
+      const workloadObj = matchingWorkloads[0];
+      const clusterObj = matchingClusters[0];
       const workloadNamespace = workloadObj.namespace || 'default';
       
-      // Create a unique policy name
-      const timestamp = Date.now();
-      const policyName = `${workloadId}-to-${clusterId}-${timestamp}`;
-      
-      console.log('🔍 DEBUG - Creating binding policy:', {
-        workloadId,
-        clusterId,
+      // Create a simpler policy name using workload and cluster names
+      const policyName = `${workloadObj.name}-to-${clusterObj.labels?.name || clusterObj.name}`;      
+      console.log('🔍 DEBUG - Creating binding policy with labels:', {
+        workloadLabels: workloadLabelsObj,
+        clusterLabels: clusterLabelsObj,
         policyName,
         namespace: workloadNamespace
       });
-      
-      // Extract workload labels - using actual labels from the workload object
-      const workloadLabels: Record<string, string> = {};
-      
-      // Directly use the workload's existing labels as the primary source
-      if (workloadObj.labels && Object.keys(workloadObj.labels).length > 0) {
-        // Copy all existing labels
-        Object.assign(workloadLabels, workloadObj.labels);
-      } 
-      // Only if no labels exist, fallback to using the name
-      else {
-        workloadLabels['kubernetes.io/kubestellar.workload.name'] = workloadObj.name;
-      }
-      
-      // Extract cluster labels - using actual labels from the cluster object
-      const clusterLabels: Record<string, string> = {};
-      
-      // If the cluster has labels, use them
-      if (clusterObj.labels && Object.keys(clusterObj.labels).length > 0) {
-        Object.assign(clusterLabels, clusterObj.labels);
-      }
-      
-      // If no labels were found, use the name as a label
-      if (Object.keys(clusterLabels).length === 0) {
-        clusterLabels['name'] = clusterId;
-      }
-      
-      // Generate resources based on workload kind
       const resources = generateResourcesFromWorkload(workloadObj);
       
-      // Convert to the format with correct labels
       const requestData = {
-        workloadLabels,
-        clusterLabels,
+        workloadLabels: workloadLabelsObj,
+        clusterLabels: clusterLabelsObj,
         resources,
         namespacesToSync: [workloadNamespace],
         policyName: policyName,
         namespace: workloadNamespace
       };
-      
-      // Add detailed console logging
       console.log('📤 SENDING REQUEST TO QUICK-CONNECT API (handleDeploymentConfirm):');
       console.log(JSON.stringify(requestData, null, 2));
-      console.log('🔍 workloadObj:', JSON.stringify({
-        name: workloadObj.name,
-        namespace: workloadObj.namespace,
-        kind: workloadObj.kind,
-        labels: workloadObj.labels
-      }, null, 2));
-      console.log('🔍 clusterObj:', JSON.stringify({
-        name: clusterObj.name,
-        labels: clusterObj.labels
-      }, null, 2));
-      
-      // Call the quick-connect API with the updated format
+      console.log('🔍 Matching workloads:', matchingWorkloads.length);
+      console.log('🔍 Matching clusters:', matchingClusters.length);
       const result = await quickConnectMutation.mutateAsync(requestData);
       console.log('API response:', result);
       
-      // Show success message
-      setSuccessMessage(`Successfully created binding policy "${policyName}" connecting ${workloadId} to ${clusterId}`);
+      setSuccessMessage(`Successfully created binding policy "${policyName}" connecting ${workloadLabelInfo.key}:${workloadLabelInfo.value} to ${clusterLabelInfo.key}:${clusterLabelInfo.value}`);
       
-      // Close the dialog after successful deployment
       setDeploymentDialogOpen(false);
       
-      // Clear the canvas to avoid duplication
+      // Clear the canvas
       if (onClearCanvas) {
         onClearCanvas();
       }
-      
-      // Reset loading state after successful completion
       setDeploymentLoading(false);
     } catch (error) {
       console.error('❌ Failed to deploy policy:', error);
@@ -794,10 +949,10 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
           ? error.message 
           : 'Failed to deploy binding policy. Please try again.'
       );
-      // Ensure loading state is reset on error
       setDeploymentLoading(false);
     }
-  }, [policiesToDeploy, quickConnectMutation, setSuccessMessage, onClearCanvas, workloads, clusters, generateResourcesFromWorkload]);
+  }, [policiesToDeploy, quickConnectMutation, canvasEntities, extractLabelInfo, findWorkloadsByLabel, 
+      findClustersByLabel, setSuccessMessage, onClearCanvas, generateResourcesFromWorkload]);
 
   // Main layout for the drag and drop interface
   return (
@@ -843,7 +998,6 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
                   removeFromCanvas={usePolicyDragDropStore(state => state.removeFromCanvas)}
                   onClearCanvas={onClearCanvas}
                   onSaveBindingPolicies={() => {
-                    // This would trigger saving all binding policies
                     setSuccessMessage("All binding policies saved successfully");
                   }}
                   dialogMode={dialogMode}

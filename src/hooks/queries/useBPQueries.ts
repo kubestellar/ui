@@ -66,9 +66,6 @@ interface GenerateYamlRequest {
   namespacesToSync?: string[];
   namespace?: string;
   policyName?: string;
-  // For backward compatibility
-  workloadIds?: string[];
-  clusterIds?: string[];
 }
 
 interface QuickConnectRequest {
@@ -78,9 +75,6 @@ interface QuickConnectRequest {
   namespacesToSync?: string[];
   policyName?: string;
   namespace?: string;
-  // For backward compatibility
-  workloadIds?: string[];
-  clusterIds?: string[];
 }
 
 interface GenerateYamlResponse {
@@ -483,32 +477,20 @@ export const useBPQueries = () => {
           );
         }
         
-        // Make sure the request has workloadLabels - only set defaults if they're missing
+        // Make sure the request has workloadLabels
         if (!formattedRequest.workloadLabels || Object.keys(formattedRequest.workloadLabels).length === 0) {
-          if (request.workloadIds && request.workloadIds.length > 0) {
-            formattedRequest.workloadLabels = {
-              'kubernetes.io/kubestellar.workload.name': request.workloadIds[0]
-            };
-          } else {
-            console.warn("No workload labels or IDs provided");
-            formattedRequest.workloadLabels = {
-              'kubernetes.io/kubestellar.workload.name': 'unknown' // Fallback default
-            };
-          }
+          console.warn("No workload labels provided");
+          formattedRequest.workloadLabels = {
+            'kubernetes.io/kubestellar.workload.name': 'unknown' // Fallback default
+          };
         }
         
-        // Make sure the request has clusterLabels - only set defaults if they're missing
+        // Make sure the request has clusterLabels
         if (!formattedRequest.clusterLabels || Object.keys(formattedRequest.clusterLabels).length === 0) {
-          if (request.clusterIds && request.clusterIds.length > 0) {
-            formattedRequest.clusterLabels = {
-              'name': request.clusterIds[0]
-            };
-          } else {
-            console.warn("No cluster labels or IDs provided");
-            formattedRequest.clusterLabels = {
-              'location-group': 'unknown' // Fallback default
-            };
-          }
+          console.warn("No cluster labels provided");
+          formattedRequest.clusterLabels = {
+            'location-group': 'unknown' // Fallback default
+          };
         }
         
         // Ensure namespacesToSync is set if not provided
@@ -549,32 +531,20 @@ export const useBPQueries = () => {
         // Only copy the request, don't modify existing labels
         const formattedRequest = { ...request };
         
-        // Make sure the request has workloadLabels - only set defaults if they're missing
+        // Make sure the request has workloadLabels
         if (!formattedRequest.workloadLabels || Object.keys(formattedRequest.workloadLabels).length === 0) {
-          if (request.workloadIds && request.workloadIds.length > 0) {
-            formattedRequest.workloadLabels = {
-              'kubernetes.io/kubestellar.workload.name': request.workloadIds[0]
-            };
-          } else {
-            console.warn("No workload labels or IDs provided for YAML generation");
-            formattedRequest.workloadLabels = {
-              'kubernetes.io/kubestellar.workload.name': 'unknown' // Fallback default
-            };
-          }
+          console.warn("No workload labels provided for YAML generation");
+          formattedRequest.workloadLabels = {
+            'kubernetes.io/kubestellar.workload.name': 'unknown' // Fallback default
+          };
         }
         
-        // Make sure the request has clusterLabels - only set defaults if they're missing
+        // Make sure the request has clusterLabels
         if (!formattedRequest.clusterLabels || Object.keys(formattedRequest.clusterLabels).length === 0) {
-          if (request.clusterIds && request.clusterIds.length > 0) {
-            formattedRequest.clusterLabels = {
-              'name': request.clusterIds[0]
-            };
-          } else {
-            console.warn("No cluster labels or IDs provided for YAML generation");
-            formattedRequest.clusterLabels = {
-              'location-group': 'unknown' // Fallback default
-            };
-          }
+          console.warn("No cluster labels provided for YAML generation");
+          formattedRequest.clusterLabels = {
+            'location-group': 'unknown' // Fallback default
+          };
         }
         
         // Validate and enhance resources if needed

@@ -30,7 +30,6 @@ interface CanvasItemsProps {
     policies: string[];
   };
   assignmentMap: Record<string, { clusters: string[], workloads: string[] }>;
-  getItemLabels: (itemType: 'cluster' | 'workload', itemId: string) => Record<string, string>;
   removeFromCanvas: (itemType: 'policy' | 'cluster' | 'workload', itemId: string) => void;
   elementsRef: React.MutableRefObject<Record<string, HTMLElement>>;
   connectionLines?: ConnectionLine[];
@@ -46,17 +45,100 @@ interface CanvasItemsProps {
   gridSize?: number;
 }
 
-// Utility function to generate unique ID
-// const generateUniqueId = (base: string): string => {
-//   return `${base}-${Math.random().toString(36).substring(2, 10)}`;
-// };
+// Extract label information from label ID
+const extractLabelInfo = (labelId: string): { key: string, value: string } | null => {
+  if (!labelId.startsWith('label-')) return null;
+  
+  console.log(`CanvasItems: Parsing label ID: ${labelId}`);
+  
+  const labelPart = labelId.substring(6);
+  
+  if (labelId === "label-location-group-edge") {
+    console.log(`CanvasItems: Found known label "location-group-edge", returning key="location-group", value="edge"`);
+    return { key: "location-group", value: "edge" };
+  }
+
+  const slashMatch = labelPart.match(/^(.+\/.+?)-(.+)$/);
+  if (slashMatch) {
+    const [, key, value] = slashMatch;
+    console.log(`CanvasItems: Found label with slash in key: key="${key}", value="${value}"`);
+    return { key, value };
+  }
+  
+  if (labelPart.includes('=')) {
+    const [key, value] = labelPart.split('=');
+    console.log(`CanvasItems: Found equals format "${key}=${value}"`);
+    return { key, value };
+  }
+  
+  if (labelPart.includes(':')) {
+    const [key, value] = labelPart.split(':');
+    console.log(`CanvasItems: Found colon format "${key}:${value}"`);
+    return { key, value };
+  }
+  
+  const knownLabelPatterns = [
+    { pattern: 'location-group-edge', key: 'location-group', value: 'edge' },
+    { pattern: 'cluster.open-cluster-management.io/clusterset-default', key: 'cluster.open-cluster-management.io/clusterset', value: 'default' },
+    { pattern: 'feature.open-cluster-management.io/addon-addon-status-available', key: 'feature.open-cluster-management.io/addon-addon-status', value: 'available' }
+  ];
+  
+  for (const pattern of knownLabelPatterns) {
+    if (labelPart === pattern.pattern) {
+      console.log(`CanvasItems: Matched known pattern "${pattern.pattern}", returning key="${pattern.key}", value="${pattern.value}"`);
+      return { key: pattern.key, value: pattern.value };
+    }
+  }
+  
+  const knownKeyPrefixes = ["app.kubernetes.io", "kubernetes.io", "location-group", "feature.open-cluster-management.io", "cluster.open-cluster-management.io"];
+  
+  for (const prefix of knownKeyPrefixes) {
+    if (labelPart.startsWith(`${prefix}-`)) {
+      const key = prefix;
+      const value = labelPart.substring(prefix.length + 1);
+      console.log(`CanvasItems: Found known prefix "${prefix}", parsed as key="${key}", value="${value}"`);
+      return { key, value };
+    }
+  }
+  
+  if (labelPart.startsWith('name-')) {
+    const value = labelPart.substring(5); 
+    console.log(`CanvasItems: Found name label, returning key="name", value="${value}"`);
+    return { key: 'name', value };
+  }
+  
+  const firstDashIndex = labelPart.indexOf('-');
+  if (firstDashIndex === -1) {
+    console.log(`CanvasItems: No dash found in "${labelPart}", can't parse`);
+    return null;
+  }
+  
+  const key = labelPart.substring(0, firstDashIndex);
+  const value = labelPart.substring(firstDashIndex + 1);
+  
+  console.log(`CanvasItems: Parsed using first dash: key="${key}", value="${value}"`);
+  return { key, value };
+};
+
+// Find workloads matching a label
+const getWorkloadsForLabel = (workloads: Workload[], key: string, value: string): Workload[] => {
+  return workloads.filter(workload => 
+    workload.labels && workload.labels[key] === value
+  );
+};
+
+// Find clusters matching a label
+const getClustersForLabel = (clusters: ManagedCluster[], key: string, value: string): ManagedCluster[] => {
+  return clusters.filter(cluster => 
+    cluster.labels && cluster.labels[key] === value
+  );
+};
 
 const CanvasItems: React.FC<CanvasItemsProps> = ({
   policies,
   clusters,
   workloads,
   canvasEntities,
-  getItemLabels,
   removeFromCanvas,
   elementsRef,
   connectionLines = [],
@@ -68,10 +150,8 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
   snapToGrid = true,
   gridSize = 20
 }) => {
-  // Keep track of item positions for grid snapping
   const [itemPositions, setItemPositions] = useState<Record<string, { x: number, y: number }>>({});
   
-  // Snap an item to the grid when it's moved
   const snapItemToGrid = (itemId: string, rawX: number, rawY: number) => {
     if (!snapToGrid) {
       setItemPositions({
@@ -81,7 +161,6 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
       return;
     }
     
-    // Round to nearest grid point
     const x = Math.round(rawX / gridSize) * gridSize;
     const y = Math.round(rawY / gridSize) * gridSize;
     
@@ -91,13 +170,11 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
     });
   };
   
-  // Initialize positions on first render or when items change
+  // Initialize positions for canvas items
   useEffect(() => {
-    // Create initial positions for new items
     const newPositions = { ...itemPositions };
     let hasNewItems = false;
     
-    // Initialize positions for newly added clusters
     canvasEntities.clusters.forEach((clusterId, index) => {
       const key = `cluster-${clusterId}`;
       if (!newPositions[key]) {
@@ -109,7 +186,6 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
       }
     });
     
-    // Initialize positions for newly added workloads
     canvasEntities.workloads.forEach((workloadId, index) => {
       const key = `workload-${workloadId}`;
       if (!newPositions[key]) {
@@ -121,7 +197,6 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
       }
     });
     
-    // Initialize positions for newly added policies
     canvasEntities.policies.forEach((policyId, index) => {
       const key = `policy-${policyId}`;
       if (!newPositions[key]) {
@@ -138,7 +213,6 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
     }
   }, [canvasEntities, snapToGrid, gridSize, itemPositions]);
   
-  // Get status color for policy
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Active':
@@ -151,13 +225,11 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
     }
   };
 
-  // Get workload icon based on type - now using KubernetesIcon
   const getWorkloadIcon = () => {
-    // Using fixed workload icon type regardless of input type
     return <KubernetesIcon type="workload" size={20} />;
   };
 
-  // Pre-calculate connections for each entity type
+  // Count connections for each entity
   const connectionCounts = useMemo(() => {
     const counts = {
       policies: {} as Record<string, number>,
@@ -166,7 +238,6 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
     };
 
     connectionLines.forEach(line => {
-      // Count policy connections
       if (line.source.startsWith('policy-')) {
         const policyId = line.source.replace('policy-', '');
         counts.policies[policyId] = (counts.policies[policyId] || 0) + 1;
@@ -175,7 +246,6 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
         counts.policies[policyId] = (counts.policies[policyId] || 0) + 1;
       }
       
-      // Count cluster connections
       if (line.source.startsWith('cluster-')) {
         const clusterId = line.source.replace('cluster-', '');
         counts.clusters[clusterId] = (counts.clusters[clusterId] || 0) + 1;
@@ -184,7 +254,6 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
         counts.clusters[clusterId] = (counts.clusters[clusterId] || 0) + 1;
       }
       
-      // Count workload connections
       if (line.source.startsWith('workload-')) {
         const workloadId = line.source.replace('workload-', '');
         counts.workloads[workloadId] = (counts.workloads[workloadId] || 0) + 1;
@@ -197,7 +266,6 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
     return counts;
   }, [connectionLines]);
 
-  // Check if an item is connected
   const isConnected = (itemType: 'policy' | 'cluster' | 'workload', itemId: string) => {
     if (itemType === 'policy') {
       return (connectionCounts.policies[itemId] || 0) > 0;
@@ -209,7 +277,6 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
     return false;
   };
 
-  // Get border style based on connection state
   const getConnectionBorderStyle = (itemType: 'policy' | 'cluster' | 'workload', itemId: string, defaultColor: string) => {
     const isItemConnected = isConnected(itemType, itemId);
     const isActiveItem = activeConnection === `${itemType}-${itemId}`;
@@ -225,41 +292,26 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
     };
   };
 
-  // Function to handle clicks and identify the closest parent element with item data
-  // const handleItemClick = useCallback((e: React.MouseEvent, itemType: 'policy' | 'cluster' | 'workload', itemId: string) => {
-  //   e.stopPropagation(); // Stop event bubbling
-  //   console.log(`🎯 Item clicked: ${itemType}-${itemId}`);
-  //   if (onItemClick) {
-  //     onItemClick(itemType, itemId);
-  //   }
-  // }, [onItemClick]);
-
-  // Handle item hover for tooltips
   const handleItemHover = useCallback((_e: React.MouseEvent | null, itemType: 'cluster' | 'workload' | 'policy' | null, itemId: string | null) => {
     if (onItemHover) {
       onItemHover(itemType, itemId);
     }
   }, [onItemHover]);
 
-  // Use this to add a visual indicator to show that an item can be connected
   const isItemConnectable = (itemType: string, itemId: string) => {
     if (!connectMode) return false;
     
-    // If there are selected items
     if (selectedItems.length > 0) {
       const selectedItem = selectedItems[0];
       
-      // If a workload is selected, clusters should be highlighted
       if (selectedItem.itemType === 'workload' && itemType === 'cluster') {
         return true;
       }
       
-      // If a cluster is selected, workloads should be highlighted
       if (selectedItem.itemType === 'cluster' && itemType === 'workload') {
         return true;
       }
       
-      // Prevent connecting an item to itself
       if (selectedItem.itemId === itemId) {
         return false;
       }
@@ -268,7 +320,6 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
     return false;
   };
 
-  // Get styles for connectable items
   const getConnectableStyles = (itemType: string, itemId: string) => {
     if (isItemConnectable(itemType, itemId)) {
       return {
@@ -296,35 +347,13 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
     return {};
   };
 
-  // Group workloads by namespace
-  const workloadsByNamespace = useMemo(() => {
-    const grouped: Record<string, string[]> = {};
-    
-    canvasEntities.workloads.forEach(workloadId => {
-      const workload = workloads.find(w => w.name === workloadId);
-      if (!workload) return;
-      
-      const namespace = workload.namespace || 'default';
-      if (!grouped[namespace]) {
-        grouped[namespace] = [];
-      }
-      
-      grouped[namespace].push(workloadId);
-    });
-    
-    return grouped;
-  }, [canvasEntities.workloads, workloads]);
-
-  // Start dragging an item
   const handleDragStart = (e: React.DragEvent, itemType: 'policy' | 'cluster' | 'workload', itemId: string) => {
     e.dataTransfer.setData('text/plain', `${itemType}-${itemId}`);
     
-    // Store initial positions
     const rect = (e.target as HTMLElement).getBoundingClientRect();
     e.dataTransfer.setDragImage(e.target as Element, rect.width / 2, rect.height / 2);
   };
 
-  // Handle dropping an item in a new position
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     
@@ -335,28 +364,21 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
     
     if (!['policy', 'cluster', 'workload'].includes(itemType)) return;
     
-    // Calculate the new position relative to the container
     const containerRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const x = e.clientX - containerRect.left;
     const y = e.clientY - containerRect.top;
     
-    // Snap to grid if enabled
     snapItemToGrid(`${itemType}-${itemId}`, x, y);
   };
 
-  // Add drag-over handler to enable drop
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
   };
 
-  // Second, add a helper function to ensure all click events within items get captured
   const captureItemClick = useCallback((e: React.MouseEvent, itemType: 'policy' | 'cluster' | 'workload', itemId: string) => {
-    e.stopPropagation(); // Stop event bubbling
-    e.preventDefault(); // Prevent any default behavior
+    e.stopPropagation();
+    e.preventDefault();
     
-    console.log(`🎯 Item clicked (captured): ${itemType}-${itemId}`);
-    
-    // Call the onItemClick handler with the item type and ID
     if (onItemClick) {
       onItemClick(itemType, itemId);
     }
@@ -394,6 +416,8 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                   onClick={(e) => captureItemClick(e, 'policy', policyId)}
                   onMouseEnter={(e) => handleItemHover(e, 'policy', policyId)}
                   onMouseLeave={(e) => handleItemHover(e, null, null)}
+                  data-item-type="policy"
+                  data-item-id={policyId}
                   sx={{
                     p: 1,
                     ...getConnectionBorderStyle('policy', policyId, getStatusColor(policy.status)),
@@ -411,9 +435,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                     '&:hover': {
                       transform: 'translateY(-2px)',
                       boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
-                    },
-                    'data-item-type': 'policy',
-                    'data-item-id': policyId
+                    }
                   }}
                 >
                   <Box sx={{ 
@@ -484,11 +506,15 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
         <Box sx={{ mb: 3 }}>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
             {canvasEntities.clusters.map(clusterId => {
-              const cluster = clusters.find(c => c.name === clusterId);
-              if (!cluster) return null;
-              
+              const labelInfo = extractLabelInfo(clusterId);
               const hasConnections = connectionCounts.clusters[clusterId] > 0;
               const position = itemPositions[`cluster-${clusterId}`] || { x: 0, y: 0 };
+              
+              const matchingClusters = labelInfo 
+                ? getClustersForLabel(clusters, labelInfo.key, labelInfo.value) 
+                : clusters.filter(c => c.name === clusterId);
+              
+              if (matchingClusters.length === 0) return null;
               
               return (
                 <Paper
@@ -502,6 +528,8 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                   onClick={(e) => captureItemClick(e, 'cluster', clusterId)}
                   onMouseEnter={(e) => handleItemHover(e, 'cluster', clusterId)}
                   onMouseLeave={(e) => handleItemHover(e, null, null)}
+                  data-item-type="cluster"
+                  data-item-id={clusterId}
                   sx={{
                     p: 1,
                     ...getConnectionBorderStyle('cluster', clusterId, '#2196f3'),
@@ -522,9 +550,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                     '&:hover': {
                       transform: 'translateY(-2px)',
                       boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
-                    },
-                    'data-item-type': 'cluster',
-                    'data-item-id': clusterId
+                    }
                   }}
                 >
                   <Box sx={{ 
@@ -537,7 +563,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       <KubernetesIcon type="cluster" size={20} sx={{ mr: 1 }} />
                       <Typography variant="subtitle2" noWrap>
-                        {cluster.name}
+                        {labelInfo ? `${labelInfo.key}` : clusterId}
                       </Typography>
                     </Box>
                     
@@ -551,6 +577,17 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                           <ConnectionIcon size={20} />
                         </Badge>
                       )}
+                      
+                      {labelInfo && matchingClusters.length > 1 && (
+                        <Badge 
+                          badgeContent={matchingClusters.length} 
+                          color="info" 
+                          sx={{ mr: 1 }}
+                        >
+                          <KubernetesIcon type="cluster" size={16} />
+                        </Badge>
+                      )}
+                      
                       <IconButton 
                         size="small" 
                         color="error"
@@ -565,23 +602,31 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                     </Box>
                   </Box>
                   
-                  {Object.keys(cluster.labels).length > 0 && (
+                  {labelInfo && (
                     <>
                       <Divider sx={{ my: 0.5 }} />
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {Object.entries(cluster.labels).map(([key, value]) => (
-                          <Chip 
-                            key={key}
-                            label={`${key}: ${value}`}
-                            size="small"
-                            variant="outlined"
-                            sx={{ 
-                              height: 18,
-                              fontSize: '0.6rem'
-                            }}
-                          />
-                        ))}
-                      </Box>
+                      <Chip 
+                        label={labelInfo.value}
+                        size="small"
+                        variant="outlined"
+                        sx={{ 
+                          height: 20,
+                          fontSize: '0.75rem',
+                          mb: 0.5
+                        }}
+                      />
+                    </>
+                  )}
+                  
+                  {labelInfo && matchingClusters.length > 0 && (
+                    <>
+                      <Divider sx={{ my: 0.5 }} />
+                      <Typography variant="caption" color="text.secondary">
+                        Clusters: {matchingClusters.length <= 2 
+                          ? matchingClusters.map(c => c.name).join(', ')
+                          : `${matchingClusters.slice(0, 2).map(c => c.name).join(', ')} +${matchingClusters.length - 2} more`
+                        }
+                      </Typography>
                     </>
                   )}
                 </Paper>
@@ -591,143 +636,149 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
         </Box>
       )}
       
-      {/* Workloads on Canvas - Grouped by Namespace */}
+      {/* Workloads on Canvas */}
       {canvasEntities.workloads.length > 0 && (
-        <Box sx={{ mb: 3 }}>
-          
-          
-          {/* Render workloads grouped by namespace */}
-          {Object.entries(workloadsByNamespace).map(([namespace, workloadIds]) => (
-            <Box key={namespace} sx={{ mb: 2 }}>
-              <Box 
-                sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  backgroundColor: alpha('#4caf50', 0.1),
-                  borderRadius: '4px',
-                  py: 0.5,
-                  px: 1,
-                  mb: 1
-                }}
-              >
-                <KubernetesIcon type="workload" size={16} sx={{ mr: 0.5 }} />
-                <Typography variant="body2" color="text.secondary">
-                  Namespace: <strong>{namespace}</strong>
-                </Typography>
-              </Box>
+        <Box sx={{ mb: 3 }}>          
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {canvasEntities.workloads.map(workloadId => {
+              const labelInfo = extractLabelInfo(workloadId);
+              const hasConnections = connectionCounts.workloads[workloadId] > 0;
+              const position = itemPositions[`workload-${workloadId}`] || { x: 0, y: 0 };
               
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {workloadIds.map(workloadId => {
-                  const workload = workloads.find(w => w.name === workloadId);
-                  if (!workload) return null;
-                  
-                  const hasConnections = connectionCounts.workloads[workloadId] > 0;
-                  const position = itemPositions[`workload-${workloadId}`] || { x: 0, y: 0 };
-                  
-                  return (
-                    <Paper
-                      key={workloadId}
-                      ref={(el: HTMLElement | null) => {
-                        if (el) elementsRef.current[`workload-${workloadId}`] = el;
-                      }}
-                      elevation={2}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, 'workload', workloadId)}
-                      onClick={(e) => captureItemClick(e, 'workload', workloadId)}
-                      onMouseEnter={(e) => handleItemHover(e, 'workload', workloadId)}
-                      onMouseLeave={(e) => handleItemHover(e, null, null)}
-                      sx={{
-                        p: 1,
-                        ...getConnectionBorderStyle('workload', workloadId, '#4caf50'),
-                        display: 'flex',
-                        flexDirection: 'column',
-                        width: 'fit-content',
-                        maxWidth: 250,
-                        transition: 'transform 0.2s, box-shadow 0.2s',
-                        ...(connectMode ? getConnectableStyles('workload', workloadId) : {}),
-                        position: 'absolute',
-                        left: position.x,
-                        top: position.y,
-                        zIndex: 3,
-                        cursor: 'move',
-                        backgroundColor: isItemConnectable('workload', workloadId) 
-                          ? alpha('#4caf50', 0.1) 
-                          : undefined,
-                        '&:hover': {
-                          transform: 'translateY(-2px)',
-                          boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
-                        },
-                        'data-item-type': 'workload',
-                        'data-item-id': workloadId
-                      }}
-                    >
-                      <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'space-between',
-                        mb: 0.5,
-                        width: '100%'
-                      }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          {getWorkloadIcon()}
-                          <Typography variant="subtitle2" sx={{ ml: 1 }} noWrap>
-                            {workload.name}
-                          </Typography>
-                        </Box>
-                        
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          {hasConnections && (
-                            <Badge 
-                              badgeContent={connectionCounts.workloads[workloadId]} 
-                              color="primary" 
-                              sx={{ mr: 1 }}
-                            >
-                              <ConnectionIcon size={20} />
-                            </Badge>
-                          )}
-                          <IconButton 
-                            size="small" 
-                            color="error"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                              removeFromCanvas('workload', workloadId);
-                            }}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Box>
-                      </Box>
-                      
-                      <Typography variant="caption" color="text.secondary" noWrap>
-                        Type: {workload.kind}
+              const matchingWorkloads = labelInfo 
+                ? getWorkloadsForLabel(workloads, labelInfo.key, labelInfo.value) 
+                : workloads.filter(w => w.name === workloadId);
+              
+              if (matchingWorkloads.length === 0) return null;
+              
+              const namespaces = [...new Set(matchingWorkloads.map(w => w.namespace || 'default'))];
+              
+              return (
+                <Paper
+                  key={workloadId}
+                  ref={(el: HTMLElement | null) => {
+                    if (el) elementsRef.current[`workload-${workloadId}`] = el;
+                  }}
+                  elevation={2}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, 'workload', workloadId)}
+                  onClick={(e) => captureItemClick(e, 'workload', workloadId)}
+                  onMouseEnter={(e) => handleItemHover(e, 'workload', workloadId)}
+                  onMouseLeave={(e) => handleItemHover(e, null, null)}
+                  data-item-type="workload"
+                  data-item-id={workloadId}
+                  sx={{
+                    p: 1,
+                    ...getConnectionBorderStyle('workload', workloadId, '#4caf50'),
+                    display: 'flex',
+                    flexDirection: 'column',
+                    width: 'fit-content',
+                    maxWidth: 250,
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    ...(connectMode ? getConnectableStyles('workload', workloadId) : {}),
+                    position: 'absolute',
+                    left: position.x,
+                    top: position.y,
+                    zIndex: 3,
+                    cursor: 'move',
+                    backgroundColor: isItemConnectable('workload', workloadId) 
+                      ? alpha('#4caf50', 0.1) 
+                      : undefined,
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                    }
+                  }}
+                >
+                  <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    mb: 0.5,
+                    width: '100%'
+                  }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      {getWorkloadIcon()}
+                      <Typography variant="subtitle2" sx={{ ml: 1 }} noWrap>
+                        {labelInfo ? `${labelInfo.key}` : workloadId}
                       </Typography>
-                      
-                      {Object.keys(getItemLabels('workload', workloadId)).length > 0 && (
-                        <>
-                          <Divider sx={{ my: 0.5 }} />
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                            {Object.entries(getItemLabels('workload', workloadId)).map(([key, value]) => (
-                              <Chip 
-                                key={key}
-                                label={`${key}: ${value}`}
-                                size="small"
-                                variant="outlined"
-                                sx={{ 
-                                  height: 18,
-                                  fontSize: '0.6rem'
-                                }}
-                              />
-                            ))}
-                          </Box>
-                        </>
+                    </Box>
+                    
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      {hasConnections && (
+                        <Badge 
+                          badgeContent={connectionCounts.workloads[workloadId]} 
+                          color="primary" 
+                          sx={{ mr: 1 }}
+                        >
+                          <ConnectionIcon size={20} />
+                        </Badge>
                       )}
-                    </Paper>
-                  );
-                })}
-              </Box>
-            </Box>
-          ))}
+                      
+                      {labelInfo && matchingWorkloads.length > 1 && (
+                        <Badge 
+                          badgeContent={matchingWorkloads.length} 
+                          color="success" 
+                          sx={{ mr: 1 }}
+                        >
+                          <KubernetesIcon type="workload" size={16} />
+                        </Badge>
+                      )}
+                      
+                      <IconButton 
+                        size="small" 
+                        color="error"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          removeFromCanvas('workload', workloadId);
+                        }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </Box>
+                  
+                  {labelInfo && (
+                    <>
+                      <Divider sx={{ my: 0.5 }} />
+                      <Chip 
+                        label={labelInfo.value}
+                        size="small"
+                        variant="outlined"
+                        sx={{ 
+                          height: 20,
+                          fontSize: '0.75rem',
+                          mb: 0.5
+                        }}
+                      />
+                    </>
+                  )}
+                  
+                  {namespaces.length > 0 && (
+                    <Typography variant="caption" color="text.secondary" noWrap>
+                      {namespaces.length === 1 
+                        ? `Namespace: ${namespaces[0]}`
+                        : `Namespaces: ${namespaces.length}`
+                      }
+                    </Typography>
+                  )}
+                  
+                  {labelInfo && matchingWorkloads.length > 0 && (
+                    <>
+                      <Divider sx={{ my: 0.5 }} />
+                      <Typography variant="caption" color="text.secondary">
+                        {matchingWorkloads.length <= 2 
+                          ? matchingWorkloads.map(w => `${w.name} (${w.kind})`).join(', ')
+                          : `${matchingWorkloads.slice(0, 2).map(w => w.name).join(', ')} +${matchingWorkloads.length - 2} more`
+                        }
+                      </Typography>
+                    </>
+                  )}
+                </Paper>
+              );
+            })}
+          </Box>
         </Box>
       )}
     </Box>

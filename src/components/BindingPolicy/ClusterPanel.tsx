@@ -6,31 +6,87 @@ import {
   Paper, 
   Divider,
   useTheme,
-  alpha
+  alpha,
+  Chip,
+  Tooltip,
+  Button
 } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
 import { Draggable } from '@hello-pangea/dnd';
 import { ManagedCluster } from '../../types/bindingPolicy';
 import StrictModeDroppable from './StrictModeDroppable';
 import KubernetesIcon from './KubernetesIcon';
+import { useNavigate } from 'react-router-dom';
 
 interface ClusterPanelProps {
   clusters: ManagedCluster[];
   loading: boolean;
   error?: string;
+  compact?: boolean;
+}
+
+// Group representing a unique label key+value with clusters that share it
+interface LabelGroup {
+  key: string;
+  value: string;
+  clusters: Array<{
+    name: string;
+  }>;
 }
 
 const ClusterPanel: React.FC<ClusterPanelProps> = ({
   clusters,
   loading,
-  error
+  error,
+  compact = false
 }) => {
   const theme = useTheme();
+  const navigate = useNavigate();
 
-  const renderClusterItem = (cluster: ManagedCluster, index: number) => {
+  const handleImportClusters = () => {
+    navigate('/its');
+  };
+
+  // Extract unique labels from clusters
+  const uniqueLabels = React.useMemo(() => {
+    const labelMap: Record<string, LabelGroup> = {};
+    
+    clusters.forEach(cluster => {
+      if (cluster.labels && Object.keys(cluster.labels).length > 0) {
+        Object.entries(cluster.labels).forEach(([key, value]) => {
+          const labelId = `${key}:${value}`;
+          
+          if (!labelMap[labelId]) {
+            labelMap[labelId] = {
+              key,
+              value,
+              clusters: []
+            };
+          }
+          
+          if (!labelMap[labelId].clusters.some(c => c.name === cluster.name)) {
+            labelMap[labelId].clusters.push({
+              name: cluster.name
+            });
+          }
+        });
+      }
+    });
+    
+    return Object.values(labelMap);
+  }, [clusters]);
+
+  const renderLabelItem = (labelGroup: LabelGroup, index: number) => {
+    const firstCluster = labelGroup.clusters[0];
+    
+    const draggableId = `label-${labelGroup.key}-${labelGroup.value}`;
+    
+    console.log(`Creating draggable label: ${draggableId} for ${labelGroup.key}:${labelGroup.value}`);
+    
     return (
       <Draggable
-        key={cluster.name}
-        draggableId={`cluster-${cluster.name}`}
+        key={`${labelGroup.key}:${labelGroup.value}`}
+        draggableId={draggableId}
         index={index}
       >
         {(provided, snapshot) => (
@@ -38,11 +94,11 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
             ref={provided.innerRef}
             {...provided.draggableProps}
             {...provided.dragHandleProps}
-            data-rbd-draggable-id={`cluster-${cluster.name}`}
+            data-rbd-draggable-id={draggableId}
             data-rfd-draggable-context-id={provided.draggableProps['data-rfd-draggable-context-id']}
             sx={{
               p: 1,
-              m: 1,
+              m: compact ? 0.5 : 1,
               borderRadius: 1,
               backgroundColor: snapshot.isDragging
                 ? alpha(theme.palette.primary.main, 0.1)
@@ -54,14 +110,71 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
               '&:hover': {
                 backgroundColor: alpha(theme.palette.primary.main, 0.05),
                 cursor: 'grab'
-              }
+              },
+              position: 'relative'
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <KubernetesIcon type="cluster" size={24} sx={{ mr: 1 }} />
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                {cluster.name}
-              </Typography>
+            {/* Position cluster count chip in absolute position */}
+            <Tooltip title={`${labelGroup.clusters.length} cluster(s)`}>
+              <Chip 
+                size="small" 
+                label={`${labelGroup.clusters.length}`}
+                sx={{ 
+                  fontSize: '0.5rem',
+                  height: 16,
+                  '& .MuiChip-label': { px: 0.5 },
+                  bgcolor: alpha(theme.palette.info.main, 0.1),
+                  color: theme.palette.info.main,
+                  position: 'absolute',
+                  top: 4,
+                  right: 4
+                }}
+              />
+            </Tooltip>
+            
+            {/* Label value */}
+            <Box sx={{ mt: 0.5 }}>
+              <Chip
+                size="small"
+                label={`${labelGroup.key} = ${labelGroup.value}`}
+                sx={{ 
+                  fontSize: '1rem',
+                  height: 20,
+                  '& .MuiChip-label': { 
+                    px: 0.75,
+                    textOverflow: 'ellipsis',
+                    overflow: 'hidden',
+                  },
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  color: theme.palette.primary.main,
+                }}
+              />
+            </Box>
+            
+            {/* Cluster summary */}
+            <Box sx={{ mt: 0.5 }}>
+              <Tooltip 
+                title={
+                  <React.Fragment>
+                    <Typography variant="caption" sx={{ fontWeight: 'bold' }}>Clusters:</Typography>
+                    <ul style={{ margin: 0, paddingLeft: '1rem' }}>
+                      {labelGroup.clusters.map(c => (
+                        <li key={c.name}>{c.name}</li>
+                      ))}
+                    </ul>
+                  </React.Fragment>
+                } 
+                arrow 
+                placement="top"
+              >
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  {labelGroup.clusters.length === 1 
+                    ? firstCluster.name
+                    : labelGroup.clusters.length <= 2
+                      ? labelGroup.clusters.map(c => c.name).join(', ')
+                      : `${labelGroup.clusters.slice(0, 2).map(c => c.name).join(', ')} +${labelGroup.clusters.length - 2} more`}
+                </Typography>
+              </Tooltip>
             </Box>
           </Box>
         )}
@@ -80,16 +193,33 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
         borderRadius: 2,
       }}
     >
-      <Box sx={{ p: 2, backgroundColor: theme.palette.primary.main, color: 'white' }}>
+      <Box sx={{ p: compact ? 1 : 2, backgroundColor: theme.palette.primary.main, color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <KubernetesIcon type="cluster" size={24} sx={{ mr: 1, color: 'white' }} />
-          <Typography variant="h6">Clusters</Typography>
+          <KubernetesIcon type="cluster" size={compact ? 20 : 24} sx={{ mr: 1, color: 'white' }} />
+          <Typography variant={compact ? "subtitle1" : "h6"}>Cluster Labels</Typography>
         </Box>
+        {!compact && (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleImportClusters}
+            size="small"
+            sx={{ 
+              bgcolor: 'white', 
+              color: theme.palette.primary.main,
+              '&:hover': {
+                bgcolor: alpha(theme.palette.common.white, 0.9),
+              }
+            }}
+          >
+            Import
+          </Button>
+        )}
       </Box>
       <Divider />
       
       <Box sx={{ 
-        p: 1, 
+        p: compact ? 0.5 : 1, 
         overflow: 'auto', 
         flexGrow: 1,
         '&::-webkit-scrollbar': {
@@ -108,7 +238,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
           </Typography>
         ) : clusters.length === 0 ? (
           <Typography sx={{ p: 2, color: 'text.secondary', textAlign: 'center' }}>
-            No clusters available
+            No cluster labels available. Please add clusters with labels to use in binding policies.
           </Typography>
         ) : (
           <StrictModeDroppable droppableId="cluster-panel" type="CLUSTER_OR_WORKLOAD">
@@ -120,13 +250,16 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
                 data-rfd-droppable-context-id={provided.droppableProps['data-rfd-droppable-context-id']}
                 sx={{ minHeight: '100%' }}
               >
-                {clusters.length === 0 ? (
+                {uniqueLabels.length === 0 ? (
                   <Typography sx={{ p: 2, color: 'text.secondary', textAlign: 'center' }}>
-                    All clusters are on the canvas
+                    No labels found in available clusters.
                   </Typography>
                 ) : (
-                  clusters.map((cluster, index) => renderClusterItem(cluster, index))
+                  uniqueLabels.map((labelGroup, index) => 
+                    renderLabelItem(labelGroup, index)
+                  )
                 )}
+                
                 {provided.placeholder}
               </Box>
             )}
@@ -137,4 +270,4 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
   );
 };
 
-export default React.memo(ClusterPanel); 
+export default React.memo(ClusterPanel);
