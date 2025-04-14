@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, memo } from "react";
-import { Box, Typography, Menu, MenuItem, Button, Alert, Snackbar } from "@mui/material";
+import { Box, Typography, Menu, MenuItem, Button, Alert, Snackbar, IconButton } from "@mui/material";
 import { ReactFlowProvider, Position, MarkerType } from "reactflow";
 import * as dagre from "dagre";
 import "reactflow/dist/style.css";
@@ -45,6 +45,7 @@ import { useWebSocket } from "../context/WebSocketProvider";
 import useTheme from "../stores/themeStore";
 import WecsDetailsPanel from "./WecsDetailsPanel";
 import { FlowCanvas } from "./Wds_Topology/FlowCanvas";
+import ListViewComponent from "../components/ListViewComponent"; // Added import
 
 // Updated Interfaces
 export interface NodeData {
@@ -312,6 +313,7 @@ const WecsTreeview = () => {
   const panelRef = useRef<HTMLDivElement>(null);
   const prevWecsData = useRef<WecsCluster[] | null>(null);
   const stateRef = useRef({ isCollapsed, isExpanded }); // Ref to track latest state
+  const [viewMode, setViewMode] = useState<'tiles' | 'list'>('tiles'); // Added viewMode state
 
   const { wecsIsConnected, hasValidWecsData, wecsData } = useWebSocket();
   console.log(setSnackbarMessage);
@@ -1116,21 +1118,47 @@ const WecsTreeview = () => {
           <Typography variant="h4" sx={{ color: "#4498FF", fontWeight: 700, fontSize: "30px", letterSpacing: "0.5px" }}>
             Remote-Cluster Treeview
           </Typography>
-          <Button
-            variant="outlined"
-            startIcon={<Plus size={20} />}
-            onClick={handleCreateWorkloadClick}
-            sx={{
-              color: "#FFFFFF",
-              backgroundColor: "#2F86FF",
-              padding: "8px 20px",
-              fontWeight: "600",
-              borderRadius: "8px",
-              textTransform: "none",
-            }}
-          >
-            Create Workload
-          </Button>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <IconButton
+              color={viewMode === 'tiles' ? "primary" : "default"}
+              onClick={() => setViewMode('tiles')}
+              sx={{ 
+                padding: 1,
+                borderRadius: "50%", // Ensures a perfect circle
+                width: 40,          // Optional: Fixed width for consistency
+                height: 40,         // Optional: Fixed height for consistency
+              }}
+            >
+              <span><i className="fa fa-th menu_icon" title="Tiles"></i></span>
+            </IconButton>
+            <IconButton
+              color={viewMode === 'list' ? "primary" : "default"}
+              onClick={() => setViewMode('list')}
+              sx={{ 
+                padding: 1,
+                borderRadius: "50%", // Ensures a perfect circle
+                width: 40,          // Optional: Fixed width for consistency
+                height: 40,         // Optional: Fixed height for consistency
+              }}
+            >
+              <span><i className="fa fa-th-list selected menu_icon" title="List"></i></span>
+            </IconButton>
+            <Button
+              variant="outlined"
+              startIcon={<Plus size={20} />}
+              onClick={handleCreateWorkloadClick}
+              sx={{
+                color: "#FFFFFF",
+                backgroundColor: "#2F86FF",
+                padding: "8px 20px",
+                fontWeight: "600",
+                borderRadius: "8px",
+                textTransform: "none",
+              }}
+            >
+              Create Workload
+            </Button>
+          </Box>
         </Box>
 
         {showCreateOptions && <CreateOptions activeOption={activeOption} setActiveOption={setActiveOption} onCancel={handleCancelCreateOptions} />}
@@ -1138,6 +1166,8 @@ const WecsTreeview = () => {
         <Box sx={{ width: "100%", height: "calc(100% - 80px)", position: "relative" }}>
           {isLoading ? (
             <LoadingFallback message="Loading the tree..." size="medium" />
+          ) : viewMode === 'list' ? (
+            <ListViewComponent />
           ) : nodes.length > 0 || edges.length > 0 ? (
             <Box sx={{ width: "100%", height: "100%", position: "relative" }}>
               <ReactFlowProvider>

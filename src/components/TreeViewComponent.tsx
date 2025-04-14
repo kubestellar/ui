@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, memo } from "react";
-import { Box, Typography, Menu, MenuItem, Button, Alert, Snackbar, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import { Box, Typography, Menu, MenuItem, Button, Alert, Snackbar, Dialog, DialogTitle, DialogContent, DialogActions, IconButton } from "@mui/material";
 import { ReactFlowProvider, Position, MarkerType } from "reactflow";
 import * as dagre from "dagre";
 import "reactflow/dist/style.css";
@@ -47,6 +47,7 @@ import { useWebSocket } from "../context/WebSocketProvider";
 import useTheme from "../stores/themeStore";
 import axios from "axios";
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import ListViewComponent from "../components/ListViewComponent"; // Import the new component
 
 // Interfaces
 export interface NodeData {
@@ -473,7 +474,7 @@ const TreeViewComponent = () => {
   const [dataReceived, setDataReceived] = useState<boolean>(false);
   const [minimumLoadingTimeElapsed, setMinimumLoadingTimeElapsed] = useState<boolean>(false);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
-  const [isExpanded, setIsExpanded] = useState<boolean>(true); // New state to track expansion of child nodes
+  const [isExpanded, setIsExpanded] = useState<boolean>(true);
   const [groupPanel, setGroupPanel] = useState<GroupPanelState | null>(null);
   const nodeCache = useRef<Map<string, CustomNode>>(new Map());
   const edgeCache = useRef<Map<string, CustomEdge>>(new Map());
@@ -488,6 +489,7 @@ const TreeViewComponent = () => {
     nodeName: string;
     nodeId: string;
   } | null>(null);
+  const [viewMode, setViewMode] = useState<'tiles' | 'list'>('tiles');
 
   const { isConnected, connect, hasValidData } = useWebSocket();
   const NAMESPACE_QUERY_KEY = ["namespaces"];
@@ -570,7 +572,7 @@ const TreeViewComponent = () => {
       parent: string | null,
       newNodes: CustomNode[],
       newEdges: CustomEdge[],
-      groupItems?: ResourceItem[] // Add optional groupItems parameter for collapsed mode
+      groupItems?: ResourceItem[]
     ) => {
       const config = getNodeConfig(type.toLowerCase(), label);
       const timeAgo = getTimeAgo(timestamp);
@@ -598,7 +600,7 @@ const TreeViewComponent = () => {
                       isOpen: true,
                       namespace: namespace || "default",
                       groupType: type.toLowerCase(),
-                      groupItems: groupItems, // Pass all group items
+                      groupItems: groupItems,
                     });
                   } else {
                     setSelectedNode({
@@ -633,7 +635,7 @@ const TreeViewComponent = () => {
       if (!cachedNode) nodeCache.current.set(id, node);
       newNodes.push(node);
 
-      if (parent && isExpanded) { // Only create edges if expanded
+      if (parent && isExpanded) {
         const uniqueSuffix = resourceData?.metadata?.uid || edgeIdCounter.current++;
         const edgeId = `edge-${parent}-${id}-${uniqueSuffix}`;
         const cachedEdge = edgeCache.current.get(edgeId);
@@ -691,7 +693,6 @@ const TreeViewComponent = () => {
             ...namespace.resources,
           };
 
-          // Only process child nodes if expanded
           if (isExpanded) {
             if (isCollapsed) {
               const resourceGroups: Record<string, ResourceItem[]> = {};
@@ -720,11 +721,11 @@ const TreeViewComponent = () => {
                   status,
                   items[0]?.metadata.creationTimestamp,
                   namespace.name,
-                  items[0], // Representative resource data
+                  items[0],
                   namespaceId,
                   newNodes,
                   newEdges,
-                  items // Pass all items for the group
+                  items
                 );
               });
             } else {
@@ -740,7 +741,7 @@ const TreeViewComponent = () => {
                   switch (kindLower) {
                     case "configmap":
                       createNode(`${resourceId}:volume`, `volume-${item.metadata.name}`, "volume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                      createNode(`${resourceId}:envvar`, `envvar-${item.metadata.name}`, "envvar", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      createNode(`${resourceId}:envvar`, `envvar-${item.metadata.name}`, "envvar", status, undefined, namespace.name, item, resourceId, newNodes , newEdges);
                       break;
 
                     case "clusterrolebinding": {
@@ -1048,7 +1049,7 @@ const TreeViewComponent = () => {
                   isOpen: true,
                   namespace: namespace || "default",
                   groupType: nodeType,
-                  groupItems: nodeCache.current.get(node.id)?.data.label.props.resourceData ? [resourceData] : [], // Fallback, should be handled by groupItems
+                  groupItems: nodeCache.current.get(node.id)?.data.label.props.resourceData ? [resourceData] : [],
                 });
               } else {
                 setSelectedNode({
@@ -1190,21 +1191,47 @@ const TreeViewComponent = () => {
           <Typography variant="h4" sx={{ color: "#4498FF", fontWeight: 700, fontSize: "30px", letterSpacing: "0.5px" }}>
             Manage Workloads
           </Typography>
-          <Button
-            variant="outlined"
-            startIcon={<Plus size={20} />}
-            onClick={handleCreateWorkloadClick}
-            sx={{
-              color: "#FFFFFF",
-              backgroundColor: "#2F86FF",
-              padding: "8px 20px",
-              fontWeight: "600",
-              borderRadius: "8px",
-              textTransform: "none",
-            }}
-          >
-            Create Workload
-          </Button>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2}}>
+            <IconButton
+              color={viewMode === 'tiles' ? "primary" : "default"}
+              onClick={() => setViewMode('tiles')}
+              sx={{ 
+                  padding: 1,
+                  borderRadius: "50%", // Ensures a perfect circle
+                  width: 40,          // Optional: Fixed width for consistency
+                  height: 40,         // Optional: Fixed height for consistency
+              }}
+            >
+              <span><i className="fa fa-th menu_icon" title="Tiles"></i></span>
+            </IconButton>
+            <IconButton
+              color={viewMode === 'list' ? "primary" : "default"}
+              onClick={() => setViewMode('list')}
+              sx={{
+                padding: 1,
+                borderRadius: "50%", // Ensures a perfect circle
+                width: 40,          // Optional: Fixed width for consistency
+                height: 40,         // Optional: Fixed height for consistency
+              }}
+            >
+              <span><i className="fa fa-th-list selected menu_icon" title="List"></i></span>
+            </IconButton>
+            <Button
+              variant="outlined"
+              startIcon={<Plus size={20} />}
+              onClick={handleCreateWorkloadClick}
+              sx={{
+                color: "#FFFFFF",
+                backgroundColor: "#2F86FF",
+                padding: "8px 20px",
+                fontWeight: "600",
+                borderRadius: "8px",
+                textTransform: "none",
+              }}
+            >
+              Create Workload
+            </Button>
+          </Box>
         </Box>
 
         {showCreateOptions && <CreateOptions activeOption={activeOption} setActiveOption={setActiveOption} onCancel={handleCancelCreateOptions} />}
@@ -1212,13 +1239,15 @@ const TreeViewComponent = () => {
         <Box sx={{ width: "100%", height: "calc(100% - 80px)", position: "relative" }}>
           {isLoading ? (
             <LoadingFallback message="Loading the tree..." size="medium" />
-          ) : nodes.length > 0 || edges.length > 0 ? (
+          ) : viewMode === 'tiles' && (nodes.length > 0 || edges.length > 0) ? (
             <Box sx={{ width: "100%", height: "100%", position: "relative" }}>
               <ReactFlowProvider>
                 <FlowCanvas nodes={nodes} edges={edges} renderStartTime={renderStartTime} theme={theme} />
                 <ZoomControls theme={theme} onToggleCollapse={handleToggleCollapse} isCollapsed={isCollapsed} onExpandAll={handleExpandAll} onCollapseAll={handleCollapseAll} />
               </ReactFlowProvider>
             </Box>
+          ) : viewMode === 'list' ? (
+            <ListViewComponent /> // Render the new list view component
           ) : (
             <Box
               sx={{
