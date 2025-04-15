@@ -137,6 +137,7 @@ func applyResources(c *gin.Context, yamlDocs []map[string]interface{},
 		}
 
 		var resource dynamic.ResourceInterface
+		var labelName string
 		if isNamespaced {
 			resource = dynamicClient.Resource(gvr).Namespace(namespace)
 		} else {
@@ -144,7 +145,12 @@ func applyResources(c *gin.Context, yamlDocs []map[string]interface{},
 		}
 
 		resourceObj := &unstructured.Unstructured{Object: resourceData}
-		autoLabelling(resourceObj)
+		if isNamespaced && namespace != "default" {
+			labelName = namespace
+		} else {
+			labelName = resourceObj.GetName()
+		}
+		autoLabelling(resourceObj, labelName)
 		result, err := resource.Create(c, resourceObj, v1.CreateOptions{})
 		if err != nil {
 			return results, fmt.Errorf("failed to create resource %s: %v", resourceKind, err)
@@ -155,15 +161,16 @@ func applyResources(c *gin.Context, yamlDocs []map[string]interface{},
 
 }
 
-func autoLabelling(obj *unstructured.Unstructured) {
+func autoLabelling(obj *unstructured.Unstructured, labelName string) {
 	labels := obj.GetLabels()
+
 	if labels == nil {
 		labels = make(map[string]string)
 	}
 	labelKey := "kubernetes.io/kubestellar.workload.name"
 
 	if _, exists := labels[labelKey]; !exists {
-		labels[labelKey] = obj.GetName()
+		labels[labelKey] = labelName
 		obj.SetLabels(labels)
 	}
 }
