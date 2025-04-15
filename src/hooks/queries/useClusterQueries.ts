@@ -85,10 +85,36 @@ export const useClusterQueries = () => {
     });
   };
 
+  // Update cluster labels mutation
+  const useUpdateClusterLabels = () => {
+    return useMutation({
+      mutationFn: async ({ 
+        contextName, 
+        clusterName, 
+        labels 
+      }: { 
+        contextName: string; 
+        clusterName: string; 
+        labels: { [key: string]: string } 
+      }) => {
+        const response = await api.patch('/api/managedclusters/labels', {
+          contextName,
+          clusterName,
+          labels
+        });
+        return response.data;
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['clusters'] });
+      },
+    });
+  };
+
   return {
     useClusters,
     useClusterStatus,
     useImportCluster,
     useOnboardCluster,
+    useUpdateClusterLabels,
   };
 }; 
