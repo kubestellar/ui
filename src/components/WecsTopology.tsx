@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, memo } from "react";
-import { Box, Typography, Menu, MenuItem, Button, Alert, Snackbar, IconButton } from "@mui/material";
+import { Box, Typography, Menu, MenuItem, Button, IconButton } from "@mui/material";
 import { ReactFlowProvider, Position, MarkerType } from "reactflow";
 import * as dagre from "dagre";
 import "reactflow/dist/style.css";
@@ -293,9 +293,9 @@ const WecsTreeview = () => {
   const theme = useTheme((state) => state.theme);
   const [nodes, setNodes] = useState<CustomNode[]>([]);
   const [edges, setEdges] = useState<CustomEdge[]>([]);
-  const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
-  const [snackbarMessage, setSnackbarMessage] = useState<string>("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
+  // const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
+  // const [snackbarMessage, setSnackbarMessage] = useState<string>("");
+  // const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
   const [contextMenu, setContextMenu] = useState<{ nodeId: string | null; x: number; y: number } | null>(null);
   const [showCreateOptions, setShowCreateOptions] = useState(false);
   const [activeOption, setActiveOption] = useState<string | null>("option1");
@@ -316,8 +316,8 @@ const WecsTreeview = () => {
   const [viewMode, setViewMode] = useState<'tiles' | 'list'>('tiles'); // Added viewMode state
 
   const { wecsIsConnected, hasValidWecsData, wecsData } = useWebSocket();
-  console.log(setSnackbarMessage);
-  console.log(setSnackbarSeverity);
+  // console.log(setSnackbarMessage);
+  // console.log(setSnackbarSeverity);
   
   useEffect(() => {
     renderStartTime.current = performance.now();
@@ -1046,10 +1046,10 @@ const WecsTreeview = () => {
       }
       handleMenuClose();
     },
-    [contextMenu, nodes, handleClosePanel]
+    [contextMenu, nodes, handleClosePanel, handleMenuClose]
   );
 
-  const handleSnackbarClose = useCallback(() => setSnackbarOpen(false), []);
+  // const handleSnackbarClose = useCallback(() => setSnackbarOpen(false), []);
 
   const handleCancelCreateOptions = () => setShowCreateOptions(false);
 
@@ -1218,12 +1218,12 @@ const WecsTreeview = () => {
             </Menu>
           )}
         </Box>
-
+{/* 
         <Snackbar anchorOrigin={{ vertical: "top", horizontal: "center" }} open={snackbarOpen} autoHideDuration={4000} onClose={handleSnackbarClose}>
           <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: "100%" }}>
             {snackbarMessage}
           </Alert>
-        </Snackbar>
+        </Snackbar> */}
       </Box>
 
       <div ref={panelRef}>

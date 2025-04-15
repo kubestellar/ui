@@ -1,6 +1,6 @@
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import { getConfirmationDialogPaperProps } from "../StyledComponents";
+import { getConfirmationDialogPaperProps } from "../../utils/dialogUtils";
 import useTheme from "../../stores/themeStore"; // Import useTheme for dark mode support
 
 interface Props {

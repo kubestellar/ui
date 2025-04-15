@@ -9,10 +9,11 @@ interface FlowCanvasProps {
   theme: string; // Add theme prop
 }
 
-export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, renderStartTime, theme }) => {
+export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
+  // renderStartTime betwwen the nodes and edges 
   const { setViewport, getViewport } = useReactFlow();
-  const startRenderTime = performance.now();
-  console.log(`FlowCanvas starting render with ${nodes.length} nodes and ${edges.length} edges at ${startRenderTime - renderStartTime.current}ms`);
+  // const startRenderTime = performance.now();
+  // console.log(`FlowCanvas starting render with ${nodes.length} nodes and ${edges.length} edges at ${startRenderTime - renderStartTime.current}ms`);
 
   const positions = useMemo(() => {
     if (nodes.length === 0) return { minX: 0, maxX: 0, minY: 0, maxY: 0 };
@@ -88,8 +89,8 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, renderStartTime
     [getViewport, setViewport, positions]
   );
 
-  const endRenderTime = performance.now();
-  console.log(`FlowCanvas completed render in ${endRenderTime - startRenderTime}ms at ${endRenderTime - renderStartTime.current}ms`);
+  // const endRenderTime = performance.now();
+  // console.log(`FlowCanvas completed render in ${endRenderTime - startRenderTime}ms at ${endRenderTime - renderStartTime.current}ms`);
 
   return (
     <ReactFlow

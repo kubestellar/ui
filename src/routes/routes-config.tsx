@@ -3,8 +3,6 @@ import { Layout } from "../components/Layout";
 import WDS from "../pages/WDS";
 import BP from "../pages/BP";
 import NotFoundPage from "../pages/NotFoundPage";
-import DeploymentDetails from "../components/DeploymentDetails";
-import NameSpace from "../pages/NS";
 import TreeView from "../components/TreeViewComponent";
 import { lazy, Suspense } from "react";
 import LoadingFallback from "../components/LoadingFallback";
@@ -62,22 +60,6 @@ export const routesConfig: RouteObject[] = [
         element: (
           <ProtectedRoute>
             <BP />
-          </ProtectedRoute>
-        ) 
-      },
-      { 
-        path: "namespaces", 
-        element: (
-          <ProtectedRoute>
-            <NameSpace />
-          </ProtectedRoute>
-        ) 
-      },
-      { 
-        path: "deploymentdetails/:namespace/:deploymentName", 
-        element: (
-          <ProtectedRoute>
-            <DeploymentDetails />
           </ProtectedRoute>
         ) 
       },
