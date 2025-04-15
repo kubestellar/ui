@@ -1124,24 +1124,53 @@ const WecsTreeview = () => {
               onClick={() => setViewMode('tiles')}
               sx={{ 
                 padding: 1,
-                borderRadius: "50%", // Ensures a perfect circle
-                width: 40,          // Optional: Fixed width for consistency
-                height: 40,         // Optional: Fixed height for consistency
+                borderRadius: "50%",
+                width: 40,
+                height: 40,
+                bgcolor: theme === "dark" && viewMode === 'tiles' ? "rgba(144, 202, 249, 0.15)" : "transparent",
+                "&:hover": {
+                  bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.05)",
+                }
               }}
             >
-              <span><i className="fa fa-th menu_icon" title="Tiles"></i></span>
+              <span>
+                <i 
+                  className="fa fa-th menu_icon" 
+                  title="Tiles"
+                  style={{ 
+                    color: theme === "dark" 
+                      ? viewMode === 'tiles' ? "#90CAF9" : "#FFFFFF" 
+                      : undefined 
+                  }}
+                ></i>
+              </span>
             </IconButton>
             <IconButton
               color={viewMode === 'list' ? "primary" : "default"}
               onClick={() => setViewMode('list')}
               sx={{ 
                 padding: 1,
-                borderRadius: "50%", // Ensures a perfect circle
-                width: 40,          // Optional: Fixed width for consistency
-                height: 40,         // Optional: Fixed height for consistency
+                borderRadius: "50%", 
+                width: 40,         
+                height: 40,         
+              
+                bgcolor: theme === "dark" && viewMode === 'list' ? "rgba(144, 202, 249, 0.15)" : "transparent",
+                "&:hover": {
+                  bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.05)",
+                }
               }}
             >
-              <span><i className="fa fa-th-list selected menu_icon" title="List"></i></span>
+              <span>
+                <i 
+                  className="fa fa-th-list menu_icon" 
+                  title="List"
+                  style={{ 
+                    color: theme === "dark" 
+                      ? viewMode === 'list' ? "#90CAF9" : "#FFFFFF" 
+                      : undefined 
+                  }}
+                ></i>
+              </span>
             </IconButton>
             <Button
               variant="outlined"
