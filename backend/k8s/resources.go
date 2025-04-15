@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -106,6 +107,42 @@ func parseYAMLFile(file io.Reader) ([]map[string]interface{}, error) {
 	}
 	return yamlDocs, nil
 }
+func EnsureNamespaceExistsAndAddLabel(dynamicClient dynamic.Interface, namespace string) error {
+	// Skip for default namespace which always exists
+	if namespace == "default" {
+		return nil
+	}
+
+	// Get the GVR for Namespace
+	nsGVR := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}
+
+	// Check if namespace exists
+	_, err := dynamicClient.Resource(nsGVR).Get(context.TODO(), namespace, v1.GetOptions{})
+	if err == nil {
+		// Namespace exists
+		return nil
+	}
+
+	// Create namespace if it doesn't exist
+	fmt.Printf("Creating namespace: %s\n", namespace)
+	nsObj := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Namespace",
+			"metadata": map[string]interface{}{
+				"name": namespace,
+			},
+		},
+	}
+	autoLabelling(nsObj, namespace)
+
+	_, err = dynamicClient.Resource(nsGVR).Create(context.TODO(), nsObj, v1.CreateOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to create namespace %s: %v", namespace, err)
+	}
+
+	return nil
+}
 
 func applyResources(c *gin.Context, yamlDocs []map[string]interface{},
 	dynamicClient dynamic.Interface,
@@ -123,7 +160,7 @@ func applyResources(c *gin.Context, yamlDocs []map[string]interface{},
 			if ns, exists := metadata["namespace"].(string); exists {
 				namespace = ns
 				if strings.EqualFold(autoNs, "true") || autoNs == "1" {
-					err := EnsureNamespaceExists(dynamicClient, namespace)
+					err := EnsureNamespaceExistsAndAddLabel(dynamicClient, namespace)
 					if err != nil {
 						return nil, fmt.Errorf("failed to ensure namespace %s exists: %v", namespace, err)
 					}
