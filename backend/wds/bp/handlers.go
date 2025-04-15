@@ -91,23 +91,8 @@ func GetAllBp(ctx *gin.Context) {
 		// Add the YAML as a string to the policy
 		bpList.Items[i].Annotations["yaml"] = string(yamlData)
 
-		// Determine if the policy is active based on status fields
 		status := "inactive"
-
-		// Check if any conditions are present and if Synced and Ready are True
-		hasSync := false
-		hasReady := false
-
-		for _, condition := range bpList.Items[i].Status.Conditions {
-			if condition.Type == "Synced" && condition.Status == "True" {
-				hasSync = true
-			}
-			if condition.Type == "Ready" && condition.Status == "True" {
-				hasReady = true
-			}
-		}
-
-		if hasSync && hasReady {
+		if bpList.Items[i].ObjectMeta.Generation == bpList.Items[i].Status.ObservedGeneration {
 			status = "active"
 		}
 

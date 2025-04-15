@@ -15,6 +15,9 @@ import (
 	"github.com/kubestellar/ui/redis"
 	"go.uber.org/zap"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 )
@@ -143,34 +146,92 @@ func extractWorkloads(bp *v1alpha1.BindingPolicy) []string {
 
 	fmt.Printf("Debug - extractWorkloads - Processing %d Downsync rules\n", len(bp.Spec.Downsync))
 
-	// Process downsync resources
-	for _, ds := range bp.Spec.Downsync {
-		apiGroupValue := "core" // Default to core
-		if ds.APIGroup != nil && *ds.APIGroup != "" {
-			apiGroupValue = *ds.APIGroup
+	// Load kubeconfig
+	kubeconfigPath := clientcmd.RecommendedHomeFile
+
+	// Load raw kubeconfig and select context "wds1"
+	rawConfig, err := clientcmd.LoadFromFile(kubeconfigPath)
+	if err != nil {
+		panic(fmt.Errorf("failed to load kubeconfig file: %v", err))
+	}
+
+	// Explicitly set context to "wds1"
+	rawConfig.CurrentContext = "wds1"
+
+	// Build config from modified rawConfig
+	config, err := clientcmd.NewDefaultClientConfig(
+		*rawConfig,
+		&clientcmd.ConfigOverrides{CurrentContext: "wds1"},
+	).ClientConfig()
+	if err != nil {
+		panic(fmt.Errorf("failed to load kubeconfig for context 'wds1': %v", err))
+	}
+
+	// Create dynamic client
+	dynClient, err := dynamic.NewForConfig(config)
+	if err != nil {
+		panic(fmt.Errorf("failed to create dynamic client: %v", err))
+	}
+
+	// Define GVR for the Binding CRD
+	bindingGVR := schema.GroupVersionResource{
+		Group:    "control.kubestellar.io",
+		Version:  "v1alpha1",
+		Resource: "bindings",
+	}
+
+	// List all Bindings across all namespaces
+	bindings, err := dynClient.Resource(bindingGVR).List(context.TODO(), v1.ListOptions{})
+	if err != nil {
+		panic(fmt.Errorf("failed to list bindings: %v", err))
+	}
+
+	var results []string
+
+	for _, binding := range bindings.Items {
+		if bp.Name != binding.GetName() {
+			continue
+		}
+		// Extract .spec.workload
+		workload, found, err := unstructured.NestedMap(binding.Object, "spec", "workload")
+		if err != nil || !found {
+			continue
 		}
 
-		fmt.Printf("Debug - extractWorkloads - Found APIGroup: %s, Resources: %v, Namespaces: %v\n",
-			apiGroupValue, ds.Resources, ds.Namespaces)
-
-		// Add each resource with its API group
-		for _, resource := range ds.Resources {
-			// Convert resource to lowercase for consistent handling
-			resourceLower := strings.ToLower(resource)
-
-			// Format as apiGroup/resource
-			workloadType := fmt.Sprintf("%s/%s", apiGroupValue, resourceLower)
-
-			// Add namespaces if specified
-			if len(ds.Namespaces) > 0 {
-				for _, ns := range ds.Namespaces {
-					workloads = append(workloads, fmt.Sprintf("%s (ns:%s)", workloadType, ns))
+		// Process clusterScope[]
+		clusterScope, found, err := unstructured.NestedSlice(workload, "clusterScope")
+		if err == nil && found {
+			for _, item := range clusterScope {
+				if obj, ok := item.(map[string]interface{}); ok {
+					resource, _ := obj["resource"].(string)
+					name, _ := obj["name"].(string)
+					if resource != "" && name != "" {
+						results = append(results, fmt.Sprintf("%s: %s", resource, name))
+					}
 				}
-			} else {
-				workloads = append(workloads, workloadType)
+			}
+		}
+
+		// Process namespaceScope[]
+		namespaceScope, found, err := unstructured.NestedSlice(workload, "namespaceScope")
+		if err == nil && found {
+			for _, item := range namespaceScope {
+				if obj, ok := item.(map[string]interface{}); ok {
+					resource, _ := obj["resource"].(string)
+					name, _ := obj["name"].(string)
+					if resource != "" && name != "" {
+						results = append(results, fmt.Sprintf("%s: %s", resource, name))
+					}
+				}
 			}
 		}
 	}
+
+	workloads = results
+
+	// Print as formatted JSON array
+	// formatted, _ := json.MarshalIndent(results, "", "  ")
+	// fmt.Println(string(formatted))
 
 	fmt.Printf("Debug - extractWorkloads - Extracted %d workloads: %v\n", len(workloads), workloads)
 	return workloads
