@@ -648,8 +648,6 @@ export const HelmTab = ({
     </Box>
   );
 
-// ... (previous imports and code remain unchanged until UserCreatedChartsForm)
-
 const UserCreatedChartsForm = () => {
   const [contextMenu, setContextMenu] = useState<{ chartId: string; x: number; y: number } | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
@@ -669,7 +667,7 @@ const UserCreatedChartsForm = () => {
     try {
       const response = await axios.delete(`http://localhost:4000/api/deployments/helm/${chartId}`);
       if (response.status === 200) {
-        setUserCharts(userCharts.filter(chart => chart.id !== chartId));
+        setUserCharts(prev => prev.filter(chart => chart.id !== chartId));
         toast.success(`Chart ${chartId} deleted successfully!`);
       } else {
         toast.error(`Chart ${chartId} not deleted!`);
@@ -682,7 +680,7 @@ const UserCreatedChartsForm = () => {
       setDeleteDialogOpen(false);
       setDeleteChartId(null);
     }
-  }, [userCharts]);
+  }, []);
 
   const handleDeleteClick = useCallback(() => {
     if (contextMenu?.chartId) {
@@ -690,7 +688,7 @@ const UserCreatedChartsForm = () => {
       setDeleteDialogOpen(true);
     }
     handleMenuClose();
-  }, [contextMenu]);
+  }, [contextMenu, handleMenuClose]);
 
   const handleDeleteConfirm = useCallback(() => {
     if (deleteChartId) {
@@ -898,8 +896,6 @@ const UserCreatedChartsForm = () => {
     </Box>
   );
 };
-
-// ... (rest of the HelmTab code remains unchanged)
 
   return (
     <StyledContainer>

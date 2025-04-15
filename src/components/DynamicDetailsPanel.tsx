@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -257,7 +257,7 @@ const DynamicDetailsPanel = ({
   }, [namespace, name, type, resourceData]);
 
   // Function to establish WebSocket connection
-  const connectWebSocket = () => {
+  const connectWebSocket = useCallback(() => {
     if (!wsParamsRef.current) return;
 
     const { kind, namespace, name } = wsParamsRef.current;
@@ -300,7 +300,7 @@ const DynamicDetailsPanel = ({
         }, 100); // Reduced from 1000ms to 100ms for faster reconnection
       }
     };
-  };
+  }, [isOpen]);
 
   // Dedicated useEffect for WebSocket connection, only dependent on isOpen and wsParamsRef
   useEffect(() => {
@@ -334,7 +334,7 @@ const DynamicDetailsPanel = ({
         }
       }
     };
-  }, [isOpen, wsParamsRef.current]); // Depend on wsParamsRef.current to ensure connection is established after params are set
+  }, [isOpen, connectWebSocket]); // Removed wsParamsRef.current since it's a mutable ref value
 
   // UseEffect to initialize terminal and display logs when "LOGS" tab is selected
   useEffect(() => {
@@ -524,7 +524,7 @@ const DynamicDetailsPanel = ({
     const labels = resourceData?.metadata?.labels;
     const labelsString = labels
       ? Object.entries(labels)
-          .map(([key, value]) => `${key}=${value}`)
+          .map(([key, value]) => `${key}: ${value}`)
           .join(", ")
       : "None";
 

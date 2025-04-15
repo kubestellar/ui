@@ -1,5 +1,5 @@
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
-import { getWebhookDialogPaperProps } from "../StyledComponents";
+import { getWebhookDialogPaperProps } from "../../utils/dialogUtils";
 import useTheme from "../../stores/themeStore"; // Import useTheme for dark mode support
 import { toast } from "react-hot-toast";
 
