@@ -1,5 +1,5 @@
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Typography } from "@mui/material";
-import { getWebhookAndCredentialDialogPaperProps } from "../StyledComponents";
+import { getWebhookAndCredentialDialogPaperProps } from "../../utils/dialogUtils";
 import useTheme from "../../stores/themeStore"; // Import useTheme for dark mode support
 
 interface Props {

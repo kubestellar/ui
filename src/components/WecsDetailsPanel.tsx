@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -166,7 +166,8 @@ const WecsDetailsPanel = ({
     fetchResourceManifest();
   }, [namespace, name, type, resourceData, cluster, isOpen]);
 
-  const connectWebSocket = () => {
+  // Convert to useCallback to memoize it
+  const connectWebSocket = useCallback(() => {
     if (!wsParamsRef.current || !isOpen) return;
 
     const { cluster, namespace, pod } = wsParamsRef.current;
@@ -217,7 +218,7 @@ const WecsDetailsPanel = ({
       ]);
       wsRef.current = null;
     };
-  };
+  }, [isOpen]); // Add isOpen as dependency
 
   // Initialize WebSocket connection only once when the panel opens
   useEffect(() => {
@@ -241,10 +242,23 @@ const WecsDetailsPanel = ({
         wsRef.current = null;
       }
     };
-  }, [isOpen, type]); // Removed dependency on wsParamsRef.current to prevent unnecessary reconnections
+  }, [isOpen, type, connectWebSocket]); // Add connectWebSocket to dependencies
 
   useEffect(() => {
+    // Only initialize terminal if needed and if it doesn't exist yet
     if (!terminalRef.current || type.toLowerCase() !== "pod" || tabValue !== 2) return;
+    
+    // Skip re-initialization if terminal already exists
+    if (terminalInstance.current) {
+      // Update existing terminal with latest logs instead of re-creating it
+      const term = terminalInstance.current;
+      const lastLogIndex = term.buffer.active.length - 1; // Approximate last written log
+      const newLogs = logs.slice(lastLogIndex > 0 ? lastLogIndex : 0);
+      newLogs.forEach((log) => {
+        term.writeln(log);
+      });
+      return;
+    }
 
     const term = new Terminal({
       theme: {
@@ -274,20 +288,7 @@ const WecsDetailsPanel = ({
       term.dispose();
       terminalInstance.current = null;
     };
-  }, [tabValue, theme, type]); // Removed logs from dependencies to prevent re-initialization
-
-  // Update terminal content when logs change
-  useEffect(() => {
-    if (terminalInstance.current && tabValue === 2) {
-      const term = terminalInstance.current;
-      const lastLogIndex = term.buffer.active.length - 1; // Approximate last written log
-      const newLogs = logs.slice(lastLogIndex > 0 ? lastLogIndex : 0);
-      newLogs.forEach((log) => {
-        term.writeln(log);
-      });
-    }
-  }, [logs, tabValue]); // Update terminal content without re-initializing
-
+  }, [tabValue, theme, type, logs]); // Add logs as dependency with logic to prevent re-initialization
 
   const calculateAge = (creationTimestamp: string | undefined): string => {
     if (!creationTimestamp) return "N/A";

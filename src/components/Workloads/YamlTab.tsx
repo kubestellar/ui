@@ -18,9 +18,8 @@ interface Props {
 
 interface YamlDocument {
   metadata?: {
-    name?: string;
-    namespace?: string;
-    labels?: Record<string, unknown>;
+    labels?: Record<string, string>;
+    [key: string]: unknown;
   };
   [key: string]: unknown;
 }
@@ -35,40 +34,49 @@ export const YamlTab = ({
   handleCancelClick,
 }: Props) => {
   const theme = useTheme((state) => state.theme);
-  const [localWorkloadName, setLocalWorkloadName] = useState("");
+  const [localWorkloadLabel, setLocalWorkloadLabel] = useState("");
   const [nameDocumentIndex, setNameDocumentIndex] = useState<number | null>(null);
   const [autoNs, setAutoNs] = useState(false); // Added state for checkbox
+  const [hasLabelsError, setHasLabelsError] = useState(true); // Default to true until checked
 
   useEffect(() => {
-    try {
-      const documents: YamlDocument[] = [];
-      yaml.loadAll(editorContent, (doc) => documents.push(doc as YamlDocument), {});
-
-      let foundIndex: number | null = null;
-      for (let i = 0; i < documents.length; i++) {
-        const doc = documents[i];
-        if (doc && doc.metadata && doc.metadata.name) {
-          setLocalWorkloadName(doc.metadata.name);
-          foundIndex = i;
-          break;
+    const checkLabels = () => {
+      try {
+        const documents: YamlDocument[] = [];
+        yaml.loadAll(editorContent, (doc) => documents.push(doc as YamlDocument), {});
+        let foundIndex: number | null = null;
+        for (let i = 0; i < documents.length; i++) {
+          const doc = documents[i];
+          if (doc && doc.metadata && doc.metadata.labels && Object.keys(doc.metadata.labels).length > 0) {
+            const firstLabelKey = Object.keys(doc.metadata.labels)[0];
+            setLocalWorkloadLabel(`${firstLabelKey}:${doc.metadata.labels[firstLabelKey]}`);
+            foundIndex = i;
+            break;
+          }
         }
-      }
-
-      if (foundIndex !== null) {
-        setNameDocumentIndex(foundIndex);
-      } else {
-        setLocalWorkloadName("");
+        const hasLabelsResult = foundIndex !== null;
+        setHasLabelsError(!hasLabelsResult); // Set error if no labels found
+        if (foundIndex !== null) {
+          setNameDocumentIndex(foundIndex);
+        } else {
+          setLocalWorkloadLabel("");
+          setNameDocumentIndex(null);
+        }
+        return hasLabelsResult;
+      } catch (error) {
+        console.error("Error parsing YAML:", error);
+        setLocalWorkloadLabel("");
         setNameDocumentIndex(null);
+        setHasLabelsError(true); // Set error on parsing failure
+        return false;
       }
-    } catch (error) {
-      console.error("Error parsing YAML:", error);
-      setLocalWorkloadName("");
-      setNameDocumentIndex(null);
-    }
+    };
+
+    checkLabels();
   }, [editorContent]);
 
-  const handleWorkloadNameChange = (newName: string) => {
-    setLocalWorkloadName(newName);
+  const handleWorkloadLabelChange = (newLabel: string) => {
+    setLocalWorkloadLabel(newLabel);
 
     try {
       const documents: YamlDocument[] = [];
@@ -79,35 +87,31 @@ export const YamlTab = ({
         documents[nameDocumentIndex] &&
         documents[nameDocumentIndex].metadata
       ) {
-        documents[nameDocumentIndex].metadata!.name = newName;
-        documents[nameDocumentIndex].metadata!.namespace = newName;
+        const [key, value] = newLabel.split(':');
         if (!documents[nameDocumentIndex].metadata!.labels) {
           documents[nameDocumentIndex].metadata!.labels = {};
         }
-        (documents[nameDocumentIndex].metadata!.labels as Record<string, unknown>)["kubernetes.io/metadata.name"] = newName;
+        documents[nameDocumentIndex].metadata!.labels[key] = value;
       } else {
         if (documents.length === 0) {
+          const [key, value] = newLabel.split(':');
           documents.push({ 
             metadata: { 
-              name: newName,
-              namespace: newName,
-              labels: { "kubernetes.io/metadata.name": newName }
+              labels: { [key]: value }
             } 
           });
         } else {
           if (!documents[0].metadata) {
+            const [key, value] = newLabel.split(':');
             documents[0].metadata = { 
-              name: newName,
-              namespace: newName,
-              labels: { "kubernetes.io/metadata.name": newName }
+              labels: { [key]: value }
             };
           } else {
-            documents[0].metadata.name = newName;
-            documents[0].metadata.namespace = newName;
+            const [key, value] = newLabel.split(':');
             if (!documents[0].metadata.labels) {
               documents[0].metadata.labels = {};
             }
-            (documents[0].metadata.labels as Record<string, unknown>)["kubernetes.io/metadata.name"] = newName;
+            documents[0].metadata.labels[key] = value;
           }
           setNameDocumentIndex(0);
         }
@@ -119,6 +123,17 @@ export const YamlTab = ({
       setEditorContent(updatedYaml);
     } catch (error) {
       console.error("Error updating YAML:", error);
+    }
+  };
+
+  const hasLabels = () => {
+    try {
+      const documents: YamlDocument[] = [];
+      yaml.loadAll(editorContent, (doc) => documents.push(doc as YamlDocument), {});
+      return documents.some(doc => doc.metadata && doc.metadata.labels && Object.keys(doc.metadata.labels).length > 0);
+    } catch (error) {
+      console.error("Error checking labels:", error);
+      return false;
     }
   };
 
@@ -134,11 +149,10 @@ export const YamlTab = ({
       >
         <TextField
           fullWidth
-          label="Workload Name *"
-          value={localWorkloadName}
-          onChange={(e) => handleWorkloadNameChange(e.target.value)}
+          label="Workload Label *"
+          value={localWorkloadLabel}
+          onChange={(e) => handleWorkloadLabelChange(e.target.value)}
           sx={{
-            // mb: 20,
             width: "98.5%",
             margin: "0 auto 10px auto",
             input: { color: theme === "dark" ? "#d4d4d4" : "#333" },
@@ -153,15 +167,25 @@ export const YamlTab = ({
               "&.Mui-focused fieldset": {
                 borderColor: "#1976d2",
               },
+              "&.Mui-error fieldset": {
+                borderColor: "#d32f2f",
+              },
             },
             "& .MuiInputLabel-root.Mui-focused": {
               color: "#1976d2",
+            },
+            "& .MuiInputLabel-root.Mui-error": {
+              color: "#d32f2f",
             },
             "& .MuiFormHelperText-root": {
               color: theme === "dark" ? "#858585" : "#666",
             },
           }}
-          helperText="Workload name is extracted from YAML/JSON metadata.name"
+          helperText={hasLabelsError ? "No labels found in YAML. Please add a label to enable deployment." : "Workload label is extracted from YAML/JSON metadata.labels (first key:value pair)"}
+          error={hasLabelsError}
+          FormHelperTextProps={{
+            error: hasLabelsError,
+          }}
         />
         {/* Added Checkbox */}
         <FormControlLabel
@@ -192,7 +216,6 @@ export const YamlTab = ({
             mt: 1,
             width: "98.5%",
             margin: "0 auto",
-            // mb:4
           }}
         >
           <Editor
@@ -242,7 +265,7 @@ export const YamlTab = ({
         <Button
           variant="contained"
           onClick={() => handleRawUpload(autoNs)} // Pass autoNs to handleRawUpload
-          disabled={!isEditorContentEdited || loading}
+          disabled={!isEditorContentEdited || loading || !hasLabels()}
           sx={{
             textTransform: "none",
             fontWeight: 600,

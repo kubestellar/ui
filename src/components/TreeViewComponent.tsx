@@ -1,3 +1,4 @@
+// TreeViewComponent.tsx
 import { useState, useEffect, useCallback, useRef, memo } from "react";
 import { Box, Typography, Menu, MenuItem, Button, Alert, Snackbar, Dialog, DialogTitle, DialogContent, DialogActions, IconButton } from "@mui/material";
 import { ReactFlowProvider, Position, MarkerType } from "reactflow";
@@ -47,7 +48,8 @@ import { useWebSocket } from "../context/WebSocketProvider";
 import useTheme from "../stores/themeStore";
 import axios from "axios";
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import ListViewComponent from "../components/ListViewComponent"; // Import the new component
+import ListViewComponent from "../components/ListViewComponent";
+import ContextDropdown from "../components/ContextDropdown"; // Import the new component
 
 // Interfaces
 export interface NodeData {
@@ -503,29 +505,37 @@ const TreeViewComponent = () => {
     initialData: [],
   });
 
+  // Use a ref to track if this is the initial render
+  const isInitialRender = useRef(true);
+
+  // Component mount effect - only run once using a ref flag
   useEffect(() => {
-    renderStartTime.current = performance.now();
-    console.log(`[TreeView] Component mounted at 0ms`);
-    console.log(`[TreeView] Initial state - isConnected: ${isConnected}, dataReceived: ${dataReceived}, isTransforming: ${isTransforming}, minimumLoadingTimeElapsed: ${minimumLoadingTimeElapsed}, nodes: ${nodes.length}, edges: ${edges.length}`);
-  }, []);
+    if (isInitialRender.current) {
+      renderStartTime.current = performance.now();
+      // console.log(`[TreeView] Component mounted at 0ms`);
+      // console.log(`[TreeView] Initial state - isConnected: ${isConnected}, dataReceived: ${dataReceived}, isTransforming: ${isTransforming}, minimumLoadingTimeElapsed: ${minimumLoadingTimeElapsed}, nodes: ${nodes.length}, edges: ${edges.length}`);
+      isInitialRender.current = false;
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array with lint disable - this should only run once on mount
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setMinimumLoadingTimeElapsed(true);
-      console.log(`[TreeView] Minimum loading time elapsed at ${performance.now() - renderStartTime.current}ms`);
+      // console.log(`[TreeView] Minimum loading time elapsed at ${performance.now() - renderStartTime.current}ms`);
     }, 1000);
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    console.log(`[TreeView] Initiating WebSocket connection at ${performance.now() - renderStartTime.current}ms`);
+    // console.log(`[TreeView] Initiating WebSocket connection at ${performance.now() - renderStartTime.current}ms`);
     connect(true);
   }, [connect]);
 
   useEffect(() => {
     if (namespaceData !== undefined && !dataReceived) {
-      console.log(`[TreeView] Setting dataReceived to true at ${performance.now() - renderStartTime.current}ms`);
-      console.log(`[TreeView] namespaceData length: ${namespaceData?.length || 0}`);
+      // console.log(`[TreeView] Setting dataReceived to true at ${performance.now() - renderStartTime.current}ms`);
+      // console.log(`[TreeView] namespaceData length: ${namespaceData?.length || 0}`);
       setDataReceived(true);
     }
   }, [namespaceData, dataReceived]);
@@ -661,8 +671,8 @@ const TreeViewComponent = () => {
 
   const transformDataToTree = useCallback(
     (data: NamespaceResource[]) => {
-      const startTime = performance.now();
-      console.log(`[TreeView] Starting transformDataToTree with ${data?.length || 0} namespaces at ${startTime - renderStartTime.current}ms`);
+      // const startTime = performance.now();
+      // console.log(`[TreeView] Starting transformDataToTree with ${data?.length || 0} namespaces at ${startTime - renderStartTime.current}ms`);
 
       nodeCache.current.clear();
       edgeCache.current.clear();
@@ -741,7 +751,7 @@ const TreeViewComponent = () => {
                   switch (kindLower) {
                     case "configmap":
                       createNode(`${resourceId}:volume`, `volume-${item.metadata.name}`, "volume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                      createNode(`${resourceId}:envvar`, `envvar-${item.metadata.name}`, "envvar", status, undefined, namespace.name, item, resourceId, newNodes , newEdges);
+                      createNode(`${resourceId}:envvar`, `envvar-${item.metadata.name}`, "envvar", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                       break;
 
                     case "clusterrolebinding": {
@@ -885,33 +895,33 @@ const TreeViewComponent = () => {
       });
       prevNodes.current = layoutedNodes;
 
-      const endTime = performance.now();
-      console.log(`[TreeView] Completed transformDataToTree: ${layoutedNodes.length} nodes, ${layoutedEdges.length} edges in ${endTime - startTime}ms`);
+      // const endTime = performance.now();
+      // console.log(`[TreeView] Completed transformDataToTree: ${layoutedNodes.length} nodes, ${layoutedEdges.length} edges in ${endTime - startTime}ms`);
     },
     [createNode, isCollapsed, isExpanded]
   );
 
   useEffect(() => {
     if (namespaceData !== undefined) {
-      console.log(
-        `[TreeView] namespaceData received with ${namespaceData.length} namespaces at ${performance.now() - renderStartTime.current}ms`
-      );
+      // console.log(
+      //   `[TreeView] namespaceData received with ${namespaceData.length} namespaces at ${performance.now() - renderStartTime.current}ms`
+      // );
       setIsTransforming(true);
       transformDataToTree(namespaceData);
     }
   }, [namespaceData, transformDataToTree]);
 
   useEffect(() => {
-    console.log(`[TreeView] State update at ${performance.now() - renderStartTime.current}ms`);
-    console.log(`[TreeView] isConnected: ${isConnected}, hasValidData: ${hasValidData}, isTransforming: ${isTransforming}, minimumLoadingTimeElapsed: ${minimumLoadingTimeElapsed}, nodes: ${nodes.length}, edges: ${edges.length}`);
-    if (nodes.length > 0 || edges.length > 0) {
-      console.log(
-        `[TreeView] Rendered successfully with ${nodes.length} nodes and ${edges.length} edges`
-      );
-    } else {
-      console.log(`[TreeView] Nodes and edges are empty`);
-    }
-  }, [nodes, edges, isConnected, hasValidData, isTransforming, minimumLoadingTimeElapsed]);
+    // console.log(`[TreeView] State update at ${performance.now() - renderStartTime.current}ms`);
+    // console.log(`[TreeView] isConnected: ${isConnected}, hasValidData: ${hasValidData}, isTransforming: ${isTransforming}, minimumLoadingTimeElapsed: ${minimumLoadingTimeElapsed}, nodes: ${nodes.length}, edges: ${edges.length}`);
+    // if (nodes.length > 0 || edges.length > 0) {
+    //   console.log(
+    //     `[TreeView] Rendered successfully with ${nodes.length} nodes and ${edges.length} edges`
+    //   );
+    // } else {
+    //   console.log(`[TreeView] Nodes and edges are empty`);
+    // }
+  }, [nodes, edges, isConnected, hasValidData, isTransforming, minimumLoadingTimeElapsed, dataReceived]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1004,7 +1014,7 @@ const TreeViewComponent = () => {
         setSnackbarMessage(`"${nodeName}" and its children deleted successfully`);
         setSnackbarSeverity("success");
         setSnackbarOpen(true);
-        console.log(`[TreeView] Node "${nodeName}" and its ${descendantNodeIds.length} descendants deleted successfully at ${performance.now() - renderStartTime.current}ms`);
+        // console.log(`[TreeView] Node "${nodeName}" and its ${descendantNodeIds.length} descendants deleted successfully at ${performance.now() - renderStartTime.current}ms`);
       } catch (error) {
         console.error(`[TreeView] Failed to delete node ${nodeId} at ${performance.now() - renderStartTime.current}ms:`, error);
         setSnackbarMessage(`Failed to delete "${nodeName}"`);
@@ -1101,7 +1111,7 @@ const TreeViewComponent = () => {
       }
       handleMenuClose();
     },
-    [contextMenu, nodes, handleClosePanel]
+    [contextMenu, nodes, handleClosePanel, handleMenuClose]
   );
 
   const handleDeleteConfirm = useCallback(async () => {
@@ -1152,16 +1162,22 @@ const TreeViewComponent = () => {
   const isLoading = !isConnected || !hasValidData || isTransforming || !minimumLoadingTimeElapsed;
 
   useEffect(() => {
-    console.log(`[TreeView] Rendering decision at ${performance.now() - renderStartTime.current}ms`);
-    console.log(`[TreeView] isLoading: ${isLoading}, nodes: ${nodes.length}, edges: ${edges.length}`);
-    if (isLoading) {
-      console.log(`[TreeView] Showing loading spinner because isLoading is true`);
-    } else if (nodes.length > 0 || edges.length > 0) {
-      console.log(`[TreeView] Showing React Flow canvas with ${nodes.length} nodes and ${edges.length} edges`);
-    } else {
-      console.log(`[TreeView] Showing "No Workloads Found" because nodes and edges are empty`);
-    }
-  }, [isLoading, nodes, edges]);
+    // Only log to console when specific values change to reduce unnecessary renders
+    // const logState = () => {
+    //   // console.log(`[TreeView] Rendering decision at ${performance.now() - renderStartTime.current}ms`);
+    //   // console.log(`[TreeView] isLoading: ${isLoading}, nodes: ${nodes.length}, edges: ${edges.length}`);
+    //   if (isLoading) {
+    //     console.log(`[TreeView] Showing loading spinner because isLoading is true`);
+    //   } else if (nodes.length > 0 || edges.length > 0) {
+    //     console.log(`[TreeView] Showing React Flow canvas with ${nodes.length} nodes and ${edges.length} edges`);
+    //   } else {
+    //     console.log(`[TreeView] Showing "No Workloads Found" because nodes and edges are empty`);
+    //   }
+    // };
+
+    // // Only call logState for actual rendering changes
+    // logState();
+  }, [isLoading, nodes, edges, dataReceived, isConnected, isTransforming, minimumLoadingTimeElapsed]);
 
   return (
     <Box sx={{ display: "flex", height: "85vh", width: "100%", position: "relative" }}>
@@ -1191,7 +1207,8 @@ const TreeViewComponent = () => {
           <Typography variant="h4" sx={{ color: "#4498FF", fontWeight: 700, fontSize: "30px", letterSpacing: "0.5px" }}>
             Manage Workloads
           </Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2}}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <ContextDropdown onContextChange={() => {}} />
             <IconButton
               color={viewMode === 'tiles' ? "primary" : "default"}
               onClick={() => setViewMode('tiles')}

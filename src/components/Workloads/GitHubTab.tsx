@@ -533,7 +533,7 @@ export const GitHubTab = ({
       setDeleteDialogOpen(true);
     }
     handleMenuClose();
-  }, [contextMenu]);
+  }, [contextMenu, handleMenuClose]);
 
   const handleDeleteConfirm = useCallback(() => {
     if (deleteDeploymentId) {

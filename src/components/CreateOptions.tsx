@@ -5,7 +5,8 @@ import GitHubIcon from "@mui/icons-material/GitHub";
 import axios, { AxiosError } from "axios";
 import { useWDSQueries } from "../hooks/queries/useWDSQueries";
 import { toast } from "react-hot-toast";
-import { StyledTab, getDialogPaperProps } from "./StyledComponents";
+import { StyledTab } from "./StyledComponents";
+import { getDialogPaperProps } from "../utils/dialogUtils";
 import { YamlTab } from "./Workloads/YamlTab";
 import { UploadFileTab } from "./Workloads/UploadFileTab";
 import { GitHubTab } from "./Workloads/GitHubTab";
@@ -251,7 +252,25 @@ spec:
     }
 
     setHasChanges(changesDetected);
-  }, [activeOption, editorContent, selectedFile, formData, helmFormData]);
+  }, [
+    activeOption,
+    editorContent,
+    selectedFile,
+    formData,
+    helmFormData,
+    initialEditorContent,
+    initialFormData.repositoryUrl,
+    initialFormData.path,
+    initialFormData.credentials,
+    initialFormData.branchSpecifier,
+    initialFormData.webhook,
+    initialHelmFormData.repoName,
+    initialHelmFormData.repoUrl,
+    initialHelmFormData.chartName,
+    initialHelmFormData.releaseName,
+    initialHelmFormData.version,
+    initialHelmFormData.namespace
+  ]);
 
   const handleFileUpload = async (autoNs: boolean) => {
     if (!selectedFile) {

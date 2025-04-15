@@ -10,9 +10,8 @@ import Editor from "@monaco-editor/react";
 // Define the type for the YAML document
 interface YamlDocument {
   metadata?: {
-    name?: string;
-    namespace?: string;
-    labels?: Record<string, unknown>;
+    labels?: Record<string, string>;
+    [key: string]: unknown;
   };
   [key: string]: unknown;
 }
@@ -44,13 +43,15 @@ export const UploadFileTab = ({
   handleCancelClick,
 }: Props) => {
   const theme = useTheme((state) => state.theme);
-  const [localWorkloadName, setLocalWorkloadName] = useState("");
+  const [localWorkloadLabel, setLocalWorkloadLabel] = useState("");
   const [fileContent, setFileContent] = useState<string | null>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [autoNs, setAutoNs] = useState(false);
+  const [hasLabelsError, setHasLabelsError] = useState<boolean>(false);
+  const [isLabelEdited, setIsLabelEdited] = useState(false); // Flag to track manual edits
 
   useEffect(() => {
-    if (selectedFile) {
+    if (selectedFile && !isLabelEdited) {
       const reader = new FileReader();
       reader.onload = (e) => {
         const content = e.target?.result as string;
@@ -63,49 +64,52 @@ export const UploadFileTab = ({
           let found = false;
           for (let i = 0; i < documents.length; i++) {
             const doc = documents[i];
-            if (doc && doc.metadata && doc.metadata.name) {
-              setLocalWorkloadName(doc.metadata.name);
+            if (doc && doc.metadata && doc.metadata.labels && Object.keys(doc.metadata.labels).length > 0) {
+              const firstLabelKey = Object.keys(doc.metadata.labels)[0];
+              setLocalWorkloadLabel(`${firstLabelKey}:${doc.metadata.labels[firstLabelKey]}`);
               found = true;
               break;
             }
           }
 
+          setHasLabelsError(!found); // Set error only if no labels found after file is uploaded
           if (!found) {
-            setLocalWorkloadName("");
+            setLocalWorkloadLabel("");
           }
         } catch (error) {
           console.error("Error parsing YAML:", error);
-          setLocalWorkloadName("");
+          setLocalWorkloadLabel("");
+          setHasLabelsError(true); // Set error on parsing failure
         }
       };
       reader.onerror = (error) => {
         console.error("Error reading file:", error);
-        setLocalWorkloadName("");
+        setLocalWorkloadLabel("");
         setFileContent(null);
+        setHasLabelsError(true); // Set error on file read failure
       };
       reader.readAsText(selectedFile);
-    } else {
-      setLocalWorkloadName("");
+    } else if (!selectedFile) {
+      setLocalWorkloadLabel("");
       setFileContent(null);
+      setHasLabelsError(false); // Reset error when no file is selected
+      setIsLabelEdited(false); // Reset edit flag when no file
     }
-  }, [selectedFile]);
+  }, [selectedFile, isLabelEdited]);
 
-  const handleWorkloadNameChange = (newName: string) => {
-    setLocalWorkloadName(newName);
+  const handleWorkloadLabelChange = (newLabel: string) => {
+    setLocalWorkloadLabel(newLabel);
+    setIsLabelEdited(true); // Mark as edited when user types
 
     if (fileContent && selectedFile) {
       try {
         const yamlObj = yaml.load(fileContent) as YamlDocument;
         if (yamlObj && yamlObj.metadata) {
-          yamlObj.metadata.name = newName;
-          // Set namespace to match the name
-          yamlObj.metadata.namespace = newName;
-          // Ensure labels object exists
+          const [key, value] = newLabel.split(':');
           if (!yamlObj.metadata.labels) {
             yamlObj.metadata.labels = {};
           }
-          // Set kubernetes.io/metadata.name label to match the name
-          yamlObj.metadata.labels["kubernetes.io/metadata.name"] = newName;
+          yamlObj.metadata.labels[key] = value;
           
           const updatedYaml = yaml.dump(yamlObj);
           const updatedFile = new File([updatedYaml], selectedFile.name, {
@@ -114,6 +118,7 @@ export const UploadFileTab = ({
           });
           setSelectedFile(updatedFile);
           setFileContent(updatedYaml);
+          setHasLabelsError(false); // Reset error when label is added manually
         }
       } catch (error) {
         console.error("Error updating YAML:", error);
@@ -137,10 +142,11 @@ export const UploadFileTab = ({
       >
         <TextField
           fullWidth
-          label="Workload Name *"
-          value={localWorkloadName}
-          onChange={(e) => handleWorkloadNameChange(e.target.value)}
-          helperText="Workload name is extracted from YAML metadata.name"
+          label="Workload Label *"
+          value={localWorkloadLabel}
+          onChange={(e) => handleWorkloadLabelChange(e.target.value)}
+          helperText={selectedFile && hasLabelsError ? "No labels found in YAML. Please add a label to enable deployment." : "Workload label is extracted from YAML/JSON metadata.labels (first key:value pair)"}
+          error={selectedFile ? hasLabelsError : false}
           sx={{
             width: "98.5%",
             margin: "0 auto 10px auto",
@@ -156,13 +162,22 @@ export const UploadFileTab = ({
               "&.Mui-focused fieldset": {
                 borderColor: "#1976d2",
               },
+              "&.Mui-error fieldset": {
+                borderColor: "#d32f2f",
+              },
             },
             "& .MuiInputLabel-root.Mui-focused": {
               color: "#1976d2",
             },
+            "& .MuiInputLabel-root.Mui-error": {
+              color: "#d32f2f",
+            },
             "& .MuiFormHelperText-root": {
               color: theme === "dark" ? "#858585" : "#666",
             },
+          }}
+          FormHelperTextProps={{
+            error: selectedFile ? hasLabelsError : false,
           }}
         />
         <FormControlLabel
@@ -212,7 +227,7 @@ export const UploadFileTab = ({
                 onClick={() => {
                   setSelectedFile(null);
                   setFileContent("");
-                  setLocalWorkloadName("");
+                  setLocalWorkloadLabel("");
                 }}
                 sx={{
                   textTransform: "none",
@@ -332,7 +347,7 @@ export const UploadFileTab = ({
         <Button
           variant="contained"
           onClick={() => handleFileUpload(autoNs)}
-          disabled={!selectedFile || loading}
+          disabled={!selectedFile || loading || (selectedFile && hasLabelsError)}
           sx={{
             textTransform: "none",
             fontWeight: 600,
