@@ -218,7 +218,8 @@ const BP = () => {
           policyStatus.includes(searchLower);
 
         const matchesStatus =
-          !activeFilters.status || policy.status === activeFilters.status;
+          !activeFilters.status || 
+          policyStatus === activeFilters.status?.toLowerCase();
 
         return matchesSearch && matchesStatus;
       } catch (error) {
@@ -488,7 +489,7 @@ const BP = () => {
               apiGroup?: string;
               namespaces?: string[];
             }>;
-          };
+          }
         }
         
         const parsedYaml = yaml.load(yamlContent) as YamlPolicy;
