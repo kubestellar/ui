@@ -33,13 +33,13 @@ type ContextInfo struct {
 	Cluster string `json:"cluster"`
 }
 
-
 // ClusterDetails holds detailed information about a cluster.
 type ClusterDetails struct {
 	ClusterName        string               `json:"clusterName"`
 	Contexts           []ContextInfo        `json:"contexts"`
 	ITSManagedClusters []ManagedClusterInfo `json:"itsManagedClusters"`
 }
+
 // ---------------------------
 // Utility Functions
 // ---------------------------
