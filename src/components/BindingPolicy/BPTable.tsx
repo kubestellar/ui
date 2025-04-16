@@ -186,18 +186,8 @@ const BPTable: React.FC<BPTableProps> = ({
     onSelectionChange(newSelected);
   };
 
-  const filteredPolicies = policies.filter((policy) => {
-    if (!policy) return false;
-    
-    // Get the API-provided status if available, otherwise use the policy's default status
-    const currentStatus = policyStatuses[policy.name] || policy.status;
-    
-    if (activeFilters.status && currentStatus !== activeFilters.status) {
-      return false;
-    }
-    return true;
-  });
-
+  console.log(`BPTable received ${policies.length} policies with status filter: ${activeFilters.status || 'none'}`);
+  const filteredPolicies = policies;
 
   const renderClusterChip = (policy: BindingPolicyInfo) => {
   
