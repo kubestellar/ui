@@ -112,18 +112,19 @@ const ListViewComponent = () => {
       sx={{
         width: "100%",
         height: "100%",
-        backgroundColor: "#eff3f5", // Parent container background
-        position: "relative", // Ensure LoadingFallback can overlay properly
+        backgroundColor: theme === "dark" ? "rgb(15, 23, 42)" : "#fff",
+        position: "relative",
       }}
     >
-      {/* Added green progress bar line */}
+
       <Box
         sx={{
           width: "100%",
           height: "12px",
-          backgroundColor: "#4498FF", // Green color matching the image
-          borderRadius:"6px",
-          borderBottom: "1px solid #ccc",
+          backgroundColor: "#4498FF",
+          borderRadius: "6px",
+
+          borderBottom: theme === "dark" ? "1px solid #334155" : "1px solid #ccc",
         }}
       />
       {isLoading ? (
@@ -145,17 +146,21 @@ const ListViewComponent = () => {
                 alignItems: "center",
                 padding: 1.5,
                 marginBottom: 1.5,
-                backgroundColor: "#fff", // White background for each list item
-                borderLeft: "4px solid #4498FF", // Green border for consistency
+                backgroundColor: theme === "dark" ? "rgb(30, 41, 59)" : "#f8fafc",
+                borderLeft: "4px solid #4498FF",
                 borderRadius: 1,
-                "&:hover": { backgroundColor: theme === "dark" ? "#2a3b5e" : "#e0e0e0" },
+                "&:hover": {
+                  backgroundColor: theme === "dark" ? "rgb(51, 65, 85)" : "#f0f7ff",
+                  transition: "background-color 0.2s",
+                },
+                transition: "background-color 0.2s",
               }}
             >
               <Box sx={{ marginRight: 2 }}>
                 <Typography sx={{ color: "#4498FF", fontSize: 18 }}>★</Typography>
               </Box>
               <Box sx={{ flexGrow: 1, minWidth: 0, display: "flex", gap: 2 }}>
-                <Box sx={{ width: 400 }}> {/* Fixed width for Project/Name column */}
+                <Box sx={{ width: 400 }}>
                   <Typography sx={{ color: theme === "dark" ? "#fff" : "#6B7280" }}>
                     Project: {resource.project}
                   </Typography>
@@ -163,7 +168,7 @@ const ListViewComponent = () => {
                     Name: {resource.name}
                   </Typography>
                 </Box>
-                <Box sx={{ width: 600 }}> {/* Fixed width for Source/Destination column */}
+                <Box sx={{ width: 600 }}>
                   <Typography sx={{ color: theme === "dark" ? "#A5ADBA" : "#6B7280", wordBreak: "break-all" }}>
                     Source: {resource.source}
                   </Typography>
@@ -171,7 +176,7 @@ const ListViewComponent = () => {
                     Destination: {resource.destination}
                   </Typography>
                 </Box>
-                <Box sx={{ width: 400 }}> {/* Fixed width for Kind/Created At column */}
+                <Box sx={{ width: 400 }}>
                   <Typography sx={{ color: theme === "dark" ? "#A5ADBA" : "#6B7280" }}>
                     Kind: {resource.kind}
                   </Typography>
@@ -187,7 +192,7 @@ const ListViewComponent = () => {
         <Box
           sx={{
             width: "100%",
-            backgroundColor: theme === "dark" ? "var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity)))" : "#fff",
+            backgroundColor: theme === "dark" ? "rgb(30, 41, 59)" : "#fff",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
@@ -198,10 +203,16 @@ const ListViewComponent = () => {
             <Typography sx={{ color: theme === "dark" ? "#fff" : "#333", fontWeight: 500, fontSize: "22px" }}>
               No Workloads Found
             </Typography>
-            <Typography variant="body2" sx={{ color: "#00000099", fontSize: "17px", mb: 2 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: theme === "dark" ? "#94a3b8" : "#00000099",
+                fontSize: "17px",
+                mb: 2,
+              }}
+            >
               Get started by creating your first workload
             </Typography>
-            {/* Placeholder for Create Workload button (you can add the actual button if needed) */}
           </Box>
         </Box>
       )}
