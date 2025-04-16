@@ -33,6 +33,13 @@ type ContextInfo struct {
 	Cluster string `json:"cluster"`
 }
 
+// ClusterDetails holds detailed information about a cluster.
+type ClusterDetails struct {
+	ClusterName        string               `json:"clusterName"`
+	Contexts           []ContextInfo        `json:"contexts"`
+	ITSManagedClusters []ManagedClusterInfo `json:"itsManagedClusters"`
+}
+
 // ---------------------------
 // Utility Functions
 // ---------------------------
@@ -308,4 +315,58 @@ func GetKubeInfo() ([]ContextInfo, []string, string, error, []ManagedClusterInfo
 	}
 
 	return contexts, clusters, currentContext, nil, managedClusters
+}
+
+func GetClusterDetailsHandler(c *gin.Context) {
+	clusterName := c.Param("name")
+	if strings.TrimSpace(clusterName) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "cluster name is required"})
+		return
+	}
+
+	// Load the kubeconfig.
+	kubeconfig := kubeconfigPath()
+	config, err := clientcmd.LoadFromFile(kubeconfig)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load kubeconfig: " + err.Error()})
+		return
+	}
+
+	var contexts []ContextInfo
+	// Check all kubeconfig contexts for a matching cluster.
+	for ctxName, ctx := range config.Contexts {
+		if strings.EqualFold(ctx.Cluster, clusterName) {
+			contexts = append(contexts, ContextInfo{
+				Name:    ctxName,
+				Cluster: ctx.Cluster,
+			})
+		}
+	}
+
+	// Retrieve ITS-managed cluster information.
+	itsData, err := GetITSInfo()
+	if err != nil {
+		itsData = []ManagedClusterInfo{}
+	}
+
+	var itsManagedClusters []ManagedClusterInfo
+	// Filter ITS data using a case-insensitive match on the cluster name.
+	for _, mc := range itsData {
+		if strings.EqualFold(mc.Name, clusterName) {
+			itsManagedClusters = append(itsManagedClusters, mc)
+		}
+	}
+
+	// Return 404 if no details are found in both kubeconfig and ITS.
+	if len(contexts) == 0 && len(itsManagedClusters) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "cluster not found"})
+		return
+	}
+
+	response := ClusterDetails{
+		ClusterName:        clusterName,
+		Contexts:           contexts,
+		ITSManagedClusters: itsManagedClusters,
+	}
+	c.JSON(http.StatusOK, response)
 }
