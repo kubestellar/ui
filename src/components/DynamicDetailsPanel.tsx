@@ -16,6 +16,7 @@ import {
   Stack,
   Snackbar,
   styled,
+  Chip,
 } from "@mui/material";
 import { FiX, FiGitPullRequest, FiTrash2 } from "react-icons/fi";
 import Editor from "@monaco-editor/react";
@@ -163,6 +164,7 @@ const DynamicDetailsPanel = ({
   initialTab,
 }: DynamicDetailsProps) => {
   const theme = useTheme((state) => state.theme); // Use the theme from the store
+  const isDarkTheme = theme === "dark";
   const [resource, setResource] = useState<ResourceInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -522,11 +524,11 @@ const DynamicDetailsPanel = ({
 
     // Extract labels from resourceData.metadata.labels and format them
     const labels = resourceData?.metadata?.labels;
-    const labelsString = labels
+    const labelsArray = labels
       ? Object.entries(labels)
           .map(([key, value]) => `${key}: ${value}`)
-          .join(", ")
-      : "None";
+      : ["None"];
+
 
     return (
       <Table sx={{ borderRadius: 1 }}>
@@ -536,7 +538,7 @@ const DynamicDetailsPanel = ({
             { label: "NAME", value: resource.name },
             { label: "NAMESPACE", value: resource.namespace },
             { label: "CREATED AT", value: `${resource.createdAt} (${resource.age})` },
-            { label: "LABELS", value: labelsString }, // New row for labels
+            // { label: "LABELS", value: labelsString }, // New row for labels
           ].map((row, index) => (
             <TableRow key={index}>
               <TableCell
@@ -560,6 +562,43 @@ const DynamicDetailsPanel = ({
               </TableCell>
             </TableRow>
           ))}
+          <TableRow>
+            <TableCell
+              sx={{
+                borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
+                color: theme === "dark" ? "#D4D4D4" : "#333333",
+                fontSize: "14px",
+                fontWeight: 500,
+              }}
+            >
+              LABELS
+            </TableCell>
+            <TableCell
+              sx={{
+                borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
+                color: theme === "dark" ? "#D4D4D4" : "#333333",
+                fontSize: "14px",
+              }}
+            >
+              <Box sx={{ mt: 1 }}>
+                {labelsArray.map((label, index) => (
+                  <Chip
+                    key={index}
+                    label={label}
+                    size="small"
+                    sx={{
+                      mr: 1,
+                      mb: 1,
+                      backgroundColor: isDarkTheme
+                        ? "#334155"
+                        : undefined,
+                      color: isDarkTheme ? "#fff" : undefined,
+                    }}
+                  />
+                ))}
+              </Box>
+            </TableCell>
+          </TableRow>
         </TableBody>
       </Table>
     );
