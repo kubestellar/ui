@@ -42,6 +42,8 @@ interface PolicyDragDropState {
   addToCanvas: (itemType: EntityType, itemId: string) => void;
   removeFromCanvas: (itemType: EntityType, itemId: string) => void;
   clearCanvas: () => void;
+  addCluster: (clusterId: string) => void;
+  addWorkload: (workloadId: string) => void;
   
   // Label management
   assignLabelsToItem: (itemType: 'cluster' | 'workload', itemId: string, labels: Record<string, string>) => void;
@@ -99,6 +101,24 @@ export const usePolicyDragDropStore = create<PolicyDragDropState>((set, get) => 
       }
     });
   },
+  
+  addCluster: (clusterId) => set((state) => ({
+    canvasEntities: {
+      ...state.canvasEntities,
+      clusters: state.canvasEntities.clusters.includes(clusterId)
+        ? state.canvasEntities.clusters
+        : [...state.canvasEntities.clusters, clusterId]
+    }
+  })),
+  
+  addWorkload: (workloadId) => set((state) => ({
+    canvasEntities: {
+      ...state.canvasEntities,
+      workloads: state.canvasEntities.workloads.includes(workloadId)
+        ? state.canvasEntities.workloads
+        : [...state.canvasEntities.workloads, workloadId]
+    }
+  })),
   
   removeFromCanvas: (itemType, itemId) => {
     const { canvasEntities, itemLabels } = get();
@@ -218,4 +238,4 @@ export const usePolicyDragDropStore = create<PolicyDragDropState>((set, get) => 
     // Auto-hide the success message
     get().clearSuccessMessageAfterDelay();
   }
-})); 
+}));

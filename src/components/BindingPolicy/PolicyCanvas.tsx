@@ -87,7 +87,9 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
     position: { x: number; y: number } | null;
   }>({ itemType: null, itemId: null, position: null });
 
- 
+  // Add this function to better coordinate between click and drag events
+  const [isDragging, setIsDragging] = useState(false);
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const elementsRef = useRef<Record<string, HTMLElement>>({});
@@ -787,6 +789,11 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
 
   // Handle global canvas click to detect clicks on items and their children
   const handleCanvasGlobalClick = useCallback((e: React.MouseEvent) => {
+    // Skip click handling if we're dragging
+    if (isDragging) {
+      return;
+    }
+
     // Check if we have an active connection in progress
     if (activeConnection.source) {
       console.log('⭐ Global canvas click with active connection:', e.target);
@@ -816,20 +823,45 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
         break;
       }
     }
-  }, [activeConnection.source, handleCanvasItemClick]);
+  }, [activeConnection.source, isDragging, handleCanvasItemClick]);
 
   // Handle drag start to clear active connection state
-  const handleDragStart = () => {
-    // Clear any active connection when starting to drag
-    if (activeConnection.source) {
-      setActiveConnection({
-        source: null,
-        sourceType: null,
-        mouseX: 0,
-        mouseY: 0
-      });
+  const handleDragStart = useCallback((e: React.DragEvent, itemType: 'cluster' | 'workload', itemId: string) => {
+    console.log(`🔄 Starting drag: ${itemType} - ${itemId}`);
+    setIsDragging(true);
+    
+    // Stop propagation to prevent parent handlers
+    e.stopPropagation();
+    
+    try {
+      // Set plain text data first (required for Firefox)
+      e.dataTransfer.setData('text/plain', itemId);
+      
+      // Set structured data in JSON format for better processing
+      const dragData = JSON.stringify({ type: itemType, id: itemId });
+      e.dataTransfer.setData('application/json', dragData);
+      
+      // Set drag effect to copy
+      e.dataTransfer.effectAllowed = 'copy';
+      
+      // Create custom drag image for better visual feedback
+      const dragElement = document.createElement('div');
+      dragElement.textContent = `${itemType}: ${itemId}`;
+      dragElement.style.padding = '8px';
+      dragElement.style.background = theme.palette.primary.main;
+      dragElement.style.color = 'white';
+      dragElement.style.borderRadius = '4px';
+      dragElement.style.pointerEvents = 'none';
+      document.body.appendChild(dragElement);
+      
+      e.dataTransfer.setDragImage(dragElement, 0, 0);
+      setTimeout(() => document.body.removeChild(dragElement), 0);
+      
+      console.log(`✅ Drag started: ${itemType} - ${itemId}`);
+    } catch (err) {
+      console.error('❌ Error setting up drag:', err);
     }
-  };
+  }, [theme.palette.primary.main]);
 
   // Function to render empty canvas state
   const renderEmptyState = () => {
@@ -902,7 +934,13 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
       }}
       onMouseMove={handleMouseMove}
       onClick={handleCanvasGlobalClick}
-      onDragStart={handleDragStart}
+      onDragStart={(e) => {
+        // Don't prevent default on the container - we only want to handle direct drags on this element
+        // Just check if the drag started directly on the Paper (not on a child) and log it
+        if (e.target === e.currentTarget) {
+          console.warn('Paper drag start triggered directly on container');
+        }
+      }}
     >
       <Box sx={{ 
         position: 'absolute',
@@ -984,17 +1022,83 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
             data-rfd-droppable-context-id={provided.droppableProps['data-rfd-droppable-context-id']}
             onClick={handleCanvasGlobalClick}
             onDragOver={(e) => {
-              // Reset active connection during drag operations
-              if (activeConnection.source) {
-                setActiveConnection({
-                  source: null,
-                  sourceType: null,
-                  mouseX: 0,
-                  mouseY: 0
-                });
-              }
-              // Still need to prevent default for the drop to work
+              // Always prevent default to allow dropping
               e.preventDefault();
+              e.dataTransfer.dropEffect = 'copy';
+              
+              // Visual feedback for drag over
+              e.currentTarget.style.backgroundColor = theme.palette.mode === 'dark' 
+                ? 'rgba(47, 134, 255, 0.15)' 
+                : 'rgba(47, 134, 255, 0.05)';
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+            onDrop={(e) => {
+              // Prevent default browser handling
+              e.preventDefault();
+              e.stopPropagation();
+              
+              setIsDragging(false);
+              console.log("⚡ Drop event triggered on canvas");
+              
+              try {
+                // Try both data formats for maximum compatibility
+                const jsonText = e.dataTransfer.getData('application/json');
+                const plainText = e.dataTransfer.getData('text/plain');
+                
+                console.log('📦 Drop data received:', { jsonText, plainText });
+                
+                let itemType, itemId;
+                
+                // Try to parse JSON data first
+                if (jsonText) {
+                  try {
+                    const data = JSON.parse(jsonText);
+                    if (data && data.type && data.id) {
+                      itemType = data.type;
+                      itemId = data.id;
+                      console.log(`📦 Successfully parsed JSON data: ${itemType} - ${itemId}`);
+                    }
+                  } catch (err) {
+                    console.error('Error parsing JSON data:', err);
+                  }
+                }
+                
+                // If JSON parsing failed, try using plain text as fallback
+                if (!itemType && plainText) {
+                  // Try to determine type from element references
+                  const isCluster = elementsRef.current[`cluster-${plainText}`];
+                  itemType = isCluster ? 'cluster' : 'workload';
+                  itemId = plainText;
+                  console.log(`📦 Using plainText fallback: ${itemType} - ${itemId}`);
+                }
+                
+                // If we have valid item data, add to canvas
+                if (itemType && itemId) {
+                  console.log(`📦 Adding to canvas: ${itemType} - ${itemId}`);
+                  
+                  // Get direct access to store
+                  const store = usePolicyDragDropStore.getState();
+                  
+                  // Call the correct add method based on item type
+                  if (itemType === 'cluster') {
+                    store.addCluster(itemId);
+                    console.log(`✅ Added cluster ${itemId} to canvas`);
+                  } else if (itemType === 'workload') {
+                    store.addWorkload(itemId);
+                    console.log(`✅ Added workload ${itemId} to canvas`);
+                  }
+                } else {
+                  console.error('❌ Could not determine item type or ID from drop data');
+                }
+              } catch (err) {
+                console.error('❌ Error processing drop:', err);
+              }
+              
+              // Reset background color
+              e.currentTarget.style.backgroundColor = 'transparent';
             }}
             sx={{
               flex: 1, 
@@ -1004,11 +1108,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                 : alpha(theme.palette.background.default, 0.3),
               border: '2px dashed',
               borderColor: snapshot.isDraggingOver 
-                ? (snapshot.draggingFromThisWith?.startsWith('cluster-') 
-                  ? alpha(theme.palette.info.main, 0.7) 
-                  : snapshot.draggingFromThisWith?.startsWith('workload-') 
-                    ? alpha(theme.palette.success.main, 0.7)
-                    : 'primary.main')
+                ? alpha(theme.palette.primary.main, 0.7)
                 : alpha(theme.palette.divider, 0.9),
               borderWidth: '3px',
               borderRadius: 2,
@@ -1154,6 +1254,15 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                   ref={(el) => {
                                     if (el) elementsRef.current[`cluster-${clusterId}`] = el;
                                   }}
+                                  draggable="true"
+                                  onDragStart={(e) => handleDragStart(e, 'cluster', clusterId)}
+                                  onDragEnd={() => setIsDragging(false)}
+                                  data-item-type="cluster"
+                                  data-item-id={clusterId}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCanvasItemClick('cluster', clusterId);
+                                  }}
                                   sx={{
                                     display: 'flex',
                                     flexDirection: 'column',
@@ -1166,17 +1275,14 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                     borderColor: theme.palette.info.main,
                                     backgroundColor: alpha(theme.palette.info.main, 0.1),
                                     transition: 'all 0.2s',
-                                    cursor: 'pointer',
+                                    cursor: 'grab', // Change cursor to indicate draggability
+                                    '&:active': {
+                                      cursor: 'grabbing'
+                                    },
                                     '&:hover': { 
                                       transform: 'translateY(-2px)', 
                                       boxShadow: 3 
                                     }
-                                  }}
-                                  data-item-type="cluster"
-                                  data-item-id={clusterId}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleCanvasItemClick('cluster', clusterId);
                                   }}
                                 >
                                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -1330,6 +1436,9 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                   ref={(el) => {
                                     if (el) elementsRef.current[`workload-${workloadId}`] = el;
                                   }}
+                                  draggable="true"
+                                  onDragStart={(e) => handleDragStart(e, 'workload', workloadId)}
+                                  onDragEnd={() => setIsDragging(false)}
                                   sx={{
                                     display: 'flex',
                                     flexDirection: 'column',
@@ -1342,7 +1451,10 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                     borderColor: theme.palette.success.main,
                                     backgroundColor: alpha(theme.palette.success.main, 0.1),
                                     transition: 'all 0.2s',
-                                    cursor: 'pointer',
+                                    cursor: 'grab', // Change cursor to indicate draggability
+                                    '&:active': {
+                                      cursor: 'grabbing' // Change cursor when dragging
+                                    },
                                     '&:hover': { 
                                       transform: 'translateY(-2px)', 
                                       boxShadow: 3 
@@ -1587,4 +1699,4 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
   );
 };
 
-export default React.memo(PolicyCanvas); 
+export default React.memo(PolicyCanvas);
