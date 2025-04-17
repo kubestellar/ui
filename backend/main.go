@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kubestellar/ui/plugin"
 	"github.com/kubestellar/ui/routes"
 
 	"github.com/kubestellar/ui/api"
@@ -42,6 +43,7 @@ func main() {
 	})
 
 	routes.SetupRoutes(router)
+	plugin.Pm.SetupPluginsRoutes(router)
 	router.POST("api/webhook", api.GitHubWebhookHandler)
 
 	if err := router.Run(":4000"); err != nil {
