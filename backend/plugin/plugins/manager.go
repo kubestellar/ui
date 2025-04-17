@@ -74,4 +74,4 @@ func (pm *pluginManager) Deregister(p plugin.Plugin) {
 	log.LogInfo("Deregistered plugin", zap.String("NAME", p.Name()))
 }
 
-var Pm *pluginManager = &pluginManager{plugins: make(map[string]plugin.Plugin)}
+var Pm *pluginManager = &pluginManager{plugins: map[string]plugin.Plugin{}}

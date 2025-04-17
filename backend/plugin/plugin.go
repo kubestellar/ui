@@ -2,11 +2,7 @@ package plugin
 
 import "github.com/gin-gonic/gin"
 
-// Plugin package has plugins that extend the core functionality of
-// our backend using plugins
-
 // plugin interface defines methods that a KS plugin must implement
-
 type Plugin interface {
 	// name of the plugin
 	Name() string
@@ -18,6 +14,7 @@ type Plugin interface {
 	Routes() []PluginRoutesMeta
 }
 
+// Metadata about routes of the pluginW
 type PluginRoutesMeta struct {
 	// http method
 	Method string
