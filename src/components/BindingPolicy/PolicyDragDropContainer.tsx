@@ -160,18 +160,13 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     if (!labelId.startsWith('label-')) return null;
     
     console.log(`Parsing label ID: ${labelId}`);
+    
+    if (labelId === 'label-location-group:edge') {
+      console.log('Found location-group:edge label');
+      return { key: 'location-group', value: 'edge' };
+    }
+    
     const labelPart = labelId.substring(6);
-    if (labelId === "label-location-group-edge") {
-      console.log(`Found known label "location-group-edge", returning key="location-group", value="edge"`);
-      return { key: "location-group", value: "edge" };
-    }
-  
-    const slashMatch = labelPart.match(/^(.+\/.+?)-(.+)$/);
-    if (slashMatch) {
-      const [, key, value] = slashMatch;
-      console.log(`Found label with slash in key: key="${key}", value="${value}"`);
-      return { key, value };
-    }
     
     if (labelPart.includes('=')) {
       const [key, value] = labelPart.split('=');
@@ -185,46 +180,24 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
       return { key, value };
     }
     
-    const knownLabelPatterns = [
-      { pattern: 'location-group-edge', key: 'location-group', value: 'edge' },
-      { pattern: 'cluster.open-cluster-management.io/clusterset-default', key: 'cluster.open-cluster-management.io/clusterset', value: 'default' },
-      { pattern: 'feature.open-cluster-management.io/addon-addon-status-available', key: 'feature.open-cluster-management.io/addon-addon-status', value: 'available' }
-    ];
-    
-    for (const pattern of knownLabelPatterns) {
-      if (labelPart === pattern.pattern) {
-        console.log(`Matched known pattern "${pattern.pattern}", returning key="${pattern.key}", value="${pattern.value}"`);
-        return { key: pattern.key, value: pattern.value };
-      }
+    const slashMatch = labelPart.match(/^(.+\/.+?)-(.+)$/);
+    if (slashMatch) {
+      const [, key, value] = slashMatch;
+      console.log(`Found label with slash in key: key="${key}", value="${value}"`);
+      return { key, value };
     }
     
-    const knownKeyPrefixes = ["app.kubernetes.io", "kubernetes.io", "location-group", "feature.open-cluster-management.io", "cluster.open-cluster-management.io"];
-    
-    for (const prefix of knownKeyPrefixes) {
-      if (labelPart.startsWith(`${prefix}-`)) {
-        const key = prefix;
-        const value = labelPart.substring(prefix.length + 1);
-        console.log(`Found known prefix "${prefix}", parsed as key="${key}", value="${value}"`);
-        return { key, value };
-      }
-    }
-    
-    if (labelPart.startsWith('name-')) {
-      const value = labelPart.substring(5);
-      console.log(`Found name label, returning key="name", value="${value}"`);
-      return { key: 'name', value };
-    }
     const firstDashIndex = labelPart.indexOf('-');
-    if (firstDashIndex === -1) {
-      console.log(`No dash found in "${labelPart}", can't parse`);
-      return null;
+    if (firstDashIndex !== -1) {
+      const key = labelPart.substring(0, firstDashIndex);
+      const value = labelPart.substring(firstDashIndex + 1);
+      
+      console.log(`Parsed using first dash: key="${key}", value="${value}"`);
+      return { key, value };
     }
     
-    const key = labelPart.substring(0, firstDashIndex);
-    const value = labelPart.substring(firstDashIndex + 1);
-    
-    console.log(`Parsed using first dash: key="${key}", value="${value}"`);
-    return { key, value };
+    console.log(`Unable to parse label format: ${labelId}`);
+    return null;
   }, []);
 
   // Helper function to find workloads matching a label

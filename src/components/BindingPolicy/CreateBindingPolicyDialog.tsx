@@ -206,41 +206,36 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
     // Remove the 'label-' prefix
     const labelPart = labelId.substring(6);
     
-    if (labelId === "label-location-group-edge") {
-      console.log(`CreateBindingPolicy: Found known label "location-group-edge", returning key="location-group", value="edge"`);
-      return { key: "location-group", value: "edge" };
+    if (labelPart.includes('=')) {
+      const [key, value] = labelPart.split('=');
+      console.log(`CreateBindingPolicy: Found equals format "${key}=${value}"`);
+      return { key, value };
     }
     
-    if (labelPart === "location-group=edge") {
-      console.log(`CreateBindingPolicy: Found equals format "location-group=edge"`);
-      return { key: "location-group", value: "edge" };
+    if (labelPart.includes(':')) {
+      const [key, value] = labelPart.split(':');
+      console.log(`CreateBindingPolicy: Found colon format "${key}:${value}"`);
+      return { key, value };
     }
     
-    const lastDashIndex = labelPart.lastIndexOf('-');
-    if (lastDashIndex === -1) return null;
-    
-    const knownKeyPrefixes = ["app.kubernetes.io", "kubernetes.io", "location-group", "feature.open-cluster-management.io", "cluster.open-cluster-management.io"];
-    
-    for (const prefix of knownKeyPrefixes) {
-      if (labelPart.startsWith(`${prefix}-`)) {
-        const key = prefix;
-        const value = labelPart.substring(prefix.length + 1); // +1 for the dash
-        console.log(`CreateBindingPolicy: Found known prefix "${prefix}", parsed as key="${key}", value="${value}"`);
-        return { key, value };
-      }
+    const slashMatch = labelPart.match(/^(.+\/.+?)-(.+)$/);
+    if (slashMatch) {
+      const [, key, value] = slashMatch;
+      console.log(`CreateBindingPolicy: Found label with slash in key: key="${key}", value="${value}"`);
+      return { key, value };
     }
     
     const firstDashIndex = labelPart.indexOf('-');
-    if (firstDashIndex === -1) {
-      console.log(`CreateBindingPolicy: No dash found in "${labelPart}", can't parse`);
-      return null;
+    if (firstDashIndex !== -1) {
+      const key = labelPart.substring(0, firstDashIndex);
+      const value = labelPart.substring(firstDashIndex + 1);
+      
+      console.log(`CreateBindingPolicy: Parsed using first dash: key="${key}", value="${value}"`);
+      return { key, value };
     }
     
-    const key = labelPart.substring(0, firstDashIndex);
-    const value = labelPart.substring(firstDashIndex + 1);
-    
-    console.log(`CreateBindingPolicy: Parsed using first dash: key="${key}", value="${value}"`);
-    return { key, value };
+    console.log(`CreateBindingPolicy: Unable to parse label format: ${labelId}`);
+    return null;
   };
 
   const prepareForDeployment = async () => {
@@ -739,14 +734,6 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
         >
           <Typography variant="h6" component="span" fontWeight={600}>
             Create Binding Policy
-          </Typography>
-          <Typography variant="caption" component="div" sx={{ 
-                  fontSize: "0.75rem",
-                  color: theme === "dark" ? "rgba(255, 255, 255, 0.9)" : "rgba(0, 0, 0, 0.9)", 
-                  mt: 0.25,
-                  display: { xs: "none", sm: "block" } 
-                }}>
-            Create Binding Policies
           </Typography>
      
           <Tabs
