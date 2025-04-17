@@ -10,7 +10,7 @@ import { getDialogPaperProps } from "../utils/dialogUtils";
 import { YamlTab } from "./Workloads/YamlTab";
 import { UploadFileTab } from "./Workloads/UploadFileTab";
 import { GitHubTab } from "./Workloads/GitHubTab";
-import { HelmTab } from "./Workloads/HelmTab";
+import { HelmTab } from "./Workloads/HelmTab/HelmTab";
 import { AddCredentialsDialog } from "../components/Workloads/AddCredentialsDialog";
 import { AddWebhookDialog } from "../components/Workloads/AddWebhookDialog";
 import { CancelConfirmationDialog } from "../components/Workloads/CancelConfirmationDialog";
