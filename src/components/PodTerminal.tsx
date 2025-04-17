@@ -31,8 +31,7 @@ const PodTerminal = ({ namespace, pod, container, context, shell = "sh" }: Props
             fitAddon.current.fit();
         }
 
-        term.current.writeln("Welcome to the pod terminal!");
-        term.current.writeln("You are now connected to the shell.");
+        term.current.writeln("Welcome!!!");
         term.current.writeln(`Pod: ${pod}, Container: ${container}, Namespace: ${namespace}`);
         // WebSocket connection
         const protocol = window.location.protocol === "https:" ? "wss" : "ws";
@@ -60,14 +59,21 @@ const PodTerminal = ({ namespace, pod, container, context, shell = "sh" }: Props
 
         socket.onerror = (err) => {
             console.error("WebSocket error", err);
-            term.current?.writeln("Error connecting to terminal.");
+            // term.current?.writeln("Error connecting to terminal.");
         };
 
-        socket.onclose = () => {
-            term.current?.writeln("\r\nConnection closed.");
+        socket.onclose = (event) => {
+            console.error("WebSocket closed:", event);
+            // term.current?.writeln(`\r\nConnection closed (code: ${event.code}, reason: ${event.reason})`);
         };
+        const pingInterval = setInterval(() => {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ Op: "ping" }));
+            }
+        }, 20000);
 
         return () => {
+            clearInterval(pingInterval);
             socket.close();
             term.current?.dispose();
         };

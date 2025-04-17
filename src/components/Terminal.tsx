@@ -6,8 +6,8 @@ const Terminal = () => {
     return (
         <>
             <PodTerminal
-                namespace="test-fhn30"
-                pod="test-fhn30-66cf98cc85-bqj45"
+                namespace="test2-rahul"
+                pod="test2-rahul-66cf98cc85-q48dh"
                 container="my-container"
                 context="cluster2"
             />
