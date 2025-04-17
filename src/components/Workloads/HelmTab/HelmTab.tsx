@@ -92,7 +92,7 @@ export const HelmTab = ({
     setSelectedChart(null);
   };
 
-  const handleChartSelection = (chartValue: string) => {
+  const handleChartSelection = (chartValue: string|null) => {
     // For userCharts, use id to find chartName; for popularCharts, use the chart name directly
     const chart = selectedOption === "userCharts"
       ? userCharts.find(c => c.id === chartValue)?.chartName || null

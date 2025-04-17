@@ -2,7 +2,7 @@ import { Box, Typography, Autocomplete, TextField } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 interface Props {
-    handleChartSelection: (chart: string) => void;
+    handleChartSelection: (chart: string|null) => void;
     theme: string;
     selectedChart: string | null;
 }
@@ -35,6 +35,7 @@ export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedCha
                   position: "sticky",
                   top: 0,
                   zIndex: 1,
+                  height: "55vh",
               }}
           >
               <Typography
@@ -54,8 +55,7 @@ export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedCha
                 <Autocomplete
                     disablePortal
                     options={popularHelmCharts}
-                    value={selectedChart!}
-                    onChange={(event, newValue) => handleChartSelection(newValue)}
+                    onChange={(_, newValue) => handleChartSelection(newValue)}
                     renderInput={(params) => (
                       <TextField
                         {...params}
@@ -69,15 +69,18 @@ export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedCha
                             color, 
                           },
                           '& .MuiOutlinedInput-root': {
-                            color, // Input text color
+                            color, 
                             '& fieldset': {
-                              borderColor:color, // Default border
+                              borderColor:color, 
                             },
                             '&:hover fieldset': {
-                              borderColor:color, // Border on hover
+                              borderColor:color, 
                             },
                             '&.Mui-focused fieldset': {
-                              borderColor:color, // Border when focused
+                              borderColor:color, 
+                            },
+                            '& .MuiAutocomplete-endAdornment': {
+                              color 
                             },
                           }, }}
                       />
@@ -86,8 +89,18 @@ export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedCha
                         width: "100%",
                         mb: 2,
                     }}
-                    disableClearable
-                    autoHighlight
+                    slotProps={{
+                      popupIndicator: {
+                        sx: {
+                          color, 
+                        },
+                      },
+                      clearIndicator: {
+                        sx: {
+                          color , 
+                        },
+                      },
+                    }}
                 />
               </Box>
 
