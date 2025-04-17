@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/log"
 	"github.com/kubestellar/ui/plugin"
 )
 
@@ -56,5 +55,5 @@ func init() {
 	bp = backupPlugin{}
 
 	Pm.Register(bp)
-	log.LogInfo("Intialized and registered backup-plugin")
+
 }

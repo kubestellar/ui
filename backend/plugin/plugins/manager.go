@@ -3,6 +3,7 @@ package plugins
 import (
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/log"
@@ -15,10 +16,13 @@ import (
 
 type pluginManager struct {
 	plugins map[string]plugin.Plugin
+	mx      sync.Mutex
 }
 
 // returns all the routes if there are any for the gin engine
 func (pm *pluginManager) SetupPluginsRoutes(e *gin.Engine) {
+	pm.mx.Lock()
+	defer pm.mx.Unlock()
 	log.LogInfo("setting up plugin route...")
 	for _, p := range pm.plugins {
 		log.LogInfo(fmt.Sprintf("routes for Plugin--->%s", p.Name()))
@@ -56,12 +60,16 @@ func (pm *pluginManager) SetupPluginsRoutes(e *gin.Engine) {
 
 // registers a plugin to plugin Manager
 func (pm *pluginManager) Register(p plugin.Plugin) {
+	pm.mx.Lock()
+	defer pm.mx.Unlock()
 	pm.plugins[p.Name()] = p
 	log.LogInfo("Registered a new plugin", zap.String("NAME", p.Name()))
 }
 
 // deregisters  a plugin to plugin manager
 func (pm *pluginManager) Deregister(p plugin.Plugin) {
+	pm.mx.Lock()
+	defer pm.mx.Unlock()
 	delete(pm.plugins, p.Name())
 	log.LogInfo("Deregistered plugin", zap.String("NAME", p.Name()))
 }

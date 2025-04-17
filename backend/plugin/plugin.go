@@ -13,7 +13,7 @@ type Plugin interface {
 	Name() string
 	// version of your plugin
 	Version() string
-	// plugin enabled or disabled 1 for enabled 0 for disbabled
+	// plugin enabled or disabled 1 for enabled 0 for disabled
 	Enabled() int
 	// routes and http methods to communicate with this plugin to do operations
 	Routes() []PluginRoutesMeta
