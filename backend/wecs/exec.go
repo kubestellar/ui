@@ -17,6 +17,13 @@ import (
 	"sync"
 )
 
+// TODO: Add the logical error message so that user can know whats the exact problem
+// TODO: Message for the user have View Only Access
+// "You do not have permission to execute into this pod. Please check your access rights."
+
+// Todo: Test with the user having not access to do pod/exec
+// Todo: Websocket improvement and remove the error message like "Connection closed"
+
 var upgrader1 = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true
