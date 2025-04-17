@@ -55,6 +55,6 @@ var bp backupPlugin
 func init() {
 	bp = backupPlugin{}
 
-	plugin.Pm.Register(bp)
+	Pm.Register(bp)
 	log.LogInfo("Intialized and registered backup-plugin")
 }

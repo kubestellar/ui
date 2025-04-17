@@ -1,4 +1,4 @@
-package plugin
+package plugins
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/log"
+	"github.com/kubestellar/ui/plugin"
 	"go.uber.org/zap"
 )
 
@@ -13,7 +14,7 @@ import (
 // a centralized manager that handles our plugins
 
 type pluginManager struct {
-	plugins map[string]Plugin
+	plugins map[string]plugin.Plugin
 }
 
 // returns all the routes if there are any for the gin engine
@@ -54,20 +55,15 @@ func (pm *pluginManager) SetupPluginsRoutes(e *gin.Engine) {
 }
 
 // registers a plugin to plugin Manager
-func (pm *pluginManager) Register(p Plugin) {
+func (pm *pluginManager) Register(p plugin.Plugin) {
 	pm.plugins[p.Name()] = p
 	log.LogInfo("Registered a new plugin", zap.String("NAME", p.Name()))
 }
 
 // deregisters  a plugin to plugin manager
-func (pm *pluginManager) Deregister(p Plugin) {
+func (pm *pluginManager) Deregister(p plugin.Plugin) {
 	delete(pm.plugins, p.Name())
 	log.LogInfo("Deregistered plugin", zap.String("NAME", p.Name()))
 }
 
-var Pm *pluginManager
-
-func init() {
-	Pm = &pluginManager{plugins: make(map[string]Plugin)}
-	log.LogInfo("Intialized Plugin Manager")
-}
+var Pm *pluginManager = &pluginManager{plugins: make(map[string]plugin.Plugin)}
