@@ -563,23 +563,15 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
   const extractLabelInfo = (labelId: string): { key: string, value: string } | null => {
     if (!labelId.startsWith('label-')) return null;
     
-    // Handle special cases directly with exact string matching first
-    if (labelId === "label-location-group-edge") {
-      return { key: "location-group", value: "edge" };
+
+    if (labelId === 'label-location-group:edge') {
+      console.log('PolicyCanvas: Found location-group:edge label');
+      return { key: 'location-group', value: 'edge' };
     }
     
     // Remove the 'label-' prefix
     const labelPart = labelId.substring(6);
     
-    // Handle kubernetes standard labels with / in the key (e.g. kubernetes.io/role)
-    // This is a more generic approach to catch labels like cluster.open-cluster-management.io/clusterset-default
-    const slashMatch = labelPart.match(/^(.+\/.+?)-(.+)$/);
-    if (slashMatch) {
-      const [, key, value] = slashMatch;
-      return { key, value };
-    }
-    
-    // Check for formats with equals or colon
     if (labelPart.includes('=')) {
       const [key, value] = labelPart.split('=');
       return { key, value };
@@ -590,42 +582,27 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
       return { key, value };
     }
     
-    // Special handling for known label patterns
-    const knownLabelPatterns = [
-      { pattern: 'location-group-edge', key: 'location-group', value: 'edge' },
-      { pattern: 'cluster.open-cluster-management.io/clusterset-default', key: 'cluster.open-cluster-management.io/clusterset', value: 'default' },
-      { pattern: 'feature.open-cluster-management.io/addon-addon-status-available', key: 'feature.open-cluster-management.io/addon-addon-status', value: 'available' }
-    ];
-    
-    for (const pattern of knownLabelPatterns) {
-      if (labelPart === pattern.pattern) {
-        return { key: pattern.key, value: pattern.value };
-      }
+    const slashMatch = labelPart.match(/^(.+\/.+?)-(.+)$/);
+    if (slashMatch) {
+      const [, key, value] = slashMatch;
+      return { key, value };
     }
     
-    // Check for known prefixes with dashes
-    const knownKeyPrefixes = ["app.kubernetes.io", "kubernetes.io", "location-group", "feature.open-cluster-management.io", "cluster.open-cluster-management.io"];
-    
-    for (const prefix of knownKeyPrefixes) {
-      if (labelPart.startsWith(`${prefix}-`)) {
-        const key = prefix;
-        const value = labelPart.substring(prefix.length + 1);
-        return { key, value };
-      }
+    const firstDashIndex = labelPart.indexOf('-');
+    if (firstDashIndex !== -1) {
+      const key = labelPart.substring(0, firstDashIndex);
+      const value = labelPart.substring(firstDashIndex + 1);
+      return { key, value };
     }
     
-    // For labels that have name as a key (the simplest case)
-    if (labelPart.startsWith('name-')) {
-      const value = labelPart.substring(5); // 'name-'.length
-      return { key: 'name', value };
-    }
-    
-    // Fallback to basic parsing - the key is the part after 'label-' and the value is everything else
     const parts = labelId.split('-');
-    const key = parts[1];
-    const value = parts.slice(2).join('-');
+    if (parts.length >= 3) {
+      const key = parts[1];
+      const value = parts.slice(2).join('-');
+      return { key, value };
+    }
     
-    return { key, value };
+    return null;
   };
 
   // Find all workloads that match a given label
@@ -1499,7 +1476,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
       {/* Footer Area with Clear Canvas Button - Always Visible */}
       <Box sx={{ 
         display: 'flex', 
-        justifyContent: 'space-between', 
+        justifyContent: 'flex-end', 
         mt: 2,
         backgroundColor: alpha(theme.palette.background.paper, 0.8),
         backdropFilter: 'blur(8px)',
@@ -1510,25 +1487,6 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
         flexDirection: { xs: 'column', sm: 'row' },
         gap: 1
       }}>
-        <Tooltip title="After binding policies, you'll need to wait for the propagation to complete">
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 0.5
-          }}>
-            <InfoIcon fontSize="small" sx={{ color: 'text.secondary', mr: 0.5 }} />
-            <KubernetesIcon type="workload" size={16} sx={{ mr: 0.5 }} />
-            <Typography variant="caption" color="text.secondary" sx={{ mx: 0.5 }}>
-              →
-            </Typography>
-            <KubernetesIcon type="cluster" size={16} sx={{ mr: 0.5 }} />
-            <Typography variant="caption" color="text.secondary">
-              Click items to create binding policies
-            </Typography>
-          </Box>
-        </Tooltip>
-        
         <Button 
           variant="outlined" 
           color="warning" 

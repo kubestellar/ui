@@ -23,6 +23,7 @@ interface ClusterPanelProps {
   loading: boolean;
   error?: string;
   compact?: boolean;
+  filteredLabelKeys?: string[];
 }
 
 // Group representing a unique label key+value with clusters that share it
@@ -34,11 +35,18 @@ interface LabelGroup {
   }>;
 }
 
+const DEFAULT_FILTERED_LABEL_KEYS = [
+  'open-cluster-management',
+  'kubernetes.io',
+  'k8s.io'
+];
+
 const ClusterPanel: React.FC<ClusterPanelProps> = ({
   clusters,
   loading,
   error,
-  compact = false
+  compact = false,
+  filteredLabelKeys = DEFAULT_FILTERED_LABEL_KEYS
 }) => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -54,6 +62,8 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
     clusters.forEach(cluster => {
       if (cluster.labels && Object.keys(cluster.labels).length > 0) {
         Object.entries(cluster.labels).forEach(([key, value]) => {
+          if (filteredLabelKeys.some(pattern => key.includes(pattern))) return;
+          
           const labelId = `${key}:${value}`;
           
           if (!labelMap[labelId]) {
@@ -74,12 +84,22 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
     });
     
     return Object.values(labelMap);
-  }, [clusters]);
+  }, [clusters, filteredLabelKeys]);
 
   const renderLabelItem = (labelGroup: LabelGroup, index: number) => {
     const firstCluster = labelGroup.clusters[0];
+
+    // Format: label-{key}-{value} or label-{key}:{value} if it's a simple label
+    let draggableId = '';
     
-    const draggableId = `label-${labelGroup.key}-${labelGroup.value}`;
+    // Special handling for common labels we know are important
+    if (labelGroup.key === 'location-group' && labelGroup.value === 'edge') {
+      draggableId = 'label-location-group:edge';
+    } else if (labelGroup.key.includes('/')) {
+      draggableId = `label-${labelGroup.key}-${labelGroup.value}`;
+    } else {
+      draggableId = `label-${labelGroup.key}:${labelGroup.value}`;
+    }
     
     console.log(`Creating draggable label: ${draggableId} for ${labelGroup.key}:${labelGroup.value}`);
     
