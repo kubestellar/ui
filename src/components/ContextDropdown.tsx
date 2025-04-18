@@ -19,7 +19,7 @@ const ContextDropdown = ({ onContextChange }: ContextDropdownProps) => {
       .then((response) => response.json())
       .then((data) => {
         const contextList = data["other-wds-context"] || [];
-        const uniqueContexts = [...new Set(["wds1", "wds2", ...contextList])];
+        const uniqueContexts = [...new Set([...contextList])];
         setContexts(uniqueContexts);
       })
       .catch((error) => console.error("Error fetching contexts:", error));
