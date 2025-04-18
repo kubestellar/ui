@@ -106,7 +106,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
           // Filter namespaces in wecsData
           const filteredWecsData = (data as WecsCluster[]).map((cluster) => ({
             ...cluster,
-            namespaces: cluster.namespaces.filter(
+            namespaces: cluster.namespaces?.filter(
               (ns) =>
                 !["kubestellar-report", "kube-node-lease", "kube-public", "default", "kube-system", "open-cluster-management-hub","open-cluster-management","local-path-storage"].includes(ns.namespace)
             ),
