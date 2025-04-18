@@ -16,6 +16,7 @@ import {
   Stack,
   Snackbar,
   styled,
+  Chip,
 } from "@mui/material";
 import { FiX, FiGitPullRequest, FiTrash2 } from "react-icons/fi";
 import Editor from "@monaco-editor/react";
@@ -26,6 +27,7 @@ import "xterm/css/xterm.css";
 import { ResourceItem } from "./TreeViewComponent";
 import useTheme from "../stores/themeStore";
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import axios from "axios";
 
 interface WecsDetailsProps {
   namespace: string;
@@ -48,6 +50,17 @@ interface ResourceInfo {
   age: string;
   status: string;
   manifest: string;
+}
+
+interface ClusterDetails {
+  clusterName: string;
+  contexts: { name: string; cluster: string }[] | null;
+  itsManagedClusters: {
+    name: string;
+    labels: Record<string, string>;
+    creationTime: string;
+    context: string;
+  }[];
 }
 
 const StyledTab = styled(Tab)(({ theme }) => {
@@ -98,6 +111,7 @@ const WecsDetailsPanel = ({
 }: WecsDetailsProps) => {
   const theme = useTheme((state) => state.theme);
   const [resource, setResource] = useState<ResourceInfo | null>(null);
+  const [clusterDetails, setClusterDetails] = useState<ClusterDetails | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tabValue, setTabValue] = useState(initialTab ?? 0);
@@ -114,6 +128,8 @@ const WecsDetailsPanel = ({
   const [logs, setLogs] = useState<string[]>([]);
   const wsParamsRef = useRef<{ cluster: string; namespace: string; pod: string } | null>(null);
   const hasShownConnectedMessageRef = useRef<boolean>(false);
+  const execTerminalRef = useRef<HTMLDivElement>(null);
+  const execTerminalInstance = useRef<Terminal | null>(null);
 
   useEffect(() => {
     if (isOpen && initialTab !== undefined) {
@@ -122,48 +138,137 @@ const WecsDetailsPanel = ({
   }, [isOpen, initialTab]);
 
   useEffect(() => {
-    if (type.toLowerCase() !== "pod" || !isOpen) {
+    // Reset states when panel closes
+    if (!isOpen) {
       setResource(null);
+      setClusterDetails(null);
       setLoading(false);
       return;
     }
 
     setLoading(true);
-    const fetchResourceManifest = async () => {
-      try {
-        const kind = resourceData?.kind ?? type;
-        const manifestData = resourceData ? JSON.stringify(resourceData, null, 2) : "No manifest available";
-        const resourceInfo: ResourceInfo = {
-          name: resourceData?.metadata?.name ?? name,
-          namespace: resourceData?.metadata?.namespace ?? namespace,
-          kind: kind,
-          createdAt: resourceData?.metadata?.creationTimestamp ?? "N/A",
-          age: calculateAge(resourceData?.metadata?.creationTimestamp),
-          status:
-            resourceData?.status?.conditions?.[0]?.status ??
-            resourceData?.status?.phase ??
-            "Unknown",
-          manifest: manifestData,
-        };
 
-        setResource(resourceInfo);
-        setEditedManifest(resourceInfo.manifest);
-        setError(null);
+    // Handle cluster details
+    if (type.toLowerCase() === "cluster") {
+      const fetchClusterDetails = async () => {
+        try {
+          const response = await axios.get(`http://localhost:4000/api/cluster/details/${encodeURIComponent(name)}`);
+          const data = response.data;
+          setClusterDetails(data);
+          
+          // Also create a manifest representation for the edit tab
+          const creationTime = data.itsManagedClusters && data.itsManagedClusters.length > 0 
+            ? data.itsManagedClusters[0].creationTime 
+            : new Date().toISOString();
+          
+          const clusterManifest = {
+            apiVersion: "v1",
+            kind: "Cluster",
+            metadata: {
+              name: data.clusterName,
+              creationTimestamp: creationTime,
+              labels: data.itsManagedClusters && data.itsManagedClusters.length > 0 
+                ? data.itsManagedClusters[0].labels 
+                : {}
+            },
+            spec: {
+              context: data.itsManagedClusters && data.itsManagedClusters.length > 0 
+                ? data.itsManagedClusters[0].context 
+                : ""
+            }
+          };
+          
+          const resourceInfo: ResourceInfo = {
+            name: data.clusterName,
+            namespace: "",
+            kind: "Cluster",
+            createdAt: creationTime,
+            age: calculateAge(creationTime),
+            status: "Active",
+            manifest: JSON.stringify(clusterManifest, null, 2)
+          };
+          
+          setResource(resourceInfo);
+          setEditedManifest(resourceInfo.manifest);
+          setError(null);
+        } catch (err) {
+          console.error(`Error fetching cluster details:`, err);
+          setError(`Failed to load cluster details.`);
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      fetchClusterDetails();
+      return;
+    }
 
-        wsParamsRef.current = {
-          cluster: cluster,
-          namespace: namespace,
-          pod: resourceInfo.name,
-        };
-      } catch (err) {
-        console.error(`Error processing ${type} details:`, err);
-        setError(`Failed to load ${type} details.`);
-      } finally {
-        setLoading(false);
-      }
-    };
+    // Handle pod details (original logic)
+    if (type.toLowerCase() === "pod") {
+      const fetchResourceManifest = async () => {
+        try {
+          const kind = resourceData?.kind ?? type;
+          const manifestData = resourceData ? JSON.stringify(resourceData, null, 2) : "No manifest available";
+          const resourceInfo: ResourceInfo = {
+            name: resourceData?.metadata?.name ?? name,
+            namespace: resourceData?.metadata?.namespace ?? namespace,
+            kind: kind,
+            createdAt: resourceData?.metadata?.creationTimestamp ?? "N/A",
+            age: calculateAge(resourceData?.metadata?.creationTimestamp),
+            status:
+              resourceData?.status?.conditions?.[0]?.status ??
+              resourceData?.status?.phase ??
+              "Unknown",
+            manifest: manifestData,
+          };
 
-    fetchResourceManifest();
+          setResource(resourceInfo);
+          setEditedManifest(resourceInfo.manifest);
+          setError(null);
+
+          wsParamsRef.current = {
+            cluster: cluster,
+            namespace: namespace,
+            pod: resourceInfo.name,
+          };
+        } catch (err) {
+          console.error(`Error processing ${type} details:`, err);
+          setError(`Failed to load ${type} details.`);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchResourceManifest();
+      return;
+    }
+    
+    // Handle other resource types
+    try {
+      const kind = resourceData?.kind ?? type;
+      const manifestData = resourceData ? JSON.stringify(resourceData, null, 2) : "No manifest available";
+      const resourceInfo: ResourceInfo = {
+        name: resourceData?.metadata?.name ?? name,
+        namespace: resourceData?.metadata?.namespace ?? namespace,
+        kind: kind,
+        createdAt: resourceData?.metadata?.creationTimestamp ?? "N/A",
+        age: calculateAge(resourceData?.metadata?.creationTimestamp),
+        status:
+          resourceData?.status?.conditions?.[0]?.status ??
+          resourceData?.status?.phase ??
+          "Unknown",
+        manifest: manifestData,
+      };
+
+      setResource(resourceInfo);
+      setEditedManifest(resourceInfo.manifest);
+      setError(null);
+    } catch (err) {
+      console.error(`Error processing ${type} details:`, err);
+      setError(`Failed to load ${type} details.`);
+    } finally {
+      setLoading(false);
+    }
   }, [namespace, name, type, resourceData, cluster, isOpen]);
 
   // Convert to useCallback to memoize it
@@ -290,6 +395,74 @@ const WecsDetailsPanel = ({
     };
   }, [tabValue, theme, type, logs]); // Add logs as dependency with logic to prevent re-initialization
 
+  // Add the Exec terminal initialization
+  useEffect(() => {
+    // Only initialize exec terminal when the exec tab is active
+    if (!execTerminalRef.current || type.toLowerCase() !== "pod" || tabValue !== 3) return;
+    
+    // Skip re-initialization if terminal already exists
+    if (execTerminalInstance.current) return;
+
+    const term = new Terminal({
+      theme: {
+        background: theme === "dark" ? "#1E1E1E" : "#FFFFFF",
+        foreground: theme === "dark" ? "#D4D4D4" : "#222222",
+        cursor: "#00FF00",
+      },
+      cursorBlink: true,
+      fontSize: 14,
+      fontFamily: "monospace",
+      scrollback: 1000,
+      disableStdin: false, // Enable stdin for exec
+    });
+
+    const fitAddon = new FitAddon();
+    term.loadAddon(fitAddon);
+    term.open(execTerminalRef.current);
+
+    setTimeout(() => fitAddon.fit(), 100);
+    execTerminalInstance.current = term;
+    
+    // Sample data to simulate an exec session
+    term.writeln("\x1b[32m# Welcome to Pod Shell Session\x1b[0m");
+    term.writeln(`\x1b[33mConnected to pod: ${name}\x1b[0m`);
+    term.writeln(`\x1b[33mNamespace: ${namespace}\x1b[0m`);
+    term.writeln(`\x1b[33mCluster: ${cluster}\x1b[0m`);
+    term.writeln("-----------------------------------");
+    term.writeln("root@" + name + ":/#");
+    
+    // Simulate typing
+    const commands = [
+      "ls -la",
+      "total 76",
+      "drwxr-xr-x   1 root root 4096 Jan  1 00:00 .",
+      "drwxr-xr-x   1 root root 4096 Jan  1 00:00 ..",
+      "-rw-r--r--   1 root root 1090 Mar 15  2023 Dockerfile",
+      "drwxr-xr-x   2 root root 4096 Jan  1 00:00 app",
+      "drwxr-xr-x   2 root root 4096 Jan  1 00:00 config",
+      "drwxr-xr-x   2 root root 4096 Jan  1 00:00 logs",
+      "-rw-r--r--   1 root root  289 Mar 15  2023 package.json",
+      "root@" + name + ":/# "
+    ];
+    
+    // Simulate command execution with delay
+    let i = 0;
+    const intervalId = setInterval(() => {
+      if (i < commands.length) {
+        term.writeln(commands[i]);
+        i++;
+      } else {
+        clearInterval(intervalId);
+      }
+    }, 300);
+    
+    return () => {
+      clearInterval(intervalId);
+      term.dispose();
+      execTerminalInstance.current = null;
+    };
+  }, [tabValue, theme, type, name, namespace, cluster]); // Add necessary dependencies
+
   const calculateAge = (creationTimestamp: string | undefined): string => {
     if (!creationTimestamp) return "N/A";
     const createdDate = new Date(creationTimestamp);
@@ -363,8 +536,105 @@ const WecsDetailsPanel = ({
   };
 
   const renderSummary = () => {
+    if (type.toLowerCase() === "cluster" && clusterDetails) {
+      // Render cluster-specific information
+      const clusterInfo = clusterDetails.itsManagedClusters && clusterDetails.itsManagedClusters.length > 0 
+        ? clusterDetails.itsManagedClusters[0] 
+        : null;
+      
+      return (
+        <Box>
+          <Table sx={{ borderRadius: 1, mb: 2 }}>
+            <TableBody>
+              {[
+                { label: "KIND", value: "Cluster" },
+                { label: "NAME", value: clusterDetails.clusterName },
+                { label: "CONTEXT", value: clusterInfo?.context || "Unknown" },
+                { label: "CREATED AT", value: clusterInfo ? `${new Date(clusterInfo.creationTime).toLocaleString()} (${calculateAge(clusterInfo.creationTime)})` : "Unknown" },
+              ].map((row, index) => (
+                <TableRow key={index}>
+                  <TableCell
+                    sx={{
+                      borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
+                      color: theme === "dark" ? "#D4D4D4" : "#333333",
+                      fontSize: "14px",
+                      fontWeight: 500,
+                      width: '150px',
+                      padding: '10px 16px'
+                    }}
+                  >
+                    {row.label}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
+                      color: theme === "dark" ? "#D4D4D4" : "#333333",
+                      fontSize: "14px",
+                      padding: '10px 16px'
+                    }}
+                  >
+                    {row.value}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          
+          {/* Display cluster labels if available */}
+          {clusterInfo && clusterInfo.labels && Object.keys(clusterInfo.labels).length > 0 && (
+            <Table sx={{ borderRadius: 1 }}>
+              <TableBody>
+                <TableRow>
+                  <TableCell
+                    sx={{
+                      borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
+                      color: theme === "dark" ? "#D4D4D4" : "#333333",
+                      fontSize: "14px",
+                      fontWeight: 500,
+                      width: '150px',
+                      padding: '10px 16px',
+                      verticalAlign: 'top'
+                    }}
+                  >
+                    LABELS
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
+                      color: theme === "dark" ? "#D4D4D4" : "#333333",
+                      fontSize: "14px",
+                      padding: '10px 16px'
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {clusterInfo.labels && Object.entries(clusterInfo.labels).map(([key, value], index) => (
+                        <Chip
+                          key={index}
+                          label={`${key}: ${value}`}
+                          size="small"
+                          sx={{
+                            mr: 1,
+                            mb: 1,
+                            backgroundColor: theme === "dark" ? "#334155" : undefined,
+                            color: theme === "dark" ? "#fff" : undefined,
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          )}
+        </Box>
+      );
+    }
+    
+    // Original resource rendering for non-cluster types
     if (!resource) return null;
-    return (
+    
+    // Create a basic summary table for any resource
+    const summaryTable = (
       <Table sx={{ borderRadius: 1 }}>
         <TableBody>
           {[
@@ -380,6 +650,8 @@ const WecsDetailsPanel = ({
                   color: theme === "dark" ? "#D4D4D4" : "#333333",
                   fontSize: "14px",
                   fontWeight: 500,
+                  width: '150px',
+                  padding: '10px 16px'
                 }}
               >
                 {row.label}
@@ -389,15 +661,59 @@ const WecsDetailsPanel = ({
                   borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
                   color: theme === "dark" ? "#D4D4D4" : "#333333",
                   fontSize: "14px",
+                  padding: '10px 16px'
                 }}
               >
                 {row.value}
               </TableCell>
             </TableRow>
           ))}
+          {resourceData?.metadata?.labels && Object.keys(resourceData.metadata.labels).length > 0 && (
+            <TableRow>
+              <TableCell
+                sx={{
+                  borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
+                  color: theme === "dark" ? "#D4D4D4" : "#333333",
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  width: '150px',
+                  padding: '10px 16px',
+                  verticalAlign: 'top'
+                }}
+              >
+                LABELS
+              </TableCell>
+              <TableCell
+                sx={{
+                  borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
+                  color: theme === "dark" ? "#D4D4D4" : "#333333",
+                  fontSize: "14px",
+                  padding: '10px 16px'
+                }}
+              >
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {resourceData.metadata.labels && Object.entries(resourceData.metadata.labels).map(([key, value], index) => (
+                    <Chip
+                      key={index}
+                      label={`${key}: ${value}`}
+                      size="small"
+                      sx={{
+                        mr: 1,
+                        mb: 1,
+                        backgroundColor: theme === "dark" ? "#334155" : undefined,
+                        color: theme === "dark" ? "#fff" : undefined,
+                      }}
+                    />
+                  ))}
+                </Box>
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
     );
+    
+    return summaryTable;
   };
 
   return (
@@ -427,7 +743,7 @@ const WecsDetailsPanel = ({
         <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
           <Alert severity="error">{error}</Alert>
         </Box>
-      ) : resource && isOpen && type.toLowerCase() === "pod" ? (
+      ) : (resource || clusterDetails) && isOpen ? (
         <Box ref={panelRef} sx={{ p: 4, height: "100%" }}>
           <Box
             display="flex"
@@ -503,6 +819,10 @@ const WecsDetailsPanel = ({
             <StyledTab label={<span><i className="fa fa-file-alt" style={{ marginRight: "8px" }}></i>SUMMARY</span>} />
             <StyledTab label={<span><i className="fa fa-edit" style={{ marginRight: "8px" }}></i>EDIT</span>} />
             <StyledTab label={<span><i className="fa fa-align-left" style={{ marginRight: "8px" }}></i>LOGS</span>} />
+            {/* Only show Exec Pods tab for pod resources */}
+            {type.toLowerCase() === "pod" && (
+              <StyledTab label={<span><i className="fa fa-terminal" style={{ marginRight: "8px" }}></i>EXEC PODS</span>} />
+            )}
           </Tabs>
 
           <Box
@@ -607,6 +927,24 @@ const WecsDetailsPanel = ({
                 >
                   <div
                     ref={terminalRef}
+                    style={{ height: "100%", width: "100%" }}
+                  />
+                </Box>
+              )}
+              {tabValue === 3 && type.toLowerCase() === "pod" && (
+                <Box
+                  sx={{
+                    height: "500px",
+                    bgcolor: theme === "dark" ? "#1E1E1E" : "#FFFFFF",
+                    borderRadius: 1,
+                    p: 1,
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <div
+                    ref={execTerminalRef}
                     style={{ height: "100%", width: "100%" }}
                   />
                 </Box>

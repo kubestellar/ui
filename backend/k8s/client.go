@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"fmt"
+	"k8s.io/client-go/rest"
 	"os"
 
 	"k8s.io/client-go/dynamic"
@@ -107,4 +108,45 @@ func GetClientSetWithContext(contextName string) (*kubernetes.Clientset, dynamic
 	}
 
 	return clientset, dynamicClient, nil
+}
+
+func GetClientSetWithConfigContext(contextName string) (*kubernetes.Clientset, *rest.Config, error) {
+	kubeconfig := os.Getenv("KUBECONFIG")
+	if kubeconfig == "" {
+		if home := homeDir(); home != "" {
+			kubeconfig = fmt.Sprintf("%s/.kube/config", home)
+		}
+	}
+
+	// Load the kubeconfig file
+	config, err := clientcmd.LoadFromFile(kubeconfig)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to load kubeconfig: %v", err)
+	}
+
+	// Check if the specified context exists
+	ctxContext := config.Contexts[contextName]
+	if ctxContext == nil {
+		return nil, nil, fmt.Errorf("failed to find context '%s'", contextName)
+	}
+
+	// Create config for the specified context
+	clientConfig := clientcmd.NewDefaultClientConfig(
+		*config,
+		&clientcmd.ConfigOverrides{
+			CurrentContext: contextName,
+		},
+	)
+
+	restConfig, err := clientConfig.ClientConfig()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create restconfig: %v", err)
+	}
+
+	clientset, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create Kubernetes client: %v", err)
+	}
+
+	return clientset, restConfig, nil
 }

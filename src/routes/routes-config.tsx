@@ -10,6 +10,7 @@ import WecsTreeview from "../components/WecsTopology";
 import ProtectedRoute from "../components/ProtectedRoute";
 import PublicRoute from "../components/PublicRoute";
 import KubeStellarVisualization from "../components/login/index";
+import Terminal from "../components/Terminal.tsx";
 
 const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ "../components/Clusters"));
 const ITSLazy = lazy(() => import(/* webpackPrefetch: true */ "../pages/ITS"));
@@ -84,6 +85,12 @@ export const routesConfig: RouteObject[] = [
         element: (
           <NotFoundPage />
         ) 
+      },
+      {
+        path: "/shell",
+        element: (
+            <Terminal />
+        )
       },
     ],
   },
