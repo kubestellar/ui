@@ -16,11 +16,13 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { Draggable } from '@hello-pangea/dnd';
 import { ManagedCluster } from '../../types/bindingPolicy';
 import StrictModeDroppable from './StrictModeDroppable';
 import KubernetesIcon from './KubernetesIcon';
 import { useNavigate } from 'react-router-dom';
+import { usePolicyDragDropStore } from '../../stores/policyDragDropStore';
 
 interface ClusterPanelProps {
   clusters: ManagedCluster[];
@@ -56,6 +58,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
   const navigate = useNavigate();
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const canvasEntities = usePolicyDragDropStore(state => state.canvasEntities);
 
   const handleImportClusters = () => {
     navigate('/its');
@@ -119,6 +122,9 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
     
     console.log(`Creating draggable label: ${draggableId} for ${labelGroup.key}:${labelGroup.value}`);
     
+    // Check if this label is already in the canvas
+    const isInCanvas = canvasEntities.clusters.includes(draggableId);
+    
     return (
       <Draggable
         key={`${labelGroup.key}:${labelGroup.value}`}
@@ -167,6 +173,21 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
                 }}
               />
             </Tooltip>
+            
+            {/* Check icon when label is in canvas */}
+            {isInCanvas && (
+              <Tooltip title="Added to canvas">
+                <CheckCircleIcon 
+                  sx={{ 
+                    position: 'absolute',
+                    bottom: 4,
+                    right: 4,
+                    fontSize: 20,
+                    color: theme.palette.success.main
+                  }}
+                />
+              </Tooltip>
+            )}
             
             {/* Label value */}
             <Box sx={{ mt: 0.5 }}>
@@ -270,10 +291,10 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
           {!showSearch && !compact && (
             <IconButton 
               size="small" 
-              sx={{ ml: 1, color: 'white' }}
+              sx={{ ml: 2, color: 'white' }}
               onClick={() => setShowSearch(true)}
             >
-              <SearchIcon fontSize="small" />
+              <SearchIcon fontSize="medium" />
             </IconButton>
           )}
         </Box>

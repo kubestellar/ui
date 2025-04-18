@@ -18,9 +18,11 @@ import { Workload } from '../../types/bindingPolicy';
 import StrictModeDroppable from './StrictModeDroppable';
 import KubernetesIcon from './KubernetesIcon';
 import AddIcon from '@mui/icons-material/Add';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useNavigate } from 'react-router-dom';
 import CloseIcon from '@mui/icons-material/Close';
-import { SearchIcon } from 'lucide-react';
+import SearchIcon from '@mui/icons-material/Search';
+import { usePolicyDragDropStore } from '../../stores/policyDragDropStore';
 
 
 interface WorkloadPanelProps {
@@ -51,6 +53,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
   const navigate = useNavigate();
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const canvasEntities = usePolicyDragDropStore(state => state.canvasEntities);
 
   const handleCreateWorkload = () => {
     navigate('/workloads/manage');
@@ -105,10 +108,15 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
     // Use first workload for the draggable ID
     const firstWorkload = labelGroup.workloads[0];
     
+    const draggableId = `label-${labelGroup.key}-${labelGroup.value}`;
+    
+    // Check if this label is already in the canvas
+    const isInCanvas = canvasEntities.workloads.includes(draggableId);
+    
     return (
       <Draggable
         key={`${labelGroup.key}:${labelGroup.value}`}
-        draggableId={`label-${labelGroup.key}-${labelGroup.value}`}
+        draggableId={draggableId}
         index={index}
       >
         {(provided, snapshot) => (
@@ -116,7 +124,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
             ref={provided.innerRef}
             {...provided.draggableProps}
             {...provided.dragHandleProps}
-            data-rbd-draggable-id={`label-${labelGroup.key}-${labelGroup.value}`}
+            data-rbd-draggable-id={draggableId}
             data-rfd-draggable-context-id={provided.draggableProps['data-rfd-draggable-context-id']}
             sx={{
               p: 1,
@@ -132,7 +140,8 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
               '&:hover': {
                 backgroundColor: alpha(theme.palette.secondary.main, 0.05),
                 cursor: 'grab'
-              }
+              },
+              position: 'relative'
             }}
           >
             {/* Label key as the primary display */}
@@ -171,6 +180,21 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
                 />
               </Tooltip>
             </Box>
+            
+            {/* Check icon when label is in canvas */}
+            {isInCanvas && (
+              <Tooltip title="Added to canvas">
+                <CheckCircleIcon 
+                  sx={{ 
+                    position: 'absolute',
+                    bottom: 4,
+                    right: 4,
+                    fontSize: 20,
+                    color: theme.palette.success.main
+                  }}
+                />
+              </Tooltip>
+            )}
             
             {/* Label value */}
             <Box sx={{ mt: 0.5 }}>
@@ -276,10 +300,10 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
         {!showSearch && !compact && (
           <IconButton 
           size="small" 
-          sx={{ ml: 1, color: 'white' }}
+          sx={{ ml: 2, color: 'white' }}
           onClick={() => setShowSearch(true)}
         >
-          <SearchIcon fontSize="small" />
+          <SearchIcon fontSize="medium" />
         </IconButton>
         )
           
