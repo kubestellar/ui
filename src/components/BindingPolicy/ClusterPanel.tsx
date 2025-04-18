@@ -12,9 +12,10 @@ import {
   Button
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import { Draggable } from '@hello-pangea/dnd';
+// Remove Draggable import
+// import { Draggable } from '@hello-pangea/dnd';
 import { ManagedCluster } from '../../types/bindingPolicy';
-import StrictModeDroppable from './StrictModeDroppable';
+// Keep for compatibility but we won't use it
 import KubernetesIcon from './KubernetesIcon';
 import { useNavigate } from 'react-router-dom';
 
@@ -24,6 +25,7 @@ interface ClusterPanelProps {
   error?: string;
   compact?: boolean;
   filteredLabelKeys?: string[];
+  onItemClick?: (clusterId: string) => void;
 }
 
 // Group representing a unique label key+value with clusters that share it
@@ -46,7 +48,8 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
   loading,
   error,
   compact = false,
-  filteredLabelKeys = DEFAULT_FILTERED_LABEL_KEYS
+  filteredLabelKeys = DEFAULT_FILTERED_LABEL_KEYS,
+  onItemClick
 }) => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -86,119 +89,106 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
     return Object.values(labelMap);
   }, [clusters, filteredLabelKeys]);
 
-  const renderLabelItem = (labelGroup: LabelGroup, index: number) => {
+  const renderLabelItem = (labelGroup: LabelGroup) => {
     const firstCluster = labelGroup.clusters[0];
 
     // Format: label-{key}-{value} or label-{key}:{value} if it's a simple label
-    let draggableId = '';
+    let itemId = '';
     
     // Special handling for common labels we know are important
     if (labelGroup.key === 'location-group' && labelGroup.value === 'edge') {
-      draggableId = 'label-location-group:edge';
+      itemId = 'label-location-group:edge';
     } else if (labelGroup.key.includes('/')) {
-      draggableId = `label-${labelGroup.key}-${labelGroup.value}`;
+      itemId = `label-${labelGroup.key}-${labelGroup.value}`;
     } else {
-      draggableId = `label-${labelGroup.key}:${labelGroup.value}`;
+      itemId = `label-${labelGroup.key}:${labelGroup.value}`;
     }
     
-    console.log(`Creating draggable label: ${draggableId} for ${labelGroup.key}:${labelGroup.value}`);
+    console.log(`Creating clickable label: ${itemId} for ${labelGroup.key}:${labelGroup.value}`);
     
+    // Replace Draggable with a simple Box
     return (
-      <Draggable
+      <Box
         key={`${labelGroup.key}:${labelGroup.value}`}
-        draggableId={draggableId}
-        index={index}
+        sx={{
+          p: 1,
+          m: compact ? 0.5 : 1,
+          borderRadius: 1,
+          backgroundColor: theme.palette.background.paper,
+          border: `1px solid ${theme.palette.divider}`,
+          boxShadow: 0,
+          '&:hover': {
+            backgroundColor: alpha(theme.palette.primary.main, 0.05),
+            cursor: 'pointer'
+          },
+          position: 'relative',
+          cursor: 'pointer'
+        }}
+        onClick={() => onItemClick && onItemClick(itemId)}
       >
-        {(provided, snapshot) => (
-          <Box
-            ref={provided.innerRef}
-            {...provided.draggableProps}
-            {...provided.dragHandleProps}
-            data-rbd-draggable-id={draggableId}
-            data-rfd-draggable-context-id={provided.draggableProps['data-rfd-draggable-context-id']}
-            sx={{
-              p: 1,
-              m: compact ? 0.5 : 1,
-              borderRadius: 1,
-              backgroundColor: snapshot.isDragging
-                ? alpha(theme.palette.primary.main, 0.1)
-                : theme.palette.background.paper,
-              border: `1px solid ${snapshot.isDragging 
-                ? theme.palette.primary.main 
-                : theme.palette.divider}`,
-              boxShadow: snapshot.isDragging ? 2 : 0,
-              '&:hover': {
-                backgroundColor: alpha(theme.palette.primary.main, 0.05),
-                cursor: 'grab'
-              },
-              position: 'relative'
+        {/* Position cluster count chip in absolute position */}
+        <Tooltip title={`${labelGroup.clusters.length} cluster(s)`}>
+          <Chip 
+            size="small" 
+            label={`${labelGroup.clusters.length}`}
+            sx={{ 
+              fontSize: '0.5rem',
+              height: 16,
+              '& .MuiChip-label': { px: 0.5 },
+              bgcolor: alpha(theme.palette.info.main, 0.1),
+              color: theme.palette.info.main,
+              position: 'absolute',
+              top: 4,
+              right: 4
             }}
+          />
+        </Tooltip>
+        
+        {/* Label value */}
+        <Box sx={{ mt: 0.5 }}>
+          <Chip
+            size="small"
+            label={`${labelGroup.key} = ${labelGroup.value}`}
+            sx={{ 
+              fontSize: '1rem',
+              height: 20,
+              '& .MuiChip-label': { 
+                px: 0.75,
+                textOverflow: 'ellipsis',
+                overflow: 'hidden',
+              },
+              bgcolor: alpha(theme.palette.primary.main, 0.1),
+              color: theme.palette.primary.main,
+            }}
+          />
+        </Box>
+        
+        {/* Cluster summary */}
+        <Box sx={{ mt: 0.5 }}>
+          <Tooltip 
+            title={
+              <React.Fragment>
+                <Typography variant="caption" sx={{ fontWeight: 'bold' }}>Clusters:</Typography>
+                <ul style={{ margin: 0, paddingLeft: '1rem' }}>
+                  {labelGroup.clusters.map(c => (
+                    <li key={c.name}>{c.name}</li>
+                  ))}
+                </ul>
+              </React.Fragment>
+            } 
+            arrow 
+            placement="top"
           >
-            {/* Position cluster count chip in absolute position */}
-            <Tooltip title={`${labelGroup.clusters.length} cluster(s)`}>
-              <Chip 
-                size="small" 
-                label={`${labelGroup.clusters.length}`}
-                sx={{ 
-                  fontSize: '0.5rem',
-                  height: 16,
-                  '& .MuiChip-label': { px: 0.5 },
-                  bgcolor: alpha(theme.palette.info.main, 0.1),
-                  color: theme.palette.info.main,
-                  position: 'absolute',
-                  top: 4,
-                  right: 4
-                }}
-              />
-            </Tooltip>
-            
-            {/* Label value */}
-            <Box sx={{ mt: 0.5 }}>
-              <Chip
-                size="small"
-                label={`${labelGroup.key} = ${labelGroup.value}`}
-                sx={{ 
-                  fontSize: '1rem',
-                  height: 20,
-                  '& .MuiChip-label': { 
-                    px: 0.75,
-                    textOverflow: 'ellipsis',
-                    overflow: 'hidden',
-                  },
-                  bgcolor: alpha(theme.palette.primary.main, 0.1),
-                  color: theme.palette.primary.main,
-                }}
-              />
-            </Box>
-            
-            {/* Cluster summary */}
-            <Box sx={{ mt: 0.5 }}>
-              <Tooltip 
-                title={
-                  <React.Fragment>
-                    <Typography variant="caption" sx={{ fontWeight: 'bold' }}>Clusters:</Typography>
-                    <ul style={{ margin: 0, paddingLeft: '1rem' }}>
-                      {labelGroup.clusters.map(c => (
-                        <li key={c.name}>{c.name}</li>
-                      ))}
-                    </ul>
-                  </React.Fragment>
-                } 
-                arrow 
-                placement="top"
-              >
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  {labelGroup.clusters.length === 1 
-                    ? firstCluster.name
-                    : labelGroup.clusters.length <= 2
-                      ? labelGroup.clusters.map(c => c.name).join(', ')
-                      : `${labelGroup.clusters.slice(0, 2).map(c => c.name).join(', ')} +${labelGroup.clusters.length - 2} more`}
-                </Typography>
-              </Tooltip>
-            </Box>
-          </Box>
-        )}
-      </Draggable>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              {labelGroup.clusters.length === 1 
+                ? firstCluster.name
+                : labelGroup.clusters.length <= 2
+                  ? labelGroup.clusters.map(c => c.name).join(', ')
+                  : `${labelGroup.clusters.slice(0, 2).map(c => c.name).join(', ')} +${labelGroup.clusters.length - 2} more`}
+            </Typography>
+          </Tooltip>
+        </Box>
+      </Box>
     );
   };
 
@@ -261,29 +251,18 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
             No cluster labels available. Please add clusters with labels to use in binding policies.
           </Typography>
         ) : (
-          <StrictModeDroppable droppableId="cluster-panel" type="CLUSTER_OR_WORKLOAD">
-            {(provided) => (
-              <Box
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-                data-rbd-droppable-id="cluster-panel"
-                data-rfd-droppable-context-id={provided.droppableProps['data-rfd-droppable-context-id']}
-                sx={{ minHeight: '100%' }}
-              >
-                {uniqueLabels.length === 0 ? (
-                  <Typography sx={{ p: 2, color: 'text.secondary', textAlign: 'center' }}>
-                    No labels found in available clusters.
-                  </Typography>
-                ) : (
-                  uniqueLabels.map((labelGroup, index) => 
-                    renderLabelItem(labelGroup, index)
-                  )
-                )}
-                
-                {provided.placeholder}
-              </Box>
+          // Replace StrictModeDroppable with a regular Box
+          <Box sx={{ minHeight: '100%' }}>
+            {uniqueLabels.length === 0 ? (
+              <Typography sx={{ p: 2, color: 'text.secondary', textAlign: 'center' }}>
+                No labels found in available clusters.
+              </Typography>
+            ) : (
+              uniqueLabels.map((labelGroup) => 
+                renderLabelItem(labelGroup)
+              )
             )}
-          </StrictModeDroppable>
+          </Box>
         )}
       </Box>
     </Paper>
