@@ -746,7 +746,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
             <StyledTab 
             icon={<DragIndicatorIcon sx={{ color: isDarkTheme ? '#FFFFFF' : 'inherit' }} />}
             iconPosition="start" 
-            label="Drag & Drop" 
+            label="Click & Drop" 
             value="dragdrop" 
             sx={{ 
               color: isDarkTheme ? '#FFFFFF' : "primary.main",
