@@ -63,7 +63,7 @@ const HelpDialog: React.FC<{open: boolean, onClose: () => void}> = ({open, onClo
           <Typography variant="h6" sx={{ 
             color: isDarkMode ? "rgba(255, 255, 255, 0.9)" : undefined 
           }}>
-            How to Use Drag & Drop
+           How to Use Click-to-Add
           </Typography>
         </Box>
       </DialogTitle>
@@ -71,7 +71,7 @@ const HelpDialog: React.FC<{open: boolean, onClose: () => void}> = ({open, onClo
         <Typography paragraph sx={{ 
           color: isDarkMode ? "rgba(255, 255, 255, 0.9)" : undefined 
         }}>
-          Follow these steps to create binding policies using the label-based drag & drop interface:
+          Follow these steps to create binding policies using the label-based interface:
         </Typography>
         <List>
           <ListItem>
@@ -81,12 +81,12 @@ const HelpDialog: React.FC<{open: boolean, onClose: () => void}> = ({open, onClo
             <ListItemText 
               primary={
                 <Typography sx={{ color: isDarkMode ? "rgba(255, 255, 255, 0.9)" : undefined }}>
-                  1. Drag labels to the canvas
+                  1. Add labels to the canvas
                 </Typography>
               }
               secondary={
                 <Typography variant="body2" sx={{ color: isDarkMode ? "rgba(255, 255, 255, 0.7)" : undefined }}>
-                  Drag cluster labels from the left panel and workload labels from the right panel onto the binding policy canvas
+                  Click on cluster from the left panel and workload from the right panel to add them to the binding policy canvas
                 </Typography>
               }
             />
@@ -103,7 +103,7 @@ const HelpDialog: React.FC<{open: boolean, onClose: () => void}> = ({open, onClo
               }
               secondary={
                 <Typography variant="body2" sx={{ color: isDarkMode ? "rgba(255, 255, 255, 0.7)" : undefined }}>
-                  Click 'Deploy Binding Policies' to create and deploy binding policies that connect workloads to clusters based on the labels
+                 Click 'Deploy Binding Policies' to create and deploy binding policies that connect workloads to clusters based on the selected labels
                 </Typography>
               }
             />
