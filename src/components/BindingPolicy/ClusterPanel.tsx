@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Box, 
   Typography, 
@@ -9,15 +9,16 @@ import {
   alpha,
   Chip,
   Tooltip,
-  Button
+  Button,
+  InputBase,
+  IconButton
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-// Remove Draggable import
-// import { Draggable } from '@hello-pangea/dnd';
+import CloseIcon from '@mui/icons-material/Close';
 import { ManagedCluster } from '../../types/bindingPolicy';
-// Keep for compatibility but we won't use it
 import KubernetesIcon from './KubernetesIcon';
 import { useNavigate } from 'react-router-dom';
+import { SearchIcon } from 'lucide-react';
 
 interface ClusterPanelProps {
   clusters: ManagedCluster[];
@@ -53,6 +54,8 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
 }) => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const handleImportClusters = () => {
     navigate('/its');
@@ -88,6 +91,16 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
     
     return Object.values(labelMap);
   }, [clusters, filteredLabelKeys]);
+
+  // Filter labels based on search term
+  const filteredLabels = React.useMemo(() => {
+    if (!searchTerm) return uniqueLabels;
+    
+    return uniqueLabels.filter(label => 
+      label.key.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      label.value.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [uniqueLabels, searchTerm]);
 
   const renderLabelItem = (labelGroup: LabelGroup) => {
     const firstCluster = labelGroup.clusters[0];
@@ -204,9 +217,52 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
       }}
     >
       <Box sx={{ p: compact ? 1 : 2, backgroundColor: theme.palette.primary.main, color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
           <KubernetesIcon type="cluster" size={compact ? 20 : 24} sx={{ mr: 1, color: 'white' }} />
-          <Typography variant={compact ? "subtitle1" : "h6"}>Cluster Labels</Typography>
+          {showSearch ? (
+            <Box 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                bgcolor: alpha(theme.palette.common.white, 0.15),
+                borderRadius: 1,
+                px: 1,
+                flexGrow: 1,
+                mr: 1
+              }}
+            >
+              <InputBase
+                placeholder="Search labels..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                sx={{ 
+                  color: 'white', 
+                  flexGrow: 1,
+                  '& .MuiInputBase-input': {
+                    py: 0.5,
+                  }
+                }}
+                autoFocus
+              />
+              <IconButton size="small" onClick={() => {
+                setSearchTerm("");
+                setShowSearch(false);
+              }} sx={{ color: 'white', p: 0.25 }}>
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
+          ) : (
+            <Typography variant={compact ? "subtitle1" : "h6"}>Cluster Labels</Typography>
+          )}
+          {!showSearch && !compact && (
+            <IconButton 
+              size="small" 
+              sx={{ ml: 1, color: 'white' }}
+              onClick={() => setShowSearch(true)}
+            >
+              <SearchIcon fontSize="small" />
+            </IconButton>
+          )}
         </Box>
         {!compact && (
           <Button
@@ -253,12 +309,12 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
         ) : (
           // Replace StrictModeDroppable with a regular Box
           <Box sx={{ minHeight: '100%' }}>
-            {uniqueLabels.length === 0 ? (
+            {filteredLabels.length === 0 ? (
               <Typography sx={{ p: 2, color: 'text.secondary', textAlign: 'center' }}>
-                No labels found in available clusters.
+                {searchTerm ? 'No labels match your search.' : 'No labels found in available clusters.'}
               </Typography>
             ) : (
-              uniqueLabels.map((labelGroup) => 
+              filteredLabels.map((labelGroup) => 
                 renderLabelItem(labelGroup)
               )
             )}

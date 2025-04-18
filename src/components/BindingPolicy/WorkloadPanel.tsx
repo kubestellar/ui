@@ -1,21 +1,24 @@
-import React from "react";
-import {
-  Box,
-  Typography,
-  CircularProgress,
-  Paper,
+import React, { useState } from 'react';
+import { 
+  Box, 
+  Typography, 
+  CircularProgress, 
+  Paper, 
   Divider,
   useTheme,
   alpha,
   Button,
   Chip,
   Tooltip,
-} from "@mui/material";
-
-import { Workload } from "../../types/bindingPolicy";
-import KubernetesIcon from "./KubernetesIcon";
-import AddIcon from "@mui/icons-material/Add";
-import { useNavigate } from "react-router-dom";
+  InputBase,
+  IconButton
+} from '@mui/material';
+import { Workload } from '../../types/bindingPolicy';
+import KubernetesIcon from './KubernetesIcon';
+import AddIcon from '@mui/icons-material/Add';
+import { useNavigate } from 'react-router-dom';
+import CloseIcon from '@mui/icons-material/Close';
+import SearchIcon from '@mui/icons-material/Search';
 
 interface WorkloadPanelProps {
   workloads: Workload[];
@@ -45,6 +48,8 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
 }) => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const handleCreateWorkload = () => {
     navigate("/workloads/manage");
@@ -86,6 +91,16 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
 
     return Object.values(labelMap);
   }, [workloads]);
+  
+  // Filter labels based on search term
+  const filteredLabels = React.useMemo(() => {
+    if (!searchTerm) return uniqueLabels;
+    
+    return uniqueLabels.filter(label => 
+      label.key.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      label.value.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [uniqueLabels, searchTerm]);
 
   // Render a label item - modified to use Box instead of Draggable
   const renderLabelItem = (labelGroup: LabelGroup) => {
@@ -231,15 +246,62 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
           alignItems: "center",
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center" }}>
+        <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
           <KubernetesIcon
             type="workload"
             size={compact ? 20 : 24}
             sx={{ mr: 1, color: "white" }}
           />
+          {showSearch ? (
+            <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              borderRadius: 1,
+              px:1,
+              mr:1,
+              bgcolor: alpha(theme.palette.common.white, 0.15),
+              flexGrow: 1,
+
+            }}
+            >
+              <InputBase
+              placeholder="Search labels"
+              value={searchTerm}
+              onChange={(e)=>setSearchTerm(e.target.value)}
+              sx={{
+                color: 'white',
+                flexGrow: 1,
+                '& .MuiInputBase-input': {
+                    py: 0.5,
+                  }
+              }}
+              autoFocus
+              />
+               <IconButton size="small" onClick={() => {
+                setSearchTerm("");
+                setShowSearch(false);
+              }} sx={{ color: 'white', p: 0.25 }}>
+                <CloseIcon fontSize="small" />
+              </IconButton>
+
+            </Box>
+          ):(
           <Typography variant={compact ? "subtitle1" : "h6"}>
             Workload Labels
           </Typography>
+        )}
+        {!showSearch && !compact && (
+          <IconButton 
+          size="small" 
+          sx={{ ml: 1, color: 'white' }}
+          onClick={() => setShowSearch(true)}
+        >
+          <SearchIcon fontSize="small" />
+        </IconButton>
+        )
+          
+        }
         </Box>
         {!compact && (
           <Button
@@ -289,18 +351,13 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
             binding policies.
           </Typography>
         ) : (
-          // Replace StrictModeDroppable with regular Box
           <Box sx={{ minHeight: "100%" }}>
-            {uniqueLabels.length === 0 ? (
-              <Typography
-                sx={{ p: 2, color: "text.secondary", textAlign: "center" }}
-              >
-                No labels found in available workloads.
+            {filteredLabels.length === 0 ? (
+              <Typography sx={{ p: 2, color: "text.secondary", textAlign: "center" }}>
+                {searchTerm ? 'No labels match your search.' : 'No labels found in available workloads.'}
               </Typography>
             ) : (
-              uniqueLabels.map((labelGroup) =>
-                renderLabelItem(labelGroup)
-              )
+              filteredLabels.map((labelGroup) => renderLabelItem(labelGroup))
             )}
           </Box>
         )}
