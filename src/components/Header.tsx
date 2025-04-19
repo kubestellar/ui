@@ -283,9 +283,6 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
                         Sign Out
                       </span>
                     </div>
-                    <span className="text-gray-400 group-hover:text-red-400 dark:group-hover:text-red-300 text-xs">
-                      Esc
-                    </span>
                   </button>
                 </div>
               )}
