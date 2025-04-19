@@ -10,14 +10,11 @@ import {
   CircularProgress,
   Divider,
   Chip,
-  TextField,
-  InputAdornment,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import InfoIcon from '@mui/icons-material/Info';
 import AddLinkIcon from '@mui/icons-material/AddLink';
-import SearchIcon from '@mui/icons-material/Search';
 import KubernetesIcon from './KubernetesIcon';
 import { usePolicyDragDropStore } from '../../stores/policyDragDropStore';
 import { useCanvasStore } from '../../stores/canvasStore';
@@ -164,8 +161,6 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
   }, [setConnectionLines]);
   
   const [, setInvalidConnectionWarning] = useState<string | null>(null);
-  const [clusterFilter, setClusterFilter] = useState<string>('');
-  const [workloadFilter, setWorkloadFilter] = useState<string>('');
   const drawConnection = useCallback((
     ctx: CanvasRenderingContext2D, 
     startX: number, 
@@ -1077,22 +1072,6 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                     flex: 'none',
                     overflow: 'hidden'
                   }}>
-                    <TextField
-                      placeholder="Search clusters..."
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      value={clusterFilter}
-                      onChange={(e) => setClusterFilter(e.target.value)}
-                      sx={{ mb: 1 }}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <SearchIcon fontSize="small" />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
                     <Box sx={{ 
                       flexGrow: 1, 
                       overflowY: 'auto',
@@ -1112,7 +1091,6 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                         }}>
                           {/* Display clusters here with individual styling */}
                           {policyCanvasEntities.clusters
-                            .filter(clusterId => clusterId.toLowerCase().includes(clusterFilter.toLowerCase()))
                             .map((clusterId) => {
                               // Extract label information if this is a label-based item
                               const labelInfo = extractLabelInfo(clusterId);
@@ -1253,22 +1231,6 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                     flex: 'none',
                     overflow: 'hidden'
                   }}>
-                    <TextField
-                      placeholder="Search workloads..."
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      value={workloadFilter}
-                      onChange={(e) => setWorkloadFilter(e.target.value)}
-                      sx={{ mb: 1 }}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <SearchIcon fontSize="small" />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
                     <Box sx={{ 
                       flexGrow: 1, 
                       overflowY: 'auto',
@@ -1288,7 +1250,6 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                         }}>
                           {/* Display workloads here with individual styling */}
                           {policyCanvasEntities.workloads
-                            .filter(workloadId => workloadId.toLowerCase().includes(workloadFilter.toLowerCase()))
                             .map((workloadId) => {
                               // Extract label information if this is a label-based item
                               const labelInfo = extractLabelInfo(workloadId);

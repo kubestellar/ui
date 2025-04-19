@@ -1,4 +1,3 @@
-// TreeViewComponent.tsx
 import { useState, useEffect, useCallback, useRef, memo } from "react";
 import { Box, Typography, Menu, MenuItem, Button, Alert, Snackbar, Dialog, DialogTitle, DialogContent, DialogActions, IconButton } from "@mui/material";
 import { ReactFlowProvider, Position, MarkerType } from "reactflow";
@@ -49,7 +48,7 @@ import useTheme from "../stores/themeStore";
 import axios from "axios";
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ListViewComponent from "../components/ListViewComponent";
-import ContextDropdown from "../components/ContextDropdown"; // Import the new component
+import ContextDropdown from "../components/ContextDropdown";
 
 // Interfaces
 export interface NodeData {
@@ -131,6 +130,7 @@ export interface NamespaceResource {
   status: string;
   labels: Record<string, string>;
   resources: Record<string, ResourceItem[]>;
+  context: string;
 }
 
 interface SelectedNode {
@@ -404,6 +404,10 @@ const getNodeConfig = (type: string, label: string) => {
       icon = ing;
       dynamicText = "ingresscontroller";
       break;
+    case "context":
+      icon = group;
+      dynamicText = "context";
+      break;
     default:
       break;
   }
@@ -512,8 +516,8 @@ const TreeViewComponent = () => {
   useEffect(() => {
     if (isInitialRender.current) {
       renderStartTime.current = performance.now();
-      // console.log(`[TreeView] Component mounted at 0ms`);
-      // console.log(`[TreeView] Initial state - isConnected: ${isConnected}, dataReceived: ${dataReceived}, isTransforming: ${isTransforming}, minimumLoadingTimeElapsed: ${minimumLoadingTimeElapsed}, nodes: ${nodes.length}, edges: ${edges.length}`);
+      console.log(`[TreeView] Component mounted at 0ms`);
+      console.log(`[TreeView] Initial state - isConnected: ${isConnected}, dataReceived: ${dataReceived}, isTransforming: ${isTransforming}, minimumLoadingTimeElapsed: ${minimumLoadingTimeElapsed}, nodes: ${nodes.length}, edges: ${edges.length}`);
       isInitialRender.current = false;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -522,20 +526,20 @@ const TreeViewComponent = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setMinimumLoadingTimeElapsed(true);
-      // console.log(`[TreeView] Minimum loading time elapsed at ${performance.now() - renderStartTime.current}ms`);
+      console.log(`[TreeView] Minimum loading time elapsed at ${performance.now() - renderStartTime.current}ms`);
     }, 1000);
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    // console.log(`[TreeView] Initiating WebSocket connection at ${performance.now() - renderStartTime.current}ms`);
+    console.log(`[TreeView] Initiating WebSocket connection at ${performance.now() - renderStartTime.current}ms`);
     connect(true);
   }, [connect]);
 
   useEffect(() => {
     if (namespaceData !== undefined && !dataReceived) {
-      // console.log(`[TreeView] Setting dataReceived to true at ${performance.now() - renderStartTime.current}ms`);
-      // console.log(`[TreeView] namespaceData length: ${namespaceData?.length || 0}`);
+      console.log(`[TreeView] Setting dataReceived to true at ${performance.now() - renderStartTime.current}ms`);
+      console.log(`[TreeView] namespaceData length: ${namespaceData?.length || 0}`);
       setDataReceived(true);
     }
   }, [namespaceData, dataReceived]);
@@ -645,7 +649,107 @@ const TreeViewComponent = () => {
       if (!cachedNode) nodeCache.current.set(id, node);
       newNodes.push(node);
 
-      if (parent && isExpanded) {
+      // Add label node before each node (except for context nodes)
+      if (parent && type.toLowerCase() !== "context") {
+        // Create a label node ID
+        const labelNodeId = `${id}:label`;
+        
+        // Extract labels from resourceData or use "No Labels"
+        let labelText = "No Labels";
+        if (resourceData?.metadata?.labels) {
+          const labels = resourceData.metadata.labels;
+          const labelEntries = Object.entries(labels);
+          if (labelEntries.length > 0) {
+            // Take only the first label for display to reduce complexity
+            const [key, value] = labelEntries[0];
+            labelText = `${key}: ${value}`;
+            
+            // If there are more labels, add a count
+            if (labelEntries.length > 1) {
+              labelText += ` +${labelEntries.length - 1}`;
+            }
+          }
+        }
+        
+        // Check if we already have this label node in cache to avoid recreating
+        const cachedLabelNode = nodeCache.current.get(labelNodeId);
+        
+        const labelNode = cachedLabelNode || {
+          id: labelNodeId,
+          data: {
+            label: (
+              <NodeLabel
+                label={labelText}
+                icon={cm} // Using configmap icon for labels
+                dynamicText="label"
+                status="Active"
+                timeAgo=""
+                resourceData={resourceData}
+                onClick={() => {}}
+                onMenuClick={() => {}}
+              />
+            ),
+          },
+          position: { x: 0, y: 0 },
+          style: {
+            ...nodeStyle,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "2px 12px",
+            backgroundColor: theme === "dark" ? "#333" : "#fff",
+            color: theme === "dark" ? "#fff" : "#000",
+          },
+          sourcePosition: Position.Right,
+          targetPosition: Position.Left,
+        } as CustomNode;
+        
+        if (!cachedLabelNode) nodeCache.current.set(labelNodeId, labelNode);
+        newNodes.push(labelNode);
+        
+        // Create edge from parent to label node with caching
+        const labelEdgeId = `edge-${parent}-${labelNodeId}`;
+        const cachedLabelEdge = edgeCache.current.get(labelEdgeId);
+        
+        if (!cachedLabelEdge) {
+          const labelEdge = {
+            id: labelEdgeId,
+            source: parent,
+            target: labelNodeId,
+            type: "step",
+            animated: true,
+            style: { stroke: theme === "dark" ? "#ccc" : "#a3a3a3", strokeDasharray: "2,2" },
+            markerEnd: { type: MarkerType.ArrowClosed, color: theme === "dark" ? "#ccc" : "#a3a3a3" },
+          };
+          newEdges.push(labelEdge);
+          edgeCache.current.set(labelEdgeId, labelEdge);
+        } else {
+          newEdges.push(cachedLabelEdge);
+        }
+        
+        // Create edge from label node to actual node with caching
+        const nodeEdgeId = `edge-${labelNodeId}-${id}`;
+        const cachedNodeEdge = edgeCache.current.get(nodeEdgeId);
+        
+        if (!cachedNodeEdge) {
+          const nodeEdge = {
+            id: nodeEdgeId,
+            source: labelNodeId,
+            target: id,
+            type: "step",
+            animated: true,
+            style: { stroke: theme === "dark" ? "#ccc" : "#a3a3a3", strokeDasharray: "2,2" },
+            markerEnd: { type: MarkerType.ArrowClosed, color: theme === "dark" ? "#ccc" : "#a3a3a3" },
+          };
+          newEdges.push(nodeEdge);
+          edgeCache.current.set(nodeEdgeId, nodeEdge);
+        } else {
+          newEdges.push(cachedNodeEdge);
+        }
+      }
+      // If it's a parent-child relationship and not a context node, don't create a direct edge from parent to node
+      // Let the label node be the intermediate
+      else if (parent && isExpanded) {
         const uniqueSuffix = resourceData?.metadata?.uid || edgeIdCounter.current++;
         const edgeId = `edge-${parent}-${id}-${uniqueSuffix}`;
         const cachedEdge = edgeCache.current.get(edgeId);
@@ -682,7 +786,27 @@ const TreeViewComponent = () => {
       const newEdges: CustomEdge[] = [];
 
       if (data && data.length > 0) {
+        // First, create all context nodes
         data.forEach((namespace: NamespaceResource) => {
+          const contextId = `context:${namespace.context}`;
+          createNode(
+            contextId,
+            namespace.context,
+            "context",
+            "Active",
+            "",
+            undefined,
+            undefined,
+            null,
+            newNodes,
+            newEdges
+          );
+        });
+
+        // If expanded, add namespace nodes and their children
+        if (isExpanded) {
+          data.forEach((namespace: NamespaceResource) => {
+            const contextId = `context:${namespace.context}`;
           const namespaceId = `ns:${namespace.name}`;
           createNode(
             namespaceId,
@@ -691,8 +815,8 @@ const TreeViewComponent = () => {
             namespace.status,
             "",
             namespace.name,
-            { apiVersion: "v1", kind: "Namespace", metadata: { name: namespace.name, namespace: namespace.name, creationTimestamp: "" }, status: { phase: namespace.status } },
-            null,
+              { apiVersion: "v1", kind: "Namespace", metadata: { name: namespace.name, namespace: namespace.name, creationTimestamp: "", labels: namespace.labels }, status: { phase: namespace.status } },
+              contextId,
             newNodes,
             newEdges
           );
@@ -703,7 +827,6 @@ const TreeViewComponent = () => {
             ...namespace.resources,
           };
 
-          if (isExpanded) {
             if (isCollapsed) {
               const resourceGroups: Record<string, ResourceItem[]> = {};
 
@@ -784,7 +907,6 @@ const TreeViewComponent = () => {
                       break;
 
                     case "deployment":
-                      createNode(`${resourceId}:replicaset`, `replicaset-${item.metadata.name}`, "replicaset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
                       break;
 
                     case "daemonset":
@@ -882,9 +1004,9 @@ const TreeViewComponent = () => {
                       break;
                   }
                 });
-            }
           }
         });
+        }
       }
 
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(newNodes, newEdges, "LR", prevNodes);
@@ -903,24 +1025,24 @@ const TreeViewComponent = () => {
 
   useEffect(() => {
     if (namespaceData !== undefined) {
-      // console.log(
-      //   `[TreeView] namespaceData received with ${namespaceData.length} namespaces at ${performance.now() - renderStartTime.current}ms`
-      // );
+      console.log(
+        `[TreeView] namespaceData received with ${namespaceData.length} namespaces at ${performance.now() - renderStartTime.current}ms`
+      );
       setIsTransforming(true);
       transformDataToTree(namespaceData);
     }
   }, [namespaceData, transformDataToTree]);
 
   useEffect(() => {
-    // console.log(`[TreeView] State update at ${performance.now() - renderStartTime.current}ms`);
-    // console.log(`[TreeView] isConnected: ${isConnected}, hasValidData: ${hasValidData}, isTransforming: ${isTransforming}, minimumLoadingTimeElapsed: ${minimumLoadingTimeElapsed}, nodes: ${nodes.length}, edges: ${edges.length}`);
-    // if (nodes.length > 0 || edges.length > 0) {
-    //   console.log(
-    //     `[TreeView] Rendered successfully with ${nodes.length} nodes and ${edges.length} edges`
-    //   );
-    // } else {
-    //   console.log(`[TreeView] Nodes and edges are empty`);
-    // }
+    console.log(`[TreeView] State update at ${performance.now() - renderStartTime.current}ms`);
+    console.log(`[TreeView] isConnected: ${isConnected}, hasValidData: ${hasValidData}, isTransforming: ${isTransforming}, minimumLoadingTimeElapsed: ${minimumLoadingTimeElapsed}, nodes: ${nodes.length}, edges: ${edges.length}`);
+    if (nodes.length > 0 || edges.length > 0) {
+      console.log(
+        `[TreeView] Rendered successfully with ${nodes.length} nodes and ${edges.length} edges`
+      );
+    } else {
+      console.log(`[TreeView] Nodes and edges are empty`);
+    }
   }, [nodes, edges, isConnected, hasValidData, isTransforming, minimumLoadingTimeElapsed, dataReceived]);
 
   useEffect(() => {
@@ -957,6 +1079,14 @@ const TreeViewComponent = () => {
       if (visited.has(currentNodeId)) continue;
       visited.add(currentNodeId);
 
+      // Check if there's a corresponding label node and add it to descendants
+      if (currentNodeId.indexOf(':label') === -1) {
+        const labelNodeId = `${currentNodeId}:label`;
+        if (nodeCache.current.has(labelNodeId)) {
+          descendants.push(labelNodeId);
+        }
+      }
+
       const children = edges
         .filter((edge) => edge.source === currentNodeId)
         .map((edge) => edge.target);
@@ -988,6 +1118,13 @@ const TreeViewComponent = () => {
         await axios.delete(endpoint);
 
         const descendantNodeIds = findDescendantNodes(nodeId, edges);
+        
+        // Also add the label node for the deleted node itself
+        const labelNodeId = `${nodeId}:label`;
+        if (nodeCache.current.has(labelNodeId) && !descendantNodeIds.includes(labelNodeId)) {
+          descendantNodeIds.push(labelNodeId);
+        }
+        
         const nodesToDelete = [nodeId, ...descendantNodeIds];
 
         setNodes((prevNodes) => {
@@ -1005,6 +1142,7 @@ const TreeViewComponent = () => {
         nodesToDelete.forEach((id) => {
           nodeCache.current.delete(id);
         });
+        
         edgeCache.current.forEach((edge, edgeId) => {
           if (nodesToDelete.includes(edge.source) || nodesToDelete.includes(edge.target)) {
             edgeCache.current.delete(edgeId);
@@ -1014,7 +1152,7 @@ const TreeViewComponent = () => {
         setSnackbarMessage(`"${nodeName}" and its children deleted successfully`);
         setSnackbarSeverity("success");
         setSnackbarOpen(true);
-        // console.log(`[TreeView] Node "${nodeName}" and its ${descendantNodeIds.length} descendants deleted successfully at ${performance.now() - renderStartTime.current}ms`);
+        console.log(`[TreeView] Node "${nodeName}" and its ${descendantNodeIds.length} descendants deleted successfully at ${performance.now() - renderStartTime.current}ms`);
       } catch (error) {
         console.error(`[TreeView] Failed to delete node ${nodeId} at ${performance.now() - renderStartTime.current}ms:`, error);
         setSnackbarMessage(`Failed to delete "${nodeName}"`);
@@ -1163,20 +1301,20 @@ const TreeViewComponent = () => {
 
   useEffect(() => {
     // Only log to console when specific values change to reduce unnecessary renders
-    // const logState = () => {
-    //   // console.log(`[TreeView] Rendering decision at ${performance.now() - renderStartTime.current}ms`);
-    //   // console.log(`[TreeView] isLoading: ${isLoading}, nodes: ${nodes.length}, edges: ${edges.length}`);
-    //   if (isLoading) {
-    //     console.log(`[TreeView] Showing loading spinner because isLoading is true`);
-    //   } else if (nodes.length > 0 || edges.length > 0) {
-    //     console.log(`[TreeView] Showing React Flow canvas with ${nodes.length} nodes and ${edges.length} edges`);
-    //   } else {
-    //     console.log(`[TreeView] Showing "No Workloads Found" because nodes and edges are empty`);
-    //   }
-    // };
+    const logState = () => {
+      console.log(`[TreeView] Rendering decision at ${performance.now() - renderStartTime.current}ms`);
+      console.log(`[TreeView] isLoading: ${isLoading}, nodes: ${nodes.length}, edges: ${edges.length}`);
+      if (isLoading) {
+        console.log(`[TreeView] Showing loading spinner because isLoading is true`);
+      } else if (nodes.length > 0 || edges.length > 0) {
+        console.log(`[TreeView] Showing React Flow canvas with ${nodes.length} nodes and ${edges.length} edges`);
+      } else {
+        console.log(`[TreeView] Showing "No Workloads Found" because nodes and edges are empty`);
+      }
+    };
 
-    // // Only call logState for actual rendering changes
-    // logState();
+    // Only call logState for actual rendering changes
+    logState();
   }, [isLoading, nodes, edges, dataReceived, isConnected, isTransforming, minimumLoadingTimeElapsed]);
 
   return (
