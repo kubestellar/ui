@@ -262,30 +262,31 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
               </button>
               
               {/* User Dropdown Menu */}
-              {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-950 shadow-xl z-50
-                  border border-gray-100 dark:border-gray-700 animate-fadeIn overflow-hidden">
-                  <button 
-                    onClick={handleLogout}
-                    className="w-full group text-left px-4 py-3 text-sm font-medium 
-                      bg-white dark:bg-transparent
-                      hover:bg-gray-50 dark:hover:bg-gray-700/30 
-                      text-gray-700 dark:text-gray-200
-                      transition-all duration-200 flex items-center"
-                  >
-                    <div className="flex items-center gap-3 w-full">
-                      <div className="p-2 rounded-full bg-red-50 dark:bg-red-500/10 
-                        group-hover:bg-red-100 dark:group-hover:bg-red-500/20
-                        transition-colors duration-200 flex-shrink-0">
-                        <FiLogOut className="text-red-500 dark:text-red-400" size={18} />
-                      </div>
-                      <span className="group-hover:text-red-500 dark:group-hover:text-red-400 transition-colors duration-200">
-                        Sign Out
-                      </span>
-                    </div>
-                  </button>
+        {showUserMenu && (
+            <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-950 shadow-xl z-50
+            border border-gray-100 dark:border-gray-700 animate-fadeIn overflow-hidden rounded-xl">
+            <button 
+              onClick={handleLogout}
+              className="w-full group text-left px-4 py-3 text-sm font-medium 
+                bg-white dark:bg-transparent
+                hover:bg-gray-50 dark:hover:bg-gray-700/30 
+                text-gray-700 dark:text-gray-200
+                transition-all duration-200 flex items-center
+                focus:outline-none active:outline-none"
+            >
+              <div className="flex items-center gap-3 w-full">
+                <div className="p-2 rounded-full bg-red-50 dark:bg-red-500/10 
+                  group-hover:bg-red-100 dark:group-hover:bg-red-500/20
+                  transition-colors duration-200 flex-shrink-0">
+                  <FiLogOut className="text-red-500 dark:text-red-400" size={18} />
                 </div>
-              )}
+                <span className="group-hover:text-red-500 dark:group-hover:text-red-400 transition-colors duration-200">
+                  Sign Out
+                </span>
+              </div>
+            </button>
+          </div>
+          )}
             </div>
           </>
         ) : (
