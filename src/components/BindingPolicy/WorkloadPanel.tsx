@@ -20,6 +20,7 @@ import { useNavigate } from 'react-router-dom';
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
 import { usePolicyDragDropStore } from '../../stores/policyDragDropStore';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 interface WorkloadPanelProps {
   workloads: Workload[];
@@ -109,6 +110,10 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
     const firstWorkload = labelGroup.workloads[0];
     const itemId = `label-${labelGroup.key}-${labelGroup.value}`;
 
+    // Check if this item is in the canvas
+    const { canvasEntities } = usePolicyDragDropStore.getState();
+    const isInCanvas = canvasEntities.workloads.includes(itemId);
+
     return (
       <Box
         key={`${labelGroup.key}:${labelGroup.value}`}
@@ -118,15 +123,11 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
             console.log("Workload clicked:", itemId);
             
             // Check if this item is already in the canvas
-            const { canvasEntities } = usePolicyDragDropStore.getState();
-            const isInCanvas = canvasEntities.workloads.includes(itemId);
-            
             if (isInCanvas) {
               console.log(`⚠️ Workload ${itemId} is already in the canvas`);
               return;
             }
             
-           
             onItemClick(itemId);
           }
         }}
@@ -138,6 +139,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
           border: `1px solid ${theme.palette.divider}`,
           boxShadow: 0,
           cursor: "pointer",
+          position: 'relative', // Make sure position is relative
           "&:hover": {
             backgroundColor: alpha(theme.palette.secondary.main, 0.1),
             boxShadow: 2,
@@ -233,6 +235,21 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
             </Typography>
           </Tooltip>
         </Box>
+
+        
+        {isInCanvas && (
+          <CheckCircleIcon 
+            sx={{ 
+              position: 'absolute',
+              bottom: 4,
+              right: 4,
+              fontSize: '1.2rem',
+              color: theme.palette.success.main,
+              backgroundColor: alpha(theme.palette.background.paper, 0.7),
+              borderRadius: '50%'
+            }}
+          />
+        )}
       </Box>
     );
   };

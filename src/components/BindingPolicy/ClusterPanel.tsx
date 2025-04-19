@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { ManagedCluster } from '../../types/bindingPolicy';
 import KubernetesIcon from './KubernetesIcon';
 import { useNavigate } from 'react-router-dom';
@@ -119,15 +120,15 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
     
     console.log(`Creating clickable label: ${itemId} for ${labelGroup.key}:${labelGroup.value}`);
     
+    // Check if this item is in the canvas
+    const { canvasEntities } = usePolicyDragDropStore.getState();
+    const isInCanvas = canvasEntities.clusters.includes(itemId);
+    
     return (
       <Box
         key={`${labelGroup.key}:${labelGroup.value}`}
         onClick={() => {
           if (onItemClick) {
-           
-            const { canvasEntities } = usePolicyDragDropStore.getState();
-            const isInCanvas = canvasEntities.clusters.includes(itemId);
-            
             if (isInCanvas) {
               console.log(`⚠️ Cluster ${itemId} is already in the canvas`);
               return;
@@ -213,6 +214,21 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
             </Typography>
           </Tooltip>
         </Box>
+
+        
+        {isInCanvas && (
+          <CheckCircleIcon 
+            sx={{ 
+              position: 'absolute',
+              bottom: 4,
+              right: 4,
+              fontSize: '1.2rem',
+              color: theme.palette.success.main,
+              backgroundColor: alpha(theme.palette.background.paper, 0.7),
+              borderRadius: '50%'
+            }}
+          />
+        )}
       </Box>
     );
   };
