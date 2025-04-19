@@ -843,7 +843,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
           <>
             <AddIcon sx={{ fontSize: 40, mb: 2, opacity: 0.5 }} />
             <Typography variant="body1" color="text.secondary" sx={{ opacity: 0.7 }}>
-              Drag clusters and workloads here
+            Click on clusters and workloads to add them here
             </Typography>
           </>
         )}
