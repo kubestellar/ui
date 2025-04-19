@@ -19,6 +19,7 @@ import AddIcon from '@mui/icons-material/Add';
 import { useNavigate } from 'react-router-dom';
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
+import { usePolicyDragDropStore } from '../../stores/policyDragDropStore';
 
 interface WorkloadPanelProps {
   workloads: Workload[];
@@ -115,6 +116,17 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
           e.stopPropagation();
           if (onItemClick) {
             console.log("Workload clicked:", itemId);
+            
+            // Check if this item is already in the canvas
+            const { canvasEntities } = usePolicyDragDropStore.getState();
+            const isInCanvas = canvasEntities.workloads.includes(itemId);
+            
+            if (isInCanvas) {
+              console.log(`⚠️ Workload ${itemId} is already in the canvas`);
+              return;
+            }
+            
+           
             onItemClick(itemId);
           }
         }}

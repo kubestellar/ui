@@ -18,8 +18,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import { ManagedCluster } from '../../types/bindingPolicy';
 import KubernetesIcon from './KubernetesIcon';
 import { useNavigate } from 'react-router-dom';
-import { SearchIcon } from 'lucide-react';
-
+import SearchIcon from '@mui/icons-material/Search';
+import { usePolicyDragDropStore } from '../../stores/policyDragDropStore';
 interface ClusterPanelProps {
   clusters: ManagedCluster[];
   loading: boolean;
@@ -103,8 +103,8 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
   }, [uniqueLabels, searchTerm]);
 
   const renderLabelItem = (labelGroup: LabelGroup) => {
-    const firstCluster = labelGroup.clusters[0];
-
+    const firstCluster = labelGroup.clusters[0]; // Fix: Use clusters instead of workloads
+    
     // Format: label-{key}-{value} or label-{key}:{value} if it's a simple label
     let itemId = '';
     
@@ -119,10 +119,23 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
     
     console.log(`Creating clickable label: ${itemId} for ${labelGroup.key}:${labelGroup.value}`);
     
-    // Replace Draggable with a simple Box
     return (
       <Box
         key={`${labelGroup.key}:${labelGroup.value}`}
+        onClick={() => {
+          if (onItemClick) {
+           
+            const { canvasEntities } = usePolicyDragDropStore.getState();
+            const isInCanvas = canvasEntities.clusters.includes(itemId);
+            
+            if (isInCanvas) {
+              console.log(`⚠️ Cluster ${itemId} is already in the canvas`);
+              return;
+            }
+            
+            onItemClick(itemId);
+          }
+        }}
         sx={{
           p: 1,
           m: compact ? 0.5 : 1,
@@ -137,7 +150,6 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
           position: 'relative',
           cursor: 'pointer'
         }}
-        onClick={() => onItemClick && onItemClick(itemId)}
       >
         {/* Position cluster count chip in absolute position */}
         <Tooltip title={`${labelGroup.clusters.length} cluster(s)`}>
