@@ -180,9 +180,14 @@ const BPTable: React.FC<BPTableProps> = ({
   };
 
   const handleCheckboxChange = (policyName: string) => {
+    console.log(`Checkbox toggled for policy: ${policyName}`);
+    console.log(`Current selected policies: ${selectedPolicies.join(', ')}`);
+    
     const newSelected = selectedPolicies.includes(policyName)
       ? selectedPolicies.filter(name => name !== policyName)
       : [...selectedPolicies, policyName];
+    
+    console.log(`New selected policies: ${newSelected.join(', ')}`);
     onSelectionChange(newSelected);
   };
 
@@ -370,9 +375,14 @@ const BPTable: React.FC<BPTableProps> = ({
                     selectedPolicies.length === policies.length
                   }
                   onChange={(e) => {
+                    console.log(`Header checkbox changed - checked: ${e.target.checked}`);
                     if (e.target.checked) {
-                      onSelectionChange(policies.map((policy) => policy.name));
+                      const allPolicyNames = policies.map((policy) => policy.name);
+                      console.log(`Selecting all policies (${allPolicyNames.length}): [${allPolicyNames.join(', ')}]`);
+                      console.log('Policy objects:', policies);
+                      onSelectionChange(allPolicyNames);
                     } else {
+                      console.log('Deselecting all policies');
                       onSelectionChange([]);
                     }
                   }}
