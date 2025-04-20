@@ -600,10 +600,8 @@ const BP = () => {
         return;
       }
       
-      // Add debug info to track the selected policies
       console.log(`Attempting to delete ${selectedPolicies.length} policies:`, selectedPolicies);
       
-      // Verify all policy names are valid strings
       const validPolicyNames = selectedPolicies.filter(name => typeof name === 'string' && name.trim() !== '');
       
       if (validPolicyNames.length !== selectedPolicies.length) {
@@ -615,7 +613,6 @@ const BP = () => {
       
       console.log("Trying a different approach: deleting each policy individually");
       
-      // Track success and failures
       const results: {
         success: string[];
         failures: string[];
@@ -624,7 +621,6 @@ const BP = () => {
         failures: []
       };
       
-      // Delete each policy individually
       for (const policyName of validPolicyNames) {
         try {
           console.log(`Deleting policy: ${policyName}`);
@@ -640,8 +636,6 @@ const BP = () => {
       console.log("Individual deletion results:", results);
       
       if (results.failures.length === 0) {
-        // All policies deleted successfully
-        // Immediately update the local state to remove the deleted policies
         setBindingPolicies(current => 
           current.filter(policy => !results.success.includes(policy.name))
         );
@@ -650,7 +644,6 @@ const BP = () => {
           `Successfully deleted ${results.success.length} binding policies`
         );
       } else {
-        // Some failures
         setSuccessMessage(
           `Deleted ${results.success.length} policies, but failed to delete ${results.failures.length} policies`
         );
