@@ -63,7 +63,7 @@ func (pm *pluginManager) Register(p plugin.Plugin) {
 	pm.mx.Lock()
 	defer pm.mx.Unlock()
 	pm.plugins[p.Name()] = p
-	log.LogInfo("Registered a new plugin", zap.String("NAME", p.Name()))
+	log.LogInfo("registered a new plugin", zap.String("NAME", p.Name()))
 }
 
 // deregisters  a plugin to plugin manager
@@ -71,7 +71,7 @@ func (pm *pluginManager) Deregister(p plugin.Plugin) {
 	pm.mx.Lock()
 	defer pm.mx.Unlock()
 	delete(pm.plugins, p.Name())
-	log.LogInfo("Deregistered plugin", zap.String("NAME", p.Name()))
+	log.LogInfo("deregistered plugin", zap.String("NAME", p.Name()))
 }
 
 var Pm *pluginManager = &pluginManager{plugins: map[string]plugin.Plugin{}}

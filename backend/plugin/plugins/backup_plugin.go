@@ -32,6 +32,11 @@ func (p backupPlugin) Routes() []plugin.PluginRoutesMeta {
 	routes = append(routes, plugin.PluginRoutesMeta{
 		Method:  http.MethodGet,
 		Path:    "/plugins/backup-plugin/",
+		Handler: rootHandler,
+	})
+	routes = append(routes, plugin.PluginRoutesMeta{
+		Method:  http.MethodGet,
+		Path:    "/plugins/backup-plugin/snapshot",
 		Handler: takeSnapshot,
 	})
 	routes = append(routes, plugin.PluginRoutesMeta{
@@ -40,6 +45,10 @@ func (p backupPlugin) Routes() []plugin.PluginRoutesMeta {
 		Handler: restoreFromSnapshot,
 	})
 	return routes
+}
+
+func rootHandler(c *gin.Context) {
+	c.JSON(200, gin.H{"name": pluginName, "version": pluginVersion})
 }
 
 func takeSnapshot(c *gin.Context) {
@@ -52,6 +61,7 @@ func restoreFromSnapshot(c *gin.Context) {
 var bp backupPlugin
 
 func init() {
+
 	bp = backupPlugin{}
 
 	Pm.Register(bp)
