@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 import {
   Button,
@@ -48,6 +48,9 @@ const BPHeader: React.FC<BPHeaderProps> = ({
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const theme = useTheme((state) => state.theme);
   const isDark = theme === "dark";
+  useEffect(() => {
+    console.log(`BPHeader: Selected policies changed - count: ${selectedPolicies.length}`, selectedPolicies);
+  }, [selectedPolicies]);
 
   const colors = {
     primary: "#2f86ff",
