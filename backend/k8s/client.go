@@ -3,6 +3,7 @@ package k8s
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -107,4 +108,27 @@ func GetClientSetWithContext(contextName string) (*kubernetes.Clientset, dynamic
 	}
 
 	return clientset, dynamicClient, nil
+}
+
+func ClientForKubeFlexCluster() (*kubernetes.Clientset, error) {
+	path := ""
+	if path = os.Getenv("KUBECONFIG"); path != "" {
+		path = filepath.Join(homeDir(), ".kube", "config")
+	}
+	cfg, err := clientcmd.LoadFromFile(path)
+	if err != nil {
+		return nil, err
+	}
+	newCfg := clientcmd.NewDefaultClientConfig(*cfg, &clientcmd.ConfigOverrides{
+		CurrentContext: "kind-kubeflex",
+	})
+	rcfg, err := newCfg.ClientConfig()
+	if err != nil {
+		return nil, err
+	}
+	c, err := kubernetes.NewForConfig(rcfg)
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
 }

@@ -2,9 +2,13 @@ package plugins
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kubestellar/ui/log"
 	"github.com/kubestellar/ui/plugin"
+	etcd "go.etcd.io/etcd/client/v3"
+	"go.uber.org/zap"
 )
 
 var (
@@ -13,6 +17,7 @@ var (
 )
 
 type backupPlugin struct {
+	etcdClient *etcd.Client
 }
 
 func (p backupPlugin) Name() string {
@@ -61,9 +66,15 @@ func restoreFromSnapshot(c *gin.Context) {
 var bp backupPlugin
 
 func init() {
-
-	bp = backupPlugin{}
-
+	etcdClient, err := etcd.New(etcd.Config{
+		Endpoints:   []string{},
+		DialTimeout: time.Second * 2,
+	})
+	if err != nil {
+		log.LogError("failed to created etcd client for backup plugin",
+			zap.String("err", err.Error()))
+		return
+	}
+	bp = backupPlugin{etcdClient: etcdClient}
 	Pm.Register(bp)
-
 }
