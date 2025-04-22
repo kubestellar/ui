@@ -9,6 +9,7 @@ interface ClusterPanelContainerProps {
   loading: boolean;
   error: string | undefined;
   compact?: boolean;
+  onItemClick?: (clusterId: string) => void; 
 }
 
 interface WorkloadPanelContainerProps {
@@ -16,12 +17,14 @@ interface WorkloadPanelContainerProps {
   loading: boolean;
   error: string | undefined;
   compact?: boolean;
+  onItemClick?: (clusterId: string) => void; 
 }
 
 export const ClusterPanelContainer: React.FC<ClusterPanelContainerProps> = ({
   clusters,
   loading,
   error,
+  onItemClick
 
 }) => {
   return (
@@ -31,6 +34,8 @@ export const ClusterPanelContainer: React.FC<ClusterPanelContainerProps> = ({
         clusters={clusters} 
         loading={loading}
         error={error}
+        
+        onItemClick={onItemClick} 
       />
     </Box>
   );
@@ -40,6 +45,7 @@ export const WorkloadPanelContainer: React.FC<WorkloadPanelContainerProps> = ({
   workloads,
   loading,
   error,
+  onItemClick // Missing
 
 }) => {
   return (
@@ -49,6 +55,8 @@ export const WorkloadPanelContainer: React.FC<WorkloadPanelContainerProps> = ({
         workloads={workloads} 
         loading={loading}
         error={error}
+        
+        onItemClick={onItemClick} // Add this
       />
     </Box>
   );

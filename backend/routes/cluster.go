@@ -39,5 +39,7 @@ func setupClusterRoutes(router *gin.Engine) {
 	router.PATCH("/api/managedclusters/labels", api.UpdateManagedClusterLabelsHandler)
 
 	router.POST("/clusters/import", handlers.ImportClusterHandler)
+	// Remote Tree View Cluster details
+	router.GET("/api/cluster/details/:name", handlers.GetClusterDetailsHandler)
 
 }

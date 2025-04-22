@@ -10,14 +10,12 @@ import {
   CircularProgress,
   Divider,
   Chip,
-  TextField,
-  InputAdornment,
+  IconButton,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import InfoIcon from '@mui/icons-material/Info';
 import AddLinkIcon from '@mui/icons-material/AddLink';
-import SearchIcon from '@mui/icons-material/Search';
 import KubernetesIcon from './KubernetesIcon';
 import { usePolicyDragDropStore } from '../../stores/policyDragDropStore';
 import { useCanvasStore } from '../../stores/canvasStore';
@@ -164,8 +162,6 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
   }, [setConnectionLines]);
   
   const [, setInvalidConnectionWarning] = useState<string | null>(null);
-  const [clusterFilter, setClusterFilter] = useState<string>('');
-  const [workloadFilter, setWorkloadFilter] = useState<string>('');
   const drawConnection = useCallback((
     ctx: CanvasRenderingContext2D, 
     startX: number, 
@@ -563,23 +559,15 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
   const extractLabelInfo = (labelId: string): { key: string, value: string } | null => {
     if (!labelId.startsWith('label-')) return null;
     
-    // Handle special cases directly with exact string matching first
-    if (labelId === "label-location-group-edge") {
-      return { key: "location-group", value: "edge" };
+
+    if (labelId === 'label-location-group:edge') {
+      console.log('PolicyCanvas: Found location-group:edge label');
+      return { key: 'location-group', value: 'edge' };
     }
     
     // Remove the 'label-' prefix
     const labelPart = labelId.substring(6);
     
-    // Handle kubernetes standard labels with / in the key (e.g. kubernetes.io/role)
-    // This is a more generic approach to catch labels like cluster.open-cluster-management.io/clusterset-default
-    const slashMatch = labelPart.match(/^(.+\/.+?)-(.+)$/);
-    if (slashMatch) {
-      const [, key, value] = slashMatch;
-      return { key, value };
-    }
-    
-    // Check for formats with equals or colon
     if (labelPart.includes('=')) {
       const [key, value] = labelPart.split('=');
       return { key, value };
@@ -590,42 +578,27 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
       return { key, value };
     }
     
-    // Special handling for known label patterns
-    const knownLabelPatterns = [
-      { pattern: 'location-group-edge', key: 'location-group', value: 'edge' },
-      { pattern: 'cluster.open-cluster-management.io/clusterset-default', key: 'cluster.open-cluster-management.io/clusterset', value: 'default' },
-      { pattern: 'feature.open-cluster-management.io/addon-addon-status-available', key: 'feature.open-cluster-management.io/addon-addon-status', value: 'available' }
-    ];
-    
-    for (const pattern of knownLabelPatterns) {
-      if (labelPart === pattern.pattern) {
-        return { key: pattern.key, value: pattern.value };
-      }
+    const slashMatch = labelPart.match(/^(.+\/.+?)-(.+)$/);
+    if (slashMatch) {
+      const [, key, value] = slashMatch;
+      return { key, value };
     }
     
-    // Check for known prefixes with dashes
-    const knownKeyPrefixes = ["app.kubernetes.io", "kubernetes.io", "location-group", "feature.open-cluster-management.io", "cluster.open-cluster-management.io"];
-    
-    for (const prefix of knownKeyPrefixes) {
-      if (labelPart.startsWith(`${prefix}-`)) {
-        const key = prefix;
-        const value = labelPart.substring(prefix.length + 1);
-        return { key, value };
-      }
+    const firstDashIndex = labelPart.indexOf('-');
+    if (firstDashIndex !== -1) {
+      const key = labelPart.substring(0, firstDashIndex);
+      const value = labelPart.substring(firstDashIndex + 1);
+      return { key, value };
     }
     
-    // For labels that have name as a key (the simplest case)
-    if (labelPart.startsWith('name-')) {
-      const value = labelPart.substring(5); // 'name-'.length
-      return { key: 'name', value };
-    }
-    
-    // Fallback to basic parsing - the key is the part after 'label-' and the value is everything else
     const parts = labelId.split('-');
-    const key = parts[1];
-    const value = parts.slice(2).join('-');
+    if (parts.length >= 3) {
+      const key = parts[1];
+      const value = parts.slice(2).join('-');
+      return { key, value };
+    }
     
-    return { key, value };
+    return null;
   };
 
   // Find all workloads that match a given label
@@ -871,7 +844,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
           <>
             <AddIcon sx={{ fontSize: 40, mb: 2, opacity: 0.5 }} />
             <Typography variant="body1" color="text.secondary" sx={{ opacity: 0.7 }}>
-              Drag clusters and workloads here
+            Click on clusters and workloads to add them here
             </Typography>
           </>
         )}
@@ -1100,22 +1073,6 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                     flex: 'none',
                     overflow: 'hidden'
                   }}>
-                    <TextField
-                      placeholder="Search clusters..."
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      value={clusterFilter}
-                      onChange={(e) => setClusterFilter(e.target.value)}
-                      sx={{ mb: 1 }}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <SearchIcon fontSize="small" />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
                     <Box sx={{ 
                       flexGrow: 1, 
                       overflowY: 'auto',
@@ -1135,7 +1092,6 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                         }}>
                           {/* Display clusters here with individual styling */}
                           {policyCanvasEntities.clusters
-                            .filter(clusterId => clusterId.toLowerCase().includes(clusterFilter.toLowerCase()))
                             .map((clusterId) => {
                               // Extract label information if this is a label-based item
                               const labelInfo = extractLabelInfo(clusterId);
@@ -1167,9 +1123,13 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                     backgroundColor: alpha(theme.palette.info.main, 0.1),
                                     transition: 'all 0.2s',
                                     cursor: 'pointer',
+                                    position: 'relative',
                                     '&:hover': { 
                                       transform: 'translateY(-2px)', 
                                       boxShadow: 3 
+                                    },
+                                    '&:hover .delete-button': {
+                                      opacity: 1,
                                     }
                                   }}
                                   data-item-type="cluster"
@@ -1248,6 +1208,29 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                       </Box>
                                     </Box>
                                   )}
+                                  <IconButton
+                                    size="small"
+                                    className="delete-button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeFromPolicyCanvas('cluster', clusterId);
+                                    }}
+                                    sx={{
+                                      position: 'absolute',
+                                      top: 4,
+                                      right: 4,
+                                      opacity: 0,
+                                      transition: 'opacity 0.2s',
+                                      bgcolor: alpha(theme.palette.error.main, 0.1),
+                                      color: theme.palette.error.main,
+                                      p: '2px',
+                                      '&:hover': {
+                                        bgcolor: alpha(theme.palette.error.main, 0.2),
+                                      }
+                                    }}
+                                  >
+                                    <DeleteIcon fontSize="small" />
+                                  </IconButton>
                                 </Paper>
                               );
                             })}
@@ -1276,22 +1259,6 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                     flex: 'none',
                     overflow: 'hidden'
                   }}>
-                    <TextField
-                      placeholder="Search workloads..."
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      value={workloadFilter}
-                      onChange={(e) => setWorkloadFilter(e.target.value)}
-                      sx={{ mb: 1 }}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <SearchIcon fontSize="small" />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
                     <Box sx={{ 
                       flexGrow: 1, 
                       overflowY: 'auto',
@@ -1311,7 +1278,6 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                         }}>
                           {/* Display workloads here with individual styling */}
                           {policyCanvasEntities.workloads
-                            .filter(workloadId => workloadId.toLowerCase().includes(workloadFilter.toLowerCase()))
                             .map((workloadId) => {
                               // Extract label information if this is a label-based item
                               const labelInfo = extractLabelInfo(workloadId);
@@ -1343,9 +1309,13 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                     backgroundColor: alpha(theme.palette.success.main, 0.1),
                                     transition: 'all 0.2s',
                                     cursor: 'pointer',
+                                    position: 'relative',
                                     '&:hover': { 
                                       transform: 'translateY(-2px)', 
                                       boxShadow: 3 
+                                    },
+                                    '&:hover .delete-button': { 
+                                      opacity: 1,
                                     }
                                   }}
                                   data-item-type="workload"
@@ -1444,6 +1414,29 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                       )}
                                     </>
                                   )}
+                                  <IconButton
+                                    size="small"
+                                    className="delete-button"
+                                    onClick={(e) => {
+                                      e.stopPropagation(); 
+                                      removeFromPolicyCanvas('workload', workloadId);
+                                    }}
+                                    sx={{
+                                      position: 'absolute',
+                                      top: 4,
+                                      right: 4,
+                                      opacity: 0, // Hidden by default
+                                      transition: 'opacity 0.2s',
+                                      bgcolor: alpha(theme.palette.error.main, 0.1),
+                                      color: theme.palette.error.main,
+                                      p: '2px',
+                                      '&:hover': {
+                                        bgcolor: alpha(theme.palette.error.main, 0.2),
+                                      }
+                                    }}
+                                  >
+                                    <DeleteIcon fontSize="small" />
+                                  </IconButton>
                                 </Paper>
                               );
                             })}
@@ -1499,7 +1492,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
       {/* Footer Area with Clear Canvas Button - Always Visible */}
       <Box sx={{ 
         display: 'flex', 
-        justifyContent: 'space-between', 
+        justifyContent: 'flex-end', 
         mt: 2,
         backgroundColor: alpha(theme.palette.background.paper, 0.8),
         backdropFilter: 'blur(8px)',
@@ -1510,25 +1503,6 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
         flexDirection: { xs: 'column', sm: 'row' },
         gap: 1
       }}>
-        <Tooltip title="After binding policies, you'll need to wait for the propagation to complete">
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 0.5
-          }}>
-            <InfoIcon fontSize="small" sx={{ color: 'text.secondary', mr: 0.5 }} />
-            <KubernetesIcon type="workload" size={16} sx={{ mr: 0.5 }} />
-            <Typography variant="caption" color="text.secondary" sx={{ mx: 0.5 }}>
-              →
-            </Typography>
-            <KubernetesIcon type="cluster" size={16} sx={{ mr: 0.5 }} />
-            <Typography variant="caption" color="text.secondary">
-              Click items to create binding policies
-            </Typography>
-          </Box>
-        </Tooltip>
-        
         <Button 
           variant="outlined" 
           color="warning" 
@@ -1587,4 +1561,4 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
   );
 };
 
-export default React.memo(PolicyCanvas); 
+export default React.memo(PolicyCanvas);

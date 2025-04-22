@@ -394,12 +394,14 @@ const WecsTreeview = () => {
                 resourceData={resourceData}
                 onClick={(e) => {
                   if ((e.target as HTMLElement).tagName === "svg" || (e.target as HTMLElement).closest("svg")) return;
-                  if (type.toLowerCase() === "cluster" || type.toLowerCase() === "namespace") return;
+                  if (type.toLowerCase() === "namespace") return;
                   const nodeIdParts = id.split(":");
                   let cluster = "";
-                  if (type.toLowerCase() === "namespace" && nodeIdParts.length === 3) {
+                  if (type.toLowerCase() === "cluster" && nodeIdParts.length === 2) {
                     cluster = nodeIdParts[1];
-                  } else if (type.toLowerCase() === "pod" && nodeIdParts.length >= 4) {
+                  } else if (type.toLowerCase() === "namespace" && nodeIdParts.length === 3) {
+                    cluster = nodeIdParts[1];
+                  } else if (nodeIdParts.length >= 4) {
                     cluster = nodeIdParts[1];
                   }
                   setSelectedNode({
