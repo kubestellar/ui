@@ -37,4 +37,7 @@ func setupClusterRoutes(router *gin.Engine) {
 
 	// New PATCH endpoint for updating managed cluster labels in ITS.
 	router.PATCH("/api/managedclusters/labels", api.UpdateManagedClusterLabelsHandler)
+
+	router.POST("/clusters/import", handlers.ImportClusterHandler)
+
 }
