@@ -14,7 +14,7 @@ type Plugin interface {
 	Routes() []PluginRoutesMeta
 }
 
-// Metadata about routes of the pluginW
+// Metadata about routes of the plugin
 type PluginRoutesMeta struct {
 	// http method
 	Method string
