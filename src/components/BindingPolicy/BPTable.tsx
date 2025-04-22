@@ -180,24 +180,19 @@ const BPTable: React.FC<BPTableProps> = ({
   };
 
   const handleCheckboxChange = (policyName: string) => {
+    console.log(`Checkbox toggled for policy: ${policyName}`);
+    console.log(`Current selected policies: ${selectedPolicies.join(', ')}`);
+    
     const newSelected = selectedPolicies.includes(policyName)
       ? selectedPolicies.filter(name => name !== policyName)
       : [...selectedPolicies, policyName];
+    
+    console.log(`New selected policies: ${newSelected.join(', ')}`);
     onSelectionChange(newSelected);
   };
 
-  const filteredPolicies = policies.filter((policy) => {
-    if (!policy) return false;
-    
-    // Get the API-provided status if available, otherwise use the policy's default status
-    const currentStatus = policyStatuses[policy.name] || policy.status;
-    
-    if (activeFilters.status && currentStatus !== activeFilters.status) {
-      return false;
-    }
-    return true;
-  });
-
+  console.log(`BPTable received ${policies.length} policies with status filter: ${activeFilters.status || 'none'}`);
+  const filteredPolicies = policies;
 
   const renderClusterChip = (policy: BindingPolicyInfo) => {
   
@@ -380,9 +375,14 @@ const BPTable: React.FC<BPTableProps> = ({
                     selectedPolicies.length === policies.length
                   }
                   onChange={(e) => {
+                    console.log(`Header checkbox changed - checked: ${e.target.checked}`);
                     if (e.target.checked) {
-                      onSelectionChange(policies.map((policy) => policy.name));
+                      const allPolicyNames = policies.map((policy) => policy.name);
+                      console.log(`Selecting all policies (${allPolicyNames.length}): [${allPolicyNames.join(', ')}]`);
+                      console.log('Policy objects:', policies);
+                      onSelectionChange(allPolicyNames);
                     } else {
+                      console.log('Deselecting all policies');
                       onSelectionChange([]);
                     }
                   }}

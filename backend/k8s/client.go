@@ -3,7 +3,8 @@ package k8s
 import (
 	"fmt"
 	"os"
-	"path/filepath"
+
+	"k8s.io/client-go/rest"
 
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -110,25 +111,43 @@ func GetClientSetWithContext(contextName string) (*kubernetes.Clientset, dynamic
 	return clientset, dynamicClient, nil
 }
 
-func ClientForKubeFlexCluster() (*kubernetes.Clientset, error) {
-	path := ""
-	if path = os.Getenv("KUBECONFIG"); path != "" {
-		path = filepath.Join(homeDir(), ".kube", "config")
+func GetClientSetWithConfigContext(contextName string) (*kubernetes.Clientset, *rest.Config, error) {
+	kubeconfig := os.Getenv("KUBECONFIG")
+	if kubeconfig == "" {
+		if home := homeDir(); home != "" {
+			kubeconfig = fmt.Sprintf("%s/.kube/config", home)
+		}
 	}
-	cfg, err := clientcmd.LoadFromFile(path)
+
+	// Load the kubeconfig file
+	config, err := clientcmd.LoadFromFile(kubeconfig)
 	if err != nil {
-		return nil, err
+		return nil, nil, fmt.Errorf("failed to load kubeconfig: %v", err)
 	}
-	newCfg := clientcmd.NewDefaultClientConfig(*cfg, &clientcmd.ConfigOverrides{
-		CurrentContext: "kind-kubeflex",
-	})
-	rcfg, err := newCfg.ClientConfig()
+
+	// Check if the specified context exists
+	ctxContext := config.Contexts[contextName]
+	if ctxContext == nil {
+		return nil, nil, fmt.Errorf("failed to find context '%s'", contextName)
+	}
+
+	// Create config for the specified context
+	clientConfig := clientcmd.NewDefaultClientConfig(
+		*config,
+		&clientcmd.ConfigOverrides{
+			CurrentContext: contextName,
+		},
+	)
+
+	restConfig, err := clientConfig.ClientConfig()
 	if err != nil {
-		return nil, err
+		return nil, nil, fmt.Errorf("failed to create restconfig: %v", err)
 	}
-	c, err := kubernetes.NewForConfig(rcfg)
+
+	clientset, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
-		return nil, err
+		return nil, nil, fmt.Errorf("failed to create Kubernetes client: %v", err)
 	}
-	return c, nil
+
+	return clientset, restConfig, nil
 }

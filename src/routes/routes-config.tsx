@@ -3,8 +3,6 @@ import { Layout } from "../components/Layout";
 import WDS from "../pages/WDS";
 import BP from "../pages/BP";
 import NotFoundPage from "../pages/NotFoundPage";
-import DeploymentDetails from "../components/DeploymentDetails";
-import NameSpace from "../pages/NS";
 import TreeView from "../components/TreeViewComponent";
 import { lazy, Suspense } from "react";
 import LoadingFallback from "../components/LoadingFallback";
@@ -12,6 +10,7 @@ import WecsTreeview from "../components/WecsTopology";
 import ProtectedRoute from "../components/ProtectedRoute";
 import PublicRoute from "../components/PublicRoute";
 import KubeStellarVisualization from "../components/login/index";
+import Terminal from "../components/Terminal.tsx";
 
 const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ "../components/Clusters"));
 const ITSLazy = lazy(() => import(/* webpackPrefetch: true */ "../pages/ITS"));
@@ -66,22 +65,6 @@ export const routesConfig: RouteObject[] = [
         ) 
       },
       { 
-        path: "namespaces", 
-        element: (
-          <ProtectedRoute>
-            <NameSpace />
-          </ProtectedRoute>
-        ) 
-      },
-      { 
-        path: "deploymentdetails/:namespace/:deploymentName", 
-        element: (
-          <ProtectedRoute>
-            <DeploymentDetails />
-          </ProtectedRoute>
-        ) 
-      },
-      { 
         path: "wds/treeview", 
         element: (
           <ProtectedRoute>
@@ -102,6 +85,12 @@ export const routesConfig: RouteObject[] = [
         element: (
           <NotFoundPage />
         ) 
+      },
+      {
+        path: "/shell",
+        element: (
+            <Terminal />
+        )
       },
     ],
   },

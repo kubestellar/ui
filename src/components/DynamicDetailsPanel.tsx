@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -16,6 +16,7 @@ import {
   Stack,
   Snackbar,
   styled,
+  Chip,
 } from "@mui/material";
 import { FiX, FiGitPullRequest, FiTrash2 } from "react-icons/fi";
 import Editor from "@monaco-editor/react";
@@ -163,6 +164,7 @@ const DynamicDetailsPanel = ({
   initialTab,
 }: DynamicDetailsProps) => {
   const theme = useTheme((state) => state.theme); // Use the theme from the store
+  const isDarkTheme = theme === "dark";
   const [resource, setResource] = useState<ResourceInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -179,6 +181,19 @@ const DynamicDetailsPanel = ({
   const wsRef = useRef<WebSocket | null>(null);
   const [logs, setLogs] = useState<string[]>([]); // New state to store logs
   const wsParamsRef = useRef<{ kind: string; namespace: string; name: string } | null>(null); // Store WebSocket parameters
+  const [isPanelVisible, setIsPanelVisible] = useState(false);
+
+  // Update panel visibility with a slight delay when isOpen changes to create proper transition
+  useEffect(() => {
+    if (isOpen) {
+      // Small delay to ensure CSS transition works properly
+      setTimeout(() => {
+        setIsPanelVisible(true);
+      }, 50);
+    } else {
+      setIsPanelVisible(false);
+    }
+  }, [isOpen]);
 
   // Update tabValue when the panel opens with a new initialTab
   useEffect(() => {
@@ -244,7 +259,7 @@ const DynamicDetailsPanel = ({
   }, [namespace, name, type, resourceData]);
 
   // Function to establish WebSocket connection
-  const connectWebSocket = () => {
+  const connectWebSocket = useCallback(() => {
     if (!wsParamsRef.current) return;
 
     const { kind, namespace, name } = wsParamsRef.current;
@@ -287,7 +302,7 @@ const DynamicDetailsPanel = ({
         }, 100); // Reduced from 1000ms to 100ms for faster reconnection
       }
     };
-  };
+  }, [isOpen]);
 
   // Dedicated useEffect for WebSocket connection, only dependent on isOpen and wsParamsRef
   useEffect(() => {
@@ -321,7 +336,7 @@ const DynamicDetailsPanel = ({
         }
       }
     };
-  }, [isOpen, wsParamsRef.current]); // Depend on wsParamsRef.current to ensure connection is established after params are set
+  }, [isOpen, connectWebSocket]); // Removed wsParamsRef.current since it's a mutable ref value
 
   // UseEffect to initialize terminal and display logs when "LOGS" tab is selected
   useEffect(() => {
@@ -420,6 +435,7 @@ const DynamicDetailsPanel = ({
 
   const handleClose = () => {
     setIsClosing(true);
+    setIsPanelVisible(false);
     setTimeout(() => {
       setIsClosing(false);
       onClose();
@@ -505,6 +521,15 @@ const DynamicDetailsPanel = ({
 
   const renderSummary = () => {
     if (!resource) return null;
+
+    // Extract labels from resourceData.metadata.labels and format them
+    const labels = resourceData?.metadata?.labels;
+    const labelsArray = labels
+      ? Object.entries(labels)
+          .map(([key, value]) => `${key}: ${value}`)
+      : ["None"];
+
+
     return (
       <Table sx={{ borderRadius: 1 }}>
         <TableBody>
@@ -513,13 +538,13 @@ const DynamicDetailsPanel = ({
             { label: "NAME", value: resource.name },
             { label: "NAMESPACE", value: resource.namespace },
             { label: "CREATED AT", value: `${resource.createdAt} (${resource.age})` },
+            // { label: "LABELS", value: labelsString }, // New row for labels
           ].map((row, index) => (
             <TableRow key={index}>
               <TableCell
                 sx={{
                   borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
                   color: theme === "dark" ? "#D4D4D4" : "#333333",
-                  // width: "200px",
                   fontSize: "14px",
                   fontWeight: 500,
                 }}
@@ -537,6 +562,43 @@ const DynamicDetailsPanel = ({
               </TableCell>
             </TableRow>
           ))}
+          <TableRow>
+            <TableCell
+              sx={{
+                borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
+                color: theme === "dark" ? "#D4D4D4" : "#333333",
+                fontSize: "14px",
+                fontWeight: 500,
+              }}
+            >
+              LABELS
+            </TableCell>
+            <TableCell
+              sx={{
+                borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
+                color: theme === "dark" ? "#D4D4D4" : "#333333",
+                fontSize: "14px",
+              }}
+            >
+              <Box sx={{ mt: 1 }}>
+                {labelsArray.map((label, index) => (
+                  <Chip
+                    key={index}
+                    label={label}
+                    size="small"
+                    sx={{
+                      mr: 1,
+                      mb: 1,
+                      backgroundColor: isDarkTheme
+                        ? "#334155"
+                        : undefined,
+                      color: isDarkTheme ? "#fff" : undefined,
+                    }}
+                  />
+                ))}
+              </Box>
+            </TableCell>
+          </TableRow>
         </TableBody>
       </Table>
     );
@@ -546,7 +608,7 @@ const DynamicDetailsPanel = ({
     <Box
       sx={{
         position: "fixed",
-        right: isOpen ? 0 : "-80vw",
+        right: isPanelVisible ? 0 : "-80vw",
         top: 0,
         bottom: 0,
         width: "80vw",

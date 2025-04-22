@@ -109,9 +109,31 @@ func SetWdsContextCookies(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
+
+	_, context, err := ListContexts()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	isContextPresent := false
+	for _, value := range context {
+		if strings.EqualFold(request.Context, value) {
+			isContextPresent = true
+			break
+		}
+	}
+	if !isContextPresent {
+		msg := fmt.Sprintf("no context with %s present", request.Context)
+		c.JSON(http.StatusOK, gin.H{
+			"error":   msg,
+			"message": "Please create context first",
+		})
+		return
+	}
 	c.SetCookie("ui-wds-context", request.Context, 3600, "/", "", false, true)
+	msg := fmt.Sprintf("switched to %s context", request.Context)
 	c.JSON(http.StatusOK, gin.H{
-		"message":            "Context updated successfully",
+		"message":            msg,
 		"current-ui-context": request.Context,
 	})
 }
