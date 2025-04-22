@@ -14,23 +14,23 @@ import (
 func setupAuthRoutes(router *gin.Engine) {
 	// Authentication routes
 	router.POST("/login", LoginHandler)
-	
+
 	// API group for all endpoints
 	api := router.Group("/api")
-	
+
 	// Protected API endpoints requiring authentication
 	protected := api.Group("/")
 	protected.Use(middleware.AuthenticateMiddleware())
 	{
 		protected.GET("/me", CurrentUserHandler)
-		
+
 		// Read-only endpoints
 		read := protected.Group("/")
 		read.Use(middleware.RequirePermission("read"))
 		{
 			read.GET("/resources", GetResourcesHandler)
 		}
-		
+
 		// Write-requiring endpoints
 		write := protected.Group("/auth")
 		write.Use(middleware.RequirePermission("write"))
@@ -39,7 +39,7 @@ func setupAuthRoutes(router *gin.Engine) {
 			write.PUT("/auth/resources/:id", UpdateResourceHandler)
 			write.DELETE("/auth/resources/:id", DeleteResourceHandler)
 		}
-		
+
 		// Admin-only endpoints
 		admin := protected.Group("/admin")
 		admin.Use(middleware.RequireAdmin())
@@ -50,7 +50,7 @@ func setupAuthRoutes(router *gin.Engine) {
 			admin.DELETE("/users/:username", DeleteUserHandler)
 		}
 	}
-	
+
 	// Setup other route groups as needed
 	setupAdditionalRoutes(router)
 }
@@ -101,7 +101,7 @@ func CurrentUserHandler(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
 		return
 	}
-	
+
 	permissions, exists := c.Get("permissions")
 	if !exists {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Permissions not found"})
@@ -156,7 +156,7 @@ func CreateUserHandler(c *gin.Context) {
 // UpdateUserHandler updates an existing user (admin only)
 func UpdateUserHandler(c *gin.Context) {
 	username := c.Param("username")
-	
+
 	var userData struct {
 		Password    string   `json:"password"`
 		Permissions []string `json:"permissions"`
@@ -173,7 +173,7 @@ func UpdateUserHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user"})
 		return
 	}
-	
+
 	if !exists {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
@@ -184,7 +184,7 @@ func UpdateUserHandler(c *gin.Context) {
 		// Update password if provided
 		userConfig.Password = userData.Password
 	}
-	
+
 	// Update permissions if provided
 	if userData.Permissions != nil {
 		userConfig.Permissions = userData.Permissions
