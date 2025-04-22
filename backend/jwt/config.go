@@ -12,10 +12,10 @@ import (
 const (
 	// Default token expiration time (24 hours)
 	DefaultTokenExpiration = 24 * time.Hour
-	
+
 	// Default refresh token expiration time (7 days)
 	DefaultRefreshTokenExpiration = 7 * 24 * time.Hour
-	
+
 	// Environment variable names
 	JWTSecretEnv         = "JWT_SECRET"
 	TokenExpirationEnv   = "JWT_TOKEN_EXPIRATION_HOURS"
@@ -51,13 +51,13 @@ func GetTokenExpiration() time.Duration {
 	if expirationHoursStr == "" {
 		return DefaultTokenExpiration
 	}
-	
+
 	expirationHours, err := strconv.Atoi(expirationHoursStr)
 	if err != nil {
 		log.Printf("Warning: Invalid JWT_TOKEN_EXPIRATION_HOURS value: %s. Using default (24 hours).", expirationHoursStr)
 		return DefaultTokenExpiration
 	}
-	
+
 	return time.Duration(expirationHours) * time.Hour
 }
 
@@ -67,13 +67,13 @@ func GetRefreshTokenExpiration() time.Duration {
 	if expirationHoursStr == "" {
 		return DefaultRefreshTokenExpiration
 	}
-	
+
 	expirationHours, err := strconv.Atoi(expirationHoursStr)
 	if err != nil {
 		log.Printf("Warning: Invalid JWT_REFRESH_EXPIRATION_HOURS value: %s. Using default (168 hours/7 days).", expirationHoursStr)
 		return DefaultRefreshTokenExpiration
 	}
-	
+
 	return time.Duration(expirationHours) * time.Hour
 }
 
@@ -84,11 +84,11 @@ func InitializeDefaultConfig() {
 		log.Println("Setting default JWT secret. This should be changed in production.")
 		SetJWTSecret("default_secret_key")
 	}
-	
+
 	if os.Getenv(TokenExpirationEnv) == "" {
 		os.Setenv(TokenExpirationEnv, "24") // 24 hours default
 	}
-	
+
 	if os.Getenv(RefreshExpirationEnv) == "" {
 		os.Setenv(RefreshExpirationEnv, "168") // 7 days default
 	}

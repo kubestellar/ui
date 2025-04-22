@@ -32,7 +32,7 @@ func setupAuthRoutes(router *gin.Engine) {
 		}
 		
 		// Write-requiring endpoints
-		write := protected.Group("/")
+		write := protected.Group("/auth")
 		write.Use(middleware.RequirePermission("write"))
 		{
 			write.POST("/auth/resources", CreateResourceHandler)

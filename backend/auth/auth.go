@@ -43,7 +43,7 @@ func (c *Config) AddUser(username string, password string, permissions []string)
 	if c.Users == nil {
 		c.Users = make(map[string]UserConfig)
 	}
-	
+
 	c.Users[username] = UserConfig{
 		Password:    password,
 		Permissions: permissions,
@@ -54,18 +54,18 @@ func (c *Config) AddUser(username string, password string, permissions []string)
 func LoadK8sConfigMap() (*Config, error) {
 	// We'll load the JWT secret from ConfigMap first, then initialize other configs
 	// This prevents generating a new random secret on each restart
-	
+
 	// Get the Kubernetes clientset
 	clientset, _, err := k8s.GetClientSetWithContext("its1")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get Kubernetes clientset: %v", err)
 	}
-	
+
 	// Check if namespace exists, create it if it doesn't
 	if err := ensureNamespaceExists(clientset); err != nil {
 		return nil, fmt.Errorf("failed to ensure namespace exists: %v", err)
 	}
-	
+
 	// Try to get the ConfigMap
 	cm, err := clientset.CoreV1().ConfigMaps(Namespace).Get(context.TODO(), ConfigMapName, metav1.GetOptions{})
 	if err != nil {
@@ -76,7 +76,7 @@ func LoadK8sConfigMap() (*Config, error) {
 				return nil, fmt.Errorf("failed to create ConfigMap: %v", err)
 			}
 			log.Println("Admin user created successfully")
-			
+
 			// Fetch again after creation
 			cm, err = clientset.CoreV1().ConfigMaps(Namespace).Get(context.TODO(), ConfigMapName, metav1.GetOptions{})
 			if err != nil {
@@ -88,21 +88,21 @@ func LoadK8sConfigMap() (*Config, error) {
 	} else {
 		log.Println("Admin configuration already exists")
 	}
-	
+
 	// Parse the ConfigMap JSON data
 	var configData Config
 	if err := json.Unmarshal([]byte(cm.Data["config"]), &configData); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal ConfigMap data: %v", err)
 	}
-	
+
 	// Update JWT secret in environment to match the one from ConfigMap
 	// This ensures tokens remain valid after server restarts
 	jwtconfig.SetJWTSecret(configData.JWTSecret)
-	
+
 	// Now we can safely load other configs after ensuring JWT secret is set
 	jwtconfig.LoadConfig()
 	log.Println("ConfigMap loaded successfully and JWT secret updated.")
-	
+
 	return &configData, nil
 }
 
@@ -112,7 +112,7 @@ func GetUserByUsername(username string) (UserConfig, bool, error) {
 	if err != nil {
 		return UserConfig{}, false, fmt.Errorf("failed to load config: %v", err)
 	}
-	
+
 	userConfig, exists := config.GetUser(username)
 	return userConfig, exists, nil
 }
@@ -123,13 +123,13 @@ func SaveConfig(config *Config) error {
 	if err != nil {
 		return fmt.Errorf("failed to get Kubernetes clientset: %v", err)
 	}
-	
+
 	// Convert struct to JSON string
 	configDataBytes, err := json.Marshal(config)
 	if err != nil {
 		return fmt.Errorf("failed to marshal config: %v", err)
 	}
-	
+
 	// Try to get the existing ConfigMap
 	cm, err := clientset.CoreV1().ConfigMaps(Namespace).Get(context.TODO(), ConfigMapName, metav1.GetOptions{})
 	if err != nil {
@@ -161,7 +161,7 @@ func SaveConfig(config *Config) error {
 			return fmt.Errorf("error updating ConfigMap: %v", err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -169,7 +169,7 @@ func SaveConfig(config *Config) error {
 func CreateConfigMap(clientset *kubernetes.Clientset) error {
 	// Get JWT secret from environment
 	jwtSecret := jwtconfig.GetJWTSecret()
-	
+
 	defaultConfig := Config{
 		JWTSecret: jwtSecret, // Use JWT secret from environment
 		Users: map[string]UserConfig{
@@ -179,15 +179,15 @@ func CreateConfigMap(clientset *kubernetes.Clientset) error {
 			},
 		},
 	}
-	
+
 	log.Printf("Creating admin user with JWT secret from environment")
-	
+
 	// Convert struct to JSON string
 	configDataBytes, err := json.Marshal(defaultConfig)
 	if err != nil {
 		return fmt.Errorf("failed to marshal default config: %v", err)
 	}
-	
+
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      ConfigMapName,
@@ -197,7 +197,7 @@ func CreateConfigMap(clientset *kubernetes.Clientset) error {
 			"config": string(configDataBytes),
 		},
 	}
-	
+
 	_, err = clientset.CoreV1().ConfigMaps(Namespace).Create(context.TODO(), configMap, metav1.CreateOptions{})
 	if err != nil {
 		if errors.IsAlreadyExists(err) {
@@ -206,7 +206,7 @@ func CreateConfigMap(clientset *kubernetes.Clientset) error {
 		}
 		return fmt.Errorf("error creating ConfigMap: %v", err)
 	}
-	
+
 	log.Println("ConfigMap created successfully with admin user.")
 	return nil
 }
@@ -253,12 +253,12 @@ var (
 		Name:        "read-only",
 		Permissions: []string{PermissionRead},
 	}
-	
+
 	StandardUserPermissions = PermissionSet{
 		Name:        "standard-user",
 		Permissions: []string{PermissionRead, PermissionWrite},
 	}
-	
+
 	AdminPermissions = PermissionSet{
 		Name:        "admin",
 		Permissions: []string{PermissionRead, PermissionWrite, PermissionAdmin},
@@ -279,19 +279,19 @@ func AddOrUpdateUser(username, password string, permissions []string) error {
 	if username == "" {
 		return fmt.Errorf("username cannot be empty")
 	}
-	
+
 	config, err := LoadK8sConfigMap()
 	if err != nil {
 		return fmt.Errorf("failed to load config: %v", err)
 	}
-	
+
 	// Check if we're updating the last admin user and removing admin permissions
 	if isLastAdminUser(config, username) && !containsPermission(permissions, PermissionAdmin) {
 		return fmt.Errorf("cannot remove admin permission from the last admin user")
 	}
-	
+
 	config.AddUser(username, password, permissions)
-	
+
 	return SaveConfig(config)
 }
 
@@ -305,27 +305,27 @@ func RemoveUser(username string) error {
 	if username == "" {
 		return fmt.Errorf("username cannot be empty")
 	}
-	
+
 	config, err := LoadK8sConfigMap()
 	if err != nil {
 		return fmt.Errorf("failed to load config: %v", err)
 	}
-	
+
 	if config.Users == nil {
 		return fmt.Errorf("no users found in configuration")
 	}
-	
+
 	if _, exists := config.Users[username]; !exists {
 		return fmt.Errorf("user %s does not exist", username)
 	}
-	
+
 	// Check if this is the last admin user
 	if isLastAdminUser(config, username) {
 		return fmt.Errorf("cannot delete the last admin user")
 	}
-	
+
 	delete(config.Users, username)
-	
+
 	return SaveConfig(config)
 }
 
@@ -334,25 +334,25 @@ func UpdateUserPermissions(username string, permissions []string) error {
 	if username == "" {
 		return fmt.Errorf("username cannot be empty")
 	}
-	
+
 	config, err := LoadK8sConfigMap()
 	if err != nil {
 		return fmt.Errorf("failed to load config: %v", err)
 	}
-	
+
 	userConfig, exists := config.GetUser(username)
 	if !exists {
 		return fmt.Errorf("user %s does not exist", username)
 	}
-	
+
 	// Check if we're updating the last admin user and removing admin permissions
 	if isLastAdminUser(config, username) && !containsPermission(permissions, PermissionAdmin) {
 		return fmt.Errorf("cannot remove admin permission from the last admin user")
 	}
-	
+
 	userConfig.Permissions = permissions
 	config.Users[username] = userConfig
-	
+
 	return SaveConfig(config)
 }
 
@@ -371,17 +371,17 @@ func isLastAdminUser(config *Config, username string) bool {
 	if config.Users == nil {
 		return false
 	}
-	
+
 	currentUser, exists := config.GetUser(username)
 	if !exists {
 		return false
 	}
-	
+
 	// Check if current user has admin permission
 	if !containsPermission(currentUser.Permissions, PermissionAdmin) {
 		return false
 	}
-	
+
 	// Count how many users have admin permission
 	adminCount := 0
 	for _, user := range config.Users {
@@ -389,7 +389,7 @@ func isLastAdminUser(config *Config, username string) bool {
 			adminCount++
 		}
 	}
-	
+
 	// If there's only one admin user and it's the current user
 	return adminCount == 1
 }
@@ -400,12 +400,12 @@ func ListUsers() ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to load config: %v", err)
 	}
-	
+
 	usernames := make([]string, 0, len(config.Users))
 	for username := range config.Users {
 		usernames = append(usernames, username)
 	}
-	
+
 	return usernames, nil
 }
 
@@ -422,7 +422,7 @@ func ListUsersWithPermissions() ([]UserWithPermissions, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to load config: %v", err)
 	}
-	
+
 	users := make([]UserWithPermissions, 0, len(config.Users))
 	for username, userConfig := range config.Users {
 		users = append(users, UserWithPermissions{
@@ -431,7 +431,7 @@ func ListUsersWithPermissions() ([]UserWithPermissions, error) {
 			// Password is intentionally omitted for security
 		})
 	}
-	
+
 	return users, nil
 }
 
@@ -440,15 +440,15 @@ func GetUserPermissions(username string) ([]string, error) {
 	if username == "" {
 		return nil, fmt.Errorf("username cannot be empty")
 	}
-	
+
 	userConfig, exists, err := GetUserByUsername(username)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching user: %v", err)
 	}
-	
+
 	if !exists {
 		return nil, fmt.Errorf("user %s does not exist", username)
 	}
-	
+
 	return userConfig.Permissions, nil
 }
