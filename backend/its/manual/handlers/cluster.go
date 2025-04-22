@@ -17,7 +17,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
-
 )
 
 // ---------------------------
@@ -315,7 +314,6 @@ func GetKubeInfo() ([]ContextInfo, []string, string, error, []ManagedClusterInfo
 	return contexts, clusters, currentContext, nil, managedClusters
 }
 
-
 func ImportClusterHandler(c *gin.Context) {
 	file, err := c.FormFile("kubeconfig")
 	if err != nil {
@@ -387,10 +385,9 @@ func ImportClusterHandler(c *gin.Context) {
 	})
 }
 
-
 func adjustClusterServerEndpoints(config *clientcmdapi.Config) {
 	for name, cluster := range config.Clusters {
-		
+
 		if strings.Contains(cluster.Server, "localhost") {
 			cluster.Server = strings.Replace(cluster.Server, "localhost", fmt.Sprintf("%s", name), 1)
 		}
