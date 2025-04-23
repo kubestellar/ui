@@ -856,7 +856,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
           });
           setLoadingClusterEdit(null);
         },
-        onError: (error: any) => {
+          onError: (error: Error) => {
           toast.error("Failed to update labels", {
             icon: '❌',
             style: {
