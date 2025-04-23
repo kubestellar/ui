@@ -4,15 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
 // ---------------------------
@@ -315,6 +319,86 @@ func GetKubeInfo() ([]ContextInfo, []string, string, error, []ManagedClusterInfo
 	}
 
 	return contexts, clusters, currentContext, nil, managedClusters
+}
+
+func ImportClusterHandler(c *gin.Context) {
+	file, err := c.FormFile("kubeconfig")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "kubeconfig file is required"})
+		return
+	}
+
+	src, err := file.Open()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to open uploaded file"})
+		return
+	}
+	defer src.Close()
+
+	data, err := io.ReadAll(src)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read file contents"})
+		return
+	}
+
+	// 2. Load kubeconfig
+	cfg, err := clientcmd.Load(data)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid kubeconfig format"})
+		return
+	}
+
+	adjustClusterServerEndpoints(cfg)
+
+	tmpPath := filepath.Join(os.TempDir(), fmt.Sprintf("import-%d.kubeconfig", time.Now().UnixNano()))
+	outData, err := clientcmd.Write(*cfg)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to serialize kubeconfig"})
+		return
+	}
+	if err := os.WriteFile(tmpPath, outData, 0600); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to write temp kubeconfig"})
+		return
+	}
+
+	hubKube := os.Getenv("HUB_BOOTSTRAP_KUBECONFIG")
+	if hubKube == "" {
+		hubKube = filepath.Join(os.Getenv("HOME"), ".kube", "bootstrap.kubeconfig")
+	}
+
+	exec.Command("helm", "repo", "add", "ocm", "https://open-cluster-management.io/helm-charts").Run()
+	exec.Command("helm", "repo", "update").Run()
+
+	releaseName := fmt.Sprintf("klusterlet-%s", strings.ReplaceAll(cfg.CurrentContext, "_", "-"))
+
+	cmd := exec.Command("helm", "upgrade", "--install",
+		releaseName, "ocm/klusterlet",
+		"--kubeconfig", tmpPath,
+		"--namespace", "open-cluster-management",
+		"--create-namespace",
+		"--set", fmt.Sprintf("hubKubeconfig=%s", hubKube),
+	)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("helm install failed: %s", string(output))})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":     "Cluster import initiated",
+		"release":     releaseName,
+		"helm_output": string(output),
+	})
+}
+
+func adjustClusterServerEndpoints(config *clientcmdapi.Config) {
+	for name, cluster := range config.Clusters {
+
+		if strings.Contains(cluster.Server, "localhost") {
+			cluster.Server = strings.Replace(cluster.Server, "localhost", fmt.Sprintf("%s", name), 1)
+		}
+	}
 }
 
 func GetClusterDetailsHandler(c *gin.Context) {
