@@ -634,10 +634,6 @@ spec:
     setFormData({ ...formData, credentials: "none" });
   };
 
-  const handleWebhookChange = (event: SelectChangeEvent<string>) => {
-    setFormData({ ...formData, webhook: event.target.value });
-  };
-
   const handleOpenWebhookDialog = () => {
     setWebhookDialogOpen(true);
   };
@@ -829,12 +825,10 @@ spec:
                 setFormData={setFormData}
                 error={error}
                 credentialsList={credentialsList}
-                webhooksList={webhooksList}
                 loading={loading}
                 hasChanges={hasChanges}
                 handleCredentialChange={handleCredentialChange}
                 handleOpenCredentialDialog={handleOpenCredentialDialog}
-                handleWebhookChange={handleWebhookChange}
                 handleOpenWebhookDialog={handleOpenWebhookDialog}
                 validateForm={validateForm}
                 handleDeploy={handleDeploy}

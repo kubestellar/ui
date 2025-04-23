@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Box, Card, Typography, useTheme, Divider } from "@mui/material";
 import GitHubOptionButtons from "./GitHubOptionButtons";
 import PopularRepositoriesForm from "./PopularRepositoriesForm";
