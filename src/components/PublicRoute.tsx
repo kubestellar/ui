@@ -24,7 +24,7 @@ const PublicRoute = ({ children }: PublicRouteProps) => {
       }
 
       try {
-        const response = await fetch("http://localhost:4000/api/me", {
+        const response = await fetch("http://localhost:4000/protected", {
           method: "GET",
           headers: {
             "Authorization": `Bearer ${token}`,
