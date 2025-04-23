@@ -21,6 +21,7 @@ export const CreateOwnHelmForm = ({ formData, setFormData, error, theme }: Props
               },
               scrollbarWidth: "none",
               "-ms-overflow-style": "none",
+              height: "55vh",
           }}
       >
           <Typography

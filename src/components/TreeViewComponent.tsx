@@ -106,6 +106,16 @@ export interface ResourceItem {
   status?: {
     conditions?: Array<{ type: string; status: string }>;
     phase?: string;
+    containerStatuses?: Array<{
+      name: string;
+      state?: Record<string, unknown>;
+      ready?: boolean;
+      restartCount?: number;
+      image?: string;
+      imageID?: string;
+      containerID?: string;
+      started?: boolean;
+    }>;
   };
   data?: Record<string, string>;
   subsets?: Array<{
@@ -1420,6 +1430,22 @@ const TreeViewComponent = () => {
         </Box>
 
         {showCreateOptions && <CreateOptions activeOption={activeOption} setActiveOption={setActiveOption} onCancel={handleCancelCreateOptions} />}
+
+        <Box 
+          sx={{ 
+            width: "100%", 
+            padding: "8px 16px",
+            backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.04)",
+            borderRadius: "4px",
+            marginBottom: "12px",
+            display: "flex",
+            alignItems: "center"
+          }}
+        >
+          <Typography variant="body2" sx={{ color: theme === "dark" ? "rgba(255, 255, 255, 0.7)" : "rgba(0, 0, 0, 0.6)" }}>
+            Note: Default, Kubernetes system, and OpenShift namespaces are filtered out from this view.
+          </Typography>
+        </Box>
 
         <Box sx={{ width: "100%", height: "calc(100% - 80px)", position: "relative" }}>
           {isLoading ? (

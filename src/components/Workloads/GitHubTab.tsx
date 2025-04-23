@@ -21,12 +21,10 @@ interface Props {
   setFormData: (data: FormData) => void;
   error: string;
   credentialsList: string[];
-  webhooksList: string[];
   loading: boolean;
   hasChanges: boolean;
   handleCredentialChange: (event: SelectChangeEvent<string>) => void;
   handleOpenCredentialDialog: () => void;
-  handleWebhookChange: (event: SelectChangeEvent<string>) => void;
   handleOpenWebhookDialog: () => void;
   validateForm: () => boolean;
   handleDeploy: () => void;
@@ -38,10 +36,8 @@ const CreateFromYourGitHub = ({ formData, setFormData, error, credentialsList, h
   setFormData: (data: FormData) => void;
   error: string;
   credentialsList: string[];
-  webhooksList: string[];
   handleCredentialChange: (event: SelectChangeEvent<string>) => void;
   handleOpenCredentialDialog: () => void;
-  handleWebhookChange: (event: SelectChangeEvent<string>) => void;
   handleOpenWebhookDialog: () => void;
   theme: string;
 }) => (
@@ -57,6 +53,7 @@ const CreateFromYourGitHub = ({ formData, setFormData, error, credentialsList, h
       },
       scrollbarWidth: "none",
       "-ms-overflow-style": "none",
+      height: "55vh",
     }}
   >
     <Typography
@@ -372,12 +369,10 @@ export const GitHubTab = ({
   setFormData,
   error,
   credentialsList,
-  webhooksList,
   loading,
   hasChanges,
   handleCredentialChange,
   handleOpenCredentialDialog,
-  handleWebhookChange,
   handleOpenWebhookDialog,
   validateForm,
   handleDeploy,
@@ -496,18 +491,35 @@ export const GitHubTab = ({
   const handleMenuOpen = useCallback((event: React.MouseEvent, deploymentId: string) => {
     event.preventDefault();
     event.stopPropagation();
-    // Use fixed positioning instead of mouse position to make menu more stable
+    // Use fixed positioning based on the element's position instead of mouse coordinates
     const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
     setContextMenu({ 
       deploymentId, 
-      x: rect.right, 
-      y: rect.top 
+      x: rect.right,  // Position at the right edge of the icon
+      y: rect.top + rect.height/2  // Position at the vertical center
     });
   }, []);
 
   const handleMenuClose = useCallback(() => {
     setContextMenu(null);
   }, []);
+
+  const handleDeleteClick = useCallback(() => {
+    if (contextMenu?.deploymentId) {
+      const deploymentId = contextMenu.deploymentId;
+      // First close the menu completely
+      handleMenuClose();
+      
+      // Use a slightly longer timeout to ensure complete separation between menu closing and dialog opening
+      setTimeout(() => {
+        // Only then set the deployment ID and open the dialog
+        setDeleteDeploymentId(deploymentId);
+        setDeleteDialogOpen(true);
+      }, 100);
+    } else {
+      handleMenuClose();
+    }
+  }, [contextMenu, handleMenuClose]);
 
   const handleDeleteDeployment = useCallback(async (deploymentId: string) => {
     try {
@@ -527,14 +539,6 @@ export const GitHubTab = ({
     }
   }, []);
 
-  const handleDeleteClick = useCallback(() => {
-    if (contextMenu?.deploymentId) {
-      setDeleteDeploymentId(contextMenu.deploymentId);
-      setDeleteDialogOpen(true);
-    }
-    handleMenuClose();
-  }, [contextMenu, handleMenuClose]);
-
   const handleDeleteConfirm = useCallback(() => {
     if (deleteDeploymentId) {
       handleDeleteDeployment(deleteDeploymentId);
@@ -545,6 +549,119 @@ export const GitHubTab = ({
     setDeleteDialogOpen(false);
     setDeleteDeploymentId(null);
   }, []);
+  
+  // Create a stable function reference for dialog operations - moved after handleDeleteCancel
+  const dialogProps = useCallback(() => ({
+    open: deleteDialogOpen,
+    onClose: (e: React.SyntheticEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handleDeleteCancel();
+    },
+    'aria-labelledby': "delete-confirmation-dialog-title",
+    keepMounted: false,
+    disablePortal: true,
+    disableEscapeKeyDown: false,
+    disableAutoFocus: true,
+    // Completely disable transitions to prevent flickering
+    transitionDuration: { enter: 0, exit: 0 },
+    // Create a constant backdrop to prevent flashing
+    hideBackdrop: false,
+    className: "stable-dialog", // Add a custom class
+    BackdropProps: {
+      transitionDuration: 0,
+      onClick: (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleDeleteCancel();
+      },
+      sx: {
+        backdropFilter: "blur(2px)",
+        pointerEvents: "auto", // Ensure backdrop receives events
+        transition: "none" // Disable backdrop transitions
+      }
+    },
+    PaperProps: {
+      elevation: 24,
+      sx: {
+        overflow: "visible",
+        position: "relative", // Ensure proper stacking
+        zIndex: 1400, // High z-index to stay on top
+        transition: "none" // Disable paper transitions
+      }
+    },
+    // Disable all MUI transitions that could cause flickering
+    TransitionProps: {
+      timeout: 0,
+      appear: false,
+      enter: false,
+      exit: false
+    },
+    sx: {
+      zIndex: 1500, // Even higher z-index for the dialog
+      position: "fixed", // Use fixed positioning
+      transition: "none !important", // Disable ALL transitions
+      "& .MuiDialog-paper": {
+        padding: "16px",
+        width: "500px",
+        backgroundColor: theme === "dark" ? "rgb(15, 23, 42)" : "#fff",
+        borderRadius: "4px",
+        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+        maxWidth: "480px",
+        height: "260px",
+        transition: "none !important" // Disable paper transitions
+      },
+      "& .MuiBackdrop-root": {
+        backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.7)" : "rgba(0, 0, 0, 0.5)",
+        transition: "none !important" // Disable backdrop transitions
+      },
+      // Target all child elements to disable transitions
+      "& *": {
+        transition: "none !important"
+      }
+    },
+    onClick: (e: React.MouseEvent) => e.stopPropagation()
+  }), [deleteDialogOpen, handleDeleteCancel, theme]);
+
+  // Add a helper function to create no-flicker button styles
+  const createStableButtonStyle = useCallback((isDelete = false) => {
+    const baseColor = isDelete ? "#d32f2f" : "transparent";
+    const hoverColor = isDelete ? "#b71c1c" : "rgba(47, 134, 255, 0.1)";
+    const textColor = isDelete ? "#fff" : "#2F86FF";
+    
+    return {
+      textTransform: "none",
+      fontWeight: isDelete ? 500 : 600,
+      backgroundColor: baseColor,
+      color: textColor,
+      padding: "6px 16px",
+      minWidth: "80px",
+      minHeight: "36px",
+      border: "none",
+      outline: "none",
+      borderRadius: "4px",
+      position: "relative",
+      boxShadow: "none",
+      transition: "none",
+      animation: "none",
+      opacity: 1,
+      // Prevent hover state transitions
+      "&:hover": { 
+        backgroundColor: hoverColor,
+        boxShadow: "none",
+        transition: "none"
+      },
+      // Prevent any focus animations
+      "&:focus": {
+        outline: "none",
+        boxShadow: "none"
+      },
+      // Prevent ripple animations
+      "&::before, &::after": {
+        display: "none"
+      }
+    };
+  }, []);
 
   const PopularRepositoriesForm = () => (
     <Box
@@ -553,6 +670,7 @@ export const GitHubTab = ({
         flexDirection: "column",
         flex: 1,
         overflow: "hidden",
+        height: "55vh",
       }}
     >
       <Box
@@ -658,7 +776,9 @@ export const GitHubTab = ({
         flexDirection: "column",
         flex: 1,
         overflow: "hidden",
+        height: "55vh",
       }}
+      onClick={handleMenuClose}
     >
       <Box
         sx={{
@@ -737,6 +857,7 @@ export const GitHubTab = ({
                   backgroundColor: theme === "dark" ? "#2a2a2a" : "#f1f1f1",
                 },
               }}
+              onClick={(e) => e.stopPropagation()}
             >
               <Box sx={{ display: "flex", alignItems: "center" }}>
                 <Checkbox
@@ -759,12 +880,19 @@ export const GitHubTab = ({
                 </Typography>
               </Box>
               <Box
-                sx={{ cursor: "pointer" }}
+                sx={{ 
+                  cursor: "pointer",
+                  padding: "4px",
+                  borderRadius: "4px",
+                  "&:hover": {
+                    backgroundColor: theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
+                  }
+                }}
                 onClick={(e) => handleMenuOpen(e, deployment)}
               >
-                    <MoreVerticalIcon
-                    style={{ color: theme === "dark" ? "#d4d4d4" : "#666" }}
-                    />
+                <MoreVerticalIcon
+                  style={{ color: theme === "dark" ? "#d4d4d4" : "#666" }}
+                />
               </Box> 
             </Box>
           ))
@@ -781,69 +909,102 @@ export const GitHubTab = ({
           onClose={handleMenuClose}
           anchorReference="anchorPosition"
           anchorPosition={contextMenu ? { top: contextMenu.y, left: contextMenu.x } : undefined}
-          // Adding these properties to make the menu more stable and prevent flickering
           keepMounted
           disablePortal
+          transitionDuration={0}
           slotProps={{
             paper: {
-              elevation: 3
+              elevation: 3,
+              sx: {
+                minWidth: "120px",
+                boxShadow: theme === "dark" 
+                  ? "0 4px 8px rgba(0, 0, 0, 0.4)" 
+                  : "0 4px 8px rgba(0, 0, 0, 0.1)"
+              }
+            }
+          }}
+          MenuListProps={{
+            sx: {
+              py: 0.5
             }
           }}
         >
-          <MenuItem onClick={handleDeleteClick}>Delete</MenuItem>
+          <MenuItem 
+            onClick={handleDeleteClick}
+            sx={{
+              px: 2,
+              py: 1,
+              fontSize: "14px"
+            }}
+          >
+            Delete
+          </MenuItem>
         </Menu>
       )}
 
-      <Dialog
-        open={deleteDialogOpen}
-        onClose={handleDeleteCancel}
-        aria-labelledby="delete-confirmation-dialog-title"
-        sx={{
-          "& .MuiDialog-paper": {
-            padding: "16px",
-            width: "500px",
-            backgroundColor: theme === "dark" ? "rgb(15, 23, 42)" : "#fff",
-            borderRadius: "4px",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
-            maxWidth: "480px",
-            height: "260px",
-          },
-        }}
-      >
-        <DialogTitle id="delete-confirmation-dialog-title" sx={{ display: "flex", alignItems: "center", gap: 1, fontSize: "18px", fontWeight: 600, color: theme === "dark" ? "#fff" : "333" }}>
+      <Dialog {...dialogProps()}>
+        <DialogTitle 
+          id="delete-confirmation-dialog-title" 
+          sx={{ 
+            display: "flex", 
+            alignItems: "center", 
+            gap: 1, 
+            fontSize: "18px", 
+            fontWeight: 600, 
+            color: theme === "dark" ? "#fff" : "333" 
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
           <WarningAmberIcon sx={{ color: "#FFA500", fontSize: "34px" }} />
           Confirm Resource Deletion
         </DialogTitle>
-        <DialogContent>
+        <DialogContent onClick={(e) => e.stopPropagation()}>
           <Typography sx={{ fontSize: "16px", color: theme === "dark" ? "#fff" : "333", mt: 2 }}>
             Are you sure you want to delete "{deleteDeploymentId}"? This action cannot be undone.
           </Typography>
         </DialogContent>
-        <DialogActions sx={{ justifyContent: "space-between", padding: "0 16px 16px 16px" }}>
+        <DialogActions 
+          sx={{ 
+            justifyContent: "space-between", 
+            padding: "0 16px 16px 16px",
+            // Prevent any layout shifts that could cause flickering
+            minHeight: '48px',
+            '& button': {
+              // Make button size stable
+              minWidth: '80px',
+              transition: 'none',
+              animation: 'none'
+            }
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
           <Button
-            onClick={handleDeleteCancel}
-            sx={{
-              textTransform: "none",
-              color: "#2F86FF",
-              fontWeight: 600,
-              "&:hover": { backgroundColor: "rgba(47, 134, 255, 0.1)" },
+            variant="text"
+            disableRipple
+            disableElevation
+            disableFocusRipple
+            disableTouchRipple
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDeleteCancel();
             }}
+            sx={createStableButtonStyle(false)}
           >
             Cancel
           </Button>
           <Button
-            onClick={handleDeleteConfirm}
-            sx={{
-              textTransform: "none",
-              fontWeight: 500,
-              backgroundColor: "#d32f2f",
-              color: "#fff",
-              padding: "6px 16px",
-              borderRadius: "4px",
-              "&:hover": {
-                backgroundColor: "#b71c1c",
-              },
+            variant="contained"
+            disableRipple
+            disableElevation
+            disableFocusRipple
+            disableTouchRipple
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDeleteConfirm();
             }}
+            sx={createStableButtonStyle(true)}
           >
             Yes, Delete
           </Button>
@@ -897,24 +1058,25 @@ export const GitHubTab = ({
         </RadioGroup>
       </Box>
 
-      {selectedOption === "createOwn" ? (
-        <CreateFromYourGitHub
-          formData={formData}
-          setFormData={setFormData}
-          error={error}
-          credentialsList={credentialsList}
-          webhooksList={webhooksList}
-          handleCredentialChange={handleCredentialChange}
-          handleOpenCredentialDialog={handleOpenCredentialDialog}
-          handleWebhookChange={handleWebhookChange}
-          handleOpenWebhookDialog={handleOpenWebhookDialog}
-          theme={theme}
-        />
-      ) : selectedOption === "popularRepos" ? (
-        <PopularRepositoriesForm />
-      ) : (
-        <PreviousDeploymentsForm />
-      )}
+      {/* Wrapper Box to maintain consistent height */}
+      <Box sx={{ height: "55vh", overflow: "hidden" }}>
+        {selectedOption === "createOwn" ? (
+          <CreateFromYourGitHub
+            formData={formData}
+            setFormData={setFormData}
+            error={error}
+            credentialsList={credentialsList}
+            handleCredentialChange={handleCredentialChange}
+            handleOpenCredentialDialog={handleOpenCredentialDialog}
+            handleOpenWebhookDialog={handleOpenWebhookDialog}
+            theme={theme}
+          />
+        ) : selectedOption === "popularRepos" ? (
+          <PopularRepositoriesForm />
+        ) : (
+          <PreviousDeploymentsForm />
+        )}
+      </Box>
 
       <Box sx={{ 
         display: "flex", 
