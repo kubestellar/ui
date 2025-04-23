@@ -9,6 +9,7 @@ func SetupRoutes(router *gin.Engine) {
 	setupClusterRoutes(router)
 	setupDeploymentRoutes(router)
 	setupNamespaceRoutes(router)
+	setupAuthRoutes(router)
 	setupBindingPolicyRoutes(router)
 	setupResourceRoutes(router)
 	getWecsResources(router)
@@ -18,5 +19,4 @@ func SetupRoutes(router *gin.Engine) {
 	setupHelmRoutes(router)
 	setupGitHubRoutes(router)
 	setupDeploymentHistoryRoutes(router)
-	setupAuthRoutes(router)
 }

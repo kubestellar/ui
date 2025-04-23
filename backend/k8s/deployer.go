@@ -920,7 +920,7 @@ func HelmDeployHandler(c *gin.Context) {
 		"namespace":      release.Namespace,
 		"version":        release.Chart.Metadata.Version,
 		"status":         release.Info.Status.String(),
-		"workload_label": req.WorkloadLabel,
+		"workload_label": req.WorkloadLabel, // Include workload label in response
 	}
 
 	// Include storage information in the response if "store" is true
