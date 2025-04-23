@@ -389,7 +389,7 @@ spec:
           const docWithKind = documents.find((doc) => doc?.kind);
           const kind = docWithKind?.kind || "Unknown";
           const namespace = docWithKind?.metadata?.namespace || "default";
-          toast.error(`Failed to create ${kind}: ${workloadName} in namespace ${namespace}, workload is already exists or Namspace ${namespace} not Found`);
+          toast.error(`Failed to create ${kind}: ${workloadName} in namespace ${namespace}, workload already exists or Namspace ${namespace} not Found`);
         } else if (err.response.status === 409) {
           toast.error("Conflict error: Deployment already in progress!");
         } else {

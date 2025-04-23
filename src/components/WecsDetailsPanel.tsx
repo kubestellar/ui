@@ -414,6 +414,8 @@ const WecsDetailsPanel = ({
       fontFamily: "monospace",
       scrollback: 1000,
       disableStdin: false, // Enable stdin for exec
+      convertEol: true,
+      allowProposedApi: true
     });
 
     const fitAddon = new FitAddon();
@@ -423,45 +425,86 @@ const WecsDetailsPanel = ({
     setTimeout(() => fitAddon.fit(), 100);
     execTerminalInstance.current = term;
     
-    // Sample data to simulate an exec session
-    term.writeln("\x1b[32m# Welcome to Pod Shell Session\x1b[0m");
-    term.writeln(`\x1b[33mConnected to pod: ${name}\x1b[0m`);
-    term.writeln(`\x1b[33mNamespace: ${namespace}\x1b[0m`);
-    term.writeln(`\x1b[33mCluster: ${cluster}\x1b[0m`);
-    term.writeln("-----------------------------------");
-    term.writeln("root@" + name + ":/#");
+    // Get the container name from the pod status if available
+    let containerName = "";
     
-    // Simulate typing
-    const commands = [
-      "ls -la",
-      "total 76",
-      "drwxr-xr-x   1 root root 4096 Jan  1 00:00 .",
-      "drwxr-xr-x   1 root root 4096 Jan  1 00:00 ..",
-      "-rw-r--r--   1 root root 1090 Mar 15  2023 Dockerfile",
-      "drwxr-xr-x   2 root root 4096 Jan  1 00:00 app",
-      "drwxr-xr-x   2 root root 4096 Jan  1 00:00 config",
-      "drwxr-xr-x   2 root root 4096 Jan  1 00:00 logs",
-      "-rw-r--r--   1 root root  289 Mar 15  2023 package.json",
-      "root@" + name + ":/# "
-    ];
-    
-    // Simulate command execution with delay
-    let i = 0;
-    const intervalId = setInterval(() => {
-      if (i < commands.length) {
-        term.writeln(commands[i]);
-        i++;
-      } else {
-        clearInterval(intervalId);
+    if (resourceData?.status?.containerStatuses && Array.isArray(resourceData.status.containerStatuses)) {
+      const containerStatus = resourceData.status.containerStatuses[0];
+      if (containerStatus && containerStatus.name) {
+        containerName = containerStatus.name;
       }
-    }, 300);
+    }
+    
+    const wsUrl = `ws://localhost:4000/ws/pod/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/shell/${encodeURIComponent(containerName || "container")}?context=${encodeURIComponent(cluster)}&shell=sh`;
+    
+    // Show a simple connecting message
+    term.writeln("\x1b[33mConnecting to pod shell...\x1b[0m");
+    
+    const socket = new WebSocket(wsUrl);
+    
+    socket.onopen = () => {
+      // Clear the terminal once connected
+      term.clear();
+    };
+    
+    socket.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        if (msg.Op === "stdout") {
+          term.write(msg.Data);
+        }
+      } catch {
+        // If it's not JSON, write it directly
+        term.writeln(event.data);
+      }
+    };
+    
+    socket.onerror = (error) => {
+      console.error("WebSocket error:", error);
+      term.writeln(`\x1b[31mError connecting to pod. Please check console for details.\x1b[0m`);
+    };
+    
+    socket.onclose = (event) => {
+      console.log("WebSocket closed:", event);
+      if (event.code !== 1000 && event.code !== 1001) {
+        term.writeln(`\x1b[31mConnection closed (code: ${event.code})\x1b[0m`);
+      }
+    };
+    
+    // Handle user input including Tab completion
+    term.onData((data) => {
+      if (socket.readyState === WebSocket.OPEN) {
+        // Special handling for Tab key for auto-completion
+        if (data === '\t') {
+          const msg = JSON.stringify({ Op: "stdin", Data: data });
+          socket.send(msg);
+        } else {
+          const msg = JSON.stringify({ Op: "stdin", Data: data });
+          socket.send(msg);
+        }
+      }
+    });
+    
+    // Handle key events for special keys (arrow up/down, etc.)
+    term.onKey(() => {
+      // Handle special key combinations if needed
+      // This allows for history navigation etc.
+    });
+    
+    // Add ping to keep connection alive
+    const pingInterval = setInterval(() => {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ Op: "ping" }));
+      }
+    }, 30000);
     
     return () => {
-      clearInterval(intervalId);
+      clearInterval(pingInterval);
+      socket.close();
       term.dispose();
       execTerminalInstance.current = null;
     };
-  }, [tabValue, theme, type, name, namespace, cluster]); // Add necessary dependencies
+  }, [tabValue, theme, type, name, namespace, cluster, resourceData]); // Add necessary dependencies
 
   const calculateAge = (creationTimestamp: string | undefined): string => {
     if (!creationTimestamp) return "N/A";
