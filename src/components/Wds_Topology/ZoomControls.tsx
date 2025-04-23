@@ -76,7 +76,7 @@ export const ZoomControls = memo<ZoomControlsProps>(({ theme, onToggleCollapse, 
       <Button
         variant="text"
         onClick={onToggleCollapse}
-        title="Group Nodes"
+        title="Group By Resource/Kind"
         sx={{
           color: theme === "dark" ? "#fff" : "#6d7f8b",
           backgroundColor: isCollapsed ? (theme === "dark" ? "#555" : "#e3f2fd") : "transparent",

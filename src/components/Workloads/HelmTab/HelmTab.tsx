@@ -203,18 +203,21 @@ export const HelmTab = ({
         </RadioGroup>
       </Box>
 
-      {selectedOption === "createOwn" ? (
-        <CreateOwnHelmForm
-          formData={formData}
-          setFormData={setFormData}
-          error={error}
-          theme={theme}
-        />
-      ) : selectedOption === "popularCharts" ? (
-          <PopularHelmChartsForm handleChartSelection={handleChartSelection} theme={theme} selectedChart={selectedChart}/>
-      ) : (
-            <UserCreatedChartsForm handleChartSelection={handleChartSelection} setUserCharts={setUserCharts} theme={theme} selectedChart={selectedChart} userCharts={userCharts} userLoading={userLoading} />
-      )}
+      {/* Wrapper Box to maintain consistent height */}
+      <Box sx={{ height: "55vh", overflow: "hidden" }}>
+        {selectedOption === "createOwn" ? (
+          <CreateOwnHelmForm
+            formData={formData}
+            setFormData={setFormData}
+            error={error}
+            theme={theme}
+          />
+        ) : selectedOption === "popularCharts" ? (
+            <PopularHelmChartsForm handleChartSelection={handleChartSelection} theme={theme} selectedChart={selectedChart}/>
+        ) : (
+              <UserCreatedChartsForm handleChartSelection={handleChartSelection} setUserCharts={setUserCharts} theme={theme} selectedChart={selectedChart} userCharts={userCharts} userLoading={userLoading} />
+        )}
+      </Box>
 
       <Box sx={{ 
         display: "flex", 

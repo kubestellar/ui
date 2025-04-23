@@ -49,7 +49,7 @@ export const UserCreatedChartsForm = ({ handleChartSelection, setUserCharts, the
             setDeleteDialogOpen(false);
             setDeleteChartId(null);
         }
-    }, []);
+    }, [setUserCharts]);
 
     const handleDeleteClick = useCallback(() => {
         if (contextMenu?.chartId) {
@@ -57,7 +57,7 @@ export const UserCreatedChartsForm = ({ handleChartSelection, setUserCharts, the
             setDeleteDialogOpen(true);
         }
         handleMenuClose();
-    }, [contextMenu, handleMenuClose]);
+    }, [contextMenu, handleMenuClose, setDeleteChartId, setDeleteDialogOpen]);
 
     const handleDeleteConfirm = useCallback(() => {
         if (deleteChartId) {
@@ -77,6 +77,7 @@ export const UserCreatedChartsForm = ({ handleChartSelection, setUserCharts, the
                 flexDirection: "column",
                 flex: 1,
                 overflow: "hidden",
+                height: "55vh",
             }}
             onClick={handleMenuClose} // Close menu when clicking outside
         >
