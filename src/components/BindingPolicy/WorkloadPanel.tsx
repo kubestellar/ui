@@ -317,7 +317,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
             </Box>
           ):(
           <Typography variant={compact ? "subtitle1" : "h6"}>
-            Workload Labels
+            Workloads
           </Typography>
         )}
         {!showSearch && !compact && (
