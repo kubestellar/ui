@@ -144,7 +144,7 @@ const LoginForm = () => {
         }
 
         const token = localStorage.getItem("jwtToken");
-        const protectedResponse = await fetch("http://localhost:4000/protected", {
+        const protectedResponse = await fetch("http://localhost:4000/api/me", {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
