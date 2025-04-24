@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import LoadingFallback from "./LoadingFallback";
 import { motion, AnimatePresence } from "framer-motion";
+import { api } from "../lib/api";
 
 interface PublicRouteProps {
   children: JSX.Element;
@@ -24,14 +25,11 @@ const PublicRoute = ({ children }: PublicRouteProps) => {
       }
 
       try {
-        const response = await fetch("http://localhost:4000/protected", {
-          method: "GET",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-          },
+        const response = await api.get("/protected", {
+          headers: { "Authorization": `Bearer ${token}` },
         });
 
-        setIsAuthenticated(response.ok);
+        setIsAuthenticated(response.status === 200);
       } catch (error) {
         setIsAuthenticated(false);
         console.error("Public route error:", error);

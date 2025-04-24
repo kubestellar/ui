@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { api } from "../lib/api";
 
 interface ProtectedRouteProps {
   children: JSX.Element;
@@ -22,18 +23,16 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       }
 
       try {
-        const response = await fetch("http://localhost:4000/protected", {
-          method: "GET",
+        const response = await api.get("/protected", {
           headers: {
             "Authorization": `Bearer ${token}`,
           },
         });
 
-        if (response.ok) {
+        if (response.status === 200) {
           setIsAuthenticated(true);
         } else {
-          const data = await response.json();
-          const errorMsg = data.error || "Your session has expired. Please sign in again.";
+          const errorMsg = response.data.error || "Your session has expired. Please sign in again.";
           setErrorMessage(errorMsg);
           setIsAuthenticated(false);
         }

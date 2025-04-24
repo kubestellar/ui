@@ -27,7 +27,7 @@ import "xterm/css/xterm.css";
 import { ResourceItem } from "./TreeViewComponent";
 import useTheme from "../stores/themeStore";
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import axios from "axios";
+import { api, getWebSocketUrl } from "../lib/api";
 
 interface WecsDetailsProps {
   namespace: string;
@@ -152,7 +152,7 @@ const WecsDetailsPanel = ({
     if (type.toLowerCase() === "cluster") {
       const fetchClusterDetails = async () => {
         try {
-          const response = await axios.get(`http://localhost:4000/api/cluster/details/${encodeURIComponent(name)}`);
+          const response = await api.get(`/api/cluster/details/${encodeURIComponent(name)}`);
           const data = response.data;
           setClusterDetails(data);
           
@@ -276,7 +276,7 @@ const WecsDetailsPanel = ({
     if (!wsParamsRef.current || !isOpen) return;
 
     const { cluster, namespace, pod } = wsParamsRef.current;
-    const wsUrl = `ws://localhost:4000/ws/logs?cluster=${cluster}&namespace=${namespace}&pod=${pod}`;
+    const wsUrl = getWebSocketUrl(`/ws/logs?cluster=${cluster}&namespace=${namespace}&pod=${pod}`);
     
     setLogs((prev) => [...prev, 
       `\x1b[33m[Connecting] WebSocket Request\x1b[0m`,
@@ -435,7 +435,7 @@ const WecsDetailsPanel = ({
       }
     }
     
-    const wsUrl = `ws://localhost:4000/ws/pod/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/shell/${encodeURIComponent(containerName || "container")}?context=${encodeURIComponent(cluster)}&shell=sh`;
+    const wsUrl = getWebSocketUrl(`/ws/pod/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/shell/${encodeURIComponent(containerName || "container")}?context=${encodeURIComponent(cluster)}&shell=sh`);
     
     // Show a simple connecting message
     term.writeln("\x1b[33mConnecting to pod shell...\x1b[0m");
