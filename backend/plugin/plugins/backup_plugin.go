@@ -2,14 +2,14 @@ package plugins
 
 import (
 	"net/http"
+	"time"
 
 	"os/exec"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/log"
 	"github.com/kubestellar/ui/plugin"
-	etcd "go.etcd.io/etcd/client/v3"
+	v3 "go.etcd.io/etcd/client/v3"
 	"go.uber.org/zap"
 )
 
@@ -19,7 +19,7 @@ var (
 )
 
 type backupPlugin struct {
-	etcdClient *etcd.Client
+	cfg v3.Config
 }
 
 func (p backupPlugin) Name() string {
@@ -74,16 +74,9 @@ func init() {
 	if err != nil {
 		log.LogError("failed to start cmd", zap.String("err", err.Error()))
 	}
-
-	etcdClient, err := etcd.New(etcd.Config{
+	bp = backupPlugin{v3.Config{
 		Endpoints:   []string{"https://127.0.0.1:2379"},
 		DialTimeout: time.Second * 2,
-	})
-	if err != nil {
-		log.LogError("failed to created etcd client for backup plugin",
-			zap.String("err", err.Error()))
-		return
-	}
-	bp = backupPlugin{etcdClient: etcdClient}
+	}}
 	Pm.Register(bp)
 }
