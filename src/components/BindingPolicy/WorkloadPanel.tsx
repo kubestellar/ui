@@ -14,7 +14,6 @@ import {
   IconButton
 } from '@mui/material';
 import { Workload } from '../../types/bindingPolicy';
-import KubernetesIcon from './KubernetesIcon';
 import AddIcon from '@mui/icons-material/Add';
 import { useNavigate } from 'react-router-dom';
 import CloseIcon from '@mui/icons-material/Close';
@@ -276,11 +275,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
-          <KubernetesIcon
-            type="workload"
-            size={compact ? 20 : 24}
-            sx={{ mr: 1, color: "white" }}
-          />
+       
           {showSearch ? (
             <Box
             sx={{
@@ -317,7 +312,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
             </Box>
           ):(
           <Typography variant={compact ? "subtitle1" : "h6"}>
-            Workload Labels
+            Workloads
           </Typography>
         )}
         {!showSearch && !compact && (
