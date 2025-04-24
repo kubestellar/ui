@@ -2,6 +2,8 @@ package plugins
 
 import (
 	"net/http"
+
+	"os/exec"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -66,8 +68,15 @@ func restoreFromSnapshot(c *gin.Context) {
 var bp backupPlugin
 
 func init() {
+	cmd := exec.Command("kubectl",
+		"--context", "kind-kubeflex", "-n", "kube-system", "port-forward", "pods/etcd-kubeflex-control-plane", "2379:2379")
+	err := cmd.Start()
+	if err != nil {
+		log.LogError("failed to start cmd", zap.String("err", err.Error()))
+	}
+
 	etcdClient, err := etcd.New(etcd.Config{
-		Endpoints:   []string{},
+		Endpoints:   []string{"https://127.0.0.1:2379"},
 		DialTimeout: time.Second * 2,
 	})
 	if err != nil {
