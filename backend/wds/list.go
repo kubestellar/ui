@@ -2,6 +2,7 @@ package wds
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/k8s"
@@ -51,6 +52,11 @@ var cachedResourcesKey = "preferredResources-list"
 // ListAllResourcesDetails api/wds/list
 const MaxConcurrentCalls = 20
 
+type ResourceListResponse struct {
+	Namespaced    map[string]map[string][]map[string]interface{} `json:"namespaced"`
+	ClusterScoped map[string][]map[string]interface{}            `json:"clusterScoped"`
+}
+
 func ListAllResourcesDetails(c *gin.Context) {
 	cookieContext, err := c.Cookie("ui-wds-context")
 	if err != nil {
@@ -58,10 +64,6 @@ func ListAllResourcesDetails(c *gin.Context) {
 	}
 	cacheKey := getCacheKey(cookieContext, "list")
 
-	type ResourceListResponse struct {
-		Namespaced    map[string]map[string][]map[string]interface{} `json:"namespaced"`
-		ClusterScoped map[string][]map[string]interface{}            `json:"clusterScoped"`
-	}
 	result := ResourceListResponse{
 		Namespaced:    make(map[string]map[string][]map[string]interface{}),
 		ClusterScoped: make(map[string][]map[string]interface{}),
@@ -277,6 +279,190 @@ func ListAllResourcesByNamespace(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"data": result,
 	})
+}
+
+func ListAllResourcesDetailsSSE(c *gin.Context) {
+	c.Writer.Header().Set("Content-Type", "text/event-stream")
+	c.Writer.Header().Set("Cache-Control", "no-cache")
+	c.Writer.Header().Set("Connection", "keep-alive")
+	c.Writer.WriteHeader(http.StatusOK)
+	c.Writer.Flush()
+
+	sendEvent := func(event string, data any) {
+		jsonData, _ := json.Marshal(data)
+		fmt.Fprintf(c.Writer, "event: %s\n", event)
+		fmt.Fprintf(c.Writer, "data: %s\n\n", jsonData)
+		c.Writer.(http.Flusher).Flush()
+	}
+
+	cookieContext, err := c.Cookie("ui-wds-context")
+	if err != nil {
+		cookieContext = "wds1"
+	}
+	cacheKey := getCacheKey(cookieContext, "list")
+	result := ResourceListResponse{
+		Namespaced:    make(map[string]map[string][]map[string]interface{}),
+		ClusterScoped: make(map[string][]map[string]interface{}),
+	}
+
+	found, err := redis.GetJSONValue(cacheKey, &result)
+	if err == nil && found && len(result.Namespaced) > 0 {
+		fmt.Println("Using cached complete result")
+		sendEvent("complete", result)
+		return
+	}
+
+	clientset, dynamicClient, err := k8s.GetClientSetWithContext(cookieContext)
+	if err != nil {
+		sendEvent("error", gin.H{"error": err.Error()})
+		return
+	}
+
+	discoveryClient := clientset.Discovery()
+
+	var cachedResources []*metav1.APIResourceList
+	found, err = redis.GetJSONValue(cachedResourcesKey, &cachedResources)
+	if err != nil {
+		log.Printf("Error fetching API resource cache: %v", err)
+	}
+	if !found {
+		cachedResources, err = discoveryClient.ServerPreferredResources()
+		if err != nil {
+			sendEvent("error", gin.H{"error": "failed to fetch API resources"})
+			return
+		}
+		_ = redis.SetJSONValue(cachedResourcesKey, cachedResources, 5*time.Minute)
+	}
+
+	nsList, err := dynamicClient.Resource(schema.GroupVersionResource{
+		Group: "", Version: "v1", Resource: "namespaces",
+	}).List(c, metav1.ListOptions{})
+	if err != nil {
+		sendEvent("error", gin.H{"error": "failed to list namespaces"})
+		return
+	}
+
+	namespaceMeta := make(map[string]map[string]interface{})
+	var namespaces []string
+	for _, ns := range nsList.Items {
+		nsName := ns.GetName()
+		if strings.HasPrefix(nsName, "kube-") {
+			continue
+		}
+		namespaces = append(namespaces, nsName)
+		namespaceMeta[nsName] = extractNamespaceDetails(nsName, nsList.Items)
+	}
+
+	var wg sync.WaitGroup
+	var mutex sync.Mutex
+	sem := make(chan struct{}, 2)
+
+	ctx := c.Request.Context()
+
+	for _, resList := range cachedResources {
+		gv, err := schema.ParseGroupVersion(resList.GroupVersion)
+		if err != nil {
+			continue
+		}
+		for _, res := range resList.APIResources {
+			if _, ok := popularKinds[res.Kind]; !ok || strings.Contains(res.Name, "/") || !contains(res.Verbs, "list") {
+				continue
+			}
+			gvr := schema.GroupVersionResource{Group: gv.Group, Version: gv.Version, Resource: res.Name}
+
+			if res.Namespaced {
+				for _, ns := range namespaces {
+					wg.Add(1)
+					sem <- struct{}{}
+					go func(ns string, gvr schema.GroupVersionResource, kind string) {
+						defer func() {
+							<-sem
+							wg.Done()
+						}()
+						ctxTimeout, cancel := context.WithTimeout(ctx, 3*time.Second)
+						defer cancel()
+
+						objs, err := dynamicClient.Resource(gvr).Namespace(ns).List(ctxTimeout, metav1.ListOptions{})
+						if err != nil || len(objs.Items) == 0 {
+							return
+						}
+						newItems := []map[string]interface{}{}
+						for _, obj := range objs.Items {
+							newItems = append(newItems, extractObjDetails(&obj))
+						}
+						mutex.Lock()
+						if result.Namespaced[ns] == nil {
+							result.Namespaced[ns] = map[string][]map[string]interface{}{
+								"__namespaceMetaData": {namespaceMeta[ns]},
+							}
+						}
+						result.Namespaced[ns][res.Kind] = append(result.Namespaced[ns][res.Kind], newItems...)
+						//for _, obj := range objs.Items {
+						//	result.Namespaced[ns][res.Kind] = append(result.Namespaced[ns][res.Kind], extractObjDetails(&obj))
+						//}
+						mutex.Unlock()
+
+						sendEvent("progress", gin.H{
+							"scope":     "namespaced",
+							"namespace": ns,
+							"kind":      res.Kind,
+							"count":     len(objs.Items),
+							"data": gin.H{
+								"new": newItems,
+							},
+						})
+					}(ns, gvr, res.Kind)
+				}
+			} else {
+				wg.Add(1)
+				sem <- struct{}{}
+				go func(gvr schema.GroupVersionResource, kind string) {
+					defer func() {
+						<-sem
+						wg.Done()
+					}()
+					ctxTimeout, cancel := context.WithTimeout(ctx, 3*time.Second)
+					defer cancel()
+
+					objs, err := dynamicClient.Resource(gvr).List(ctxTimeout, metav1.ListOptions{})
+					if err != nil || len(objs.Items) == 0 {
+						return
+					}
+					newItems := []map[string]interface{}{}
+					for _, obj := range objs.Items {
+						newItems = append(newItems, extractObjDetails(&obj))
+					}
+					mutex.Lock()
+					result.ClusterScoped[res.Kind] = append(result.ClusterScoped[res.Kind], newItems...)
+					//for _, obj := range objs.Items {
+					//	result.ClusterScoped[res.Kind] = append(result.ClusterScoped[res.Kind], extractObjDetails(&obj))
+					//}
+					mutex.Unlock()
+
+					sendEvent("progress", gin.H{
+						"scope": "cluster",
+						"kind":  res.Kind,
+						"count": len(objs.Items),
+						"data": gin.H{
+							"new": newItems,
+						},
+					})
+				}(gvr, res.Kind)
+			}
+		}
+	}
+
+	// Wait for everything to finish
+	wg.Wait()
+
+	// Final result
+	sendEvent("complete", result)
+
+	// Cache final result
+	_ = redis.SetJSONValue(cacheKey, result, 2*time.Minute)
+
+	// Keep open until client disconnects
+	//<-ctx.Done()
 }
 
 // if it contains "list" then just ignore them
