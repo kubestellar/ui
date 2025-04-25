@@ -1,11 +1,12 @@
 import { Box,Typography, Checkbox, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions, Button,Menu } from "@mui/material";
-import axios, { AxiosError } from "axios";
+import  { AxiosError } from "axios";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { MoreVerticalIcon } from "lucide-react";
 import { useState, useCallback } from "react";
 import toast from "react-hot-toast";
 import type { Deployment } from "./HelmTab";
+import { api } from "../../../lib/api";
 
 
 interface Props {
@@ -34,7 +35,7 @@ export const UserCreatedChartsForm = ({ handleChartSelection, setUserCharts, the
 
     const handleDeleteChart = useCallback(async (chartId: string) => {
         try {
-            const response = await axios.delete(`http://localhost:4000/api/deployments/helm/${chartId}`);
+            const response = await api.delete(`/api/deployments/helm/${chartId}`);
             if (response.status === 200) {
                 setUserCharts(prev => prev.filter(chart => chart.id !== chartId));
                 toast.success(`Chart ${chartId} deleted successfully!`);

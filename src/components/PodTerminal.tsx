@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
+import { getWebSocketUrl } from "../lib/api";
 
 type Props = {
     namespace: string;
@@ -34,8 +35,7 @@ const PodTerminal = ({ namespace, pod, container, context, shell = "sh" }: Props
         term.current.writeln("Welcome!!!");
         term.current.writeln(`Pod: ${pod}, Container: ${container}, Namespace: ${namespace}`);
         // WebSocket connection
-        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-        const socketUrl = `${protocol}://localhost:4000/ws/pod/${namespace}/${pod}/shell/${container}?context=${context}&shell=${shell}`;
+        const socketUrl = getWebSocketUrl(`/ws/pod/${namespace}/${pod}/shell/${container}?context=${context}&shell=${shell}`);
         const socket = new WebSocket(socketUrl);
         socketRef.current = socket;
 

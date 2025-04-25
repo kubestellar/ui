@@ -1,8 +1,8 @@
 import { Box, Typography, Button } from "@mui/material";
 import { useEffect, useState, useCallback } from "react";
-import axios from "axios";
 import useTheme from "../stores/themeStore";
 import LoadingFallback from "./LoadingFallback";
+import { api } from "../lib/api";
 
 // Define the API response interface
 interface ApiResponse {
@@ -48,7 +48,7 @@ const ListViewComponent = () => {
     const fetchData = async () => {
       setIsLoading(true); // Set loading state when starting the fetch
       try {
-        const response = await axios.get<ApiResponse>("http://localhost:4000/api/wds/list");
+        const response = await api.get<ApiResponse>("/api/wds/list");
         const data = response.data.data;
 
         const resourceList: ResourceItem[] = [];

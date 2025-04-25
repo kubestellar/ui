@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import { Box, MenuItem, Select } from "@mui/material";
 import { SelectChangeEvent } from "@mui/material/Select";
 import { toast } from "react-hot-toast";
-import useTheme from "../stores/themeStore"; // Add this import
+import useTheme from "../stores/themeStore";
+import { api } from "../lib/api";
 
 interface ContextDropdownProps {
   onContextChange: (context: string) => void;
@@ -15,10 +16,9 @@ const ContextDropdown = ({ onContextChange }: ContextDropdownProps) => {
   const theme = useTheme((state) => state.theme);
 
   useEffect(() => {
-    fetch("http://localhost:4000/wds/get/context")
-      .then((response) => response.json())
-      .then((data) => {
-        const contextList = data["other-wds-context"] || [];
+    api.get("/wds/get/context")
+      .then((response) => {
+        const contextList = response.data["other-wds-context"] || [];
         const uniqueContexts = [...new Set([...contextList])];
         setContexts(uniqueContexts);
       })
@@ -27,12 +27,7 @@ const ContextDropdown = ({ onContextChange }: ContextDropdownProps) => {
 
   const handleContextChange = (event: SelectChangeEvent<string>) => {
     const newContext = event.target.value as string;
-    fetch("http://localhost:4000/wds/set/context", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ context: newContext }),
-    })
-      .then((response) => response.json())
+    api.post("/wds/set/context", { context: newContext })
       .then(() => {
         setCurrentContext(newContext);
         toast.success(`Switched to ${newContext} context`, {

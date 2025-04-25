@@ -4,9 +4,10 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { StyledContainer } from "../StyledComponents";
 import useTheme from "../../stores/themeStore";
 import { useState, useEffect, useCallback } from "react";
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
 import { toast } from "react-hot-toast";
 import { MoreVerticalIcon } from "lucide-react";
+import { api } from "../../lib/api";
 
 interface FormData {
   repositoryUrl: string;
@@ -411,7 +412,7 @@ export const GitHubTab = ({
     const fetchPreviousDeployments = async () => {
       setPreviousLoading(true);
       try {
-        const response = await axios.get("http://localhost:4000/api/deployments/github/list");
+        const response = await api.get("/api/deployments/github/list");
         if (response.status === 200) {
           const deployments = response.data.deployments.map((deployment: { id: string }) => deployment.id);
           setPreviousDeployments(deployments);
@@ -460,8 +461,8 @@ export const GitHubTab = ({
         throw new Error("Selected repository data not found");
       }
 
-      const response = await axios.post(
-        `http://localhost:4000/api/deploy?created_by_me=true&branch=${selectedRepoData.branch}`,
+      const response = await api.post(
+        `/api/deploy?created_by_me=true&branch=${selectedRepoData.branch}`,
         {
           repo_url: selectedRepoData.repo_url,
           folder_path: selectedRepoData.folder_path
@@ -523,7 +524,7 @@ export const GitHubTab = ({
 
   const handleDeleteDeployment = useCallback(async (deploymentId: string) => {
     try {
-      const response = await axios.delete(`http://localhost:4000/api/deployments/github/${deploymentId}`);
+      const response = await api.delete(`/api/deployments/github/${deploymentId}`);
       if (response.status === 200) {
         setPreviousDeployments((prev) => prev.filter((id) => id !== deploymentId));
         toast.success(`Deployment "${deploymentId}" deleted successfully!`);

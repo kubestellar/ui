@@ -2,11 +2,12 @@ import { Box, Button, FormControlLabel, Radio, RadioGroup} from "@mui/material";
 import { StyledContainer } from "../../StyledComponents";
 import useTheme from "../../../stores/themeStore";
 import { useState, useEffect } from "react";
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
 import { toast } from "react-hot-toast";
 import { PopularHelmChartsForm } from "./PopularHelmChartsForm";
 import { UserCreatedChartsForm } from "./UserCreatedChartsForm";
 import { CreateOwnHelmForm } from "./CreateOwnHelmForm";
+import { api } from "../../../lib/api";
 
 export interface HelmFormData {
   repoName: string;
@@ -66,7 +67,7 @@ export const HelmTab = ({
     const fetchUserCharts = async () => {
       setUserLoading(true);
       try {
-        const response = await axios.get("http://localhost:4000/api/deployments/helm/list");
+        const response = await api.get("/api/deployments/helm/list");
         if (response.status === 200) {
           const deployments = response.data.deployments;
           setUserCharts(deployments);
@@ -117,14 +118,9 @@ export const HelmTab = ({
         namespace: selectedChart,
       };
 
-      const response = await axios.post(
-        "http://localhost:4000/deploy/helm?store=true",
-        requestBody,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+      const response = await api.post(
+        "/deploy/helm?store=true",
+        requestBody
       );
 
       if (response.status === 200 || response.status === 201) {
@@ -143,11 +139,7 @@ export const HelmTab = ({
           toast.error("Deployment failed: failed to install chart: cannot re-use a name that is still in use!");
         } else if (err.response.status === 400) {
           toast.error("Failed to deploy popular Helm chart!");
-        } else {
-          toast.error(`Popular Helm deployment failed! (${err.response.status})`);
         }
-      } else {
-        toast.error("Popular Helm deployment failed due to network error!");
       }
     } finally {
       setPopularLoading(false);
@@ -282,5 +274,5 @@ export const HelmTab = ({
         </Button>
       </Box>
     </StyledContainer>
-  );
+  );  
 };  

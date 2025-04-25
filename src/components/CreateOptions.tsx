@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import jsyaml from "js-yaml";
 import { Dialog, DialogContent, DialogTitle, Tabs, Box, Alert, SelectChangeEvent, Typography, Snackbar } from "@mui/material";
 import GitHubIcon from "@mui/icons-material/GitHub";
-import axios, { AxiosError } from "axios";
+import  { AxiosError } from "axios";
 import { useWDSQueries } from "../hooks/queries/useWDSQueries";
 import { toast } from "react-hot-toast";
 import { StyledTab } from "./StyledComponents";
@@ -16,6 +16,7 @@ import { AddWebhookDialog } from "../components/Workloads/AddWebhookDialog";
 import { CancelConfirmationDialog } from "../components/Workloads/CancelConfirmationDialog";
 import useTheme from "../stores/themeStore";
 import helmicon from "../assets/Helm.png"
+import { api } from "../lib/api";
 
 interface Props {
   activeOption: string | null;
@@ -359,8 +360,8 @@ spec:
         return;
       }
 
-      const response = await axios.post(
-        `http://localhost:4000/api/resources?auto_ns=${autoNs}`,
+      const response = await api.post(
+        `/api/resources?auto_ns=${autoNs}`,
         documents,{
           withCredentials: true,
         }
@@ -426,8 +427,8 @@ spec:
         queryParams.branch = formData.branchSpecifier || "main";
       }
 
-      const response = await axios.post(
-        "http://localhost:4000/api/deploy?created_by_me=true",
+      const response = await api.post(
+        "/api/deploy?created_by_me=true",
         requestBody,
         {
           params: queryParams,
@@ -491,8 +492,8 @@ spec:
         requestBody.version = helmFormData.version;
       }
 
-      const response = await axios.post(
-        "http://localhost:4000/deploy/helm",
+      const response = await api.post(
+        "/deploy/helm",
         requestBody,
         {
           headers: {
