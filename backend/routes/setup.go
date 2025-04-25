@@ -10,7 +10,6 @@ func SetupRoutes(router *gin.Engine) {
 	setupClusterRoutes(router)
 	setupDeploymentRoutes(router)
 	setupNamespaceRoutes(router)
-	setupAuthRoutes(router)
 	setupBindingPolicyRoutes(router)
 	setupResourceRoutes(router)
 	getWecsResources(router)
@@ -22,4 +21,5 @@ func SetupRoutes(router *gin.Engine) {
 	setupDeploymentHistoryRoutes(router)
 	plugins.Pm.SetupPluginsRoutes(router)
 
+	setupAuthRoutes(router)
 }

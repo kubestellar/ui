@@ -659,107 +659,8 @@ const TreeViewComponent = () => {
       if (!cachedNode) nodeCache.current.set(id, node);
       newNodes.push(node);
 
-      // Add label node before each node (except for context nodes)
-      if (parent && type.toLowerCase() !== "context") {
-        // Create a label node ID
-        const labelNodeId = `${id}:label`;
-        
-        // Extract labels from resourceData or use "No Labels"
-        let labelText = "No Labels";
-        if (resourceData?.metadata?.labels) {
-          const labels = resourceData.metadata.labels;
-          const labelEntries = Object.entries(labels);
-          if (labelEntries.length > 0) {
-            // Take only the first label for display to reduce complexity
-            const [key, value] = labelEntries[0];
-            labelText = `${key}: ${value}`;
-            
-            // If there are more labels, add a count
-            if (labelEntries.length > 1) {
-              labelText += ` +${labelEntries.length - 1}`;
-            }
-          }
-        }
-        
-        // Check if we already have this label node in cache to avoid recreating
-        const cachedLabelNode = nodeCache.current.get(labelNodeId);
-        
-        const labelNode = cachedLabelNode || {
-          id: labelNodeId,
-          data: {
-            label: (
-              <NodeLabel
-                label={labelText}
-                icon={cm} // Using configmap icon for labels
-                dynamicText="label"
-                status="Active"
-                timeAgo=""
-                resourceData={resourceData}
-                onClick={() => {}}
-                onMenuClick={() => {}}
-              />
-            ),
-          },
-          position: { x: 0, y: 0 },
-          style: {
-            ...nodeStyle,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "2px 12px",
-            backgroundColor: theme === "dark" ? "#333" : "#fff",
-            color: theme === "dark" ? "#fff" : "#000",
-          },
-          sourcePosition: Position.Right,
-          targetPosition: Position.Left,
-        } as CustomNode;
-        
-        if (!cachedLabelNode) nodeCache.current.set(labelNodeId, labelNode);
-        newNodes.push(labelNode);
-        
-        // Create edge from parent to label node with caching
-        const labelEdgeId = `edge-${parent}-${labelNodeId}`;
-        const cachedLabelEdge = edgeCache.current.get(labelEdgeId);
-        
-        if (!cachedLabelEdge) {
-          const labelEdge = {
-            id: labelEdgeId,
-            source: parent,
-            target: labelNodeId,
-            type: "step",
-            animated: true,
-            style: { stroke: theme === "dark" ? "#ccc" : "#a3a3a3", strokeDasharray: "2,2" },
-            markerEnd: { type: MarkerType.ArrowClosed, color: theme === "dark" ? "#ccc" : "#a3a3a3" },
-          };
-          newEdges.push(labelEdge);
-          edgeCache.current.set(labelEdgeId, labelEdge);
-        } else {
-          newEdges.push(cachedLabelEdge);
-        }
-        
-        // Create edge from label node to actual node with caching
-        const nodeEdgeId = `edge-${labelNodeId}-${id}`;
-        const cachedNodeEdge = edgeCache.current.get(nodeEdgeId);
-        
-        if (!cachedNodeEdge) {
-          const nodeEdge = {
-            id: nodeEdgeId,
-            source: labelNodeId,
-            target: id,
-            type: "step",
-            animated: true,
-            style: { stroke: theme === "dark" ? "#ccc" : "#a3a3a3", strokeDasharray: "2,2" },
-            markerEnd: { type: MarkerType.ArrowClosed, color: theme === "dark" ? "#ccc" : "#a3a3a3" },
-          };
-          newEdges.push(nodeEdge);
-          edgeCache.current.set(nodeEdgeId, nodeEdge);
-        } else {
-          newEdges.push(cachedNodeEdge);
-        }
-      }
-      // If it's a parent-child relationship and not a context node, don't create a direct edge from parent to node
-      // Let the label node be the intermediate
-      else if (parent && isExpanded) {
+      // Add direct edge from parent to node if it's a parent-child relationship
+      if (parent && isExpanded) {
         const uniqueSuffix = resourceData?.metadata?.uid || edgeIdCounter.current++;
         const edgeId = `edge-${parent}-${id}-${uniqueSuffix}`;
         const cachedEdge = edgeCache.current.get(edgeId);
@@ -1089,14 +990,6 @@ const TreeViewComponent = () => {
       if (visited.has(currentNodeId)) continue;
       visited.add(currentNodeId);
 
-      // Check if there's a corresponding label node and add it to descendants
-      if (currentNodeId.indexOf(':label') === -1) {
-        const labelNodeId = `${currentNodeId}:label`;
-        if (nodeCache.current.has(labelNodeId)) {
-          descendants.push(labelNodeId);
-        }
-      }
-
       const children = edges
         .filter((edge) => edge.source === currentNodeId)
         .map((edge) => edge.target);
@@ -1128,13 +1021,6 @@ const TreeViewComponent = () => {
         await axios.delete(endpoint);
 
         const descendantNodeIds = findDescendantNodes(nodeId, edges);
-        
-        // Also add the label node for the deleted node itself
-        const labelNodeId = `${nodeId}:label`;
-        if (nodeCache.current.has(labelNodeId) && !descendantNodeIds.includes(labelNodeId)) {
-          descendantNodeIds.push(labelNodeId);
-        }
-        
         const nodesToDelete = [nodeId, ...descendantNodeIds];
 
         setNodes((prevNodes) => {
@@ -1211,7 +1097,7 @@ const TreeViewComponent = () => {
                 });
               } else {
                 setSelectedNode({
-                  namespace: namespace || "default",
+                  namespace: namespace || "default",  
                   name: nodeName,
                   type: nodeType,
                   onClose: handleClosePanel,

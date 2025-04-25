@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import ReactDOM from "react-dom";
 import { isEqual } from "lodash";
 import { WebSocketContext, NamespaceData, WecsCluster } from "./WebSocketContext";
+import { getWebSocketUrl } from "../lib/api";
 // Still importing useWebSocket to maintain exports order if needed
 export { useWebSocket } from './useWebSocket';
 
@@ -227,7 +228,10 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     
     // const currentRenderStartTime = renderStartTime.current;
 
-    connectWebSocket(() => reconnectWebSocket("ws://localhost:4000/ws/namespaces"), "ws://localhost:4000/ws/namespaces");
+    connectWebSocket(
+      () => reconnectWebSocket(getWebSocketUrl("/ws/namespaces")), 
+      getWebSocketUrl("/ws/namespaces")
+    );
 
     return () => {
       if (wsRef.current) {
@@ -243,7 +247,11 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     
     // const currentRenderStartTime = renderStartTime.current;
 
-    connectWebSocket(() => reconnectWebSocket("ws://localhost:4000/ws/wecs", true), "ws://localhost:4000/ws/wecs", true);
+    connectWebSocket(
+      () => reconnectWebSocket(getWebSocketUrl("/ws/wecs"), true), 
+      getWebSocketUrl("/ws/wecs"), 
+      true
+    );
 
     return () => {
       if (wecsWsRef.current) {
