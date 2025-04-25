@@ -10,6 +10,7 @@ import {
   CircularProgress,
   Divider,
   Chip,
+  IconButton,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -1122,9 +1123,13 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                     backgroundColor: alpha(theme.palette.info.main, 0.1),
                                     transition: 'all 0.2s',
                                     cursor: 'pointer',
+                                    position: 'relative',
                                     '&:hover': { 
                                       transform: 'translateY(-2px)', 
                                       boxShadow: 3 
+                                    },
+                                    '&:hover .delete-button': {
+                                      opacity: 1,
                                     }
                                   }}
                                   data-item-type="cluster"
@@ -1203,6 +1208,29 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                       </Box>
                                     </Box>
                                   )}
+                                  <IconButton
+                                    size="small"
+                                    className="delete-button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeFromPolicyCanvas('cluster', clusterId);
+                                    }}
+                                    sx={{
+                                      position: 'absolute',
+                                      top: 4,
+                                      right: 4,
+                                      opacity: 0,
+                                      transition: 'opacity 0.2s',
+                                      bgcolor: alpha(theme.palette.error.main, 0.1),
+                                      color: theme.palette.error.main,
+                                      p: '2px',
+                                      '&:hover': {
+                                        bgcolor: alpha(theme.palette.error.main, 0.2),
+                                      }
+                                    }}
+                                  >
+                                    <DeleteIcon fontSize="small" />
+                                  </IconButton>
                                 </Paper>
                               );
                             })}
@@ -1281,9 +1309,13 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                     backgroundColor: alpha(theme.palette.success.main, 0.1),
                                     transition: 'all 0.2s',
                                     cursor: 'pointer',
+                                    position: 'relative',
                                     '&:hover': { 
                                       transform: 'translateY(-2px)', 
                                       boxShadow: 3 
+                                    },
+                                    '&:hover .delete-button': { 
+                                      opacity: 1,
                                     }
                                   }}
                                   data-item-type="workload"
@@ -1382,6 +1414,29 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                       )}
                                     </>
                                   )}
+                                  <IconButton
+                                    size="small"
+                                    className="delete-button"
+                                    onClick={(e) => {
+                                      e.stopPropagation(); 
+                                      removeFromPolicyCanvas('workload', workloadId);
+                                    }}
+                                    sx={{
+                                      position: 'absolute',
+                                      top: 4,
+                                      right: 4,
+                                      opacity: 0, // Hidden by default
+                                      transition: 'opacity 0.2s',
+                                      bgcolor: alpha(theme.palette.error.main, 0.1),
+                                      color: theme.palette.error.main,
+                                      p: '2px',
+                                      '&:hover': {
+                                        bgcolor: alpha(theme.palette.error.main, 0.2),
+                                      }
+                                    }}
+                                  >
+                                    <DeleteIcon fontSize="small" />
+                                  </IconButton>
                                 </Paper>
                               );
                             })}
@@ -1506,4 +1561,4 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
   );
 };
 
-export default React.memo(PolicyCanvas); 
+export default React.memo(PolicyCanvas);

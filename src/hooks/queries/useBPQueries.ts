@@ -416,12 +416,33 @@ export const useBPQueries = () => {
   const useDeletePolicies = () => {
     return useMutation({
       mutationFn: async (policies: string[]) => {
-        const response = await api.delete('/api/bp/delete', {
-          data: { policies },
-        });
-        return response.data;
+        console.log('useDeletePolicies - Received policies to delete:', policies);
+        
+        if (!Array.isArray(policies)) {
+          console.error('useDeletePolicies - Expected an array of policy names, got:', policies);
+          throw new Error('Invalid input: policies must be an array of strings');
+        }
+        
+        if (policies.length === 0) {
+          console.warn('useDeletePolicies - No policies to delete');
+          return { success: true, message: 'No policies to delete' };
+        }
+        console.log('useDeletePolicies - Sending request with payload:', { policies });
+        
+        try {
+          const response = await api.delete('/api/bp/delete', {
+            data: { policies },
+          });
+          
+          console.log('useDeletePolicies - API response:', response.data);
+          return response.data;
+        } catch (error) {
+          console.error('useDeletePolicies - API error:', error);
+          throw error;
+        }
       },
-      onSuccess: () => {
+      onSuccess: (data) => {
+        console.log('useDeletePolicies - Mutation succeeded with data:', data);
         queryClient.invalidateQueries({ queryKey: ['binding-policies'] });
         toast.success('Selected binding policies deleted successfully');
       },

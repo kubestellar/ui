@@ -21,13 +21,13 @@ import {
 import { FiX, FiGitPullRequest, FiTrash2 } from "react-icons/fi";
 import Editor from "@monaco-editor/react";
 import jsyaml from "js-yaml";
-import axios from "axios";
 import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 import { ResourceItem } from "./TreeViewComponent"; // Adjust the import path to your TreeView file
 import useTheme from "../stores/themeStore"; // Import the useTheme hook
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import { api, getWebSocketUrl } from "../lib/api";
 
 interface DynamicDetailsProps {
   namespace: string;
@@ -217,7 +217,7 @@ const DynamicDetailsPanel = ({
 
         // If the resource is a Namespace, fetch the manifest from the API
         if (kind === "Namespace") {
-          const response = await axios.get(`http://localhost:4000/api/namespaces/${name}`);
+          const response = await api.get(`/api/namespaces/${name}`);
           manifestData = response.data ? JSON.stringify(response.data, null, 2) : "No manifest available";
         } else {
           // For all other resources, use the resourceData prop
@@ -271,7 +271,7 @@ const DynamicDetailsPanel = ({
     }
 
     const pluralForm = kindToPluralMap[kind] || `${kind.toLowerCase()}s`;
-    const wsUrl = `ws://localhost:4000/api/${pluralForm}/${namespace}/log?name=${name}`;
+    const wsUrl = getWebSocketUrl(`/api/${pluralForm}/${namespace}/log?name=${name}`);
     console.log(`Connecting to WebSocket: ${wsUrl}`);
 
     const socket = new WebSocket(wsUrl);
@@ -472,13 +472,13 @@ const DynamicDetailsPanel = ({
     // Check if the resource is a Namespace
     if (kind === "Namespace") {
       // Use the specific API for updating a Namespace
-      updateEndpoint = `http://localhost:4000/api/namespaces/update/${resourceName}`;
-      fetchEndpoint = `http://localhost:4000/api/namespaces/${resourceName}`;
+      updateEndpoint = `/api/namespaces/update/${resourceName}`;
+      fetchEndpoint = `/api/namespaces/${resourceName}`;
       console.log(`Updating Namespace at: ${updateEndpoint}`);
     } else {
       // Use the existing API for other resources under a namespace
       const pluralForm = kindToPluralMap[kind] || `${kind.toLowerCase()}s`;
-      updateEndpoint = `http://localhost:4000/api/${pluralForm}/${resourceNamespace}/${resourceName}`;
+      updateEndpoint = `/api/${pluralForm}/${resourceNamespace}/${resourceName}`;
       fetchEndpoint = updateEndpoint; // Same endpoint for fetching
       console.log(`Updating resource at: ${updateEndpoint}`);
     }
@@ -488,10 +488,10 @@ const DynamicDetailsPanel = ({
       const editedData = JSON.parse(manifestToUpdate);
 
       // Update the resource using the appropriate endpoint
-      await axios.put(updateEndpoint, editedData);
+      await api.put(updateEndpoint, editedData);
 
       // Fetch the updated resource using the appropriate endpoint
-      const response = await axios.get(fetchEndpoint);
+      const response = await api.get(fetchEndpoint);
       const updatedResource = response.data;
 
       const newManifestString = JSON.stringify(updatedResource, null, 2);

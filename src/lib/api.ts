@@ -20,3 +20,15 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Helper function to get WebSocket URL with proper protocol and base URL
+export const getWebSocketUrl = (path: string): string => {
+
+  const baseUrl = process.env.VITE_BASE_URL || '';
+  
+  const wsProtocol = baseUrl.startsWith('https') ? 'wss' : 'ws';
+  
+  const baseUrlWithoutProtocol = baseUrl.replace(/^https?:\/\//, '');
+  
+  return `${wsProtocol}://${baseUrlWithoutProtocol}${path}`;
+};

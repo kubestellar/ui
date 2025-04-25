@@ -26,6 +26,7 @@ import KubernetesIcon from '../components/BindingPolicy/KubernetesIcon';
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 import { useLocation, useNavigate } from "react-router-dom";
 import { getTabsStyles, StyledTab } from "../components/BindingPolicy/styles/CreateBindingPolicyStyles";
+import { api } from "../lib/api";
 
 // Define EmptyState component outside of the BP component
 const EmptyState: React.FC<{ 
@@ -593,25 +594,73 @@ const BP = () => {
 
   const handleBulkDelete = useCallback(async () => {
     try {
-      // Use the mutation for deleting multiple binding policies
-      await deleteMultiplePoliciesMutation.mutateAsync(selectedPolicies);
+      // Verify we have policies selected
+      if (selectedPolicies.length === 0) {
+        setSuccessMessage("No policies selected for deletion");
+        return;
+      }
       
-      // Immediately update the local state to remove the deleted policies
-      setBindingPolicies(current => 
-        current.filter(policy => !selectedPolicies.includes(policy.name))
-      );
+      console.log(`Attempting to delete ${selectedPolicies.length} policies:`, selectedPolicies);
       
-      setSuccessMessage(
-        `Successfully deleted ${selectedPolicies.length} binding policies`
-      );
+      const validPolicyNames = selectedPolicies.filter(name => typeof name === 'string' && name.trim() !== '');
+      
+      if (validPolicyNames.length !== selectedPolicies.length) {
+        console.error("Some selected policy names are invalid:", 
+          selectedPolicies.filter(name => !validPolicyNames.includes(name)));
+        setSuccessMessage("Error: Some selected policy names are invalid");
+        return;
+      }
+      
+      console.log("Trying a different approach: deleting each policy individually");
+      
+      const results: {
+        success: string[];
+        failures: string[];
+      } = {
+        success: [],
+        failures: []
+      };
+      
+      for (const policyName of validPolicyNames) {
+        try {
+          console.log(`Deleting policy: ${policyName}`);
+          const response = await api.delete(`/api/bp/delete/${policyName}`);
+          console.log(`Success deleting policy ${policyName}:`, response.data);
+          results.success.push(policyName);
+        } catch (error) {
+          console.error(`Error deleting policy ${policyName}:`, error);
+          results.failures.push(policyName);
+        }
+      }
+      
+      console.log("Individual deletion results:", results);
+      
+      if (results.failures.length === 0) {
+        setBindingPolicies(current => 
+          current.filter(policy => !results.success.includes(policy.name))
+        );
+        
+        setSuccessMessage(
+          `Successfully deleted ${results.success.length} binding policies`
+        );
+      } else {
+        setSuccessMessage(
+          `Deleted ${results.success.length} policies, but failed to delete ${results.failures.length} policies`
+        );
+      }
+      
       setSelectedPolicies([]);
+      
+      // Force refresh the data
+      deleteMultiplePoliciesMutation.reset();
+      await deleteMultiplePoliciesMutation.mutateAsync([]);
     } catch (error) {
       console.error("Error deleting binding policies:", error);
       setSuccessMessage(
-        `Error deleting binding policies`
+        `Error deleting binding policies: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
-  }, [selectedPolicies, deleteMultiplePoliciesMutation, setSuccessMessage, setSelectedPolicies, setBindingPolicies]);
+  }, [selectedPolicies, setSuccessMessage, setSelectedPolicies, setBindingPolicies, deleteMultiplePoliciesMutation]);
 
   // Modify the conditional return for loading to use the component:
   if (loading) {

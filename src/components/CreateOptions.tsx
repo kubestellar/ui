@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import jsyaml from "js-yaml";
 import { Dialog, DialogContent, DialogTitle, Tabs, Box, Alert, SelectChangeEvent, Typography, Snackbar } from "@mui/material";
 import GitHubIcon from "@mui/icons-material/GitHub";
-import axios, { AxiosError } from "axios";
+import  { AxiosError } from "axios";
 import { useWDSQueries } from "../hooks/queries/useWDSQueries";
 import { toast } from "react-hot-toast";
 import { StyledTab } from "./StyledComponents";
@@ -16,6 +16,7 @@ import { AddWebhookDialog } from "../components/Workloads/AddWebhookDialog";
 import { CancelConfirmationDialog } from "../components/Workloads/CancelConfirmationDialog";
 import useTheme from "../stores/themeStore";
 import helmicon from "../assets/Helm.png"
+import { api } from "../lib/api";
 
 interface Props {
   activeOption: string | null;
@@ -29,6 +30,7 @@ interface FormData {
   credentials: string;
   branchSpecifier: string;
   webhook: string;
+  workload_label: string;
 }
 
 interface HelmFormData {
@@ -38,6 +40,7 @@ interface HelmFormData {
   releaseName: string;
   version: string;
   namespace: string;
+  workload_label: string;
 }
 
 interface Workload {
@@ -126,6 +129,7 @@ spec:
     credentials: "none",
     branchSpecifier: "main",
     webhook: "none",
+    workload_label: "",
   };
   const [formData, setFormData] = useState<FormData>(initialFormData);
 
@@ -136,6 +140,7 @@ spec:
     releaseName: "",
     version: "", // Changed from "latest" to "" to make it empty by default
     namespace: "default",
+    workload_label: "",
   };
   const [helmFormData, setHelmFormData] = useState<HelmFormData>(initialHelmFormData);
 
@@ -359,8 +364,8 @@ spec:
         return;
       }
 
-      const response = await axios.post(
-        `http://localhost:4000/api/resources?auto_ns=${autoNs}`,
+      const response = await api.post(
+        `/api/resources?auto_ns=${autoNs}`,
         documents,{
           withCredentials: true,
         }
@@ -389,7 +394,7 @@ spec:
           const docWithKind = documents.find((doc) => doc?.kind);
           const kind = docWithKind?.kind || "Unknown";
           const namespace = docWithKind?.metadata?.namespace || "default";
-          toast.error(`Failed to create ${kind}: ${workloadName} in namespace ${namespace}, workload is already exists or Namspace ${namespace} not Found`);
+          toast.error(`Failed to create ${kind}: ${workloadName} in namespace ${namespace}, workload already exists or Namspace ${namespace} not Found`);
         } else if (err.response.status === 409) {
           toast.error("Conflict error: Deployment already in progress!");
         } else {
@@ -414,6 +419,7 @@ spec:
         folder_path: formData.path,
         branch: formData.branchSpecifier || "main",
         webhook: formData.webhook !== "none" ? formData.webhook : undefined,
+        workload_label: formData.workload_label || undefined,
       };
 
       const queryParams: { [key: string]: string } = {};
@@ -426,8 +432,8 @@ spec:
         queryParams.branch = formData.branchSpecifier || "main";
       }
 
-      const response = await axios.post(
-        "http://localhost:4000/api/deploy?created_by_me=true",
+      const response = await api.post(
+        "/api/deploy?created_by_me=true",
         requestBody,
         {
           params: queryParams,
@@ -444,6 +450,7 @@ spec:
           credentials: "none",
           branchSpecifier: "main",
           webhook: "none",
+          workload_label: "",
         });
         setTimeout(() => window.location.reload(), 4000);
       } else {
@@ -491,8 +498,13 @@ spec:
         requestBody.version = helmFormData.version;
       }
 
-      const response = await axios.post(
-        "http://localhost:4000/deploy/helm",
+      // Include the workload_label field if it's not empty
+      if (helmFormData.workload_label) {
+        requestBody.workloadLabel = helmFormData.workload_label;
+      }
+
+      const response = await api.post(
+        "/deploy/helm",
         requestBody,
         {
           headers: {
@@ -512,6 +524,7 @@ spec:
           releaseName: "",
           version: "", // Reset to empty string
           namespace: "default",
+          workload_label: "",
         });
         setTimeout(() => window.location.reload(), 4000);
       } else {
@@ -632,10 +645,6 @@ spec:
     setCredentialDialogOpen(false);
     setNewCredential({ githubUsername: "", personalAccessToken: "" });
     setFormData({ ...formData, credentials: "none" });
-  };
-
-  const handleWebhookChange = (event: SelectChangeEvent<string>) => {
-    setFormData({ ...formData, webhook: event.target.value });
   };
 
   const handleOpenWebhookDialog = () => {
@@ -829,12 +838,10 @@ spec:
                 setFormData={setFormData}
                 error={error}
                 credentialsList={credentialsList}
-                webhooksList={webhooksList}
                 loading={loading}
                 hasChanges={hasChanges}
                 handleCredentialChange={handleCredentialChange}
                 handleOpenCredentialDialog={handleOpenCredentialDialog}
-                handleWebhookChange={handleWebhookChange}
                 handleOpenWebhookDialog={handleOpenWebhookDialog}
                 validateForm={validateForm}
                 handleDeploy={handleDeploy}

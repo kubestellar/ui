@@ -205,7 +205,7 @@ export const AddWebhookDialog = ({
                           fontSize: "12px",
                         }}
                       >
-                        smee --url smee-url --target http://localhost:4000/api/webhook
+                        {`smee --url smee-url --target ${process.env.VITE_BASE_URL}/api/webhook` }
                       </Typography>
                       <Box
                         sx={{
@@ -219,7 +219,7 @@ export const AddWebhookDialog = ({
                           cursor: "pointer",
                         }}
                         onClick={() =>
-                          handleCopy("smee --url <smee-url> --target http://localhost:4000/api/webhook")
+                          handleCopy(`smee --url <smee-url> --target ${process.env.VITE_BASE_URL}/api/webhook`)
                         }
                       >
                         <span role="img" aria-label="copy" style={{ fontSize: "0.8rem" }}>

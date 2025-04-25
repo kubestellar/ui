@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 import {
   Button,
@@ -48,6 +48,9 @@ const BPHeader: React.FC<BPHeaderProps> = ({
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const theme = useTheme((state) => state.theme);
   const isDark = theme === "dark";
+  useEffect(() => {
+    console.log(`BPHeader: Selected policies changed - count: ${selectedPolicies.length}`, selectedPolicies);
+  }, [selectedPolicies]);
 
   const colors = {
     primary: "#2f86ff",
@@ -122,7 +125,7 @@ const BPHeader: React.FC<BPHeaderProps> = ({
                 <InputAdornment position="start">
                   <Search
                     size={20}
-                    style={{ color: isDark ? "#ffffff" : "inherit" }}
+                    style={{ color: isDark ? "#ffffff" : "inherit", }}
                   />
                 </InputAdornment>
               ),
@@ -131,6 +134,8 @@ const BPHeader: React.FC<BPHeaderProps> = ({
               minWidth: "300px",
               width: "100%",
               maxWidth: "450px",
+              borderColor: colors.border,
+              backgroundColor: isDark ? colors.paper : colors.white,
               ...(isDark && {
                 input: { color: "white" },
                 "& .MuiOutlinedInput-root": {
