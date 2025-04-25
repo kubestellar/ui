@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { api } from "../lib/api";
 
 interface ProtectedRouteProps {
   children: JSX.Element;
@@ -23,40 +22,31 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       }
 
       try {
-        const response = await api.get("/protected", {
+        const response = await fetch("http://localhost:4000/api/me", {
+          method: "GET",
           headers: {
             "Authorization": `Bearer ${token}`,
           },
-          signal: new AbortController().signal
         });
 
-        if (response.status === 200) {
+        if (response.ok) {
           setIsAuthenticated(true);
         } else {
-          const errorMsg = response.data.error || "Your session has expired. Please sign in again.";
+          const data = await response.json();
+          const errorMsg = data.error || "Your session has expired. Please sign in again.";
           setErrorMessage(errorMsg);
           setIsAuthenticated(false);
         }
       } catch (error) {
-        if (error instanceof Error && error.name !== 'CanceledError') {
-          setErrorMessage("Your session has expired. Please sign in again.");
-          setIsAuthenticated(false);
-          
-          if (error.message.includes('401')) {
-            localStorage.removeItem("jwtToken");
-          }
-        }
+        const errorMsg = "Connection error. Please try again.";
+        setErrorMessage(errorMsg);
+        setIsAuthenticated(false);
+        console.error("Protected route error:", error);
       }
     };
 
-    if (isAuthenticated === null) {
-      verifyToken();
-    }
-
-    // Cleanup function
-    return () => {
-    };
-  }, [isAuthenticated]);
+    verifyToken();
+  }, []);
 
   // While checking authentication, return nothing or a minimal spinner
   // This reduces UI flicker and provides a smoother experience

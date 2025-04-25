@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import LoadingFallback from "./LoadingFallback";
 import { motion, AnimatePresence } from "framer-motion";
-import { api } from "../lib/api";
 
 interface PublicRouteProps {
   children: JSX.Element;
@@ -14,8 +13,6 @@ const PublicRoute = ({ children }: PublicRouteProps) => {
   const location = useLocation();
 
   useEffect(() => {
-    const abortController = new AbortController();
-    
     const verifyToken = async () => {
       setIsLoading(true);
       const token = localStorage.getItem("jwtToken");
@@ -27,33 +24,24 @@ const PublicRoute = ({ children }: PublicRouteProps) => {
       }
 
       try {
-        const response = await api.get("/protected", {
-          headers: { "Authorization": `Bearer ${token}` },
-          signal: abortController.signal 
+        const response = await fetch("http://localhost:4000/api/me", {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
         });
 
-        setIsAuthenticated(response.status === 200);
+        setIsAuthenticated(response.ok);
       } catch (error) {
-        if (error instanceof Error && error.name !== 'CanceledError') {
-          setIsAuthenticated(false);
-          
-          if (error.message.includes('401')) {
-            localStorage.removeItem("jwtToken");
-          }
-        }
+        setIsAuthenticated(false);
+        console.error("Public route error:", error);
       } finally {
-        if (!abortController.signal.aborted) {
-          // Add a small delay to make transitions feel more natural
-          setTimeout(() => setIsLoading(false), 300);
-        }
+        // Add a small delay to make transitions feel more natural
+        setTimeout(() => setIsLoading(false), 300);
       }
     };
 
     verifyToken();
-
-    return () => {
-      abortController.abort();
-    };
   }, []);
 
   // Show loading state
