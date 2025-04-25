@@ -14,6 +14,8 @@ const PublicRoute = ({ children }: PublicRouteProps) => {
   const location = useLocation();
 
   useEffect(() => {
+    const abortController = new AbortController();
+    
     const verifyToken = async () => {
       setIsLoading(true);
       const token = localStorage.getItem("jwtToken");
@@ -27,19 +29,31 @@ const PublicRoute = ({ children }: PublicRouteProps) => {
       try {
         const response = await api.get("/protected", {
           headers: { "Authorization": `Bearer ${token}` },
+          signal: abortController.signal 
         });
 
         setIsAuthenticated(response.status === 200);
       } catch (error) {
-        setIsAuthenticated(false);
-        console.error("Public route error:", error);
+        if (error instanceof Error && error.name !== 'CanceledError') {
+          setIsAuthenticated(false);
+          
+          if (error.message.includes('401')) {
+            localStorage.removeItem("jwtToken");
+          }
+        }
       } finally {
-        // Add a small delay to make transitions feel more natural
-        setTimeout(() => setIsLoading(false), 300);
+        if (!abortController.signal.aborted) {
+          // Add a small delay to make transitions feel more natural
+          setTimeout(() => setIsLoading(false), 300);
+        }
       }
     };
 
     verifyToken();
+
+    return () => {
+      abortController.abort();
+    };
   }, []);
 
   // Show loading state
