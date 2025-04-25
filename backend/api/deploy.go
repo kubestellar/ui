@@ -72,6 +72,9 @@ func DeployHandler(c *gin.Context) {
 		repoBase := filepath.Base(request.RepoURL)
 		projectName := strings.TrimSuffix(repoBase, filepath.Ext(repoBase))
 		request.WorkloadLabel = projectName
+	} else {
+		log.Printf("Using provided workload_label: %s", request.WorkloadLabel)
+
 	}
 
 	// Save deployment configuration in Redis for webhook usage
