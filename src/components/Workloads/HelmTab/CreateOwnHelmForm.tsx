@@ -336,7 +336,7 @@ export const CreateOwnHelmForm = ({ formData, setFormData, error, theme }: Props
                       mb: 1,
                   }}
               >
-                  Namespace (default: default)
+                  Namespace *
               </Typography>
               <TextField
                   fullWidth
@@ -344,7 +344,66 @@ export const CreateOwnHelmForm = ({ formData, setFormData, error, theme }: Props
                   onChange={(e) =>
                       setFormData({ ...formData, namespace: e.target.value })
                   }
-                  placeholder="e.g., kube-system"
+                  error={!!error && !formData.namespace}
+                  placeholder="e.g., default, my-namespace"
+                  sx={{
+                      "& .MuiOutlinedInput-root": {
+                          borderRadius: "8px",
+                          "& fieldset": {
+                              borderColor: theme === "dark" ? "#444" : "#e0e0e0",
+                              borderWidth: "1px",
+                          },
+                          "&:hover fieldset": {
+                              borderColor: "#1976d2",
+                          },
+                          "&.Mui-focused fieldset": {
+                              borderColor: "#1976d2",
+                              borderWidth: "1px",
+                          },
+                          "&.Mui-error fieldset": {
+                              borderColor: "red",
+                          },
+                      },
+                      "& .MuiInputBase-input": {
+                          padding: "12px 14px",
+                          fontSize: "0.875rem",
+                          color: theme === "dark" ? "#d4d4d4" : "#666",
+                      },
+                      "& .MuiInputBase-input::placeholder": {
+                          color: theme === "dark" ? "#858585" : "#666",
+                          opacity: 1,
+                      },
+                  }}
+              />
+              <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+                  <span role="img" aria-label="tip" style={{ fontSize: "0.8rem", marginRight: "8px" }}>
+                      💡
+                  </span>
+                  <Typography variant="caption" sx={{ color: theme === "dark" ? "#858585" : "#666" }}>
+                      Specify the namespace for the Helm chart
+                  </Typography>
+              </Box>
+          </Box>
+
+          <Box>
+              <Typography
+                  variant="subtitle1"
+                  sx={{
+                      fontWeight: 600,
+                      fontSize: "13px",
+                      color: theme === "dark" ? "#d4d4d4" : "#333",
+                      mb: 1,
+                  }}
+              >
+                  Workload Label
+              </Typography>
+              <TextField
+                  fullWidth
+                  value={formData.workload_label}
+                  onChange={(e) =>
+                      setFormData({ ...formData, workload_label: e.target.value })
+                  }
+                  placeholder="e.g., my-helm-workload"
                   sx={{
                       "& .MuiOutlinedInput-root": {
                           borderRadius: "8px",
@@ -376,7 +435,7 @@ export const CreateOwnHelmForm = ({ formData, setFormData, error, theme }: Props
                       💡
                   </span>
                   <Typography variant="caption" sx={{ color: theme === "dark" ? "#858585" : "#666" }}>
-                      Specify the namespace for the Helm deployment
+                      Add a label to identify your workload (optional)
                   </Typography>
               </Box>
           </Box>
