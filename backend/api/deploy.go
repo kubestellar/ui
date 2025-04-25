@@ -1,12 +1,13 @@
 package api
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -24,6 +25,32 @@ type DeployRequest struct {
 	WorkloadLabel string `json:"workload_label"`
 }
 
+// GitHubContentResponse represents the GitHub API response for a file's content
+type GitHubContentResponse struct {
+	Type        string `json:"type"`
+	Encoding    string `json:"encoding"`
+	Size        int    `json:"size"`
+	Name        string `json:"name"`
+	Path        string `json:"path"`
+	Content     string `json:"content"`
+	SHA         string `json:"sha"`
+	URL         string `json:"url"`
+	DownloadURL string `json:"download_url"`
+}
+
+// GitHubDirectoryResponse represents a GitHub API response for directory listing
+type GitHubDirectoryResponse []struct {
+	Name        string `json:"name"`
+	Path        string `json:"path"`
+	SHA         string `json:"sha"`
+	Size        int    `json:"size"`
+	URL         string `json:"url"`
+	HTMLURL     string `json:"html_url"`
+	GitURL      string `json:"git_url"`
+	DownloadURL string `json:"download_url"`
+	Type        string `json:"type"`
+}
+
 // GitHubWebhookPayload defines the expected structure of the webhook request
 type GitHubWebhookPayload struct {
 	Repository struct {
@@ -38,7 +65,129 @@ type GitHubWebhookPayload struct {
 	} `json:"commits"`
 }
 
-// DeployHandler handles deployment requests
+// Fetches YAML files from a GitHub repository directory without cloning
+func fetchGitHubYAMLs(repoURL, folderPath, branch, gitUsername, gitToken string) (map[string][]byte, error) {
+	// Extract owner and repo from the GitHub URL
+	// Example: from https://github.com/owner/repo.git to owner/repo
+	urlParts := strings.Split(strings.TrimSuffix(repoURL, ".git"), "/")
+	ownerRepo := fmt.Sprintf("%s/%s", urlParts[len(urlParts)-2], urlParts[len(urlParts)-1])
+
+	// Prepare the GitHub API URL to fetch directory contents
+	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/contents/%s?ref=%s",
+		ownerRepo, folderPath, branch)
+
+	// Create a request with authentication if provided
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %v", err)
+	}
+
+	req.Header.Set("Accept", "application/vnd.github.v3+json")
+
+	// Add authentication if provided
+	if gitUsername != "" && gitToken != "" {
+		req.SetBasicAuth(gitUsername, gitToken)
+	} else if gitToken != "" {
+		req.Header.Set("Authorization", "token "+gitToken)
+	}
+
+	// Make the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch repository contents: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("GitHub API error: %s - %s", resp.Status, string(bodyBytes))
+	}
+
+	// Read and process the response
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read API response: %v", err)
+	}
+
+	// Try to parse as a directory first
+	var dirContents GitHubDirectoryResponse
+	if err := json.Unmarshal(bodyBytes, &dirContents); err != nil {
+		// If not a directory, it might be a single file
+		var fileContent GitHubContentResponse
+		if err := json.Unmarshal(bodyBytes, &fileContent); err != nil {
+			return nil, fmt.Errorf("failed to parse GitHub API response: %v", err)
+		}
+
+		// If it's a single YAML file, process it
+		if strings.HasSuffix(fileContent.Name, ".yaml") || strings.HasSuffix(fileContent.Name, ".yml") {
+			decodedContent, err := base64.StdEncoding.DecodeString(fileContent.Content)
+			if err != nil {
+				return nil, fmt.Errorf("failed to decode file content: %v", err)
+			}
+
+			return map[string][]byte{fileContent.Path: decodedContent}, nil
+		}
+		return map[string][]byte{}, nil
+	}
+
+	// Process directory contents recursively
+	yamlFiles := make(map[string][]byte)
+	for _, item := range dirContents {
+		if item.Type == "file" && (strings.HasSuffix(item.Name, ".yaml") || strings.HasSuffix(item.Name, ".yml")) {
+			// Fetch the YAML file content
+			fileReq, err := http.NewRequest("GET", item.URL, nil)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create file request: %v", err)
+			}
+
+			fileReq.Header.Set("Accept", "application/vnd.github.v3+json")
+			if gitUsername != "" && gitToken != "" {
+				fileReq.SetBasicAuth(gitUsername, gitToken)
+			} else if gitToken != "" {
+				fileReq.Header.Set("Authorization", "token "+gitToken)
+			}
+
+			fileResp, err := client.Do(fileReq)
+			if err != nil {
+				return nil, fmt.Errorf("failed to fetch file content: %v", err)
+			}
+
+			fileBytes, err := ioutil.ReadAll(fileResp.Body)
+			fileResp.Body.Close()
+			if err != nil {
+				return nil, fmt.Errorf("failed to read file content: %v", err)
+			}
+
+			var fileContent GitHubContentResponse
+			if err := json.Unmarshal(fileBytes, &fileContent); err != nil {
+				return nil, fmt.Errorf("failed to parse file content: %v", err)
+			}
+
+			decodedContent, err := base64.StdEncoding.DecodeString(fileContent.Content)
+			if err != nil {
+				return nil, fmt.Errorf("failed to decode file content: %v", err)
+			}
+
+			yamlFiles[item.Path] = decodedContent
+		} else if item.Type == "dir" {
+			// Recursively fetch YAML files from subdirectories
+			subPath := filepath.Join(folderPath, item.Name)
+			subFiles, err := fetchGitHubYAMLs(repoURL, subPath, branch, gitUsername, gitToken)
+			if err != nil {
+				return nil, err
+			}
+
+			for path, content := range subFiles {
+				yamlFiles[path] = content
+			}
+		}
+	}
+
+	return yamlFiles, nil
+}
+
+// DeployHandler that uses the GitHub API instead of cloning
 func DeployHandler(c *gin.Context) {
 	var request DeployRequest
 
@@ -72,9 +221,6 @@ func DeployHandler(c *gin.Context) {
 		repoBase := filepath.Base(request.RepoURL)
 		projectName := strings.TrimSuffix(repoBase, filepath.Ext(repoBase))
 		request.WorkloadLabel = projectName
-	} else {
-		log.Printf("Using provided workload_label: %s", request.WorkloadLabel)
-
 	}
 
 	// Save deployment configuration in Redis for webhook usage
@@ -82,35 +228,50 @@ func DeployHandler(c *gin.Context) {
 	redis.SetRepoURL(request.RepoURL)
 	redis.SetBranch(branch)
 	redis.SetGitToken(gitToken)
-	redis.SetWorkloadLabel(request.WorkloadLabel) // Store workload label in Redis
+	redis.SetWorkloadLabel(request.WorkloadLabel)
 
-	tempDir := fmt.Sprintf("/tmp/%d", time.Now().Unix())
-	cloneURL := request.RepoURL
-
-	if gitUsername != "" && gitToken != "" {
-		cloneURL = fmt.Sprintf("https://%s:%s@%s", gitUsername, gitToken, request.RepoURL[8:])
-	}
-
-	// Clone the repository
-	cmd := exec.Command("git", "clone", "-b", branch, cloneURL, tempDir)
-	if err := cmd.Run(); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to clone repo", "details": err.Error()})
+	// Create temporary directory to store downloaded YAML files
+	tempDir, err := ioutil.TempDir("", "github-yamls-")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create temporary directory", "details": err.Error()})
 		return
 	}
 	defer os.RemoveAll(tempDir)
 
-	deployPath := tempDir
-	if request.FolderPath != "" {
-		deployPath = filepath.Join(tempDir, request.FolderPath)
-	}
-
-	if _, err := os.Stat(deployPath); os.IsNotExist(err) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Specified folder does not exist"})
+	// Fetch YAML files from GitHub using the API
+	yamlFiles, err := fetchGitHubYAMLs(request.RepoURL, request.FolderPath, branch, gitUsername, gitToken)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch YAML files", "details": err.Error()})
 		return
 	}
 
-	// Deploy the manifests with workload label
-	deploymentTree, err := k8s.DeployManifests(deployPath, dryRun, dryRunStrategy, request.WorkloadLabel)
+	// Write YAML files to temporary directory
+	for path, content := range yamlFiles {
+		// Get relative path from the folder path
+		relPath := path
+		if request.FolderPath != "" && strings.HasPrefix(path, request.FolderPath) {
+			relPath = strings.TrimPrefix(path, request.FolderPath)
+			relPath = strings.TrimPrefix(relPath, "/")
+		}
+
+		filePath := filepath.Join(tempDir, relPath)
+
+		// Ensure directory exists
+		dir := filepath.Dir(filePath)
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create directory structure", "details": err.Error()})
+			return
+		}
+
+		// Write file
+		if err := ioutil.WriteFile(filePath, content, 0644); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to write YAML file", "details": err.Error()})
+			return
+		}
+	}
+
+	// Deploy the manifests with workload label using the temporary directory
+	deploymentTree, err := k8s.DeployManifests(tempDir, dryRun, dryRunStrategy, request.WorkloadLabel)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Deployment failed", "details": err.Error()})
 		return
@@ -134,7 +295,7 @@ func DeployHandler(c *gin.Context) {
 			"dry_run":          fmt.Sprintf("%v", dryRun),
 			"dry_run_strategy": dryRunStrategy,
 			"created_by_me":    "true",
-			"workload_label":   request.WorkloadLabel, // Store workload label in deployment data
+			"workload_label":   request.WorkloadLabel,
 		}
 
 		// Convert deployment tree to JSON string for storage
@@ -157,7 +318,7 @@ func DeployHandler(c *gin.Context) {
 			"branch":         deploymentData["branch"],
 			"dry_run":        deploymentData["dry_run"],
 			"created_by_me":  deploymentData["created_by_me"],
-			"workload_label": deploymentData["workload_label"], // Include workload label
+			"workload_label": deploymentData["workload_label"],
 		}
 
 		existingDeployments = append(existingDeployments, newDeployment)
@@ -187,6 +348,7 @@ func DeployHandler(c *gin.Context) {
 		"stored":          createdByMe,
 		"id":              deploymentID,
 		"workload_label":  request.WorkloadLabel,
+		"files_processed": len(yamlFiles),
 	}
 
 	if createdByMe {
@@ -271,7 +433,6 @@ func GitHubWebhookHandler(c *gin.Context) {
 
 	// Get repository URL from webhook payload
 	repoUrl := request.Repository.CloneURL
-	tempDir := fmt.Sprintf("/tmp/%d", time.Now().Unix())
 
 	// Get access token from Redis
 	gitToken, _ := redis.GetGitToken()
@@ -280,32 +441,48 @@ func GitHubWebhookHandler(c *gin.Context) {
 	dryRun := false
 	dryRunStrategy := ""
 
-	// Clone the repository using token if available
-	cloneURL := repoUrl
-	if gitToken != "" {
-		cloneURL = fmt.Sprintf("https://x-access-token:%s@%s", gitToken, repoUrl[8:])
-	}
-
-	// Clone the specific branch
-	cmd := exec.Command("git", "clone", "-b", storedBranch, cloneURL, tempDir)
-	if err := cmd.Run(); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to clone repo", "details": err.Error()})
+	// Create temporary directory to store downloaded YAML files
+	tempDir, err := ioutil.TempDir("", "github-webhook-yamls-")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create temporary directory", "details": err.Error()})
 		return
 	}
 	defer os.RemoveAll(tempDir)
 
-	deployPath := tempDir
-	if folderPath != "" {
-		deployPath = filepath.Join(tempDir, folderPath)
-	}
-
-	if _, err := os.Stat(deployPath); os.IsNotExist(err) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Specified folder does not exist"})
+	// Fetch YAML files from GitHub using the API
+	yamlFiles, err := fetchGitHubYAMLs(repoUrl, folderPath, storedBranch, "", gitToken)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch YAML files", "details": err.Error()})
 		return
 	}
 
+	// Write YAML files to temporary directory
+	for path, content := range yamlFiles {
+		// Get relative path from the folder path
+		relPath := path
+		if folderPath != "" && strings.HasPrefix(path, folderPath) {
+			relPath = strings.TrimPrefix(path, folderPath)
+			relPath = strings.TrimPrefix(relPath, "/")
+		}
+
+		filePath := filepath.Join(tempDir, relPath)
+
+		// Ensure directory exists
+		dir := filepath.Dir(filePath)
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create directory structure", "details": err.Error()})
+			return
+		}
+
+		// Write file
+		if err := ioutil.WriteFile(filePath, content, 0644); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to write YAML file", "details": err.Error()})
+			return
+		}
+	}
+
 	// For webhook deployments, always deploy and store the data
-	deploymentTree, err := k8s.DeployManifests(deployPath, dryRun, dryRunStrategy, workloadLabel)
+	deploymentTree, err := k8s.DeployManifests(tempDir, dryRun, dryRunStrategy, workloadLabel)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Deployment failed", "details": err.Error()})
 		return
