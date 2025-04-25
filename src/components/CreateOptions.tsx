@@ -30,6 +30,7 @@ interface FormData {
   credentials: string;
   branchSpecifier: string;
   webhook: string;
+  workload_label: string;
 }
 
 interface HelmFormData {
@@ -39,6 +40,7 @@ interface HelmFormData {
   releaseName: string;
   version: string;
   namespace: string;
+  workload_label: string;
 }
 
 interface Workload {
@@ -127,6 +129,7 @@ spec:
     credentials: "none",
     branchSpecifier: "main",
     webhook: "none",
+    workload_label: "",
   };
   const [formData, setFormData] = useState<FormData>(initialFormData);
 
@@ -137,6 +140,7 @@ spec:
     releaseName: "",
     version: "", // Changed from "latest" to "" to make it empty by default
     namespace: "default",
+    workload_label: "",
   };
   const [helmFormData, setHelmFormData] = useState<HelmFormData>(initialHelmFormData);
 
@@ -415,6 +419,7 @@ spec:
         folder_path: formData.path,
         branch: formData.branchSpecifier || "main",
         webhook: formData.webhook !== "none" ? formData.webhook : undefined,
+        workload_label: formData.workload_label || undefined,
       };
 
       const queryParams: { [key: string]: string } = {};
@@ -445,6 +450,7 @@ spec:
           credentials: "none",
           branchSpecifier: "main",
           webhook: "none",
+          workload_label: "",
         });
         setTimeout(() => window.location.reload(), 4000);
       } else {
@@ -492,6 +498,11 @@ spec:
         requestBody.version = helmFormData.version;
       }
 
+      // Include the workload_label field if it's not empty
+      if (helmFormData.workload_label) {
+        requestBody.workloadLabel = helmFormData.workload_label;
+      }
+
       const response = await api.post(
         "/deploy/helm",
         requestBody,
@@ -513,6 +524,7 @@ spec:
           releaseName: "",
           version: "", // Reset to empty string
           namespace: "default",
+          workload_label: "",
         });
         setTimeout(() => window.location.reload(), 4000);
       } else {

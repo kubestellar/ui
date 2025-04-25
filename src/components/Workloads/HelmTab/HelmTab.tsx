@@ -16,6 +16,7 @@ export interface HelmFormData {
   releaseName: string;
   version: string;
   namespace: string;
+  workload_label: string;
 }
 
 interface Props {
@@ -116,6 +117,7 @@ export const HelmTab = ({
         chartName: selectedChart,
         releaseName: selectedChart,
         namespace: selectedChart,
+        workloadLabel: formData.workload_label || undefined
       };
 
       const response = await api.post(
