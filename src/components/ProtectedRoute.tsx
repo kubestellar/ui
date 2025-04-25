@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { api } from "../lib/api";
+import axios from "axios";
 
 interface ProtectedRouteProps {
   children: JSX.Element;
@@ -22,23 +24,22 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       }
 
       try {
-        const response = await fetch("http://localhost:4000/api/me", {
-          method: "GET",
+        await api.get("/api/me", {
           headers: {
             "Authorization": `Bearer ${token}`,
           },
         });
-
-        if (response.ok) {
-          setIsAuthenticated(true);
-        } else {
-          const data = await response.json();
-          const errorMsg = data.error || "Your session has expired. Please sign in again.";
-          setErrorMessage(errorMsg);
-          setIsAuthenticated(false);
-        }
+        
+        setIsAuthenticated(true);
       } catch (error) {
-        const errorMsg = "Connection error. Please try again.";
+        let errorMsg = "Your session has expired. Please sign in again.";
+        
+        if (axios.isAxiosError(error) && error.response) {
+          errorMsg = error.response.data?.error || errorMsg;
+        } else if (axios.isAxiosError(error) && error.request) {
+          errorMsg = "Connection error. Please try again.";
+        }
+        
         setErrorMessage(errorMsg);
         setIsAuthenticated(false);
         console.error("Protected route error:", error);

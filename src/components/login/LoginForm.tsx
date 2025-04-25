@@ -4,6 +4,8 @@ import { Eye, EyeOff, Lock, User, Globe } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useWebSocket } from "../../context/WebSocketProvider";
+import { api } from "../../lib/api";
+import axios from "axios";
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -119,69 +121,60 @@ const LoginForm = () => {
     const loadingToastId = toast.loading("Signing in...", { id: "auth-loading" });
 
     try {
-      const loginResponse = await fetch("http://localhost:4000/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, password }),
-      });
+      const { data: responseData } = await api.post("/login", { username, password });
+      
+      localStorage.setItem("jwtToken", responseData.token);
+      console.log(`[LoginForm] JWT token stored at ${performance.now() - renderStartTime.current}ms`);
 
-      const responseData = await loginResponse.json();
+      if (rememberMe) {
+        localStorage.setItem("rememberedUsername", username);
+        localStorage.setItem("rememberedPassword", btoa(password));
+        console.log(`[LoginForm] Saved credentials for "Remember Me" at ${performance.now() - renderStartTime.current}ms`);
+      } else {
+        localStorage.removeItem("rememberedUsername");
+        localStorage.removeItem("rememberedPassword");
+        console.log(`[LoginForm] Cleared remembered credentials at ${performance.now() - renderStartTime.current}ms`);
+      }
 
-      if (loginResponse.ok) {
-        localStorage.setItem("jwtToken", responseData.token);
-        console.log(`[LoginForm] JWT token stored at ${performance.now() - renderStartTime.current}ms`);
-
-        if (rememberMe) {
-          localStorage.setItem("rememberedUsername", username);
-          localStorage.setItem("rememberedPassword", btoa(password));
-          console.log(`[LoginForm] Saved credentials for "Remember Me" at ${performance.now() - renderStartTime.current}ms`);
-        } else {
-          localStorage.removeItem("rememberedUsername");
-          localStorage.removeItem("rememberedPassword");
-          console.log(`[LoginForm] Cleared remembered credentials at ${performance.now() - renderStartTime.current}ms`);
-        }
-
-        const token = localStorage.getItem("jwtToken");
-        const protectedResponse = await fetch("http://localhost:4000/api/me", {
-          method: "GET",
+      const token = localStorage.getItem("jwtToken");
+      
+      try {
+        await api.get("/api/me", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-        const protectedData = await protectedResponse.json();
+        toast.success("Login successful", { id: loadingToastId });
+        console.log(`[LoginForm] Login successful at ${performance.now() - renderStartTime.current}ms`);
 
-        if (protectedResponse.ok) {
-          toast.success("Login successful", { id: loadingToastId });
-          console.log(`[LoginForm] Login successful at ${performance.now() - renderStartTime.current}ms`);
+        setIsLoggedIn(true);
 
-          setIsLoggedIn(true);
+        const redirectPath = localStorage.getItem("redirectAfterLogin") || "/";
+        localStorage.removeItem("redirectAfterLogin");
+        console.log(`[LoginForm] Redirecting to "${redirectPath}" at ${performance.now() - renderStartTime.current}ms`);
 
-          const redirectPath = localStorage.getItem("redirectAfterLogin") || "/";
-          localStorage.removeItem("redirectAfterLogin");
-          console.log(`[LoginForm] Redirecting to "${redirectPath}" at ${performance.now() - renderStartTime.current}ms`);
-
-          setTimeout(() => {
-            navigate(redirectPath);
-          }, 1000);
-        } else {
-          toast.error(protectedData.error || "Authentication failed", { id: loadingToastId });
-          console.log(`[LoginForm] Token verification failed at ${performance.now() - renderStartTime.current}ms: ${protectedData.error}`);
-          localStorage.removeItem("jwtToken");
-        }
-      } else {
-        setErrors((prev) => ({
-          ...prev,
-          password: responseData.error || "Invalid credentials",
-        }));
-        toast.error(responseData.error || "Invalid credentials", { id: loadingToastId });
-        console.log(`[LoginForm] Login failed at ${performance.now() - renderStartTime.current}ms: ${responseData.error}`);
+        setTimeout(() => {
+          navigate(redirectPath);
+        }, 1000);
+      } catch (error) {
+        const errorMessage = axios.isAxiosError(error) 
+          ? error.response?.data?.error || "Authentication failed"
+          : "Authentication failed";
+        toast.error(errorMessage, { id: loadingToastId });
+        console.log(`[LoginForm] Token verification failed at ${performance.now() - renderStartTime.current}ms: ${errorMessage}`);
+        localStorage.removeItem("jwtToken");
       }
     } catch (error) {
-      toast.error("Network error. Please check your connection and try again.", { id: loadingToastId });
-      console.error(`[LoginForm] Network error at ${performance.now() - renderStartTime.current}ms:`, error);
+      const errorMessage = axios.isAxiosError(error)
+        ? error.response?.data?.error || "Invalid credentials"
+        : "Invalid credentials";
+      setErrors((prev) => ({
+        ...prev,
+        password: errorMessage,
+      }));
+      toast.error(errorMessage, { id: loadingToastId });
+      console.log(`[LoginForm] Login failed at ${performance.now() - renderStartTime.current}ms: ${errorMessage}`);
     } finally {
       setIsLoading(false);
       console.log(`[LoginForm] Form submission completed at ${performance.now() - renderStartTime.current}ms`);
