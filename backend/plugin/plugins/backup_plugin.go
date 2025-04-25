@@ -1,15 +1,14 @@
 package plugins
 
 import (
+	"fmt"
 	"net/http"
-	"time"
 
 	"os/exec"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/log"
 	"github.com/kubestellar/ui/plugin"
-	v3 "go.etcd.io/etcd/client/v3"
 	"go.uber.org/zap"
 )
 
@@ -19,7 +18,10 @@ var (
 )
 
 type backupPlugin struct {
-	cfg v3.Config
+	ep     string
+	caCert string
+	cert   string
+	key    string
 }
 
 func (p backupPlugin) Name() string {
@@ -60,8 +62,30 @@ func rootHandler(c *gin.Context) {
 
 func takeSnapshot(c *gin.Context) {
 
+	cmd := exec.Command("etcdtl",
+		fmt.Sprintf("--endppoints=%s", bp.ep), fmt.Sprintf("--cacert=%s", bp.caCert),
+		fmt.Sprintf("--cert=%s", bp.cert), fmt.Sprintf("--key=%s", bp.key), "save")
+	err := cmd.Run()
+	if err != nil {
+		log.LogError("failed to take snapshot", zap.String("error", err.Error()))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "success"})
+
 }
 func restoreFromSnapshot(c *gin.Context) {
+
+	cmd := exec.Command("etcdtl",
+		fmt.Sprintf("--endppoints=%s", bp.ep), fmt.Sprintf("--cacert=%s", bp.caCert),
+		fmt.Sprintf("--cert=%s", bp.cert), fmt.Sprintf("--key=%s", bp.key), "restore")
+	err := cmd.Run()
+	if err != nil {
+		log.LogError("failed to restore from snapshot", zap.String("error", err.Error()))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "success"})
 
 }
 
@@ -72,11 +96,14 @@ func init() {
 		"--context", "kind-kubeflex", "-n", "kube-system", "port-forward", "pods/etcd-kubeflex-control-plane", "2379:2379")
 	err := cmd.Start()
 	if err != nil {
-		log.LogError("failed to start cmd", zap.String("err", err.Error()))
+		log.LogError("failed to start cmd", zap.String("error", err.Error()))
 	}
-	bp = backupPlugin{v3.Config{
-		Endpoints:   []string{"https://127.0.0.1:2379"},
-		DialTimeout: time.Second * 2,
-	}}
+
+	bp = backupPlugin{
+		ep:     "https://127.0.0.1:2379",
+		caCert: "",
+		cert:   "",
+		key:    "",
+	}
 	Pm.Register(bp)
 }
