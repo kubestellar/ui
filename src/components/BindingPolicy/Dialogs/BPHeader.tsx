@@ -125,7 +125,7 @@ const BPHeader: React.FC<BPHeaderProps> = ({
                 <InputAdornment position="start">
                   <Search
                     size={20}
-                    style={{ color: isDark ? "#ffffff" : "inherit" }}
+                    style={{ color: isDark ? "#ffffff" : "inherit", }}
                   />
                 </InputAdornment>
               ),
@@ -134,6 +134,8 @@ const BPHeader: React.FC<BPHeaderProps> = ({
               minWidth: "300px",
               width: "100%",
               maxWidth: "450px",
+              borderColor: colors.border,
+              backgroundColor: isDark ? colors.paper : colors.white,
               ...(isDark && {
                 input: { color: "white" },
                 "& .MuiOutlinedInput-root": {
