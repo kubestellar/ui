@@ -1,23 +1,10 @@
 import { Box, Typography, Button } from "@mui/material";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import useTheme from "../stores/themeStore";
 import LoadingFallback from "./LoadingFallback";
 import { api } from "../lib/api";
 
-// Define the API response interface
-interface ApiResponse {
-  data: {
-    clusterScoped: {
-      [key: string]: ResourceItem[];
-    };
-    namespaced: {
-      [namespace: string]: {
-        [kind: string]: ResourceItem[] | { __namespaceMetaData: ResourceItem[] };
-      };
-    };
-  };
-}
-
+// Define the response interfaces
 interface ResourceItem {
   createdAt: string;
   kind: string;
@@ -32,87 +19,373 @@ interface ResourceItem {
   status?: "Synced" | "OutOfSync" | "Missing" | "Healthy";
 }
 
+interface SSEData {
+  count: number;
+  data: {
+    new: ResourceItem[];
+  };
+}
+
+// Define types for the data structure in the complete event
+interface NamespacedResources {
+  [namespace: string]: {
+    [kind: string]: ResourceItem[] | { __namespaceMetaData: ResourceItem[] };
+  };
+}
+
+interface ClusterScopedResources {
+  [key: string]: ResourceItem[];
+}
+
+interface CompleteEventData {
+  namespaced: NamespacedResources;
+  clusterScoped: ClusterScopedResources;
+}
+
 const ListViewComponent = () => {
   const theme = useTheme((state) => state.theme);
   const [resources, setResources] = useState<ResourceItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [initialLoading, setInitialLoading] = useState<boolean>(true); // Track initial connection
+  const [loadingMessage, setLoadingMessage] = useState<string>("Connecting to server...");
+  const [error, setError] = useState<string | null>(null);
+  const resourcesRef = useRef<ResourceItem[]>([]);
 
   // Add pagination state
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage] = useState<number>(10);
   const [totalItems, setTotalItems] = useState<number>(0);
 
+  // Function to format date strings properly
+  const formatCreatedAt = (dateString: string): string => {
+    // The backend returns dates in format like "2025-02-13 15:10:11 +0530 IST"
+    // Direct usage of new Date() doesn't parse this format correctly
+    try {
+      // Remove the timezone name (IST) and use only the offset
+      const cleanDateString = dateString.replace(" IST", "");
+      
+      // Try to parse using various approaches
+      const date = new Date(cleanDateString);
+      
+      // Check if date is valid
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleString();
+      }
+      
+      // If direct parsing fails, try manual parsing
+      const parts = dateString.split(' ');
+      if (parts.length >= 2) {
+        // Just return the original date string without the timezone name
+        return `${parts[0]} ${parts[1]}`;
+      }
+      
+      // If all parsing fails, return the original string
+      return dateString;
+    } catch (error) {
+      console.error("Error formatting date:",error, dateString);
+      return dateString; // Return original if parsing fails
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
+    let eventSource: EventSource | null = null;
 
-    const fetchData = async () => {
-      setIsLoading(true); // Set loading state when starting the fetch
-      try {
-        const response = await api.get<ApiResponse>("/api/wds/list");
-        const data = response.data.data;
-
+    const processCompleteData = (data: CompleteEventData): ResourceItem[] => {
         const resourceList: ResourceItem[] = [];
 
-        // Process cluster-scoped resources with type assertion
-        (Object.entries(data.clusterScoped) as [string, ResourceItem[]][]).forEach(([kind, items]) => {
-          console.log(kind);
-          items.forEach((item) => {
+      // Process cluster-scoped resources
+      if (data.clusterScoped) {
+        Object.entries(data.clusterScoped).forEach(([kind, items]) => {
+          if (!Array.isArray(items)) return;
+          
+          (items as ResourceItem[]).forEach((item: ResourceItem) => {
+            const sourceUrl = `https://github.com/onkarr17/${item.name.toLowerCase()}-gitrepo.io/k8s`;
             resourceList.push({
               createdAt: item.createdAt,
-              kind: item.kind,
+              kind: item.kind || kind,
               name: item.name,
               namespace: item.namespace || "Cluster",
-              project: "default", // Default project based on backend
-              source: `https://github.com/onkarr17/${item.name.toLowerCase()}-gitrepo.io/k8s`, // Example source URL
+              project: "default",
+              source: sourceUrl,
               destination: `in-cluster/${item.namespace || "default"}`,
             });
           });
         });
+      }
 
-        // Process namespaced resources with type assertion
+      // Process namespaced resources
+      if (data.namespaced) {
         Object.entries(data.namespaced).forEach(([namespace, resourcesByKind]) => {
-          console.log(namespace);
-          (Object.entries(resourcesByKind) as [string, ResourceItem[]][]).forEach(([kind, items]) => {
-            if (kind !== "__namespaceMetaData") {
-              items.forEach((item) => {
+          if (typeof resourcesByKind !== 'object' || resourcesByKind === null) return;
+          
+          // Process each kind of resource in this namespace
+          Object.entries(resourcesByKind).forEach(([kind, items]) => {
+            // Special handling for namespace metadata
+            if (kind === "__namespaceMetaData") {
+              if (Array.isArray(items)) {
+                (items as ResourceItem[]).forEach((item: ResourceItem) => {
                 resourceList.push({
                   createdAt: item.createdAt,
-                  kind: item.kind,
-                  name: item.name,
-                  namespace: item.namespace,
-                  project: "default", // Default project based on backend
-                  source: `https://github.com/onkarr17/${item.name.toLowerCase()}-gitrepo.io/k8s`, // Example source URL
-                  destination: `in-cluster/${item.namespace}`,
+                    kind: "Namespace",
+                    name: item.name || namespace,
+                    namespace: namespace,
+                    project: "default",
+                    source: `https://github.com/onkarr17/${namespace.toLowerCase()}-gitrepo.io/k8s`,
+                    destination: `in-cluster/${namespace}`,
+                  });
                 });
-              });
+              }
+              return;
             }
+            
+            // Skip if items is not an array
+            if (!Array.isArray(items)) return;
+            
+            (items as ResourceItem[]).forEach((item: ResourceItem) => {
+              const sourceUrl = `https://github.com/onkarr17/${item.name.toLowerCase()}-gitrepo.io/k8s`;
+              resourceList.push({
+                createdAt: item.createdAt,
+                kind: item.kind || kind,
+                name: item.name,
+                namespace: item.namespace || namespace,
+                project: "default",
+                source: sourceUrl,
+                destination: `in-cluster/${item.namespace || namespace}`,
+              });
+            });
           });
         });
+      }
+      
+      return resourceList;
+    };
 
+    const fetchDataWithSSE = () => {
+      setIsLoading(true);
+      setInitialLoading(true);
+      setLoadingMessage("Connecting to server...");
+      setError(null);
+      resourcesRef.current = [];
+
+      const sseEndpoint = "/api/wds/list-sse";
+
+      try {
+        // Create EventSource for SSE connection
+        eventSource = new EventSource(`${process.env.VITE_BASE_URL || "http://localhost:4000"}${sseEndpoint}`);
+        
+        // Handle connection open
+        eventSource.onopen = () => {
+          if (isMounted) {
+            setLoadingMessage("Receiving workloads...");
+            // Keep isLoading true, but set initialLoading to false so we can show the items as they arrive
+            setInitialLoading(false);
+          }
+        };
+
+        // Handle progress events
+        eventSource.addEventListener('progress', (event: MessageEvent) => {
+          if (!isMounted) return;
+          
+          try {
+            const eventData: SSEData = JSON.parse(event.data);
+            
+            // Process new resources
+            if (eventData.data && eventData.data.new && Array.isArray(eventData.data.new)) {
+              // Make a copy to avoid race conditions
+              const currentResources = [...resourcesRef.current];
+              
+              // Track added resources
+              let addedCount = 0;
+              
+              eventData.data.new.forEach(item => {
+                if (!item || typeof item !== 'object') return;
+                
+                const sourceUrl = `https://github.com/onkarr17/${(item.name || 'unknown').toLowerCase()}-gitrepo.io/k8s`;
+                const resourceItem = {
+                  createdAt: item.createdAt || new Date().toISOString(),
+                  kind: item.kind || 'Unknown',
+                  name: item.name || 'unknown',
+                  namespace: item.namespace || "Cluster",
+                  project: "default",
+                  source: sourceUrl,
+                  destination: `in-cluster/${item.namespace || "default"}`,
+                };
+                currentResources.push(resourceItem);
+                addedCount++;
+              });
+              
+              if (addedCount > 0) {
+                resourcesRef.current = currentResources;
+                
+                // Update state with current resources
+                setResources([...currentResources]);
+                setTotalItems(currentResources.length);
+                
+                // Update loading message to show progress
+                setLoadingMessage(`Received ${currentResources.length} workloads so far...`);
+              }
+            }
+          } catch (parseError) {
+            console.error("Progress event parse error:", parseError);
+          }
+        });
+
+        // Handle complete event
+        eventSource.addEventListener('complete', (event: MessageEvent) => {
+          if (!isMounted) return;
+          
+          try {
+            // Parse the complete event data
+            const completeData = JSON.parse(event.data) as CompleteEventData;
+            
+            // Process the complete data which has the full dataset
+            const allResources = processCompleteData(completeData);
+            
+            // If we have resources from the progress events but none in the complete event
+            // (which would be unusual), keep the progress resources
+            if (allResources.length === 0 && resourcesRef.current.length > 0) {
+              setResources([...resourcesRef.current]);
+              setTotalItems(resourcesRef.current.length);
+            } else {
+              // Otherwise use the complete data
+              setResources(allResources);
+              setTotalItems(allResources.length);
+              resourcesRef.current = allResources;
+            }
+            
+            // Show a completion message briefly before hiding the loading indicator
+            setLoadingMessage(`All ${resourcesRef.current.length} workloads received`);
+            
+            // After a brief delay, hide the loading indicator
+            setTimeout(() => {
+              if (isMounted) {
+                setIsLoading(false);
+              }
+            }, 2000);
+            
+            // Close the connection
+            if (eventSource) {
+              eventSource.close();
+              eventSource = null;
+            }
+          } catch (parseError) {
+            console.error("Complete event processing error:", parseError);
+            
+            // If we failed to parse the complete event but have resources from progress,
+            // just use those and don't show an error
+            if (resourcesRef.current.length > 0) {
+              setResources([...resourcesRef.current]);
+              setTotalItems(resourcesRef.current.length);
+              setInitialLoading(false);
+              setIsLoading(false);
+              
+              // Show warning about incomplete data
+              setLoadingMessage(`Showing ${resourcesRef.current.length} workloads (data may be incomplete)`);
+              setTimeout(() => {
         if (isMounted) {
-          setResources(resourceList);
-          setTotalItems(resourceList.length); 
+                  setIsLoading(false);
+                }
+              }, 3000);
+            } else {
+              // If we have no resources at all, show an error
+              setError("Failed to process resource data. Please try again.");
+              setInitialLoading(false);
+              setIsLoading(false);
+            }
+            
+            // Close the connection
+            if (eventSource) {
+              eventSource.close();
+              eventSource = null;
+            }
+          }
+        });
+
+        // Handle errors
+        eventSource.onerror = (err) => {
+          console.error("SSE connection error", err);
+
+          if (isMounted) {
+            // If we already have resources from progress events, just show those
+            if (resourcesRef.current.length > 0) {
+              setInitialLoading(false);
+              setResources([...resourcesRef.current]);
+              setTotalItems(resourcesRef.current.length);
+              setLoadingMessage(`Connection lost. Showing ${resourcesRef.current.length} received workloads.`);
+              
+              // After a brief delay, hide the loading indicator
+              setTimeout(() => {
+        if (isMounted) {
+                  setIsLoading(false);
+                }
+              }, 2000);
+            } else {
+              // Otherwise show an error and try the fallback
+              setError("Connection to server lost or failed. Trying fallback method...");
+              fetchFallbackData();
+            }
+            
+            // Close the connection
+            if (eventSource) {
+              eventSource.close();
+              eventSource = null;
+            }
+          }
+        };
+      } catch (error: unknown) {
+        // Fall back to regular API if SSE fails
+        console.error("SSE connection establishment error",error);
+        fetchFallbackData();
+      }
+    };
+
+    const fetchFallbackData = async () => {
+      // Regular API fallback in case SSE doesn't work
+      setInitialLoading(true);
+      setLoadingMessage("Fetching resources (fallback method)...");
+      
+      try {
+        const response = await api.get("/api/wds/list", { timeout: 15000 });
+        
+        if (!isMounted) return;
+        
+        // Process the fallback response
+        if (response.data && response.data.data) {
+          const processedResources = processCompleteData(response.data.data as CompleteEventData);
+          setResources(processedResources);
+          setTotalItems(processedResources.length);
+          resourcesRef.current = processedResources;
+          setInitialLoading(false);
+          setIsLoading(false);
+        } else {
+          setError("Invalid response format from server");
+          setInitialLoading(false);
+          setIsLoading(false);
         }
-      } catch (error) {
-        console.error("Error fetching list data:", error);
+      } catch (error: unknown) {
+        console.error("Error fetching list data",error);
+        
+        const errorMessage = "An unknown error occurred while fetching resources.";
+        
         if (isMounted) {
-          setResources([]);
-          setTotalItems(0);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false); // Clear loading state after fetch completes
+          setError(errorMessage);
+          setInitialLoading(false);
+          setIsLoading(false);
         }
       }
     };
 
-    fetchData();
+    // Start with SSE
+    fetchDataWithSSE();
 
-    // Cleanup function to prevent state updates on unmounted component
     return () => {
       isMounted = false;
+      if (eventSource) {
+        eventSource.close();
+      }
     };
-  }, []);
+  }, []); // Remove logDebug from dependencies
 
   // Calculate pagination values
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -156,6 +429,11 @@ const ListViewComponent = () => {
     return range;
   }, [currentPage, totalPages]);
 
+  // Retry handler for when errors occur
+  const handleRetry = () => {
+    window.location.reload();
+  };
+
   return (
     <Box
       sx={{
@@ -174,19 +452,96 @@ const ListViewComponent = () => {
           borderBottom: theme === "dark" ? "1px solid #334155" : "1px solid #ccc",
         }}
       />
-      {isLoading ? (
-        <LoadingFallback message="Loading the List-View" size="medium" />
+      {initialLoading ? (
+        <Box sx={{ 
+          display: "flex", 
+          flexDirection: "column",
+          alignItems: "center", 
+          justifyContent: "center", 
+          height: "70vh" 
+        }}>
+          <LoadingFallback message={loadingMessage} size="medium" />
+        </Box>
+      ) : error ? (
+        <Box
+          sx={{
+            width: "100%",
+            height: "70vh",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: 2,
+            padding: 3,
+          }}
+        >
+          <Typography variant="h6" sx={{ color: theme === "dark" ? "#fff" : "#333" }}>
+            Error Loading Resources
+          </Typography>
+          <Typography variant="body1" sx={{ color: theme === "dark" ? "#A5ADBA" : "#6B7280", textAlign: "center", maxWidth: "600px" }}>
+            {error}
+          </Typography>
+          <Box sx={{ 
+            backgroundColor: theme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)", 
+            padding: 2, 
+            borderRadius: 1,
+            maxWidth: "600px",
+            marginTop: 2
+          }}>
+            <Typography variant="body2" sx={{ color: theme === "dark" ? "#A5ADBA" : "#6B7280", mt: 1, fontFamily: "monospace", fontSize: "0.8rem" }}>
+              Try these troubleshooting steps:
+              <br />
+              1. Check that the backend server is running at http://localhost:4000
+              <br />
+              2. Verify the server's CORS configuration allows requests from http://localhost:5173
+              <br />
+              3. If the server uses wildcard (*) CORS, it can't accept requests with credentials
+              <br />
+              4. Check the browser console for detailed error messages
+            </Typography>
+          </Box>
+          <Button 
+            variant="contained" 
+            color="primary"
+            onClick={handleRetry}
+            sx={{ mt: 3 }}
+          >
+            Retry
+          </Button>
+        </Box>
       ) : resources.length > 0 ? (
-        <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+        <Box sx={{ display: "flex", flexDirection: "column", height: "100%", position: "relative" }}>
+          {isLoading && (
+            <Box sx={{ 
+              width: "100%", 
+              px: 2, 
+              py: 1, 
+              backgroundColor: theme === "dark" ? "rgba(30, 41, 59, 0.8)" : "rgba(240, 247, 255, 0.8)",
+              borderBottom: theme === "dark" ? "1px solid #334155" : "1px solid #e5e7eb",
+              position: "sticky",
+              top: 0,
+              zIndex: 10,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
+            }}>
+              <Typography variant="body2" sx={{ 
+                color: theme === "dark" ? "#A5ADBA" : "#6B7280",
+                fontStyle: "italic"
+              }}>
+                {loadingMessage}
+              </Typography>
+            </Box>
+          )}
           <Box
             sx={{
               width: "100%",
               flex: 1,
               overflow: "auto",
               padding: 2,
+              paddingBottom: "80px", // Add padding at the bottom to prevent content from being hidden behind pagination
             }}
           >
-          
             {currentItems.map((resource, index) => (
               <Box
                 key={index}
@@ -206,101 +561,95 @@ const ListViewComponent = () => {
                   transition: "background-color 0.2s",
                 }}
               >
-            
+                {/* Star icon */}
                 <Box
                   sx={{
-                    marginRight: 2,
-                    display: { xs: "flex", md: "block" },
+                    width: "36px",
+                    display: "flex",
+                    justifyContent: "center",
                     alignItems: "center",
-                    mb: { xs: 1, md: 0 },
+                    mr: 2,
                   }}
                 >
                   <Typography sx={{ color: "#4498FF", fontSize: 18 }}>★</Typography>
-
-               
-                  <Typography
-                    sx={{
-                      color: theme === "dark" ? "#fff" : "#6B7280",
-                      ml: 1,
-                      display: { xs: "block", md: "none" },
-                      fontWeight: 500,
-                    }}
-                  >
-                    {resource.name}
-                  </Typography>
                 </Box>
 
-            
+                {/* Content section */}
                 <Box
                   sx={{
                     flexGrow: 1,
                     minWidth: 0,
-                    display: "flex",
-                    flexDirection: { xs: "column", md: "row" },
-                    gap: { xs: 1, md: 2 },
+                    display: "grid", 
+                    gridTemplateColumns: { xs: "1fr", md: "2fr 1fr 1fr" },
+                    gap: { xs: 1, md: 3 },
                     width: "100%",
+                    alignItems: "center"
                   }}
                 >
-            
-                  <Box
-                    sx={{
-                      width: { xs: "100%", md: "25%" },
-                      mb: { xs: 1, md: 0 },
-                    }}
-                  >
-                    <Typography sx={{ color: theme === "dark" ? "#fff" : "#6B7280" }}>
-                      Project: {resource.project}
+                  {/* Name and namespace section */}
+                  <Box sx={{ overflow: "hidden" }}>
+                    <Typography
+                      sx={{
+                        color: theme === "dark" ? "#fff" : "#6B7280",
+                        fontWeight: 500,
+                        fontSize: "1rem",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis"
+                      }}
+                    >
+                      {resource.name}
                     </Typography>
                     <Typography
                       sx={{
                         color: theme === "dark" ? "#A5ADBA" : "#6B7280",
-                        display: { xs: "none", md: "block" },
+                        fontSize: "0.875rem",
                       }}
                     >
-                      Name: {resource.name}
+                      Namespace: {resource.namespace}
                     </Typography>
                   </Box>
 
-                
-                  <Box
-                    sx={{
-                      width: { xs: "100%", md: "45%" },
-                      mb: { xs: 1, md: 0 },
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        color: theme === "dark" ? "#A5ADBA" : "#6B7280",
-                        wordBreak: "break-all",
-                        fontSize: { xs: "0.875rem", md: "inherit" },
-                      }}
-                    >
-                      Source: {resource.source}
-                    </Typography>
-                    <Typography
-                      sx={{
-                        color: theme === "dark" ? "#A5ADBA" : "#6B7280",
-                        fontSize: { xs: "0.875rem", md: "inherit" },
-                      }}
-                    >
-                      Destination: {resource.destination}
+                  {/* Kind tag centered */}
+                  <Box sx={{ 
+                    display: "flex",
+                    justifyContent: { xs: "flex-start", md: "center" },
+                    alignItems: "center"
+                  }}>
+                    <Typography sx={{ 
+                      color: theme === "dark" ? "#A5ADBA" : "#6B7280",
+                      fontWeight: 500,
+                      fontSize: "0.875rem",
+                      backgroundColor: theme === "dark" ? "rgba(71, 85, 105, 0.5)" : "rgba(241, 245, 249, 0.8)",
+                      padding: "4px 8px",
+                      borderRadius: "4px",
+                      border: theme === "dark" ? "1px solid rgba(100, 116, 139, 0.5)" : "1px solid rgba(226, 232, 240, 0.8)",
+                      display: "inline-block",
+                      minWidth: "80px",
+                      textAlign: "center"
+                    }}>
+                      {resource.kind}
                     </Typography>
                   </Box>
 
-               
-                  <Box sx={{ width: { xs: "100%", md: "30%" } }}>
-                    <Typography sx={{ color: theme === "dark" ? "#A5ADBA" : "#6B7280" }}>
-                      Kind: {resource.kind}
-                    </Typography>
-                    <Typography sx={{ color: theme === "dark" ? "#A5ADBA" : "#6B7280" }}>
-                      Created At: {resource.createdAt}
+                  {/* Created at date aligned right */}
+                  <Box sx={{ 
+                    display: "flex",
+                    justifyContent: { xs: "flex-start", md: "flex-end" },
+                    alignItems: "center"
+                  }}>
+                    <Typography sx={{ 
+                      color: theme === "dark" ? "#A5ADBA" : "#6B7280",
+                      fontSize: "0.875rem",
+                      whiteSpace: "nowrap"
+                    }}>
+                      Created: {formatCreatedAt(resource.createdAt)}
                     </Typography>
                   </Box>
                 </Box>
               </Box>
             ))}
           </Box>
-
       
           <Box
             sx={{
@@ -311,17 +660,19 @@ const ListViewComponent = () => {
               gap: { xs: 2, sm: 0 },
               p: { xs: 2, sm: 3 },
               pt: { xs: 2, sm: 2 },
-              mt: 2, 
-              mb: { xs: 6, sm: 4 }, 
               borderTop: theme === "dark" ? "1px solid #334155" : "1px solid #e5e7eb",
-              backgroundColor: theme === "dark" ? "rgba(30, 41, 59, 0.8)" : "rgba(248, 250, 252, 0.9)", 
+              backgroundColor: theme === "dark" ? "rgba(30, 41, 59, 0.9)" : "rgba(248, 250, 252, 0.95)", 
               borderRadius: "0 0 8px 8px",
-              position: "relative",
-              zIndex: 2,
-              boxShadow: theme === "dark" ? "0 -2px 6px rgba(0,0,0,0.2)" : "0 -2px 6px rgba(0,0,0,0.1)",
+              position: "sticky",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              zIndex: 20,
+              boxShadow: theme === "dark" ? "0 -4px 6px rgba(0,0,0,0.3)" : "0 -4px 6px rgba(0,0,0,0.1)",
+              backdropFilter: "blur(4px)",
+              margin: 0,
             }}
           >
-          
             <Typography
               variant="body2"
               sx={{
@@ -333,7 +684,6 @@ const ListViewComponent = () => {
             >
               Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, totalItems)} of {totalItems} entries
             </Typography>
-
          
             <Box
               sx={{
@@ -373,7 +723,6 @@ const ListViewComponent = () => {
               >
                 Prev
               </Button>
-
           
               <Box 
                 sx={{ 
@@ -392,7 +741,6 @@ const ListViewComponent = () => {
                     onClick={() => (typeof pageNumber === "number" ? handlePageChange(pageNumber) : undefined)}
                     sx={{
                       display: {
-                   
                         xs: typeof pageNumber === "number" && 
                             Math.abs((pageNumber as number) - currentPage) > 1 && 
                             pageNumber !== 1 && 
