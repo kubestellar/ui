@@ -1,23 +1,13 @@
-import { Box, Typography, Button } from "@mui/material";
-import { useEffect, useState, useCallback } from "react";
+import { Box, Typography, Button, CircularProgress } from "@mui/material";
+import { useEffect, useState, useCallback, useRef } from "react";
 import useTheme from "../stores/themeStore";
 import LoadingFallback from "./LoadingFallback";
 import { api } from "../lib/api";
 
-// Define the API response interface
-interface ApiResponse {
-  data: {
-    clusterScoped: {
-      [key: string]: ResourceItem[];
-    };
-    namespaced: {
-      [namespace: string]: {
-        [kind: string]: ResourceItem[] | { __namespaceMetaData: ResourceItem[] };
-      };
-    };
-  };
-}
+// For better debugging
+const DEBUG = true;
 
+// Define the response interfaces
 interface ResourceItem {
   createdAt: string;
   kind: string;
@@ -32,87 +22,326 @@ interface ResourceItem {
   status?: "Synced" | "OutOfSync" | "Missing" | "Healthy";
 }
 
+interface SSEData {
+  count: number;
+  data: {
+    new: ResourceItem[];
+  };
+}
+
+// Define types for the data structure in the complete event
+interface NamespacedResources {
+  [namespace: string]: {
+    [kind: string]: ResourceItem[] | { __namespaceMetaData: ResourceItem[] };
+  };
+}
+
+interface ClusterScopedResources {
+  [key: string]: ResourceItem[];
+}
+
+interface CompleteEventData {
+  namespaced: NamespacedResources;
+  clusterScoped: ClusterScopedResources;
+}
+
 const ListViewComponent = () => {
   const theme = useTheme((state) => state.theme);
   const [resources, setResources] = useState<ResourceItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [loadingProgress, setLoadingProgress] = useState<number>(0);
+  const [loadingMessage, setLoadingMessage] = useState<string>("Loading resources...");
+  const [error, setError] = useState<string | null>(null);
+  const resourcesRef = useRef<ResourceItem[]>([]);
 
   // Add pagination state
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage] = useState<number>(10);
   const [totalItems, setTotalItems] = useState<number>(0);
 
+  // Debug utility
+  const logDebug = useCallback((message: string, data?: unknown) => {
+    if (DEBUG) {
+      console.log(`[ListViewComponent] ${message}`, data || '');
+    }
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
+    let eventSource: EventSource | null = null;
 
-    const fetchData = async () => {
-      setIsLoading(true); // Set loading state when starting the fetch
-      try {
-        const response = await api.get<ApiResponse>("/api/wds/list");
-        const data = response.data.data;
-
-        const resourceList: ResourceItem[] = [];
-
-        // Process cluster-scoped resources with type assertion
-        (Object.entries(data.clusterScoped) as [string, ResourceItem[]][]).forEach(([kind, items]) => {
-          console.log(kind);
-          items.forEach((item) => {
+    const processCompleteData = (data: CompleteEventData): ResourceItem[] => {
+      logDebug("Processing complete event data", data);
+      const resourceList: ResourceItem[] = [];
+      
+      // Process cluster-scoped resources
+      if (data.clusterScoped) {
+        Object.entries(data.clusterScoped).forEach(([kind, items]) => {
+          if (!Array.isArray(items)) return;
+          
+          (items as ResourceItem[]).forEach((item: ResourceItem) => {
+            const sourceUrl = `https://github.com/onkarr17/${item.name.toLowerCase()}-gitrepo.io/k8s`;
             resourceList.push({
               createdAt: item.createdAt,
-              kind: item.kind,
+              kind: item.kind || kind,
               name: item.name,
               namespace: item.namespace || "Cluster",
-              project: "default", // Default project based on backend
-              source: `https://github.com/onkarr17/${item.name.toLowerCase()}-gitrepo.io/k8s`, // Example source URL
+              project: "default",
+              source: sourceUrl,
               destination: `in-cluster/${item.namespace || "default"}`,
             });
           });
         });
-
-        // Process namespaced resources with type assertion
+      }
+      
+      // Process namespaced resources
+      if (data.namespaced) {
         Object.entries(data.namespaced).forEach(([namespace, resourcesByKind]) => {
-          console.log(namespace);
-          (Object.entries(resourcesByKind) as [string, ResourceItem[]][]).forEach(([kind, items]) => {
-            if (kind !== "__namespaceMetaData") {
-              items.forEach((item) => {
+          if (typeof resourcesByKind !== 'object' || resourcesByKind === null) return;
+          
+          Object.entries(resourcesByKind).forEach(([kind, items]) => {
+            // Include namespace metadata resources
+            if (kind === "__namespaceMetaData" && Array.isArray(items)) {
+              (items as ResourceItem[]).forEach((item: ResourceItem) => {
                 resourceList.push({
+                  createdAt: item.createdAt,
+                  kind: "Namespace",
+                  name: item.name || namespace,
+                  namespace: namespace,
+                  project: "default",
+                  source: `https://github.com/onkarr17/${namespace.toLowerCase()}-gitrepo.io/k8s`,
+                  destination: `in-cluster/${namespace}`,
+                });
+              });
+              return;
+            }
+            
+            if (!Array.isArray(items)) return;
+            
+            (items as ResourceItem[]).forEach((item: ResourceItem) => {
+              const sourceUrl = `https://github.com/onkarr17/${item.name.toLowerCase()}-gitrepo.io/k8s`;
+              resourceList.push({
+                createdAt: item.createdAt,
+                kind: item.kind || kind,
+                name: item.name,
+                namespace: item.namespace || namespace,
+                project: "default",
+                source: sourceUrl,
+                destination: `in-cluster/${item.namespace || namespace}`,
+              });
+            });
+          });
+        });
+      }
+      
+      logDebug(`Processed ${resourceList.length} total resources from complete event`);
+      return resourceList;
+    };
+
+    const fetchDataWithSSE = () => {
+      setIsLoading(true);
+      setLoadingMessage("Connecting to server...");
+      setError(null);
+      resourcesRef.current = [];
+
+      const sseEndpoint = "/api/wds/list-sse";
+      logDebug(`Connecting to SSE endpoint: ${sseEndpoint}`);
+
+      try {
+        // Create EventSource for SSE connection
+        eventSource = new EventSource(`${process.env.VITE_BASE_URL || "http://localhost:4000"}${sseEndpoint}`);
+        
+        // Handle connection open
+        eventSource.onopen = () => {
+          if (isMounted) {
+            logDebug("SSE connection opened successfully");
+            setLoadingMessage("Receiving data...");
+          }
+        };
+
+        // Handle progress events
+        eventSource.addEventListener('progress', (event) => {
+          if (!isMounted) return;
+          
+          try {
+            const eventData: SSEData = JSON.parse(event.data);
+            logDebug(`Received progress event with ${eventData.data.new.length} resources`, eventData);
+            
+            // Process new resources
+            if (eventData.data && eventData.data.new) {
+              eventData.data.new.forEach(item => {
+                const sourceUrl = `https://github.com/onkarr17/${item.name.toLowerCase()}-gitrepo.io/k8s`;
+                const resourceItem = {
                   createdAt: item.createdAt,
                   kind: item.kind,
                   name: item.name,
-                  namespace: item.namespace,
-                  project: "default", // Default project based on backend
-                  source: `https://github.com/onkarr17/${item.name.toLowerCase()}-gitrepo.io/k8s`, // Example source URL
-                  destination: `in-cluster/${item.namespace}`,
-                });
+                  namespace: item.namespace || "Cluster",
+                  project: "default",
+                  source: sourceUrl,
+                  destination: `in-cluster/${item.namespace || "default"}`,
+                };
+                resourcesRef.current.push(resourceItem);
               });
+              
+              // Update state with current resources
+              setResources([...resourcesRef.current]);
+              setTotalItems(resourcesRef.current.length);
+              
+              // Update progress based on count
+              const progressPercent = Math.min(eventData.count * 10, 90); // Keep it under 90% until complete
+              setLoadingProgress(progressPercent);
+              setLoadingMessage(`Received ${resourcesRef.current.length} resources...`);
             }
-          });
+          } catch (parseError) {
+            logDebug("Error parsing progress event data", parseError);
+            console.error("Progress event parse error:", parseError);
+          }
         });
 
-        if (isMounted) {
-          setResources(resourceList);
-          setTotalItems(resourceList.length); 
+        // Handle complete event
+        eventSource.addEventListener('complete', (event) => {
+          if (!isMounted) return;
+          
+          try {
+            logDebug("Received complete event", event.data);
+            
+            // Parse the complete event data
+            const completeData = JSON.parse(event.data) as CompleteEventData;
+            
+            // Process the complete data which has the full dataset
+            const allResources = processCompleteData(completeData);
+            
+            // If we have resources from the progress events but none in the complete event
+            // (which would be unusual), keep the progress resources
+            if (allResources.length === 0 && resourcesRef.current.length > 0) {
+              logDebug("Complete event had no resources, using progress resources instead", {
+                progressResourcesCount: resourcesRef.current.length
+              });
+              setResources([...resourcesRef.current]);
+              setTotalItems(resourcesRef.current.length);
+            } else {
+              // Otherwise use the complete data
+              logDebug(`Setting UI with ${allResources.length} resources from complete event`);
+              setResources(allResources);
+              setTotalItems(allResources.length);
+              resourcesRef.current = allResources;
+            }
+            
+            setLoadingProgress(100);
+            setIsLoading(false);
+            
+            // Close the connection
+            if (eventSource) {
+              eventSource.close();
+              eventSource = null;
+            }
+          } catch (parseError) {
+            logDebug("Error parsing complete event data", parseError);
+            console.error("Complete event parse error:", parseError);
+            
+            // If we failed to parse the complete event but have resources from progress,
+            // just use those and don't show an error
+            if (resourcesRef.current.length > 0) {
+              logDebug(`Falling back to ${resourcesRef.current.length} resources from progress events`);
+              setResources([...resourcesRef.current]);
+              setTotalItems(resourcesRef.current.length);
+              setIsLoading(false);
+            } else {
+              // If we have no resources at all, show an error
+              setError("Failed to process resource data. Please try again.");
+              setIsLoading(false);
+            }
+            
+            // Close the connection
+            if (eventSource) {
+              eventSource.close();
+              eventSource = null;
+            }
+          }
+        });
+
+        // Handle general messages
+        eventSource.onmessage = (event) => {
+          logDebug("Received generic message event", event.data);
+        };
+
+        // Handle errors
+        eventSource.onerror = (err) => {
+          logDebug("SSE connection error", err);
+          console.error("SSE connection error:", err);
+          
+          if (isMounted) {
+            // If we already have resources from progress events, just show those
+            if (resourcesRef.current.length > 0) {
+              logDebug(`Connection error but showing ${resourcesRef.current.length} resources from progress events`);
+              setResources([...resourcesRef.current]);
+              setTotalItems(resourcesRef.current.length);
+              setIsLoading(false);
+            } else {
+              // Otherwise show an error and try the fallback
+              setError("Connection to server lost or failed. Trying fallback method...");
+              fetchFallbackData();
+            }
+            
+            // Close the connection
+            if (eventSource) {
+              eventSource.close();
+              eventSource = null;
+            }
+          }
+        };
+      } catch (error: unknown) {
+        // Fall back to regular API if SSE fails
+        logDebug("Failed to establish SSE connection, falling back to regular API", error);
+        console.error("SSE connection establishment error:", error);
+        fetchFallbackData();
+      }
+    };
+
+    const fetchFallbackData = async () => {
+      // Regular API fallback in case SSE doesn't work
+      setLoadingMessage("Fetching resources (fallback method)...");
+      
+      try {
+        const response = await api.get("/api/wds/list", { timeout: 15000 });
+        
+        if (!isMounted) return;
+        
+        // Process the fallback response
+        if (response.data && response.data.data) {
+          const processedResources = processCompleteData(response.data.data as CompleteEventData);
+          setResources(processedResources);
+          setTotalItems(processedResources.length);
+          resourcesRef.current = processedResources;
+          setIsLoading(false);
+          logDebug(`Fetched ${processedResources.length} resources using fallback method`);
+        } else {
+          setError("Invalid response format from server");
+          setIsLoading(false);
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Error fetching list data:", error);
+        
+        const errorMessage = "An unknown error occurred while fetching resources.";
+        console.log(errorMessage)
+        
         if (isMounted) {
-          setResources([]);
-          setTotalItems(0);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false); // Clear loading state after fetch completes
+          setError(errorMessage);
+          setIsLoading(false);
         }
       }
     };
 
-    fetchData();
+    // Start with SSE
+    fetchDataWithSSE();
 
-    // Cleanup function to prevent state updates on unmounted component
     return () => {
       isMounted = false;
+      if (eventSource) {
+        eventSource.close();
+      }
     };
-  }, []);
+  }, [logDebug]);
 
   // Calculate pagination values
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -156,6 +385,11 @@ const ListViewComponent = () => {
     return range;
   }, [currentPage, totalPages]);
 
+  // Retry handler for when errors occur
+  const handleRetry = () => {
+    window.location.reload();
+  };
+
   return (
     <Box
       sx={{
@@ -175,7 +409,89 @@ const ListViewComponent = () => {
         }}
       />
       {isLoading ? (
-        <LoadingFallback message="Loading the List-View" size="medium" />
+        <Box sx={{ 
+          display: "flex", 
+          flexDirection: "column",
+          alignItems: "center", 
+          justifyContent: "center", 
+          height: "70vh" 
+        }}>
+          <LoadingFallback message={loadingMessage} size="medium" />
+          <CircularProgress 
+            variant="determinate" 
+            value={loadingProgress} 
+            size={60} 
+            sx={{ mt: 4, mb: 2 }} 
+          />
+          <Typography variant="body2" sx={{ color: theme === "dark" ? "#A5ADBA" : "#6B7280" }}>
+            {loadingProgress}% complete
+          </Typography>
+        </Box>
+      ) : error ? (
+        <Box
+          sx={{
+            width: "100%",
+            height: "70vh",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: 2,
+            padding: 3,
+          }}
+        >
+          <Typography variant="h6" sx={{ color: theme === "dark" ? "#fff" : "#333" }}>
+            Error Loading Resources
+          </Typography>
+          <Typography variant="body1" sx={{ color: theme === "dark" ? "#A5ADBA" : "#6B7280", textAlign: "center", maxWidth: "600px" }}>
+            {error}
+          </Typography>
+          <Box sx={{ 
+            backgroundColor: theme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)", 
+            padding: 2, 
+            borderRadius: 1,
+            maxWidth: "600px",
+            marginTop: 2
+          }}>
+            <Typography variant="body2" sx={{ color: theme === "dark" ? "#A5ADBA" : "#6B7280", mt: 1, fontFamily: "monospace", fontSize: "0.8rem" }}>
+              Try these troubleshooting steps:
+              <br />
+              1. Check that the backend server is running at http://localhost:4000
+              <br />
+              2. Verify the server's CORS configuration allows requests from http://localhost:5173
+              <br />
+              3. If the server uses wildcard (*) CORS, it can't accept requests with credentials
+              <br />
+              4. Check the browser console for detailed error messages
+            </Typography>
+          </Box>
+          <Button 
+            variant="contained" 
+            color="primary"
+            onClick={handleRetry}
+            sx={{ mt: 3 }}
+          >
+            Retry
+          </Button>
+          {DEBUG && (
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => {
+                console.log("Debugging info:", {
+                  currentEnvironment: {
+                    origin: window.location.origin,
+                    apiEndpoint: "http://localhost:4000/api/wds/list-sse"
+                  },
+                  errorDetails: error
+                });
+              }}
+              sx={{ mt: 1 }}
+            >
+              Log Debug Info
+            </Button>
+          )}
+        </Box>
       ) : resources.length > 0 ? (
         <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
           <Box
