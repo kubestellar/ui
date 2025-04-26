@@ -96,9 +96,10 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
 
   const policyCanvasEntities = usePolicyDragDropStore(state => state.canvasEntities);
 
-  const { useGenerateBindingPolicyYaml, useQuickConnect } = useBPQueries();
+  const { useGenerateBindingPolicyYaml, useQuickConnect, useCreateWecNamespace } = useBPQueries();
   const generateYamlMutation = useGenerateBindingPolicyYaml();
   const quickConnectMutation = useQuickConnect();
+  const createWecNamespaceMutation = useCreateWecNamespace();
 
   const handleTabChange = (_event: React.SyntheticEvent, value: string) => {
     setActiveTab(value);
@@ -163,39 +164,73 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   const generateResourcesFromWorkload = (workloadObj: Workload) => {
     console.log("Generating resources from workload:", workloadObj);
     
-    const resources = [
-      { type: 'namespaces', createOnly: true }
+    const commonResources = [
+      { type: 'namespaces', createOnly: true },
+      { type: 'serviceaccounts', createOnly: false },
+      { type: 'configmaps', createOnly: false },
+      { type: 'secrets', createOnly: false }
     ];
+    const resourceMapping: Record<string, Array<{ type: string, createOnly: boolean }>> = {
+      'deployment': [
+        { type: 'deployments', createOnly: false },
+        { type: 'replicasets', createOnly: false },
+        { type: 'services', createOnly: false },
+        { type: 'pods', createOnly: false }
+      ],
+      'statefulset': [
+        { type: 'statefulsets', createOnly: false },
+        { type: 'services', createOnly: false },
+        { type: 'pods', createOnly: false }
+      ],
+      'daemonset': [
+        { type: 'daemonsets', createOnly: false },
+        { type: 'pods', createOnly: false }
+      ],
+      'job': [
+        { type: 'jobs', createOnly: false },
+        { type: 'pods', createOnly: false }
+      ],
+      'cronjob': [
+        { type: 'cronjobs', createOnly: false },
+        { type: 'jobs', createOnly: false },
+        { type: 'pods', createOnly: false }
+      ]
+    };
+    let workloadSpecificResources: Array<{ type: string, createOnly: boolean }> = [];
+
     
     if (workloadObj?.kind) {
       const kindLower = workloadObj.kind.toLowerCase();
-      let resourceType = kindLower;
+
+
+      if (resourceMapping[kindLower]) {
+        workloadSpecificResources = resourceMapping[kindLower];
+      } else {
+        let resourceType = kindLower;
       
       if (!resourceType.endsWith('s')) {
         resourceType += 's';
       }
-      
-      console.log(`Adding resource type from workload kind: ${resourceType}`);
+      workloadSpecificResources = [{ type: resourceType, createOnly: false }];
+
       
 
-      resources.push({ type: resourceType, createOnly: false });
       
-      if (kindLower === 'deployment') {
-        resources.push({ type: 'replicasets', createOnly: false });
-        resources.push({ type: 'services', createOnly: false });
-      } else if (kindLower === 'statefulset') {
-        resources.push({ type: 'services', createOnly: false });
+ 
       }
     } else {
-      console.warn("Workload kind missing, adding deployment as default resource type");
-      // If workload kind is missing, default to deployment
-      resources.push({ type: 'deployments', createOnly: false });
-      resources.push({ type: 'replicasets', createOnly: false });
-      resources.push({ type: 'services', createOnly: false });
+      console.warn("Workload kind missing, adding deployment resources as default");
+      workloadSpecificResources = resourceMapping['deployment'];
     }
+ 
+    const resources = [...commonResources, ...workloadSpecificResources];
     
-    console.log("Final resources:", resources);
-    return resources;
+    const uniqueResources = resources.filter((resource, index, self) => 
+      index === self.findIndex(r => r.type === resource.type)
+    );
+    
+    console.log("Final resources:", uniqueResources);
+    return uniqueResources;
   };
 
   const extractLabelInfo = (labelId: string): { key: string, value: string } | null => {
@@ -383,6 +418,14 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
         const result = await quickConnectMutation.mutateAsync(requestData);
         console.log(result);
         
+        // Create namespace directly in WEC
+        try {
+          console.log(`Creating namespace "${workloadNamespace}" directly in WEC`);
+          await createWecNamespaceMutation.mutateAsync(workloadNamespace);
+        } catch (namespaceError) {
+          console.error("Failed to create namespace in WEC:", namespaceError);
+        }
+        
         setSuccessMessage(`Successfully created binding policy "${policyName}"`);
         setShowDeployDialog(false);
         handleClearPolicyCanvas();
@@ -402,7 +445,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
     }
   };
 
-  const handleCreateFromFile = () => {
+  const handleCreateFromFile = async () => {
     if (activeTab === "file") {
       if (!fileContent) {
         setError("Please select a YAML file first");
@@ -437,22 +480,38 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
       }
 
       let workloadInfo = "default-workload";
+      let namespace = "default";
       try {
         const parsedYaml = yaml.load(content) as YamlPolicy;
         if (parsedYaml?.spec?.downsync?.[0]?.apiGroup) {
           workloadInfo = parsedYaml.spec.downsync[0].apiGroup;
         }
+        if (parsedYaml?.metadata?.namespace) {
+          namespace = parsedYaml.metadata.namespace;
+        }
+        if (parsedYaml?.spec?.downsync?.[0]?.namespaces?.[0]) {
+          namespace = parsedYaml.spec.downsync[0].namespaces[0];
+        }
       } catch (e) {
         console.error("Error parsing YAML for workload info:", e);
       }
       
+      // First create the binding policy
       onCreatePolicy({
         name: policyName,
         workloads: [workloadInfo],
         clusters: policyCanvasEntities.clusters,
-        namespace: 'default',
+        namespace: namespace,
         yaml: content
       });
+      
+      // Then create namespace directly in WEC
+      try {
+        console.log(`Creating namespace "${namespace}" directly in WEC`);
+        await createWecNamespaceMutation.mutateAsync(namespace);
+      } catch (namespaceError) {
+        console.error("Failed to create namespace in WEC:", namespaceError);
+      }
       
       setTimeout(() => {
         setEditorContent(DEFAULT_BINDING_POLICY_TEMPLATE);
@@ -461,6 +520,8 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
         setFileContent("");
         setDragDropYaml("");
       }, 500);
+      
+      setIsLoading(false);
     } catch (error) {
       console.error("Error creating binding policy:", error);
       setError(
@@ -687,6 +748,13 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
       
       if (onCreatePolicy) {
         onCreatePolicy(policyData);
+      }
+      
+      try {
+        console.log(`Creating namespace "${workloadNamespace}" directly in WEC`);
+        await createWecNamespaceMutation.mutateAsync(workloadNamespace);
+      } catch (namespaceError) {
+        console.error("Failed to create namespace in WEC:", namespaceError);
       }
       
       setSuccessMessage('Binding policy created successfully');

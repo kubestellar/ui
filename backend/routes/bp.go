@@ -15,4 +15,6 @@ func setupBindingPolicyRoutes(router *gin.Engine) {
 	router.DELETE("/api/bp/delete/:name", bp.DeleteBp)
 	router.DELETE("/api/bp/delete", bp.DeleteAllBp)
 	router.PATCH("/api/bp/update/:name", bp.UpdateBp)
+	router.POST("/api/wec/namespace/:namespace", bp.CreateWecNamespace)
+
 }
