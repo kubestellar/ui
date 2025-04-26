@@ -107,7 +107,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
   const renderLabelItem = (labelGroup: LabelGroup) => {
     // Use first workload for the item ID
     const firstWorkload = labelGroup.workloads[0];
-    const itemId = `label-${labelGroup.key}-${labelGroup.value}`;
+    const itemId = `label-${labelGroup.key}:${labelGroup.value}`;
 
     // Check if this item is in the canvas
     const { canvasEntities } = usePolicyDragDropStore.getState();
@@ -120,6 +120,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
           e.stopPropagation();
           if (onItemClick) {
             console.log("Workload clicked:", itemId);
+            console.log(`Label details - key: "${labelGroup.key}", value: "${labelGroup.value}"`);
             
             // Check if this item is already in the canvas
             if (isInCanvas) {
@@ -138,7 +139,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
           border: `1px solid ${theme.palette.divider}`,
           boxShadow: 0,
           cursor: "pointer",
-          position: 'relative', // Make sure position is relative
+          position: 'relative', 
           "&:hover": {
             backgroundColor: alpha(theme.palette.secondary.main, 0.1),
             boxShadow: 2,

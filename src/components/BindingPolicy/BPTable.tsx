@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Table,
   TableHead,
@@ -21,6 +21,7 @@ import PolicyDetailDialog from "./Dialogs/PolicyDetailDialog";
 import useTheme from "../../stores/themeStore";
 import { useBPQueries } from "../../hooks/queries/useBPQueries";
 import { api } from "../../lib/api";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface BPTableProps {
   policies: BindingPolicyInfo[];
@@ -46,6 +47,7 @@ const BPTable: React.FC<BPTableProps> = ({
   const { useBindingPolicyDetails } = useBPQueries();
   const theme = useTheme((state) => state.theme);
   const isDark = theme === "dark";
+  const queryClient = useQueryClient();
   
   // Map to store policy statuses from API
   const [policyStatuses, setPolicyStatuses] = useState<Record<string, string>>({});
@@ -73,10 +75,24 @@ const BPTable: React.FC<BPTableProps> = ({
     data: selectedPolicyDetails, 
     isLoading: isLoadingDetails,
     error: detailsError
-  } = useBindingPolicyDetails(selectedPolicyName || undefined);
+  } = useBindingPolicyDetails(selectedPolicyName || undefined, { refetchInterval: 2000 });
+
+  const refetchPolicies = useCallback(() => {
+    console.log("Manually triggering policy data refetch");
+    queryClient.invalidateQueries({ queryKey: ['binding-policies'] });
+    fetchPolicyStatuses();
+  }, [queryClient]);
+
+  useEffect(() => {
+    const refreshInterval = setInterval(() => {
+      refetchPolicies();
+    }, 2000); 
+    
+    return () => clearInterval(refreshInterval);
+  }, [refetchPolicies]);
 
   // Fetch status for each policy
-  useEffect(() => {
+  const fetchPolicyStatuses = useCallback(async () => {
     // Create a map to store statuses
     const newPolicyStatuses: Record<string, string> = {};
     
@@ -86,58 +102,57 @@ const BPTable: React.FC<BPTableProps> = ({
     }
     
     // Fetch status for each policy using the API directly
-    const fetchStatuses = async () => {
+    try {
       // First, get the current list of valid policies from the backend
-      try {
-        const validPoliciesResponse = await api.get('/api/bp');
-        let validPolicies: string[] = [];
-        
-        // Extract policy names from the response
-        if (validPoliciesResponse.data && validPoliciesResponse.data.bindingPolicies) {
-          validPolicies = validPoliciesResponse.data.bindingPolicies
-            .map((p: { name?: string; metadata?: { name?: string } }) => p.name || p.metadata?.name)
-            .filter((name: string | undefined): name is string => name !== undefined);
-        } else if (Array.isArray(validPoliciesResponse.data)) {
-          validPolicies = validPoliciesResponse.data
-            .map((p: { name?: string; metadata?: { name?: string } }) => p.name || p.metadata?.name)
-            .filter((name: string | undefined): name is string => name !== undefined);
-        }
-        
-        // Filter out any policies that don't exist in the backend
-        const existingPolicies = policies.filter(policy => 
-          policy && policy.name && validPolicies.includes(policy.name)
-        );
-        
-        // Now only fetch status for policies that actually exist
-        for (const policy of existingPolicies) {
-          try {
-            // Skip if policy is invalid or missing name
-            if (!policy || !policy.name) {
-              continue;
-            }
-            
-            const response = await api.get(`/api/bp/status?name=${encodeURIComponent(policy.name)}`);
-            if (response.data?.status) {
-              // Capitalize the first letter of the status
-              const status = response.data.status.charAt(0).toUpperCase() + 
-                             response.data.status.slice(1).toLowerCase();
-              newPolicyStatuses[policy.name] = status;
-            }
-          } catch (error) {
-            console.error(`Error fetching status for policy ${policy.name}:`, error);
-          }
-        }
-        
-      } catch (error) {
-        console.error("Error fetching valid policies:", error);
+      const validPoliciesResponse = await api.get('/api/bp');
+      let validPolicies: string[] = [];
+      
+      // Extract policy names from the response
+      if (validPoliciesResponse.data && validPoliciesResponse.data.bindingPolicies) {
+        validPolicies = validPoliciesResponse.data.bindingPolicies
+          .map((p: { name?: string; metadata?: { name?: string } }) => p.name || p.metadata?.name)
+          .filter((name: string | undefined): name is string => name !== undefined);
+      } else if (Array.isArray(validPoliciesResponse.data)) {
+        validPolicies = validPoliciesResponse.data
+          .map((p: { name?: string; metadata?: { name?: string } }) => p.name || p.metadata?.name)
+          .filter((name: string | undefined): name is string => name !== undefined);
       }
       
-      // Update state with all fetched statuses
-      setPolicyStatuses(newPolicyStatuses);
-    };
+      // Filter out any policies that don't exist in the backend
+      const existingPolicies = policies.filter(policy => 
+        policy && policy.name && validPolicies.includes(policy.name)
+      );
+      
+      // Now only fetch status for policies that actually exist
+      for (const policy of existingPolicies) {
+        try {
+          // Skip if policy is invalid or missing name
+          if (!policy || !policy.name) {
+            continue;
+          }
+          
+          const response = await api.get(`/api/bp/status?name=${encodeURIComponent(policy.name)}`);
+          if (response.data?.status) {
+            // Capitalize the first letter of the status
+            const status = response.data.status.charAt(0).toUpperCase() + 
+                          response.data.status.slice(1).toLowerCase();
+            newPolicyStatuses[policy.name] = status;
+          }
+        } catch (error) {
+          console.error(`Error fetching status for policy ${policy.name}:`, error);
+        }
+      }
+      
+    } catch (error) {
+      console.error("Error fetching valid policies:", error);
+    }
     
-    fetchStatuses();
+    // Update state with all fetched statuses
+    setPolicyStatuses(newPolicyStatuses);
   }, [policies]);
+  useEffect(() => {
+    fetchPolicyStatuses();
+  }, [fetchPolicyStatuses]);
 
   // Add debugging for policy details
   useEffect(() => {
