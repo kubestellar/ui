@@ -164,40 +164,73 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   const generateResourcesFromWorkload = (workloadObj: Workload) => {
     console.log("Generating resources from workload:", workloadObj);
     
-    const resources = [
+    const commonResources = [
       { type: 'namespaces', createOnly: true },
-      { type: 'serviceaccounts', createOnly: false }
+      { type: 'serviceaccounts', createOnly: false },
+      { type: 'configmaps', createOnly: false },
+      { type: 'secrets', createOnly: false }
     ];
+    const resourceMapping: Record<string, Array<{ type: string, createOnly: boolean }>> = {
+      'deployment': [
+        { type: 'deployments', createOnly: false },
+        { type: 'replicasets', createOnly: false },
+        { type: 'services', createOnly: false },
+        { type: 'pods', createOnly: false }
+      ],
+      'statefulset': [
+        { type: 'statefulsets', createOnly: false },
+        { type: 'services', createOnly: false },
+        { type: 'pods', createOnly: false }
+      ],
+      'daemonset': [
+        { type: 'daemonsets', createOnly: false },
+        { type: 'pods', createOnly: false }
+      ],
+      'job': [
+        { type: 'jobs', createOnly: false },
+        { type: 'pods', createOnly: false }
+      ],
+      'cronjob': [
+        { type: 'cronjobs', createOnly: false },
+        { type: 'jobs', createOnly: false },
+        { type: 'pods', createOnly: false }
+      ]
+    };
+    let workloadSpecificResources: Array<{ type: string, createOnly: boolean }> = [];
+
     
     if (workloadObj?.kind) {
       const kindLower = workloadObj.kind.toLowerCase();
-      let resourceType = kindLower;
+
+
+      if (resourceMapping[kindLower]) {
+        workloadSpecificResources = resourceMapping[kindLower];
+      } else {
+        let resourceType = kindLower;
       
       if (!resourceType.endsWith('s')) {
         resourceType += 's';
       }
-      
-      console.log(`Adding resource type from workload kind: ${resourceType}`);
+      workloadSpecificResources = [{ type: resourceType, createOnly: false }];
+
       
 
-      resources.push({ type: resourceType, createOnly: false });
       
-      if (kindLower === 'deployment') {
-        resources.push({ type: 'replicasets', createOnly: false });
-        resources.push({ type: 'services', createOnly: false });
-      } else if (kindLower === 'statefulset') {
-        resources.push({ type: 'services', createOnly: false });
+ 
       }
     } else {
-      console.warn("Workload kind missing, adding deployment as default resource type");
-      // If workload kind is missing, default to deployment
-      resources.push({ type: 'deployments', createOnly: false });
-      resources.push({ type: 'replicasets', createOnly: false });
-      resources.push({ type: 'services', createOnly: false });
+      console.warn("Workload kind missing, adding deployment resources as default");
+      workloadSpecificResources = resourceMapping['deployment'];
     }
+ 
+    const resources = [...commonResources, ...workloadSpecificResources];
     
-    console.log("Final resources:", resources);
-    return resources;
+    const uniqueResources = resources.filter((resource, index, self) => 
+      index === self.findIndex(r => r.type === resource.type)
+    );
+    
+    console.log("Final resources:", uniqueResources);
+    return uniqueResources;
   };
 
   const extractLabelInfo = (labelId: string): { key: string, value: string } | null => {
