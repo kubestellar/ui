@@ -185,7 +185,7 @@ export const useBPQueries = () => {
   };
 
   // GET policy details with YAML from /api/bp and status from /api/bp/status
-  const useBindingPolicyDetails = (policyName: string | undefined) => {
+  const useBindingPolicyDetails = (policyName: string | undefined, options?: { refetchInterval?: number }) => {
     return useQuery<BindingPolicyInfo, Error>({
       queryKey: ['binding-policy-details', policyName],
       queryFn: async () => {
@@ -286,6 +286,7 @@ export const useBPQueries = () => {
         return formattedPolicy;
       },
       enabled: !!policyName,
+      refetchInterval: options?.refetchInterval,
       // Provide initial data for when the query is loading
       placeholderData: (currentData) => {
         // If we already have data, return it
@@ -383,9 +384,20 @@ export const useBPQueries = () => {
           }
         }
       },
-      onSuccess: () => {
+      onSuccess: (_data, variables) => {
         queryClient.invalidateQueries({ queryKey: ['binding-policies'] });
         toast.success('Binding policy created successfully');
+        
+        setTimeout(() => {
+          console.log(`Refetching binding policies after delay to update status for ${variables.name}`);
+          queryClient.invalidateQueries({ queryKey: ['binding-policies'] });
+          
+          if (variables.name) {
+            queryClient.invalidateQueries({ 
+              queryKey: ['binding-policy-details', variables.name] 
+            });
+          }
+        }, 1500); // 1.5 second delay to ensure status change is captured
       },
       onError: (error: Error) => {
         toast.error('Failed to create binding policy');
@@ -532,9 +544,22 @@ export const useBPQueries = () => {
         console.log("Quick connect response:", response.data);
         return response.data;
       },
-      onSuccess: () => {
+      onSuccess: (data) => {
         queryClient.invalidateQueries({ queryKey: ['binding-policies'] });
         toast.success('Binding policy created successfully');
+        
+        const createdPolicyName = data?.bindingPolicy?.name;
+        
+        setTimeout(() => {
+          console.log(`Refetching binding policies after delay to update status for quick-connect policy`);
+          queryClient.invalidateQueries({ queryKey: ['binding-policies'] });
+          
+          if (createdPolicyName) {
+            queryClient.invalidateQueries({ 
+              queryKey: ['binding-policy-details', createdPolicyName] 
+            });
+          }
+        }, 1500);  
       },
       onError: (error: Error) => {
         console.error("Error creating quick connect binding policy:", error);

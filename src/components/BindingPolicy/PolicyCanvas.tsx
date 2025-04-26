@@ -531,63 +531,36 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
     policyCanvasEntities.clusters.length === 0 && 
     policyCanvasEntities.workloads.length === 0;
 
-  // Group workloads by namespace
-  // const groupedWorkloads = useMemo(() => {
-  //   const groups: Record<string, Workload[]> = {};
-    
-  //   workloads.forEach(workload => {
-  //     const namespace = workload.namespace || 'default';
-  //     if (!groups[namespace]) {
-  //       groups[namespace] = [];
-  //     }
-  //     groups[namespace].push(workload);
-  //   });
-    
-  //   return groups;
-  // }, [workloads]);
-  
-  // Find workload or cluster by ID
-  // const getItemById = useCallback((itemType: 'workload' | 'cluster', itemId: string) => {
-  //   if (itemType === 'workload') {
-  //     return workloads.find(w => w.name === itemId);
-  //   } else {
-  //     return clusters.find(c => c.name === itemId);
-  //   }
-  // }, [workloads, clusters]);
   
   // Helper function to extract label information from a label ID
   const extractLabelInfo = (labelId: string): { key: string, value: string } | null => {
     if (!labelId.startsWith('label-')) return null;
     
-
+    const labelPart = labelId.substring(6);
+    
     if (labelId === 'label-location-group:edge') {
-      console.log('PolicyCanvas: Found location-group:edge label');
       return { key: 'location-group', value: 'edge' };
     }
     
-    // Remove the 'label-' prefix
-    const labelPart = labelId.substring(6);
+    if (labelPart.includes(':')) {
+      const colonIndex = labelPart.indexOf(':');
+      const key = labelPart.substring(0, colonIndex);
+      const value = labelPart.substring(colonIndex + 1);
+      return { key, value };
+    }
     
     if (labelPart.includes('=')) {
-      const [key, value] = labelPart.split('=');
+      const equalsIndex = labelPart.indexOf('=');
+      const key = labelPart.substring(0, equalsIndex);
+      const value = labelPart.substring(equalsIndex + 1);
       return { key, value };
     }
     
-    if (labelPart.includes(':')) {
-      const [key, value] = labelPart.split(':');
-      return { key, value };
-    }
     
-    const slashMatch = labelPart.match(/^(.+\/.+?)-(.+)$/);
-    if (slashMatch) {
-      const [, key, value] = slashMatch;
-      return { key, value };
-    }
-    
-    const firstDashIndex = labelPart.indexOf('-');
-    if (firstDashIndex !== -1) {
-      const key = labelPart.substring(0, firstDashIndex);
-      const value = labelPart.substring(firstDashIndex + 1);
+    const lastDashIndex = labelPart.lastIndexOf('-');
+    if (lastDashIndex !== -1 && lastDashIndex > 0) {
+      const key = labelPart.substring(0, lastDashIndex);
+      const value = labelPart.substring(lastDashIndex + 1);
       return { key, value };
     }
     

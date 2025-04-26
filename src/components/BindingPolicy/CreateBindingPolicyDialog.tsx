@@ -241,31 +241,41 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
     // Remove the 'label-' prefix
     const labelPart = labelId.substring(6);
     
-    if (labelPart.includes('=')) {
-      const [key, value] = labelPart.split('=');
-      console.log(`CreateBindingPolicy: Found equals format "${key}=${value}"`);
-      return { key, value };
+    if (labelId === 'label-location-group:edge') {
+      console.log('CreateBindingPolicy: Found location-group:edge label');
+      return { key: 'location-group', value: 'edge' };
     }
     
     if (labelPart.includes(':')) {
-      const [key, value] = labelPart.split(':');
+      const colonIndex = labelPart.indexOf(':');
+      const key = labelPart.substring(0, colonIndex);
+      const value = labelPart.substring(colonIndex + 1);
       console.log(`CreateBindingPolicy: Found colon format "${key}:${value}"`);
       return { key, value };
     }
     
-    const slashMatch = labelPart.match(/^(.+\/.+?)-(.+)$/);
-    if (slashMatch) {
-      const [, key, value] = slashMatch;
-      console.log(`CreateBindingPolicy: Found label with slash in key: key="${key}", value="${value}"`);
+    if (labelPart.includes('=')) {
+      const equalsIndex = labelPart.indexOf('=');
+      const key = labelPart.substring(0, equalsIndex);
+      const value = labelPart.substring(equalsIndex + 1);
+      console.log(`CreateBindingPolicy: Found equals format "${key}=${value}"`);
       return { key, value };
     }
     
-    const firstDashIndex = labelPart.indexOf('-');
-    if (firstDashIndex !== -1) {
-      const key = labelPart.substring(0, firstDashIndex);
-      const value = labelPart.substring(firstDashIndex + 1);
-      
-      console.log(`CreateBindingPolicy: Parsed using first dash: key="${key}", value="${value}"`);
+    
+    const lastDashIndex = labelPart.lastIndexOf('-');
+    if (lastDashIndex !== -1 && lastDashIndex > 0) {
+      const key = labelPart.substring(0, lastDashIndex);
+      const value = labelPart.substring(lastDashIndex + 1);
+      console.log(`CreateBindingPolicy: Parsed using last dash: key="${key}", value="${value}"`);
+      return { key, value };
+    }
+    
+    const parts = labelId.split('-');
+    if (parts.length >= 3) {
+      const key = parts[1];
+      const value = parts.slice(2).join('-');
+      console.log(`CreateBindingPolicy: Fallback parsing: key="${key}", value="${value}"`);
       return { key, value };
     }
     
