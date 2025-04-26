@@ -605,6 +605,25 @@ export const useBPQueries = () => {
     });
   };
 
+  // Create namespace directly in WEC
+  const useCreateWecNamespace = () => {
+    return useMutation({
+      mutationFn: async (namespace: string) => {
+        console.log(`Creating namespace "${namespace}" directly in WEC`);
+        const response = await api.post(`/api/wec/namespace/${namespace}`);
+        return response.data;
+      },
+      onSuccess: (data) => {
+        console.log('Namespace created successfully in WEC');
+        console.log('Namespace creation response:', data);
+      },
+      onError: (error: Error) => {
+        console.error('Failed to create namespace in WEC');
+        console.error('Error creating namespace in WEC:', error);
+      },
+    });
+  };
+
   return {
     useBindingPolicies,
     useBindingPolicyDetails,
@@ -615,5 +634,6 @@ export const useBPQueries = () => {
     useDeploy,
     useGenerateBindingPolicyYaml,
     useQuickConnect,
+    useCreateWecNamespace,
   };
 };
