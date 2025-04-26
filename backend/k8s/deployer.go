@@ -625,7 +625,7 @@ func GetHelmDeploymentsByNamespace(contextName, namespace string) ([]HelmDeploym
 	return filtered, nil
 }
 
-func deployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, error) {
+func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -907,8 +907,8 @@ func HelmDeployHandler(c *gin.Context) {
 		store = true
 	}
 
-	// Pass the parsed "store" parameter to deployHelmChart
-	release, err := deployHelmChart(req, store)
+	// Pass the parsed "store" parameter to DeployHelmChart
+	release, err := DeployHelmChart(req, store)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Deployment failed: %v", err)})
 		return

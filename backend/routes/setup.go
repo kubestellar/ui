@@ -19,4 +19,5 @@ func SetupRoutes(router *gin.Engine) {
 	setupGitHubRoutes(router)
 	setupDeploymentHistoryRoutes(router)
 	setupAuthRoutes(router)
+	setupArtifactHubRoutes(router)
 }
