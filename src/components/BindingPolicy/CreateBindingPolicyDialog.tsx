@@ -165,7 +165,8 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
     console.log("Generating resources from workload:", workloadObj);
     
     const resources = [
-      { type: 'namespaces', createOnly: true }
+      { type: 'namespaces', createOnly: true },
+      { type: 'serviceaccounts', createOnly: false }
     ];
     
     if (workloadObj?.kind) {
