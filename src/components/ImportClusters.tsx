@@ -1789,6 +1789,110 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                                 </Box>
                               </Box>
                             </Box>
+                           
+{/* Step 3: Run accept command */}
+<Box sx={{ 
+  display: "flex", 
+  alignItems: "flex-start", 
+  gap: 1.5,
+  p: 1.5,
+  borderRadius: 1.5,
+  bgcolor: theme === "dark" ? "rgba(0, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.5)",
+  border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
+}}>
+  <Box sx={{ 
+    width: 24, 
+    height: 24, 
+    borderRadius: "50%", 
+    display: "flex", 
+    alignItems: "center", 
+    justifyContent: "center",
+    bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.1)",
+    color: theme === "dark" ? colors.primaryLight : colors.primary,
+    flexShrink: 0,
+    fontSize: "0.75rem",
+    fontWeight: 600,
+  }}>
+    3
+  </Box>
+  <Box sx={{ fontSize: "0.825rem", color: colors.textSecondary, width: "100%" }}>
+    <Box sx={{ fontWeight: 500, color: textColor, mb: 0.5 }}>
+      Accept the cluster joining request
+    </Box>
+    <Box sx={{ fontSize: "0.8rem", mb: 1.5 }}>
+      After running the command above, you need to accept the cluster joining request:
+    </Box>
+    
+    <Box
+      component="pre"
+      sx={{
+        position: "relative",
+        p: 1.5,
+        backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.3)" : "#f0f0f0",
+        color: theme === "dark" ? "#e6e6e6" : "#333",
+        borderRadius: 1,
+        fontFamily: "'Fira Code', monospace",
+        fontSize: "0.75rem",
+        mb: 1,
+        overflow: "hidden",
+        border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"}`,
+        whiteSpace: "pre",
+        "&::before": {
+          content: '"$"',
+          color: theme === "dark" ? colors.primaryLight : colors.primary,
+          marginRight: "6px",
+          fontWeight: "bold",
+          display: "inline-block",
+        },
+      }}
+    >
+      <Box component="span" sx={{ paddingLeft: "1rem" }}>clusteradm accept --clusters {manualCommand.clusterName}</Box>
+      <Button
+        onClick={() => {
+          navigator.clipboard.writeText(`clusteradm accept --clusters ${manualCommand.clusterName}`);
+          setSnackbar({
+            open: true,
+            message: "Accept command copied!",
+            severity: "success"
+          });
+        }}
+        sx={{
+          position: "absolute",
+          top: 4,
+          right: 4,
+          minWidth: "28px",
+          width: "28px",
+          height: "28px",
+          p: 0,
+          borderRadius: 0.75,
+          bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
+          color: theme === "dark" ? colors.primaryLight : colors.primary,
+          boxShadow: "none",
+          "&:hover": {
+            bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.3)" : "rgba(47, 134, 255, 0.2)",
+          }
+        }}
+      >
+        <span role="img" aria-label="copy" style={{ fontSize: "0.7rem" }}>📋</span>
+      </Button>
+    </Box>
+    
+    <Box sx={{ 
+      p: 1.5,
+      borderRadius: 1,
+      backgroundColor: theme === "dark" ? "rgba(103, 192, 115, 0.08)" : "rgba(103, 192, 115, 0.05)",
+      border: `1px solid ${theme === "dark" ? "rgba(103, 192, 115, 0.15)" : "rgba(103, 192, 115, 0.1)"}`,
+      fontSize: "0.775rem",
+      color: theme === "dark" ? "rgba(103, 192, 115, 0.9)" : "#3d9950",
+    }}>
+      <Box className="flex items-center gap-1">
+        <span role="img" aria-label="tip" style={{ fontSize: "0.8rem" }}>💡</span> 
+        <span style={{ fontWeight: 500 }}>Tip:</span> This command accepts the cluster join request and establishes the connection.
+      </Box>
+    </Box>
+  </Box>
+</Box>
+
                             
                             {/* Step 3: Wait for CSR approval */}
                             <Box sx={{ 
@@ -1813,7 +1917,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                                 fontSize: "0.75rem",
                                 fontWeight: 600,
                               }}>
-                                3
+                                4
                               </Box>
                               <Box sx={{ fontSize: "0.825rem", color: colors.textSecondary, width: "100%" }}>
                                 <Box sx={{ fontWeight: 500, color: textColor, mb: 0.5 }}>
@@ -1939,7 +2043,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                                 fontSize: "0.75rem",
                                 fontWeight: 600,
                               }}>
-                                4
+                                5
                               </Box>
                               <Box sx={{ fontSize: "0.825rem", color: colors.textSecondary, width: "100%" }}>
                                 <Box sx={{ fontWeight: 500, color: textColor, mb: 0.5 }}>
