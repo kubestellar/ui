@@ -17,6 +17,7 @@ import { Editor } from '@monaco-editor/react';
 import ContentCopy from "@mui/icons-material/ContentCopy";
 import useTheme from "../../../stores/themeStore";
 import { PolicyDetailDialogProps } from '../../../types/bindingPolicy';
+import { useBPQueries } from "../../../hooks/queries/useBPQueries";
 
 interface PolicyCondition {
   type: string;
@@ -38,12 +39,28 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
   const [yamlContent, setYamlContent] = useState<string>("");
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [fetchLoading, setFetchLoading] = useState<boolean>(false);
+  
+  const { useBindingPolicyDetails } = useBPQueries();
+  
+  const { 
+    data: refreshedPolicy,
+    isLoading: isRefreshing,
+    error: refreshError
+  } = useBindingPolicyDetails(policy?.name, { refetchInterval: 2000 });
+
+  const policyData = refreshedPolicy || policy;
+  const isLoadingData = isLoading || isRefreshing;
+  const errorData = error || (refreshError ? refreshError.message : undefined);
 
   // Debug log the incoming policy object
   useEffect(() => {
     console.log("PolicyDetailDialog - Received policy:", policy);
     console.log("PolicyDetailDialog - YAML property:", policy.yaml || '<empty string>');
-  }, [policy]);
+    
+    if (refreshedPolicy) {
+      console.log("PolicyDetailDialog - Using auto-refreshed policy data with status:", refreshedPolicy.status);
+    }
+  }, [policy, refreshedPolicy]);
 
   // Process YAML content when policy changes
   useEffect(() => {
@@ -51,10 +68,11 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
       setFetchLoading(true);
       setFetchError(null);
       
-      console.log("Processing YAML for policy:", policy?.name);
+      const currentPolicy = refreshedPolicy || policy;
+      console.log("Processing YAML for policy:", currentPolicy?.name);
       
       // Don't process if we're still in the initial loading state
-      if (policy.status === 'Loading...') {
+      if (currentPolicy.status === 'Loading...') {
         console.log("Policy is still loading, deferring YAML processing");
         setFetchLoading(false);
         return;
@@ -62,15 +80,15 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
       
       try {
         // Use the YAML content directly from the policy object
-        if (policy?.yaml) {
-          console.log(`Using YAML content from policy object (${policy.yaml.length} chars)`);
-          setYamlContent(policy.yaml);
+        if (currentPolicy?.yaml) {
+          console.log(`Using YAML content from policy object (${currentPolicy.yaml.length} chars)`);
+          setYamlContent(currentPolicy.yaml);
         } else {
           console.log("No YAML content found in policy object");
           
           // Log additional debug info
-          console.log("Policy object keys:", Object.keys(policy));
-          console.log("Policy yaml property type:", typeof policy.yaml);
+          console.log("Policy object keys:", Object.keys(currentPolicy));
+          console.log("Policy yaml property type:", typeof currentPolicy.yaml);
           
           setFetchError("No YAML content available. The policy may have been created before YAML tracking was implemented or the YAML content may not be available from the API.");
           setYamlContent("");
@@ -84,26 +102,20 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
       }
     };
     
-    if (policy) {
-      processYaml();
-    }
-  }, [policy]);
+    processYaml();
+  }, [policy, refreshedPolicy]);
 
-  // Use the binding mode directly from the policy object
-  const bindingMode = policy.bindingMode || "N/A";
+  const bindingMode = policyData.bindingMode || "N/A";
 
-  // Use the cluster list directly from the policy object
-  const clusterNames = policy.clusterList || [];
+  const clusterNames = policyData.clusterList || [];
 
-  // Use the workload list directly from the policy object
-  const workloads = policy.workloadList || [];
+  const workloads = policyData.workloadList || [];
 
-  // Add creation timestamp formatting if available
-  const formattedCreationDate = policy.creationTimestamp 
-    ? new Date(policy.creationTimestamp).toLocaleString() 
+  const formattedCreationDate = policyData.creationTimestamp 
+    ? new Date(policyData.creationTimestamp).toLocaleString() 
     : 'Not available';
 
-  if (isLoading) {
+  if (isLoadingData) {
     return (
       <Dialog
         open={open}
@@ -129,7 +141,7 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
     );
   }
 
-  if (error) {
+  if (errorData) {
     return (
       <Dialog
         open={open}
@@ -145,7 +157,7 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
         <DialogTitle>Error Loading Policy Details</DialogTitle>
         <DialogContent>
           <Alert severity="error" sx={{ mt: 2 }}>
-            {error}
+            {errorData}
           </Alert>
         </DialogContent>
         <DialogActions>
@@ -180,15 +192,15 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
               variant="h6"
               className={isDarkTheme ? "text-white" : "text-black"}
             >
-              {policy.name} 
+              {policyData.name} 
             </Typography>
             <Chip
-              label={policy.status}
+              label={policyData.status}
               size="small"
               color={
-                policy.status.toLowerCase() === "active" 
+                policyData.status.toLowerCase() === "active" 
                   ? "success" 
-                  : policy.status.toLowerCase() === "pending"
+                  : policyData.status.toLowerCase() === "pending"
                     ? "warning"
                     : "error"
               }
@@ -196,7 +208,7 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
           </Box>
           {onEdit && (
             <Button
-              onClick={() => onEdit(policy)}
+              onClick={() => onEdit(policyData)}
               sx={{
                 color: isDarkTheme ? "#fff" : "text.primary",
                 "&:hover": {
@@ -247,7 +259,7 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                     Created
                   </Typography>
                   <Typography sx={{ color: isDarkTheme ? "#fff" : "text.primary" }}>
-                    {formattedCreationDate || policy.creationDate || 'Not available'}
+                    {formattedCreationDate || policyData.creationDate || 'Not available'}
                   </Typography>
                 </Box>
                 <Box>
@@ -258,7 +270,7 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                     Last Modified
                   </Typography>
                   <Typography sx={{ color: isDarkTheme ? "#fff" : "text.primary" }}>
-                    {policy.lastModifiedDate || "Not available"}
+                    {policyData.lastModifiedDate || "Not available"}
                   </Typography>
                 </Box>
                 <Box>
@@ -359,12 +371,12 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                   </Typography>
                   <Box sx={{ mt: 1 }}>
                     <Chip
-                      label={policy.status}
+                      label={policyData.status}
                       size="small"
                       color={
-                        policy.status.toLowerCase() === "active"
+                        policyData.status.toLowerCase() === "active"
                           ? "success"
-                          : policy.status.toLowerCase() === "pending"
+                          : policyData.status.toLowerCase() === "pending"
                             ? "warning"
                             : "error"
                       }
@@ -372,7 +384,7 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                   </Box>
                 </Box>
 
-                {policy.conditions && policy.conditions.length > 0 && (
+                {policyData.conditions && policyData.conditions.length > 0 && (
                   <Box>
                     <Typography
                       variant="body2"
@@ -383,7 +395,7 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                       Conditions
                     </Typography>
                     <Box sx={{ mt: 1 }}>
-                      {policy.conditions.map((condition: PolicyCondition, index: number) => (
+                      {policyData.conditions.map((condition: PolicyCondition, index: number) => (
                         <Box key={index} sx={{ mb: 1 }}>
                           <Typography
                             variant="body2"
@@ -468,7 +480,7 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                   borderColor: isDarkTheme ? "gray.700" : "divider",
                 }}
               >
-                {policy.status === 'Loading...' ? (
+                {policyData.status === 'Loading...' ? (
                   <Box display="flex" justifyContent="center" alignItems="center" height="400px">
                     <CircularProgress />
                     <Typography sx={{ ml: 2 }}>Loading policy details...</Typography>
@@ -483,13 +495,13 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                       {fetchError}
                       <Box mt={2}>
                         <Typography variant="body2">
-                          Policy Name: {policy.name}
+                          Policy Name: {policyData.name}
                         </Typography>
                         <Typography variant="body2">
-                          Status: {policy.status} (from status API)
+                          Status: {policyData.status} (from status API)
                         </Typography>
                         <Typography variant="body2">
-                          Created: {policy.creationDate}
+                          Created: {policyData.creationDate}
                         </Typography>
                         <Button 
                           variant="outlined" 
@@ -501,8 +513,8 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                             setFetchError(null);
                             
                             setTimeout(() => {
-                              if (policy?.yaml) {
-                                setYamlContent(policy.yaml);
+                              if (policyData?.yaml) {
+                                setYamlContent(policyData.yaml);
                                 setFetchLoading(false);
                               } else {
                                 setFetchError("YAML content still not available after retry. The YAML data is retrieved from the main API, while status comes from the status API.");

@@ -14,10 +14,12 @@ import (
 	"github.com/kubestellar/ui/log"
 	"github.com/kubestellar/ui/redis"
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 )
@@ -370,4 +372,260 @@ func watchOnBps() {
 func init() {
 
 	go watchOnBps()
+}
+
+// CreateNamespaceInWEC creates a namespace in the WEC cluster with the same name as the namespace in the BP
+func CreateNamespaceInWEC(bpNamespace string, wecContexts []string, clusterLabels []map[string]string) error {
+	log.LogInfo("CreateNamespaceInWEC called",
+		zap.String("namespace", bpNamespace),
+		zap.Strings("wecContexts", wecContexts),
+		zap.Any("clusterLabels", clusterLabels))
+
+	if bpNamespace == "" || bpNamespace == "default" {
+		log.LogInfo("Skipping namespace creation for default or empty namespace")
+		return nil
+	}
+
+	kubeconfig := os.Getenv("KUBECONFIG")
+	if kubeconfig == "" {
+		kubeconfig = filepath.Join(homedir.HomeDir(), ".kube", "config")
+	}
+	log.LogInfo("Using kubeconfig", zap.String("path", kubeconfig))
+
+	config, err := clientcmd.LoadFromFile(kubeconfig)
+	if err != nil {
+		log.LogError("Failed to load kubeconfig for WEC", zap.String("err", err.Error()))
+		return err
+	}
+
+	var availableContexts []string
+	for contextName := range config.Contexts {
+		availableContexts = append(availableContexts, contextName)
+	}
+	log.LogInfo("Available contexts", zap.Strings("contexts", availableContexts))
+
+	finalContexts := []string{}
+
+	for _, ctx := range wecContexts {
+		if _, exists := config.Contexts[ctx]; exists {
+			finalContexts = append(finalContexts, ctx)
+			log.LogInfo("Added explicit context", zap.String("context", ctx))
+		} else {
+			log.LogWarn("Explicit context not found", zap.String("context", ctx))
+		}
+	}
+
+	if len(finalContexts) == 0 {
+		log.LogInfo("Starting auto-discovery of WEC contexts")
+
+		for _, directCtx := range []string{"cluster1", "cluster2"} {
+			if _, exists := config.Contexts[directCtx]; exists {
+				finalContexts = append(finalContexts, directCtx)
+				log.LogInfo("Using direct cluster context", zap.String("context", directCtx))
+			}
+		}
+
+		if len(finalContexts) > 0 {
+			log.LogInfo("Found direct cluster contexts, using them",
+				zap.Strings("contexts", finalContexts))
+			goto CreateNamespaces
+		}
+
+		if len(clusterLabels) > 0 {
+			log.LogInfo("Trying to match cluster labels to contexts",
+				zap.Any("clusterLabels", clusterLabels))
+
+			for _, labelSet := range clusterLabels {
+				if clusterName, ok := labelSet["kubernetes.io/cluster-name"]; ok {
+					if _, exists := config.Contexts[clusterName]; exists {
+						log.LogInfo("Found context from kubernetes.io/cluster-name label",
+							zap.String("context", clusterName))
+						finalContexts = append(finalContexts, clusterName)
+					} else {
+						log.LogInfo("Context from kubernetes.io/cluster-name not found",
+							zap.String("context", clusterName))
+					}
+				}
+			}
+
+			for _, labelSet := range clusterLabels {
+				if clusterName, ok := labelSet["name"]; ok {
+					// Check if this context exists
+					if _, exists := config.Contexts[clusterName]; exists {
+						isDuplicate := false
+						for _, ctx := range finalContexts {
+							if ctx == clusterName {
+								isDuplicate = true
+								break
+							}
+						}
+						if !isDuplicate {
+							log.LogInfo("Found context from name label",
+								zap.String("context", clusterName))
+							finalContexts = append(finalContexts, clusterName)
+						}
+					}
+				}
+			}
+
+			// If no contexts found yet, try looking for "cluster" prefixed contexts
+			// including exact matches to label values
+			if len(finalContexts) == 0 {
+				log.LogInfo("No contexts found from specific labels, trying pattern matching")
+
+				// First, extract potential cluster names from labels
+				var potentialClusterNames []string
+				for _, labelSet := range clusterLabels {
+					for _, value := range labelSet {
+						potentialClusterNames = append(potentialClusterNames, value)
+					}
+				}
+
+				log.LogInfo("Potential cluster names from labels",
+					zap.Strings("names", potentialClusterNames))
+
+				// Now try to match with available contexts
+				for contextName := range config.Contexts {
+					// Skip WDS
+					if contextName == "wds1" {
+						continue
+					}
+
+					// Check for exact matches to label values
+					for _, name := range potentialClusterNames {
+						if contextName == name {
+							log.LogInfo("Found direct match for context name",
+								zap.String("context", contextName))
+							finalContexts = append(finalContexts, contextName)
+							break
+						}
+					}
+
+					// Also check for cluster prefix
+					if strings.HasPrefix(contextName, "cluster") && contextName != "wds1" {
+						// Don't add duplicates
+						isDuplicate := false
+						for _, ctx := range finalContexts {
+							if ctx == contextName {
+								isDuplicate = true
+								break
+							}
+						}
+						if !isDuplicate {
+							log.LogInfo("Found cluster context", zap.String("context", contextName))
+							finalContexts = append(finalContexts, contextName)
+						}
+					}
+				}
+			}
+		}
+
+		// If still no contexts found, use the standard detection method
+		if len(finalContexts) == 0 {
+			log.LogInfo("No contexts found from labels, trying prefix-based detection")
+			for contextName := range config.Contexts {
+				// Accept contexts with standard WEC prefixes or explicit "cluster" prefix
+				if strings.HasPrefix(contextName, "wec") ||
+					strings.HasPrefix(contextName, "its") ||
+					strings.HasPrefix(contextName, "cluster") {
+					// Skip the WDS context
+					if contextName == "wds1" {
+						continue
+					}
+					// Don't add duplicates
+					isDuplicate := false
+					for _, ctx := range finalContexts {
+						if ctx == contextName {
+							isDuplicate = true
+							break
+						}
+					}
+					if !isDuplicate {
+						finalContexts = append(finalContexts, contextName)
+						log.LogInfo("Found potential WEC context", zap.String("context", contextName))
+					}
+				}
+			}
+		}
+	}
+
+CreateNamespaces:
+	// If still no WEC contexts found, log warning and return
+	if len(finalContexts) == 0 {
+		log.LogWarn("No WEC contexts found, skipping namespace creation. Please specify contexts explicitly.")
+		return nil
+	}
+
+	log.LogInfo("Creating namespace in WEC contexts",
+		zap.String("namespace", bpNamespace),
+		zap.Strings("contexts", finalContexts))
+
+	// Create namespace in each WEC context
+	for _, wecContext := range finalContexts {
+		log.LogInfo("Processing context", zap.String("context", wecContext))
+
+		// Set config overrides with WEC context
+		overrides := &clientcmd.ConfigOverrides{
+			CurrentContext: wecContext,
+		}
+		clientConfig := clientcmd.NewDefaultClientConfig(*config, overrides)
+
+		// Get REST config
+		restConfig, err := clientConfig.ClientConfig()
+		if err != nil {
+			log.LogError("Failed to get rest config for WEC",
+				zap.String("context", wecContext),
+				zap.String("error", err.Error()))
+			continue
+		}
+
+		// Create client
+		clientset, err := kubernetes.NewForConfig(restConfig)
+		if err != nil {
+			log.LogError("Failed to create kubernetes client for WEC",
+				zap.String("context", wecContext),
+				zap.String("error", err.Error()))
+			continue
+		}
+
+		// Check if namespace already exists
+		_, err = clientset.CoreV1().Namespaces().Get(context.TODO(), bpNamespace, v1.GetOptions{})
+		if err == nil {
+			log.LogInfo("Namespace already exists in WEC",
+				zap.String("namespace", bpNamespace),
+				zap.String("context", wecContext))
+			continue
+		} else {
+			log.LogInfo("Namespace does not exist, will create",
+				zap.String("namespace", bpNamespace),
+				zap.String("context", wecContext),
+				zap.String("error", err.Error()))
+		}
+
+		// Create namespace
+		ns := &corev1.Namespace{
+			ObjectMeta: v1.ObjectMeta{
+				Name: bpNamespace,
+				Labels: map[string]string{
+					"kubernetes.io/kubestellar.workload.name": bpNamespace,
+					"created-by": "kubestellar-ui",
+				},
+			},
+		}
+
+		createdNs, err := clientset.CoreV1().Namespaces().Create(context.TODO(), ns, v1.CreateOptions{})
+		if err != nil {
+			log.LogError("Failed to create namespace in WEC",
+				zap.String("namespace", bpNamespace),
+				zap.String("context", wecContext),
+				zap.String("error", err.Error()))
+			continue
+		}
+
+		log.LogInfo("Successfully created namespace in WEC",
+			zap.String("namespace", createdNs.Name),
+			zap.String("context", wecContext))
+	}
+
+	return nil
 }

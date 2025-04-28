@@ -231,33 +231,37 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
 
       const labelPart = labelId.substring(6);
 
+      if (labelPart.includes(":")) {
+        const colonIndex = labelPart.indexOf(":");
+        const key = labelPart.substring(0, colonIndex);
+        const value = labelPart.substring(colonIndex + 1);
+        console.log(`Found colon format "${key}:${value}"`);
+        return { key, value };
+      }
+      
       if (labelPart.includes("=")) {
-        const [key, value] = labelPart.split("=");
+        const equalsIndex = labelPart.indexOf("=");
+        const key = labelPart.substring(0, equalsIndex);
+        const value = labelPart.substring(equalsIndex + 1);
         console.log(`Found equals format "${key}=${value}"`);
         return { key, value };
       }
 
-      if (labelPart.includes(":")) {
-        const [key, value] = labelPart.split(":");
-        console.log(`Found colon format "${key}:${value}"`);
+      
+      const lastDashIndex = labelPart.lastIndexOf("-");
+      if (lastDashIndex !== -1 && lastDashIndex > 0) {
+        const key = labelPart.substring(0, lastDashIndex);
+        const value = labelPart.substring(lastDashIndex + 1);
+        console.log(`Parsed using last dash: key="${key}", value="${value}"`);
         return { key, value };
       }
 
-      const slashMatch = labelPart.match(/^(.+\/.+?)-(.+)$/);
-      if (slashMatch) {
-        const [, key, value] = slashMatch;
-        console.log(
-          `Found label with slash in key: key="${key}", value="${value}"`
-        );
-        return { key, value };
-      }
 
-      const firstDashIndex = labelPart.indexOf("-");
-      if (firstDashIndex !== -1) {
-        const key = labelPart.substring(0, firstDashIndex);
-        const value = labelPart.substring(firstDashIndex + 1);
-
-        console.log(`Parsed using first dash: key="${key}", value="${value}"`);
+      const parts = labelId.split("-");
+      if (parts.length >= 3) {
+        const key = parts[1];
+        const value = parts.slice(2).join("-");
+        console.log(`Fallback parsing: key="${key}", value="${value}"`);
         return { key, value };
       }
 

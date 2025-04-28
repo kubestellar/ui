@@ -1892,3 +1892,59 @@ func getMapKeys(m map[string]interface{}) []string {
 	}
 	return keys
 }
+
+// CreateWecNamespace creates a namespace directly in the WEC cluster for testing purposes
+func CreateWecNamespace(ctx *gin.Context) {
+	namespace := ctx.Param("namespace")
+	if namespace == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "namespace parameter is required"})
+		return
+	}
+
+	// Get WEC contexts from query parameter
+	wecContextsParam := ctx.Query("wec_contexts")
+	var wecContexts []string
+
+	if wecContextsParam != "" {
+		wecContexts = strings.Split(wecContextsParam, ",")
+		log.LogInfo("Using explicitly provided WEC contexts",
+			zap.String("contexts", wecContextsParam))
+	} else {
+		wecContexts = []string{}
+		log.LogInfo("No WEC contexts provided, will auto-discover")
+	}
+
+	var clusterLabels []map[string]string
+	clusterLabelParam := ctx.Query("cluster_label")
+	if clusterLabelParam != "" {
+		parts := strings.Split(clusterLabelParam, "=")
+		if len(parts) == 2 {
+			key := parts[0]
+			value := parts[1]
+			clusterLabels = append(clusterLabels, map[string]string{key: value})
+
+			if key == "name" {
+				clusterLabels = append(clusterLabels, map[string]string{
+					"kubernetes.io/cluster-name": value,
+				})
+			}
+
+			log.LogInfo("Added cluster label for context matching",
+				zap.String("key", key),
+				zap.String("value", value))
+		}
+	}
+
+	err := CreateNamespaceInWEC(namespace, wecContexts, clusterLabels)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Failed to create namespace in WEC: %s", err.Error()),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message":        fmt.Sprintf("Namespace %s created in WEC clusters: %v", namespace, wecContexts),
+		"cluster_labels": clusterLabels,
+	})
+}

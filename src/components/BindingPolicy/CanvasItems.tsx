@@ -50,6 +50,7 @@ const extractLabelInfo = (labelId: string): { key: string, value: string } | nul
   if (!labelId.startsWith('label-')) return null;
   
   console.log(`CanvasItems: Parsing label ID: ${labelId}`);
+    const labelPart = labelId.substring(6);
   
   // Special case for location-group:edge which is a common label
   if (labelId === 'label-location-group:edge') {
@@ -57,35 +58,35 @@ const extractLabelInfo = (labelId: string): { key: string, value: string } | nul
     return { key: 'location-group', value: 'edge' };
   }
   
-  const labelPart = labelId.substring(6);
-  
-
-  if (labelPart.includes('=')) {
-    const [key, value] = labelPart.split('=');
-    console.log(`CanvasItems: Found equals format "${key}=${value}"`);
-    return { key, value };
-  }
-  
   if (labelPart.includes(':')) {
-    const [key, value] = labelPart.split(':');
+    const colonIndex = labelPart.indexOf(':');
+    const key = labelPart.substring(0, colonIndex);
+    const value = labelPart.substring(colonIndex + 1);
     console.log(`CanvasItems: Found colon format "${key}:${value}"`);
     return { key, value };
   }
   
-  const slashMatch = labelPart.match(/^(.+\/.+?)-(.+)$/);
-  if (slashMatch) {
-    const [, key, value] = slashMatch;
-    console.log(`CanvasItems: Found label with slash in key: key="${key}", value="${value}"`);
+  if (labelPart.includes('=')) {
+    const equalsIndex = labelPart.indexOf('=');
+    const key = labelPart.substring(0, equalsIndex);
+    const value = labelPart.substring(equalsIndex + 1);
+    console.log(`CanvasItems: Found equals format "${key}=${value}"`);
     return { key, value };
   }
   
-
-  const firstDashIndex = labelPart.indexOf('-');
-  if (firstDashIndex !== -1) {
-    const key = labelPart.substring(0, firstDashIndex);
-    const value = labelPart.substring(firstDashIndex + 1);
-    
-    console.log(`CanvasItems: Parsed using first dash: key="${key}", value="${value}"`);
+  const lastDashIndex = labelPart.lastIndexOf('-');
+  if (lastDashIndex !== -1 && lastDashIndex > 0) {
+    const key = labelPart.substring(0, lastDashIndex);
+    const value = labelPart.substring(lastDashIndex + 1);
+    console.log(`CanvasItems: Parsed using last dash: key="${key}", value="${value}"`);
+    return { key, value };
+  }
+  
+  const parts = labelId.split('-');
+  if (parts.length >= 3) {
+    const key = parts[1];
+    const value = parts.slice(2).join('-');
+    console.log(`CanvasItems: Fallback parsing: key="${key}", value="${value}"`);
     return { key, value };
   }
   
