@@ -36,6 +36,66 @@ import { useBPQueries } from "../../hooks/queries/useBPQueries";
 import Editor from "@monaco-editor/react";
 import useTheme from "../../stores/themeStore";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import toast from "react-hot-toast";
+
+// Type definitions for components from other files
+interface TreeItem {
+  id: string;
+  name?: string;
+  kind?: string;
+  namespace?: string;
+  labels?: Record<string, string>;
+  creationTime?: string;
+  status?: string;
+  resourceVersion?: string;
+  uid?: string;
+  apiVersion?: string;
+  selector?: Record<string, string>;
+  podCount?: number;
+  metadata?: {
+    name?: string;
+    namespace?: string;
+    labels?: Record<string, string>;
+    [metadataKey: string]: unknown;
+  };
+  spec?: Record<string, unknown>;
+  bindingMode?: string;
+  clusterList?: string[];
+  workloadList?: string[];
+}
+
+// Helper function to check if an item is a namespace
+const isNamespace = (item: TreeItem): boolean => {
+  if (!item) return false;
+  if (item.kind === 'Namespace') return true;
+  if (typeof item.id === 'string' && item.id.startsWith('namespace-')) return true;
+  return false;
+};
+
+// Helper function to check if a label belongs to a namespace
+const isNamespaceLabel = (labelInfo: { key: string; value: string }): boolean => {
+  if (!labelInfo) return false;
+  
+  // Standard Kubernetes namespace identifiers
+  const namespacePatterns = [
+    { key: 'kubernetes.io/metadata.name', valuePattern: null },
+    { key: 'name', valuePattern: /namespace/ },
+    { key: 'k8s-namespace', valuePattern: null },
+    { key: 'name', valuePattern: /^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/ }
+  ];
+  
+  return namespacePatterns.some(pattern => {
+    if (pattern.key && labelInfo.key !== pattern.key) {
+      return false;
+    }
+    
+    if (pattern.valuePattern && !pattern.valuePattern.test(labelInfo.value)) {
+      return false;
+    }
+    
+    return true;
+  });
+};
 
 // StrictMode-compatible DragDropContext wrapper
 const StrictModeDragDropContext: React.FC<
@@ -87,7 +147,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
   onPolicyAssign,
   onCreateBindingPolicy,
   dialogMode = false,
-}) => {
+}: PolicyDragDropContainerProps) => {
   console.log("🔄 PolicyDragDropContainer component rendering", {
     hasPropPolicies: !!propPolicies,
     hasPropClusters: !!propClusters,
@@ -271,17 +331,123 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     []
   );
 
+  //  function to detect CRDs and other cluster-scoped resources
+  const isClusterScopedResource = (labelInfo: { key: string; value: string }): boolean => {
+    if (labelInfo.value.includes('.') && 
+        (labelInfo.value.endsWith('.io') || 
+         labelInfo.value.includes('.k8s.io') || 
+         labelInfo.value.includes('.internal'))) {
+      console.log(`Detected potential cluster-scoped resource by API group pattern: ${labelInfo.value}`);
+      return true;
+    }
+    
+    // Check if part-of label indicates a cluster-level component
+    if (labelInfo.key === 'app.kubernetes.io/part-of') {
+      console.log(`Detected resource with part-of label: ${labelInfo.value}`);
+      return true;
+    }
+    
+    // Known cluster-scoped Kubernetes resources
+    const knownClusterScopedResources = [
+      // Core cluster-scoped resources
+      'customresourcedefinitions',
+      'clusterroles',
+      'clusterrolebindings',
+      'validatingwebhookconfigurations',
+      'mutatingwebhookconfigurations',
+      'priorityclasses',
+      'storageclasses',
+      'csidrivers',
+      'csinodes',
+      'volumeattachments',
+      
+      // Common API group patterns for cluster resources
+      '.apiextensions.k8s.io',
+      '.rbac.authorization.k8s.io',
+      '.admissionregistration.k8s.io',
+      '.storage.k8s.io',
+      '.networking.k8s.io',
+      '.apiserver.k8s.io',
+      '.certificates.k8s.io',
+      '.coordination.k8s.io',
+      '.node.k8s.io'
+    ];
+    
+    if (knownClusterScopedResources.some(r => labelInfo.value === r || labelInfo.value.includes(r))) {
+      console.log(`Detected known cluster-scoped resource: ${labelInfo.value}`);
+      return true;
+    }
+    
+    return false;
+  };
+
+  const determineResourceKind = (labelInfo: { key: string; value: string }): string => {
+    if (labelInfo.key === 'app.kubernetes.io/part-of') {
+      return labelInfo.value.charAt(0).toUpperCase() + labelInfo.value.slice(1);
+    }
+    
+    if (labelInfo.key === 'app.kubernetes.io/name') {
+      return labelInfo.value.charAt(0).toUpperCase() + labelInfo.value.slice(1);
+    }
+    
+    // For labels where the value contains a domain (API group)
+    if (labelInfo.value.includes('.')) {
+      return 'CustomResourceDefinition';
+    }
+    
+    // Default to 'Resource' with proper capitalization
+    return labelInfo.value.charAt(0).toUpperCase() + labelInfo.value.slice(1);
+  };
+
   // Helper function to find workloads matching a label
   const findWorkloadsByLabel = useCallback(
     (labelInfo: { key: string; value: string }): Workload[] => {
-      if (!labelInfo) return [];
-
-      return workloads.filter(
-        (workload) =>
-          workload.labels && workload.labels[labelInfo.key] === labelInfo.value
+      console.log(
+        `Looking for workloads with label: ${labelInfo.key}=${labelInfo.value}`
       );
+
+      const matchingWorkloads = workloads.filter((workload) => {
+        const hasMatchingLabel =
+          workload.labels &&
+          workload.labels[labelInfo.key] === labelInfo.value;
+
+        console.log(
+          `Checking workload ${workload.name}: ${hasMatchingLabel ? "MATCH" : "NO MATCH"
+          }`
+        );
+
+        return hasMatchingLabel;
+      });
+
+      console.log(
+        `Found ${matchingWorkloads.length} matching workloads:`,
+        matchingWorkloads.map((w) => w.name)
+      );
+
+      
+      if (matchingWorkloads.length === 0 && isClusterScopedResource(labelInfo)) {
+        console.log(`Creating synthetic workload for cluster-scoped resource: ${labelInfo.value}`);
+        
+        const syntheticWorkload: Workload = {
+          name: `${labelInfo.value}-resource`,
+          namespace: 'cluster-scoped',
+          kind: determineResourceKind(labelInfo),
+          labels: { [labelInfo.key]: labelInfo.value },
+          creationTime: new Date().toISOString()
+        };
+        
+       
+        if (labelInfo.key === 'app.kubernetes.io/part-of') {
+          syntheticWorkload.kind = labelInfo.value.charAt(0).toUpperCase() + labelInfo.value.slice(1);
+        }
+        
+        console.log('Created synthetic workload:', syntheticWorkload);
+        return [syntheticWorkload];
+      }
+
+      return matchingWorkloads;
     },
-    [workloads]
+    [workloads, isClusterScopedResource, determineResourceKind]
   );
 
   // Helper function to find clusters matching a label
@@ -324,105 +490,210 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
   const generateResourcesFromWorkload = useCallback((workload: Workload) => {
     console.log("🔍 DEBUG - Generating resources from workload:", workload);
 
-    const resources = [];
-    resources.push({ type: "namespaces", createOnly: true });
+    // Common resources that should be included for all workload types
+    const commonResources = [
+      { type: "namespaces", createOnly: true },
+      { type: "serviceaccounts", createOnly: false }
+    ];
+    
+    const resourceMapping: Record<string, Array<{ type: string, createOnly: boolean }>> = {
+      'deployment': [
+        { type: "deployments", createOnly: false },
+        { type: "replicasets", createOnly: false },
+        { type: "services", createOnly: false },
+        { type: "pods", createOnly: false }
+      ],
+      'statefulset': [
+        { type: "statefulsets", createOnly: false },
+        { type: "services", createOnly: false },
+        { type: "pods", createOnly: false }
+      ],
+      'daemonset': [
+        { type: "daemonsets", createOnly: false },
+        { type: "pods", createOnly: false }
+      ],
+      'service': [
+        { type: "services", createOnly: false }
+      ],
+      'namespace': [
+        { type: "namespaces", createOnly: true }
+      ],
+      'customresourcedefinition': [
+        { type: "customresourcedefinitions", createOnly: false }
+      ]
+    };
 
+    let workloadSpecificResources: Array<{ type: string, createOnly: boolean }> = [];
+
+    // Determine resources based on workload kind
     if (workload.kind) {
       const kindLower = workload.kind.toLowerCase();
-      let resourceType = kindLower;
 
-      if (!resourceType.endsWith("s")) {
-        resourceType += "s";
-      }
+      if (resourceMapping[kindLower]) {
+        workloadSpecificResources = resourceMapping[kindLower];
+      } else {
+        let resourceType = kindLower;
 
-      console.log(`🔍 DEBUG - Adding resource from kind: ${resourceType}`);
-      resources.push({ type: resourceType, createOnly: false });
+        if (!resourceType.endsWith("s")) {
+          resourceType += "s";
+        }
 
-      if (kindLower === "deployment") {
-        resources.push({ type: "replicasets", createOnly: false });
-        resources.push({ type: "services", createOnly: false });
-      } else if (kindLower === "statefulset") {
-        resources.push({ type: "services", createOnly: false });
+        console.log(`🔍 DEBUG - Adding resource from kind: ${resourceType}`);
+        workloadSpecificResources = [{ type: resourceType, createOnly: false }];
       }
     } else {
-      console.warn(
-        "🔍 DEBUG - Workload kind missing, adding deployment as default resource type"
-      );
-      resources.push({ type: "deployments", createOnly: false });
-      resources.push({ type: "replicasets", createOnly: false });
-      resources.push({ type: "services", createOnly: false });
+      console.warn("Workload kind missing, adding deployment resources as default");
+      workloadSpecificResources = resourceMapping['deployment'];
     }
 
-    console.log("🔍 DEBUG - Final resources array:", resources);
-    return resources;
+    // Combine common and workload-specific resources
+    const allResources = [...commonResources, ...workloadSpecificResources];
+    
+    const uniqueResources = allResources.filter((resource, index, self) => 
+      index === self.findIndex(r => r.type === resource.type)
+    );
+    
+    console.log("Final resources:", uniqueResources);
+    return uniqueResources;
   }, []);
-  // Add a generic function to handle adding items to the canvas by click or drop
+
   const addItemToCanvas = useCallback(
-    (itemType: "cluster" | "workload", itemId: string) => {
-      console.log(`🔄 Adding ${itemType} to canvas: ${itemId}`);
-
-      // For label-based items, verify before adding
-      if (itemId.startsWith("label-")) {
-        const labelInfo = extractLabelInfo(itemId);
-
-        if (labelInfo) {
-          const matchingItems =
-            itemType === "cluster"
-              ? findClustersByLabel(labelInfo)
-              : findWorkloadsByLabel(labelInfo);
-
-          if (matchingItems.length > 0) {
-            console.log(
-              `Adding ${itemType} label ${itemId} to canvas, matches ${matchingItems.length} ${itemType}s`
-            );
-            addToCanvas(itemType, itemId);
-            console.log(`✅ Added ${itemType} label ${itemId} to canvas`);
-
-            // Show a success message
-            setSuccessMessage(
-              `Added ${labelInfo.key}:${labelInfo.value} to canvas`
-            );
-          } else {
-            console.error(
-              `No ${itemType}s match label: ${labelInfo.key}=${labelInfo.value}`
-            );
+    (
+      itemType: "policy" | "cluster" | "workload",
+      itemId: string,
+      
+    ) => {
+      console.log(`🔄 Adding ${itemType} to canvas:`, itemId);
+      try {
+        if (itemId.startsWith("label-")) {
+          // Extract label information
+          const labelInfo = extractLabelInfo(itemId);
+          if (!labelInfo) {
+            console.error(`Invalid label format: ${itemId}`);
+            toast.error(`Invalid label format: ${itemId}`);
+            return;
           }
-        } else {
-          console.error(`Invalid ${itemType} label format:`, itemId);
+
+          if (itemType === 'workload' && isNamespaceLabel(labelInfo)) {
+            console.log(`Detected namespace label: ${labelInfo.key}=${labelInfo.value}`);
+            toast(`Added namespace with label: ${labelInfo.key}=${labelInfo.value}`, {
+              icon: '📁',
+            });
+          }
+          else if (itemType === "workload" && isClusterScopedResource(labelInfo)) {
+            console.log(`Detected cluster-scoped resource label: ${labelInfo.key}=${labelInfo.value}`);
+            
+            toast(`Added cluster-scoped resource with label: ${labelInfo.key}=${labelInfo.value}`, {
+              icon: 'ℹ️',
+            });
+          }
+
+          // Check if the item is already in the canvas
+          if ((itemType === 'workload' && canvasEntities.workloads.includes(itemId)) || 
+              (itemType === 'cluster' && canvasEntities.clusters.includes(itemId))) {
+            console.log(`Item ${itemId} is already in the canvas`);
+            toast(`This label is already on the canvas`);
+            return;
+          }
+
+          console.log(`Adding label ${itemId} to canvas as ${itemType}`);
+          addToCanvas(itemType, itemId);
+          
+          // Also add the labels to the store for reference
+          if (itemType === 'workload' || itemType === 'cluster') {
+            const storeLabels = {[labelInfo.key]: labelInfo.value};
+            usePolicyDragDropStore.getState().assignLabelsToItem(itemType, itemId, storeLabels);
+            console.log(`Assigned labels to ${itemType} ${itemId}:`, storeLabels);
+          }
+
+          return;
         }
-      } else {
-        // Legacy format handling for direct cluster/workload references
-        const displayName =
-          itemType === "cluster"
-            ? clusters.find((c) => c.name === itemId)?.name || itemId
-            : workloads.find((w) => w.name === itemId)?.name || itemId;
 
         addToCanvas(itemType, itemId);
-        setSuccessMessage(`Added ${displayName} to canvas`);
+      } catch (error) {
+        console.error("Error adding item to canvas:", error);
+        toast.error("Failed to add item to canvas");
       }
     },
-    [
-      addToCanvas,
-      extractLabelInfo,
-      findClustersByLabel,
-      findWorkloadsByLabel,
-      clusters,
-      workloads,
-      setSuccessMessage,
-    ]
+    [canvasEntities, extractLabelInfo, isClusterScopedResource, addToCanvas]
   );
 
-  // Create click handlers for clusters and workloads
-  const handleClusterItemClick = useCallback(
-    (clusterId: string) => {
-      addItemToCanvas("cluster", clusterId);
-    },
-    [addItemToCanvas]
-  );
-
+  // Update the handleWorkloadItemClick function to handle cluster-scoped resources
   const handleWorkloadItemClick = useCallback(
-    (workloadId: string) => {
-      addItemToCanvas("workload", workloadId);
+    (itemOrId: TreeItem | string) => {
+      if (typeof itemOrId === 'string') {
+        const itemId = itemOrId;
+
+        if (itemId.startsWith('namespace-')) {
+          console.log(`Selected namespace from string ID: ${itemId}`);
+          return;
+        }
+
+        if (itemId.startsWith('label-')) {
+          console.log(`Processing label ID: ${itemId}`);
+          const labelInfo = extractLabelInfo(itemId);
+          
+          if (!labelInfo) {
+            console.warn(`Invalid label format: ${itemId}`);
+            return;
+          }
+          
+          // Add the item to canvas using the label ID
+          addItemToCanvas('workload', itemId);
+          return;
+        }
+
+        addItemToCanvas('workload', itemId);
+        return;
+      }
+
+      const item = itemOrId;
+      
+      if (item && typeof item === 'object' && (item.kind !== undefined || item.id !== undefined)) {
+        if (isNamespace(item)) {
+          console.log(`Selected namespace: ${item.id}`);
+          return;
+        }
+      }
+
+      if (item && item.id && item.id.startsWith('label-')) {
+        // This is a label node, parse the label key/value
+        const labelPart = item.id.substring('label-'.length);
+        const [key, value] = labelPart.split(':');
+        
+        if (!key || !value) {
+          console.warn(`Invalid label format: ${labelPart}`);
+          return;
+        }
+
+        const labelInfo = { key, value };
+        console.log(`Selected label: ${key}=${value}`);
+
+        // Check if this is a cluster-scoped resource
+        if (isClusterScopedResource(labelInfo)) {
+          console.log(`Handling cluster-scoped resource: ${value}`);
+          
+          addItemToCanvas('workload', item.id);
+          return;
+        }
+
+        addItemToCanvas('workload', item.id);
+      } else if (item && item.id) {
+        addItemToCanvas('workload', item.id);
+      }
+    },
+    [addItemToCanvas, extractLabelInfo, isClusterScopedResource]
+  );
+
+  // Create click handlers for clusters and workloads - update to handle string IDs
+  const handleClusterItemClick = useCallback(
+    (itemOrId: TreeItem | string) => {
+      // Add cluster item to the canvas
+      if (typeof itemOrId === 'string') {
+        addItemToCanvas("cluster", itemOrId);
+      } else if (itemOrId && itemOrId.id) {
+        addItemToCanvas("cluster", itemOrId.id);
+      }
     },
     [addItemToCanvas]
   );

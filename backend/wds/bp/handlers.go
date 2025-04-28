@@ -1380,6 +1380,7 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 	type ResourceConfig struct {
 		Type       string `json:"type"`       // Resource type (e.g., "deployments", "namespaces")
 		CreateOnly bool   `json:"createOnly"` // Whether to use createOnly mode for this resource
+		APIGroup   string `json:"apiGroup"`   // Optional API group for the resource (for CRDs)
 	}
 
 	type QuickBindingPolicyRequest struct {
@@ -1512,6 +1513,96 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 
 	downsyncRules := []interface{}{namespaceRule}
 
+	// Track if we have CRDs to add
+	hasCRDs := false
+	crdAPIGroups := make(map[string]string)
+
+	// First check for custom resources that will need CRDs
+	for _, resourceCfg := range resourceConfigs {
+		resource := resourceCfg.Type
+
+		if isKubernetesBuiltInResource(resource) {
+			continue
+		}
+
+		// Found a custom resource, track its API group for CRD handling
+		apiGroup := ""
+		// Check if original request has apiGroup in the matching resource
+		for _, origRes := range request.Resources {
+			if origRes.Type == resource && origRes.APIGroup != "" {
+				apiGroup = origRes.APIGroup
+				break
+			}
+		}
+
+		// If no explicit apiGroup provided, use a heuristic to determine it
+		if apiGroup == "" {
+			singular := strings.TrimSuffix(resource, "s")
+
+			if strings.HasSuffix(resource, "cds") || strings.HasSuffix(resource, "eds") {
+				rootName := singular[:len(singular)-1]
+				apiGroup = fmt.Sprintf("%s.io", rootName)
+			} else {
+				apiGroup = fmt.Sprintf("%s.k8s.io", singular)
+			}
+		}
+
+		crdAPIGroups[resource] = apiGroup
+		hasCRDs = true
+	}
+
+	// If we have custom resources, add rule(s) for CustomResourceDefinitions
+	if hasCRDs {
+		fmt.Printf("Debug - Adding CustomResourceDefinitions to binding policy\n")
+
+		// Check if customresourcedefinitions is already in the resources list
+		hasExplicitCRDResource := false
+		for _, res := range resourceConfigs {
+			if res.Type == "customresourcedefinitions" {
+				hasExplicitCRDResource = true
+				break
+			}
+		}
+
+		if hasExplicitCRDResource {
+			fmt.Printf("Debug - User explicitly specified CustomResourceDefinitions resource, using workload labels\n")
+			crdRule := map[string]interface{}{
+				"apiGroup":  "apiextensions.k8s.io",
+				"resources": []string{"customresourcedefinitions"},
+				"objectSelectors": []interface{}{
+					map[string]interface{}{
+						"matchLabels": request.WorkloadLabels,
+					},
+				},
+			}
+			downsyncRules = append([]interface{}{crdRule}, downsyncRules...)
+		} else {
+			specificCRDNames := getCRDNamesFromResources(crdAPIGroups)
+
+			if len(specificCRDNames) > 0 {
+				fmt.Printf("Debug - Adding specific CRDs to binding policy: %v\n", specificCRDNames)
+
+				for _, crdName := range specificCRDNames {
+					fmt.Printf("Debug - Adding individual CRD rule for %s\n", crdName)
+
+					// Individual CRD rule with explicit name matching
+					crdRule := map[string]interface{}{
+						"apiGroup":  "apiextensions.k8s.io",
+						"resources": []string{"customresourcedefinitions"},
+						"objectSelectors": []interface{}{
+							map[string]interface{}{
+								"matchNames": []string{crdName},
+							},
+						},
+					}
+
+					// Add individual CRD rule (at the beginning, so CRDs are created first)
+					downsyncRules = append([]interface{}{crdRule}, downsyncRules...)
+				}
+			}
+		}
+	}
+
 	// Now add other resources
 	for _, resourceCfg := range resourceConfigs {
 		resource := resourceCfg.Type
@@ -1529,6 +1620,14 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 					"matchLabels": request.WorkloadLabels,
 				},
 			},
+		}
+
+		// Handle custom resources by detecting non-standard resource types
+		if !isKubernetesBuiltInResource(resource) {
+			// For CRDs, we need to specify the apiGroup
+			apiGroup := crdAPIGroups[resource]
+			downsyncRule["apiGroup"] = apiGroup
+			fmt.Printf("Debug - Adding CRD resource %s with apiGroup %s\n", resource, apiGroup)
 		}
 
 		// Only add createOnly if it's true
@@ -1660,6 +1759,7 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 	type ResourceConfig struct {
 		Type       string `json:"type"`       // Resource type (e.g., "deployments", "namespaces")
 		CreateOnly bool   `json:"createOnly"` // Whether to use createOnly mode for this resource
+		APIGroup   string `json:"apiGroup"`   // Optional API group for the resource (for CRDs)
 	}
 
 	type QuickBindingPolicyRequest struct {
@@ -1792,6 +1892,94 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 
 	downsyncRules := []interface{}{namespaceRule}
 
+	// Track if we have CRDs to add
+	hasCRDs := false
+	crdAPIGroups := make(map[string]string)
+
+	// First check for custom resources that will need CRDs
+	for _, resourceCfg := range resourceConfigs {
+		resource := resourceCfg.Type
+
+		if isKubernetesBuiltInResource(resource) {
+			continue
+		}
+
+		apiGroup := ""
+		// Check if original request has apiGroup in the matching resource
+		for _, origRes := range request.Resources {
+			if origRes.Type == resource && origRes.APIGroup != "" {
+				apiGroup = origRes.APIGroup
+				break
+			}
+		}
+
+		if apiGroup == "" {
+			singular := strings.TrimSuffix(resource, "s")
+			if strings.HasSuffix(resource, "cds") || strings.HasSuffix(resource, "eds") {
+				rootName := singular[:len(singular)-1]
+				apiGroup = fmt.Sprintf("%s.io", rootName)
+			} else {
+				apiGroup = fmt.Sprintf("%s.k8s.io", singular)
+			}
+		}
+
+		crdAPIGroups[resource] = apiGroup
+		hasCRDs = true
+	}
+
+	// If we have custom resources, add rule(s) for CustomResourceDefinitions
+	if hasCRDs {
+		fmt.Printf("Debug - Adding CustomResourceDefinitions to binding policy\n")
+
+		// Check if customresourcedefinitions is already in the resources list
+		hasExplicitCRDResource := false
+		for _, res := range resourceConfigs {
+			if res.Type == "customresourcedefinitions" {
+				hasExplicitCRDResource = true
+				break
+			}
+		}
+
+		if hasExplicitCRDResource {
+			fmt.Printf("Debug - User explicitly specified CustomResourceDefinitions resource, using workload labels\n")
+
+			crdRule := map[string]interface{}{
+				"apiGroup":  "apiextensions.k8s.io",
+				"resources": []string{"customresourcedefinitions"},
+				"objectSelectors": []interface{}{
+					map[string]interface{}{
+						"matchLabels": request.WorkloadLabels,
+					},
+				},
+			}
+			downsyncRules = append([]interface{}{crdRule}, downsyncRules...)
+		} else {
+			specificCRDNames := getCRDNamesFromResources(crdAPIGroups)
+
+			if len(specificCRDNames) > 0 {
+				fmt.Printf("Debug - Adding specific CRDs to binding policy: %v\n", specificCRDNames)
+
+				for _, crdName := range specificCRDNames {
+					fmt.Printf("Debug - Adding individual CRD rule for %s\n", crdName)
+
+					// Individual CRD rule with explicit name matching
+					crdRule := map[string]interface{}{
+						"apiGroup":  "apiextensions.k8s.io",
+						"resources": []string{"customresourcedefinitions"},
+						"objectSelectors": []interface{}{
+							map[string]interface{}{
+								"matchNames": []string{crdName},
+							},
+						},
+					}
+
+					// Add individual CRD rule (at the beginning, so CRDs are created first)
+					downsyncRules = append([]interface{}{crdRule}, downsyncRules...)
+				}
+			}
+		}
+	}
+
 	// Now add other resources
 	for _, resourceCfg := range resourceConfigs {
 		resource := resourceCfg.Type
@@ -1809,6 +1997,13 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 					"matchLabels": request.WorkloadLabels,
 				},
 			},
+		}
+
+		if !isKubernetesBuiltInResource(resource) {
+			// For CRDs, we need to specify the apiGroup
+			apiGroup := crdAPIGroups[resource]
+			downsyncRule["apiGroup"] = apiGroup
+			fmt.Printf("Debug - Adding CRD resource %s with apiGroup %s\n", resource, apiGroup)
 		}
 
 		// Only add createOnly if it's true
@@ -1947,4 +2142,38 @@ func CreateWecNamespace(ctx *gin.Context) {
 		"message":        fmt.Sprintf("Namespace %s created in WEC clusters: %v", namespace, wecContexts),
 		"cluster_labels": clusterLabels,
 	})
+}
+
+// Check if a resource is a built-in Kubernetes resource
+func isKubernetesBuiltInResource(resource string) bool {
+	// Common built-in Kubernetes resources
+	builtInResources := []string{
+		"pods", "services", "deployments", "statefulsets", "daemonsets",
+		"configmaps", "secrets", "namespaces", "persistentvolumes", "persistentvolumeclaims",
+		"serviceaccounts", "roles", "rolebindings", "clusterroles", "clusterrolebindings",
+		"ingresses", "jobs", "cronjobs", "events", "horizontalpodautoscalers",
+		"endpoints", "replicasets", "networkpolicies", "limitranges", "resourcequotas",
+		"customresourcedefinitions", "priorityclasses", "storageclasses",
+	}
+
+	for _, builtIn := range builtInResources {
+		if builtIn == resource {
+			return true
+		}
+	}
+	return false
+}
+
+// Helper function to get CRD full names from resource types and API groups
+func getCRDNamesFromResources(resourceAPIGroups map[string]string) []string {
+	crdNames := []string{}
+
+	for resource, apiGroup := range resourceAPIGroups {
+		crdName := fmt.Sprintf("%s.%s", resource, apiGroup)
+
+		fmt.Printf("Debug - Generated CRD name: %s for resource type %s\n", crdName, resource)
+		crdNames = append(crdNames, crdName)
+	}
+
+	return crdNames
 }
