@@ -96,10 +96,9 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
 
   const policyCanvasEntities = usePolicyDragDropStore(state => state.canvasEntities);
 
-  const { useGenerateBindingPolicyYaml, useQuickConnect, useCreateWecNamespace } = useBPQueries();
+  const { useGenerateBindingPolicyYaml, useQuickConnect } = useBPQueries();
   const generateYamlMutation = useGenerateBindingPolicyYaml();
   const quickConnectMutation = useQuickConnect();
-  const createWecNamespaceMutation = useCreateWecNamespace();
 
   const handleTabChange = (_event: React.SyntheticEvent, value: string) => {
     setActiveTab(value);
@@ -620,14 +619,6 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
         const result = await quickConnectMutation.mutateAsync(requestData);
         console.log(result);
         
-        // Create namespace directly in WEC
-        try {
-          console.log(`Creating namespace "${workloadNamespace}" directly in WEC`);
-          await createWecNamespaceMutation.mutateAsync(workloadNamespace);
-        } catch (namespaceError) {
-          console.error("Failed to create namespace in WEC:", namespaceError);
-        }
-        
         setSuccessMessage(`Successfully created binding policy "${policyName}"`);
         setShowDeployDialog(false);
         handleClearPolicyCanvas();
@@ -699,21 +690,19 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
       }
       
       // First create the binding policy
-      onCreatePolicy({
+      const policyData: PolicyData = {
         name: policyName,
         workloads: [workloadInfo],
         clusters: policyCanvasEntities.clusters,
         namespace: namespace,
         yaml: content
-      });
+      };
       
-      // Then create namespace directly in WEC
-      try {
-        console.log(`Creating namespace "${namespace}" directly in WEC`);
-        await createWecNamespaceMutation.mutateAsync(namespace);
-      } catch (namespaceError) {
-        console.error("Failed to create namespace in WEC:", namespaceError);
+      if (onCreatePolicy) {
+        onCreatePolicy(policyData);
       }
+      
+      setSuccessMessage('Binding policy created successfully');
       
       setTimeout(() => {
         setEditorContent(DEFAULT_BINDING_POLICY_TEMPLATE);
@@ -1004,13 +993,6 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
       
       if (onCreatePolicy) {
         onCreatePolicy(policyData);
-      }
-      
-      try {
-        console.log(`Creating namespace "${workloadNamespace}" directly in WEC`);
-        await createWecNamespaceMutation.mutateAsync(workloadNamespace);
-      } catch (namespaceError) {
-        console.error("Failed to create namespace in WEC:", namespaceError);
       }
       
       setSuccessMessage('Binding policy created successfully');
