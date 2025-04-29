@@ -170,19 +170,36 @@ func CreateWDSContextUsingCommand(w http.ResponseWriter, r *http.Request, c *gin
 	if version == "" {
 		version = "0.27.2" // newer version
 	}
-	if newWdsContext == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "context query must be prestent ?context=<your_new_context>",
-		})
-	}
-	releaseName := "add-" + newWdsContext
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("WebSocket Upgrade Error:", err)
 		return
 	}
-
 	defer conn.Close()
+	if newWdsContext == "" {
+		msg := "context query must be present ?context=<your_new_context>"
+		log.Println(msg)
+		writeMessage(conn, msg)
+		return
+	}
+	// Checking is that wds context is present or not
+	config, err := getKubeConfig()
+	if err != nil {
+		msg := "failed to load the kubeconfig"
+		log.Println(msg)
+		writeMessage(conn, msg)
+		return
+	}
+	for name := range config.Contexts {
+		if strings.Contains(name, newWdsContext) {
+			msg := fmt.Sprintf("Context: %s is already present", newWdsContext)
+			log.Println(msg)
+			writeMessage(conn, msg)
+			return
+		}
+	}
+	releaseName := "add-" + newWdsContext
+	writeMessage(conn, "Context is valid. Proceeding...")
 	// Step 0: Switch to "kind-kubeflex" context
 	writeMessage(conn, "Switching to kind-kubeflex context")
 	flexCmd := exec.Command("kubectl", "config", "use-context", "kind-kubeflex")
