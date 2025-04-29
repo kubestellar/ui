@@ -823,6 +823,12 @@ export const useBPQueries = () => {
         error: null
       });
 
+      // Initialize empty data structure for incremental updates
+      const incrementalData: WorkloadSSEData = {
+        namespaced: {},
+        clusterScoped: {}
+      };
+
       // Get the base URL from the api client
       const baseUrl = api.defaults.baseURL || '';
       const url = `${baseUrl}/api/wds/list-sse`;
@@ -837,16 +843,54 @@ export const useBPQueries = () => {
         console.log('SSE connection established');
       };
 
-      // Handle progress events
+      // Handle progress events with incremental processing
       eventSource.addEventListener('progress', (event) => {
         try {
-          const data = JSON.parse(event.data);
-          console.log('SSE progress event:', data);
+          const progressData = JSON.parse(event.data);
+          console.log('SSE progress event:', progressData);
 
           setState(prevState => ({
             ...prevState,
             progress: Math.min(prevState.progress + 5, 95) // Cap at 95% until complete
           }));
+
+          // Process incremental data from progress event
+          if (progressData && progressData.data && progressData.data.new) {
+            const newResources = progressData.data.new;
+            const resourceKind = progressData.kind;
+            const namespace = progressData.namespace;
+            const scope = progressData.scope;
+
+            if (scope === 'namespaced' && namespace) {
+              if (!incrementalData.namespaced[namespace]) {
+                incrementalData.namespaced[namespace] = {};
+              }
+              
+              if (!incrementalData.namespaced[namespace][resourceKind]) {
+                incrementalData.namespaced[namespace][resourceKind] = [];
+              }
+
+              incrementalData.namespaced[namespace][resourceKind] = [
+                ...incrementalData.namespaced[namespace][resourceKind],
+                ...newResources
+              ];
+            } else if (scope === 'cluster') {
+              if (!incrementalData.clusterScoped[resourceKind]) {
+                incrementalData.clusterScoped[resourceKind] = [];
+              }
+
+              incrementalData.clusterScoped[resourceKind] = [
+                ...incrementalData.clusterScoped[resourceKind],
+                ...newResources
+              ];
+            }
+
+            setState(prevState => ({
+              ...prevState,
+              status: 'loading',
+              data: { ...incrementalData }
+            }));
+          }
         } catch (error) {
           console.error('Error parsing progress event data:', error);
           // Don't fail the whole connection for a single progress event parsing error
@@ -921,36 +965,39 @@ export const useBPQueries = () => {
         'ConfigMap', 
         'Endpoints', 
         'EndpointSlice',
-        'ControllerRevision'
+        'ControllerRevision',
+        'PersistentVolumeClaim'
       ]);
       
       const excludedNamespaces = new Set(['default']);
       
-      Object.entries(state.data.namespaced).forEach(([namespace, resourceTypes]) => {
-        if (excludedNamespaces.has(namespace)) {
-          return;
-        }
-        
-        Object.entries(resourceTypes).forEach(([resourceType, resources]) => {
-          // Skip namespace metadata and excluded resource types
-          if (resourceType === '__namespaceMetaData' || excludedTypes.has(resourceType)) {
+      if (state.data.namespaced) {
+        Object.entries(state.data.namespaced).forEach(([namespace, resourceTypes]) => {
+          if (excludedNamespaces.has(namespace)) {
             return;
           }
           
-          // Process workload resources
-          resources.forEach(resource => {
-            if (resource.labels) {
-              workloads.push({
-                name: resource.name,
-                namespace: namespace,
-                kind: resource.kind,
-                labels: resource.labels,
-                creationTime: resource.createdAt
-              });
+          Object.entries(resourceTypes).forEach(([resourceType, resources]) => {
+            // Skip namespace metadata and excluded resource types
+            if (resourceType === '__namespaceMetaData' || excludedTypes.has(resourceType)) {
+              return;
             }
+            
+            // Process workload resources
+            resources.forEach(resource => {
+              if (resource.labels) {
+                workloads.push({
+                  name: resource.name,
+                  namespace: namespace,
+                  kind: resource.kind,
+                  labels: resource.labels,
+                  creationTime: resource.createdAt
+                });
+              }
+            });
           });
         });
-      });
+      }
       
       // Process cluster-scoped resources
       if (state.data.clusterScoped) {

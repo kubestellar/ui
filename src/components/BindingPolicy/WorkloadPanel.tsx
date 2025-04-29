@@ -59,8 +59,8 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
   const { state, startSSEConnection, extractWorkloads } = useWorkloadSSE();
 
   // Use SSE or prop workloads based on SSE connection status
-  const workloads = state.status === 'success' ? extractWorkloads() : propWorkloads;
-  const loading = state.status === 'loading' || propLoading;
+  const workloads = state.data ? extractWorkloads() : propWorkloads;
+  const loading = (state.status === 'loading' || state.status === 'idle') && propLoading;
   const error = state.error?.message || propError;
 
   // Start SSE connection when component mounts
@@ -100,7 +100,14 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
       'app.kubernetes.io/team'
     ];
 
+    const excludedKinds = ['PersistentVolumeClaim'];
+
     workloads.forEach((workload) => {
+      // Skip excluded kinds
+      if (excludedKinds.includes(workload.kind)) {
+        return;
+      }
+      
       if (workload.labels && Object.keys(workload.labels).length > 0) {
         Object.entries(workload.labels).forEach(([key, value]) => {
           const isSystemLabel = systemLabelPrefixes.some(prefix => key.startsWith(prefix));
@@ -447,7 +454,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
           "-ms-overflow-style": "none",
         }}
       >
-        {loading ? (
+        {loading && !state.data ? (
           <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
             <CircularProgress size={30} />
           </Box>
@@ -459,8 +466,9 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
           <Typography
             sx={{ p: 2, color: "text.secondary", textAlign: "center" }}
           >
-            No workloads available. Please add workloads with labels to use in
-            binding policies.
+            {state.status === 'loading' 
+              ? "Loading workloads and their labels..." 
+              : "No workloads available. Please add workloads with labels to use in binding policies."}
           </Typography>
         ) : (
           <Box sx={{ minHeight: "100%" }}>
@@ -472,10 +480,10 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
               </Typography>
             ) : (
               <>
-                {state.status === 'success' && (
+                {(state.status === 'success' || state.status === 'loading') && state.data && (
                   <Typography variant="caption" color="text.secondary" sx={{ px: 2, display: 'block' }}>
                     {filteredLabels.length} unique labels across {workloads.length} workloads
-                    (includes cluster-scoped resources like CRDs and Namespaces)
+                    {state.status === 'loading' ? " (loading...)" : " (includes cluster-scoped resources like CRDs and Namespaces)"}
                   </Typography>
                 )}
                 {filteredLabels.map((labelGroup) => renderLabelItem(labelGroup))}
