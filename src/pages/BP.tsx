@@ -715,14 +715,14 @@ const BP = () => {
                 color: theme === "dark" ? "#E5E7EB" : undefined,  
               }}
             />
-            <StyledTab
+            {/* <StyledTab
               iconPosition="start"
               label="Visualize"
               value="visualize"
               sx={{
                 color: theme === "dark" ? "#E5E7EB" : undefined,
               }}
-            />
+            /> */}
            
           </Tabs>
         </Box>
