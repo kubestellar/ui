@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import { toast } from 'react-hot-toast';
-import { BindingPolicyInfo } from '../../types/bindingPolicy';
+import { BindingPolicyInfo, Workload } from '../../types/bindingPolicy';
+import { useState, useCallback } from 'react';
 
 interface RawBindingPolicy {
   kind: string;
@@ -57,6 +58,8 @@ interface DownsyncItem {
 interface ResourceConfig {
   type: string;
   createOnly: boolean;
+  apiGroup?: string;
+  includeCRD?: boolean;
 }
 
 interface GenerateYamlRequest {
@@ -104,6 +107,34 @@ interface QuickConnectResponse {
     yaml: string;
   };
   message: string;
+}
+
+interface WorkloadSSEData {
+  namespaced: Record<string, Record<string, Array<{
+    createdAt: string;
+    kind: string;
+    labels: Record<string, string> | null;
+    name: string;
+    namespace: string;
+    uid: string;
+    version: string;
+  }>>>;
+  clusterScoped: Record<string, Array<{
+    createdAt: string;
+    kind: string;
+    labels: Record<string, string> | null;
+    name: string;
+    namespace: string;
+    uid: string;
+    version: string;
+  }>>;
+}
+
+interface WorkloadSSEState {
+  status: 'idle' | 'loading' | 'success' | 'error';
+  progress: number;
+  data: WorkloadSSEData | null;
+  error: Error | null;
 }
 
 export const useBPQueries = () => {
@@ -510,6 +541,68 @@ export const useBPQueries = () => {
           );
         }
         
+        // Check for custom resources and ensure they have apiGroup if possible
+        formattedRequest.resources = formattedRequest.resources.map(resource => {
+          const standardResources = [
+            'pods', 'services', 'deployments', 'statefulsets', 'daemonsets',
+            'configmaps', 'secrets', 'namespaces', 'persistentvolumes', 'persistentvolumeclaims',
+            'serviceaccounts', 'roles', 'rolebindings', 'clusterroles', 'clusterrolebindings',
+            'ingresses', 'jobs', 'cronjobs', 'events', 'horizontalpodautoscalers',
+            'endpoints', 'replicasets', 'networkpolicies', 'limitranges', 'resourcequotas',
+            'customresourcedefinitions',
+          ];
+          
+          if (!standardResources.includes(resource.type)) {
+            const newResource = { ...resource };
+            
+            // Explicitly set includeCRD to true for all custom resources
+            newResource.includeCRD = true;
+            
+            // If API group is already set, keep it
+            if (!newResource.apiGroup) {
+              const singular = resource.type.endsWith('s')
+                ? resource.type.slice(0, -1) 
+                : resource.type;
+              
+
+              if (/^argo/.test(resource.type)) {
+
+                newResource.apiGroup = 'argoproj.io';
+                console.log(`Assigning argoproj.io API group to ${resource.type} based on name pattern`);
+              } else if (/^istio/.test(resource.type) || /gateway|service|route/.test(resource.type)) {
+                newResource.apiGroup = 'networking.istio.io';
+                console.log(`Assigning networking.istio.io API group to ${resource.type} based on name pattern`);
+              } else {
+                let domain = 'k8s.io';
+                
+                const parts = singular.split('.');
+                if (parts.length > 1) {
+                  domain = parts.slice(1).join('.');
+                  newResource.apiGroup = domain;
+                } else {
+                  
+                  newResource.apiGroup = `${parts[0]}.${domain}`;
+                }
+              }
+            }
+            
+            console.log(`Determined API group for custom resource ${resource.type}: ${newResource.apiGroup}`);
+            return newResource;
+          }
+          
+          return resource;
+        });
+        
+        // Check if customresourcedefinitions is explicitly included by the user
+        const userExplicitlyIncludedCRDs = formattedRequest.resources.some(
+          res => res.type === 'customresourcedefinitions'
+        );
+        
+        
+        if (userExplicitlyIncludedCRDs) {
+          console.log("User explicitly included customresourcedefinitions in resources");
+        }
+        
         // Make sure the request has workloadLabels
         if (!formattedRequest.workloadLabels || Object.keys(formattedRequest.workloadLabels).length === 0) {
           console.warn("No workload labels provided");
@@ -612,6 +705,70 @@ export const useBPQueries = () => {
           );
         }
         
+        // Check for custom resources and ensure they have apiGroup if possible
+        formattedRequest.resources = formattedRequest.resources.map(resource => {
+          // Check if this looks like a CRD (not one of the standard k8s resources)
+          const standardResources = [
+            'pods', 'services', 'deployments', 'statefulsets', 'daemonsets',
+            'configmaps', 'secrets', 'namespaces', 'persistentvolumes', 'persistentvolumeclaims',
+            'serviceaccounts', 'roles', 'rolebindings', 'clusterroles', 'clusterrolebindings',
+            'ingresses', 'jobs', 'cronjobs', 'events', 'horizontalpodautoscalers',
+            'endpoints', 'replicasets', 'networkpolicies', 'limitranges', 'resourcequotas',
+            'customresourcedefinitions',
+          ];
+          
+          if (!standardResources.includes(resource.type)) {
+            const newResource = { ...resource };
+            
+            newResource.includeCRD = true;
+            
+            // If API group is already set, keep it
+            if (!newResource.apiGroup) {
+              // Get singular form
+              const singular = resource.type.endsWith('s')
+                ? resource.type.slice(0, -1) 
+                : resource.type;
+             
+              if (/^argo/.test(resource.type)) {
+               
+                newResource.apiGroup = 'argoproj.io';
+                console.log(`Assigning argoproj.io API group to ${resource.type} based on name pattern`);
+              } else if (/^istio/.test(resource.type) || /gateway|service|route/.test(resource.type)) {
+                newResource.apiGroup = 'networking.istio.io';
+                console.log(`Assigning networking.istio.io API group to ${resource.type} based on name pattern`);
+              } else {
+                let domain = 'k8s.io';
+                
+                // Extract resource name that might be part of a domain
+                const parts = singular.split('.');
+                if (parts.length > 1) {
+                  // If resource has dots, use everything after first dot as domain
+                  domain = parts.slice(1).join('.');
+                  newResource.apiGroup = domain;
+                } else {
+                  
+                  newResource.apiGroup = `${parts[0]}.${domain}`;
+                }
+              }
+            }
+            
+            console.log(`Determined API group for custom resource ${resource.type}: ${newResource.apiGroup}`);
+            return newResource;
+          }
+          
+          return resource;
+        });
+        
+        // Check if customresourcedefinitions is explicitly included by the user
+        const userExplicitlyIncludedCRDs = formattedRequest.resources.some(
+          res => res.type === 'customresourcedefinitions'
+        );
+        
+        
+        if (userExplicitlyIncludedCRDs) {
+          console.log("User explicitly included customresourcedefinitions in YAML generation");
+        }
+        
         // Ensure namespacesToSync is set if not provided
         if (!formattedRequest.namespacesToSync || formattedRequest.namespacesToSync.length === 0) {
           // Use the provided namespace or default to 'default'
@@ -649,6 +806,260 @@ export const useBPQueries = () => {
     });
   };
 
+  // Get workloads and their labels using SSE
+  const useWorkloadSSE = () => {
+    const [state, setState] = useState<WorkloadSSEState>({
+      status: 'idle',
+      progress: 0,
+      data: null,
+      error: null
+    });
+
+    const startSSEConnection = useCallback(() => {
+      setState({
+        status: 'loading',
+        progress: 0,
+        data: null,
+        error: null
+      });
+
+      // Initialize empty data structure for incremental updates
+      const incrementalData: WorkloadSSEData = {
+        namespaced: {},
+        clusterScoped: {}
+      };
+
+      // Get the base URL from the api client
+      const baseUrl = api.defaults.baseURL || '';
+      const url = `${baseUrl}/api/wds/list-sse`;
+      
+      console.log('Starting SSE connection to:', url);
+      
+      // Create EventSource connection with credentials enabled
+      const eventSource = new EventSource(url, { withCredentials: true });
+      
+      // Handle connection open
+      eventSource.onopen = () => {
+        console.log('SSE connection established');
+      };
+
+      // Handle progress events with incremental processing
+      eventSource.addEventListener('progress', (event) => {
+        try {
+          const progressData = JSON.parse(event.data);
+          console.log('SSE progress event:', progressData);
+
+          setState(prevState => ({
+            ...prevState,
+            progress: Math.min(prevState.progress + 5, 95) // Cap at 95% until complete
+          }));
+
+          // Process incremental data from progress event
+          if (progressData && progressData.data && progressData.data.new) {
+            const newResources = progressData.data.new;
+            const resourceKind = progressData.kind;
+            const namespace = progressData.namespace;
+            const scope = progressData.scope;
+
+            if (scope === 'namespaced' && namespace) {
+              if (!incrementalData.namespaced[namespace]) {
+                incrementalData.namespaced[namespace] = {};
+              }
+              
+              if (!incrementalData.namespaced[namespace][resourceKind]) {
+                incrementalData.namespaced[namespace][resourceKind] = [];
+              }
+
+              incrementalData.namespaced[namespace][resourceKind] = [
+                ...incrementalData.namespaced[namespace][resourceKind],
+                ...newResources
+              ];
+            } else if (scope === 'cluster') {
+              if (!incrementalData.clusterScoped[resourceKind]) {
+                incrementalData.clusterScoped[resourceKind] = [];
+              }
+
+              incrementalData.clusterScoped[resourceKind] = [
+                ...incrementalData.clusterScoped[resourceKind],
+                ...newResources
+              ];
+            }
+
+            setState(prevState => ({
+              ...prevState,
+              status: 'loading',
+              data: { ...incrementalData }
+            }));
+          }
+        } catch (error) {
+          console.error('Error parsing progress event data:', error);
+          // Don't fail the whole connection for a single progress event parsing error
+        }
+      });
+
+      // Handle completed event (backend calls it 'complete', not 'completed')
+      eventSource.addEventListener('complete', (event) => {
+        try {
+          console.log('SSE complete event received, parsing data');
+          const parsedData = JSON.parse(event.data);
+          
+          setState({
+            status: 'success',
+            progress: 100,
+            data: parsedData,
+            error: null
+          });
+
+          console.log('SSE data successfully processed');
+          // Close the connection since we have the complete data
+          eventSource.close();
+        } catch (error) {
+          console.error('Error parsing complete event data:', error);
+          
+          setState(prevState => ({
+            ...prevState,
+            status: 'error',
+            error: new Error('Failed to parse complete event data')
+          }));
+          
+          eventSource.close();
+        }
+      });
+
+      eventSource.onmessage = (event) => {
+        console.log('SSE general message:', event.data);
+      };
+
+      eventSource.onerror = (error) => {
+        console.error('SSE connection error:', error);
+        
+        if (error instanceof Event && !error.target) {
+          console.error('Possible CORS error with EventSource');
+        }
+        
+        setState(prevState => ({
+          ...prevState,
+          status: 'error',
+          error: new Error('Failed to connect to SSE endpoint. Please ensure you have proper permissions and the server is running.')
+        }));
+        
+        // Close the connection on error
+        eventSource.close();
+      };
+
+      // Return cleanup function
+      return () => {
+        console.log('Closing SSE connection');
+        eventSource.close();
+      };
+    }, []);
+
+    // Extract workloads with their labels from the SSE data
+    const extractWorkloads = useCallback(() => {
+      if (!state.data) return [];
+
+      const workloads: Workload[] = [];
+      
+      const excludedTypes = new Set([
+        'Secret', 
+        'ConfigMap', 
+        'Endpoints', 
+        'EndpointSlice',
+        'ControllerRevision',
+        'PersistentVolumeClaim'
+      ]);
+      
+      const excludedNamespaces = new Set(['default']);
+      
+      if (state.data.namespaced) {
+        Object.entries(state.data.namespaced).forEach(([namespace, resourceTypes]) => {
+          if (excludedNamespaces.has(namespace)) {
+            return;
+          }
+          
+          Object.entries(resourceTypes).forEach(([resourceType, resources]) => {
+            // Skip namespace metadata and excluded resource types
+            if (resourceType === '__namespaceMetaData' || excludedTypes.has(resourceType)) {
+              return;
+            }
+            
+            // Process workload resources
+            resources.forEach(resource => {
+              if (resource.labels) {
+                workloads.push({
+                  name: resource.name,
+                  namespace: namespace,
+                  kind: resource.kind,
+                  labels: resource.labels,
+                  creationTime: resource.createdAt
+                });
+              }
+            });
+          });
+        });
+      }
+      
+      // Process cluster-scoped resources
+      if (state.data.clusterScoped) {
+        // Define which cluster-scoped resource types to include
+        const includeClusterResourceTypes = new Set([
+          'CustomResourceDefinition',
+          'Namespace'
+        ]);
+
+        Object.entries(state.data.clusterScoped).forEach(([resourceType, resources]) => {
+          if (excludedTypes.has(resourceType) || !includeClusterResourceTypes.has(resourceType)) {
+            return;
+          }
+          
+          // Process cluster-scoped resources
+          resources.forEach(resource => {
+            if (resource.labels) {
+              workloads.push({
+                name: resource.name,
+                namespace: resource.namespace || 'cluster-scoped',
+                kind: resource.kind,
+                labels: resource.labels,
+                creationTime: resource.createdAt
+              });
+            }
+          });
+        });
+      }
+
+      console.log(`Extracted ${workloads.length} workloads after filtering (default namespace excluded)`);
+      return workloads;
+    }, [state.data]);
+
+    // Provide a way to get unique label keys and values for filtering
+    const extractUniqueLabels = useCallback(() => {
+      const workloads = extractWorkloads();
+      const labelMap: Record<string, Set<string>> = {};
+      
+      workloads.forEach(workload => {
+        if (workload.labels) {
+          Object.entries(workload.labels).forEach(([key, value]) => {
+            if (!labelMap[key]) {
+              labelMap[key] = new Set();
+            }
+            labelMap[key].add(value);
+          });
+        }
+      });
+      
+      return Object.fromEntries(
+        Object.entries(labelMap).map(([key, values]) => [key, Array.from(values)])
+      );
+    }, [extractWorkloads]);
+
+    return {
+      state,
+      startSSEConnection,
+      extractWorkloads,
+      extractUniqueLabels
+    };
+  };
+
   return {
     useBindingPolicies,
     useBindingPolicyDetails,
@@ -660,5 +1071,6 @@ export const useBPQueries = () => {
     useGenerateBindingPolicyYaml,
     useQuickConnect,
     useCreateWecNamespace,
+    useWorkloadSSE,
   };
 };

@@ -603,12 +603,15 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
       if (labelInfo) {
         // For label-based cluster items
         const matchingClusters = getClustersForLabel(clusters, labelInfo.key, labelInfo.value);
-        if (matchingClusters.length === 0) return null;
+        
+        const clusterInfo = matchingClusters.length > 0 ? 
+          `Matching ${matchingClusters.length} cluster(s)` :
+          'No matching clusters (will create synthetic cluster)';
         
         return (
           <ItemTooltip 
             title={`${labelInfo.key}: ${labelInfo.value}`}
-            subtitle={`Matching ${matchingClusters.length} cluster(s)`}
+            subtitle={clusterInfo}
             labels={{ [labelInfo.key]: labelInfo.value }}
             description={`Label selector for Kubernetes clusters`}
             type="cluster"
@@ -636,14 +639,29 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
       if (labelInfo) {
         // For label-based workload items
         const matchingWorkloads = getWorkloadsForLabel(workloads, labelInfo.key, labelInfo.value);
-        if (matchingWorkloads.length === 0) return null;
+        
+        // Determine resource type for API group labels
+        let resourceDescription = 'Label selector for Kubernetes workloads';
+        let resourceType = 'workload';
+        
+        if (labelInfo.value.includes('.')) {
+          resourceDescription = `CustomResourceDefinition (${labelInfo.value})`;
+          resourceType = 'CustomResourceDefinition';
+        } else if (labelInfo.key === 'app.kubernetes.io/part-of') {
+          resourceDescription = `${labelInfo.value} resource`;
+          resourceType = labelInfo.value;
+        }
+        
+        const workloadInfo = matchingWorkloads.length > 0 ? 
+          `Matching ${matchingWorkloads.length} workload(s)` :
+          `No matching workloads (will create synthetic ${resourceType})`;
         
         return (
           <ItemTooltip 
             title={`${labelInfo.key}: ${labelInfo.value}`}
-            subtitle={`Matching ${matchingWorkloads.length} workload(s)`}
+            subtitle={workloadInfo}
             labels={{ [labelInfo.key]: labelInfo.value }}
-            description={`Label selector for Kubernetes workloads`}
+            description={resourceDescription}
             type="workload"
           />
         );
@@ -825,7 +843,133 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
     );
   };
 
+  // Helper function to check if a label belongs to a namespace
+  const isNamespaceLabel = (labelInfo: { key: string; value: string }): boolean => {
+    if (!labelInfo) return false;
+    
+    // Standard Kubernetes namespace identifiers
+    const namespacePatterns = [
+      { key: 'kubernetes.io/metadata.name', valuePattern: null },
+      { key: 'name', valuePattern: /namespace/ },
+      { key: 'k8s-namespace', valuePattern: null },
+      { key: 'type', valuePattern: /^namespace$/i },
+      { keyPattern: /namespace/i, valuePattern: null }
+    ];
+    
+    // Check against all patterns
+    return namespacePatterns.some(pattern => {
+      if (pattern.key && labelInfo.key !== pattern.key) {
+        return false;
+      }
+      
+      if (pattern.keyPattern && !pattern.keyPattern.test(labelInfo.key)) {
+        return false;
+      }
+      
+      if (pattern.valuePattern && !pattern.valuePattern.test(labelInfo.value)) {
+        return false;
+      }
+      
+      return true;
+    });
+  };
 
+  const renderNamespaceItem = (itemId: string, labelInfo: { key: string; value: string }) => {
+    return (
+      <Paper
+        key={`workload-section-${itemId}`}
+        elevation={2}
+        ref={(el) => {
+          if (el) elementsRef.current[`workload-${itemId}`] = el;
+        }}
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          p: 1.5,
+          mb: 1,
+          minHeight: '90px',
+          height: '100%',
+          borderLeft: '4px solid',
+          borderColor: theme.palette.info.main,
+          backgroundColor: alpha(theme.palette.info.main, 0.1),
+          transition: 'all 0.2s',
+          cursor: 'pointer',
+          position: 'relative',
+          '&:hover': { 
+            transform: 'translateY(-2px)', 
+            boxShadow: 3 
+          },
+          '&:hover .delete-button': { 
+            opacity: 1,
+          }
+        }}
+        data-item-type="workload"
+        data-item-id={itemId}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleCanvasItemClick('workload', itemId);
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+          <KubernetesIcon type="namespace" size={16} sx={{ mr: 1 }} />
+          <Typography variant="body2" component="div" sx={{ 
+            fontWeight: 'medium',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}>
+            Namespace: {labelInfo.value}
+          </Typography>
+        </Box>
+        
+        <Box sx={{ mb: 1 }}>
+          <Chip 
+            label={`${labelInfo.key}: ${labelInfo.value}`}
+            size="small"
+            variant="outlined"
+            color="info"
+            sx={{ 
+              fontSize: '0.75rem',
+              maxWidth: '100%',
+              '& .MuiChip-label': { 
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
+              }
+            }}
+          />
+        </Box>
+        
+        <Typography variant="caption" color="text.secondary">
+          Namespace selector
+        </Typography>
+        
+        <IconButton
+          size="small"
+          className="delete-button"
+          onClick={(e) => {
+            e.stopPropagation();
+            removeFromPolicyCanvas('workload', itemId);
+          }}
+          sx={{
+            position: 'absolute',
+            top: 4,
+            right: 4,
+            opacity: 0,
+            transition: 'opacity 0.2s',
+            bgcolor: alpha(theme.palette.error.main, 0.1),
+            color: theme.palette.error.main,
+            p: '2px',
+            '&:hover': {
+              bgcolor: alpha(theme.palette.error.main, 0.2),
+            }
+          }}
+        >
+          <DeleteIcon fontSize="small" />
+        </IconButton>
+      </Paper>
+    );
+  };
 
   return (
     <Paper
@@ -1066,6 +1210,8 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                           {/* Display clusters here with individual styling */}
                           {policyCanvasEntities.clusters
                             .map((clusterId) => {
+                              console.log(`Rendering cluster item on canvas: ${clusterId}`);
+                              
                               // Extract label information if this is a label-based item
                               const labelInfo = extractLabelInfo(clusterId);
                               
@@ -1074,7 +1220,105 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                 ? getClustersForLabel(clusters, labelInfo.key, labelInfo.value) 
                                 : clusters.filter(c => c.name === clusterId);
                                 
-                              if (matchingClusters.length === 0) return null;
+                              if (matchingClusters.length === 0) {
+                                console.log(`No matching clusters found for ${clusterId}, using label info directly`);
+                                if (labelInfo) {
+                                  return (
+                                    <Paper
+                                      key={`cluster-section-${clusterId}`}
+                                      elevation={2}
+                                      ref={(el) => {
+                                        if (el) elementsRef.current[`cluster-${clusterId}`] = el;
+                                      }}
+                                      sx={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        justifyContent: 'space-between',
+                                        p: 1.5,
+                                        mb: 1,
+                                        minHeight: '90px',
+                                        height: '100%',
+                                        borderLeft: '4px solid',
+                                        borderColor: theme.palette.info.main,
+                                        backgroundColor: alpha(theme.palette.info.main, 0.1),
+                                        transition: 'all 0.2s',
+                                        cursor: 'pointer',
+                                        position: 'relative',
+                                        '&:hover': { 
+                                          transform: 'translateY(-2px)', 
+                                          boxShadow: 3 
+                                        },
+                                        '&:hover .delete-button': {
+                                          opacity: 1,
+                                        }
+                                      }}
+                                      data-item-type="cluster"
+                                      data-item-id={clusterId}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleCanvasItemClick('cluster', clusterId);
+                                      }}
+                                    >
+                                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                        <KubernetesIcon type="cluster" size={16} sx={{ mr: 1 }} />
+                                        <Typography variant="body2" component="div" sx={{ 
+                                          fontWeight: 'medium',
+                                          overflow: 'hidden',
+                                          textOverflow: 'ellipsis',
+                                          whiteSpace: 'nowrap'
+                                        }}>
+                                          {labelInfo.key}
+                                        </Typography>
+                                      </Box>
+                                      
+                                      <Box sx={{ mb: 1 }}>
+                                        <Chip 
+                                          label={labelInfo.value}
+                                          size="small"
+                                          variant="outlined"
+                                          sx={{ 
+                                            fontSize: '0.75rem',
+                                            maxWidth: '100%',
+                                            '& .MuiChip-label': { 
+                                              overflow: 'hidden',
+                                              textOverflow: 'ellipsis'
+                                            }
+                                          }}
+                                        />
+                                      </Box>
+                                      
+                                      <Typography variant="caption" color="text.secondary">
+                                        Label selector
+                                      </Typography>
+                                      
+                                      <IconButton
+                                        size="small"
+                                        className="delete-button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          removeFromPolicyCanvas('cluster', clusterId);
+                                        }}
+                                        sx={{
+                                          position: 'absolute',
+                                          top: 4,
+                                          right: 4,
+                                          opacity: 0,
+                                          transition: 'opacity 0.2s',
+                                          bgcolor: alpha(theme.palette.error.main, 0.1),
+                                          color: theme.palette.error.main,
+                                          p: '2px',
+                                          '&:hover': {
+                                            bgcolor: alpha(theme.palette.error.main, 0.2),
+                                          }
+                                        }}
+                                      >
+                                        <DeleteIcon fontSize="small" />
+                                      </IconButton>
+                                    </Paper>
+                                  );
+                                }
+                                return null;
+                              }
                               
                               return (
                                 <Paper
@@ -1252,6 +1496,8 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                           {/* Display workloads here with individual styling */}
                           {policyCanvasEntities.workloads
                             .map((workloadId) => {
+                              console.log(`Rendering workload item on canvas: ${workloadId}`);
+                              
                               // Extract label information if this is a label-based item
                               const labelInfo = extractLabelInfo(workloadId);
                               
@@ -1260,7 +1506,111 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                 ? getWorkloadsForLabel(workloads, labelInfo.key, labelInfo.value) 
                                 : workloads.filter(w => w.name === workloadId);
                                 
-                              if (matchingWorkloads.length === 0) return null;
+                              if (matchingWorkloads.length === 0) {
+                                console.log(`No matching workloads found for ${workloadId}, using label info directly`);
+                                
+                                if (labelInfo) {
+                                  if (isNamespaceLabel(labelInfo)) {
+                                    console.log(`Rendering namespace label: ${labelInfo.key}=${labelInfo.value}`);
+                                    return renderNamespaceItem(workloadId, labelInfo);
+                                  }
+                                  
+                                  return (
+                                    <Paper
+                                      key={`workload-section-${workloadId}`}
+                                      elevation={2}
+                                      ref={(el) => {
+                                        if (el) elementsRef.current[`workload-${workloadId}`] = el;
+                                      }}
+                                      sx={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        justifyContent: 'space-between',
+                                        p: 1.5,
+                                        mb: 1,
+                                        minHeight: '90px',
+                                        height: '100%',
+                                        borderLeft: '4px solid',
+                                        borderColor: theme.palette.success.main,
+                                        backgroundColor: alpha(theme.palette.success.main, 0.1),
+                                        transition: 'all 0.2s',
+                                        cursor: 'pointer',
+                                        position: 'relative',
+                                        '&:hover': { 
+                                          transform: 'translateY(-2px)', 
+                                          boxShadow: 3 
+                                        },
+                                        '&:hover .delete-button': { 
+                                          opacity: 1,
+                                        }
+                                      }}
+                                      data-item-type="workload"
+                                      data-item-id={workloadId}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleCanvasItemClick('workload', workloadId);
+                                      }}
+                                    >
+                                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                        <KubernetesIcon type="workload" size={16} sx={{ mr: 1 }} />
+                                        <Typography variant="body2" component="div" sx={{ 
+                                          fontWeight: 'medium',
+                                          overflow: 'hidden',
+                                          textOverflow: 'ellipsis',
+                                          whiteSpace: 'nowrap'
+                                        }}>
+                                          {labelInfo.key}
+                                        </Typography>
+                                      </Box>
+                                      
+                                      <Box sx={{ mb: 1 }}>
+                                        <Chip 
+                                          label={labelInfo.value}
+                                          size="small"
+                                          variant="outlined"
+                                          sx={{ 
+                                            fontSize: '0.75rem',
+                                            maxWidth: '100%',
+                                            '& .MuiChip-label': { 
+                                              overflow: 'hidden',
+                                              textOverflow: 'ellipsis'
+                                            }
+                                          }}
+                                        />
+                                      </Box>
+                                      
+                                      <Typography variant="caption" color="text.secondary">
+                                        Label selector
+                                      </Typography>
+                                      
+                                      <IconButton
+                                        size="small"
+                                        className="delete-button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          removeFromPolicyCanvas('workload', workloadId);
+                                        }}
+                                        sx={{
+                                          position: 'absolute',
+                                          top: 4,
+                                          right: 4,
+                                          opacity: 0,
+                                          transition: 'opacity 0.2s',
+                                          bgcolor: alpha(theme.palette.error.main, 0.1),
+                                          color: theme.palette.error.main,
+                                          p: '2px',
+                                          '&:hover': {
+                                            bgcolor: alpha(theme.palette.error.main, 0.2),
+                                          }
+                                        }}
+                                      >
+                                        <DeleteIcon fontSize="small" />
+                                      </IconButton>
+                                    </Paper>
+                                  );
+                                }
+                                return null;
+                              }
                               
                               return (
                                 <Paper

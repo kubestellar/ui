@@ -77,20 +77,6 @@ const BPTable: React.FC<BPTableProps> = ({
     error: detailsError
   } = useBindingPolicyDetails(selectedPolicyName || undefined, { refetchInterval: 2000 });
 
-  const refetchPolicies = useCallback(() => {
-    console.log("Manually triggering policy data refetch");
-    queryClient.invalidateQueries({ queryKey: ['binding-policies'] });
-    fetchPolicyStatuses();
-  }, [queryClient]);
-
-  useEffect(() => {
-    const refreshInterval = setInterval(() => {
-      refetchPolicies();
-    }, 2000); 
-    
-    return () => clearInterval(refreshInterval);
-  }, [refetchPolicies]);
-
   // Fetch status for each policy
   const fetchPolicyStatuses = useCallback(async () => {
     // Create a map to store statuses
@@ -150,9 +136,20 @@ const BPTable: React.FC<BPTableProps> = ({
     // Update state with all fetched statuses
     setPolicyStatuses(newPolicyStatuses);
   }, [policies]);
-  useEffect(() => {
+
+  const refreshAllPolicyData = useCallback(() => {
+    console.log("Manually triggering policy data refetch");
+    queryClient.invalidateQueries({ queryKey: ['binding-policies'] });
     fetchPolicyStatuses();
-  }, [fetchPolicyStatuses]);
+  }, [queryClient, fetchPolicyStatuses]);
+
+  useEffect(() => {
+    const refreshInterval = setInterval(() => {
+      refreshAllPolicyData();
+    }, 2000); 
+    
+    return () => clearInterval(refreshInterval);
+  }, [refreshAllPolicyData]);
 
   // Add debugging for policy details
   useEffect(() => {
