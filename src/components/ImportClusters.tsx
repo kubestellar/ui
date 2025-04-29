@@ -1213,7 +1213,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                                       color: theme === "dark" ? colors.primaryLight : colors.primary,
                                     }}
                                   >
-                                    <span role="img" aria-label="cluster" style={{ fontSize: "0.8rem" }}>🔶</span>
+                                    
                                   </Box>
                                 </Box>
                                 <Box sx={{ 
@@ -2223,35 +2223,46 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
           </Box>
         </Box>
 
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 1 }}>
-          <Button
-            variant="contained"
-            component="a"
-            href="/its"
-            onClick={() => {
-              // Close the dialog when redirecting
-              onCancel();
-            }}
-            sx={{
-              ...primaryButtonStyles,
-              bgcolor: theme === "dark" ? "rgba(103, 192, 115, 0.3)" : "rgba(103, 192, 115, 0.8)",
-              color: theme === "dark" ? "#ffffff" : "#ffffff",
-              border: `1px solid ${theme === "dark" ? "rgba(103, 192, 115, 0.5)" : "rgba(103, 192, 115, 0.3)"}`,
-              width: "100%",
-              maxWidth: "300px",
-              "&:hover": {
-                bgcolor: theme === "dark" ? "rgba(103, 192, 115, 0.4)" : "rgba(103, 192, 115, 0.9)",
-                transform: "translateY(-2px)",
-                boxShadow: theme === "dark" 
-                  ? "0 6px 10px -1px rgba(0, 0, 0, 0.3)" 
-                  : "0 6px 10px -1px rgba(103, 192, 115, 0.3)",
-              },
-            }}
-            startIcon={<span role="img" aria-label="view" style={{ fontSize: "0.9rem" }}>👁️</span>}
-          >
-            View Cluster in Dashboard
-          </Button>
-        </Box>
+       
+<Box sx={{ display: "flex", justifyContent: "center", mt: 1 }}>
+  <Button
+    variant="contained"
+    component="a"
+    href="/its"
+    onClick={() => {
+      // Close the dialog when redirecting
+      onCancel();
+    }}
+    sx={{
+      ...primaryButtonStyles,
+      bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.7)" : colors.primary,
+      color: "#ffffff",
+      fontWeight: 600,
+      border: `1px solid ${theme === "dark" ? "rgba(47, 134, 255, 0.8)" : colors.primaryDark}`,
+      width: "100%",
+      maxWidth: "320px",
+      borderRadius: "8px",
+      py: 1.5,
+      fontSize: "0.9rem",
+      letterSpacing: "0.3px",
+      "&:hover": {
+        bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.8)" : colors.primaryDark,
+        transform: "translateY(-2px)",
+        boxShadow: theme === "dark" 
+          ? "0 8px 16px -2px rgba(47, 134, 255, 0.3)" 
+          : "0 8px 16px -2px rgba(47, 134, 255, 0.4)",
+      },
+      "&:active": {
+        transform: "translateY(-1px)",
+        boxShadow: theme === "dark" 
+          ? "0 4px 8px -2px rgba(47, 134, 255, 0.3)" 
+          : "0 4px 8px -2px rgba(47, 134, 255, 0.4)",
+      }
+    }}
+  >
+    View Cluster in Dashboard
+  </Button>
+</Box>
       </Box>
     </Box>
   </Box>
