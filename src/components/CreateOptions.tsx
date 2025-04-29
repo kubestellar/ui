@@ -17,6 +17,7 @@ import { CancelConfirmationDialog } from "../components/Workloads/CancelConfirma
 import useTheme from "../stores/themeStore";
 import helmicon from "../assets/Helm.png"
 import { api } from "../lib/api";
+import { ArtifactHubTab } from "./Workloads/ArtifactHubTab/ArtifactHubTab";
 
 interface Props {
   activeOption: string | null;
@@ -40,6 +41,15 @@ interface HelmFormData {
   releaseName: string;
   version: string;
   namespace: string;
+  workload_label: string;
+}
+
+interface ArtifactHubFormData {
+  packageId: string;
+  version: string;
+  namespace: string;
+  releaseName: string;
+  values: Record<string, unknown>;
   workload_label: string;
 }
 
@@ -143,6 +153,16 @@ spec:
     workload_label: "",
   };
   const [helmFormData, setHelmFormData] = useState<HelmFormData>(initialHelmFormData);
+
+  const initialArtifactHubFormData: ArtifactHubFormData = {
+    packageId: "",
+    version: "",
+    namespace: "default",
+    releaseName: "",
+    values: {},
+    workload_label: "",
+  };
+  const [artifactHubFormData, setArtifactHubFormData] = useState<ArtifactHubFormData>(initialArtifactHubFormData);
 
   const { useUploadWorkloadFile } = useWDSQueries();
   const uploadFileMutation = useUploadWorkloadFile();
@@ -254,6 +274,13 @@ spec:
         helmFormData.releaseName !== initialHelmFormData.releaseName ||
         helmFormData.version !== initialHelmFormData.version ||
         helmFormData.namespace !== initialHelmFormData.namespace;
+    } else if (activeOption === "option5") {
+      changesDetected =
+        artifactHubFormData.packageId !== initialArtifactHubFormData.packageId ||
+        artifactHubFormData.version !== initialArtifactHubFormData.version ||
+        artifactHubFormData.namespace !== initialArtifactHubFormData.namespace ||
+        artifactHubFormData.releaseName !== initialArtifactHubFormData.releaseName ||
+        JSON.stringify(artifactHubFormData.values) !== JSON.stringify(initialArtifactHubFormData.values);
     }
 
     setHasChanges(changesDetected);
@@ -263,6 +290,7 @@ spec:
     selectedFile,
     formData,
     helmFormData,
+    artifactHubFormData,
     initialEditorContent,
     initialFormData.repositoryUrl,
     initialFormData.path,
@@ -274,7 +302,8 @@ spec:
     initialHelmFormData.chartName,
     initialHelmFormData.releaseName,
     initialHelmFormData.version,
-    initialHelmFormData.namespace
+    initialHelmFormData.namespace,
+    initialArtifactHubFormData
   ]);
 
   const handleFileUpload = async (autoNs: boolean) => {
@@ -550,6 +579,64 @@ spec:
     }
   };
 
+  const handleArtifactHubDeploy = async () => {
+    if (!validateArtifactHubForm()) {
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const requestBody = {
+        packageId: artifactHubFormData.packageId,
+        version: artifactHubFormData.version,
+        namespace: artifactHubFormData.namespace,
+        releaseName: artifactHubFormData.releaseName,
+        values: artifactHubFormData.values,
+        workloadLabel: artifactHubFormData.workload_label,
+      };
+
+      const response = await api.post(
+        "/api/v1/artifact-hub/helm-deploy",
+        requestBody
+      );
+
+      console.log("Artifact Hub Deploy response:", response);
+
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Artifact Hub deployment successful!");
+        setArtifactHubFormData({
+          packageId: "",
+          version: "",
+          namespace: "default",
+          releaseName: "",
+          values: {},
+          workload_label: "",
+        });
+        setTimeout(() => window.location.reload(), 4000);
+      } else {
+        throw new Error("Unexpected response status: " + response.status);
+      }
+    } catch (error: unknown) {
+      const err = error as AxiosError;
+      console.error("Artifact Hub Deploy error:", err);
+
+      if (err.response) {
+        if (err.response.status === 500) {
+          toast.error("Deployment failed: failed to deploy to Artifact Hub!");
+        } else if (err.response.status === 400) {
+          toast.error("Failed to deploy to Artifact Hub!");
+        } else {
+          toast.error(`Artifact Hub deployment failed! (${err.response.status})`);
+        }
+      } else {
+        toast.error("Artifact Hub deployment failed due to network error!");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleCancelClick = () => {
     if (hasChanges) {
       setCancelConfirmationOpen(true);
@@ -604,6 +691,19 @@ spec:
       isValid = false;
     } else if (!helmFormData.releaseName) {
       errorMessage = "Please enter Release Name.";
+      isValid = false;
+    }
+
+    setError(errorMessage);
+    return isValid;
+  };
+
+  const validateArtifactHubForm = () => {
+    let isValid = true;
+    let errorMessage = "";
+
+    if (!artifactHubFormData.packageId) {
+      errorMessage = "Please select a package.";
       isValid = false;
     }
 
@@ -789,6 +889,12 @@ spec:
               }              
               iconPosition="start"
             />
+            <StyledTab
+              label="Artifact Hub"
+              value="option5"
+              icon={<span role="img" aria-label="artifact-hub" style={{ fontSize: "0.9rem" }}>📦</span>}
+              iconPosition="start"
+            />
           </Tabs>
         </DialogTitle>
         <DialogContent sx={{ 
@@ -857,6 +963,18 @@ spec:
                 hasChanges={hasChanges}
                 validateForm={validateHelmForm}
                 handleDeploy={handleHelmDeploy}
+                handleCancelClick={handleCancelClick}
+              />
+            )}
+            {activeOption === "option5" && (
+              <ArtifactHubTab
+                formData={artifactHubFormData}
+                setFormData={setArtifactHubFormData}
+                error={error}
+                loading={loading}
+                hasChanges={hasChanges}
+                validateForm={validateArtifactHubForm}
+                handleDeploy={handleArtifactHubDeploy}
                 handleCancelClick={handleCancelClick}
               />
             )}
