@@ -968,14 +968,10 @@ spec:
             )}
             {activeOption === "option5" && (
               <ArtifactHubTab
-                formData={artifactHubFormData}
-                setFormData={setArtifactHubFormData}
+                onCancel={handleCancelClick}
+                onDeploy={handleArtifactHubDeploy}
                 error={error}
                 loading={loading}
-                hasChanges={hasChanges}
-                validateForm={validateArtifactHubForm}
-                handleDeploy={handleArtifactHubDeploy}
-                handleCancelClick={handleCancelClick}
               />
             )}
           </Box>
