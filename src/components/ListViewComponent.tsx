@@ -5,7 +5,7 @@ import LoadingFallback from "./LoadingFallback";
 import { api } from "../lib/api";
 
 // Define the response interfaces
-interface ResourceItem {
+export interface ResourceItem {
   createdAt: string;
   kind: string;
   name: string;
@@ -17,6 +17,7 @@ interface ResourceItem {
   source?: string;
   destination?: string;
   status?: "Synced" | "OutOfSync" | "Missing" | "Healthy";
+  context?: string; // Add context field
 }
 
 interface SSEData {
@@ -40,21 +41,81 @@ interface ClusterScopedResources {
 interface CompleteEventData {
   namespaced: NamespacedResources;
   clusterScoped: ClusterScopedResources;
+  contexts?: Record<string, string>; // Map of resources to contexts
 }
 
-const ListViewComponent = () => {
+// Add props interface
+interface ListViewComponentProps {
+  filteredContext?: string;
+  onResourceDataChange?: (data: {
+    resources: ResourceItem[];
+    filteredResources: ResourceItem[];
+    contextCounts: Record<string, number>;
+    totalCount: number;
+  }) => void;
+}
+
+const ListViewComponent = ({ 
+  filteredContext = "all",
+  onResourceDataChange
+}: ListViewComponentProps) => {
   const theme = useTheme((state) => state.theme);
   const [resources, setResources] = useState<ResourceItem[]>([]);
+  const [filteredResources, setFilteredResources] = useState<ResourceItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [initialLoading, setInitialLoading] = useState<boolean>(true); // Track initial connection
   const [loadingMessage, setLoadingMessage] = useState<string>("Connecting to server...");
   const [error, setError] = useState<string | null>(null);
   const resourcesRef = useRef<ResourceItem[]>([]);
+  const [totalRawResources, setTotalRawResources] = useState<number>(0); // Track raw resources count
 
   // Add pagination state
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage] = useState<number>(10);
   const [totalItems, setTotalItems] = useState<number>(0);
+
+  // Add useEffect to notify parent of resource data changes
+  useEffect(() => {
+    // Calculate context counts
+    const contextCounts: Record<string, number> = {};
+    resources.forEach(resource => {
+      const context = resource.context || "default";
+      contextCounts[context] = (contextCounts[context] || 0) + 1;
+    });
+    
+    // Notify parent component if callback provided
+    if (onResourceDataChange) {
+      onResourceDataChange({
+        resources,
+        filteredResources,
+        contextCounts,
+        totalCount: resources.length
+      });
+    }
+  }, [resources, filteredResources, onResourceDataChange]);
+
+  // Add effect to filter resources when filteredContext changes
+  useEffect(() => {
+    if (filteredContext === "all") {
+      setFilteredResources(resources);
+      setTotalItems(resources.length);
+    } else {
+      const filtered = resources.filter(resource => 
+        resource.context === filteredContext
+      );
+      setFilteredResources(filtered);
+      setTotalItems(filtered.length);
+    }
+    // Log resources stats for debugging
+    console.log(`[ListViewComponent] Resource counts: 
+      - Total raw resources: ${totalRawResources}
+      - Resources after processing: ${resources.length}
+      - Filtered resources (${filteredContext}): ${filteredContext === "all" ? resources.length : resources.filter(r => r.context === filteredContext).length}
+    `);
+    
+    // Reset to first page when filter changes
+    setCurrentPage(1);
+  }, [filteredContext, resources, totalRawResources]);
 
   // Function to format date strings properly
   const formatCreatedAt = (dateString: string): string => {
@@ -92,15 +153,25 @@ const ListViewComponent = () => {
     let eventSource: EventSource | null = null;
 
     const processCompleteData = (data: CompleteEventData): ResourceItem[] => {
-        const resourceList: ResourceItem[] = [];
-
+      const resourceList: ResourceItem[] = [];
+      const resourceContexts = data.contexts || {};
+      
+      // Count raw resources for debugging
+      let rawClusterCount = 0;
+      let rawNamespacedCount = 0;
+      
       // Process cluster-scoped resources
       if (data.clusterScoped) {
         Object.entries(data.clusterScoped).forEach(([kind, items]) => {
           if (!Array.isArray(items)) return;
           
+          rawClusterCount += items.length;
           (items as ResourceItem[]).forEach((item: ResourceItem) => {
             const sourceUrl = `https://github.com/onkarr17/${item.name.toLowerCase()}-gitrepo.io/k8s`;
+            // Get context for this resource from the contexts map
+            const resourceUid = item.uid || `${item.kind || kind}/${item.name}`;
+            const context = resourceContexts[resourceUid] || "default";
+            
             resourceList.push({
               createdAt: item.createdAt,
               kind: item.kind || kind,
@@ -109,6 +180,7 @@ const ListViewComponent = () => {
               project: "default",
               source: sourceUrl,
               destination: `in-cluster/${item.namespace || "default"}`,
+              context: context // Add context information
             });
           });
         });
@@ -124,7 +196,12 @@ const ListViewComponent = () => {
             // Special handling for namespace metadata
             if (kind === "__namespaceMetaData") {
               if (Array.isArray(items)) {
+                rawNamespacedCount += items.length;
                 (items as ResourceItem[]).forEach((item: ResourceItem) => {
+                  // Get context for this namespace from the contexts map
+                  const resourceUid = item.uid || `Namespace/${item.name || namespace}`;
+                  const context = resourceContexts[resourceUid] || "default";
+                  
                 resourceList.push({
                   createdAt: item.createdAt,
                     kind: "Namespace",
@@ -133,6 +210,7 @@ const ListViewComponent = () => {
                     project: "default",
                     source: `https://github.com/onkarr17/${namespace.toLowerCase()}-gitrepo.io/k8s`,
                     destination: `in-cluster/${namespace}`,
+                    context: context // Add context information
                   });
                 });
               }
@@ -142,8 +220,13 @@ const ListViewComponent = () => {
             // Skip if items is not an array
             if (!Array.isArray(items)) return;
             
+            rawNamespacedCount += items.length;
             (items as ResourceItem[]).forEach((item: ResourceItem) => {
               const sourceUrl = `https://github.com/onkarr17/${item.name.toLowerCase()}-gitrepo.io/k8s`;
+              // Get context for this resource from the contexts map
+              const resourceUid = item.uid || `${item.kind || kind}/${item.name}`;
+              const context = resourceContexts[resourceUid] || "default";
+              
               resourceList.push({
                 createdAt: item.createdAt,
                 kind: item.kind || kind,
@@ -152,10 +235,21 @@ const ListViewComponent = () => {
                 project: "default",
                 source: sourceUrl,
                 destination: `in-cluster/${item.namespace || namespace}`,
+                context: context // Add context information
               });
             });
           });
         });
+      }
+
+        if (isMounted) {
+        setTotalRawResources(rawClusterCount + rawNamespacedCount);
+        console.log(`[ListViewComponent] API returned: 
+          - Raw cluster resources: ${rawClusterCount}
+          - Raw namespaced resources: ${rawNamespacedCount}
+          - Total raw: ${rawClusterCount + rawNamespacedCount}
+          - Processed: ${resourceList.length}
+        `);
       }
       
       return resourceList;
@@ -210,6 +304,7 @@ const ListViewComponent = () => {
                   project: "default",
                   source: sourceUrl,
                   destination: `in-cluster/${item.namespace || "default"}`,
+                  context: item.context || "default" // Include context
                 };
                 currentResources.push(resourceItem);
                 addedCount++;
@@ -220,7 +315,7 @@ const ListViewComponent = () => {
                 
                 // Update state with current resources
                 setResources([...currentResources]);
-                setTotalItems(currentResources.length);
+                // Total items will be set by useEffect for filtering
                 
                 // Update loading message to show progress
                 setLoadingMessage(`Received ${currentResources.length} workloads so far...`);
@@ -246,11 +341,11 @@ const ListViewComponent = () => {
             // (which would be unusual), keep the progress resources
             if (allResources.length === 0 && resourcesRef.current.length > 0) {
               setResources([...resourcesRef.current]);
-              setTotalItems(resourcesRef.current.length);
+              // Total items will be set by useEffect for filtering
             } else {
               // Otherwise use the complete data
               setResources(allResources);
-              setTotalItems(allResources.length);
+              // Total items will be set by useEffect for filtering
               resourcesRef.current = allResources;
             }
             
@@ -276,14 +371,14 @@ const ListViewComponent = () => {
             // just use those and don't show an error
             if (resourcesRef.current.length > 0) {
               setResources([...resourcesRef.current]);
-              setTotalItems(resourcesRef.current.length);
+              // Total items will be set by useEffect for filtering
               setInitialLoading(false);
               setIsLoading(false);
               
               // Show warning about incomplete data
               setLoadingMessage(`Showing ${resourcesRef.current.length} workloads (data may be incomplete)`);
               setTimeout(() => {
-        if (isMounted) {
+                if (isMounted) {
                   setIsLoading(false);
                 }
               }, 3000);
@@ -311,7 +406,7 @@ const ListViewComponent = () => {
             if (resourcesRef.current.length > 0) {
               setInitialLoading(false);
               setResources([...resourcesRef.current]);
-              setTotalItems(resourcesRef.current.length);
+              // Total items will be set by useEffect for filtering
               setLoadingMessage(`Connection lost. Showing ${resourcesRef.current.length} received workloads.`);
               
               // After a brief delay, hide the loading indicator
@@ -346,15 +441,20 @@ const ListViewComponent = () => {
       setLoadingMessage("Fetching resources (fallback method)...");
       
       try {
-        const response = await api.get("/api/wds/list", { timeout: 15000 });
+        const response = await api.get("/wds/list", { timeout: 15000 });
         
         if (!isMounted) return;
         
         // Process the fallback response
         if (response.data && response.data.data) {
+          // Log raw API response for debugging
+          console.log("[ListViewComponent] API response structure:", 
+            Object.keys(response.data.data).map(key => `${key}: ${JSON.stringify(response.data.data[key]).substring(0, 100)}...`)
+          );
+          
           const processedResources = processCompleteData(response.data.data as CompleteEventData);
           setResources(processedResources);
-          setTotalItems(processedResources.length);
+          // Total items will be set by useEffect for filtering
           resourcesRef.current = processedResources;
           setInitialLoading(false);
           setIsLoading(false);
@@ -385,13 +485,13 @@ const ListViewComponent = () => {
         eventSource.close();
       }
     };
-  }, []); // Remove logDebug from dependencies
+  }, []); // Keep original dependencies
 
-  // Calculate pagination values
+  // Calculate pagination values using filteredResources instead of resources
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = resources.slice(indexOfFirstItem, indexOfLastItem);
+  const currentItems = filteredResources.slice(indexOfFirstItem, indexOfLastItem);
 
   // Handle page changes
   const handlePageChange = (pageNumber: number) => {
@@ -509,7 +609,7 @@ const ListViewComponent = () => {
             Retry
           </Button>
         </Box>
-      ) : resources.length > 0 ? (
+      ) : filteredResources.length > 0 ? (
         <Box sx={{ display: "flex", flexDirection: "column", height: "100%", position: "relative" }}>
           {isLoading && (
             <Box sx={{ 
@@ -533,6 +633,33 @@ const ListViewComponent = () => {
               </Typography>
             </Box>
           )}
+          
+          {/* Resource count info banner */}
+          {filteredContext !== "all" && (
+            <Box sx={{ 
+              width: "100%", 
+              px: 2, 
+              py: 1, 
+              backgroundColor: theme === "dark" ? "rgba(25, 118, 210, 0.1)" : "rgba(25, 118, 210, 0.05)",
+              borderBottom: theme === "dark" ? "1px solid rgba(144, 202, 249, 0.2)" : "1px solid rgba(25, 118, 210, 0.1)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between"
+            }}>
+              <Typography variant="body2" sx={{ 
+                color: theme === "dark" ? "#90CAF9" : "#1976d2",
+                fontWeight: 500
+              }}>
+                Filtered by context: {filteredContext}
+              </Typography>
+              <Typography variant="body2" sx={{ 
+                color: theme === "dark" ? "#A5ADBA" : "#6B7280",
+              }}>
+                Showing {filteredResources.length} of {resources.length} total resources
+              </Typography>
+            </Box>
+          )}
+          
           <Box
             sx={{
               width: "100%",
@@ -673,6 +800,7 @@ const ListViewComponent = () => {
               margin: 0,
             }}
           >
+            <Box sx={{ display: "flex", flexDirection: "column" }}>
             <Typography
               variant="body2"
               sx={{
@@ -683,7 +811,23 @@ const ListViewComponent = () => {
               }}
             >
               Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, totalItems)} of {totalItems} entries
+                {filteredContext !== "all" && ` (filtered by ${filteredContext} context)`}
             </Typography>
+
+              {totalRawResources > 0 && totalRawResources !== resources.length && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: theme === "dark" ? "rgba(255, 255, 255, 0.6)" : "rgba(0, 0, 0, 0.6)",
+                    textAlign: { xs: "center", sm: "left" },
+                    mt: 0.5,
+                    fontSize: "0.7rem",
+                  }}
+                >
+                  {totalRawResources} raw resources detected, {resources.length} processed
+                </Typography>
+              )}
+            </Box>
          
             <Box
               sx={{
@@ -822,8 +966,23 @@ const ListViewComponent = () => {
                 mb: 2,
               }}
             >
-              Get started by creating your first workload
+              {filteredContext !== "all" 
+                ? `No resources found for the ${filteredContext} context`
+                : resources.length > 0 
+                  ? "Resources are available but filtered out" 
+                  : "Get started by creating your first workload"}
             </Typography>
+            {resources.length > 0 && filteredResources.length === 0 && (
+              <Typography
+                variant="caption"
+                sx={{
+                  color: theme === "dark" ? "#90CAF9" : "#1976d2",
+                  fontSize: "0.85rem",
+                }}
+              >
+                {resources.length} total resources available, but none match the current filter
+              </Typography>
+            )}
           </Box>
         </Box>
       )}
