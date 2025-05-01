@@ -251,7 +251,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
         </Box>
 
         {/* Add cluster-scoped indicator if needed */}
-        {isClusterScoped && (
+        {/* {isClusterScoped && (
           <Box sx={{ mt: 0.5 }}>
             <Chip
               size="small"
@@ -265,7 +265,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
               }}
             />
           </Box>
-        )}
+        )} */}
 
         {/* Label value */}
         <Box sx={{ mt: 0.5 }}>
