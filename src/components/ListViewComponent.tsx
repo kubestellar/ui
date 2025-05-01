@@ -71,7 +71,7 @@ const ListViewComponent = ({
 
   // Add pagination state
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [itemsPerPage] = useState<number>(10);
+  const [itemsPerPage] = useState<number>(15);
   const [totalItems, setTotalItems] = useState<number>(0);
 
   // Add useEffect to notify parent of resource data changes
@@ -176,7 +176,7 @@ const ListViewComponent = ({
               createdAt: item.createdAt,
               kind: item.kind || kind,
               name: item.name,
-              namespace: item.namespace || "Cluster",
+              namespace: item.namespace || "",
               project: "default",
               source: sourceUrl,
               destination: `in-cluster/${item.namespace || "default"}`,
@@ -727,14 +727,14 @@ const ListViewComponent = ({
                     >
                       {resource.name}
                     </Typography>
-                    <Typography
-                      sx={{
-                        color: theme === "dark" ? "#A5ADBA" : "#6B7280",
-                        fontSize: "0.875rem",
-                      }}
+                    {resource.namespace != "" && <Typography
+                        sx={{
+                          color: theme === "dark" ? "#A5ADBA" : "#6B7280",
+                          fontSize: "0.875rem",
+                        }}
                     >
                       Namespace: {resource.namespace}
-                    </Typography>
+                    </Typography>}
                   </Box>
 
                   {/* Kind tag centered */}
