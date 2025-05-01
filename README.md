@@ -43,7 +43,7 @@ Before you begin, ensure that your system meets the following requirements:
 
 - **Kubestellar guide**: [Guide](https://docs.kubestellar.io/release-0.25.1/direct/get-started/)
  
-- ### 5. Make and Air
+### 5. Make and Air
 
 - Make sure you have "make" installed to directly execute the backend script via makefile
 - Air helps in hot reloading of the backend
