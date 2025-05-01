@@ -540,7 +540,9 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
 
   // Use a ref to track if this is the initial render
   const isInitialRender = useRef(true);
-
+  console.log(resources);
+  console.log(_props);
+  
   // Component mount effect - only run once using a ref flag
   useEffect(() => {
     if (isInitialRender.current) {
@@ -1380,24 +1382,24 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
 
   // In the handleViewChange function, add logic to recalculate counts
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleViewChange = useCallback((newView: boolean) => {
-    // Convert from boolean to view mode string
-    const newViewMode = newView ? 'list' : 'tiles';
+  // const handleViewChange = useCallback((newView: boolean) => {
+  //   // Convert from boolean to view mode string
+  //   const newViewMode = newView ? 'list' : 'tiles';
     
-    // Only proceed if the view is actually changing
-    if (newViewMode !== viewMode) {
-      console.log(`[TreeViewComponent] Switching to ${newViewMode} view`);
-      setViewMode(newViewMode as 'tiles' | 'list');
+  //   // Only proceed if the view is actually changing
+  //   if (newViewMode !== viewMode) {
+  //     console.log(`[TreeViewComponent] Switching to ${newViewMode} view`);
+  //     setViewMode(newViewMode as 'tiles' | 'list');
       
-      // If switching to list view, counts will be updated by the ListViewComponent via onResourceDataChange
-      // If switching to tree view, the useEffect above will handle the recalculation
+  //     // If switching to list view, counts will be updated by the ListViewComponent via onResourceDataChange
+  //     // If switching to tree view, the useEffect above will handle the recalculation
       
-      // Call the prop callback if provided
-      if (_props.onViewModeChange) {
-        _props.onViewModeChange(newViewMode as 'tiles' | 'list');
-      }
-    }
-  }, [viewMode, _props]);
+  //     // Call the prop callback if provided
+  //     if (_props.onViewModeChange) {
+  //       _props.onViewModeChange(newViewMode as 'tiles' | 'list');
+  //     }
+  //   }
+  // }, [viewMode, _props]);
 
   return (
     <Box sx={{ display: "flex", height: "85vh", width: "100%", position: "relative" }}>
