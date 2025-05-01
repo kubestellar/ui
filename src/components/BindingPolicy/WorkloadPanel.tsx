@@ -100,7 +100,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
       'app.kubernetes.io/team'
     ];
 
-    const excludedKinds = ['PersistentVolumeClaim'];
+    const excludedKinds: string[] = [];
 
     workloads.forEach((workload) => {
       // Skip excluded kinds
