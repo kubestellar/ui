@@ -71,7 +71,7 @@ const ListViewComponent = ({
 
   // Add pagination state
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [itemsPerPage] = useState<number>(15);
+  const [itemsPerPage] = useState<number>(25);
   const [totalItems, setTotalItems] = useState<number>(0);
 
   // Add useEffect to notify parent of resource data changes
