@@ -119,7 +119,7 @@ export const HelmTab = ({
         chartName: selectedChart,
         releaseName: selectedChart,
         namespace: selectedChart,
-        workloadLabel: workloadLabelPopularHelmChartTab.length && 'kubestellar.io/workload' + workloadLabelPopularHelmChartTab
+        workloadLabel: workloadLabelPopularHelmChartTab
       };
 
       const response = await api.post(
