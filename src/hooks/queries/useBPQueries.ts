@@ -942,15 +942,12 @@ export const useBPQueries = () => {
       const workloads: Workload[] = [];
       
       const excludedTypes = new Set([
-        'Secret', 
-        'ConfigMap', 
         'Endpoints', 
         'EndpointSlice',
-        'ControllerRevision',
-        'PersistentVolumeClaim'
+        'ControllerRevision'
       ]);
       
-      const excludedNamespaces = new Set(['default']);
+      const excludedNamespaces = new Set(['default', 'kube-system', 'kube-public']);
       
       if (state.data.namespaced) {
         Object.entries(state.data.namespaced).forEach(([namespace, resourceTypes]) => {
@@ -996,6 +993,15 @@ export const useBPQueries = () => {
           // Process cluster-scoped resources
           resources.forEach(resource => {
             if (resource.labels) {
+              if (resourceType === 'Namespace' && 
+                  (resource.name === 'default' || 
+                   resource.name === 'kube-system' || 
+                   resource.name === 'kube-public' || 
+                   resource.name === 'kubestellar-report' ||
+                   resource.name === 'kube-node-lease')) {
+                return;
+              }
+              
               workloads.push({
                 name: resource.name,
                 namespace: resource.namespace || 'cluster-scoped',
