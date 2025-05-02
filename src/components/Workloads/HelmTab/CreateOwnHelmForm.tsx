@@ -33,7 +33,7 @@ export const CreateOwnHelmForm = ({ formData, setFormData, error, theme }: Props
                   onChange={(e) =>
                       setFormData({ ...formData, workload_label: e.target.value })
                   }
-                  helperText={"Workload label is extracted from YAML/JSON metadata.labels (first key:value pair)"}
+                  helperText={"Workload label is key:value pair. Key is constant and defaulted to 'kubestellar.io/workload', you can only change the value."}
                   sx={{
                       width: "98.5%",
                       marginTop: "20px",

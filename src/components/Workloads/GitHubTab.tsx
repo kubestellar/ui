@@ -66,7 +66,7 @@ const CreateFromYourGitHub = ({ formData, setFormData, error, credentialsList, h
         onChange={(e) =>
           setFormData({ ...formData, workload_label: e.target.value })
         }
-        helperText={"Workload label is extracted from YAML/JSON metadata.labels (first key:value pair)"}
+        helperText={"Workload label is key:value pair. Key is constant and defaulted to 'kubestellar.io/workload', you can only change the value."}
         sx={{
           width: "98.5%",
           marginTop: "20px",
@@ -1106,7 +1106,7 @@ const PopularRepositoriesForm = ({ theme, selectedRepo, popularRepositories, han
             onChange={(e) =>
               setWorkloadLabel(e.target.value)
             }
-            helperText={"Workload label is extracted from YAML/JSON metadata.labels (first key:value pair)"}
+            helperText={"Workload label is key:value pair. Key is constant and defaulted to 'kubestellar.io/workload', you can only change the value."}
             sx={{
               width: "98.5%",
               marginTop: "20px",
@@ -1146,18 +1146,6 @@ const PopularRepositoriesForm = ({ theme, selectedRepo, popularRepositories, han
         borderRadius: "4px"
       }}
     >
-      <Typography
-        variant="subtitle1"
-        sx={{
-          fontWeight: 600,
-          fontSize: "20px",
-          color: theme === "dark" ? "#d4d4d4" : "#333",
-          mb: 3,
-          mt: 1,
-        }}
-      >
-        Select a Popular Repository to deploy!
-      </Typography>
       {selectedRepo && (
         <Box
           sx={{

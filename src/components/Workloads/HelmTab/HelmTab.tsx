@@ -62,6 +62,8 @@ export const HelmTab = ({
   const [userCharts, setUserCharts] = useState<Deployment[]>([]);
   const [userLoading, setUserLoading] = useState(false);
 
+  const [workloadLabelPopularHelmChartTab, setWorkloadLabelPopularHelmChartTab] = useState("");
+
 
   // Fetch user-created charts
   useEffect(() => {
@@ -117,7 +119,7 @@ export const HelmTab = ({
         chartName: selectedChart,
         releaseName: selectedChart,
         namespace: selectedChart,
-        workloadLabel: formData.workload_label || undefined
+        workloadLabel: workloadLabelPopularHelmChartTab.length && 'kubestellar.io/workload' + workloadLabelPopularHelmChartTab
       };
 
       const response = await api.post(
@@ -207,7 +209,7 @@ export const HelmTab = ({
             theme={theme}
           />
         ) : selectedOption === "popularCharts" ? (
-            <PopularHelmChartsForm handleChartSelection={handleChartSelection} theme={theme} selectedChart={selectedChart}/>
+            <PopularHelmChartsForm handleChartSelection={handleChartSelection} theme={theme} selectedChart={selectedChart} workloadLabel={workloadLabelPopularHelmChartTab} setWorkloadLabel={setWorkloadLabelPopularHelmChartTab} />
         ) : (
               <UserCreatedChartsForm handleChartSelection={handleChartSelection} setUserCharts={setUserCharts} theme={theme} selectedChart={selectedChart} userCharts={userCharts} userLoading={userLoading} />
         )}

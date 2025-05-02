@@ -49,7 +49,7 @@ export const YamlTab = ({
           const doc = documents[i];
           if (doc && doc.metadata && doc.metadata.labels && Object.keys(doc.metadata.labels).length > 0) {
             const firstLabelKey = Object.keys(doc.metadata.labels)[0];
-            setLocalWorkloadLabel(`${firstLabelKey}:${doc.metadata.labels[firstLabelKey]}`);
+            setLocalWorkloadLabel(doc.metadata.labels[firstLabelKey]);
             foundIndex = i;
             break;
           }
@@ -181,7 +181,7 @@ export const YamlTab = ({
               color: theme === "dark" ? "#858585" : "#666",
             },
           }}
-          helperText={hasLabelsError ? "No labels found in YAML. Please add a label to enable deployment." : "Workload label is extracted from YAML/JSON metadata.labels (first key:value pair)"}
+          helperText={hasLabelsError ? "No labels found in YAML. Please add a label to enable deployment." : "Workload label is key:value pair. Key is constant and defaulted to 'kubestellar.io/workload', you can only change the value."}
           error={hasLabelsError}
           FormHelperTextProps={{
             error: hasLabelsError,

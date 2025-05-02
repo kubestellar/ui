@@ -1,15 +1,15 @@
 import { Box, Typography, Autocomplete, TextField } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { useState } from "react";
 
 interface Props {
     handleChartSelection: (chart: string|null) => void;
     theme: string;
     selectedChart: string | null;
+    workloadLabel: string;
+    setWorkloadLabel:    React.Dispatch<React.SetStateAction<string>>
 }
 
-export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedChart}:Props) => {
-  const [workloadLabel, setWorkloadLabel] = useState("");
+export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedChart, workloadLabel, setWorkloadLabel }:Props) => {
   const color=theme === "dark" ? "#d4d4d4" : "#333"
 
     const popularHelmCharts = [
@@ -30,7 +30,7 @@ export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedCha
           onChange={(e) =>
             setWorkloadLabel(e.target.value)
           }
-          helperText={"Workload label is extracted from YAML/JSON metadata.labels (first key:value pair)"}
+        helperText={"Workload label is key:value pair. Key is constant and defaulted to 'kubestellar.io/workload', you can only change the value."}
           sx={{
             width: "98.5%",
             marginTop: "20px",

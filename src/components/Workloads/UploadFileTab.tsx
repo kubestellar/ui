@@ -66,7 +66,7 @@ export const UploadFileTab = ({
             const doc = documents[i];
             if (doc && doc.metadata && doc.metadata.labels && Object.keys(doc.metadata.labels).length > 0) {
               const firstLabelKey = Object.keys(doc.metadata.labels)[0];
-              setLocalWorkloadLabel(`${firstLabelKey}:${doc.metadata.labels[firstLabelKey]}`);
+              setLocalWorkloadLabel(doc.metadata.labels[firstLabelKey]);
               found = true;
               break;
             }
