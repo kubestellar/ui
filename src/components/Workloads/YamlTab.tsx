@@ -1,9 +1,10 @@
 import Editor from "@monaco-editor/react";
-import { Box, Button, TextField, FormControlLabel, Checkbox } from "@mui/material"; // Added Checkbox and FormControlLabel
+import { Box, Button, FormControlLabel, Checkbox } from "@mui/material"; // Added Checkbox and FormControlLabel
 import { StyledContainer } from "../StyledComponents";
 import yaml from "js-yaml";
 import { useState, useEffect } from "react";
 import useTheme from "../../stores/themeStore";
+import WorkloadLabelInput from "./WorkloadLabelInput";
 
 interface Props {
   editorContent: string;
@@ -147,46 +148,7 @@ export const YamlTab = ({
           minHeight: 0,
         }}
       >
-        <TextField
-          fullWidth
-          label="Workload Label *"
-          value={localWorkloadLabel}
-          onChange={(e) => handleWorkloadLabelChange(e.target.value)}
-          sx={{
-            width: "98.5%",
-            margin: "0 auto 10px auto",
-            input: { color: theme === "dark" ? "#d4d4d4" : "#333" },
-            label: { color: theme === "dark" ? "#858585" : "#666" },
-            "& .MuiOutlinedInput-root": {
-              "& fieldset": {
-                borderColor: theme === "dark" ? "#444" : "#e0e0e0",
-              },
-              "&:hover fieldset": {
-                borderColor: "#1976d2",
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: "#1976d2",
-              },
-              "&.Mui-error fieldset": {
-                borderColor: "#d32f2f",
-              },
-            },
-            "& .MuiInputLabel-root.Mui-focused": {
-              color: "#1976d2",
-            },
-            "& .MuiInputLabel-root.Mui-error": {
-              color: "#d32f2f",
-            },
-            "& .MuiFormHelperText-root": {
-              color: theme === "dark" ? "#858585" : "#666",
-            },
-          }}
-          helperText={hasLabelsError ? "No labels found in YAML. Please add a label to enable deployment." : "Workload label is key:value pair. Key is constant and defaulted to 'kubestellar.io/workload', you can only change the value."}
-          error={hasLabelsError}
-          FormHelperTextProps={{
-            error: hasLabelsError,
-          }}
-        />
+        <WorkloadLabelInput handleChange={(e) => handleWorkloadLabelChange(e.target.value)} isError={hasLabelsError} theme={theme} value={localWorkloadLabel} />
         {/* Added Checkbox */}
         <FormControlLabel
           control={

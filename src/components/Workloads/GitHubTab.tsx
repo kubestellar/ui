@@ -8,6 +8,7 @@ import { AxiosError } from "axios";
 import { toast } from "react-hot-toast";
 import { MoreVerticalIcon } from "lucide-react";
 import { api } from "../../lib/api";
+import WorkloadLabelInput from "./WorkloadLabelInput";
 
 interface FormData {
   repositoryUrl: string;
@@ -58,45 +59,8 @@ const CreateFromYourGitHub = ({ formData, setFormData, error, credentialsList, h
       height: "55vh",
     }}
   >
-    <Box>
-      <TextField
-        fullWidth
-        label="Workload Label *"
-        value={formData.workload_label}
-        onChange={(e) =>
-          setFormData({ ...formData, workload_label: e.target.value })
-        }
-        helperText={"Workload label is key:value pair. Key is constant and defaulted to 'kubestellar.io/workload', you can only change the value."}
-        sx={{
-          width: "98.5%",
-          marginTop: "20px",
-          input: { color: theme === "dark" ? "#d4d4d4" : "#333" },
-          label: { color: theme === "dark" ? "#858585" : "#666" },
-          "& .MuiOutlinedInput-root": {
-            "& fieldset": {
-              borderColor: theme === "dark" ? "#444" : "#e0e0e0",
-            },
-            "&:hover fieldset": {
-              borderColor: "#1976d2",
-            },
-            "&.Mui-focused fieldset": {
-              borderColor: "#1976d2",
-            },
-            "&.Mui-error fieldset": {
-              borderColor: "#d32f2f",
-            },
-          },
-          "& .MuiInputLabel-root.Mui-focused": {
-            color: "#1976d2",
-          },
-          "& .MuiInputLabel-root.Mui-error": {
-            color: "#d32f2f",
-          },
-          "& .MuiFormHelperText-root": {
-            color: theme === "dark" ? "#858585" : "#666",
-          },
-        }}
-      />
+    <Box  sx={{marginTop: "20px"}}>
+      <WorkloadLabelInput handleChange={(e) => setFormData({ ...formData, workload_label: e.target.value })} isError={false} theme={theme} value={formData.workload_label} />
     </Box>
 
     <Box>
@@ -1098,45 +1062,8 @@ const PopularRepositoriesForm = ({ theme, selectedRepo, popularRepositories, han
       height: "55vh",
     }}
   >
-        <Box>
-          <TextField
-            fullWidth
-            label="Workload Label *"
-            value={workloadLabel}
-            onChange={(e) =>
-              setWorkloadLabel(e.target.value)
-            }
-            helperText={"Workload label is key:value pair. Key is constant and defaulted to 'kubestellar.io/workload', you can only change the value."}
-            sx={{
-              width: "98.5%",
-              marginTop: "20px",
-              input: { color: theme === "dark" ? "#d4d4d4" : "#333" },
-              label: { color: theme === "dark" ? "#858585" : "#666" },
-              "& .MuiOutlinedInput-root": {
-                "& fieldset": {
-                  borderColor: theme === "dark" ? "#444" : "#e0e0e0",
-                },
-                "&:hover fieldset": {
-                  borderColor: "#1976d2",
-                },
-                "&.Mui-focused fieldset": {
-                  borderColor: "#1976d2",
-                },
-                "&.Mui-error fieldset": {
-                  borderColor: "#d32f2f",
-                },
-              },
-              "& .MuiInputLabel-root.Mui-focused": {
-                color: "#1976d2",
-              },
-              "& .MuiInputLabel-root.Mui-error": {
-                color: "#d32f2f",
-              },
-              "& .MuiFormHelperText-root": {
-                color: theme === "dark" ? "#858585" : "#666",
-              },
-            }}
-          />
+        <Box sx={{ marginTop: "20px" }}>
+          <WorkloadLabelInput handleChange={(e) => setWorkloadLabel(e.target.value)} isError={false} theme={theme} value={workloadLabel ? workloadLabel:""} />
         </Box>
     <Box
       sx={{
