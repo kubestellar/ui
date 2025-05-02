@@ -359,7 +359,7 @@ const WecsTreeview = () => {
   const handleMenuOpen = useCallback((event: React.MouseEvent, nodeId: string) => {
     event.preventDefault();
     event.stopPropagation();
-    let nodeType: string | undefined = undefined;
+    let nodeType: string | null = null;
     if (nodeId.includes(":")) {
       const nodeIdParts = nodeId.split(":");
       nodeType = nodeIdParts[0];
