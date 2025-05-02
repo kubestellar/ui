@@ -861,7 +861,9 @@ const WecsDetailsPanel = ({
           >
             <StyledTab label={<span><i className="fa fa-file-alt" style={{ marginRight: "8px" }}></i>SUMMARY</span>} />
             <StyledTab label={<span><i className="fa fa-edit" style={{ marginRight: "8px" }}></i>EDIT</span>} />
-            <StyledTab label={<span><i className="fa fa-align-left" style={{ marginRight: "8px" }}></i>LOGS</span>} />
+            {type.toLowerCase() !== "cluster" && (
+              <StyledTab label={<span><i className="fa fa-align-left" style={{ marginRight: "8px" }}></i>LOGS</span>} />
+            )}
             {/* Only show Exec Pods tab for pod resources */}
             {type.toLowerCase() === "pod" && (
               <StyledTab label={<span><i className="fa fa-terminal" style={{ marginRight: "8px" }}></i>EXEC PODS</span>} />
@@ -958,7 +960,7 @@ const WecsDetailsPanel = ({
                   </Box>
                 </Box>
               )}
-              {tabValue === 2 && (
+              {tabValue === 2 && type.toLowerCase() !== "cluster" && (
                 <Box
                   sx={{
                     height: "500px",

@@ -4,12 +4,21 @@ import { ManagedCluster, Workload } from '../../types/bindingPolicy';
 import ClusterPanel from './ClusterPanel';
 import WorkloadPanel from './WorkloadPanel';
 
+// Import TreeItem type for the callback
+interface TreeItem {
+  id: string;
+  name?: string;
+  kind?: string;
+  namespace?: string;
+  [key: string]: unknown;
+}
+
 interface ClusterPanelContainerProps {
   clusters: ManagedCluster[];
   loading: boolean;
   error: string | undefined;
   compact?: boolean;
-  onItemClick?: (clusterId: string) => void; 
+  onItemClick?: (itemOrId: TreeItem | string) => void; 
 }
 
 interface WorkloadPanelContainerProps {
@@ -17,7 +26,7 @@ interface WorkloadPanelContainerProps {
   loading: boolean;
   error: string | undefined;
   compact?: boolean;
-  onItemClick?: (clusterId: string) => void; 
+  onItemClick?: (itemOrId: TreeItem | string) => void; 
 }
 
 export const ClusterPanelContainer: React.FC<ClusterPanelContainerProps> = ({
