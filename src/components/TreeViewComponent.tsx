@@ -1559,32 +1559,40 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
               onResourceDataChange={handleResourceDataChange}
             />
           ) : (
-            <Box
-              sx={{
-                width: "100%",
-                backgroundColor: theme === "dark" ? "var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity)))" : "#fff",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                marginTop: "250px",
-              }}
-            >
-              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-                <Typography sx={{ color: theme === "dark" ? "#fff" : "#333", fontWeight: 500, fontSize: "22px" }}>
-                  No Workloads Found
-                </Typography>
-                <Typography variant="body2" sx={{ color: "#00000099", fontSize: "17px", mb: 2 }}>
-                  Get started by creating your first workload
-                </Typography>
-                <Button
-                  variant="contained"
-                  startIcon={<Plus size={20} />}
-                  onClick={handleCreateWorkloadClick}
-                  sx={{ backgroundColor: "#2f86ff", color: "#fff", "&:hover": { backgroundColor: "#1f76e5" } }}
+            <Box sx={{ width: "100%", height: "100%", position: "relative" }}>
+              <ReactFlowProvider>
+                <FlowCanvas nodes={[]} edges={[]} renderStartTime={renderStartTime} theme={theme} />
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    zIndex: 10,
+                  }}
                 >
-                  Create Workload
-                </Button>
-              </Box>
+                  <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1, backgroundColor: theme === "dark" ? "rgba(15, 23, 42, 0.8)" : "rgba(255, 255, 255, 0.8)", padding: 4, borderRadius: 2 }}>
+                    <Typography sx={{ color: theme === "dark" ? "#fff" : "#333", fontWeight: 500, fontSize: "22px" }}>
+                      No Workloads Found
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: theme === "dark" ? "rgba(255, 255, 255, 0.7)" : "#00000099", fontSize: "17px", mb: 2 }}>
+                      Get started by creating your first workload
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      startIcon={<Plus size={20} />}
+                      onClick={handleCreateWorkloadClick}
+                      sx={{ backgroundColor: "#2f86ff", color: "#fff", "&:hover": { backgroundColor: "#1f76e5" } }}
+                    >
+                      Create Workload
+                    </Button>
+                  </Box>
+                </Box>
+              </ReactFlowProvider>
             </Box>
           )}
 
