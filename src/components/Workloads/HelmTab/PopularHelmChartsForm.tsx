@@ -47,8 +47,6 @@ export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedCha
                   height: "55vh",
               }}
           >
-        
-
               <Box>
                 <Autocomplete
                     disablePortal

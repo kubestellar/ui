@@ -1,14 +1,16 @@
-import { TextField } from '@mui/material'
+import { InputAdornment, TextField } from '@mui/material'
 import React from 'react'
 
 interface Props {
     value: string
     handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-    isError?: boolean 
+    isError?: boolean
     theme: string
 }
 
 const WorkloadLabelInput = ({ value, handleChange, isError, theme }: Props) => {
+    const prefix = "kubestellar.io/workload:"
+    
     return (
         <TextField
             fullWidth
@@ -44,8 +46,17 @@ const WorkloadLabelInput = ({ value, handleChange, isError, theme }: Props) => {
                     color: theme === "dark" ? "#858585" : "#666",
                 },
             }}
-            helperText={"Workload label is key:value pair. Key is constant and defaulted to 'kubestellar.io/workload', you can only change the value."}
+            helperText={isError?"Label not found":"Workload label is key:value pair. Key is constant and defaulted to 'kubestellar.io/workload', you can only change the value."}
             error={isError}
+            slotProps={{
+                input: {
+                    startAdornment: !isError && (
+                        <InputAdornment position="start">
+                            <span style={{ color: "white" }}>{prefix}</span>
+                        </InputAdornment>
+                    ),
+                },
+            }}
         />
     )
 }
