@@ -359,8 +359,11 @@ const WecsTreeview = () => {
   const handleMenuOpen = useCallback((event: React.MouseEvent, nodeId: string) => {
     event.preventDefault();
     event.stopPropagation();
-    const nodeIdParts = nodeId.split(":");
-    const nodeType = nodeIdParts[0];
+    let nodeType: string | undefined = undefined;
+    if (nodeId.includes(":")) {
+      const nodeIdParts = nodeId.split(":");
+      nodeType = nodeIdParts[0];
+    }
     setContextMenu({ nodeId, x: event.clientX, y: event.clientY, nodeType });
   }, []);
 
