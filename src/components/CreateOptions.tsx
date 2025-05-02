@@ -77,7 +77,7 @@ metadata:
   name: test-${randomStrings}
   namespace: test-${randomStrings}
   labels:
-    kubernetes.io/kubestellar.workload.name: test-${randomStrings}
+    kubestellar.io/workload: test-${randomStrings}
 spec:
   replicas: 2
   selector:
@@ -577,6 +577,14 @@ spec:
     let isValid = true;
     let errorMessage = "";
 
+    if (!formData.workload_label) {
+      errorMessage = "Please enter Workload Label.";
+      isValid = false;
+    } else if (formData.workload_label.includes(":")) {
+      errorMessage = "You can only enter value, key is constant and defauled to 'kubestellar.io/workload'.";
+      isValid = false;
+    } 
+    
     if (!formData.repositoryUrl) {
       errorMessage = "Please enter Git repository.";
       isValid = false;
@@ -592,6 +600,14 @@ spec:
   const validateHelmForm = () => {
     let isValid = true;
     let errorMessage = "";
+
+    if (!helmFormData.workload_label) {
+      errorMessage = "Please enter Workload Label.";
+      isValid = false;
+    } else if (formData.workload_label.includes(":")) {
+      errorMessage = "You can only enter value, key is constant and defauled to 'kubestellar.io/workload'.";
+      isValid = false;
+    } 
 
     if (!helmFormData.repoName) {
       errorMessage = "Please enter Repository Name.";

@@ -24,71 +24,46 @@ export const CreateOwnHelmForm = ({ formData, setFormData, error, theme }: Props
               height: "55vh",
           }}
       >
-          <Typography
-              variant="subtitle1"
-              sx={{
-                  fontWeight: 600,
-                  fontSize: "20px",
-                  color: theme === "dark" ? "#d4d4d4" : "#333",
-                  mt: 1,
-              }}
-          >
-              Create our Own Helm Chart and deploy!
-          </Typography>
           
           <Box>
-              <Typography
-                  variant="subtitle1"
-                  sx={{
-                      fontWeight: 600,
-                      fontSize: "13px",
-                      color: theme === "dark" ? "#d4d4d4" : "#333",
-                      mb: 1,
-                  }}
-              >
-                  Workload Label
-              </Typography>
               <TextField
                   fullWidth
+                  label="Workload Label *"
                   value={formData.workload_label}
                   onChange={(e) =>
                       setFormData({ ...formData, workload_label: e.target.value })
                   }
-                  placeholder="e.g., my-helm-workload"
+                  helperText={"Workload label is key:value pair. Key is constant and defaulted to 'kubestellar.io/workload', you can only change the value."}
                   sx={{
+                      width: "98.5%",
+                      marginTop: "20px",
+                      input: { color: theme === "dark" ? "#d4d4d4" : "#333" },
+                      label: { color: theme === "dark" ? "#858585" : "#666" },
                       "& .MuiOutlinedInput-root": {
-                          borderRadius: "8px",
                           "& fieldset": {
                               borderColor: theme === "dark" ? "#444" : "#e0e0e0",
-                              borderWidth: "1px",
                           },
                           "&:hover fieldset": {
                               borderColor: "#1976d2",
                           },
                           "&.Mui-focused fieldset": {
                               borderColor: "#1976d2",
-                              borderWidth: "1px",
+                          },
+                          "&.Mui-error fieldset": {
+                              borderColor: "#d32f2f",
                           },
                       },
-                      "& .MuiInputBase-input": {
-                          padding: "12px 14px",
-                          fontSize: "0.875rem",
-                          color: theme === "dark" ? "#d4d4d4" : "#666",
+                      "& .MuiInputLabel-root.Mui-focused": {
+                          color: "#1976d2",
                       },
-                      "& .MuiInputBase-input::placeholder": {
+                      "& .MuiInputLabel-root.Mui-error": {
+                          color: "#d32f2f",
+                      },
+                      "& .MuiFormHelperText-root": {
                           color: theme === "dark" ? "#858585" : "#666",
-                          opacity: 1,
                       },
                   }}
               />
-              <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
-                  <span role="img" aria-label="tip" style={{ fontSize: "0.8rem", marginRight: "8px" }}>
-                      💡
-                  </span>
-                  <Typography variant="caption" sx={{ color: theme === "dark" ? "#858585" : "#666" }}>
-                      Add a label to identify your workload (optional)
-                  </Typography>
-              </Box>
           </Box>
           
           <Box>

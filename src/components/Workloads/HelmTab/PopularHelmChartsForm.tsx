@@ -5,10 +5,11 @@ interface Props {
     handleChartSelection: (chart: string|null) => void;
     theme: string;
     selectedChart: string | null;
+    workloadLabel: string;
+    setWorkloadLabel:    React.Dispatch<React.SetStateAction<string>>
 }
 
-export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedChart}:Props) => {
-
+export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedChart, workloadLabel, setWorkloadLabel }:Props) => {
   const color=theme === "dark" ? "#d4d4d4" : "#333"
 
     const popularHelmCharts = [
@@ -21,6 +22,46 @@ export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedCha
         "valkey", "vault", "victoriametrics", "whereabouts", "wildfly", "wordpress", "zipkin"
     ];
   return (
+    <Box>
+      <TextField
+          fullWidth
+          label="Workload Label *"
+          value={workloadLabel}
+          onChange={(e) =>
+            setWorkloadLabel(e.target.value)
+          }
+        helperText={"Workload label is key:value pair. Key is constant and defaulted to 'kubestellar.io/workload', you can only change the value."}
+          sx={{
+            width: "98.5%",
+            marginTop: "20px",
+            input: { color: theme === "dark" ? "#d4d4d4" : "#333" },
+            label: { color: theme === "dark" ? "#858585" : "#666" },
+            "& .MuiOutlinedInput-root": {
+              "& fieldset": {
+                borderColor: theme === "dark" ? "#444" : "#e0e0e0",
+              },
+              "&:hover fieldset": {
+                borderColor: "#1976d2",
+              },
+              "&.Mui-focused fieldset": {
+                borderColor: "#1976d2",
+              },
+              "&.Mui-error fieldset": {
+                borderColor: "#d32f2f",
+              },
+            },
+            "& .MuiInputLabel-root.Mui-focused": {
+              color: "#1976d2",
+            },
+            "& .MuiInputLabel-root.Mui-error": {
+              color: "#d32f2f",
+            },
+            "& .MuiFormHelperText-root": {
+              color: theme === "dark" ? "#858585" : "#666",
+            },
+          }}
+        />
+    
       <Box
           sx={{
               display: "flex",
@@ -33,23 +74,13 @@ export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedCha
           <Box
               sx={{
                   position: "sticky",
+                  marginTop: "20px",
                   top: 0,
                   zIndex: 1,
                   height: "55vh",
               }}
           >
-              <Typography
-                  variant="subtitle1"
-                  sx={{
-                      fontWeight: 600,
-                      fontSize: "20px",
-                      color,
-                      mb: 3,
-                      mt: 1,
-                  }}
-              >
-                  Select a Popular Helm Chart to deploy!
-              </Typography>
+        
 
               <Box>
                 <Autocomplete
@@ -127,57 +158,7 @@ export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedCha
                   </Box>
               )}
           </Box>
-
-          {/* Scrollable List */}
-          {/* <Box
-        sx={{
-          flex: 1,
-          overflowY: "auto",
-          "&::-webkit-scrollbar": {
-            display: "none",
-          },
-          scrollbarWidth: "none",
-          "-ms-overflow-style": "none",
-          display: "flex",
-          flexDirection: "column",
-          gap: 2,
-        }}
-      >
-        {popularHelmCharts.map((chart) => (
-          <Box
-            key={chart}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              padding: "8px",
-              borderRadius: "4px",
-              backgroundColor: theme === "dark" ? "#00000033" : "#f9f9f9",
-              "&:hover": {
-                backgroundColor: theme === "dark" ? "#2a2a2a" : "#f1f1f1",
-              },
-            }}
-          >
-            <Checkbox
-              checked={selectedChart === chart}
-              onChange={() => handleChartSelection(chart)}
-              sx={{
-                color: theme === "dark" ? "#d4d4d4" : "#666",
-                "&.Mui-checked": {
-                  color: "#1976d2",
-                },
-              }}
-            />
-            <Typography
-              sx={{
-                fontSize: "0.875rem",
-                color: theme === "dark" ? "#d4d4d4" : "#333",
-              }}
-            >
-              {chart}
-            </Typography>
-          </Box>
-        ))}
-      </Box> */}
+      </Box>
       </Box>
   )
 }
