@@ -861,11 +861,11 @@ const WecsDetailsPanel = ({
           >
             <StyledTab label={<span><i className="fa fa-file-alt" style={{ marginRight: "8px" }}></i>SUMMARY</span>} />
             <StyledTab label={<span><i className="fa fa-edit" style={{ marginRight: "8px" }}></i>EDIT</span>} />
-            {lowerCaseType !== "cluster" && (
+            {type.toLowerCase() !== "cluster" && (
               <StyledTab label={<span><i className="fa fa-align-left" style={{ marginRight: "8px" }}></i>LOGS</span>} />
             )}
             {/* Only show Exec Pods tab for pod resources */}
-            {lowerCaseType === "pod" && (
+            {type.toLowerCase() === "pod" && (
               <StyledTab label={<span><i className="fa fa-terminal" style={{ marginRight: "8px" }}></i>EXEC PODS</span>} />
             )}
           </Tabs>
