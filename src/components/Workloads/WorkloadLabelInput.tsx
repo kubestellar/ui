@@ -52,7 +52,7 @@ const WorkloadLabelInput = ({ value, handleChange, isError, theme }: Props) => {
                 input: {
                     startAdornment: !isError && (
                         <InputAdornment position="start">
-                            <span style={{ color: "white" }}>{prefix}</span>
+                            <span style={{ color: theme==="dark"?"white":"black" }}>{prefix}</span>
                         </InputAdornment>
                     ),
                 },
