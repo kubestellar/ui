@@ -1,6 +1,7 @@
 package k8s
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"gopkg.in/yaml.v3"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -23,7 +25,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/util/retry"
@@ -80,6 +81,86 @@ type HelmDeploymentData struct {
 type ConfigMapRef struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace,omitempty"`
+}
+
+// labelInjector is a post-renderer that injects the given label into every manifest.
+type labelInjector struct {
+	key   string
+	value string
+}
+
+// Run implements the postrender.Run interface, modifying metadata.labels on each doc.
+func (l *labelInjector) Run(renderedManifests *bytes.Buffer) (*bytes.Buffer, error) {
+	data := renderedManifests.Bytes()
+
+	docs := bytes.Split(data, []byte("\n---\n"))
+	out := &bytes.Buffer{}
+
+	for i, doc := range docs {
+		if len(bytes.TrimSpace(doc)) == 0 {
+			continue
+		}
+
+		var obj map[string]interface{}
+		if err := yaml.Unmarshal(doc, &obj); err != nil {
+			// Non-YAML/K8s object – pass through without modification
+			out.Write(doc)
+		} else {
+			// Skip empty documents or non-Kubernetes resources
+			if obj == nil || obj["kind"] == nil || obj["apiVersion"] == nil {
+				out.Write(doc)
+			} else {
+				// Add label to metadata
+				meta, ok := obj["metadata"].(map[string]interface{})
+				if !ok {
+					meta = make(map[string]interface{})
+					obj["metadata"] = meta
+				}
+
+				labels, ok := meta["labels"].(map[string]interface{})
+				if !ok {
+					labels = make(map[string]interface{})
+					meta["labels"] = labels
+				}
+
+				labels[l.key] = l.value
+				meta["labels"] = labels
+
+				// Also add to template metadata for resources with Pod templates
+				// (Deployments, StatefulSets, DaemonSets, etc.)
+				if spec, ok := obj["spec"].(map[string]interface{}); ok {
+					if template, ok := spec["template"].(map[string]interface{}); ok {
+						if templateMeta, ok := template["metadata"].(map[string]interface{}); ok {
+							templateLabels, ok := templateMeta["labels"].(map[string]interface{})
+							if !ok {
+								templateLabels = make(map[string]interface{})
+							}
+							templateLabels[l.key] = l.value
+							templateMeta["labels"] = templateLabels
+						} else {
+							template["metadata"] = map[string]interface{}{
+								"labels": map[string]interface{}{
+									l.key: l.value,
+								},
+							}
+						}
+					}
+				}
+
+				patched, err := yaml.Marshal(obj)
+				if err != nil {
+					return nil, fmt.Errorf("failed to marshal patched object: %w", err)
+				}
+				out.Write(patched)
+			}
+		}
+
+		if i < len(docs)-1 {
+			out.WriteString("\n---\n")
+		}
+	}
+
+	return out, nil
 }
 
 // getResourceGVR dynamically fetches the correct GroupVersionResource (GVR) using the Discovery API
@@ -720,6 +801,11 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 	install.Namespace = req.Namespace
 	install.Version = req.Version
 	install.Wait = false // Don't wait for resources to be ready to speed up deployment
+	// Attach our post-renderer
+	install.PostRenderer = &labelInjector{
+		key:   "kubestellar.io/workload",
+		value: req.WorkloadLabel,
+	}
 
 	// Locate and load chart concurrently
 	type chartResult struct {
@@ -816,21 +902,22 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 	chartValues["commonLabels"] = commonLabelsMap
 
 	// Approach 3: Add to podLabels if chart supports it
-	podLabelsVal, exists := chartValues["podLabels"]
 	var podLabelsMap map[string]interface{}
 
 	if exists {
-		if convertedMap, ok := podLabelsVal.(map[string]interface{}); ok {
-			podLabelsMap = convertedMap
-		} else {
-			podLabelsMap = make(map[string]interface{})
+		// Set a reasonable timeout for the installation
+		install.Timeout = 8 * time.Minute
+
+		// Ensure post-renderer is properly attached
+		install.PostRenderer = &labelInjector{
+			key:   "kubestellar.io/workload",
+			value: req.WorkloadLabel,
 		}
-	} else {
-		podLabelsMap = make(map[string]interface{})
+
+		// Install the chart
 	}
 
 	// Add workload label to podLabels
-	podLabelsMap["kubestellar.io/workload"] = req.WorkloadLabel
 	chartValues["podLabels"] = podLabelsMap
 
 	// Approach 4: Add as a top-level label
@@ -852,6 +939,8 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 
 	// Set a reasonable timeout for the installation
 	install.Timeout = 4 * time.Minute
+
+	// Attach our post-renderer
 
 	// Install the chart
 	release, err := install.Run(chartRes.chartObj, chartValues)
