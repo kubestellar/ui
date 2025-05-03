@@ -1,4 +1,4 @@
-import { Box, Button, TextField, Typography, Snackbar, FormControlLabel, Checkbox } from "@mui/material";
+import { Box, Button, Typography, Snackbar, FormControlLabel, Checkbox } from "@mui/material";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { StyledContainer, StyledPaper } from "../StyledComponents";
@@ -6,6 +6,7 @@ import yaml from "js-yaml";
 import { useState, useEffect } from "react";
 import useTheme from "../../stores/themeStore";
 import Editor from "@monaco-editor/react";
+import WorkloadLabelInput from "./WorkloadLabelInput";
 
 // Define the type for the YAML document
 interface YamlDocument {
@@ -140,46 +141,7 @@ export const UploadFileTab = ({
           minHeight: 0,
         }}
       >
-        <TextField
-          fullWidth
-          label="Workload Label *"
-          value={localWorkloadLabel}
-          onChange={(e) => handleWorkloadLabelChange(e.target.value)}
-          helperText={selectedFile && hasLabelsError ? "No labels found in YAML. Please add a label to enable deployment." : "Workload label is extracted from YAML/JSON metadata.labels (first key:value pair)"}
-          error={selectedFile ? hasLabelsError : false}
-          sx={{
-            width: "98.5%",
-            margin: "0 auto 10px auto",
-            input: { color: theme === "dark" ? "#d4d4d4" : "#333" },
-            label: { color: theme === "dark" ? "#858585" : "#666" },
-            "& .MuiOutlinedInput-root": {
-              "& fieldset": {
-                borderColor: theme === "dark" ? "#444" : "#e0e0e0",
-              },
-              "&:hover fieldset": {
-                borderColor: "#1976d2",
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: "#1976d2",
-              },
-              "&.Mui-error fieldset": {
-                borderColor: "#d32f2f",
-              },
-            },
-            "& .MuiInputLabel-root.Mui-focused": {
-              color: "#1976d2",
-            },
-            "& .MuiInputLabel-root.Mui-error": {
-              color: "#d32f2f",
-            },
-            "& .MuiFormHelperText-root": {
-              color: theme === "dark" ? "#858585" : "#666",
-            },
-          }}
-          FormHelperTextProps={{
-            error: selectedFile ? hasLabelsError : false,
-          }}
-        />
+        <WorkloadLabelInput handleChange={(e) => handleWorkloadLabelChange(e.target.value)} isError={selectedFile ? hasLabelsError : false} theme={theme} value={localWorkloadLabel} />
         <FormControlLabel
           control={
             <Checkbox
