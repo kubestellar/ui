@@ -69,8 +69,6 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [reposLoading, setReposLoading] = useState(false);
   const [deployLoading, setDeployLoading] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
   const [searchLoading] = useState(false);
   const [formData, setFormData] = useState<ArtifactHubFormData>({
     workloadLabel: "",
@@ -108,14 +106,13 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
 
   const handleOptionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedOption(event.target.value);
-    setSelectedPackage(null);
   };
 
+  // This function is kept for future implementation
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handlePackageSelection = (pkg: Package) => {
     // Check if this is a "clear selection" call (empty name)
     if (!pkg.name) {
-      setSelectedPackage(null);
       setFormData({
         ...formData,
         packageId: "",
@@ -124,8 +121,6 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
       });
       return;
     }
-    
-    setSelectedPackage(pkg);
     
     // The packageId is exactly as it appears in the API search response
     const packageId = `helm/${pkg.repository.name}/${pkg.name}`;
@@ -268,6 +263,7 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
         {selectedOption === "searchPackages" ? (
           <SearchPackagesForm
             theme={theme}
+            handlePackageSelection={handlePackageSelection}
           />
         ) : selectedOption === "repositories" ? (
             <RepositoriesListForm 

@@ -154,7 +154,7 @@ spec:
     workloadLabel: "",
   };
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [artifactHubFormData, setArtifactHubFormData] = useState<ArtifactHubFormData>(initialArtifactHubFormData);
+  const [artifactHubFormData, _] = useState<ArtifactHubFormData>(initialArtifactHubFormData);
 
   const { useUploadWorkloadFile } = useWDSQueries();
   const uploadFileMutation = useUploadWorkloadFile();
