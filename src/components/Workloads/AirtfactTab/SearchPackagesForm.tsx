@@ -1,12 +1,16 @@
-import { Box, Typography, TextField, CircularProgress, Paper, Chip, Avatar, Button, List, ListItem, ListItemAvatar, ListItemText } from "@mui/material";
+import { Box, Typography, TextField, CircularProgress, Paper, Chip, Avatar, List, ListItem, ListItemAvatar, ListItemText, IconButton, FormControl, Select, MenuItem, SelectChangeEvent } from "@mui/material";
 import { useState, useEffect, useCallback } from "react";
 import { AxiosError } from "axios";
 import { api } from "../../../lib/api";
-import { Package } from "./ArtifactHubTab";
+import { Package, ArtifactHubFormData } from "./ArtifactHubTab";
 import SearchIcon from "@mui/icons-material/Search";
 import InfoIcon from "@mui/icons-material/Info";
 import ImageIcon from '@mui/icons-material/Image';
 import StarIcon from '@mui/icons-material/Star';
+import CloseIcon from '@mui/icons-material/Close';
+import SettingsIcon from '@mui/icons-material/Settings';
+import WorkloadLabelInput from "../WorkloadLabelInput";
+// import { toast } from "react-hot-toast";
 
 // Commented out as it's currently unused 
 // interface ExtendedPackage extends Package {
@@ -33,6 +37,10 @@ interface Props {
   handlePackageSelection?: (pkg: Package) => void;
   theme: string;
   selectedPackage?: Package | null;
+  formData?: ArtifactHubFormData;
+  setFormData?: (data: ArtifactHubFormData) => void;
+  onCancel?: () => void;
+  onDeploy?: (data: ArtifactHubFormData) => void;
 }
 
 interface SearchResult {
@@ -118,12 +126,17 @@ interface SearchResponse {
 
 export const SearchPackagesForm = ({
   theme,
-  handlePackageSelection
+  handlePackageSelection,
+  formData,
+  setFormData,
+  // onCancel,
+  // onDeploy
 }: Props) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [selectedPackageDetails, setSelectedPackageDetails] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(false);
+  // const [deployLoading, setDeployLoading] = useState(false);
   const [error, setError] = useState("");
 
   // Function to search packages using the advanced-search endpoint
@@ -207,6 +220,102 @@ export const SearchPackagesForm = ({
         };
         handlePackageSelection(packageData);
       }
+      
+      // Update formData with selected package details
+      if (setFormData && formData) {
+        const chartPackageId = `helm/${selectedPackage.repository.name}/${selectedPackage.name}`;
+        setFormData({
+          ...formData,
+          packageId: chartPackageId,
+          version: selectedPackage.version, // Store this just for UI display
+          releaseName: `my-${selectedPackage.name}-${Math.floor(Math.random() * 100)}`,
+          namespace: "default",
+          values: {
+            "service.port": "80",
+            "service.type": "LoadBalancer"
+          }
+        });
+      }
+    }
+  };
+  
+  // Handle deployment of the selected package
+  // const handleDeploy = async () => {
+  //   if (!selectedPackageDetails || !formData || !setFormData) {
+  //     toast.error("Please select a package first");
+  //     return;
+  //   }
+    
+  //   if (!formData.workloadLabel) {
+  //     toast.error("Please enter a workload label");
+  //     return;
+  //   }
+    
+  //   setDeployLoading(true);
+    
+  //   try {
+  //     if (onDeploy) {
+  //       // Prepare the payload excluding version
+  //       const deployPayload = {
+  //         namespace: formData.namespace,
+  //         packageId: formData.packageId,
+  //         releaseName: formData.releaseName,
+  //         values: formData.values,
+  //         workloadLabel: formData.workloadLabel
+  //       };
+        
+  //       onDeploy(deployPayload);
+  //     } else {
+  //       // Direct API call if onDeploy not provided
+  //       const response = await api.post('/api/v1/artifact-hub/helm-deploy', {
+  //         namespace: formData.namespace,
+  //         packageId: formData.packageId,
+  //         releaseName: formData.releaseName,
+  //         values: formData.values,
+  //         workloadLabel: formData.workloadLabel
+  //       });
+        
+  //       if (response.status === 200) {
+  //         toast.success("Chart deployed successfully!");
+  //         setSelectedPackageDetails(null);
+  //         setSearchResults([]);
+  //         setSearchQuery("");
+  //       } else {
+  //         throw new Error("Failed to deploy chart");
+  //       }
+  //     }
+  //   } catch (error: unknown) {
+  //     const err = error as AxiosError;
+  //     console.error("Chart deployment error:", err);
+  //     toast.error(`Deployment failed: ${err.message}`);
+  //   } finally {
+  //     setDeployLoading(false);
+  //   }
+  // };
+
+  // Handle service type change
+  const handleServiceTypeChange = (event: SelectChangeEvent) => {
+    if (formData && setFormData) {
+      setFormData({
+        ...formData,
+        values: {
+          ...formData.values,
+          "service.type": event.target.value
+        }
+      });
+    }
+  };
+
+  // Handle service port change
+  const handleServicePortChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (formData && setFormData) {
+      setFormData({
+        ...formData,
+        values: {
+          ...formData.values,
+          "service.port": event.target.value
+        }
+      });
     }
   };
 
@@ -224,6 +333,18 @@ export const SearchPackagesForm = ({
         Search Artifact Hub Packages
       </Typography>
 
+      {/* Added WorkloadLabelInput component */}
+      {setFormData && formData && (
+        <Box sx={{ mb: 2 }}>
+          <WorkloadLabelInput
+            value={formData.workloadLabel || ""}
+            handleChange={(e) => setFormData({ ...formData, workloadLabel: e.target.value })}
+            theme={theme}
+          />
+        </Box>
+      )}
+
+      {!selectedPackageDetails && (
       <Box>
         <TextField
           label="Search"
@@ -273,6 +394,7 @@ export const SearchPackagesForm = ({
           </Typography>
         </Box>
       </Box>
+      )}
 
       {error && (
         <Box 
@@ -293,18 +415,11 @@ export const SearchPackagesForm = ({
           flex: 1,
           overflowY: "auto",
           "&::-webkit-scrollbar": {
-            width: "8px",
-            display: "block",
+            width: "0px", // Hide scrollbar while keeping functionality
+            display: "none",
           },
-          "&::-webkit-scrollbar-track": {
-            background: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.05)",
-            borderRadius: "4px",
-          },
-          "&::-webkit-scrollbar-thumb": {
-            background: theme === "dark" ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.15)",
-            borderRadius: "4px",
-          },
-          scrollbarWidth: "thin",
+          scrollbarWidth: "none", // Firefox
+          msOverflowStyle: "none", // IE/Edge
           display: "flex",
           flexDirection: "column",
           gap: 2,
@@ -324,12 +439,30 @@ export const SearchPackagesForm = ({
               flexDirection: "column",
               gap: 1.5,
               p: 2,
+              position: "relative",
               borderRadius: "10px",
               border: "1px solid",
               borderColor: theme === "dark" ? "rgba(144, 202, 249, 0.3)" : "rgba(25, 118, 210, 0.3)",
-              backgroundColor: theme === "dark" ? "rgba(25, 118, 210, 0.1)" : "rgba(25, 118, 210, 0.05)",
+              backgroundColor: theme === "dark" ? "rgba(243, 246, 249, 0.05)" : "rgba(243, 246, 249, 0.5)",
             }}
           >
+            {/* Close button */}
+            <IconButton
+              size="small"
+              onClick={() => setSelectedPackageDetails(null)}
+              sx={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                color: theme === "dark" ? "rgba(255, 255, 255, 0.7)" : "rgba(0, 0, 0, 0.54)",
+                "&:hover": {
+                  backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.04)",
+                }
+              }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+
             <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
               {selectedPackageDetails.logo_url ? (
                 <Avatar 
@@ -443,26 +576,118 @@ export const SearchPackagesForm = ({
               variant="body2" 
               sx={{ 
                 color: theme === "dark" ? '#ddd' : '#555',
-                mt: 1
+                mt: 1,
+                lineHeight: 1.5
               }}
             >
               {selectedPackageDetails.description}
             </Typography>
 
-            <Button 
-              variant="outlined" 
+            {/* Service configuration section */}
+            {formData && setFormData && (
+              <Box 
+                sx={{ 
+                  mt: 3,
+                  p: 3,
+                  pt: 2,
+                  pb: 3,
+                  borderRadius: '8px',
+                  backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.03)" : "rgba(243, 246, 249, 0.8)",
+                  border: '1px solid',
+                  borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Box 
+                    sx={{ 
+                      width: 24, 
+                      height: 24, 
+                      borderRadius: '50%', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      backgroundColor: theme === "dark" ? "#1976d2" : "#1976d2",
+                      color: 'white',
+                      mr: 1.5
+                    }}
+                  >
+                    <SettingsIcon sx={{ fontSize: "1rem" }} />
+                  </Box>
+                  <Typography variant="subtitle2" sx={{ color: theme === "dark" ? '#fff' : '#333', fontWeight: 600, fontSize: '0.95rem' }}>
+                    Service Configuration
+                  </Typography>
+                </Box>
+                
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mt: 1 }}>
+                  <Box sx={{ minWidth: 200 }}>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        color: theme === "dark" ? '#bbb' : '#666',
+                        mb: 0.5,
+                        fontWeight: 500,
+                        fontSize: '0.8rem'
+                      }}
+                    >
+                      Service Type
+                    </Typography>
+                    <FormControl 
+                      fullWidth
               size="small"
-              onClick={() => setSelectedPackageDetails(null)}
+                      sx={{ 
+                        "& .MuiOutlinedInput-root": {
+                          backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "#fff",
+                        }
+                      }}
+                    >
+                      <Select
+                        id="service-type"
+                        value={formData.values["service.type"] || "LoadBalancer"}
+                        onChange={handleServiceTypeChange}
+                        displayEmpty
+                        sx={{ 
+                          borderRadius: '4px',
+                          fontSize: '0.875rem'
+                        }}
+                      >
+                        <MenuItem value="ClusterIP">ClusterIP</MenuItem>
+                        <MenuItem value="NodePort">NodePort</MenuItem>
+                        <MenuItem value="LoadBalancer">LoadBalancer</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Box>
+                  
+                  <Box sx={{ minWidth: 150 }}>
+                    <Typography 
+                      variant="body2" 
               sx={{
-                mt: 1,
-                alignSelf: 'flex-start',
-                textTransform: 'none',
-                color: theme === "dark" ? "#90caf9" : "#1976d2",
-                borderColor: theme === "dark" ? "rgba(144, 202, 249, 0.5)" : "rgba(25, 118, 210, 0.5)",
-              }}
-            >
-              Back to results
-            </Button>
+                        color: theme === "dark" ? '#bbb' : '#666',
+                        mb: 0.5,
+                        fontWeight: 500,
+                        fontSize: '0.8rem'
+                      }}
+                    >
+                      Service Port
+                    </Typography>
+                    <TextField
+                      value={formData.values["service.port"] || "80"}
+                      onChange={handleServicePortChange}
+                      size="small"
+                      type="number"
+                      fullWidth
+                      InputProps={{
+                        inputProps: { min: 1, max: 65535 }
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "#fff",
+                        }
+                      }}
+                    />
+                  </Box>
+                </Box>
+              </Box>
+            )}
           </Paper>
         ) : searchResults.length > 0 ? (
           // Show search results list

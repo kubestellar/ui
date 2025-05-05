@@ -8,6 +8,7 @@ import { SearchPackagesForm } from "./SearchPackagesForm";
 import { RepositoriesListForm } from "./RepositoriesListForm";
 import { DirectDeployForm } from "./DirectDeployForm";
 import { api } from "../../../lib/api";
+import { CircularProgress } from "@mui/material";
 
 export interface Repository {
   name: string;
@@ -50,7 +51,7 @@ export interface Package {
 export interface ArtifactHubFormData {
   workloadLabel: string;
   packageId: string;
-  version: string;
+  version?: string;
   releaseName: string;
   namespace: string;
   values: Record<string, string>;
@@ -70,7 +71,18 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
   const [reposLoading, setReposLoading] = useState(false);
   const [deployLoading, setDeployLoading] = useState(false);
   const [searchLoading] = useState(false);
-  const [formData, setFormData] = useState<ArtifactHubFormData>({
+  
+  // Create separate form data for search tab and direct deploy tab
+  const [searchFormData, setSearchFormData] = useState<ArtifactHubFormData>({
+    workloadLabel: "",
+    packageId: "",
+    version: "",
+    releaseName: "",
+    namespace: "default",
+    values: {},
+  });
+
+  const [directDeployFormData, setDirectDeployFormData] = useState<ArtifactHubFormData>({
     workloadLabel: "",
     packageId: "",
     version: "",
@@ -108,13 +120,11 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
     setSelectedOption(event.target.value);
   };
 
-  // This function is kept for future implementation
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handlePackageSelection = (pkg: Package) => {
     // Check if this is a "clear selection" call (empty name)
     if (!pkg.name) {
-      setFormData({
-        ...formData,
+      setSearchFormData({
+        ...searchFormData,
         packageId: "",
         version: "",
         releaseName: "",
@@ -127,38 +137,65 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
     console.log("Selected package:", pkg);
     console.log("Constructed packageId:", packageId);
     
-    setFormData({
-      ...formData,
+    setSearchFormData({
+      ...searchFormData,
       packageId: packageId,
       version: pkg.version,
       releaseName: pkg.name,
       namespace: "default",
-      values: {},
-      workloadLabel: formData.workloadLabel || ""
+      values: {
+        "service.port": "80",
+        "service.type": "LoadBalancer"
+      },
+      workloadLabel: searchFormData.workloadLabel || ""
     });
   };
 
-  const handleArtifactHubDeploy = async () => {
-    // If on repositories or searchPackages tab, just close the dialog
-    if (selectedOption === "repositories" || selectedOption === "searchPackages") {
+  const handleArtifactHubDeploy = async (deployData?: ArtifactHubFormData) => {
+    // If this is from search tab, use search form data
+    // If this is from direct deploy tab, use direct deploy form data
+    // If data is explicitly passed, use that
+    let dataToUse: ArtifactHubFormData;
+    
+    if (deployData) {
+      dataToUse = deployData;
+    } else if (selectedOption === "searchPackages") {
+      dataToUse = searchFormData;
+    } else {
+      dataToUse = directDeployFormData;
+    }
+
+    // For "repositories", just close the dialog
+    if (selectedOption === "repositories") {
       onCancel();
       return;
     }
 
-    // For "searchPackages", we also just close
+    // For "searchPackages", proceed with deployment if a package is selected
     if (selectedOption === "searchPackages") {
-      onCancel();
-      return;
+      if (!searchFormData.packageId) {
+        toast.error("Please select a package first");
+        return;
+      }
+      
+      if (!searchFormData.workloadLabel) {
+        toast.error("Please enter a workload label");
+        return;
+      }
     }
 
     // For "directDeploy", validate and proceed with deployment
     if (selectedOption === "directDeploy") {
-      if (!formData.packageId) {
+      if (!dataToUse.packageId) {
         toast.error("Please enter a package ID.");
         return;
       }
-      if (!formData.releaseName) {
+      if (!dataToUse.releaseName) {
         toast.error("Please enter a release name.");
+        return;
+      }
+      if (!dataToUse.workloadLabel) {
+        toast.error("Please enter a workload label");
         return;
       }
     }
@@ -168,24 +205,24 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
     try {
       // Enhanced logging for debugging
       console.log("Sending deployment request with:", {
-        packageId: formData.packageId,
-        version: formData.version,
-        namespace: formData.namespace,
-        releaseName: formData.releaseName,
-        values: formData.values,
-        workloadLabel: formData.workloadLabel
+        packageId: dataToUse.packageId,
+        namespace: dataToUse.namespace,
+        releaseName: dataToUse.releaseName,
+        values: dataToUse.values,
+        workloadLabel: dataToUse.workloadLabel
       });
-
-      // Create a request object that matches the backend expected format
-      const deployRequest = {
-        ...formData,
-        // Make sure workloadLabel is properly set
-        workloadLabel: formData.workloadLabel
+      
+      // Call the onDeploy function with the data, but without version
+      const apiPayload = {
+        packageId: dataToUse.packageId,
+        namespace: dataToUse.namespace,
+        releaseName: dataToUse.releaseName,
+        values: dataToUse.values,
+        workloadLabel: dataToUse.workloadLabel
       };
       
-      console.log("Final deploy request payload:", JSON.stringify(deployRequest));
-      
-      onDeploy(formData);
+      console.log("Final payload:", JSON.stringify(apiPayload));
+      onDeploy(apiPayload);
     } catch (error: unknown) {
       const err = error as AxiosError;
       console.error("Artifact Hub Deploy error:", err);
@@ -201,12 +238,21 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
       return true;
     }
     
-    // Never disable the button for repositories or searchPackages tabs
-    if (selectedOption === "repositories" || selectedOption === "searchPackages") {
+    // For repositories tab, never disable button since it just closes
+    if (selectedOption === "repositories") {
       return false;
     }
     
-    if (selectedOption === "directDeploy" && (!formData.packageId || !formData.releaseName)) {
+    // For search packages tab, disable if no package is selected or no workload label
+    if (selectedOption === "searchPackages") {
+      return !searchFormData.packageId || !searchFormData.workloadLabel;
+    }
+    
+    // For direct deploy, disable if no required fields
+    if (selectedOption === "directDeploy" && 
+        (!directDeployFormData.packageId || 
+         !directDeployFormData.releaseName || 
+         !directDeployFormData.workloadLabel)) {
       return true;
     }
     
@@ -264,6 +310,10 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
           <SearchPackagesForm
             theme={theme}
             handlePackageSelection={handlePackageSelection}
+            formData={searchFormData}
+            setFormData={setSearchFormData}
+            onCancel={onCancel}
+            onDeploy={handleArtifactHubDeploy}
           />
         ) : selectedOption === "repositories" ? (
             <RepositoriesListForm 
@@ -274,8 +324,8 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
         ) : (
             <DirectDeployForm 
               theme={theme}
-              formData={formData}
-              setFormData={setFormData}
+              formData={directDeployFormData}
+              setFormData={setDirectDeployFormData}
               error={error}
             />
         )}
@@ -290,7 +340,7 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
           gap: 2,
         }}
       >
-        {selectedOption !== "repositories" && selectedOption !== "searchPackages" && (
+        {selectedOption !== "repositories" && (
           <Button
             variant="outlined"
             onClick={onCancel}
@@ -308,7 +358,7 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
         )}
         <Button
           variant="contained"
-          onClick={handleArtifactHubDeploy}
+          onClick={() => handleArtifactHubDeploy()}
           disabled={isApplyDisabled()}
           sx={{
             backgroundColor: theme === "dark" ? "#1976d2" : "#1976d2",
@@ -318,7 +368,11 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
             },
           }}
         >
-          {selectedOption === "repositories" || selectedOption === "searchPackages" ? "Close" : "Apply"}
+          {deployLoading ? (
+            <CircularProgress size={24} sx={{ color: "#fff" }} />
+          ) : (
+            selectedOption === "repositories" ? "Close" : "Apply"
+          )}
         </Button>
       </Box>
     </StyledContainer>
