@@ -34,7 +34,7 @@ func GenerateCommandHandler(c *gin.Context) {
 	}
 
 	// Create a context with a timeout to prevent hanging.
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
 	// Run the command to get the token.
