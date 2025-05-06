@@ -59,10 +59,6 @@ const CreateFromYourGitHub = ({ formData, setFormData, error, credentialsList, h
       height: "55vh",
     }}
   >
-    <Box  sx={{marginTop: "20px"}}>
-      <WorkloadLabelInput handleChange={(e) => setFormData({ ...formData, workload_label: e.target.value })} isError={false} theme={theme} value={formData.workload_label} />
-    </Box>
-
     <Box>
       <Typography
         variant="subtitle1"
@@ -903,67 +899,82 @@ export const GitHubTab = ({
 
   return (
     <StyledContainer>
-      <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 1 }}>
-        <RadioGroup
-          row
-          value={selectedOption}
-          onChange={handleOptionChange}
-          sx={{ gap: 4 }}
-        >
-          <FormControlLabel
-            value="createOwn"
-            control={<Radio />}
-            label="Create from your GitHub"
-            sx={{
-              "& .MuiTypography-root": {
-                color: theme === "dark" ? "#d4d4d4" : "#333",
-                fontSize: "0.875rem",
-              },
-            }}
-          />
-          <FormControlLabel
-            value="popularRepos"
-            control={<Radio />}
-            label="Deploy from popular Repositories"
-            sx={{
-              "& .MuiTypography-root": {
-                color: theme === "dark" ? "#d4d4d4" : "#333",
-                fontSize: "0.875rem",
-              },
-            }}
-          />
-          <FormControlLabel
-            value="previousDeployments"
-            control={<Radio />}
-            label="List of Previous Deployments"
-            sx={{
-              "& .MuiTypography-root": {
-                color: theme === "dark" ? "#d4d4d4" : "#333",
-                fontSize: "0.875rem",
-              },
-            }}
-          />
-        </RadioGroup>
-      </Box>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          flex: 1,
+          minHeight: 0,
+        }}
+      >
+        <WorkloadLabelInput 
+          value={formData.workload_label || ''} 
+          handleChange={(e) => setFormData({ ...formData, workload_label: e.target.value })} 
+          isError={false}
+          theme={theme} 
+        />
+        
+        <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 1, mt: 2 }}>
+          <RadioGroup
+            row
+            value={selectedOption}
+            onChange={handleOptionChange}
+            sx={{ gap: 4 }}
+          >
+            <FormControlLabel
+              value="createOwn"
+              control={<Radio />}
+              label="Create from your GitHub"
+              sx={{
+                "& .MuiTypography-root": {
+                  color: theme === "dark" ? "#d4d4d4" : "#333",
+                  fontSize: "0.875rem",
+                },
+              }}
+            />
+            <FormControlLabel
+              value="popularRepos"
+              control={<Radio />}
+              label="Deploy from popular Repositories"
+              sx={{
+                "& .MuiTypography-root": {
+                  color: theme === "dark" ? "#d4d4d4" : "#333",
+                  fontSize: "0.875rem",
+                },
+              }}
+            />
+            <FormControlLabel
+              value="previousDeployments"
+              control={<Radio />}
+              label="List of Previous Deployments"
+              sx={{
+                "& .MuiTypography-root": {
+                  color: theme === "dark" ? "#d4d4d4" : "#333",
+                  fontSize: "0.875rem",
+                },
+              }}
+            />
+          </RadioGroup>
+        </Box>
 
-      {/* Wrapper Box to maintain consistent height */}
-      <Box sx={{ height: "55vh", overflow: "hidden" }}>
-        {selectedOption === "createOwn" ? (
-          <CreateFromYourGitHub
-            formData={formData}
-            setFormData={setFormData}
-            error={error}
-            credentialsList={credentialsList}
-            handleCredentialChange={handleCredentialChange}
-            handleOpenCredentialDialog={handleOpenCredentialDialog}
-            handleOpenWebhookDialog={handleOpenWebhookDialog}
-            theme={theme}
-          />
-        ) : selectedOption === "popularRepos" ? (
-          <PopularRepositoriesForm theme={theme} selectedRepo={selectedRepo} handleRepoSelection={handleRepoSelection} popularRepositories={popularRepositories}/>
-        ) : (
-          <PreviousDeploymentsForm />
-        )}
+        <Box sx={{ height: "55vh", overflow: "hidden" }}>
+          {selectedOption === "createOwn" ? (
+            <CreateFromYourGitHub
+              formData={formData}
+              setFormData={setFormData}
+              error={error}
+              credentialsList={credentialsList}
+              handleCredentialChange={handleCredentialChange}
+              handleOpenCredentialDialog={handleOpenCredentialDialog}
+              handleOpenWebhookDialog={handleOpenWebhookDialog}
+              theme={theme}
+            />
+          ) : selectedOption === "popularRepos" ? (
+            <PopularRepositoriesForm theme={theme} selectedRepo={selectedRepo} handleRepoSelection={handleRepoSelection} popularRepositories={popularRepositories}/>
+          ) : (
+            <PreviousDeploymentsForm />
+          )}
+        </Box>
       </Box>
 
       <Box sx={{
@@ -1044,8 +1055,6 @@ interface PopularRepositoriesFormProps {
 }
 
 const PopularRepositoriesForm = ({ theme, selectedRepo, popularRepositories, handleRepoSelection }: PopularRepositoriesFormProps) => {
-  const [workloadLabel, setWorkloadLabel] = useState<string | null>(null);
-
   const extractRepoName = (url: string) => {
     const parts = url.split('/');
     return parts[parts.length - 1];
@@ -1062,9 +1071,6 @@ const PopularRepositoriesForm = ({ theme, selectedRepo, popularRepositories, han
       height: "55vh",
     }}
   >
-        <Box sx={{ marginTop: "20px" }}>
-          <WorkloadLabelInput handleChange={(e) => setWorkloadLabel(e.target.value)} isError={false} theme={theme} value={workloadLabel ? workloadLabel:""} />
-        </Box>
     <Box
       sx={{
         position: "sticky",

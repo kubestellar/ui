@@ -18,7 +18,7 @@ const WorkloadLabelInput = ({ value, handleChange, isError, theme }: Props) => {
             value={value}
             onChange={handleChange}
             sx={{
-                width: "98.5%",
+                width: "100%",
                 margin: "0 auto 10px auto",
                 input: { color: theme === "dark" ? "#d4d4d4" : "#333" },
                 label: { color: theme === "dark" ? "#858585" : "#666" },

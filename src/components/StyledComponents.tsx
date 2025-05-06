@@ -51,7 +51,7 @@ export const StyledPaper = styled(Paper)(({ theme }) => {
     justifyContent: "center",
     transition: "all 0.2s ease",
     height: "450px",
-    width: "98.5%",
+    width: "100%",
     margin: "0 auto",
     gap: theme.spacing(1.5),
     outline: "none !important",

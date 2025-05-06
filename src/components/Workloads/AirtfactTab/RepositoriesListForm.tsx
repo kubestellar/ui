@@ -31,19 +31,9 @@ export const RepositoriesListForm = ({
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3, height: "100%" }}>
-      <Typography
-        variant="subtitle1"
-        sx={{
-          fontWeight: 600,
-          fontSize: "20px",
-          color: theme === "dark" ? "#d4d4d4" : "#333",
-          mt: 1,
-        }}
-      >
-        Available Repositories
-      </Typography>
 
-      <Box sx={{ display: "flex", alignItems: "center", mt: -1, mb: 1 }}>
+
+      <Box sx={{ display: "flex", alignItems: "center", mt: 0, mb: 1 }}>
         <span role="img" aria-label="tip" style={{ fontSize: "0.8rem", marginRight: "8px" }}>
           💡
         </span>
