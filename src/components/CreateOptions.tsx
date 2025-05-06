@@ -914,8 +914,7 @@ spec:
         </DialogTitle>
         <DialogContent sx={{ 
           padding: "17px", 
-          height: "auto", 
-          maxHeight: "100vh", 
+          height: "100vh", 
           overflow: "hidden",
           overflowY: "auto",
         }}>
