@@ -225,12 +225,12 @@ func DeployManifests(deployPath string, dryRun bool, dryRunStrategy string, work
 			if obj.Object == nil {
 				obj.Object = make(map[string]interface{})
 			}
-			
+
 			if !exists {
 				metadata = make(map[string]interface{})
 				obj.Object["metadata"] = metadata
 			}
-			
+
 			labels, exists := metadata["labels"].(map[string]interface{})
 			if !exists {
 				labels = make(map[string]interface{})
@@ -319,7 +319,7 @@ func EnsureNamespaceExists(dynamicClient dynamic.Interface, namespace string, wo
 						// Label doesn't exist, add it
 						labels["kubestellar.io/workload"] = workloadLabel[0]
 						nsObj.SetUnstructuredContent(nsObj.Object)
-						
+
 						// Update namespace with the new label
 						_, err = dynamicClient.Resource(nsGVR).Update(context.TODO(), nsObj, v1.UpdateOptions{})
 						if err != nil {
@@ -333,7 +333,7 @@ func EnsureNamespaceExists(dynamicClient dynamic.Interface, namespace string, wo
 						"kubestellar.io/workload": workloadLabel[0],
 					}
 					nsObj.SetUnstructuredContent(nsObj.Object)
-					
+
 					// Update namespace with new labels
 					_, err = dynamicClient.Resource(nsGVR).Update(context.TODO(), nsObj, v1.UpdateOptions{})
 					if err != nil {
@@ -348,7 +348,7 @@ func EnsureNamespaceExists(dynamicClient dynamic.Interface, namespace string, wo
 
 	// Create namespace if it doesn't exist
 	fmt.Printf("Creating namespace: %s\n", namespace)
-	
+
 	// Prepare namespace object
 	nsObjCreate := &unstructured.Unstructured{
 		Object: map[string]interface{}{
@@ -359,7 +359,7 @@ func EnsureNamespaceExists(dynamicClient dynamic.Interface, namespace string, wo
 			},
 		},
 	}
-	
+
 	// Add labels if workload label is provided
 	if len(workloadLabel) > 0 && workloadLabel[0] != "" {
 		nsObjCreate.Object["metadata"].(map[string]interface{})["labels"] = map[string]interface{}{
@@ -805,7 +805,7 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 	// Check if namespace exists
 	nsObj, err := dynamicClient.Resource(nsGVR).Get(context.TODO(), req.Namespace, v1.GetOptions{})
 	if err == nil {
-			
+
 		// Check if namespace already has the workload label
 		metadata, found := nsObj.Object["metadata"].(map[string]interface{})
 		if found {
@@ -817,7 +817,7 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 					if val != req.WorkloadLabel {
 						labels["kubestellar.io/workload"] = fmt.Sprintf("%s,%s", val, req.WorkloadLabel)
 						nsObj.SetUnstructuredContent(nsObj.Object)
-						
+
 						// Update namespace with modified labels
 						_, err = dynamicClient.Resource(nsGVR).Update(context.TODO(), nsObj, v1.UpdateOptions{})
 						if err != nil {
@@ -828,7 +828,7 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 					// Label doesn't exist, add it
 					labels["kubestellar.io/workload"] = req.WorkloadLabel
 					nsObj.SetUnstructuredContent(nsObj.Object)
-					
+
 					// Update namespace with the new label
 					_, err = dynamicClient.Resource(nsGVR).Update(context.TODO(), nsObj, v1.UpdateOptions{})
 					if err != nil {
@@ -841,7 +841,7 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 					"kubestellar.io/workload": req.WorkloadLabel,
 				}
 				nsObj.SetUnstructuredContent(nsObj.Object)
-				
+
 				// Update namespace with new labels
 				_, err = dynamicClient.Resource(nsGVR).Update(context.TODO(), nsObj, v1.UpdateOptions{})
 				if err != nil {
@@ -863,7 +863,7 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 				},
 			},
 		}
-		
+
 		// Create namespace
 		_, err = dynamicClient.Resource(nsGVR).Create(context.TODO(), nsObj, v1.CreateOptions{})
 		if err != nil {
