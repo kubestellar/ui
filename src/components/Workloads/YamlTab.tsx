@@ -42,6 +42,7 @@ export const YamlTab = ({
 
   useEffect(() => {
     const checkLabels = () => {
+      
       try {
         const documents: YamlDocument[] = [];
         yaml.loadAll(editorContent, (doc) => documents.push(doc as YamlDocument), {});
@@ -100,20 +101,20 @@ export const YamlTab = ({
     try {
       const documents: YamlDocument[] = [];
       yaml.loadAll(editorContent, (doc) => documents.push(doc as YamlDocument), {});
+      const key="kubestellar.io/workload";
+      const value = newLabel;
 
       if (
         nameDocumentIndex !== null &&
         documents[nameDocumentIndex] &&
-        documents[nameDocumentIndex].metadata
+        documents[nameDocumentIndex].metadata 
       ) {
-        const [key, value] = newLabel.split(':');
         if (!documents[nameDocumentIndex].metadata!.labels) {
           documents[nameDocumentIndex].metadata!.labels = {};
         }
         documents[nameDocumentIndex].metadata!.labels[key] = value;
       } else {
         if (documents.length === 0) {
-          const [key, value] = newLabel.split(':');
           documents.push({ 
             metadata: { 
               labels: { [key]: value }
@@ -121,12 +122,10 @@ export const YamlTab = ({
           });
         } else {
           if (!documents[0].metadata) {
-            const [key, value] = newLabel.split(':');
             documents[0].metadata = { 
               labels: { [key]: value }
             };
           } else {
-            const [key, value] = newLabel.split(':');
             if (!documents[0].metadata.labels) {
               documents[0].metadata.labels = {};
             }
