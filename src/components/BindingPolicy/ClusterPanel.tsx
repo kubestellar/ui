@@ -1018,7 +1018,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
               size="small" 
               label={`${labelGroup.clusters.length}`}
               sx={{ 
-                fontSize: '0.5rem',
+                fontSize: '0.8rem',
                 height: 16,
                 '& .MuiChip-label': { px: 0.5 },
                 bgcolor: alpha(theme.palette.info.main, 0.1),

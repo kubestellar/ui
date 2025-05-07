@@ -215,36 +215,17 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
             justifyContent: "space-between",
           }}
         >
-          <Chip
-            size="small"
-            label={isClusterScoped ? `${labelGroup.workloads[0].kind}` : labelGroup.workloads[0].kind}
-            sx={{
-              fontSize: "0.75rem",
-              maxWidth: "70%",
-              height: 24,
-              "& .MuiChip-label": {
-                px: 1,
-                textOverflow: "ellipsis",
-                overflow: "hidden",
-                whiteSpace: "nowrap",
-              },
-              bgcolor: isClusterScoped ? alpha(theme.palette.warning.main, 0.1) : alpha(theme.palette.secondary.main, 0.1),
-              color: isClusterScoped ? theme.palette.warning.main : theme.palette.secondary.main,
-              fontWeight: 500,
-            }}
-          />
-
-          {/* Workload count or most common type */}
           <Tooltip title={`${labelGroup.workloads.length} object(s)`}>
             <Chip
               size="small"
               label={`${labelGroup.workloads.length}`}
               sx={{
-                fontSize: "0.5rem",
+                fontSize: "0.8rem",
                 height: 16,
                 "& .MuiChip-label": { px: 0.5 },
                 bgcolor: alpha(theme.palette.info.main, 0.1),
                 color: theme.palette.info.main,
+                ml: "auto", 
               }}
             />
           </Tooltip>
