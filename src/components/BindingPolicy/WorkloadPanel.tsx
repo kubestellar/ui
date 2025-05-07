@@ -260,24 +260,56 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
           </Tooltip>
         </Box>
 
-        {/* Add cluster-scoped indicator if needed */}
-        {/* {isClusterScoped && (
+        {labelGroup.workloads.length === 1 && (
           <Box sx={{ mt: 0.5 }}>
-            <Chip
-              size="small"
-              label="Cluster-scoped"
-              sx={{
-                fontSize: "0.7rem",
-                height: 18,
-                "& .MuiChip-label": { px: 0.75 },
-                bgcolor: alpha(theme.palette.warning.main, 0.1),
-                color: theme.palette.warning.main,
-              }}
-            />
+            <Typography variant="caption" sx={{ fontWeight: 500, color: "text.primary" }}>
+              {firstWorkload.name}
+            </Typography>
           </Box>
-        )} */}
+        )}
 
-        {/* Label value */}
+        {/* Namespace (if not cluster-scoped) */}
+        {labelGroup.workloads.length === 1 && !isClusterScoped && (
+          <Box sx={{ mt: 0.25 }}>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              {firstWorkload.namespace}
+            </Typography>
+          </Box>
+        )}
+
+        {/* Multiple objects summary */}
+        {labelGroup.workloads.length > 1 && (
+          <Box sx={{ mt: 0.5 }}>
+            <Tooltip
+              title={
+                <React.Fragment>
+                  <Typography variant="caption" sx={{ fontWeight: "bold" }}>
+                    Objects:
+                  </Typography>
+                  <ul style={{ margin: 0, paddingLeft: "1rem" }}>
+                    {labelGroup.workloads.map((w) => (
+                      <li key={`${w.namespace}-${w.name}`}>
+                        {w.namespace === 'cluster-scoped' ? w.name : `${w.namespace}/${w.name}`} ({w.kind})
+                      </li>
+                    ))}
+                  </ul>
+                  {labelGroup.workloads.length > 1 && (
+                    <Typography variant="caption" sx={{ fontWeight: "bold", mt: 1, display: "block" }}>
+                      Resource types: {Array.from(new Set(labelGroup.workloads.map(w => w.kind))).join(", ")}
+                    </Typography>
+                  )}
+                </React.Fragment>
+              }
+              arrow
+              placement="top"
+            >
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                {`${labelGroup.workloads.length} resource objects`}
+              </Typography>
+            </Tooltip>
+          </Box>
+        )}
+
         <Box sx={{ mt: 0.5 }}>
           <Chip
             size="small"
@@ -295,40 +327,6 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
             }}
           />
         </Box>
-
-        {/* Workload summary */}
-        <Box sx={{ mt: 0.5 }}>
-          <Tooltip
-            title={
-              <React.Fragment>
-                <Typography variant="caption" sx={{ fontWeight: "bold" }}>
-                  Objects:
-                </Typography>
-                <ul style={{ margin: 0, paddingLeft: "1rem" }}>
-                  {labelGroup.workloads.map((w) => (
-                    <li key={`${w.namespace}-${w.name}`}>
-                      {w.namespace}/{w.name} ({w.kind})
-                    </li>
-                  ))}
-                </ul>
-                {labelGroup.workloads.length > 1 && (
-                  <Typography variant="caption" sx={{ fontWeight: "bold", mt: 1, display: "block" }}>
-                    Resource types: {Array.from(new Set(labelGroup.workloads.map(w => w.kind))).join(", ")}
-                  </Typography>
-                )}
-              </React.Fragment>
-            }
-            arrow
-            placement="top"
-          >
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              {labelGroup.workloads.length === 1
-                ? `${firstWorkload.namespace}/${firstWorkload.name}`
-                : `${labelGroup.workloads.length} resource objects`}
-            </Typography>
-          </Tooltip>
-        </Box>
-
         
         {isInCanvas && (
           <CheckCircleIcon 
