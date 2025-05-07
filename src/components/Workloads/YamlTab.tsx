@@ -46,33 +46,51 @@ export const YamlTab = ({
         const documents: YamlDocument[] = [];
         yaml.loadAll(editorContent, (doc) => documents.push(doc as YamlDocument), {});
         let foundIndex: number | null = null;
+        let foundValue = "";
+        let needsUpdate = false;
         for (let i = 0; i < documents.length; i++) {
           const doc = documents[i];
-          if (doc && doc.metadata && doc.metadata.labels && Object.keys(doc.metadata.labels).length > 0) {
-            const firstLabelKey = Object.keys(doc.metadata.labels)[0];
-            setLocalWorkloadLabel(doc.metadata.labels[firstLabelKey]);
-            foundIndex = i;
-            break;
+          if (doc && doc.metadata && doc.metadata.labels) {
+            // If old key exists, migrate to new key
+            if (doc.metadata.labels["kubernetes.io/kubestellar.workload.name"]) {
+              foundValue = doc.metadata.labels["kubernetes.io/kubestellar.workload.name"];
+              doc.metadata.labels["kubestellar.io/workload"] = foundValue;
+              delete doc.metadata.labels["kubernetes.io/kubestellar.workload.name"];
+              foundIndex = i;
+              needsUpdate = true;
+              break;
+            }
+            // If new key exists, use it
+            if (doc.metadata.labels["kubestellar.io/workload"]) {
+              foundValue = doc.metadata.labels["kubestellar.io/workload"];
+              foundIndex = i;
+              break;
+            }
           }
         }
         const hasLabelsResult = foundIndex !== null;
-        setHasLabelsError(!hasLabelsResult); // Set error if no labels found
+        setHasLabelsError(!hasLabelsResult);
         if (foundIndex !== null) {
+          setLocalWorkloadLabel(foundValue);
           setNameDocumentIndex(foundIndex);
         } else {
           setLocalWorkloadLabel("");
           setNameDocumentIndex(null);
+        }
+        // If migration happened, update the YAML in the editor
+        if (needsUpdate) {
+          const updatedYaml = documents.map((doc) => yaml.dump(doc)).join("---\n");
+          setEditorContent(updatedYaml);
         }
         return hasLabelsResult;
       } catch (error) {
         console.error("Error parsing YAML:", error);
         setLocalWorkloadLabel("");
         setNameDocumentIndex(null);
-        setHasLabelsError(true); // Set error on parsing failure
+        setHasLabelsError(true);
         return false;
       }
     };
-
     checkLabels();
   }, [editorContent]);
 
@@ -166,7 +184,7 @@ export const YamlTab = ({
           label="Create Namespace Automatically"
           sx={{
             mb: 2,
-            ml: 0.1,
+            ml: -1.2,
             color: theme === "dark" ? "#d4d4d4" : "#333",
           }}
         />
@@ -176,7 +194,7 @@ export const YamlTab = ({
             borderRadius: "8px",
             overflow: "hidden",
             mt: 1,
-            width: "98.5%",
+            width: "100%",
             margin: "0 auto",
           }}
         >

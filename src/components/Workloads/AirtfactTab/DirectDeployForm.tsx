@@ -2,7 +2,6 @@ import { Box, Typography, TextField, Tooltip } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import { ArtifactHubFormData } from "./ArtifactHubTab";
 import { useState } from "react";
-import WorkloadLabelInput from "../WorkloadLabelInput";
 
 interface Props {
   theme: string;
@@ -56,15 +55,6 @@ export const DirectDeployForm = ({
       "-ms-overflow-style": "none",
       height: "55vh",
     }}>
-      <Box sx={{ marginTop: "20px" }} >
-        <WorkloadLabelInput 
-          handleChange={(e) => setFormData({ ...formData, workloadLabel: e.target.value })}
-          isError={false} 
-          theme={theme} 
-          value={formData.workloadLabel} 
-        />
-      </Box>
-
       <Box>
         <Typography
           variant="subtitle1"

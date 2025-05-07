@@ -1,6 +1,6 @@
 import { Box,Typography, TextField } from "@mui/material";
 import type { HelmFormData } from "./HelmTab";
-import WorkloadLabelInput from "../WorkloadLabelInput";
+// import WorkloadLabelInput from "../WorkloadLabelInput";
 
 interface Props {
     formData: HelmFormData;
@@ -25,12 +25,6 @@ export const CreateOwnHelmForm = ({ formData, setFormData, error, theme }: Props
               height: "55vh",
           }}
       >
-          
-          <Box sx={{ marginTop: "20px" }} >
-              <WorkloadLabelInput handleChange={(e) =>setFormData({ ...formData, workload_label: e.target.value })}
-              isError={false} theme={theme} value={formData.workload_label} />
-          </Box>
-          
           <Box>
               <Typography
                   variant="subtitle1"

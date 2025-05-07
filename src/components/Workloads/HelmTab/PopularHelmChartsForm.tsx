@@ -1,16 +1,13 @@
 import { Box, Typography, Autocomplete, TextField } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import WorkloadLabelInput from "../WorkloadLabelInput";
 
 interface Props {
     handleChartSelection: (chart: string|null) => void;
     theme: string;
     selectedChart: string | null;
-    workloadLabel: string;
-    setWorkloadLabel:    React.Dispatch<React.SetStateAction<string>>
 }
 
-export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedChart, workloadLabel, setWorkloadLabel }:Props) => {
+export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedChart }:Props) => {
   const color=theme === "dark" ? "#d4d4d4" : "#333"
 
     const popularHelmCharts = [
@@ -24,11 +21,6 @@ export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedCha
     ];
   return (
     <Box>
-      <Box sx={{ marginTop: "20px" }} >
-        <WorkloadLabelInput handleChange={(e) =>setWorkloadLabel(e.target.value)}
-          isError={false} theme={theme} value={workloadLabel} />
-      </Box>
-    
       <Box
           sx={{
               display: "flex",

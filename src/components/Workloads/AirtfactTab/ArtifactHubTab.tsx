@@ -9,6 +9,7 @@ import { RepositoriesListForm } from "./RepositoriesListForm";
 import { DirectDeployForm } from "./DirectDeployForm";
 import { api } from "../../../lib/api";
 import { CircularProgress } from "@mui/material";
+import WorkloadLabelInput from "../WorkloadLabelInput";
 
 export interface Repository {
   name: string;
@@ -222,10 +223,13 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
       };
       
       console.log("Final payload:", JSON.stringify(apiPayload));
+      
+      // Pass the payload to onDeploy without the _requestOptions property
       onDeploy(apiPayload);
     } catch (error: unknown) {
       const err = error as AxiosError;
       console.error("Artifact Hub Deploy error:", err);
+      
       toast.error("Failed to deploy Artifact Hub package!");
     } finally {
       setDeployLoading(false);
@@ -261,119 +265,141 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
 
   return (
     <StyledContainer>
-      <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 1 }}>
-        <RadioGroup
-          row
-          value={selectedOption}
-          onChange={handleOptionChange}
-          sx={{ gap: 4 }}
-        >
-          <FormControlLabel
-            value="searchPackages"
-            control={<Radio />}
-            label="Search Packages"
-            sx={{
-              "& .MuiTypography-root": {
-                color: theme === "dark" ? "#d4d4d4" : "#333",
-                fontSize: "0.875rem",
-              },
-            }}
-          />
-          <FormControlLabel
-            value="directDeploy"
-            control={<Radio />}
-            label="Deploy Helm Chart from Artifact Hub"
-            sx={{
-              "& .MuiTypography-root": {
-                color: theme === "dark" ? "#d4d4d4" : "#333",
-                fontSize: "0.875rem",
-              },
-            }}
-          />
-          <FormControlLabel
-            value="repositories"
-            control={<Radio />}
-            label="List Repositories"
-            sx={{
-              "& .MuiTypography-root": {
-                color: theme === "dark" ? "#d4d4d4" : "#333",
-                fontSize: "0.875rem",
-              },
-            }}
-          />
-        </RadioGroup>
-      </Box>
-
-      {/* Wrapper Box to maintain consistent height */}
-      <Box sx={{ height: "55vh", overflow: "hidden" }}>
-        {selectedOption === "searchPackages" ? (
-          <SearchPackagesForm
-            theme={theme}
-            handlePackageSelection={handlePackageSelection}
-            formData={searchFormData}
-            setFormData={setSearchFormData}
-            onCancel={onCancel}
-            onDeploy={handleArtifactHubDeploy}
-          />
-        ) : selectedOption === "repositories" ? (
-            <RepositoriesListForm 
-              repositories={repositories}
-              loading={reposLoading}
-              theme={theme}
-            />
-        ) : (
-            <DirectDeployForm 
-              theme={theme}
-              formData={directDeployFormData}
-              setFormData={setDirectDeployFormData}
-              error={error}
-            />
-        )}
-      </Box>
-
-      {/* Button section */}
       <Box
         sx={{
           display: "flex",
-          justifyContent: "flex-end",
-          mt: 2,
-          gap: 2,
+          flexDirection: "column",
+          flex: 1,
+          minHeight: 0,
         }}
       >
-        {selectedOption !== "repositories" && (
+        <WorkloadLabelInput 
+          value={selectedOption === "searchPackages" ? searchFormData.workloadLabel : directDeployFormData.workloadLabel}
+          handleChange={(e) => {
+            if (selectedOption === "searchPackages") {
+              setSearchFormData({ ...searchFormData, workloadLabel: e.target.value });
+            } else {
+              setDirectDeployFormData({ ...directDeployFormData, workloadLabel: e.target.value });
+            }
+          }}
+          isError={false}
+          theme={theme}
+        />
+        
+        <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 1, mt: 2 }}>
+          <RadioGroup
+            row
+            value={selectedOption}
+            onChange={handleOptionChange}
+            sx={{ gap: 4 }}
+          >
+            <FormControlLabel
+              value="searchPackages"
+              control={<Radio />}
+              label="Search Packages"
+              sx={{
+                "& .MuiTypography-root": {
+                  color: theme === "dark" ? "#d4d4d4" : "#333",
+                  fontSize: "0.875rem",
+                },
+              }}
+            />
+            <FormControlLabel
+              value="directDeploy"
+              control={<Radio />}
+              label="Deploy Helm Chart from Artifact Hub"
+              sx={{
+                "& .MuiTypography-root": {
+                  color: theme === "dark" ? "#d4d4d4" : "#333",
+                  fontSize: "0.875rem",
+                },
+              }}
+            />
+            <FormControlLabel
+              value="repositories"
+              control={<Radio />}
+              label="List Repositories"
+              sx={{
+                "& .MuiTypography-root": {
+                  color: theme === "dark" ? "#d4d4d4" : "#333",
+                  fontSize: "0.875rem",
+                },
+              }}
+            />
+          </RadioGroup>
+        </Box>
+
+        {/* Wrapper Box to maintain consistent height */}
+        <Box sx={{ height: "55vh", overflow: "hidden" }}>
+          {selectedOption === "searchPackages" ? (
+            <SearchPackagesForm
+              theme={theme}
+              handlePackageSelection={handlePackageSelection}
+              formData={searchFormData}
+              setFormData={setSearchFormData}
+              onCancel={onCancel}
+              onDeploy={handleArtifactHubDeploy}
+            />
+          ) : selectedOption === "repositories" ? (
+              <RepositoriesListForm 
+                repositories={repositories}
+                loading={reposLoading}
+                theme={theme}
+              />
+          ) : (
+              <DirectDeployForm 
+                theme={theme}
+                formData={directDeployFormData}
+                setFormData={setDirectDeployFormData}
+                error={error}
+              />
+          )}
+        </Box>
+
+        {/* Button section */}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "flex-end",
+            mt: 2,
+            gap: 2,
+          }}
+        >
+          {selectedOption !== "repositories" && (
+            <Button
+              variant="outlined"
+              onClick={onCancel}
+              sx={{
+                borderColor: theme === "dark" ? "#444" : "#e0e0e0",
+                color: theme === "dark" ? "#d4d4d4" : "#333",
+                "&:hover": {
+                  borderColor: theme === "dark" ? "#666" : "#bdbdbd",
+                  backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)",
+                },
+              }}
+            >
+              Cancel
+            </Button>
+          )}
           <Button
-            variant="outlined"
-            onClick={onCancel}
+            variant="contained"
+            onClick={() => handleArtifactHubDeploy()}
+            disabled={isApplyDisabled()}
             sx={{
-              borderColor: theme === "dark" ? "#444" : "#e0e0e0",
-              color: theme === "dark" ? "#d4d4d4" : "#333",
+              backgroundColor: theme === "dark" ? "#1976d2" : "#1976d2",
+              color: "#fff",
               "&:hover": {
-                borderColor: theme === "dark" ? "#666" : "#bdbdbd",
-                backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)",
+                backgroundColor: theme === "dark" ? "#1565c0" : "#1565c0",
               },
             }}
           >
-            Cancel
+            {deployLoading ? (
+              <CircularProgress size={24} sx={{ color: "#fff" }} />
+            ) : (
+              selectedOption === "repositories" ? "Close" : "Apply"
+            )}
           </Button>
-        )}
-        <Button
-          variant="contained"
-          onClick={() => handleArtifactHubDeploy()}
-          disabled={isApplyDisabled()}
-          sx={{
-            backgroundColor: theme === "dark" ? "#1976d2" : "#1976d2",
-            color: "#fff",
-            "&:hover": {
-              backgroundColor: theme === "dark" ? "#1565c0" : "#1565c0",
-            },
-          }}
-        >
-          {deployLoading ? (
-            <CircularProgress size={24} sx={{ color: "#fff" }} />
-          ) : (
-            selectedOption === "repositories" ? "Close" : "Apply"
-          )}
-        </Button>
+        </Box>
       </Box>
     </StyledContainer>
   );

@@ -9,7 +9,6 @@ import ImageIcon from '@mui/icons-material/Image';
 import StarIcon from '@mui/icons-material/Star';
 import CloseIcon from '@mui/icons-material/Close';
 import SettingsIcon from '@mui/icons-material/Settings';
-import WorkloadLabelInput from "../WorkloadLabelInput";
 // import { toast } from "react-hot-toast";
 
 // Commented out as it's currently unused 
@@ -228,8 +227,8 @@ export const SearchPackagesForm = ({
           ...formData,
           packageId: chartPackageId,
           version: selectedPackage.version, // Store this just for UI display
-          releaseName: `my-${selectedPackage.name}-${Math.floor(Math.random() * 100)}`,
-          namespace: "default",
+          releaseName: selectedPackage.name, // Use the exact chart name as the release name
+          namespace: formData.namespace || "default", // Keep existing namespace if available
           values: {
             "service.port": "80",
             "service.type": "LoadBalancer"
@@ -309,41 +308,22 @@ export const SearchPackagesForm = ({
   // Handle service port change
   const handleServicePortChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (formData && setFormData) {
-      setFormData({
-        ...formData,
-        values: {
-          ...formData.values,
-          "service.port": event.target.value
-        }
-      });
+      const value = event.target.value;
+      // Allow empty value or numbers only
+      if (value === '' || /^[0-9]+$/.test(value)) {
+        setFormData({
+          ...formData,
+          values: {
+            ...formData.values,
+            "service.port": value
+          }
+        });
+      }
     }
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3, height: "100%" }}>
-      <Typography
-        variant="subtitle1"
-        sx={{
-          fontWeight: 600,
-          fontSize: "20px",
-          color: theme === "dark" ? "#d4d4d4" : "#333",
-          mt: 1,
-        }}
-      >
-        Search Artifact Hub Packages
-      </Typography>
-
-      {/* Added WorkloadLabelInput component */}
-      {setFormData && formData && (
-        <Box sx={{ mb: 2 }}>
-          <WorkloadLabelInput
-            value={formData.workloadLabel || ""}
-            handleChange={(e) => setFormData({ ...formData, workloadLabel: e.target.value })}
-            theme={theme}
-          />
-        </Box>
-      )}
-
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3, height: "100%" , mt:2}}>
       {!selectedPackageDetails && (
       <Box>
         <TextField
@@ -354,7 +334,7 @@ export const SearchPackagesForm = ({
           size="small"
           fullWidth
           InputProps={{
-            startAdornment: <SearchIcon sx={{ color: theme === "dark" ? "#90caf9" : "#1976d2", mr: 1 }} />,
+            startAdornment: <SearchIcon sx={{ color: theme === "dark" ? "#90caf9" : "#1976d2", mr: 1}} />,
           }}
           sx={{
             "& .MuiOutlinedInput-root": {
@@ -583,6 +563,39 @@ export const SearchPackagesForm = ({
               {selectedPackageDetails.description}
             </Typography>
 
+            {/* Namespace field outside service configuration */}
+            {formData && setFormData && (
+              <Box sx={{ mt: 3 }}>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    color: theme === "dark" ? '#bbb' : '#666',
+                    mb: 0.5,
+                    fontWeight: 500,
+                    fontSize: '0.8rem'
+                  }}
+                >
+                  Namespace
+                </Typography>
+                <TextField
+                  value={formData.namespace || ""}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    namespace: e.target.value
+                  })}
+                  size="small"
+                  type="text"
+                  fullWidth
+                  placeholder="default"
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "#fff",
+                    }
+                  }}
+                />
+              </Box>
+            )}
+
             {/* Service configuration section */}
             {formData && setFormData && (
               <Box 
@@ -670,13 +683,14 @@ export const SearchPackagesForm = ({
                       Service Port
                     </Typography>
                     <TextField
-                      value={formData.values["service.port"] || "80"}
+                      value={formData.values["service.port"] || ""}
                       onChange={handleServicePortChange}
                       size="small"
-                      type="number"
+                      type="text"
                       fullWidth
-                      InputProps={{
-                        inputProps: { min: 1, max: 65535 }
+                      placeholder="80"
+                      inputProps={{
+                        inputMode: "numeric"
                       }}
                       sx={{
                         "& .MuiOutlinedInput-root": {

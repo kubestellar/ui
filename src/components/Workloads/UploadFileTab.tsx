@@ -158,7 +158,7 @@ export const UploadFileTab = ({
           label="Create Namespace Automatically"
           sx={{
             mb: 2,
-            ml: 0.1,
+            ml: -1.2,
             color: theme === "dark" ? "#d4d4d4" : "#333",
           }}
         />
@@ -166,7 +166,7 @@ export const UploadFileTab = ({
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <Box
               sx={{
-                width: "98.5%",
+                width: "100%",
                 margin: "0 auto 10px auto",
                 display: "flex",
                 alignItems: "center",
