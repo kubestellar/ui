@@ -486,16 +486,30 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     [clusters]
   );
 
-  // Helper function to generate resources array from workload
-  const generateResourcesFromWorkload = useCallback((workload: Workload) => {
-    console.log("🔍 DEBUG - Generating resources from workload:", workload);
+  // Helper function to generate resources from workload
+  const generateResourcesFromWorkload = useCallback((workloadObj: Workload) => {
+    console.log("🔍 DEBUG - Generating resources from workload:", workloadObj);
 
     // Common resources that should be included for all workload types
     const commonResources = [
       { type: "namespaces", createOnly: true },
-      { type: "serviceaccounts", createOnly: false }
+      { type: "serviceaccounts", createOnly: false },
+      { type: "persistentvolumeclaims", createOnly: false },
+      { type: "configmaps", createOnly: false },
+      { type: "secrets", createOnly: false }
     ];
     
+    // Special handling for database components - always include them
+    const databaseResources = [
+      { type: "statefulsets", createOnly: false },  
+      { type: "pods", createOnly: false },          
+      { type: "serviceaccounts", createOnly: false },  
+      { type: "roles", createOnly: false },           
+      { type: "rolebindings", createOnly: false },    
+      { type: "clusterroles", createOnly: false },    
+      { type: "clusterrolebindings", createOnly: false }  
+    ];
+
     const resourceMapping: Record<string, Array<{ type: string, createOnly: boolean }>> = {
       'deployment': [
         { type: "deployments", createOnly: false },
@@ -520,14 +534,19 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
       ],
       'customresourcedefinition': [
         { type: "customresourcedefinitions", createOnly: false }
+      ],
+      'statefulsets': [
+        { type: "statefulsets", createOnly: false },
+        { type: "services", createOnly: false },
+        { type: "pods", createOnly: false }
       ]
     };
 
     let workloadSpecificResources: Array<{ type: string, createOnly: boolean }> = [];
 
     // Determine resources based on workload kind
-    if (workload.kind) {
-      const kindLower = workload.kind.toLowerCase();
+    if (workloadObj.kind) {
+      const kindLower = workloadObj.kind.toLowerCase();
 
       if (resourceMapping[kindLower]) {
         workloadSpecificResources = resourceMapping[kindLower];
@@ -546,8 +565,8 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
       workloadSpecificResources = resourceMapping['deployment'];
     }
 
-    // Combine common and workload-specific resources
-    const allResources = [...commonResources, ...workloadSpecificResources];
+    // Combine resources in priority order: database, common, workload-specific 
+    const allResources = [...databaseResources, ...commonResources, ...workloadSpecificResources];
     
     const uniqueResources = allResources.filter((resource, index, self) => 
       index === self.findIndex(r => r.type === resource.type)
