@@ -527,17 +527,25 @@ export const useBPQueries = () => {
           console.warn("No resources provided, adding default resources");
           formattedRequest.resources = [
             { type: 'namespaces', createOnly: true },
+            { type: 'persistentvolumeclaims', createOnly: false },
             { type: 'deployments', createOnly: false },
+            { type: 'statefulsets', createOnly: false },
             { type: 'services', createOnly: false }, 
-            { type: 'replicasets', createOnly: false }
+            { type: 'replicasets', createOnly: false },
+            { type: 'configmaps', createOnly: false },
+            { type: 'secrets', createOnly: false }
           ];
         } else if (formattedRequest.resources.length === 1 && 
                   formattedRequest.resources[0].type === 'namespaces') {
           console.warn("Only namespaces resource provided, adding default workload resources");
           formattedRequest.resources.push(
+            { type: 'persistentvolumeclaims', createOnly: false },
             { type: 'deployments', createOnly: false },
+            { type: 'statefulsets', createOnly: false },
             { type: 'services', createOnly: false },
-            { type: 'replicasets', createOnly: false }
+            { type: 'replicasets', createOnly: false },
+            { type: 'configmaps', createOnly: false },
+            { type: 'secrets', createOnly: false }
           );
         }
         
@@ -598,9 +606,19 @@ export const useBPQueries = () => {
           res => res.type === 'customresourcedefinitions'
         );
         
-        
         if (userExplicitlyIncludedCRDs) {
           console.log("User explicitly included customresourcedefinitions in resources");
+        }
+        // Check if statefulsets are explicitly included
+        const hasStatefulSets = formattedRequest.resources.some(
+          res => res.type === 'statefulsets'
+        );
+
+        // If statefulsets are not included, add them with high priority
+        if (!hasStatefulSets) {
+          console.log("StatefulSets not explicitly included - adding them to support database workloads");
+          // Add to beginning of array to ensure they get processed first
+          formattedRequest.resources.unshift({ type: 'statefulsets', createOnly: false });
         }
         
         // Make sure the request has workloadLabels
@@ -688,20 +706,28 @@ export const useBPQueries = () => {
         
         // Validate and enhance resources if needed
         if (!formattedRequest.resources || formattedRequest.resources.length === 0) {
-          console.warn("No resources provided for YAML generation, adding default resources");
+          console.warn("No resources provided, adding default resources");
           formattedRequest.resources = [
             { type: 'namespaces', createOnly: true },
+            { type: 'persistentvolumeclaims', createOnly: false },
             { type: 'deployments', createOnly: false },
+            { type: 'statefulsets', createOnly: false },
             { type: 'services', createOnly: false }, 
-            { type: 'replicasets', createOnly: false }
+            { type: 'replicasets', createOnly: false },
+            { type: 'configmaps', createOnly: false },
+            { type: 'secrets', createOnly: false }
           ];
         } else if (formattedRequest.resources.length === 1 && 
                   formattedRequest.resources[0].type === 'namespaces') {
-          console.warn("Only namespaces resource provided for YAML generation, adding default workload resources");
+          console.warn("Only namespaces resource provided, adding default workload resources");
           formattedRequest.resources.push(
+            { type: 'persistentvolumeclaims', createOnly: false },
             { type: 'deployments', createOnly: false },
+            { type: 'statefulsets', createOnly: false },
             { type: 'services', createOnly: false },
-            { type: 'replicasets', createOnly: false }
+            { type: 'replicasets', createOnly: false },
+            { type: 'configmaps', createOnly: false },
+            { type: 'secrets', createOnly: false }
           );
         }
         
@@ -764,9 +790,19 @@ export const useBPQueries = () => {
           res => res.type === 'customresourcedefinitions'
         );
         
-        
         if (userExplicitlyIncludedCRDs) {
-          console.log("User explicitly included customresourcedefinitions in YAML generation");
+          console.log("User explicitly included customresourcedefinitions in resources");
+        }
+        
+        // Check if statefulsets are explicitly included
+        const hasStatefulSets = formattedRequest.resources.some(
+          res => res.type === 'statefulsets'
+        );
+
+        // If statefulsets are not included, add them with high priority
+        if (!hasStatefulSets) {
+          console.log("StatefulSets not explicitly included - adding them to support database workloads");
+          formattedRequest.resources.unshift({ type: 'statefulsets', createOnly: false });
         }
         
         // Ensure namespacesToSync is set if not provided
