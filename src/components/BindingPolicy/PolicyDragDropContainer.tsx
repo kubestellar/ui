@@ -502,7 +502,12 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     // Special handling for database components - always include them
     const databaseResources = [
       { type: "statefulsets", createOnly: false },  
-      { type: "pods", createOnly: false }           
+      { type: "pods", createOnly: false },          
+      { type: "serviceaccounts", createOnly: false },  
+      { type: "roles", createOnly: false },           
+      { type: "rolebindings", createOnly: false },    
+      { type: "clusterroles", createOnly: false },    
+      { type: "clusterrolebindings", createOnly: false }  
     ];
 
     const resourceMapping: Record<string, Array<{ type: string, createOnly: boolean }>> = {

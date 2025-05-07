@@ -526,10 +526,16 @@ export const useBPQueries = () => {
         if (!formattedRequest.resources || formattedRequest.resources.length === 0) {
           console.warn("No resources provided, adding default resources");
           formattedRequest.resources = [
+            { type: 'customresourcedefinitions', createOnly: false },
             { type: 'namespaces', createOnly: true },
+            { type: 'statefulsets', createOnly: false },
+            { type: 'serviceaccounts', createOnly: false },
+            { type: 'roles', createOnly: false },
+            { type: 'rolebindings', createOnly: false },
+            { type: 'clusterroles', createOnly: false },
+            { type: 'clusterrolebindings', createOnly: false },
             { type: 'persistentvolumeclaims', createOnly: false },
             { type: 'deployments', createOnly: false },
-            { type: 'statefulsets', createOnly: false },
             { type: 'services', createOnly: false }, 
             { type: 'replicasets', createOnly: false },
             { type: 'configmaps', createOnly: false },
@@ -539,9 +545,15 @@ export const useBPQueries = () => {
                   formattedRequest.resources[0].type === 'namespaces') {
           console.warn("Only namespaces resource provided, adding default workload resources");
           formattedRequest.resources.push(
+            { type: 'customresourcedefinitions', createOnly: false },
+            { type: 'statefulsets', createOnly: false },
+            { type: 'serviceaccounts', createOnly: false },
+            { type: 'roles', createOnly: false },
+            { type: 'rolebindings', createOnly: false },
+            { type: 'clusterroles', createOnly: false },
+            { type: 'clusterrolebindings', createOnly: false },
             { type: 'persistentvolumeclaims', createOnly: false },
             { type: 'deployments', createOnly: false },
-            { type: 'statefulsets', createOnly: false },
             { type: 'services', createOnly: false },
             { type: 'replicasets', createOnly: false },
             { type: 'configmaps', createOnly: false },
@@ -600,9 +612,8 @@ export const useBPQueries = () => {
           
           return resource;
         });
-        
-        // Check if customresourcedefinitions is explicitly included by the user
-        const userExplicitlyIncludedCRDs = formattedRequest.resources.some(
+         // Check if customresourcedefinitions is explicitly included by the user
+         const userExplicitlyIncludedCRDs = formattedRequest.resources.some(
           res => res.type === 'customresourcedefinitions'
         );
         
@@ -642,7 +653,7 @@ export const useBPQueries = () => {
           // Use the provided namespace or default to 'default'
           formattedRequest.namespacesToSync = [formattedRequest.namespace || 'default'];
         }
-        
+
         // Add detailed console logging with pretty printing
         console.log("📤 SENDING REQUEST TO QUICK-CONNECT API:");
         console.log(JSON.stringify(formattedRequest, null, 2));
@@ -708,10 +719,16 @@ export const useBPQueries = () => {
         if (!formattedRequest.resources || formattedRequest.resources.length === 0) {
           console.warn("No resources provided, adding default resources");
           formattedRequest.resources = [
+            { type: 'customresourcedefinitions', createOnly: false },
             { type: 'namespaces', createOnly: true },
+            { type: 'statefulsets', createOnly: false },
+            { type: 'serviceaccounts', createOnly: false },
+            { type: 'roles', createOnly: false },
+            { type: 'rolebindings', createOnly: false },
+            { type: 'clusterroles', createOnly: false },
+            { type: 'clusterrolebindings', createOnly: false },
             { type: 'persistentvolumeclaims', createOnly: false },
             { type: 'deployments', createOnly: false },
-            { type: 'statefulsets', createOnly: false },
             { type: 'services', createOnly: false }, 
             { type: 'replicasets', createOnly: false },
             { type: 'configmaps', createOnly: false },
@@ -721,9 +738,15 @@ export const useBPQueries = () => {
                   formattedRequest.resources[0].type === 'namespaces') {
           console.warn("Only namespaces resource provided, adding default workload resources");
           formattedRequest.resources.push(
+            { type: 'customresourcedefinitions', createOnly: false },
+            { type: 'statefulsets', createOnly: false },
+            { type: 'serviceaccounts', createOnly: false },
+            { type: 'roles', createOnly: false },
+            { type: 'rolebindings', createOnly: false },
+            { type: 'clusterroles', createOnly: false },
+            { type: 'clusterrolebindings', createOnly: false },
             { type: 'persistentvolumeclaims', createOnly: false },
             { type: 'deployments', createOnly: false },
-            { type: 'statefulsets', createOnly: false },
             { type: 'services', createOnly: false },
             { type: 'replicasets', createOnly: false },
             { type: 'configmaps', createOnly: false },
@@ -784,7 +807,7 @@ export const useBPQueries = () => {
           
           return resource;
         });
-        
+ 
         // Check if customresourcedefinitions is explicitly included by the user
         const userExplicitlyIncludedCRDs = formattedRequest.resources.some(
           res => res.type === 'customresourcedefinitions'
@@ -792,8 +815,7 @@ export const useBPQueries = () => {
         
         if (userExplicitlyIncludedCRDs) {
           console.log("User explicitly included customresourcedefinitions in resources");
-        }
-        
+        }       
         // Check if statefulsets are explicitly included
         const hasStatefulSets = formattedRequest.resources.some(
           res => res.type === 'statefulsets'
