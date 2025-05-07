@@ -1,4 +1,4 @@
-import { Box, Button, FormControl, MenuItem, Select, SelectChangeEvent, TextField, Typography, FormControlLabel, Radio, RadioGroup, Checkbox, Menu, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import { Box, Button, FormControl, MenuItem, Select, SelectChangeEvent, TextField, Typography, FormControlLabel, Radio, RadioGroup, Checkbox, Dialog, DialogTitle, DialogContent, DialogActions, Menu } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { StyledContainer } from "../StyledComponents";
@@ -32,6 +32,13 @@ interface Props {
   validateForm: () => boolean;
   handleDeploy: () => void;
   handleCancelClick: () => void;
+}
+
+interface PreviousDeployment {
+  id: string;
+  repo_url: string;
+  folder_path: string;
+  branch: string;
 }
 
 const CreateFromYourGitHub = ({ formData, setFormData, error, credentialsList, handleCredentialChange, handleOpenCredentialDialog, handleOpenWebhookDialog, theme }: {
@@ -374,7 +381,7 @@ export const GitHubTab = ({
   const [selectedOption, setSelectedOption] = useState("createOwn");
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [popularLoading, setPopularLoading] = useState(false);
-  const [previousDeployments, setPreviousDeployments] = useState<string[]>([]);
+  const [previousDeployments, setPreviousDeployments] = useState<PreviousDeployment[]>([]);
   const [previousLoading, setPreviousLoading] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ deploymentId: string | null; x: number; y: number } | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
@@ -405,7 +412,12 @@ export const GitHubTab = ({
       try {
         const response = await api.get("/api/deployments/github/list");
         if (response.status === 200) {
-          const deployments = response.data.deployments.map((deployment: { id: string }) => deployment.id);
+          const deployments = response.data.deployments.map((deployment: PreviousDeployment) => ({
+            id: deployment.id,
+            repo_url: deployment.repo_url,
+            folder_path: deployment.folder_path,
+            branch: deployment.branch || "main"
+          }));
           setPreviousDeployments(deployments);
         } else {
           throw new Error("Failed to fetch previous deployments");
@@ -513,7 +525,7 @@ export const GitHubTab = ({
     try {
       const response = await api.delete(`/api/deployments/github/${deploymentId}`);
       if (response.status === 200) {
-        setPreviousDeployments((prev) => prev.filter((id) => id !== deploymentId));
+        setPreviousDeployments((prev) => prev.filter((dep) => dep.id !== deploymentId));
         toast.success(`Deployment "${deploymentId}" deleted successfully!`);
       } else {
         throw new Error("Failed to delete deployment");
@@ -651,7 +663,44 @@ export const GitHubTab = ({
     };
   }, []);
 
-
+  const handlePreviousDeploymentDeploy = async () => {
+    if (!selectedRepo) {
+      toast.error("Please select a previous deployment to redeploy.");
+      return;
+    }
+    setPreviousLoading(true);
+    try {
+      const selectedDeployment = previousDeployments.find(dep => dep.id === selectedRepo);
+      if (!selectedDeployment) {
+        throw new Error("Selected deployment data not found");
+      }
+      const response = await api.post(
+        `/api/deploy?created_by_me=true&branch=${selectedDeployment.branch}`,
+        {
+          repo_url: selectedDeployment.repo_url,
+          folder_path: selectedDeployment.folder_path,
+          workload_label: formData.workload_label
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (response.status === 200 || response.status === 201) {
+        toast.success(`Previous deployment redeployed successfully!`);
+        setSelectedRepo(null);
+        setTimeout(() => window.location.reload(), 4000);
+      } else {
+        throw new Error("Unexpected response status: " + response.status);
+      }
+    } catch (error) {
+      console.error("Previous Deployment Deploy error:", error);
+      toast.error("Failed to deploy previous repository!");
+    } finally {
+      setPreviousLoading(false);
+    }
+  };
 
   const PreviousDeploymentsForm = () => (
     <Box
@@ -729,7 +778,7 @@ export const GitHubTab = ({
         ) : previousDeployments.length > 0 ? (
           previousDeployments.map((deployment) => (
             <Box
-              key={deployment}
+              key={deployment.id}
               sx={{
                 display: "flex",
                 alignItems: "center",
@@ -745,8 +794,8 @@ export const GitHubTab = ({
             >
               <Box sx={{ display: "flex", alignItems: "center" }}>
                 <Checkbox
-                  checked={selectedRepo === deployment}
-                  onChange={() => handleRepoSelection(deployment)}
+                  checked={selectedRepo === deployment.id}
+                  onChange={() => handleRepoSelection(deployment.id)}
                   sx={{
                     color: theme === "dark" ? "#d4d4d4" : "#666",
                     "&.Mui-checked": {
@@ -760,7 +809,7 @@ export const GitHubTab = ({
                     color: theme === "dark" ? "#d4d4d4" : "#333",
                   }}
                 >
-                  {deployment}
+                  {deployment.id}
                 </Typography>
               </Box>
               <Box
@@ -772,7 +821,7 @@ export const GitHubTab = ({
                     backgroundColor: theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
                   }
                 }}
-                onClick={(e) => handleMenuOpen(e, deployment)}
+                onClick={(e) => handleMenuOpen(e, deployment.id)}
               >
                 <MoreVerticalIcon
                   style={{ color: theme === "dark" ? "#d4d4d4" : "#666" }}
@@ -793,39 +842,39 @@ export const GitHubTab = ({
           onClose={handleMenuClose}
           anchorReference="anchorPosition"
           anchorPosition={contextMenu ? { top: contextMenu.y, left: contextMenu.x } : undefined}
-          keepMounted
-          disablePortal
-          transitionDuration={0}
-          slotProps={{
-            paper: {
-              elevation: 3,
-              sx: {
-                minWidth: "120px",
-                boxShadow: theme === "dark"
-                  ? "0 4px 8px rgba(0, 0, 0, 0.4)"
-                  : "0 4px 8px rgba(0, 0, 0, 0.1)"
-              }
-            }
-          }}
-          MenuListProps={{
-            sx: {
-              py: 0.5
-            }
-          }}
+          // keepMounted
+          // disablePortal
+          // transitionDuration={0}
+          // slotProps={{
+          //   paper: {
+          //     elevation: 3,
+          //     sx: {
+          //       minWidth: "120px",
+          //       boxShadow: theme === "dark"
+          //         ? "0 4px 8px rgba(0, 0, 0, 0.4)"
+          //         : "0 4px 8px rgba(0, 0, 0, 0.1)"
+          //     }
+          //   }
+          // }}
+          // MenuListProps={{
+          //   sx: {
+          //     py: 0.5
+          //   }
+          // }}
         >
           <MenuItem
             onClick={handleDeleteClick}
-            sx={{
-              px: 2,
-              py: 1,
-              fontSize: "14px"
-            }}
+            // sx={{
+            //   // px: 2,
+            //   // py: 1,
+            //   fontSize: "14px"
+            // }}
+            // anchorReference="anchorPosition"
           >
             Delete
           </MenuItem>
         </Menu>
       )}
-
       <Dialog {...dialogProps()}>
         <DialogTitle
           id="delete-confirmation-dialog-title"
@@ -851,10 +900,8 @@ export const GitHubTab = ({
           sx={{
             justifyContent: "space-between",
             padding: "0 16px 16px 16px",
-            // Prevent any layout shifts that could cause flickering
             minHeight: '48px',
             '& button': {
-              // Make button size stable
               minWidth: '80px',
               transition: 'none',
               animation: 'none'
@@ -1009,8 +1056,10 @@ export const GitHubTab = ({
           onClick={() => {
             if (selectedOption === "createOwn") {
               if (validateForm()) handleDeploy();
-            } else {
+            } else if (selectedOption === "popularRepos") {
               handlePopularRepoDeploy();
+            } else if (selectedOption === "previousDeployments") {
+              handlePreviousDeploymentDeploy();
             }
           }}
           disabled={

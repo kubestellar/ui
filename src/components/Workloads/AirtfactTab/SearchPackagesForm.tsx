@@ -323,7 +323,7 @@ export const SearchPackagesForm = ({
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3, height: "100%" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3, height: "100%" , mt:2}}>
       {!selectedPackageDetails && (
       <Box>
         <TextField
@@ -334,7 +334,7 @@ export const SearchPackagesForm = ({
           size="small"
           fullWidth
           InputProps={{
-            startAdornment: <SearchIcon sx={{ color: theme === "dark" ? "#90caf9" : "#1976d2", mr: 1 }} />,
+            startAdornment: <SearchIcon sx={{ color: theme === "dark" ? "#90caf9" : "#1976d2", mr: 1}} />,
           }}
           sx={{
             "& .MuiOutlinedInput-root": {
