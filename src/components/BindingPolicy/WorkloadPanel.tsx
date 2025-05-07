@@ -215,6 +215,35 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
             justifyContent: "space-between",
           }}
         >
+          <Tooltip 
+            title={labelGroup.workloads.length > 1 
+              ? `Multiple resource types: ${Array.from(new Set(labelGroup.workloads.map(w => w.kind))).join(", ")}` 
+              : `Resource type: ${labelGroup.workloads[0].kind}`}
+            arrow
+          >
+            <Chip
+              size="small"
+              label={labelGroup.workloads.length > 1 
+                ? "Label Selector" 
+                : isClusterScoped 
+                  ? `${labelGroup.workloads[0].kind}` 
+                  : labelGroup.workloads[0].kind}
+              sx={{
+                fontSize: "0.75rem",
+                maxWidth: "70%",
+                height: 24,
+                "& .MuiChip-label": {
+                  px: 1,
+                  textOverflow: "ellipsis",
+                  overflow: "hidden",
+                  whiteSpace: "nowrap",
+                },
+                bgcolor: isClusterScoped ? alpha(theme.palette.warning.main, 0.1) : alpha(theme.palette.secondary.main, 0.1),
+                color: isClusterScoped ? theme.palette.warning.main : theme.palette.secondary.main,
+                fontWeight: 500,
+              }}
+            />
+          </Tooltip>
           <Tooltip title={`${labelGroup.workloads.length} object(s)`}>
             <Chip
               size="small"
@@ -282,6 +311,11 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
                     </li>
                   ))}
                 </ul>
+                {labelGroup.workloads.length > 1 && (
+                  <Typography variant="caption" sx={{ fontWeight: "bold", mt: 1, display: "block" }}>
+                    Resource types: {Array.from(new Set(labelGroup.workloads.map(w => w.kind))).join(", ")}
+                  </Typography>
+                )}
               </React.Fragment>
             }
             arrow
