@@ -34,6 +34,8 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
 
   const [isDrawerOpen, setDrawerOpen] = React.useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [username, setUsername] = useState("");
+
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   
@@ -52,6 +54,20 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
   // Check if user is logged in
   useEffect(() => {
     const token = localStorage.getItem("jwtToken");
+    if (token) {
+      api
+        .get("/api/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        .then((response) => {
+          setUsername(response.data.username);
+        })
+        .catch((error) => {
+          console.error("Error fetching user data:", error);
+        });
+    }
     setIsLoggedIn(!!token);
   }, []);
 
@@ -256,9 +272,10 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
             <div className="relative" ref={userMenuRef}>
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className="btn btn-circle btn-ghost border-2 border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all duration-300"
+                className="btn w-auto h-auto btn-ghost border-2 border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all duration-300"
               >
-                <ProfileIcon className="text-2xl text-primary" />
+                <div className="mr-3">{username}</div>
+                <ProfileIcon className="text-4xl text-primary" />
               </button>
               
               {/* User Dropdown Menu */}
