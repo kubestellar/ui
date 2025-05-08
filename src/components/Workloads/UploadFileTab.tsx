@@ -106,7 +106,8 @@ export const UploadFileTab = ({
       try {
         const yamlObj = yaml.load(fileContent) as YamlDocument;
         if (yamlObj && yamlObj.metadata) {
-          const [key, value] = newLabel.split(':');
+          const key = "kubestellar.io/workload";
+          const value = newLabel;
           if (!yamlObj.metadata.labels) {
             yamlObj.metadata.labels = {};
           }

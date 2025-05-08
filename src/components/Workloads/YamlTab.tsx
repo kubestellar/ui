@@ -42,30 +42,18 @@ export const YamlTab = ({
 
   useEffect(() => {
     const checkLabels = () => {
+      
       try {
         const documents: YamlDocument[] = [];
         yaml.loadAll(editorContent, (doc) => documents.push(doc as YamlDocument), {});
         let foundIndex: number | null = null;
         let foundValue = "";
-        let needsUpdate = false;
         for (let i = 0; i < documents.length; i++) {
           const doc = documents[i];
-          if (doc && doc.metadata && doc.metadata.labels) {
-            // If old key exists, migrate to new key
-            if (doc.metadata.labels["kubernetes.io/kubestellar.workload.name"]) {
-              foundValue = doc.metadata.labels["kubernetes.io/kubestellar.workload.name"];
-              doc.metadata.labels["kubestellar.io/workload"] = foundValue;
-              delete doc.metadata.labels["kubernetes.io/kubestellar.workload.name"];
-              foundIndex = i;
-              needsUpdate = true;
-              break;
-            }
-            // If new key exists, use it
-            if (doc.metadata.labels["kubestellar.io/workload"]) {
-              foundValue = doc.metadata.labels["kubestellar.io/workload"];
-              foundIndex = i;
-              break;
-            }
+          if(doc?.metadata?.labels?.["kubestellar.io/workload"]){
+            foundValue = doc.metadata.labels["kubestellar.io/workload"];
+            foundIndex = i;
+            break;
           }
         }
         const hasLabelsResult = foundIndex !== null;
@@ -76,11 +64,6 @@ export const YamlTab = ({
         } else {
           setLocalWorkloadLabel("");
           setNameDocumentIndex(null);
-        }
-        // If migration happened, update the YAML in the editor
-        if (needsUpdate) {
-          const updatedYaml = documents.map((doc) => yaml.dump(doc)).join("---\n");
-          setEditorContent(updatedYaml);
         }
         return hasLabelsResult;
       } catch (error) {
@@ -100,20 +83,20 @@ export const YamlTab = ({
     try {
       const documents: YamlDocument[] = [];
       yaml.loadAll(editorContent, (doc) => documents.push(doc as YamlDocument), {});
+      const key="kubestellar.io/workload";
+      const value = newLabel;
 
       if (
         nameDocumentIndex !== null &&
         documents[nameDocumentIndex] &&
-        documents[nameDocumentIndex].metadata
+        documents[nameDocumentIndex].metadata 
       ) {
-        const [key, value] = newLabel.split(':');
         if (!documents[nameDocumentIndex].metadata!.labels) {
           documents[nameDocumentIndex].metadata!.labels = {};
         }
         documents[nameDocumentIndex].metadata!.labels[key] = value;
       } else {
         if (documents.length === 0) {
-          const [key, value] = newLabel.split(':');
           documents.push({ 
             metadata: { 
               labels: { [key]: value }
@@ -121,12 +104,10 @@ export const YamlTab = ({
           });
         } else {
           if (!documents[0].metadata) {
-            const [key, value] = newLabel.split(':');
             documents[0].metadata = { 
               labels: { [key]: value }
             };
           } else {
-            const [key, value] = newLabel.split(':');
             if (!documents[0].metadata.labels) {
               documents[0].metadata.labels = {};
             }
@@ -245,7 +226,7 @@ export const YamlTab = ({
         <Button
           variant="contained"
           onClick={() => handleRawUpload(autoNs)} // Pass autoNs to handleRawUpload
-          disabled={!isEditorContentEdited || loading || !hasLabels()}
+          disabled={hasLabelsError || !isEditorContentEdited || loading || !hasLabels()}
           sx={{
             textTransform: "none",
             fontWeight: 600,
