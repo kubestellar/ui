@@ -226,7 +226,7 @@ export const YamlTab = ({
         <Button
           variant="contained"
           onClick={() => handleRawUpload(autoNs)} // Pass autoNs to handleRawUpload
-          disabled={!isEditorContentEdited || loading || !hasLabels()}
+          disabled={hasLabelsError || !isEditorContentEdited || loading || !hasLabels()}
           sx={{
             textTransform: "none",
             fontWeight: 600,
