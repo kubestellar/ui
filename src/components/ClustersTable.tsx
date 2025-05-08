@@ -61,6 +61,7 @@ interface ClustersTableProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  isLoading?: boolean; // Add isLoading prop
 }
 
 // Add a new ColorTheme interface before the LabelEditDialogProps interface
@@ -89,6 +90,137 @@ interface LabelEditDialogProps {
   isDark: boolean;
   colors: ColorTheme;
 }
+
+// Create a TableSkeleton component for use within ClustersTable
+const TableSkeleton: React.FC<{ rows?: number; isDark: boolean; colors: ColorTheme }> = ({ 
+  rows = 5, 
+  isDark, 
+  colors 
+}) => {
+  return (
+    <TableContainer
+      component={Paper}
+      className="overflow-auto"
+      sx={{
+        backgroundColor: colors.paper,
+        boxShadow: isDark
+          ? "0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2)"
+          : "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)",
+        borderRadius: "12px",
+        border: `1px solid ${colors.border}`,
+      }}
+    >
+      <Table>
+        <TableHead>
+          <TableRow
+            sx={{
+              background: colors.primary,
+              "& .MuiTableCell-head": {
+                color: colors.white,
+                fontWeight: 600,
+                padding: "16px",
+                fontSize: "0.95rem",
+              },
+            }}
+          >
+            <TableCell>
+              <Checkbox
+                disabled
+                sx={{
+                  color: colors.white,
+                  "&.Mui-checked": { color: colors.white },
+                  "&.Mui-disabled": { color: "rgba(255, 255, 255, 0.5)" },
+                }}
+              />
+            </TableCell>
+            <TableCell>Name</TableCell>
+            <TableCell>Labels</TableCell>
+            <TableCell>Creation Time</TableCell>
+            <TableCell>Context</TableCell>
+            <TableCell>Status</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {Array(rows).fill(0).map((_, rowIndex) => (
+            <TableRow
+              key={`skeleton-row-${rowIndex}`}
+              sx={{
+                backgroundColor: colors.paper,
+                "& .MuiTableCell-body": {
+                  color: colors.text,
+                  borderColor: colors.border,
+                  padding: "12px 16px",
+                },
+                opacity: 1,
+                animation: `fadeIn 0.5s ease-in-out ${rowIndex * 0.1}s both`,
+              }}
+            >
+              <TableCell>
+                <Checkbox
+                  disabled
+                  sx={{
+                    color: colors.textSecondary,
+                    "&.Mui-disabled": { color: isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)" },
+                  }}
+                />
+              </TableCell>
+              <TableCell>
+                <div 
+                  className="h-5 rounded-md animate-pulse"
+                  style={{ 
+                    width: "80%", 
+                    backgroundColor: isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"
+                  }}
+                ></div>
+              </TableCell>
+              <TableCell>
+                <div className="flex flex-wrap gap-2">
+                  {Array(Math.floor(Math.random() * 3) + 1).fill(0).map((_, chipIndex) => (
+                    <div
+                      key={`chip-${rowIndex}-${chipIndex}`}
+                      className="h-6 rounded-lg animate-pulse"
+                      style={{ 
+                        width: `${Math.floor(Math.random() * 40) + 60}px`, 
+                        backgroundColor: isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"
+                      }}
+                    ></div>
+                  ))}
+                </div>
+              </TableCell>
+              <TableCell>
+                <div 
+                  className="h-5 rounded-md animate-pulse"
+                  style={{ 
+                    width: "90%", 
+                    backgroundColor: isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"
+                  }}
+                ></div>
+              </TableCell>
+              <TableCell>
+                <div 
+                  className="h-6 rounded-lg animate-pulse"
+                  style={{ 
+                    width: "80px", 
+                    backgroundColor: isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"
+                  }}
+                ></div>
+              </TableCell>
+              <TableCell>
+                <div 
+                  className="h-6 rounded-lg animate-pulse"
+                  style={{ 
+                    width: "70px", 
+                    backgroundColor: isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"
+                  }}
+                ></div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+};
 
 const LabelEditDialog: React.FC<LabelEditDialogProps> = ({ 
   open, 
@@ -539,11 +671,30 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
   );
 };
 
+// Add CSS for skeleton animations
+const skeletonStyles = document.createElement('style');
+skeletonStyles.textContent = `
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+`;
+document.head.appendChild(skeletonStyles);
+
 const ClustersTable: React.FC<ClustersTableProps> = ({
   clusters,
   currentPage,
   totalPages,
   onPageChange,
+  isLoading = false, // Default to false if not provided
 }) => {
   const [query, setQuery] = useState("");
   const [filteredClusters, setFilteredClusters] = useState<ManagedClusterInfo[]>(clusters);
@@ -564,6 +715,22 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
 
   const { useUpdateClusterLabels } = useClusterQueries();
   const updateLabelsMutation = useUpdateClusterLabels();
+
+  // New loading state for initial data fetch
+  const [initialLoad, setInitialLoad] = useState(true);
+
+  // Simulate initial loading to show skeleton loader
+  useEffect(() => {
+    if (isLoading) {
+      setInitialLoad(true);
+    } else {
+      // Add a delay to show the skeleton for at least 800ms
+      const timer = setTimeout(() => {
+        setInitialLoad(false);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, clusters]);
 
   // Add useEffect for keyboard shortcuts
   useEffect(() => {
@@ -632,10 +799,16 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
   };
 
   useEffect(() => {
-    setFilteredClusters(clusters);
-  }, [clusters]);
+    // Only update filtered clusters when not loading
+    if (!isLoading && !initialLoad) {
+      setFilteredClusters(clusters);
+    }
+  }, [clusters, isLoading, initialLoad]);
 
   const filterClusters = useCallback(() => {
+    // Don't filter during loading
+    if (isLoading || initialLoad) return;
+    
     let result = [...clusters];
     
     // Apply search query filter
@@ -670,7 +843,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
     }
     
     setFilteredClusters(result);
-  }, [clusters, query, filter, filterByLabel]);
+  }, [clusters, query, filter, filterByLabel, isLoading, initialLoad]);
 
   useEffect(() => {
     filterClusters();
@@ -870,7 +1043,14 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
               color: colors.primary,
             }}
           >
-            {clusters.length}
+            {isLoading || initialLoad ? (
+              <span className="flex items-center">
+                <CircularProgress size={14} thickness={4} style={{ color: colors.primary, marginRight: '4px' }} />
+                Loading
+              </span>
+            ) : (
+              clusters.length
+            )}
           </span>
         </h1>
         <p className="text-lg" style={{ color: colors.textSecondary }}>
@@ -886,6 +1066,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
           onChange={handleSearchChange}
           variant="outlined"
           className="w-full sm:w-1/2 md:w-1/3"
+          disabled={isLoading || initialLoad}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -902,6 +1083,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
               "& fieldset": { borderColor: colors.border },
               "&:hover fieldset": { borderColor: colors.primaryLight },
               "&.Mui-focused fieldset": { borderColor: colors.primary },
+              "&.Mui-disabled": { opacity: 0.6 },
             },
           }}
         />
@@ -912,6 +1094,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
             value={filter}
             label="Status Filter"
             onChange={handleFilterChange}
+            disabled={isLoading || initialLoad}
             sx={{
               "& .MuiSelect-select": {
                 color: colors.text,
@@ -923,6 +1106,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
               "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: colors.primaryLight },
               "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: colors.primary },
               "& .MuiSelect-icon": { color: colors.textSecondary },
+              "&.Mui-disabled": { opacity: 0.6 },
             }}
             IconComponent={() => (
               <Filter size={18} style={{ color: colors.textSecondary, marginRight: "8px" }} />
@@ -950,7 +1134,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
           </Select>
         </FormControl>
 
-        {hasSelectedClusters && (
+        {hasSelectedClusters && !isLoading && !initialLoad && (
           <div className="flex ml-auto">
             <Button
               variant="outlined"
@@ -1006,6 +1190,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
               setShowCreateOptions(true);
               setActiveOption("option1");
             }}
+            disabled={isLoading || initialLoad}
             sx={{
               bgcolor: colors.primary,
               color: colors.white,
@@ -1017,6 +1202,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
               boxShadow: isDark
                 ? "0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2)"
                 : "0 4px 6px -1px rgba(47, 134, 255, 0.2), 0 2px 4px -2px rgba(47, 134, 255, 0.1)",
+              "&.Mui-disabled": { opacity: 0.6, bgcolor: colors.disabled },
             }}
           >
             Import Cluster
@@ -1026,251 +1212,257 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
           )}
         </div>
       </div>
-
-      <TableContainer
-        component={Paper}
-        className="overflow-auto"
-        sx={{
-          backgroundColor: colors.paper,
-          boxShadow: isDark
-            ? "0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2)"
-            : "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)",
-          borderRadius: "12px",
-          border: `1px solid ${colors.border}`,
-        }}
-      >
-        <Table>
-          <TableHead>
-            <TableRow
-              sx={{
-                background: colors.primary,
-                "& .MuiTableCell-head": {
-                  color: colors.white,
-                  fontWeight: 600,
-                  padding: "16px",
-                  fontSize: "0.95rem",
-                },
-              }}
-            >
-              <TableCell>
-                <Checkbox
-                  checked={selectAll}
-                  onChange={handleSelectAll}
-                  sx={{
+      
+      {/* Show skeleton table while loading */}
+      {(isLoading || initialLoad) ? (
+        <TableSkeleton rows={6} isDark={isDark} colors={colors} />
+      ) : (
+        <TableContainer
+          component={Paper}
+          className="overflow-auto"
+          sx={{
+            backgroundColor: colors.paper,
+            boxShadow: isDark
+              ? "0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2)"
+              : "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)",
+            borderRadius: "12px",
+            border: `1px solid ${colors.border}`,
+          }}
+        >
+          <Table>
+            <TableHead>
+              <TableRow
+                sx={{
+                  background: colors.primary,
+                  "& .MuiTableCell-head": {
                     color: colors.white,
-                    "&.Mui-checked": { color: colors.white },
-                  }}
-                />
-              </TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Labels</TableCell>
-              <TableCell>Creation Time</TableCell>
-              <TableCell>Context</TableCell>
-              <TableCell>Status</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredClusters.length > 0 ? (
-              filteredClusters.map((cluster) => (
-                <TableRow
-                  key={cluster.name}
-                  sx={{
-                    backgroundColor: colors.paper,
-                    "&:hover": {
-                      backgroundColor: isDark ? "rgba(47, 134, 255, 0.08)" : "rgba(47, 134, 255, 0.04)",
-                    },
-                    "& .MuiTableCell-body": {
-                      color: colors.text,
-                      borderColor: colors.border,
-                      padding: "12px 16px",
-                    },
-                  }}
-                >
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedClusters.includes(cluster.name)}
-                      onChange={() => handleCheckboxChange(cluster.name)}
-                      sx={{
-                        color: colors.textSecondary,
-                        "&.Mui-checked": { color: colors.primary },
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div className="font-medium">{cluster.name}</div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        {cluster.labels && Object.keys(cluster.labels).length > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {Object.entries(cluster.labels).map(([key, value]) => (
-                              <Tooltip key={`${key}-${value}`} title="Click to filter by this label">
-                                <span
-                                  onClick={() => handleFilterByLabel(key, value)}
-                                  style={{
-                                    backgroundColor: 
-                                      filterByLabel?.key === key && filterByLabel?.value === value
-                                        ? (isDark ? "rgba(47, 134, 255, 0.3)" : "rgba(47, 134, 255, 0.15)")
-                                        : (isDark ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.08)"),
-                                    color: colors.primary,
-                                    border: `1px solid ${filterByLabel?.key === key && filterByLabel?.value === value
-                                      ? colors.primary
-                                      : isDark ? "rgba(47, 134, 255, 0.4)" : "rgba(47, 134, 255, 0.3)"}`,
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s ease',
-                                  }}
-                                  className="px-2 py-1 rounded text-xs font-medium hover:shadow-sm"
-                                >
-                                  {key}={value}
-                                </span>
-                              </Tooltip>
-                            ))}
-                          </div>
-                        ) : (
-                          <span style={{ color: colors.textSecondary }}>No labels</span>
-                        )}
-                      </div>
-                      <Tooltip title="Edit Labels">
-                        <IconButton
-                          size="small"
-                          onClick={() => handleEditLabels(cluster)}
-                          disabled={loadingClusterEdit === cluster.name}
-                          style={{ 
-                            color: colors.textSecondary,
-                            backgroundColor: isDark ? 'rgba(47, 134, 255, 0.08)' : 'rgba(47, 134, 255, 0.05)',
-                            transition: 'all 0.2s ease',
-                          }}
-                          className="hover:bg-opacity-80 hover:scale-105"
-                        >
-                          {loadingClusterEdit === cluster.name ? (
-                            <CircularProgress size={16} style={{ color: colors.primary }} />
+                    fontWeight: 600,
+                    padding: "16px",
+                    fontSize: "0.95rem",
+                  },
+                }}
+              >
+                <TableCell>
+                  <Checkbox
+                    checked={selectAll}
+                    onChange={handleSelectAll}
+                    sx={{
+                      color: colors.white,
+                      "&.Mui-checked": { color: colors.white },
+                    }}
+                  />
+                </TableCell>
+                <TableCell>Name</TableCell>
+                <TableCell>Labels</TableCell>
+                <TableCell>Creation Time</TableCell>
+                <TableCell>Context</TableCell>
+                <TableCell>Status</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredClusters.length > 0 ? (
+                filteredClusters.map((cluster) => (
+                  <TableRow
+                    key={cluster.name}
+                    sx={{
+                      backgroundColor: colors.paper,
+                      "&:hover": {
+                        backgroundColor: isDark ? "rgba(47, 134, 255, 0.08)" : "rgba(47, 134, 255, 0.04)",
+                      },
+                      "& .MuiTableCell-body": {
+                        color: colors.text,
+                        borderColor: colors.border,
+                        padding: "12px 16px",
+                      },
+                    }}
+                  >
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedClusters.includes(cluster.name)}
+                        onChange={() => handleCheckboxChange(cluster.name)}
+                        sx={{
+                          color: colors.textSecondary,
+                          "&.Mui-checked": { color: colors.primary },
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium">{cluster.name}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          {cluster.labels && Object.keys(cluster.labels).length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                              {Object.entries(cluster.labels).map(([key, value]) => (
+                                <Tooltip key={`${key}-${value}`} title="Click to filter by this label">
+                                  <span
+                                    onClick={() => handleFilterByLabel(key, value)}
+                                    style={{
+                                      backgroundColor: 
+                                        filterByLabel?.key === key && filterByLabel?.value === value
+                                          ? (isDark ? "rgba(47, 134, 255, 0.3)" : "rgba(47, 134, 255, 0.15)")
+                                          : (isDark ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.08)"),
+                                      color: colors.primary,
+                                      border: `1px solid ${filterByLabel?.key === key && filterByLabel?.value === value
+                                        ? colors.primary
+                                        : isDark ? "rgba(47, 134, 255, 0.4)" : "rgba(47, 134, 255, 0.3)"}`,
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s ease',
+                                    }}
+                                    className="px-2 py-1 rounded text-xs font-medium hover:shadow-sm"
+                                  >
+                                    {key}={value}
+                                  </span>
+                                </Tooltip>
+                              ))}
+                            </div>
                           ) : (
-                            <EditIcon fontSize="small" />
+                            <span style={{ color: colors.textSecondary }}>No labels</span>
                           )}
-                        </IconButton>
-                      </Tooltip>
+                        </div>
+                        <Tooltip title="Edit Labels">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleEditLabels(cluster)}
+                            disabled={loadingClusterEdit === cluster.name}
+                            style={{ 
+                              color: colors.textSecondary,
+                              backgroundColor: isDark ? 'rgba(47, 134, 255, 0.08)' : 'rgba(47, 134, 255, 0.05)',
+                              transition: 'all 0.2s ease',
+                            }}
+                            className="hover:bg-opacity-80 hover:scale-105"
+                          >
+                            {loadingClusterEdit === cluster.name ? (
+                              <CircularProgress size={16} style={{ color: colors.primary }} />
+                            ) : (
+                              <EditIcon fontSize="small" />
+                            )}
+                          </IconButton>
+                        </Tooltip>
+                      </div>
+                    </TableCell>
+                    <TableCell>{new Date(cluster.creationTime).toLocaleString()}</TableCell>
+                    <TableCell>
+                      <span
+                        style={{
+                          backgroundColor: isDark ? "rgba(103, 192, 115, 0.2)" : "rgba(103, 192, 115, 0.1)",
+                          color: isDark ? "rgb(154, 214, 249)" : "rgb(47, 134, 255)",
+                          border: `1px solid ${isDark ? "rgba(103, 192, 115, 0.4)" : "rgba(103, 192, 115, 0.3)"}`,
+                        }}
+                        className="px-2 py-1 text-xs font-medium rounded-lg"
+                      >
+                        {cluster.context}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className="px-2 py-1 text-xs font-medium rounded-lg inline-flex items-center gap-1"
+                        style={{
+                          backgroundColor:
+                            cluster.status === "Inactive"
+                              ? isDark
+                                ? "rgba(255, 107, 107, 0.2)"
+                                : "rgba(255, 107, 107, 0.1)"
+                              : cluster.status === "Pending"
+                              ? isDark
+                                ? "rgba(255, 179, 71, 0.2)"
+                                : "rgba(255, 179, 71, 0.1)"
+                              : isDark
+                              ? "rgba(103, 192, 115, 0.2)"
+                              : "rgba(103, 192, 115, 0.1)",
+                          color:
+                            cluster.status === "Inactive"
+                              ? colors.error
+                              : cluster.status === "Pending"
+                              ? colors.warning
+                              : colors.success,
+                          border:
+                            cluster.status === "Inactive"
+                              ? `1px solid ${isDark ? "rgba(255, 107, 107, 0.4)" : "rgba(255, 107, 107, 0.3)"}`
+                              : cluster.status === "Pending"
+                              ? `1px solid ${isDark ? "rgba(255, 179, 71, 0.4)" : "rgba(255, 179, 71, 0.3)"}`
+                              : `1px solid ${isDark ? "rgba(103, 192, 115, 0.4)" : "rgba(103, 192, 115, 0.3)"}`,
+                        }}
+                      >
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cluster.status === "Inactive" ? colors.error : cluster.status === "Pending" ? colors.warning : colors.success }}></span>
+                        {cluster.status || "Active✓"}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-12">
+                    <div className="flex flex-col items-center justify-center text-center p-6">
+                      <CloudOff size={48} style={{ color: colors.textSecondary, marginBottom: "16px" }} />
+                      <h3 style={{ color: colors.text }} className="text-lg font-semibold mb-2">
+                        No Clusters Found
+                      </h3>
+                      <p style={{ color: colors.textSecondary }} className="mb-4 max-w-md">
+                        {query && filter
+                          ? "No clusters match both your search and filter criteria"
+                          : query
+                          ? "No clusters match your search term"
+                          : filter
+                          ? "No clusters match your filter selection"
+                          : "No clusters available"}
+                      </p>
+                      {(query || filter) && (
+                        <div className="flex gap-2">
+                          {query && (
+                            <Button
+                              onClick={() => setQuery("")}
+                              size="small"
+                              sx={{
+                                color: colors.primary,
+                                borderColor: colors.primary,
+                                backgroundColor: isDark ? "rgba(47, 134, 255, 0.1)" : "transparent",
+                                "&:hover": {
+                                  borderColor: colors.primaryLight,
+                                  backgroundColor: isDark ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
+                                },
+                                textTransform: "none",
+                                fontWeight: "600",
+                              }}
+                              variant="outlined"
+                            >
+                              Clear Search
+                            </Button>
+                          )}
+                          {filter && (
+                            <Button
+                              onClick={() => setFilter("")}
+                              size="small"
+                              sx={{
+                                color: colors.primary,
+                                borderColor: colors.primary,
+                                backgroundColor: isDark ? "rgba(47, 134, 255, 0.1)" : "transparent",
+                                "&:hover": {
+                                  borderColor: colors.primaryLight,
+                                  backgroundColor: isDark ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
+                                },
+                                textTransform: "none",
+                                fontWeight: "600",
+                              }}
+                              variant="outlined"
+                            >
+                              Clear Filter
+                            </Button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </TableCell>
-                  <TableCell>{new Date(cluster.creationTime).toLocaleString()}</TableCell>
-                  <TableCell>
-                    <span
-                      style={{
-                        backgroundColor: isDark ? "rgba(103, 192, 115, 0.2)" : "rgba(103, 192, 115, 0.1)",
-                        color: isDark ? "rgb(154, 214, 249)" : "rgb(47, 134, 255)",
-                        border: `1px solid ${isDark ? "rgba(103, 192, 115, 0.4)" : "rgba(103, 192, 115, 0.3)"}`,
-                      }}
-                      className="px-2 py-1 text-xs font-medium rounded-lg"
-                    >
-                      {cluster.context}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className="px-2 py-1 text-xs font-medium rounded-lg inline-flex items-center gap-1"
-                      style={{
-                        backgroundColor:
-                          cluster.status === "Inactive"
-                            ? isDark
-                              ? "rgba(255, 107, 107, 0.2)"
-                              : "rgba(255, 107, 107, 0.1)"
-                            : cluster.status === "Pending"
-                            ? isDark
-                              ? "rgba(255, 179, 71, 0.2)"
-                              : "rgba(255, 179, 71, 0.1)"
-                            : isDark
-                            ? "rgba(103, 192, 115, 0.2)"
-                            : "rgba(103, 192, 115, 0.1)",
-                        color:
-                          cluster.status === "Inactive"
-                            ? colors.error
-                            : cluster.status === "Pending"
-                            ? colors.warning
-                            : colors.success,
-                        border:
-                          cluster.status === "Inactive"
-                            ? `1px solid ${isDark ? "rgba(255, 107, 107, 0.4)" : "rgba(255, 107, 107, 0.3)"}`
-                            : cluster.status === "Pending"
-                            ? `1px solid ${isDark ? "rgba(255, 179, 71, 0.4)" : "rgba(255, 179, 71, 0.3)"}`
-                            : `1px solid ${isDark ? "rgba(103, 192, 115, 0.4)" : "rgba(103, 192, 115, 0.3)"}`,
-                      }}
-                    >
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cluster.status === "Inactive" ? colors.error : cluster.status === "Pending" ? colors.warning : colors.success }}></span>
-                      {cluster.status || "Active✓"}
-                    </span>
-                  </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={6} className="py-12">
-                  <div className="flex flex-col items-center justify-center text-center p-6">
-                    <CloudOff size={48} style={{ color: colors.textSecondary, marginBottom: "16px" }} />
-                    <h3 style={{ color: colors.text }} className="text-lg font-semibold mb-2">
-                      No Clusters Found
-                    </h3>
-                    <p style={{ color: colors.textSecondary }} className="mb-4 max-w-md">
-                      {query && filter
-                        ? "No clusters match both your search and filter criteria"
-                        : query
-                        ? "No clusters match your search term"
-                        : filter
-                        ? "No clusters match your filter selection"
-                        : "No clusters available"}
-                    </p>
-                    {(query || filter) && (
-                      <div className="flex gap-2">
-                        {query && (
-                          <Button
-                            onClick={() => setQuery("")}
-                            size="small"
-                            sx={{
-                              color: colors.primary,
-                              borderColor: colors.primary,
-                              backgroundColor: isDark ? "rgba(47, 134, 255, 0.1)" : "transparent",
-                              "&:hover": {
-                                borderColor: colors.primaryLight,
-                                backgroundColor: isDark ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
-                              },
-                              textTransform: "none",
-                              fontWeight: "600",
-                            }}
-                            variant="outlined"
-                          >
-                            Clear Search
-                          </Button>
-                        )}
-                        {filter && (
-                          <Button
-                            onClick={() => setFilter("")}
-                            size="small"
-                            sx={{
-                              color: colors.primary,
-                              borderColor: colors.primary,
-                              backgroundColor: isDark ? "rgba(47, 134, 255, 0.1)" : "transparent",
-                              "&:hover": {
-                                borderColor: colors.primaryLight,
-                                backgroundColor: isDark ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
-                              },
-                              textTransform: "none",
-                              fontWeight: "600",
-                            }}
-                            variant="outlined"
-                          >
-                            Clear Filter
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
-      {filterByLabel && (
+      {/* Show filter chips in both loading and non-loading states */}
+      {filterByLabel && !isLoading && !initialLoad && (
         <div className="flex items-center mt-4 p-2 rounded-lg bg-opacity-10" style={{ backgroundColor: isDark ? 'rgba(47, 134, 255, 0.1)' : 'rgba(47, 134, 255, 0.05)', border: `1px solid ${colors.border}` }}>
           <InboxIcon style={{ color: colors.primary, marginRight: '8px' }} fontSize="small" />
           <span style={{ color: colors.textSecondary }}>
@@ -1294,61 +1486,70 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
         </div>
       )}
 
-      <div className="flex justify-between items-center mt-6 px-2">
-        <Button
-          disabled={currentPage === 1}
-          onClick={() => onPageChange(currentPage - 1)}
-          sx={{
-            color: currentPage === 1 ? colors.disabled : colors.primary,
-            borderColor: currentPage === 1 ? colors.disabled : colors.primary,
-            backgroundColor: isDark && currentPage !== 1 ? "rgba(47, 134, 255, 0.1)" : "transparent",
-            "&:hover": {
-              borderColor: colors.primaryLight,
-              backgroundColor: isDark ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
-            },
-            "&.Mui-disabled": {
-              color: colors.disabled,
-              borderColor: colors.disabled,
-            },
-            textTransform: "none",
-            fontWeight: "600",
-            padding: "6px 16px",
-            borderRadius: "8px",
-          }}
-          variant="outlined"
-        >
-          Previous
-        </Button>
-        <div className="flex items-center gap-2">
-          <span style={{ color: colors.textSecondary }} className="font-medium">
-            Page {currentPage} of {totalPages}
-          </span>
+      {/* Skeleton pagination during loading, real pagination otherwise */}
+      {isLoading || initialLoad ? (
+        <div className="flex justify-between items-center mt-6 px-2">
+          <div className="w-24 h-10 rounded animate-pulse" style={{ backgroundColor: isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)" }}></div>
+          <div className="w-32 h-6 rounded animate-pulse" style={{ backgroundColor: isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)" }}></div>
+          <div className="w-24 h-10 rounded animate-pulse" style={{ backgroundColor: isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)" }}></div>
         </div>
-        <Button
-          disabled={currentPage === totalPages}
-          onClick={() => onPageChange(currentPage + 1)}
-          sx={{
-            color: currentPage === totalPages ? colors.disabled : colors.primary,
-            borderColor: currentPage === totalPages ? colors.disabled : colors.primary,
-            backgroundColor: isDark && currentPage !== totalPages ? "rgba(47, 134, 255, 0.1)" : "transparent",
-            "&:hover": {
-              borderColor: colors.primaryLight,
-              backgroundColor: isDark ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
-            },
-            "&.Mui-disabled": {
-              color: colors.disabled,
-              borderColor: colors.disabled,
-            },
-            textTransform: "none",
-            fontWeight: "600",
-            padding: "6px 16px",
-            borderRadius: "8px",
-          }}
-          variant="outlined"
-        >
-          Next
-        </Button>
-      </div>
+      ) : (
+        <div className="flex justify-between items-center mt-6 px-2">
+          <Button
+            disabled={currentPage === 1}
+            onClick={() => onPageChange(currentPage - 1)}
+            sx={{
+              color: currentPage === 1 ? colors.disabled : colors.primary,
+              borderColor: currentPage === 1 ? colors.disabled : colors.primary,
+              backgroundColor: isDark && currentPage !== 1 ? "rgba(47, 134, 255, 0.1)" : "transparent",
+              "&:hover": {
+                borderColor: colors.primaryLight,
+                backgroundColor: isDark ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
+              },
+              "&.Mui-disabled": {
+                color: colors.disabled,
+                borderColor: colors.disabled,
+              },
+              textTransform: "none",
+              fontWeight: "600",
+              padding: "6px 16px",
+              borderRadius: "8px",
+            }}
+            variant="outlined"
+          >
+            Previous
+          </Button>
+          <div className="flex items-center gap-2">
+            <span style={{ color: colors.textSecondary }} className="font-medium">
+              Page {currentPage} of {totalPages}
+            </span>
+          </div>
+          <Button
+            disabled={currentPage === totalPages}
+            onClick={() => onPageChange(currentPage + 1)}
+            sx={{
+              color: currentPage === totalPages ? colors.disabled : colors.primary,
+              borderColor: currentPage === totalPages ? colors.disabled : colors.primary,
+              backgroundColor: isDark && currentPage !== totalPages ? "rgba(47, 134, 255, 0.1)" : "transparent",
+              "&:hover": {
+                borderColor: colors.primaryLight,
+                backgroundColor: isDark ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
+              },
+              "&.Mui-disabled": {
+                color: colors.disabled,
+                borderColor: colors.disabled,
+              },
+              textTransform: "none",
+              fontWeight: "600",
+              padding: "6px 16px",
+              borderRadius: "8px",
+            }}
+            variant="outlined"
+          >
+            Next
+          </Button>
+        </div>
+      )}
 
       <LabelEditDialog
         open={editDialogOpen}
