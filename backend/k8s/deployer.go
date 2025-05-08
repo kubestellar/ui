@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
@@ -13,7 +14,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"gopkg.in/yaml.v3"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -25,9 +25,11 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/util/retry"
+	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -81,86 +83,6 @@ type HelmDeploymentData struct {
 type ConfigMapRef struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace,omitempty"`
-}
-
-// labelInjector is a post-renderer that injects the given label into every manifest.
-type labelInjector struct {
-	key   string
-	value string
-}
-
-// Run implements the postrender.Run interface, modifying metadata.labels on each doc.
-func (l *labelInjector) Run(renderedManifests *bytes.Buffer) (*bytes.Buffer, error) {
-	data := renderedManifests.Bytes()
-
-	docs := bytes.Split(data, []byte("\n---\n"))
-	out := &bytes.Buffer{}
-
-	for i, doc := range docs {
-		if len(bytes.TrimSpace(doc)) == 0 {
-			continue
-		}
-
-		var obj map[string]interface{}
-		if err := yaml.Unmarshal(doc, &obj); err != nil {
-			// Non-YAML/K8s object – pass through without modification
-			out.Write(doc)
-		} else {
-			// Skip empty documents or non-Kubernetes resources
-			if obj == nil || obj["kind"] == nil || obj["apiVersion"] == nil {
-				out.Write(doc)
-			} else {
-				// Add label to metadata
-				meta, ok := obj["metadata"].(map[string]interface{})
-				if !ok {
-					meta = make(map[string]interface{})
-					obj["metadata"] = meta
-				}
-
-				labels, ok := meta["labels"].(map[string]interface{})
-				if !ok {
-					labels = make(map[string]interface{})
-					meta["labels"] = labels
-				}
-
-				labels[l.key] = l.value
-				meta["labels"] = labels
-
-				// Also add to template metadata for resources with Pod templates
-				// (Deployments, StatefulSets, DaemonSets, etc.)
-				if spec, ok := obj["spec"].(map[string]interface{}); ok {
-					if template, ok := spec["template"].(map[string]interface{}); ok {
-						if templateMeta, ok := template["metadata"].(map[string]interface{}); ok {
-							templateLabels, ok := templateMeta["labels"].(map[string]interface{})
-							if !ok {
-								templateLabels = make(map[string]interface{})
-							}
-							templateLabels[l.key] = l.value
-							templateMeta["labels"] = templateLabels
-						} else {
-							template["metadata"] = map[string]interface{}{
-								"labels": map[string]interface{}{
-									l.key: l.value,
-								},
-							}
-						}
-					}
-				}
-
-				patched, err := yaml.Marshal(obj)
-				if err != nil {
-					return nil, fmt.Errorf("failed to marshal patched object: %w", err)
-				}
-				out.Write(patched)
-			}
-		}
-
-		if i < len(docs)-1 {
-			out.WriteString("\n---\n")
-		}
-	}
-
-	return out, nil
 }
 
 // getResourceGVR dynamically fetches the correct GroupVersionResource (GVR) using the Discovery API
@@ -222,10 +144,6 @@ func DeployManifests(deployPath string, dryRun bool, dryRunStrategy string, work
 		if workloadLabel != "" {
 			// Get existing labels or initialize new map
 			metadata, exists := obj.Object["metadata"].(map[string]interface{})
-			if obj.Object == nil {
-				obj.Object = make(map[string]interface{})
-			}
-
 			if !exists {
 				metadata = make(map[string]interface{})
 				obj.Object["metadata"] = metadata
@@ -262,8 +180,7 @@ func DeployManifests(deployPath string, dryRun bool, dryRunStrategy string, work
 
 		// Ensure namespace exists before applying resources
 		if !dryRun && obj.GetKind() != "Namespace" {
-			// Add workload label if provided
-			err = EnsureNamespaceExists(dynamicClient, finalNamespace, workloadLabel)
+			err = EnsureNamespaceExists(dynamicClient, finalNamespace)
 			if err != nil {
 				return nil, fmt.Errorf("failed to ensure namespace %s exists: %v", finalNamespace, err)
 			}
@@ -294,8 +211,7 @@ func DeployManifests(deployPath string, dryRun bool, dryRunStrategy string, work
 }
 
 // EnsureNamespaceExists checks if a namespace exists and creates it if it doesn't
-// Also ensures the namespace has the workload label if provided
-func EnsureNamespaceExists(dynamicClient dynamic.Interface, namespace string, workloadLabel ...string) error {
+func EnsureNamespaceExists(dynamicClient dynamic.Interface, namespace string) error {
 	// Skip for default namespace which always exists
 	if namespace == "default" {
 		return nil
@@ -305,52 +221,15 @@ func EnsureNamespaceExists(dynamicClient dynamic.Interface, namespace string, wo
 	nsGVR := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}
 
 	// Check if namespace exists
-	nsObj, err := dynamicClient.Resource(nsGVR).Get(context.TODO(), namespace, v1.GetOptions{})
+	_, err := dynamicClient.Resource(nsGVR).Get(context.TODO(), namespace, v1.GetOptions{})
 	if err == nil {
-		// Namespace exists, check if we need to add the workload label
-		if len(workloadLabel) > 0 && workloadLabel[0] != "" {
-			// Check if namespace already has the label
-			metadata, found := nsObj.Object["metadata"].(map[string]interface{})
-			if found {
-				labels, labelsFound := metadata["labels"].(map[string]interface{})
-				if labelsFound {
-					// Check if label exists
-					if _, exists := labels["kubestellar.io/workload"]; !exists {
-						// Label doesn't exist, add it
-						labels["kubestellar.io/workload"] = workloadLabel[0]
-						nsObj.SetUnstructuredContent(nsObj.Object)
-
-						// Update namespace with the new label
-						_, err = dynamicClient.Resource(nsGVR).Update(context.TODO(), nsObj, v1.UpdateOptions{})
-						if err != nil {
-							return fmt.Errorf("failed to update namespace labels: %v", err)
-						}
-						fmt.Printf("Added workload label to namespace: %s\n", namespace)
-					}
-				} else {
-					// No labels found, add labels with our workload label
-					metadata["labels"] = map[string]interface{}{
-						"kubestellar.io/workload": workloadLabel[0],
-					}
-					nsObj.SetUnstructuredContent(nsObj.Object)
-
-					// Update namespace with new labels
-					_, err = dynamicClient.Resource(nsGVR).Update(context.TODO(), nsObj, v1.UpdateOptions{})
-					if err != nil {
-						return fmt.Errorf("failed to update namespace labels: %v", err)
-					}
-					fmt.Printf("Added workload label to namespace: %s\n", namespace)
-				}
-			}
-		}
+		// Namespace exists
 		return nil
 	}
 
 	// Create namespace if it doesn't exist
 	fmt.Printf("Creating namespace: %s\n", namespace)
-
-	// Prepare namespace object
-	nsObjCreate := &unstructured.Unstructured{
+	nsObj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "v1",
 			"kind":       "Namespace",
@@ -360,15 +239,7 @@ func EnsureNamespaceExists(dynamicClient dynamic.Interface, namespace string, wo
 		},
 	}
 
-	// Add labels if workload label is provided
-	if len(workloadLabel) > 0 && workloadLabel[0] != "" {
-		nsObjCreate.Object["metadata"].(map[string]interface{})["labels"] = map[string]interface{}{
-			"kubestellar.io/workload": workloadLabel[0],
-		}
-		fmt.Printf("Creating namespace %s with workload label: %s\n", namespace, workloadLabel[0])
-	}
-
-	_, err = dynamicClient.Resource(nsGVR).Create(context.TODO(), nsObjCreate, v1.CreateOptions{})
+	_, err = dynamicClient.Resource(nsGVR).Create(context.TODO(), nsObj, v1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to create namespace %s: %v", namespace, err)
 	}
@@ -798,60 +669,22 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 		return nil, fmt.Errorf("failed to get Kubernetes client: %v", err)
 	}
 
-	// Ensure namespace exists before proceeding with the workload label
+	// Create the namespace with the workload label before proceeding
 	nsGVR := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}
+	nsExists := true
 
-	// Declare variable to track if namespace exists
-	// Check if namespace exists
-	nsObj, err := dynamicClient.Resource(nsGVR).Get(context.TODO(), req.Namespace, v1.GetOptions{})
-	if err == nil {
-
-		// Check if namespace already has the workload label
-		metadata, found := nsObj.Object["metadata"].(map[string]interface{})
-		if found {
-			labels, labelsFound := metadata["labels"].(map[string]interface{})
-			if labelsFound {
-				// If label exists with a different value, we'll append the new value
-				if val, exists := labels["kubestellar.io/workload"]; exists {
-					// Label exists - append new value if different
-					if val != req.WorkloadLabel {
-						labels["kubestellar.io/workload"] = fmt.Sprintf("%s,%s", val, req.WorkloadLabel)
-						nsObj.SetUnstructuredContent(nsObj.Object)
-
-						// Update namespace with modified labels
-						_, err = dynamicClient.Resource(nsGVR).Update(context.TODO(), nsObj, v1.UpdateOptions{})
-						if err != nil {
-							return nil, fmt.Errorf("failed to update namespace labels: %v", err)
-						}
-					}
-				} else {
-					// Label doesn't exist, add it
-					labels["kubestellar.io/workload"] = req.WorkloadLabel
-					nsObj.SetUnstructuredContent(nsObj.Object)
-
-					// Update namespace with the new label
-					_, err = dynamicClient.Resource(nsGVR).Update(context.TODO(), nsObj, v1.UpdateOptions{})
-					if err != nil {
-						return nil, fmt.Errorf("failed to update namespace labels: %v", err)
-					}
-				}
-			} else {
-				// No labels found, add labels with our workload label
-				metadata["labels"] = map[string]interface{}{
-					"kubestellar.io/workload": req.WorkloadLabel,
-				}
-				nsObj.SetUnstructuredContent(nsObj.Object)
-
-				// Update namespace with new labels
-				_, err = dynamicClient.Resource(nsGVR).Update(context.TODO(), nsObj, v1.UpdateOptions{})
-				if err != nil {
-					return nil, fmt.Errorf("failed to update namespace labels: %v", err)
-				}
-			}
+	_, err = dynamicClient.Resource(nsGVR).Get(ctx, req.Namespace, v1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			nsExists = false
+		} else {
+			return nil, fmt.Errorf("failed to check namespace: %v", err)
 		}
-	} else if errors.IsNotFound(err) {
-		// Create namespace with the workload label
-		nsObj = &unstructured.Unstructured{
+	}
+
+	if !nsExists {
+		// Create namespace with workload label
+		nsObj := &unstructured.Unstructured{
 			Object: map[string]interface{}{
 				"apiVersion": "v1",
 				"kind":       "Namespace",
@@ -864,14 +697,47 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 			},
 		}
 
-		// Create namespace
-		_, err = dynamicClient.Resource(nsGVR).Create(context.TODO(), nsObj, v1.CreateOptions{})
+		_, err = dynamicClient.Resource(nsGVR).Create(ctx, nsObj, v1.CreateOptions{})
 		if err != nil {
-			return nil, fmt.Errorf("failed to create namespace %s with labels: %v", req.Namespace, err)
+			return nil, fmt.Errorf("failed to create labeled namespace: %v", err)
 		}
+		fmt.Printf("Created namespace %s with workload label\n", req.Namespace)
 	} else {
-		// Other error occurred
-		return nil, fmt.Errorf("failed to check if namespace exists: %v", err)
+		// Update existing namespace to add label
+		err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			existingNs, err := dynamicClient.Resource(nsGVR).Get(ctx, req.Namespace, v1.GetOptions{})
+			if err != nil {
+				return err
+			}
+
+			// Get or create labels map
+			metadata, ok := existingNs.Object["metadata"].(map[string]interface{})
+			if !ok {
+				return fmt.Errorf("unexpected metadata structure")
+			}
+
+			labels, ok := metadata["labels"].(map[string]interface{})
+			if !ok {
+				labels = make(map[string]interface{})
+				metadata["labels"] = labels
+			}
+
+			// Add workload label if not present
+			if _, exists := labels["kubestellar.io/workload"]; !exists {
+				labels["kubestellar.io/workload"] = req.WorkloadLabel
+				_, err = dynamicClient.Resource(nsGVR).Update(ctx, existingNs, v1.UpdateOptions{})
+				if err != nil {
+					return err
+				}
+				fmt.Printf("Added workload label to existing namespace %s\n", req.Namespace)
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			fmt.Printf("Warning: failed to update namespace labels: %v\n", err)
+		}
 	}
 
 	// Initialize Helm action configuration
@@ -923,11 +789,12 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 	install.Namespace = req.Namespace
 	install.Version = req.Version
 	install.Wait = false // Don't wait for resources to be ready to speed up deployment
-	// Attach our post-renderer
-	install.PostRenderer = &labelInjector{
-		key:   "kubestellar.io/workload",
-		value: req.WorkloadLabel,
+
+	// Create a post-renderer that adds the workload label to every resource
+	postRenderer := &labelAddingPostRenderer{
+		workloadLabel: req.WorkloadLabel,
 	}
+	install.PostRenderer = postRenderer
 
 	// Locate and load chart concurrently
 	type chartResult struct {
@@ -1024,22 +891,21 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 	chartValues["commonLabels"] = commonLabelsMap
 
 	// Approach 3: Add to podLabels if chart supports it
+	podLabelsVal, exists := chartValues["podLabels"]
 	var podLabelsMap map[string]interface{}
 
 	if exists {
-		// Set a reasonable timeout for the installation
-		install.Timeout = 8 * time.Minute
-
-		// Ensure post-renderer is properly attached
-		install.PostRenderer = &labelInjector{
-			key:   "kubestellar.io/workload",
-			value: req.WorkloadLabel,
+		if convertedMap, ok := podLabelsVal.(map[string]interface{}); ok {
+			podLabelsMap = convertedMap
+		} else {
+			podLabelsMap = make(map[string]interface{})
 		}
-
-		// Install the chart
+	} else {
+		podLabelsMap = make(map[string]interface{})
 	}
 
 	// Add workload label to podLabels
+	podLabelsMap["kubestellar.io/workload"] = req.WorkloadLabel
 	chartValues["podLabels"] = podLabelsMap
 
 	// Approach 4: Add as a top-level label
@@ -1061,8 +927,6 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 
 	// Set a reasonable timeout for the installation
 	install.Timeout = 4 * time.Minute
-
-	// Attach our post-renderer
 
 	// Install the chart
 	release, err := install.Run(chartRes.chartObj, chartValues)
@@ -1098,6 +962,86 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 	return release, nil
 }
 
+// labelAddingPostRenderer is a post-renderer that adds labels to all resources
+type labelAddingPostRenderer struct {
+	workloadLabel string
+}
+
+// Run implements the PostRenderer interface and adds the kubestellar.io/workload label to all resources
+func (r *labelAddingPostRenderer) Run(renderedManifests *bytes.Buffer) (*bytes.Buffer, error) {
+	if renderedManifests == nil {
+		return nil, fmt.Errorf("rendered manifests is nil")
+	}
+
+	decoder := k8syaml.NewDocumentDecoder(io.NopCloser(renderedManifests))
+	var resultBuffer bytes.Buffer
+
+	docSeparator := []byte("---\n")
+	first := true
+
+	for {
+		// Read a single document
+		var buf bytes.Buffer
+		buffer := make([]byte, 1048576)
+		n, err := decoder.Read(buffer)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		buf.Write(buffer[:n])
+
+		// Skip empty documents
+		if len(strings.TrimSpace(buf.String())) == 0 {
+			continue
+		}
+		// Unmarshal the document
+		var obj map[string]interface{}
+		if err := k8syaml.Unmarshal(buf.Bytes(), &obj); err != nil {
+			// Write the document as-is if we can't unmarshal it
+			if !first {
+				resultBuffer.Write(docSeparator)
+			}
+			first = false
+			resultBuffer.Write(buf.Bytes())
+			continue
+
+		}
+
+		// Add the workload label
+		metadata, ok := obj["metadata"].(map[string]interface{})
+		if !ok {
+			metadata = make(map[string]interface{})
+			obj["metadata"] = metadata
+		}
+
+		labels, ok := metadata["labels"].(map[string]interface{})
+		if !ok {
+			labels = make(map[string]interface{})
+			metadata["labels"] = labels
+		}
+
+		// Add the kubestellar.io/workload label
+		labels["kubestellar.io/workload"] = r.workloadLabel
+
+		// Marshal the modified document
+		modifiedDoc, err := yaml.Marshal(obj)
+		if err != nil {
+			return nil, err
+		}
+
+		// Add document separator if not the first document
+		if !first {
+			resultBuffer.Write(docSeparator)
+		}
+		first = false
+		resultBuffer.Write(modifiedDoc)
+	}
+
+	return &resultBuffer, nil
+}
+
 // HelmDeployHandler handles API requests to deploy Helm charts
 func HelmDeployHandler(c *gin.Context) {
 	var req HelmDeploymentRequest
@@ -1118,7 +1062,7 @@ func HelmDeployHandler(c *gin.Context) {
 		store = true
 	}
 
-	// Pass the parsed "store" parameter to DeployHelmChart
+	// Pass the parsed "store" parameter to deployHelmChart
 	release, err := DeployHelmChart(req, store)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Deployment failed: %v", err)})
