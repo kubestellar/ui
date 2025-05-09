@@ -788,15 +788,14 @@ const ListViewComponent = ({
               p: { xs: 2, sm: 3 },
               pt: { xs: 2, sm: 2 },
               borderTop: theme === "dark" ? "1px solid #334155" : "1px solid #e5e7eb",
-              backgroundColor: theme === "dark" ? "rgba(30, 41, 59, 0.9)" : "rgba(248, 250, 252, 0.95)", 
+              backgroundColor: theme === "dark" ? "rgb(30, 41, 59)" : "rgb(248, 250, 252)", 
               borderRadius: "0 0 8px 8px",
               position: "sticky",
-              bottom: 0,
+              bottom: 14,
               left: 0,
               right: 0,
               zIndex: 20,
               boxShadow: theme === "dark" ? "0 -4px 6px rgba(0,0,0,0.3)" : "0 -4px 6px rgba(0,0,0,0.1)",
-              backdropFilter: "blur(4px)",
               margin: 0,
             }}
           >
