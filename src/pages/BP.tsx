@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { Paper, Box, Snackbar, Alert, Typography, Button, Tabs, Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemIcon, ListItemText } from "@mui/material";
+import {CircularProgress, Paper, Box, Snackbar, Alert, Typography, Button, Tabs, Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemIcon, ListItemText } from "@mui/material";
 import BPHeader from "../components/BindingPolicy/Dialogs/BPHeader";
 import BPTable from "../components/BindingPolicy/BPTable";
 import BPPagination from "../components/BindingPolicy/BPPagination";
@@ -106,15 +106,34 @@ const LoadingIndicator: React.FC = () => {
   const theme = useTheme(state => state.theme);
   return (
     <Box sx={{ 
-      textAlign: "center", 
-      color: theme === "dark" ? "#E5E7EB" : "text.secondary", 
-      py: 3 
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '200px',
+      py: 6
     }}>
-      Loading KubeStellar Binding Policies...
+      <CircularProgress 
+        size={60}
+        thickness={4}
+        sx={{ 
+          color: theme === "dark" ? "#4498FF" : "primary.main",
+          mb: 3
+        }} 
+      />
+      <Typography 
+        variant="body1" 
+        sx={{ 
+          textAlign: "center", 
+          color: theme === "dark" ? "#E5E7EB" : "text.secondary",
+          fontWeight: 500
+        }}
+      >
+        Loading KubeStellar Binding Policies...
+      </Typography>
     </Box>
   );
 };
-
 const BP = () => {
   console.log('BP component rendering');
   
