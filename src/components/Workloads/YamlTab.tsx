@@ -1,9 +1,10 @@
 import Editor from "@monaco-editor/react";
-import { Box, Button, TextField, FormControlLabel, Checkbox } from "@mui/material"; // Added Checkbox and FormControlLabel
+import { Box, Button, FormControlLabel, Checkbox } from "@mui/material"; // Added Checkbox and FormControlLabel
 import { StyledContainer } from "../StyledComponents";
 import yaml from "js-yaml";
 import { useState, useEffect } from "react";
 import useTheme from "../../stores/themeStore";
+import WorkloadLabelInput from "./WorkloadLabelInput";
 
 interface Props {
   editorContent: string;
@@ -41,22 +42,24 @@ export const YamlTab = ({
 
   useEffect(() => {
     const checkLabels = () => {
+      
       try {
         const documents: YamlDocument[] = [];
         yaml.loadAll(editorContent, (doc) => documents.push(doc as YamlDocument), {});
         let foundIndex: number | null = null;
+        let foundValue = "";
         for (let i = 0; i < documents.length; i++) {
           const doc = documents[i];
-          if (doc && doc.metadata && doc.metadata.labels && Object.keys(doc.metadata.labels).length > 0) {
-            const firstLabelKey = Object.keys(doc.metadata.labels)[0];
-            setLocalWorkloadLabel(`${firstLabelKey}:${doc.metadata.labels[firstLabelKey]}`);
+          if(doc?.metadata?.labels?.["kubestellar.io/workload"]){
+            foundValue = doc.metadata.labels["kubestellar.io/workload"];
             foundIndex = i;
             break;
           }
         }
         const hasLabelsResult = foundIndex !== null;
-        setHasLabelsError(!hasLabelsResult); // Set error if no labels found
+        setHasLabelsError(!hasLabelsResult);
         if (foundIndex !== null) {
+          setLocalWorkloadLabel(foundValue);
           setNameDocumentIndex(foundIndex);
         } else {
           setLocalWorkloadLabel("");
@@ -67,11 +70,10 @@ export const YamlTab = ({
         console.error("Error parsing YAML:", error);
         setLocalWorkloadLabel("");
         setNameDocumentIndex(null);
-        setHasLabelsError(true); // Set error on parsing failure
+        setHasLabelsError(true);
         return false;
       }
     };
-
     checkLabels();
   }, [editorContent]);
 
@@ -81,20 +83,20 @@ export const YamlTab = ({
     try {
       const documents: YamlDocument[] = [];
       yaml.loadAll(editorContent, (doc) => documents.push(doc as YamlDocument), {});
+      const key="kubestellar.io/workload";
+      const value = newLabel;
 
       if (
         nameDocumentIndex !== null &&
         documents[nameDocumentIndex] &&
-        documents[nameDocumentIndex].metadata
+        documents[nameDocumentIndex].metadata 
       ) {
-        const [key, value] = newLabel.split(':');
         if (!documents[nameDocumentIndex].metadata!.labels) {
           documents[nameDocumentIndex].metadata!.labels = {};
         }
         documents[nameDocumentIndex].metadata!.labels[key] = value;
       } else {
         if (documents.length === 0) {
-          const [key, value] = newLabel.split(':');
           documents.push({ 
             metadata: { 
               labels: { [key]: value }
@@ -102,12 +104,10 @@ export const YamlTab = ({
           });
         } else {
           if (!documents[0].metadata) {
-            const [key, value] = newLabel.split(':');
             documents[0].metadata = { 
               labels: { [key]: value }
             };
           } else {
-            const [key, value] = newLabel.split(':');
             if (!documents[0].metadata.labels) {
               documents[0].metadata.labels = {};
             }
@@ -147,46 +147,7 @@ export const YamlTab = ({
           minHeight: 0,
         }}
       >
-        <TextField
-          fullWidth
-          label="Workload Label *"
-          value={localWorkloadLabel}
-          onChange={(e) => handleWorkloadLabelChange(e.target.value)}
-          sx={{
-            width: "98.5%",
-            margin: "0 auto 10px auto",
-            input: { color: theme === "dark" ? "#d4d4d4" : "#333" },
-            label: { color: theme === "dark" ? "#858585" : "#666" },
-            "& .MuiOutlinedInput-root": {
-              "& fieldset": {
-                borderColor: theme === "dark" ? "#444" : "#e0e0e0",
-              },
-              "&:hover fieldset": {
-                borderColor: "#1976d2",
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: "#1976d2",
-              },
-              "&.Mui-error fieldset": {
-                borderColor: "#d32f2f",
-              },
-            },
-            "& .MuiInputLabel-root.Mui-focused": {
-              color: "#1976d2",
-            },
-            "& .MuiInputLabel-root.Mui-error": {
-              color: "#d32f2f",
-            },
-            "& .MuiFormHelperText-root": {
-              color: theme === "dark" ? "#858585" : "#666",
-            },
-          }}
-          helperText={hasLabelsError ? "No labels found in YAML. Please add a label to enable deployment." : "Workload label is extracted from YAML/JSON metadata.labels (first key:value pair)"}
-          error={hasLabelsError}
-          FormHelperTextProps={{
-            error: hasLabelsError,
-          }}
-        />
+        <WorkloadLabelInput handleChange={(e) => handleWorkloadLabelChange(e.target.value)} isError={hasLabelsError} theme={theme} value={localWorkloadLabel} />
         {/* Added Checkbox */}
         <FormControlLabel
           control={
@@ -204,7 +165,7 @@ export const YamlTab = ({
           label="Create Namespace Automatically"
           sx={{
             mb: 2,
-            ml: 0.1,
+            ml: -1.2,
             color: theme === "dark" ? "#d4d4d4" : "#333",
           }}
         />
@@ -214,7 +175,7 @@ export const YamlTab = ({
             borderRadius: "8px",
             overflow: "hidden",
             mt: 1,
-            width: "98.5%",
+            width: "100%",
             margin: "0 auto",
           }}
         >
@@ -265,7 +226,7 @@ export const YamlTab = ({
         <Button
           variant="contained"
           onClick={() => handleRawUpload(autoNs)} // Pass autoNs to handleRawUpload
-          disabled={!isEditorContentEdited || loading || !hasLabels()}
+          disabled={hasLabelsError || !isEditorContentEdited || loading || !hasLabels()}
           sx={{
             textTransform: "none",
             fontWeight: 600,

@@ -166,9 +166,22 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
     const commonResources = [
       { type: 'namespaces', createOnly: true },
       { type: 'serviceaccounts', createOnly: false },
+      { type: 'persistentvolumeclaims', createOnly: false },
       { type: 'configmaps', createOnly: false },
       { type: 'secrets', createOnly: false }
     ];
+    
+    // Special handling for database components - always include them
+    const databaseResources = [
+      { type: 'statefulsets', createOnly: false }, 
+      { type: 'pods', createOnly: false },
+      { type: 'serviceaccounts', createOnly: false },  
+      { type: 'roles', createOnly: false },
+      { type: 'rolebindings', createOnly: false },    
+      { type: 'clusterroles', createOnly: false },    
+      { type: 'clusterrolebindings', createOnly: false }  
+    ];
+    
     const resourceMapping: Record<string, Array<{ type: string, createOnly: boolean }>> = {
       'deployment': [
         { type: 'deployments', createOnly: false },
@@ -215,6 +228,11 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
       ],
       'customresourcedefinition': [
         { type: 'customresourcedefinitions', createOnly: false }
+      ],
+      'statefulsets': [
+        { type: 'statefulsets', createOnly: false },
+        { type: 'services', createOnly: false },
+        { type: 'pods', createOnly: false }
       ]
     };
     
@@ -239,9 +257,9 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
       console.warn("Workload kind missing, adding deployment resources as default");
       workloadSpecificResources = resourceMapping['deployment'];
     }
- 
-    // Combine common and workload-specific resources
-    const resources = [...commonResources, ...workloadSpecificResources];
+
+    // Combine resources in priority order: database, common, workload-specific 
+    const resources = [...databaseResources, ...commonResources, ...workloadSpecificResources];
     
     const uniqueResources = resources.filter((resource, index, self) => 
       index === self.findIndex(r => r.type === resource.type)

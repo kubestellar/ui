@@ -2,12 +2,15 @@ import { useState } from "react";
 import { Box, Card, Typography, useTheme, Divider } from "@mui/material";
 import GitHubOptionButtons from "./GitHubOptionButtons";
 import PopularRepositoriesForm from "./PopularRepositoriesForm";
+import WorkloadLabelInput from "../WorkloadLabelInput";
 
 interface Props {
   onComplete: (repoData: { url: string; path: string }) => void;
+  formData?: { workload_label: string };
+  setFormData?: (data: { workload_label: string }) => void;
 }
 
-export const GitHubTab = ({ onComplete }: Props) => {
+export const GitHubTab = ({ onComplete, formData, setFormData }: Props) => {
   const theme = useTheme();
   const isDarkTheme = theme.palette.mode === "dark";
   const [selectedOption, setSelectedOption] = useState<string>("yourGitHub");
@@ -58,6 +61,16 @@ export const GitHubTab = ({ onComplete }: Props) => {
       <Typography variant="body2" sx={{ color: isDarkTheme ? "#aaa" : "#666", mb: 2 }}>
         Select a repository source to import your application
       </Typography>
+      
+      {formData && setFormData && (
+        <Box sx={{ mb: 3 }}>
+          <WorkloadLabelInput 
+            value={formData.workload_label || ''} 
+            handleChange={(e) => setFormData({ ...formData, workload_label: e.target.value })} 
+            theme={isDarkTheme ? "dark" : "light"} 
+          />
+        </Box>
+      )}
       
       <Box sx={{ display: "flex", gap: 3, flexDirection: { xs: "column", md: "row" } }}>
         <Card sx={{ 

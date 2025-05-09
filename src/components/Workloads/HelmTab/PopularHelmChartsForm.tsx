@@ -7,8 +7,7 @@ interface Props {
     selectedChart: string | null;
 }
 
-export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedChart}:Props) => {
-
+export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedChart }:Props) => {
   const color=theme === "dark" ? "#d4d4d4" : "#333"
 
     const popularHelmCharts = [
@@ -21,6 +20,7 @@ export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedCha
         "valkey", "vault", "victoriametrics", "whereabouts", "wildfly", "wordpress", "zipkin"
     ];
   return (
+    <Box>
       <Box
           sx={{
               display: "flex",
@@ -33,24 +33,12 @@ export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedCha
           <Box
               sx={{
                   position: "sticky",
+                  marginTop: "20px",
                   top: 0,
                   zIndex: 1,
                   height: "55vh",
               }}
           >
-              <Typography
-                  variant="subtitle1"
-                  sx={{
-                      fontWeight: 600,
-                      fontSize: "20px",
-                      color,
-                      mb: 3,
-                      mt: 1,
-                  }}
-              >
-                  Select a Popular Helm Chart to deploy!
-              </Typography>
-
               <Box>
                 <Autocomplete
                     disablePortal
@@ -127,57 +115,7 @@ export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedCha
                   </Box>
               )}
           </Box>
-
-          {/* Scrollable List */}
-          {/* <Box
-        sx={{
-          flex: 1,
-          overflowY: "auto",
-          "&::-webkit-scrollbar": {
-            display: "none",
-          },
-          scrollbarWidth: "none",
-          "-ms-overflow-style": "none",
-          display: "flex",
-          flexDirection: "column",
-          gap: 2,
-        }}
-      >
-        {popularHelmCharts.map((chart) => (
-          <Box
-            key={chart}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              padding: "8px",
-              borderRadius: "4px",
-              backgroundColor: theme === "dark" ? "#00000033" : "#f9f9f9",
-              "&:hover": {
-                backgroundColor: theme === "dark" ? "#2a2a2a" : "#f1f1f1",
-              },
-            }}
-          >
-            <Checkbox
-              checked={selectedChart === chart}
-              onChange={() => handleChartSelection(chart)}
-              sx={{
-                color: theme === "dark" ? "#d4d4d4" : "#666",
-                "&.Mui-checked": {
-                  color: "#1976d2",
-                },
-              }}
-            />
-            <Typography
-              sx={{
-                fontSize: "0.875rem",
-                color: theme === "dark" ? "#d4d4d4" : "#333",
-              }}
-            >
-              {chart}
-            </Typography>
-          </Box>
-        ))}
-      </Box> */}
+      </Box>
       </Box>
   )
 }

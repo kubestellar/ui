@@ -1,6 +1,7 @@
 package wecs
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -205,6 +206,8 @@ func StreamK8sDataChronologically(c *gin.Context) {
 	fetchTicker := time.NewTicker(1 * time.Second)
 	defer fetchTicker.Stop()
 
+	var lastMessage []byte
+
 	for range fetchTicker.C {
 		var allClusters []ClusterData
 		allClustersCacheKey := getCacheKey("allclusters")
@@ -279,7 +282,7 @@ func StreamK8sDataChronologically(c *gin.Context) {
 
 								cacheHit, _ := redis.GetJSONValue(nsCacheKey, &nsData)
 
-								nsNeedsRefresh := !cacheHit || true
+								nsNeedsRefresh := !cacheHit
 								if nsNeedsRefresh {
 									nsData = NamespaceData{Name: nsName}
 									var resourceTypes []ResourceTypeData
@@ -465,10 +468,13 @@ func StreamK8sDataChronologically(c *gin.Context) {
 		if err != nil {
 			continue
 		}
-
+		if bytes.Equal(message, lastMessage) {
+			continue
+		}
 		if err := conn.WriteMessage(websocket.TextMessage, message); err != nil {
 			return
 		}
+		lastMessage = message
 	}
 }
 
