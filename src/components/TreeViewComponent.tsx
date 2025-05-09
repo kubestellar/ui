@@ -676,7 +676,6 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
             alignItems: "center",
             justifyContent: "space-between",
             padding: "2px 12px",
-            // backgroundColor: theme === "dark" ? "#333" : "#fff",
             color: theme === "dark" ? "#fff" : "#000",
             ...(hasHighlightedLabel ? {
               boxShadow: `0 0 0 2px ${theme === "dark" ? '#41dc8e' : '#41dc8e'}`,
@@ -684,11 +683,15 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
               zIndex: 1000, // Bring highlighted nodes to front
               opacity: 1,
               transition: "all 0.2s ease-in-out"
-            } : highlightedLabels ? {
-              // If highlighting is active but this node doesn't match
-              opacity: 0.5,
-              transition: "all 0.2s ease-in-out"
-            } : {}),
+            } : {
+              // Always set default bg color even when not highlighted
+              backgroundColor: theme === "dark" ? "#333" : "#fff",
+              transition: "all 0.2s ease-in-out",
+              ...(highlightedLabels ? {
+                // If highlighting is active but this node doesn't match
+                opacity: 0.5
+              } : {})
+            }),
           },
           sourcePosition: Position.Right,
           targetPosition: Position.Left,
@@ -696,23 +699,25 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
         } as CustomNode);
 
       // If the node is already cached but highlighting changed, update style
-      if (cachedNode && highlightedLabels) {
-        // Update style based on current highlight state
+      if (cachedNode) {
+        // Always update theme-dependent styles for cached nodes
         node.style = {
           ...node.style,
+          backgroundColor: hasHighlightedLabel 
+            ? (theme === "dark" ? 'rgba(68, 152, 255, 0.15)' : 'rgba(68, 152, 255, 0.08)')
+            : (theme === "dark" ? "#333" : "#fff"),
+          color: theme === "dark" ? "#fff" : "#000",
           ...(hasHighlightedLabel ? {
             boxShadow: `0 0 0 2px ${theme === "dark" ? '#41dc8e' : '#41dc8e'}`,
-            backgroundColor: theme === "dark" ? 'rgba(68, 152, 255, 0.15)' : 'rgba(68, 152, 255, 0.08)',
             zIndex: 1000,
             opacity: 1,
             transition: "all 0.2s ease-in-out"
-          } : {
+          } : highlightedLabels ? {
             boxShadow: 'none',
-            backgroundColor: theme === "dark" ? "#333" : "#fff",
             zIndex: 0,
             opacity: 0.5,
             transition: "all 0.2s ease-in-out"
-          }),
+          } : {}),
         };
       }
 
@@ -731,13 +736,19 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
             target: id,
             type: "step",
             animated: true,
-            style: { stroke: theme === "dark" ? "#ccc" : "#a3a3a3", strokeDasharray: "2,2" },
-            markerEnd: { type: MarkerType.ArrowClosed, color: theme === "dark" ? "#ccc" : "#a3a3a3" },
+            style: { stroke: theme === "dark" ? "#777" : "#a3a3a3", strokeDasharray: "2,2" },
+            markerEnd: { type: MarkerType.ArrowClosed, color: theme === "dark" ? "#777" : "#a3a3a3" },
           };
           newEdges.push(edge);
           edgeCache.current.set(edgeId, edge);
         } else {
-          newEdges.push(cachedEdge);
+          // Update the cached edge with current theme colors
+          const updatedEdge = {
+            ...cachedEdge,
+            style: { stroke: theme === "dark" ? "#777" : "#a3a3a3", strokeDasharray: "2,2" },
+            markerEnd: { type: MarkerType.ArrowClosed, color: theme === "dark" ? "#777" : "#a3a3a3" }
+          };
+          newEdges.push(updatedEdge);
         }
       }
     },
@@ -753,6 +764,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
       setIsTransforming(true);
       
       try {
+        // Clear caches to ensure proper redraw with current theme
         nodeCache.current.clear();
         edgeCache.current.clear();
         edgeIdCounter.current = 0;
@@ -1419,6 +1431,49 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
     }
   }, [viewMode, websocketData]);
 
+  // Add a specific effect to handle theme changes
+  useEffect(() => {
+    if (nodes.length > 0) {
+      console.log("[TreeView] Theme changed, updating node styles");
+      
+      // Update node styles when theme changes without recreating the nodes
+      setNodes(currentNodes => {
+        // Create a new array with updated styles but preserve all other node properties
+        const updatedNodes = currentNodes.map(node => {
+          // Extract resourceData from node label props
+          const resourceData = node.data?.label?.props?.resourceData;
+          
+          // Check if this node has the highlighted label
+          const hasHighlightedLabel = 
+            resourceData?.metadata?.labels && 
+            highlightedLabels &&
+            resourceData.metadata.labels[highlightedLabels.key] === highlightedLabels.value;
+          
+          // Create a new style object with the correct properties
+          const newStyle = {
+            ...node.style,
+            backgroundColor: hasHighlightedLabel 
+              ? (theme === "dark" ? 'rgba(47, 134, 255, 0.2)' : 'rgba(47, 134, 255, 0.12)')
+              : (theme === "dark" ? "#333" : "#fff"),
+            color: theme === "dark" ? "#fff" : "#000",
+            boxShadow: hasHighlightedLabel 
+              ? `0 0 0 2px ${theme === "dark" ? '#41dc8e' : '#41dc8e'}`
+              : 'none',
+            transition: "all 0.2s ease-in-out"
+          };
+          
+          // Return the node with updated style
+          return {
+            ...node,
+            style: newStyle
+          };
+        });
+        
+        return updatedNodes;
+      });
+    }
+  }, [theme, nodes.length, highlightedLabels]);
+
   // Force a re-render when highlighted labels change
   useEffect(() => {
     if (dataReceived && websocketData) {
@@ -1446,6 +1501,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
             backgroundColor: hasHighlightedLabel 
               ? (theme === "dark" ? 'rgba(47, 134, 255, 0.2)' : 'rgba(47, 134, 255, 0.12)')
               : (theme === "dark" ? "#333" : "#fff"),
+            color: theme === "dark" ? "#fff" : "#000",
             zIndex: hasHighlightedLabel ? 1000 : 0,
             opacity: !highlightedLabels ? 1 : (hasHighlightedLabel ? 1 : 0.5),
             transition: "all 0.2s ease-in-out"
