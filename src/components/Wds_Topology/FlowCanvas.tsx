@@ -1,6 +1,7 @@
-import { memo, useMemo, useEffect, useCallback } from "react";
+import { memo, useMemo, useEffect, useCallback, useRef } from "react";
 import ReactFlow, { Background, useReactFlow, BackgroundVariant } from "reactflow";
 import { CustomNode, CustomEdge } from "../TreeViewComponent";
+import useLabelHighlightStore from "../../stores/labelHighlightStore";
 
 interface FlowCanvasProps {
   nodes: CustomNode[];
@@ -12,8 +13,10 @@ interface FlowCanvasProps {
 export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
   // renderStartTime betwwen the nodes and edges 
   const { setViewport, getViewport } = useReactFlow();
-  // const startRenderTime = performance.now();
-  // console.log(`FlowCanvas starting render with ${nodes.length} nodes and ${edges.length} edges at ${startRenderTime - renderStartTime.current}ms`);
+  // Access the highlighted labels from the store for component rerendering
+  const highlightedLabels = useLabelHighlightStore((state) => state.highlightedLabels);
+  // Add ref to store the viewport position
+  const viewportRef = useRef({ x: 0, y: 0, zoom: 1.6 });
 
   const positions = useMemo(() => {
     if (nodes.length === 0) return { minX: 0, maxX: 0, minY: 0, maxY: 0 };
@@ -34,6 +37,7 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
     return { minX, maxX, minY, maxY };
   }, [nodes]);
 
+  // This effect runs only once when the component mounts with nodes
   useEffect(() => {
     if (nodes.length > 0) {
       const { minX, minY, maxY } = positions;
@@ -52,10 +56,24 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
       if (reactFlowContainer) {
         reactFlowContainer.style.minHeight = `${Math.max(treeHeight * initialZoom + padding * 2 + topMargin, viewportHeight)}px`;
       }
-
-      setViewport({ x: centerX, y: centerY, zoom: initialZoom });
+      
+      // Only set initial viewport if we don't have a stored one
+      if (viewportRef.current.zoom === 1.6 && viewportRef.current.x === 0 && viewportRef.current.y === 0) {
+        const initialViewport = { x: centerX, y: centerY, zoom: initialZoom };
+        setViewport(initialViewport);
+        viewportRef.current = initialViewport;
+      } else {
+        // Restore saved viewport position
+        setViewport(viewportRef.current);
+      }
     }
   }, [nodes, edges, setViewport, positions]);
+
+  // Save viewport position on any viewport change
+  const onMoveEnd = useCallback(() => {
+    const currentViewport = getViewport();
+    viewportRef.current = currentViewport;
+  }, [getViewport]);
 
   const handleWheel = useCallback(
     (event: React.WheelEvent) => {
@@ -70,9 +88,11 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
         if (event.shiftKey) {
           const newX = x - event.deltaY * scrollSpeed;
           setViewport({ x: newX, y, zoom });
+          viewportRef.current = { x: newX, y, zoom };
         } else if (event.ctrlKey) {
           const newZoom = Math.min(Math.max(zoom + (event.deltaY > 0 ? -zoomSpeed : zoomSpeed), 0.1), 2);
           setViewport({ x, y, zoom: newZoom });
+          viewportRef.current = { x, y, zoom: newZoom };
         } else {
           const { minY, maxY } = positions;
           const treeHeight = maxY - minY;
@@ -83,14 +103,17 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
           const newY = y - event.deltaY * scrollSpeed;
           const clampedY = Math.min(Math.max(newY, minScrollY), maxScrollY);
           setViewport({ x, y: clampedY, zoom });
+          viewportRef.current = { x, y: clampedY, zoom };
         }
       }
     },
     [getViewport, setViewport, positions]
   );
 
-  // const endRenderTime = performance.now();
-  // console.log(`FlowCanvas completed render in ${endRenderTime - startRenderTime}ms at ${endRenderTime - renderStartTime.current}ms`);
+  // Ensure we re-render when highlighted labels change, but we don't reset the viewport
+  useEffect(() => {
+    console.log('FlowCanvas reacting to highlightedLabels change:', highlightedLabels);
+  }, [highlightedLabels]);
 
   return (
     <ReactFlow
@@ -101,6 +124,7 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
       zoomOnScroll={false}
       zoomOnDoubleClick={false}
       zoomOnPinch={false}
+      onMoveEnd={onMoveEnd}
       style={{ 
         background: theme === "dark" ? "rgb(15, 23, 42)" : "rgb(222, 230, 235)", 
         width: "100%", 
