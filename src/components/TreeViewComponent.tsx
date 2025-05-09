@@ -50,6 +50,7 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ListViewComponent from "../components/ListViewComponent";
 import ContextDropdown from "../components/ContextDropdown";
 import { ResourceItem as ListResourceItem } from "./ListViewComponent"; // Import ResourceItem from ListViewComponent
+import useLabelHighlightStore from "../stores/labelHighlightStore";
 
 // Interfaces
 export interface NodeData {
@@ -491,6 +492,7 @@ interface ResourceDataChangeEvent {
 
 const TreeViewComponent = (_props: TreeViewComponentProps) => {
   const theme = useTheme((state) => state.theme);
+  const highlightedLabels = useLabelHighlightStore((state) => state.highlightedLabels);
   const [nodes, setNodes] = useState<CustomNode[]>([]);
   const [edges, setEdges] = useState<CustomEdge[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
@@ -624,6 +626,11 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
       const cachedNode = nodeCache.current.get(id);
 
       const isGroupNode = id.includes(":group");
+      
+      // Check if this node has the highlighted label
+      const hasHighlightedLabel = highlightedLabels && 
+        resourceData?.metadata?.labels && 
+        resourceData.metadata.labels[highlightedLabels.key] === highlightedLabels.value;
 
       const node =
         cachedNode ||
@@ -669,13 +676,50 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
             alignItems: "center",
             justifyContent: "space-between",
             padding: "2px 12px",
-            backgroundColor: theme === "dark" ? "#333" : "#fff",
             color: theme === "dark" ? "#fff" : "#000",
+            ...(hasHighlightedLabel ? {
+              boxShadow: `0 0 0 2px ${theme === "dark" ? '#41dc8e' : '#41dc8e'}`,
+              backgroundColor: theme === "dark" ? 'rgba(68, 152, 255, 0.15)' : 'rgba(68, 152, 255, 0.08)',
+              zIndex: 1000, // Bring highlighted nodes to front
+              opacity: 1,
+              transition: "all 0.2s ease-in-out"
+            } : {
+              // Always set default bg color even when not highlighted
+              backgroundColor: theme === "dark" ? "#333" : "#fff",
+              transition: "all 0.2s ease-in-out",
+              ...(highlightedLabels ? {
+                // If highlighting is active but this node doesn't match
+                opacity: 0.5
+              } : {})
+            }),
           },
           sourcePosition: Position.Right,
           targetPosition: Position.Left,
           isGroup: isGroupNode,
         } as CustomNode);
+
+      // If the node is already cached but highlighting changed, update style
+      if (cachedNode) {
+        // Always update theme-dependent styles for cached nodes
+        node.style = {
+          ...node.style,
+          backgroundColor: hasHighlightedLabel 
+            ? (theme === "dark" ? 'rgba(68, 152, 255, 0.15)' : 'rgba(68, 152, 255, 0.08)')
+            : (theme === "dark" ? "#333" : "#fff"),
+          color: theme === "dark" ? "#fff" : "#000",
+          ...(hasHighlightedLabel ? {
+            boxShadow: `0 0 0 2px ${theme === "dark" ? '#41dc8e' : '#41dc8e'}`,
+            zIndex: 1000,
+            opacity: 1,
+            transition: "all 0.2s ease-in-out"
+          } : highlightedLabels ? {
+            boxShadow: 'none',
+            zIndex: 0,
+            opacity: 0.5,
+            transition: "all 0.2s ease-in-out"
+          } : {}),
+        };
+      }
 
       if (!cachedNode) nodeCache.current.set(id, node);
       newNodes.push(node);
@@ -692,17 +736,23 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
             target: id,
             type: "step",
             animated: true,
-            style: { stroke: theme === "dark" ? "#ccc" : "#a3a3a3", strokeDasharray: "2,2" },
-            markerEnd: { type: MarkerType.ArrowClosed, color: theme === "dark" ? "#ccc" : "#a3a3a3" },
+            style: { stroke: theme === "dark" ? "#777" : "#a3a3a3", strokeDasharray: "2,2" },
+            markerEnd: { type: MarkerType.ArrowClosed, color: theme === "dark" ? "#777" : "#a3a3a3" },
           };
           newEdges.push(edge);
           edgeCache.current.set(edgeId, edge);
         } else {
-          newEdges.push(cachedEdge);
+          // Update the cached edge with current theme colors
+          const updatedEdge = {
+            ...cachedEdge,
+            style: { stroke: theme === "dark" ? "#777" : "#a3a3a3", strokeDasharray: "2,2" },
+            markerEnd: { type: MarkerType.ArrowClosed, color: theme === "dark" ? "#777" : "#a3a3a3" }
+          };
+          newEdges.push(updatedEdge);
         }
       }
     },
-    [getTimeAgo, handleClosePanel, handleMenuOpen, theme, isExpanded]
+    [getTimeAgo, handleClosePanel, handleMenuOpen, theme, isExpanded, highlightedLabels]
   );
 
   const handleContextFilter = useCallback((context: string) => {
@@ -714,6 +764,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
       setIsTransforming(true);
       
       try {
+        // Clear caches to ensure proper redraw with current theme
         nodeCache.current.clear();
         edgeCache.current.clear();
         edgeIdCounter.current = 0;
@@ -1380,26 +1431,93 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
     }
   }, [viewMode, websocketData]);
 
-  // In the handleViewChange function, add logic to recalculate counts
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  // const handleViewChange = useCallback((newView: boolean) => {
-  //   // Convert from boolean to view mode string
-  //   const newViewMode = newView ? 'list' : 'tiles';
-    
-  //   // Only proceed if the view is actually changing
-  //   if (newViewMode !== viewMode) {
-  //     console.log(`[TreeViewComponent] Switching to ${newViewMode} view`);
-  //     setViewMode(newViewMode as 'tiles' | 'list');
+  // Add a specific effect to handle theme changes
+  useEffect(() => {
+    if (nodes.length > 0) {
+      console.log("[TreeView] Theme changed, updating node styles");
       
-  //     // If switching to list view, counts will be updated by the ListViewComponent via onResourceDataChange
-  //     // If switching to tree view, the useEffect above will handle the recalculation
+      // Update node styles when theme changes without recreating the nodes
+      setNodes(currentNodes => {
+        // Create a new array with updated styles but preserve all other node properties
+        const updatedNodes = currentNodes.map(node => {
+          // Extract resourceData from node label props
+          const resourceData = node.data?.label?.props?.resourceData;
+          
+          // Check if this node has the highlighted label
+          const hasHighlightedLabel = 
+            resourceData?.metadata?.labels && 
+            highlightedLabels &&
+            resourceData.metadata.labels[highlightedLabels.key] === highlightedLabels.value;
+          
+          // Create a new style object with the correct properties
+          const newStyle = {
+            ...node.style,
+            backgroundColor: hasHighlightedLabel 
+              ? (theme === "dark" ? 'rgba(47, 134, 255, 0.2)' : 'rgba(47, 134, 255, 0.12)')
+              : (theme === "dark" ? "#333" : "#fff"),
+            color: theme === "dark" ? "#fff" : "#000",
+            boxShadow: hasHighlightedLabel 
+              ? `0 0 0 2px ${theme === "dark" ? '#41dc8e' : '#41dc8e'}`
+              : 'none',
+            transition: "all 0.2s ease-in-out"
+          };
+          
+          // Return the node with updated style
+          return {
+            ...node,
+            style: newStyle
+          };
+        });
+        
+        return updatedNodes;
+      });
+    }
+  }, [theme, nodes.length, highlightedLabels]);
+
+  // Force a re-render when highlighted labels change
+  useEffect(() => {
+    if (dataReceived && websocketData) {
+      console.log("[TreeView] Highlighted labels changed, updating node styles");
       
-  //     // Call the prop callback if provided
-  //     if (_props.onViewModeChange) {
-  //       _props.onViewModeChange(newViewMode as 'tiles' | 'list');
-  //     }
-  //   }
-  // }, [viewMode, _props]);
+      // Update node styles directly based on highlighted labels without recreating the nodes
+      setNodes(currentNodes => {
+        // Create a new array with updated styles but preserve all other node properties
+        const updatedNodes = currentNodes.map(node => {
+          // Extract resourceData from node label props
+          const resourceData = node.data?.label?.props?.resourceData;
+          
+          // Check if this node has the highlighted label
+          const hasHighlightedLabel = 
+            resourceData?.metadata?.labels && 
+            highlightedLabels &&
+            resourceData.metadata.labels[highlightedLabels.key] === highlightedLabels.value;
+          
+          // Create a new style object with the correct properties
+          const newStyle = {
+            ...node.style,
+            boxShadow: hasHighlightedLabel 
+              ? `0 0 0 2px #2F86FF` 
+              : 'none',
+            backgroundColor: hasHighlightedLabel 
+              ? (theme === "dark" ? 'rgba(47, 134, 255, 0.2)' : 'rgba(47, 134, 255, 0.12)')
+              : (theme === "dark" ? "#333" : "#fff"),
+            color: theme === "dark" ? "#fff" : "#000",
+            zIndex: hasHighlightedLabel ? 1000 : 0,
+            opacity: !highlightedLabels ? 1 : (hasHighlightedLabel ? 1 : 0.5),
+            transition: "all 0.2s ease-in-out"
+          };
+          
+          // Return the node with updated style
+          return {
+            ...node,
+            style: newStyle
+          };
+        });
+        
+        return updatedNodes;
+      });
+    }
+  }, [highlightedLabels, dataReceived, websocketData, theme]);
 
   return (
     <Box sx={{ display: "flex", height: "85vh", width: "100%", position: "relative" }}>
