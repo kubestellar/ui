@@ -1,8 +1,9 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { FiMoreVertical } from "react-icons/fi";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import { ResourceItem } from "../TreeViewComponent";
 import useTheme from "../../stores/themeStore"; // Import useTheme for dark mode support
+import useLabelHighlightStore from "../../stores/labelHighlightStore"; // Import the label highlight store
 import { Tooltip, Chip, Box } from "@mui/material";
 
 interface NodeLabelProps {
@@ -26,11 +27,21 @@ export const NodeLabel = memo<NodeLabelProps>(({
   resourceData,
 }) => {
   const theme = useTheme((state) => state.theme); // Get the current theme
-  // const [isHovering, setIsHovering] = useState(false);
+  // We're not using isHovering state for now, but may use it later for additional effects
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [isHovering, setIsHovering] = useState(false);
+  console.log(isHovering);
+
+  // Get highlighted labels state from the store
+  const { highlightedLabels, setHighlightedLabels, clearHighlightedLabels } = useLabelHighlightStore();
   
   // Extract labels from resourceData if available
   const labels = resourceData?.metadata?.labels || {};
   const hasLabels = Object.keys(labels).length > 0;
+  
+  // Check if this node's labels match the highlighted label
+  const hasHighlightedLabel = highlightedLabels && 
+    labels[highlightedLabels.key] === highlightedLabels.value;
   
   // Create label tooltip content
   const labelTooltipContent = hasLabels ? (
@@ -58,11 +69,38 @@ export const NodeLabel = memo<NodeLabelProps>(({
             sx={{
               fontSize: '10px',
               height: '20px',
-              backgroundColor: theme === "dark" ? 'rgba(144, 202, 249, 0.08)' : 'rgba(25, 118, 210, 0.08)',
+              backgroundColor: 
+                (highlightedLabels && highlightedLabels.key === key && highlightedLabels.value === value) 
+                  ? (theme === "dark" ? 'rgba(25, 118, 210, 0.4)' : 'rgba(25, 118, 210, 0.2)')
+                  : (theme === "dark" ? 'rgba(144, 202, 249, 0.08)' : 'rgba(25, 118, 210, 0.08)'),
               color: theme === "dark" ? '#90CAF9' : '#1976d2',
               border: theme === "dark" ? '1px solid rgba(144, 202, 249, 0.5)' : '1px solid rgba(25, 118, 210, 0.5)',
               width: '100%',
-              margin: '0'
+              margin: '0',
+              cursor: 'pointer',
+              '&:hover': {
+                backgroundColor: theme === "dark" ? 'rgba(25, 118, 210, 0.4)' : 'rgba(25, 118, 210, 0.2)',
+              }
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              const isAlreadyHighlighted = highlightedLabels && 
+                highlightedLabels.key === key && 
+                highlightedLabels.value === value;
+              
+              if (isAlreadyHighlighted) {
+                clearHighlightedLabels();
+              } else {
+                setHighlightedLabels({ key, value });
+              }
+            }}
+            onMouseEnter={() => {
+              // Set highlighting on hover
+              setHighlightedLabels({ key, value });
+            }}
+            onMouseLeave={() => {
+              // Clear highlighting when mouse leaves
+              clearHighlightedLabels();
             }}
           />
         ))}
@@ -104,13 +142,13 @@ export const NodeLabel = memo<NodeLabelProps>(({
           padding: "2px 12px", // Matching padding to maintain content position
           borderRadius: "4px", // Increased border radius to match node shape
           border: hasLabels ? `1px solid ${theme === "dark" ? '#3f51b5' : '#3f51b5'}` : "none", // Increased border width and using a more prominent blue
-          // boxShadow: hasLabels && isHovering ? `0 0 0px 0px ${theme === "dark" ? '#3f51b5' : '#3f51b5'}` : "none",
-          backgroundColor: "transparent",
+          boxShadow: hasHighlightedLabel ? `0 0 0 2px ${theme === "dark" ? '#00e676' : '#00c853'}` : "none",
+          backgroundColor: hasHighlightedLabel ? (theme === "dark" ? 'rgba(0, 230, 118, 0.1)' : 'rgba(0, 200, 83, 0.1)') : "transparent",
           transition: "all 0.1s ease",
           width: "calc(100% + 24px)", // Ensure width coverage with the negative margins
         }}
-        // onMouseEnter={() => setIsHovering(true)}
-        // onMouseLeave={() => setIsHovering(false)}
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
       >
         <div
           style={{ 
