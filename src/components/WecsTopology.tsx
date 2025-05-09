@@ -171,6 +171,13 @@ interface SelectedNode {
   cluster?: string;
 }
 
+interface ContextMenuState {
+  nodeId: string | null;
+  x: number;
+  y: number;
+  nodeType: string | null;
+}
+
 const nodeStyle: React.CSSProperties = {
   padding: "2px 12px",
   fontSize: "6px",
@@ -296,7 +303,7 @@ const WecsTreeview = () => {
   // const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
   // const [snackbarMessage, setSnackbarMessage] = useState<string>("");
   // const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
-  const [contextMenu, setContextMenu] = useState<{ nodeId: string | null; x: number; y: number } | null>(null);
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const [showCreateOptions, setShowCreateOptions] = useState(false);
   const [activeOption, setActiveOption] = useState<string | null>("option1");
   const [selectedNode, setSelectedNode] = useState<SelectedNode | null>(null);
@@ -352,7 +359,12 @@ const WecsTreeview = () => {
   const handleMenuOpen = useCallback((event: React.MouseEvent, nodeId: string) => {
     event.preventDefault();
     event.stopPropagation();
-    setContextMenu({ nodeId, x: event.clientX, y: event.clientY });
+    let nodeType: string | null = null;
+    if (nodeId.includes(":")) {
+      const nodeIdParts = nodeId.split(":");
+      nodeType = nodeIdParts[0];
+    }
+    setContextMenu({ nodeId, x: event.clientX, y: event.clientY, nodeType });
   }, []);
 
   const handleClosePanel = useCallback(() => {
@@ -997,11 +1009,6 @@ const WecsTreeview = () => {
             return;
           }
 
-          if (nodeType === "cluster") {
-            handleMenuClose();
-            return;
-          }
-
           const resourceData = node.data.label.props.resourceData;
 
           switch (action) {
@@ -1261,7 +1268,9 @@ const WecsTreeview = () => {
             >
               <MenuItem onClick={() => handleMenuAction("Details")}>Details</MenuItem>
               <MenuItem onClick={() => handleMenuAction("Edit")}>Edit</MenuItem>
-              <MenuItem onClick={() => handleMenuAction("Logs")}>Logs</MenuItem>
+              {contextMenu.nodeType !== "cluster" && (
+                <MenuItem onClick={() => handleMenuAction("Logs")}>Logs</MenuItem>
+              )}
             </Menu>
           )}
         </Box>

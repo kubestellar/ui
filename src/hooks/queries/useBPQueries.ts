@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import { toast } from 'react-hot-toast';
-import { BindingPolicyInfo } from '../../types/bindingPolicy';
+import { BindingPolicyInfo, Workload } from '../../types/bindingPolicy';
+import { useState, useCallback } from 'react';
 
 interface RawBindingPolicy {
   kind: string;
@@ -57,6 +58,8 @@ interface DownsyncItem {
 interface ResourceConfig {
   type: string;
   createOnly: boolean;
+  apiGroup?: string;
+  includeCRD?: boolean;
 }
 
 interface GenerateYamlRequest {
@@ -104,6 +107,34 @@ interface QuickConnectResponse {
     yaml: string;
   };
   message: string;
+}
+
+interface WorkloadSSEData {
+  namespaced: Record<string, Record<string, Array<{
+    createdAt: string;
+    kind: string;
+    labels: Record<string, string> | null;
+    name: string;
+    namespace: string;
+    uid: string;
+    version: string;
+  }>>>;
+  clusterScoped: Record<string, Array<{
+    createdAt: string;
+    kind: string;
+    labels: Record<string, string> | null;
+    name: string;
+    namespace: string;
+    uid: string;
+    version: string;
+  }>>;
+}
+
+interface WorkloadSSEState {
+  status: 'idle' | 'loading' | 'success' | 'error';
+  progress: number;
+  data: WorkloadSSEData | null;
+  error: Error | null;
 }
 
 export const useBPQueries = () => {
@@ -185,7 +216,7 @@ export const useBPQueries = () => {
   };
 
   // GET policy details with YAML from /api/bp and status from /api/bp/status
-  const useBindingPolicyDetails = (policyName: string | undefined) => {
+  const useBindingPolicyDetails = (policyName: string | undefined, options?: { refetchInterval?: number }) => {
     return useQuery<BindingPolicyInfo, Error>({
       queryKey: ['binding-policy-details', policyName],
       queryFn: async () => {
@@ -286,6 +317,7 @@ export const useBPQueries = () => {
         return formattedPolicy;
       },
       enabled: !!policyName,
+      refetchInterval: options?.refetchInterval,
       // Provide initial data for when the query is loading
       placeholderData: (currentData) => {
         // If we already have data, return it
@@ -383,9 +415,20 @@ export const useBPQueries = () => {
           }
         }
       },
-      onSuccess: () => {
+      onSuccess: (_data, variables) => {
         queryClient.invalidateQueries({ queryKey: ['binding-policies'] });
         toast.success('Binding policy created successfully');
+        
+        setTimeout(() => {
+          console.log(`Refetching binding policies after delay to update status for ${variables.name}`);
+          queryClient.invalidateQueries({ queryKey: ['binding-policies'] });
+          
+          if (variables.name) {
+            queryClient.invalidateQueries({ 
+              queryKey: ['binding-policy-details', variables.name] 
+            });
+          }
+        }, 1500); // 1.5 second delay to ensure status change is captured
       },
       onError: (error: Error) => {
         toast.error('Failed to create binding policy');
@@ -483,19 +526,110 @@ export const useBPQueries = () => {
         if (!formattedRequest.resources || formattedRequest.resources.length === 0) {
           console.warn("No resources provided, adding default resources");
           formattedRequest.resources = [
+            { type: 'customresourcedefinitions', createOnly: false },
             { type: 'namespaces', createOnly: true },
+            { type: 'statefulsets', createOnly: false },
+            { type: 'serviceaccounts', createOnly: false },
+            { type: 'roles', createOnly: false },
+            { type: 'rolebindings', createOnly: false },
+            { type: 'clusterroles', createOnly: false },
+            { type: 'clusterrolebindings', createOnly: false },
+            { type: 'persistentvolumeclaims', createOnly: false },
             { type: 'deployments', createOnly: false },
             { type: 'services', createOnly: false }, 
-            { type: 'replicasets', createOnly: false }
+            { type: 'replicasets', createOnly: false },
+            { type: 'configmaps', createOnly: false },
+            { type: 'secrets', createOnly: false }
           ];
         } else if (formattedRequest.resources.length === 1 && 
                   formattedRequest.resources[0].type === 'namespaces') {
           console.warn("Only namespaces resource provided, adding default workload resources");
           formattedRequest.resources.push(
+            { type: 'customresourcedefinitions', createOnly: false },
+            { type: 'statefulsets', createOnly: false },
+            { type: 'serviceaccounts', createOnly: false },
+            { type: 'roles', createOnly: false },
+            { type: 'rolebindings', createOnly: false },
+            { type: 'clusterroles', createOnly: false },
+            { type: 'clusterrolebindings', createOnly: false },
+            { type: 'persistentvolumeclaims', createOnly: false },
             { type: 'deployments', createOnly: false },
             { type: 'services', createOnly: false },
-            { type: 'replicasets', createOnly: false }
+            { type: 'replicasets', createOnly: false },
+            { type: 'configmaps', createOnly: false },
+            { type: 'secrets', createOnly: false }
           );
+        }
+        
+        // Check for custom resources and ensure they have apiGroup if possible
+        formattedRequest.resources = formattedRequest.resources.map(resource => {
+          const standardResources = [
+            'pods', 'services', 'deployments', 'statefulsets', 'daemonsets',
+            'configmaps', 'secrets', 'namespaces', 'persistentvolumes', 'persistentvolumeclaims',
+            'serviceaccounts', 'roles', 'rolebindings', 'clusterroles', 'clusterrolebindings',
+            'ingresses', 'jobs', 'cronjobs', 'events', 'horizontalpodautoscalers',
+            'endpoints', 'replicasets', 'networkpolicies', 'limitranges', 'resourcequotas',
+            'customresourcedefinitions',
+          ];
+          
+          if (!standardResources.includes(resource.type)) {
+            const newResource = { ...resource };
+            
+            // Explicitly set includeCRD to true for all custom resources
+            newResource.includeCRD = true;
+            
+            // If API group is already set, keep it
+            if (!newResource.apiGroup) {
+              const singular = resource.type.endsWith('s')
+                ? resource.type.slice(0, -1) 
+                : resource.type;
+              
+
+              if (/^argo/.test(resource.type)) {
+
+                newResource.apiGroup = 'argoproj.io';
+                console.log(`Assigning argoproj.io API group to ${resource.type} based on name pattern`);
+              } else if (/^istio/.test(resource.type) || /gateway|service|route/.test(resource.type)) {
+                newResource.apiGroup = 'networking.istio.io';
+                console.log(`Assigning networking.istio.io API group to ${resource.type} based on name pattern`);
+              } else {
+                let domain = 'k8s.io';
+                
+                const parts = singular.split('.');
+                if (parts.length > 1) {
+                  domain = parts.slice(1).join('.');
+                  newResource.apiGroup = domain;
+                } else {
+                  
+                  newResource.apiGroup = `${parts[0]}.${domain}`;
+                }
+              }
+            }
+            
+            console.log(`Determined API group for custom resource ${resource.type}: ${newResource.apiGroup}`);
+            return newResource;
+          }
+          
+          return resource;
+        });
+         // Check if customresourcedefinitions is explicitly included by the user
+         const userExplicitlyIncludedCRDs = formattedRequest.resources.some(
+          res => res.type === 'customresourcedefinitions'
+        );
+        
+        if (userExplicitlyIncludedCRDs) {
+          console.log("User explicitly included customresourcedefinitions in resources");
+        }
+        // Check if statefulsets are explicitly included
+        const hasStatefulSets = formattedRequest.resources.some(
+          res => res.type === 'statefulsets'
+        );
+
+        // If statefulsets are not included, add them with high priority
+        if (!hasStatefulSets) {
+          console.log("StatefulSets not explicitly included - adding them to support database workloads");
+          // Add to beginning of array to ensure they get processed first
+          formattedRequest.resources.unshift({ type: 'statefulsets', createOnly: false });
         }
         
         // Make sure the request has workloadLabels
@@ -519,7 +653,7 @@ export const useBPQueries = () => {
           // Use the provided namespace or default to 'default'
           formattedRequest.namespacesToSync = [formattedRequest.namespace || 'default'];
         }
-        
+
         // Add detailed console logging with pretty printing
         console.log("📤 SENDING REQUEST TO QUICK-CONNECT API:");
         console.log(JSON.stringify(formattedRequest, null, 2));
@@ -532,9 +666,22 @@ export const useBPQueries = () => {
         console.log("Quick connect response:", response.data);
         return response.data;
       },
-      onSuccess: () => {
+      onSuccess: (data) => {
         queryClient.invalidateQueries({ queryKey: ['binding-policies'] });
         toast.success('Binding policy created successfully');
+        
+        const createdPolicyName = data?.bindingPolicy?.name;
+        
+        setTimeout(() => {
+          console.log(`Refetching binding policies after delay to update status for quick-connect policy`);
+          queryClient.invalidateQueries({ queryKey: ['binding-policies'] });
+          
+          if (createdPolicyName) {
+            queryClient.invalidateQueries({ 
+              queryKey: ['binding-policy-details', createdPolicyName] 
+            });
+          }
+        }, 1500);  
       },
       onError: (error: Error) => {
         console.error("Error creating quick connect binding policy:", error);
@@ -570,21 +717,114 @@ export const useBPQueries = () => {
         
         // Validate and enhance resources if needed
         if (!formattedRequest.resources || formattedRequest.resources.length === 0) {
-          console.warn("No resources provided for YAML generation, adding default resources");
+          console.warn("No resources provided, adding default resources");
           formattedRequest.resources = [
+            { type: 'customresourcedefinitions', createOnly: false },
             { type: 'namespaces', createOnly: true },
+            { type: 'statefulsets', createOnly: false },
+            { type: 'serviceaccounts', createOnly: false },
+            { type: 'roles', createOnly: false },
+            { type: 'rolebindings', createOnly: false },
+            { type: 'clusterroles', createOnly: false },
+            { type: 'clusterrolebindings', createOnly: false },
+            { type: 'persistentvolumeclaims', createOnly: false },
             { type: 'deployments', createOnly: false },
             { type: 'services', createOnly: false }, 
-            { type: 'replicasets', createOnly: false }
+            { type: 'replicasets', createOnly: false },
+            { type: 'configmaps', createOnly: false },
+            { type: 'secrets', createOnly: false }
           ];
         } else if (formattedRequest.resources.length === 1 && 
                   formattedRequest.resources[0].type === 'namespaces') {
-          console.warn("Only namespaces resource provided for YAML generation, adding default workload resources");
+          console.warn("Only namespaces resource provided, adding default workload resources");
           formattedRequest.resources.push(
+            { type: 'customresourcedefinitions', createOnly: false },
+            { type: 'statefulsets', createOnly: false },
+            { type: 'serviceaccounts', createOnly: false },
+            { type: 'roles', createOnly: false },
+            { type: 'rolebindings', createOnly: false },
+            { type: 'clusterroles', createOnly: false },
+            { type: 'clusterrolebindings', createOnly: false },
+            { type: 'persistentvolumeclaims', createOnly: false },
             { type: 'deployments', createOnly: false },
             { type: 'services', createOnly: false },
-            { type: 'replicasets', createOnly: false }
+            { type: 'replicasets', createOnly: false },
+            { type: 'configmaps', createOnly: false },
+            { type: 'secrets', createOnly: false }
           );
+        }
+        
+        // Check for custom resources and ensure they have apiGroup if possible
+        formattedRequest.resources = formattedRequest.resources.map(resource => {
+          // Check if this looks like a CRD (not one of the standard k8s resources)
+          const standardResources = [
+            'pods', 'services', 'deployments', 'statefulsets', 'daemonsets',
+            'configmaps', 'secrets', 'namespaces', 'persistentvolumes', 'persistentvolumeclaims',
+            'serviceaccounts', 'roles', 'rolebindings', 'clusterroles', 'clusterrolebindings',
+            'ingresses', 'jobs', 'cronjobs', 'events', 'horizontalpodautoscalers',
+            'endpoints', 'replicasets', 'networkpolicies', 'limitranges', 'resourcequotas',
+            'customresourcedefinitions',
+          ];
+          
+          if (!standardResources.includes(resource.type)) {
+            const newResource = { ...resource };
+            
+            newResource.includeCRD = true;
+            
+            // If API group is already set, keep it
+            if (!newResource.apiGroup) {
+              // Get singular form
+              const singular = resource.type.endsWith('s')
+                ? resource.type.slice(0, -1) 
+                : resource.type;
+             
+              if (/^argo/.test(resource.type)) {
+               
+                newResource.apiGroup = 'argoproj.io';
+                console.log(`Assigning argoproj.io API group to ${resource.type} based on name pattern`);
+              } else if (/^istio/.test(resource.type) || /gateway|service|route/.test(resource.type)) {
+                newResource.apiGroup = 'networking.istio.io';
+                console.log(`Assigning networking.istio.io API group to ${resource.type} based on name pattern`);
+              } else {
+                let domain = 'k8s.io';
+                
+                // Extract resource name that might be part of a domain
+                const parts = singular.split('.');
+                if (parts.length > 1) {
+                  // If resource has dots, use everything after first dot as domain
+                  domain = parts.slice(1).join('.');
+                  newResource.apiGroup = domain;
+                } else {
+                  
+                  newResource.apiGroup = `${parts[0]}.${domain}`;
+                }
+              }
+            }
+            
+            console.log(`Determined API group for custom resource ${resource.type}: ${newResource.apiGroup}`);
+            return newResource;
+          }
+          
+          return resource;
+        });
+ 
+        // Check if customresourcedefinitions is explicitly included by the user
+        const userExplicitlyIncludedCRDs = formattedRequest.resources.some(
+          res => res.type === 'customresourcedefinitions'
+        );
+        
+        if (userExplicitlyIncludedCRDs) {
+          console.log("User explicitly included customresourcedefinitions in resources");
+        }       
+        // Check if statefulsets are explicitly included
+        const hasStatefulSets = formattedRequest.resources.some(
+          res => res.type === 'statefulsets'
+        );
+
+        // If statefulsets are not included, add them with high priority
+        if (!hasStatefulSets) {
+          console.log("StatefulSets not explicitly included - adding them to support database workloads");
+          formattedRequest.resources.unshift({ type: 'statefulsets', createOnly: false });
         }
         
         // Ensure namespacesToSync is set if not provided
@@ -605,6 +845,266 @@ export const useBPQueries = () => {
     });
   };
 
+  // Get workloads and their labels using SSE
+  const useWorkloadSSE = () => {
+    const [state, setState] = useState<WorkloadSSEState>({
+      status: 'idle',
+      progress: 0,
+      data: null,
+      error: null
+    });
+
+    const startSSEConnection = useCallback(() => {
+      setState({
+        status: 'loading',
+        progress: 0,
+        data: null,
+        error: null
+      });
+
+      // Initialize empty data structure for incremental updates
+      const incrementalData: WorkloadSSEData = {
+        namespaced: {},
+        clusterScoped: {}
+      };
+
+      // Get the base URL from the api client
+      const baseUrl = api.defaults.baseURL || '';
+      const url = `${baseUrl}/api/wds/list-sse`;
+      
+      console.log('Starting SSE connection to:', url);
+      
+      // Create EventSource connection with credentials enabled
+      const eventSource = new EventSource(url, { withCredentials: true });
+      
+      // Handle connection open
+      eventSource.onopen = () => {
+        console.log('SSE connection established');
+      };
+
+      // Handle progress events with incremental processing
+      eventSource.addEventListener('progress', (event) => {
+        try {
+          const progressData = JSON.parse(event.data);
+          console.log('SSE progress event:', progressData);
+
+          setState(prevState => ({
+            ...prevState,
+            progress: Math.min(prevState.progress + 5, 95) // Cap at 95% until complete
+          }));
+
+          // Process incremental data from progress event
+          if (progressData && progressData.data && progressData.data.new) {
+            const newResources = progressData.data.new;
+            const resourceKind = progressData.kind;
+            const namespace = progressData.namespace;
+            const scope = progressData.scope;
+
+            if (scope === 'namespaced' && namespace) {
+              if (!incrementalData.namespaced[namespace]) {
+                incrementalData.namespaced[namespace] = {};
+              }
+              
+              if (!incrementalData.namespaced[namespace][resourceKind]) {
+                incrementalData.namespaced[namespace][resourceKind] = [];
+              }
+
+              incrementalData.namespaced[namespace][resourceKind] = [
+                ...incrementalData.namespaced[namespace][resourceKind],
+                ...newResources
+              ];
+            } else if (scope === 'cluster') {
+              if (!incrementalData.clusterScoped[resourceKind]) {
+                incrementalData.clusterScoped[resourceKind] = [];
+              }
+
+              incrementalData.clusterScoped[resourceKind] = [
+                ...incrementalData.clusterScoped[resourceKind],
+                ...newResources
+              ];
+            }
+
+            setState(prevState => ({
+              ...prevState,
+              status: 'loading',
+              data: { ...incrementalData }
+            }));
+          }
+        } catch (error) {
+          console.error('Error parsing progress event data:', error);
+          // Don't fail the whole connection for a single progress event parsing error
+        }
+      });
+
+      // Handle completed event (backend calls it 'complete', not 'completed')
+      eventSource.addEventListener('complete', (event) => {
+        try {
+          console.log('SSE complete event received, parsing data');
+          const parsedData = JSON.parse(event.data);
+          
+          setState({
+            status: 'success',
+            progress: 100,
+            data: parsedData,
+            error: null
+          });
+
+          console.log('SSE data successfully processed');
+          // Close the connection since we have the complete data
+          eventSource.close();
+        } catch (error) {
+          console.error('Error parsing complete event data:', error);
+          
+          setState(prevState => ({
+            ...prevState,
+            status: 'error',
+            error: new Error('Failed to parse complete event data')
+          }));
+          
+          eventSource.close();
+        }
+      });
+
+      eventSource.onmessage = (event) => {
+        console.log('SSE general message:', event.data);
+      };
+
+      eventSource.onerror = (error) => {
+        console.error('SSE connection error:', error);
+        
+        if (error instanceof Event && !error.target) {
+          console.error('Possible CORS error with EventSource');
+        }
+        
+        setState(prevState => ({
+          ...prevState,
+          status: 'error',
+          error: new Error('Failed to connect to SSE endpoint. Please ensure you have proper permissions and the server is running.')
+        }));
+        
+        // Close the connection on error
+        eventSource.close();
+      };
+
+      // Return cleanup function
+      return () => {
+        console.log('Closing SSE connection');
+        eventSource.close();
+      };
+    }, []);
+
+    // Extract workloads with their labels from the SSE data
+    const extractWorkloads = useCallback(() => {
+      if (!state.data) return [];
+
+      const workloads: Workload[] = [];
+      
+      const excludedTypes = new Set([
+        'Endpoints', 
+        'EndpointSlice',
+        'ControllerRevision'
+      ]);
+      
+      const excludedNamespaces = new Set(['default', 'kube-system', 'kube-public']);
+      
+      if (state.data.namespaced) {
+        Object.entries(state.data.namespaced).forEach(([namespace, resourceTypes]) => {
+          if (excludedNamespaces.has(namespace)) {
+            return;
+          }
+          
+          Object.entries(resourceTypes).forEach(([resourceType, resources]) => {
+            // Skip namespace metadata and excluded resource types
+            if (resourceType === '__namespaceMetaData' || excludedTypes.has(resourceType)) {
+              return;
+            }
+            
+            // Process workload resources
+            resources.forEach(resource => {
+              if (resource.labels) {
+                workloads.push({
+                  name: resource.name,
+                  namespace: namespace,
+                  kind: resource.kind,
+                  labels: resource.labels,
+                  creationTime: resource.createdAt
+                });
+              }
+            });
+          });
+        });
+      }
+      
+      // Process cluster-scoped resources
+      if (state.data.clusterScoped) {
+        // Define which cluster-scoped resource types to include
+        const includeClusterResourceTypes = new Set([
+          'CustomResourceDefinition',
+          'Namespace'
+        ]);
+
+        Object.entries(state.data.clusterScoped).forEach(([resourceType, resources]) => {
+          if (excludedTypes.has(resourceType) || !includeClusterResourceTypes.has(resourceType)) {
+            return;
+          }
+          
+          // Process cluster-scoped resources
+          resources.forEach(resource => {
+            if (resource.labels) {
+              if (resourceType === 'Namespace' && 
+                  (resource.name === 'default' || 
+                   resource.name === 'kube-system' || 
+                   resource.name === 'kube-public' || 
+                   resource.name === 'kubestellar-report' ||
+                   resource.name === 'kube-node-lease')) {
+                return;
+              }
+              
+              workloads.push({
+                name: resource.name,
+                namespace: resource.namespace || 'cluster-scoped',
+                kind: resource.kind,
+                labels: resource.labels,
+                creationTime: resource.createdAt
+              });
+            }
+          });
+        });
+      }
+
+      console.log(`Extracted ${workloads.length} workloads after filtering (default namespace excluded)`);
+      return workloads;
+    }, [state.data]);
+
+    // Provide a way to get unique label keys and values for filtering
+    const extractUniqueLabels = useCallback(() => {
+      const workloads = extractWorkloads();
+      const labelMap: Record<string, Set<string>> = {};
+      
+      workloads.forEach(workload => {
+        if (workload.labels) {
+          Object.entries(workload.labels).forEach(([key, value]) => {
+            if (!labelMap[key]) {
+              labelMap[key] = new Set();
+            }
+            labelMap[key].add(value);
+          });
+        }
+      });
+      
+      return Object.fromEntries(
+        Object.entries(labelMap).map(([key, values]) => [key, Array.from(values)])
+      );
+    }, [extractWorkloads]);
+
+    return {
+      state,
+      startSSEConnection,
+      extractWorkloads,
+      extractUniqueLabels
+    };
+  };
+
   return {
     useBindingPolicies,
     useBindingPolicyDetails,
@@ -615,5 +1115,6 @@ export const useBPQueries = () => {
     useDeploy,
     useGenerateBindingPolicyYaml,
     useQuickConnect,
+    useWorkloadSSE,
   };
 };

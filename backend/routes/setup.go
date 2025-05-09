@@ -22,4 +22,5 @@ func SetupRoutes(router *gin.Engine) {
 	plugins.Pm.SetupPluginsRoutes(router)
 
 	setupAuthRoutes(router)
+	setupArtifactHubRoutes(router)
 }

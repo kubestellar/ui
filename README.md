@@ -5,6 +5,10 @@ Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI 
 1. **Frontend**: Built with React and TypeScript
 2. **Backend**: Built with Golang using the Gin framework.
 
+<a href="https://kubernetes.slack.com/archives/C058SUSL5AA"> 
+  <img alt="Join Slack" src="https://img.shields.io/badge/KubeStellar-Join%20Slack-blue?logo=slack">
+</a>
+
 ## Contents
 
 - [Prerequisites](#prerequisites)
@@ -43,7 +47,7 @@ Before you begin, ensure that your system meets the following requirements:
 
 - **Kubestellar guide**: [Guide](https://docs.kubestellar.io/release-0.25.1/direct/get-started/)
  
-- ### 5. Make and Air
+### 5. Make and Air
 
 - Make sure you have "make" installed to directly execute the backend script via makefile
 - Air helps in hot reloading of the backend
@@ -286,6 +290,11 @@ If you want to pull an image for a specific version (e.g., commit hash), use:
 1. **Backend API**: [http://localhost:4000](http://localhost:4000)
 2. **Frontend UI**: [http://localhost:5173](http://localhost:5173)
 
+
+#### Dashboard Default Login Credentials
+
+* **Username: admin**
+* **Password: admin**
 
 <div>
 <h2><font size="6"><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Red%20Heart.png" alt="Red Heart" width="40" height="40" /> Contributors </font></h2>

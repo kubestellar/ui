@@ -1,4 +1,4 @@
-import { Box, Button, FormControl, MenuItem, Select, SelectChangeEvent, TextField, Typography, FormControlLabel, Radio, RadioGroup, Checkbox, Menu, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import { Box, Button, FormControl, MenuItem, Select, SelectChangeEvent, TextField, Typography, FormControlLabel, Radio, RadioGroup, Checkbox, Dialog, DialogTitle, DialogContent, DialogActions, Menu } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { StyledContainer } from "../StyledComponents";
@@ -8,6 +8,7 @@ import { AxiosError } from "axios";
 import { toast } from "react-hot-toast";
 import { MoreVerticalIcon } from "lucide-react";
 import { api } from "../../lib/api";
+import WorkloadLabelInput from "./WorkloadLabelInput";
 
 interface FormData {
   repositoryUrl: string;
@@ -15,6 +16,7 @@ interface FormData {
   credentials: string;
   branchSpecifier: string;
   webhook: string;
+  workload_label: string;
 }
 
 interface Props {
@@ -30,6 +32,13 @@ interface Props {
   validateForm: () => boolean;
   handleDeploy: () => void;
   handleCancelClick: () => void;
+}
+
+interface PreviousDeployment {
+  id: string;
+  repo_url: string;
+  folder_path: string;
+  branch: string;
 }
 
 const CreateFromYourGitHub = ({ formData, setFormData, error, credentialsList, handleCredentialChange, handleOpenCredentialDialog, handleOpenWebhookDialog, theme }: {
@@ -57,17 +66,6 @@ const CreateFromYourGitHub = ({ formData, setFormData, error, credentialsList, h
       height: "55vh",
     }}
   >
-    <Typography
-      variant="subtitle1"
-      sx={{
-        fontWeight: 600,
-        fontSize: "20px",
-        color: theme === "dark" ? "#d4d4d4" : "#333",
-        mt: 1,
-      }}
-    >
-      Create from your GitHub Repository and deploy!
-    </Typography>
     <Box>
       <Typography
         variant="subtitle1"
@@ -383,25 +381,25 @@ export const GitHubTab = ({
   const [selectedOption, setSelectedOption] = useState("createOwn");
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [popularLoading, setPopularLoading] = useState(false);
-  const [previousDeployments, setPreviousDeployments] = useState<string[]>([]);
+  const [previousDeployments, setPreviousDeployments] = useState<PreviousDeployment[]>([]);
   const [previousLoading, setPreviousLoading] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ deploymentId: string | null; x: number; y: number } | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [deleteDeploymentId, setDeleteDeploymentId] = useState<string | null>(null);
 
   const popularRepositories = [
-    { 
-      repo_url: "https://github.com/onkar717/gitops-example", 
+    {
+      repo_url: "https://github.com/onkar717/gitops-example",
       folder_path: "k8s-specifications",
       branch: "main"
     },
-    { 
-      repo_url: "https://github.com/example/repo1", 
+    {
+      repo_url: "https://github.com/example/repo1",
       folder_path: "manifests",
       branch: "main"
     },
-    { 
-      repo_url: "https://github.com/example/repo2", 
+    {
+      repo_url: "https://github.com/example/repo2",
       folder_path: "kubernetes",
       branch: "master"
     }
@@ -414,7 +412,12 @@ export const GitHubTab = ({
       try {
         const response = await api.get("/api/deployments/github/list");
         if (response.status === 200) {
-          const deployments = response.data.deployments.map((deployment: { id: string }) => deployment.id);
+          const deployments = response.data.deployments.map((deployment: PreviousDeployment) => ({
+            id: deployment.id,
+            repo_url: deployment.repo_url,
+            folder_path: deployment.folder_path,
+            branch: deployment.branch || "main"
+          }));
           setPreviousDeployments(deployments);
         } else {
           throw new Error("Failed to fetch previous deployments");
@@ -436,11 +439,6 @@ export const GitHubTab = ({
   const handleOptionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedOption(event.target.value);
     setSelectedRepo(null); // Reset selected repo when switching options
-  };
-
-  const extractRepoName = (url: string) => {
-    const parts = url.split('/');
-    return parts[parts.length - 1];
   };
 
   const handleRepoSelection = (repoUrl: string) => {
@@ -465,7 +463,8 @@ export const GitHubTab = ({
         `/api/deploy?created_by_me=true&branch=${selectedRepoData.branch}`,
         {
           repo_url: selectedRepoData.repo_url,
-          folder_path: selectedRepoData.folder_path
+          folder_path: selectedRepoData.folder_path,
+          workload_label: formData.workload_label
         },
         {
           headers: {
@@ -494,10 +493,10 @@ export const GitHubTab = ({
     event.stopPropagation();
     // Use fixed positioning based on the element's position instead of mouse coordinates
     const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-    setContextMenu({ 
-      deploymentId, 
+    setContextMenu({
+      deploymentId,
       x: rect.right,  // Position at the right edge of the icon
-      y: rect.top + rect.height/2  // Position at the vertical center
+      y: rect.top + rect.height / 2  // Position at the vertical center
     });
   }, []);
 
@@ -510,7 +509,7 @@ export const GitHubTab = ({
       const deploymentId = contextMenu.deploymentId;
       // First close the menu completely
       handleMenuClose();
-      
+
       // Use a slightly longer timeout to ensure complete separation between menu closing and dialog opening
       setTimeout(() => {
         // Only then set the deployment ID and open the dialog
@@ -526,7 +525,7 @@ export const GitHubTab = ({
     try {
       const response = await api.delete(`/api/deployments/github/${deploymentId}`);
       if (response.status === 200) {
-        setPreviousDeployments((prev) => prev.filter((id) => id !== deploymentId));
+        setPreviousDeployments((prev) => prev.filter((dep) => dep.id !== deploymentId));
         toast.success(`Deployment "${deploymentId}" deleted successfully!`);
       } else {
         throw new Error("Failed to delete deployment");
@@ -550,7 +549,7 @@ export const GitHubTab = ({
     setDeleteDialogOpen(false);
     setDeleteDeploymentId(null);
   }, []);
-  
+
   // Create a stable function reference for dialog operations - moved after handleDeleteCancel
   const dialogProps = useCallback(() => ({
     open: deleteDialogOpen,
@@ -629,7 +628,7 @@ export const GitHubTab = ({
     const baseColor = isDelete ? "#d32f2f" : "transparent";
     const hoverColor = isDelete ? "#b71c1c" : "rgba(47, 134, 255, 0.1)";
     const textColor = isDelete ? "#fff" : "#2F86FF";
-    
+
     return {
       textTransform: "none",
       fontWeight: isDelete ? 500 : 600,
@@ -647,7 +646,7 @@ export const GitHubTab = ({
       animation: "none",
       opacity: 1,
       // Prevent hover state transitions
-      "&:hover": { 
+      "&:hover": {
         backgroundColor: hoverColor,
         boxShadow: "none",
         transition: "none"
@@ -664,111 +663,44 @@ export const GitHubTab = ({
     };
   }, []);
 
-  const PopularRepositoriesForm = () => (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        flex: 1,
-        overflow: "hidden",
-        height: "55vh",
-      }}
-    >
-      <Box
-        sx={{
-          position: "sticky",
-          top: 0,
-          zIndex: 1,
-          borderRadius: "4px"
-        }}
-      >
-        <Typography
-          variant="subtitle1"
-          sx={{
-            fontWeight: 600,
-            fontSize: "20px",
-            color: theme === "dark" ? "#d4d4d4" : "#333",
-            mb: 3,
-            mt: 1,
-          }}
-        >
-          Select a Popular Repository to deploy!
-        </Typography>
-        {selectedRepo && (
-          <Box
-            sx={{
-              width: "100%",
-              margin: "0 auto 25px auto",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              p: 1.6,
-              borderRadius: "4px",
-              border: "1px solid",
-              borderColor: theme === "dark" ? "#444" : "#e0e0e0",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <CheckCircleIcon color="success" sx={{ mr: 1 }} />
-              <Typography variant="body1" sx={{ color: theme === "dark" ? "#fff" : "#333" }}>
-                <strong>{extractRepoName(selectedRepo)}</strong>
-              </Typography>
-            </Box>
-          </Box>
-        )}
-      </Box>
-
-      <Box
-        sx={{
-          flex: 1,
-          overflowY: "auto",
-          "&::-webkit-scrollbar": {
-            display: "none",
+  const handlePreviousDeploymentDeploy = async () => {
+    if (!selectedRepo) {
+      toast.error("Please select a previous deployment to redeploy.");
+      return;
+    }
+    setPreviousLoading(true);
+    try {
+      const selectedDeployment = previousDeployments.find(dep => dep.id === selectedRepo);
+      if (!selectedDeployment) {
+        throw new Error("Selected deployment data not found");
+      }
+      const response = await api.post(
+        `/api/deploy?created_by_me=true&branch=${selectedDeployment.branch}`,
+        {
+          repo_url: selectedDeployment.repo_url,
+          folder_path: selectedDeployment.folder_path,
+          workload_label: formData.workload_label
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
           },
-          scrollbarWidth: "none",
-          "-ms-overflow-style": "none",
-          display: "flex",
-          flexDirection: "column",
-          gap: 2,
-        }}
-      >
-        {popularRepositories.map((repo) => (
-          <Box
-            key={repo.repo_url}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              padding: "8px",
-              borderRadius: "4px",
-              backgroundColor: theme === "dark" ? "#00000033" : "#f9f9f9",
-              "&:hover": {
-                backgroundColor: theme === "dark" ? "#2a2a2a" : "#f1f1f1",
-              },
-            }}
-          >
-            <Checkbox
-              checked={selectedRepo === repo.repo_url}
-              onChange={() => handleRepoSelection(repo.repo_url)}
-              sx={{
-                color: theme === "dark" ? "#d4d4d4" : "#666",
-                "&.Mui-checked": {
-                  color: "#1976d2",
-                },
-              }}
-            />
-            <Typography
-              sx={{
-                fontSize: "0.875rem",
-                color: theme === "dark" ? "#d4d4d4" : "#333",
-              }}
-            >
-              {extractRepoName(repo.repo_url)}
-            </Typography>
-          </Box>
-        ))}
-      </Box>
-    </Box>
-  );
+        }
+      );
+      if (response.status === 200 || response.status === 201) {
+        toast.success(`Previous deployment redeployed successfully!`);
+        setSelectedRepo(null);
+        setTimeout(() => window.location.reload(), 4000);
+      } else {
+        throw new Error("Unexpected response status: " + response.status);
+      }
+    } catch (error) {
+      console.error("Previous Deployment Deploy error:", error);
+      toast.error("Failed to deploy previous repository!");
+    } finally {
+      setPreviousLoading(false);
+    }
+  };
 
   const PreviousDeploymentsForm = () => (
     <Box
@@ -846,7 +778,7 @@ export const GitHubTab = ({
         ) : previousDeployments.length > 0 ? (
           previousDeployments.map((deployment) => (
             <Box
-              key={deployment}
+              key={deployment.id}
               sx={{
                 display: "flex",
                 alignItems: "center",
@@ -862,8 +794,8 @@ export const GitHubTab = ({
             >
               <Box sx={{ display: "flex", alignItems: "center" }}>
                 <Checkbox
-                  checked={selectedRepo === deployment}
-                  onChange={() => handleRepoSelection(deployment)}
+                  checked={selectedRepo === deployment.id}
+                  onChange={() => handleRepoSelection(deployment.id)}
                   sx={{
                     color: theme === "dark" ? "#d4d4d4" : "#666",
                     "&.Mui-checked": {
@@ -877,11 +809,11 @@ export const GitHubTab = ({
                     color: theme === "dark" ? "#d4d4d4" : "#333",
                   }}
                 >
-                  {deployment}
+                  {deployment.id}
                 </Typography>
               </Box>
               <Box
-                sx={{ 
+                sx={{
                   cursor: "pointer",
                   padding: "4px",
                   borderRadius: "4px",
@@ -889,12 +821,12 @@ export const GitHubTab = ({
                     backgroundColor: theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
                   }
                 }}
-                onClick={(e) => handleMenuOpen(e, deployment)}
+                onClick={(e) => handleMenuOpen(e, deployment.id)}
               >
                 <MoreVerticalIcon
                   style={{ color: theme === "dark" ? "#d4d4d4" : "#666" }}
                 />
-              </Box> 
+              </Box>
             </Box>
           ))
         ) : (
@@ -910,49 +842,49 @@ export const GitHubTab = ({
           onClose={handleMenuClose}
           anchorReference="anchorPosition"
           anchorPosition={contextMenu ? { top: contextMenu.y, left: contextMenu.x } : undefined}
-          keepMounted
-          disablePortal
-          transitionDuration={0}
-          slotProps={{
-            paper: {
-              elevation: 3,
-              sx: {
-                minWidth: "120px",
-                boxShadow: theme === "dark" 
-                  ? "0 4px 8px rgba(0, 0, 0, 0.4)" 
-                  : "0 4px 8px rgba(0, 0, 0, 0.1)"
-              }
-            }
-          }}
-          MenuListProps={{
-            sx: {
-              py: 0.5
-            }
-          }}
+          // keepMounted
+          // disablePortal
+          // transitionDuration={0}
+          // slotProps={{
+          //   paper: {
+          //     elevation: 3,
+          //     sx: {
+          //       minWidth: "120px",
+          //       boxShadow: theme === "dark"
+          //         ? "0 4px 8px rgba(0, 0, 0, 0.4)"
+          //         : "0 4px 8px rgba(0, 0, 0, 0.1)"
+          //     }
+          //   }
+          // }}
+          // MenuListProps={{
+          //   sx: {
+          //     py: 0.5
+          //   }
+          // }}
         >
-          <MenuItem 
+          <MenuItem
             onClick={handleDeleteClick}
-            sx={{
-              px: 2,
-              py: 1,
-              fontSize: "14px"
-            }}
+            // sx={{
+            //   // px: 2,
+            //   // py: 1,
+            //   fontSize: "14px"
+            // }}
+            // anchorReference="anchorPosition"
           >
             Delete
           </MenuItem>
         </Menu>
       )}
-
       <Dialog {...dialogProps()}>
-        <DialogTitle 
-          id="delete-confirmation-dialog-title" 
-          sx={{ 
-            display: "flex", 
-            alignItems: "center", 
-            gap: 1, 
-            fontSize: "18px", 
-            fontWeight: 600, 
-            color: theme === "dark" ? "#fff" : "333" 
+        <DialogTitle
+          id="delete-confirmation-dialog-title"
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            fontSize: "18px",
+            fontWeight: 600,
+            color: theme === "dark" ? "#fff" : "333"
           }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -964,14 +896,12 @@ export const GitHubTab = ({
             Are you sure you want to delete "{deleteDeploymentId}"? This action cannot be undone.
           </Typography>
         </DialogContent>
-        <DialogActions 
-          sx={{ 
-            justifyContent: "space-between", 
+        <DialogActions
+          sx={{
+            justifyContent: "space-between",
             padding: "0 16px 16px 16px",
-            // Prevent any layout shifts that could cause flickering
             minHeight: '48px',
             '& button': {
-              // Make button size stable
               minWidth: '80px',
               transition: 'none',
               animation: 'none'
@@ -1016,73 +946,88 @@ export const GitHubTab = ({
 
   return (
     <StyledContainer>
-      <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 1 }}>
-        <RadioGroup
-          row
-          value={selectedOption}
-          onChange={handleOptionChange}
-          sx={{ gap: 4 }}
-        >
-          <FormControlLabel
-            value="createOwn"
-            control={<Radio />}
-            label="Create from your GitHub"
-            sx={{
-              "& .MuiTypography-root": {
-                color: theme === "dark" ? "#d4d4d4" : "#333",
-                fontSize: "0.875rem",
-              },
-            }}
-          />
-          <FormControlLabel
-            value="popularRepos"
-            control={<Radio />}
-            label="Deploy from popular Repositories"
-            sx={{
-              "& .MuiTypography-root": {
-                color: theme === "dark" ? "#d4d4d4" : "#333",
-                fontSize: "0.875rem",
-              },
-            }}
-          />
-          <FormControlLabel
-            value="previousDeployments"
-            control={<Radio />}
-            label="List of Previous Deployments"
-            sx={{
-              "& .MuiTypography-root": {
-                color: theme === "dark" ? "#d4d4d4" : "#333",
-                fontSize: "0.875rem",
-              },
-            }}
-          />
-        </RadioGroup>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          flex: 1,
+          minHeight: 0,
+        }}
+      >
+        <WorkloadLabelInput 
+          value={formData.workload_label || ''} 
+          handleChange={(e) => setFormData({ ...formData, workload_label: e.target.value })} 
+          isError={false}
+          theme={theme} 
+        />
+        
+        <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 1, mt: 2 }}>
+          <RadioGroup
+            row
+            value={selectedOption}
+            onChange={handleOptionChange}
+            sx={{ gap: 4 }}
+          >
+            <FormControlLabel
+              value="createOwn"
+              control={<Radio />}
+              label="Create from your GitHub"
+              sx={{
+                "& .MuiTypography-root": {
+                  color: theme === "dark" ? "#d4d4d4" : "#333",
+                  fontSize: "0.875rem",
+                },
+              }}
+            />
+            <FormControlLabel
+              value="popularRepos"
+              control={<Radio />}
+              label="Deploy from popular Repositories"
+              sx={{
+                "& .MuiTypography-root": {
+                  color: theme === "dark" ? "#d4d4d4" : "#333",
+                  fontSize: "0.875rem",
+                },
+              }}
+            />
+            <FormControlLabel
+              value="previousDeployments"
+              control={<Radio />}
+              label="List of Previous Deployments"
+              sx={{
+                "& .MuiTypography-root": {
+                  color: theme === "dark" ? "#d4d4d4" : "#333",
+                  fontSize: "0.875rem",
+                },
+              }}
+            />
+          </RadioGroup>
+        </Box>
+
+        <Box sx={{ height: "55vh", overflow: "hidden" }}>
+          {selectedOption === "createOwn" ? (
+            <CreateFromYourGitHub
+              formData={formData}
+              setFormData={setFormData}
+              error={error}
+              credentialsList={credentialsList}
+              handleCredentialChange={handleCredentialChange}
+              handleOpenCredentialDialog={handleOpenCredentialDialog}
+              handleOpenWebhookDialog={handleOpenWebhookDialog}
+              theme={theme}
+            />
+          ) : selectedOption === "popularRepos" ? (
+            <PopularRepositoriesForm theme={theme} selectedRepo={selectedRepo} handleRepoSelection={handleRepoSelection} popularRepositories={popularRepositories}/>
+          ) : (
+            <PreviousDeploymentsForm />
+          )}
+        </Box>
       </Box>
 
-      {/* Wrapper Box to maintain consistent height */}
-      <Box sx={{ height: "55vh", overflow: "hidden" }}>
-        {selectedOption === "createOwn" ? (
-          <CreateFromYourGitHub
-            formData={formData}
-            setFormData={setFormData}
-            error={error}
-            credentialsList={credentialsList}
-            handleCredentialChange={handleCredentialChange}
-            handleOpenCredentialDialog={handleOpenCredentialDialog}
-            handleOpenWebhookDialog={handleOpenWebhookDialog}
-            theme={theme}
-          />
-        ) : selectedOption === "popularRepos" ? (
-          <PopularRepositoriesForm />
-        ) : (
-          <PreviousDeploymentsForm />
-        )}
-      </Box>
-
-      <Box sx={{ 
-        display: "flex", 
-        justifyContent: "flex-end", 
-        gap: 1, 
+      <Box sx={{
+        display: "flex",
+        justifyContent: "flex-end",
+        gap: 1,
         mt: 2,
         position: "relative",
         width: "100%",
@@ -1111,8 +1056,10 @@ export const GitHubTab = ({
           onClick={() => {
             if (selectedOption === "createOwn") {
               if (validateForm()) handleDeploy();
-            } else {
+            } else if (selectedOption === "popularRepos") {
               handlePopularRepoDeploy();
+            } else if (selectedOption === "previousDeployments") {
+              handlePreviousDeploymentDeploy();
             }
           }}
           disabled={
@@ -1144,3 +1091,117 @@ export const GitHubTab = ({
     </StyledContainer>
   );
 };
+
+interface PopularRepositoriesFormProps {
+  theme: string;
+  selectedRepo: string | null;
+  handleRepoSelection: (repoUrl: string) => void;
+  popularRepositories: {
+    repo_url: string;
+    folder_path: string;
+    branch: string;
+  }[]
+}
+
+const PopularRepositoriesForm = ({ theme, selectedRepo, popularRepositories, handleRepoSelection }: PopularRepositoriesFormProps) => {
+  const extractRepoName = (url: string) => {
+    const parts = url.split('/');
+    return parts[parts.length - 1];
+  };
+
+  return ( 
+    <>
+  <Box
+    sx={{
+      display: "flex",
+      flexDirection: "column",
+      flex: 1,
+      overflow: "hidden",
+      height: "55vh",
+    }}
+  >
+    <Box
+      sx={{
+        position: "sticky",
+        top: 0,
+        zIndex: 1,
+        borderRadius: "4px"
+      }}
+    >
+      {selectedRepo && (
+        <Box
+          sx={{
+            width: "100%",
+            margin: "0 auto 25px auto",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            p: 1.6,
+            borderRadius: "4px",
+            border: "1px solid",
+            borderColor: theme === "dark" ? "#444" : "#e0e0e0",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <CheckCircleIcon color="success" sx={{ mr: 1 }} />
+            <Typography variant="body1" sx={{ color: theme === "dark" ? "#fff" : "#333" }}>
+              <strong>{extractRepoName(selectedRepo)}</strong>
+            </Typography>
+          </Box>
+        </Box>
+      )}
+    </Box>
+
+    <Box
+      sx={{
+        flex: 1,
+        overflowY: "auto",
+        "&::-webkit-scrollbar": {
+          display: "none",
+        },
+        scrollbarWidth: "none",
+        "-ms-overflow-style": "none",
+        display: "flex",
+        flexDirection: "column",
+        gap: 2,
+      }}
+    >
+      {popularRepositories.map((repo) => (
+        <Box
+          key={repo.repo_url}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            padding: "8px",
+            borderRadius: "4px",
+            backgroundColor: theme === "dark" ? "#00000033" : "#f9f9f9",
+            "&:hover": {
+              backgroundColor: theme === "dark" ? "#2a2a2a" : "#f1f1f1",
+            },
+          }}
+        >
+          <Checkbox
+            checked={selectedRepo === repo.repo_url}
+            onChange={() => handleRepoSelection(repo.repo_url)}
+            sx={{
+              color: theme === "dark" ? "#d4d4d4" : "#666",
+              "&.Mui-checked": {
+                color: "#1976d2",
+              },
+            }}
+          />
+          <Typography
+            sx={{
+              fontSize: "0.875rem",
+              color: theme === "dark" ? "#d4d4d4" : "#333",
+            }}
+          >
+            {extractRepoName(repo.repo_url)}
+          </Typography>
+        </Box>
+      ))}
+    </Box>
+  </Box>
+  </>
+);
+}

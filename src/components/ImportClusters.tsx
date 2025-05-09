@@ -1213,7 +1213,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                                       color: theme === "dark" ? colors.primaryLight : colors.primary,
                                     }}
                                   >
-                                    <span role="img" aria-label="cluster" style={{ fontSize: "0.8rem" }}>🔶</span>
+                                    
                                   </Box>
                                 </Box>
                                 <Box sx={{ 
@@ -1653,422 +1653,620 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                           bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 0, 0, 0.01)",
                           border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
                         }}>
-                          <Box sx={{ 
-                            fontWeight: 600, 
-                            fontSize: "0.9rem", 
-                            mb: 1.5, 
-                            color: textColor,
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 1
-                          }}>
-                            <span role="img" aria-label="steps" style={{ fontSize: "0.9rem" }}>📝</span>
-                            Next steps
-                          </Box>
                           
-                          <Box sx={{ 
-                            display: "flex", 
-                            flexDirection: "column",
-                            gap: 1.5,
-                          }}>
-                            {/* Step 1: Context switching */}
-                            <Box sx={{ 
-                              display: "flex", 
-                              alignItems: "flex-start", 
-                              gap: 1.5,
-                              p: 1.5,
-                              borderRadius: 1.5,
-                              bgcolor: theme === "dark" ? "rgba(0, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.5)",
-                              border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
-                            }}>
-                              <Box sx={{ 
-                                width: 24, 
-                                height: 24, 
-                                borderRadius: "50%", 
-                                display: "flex", 
-                                alignItems: "center", 
-                                justifyContent: "center",
-                                bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.1)",
-                                color: theme === "dark" ? colors.primaryLight : colors.primary,
-                                flexShrink: 0,
-                                fontSize: "0.75rem",
-                                fontWeight: 600,
-                              }}>
-                                1
-                              </Box>
-                              <Box sx={{ fontSize: "0.825rem", color: colors.textSecondary, width: "100%" }}>
-                                <Box sx={{ mb: 1, fontWeight: 500, color: textColor }}>
-                                  First, switch to the correct context on your terminal
-                                </Box>
-                                <Box
-                                  sx={{
-                                    position: "relative",
-                                    p: 1.5,
-                                    backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.3)" : "#f0f0f0",
-                                    color: theme === "dark" ? "#e6e6e6" : "#333",
-                                    borderRadius: 1,
-                                    fontFamily: "'Fira Code', monospace",
-                                    fontSize: "0.75rem",
-                                    mb: 1,
-                                    overflow: "hidden",
-                                    border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"}`,
-                                    whiteSpace: "pre",
-                                    "&::before": {
-                                      content: '"$"',
-                                      color: theme === "dark" ? colors.primaryLight : colors.primary,
-                                      marginRight: "6px",
-                                      fontWeight: "bold",
-                                      display: "inline-block",
-                                    },
-                                  }}
-                                >
-                                  <Box component="span" sx={{ paddingLeft: "1rem" }}>kubectl config use-context its1</Box>
-                                  <Button
-                                    onClick={() => {
-                                      navigator.clipboard.writeText("kubectl config use-context its1");
-                                      setSnackbar({
-                                        open: true,
-                                        message: "Context command copied!",
-                                        severity: "success"
-                                      });
-                                    }}
-                                    sx={{
-                                      position: "absolute",
-                                      top: 4,
-                                      right: 4,
-                                      minWidth: "28px",
-                                      width: "28px",
-                                      height: "28px",
-                                      p: 0,
-                                      borderRadius: 0.75,
-                                      bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
-                                      color: theme === "dark" ? colors.primaryLight : colors.primary,
-                                      boxShadow: "none",
-                                      "&:hover": {
-                                        bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.3)" : "rgba(47, 134, 255, 0.2)",
-                                      }
-                                    }}
-                                  >
-                                    <span role="img" aria-label="copy" style={{ fontSize: "0.7rem" }}>📋</span>
-                                  </Button>
-                                </Box>
-                              </Box>
-                            </Box>
-                            
-                            {/* Step 2: Run command */}
-                            <Box sx={{ 
-                              display: "flex", 
-                              alignItems: "flex-start", 
-                              gap: 1.5,
-                              p: 1.5,
-                              borderRadius: 1.5,
-                              bgcolor: theme === "dark" ? "rgba(0, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.5)",
-                              border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
-                            }}>
-                              <Box sx={{ 
-                                width: 24, 
-                                height: 24, 
-                                borderRadius: "50%", 
-                                display: "flex", 
-                                alignItems: "center", 
-                                justifyContent: "center",
-                                bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.1)",
-                                color: theme === "dark" ? colors.primaryLight : colors.primary,
-                                flexShrink: 0,
-                                fontSize: "0.75rem",
-                                fontWeight: 600,
-                              }}>
-                                2
-                              </Box>
-                              <Box sx={{ fontSize: "0.825rem", color: colors.textSecondary }}>
-                                <Box sx={{ fontWeight: 500, color: textColor, mb: 0.5 }}>
-                                  Copy and paste the command above into your terminal
-                                </Box>
-                                <Box sx={{ fontSize: "0.8rem" }}>
-                                  This will register your cluster with the platform and establish the connection.
-                                </Box>
-                              </Box>
-                            </Box>
-                            
-                            {/* Step 3: Wait for CSR approval */}
-                            <Box sx={{ 
-                              display: "flex", 
-                              alignItems: "flex-start", 
-                              gap: 1.5,
-                              p: 1.5,
-                              borderRadius: 1.5,
-                              bgcolor: theme === "dark" ? "rgba(0, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.5)",
-                              border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
-                            }}>
-                              <Box sx={{ 
-                                width: 24, 
-                                height: 24, 
-                                borderRadius: "50%", 
-                                display: "flex", 
-                                alignItems: "center", 
-                                justifyContent: "center",
-                                bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.1)",
-                                color: theme === "dark" ? colors.primaryLight : colors.primary,
-                                flexShrink: 0,
-                                fontSize: "0.75rem",
-                                fontWeight: 600,
-                              }}>
-                                3
-                              </Box>
-                              <Box sx={{ fontSize: "0.825rem", color: colors.textSecondary, width: "100%" }}>
-                                <Box sx={{ fontWeight: 500, color: textColor, mb: 0.5 }}>
-                                  Wait for CSR approval and connection establishment
-                              </Box>
-                                <Box sx={{ fontSize: "0.8rem", mb: 1.5 }}>
-                                  After running the command, a Certificate Signing Request (CSR) is generated and must be approved. This process typically takes 1-2 minutes to complete automatically.
-                            </Box>
-                            
-                                <Box sx={{ 
-                                  p: 1.5,
-                                  borderRadius: 1.5,
-                                  backgroundColor: theme === "dark" ? "rgba(255, 215, 0, 0.08)" : "rgba(255, 215, 0, 0.05)",
-                                  border: `1px solid ${theme === "dark" ? "rgba(255, 215, 0, 0.15)" : "rgba(255, 215, 0, 0.1)"}`,
-                                }}>
-                                  <Box sx={{ 
-                                    display: "flex", 
-                                    alignItems: "center", 
-                                    gap: 1,
-                                    mb: 1
-                                  }}>
-                                    <Box 
-                                      sx={{ 
-                                        width: 20, 
-                                        height: 20, 
-                                        borderRadius: "50%", 
-                                        display: "flex", 
-                                        alignItems: "center", 
-                                        justifyContent: "center",
-                                        bgcolor: theme === "dark" ? "rgba(255, 215, 0, 0.2)" : "rgba(255, 215, 0, 0.15)",
-                                        color: theme === "dark" ? "rgba(255, 215, 0, 0.9)" : "#7d6608",
-                                        flexShrink: 0,
-                                      }}
-                                    >
-                                      <span role="img" aria-label="tip" style={{ fontSize: "0.7rem" }}>💡</span>
-                                    </Box>
-                                    <Box sx={{ 
-                                      fontSize: "0.8rem", 
-                                      fontWeight: 600,
-                                      color: theme === "dark" ? "rgba(255, 215, 0, 0.9)" : "#7d6608"
-                                    }}>
-                                      Check CSR Status
-                                    </Box>
-                                  </Box>
-                                  
-                                  <Box
-                                    component="pre"
-                                    sx={{
-                                      position: "relative",
-                                      p: 1.5,
-                                      backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.3)" : "#f7f3e3",
-                                      color: theme === "dark" ? "#e6e6e6" : "#333",
-                                      borderRadius: 1,
-                                      fontFamily: "'Fira Code', monospace",
-                                      fontSize: "0.75rem",
-                                      mb: 0.5,
-                                      overflow: "auto",
-                                      border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(255, 215, 0, 0.2)"}`,
-                                      whiteSpace: "pre",
-                                      "&::before": {
-                                        content: '"$"',
-                                        color: theme === "dark" ? "rgba(255, 215, 0, 0.7)" : "#7d6608",
-                                        marginRight: "6px",
-                                        fontWeight: "bold",
-                                        display: "inline-block",
-                                      },
-                                    }}
-                                  >
-                                    <Box component="span" sx={{ paddingLeft: "1rem" }}>kubectl get csr | grep {manualCommand.clusterName}</Box>
-                                    <Button
-                                      onClick={() => {
-                                        navigator.clipboard.writeText(`kubectl get csr | grep ${manualCommand.clusterName}`);
-                                        setSnackbar({
-                                          open: true,
-                                          message: "CSR check command copied!",
-                                          severity: "success"
-                                        });
-                                      }}
-                                      sx={{
-                                        position: "absolute",
-                                        top: 4,
-                                        right: 4,
-                                        minWidth: "28px",
-                                        width: "28px",
-                                        height: "28px",
-                                        p: 0,
-                                        borderRadius: 0.75,
-                                        bgcolor: theme === "dark" ? "rgba(255, 215, 0, 0.15)" : "rgba(255, 215, 0, 0.1)",
-                                        color: theme === "dark" ? "rgba(255, 215, 0, 0.9)" : "#7d6608",
-                                        boxShadow: "none",
-                                        "&:hover": {
-                                          bgcolor: theme === "dark" ? "rgba(255, 215, 0, 0.25)" : "rgba(255, 215, 0, 0.2)",
-                                        }
-                                      }}
-                                    >
-                                      <span role="img" aria-label="copy" style={{ fontSize: "0.7rem" }}>📋</span>
-                                    </Button>
-                                  </Box>
-                                </Box>
-                              </Box>
-                            </Box>
 
-                            {/* Step 4: Verify connection */}
-                            <Box sx={{ 
-                              display: "flex", 
-                              alignItems: "flex-start", 
-                              gap: 1.5,
-                              p: 1.5,
-                              borderRadius: 1.5,
-                              bgcolor: theme === "dark" ? "rgba(0, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.5)",
-                              border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
-                            }}>
-                              <Box sx={{ 
-                                width: 24, 
-                                height: 24, 
-                                borderRadius: "50%", 
-                                display: "flex", 
-                                alignItems: "center", 
-                                justifyContent: "center",
-                                bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.1)",
-                                color: theme === "dark" ? colors.primaryLight : colors.primary,
-                                flexShrink: 0,
-                                fontSize: "0.75rem",
-                                fontWeight: 600,
-                              }}>
-                                4
-                              </Box>
-                              <Box sx={{ fontSize: "0.825rem", color: colors.textSecondary, width: "100%" }}>
-                                <Box sx={{ fontWeight: 500, color: textColor, mb: 0.5 }}>
-                                  Verify the connection is successful
-                              </Box>
-                                <Box sx={{ fontSize: "0.8rem", mb: 1.5 }}>
-                                  Once connected, the cluster will appear in your clusters list with status "Ready". You can verify the connection status using:
-                            </Box>
-                                
-                                <Box
-                                  component="pre"
-                                  sx={{
-                                    position: "relative",
-                                    p: 1.5,
-                                    backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.3)" : "rgba(0, 0, 0, 0.04)",
-                                    color: theme === "dark" ? "#e6e6e6" : "#333",
-                                    borderRadius: 1,
-                                    fontFamily: "'Fira Code', monospace",
-                                    fontSize: "0.75rem",
-                                    mb: 0.5,
-                                    overflow: "hidden",
-                                    border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"}`,
-                                    whiteSpace: "pre",
-                                    "&::before": {
-                                      content: '"$"',
-                                      color: theme === "dark" ? colors.primaryLight : colors.primary,
-                                      marginRight: "6px",
-                                      fontWeight: "bold",
-                                      display: "inline-block",
-                                    },
-                                  }}
-                                >
-                                  <Box component="span" sx={{ paddingLeft: "1rem" }}>kubectl get managedclusters</Box>
-                                  <Button
-                                    onClick={() => {
-                                      navigator.clipboard.writeText("kubectl get managedclusters");
-                                      setSnackbar({
-                                        open: true,
-                                        message: "Verify command copied!",
-                                        severity: "success"
-                                      });
-                                    }}
-                                    sx={{
-                                      position: "absolute",
-                                      top: 4,
-                                      right: 4,
-                                      minWidth: "28px",
-                                      width: "28px",
-                                      height: "28px",
-                                      p: 0,
-                                      borderRadius: 0.75,
-                                      bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
-                                      color: theme === "dark" ? colors.primaryLight : colors.primary,
-                                      boxShadow: "none",
-                                      "&:hover": {
-                                        bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.3)" : "rgba(47, 134, 255, 0.2)",
-                                      }
-                                    }}
-                                  >
-                                    <span role="img" aria-label="copy" style={{ fontSize: "0.7rem" }}>📋</span>
-                                  </Button>
-                                </Box>
-                                
-                                <Box sx={{ 
-                                  mt: 2,
-                                  p: 1.5,
-                                  borderRadius: 1.5,
-                                  backgroundColor: theme === "dark" ? "rgba(103, 192, 115, 0.08)" : "rgba(103, 192, 115, 0.05)",
-                                  border: `1px solid ${theme === "dark" ? "rgba(103, 192, 115, 0.15)" : "rgba(103, 192, 115, 0.1)"}`,
-                                  fontSize: "0.8rem",
-                                  color: theme === "dark" ? "rgba(103, 192, 115, 0.9)" : "#3d9950",
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  gap: 2,
-                                }}>
-                                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                    <Box 
-                                      sx={{ 
-                                        width: 20, 
-                                        height: 20, 
-                                        borderRadius: "50%", 
-                                        display: "flex", 
-                                        alignItems: "center", 
-                                        justifyContent: "center",
-                                        bgcolor: theme === "dark" ? "rgba(103, 192, 115, 0.2)" : "rgba(103, 192, 115, 0.15)",
-                                        color: theme === "dark" ? "rgba(103, 192, 115, 0.9)" : "#3d9950",
-                                        flexShrink: 0,
-                                      }}
-                                    >
-                                      <span role="img" aria-label="success" style={{ fontSize: "0.7rem" }}>✓</span>
-                                    </Box>
-                                    <Box>
-                                      After approval, your cluster will show <strong>status: Ready</strong> and be available for management
-                          </Box>
-                        </Box>
+<Box sx={{ 
+  fontWeight: 600, 
+  fontSize: "0.9rem", 
+  mb: 1.5, 
+  color: textColor,
+  display: "flex",
+  alignItems: "center",
+  gap: 1
+}}>
+  <span role="img" aria-label="steps" style={{ fontSize: "0.9rem" }}>📝</span>
+  Next steps
+</Box>
 
-                                  <Box sx={{ display: "flex", justifyContent: "center", mt: 1 }}>
-                                    <Button
-                                      variant="contained"
-                                      component="a"
-                                      href="/its"
-                                      onClick={() => {
-                                        // Close the dialog when redirecting
-                                        onCancel();
-                                      }}
-                                      sx={{
-                                        ...primaryButtonStyles,
-                                        bgcolor: theme === "dark" ? "rgba(103, 192, 115, 0.3)" : "rgba(103, 192, 115, 0.8)",
-                                        color: theme === "dark" ? "#ffffff" : "#ffffff",
-                                        border: `1px solid ${theme === "dark" ? "rgba(103, 192, 115, 0.5)" : "rgba(103, 192, 115, 0.3)"}`,
-                                        width: "100%",
-                                        maxWidth: "300px",
-                                        "&:hover": {
-                                          bgcolor: theme === "dark" ? "rgba(103, 192, 115, 0.4)" : "rgba(103, 192, 115, 0.9)",
-                                          transform: "translateY(-2px)",
-                                          boxShadow: theme === "dark" 
-                                            ? "0 6px 10px -1px rgba(0, 0, 0, 0.3)" 
-                                            : "0 6px 10px -1px rgba(103, 192, 115, 0.3)",
-                                        },
-                                      }}
-                                      startIcon={<span role="img" aria-label="view" style={{ fontSize: "0.9rem" }}>👁️</span>}
-                                    >
-                                      View Cluster in Dashboard
-                                    </Button>
-                                  </Box>
-                                </Box>
-                              </Box>
-                            </Box>
-                          </Box>
+<Box sx={{ 
+  display: "flex", 
+  flexDirection: "column",
+  gap: 1.5,
+}}>
+  {/* Step 1: Context switching */}
+  <Box sx={{ 
+    display: "flex", 
+    alignItems: "flex-start", 
+    gap: 1.5,
+    p: 1.5,
+    borderRadius: 1.5,
+    bgcolor: theme === "dark" ? "rgba(0, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.5)",
+    border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
+  }}>
+    <Box sx={{ 
+      width: 24, 
+      height: 24, 
+      borderRadius: "50%", 
+      display: "flex", 
+      alignItems: "center", 
+      justifyContent: "center",
+      bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.1)",
+      color: theme === "dark" ? colors.primaryLight : colors.primary,
+      flexShrink: 0,
+      fontSize: "0.75rem",
+      fontWeight: 600,
+    }}>
+      1
+    </Box>
+    <Box sx={{ fontSize: "0.825rem", color: colors.textSecondary, width: "100%" }}>
+      <Box sx={{ mb: 1, fontWeight: 500, color: textColor }}>
+        Switch to the correct context on your terminal
+      </Box>
+      <Box
+        sx={{
+          position: "relative",
+          p: 1.5,
+          backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.3)" : "#f0f0f0",
+          color: theme === "dark" ? "#e6e6e6" : "#333",
+          borderRadius: 1,
+          fontFamily: "'Fira Code', monospace",
+          fontSize: "0.75rem",
+          mb: 1,
+          overflow: "hidden",
+          border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"}`,
+          whiteSpace: "pre",
+          "&::before": {
+            content: '"$"',
+            color: theme === "dark" ? colors.primaryLight : colors.primary,
+            marginRight: "6px",
+            fontWeight: "bold",
+            display: "inline-block",
+          },
+        }}
+      >
+        <Box component="span" sx={{ paddingLeft: "1rem" }}>kubectl config use-context its1</Box>
+        <Button
+          onClick={() => {
+            navigator.clipboard.writeText("kubectl config use-context its1");
+            setSnackbar({
+              open: true,
+              message: "Context command copied!",
+              severity: "success"
+            });
+          }}
+          sx={{
+            position: "absolute",
+            top: 4,
+            right: 4,
+            minWidth: "28px",
+            width: "28px",
+            height: "28px",
+            p: 0,
+            borderRadius: 0.75,
+            bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
+            color: theme === "dark" ? colors.primaryLight : colors.primary,
+            boxShadow: "none",
+            "&:hover": {
+              bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.3)" : "rgba(47, 134, 255, 0.2)",
+            }
+          }}
+        >
+          <span role="img" aria-label="copy" style={{ fontSize: "0.7rem" }}>📋</span>
+        </Button>
+      </Box>
+    </Box>
+  </Box>
+
+  {/* Step 2: Run the join command */}
+  <Box sx={{ 
+    display: "flex", 
+    alignItems: "flex-start", 
+    gap: 1.5,
+    p: 1.5,
+    borderRadius: 1.5,
+    bgcolor: theme === "dark" ? "rgba(0, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.5)",
+    border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
+  }}>
+    <Box sx={{ 
+      width: 24, 
+      height: 24, 
+      borderRadius: "50%", 
+      display: "flex", 
+      alignItems: "center", 
+      justifyContent: "center",
+      bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.1)",
+      color: theme === "dark" ? colors.primaryLight : colors.primary,
+      flexShrink: 0,
+      fontSize: "0.75rem",
+      fontWeight: 600,
+    }}>
+      2
+    </Box>
+    <Box sx={{ fontSize: "0.825rem", color: colors.textSecondary }}>
+      <Box sx={{ fontWeight: 500, color: textColor, mb: 0.5 }}>
+        Copy and paste the command above into your terminal
+      </Box>
+      <Box sx={{ fontSize: "0.8rem" }}>
+        This will register your cluster with the platform and request connection.
+      </Box>
+    </Box>
+  </Box>
+
+  {/* Step 3: Check for pending clusters */}
+  <Box sx={{ 
+    display: "flex", 
+    alignItems: "flex-start", 
+    gap: 1.5,
+    p: 1.5,
+    borderRadius: 1.5,
+    bgcolor: theme === "dark" ? "rgba(0, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.5)",
+    border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
+  }}>
+    <Box sx={{ 
+      width: 24, 
+      height: 24, 
+      borderRadius: "50%", 
+      display: "flex", 
+      alignItems: "center", 
+      justifyContent: "center",
+      bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.1)",
+      color: theme === "dark" ? colors.primaryLight : colors.primary,
+      flexShrink: 0,
+      fontSize: "0.75rem",
+      fontWeight: 600,
+    }}>
+      3
+    </Box>
+    <Box sx={{ fontSize: "0.825rem", color: colors.textSecondary, width: "100%" }}>
+      <Box sx={{ fontWeight: 500, color: textColor, mb: 0.5 }}>
+        Check for pending cluster join requests
+      </Box>
+      <Box sx={{ fontSize: "0.8rem", mb: 1.5 }}>
+        Check if there are any pending cluster join requests:
+      </Box>
+      
+      <Box
+        component="pre"
+        sx={{
+          position: "relative",
+          p: 1.5,
+          backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.3)" : "#f0f0f0",
+          color: theme === "dark" ? "#e6e6e6" : "#333",
+          borderRadius: 1,
+          fontFamily: "'Fira Code', monospace",
+          fontSize: "0.75rem",
+          mb: 1,
+          overflow: "hidden",
+          border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"}`,
+          whiteSpace: "pre",
+          "&::before": {
+            content: '"$"',
+            color: theme === "dark" ? colors.primaryLight : colors.primary,
+            marginRight: "6px",
+            fontWeight: "bold",
+            display: "inline-block",
+          },
+        }}
+      >
+        <Box component="span" sx={{ paddingLeft: "1rem" }}>kubectl get csr | grep {manualCommand.clusterName}</Box>
+        <Button
+          onClick={() => {
+            navigator.clipboard.writeText(`kubectl get csr | grep ${manualCommand.clusterName}`);
+            setSnackbar({
+              open: true,
+              message: "CSR check command copied!",
+              severity: "success"
+            });
+          }}
+          sx={{
+            position: "absolute",
+            top: 4,
+            right: 4,
+            minWidth: "28px",
+            width: "28px",
+            height: "28px",
+            p: 0,
+            borderRadius: 0.75,
+            bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
+            color: theme === "dark" ? colors.primaryLight : colors.primary,
+            boxShadow: "none",
+            "&:hover": {
+              bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.3)" : "rgba(47, 134, 255, 0.2)",
+            }
+          }}
+        >
+          <span role="img" aria-label="copy" style={{ fontSize: "0.7rem" }}>📋</span>
+        </Button>
+      </Box>
+      
+      <Box sx={{ 
+        p: 1.5,
+        borderRadius: 1,
+        backgroundColor: theme === "dark" ? "rgba(255, 215, 0, 0.08)" : "rgba(255, 215, 0, 0.05)",
+        border: `1px solid ${theme === "dark" ? "rgba(255, 215, 0, 0.15)" : "rgba(255, 215, 0, 0.1)"}`,
+        fontSize: "0.775rem",
+        color: theme === "dark" ? "rgba(255, 215, 0, 0.9)" : "#7d6608",
+        mb: 1
+      }}>
+        <Box className="flex items-center gap-1">
+          <span role="img" aria-label="tip" style={{ fontSize: "0.8rem" }}>💡</span> 
+          <span style={{ fontWeight: 500 }}>Note:</span> If you see certificates in <strong>Pending</strong> status, proceed to the next step.
+        </Box>
+      </Box>
+    </Box>
+  </Box>
+
+  {/* Step 4: Accept the cluster */}
+  <Box sx={{ 
+    display: "flex", 
+    alignItems: "flex-start", 
+    gap: 1.5,
+    p: 1.5,
+    borderRadius: 1.5,
+    bgcolor: theme === "dark" ? "rgba(0, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.5)",
+    border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
+  }}>
+    <Box sx={{ 
+      width: 24, 
+      height: 24, 
+      borderRadius: "50%", 
+      display: "flex", 
+      alignItems: "center", 
+      justifyContent: "center",
+      bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.1)",
+      color: theme === "dark" ? colors.primaryLight : colors.primary,
+      flexShrink: 0,
+      fontSize: "0.75rem",
+      fontWeight: 600,
+    }}>
+      4
+    </Box>
+    <Box sx={{ fontSize: "0.825rem", color: colors.textSecondary, width: "100%" }}>
+      <Box sx={{ fontWeight: 500, color: textColor, mb: 0.5 }}>
+        Accept the cluster joining request
+      </Box>
+      <Box sx={{ fontSize: "0.8rem", mb: 1.5 }}>
+        Run the following command to accept the cluster join request:
+      </Box>
+      
+      <Box
+        component="pre"
+        sx={{
+          position: "relative",
+          p: 1.5,
+          backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.3)" : "#f0f0f0",
+          color: theme === "dark" ? "#e6e6e6" : "#333",
+          borderRadius: 1,
+          fontFamily: "'Fira Code', monospace",
+          fontSize: "0.75rem",
+          mb: 1,
+          overflow: "hidden",
+          border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"}`,
+          whiteSpace: "pre",
+          "&::before": {
+            content: '"$"',
+            color: theme === "dark" ? colors.primaryLight : colors.primary,
+            marginRight: "6px",
+            fontWeight: "bold",
+            display: "inline-block",
+          },
+        }}
+      >
+        <Box component="span" sx={{ paddingLeft: "1rem" }}>clusteradm accept --clusters {manualCommand.clusterName}</Box>
+        <Button
+          onClick={() => {
+            navigator.clipboard.writeText(`clusteradm accept --clusters ${manualCommand.clusterName}`);
+            setSnackbar({
+              open: true,
+              message: "Accept command copied!",
+              severity: "success"
+            });
+          }}
+          sx={{
+            position: "absolute",
+            top: 4,
+            right: 4,
+            minWidth: "28px",
+            width: "28px",
+            height: "28px",
+            p: 0,
+            borderRadius: 0.75,
+            bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
+            color: theme === "dark" ? colors.primaryLight : colors.primary,
+            boxShadow: "none",
+            "&:hover": {
+              bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.3)" : "rgba(47, 134, 255, 0.2)",
+            }
+          }}
+        >
+          <span role="img" aria-label="copy" style={{ fontSize: "0.7rem" }}>📋</span>
+        </Button>
+      </Box>
+      
+      <Box sx={{ 
+        p: 1.5,
+        borderRadius: 1,
+        backgroundColor: theme === "dark" ? "rgba(103, 192, 115, 0.08)" : "rgba(103, 192, 115, 0.05)",
+        border: `1px solid ${theme === "dark" ? "rgba(103, 192, 115, 0.15)" : "rgba(103, 192, 115, 0.1)"}`,
+        fontSize: "0.775rem",
+        color: theme === "dark" ? "rgba(103, 192, 115, 0.9)" : "#3d9950",
+      }}>
+        <Box className="flex items-center gap-1">
+          <span role="img" aria-label="tip" style={{ fontSize: "0.8rem" }}>💡</span> 
+          <span style={{ fontWeight: 500 }}>Tip:</span> This command accepts the cluster join request and establishes the connection.
+        </Box>
+      </Box>
+    </Box>
+  </Box>
+
+  {/* Step 5: Watch the CSR status */}
+  <Box sx={{ 
+    display: "flex", 
+    alignItems: "flex-start", 
+    gap: 1.5,
+    p: 1.5,
+    borderRadius: 1.5,
+    bgcolor: theme === "dark" ? "rgba(0, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.5)",
+    border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
+  }}>
+    <Box sx={{ 
+      width: 24, 
+      height: 24, 
+      borderRadius: "50%", 
+      display: "flex", 
+      alignItems: "center", 
+      justifyContent: "center",
+      bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.1)",
+      color: theme === "dark" ? colors.primaryLight : colors.primary,
+      flexShrink: 0,
+      fontSize: "0.75rem",
+      fontWeight: 600,
+    }}>
+      5
+    </Box>
+    <Box sx={{ fontSize: "0.825rem", color: colors.textSecondary, width: "100%" }}>
+      <Box sx={{ fontWeight: 500, color: textColor, mb: 0.5 }}>
+        Watch the status of your cluster
+      </Box>
+      <Box sx={{ fontSize: "0.8rem", mb: 1.5 }}>
+        Watch for changes in the CSR status using:
+      </Box>
+      
+      <Box
+        component="pre"
+        sx={{
+          position: "relative",
+          p: 1.5,
+          backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.3)" : "#f0f0f0",
+          color: theme === "dark" ? "#e6e6e6" : "#333",
+          borderRadius: 1,
+          fontFamily: "'Fira Code', monospace",
+          fontSize: "0.75rem",
+          mb: 1,
+          overflow: "hidden",
+          border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"}`,
+          whiteSpace: "pre",
+          "&::before": {
+            content: '"$"',
+            color: theme === "dark" ? colors.primaryLight : colors.primary,
+            marginRight: "6px",
+            fontWeight: "bold",
+            display: "inline-block",
+          },
+        }}
+      >
+        <Box component="span" sx={{ paddingLeft: "1rem" }}>kubectl get csr | grep {manualCommand.clusterName}</Box>
+        <Button
+          onClick={() => {
+            navigator.clipboard.writeText(`kubectl get csr | grep ${manualCommand.clusterName}`);
+            setSnackbar({
+              open: true,
+              message: "Watch command copied!",
+              severity: "success"
+            });
+          }}
+          sx={{
+            position: "absolute",
+            top: 4,
+            right: 4,
+            minWidth: "28px",
+            width: "28px",
+            height: "28px",
+            p: 0,
+            borderRadius: 0.75,
+            bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
+            color: theme === "dark" ? colors.primaryLight : colors.primary,
+            boxShadow: "none",
+            "&:hover": {
+              bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.3)" : "rgba(47, 134, 255, 0.2)",
+            }
+          }}
+        >
+          <span role="img" aria-label="copy" style={{ fontSize: "0.7rem" }}>📋</span>
+        </Button>
+      </Box>
+      
+      <Box sx={{ 
+        p: 1.5,
+        borderRadius: 1,
+        backgroundColor: theme === "dark" ? "rgba(255, 215, 0, 0.08)" : "rgba(255, 215, 0, 0.05)",
+        border: `1px solid ${theme === "dark" ? "rgba(255, 215, 0, 0.15)" : "rgba(255, 215, 0, 0.1)"}`,
+        fontSize: "0.775rem",
+        color: theme === "dark" ? "rgba(255, 215, 0, 0.9)" : "#7d6608",
+      }}>
+        <Box className="flex items-center gap-1">
+          <span role="img" aria-label="tip" style={{ fontSize: "0.8rem" }}>💡</span> 
+          <span style={{ fontWeight: 500 }}>Note:</span> Wait until the CSR status changes to <strong>Approved</strong>.
+          The process typically takes 1-2 minutes to complete.
+        </Box>
+      </Box>
+    </Box>
+  </Box>
+
+  {/* Step 6: Verify connection */}
+  <Box sx={{ 
+    display: "flex", 
+    alignItems: "flex-start", 
+    gap: 1.5,
+    p: 1.5,
+    borderRadius: 1.5,
+    bgcolor: theme === "dark" ? "rgba(0, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.5)",
+    border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
+  }}>
+    <Box sx={{ 
+      width: 24, 
+      height: 24, 
+      borderRadius: "50%", 
+      display: "flex", 
+      alignItems: "center", 
+      justifyContent: "center",
+      bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.15)" : "rgba(47, 134, 255, 0.1)",
+      color: theme === "dark" ? colors.primaryLight : colors.primary,
+      flexShrink: 0,
+      fontSize: "0.75rem",
+      fontWeight: 600,
+    }}>
+      6
+    </Box>
+    <Box sx={{ fontSize: "0.825rem", color: colors.textSecondary, width: "100%" }}>
+      <Box sx={{ fontWeight: 500, color: textColor, mb: 0.5 }}>
+        Verify the connection is successful
+      </Box>
+      <Box sx={{ fontSize: "0.8rem", mb: 1.5 }}>
+        Once connected, the cluster will appear in your clusters list with status "Ready". You can verify the connection status using:
+      </Box>
+      
+      <Box
+        component="pre"
+        sx={{
+          position: "relative",
+          p: 1.5,
+          backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.3)" : "rgba(0, 0, 0, 0.04)",
+          color: theme === "dark" ? "#e6e6e6" : "#333",
+          borderRadius: 1,
+          fontFamily: "'Fira Code', monospace",
+          fontSize: "0.75rem",
+          mb: 0.5,
+          overflow: "hidden",
+          border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"}`,
+          whiteSpace: "pre",
+          "&::before": {
+            content: '"$"',
+            color: theme === "dark" ? colors.primaryLight : colors.primary,
+            marginRight: "6px",
+            fontWeight: "bold",
+            display: "inline-block",
+          },
+        }}
+      >
+        <Box component="span" sx={{ paddingLeft: "1rem" }}>kubectl get managedclusters</Box>
+        <Button
+          onClick={() => {
+            navigator.clipboard.writeText("kubectl get managedclusters");
+            setSnackbar({
+              open: true,
+              message: "Verify command copied!",
+              severity: "success"
+            });
+          }}
+          sx={{
+            position: "absolute",
+            top: 4,
+            right: 4,
+            minWidth: "28px",
+            width: "28px",
+            height: "28px",
+            p: 0,
+            borderRadius: 0.75,
+            bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.2)" : "rgba(47, 134, 255, 0.1)",
+            color: theme === "dark" ? colors.primaryLight : colors.primary,
+            boxShadow: "none",
+            "&:hover": {
+              bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.3)" : "rgba(47, 134, 255, 0.2)",
+            }
+          }}
+        >
+          <span role="img" aria-label="copy" style={{ fontSize: "0.7rem" }}>📋</span>
+        </Button>
+      </Box>
+      
+      <Box sx={{ 
+        mt: 2,
+        p: 1.5,
+        borderRadius: 1.5,
+        backgroundColor: theme === "dark" ? "rgba(103, 192, 115, 0.08)" : "rgba(103, 192, 115, 0.05)",
+        border: `1px solid ${theme === "dark" ? "rgba(103, 192, 115, 0.15)" : "rgba(103, 192, 115, 0.1)"}`,
+        fontSize: "0.8rem",
+        color: theme === "dark" ? "rgba(103, 192, 115, 0.9)" : "#3d9950",
+        display: "flex",
+        flexDirection: "column",
+        gap: 2,
+      }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box 
+            sx={{ 
+              width: 20, 
+              height: 20, 
+              borderRadius: "50%", 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "center",
+              bgcolor: theme === "dark" ? "rgba(103, 192, 115, 0.2)" : "rgba(103, 192, 115, 0.15)",
+              color: theme === "dark" ? "rgba(103, 192, 115, 0.9)" : "#3d9950",
+              flexShrink: 0,
+            }}
+          >
+            <span role="img" aria-label="success" style={{ fontSize: "0.7rem" }}>✓</span>
+          </Box>
+          <Box>
+            After approval, your cluster will show <strong>status: Ready</strong> and be available for management
+          </Box>
+        </Box>
+
+       
+<Box sx={{ display: "flex", justifyContent: "center", mt: 1 }}>
+  <Button
+    variant="contained"
+    component="a"
+    href="/its"
+    onClick={() => {
+      // Close the dialog when redirecting
+      onCancel();
+    }}
+    sx={{
+      ...primaryButtonStyles,
+      bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.7)" : colors.primary,
+      color: "#ffffff",
+      fontWeight: 600,
+      border: `1px solid ${theme === "dark" ? "rgba(47, 134, 255, 0.8)" : colors.primaryDark}`,
+      width: "100%",
+      maxWidth: "320px",
+      borderRadius: "8px",
+      py: 1.5,
+      fontSize: "0.9rem",
+      letterSpacing: "0.3px",
+      "&:hover": {
+        bgcolor: theme === "dark" ? "rgba(47, 134, 255, 0.8)" : colors.primaryDark,
+        transform: "translateY(-2px)",
+        boxShadow: theme === "dark" 
+          ? "0 8px 16px -2px rgba(47, 134, 255, 0.3)" 
+          : "0 8px 16px -2px rgba(47, 134, 255, 0.4)",
+      },
+      "&:active": {
+        transform: "translateY(-1px)",
+        boxShadow: theme === "dark" 
+          ? "0 4px 8px -2px rgba(47, 134, 255, 0.3)" 
+          : "0 4px 8px -2px rgba(47, 134, 255, 0.4)",
+      }
+    }}
+  >
+    View Cluster in Dashboard
+  </Button>
+</Box>
+      </Box>
+    </Box>
+  </Box>
+</Box>
                         </Box>
 
                         {/* Button section with improved styling - Added Back button */}

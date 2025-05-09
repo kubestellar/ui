@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Typography, SxProps, Theme } from '@mui/material';
 
-export type IconType = 'workload' | 'cluster' | 'policy';
+export type IconType = 'workload' | 'cluster' | 'policy' | 'namespace';
 
 interface KubernetesIconProps {
   type: IconType;
@@ -19,6 +19,8 @@ const KubernetesIcon: React.FC<KubernetesIconProps> = ({ type, size = 24, sx = {
         return '#2196f3'; // Material blue
       case 'policy':
         return '#9c27b0'; // Purple for policies
+      case 'namespace':
+        return '#00bcd4'; // Cyan for namespaces
       default:
         return '#326ce5';
     }
@@ -33,6 +35,8 @@ const KubernetesIcon: React.FC<KubernetesIconProps> = ({ type, size = 24, sx = {
         return 'CL';
       case 'policy':
         return 'BP';
+      case 'namespace':
+        return 'NS';
       default:
         return '';
     }

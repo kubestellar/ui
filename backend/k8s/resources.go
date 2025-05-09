@@ -9,7 +9,6 @@ import (
 	"github.com/gorilla/websocket"
 	"gopkg.in/yaml.v3"
 	"io"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -508,12 +507,11 @@ func LogWorkloads(c *gin.Context) {
 	}
 
 	// Create informer factory filtering by name if provided
-	tweakListOptions := func(options *metav1.ListOptions) {
+	tweakListOptions := func(options *v1.ListOptions) {
 		if name != "" {
 			options.FieldSelector = fmt.Sprintf("metadata.name=%s", name)
 		}
 	}
-
 	factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynamicClient, time.Minute, namespace, tweakListOptions)
 	informer := factory.ForResource(gvr).Informer()
 

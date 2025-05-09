@@ -17,6 +17,7 @@ import { CancelConfirmationDialog } from "../components/Workloads/CancelConfirma
 import useTheme from "../stores/themeStore";
 import helmicon from "../assets/Helm.png"
 import { api } from "../lib/api";
+import { ArtifactHubTab, ArtifactHubFormData } from "./Workloads/AirtfactTab/ArtifactHubTab";
 
 interface Props {
   activeOption: string | null;
@@ -30,6 +31,7 @@ interface FormData {
   credentials: string;
   branchSpecifier: string;
   webhook: string;
+  workload_label: string;
 }
 
 interface HelmFormData {
@@ -39,6 +41,7 @@ interface HelmFormData {
   releaseName: string;
   version: string;
   namespace: string;
+  workload_label: string;
 }
 
 interface Workload {
@@ -75,7 +78,7 @@ metadata:
   name: test-${randomStrings}
   namespace: test-${randomStrings}
   labels:
-    kubernetes.io/kubestellar.workload.name: test-${randomStrings}
+    kubestellar.io/workload: test-${randomStrings}
 spec:
   replicas: 2
   selector:
@@ -127,6 +130,7 @@ spec:
     credentials: "none",
     branchSpecifier: "main",
     webhook: "none",
+    workload_label: "",
   };
   const [formData, setFormData] = useState<FormData>(initialFormData);
 
@@ -137,8 +141,20 @@ spec:
     releaseName: "",
     version: "", // Changed from "latest" to "" to make it empty by default
     namespace: "default",
+    workload_label: "",
   };
   const [helmFormData, setHelmFormData] = useState<HelmFormData>(initialHelmFormData);
+
+  const initialArtifactHubFormData: ArtifactHubFormData = {
+    packageId: "",
+    version: "",
+    namespace: "default",
+    releaseName: "",
+    values: {},
+    workloadLabel: "",
+  };
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [artifactHubFormData, _] = useState<ArtifactHubFormData>(initialArtifactHubFormData);
 
   const { useUploadWorkloadFile } = useWDSQueries();
   const uploadFileMutation = useUploadWorkloadFile();
@@ -250,6 +266,13 @@ spec:
         helmFormData.releaseName !== initialHelmFormData.releaseName ||
         helmFormData.version !== initialHelmFormData.version ||
         helmFormData.namespace !== initialHelmFormData.namespace;
+    } else if (activeOption === "option5") {
+      changesDetected =
+        artifactHubFormData.packageId !== initialArtifactHubFormData.packageId ||
+        artifactHubFormData.version !== initialArtifactHubFormData.version ||
+        artifactHubFormData.namespace !== initialArtifactHubFormData.namespace ||
+        artifactHubFormData.releaseName !== initialArtifactHubFormData.releaseName ||
+        JSON.stringify(artifactHubFormData.values) !== JSON.stringify(initialArtifactHubFormData.values);
     }
 
     setHasChanges(changesDetected);
@@ -259,6 +282,7 @@ spec:
     selectedFile,
     formData,
     helmFormData,
+    artifactHubFormData,
     initialEditorContent,
     initialFormData.repositoryUrl,
     initialFormData.path,
@@ -270,7 +294,8 @@ spec:
     initialHelmFormData.chartName,
     initialHelmFormData.releaseName,
     initialHelmFormData.version,
-    initialHelmFormData.namespace
+    initialHelmFormData.namespace,
+    initialArtifactHubFormData
   ]);
 
   const handleFileUpload = async (autoNs: boolean) => {
@@ -415,6 +440,7 @@ spec:
         folder_path: formData.path,
         branch: formData.branchSpecifier || "main",
         webhook: formData.webhook !== "none" ? formData.webhook : undefined,
+        workload_label: formData.workload_label || undefined,
       };
 
       const queryParams: { [key: string]: string } = {};
@@ -445,6 +471,7 @@ spec:
           credentials: "none",
           branchSpecifier: "main",
           webhook: "none",
+          workload_label: "",
         });
         setTimeout(() => window.location.reload(), 4000);
       } else {
@@ -492,6 +519,11 @@ spec:
         requestBody.version = helmFormData.version;
       }
 
+      // Include the workload_label field if it's not empty
+      if (helmFormData.workload_label) {
+        requestBody.workloadLabel = helmFormData.workload_label;
+      }
+
       const response = await api.post(
         "/deploy/helm",
         requestBody,
@@ -513,6 +545,7 @@ spec:
           releaseName: "",
           version: "", // Reset to empty string
           namespace: "default",
+          workload_label: "",
         });
         setTimeout(() => window.location.reload(), 4000);
       } else {
@@ -532,6 +565,83 @@ spec:
         }
       } else {
         toast.error("Helm deployment failed due to network error!");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleArtifactHubDeploy = async (formData: ArtifactHubFormData) => {
+    console.log("Starting Artifact Hub deployment with formData:", formData);
+    
+    if (!formData || !formData.packageId) {
+      toast.error("Please select a package.");
+      return;
+    }
+
+    if (!formData.releaseName) {
+      toast.error("Please enter a release name.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Create a request body with the exact field names expected by the backend
+      const requestBody = {
+        packageId: formData.packageId,
+        version: formData.version,
+        namespace: formData.namespace,
+        releaseName: formData.releaseName,
+        values: formData.values,
+        workloadLabel: formData.workloadLabel
+      };
+
+      console.log("Sending Artifact Hub deployment request:", JSON.stringify(requestBody));
+
+      // Make explicit API call to ensure it's being called
+      const response = await api.post(
+        "/api/v1/artifact-hub/helm-deploy",
+        requestBody,
+        {
+          headers: {
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      console.log("Artifact Hub Deploy response:", response);
+
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Artifact Hub deployment successful!");
+        setTimeout(() => window.location.reload(), 4000);
+      } else {
+        throw new Error("Unexpected response status: " + response.status);
+      }
+    } catch (error: unknown) {
+      const err = error as AxiosError;
+      console.error("Artifact Hub Deploy error:", err);
+
+      // Enhanced error logging
+      console.error("Error details:", {
+        message: err.message,
+        response: err.response ? {
+          status: err.response.status,
+          data: err.response.data
+        } : 'No response',
+        request: err.request ? 'Request exists' : 'No request'
+      });
+
+      if (err.response) {
+        if (err.response.status === 500) {
+          toast.error("Deployment failed: failed to deploy to Artifact Hub!");
+        } else if (err.response.status === 400) {
+          toast.error("Failed to deploy to Artifact Hub!");
+        } else {
+          toast.error(`Artifact Hub deployment failed! (${err.response.status})`);
+        }
+      } else {
+        toast.error("Artifact Hub deployment failed due to network error!");
       }
     } finally {
       setLoading(false);
@@ -565,6 +675,14 @@ spec:
     let isValid = true;
     let errorMessage = "";
 
+    if (!formData.workload_label) {
+      errorMessage = "Please enter Workload Label.";
+      isValid = false;
+    } else if (formData.workload_label.includes(":")) {
+      errorMessage = "You can only enter value, key is constant and defauled to 'kubestellar.io/workload'.";
+      isValid = false;
+    } 
+    
     if (!formData.repositoryUrl) {
       errorMessage = "Please enter Git repository.";
       isValid = false;
@@ -578,25 +696,34 @@ spec:
   };
 
   const validateHelmForm = () => {
-    let isValid = true;
-    let errorMessage = "";
-
-    if (!helmFormData.repoName) {
-      errorMessage = "Please enter Repository Name.";
-      isValid = false;
-    } else if (!helmFormData.repoUrl) {
-      errorMessage = "Please enter Repository URL.";
-      isValid = false;
-    } else if (!helmFormData.chartName) {
-      errorMessage = "Please enter Chart Name.";
-      isValid = false;
-    } else if (!helmFormData.releaseName) {
-      errorMessage = "Please enter Release Name.";
-      isValid = false;
+    const { repoName, repoUrl, chartName, releaseName, namespace } = helmFormData;
+    
+    if (!repoName) {
+      toast.error("Please enter a repository name.");
+      return false;
     }
-
-    setError(errorMessage);
-    return isValid;
+    
+    if (!repoUrl) {
+      toast.error("Please enter a repository URL.");
+      return false;
+    }
+    
+    if (!chartName) {
+      toast.error("Please enter a chart name.");
+      return false;
+    }
+    
+    if (!releaseName) {
+      toast.error("Please enter a release name.");
+      return false;
+    }
+    
+    if (!namespace) {
+      toast.error("Please enter a namespace.");
+      return false;
+    }
+    
+    return true;
   };
 
   const handleCredentialChange = (event: SelectChangeEvent<string>) => {
@@ -777,12 +904,17 @@ spec:
               }              
               iconPosition="start"
             />
+            <StyledTab
+              label="Artifact Hub"
+              value="option5"
+              icon={<span role="img" aria-label="artifact-hub" style={{ fontSize: "0.9rem" }}>📦</span>}
+              iconPosition="start"
+            />
           </Tabs>
         </DialogTitle>
         <DialogContent sx={{ 
           padding: "17px", 
-          height: "auto", 
-          maxHeight: "100vh", 
+          height: "100vh", 
           overflow: "hidden",
           overflowY: "auto",
         }}>
@@ -846,6 +978,14 @@ spec:
                 validateForm={validateHelmForm}
                 handleDeploy={handleHelmDeploy}
                 handleCancelClick={handleCancelClick}
+              />
+            )}
+            {activeOption === "option5" && (
+              <ArtifactHubTab
+                onCancel={handleCancelClick}
+                onDeploy={handleArtifactHubDeploy}
+                error={error}
+                loading={loading}
               />
             )}
           </Box>

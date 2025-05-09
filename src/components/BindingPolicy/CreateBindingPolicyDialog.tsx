@@ -163,39 +163,110 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   const generateResourcesFromWorkload = (workloadObj: Workload) => {
     console.log("Generating resources from workload:", workloadObj);
     
-    const resources = [
-      { type: 'namespaces', createOnly: true }
+    const commonResources = [
+      { type: 'namespaces', createOnly: true },
+      { type: 'serviceaccounts', createOnly: false },
+      { type: 'persistentvolumeclaims', createOnly: false },
+      { type: 'configmaps', createOnly: false },
+      { type: 'secrets', createOnly: false }
     ];
     
+    // Special handling for database components - always include them
+    const databaseResources = [
+      { type: 'statefulsets', createOnly: false }, 
+      { type: 'pods', createOnly: false },
+      { type: 'serviceaccounts', createOnly: false },  
+      { type: 'roles', createOnly: false },
+      { type: 'rolebindings', createOnly: false },    
+      { type: 'clusterroles', createOnly: false },    
+      { type: 'clusterrolebindings', createOnly: false }  
+    ];
+    
+    const resourceMapping: Record<string, Array<{ type: string, createOnly: boolean }>> = {
+      'deployment': [
+        { type: 'deployments', createOnly: false },
+        { type: 'replicasets', createOnly: false },
+        { type: 'services', createOnly: false },
+        { type: 'pods', createOnly: false }
+      ],
+      'statefulset': [
+        { type: 'statefulsets', createOnly: false },
+        { type: 'services', createOnly: false },
+        { type: 'pods', createOnly: false }
+      ],
+      'daemonset': [
+        { type: 'daemonsets', createOnly: false },
+        { type: 'pods', createOnly: false }
+      ],
+      'job': [
+        { type: 'jobs', createOnly: false },
+        { type: 'pods', createOnly: false }
+      ],
+      'cronjob': [
+        { type: 'cronjobs', createOnly: false },
+        { type: 'jobs', createOnly: false },
+        { type: 'pods', createOnly: false }
+      ],
+      'service': [
+        { type: 'services', createOnly: false },
+        { type: 'endpoints', createOnly: false }
+      ],
+      'ingress': [
+        { type: 'ingresses', createOnly: false }
+      ],
+      'configmap': [
+        { type: 'configmaps', createOnly: false }
+      ],
+      'secret': [
+        { type: 'secrets', createOnly: false }
+      ],
+      'persistentvolumeclaim': [
+        { type: 'persistentvolumeclaims', createOnly: false }
+      ],
+      'namespace': [
+        { type: 'namespaces', createOnly: true }
+      ],
+      'customresourcedefinition': [
+        { type: 'customresourcedefinitions', createOnly: false }
+      ],
+      'statefulsets': [
+        { type: 'statefulsets', createOnly: false },
+        { type: 'services', createOnly: false },
+        { type: 'pods', createOnly: false }
+      ]
+    };
+    
+    let workloadSpecificResources: Array<{ type: string, createOnly: boolean }> = [];
+
+    // Determine resources based on workload kind
     if (workloadObj?.kind) {
       const kindLower = workloadObj.kind.toLowerCase();
-      let resourceType = kindLower;
-      
-      if (!resourceType.endsWith('s')) {
-        resourceType += 's';
-      }
-      
-      console.log(`Adding resource type from workload kind: ${resourceType}`);
-      
 
-      resources.push({ type: resourceType, createOnly: false });
+      if (resourceMapping[kindLower]) {
+        workloadSpecificResources = resourceMapping[kindLower];
+      } else {
+        let resourceType = kindLower;
       
-      if (kindLower === 'deployment') {
-        resources.push({ type: 'replicasets', createOnly: false });
-        resources.push({ type: 'services', createOnly: false });
-      } else if (kindLower === 'statefulset') {
-        resources.push({ type: 'services', createOnly: false });
+        if (!resourceType.endsWith('s')) {
+          resourceType += 's';
+        }
+        
+        workloadSpecificResources = [{ type: resourceType, createOnly: false }];
       }
     } else {
-      console.warn("Workload kind missing, adding deployment as default resource type");
-      // If workload kind is missing, default to deployment
-      resources.push({ type: 'deployments', createOnly: false });
-      resources.push({ type: 'replicasets', createOnly: false });
-      resources.push({ type: 'services', createOnly: false });
+      console.warn("Workload kind missing, adding deployment resources as default");
+      workloadSpecificResources = resourceMapping['deployment'];
     }
+
+    // Combine resources in priority order: database, common, workload-specific 
+    const resources = [...databaseResources, ...commonResources, ...workloadSpecificResources];
     
-    console.log("Final resources:", resources);
-    return resources;
+    const uniqueResources = resources.filter((resource, index, self) => 
+      index === self.findIndex(r => r.type === resource.type)
+    );
+    
+    console.log("Final resources:", uniqueResources);
+    return uniqueResources;
   };
 
   const extractLabelInfo = (labelId: string): { key: string, value: string } | null => {
@@ -206,36 +277,358 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
     // Remove the 'label-' prefix
     const labelPart = labelId.substring(6);
     
-    if (labelPart.includes('=')) {
-      const [key, value] = labelPart.split('=');
-      console.log(`CreateBindingPolicy: Found equals format "${key}=${value}"`);
-      return { key, value };
+    if (labelId === 'label-location-group:edge') {
+      console.log('CreateBindingPolicy: Found location-group:edge label');
+      return { key: 'location-group', value: 'edge' };
     }
     
     if (labelPart.includes(':')) {
-      const [key, value] = labelPart.split(':');
+      const colonIndex = labelPart.indexOf(':');
+      const key = labelPart.substring(0, colonIndex);
+      const value = labelPart.substring(colonIndex + 1);
       console.log(`CreateBindingPolicy: Found colon format "${key}:${value}"`);
       return { key, value };
     }
     
-    const slashMatch = labelPart.match(/^(.+\/.+?)-(.+)$/);
-    if (slashMatch) {
-      const [, key, value] = slashMatch;
-      console.log(`CreateBindingPolicy: Found label with slash in key: key="${key}", value="${value}"`);
+    if (labelPart.includes('=')) {
+      const equalsIndex = labelPart.indexOf('=');
+      const key = labelPart.substring(0, equalsIndex);
+      const value = labelPart.substring(equalsIndex + 1);
+      console.log(`CreateBindingPolicy: Found equals format "${key}=${value}"`);
       return { key, value };
     }
     
-    const firstDashIndex = labelPart.indexOf('-');
-    if (firstDashIndex !== -1) {
-      const key = labelPart.substring(0, firstDashIndex);
-      const value = labelPart.substring(firstDashIndex + 1);
-      
-      console.log(`CreateBindingPolicy: Parsed using first dash: key="${key}", value="${value}"`);
+    
+    const lastDashIndex = labelPart.lastIndexOf('-');
+    if (lastDashIndex !== -1 && lastDashIndex > 0) {
+      const key = labelPart.substring(0, lastDashIndex);
+      const value = labelPart.substring(lastDashIndex + 1);
+      console.log(`CreateBindingPolicy: Parsed using last dash: key="${key}", value="${value}"`);
+      return { key, value };
+    }
+    
+    const parts = labelId.split('-');
+    if (parts.length >= 3) {
+      const key = parts[1];
+      const value = parts.slice(2).join('-');
+      console.log(`CreateBindingPolicy: Fallback parsing: key="${key}", value="${value}"`);
       return { key, value };
     }
     
     console.log(`CreateBindingPolicy: Unable to parse label format: ${labelId}`);
     return null;
+  };
+
+  const isClusterScopedLabel = (labelInfo: { key: string; value: string }): boolean => {
+    if (!labelInfo) return false;
+    
+    // Patterns that identify cluster-scoped resources
+    const clusterScopedPatterns = [
+      // API group domain patterns
+      { valuePattern: /\.io$/ },
+      { valuePattern: /\.k8s\.io/ },
+      { valuePattern: /\.internal/ },
+      
+      // Part-of labels for cluster-level components
+      { key: 'app.kubernetes.io/part-of' },
+      
+      // Common cluster-scoped resource indicators
+      { valuePattern: /^cluster/ },
+      { valuePattern: /^custom/ },
+      { valuePattern: /^crd/ },
+      { valuePattern: /definition/ }
+    ];
+    
+    // Check against all patterns
+    return clusterScopedPatterns.some(pattern => {
+      if (pattern.key && labelInfo.key !== pattern.key) {
+        return false;
+      }
+      
+      if (pattern.valuePattern && !pattern.valuePattern.test(labelInfo.value)) {
+        return false;
+      }
+      
+      return true;
+    });
+  };
+
+  // Helper function to check if label corresponds to a namespace
+  const isNamespaceLabel = (labelInfo: { key: string; value: string }): boolean => {
+    if (!labelInfo) return false;
+    
+    // Standard Kubernetes namespace identifiers
+    const namespacePatterns = [
+      // Standard Kubernetes namespace metadata label
+      { key: 'kubernetes.io/metadata.name', valuePattern: null },
+      // Common namespace identifiers
+      { key: 'name', valuePattern: /namespace/ },
+      { key: 'k8s-namespace', valuePattern: null },
+      { key: 'type', valuePattern: /^namespace$/i },
+      // Any key containing 'namespace'
+      { keyPattern: /namespace/i, valuePattern: null },
+      // Simple name labels that might be namespaces
+      { key: 'name', valuePattern: /^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/ }
+    ];
+    
+    // Check against all patterns
+    return namespacePatterns.some(pattern => {
+      // Check for exact key match if specified
+      if (pattern.key && labelInfo.key !== pattern.key) {
+        return false;
+      }
+      
+      // Check for key pattern match if specified
+      if (pattern.keyPattern && !pattern.keyPattern.test(labelInfo.key)) {
+        return false;
+      }
+      
+      // Check for value pattern match if specified
+      if (pattern.valuePattern && !pattern.valuePattern.test(labelInfo.value)) {
+        return false;
+      }
+      
+      return true;
+    });
+  };
+
+  // Add this utility function to determine resource kind from labels
+  const determineResourceKind = (labelInfo: { key: string; value: string }): string => {
+    if (labelInfo.key === 'app.kubernetes.io/part-of') {
+      return labelInfo.value.charAt(0).toUpperCase() + labelInfo.value.slice(1);
+    }
+    
+    if (labelInfo.key === 'app.kubernetes.io/name') {
+      return labelInfo.value.charAt(0).toUpperCase() + labelInfo.value.slice(1);
+    }
+    
+    // For labels where the value contains a domain (API group)
+    if (labelInfo.value.includes('.')) {
+      return 'CustomResourceDefinition';
+    }
+    
+    return labelInfo.value.charAt(0).toUpperCase() + labelInfo.value.slice(1);
+  };
+
+  const handleCreateBindingPolicy = async (clusterIds: string[], workloadIds: string[], config?: PolicyConfiguration) => {
+    console.log('Creating binding policy with:', { clusterIds, workloadIds, config });
+    
+    if (clusterIds.length === 0 || workloadIds.length === 0) {
+      toast.error('Both cluster and workload are required');
+      return;
+    }
+    
+    const clusterId = clusterIds[0];
+    const workloadId = workloadIds[0];
+    
+    let workloadObj;
+    let isClusterScoped = false;
+    let isNamespace = false;
+    
+    if (workloadId.startsWith('label-')) {
+      const labelInfo = extractLabelInfo(workloadId);
+      console.log('Extracted workload label info:', labelInfo);
+      
+      if (labelInfo) {
+        if (isNamespaceLabel(labelInfo)) {
+          console.log(`Using namespace label: ${labelInfo.key}=${labelInfo.value}`);
+          isNamespace = true;
+          
+          workloadObj = {
+            name: labelInfo.value,
+            namespace: labelInfo.value,
+            kind: 'Namespace',
+            labels: { [labelInfo.key]: labelInfo.value }
+          };
+        }
+        else if (isClusterScopedLabel(labelInfo)) {
+          console.log(`Using cluster-scoped resource label: ${labelInfo.key}=${labelInfo.value}`);
+          isClusterScoped = true;
+          
+          workloadObj = {
+            name: labelInfo.value,
+            namespace: 'cluster-scoped',
+            kind: determineResourceKind(labelInfo),
+            labels: { [labelInfo.key]: labelInfo.value }
+          };
+        } else {
+          const matchingWorkloads = workloads.filter(workload => 
+            workload.labels && 
+            workload.labels[labelInfo.key] === labelInfo.value
+          );
+          
+          console.log('Found matching workloads by label:', matchingWorkloads.length);
+          
+          if (matchingWorkloads.length > 0) {
+            workloadObj = matchingWorkloads[0];
+          } else {
+
+            console.log(`No existing workloads match label ${labelInfo.key}=${labelInfo.value}, using synthetic workload`);
+            
+            workloadObj = {
+              name: `${labelInfo.value}-resource`, 
+              namespace: 'default',
+              kind: determineResourceKind(labelInfo),
+              labels: { [labelInfo.key]: labelInfo.value }
+            };
+            
+            if (labelInfo.key === 'app.kubernetes.io/part-of') {
+              workloadObj.kind = labelInfo.value.charAt(0).toUpperCase() + labelInfo.value.slice(1);
+              workloadObj.namespace = 'cluster-scoped';
+            }
+            
+            console.log(`Created synthetic workload:`, workloadObj);
+          }
+        }
+      } else {
+        console.error('Invalid workload label format:', workloadId);
+        toast.error(`Invalid workload label format: ${workloadId}`);
+        return;
+      }
+    } else {
+      workloadObj = workloads.find(w => w.name === workloadId);
+    }
+    
+    if (!workloadObj) {
+      console.error('Workload not found:', workloadId);
+      toast.error(`Workload not found: ${workloadId}`);
+      return;
+    }
+    
+    const workloadNamespace = isClusterScoped ? 'default' : (workloadObj.namespace || 'default');
+    
+    try {
+      let clusterObj;
+      let clusterLabelValue = '';
+      
+      if (clusterId.startsWith('label-')) {
+        const labelInfo = extractLabelInfo(clusterId);
+        console.log('Extracted cluster label info:', labelInfo);
+        
+        if (labelInfo) {
+          clusterLabelValue = labelInfo.value;
+          const matchingClusters = clusters.filter(cluster => 
+            cluster.labels && 
+            cluster.labels[labelInfo.key] === labelInfo.value
+          );
+          
+          console.log('Found matching clusters by label:', matchingClusters.length);
+          
+          if (matchingClusters.length > 0) {
+            clusterObj = matchingClusters[0];
+          } else {
+            console.error('No clusters match label:', labelInfo);
+            toast.error(`No clusters found with label ${labelInfo.key}=${labelInfo.value}`);
+            return;
+          }
+        } else {
+          console.error('Invalid cluster label format:', clusterId);
+          toast.error(`Invalid cluster label format: ${clusterId}`);
+          return;
+        }
+      } else {
+        clusterObj = clusters.find(c => c.name === clusterId);
+        clusterLabelValue = clusterObj?.name || 'unknown';
+      }
+      
+      if (!clusterObj) {
+        console.error('Cluster not found:', clusterId);
+        toast.error(`Cluster not found: ${clusterId}`);
+        return;
+      }
+      
+      const workloadLabels: Record<string, string> = {};
+      const clusterLabels: Record<string, string> = {};
+      
+      if (workloadId.startsWith('label-')) {
+        const labelInfo = extractLabelInfo(workloadId);
+        if (labelInfo) {
+          workloadLabels[labelInfo.key] = labelInfo.value;
+        }
+      } else {
+        workloadLabels['kubernetes.io/kubestellar.workload.name'] = workloadObj.name;
+      }
+      
+      if (clusterId.startsWith('label-')) {
+        const labelInfo = extractLabelInfo(clusterId);
+        if (labelInfo) {
+          clusterLabels[labelInfo.key] = labelInfo.value;
+        }
+      } else {
+        clusterLabels['name'] = clusterObj.name;
+      }
+      
+      let resources;
+      if (isNamespace) {
+        resources = [
+          { type: 'namespaces', createOnly: true }
+        ];
+      } else if (isClusterScoped) {
+        resources = [
+          { type: 'namespaces', createOnly: true },
+          { type: 'customresourcedefinitions', createOnly: false }
+        ];
+      } else {
+        // For regular workloads
+        resources = generateResourcesFromWorkload(workloadObj);
+      }
+      
+      // Generate the new policy name format
+      const resourceType = workloadObj.kind?.toLowerCase() || 'resource';
+      const uniqueId = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+      const randomDigits = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+      
+      const newPolicyName = `${clusterLabelValue}-${resourceType}-${uniqueId}${randomDigits}`
+        .toLowerCase()
+        .replace(/[^a-z0-9-]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+      
+      const requestData = {
+        workloadLabels,
+        clusterLabels,
+        resources,
+        namespacesToSync: [workloadNamespace],
+        namespace: workloadNamespace,
+        policyName: config?.name || newPolicyName
+      };
+      
+      console.log('📤 SENDING REQUEST TO GENERATE-YAML API (CreateBindingPolicyDialog):');
+      console.log(JSON.stringify(requestData, null, 2));
+      console.log('🔍 workloadObj:', JSON.stringify({
+        name: workloadObj.name,
+        namespace: workloadObj.namespace,
+        kind: workloadObj.kind,
+        labels: workloadObj.labels
+      }, null, 2));
+      console.log('🔍 clusterObj:', JSON.stringify({
+        name: clusterObj.name,
+        labels: clusterObj.labels
+      }, null, 2));
+      
+      const generateYamlResponse = await generateYamlMutation.mutateAsync(requestData);
+      
+      setPreviewYaml(generateYamlResponse.yaml);
+      
+      const policyData: PolicyData = {
+        name: config?.name || newPolicyName,
+        workloads: [workloadObj.name],
+        clusters: [clusterObj.name],
+        namespace: workloadNamespace,
+        yaml: generateYamlResponse.yaml
+      };
+      
+      if (onCreatePolicy) {
+        onCreatePolicy(policyData);
+      }
+      
+      setSuccessMessage('Binding policy created successfully');
+      handleClearPolicyCanvas();
+      onClose();
+    } catch (error) {
+      console.error('Error creating binding policy:', error);
+      toast.error('Failed to create binding policy');
+    }
   };
 
   const prepareForDeployment = async () => {
@@ -255,51 +648,96 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
       
       // Find the workload object 
       let workloadObj;
+      let isNamespace = false;
+      let isClusterScoped = false;
       
       if (workloadId.startsWith('label-')) {
         const labelInfo = extractLabelInfo(workloadId);
         console.log('Extracted label info:', labelInfo);
         
         if (labelInfo) {
-          const matchingWorkloads = workloads.filter(workload => 
-            workload.labels && 
-            workload.labels[labelInfo.key] === labelInfo.value
-          );
-          
-          console.log('Found matching workloads by label:', matchingWorkloads.length);
-          
-          if (matchingWorkloads.length > 0) {
-            workloadObj = matchingWorkloads[0];
+          // Check if this is a namespace label
+          if (isNamespaceLabel(labelInfo)) {
+            console.log(`Using namespace label: ${labelInfo.key}=${labelInfo.value}`);
+            isNamespace = true;
+              workloadObj = {
+              name: labelInfo.value,
+              namespace: labelInfo.value,
+              kind: 'Namespace',
+              labels: { [labelInfo.key]: labelInfo.value }
+            };
+          }
+          // Check if this is a cluster-scoped resource
+          else if (isClusterScopedLabel(labelInfo)) {
+            console.log(`Using cluster-scoped resource label: ${labelInfo.key}=${labelInfo.value}`);
+            isClusterScoped = true;
+            
+            workloadObj = {
+              name: labelInfo.value,
+              namespace: 'cluster-scoped',
+              kind: determineResourceKind(labelInfo),
+              labels: { [labelInfo.key]: labelInfo.value }
+            };
           } else {
-            console.error('No workloads match label:', labelInfo);
-            setError(`No workloads found with label ${labelInfo.key}=${labelInfo.value}`);
-            setIsLoading(false);
-            return;
+            // Try to find a matching workload 
+            const matchingWorkloads = workloads.filter(workload => 
+              workload.labels && 
+              workload.labels[labelInfo.key] === labelInfo.value
+            );
+            
+            console.log('Found matching workloads by label:', matchingWorkloads.length);
+            
+            if (matchingWorkloads.length > 0) {
+              workloadObj = matchingWorkloads[0];
+            } else {
+              console.log(`No existing workloads match label ${labelInfo.key}=${labelInfo.value}, using synthetic workload`);
+              
+              workloadObj = {
+                name: `${labelInfo.value}-resource`, 
+                namespace: 'default',
+                kind: determineResourceKind(labelInfo),
+                labels: { [labelInfo.key]: labelInfo.value }
+              };
+              
+              // For CRDs and API group patterns, mark as cluster-scoped
+              if (labelInfo.value.includes('.')) {
+                workloadObj.namespace = 'cluster-scoped';
+                isClusterScoped = true;
+              }
+              
+              if (labelInfo.key === 'app.kubernetes.io/part-of') {
+                workloadObj.kind = labelInfo.value.charAt(0).toUpperCase() + labelInfo.value.slice(1);
+                workloadObj.namespace = 'cluster-scoped';
+                isClusterScoped = true;
+              }
+              
+              console.log('Created synthetic workload:', workloadObj);
+            }
           }
         } else {
-          console.error('Invalid label format:', workloadId);
-          setError(`Invalid label format: ${workloadId}`);
+          setError(`Invalid workload label format: ${workloadId}`);
           setIsLoading(false);
           return;
         }
       } else {
-        workloadObj = workloads.find(w => w.name === workloadId);
+        workloadObj = workloads.find(workload => workload.name === workloadId);
       }
       
       if (!workloadObj) {
-        console.error('Workload not found:', workloadId);
         setError(`Workload not found: ${workloadId}`);
         setIsLoading(false);
         return;
       }
       
       let clusterObj;
+      let clusterLabelValue = '';
       
       if (clusterId.startsWith('label-')) {
         const labelInfo = extractLabelInfo(clusterId);
         console.log('Extracted cluster label info:', labelInfo);
         
         if (labelInfo) {
+          clusterLabelValue = labelInfo.value;
           const matchingClusters = clusters.filter(cluster => 
             cluster.labels && 
             cluster.labels[labelInfo.key] === labelInfo.value
@@ -310,19 +748,22 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
           if (matchingClusters.length > 0) {
             clusterObj = matchingClusters[0];
           } else {
-            console.error('No clusters match label:', labelInfo);
-            setError(`No clusters found with label ${labelInfo.key}=${labelInfo.value}`);
-            setIsLoading(false);
-            return;
+            console.log(`No clusters match label: ${labelInfo.key}=${labelInfo.value}, creating synthetic cluster`);
+            clusterObj = {
+              name: `${labelInfo.value}-cluster`, 
+              status: 'Ready',
+              location: 'Unknown',
+              labels: { [labelInfo.key]: labelInfo.value }
+            };
           }
         } else {
-          console.error('Invalid cluster label format:', clusterId);
           setError(`Invalid cluster label format: ${clusterId}`);
           setIsLoading(false);
           return;
         }
       } else {
         clusterObj = clusters.find(c => c.name === clusterId);
+        clusterLabelValue = clusterObj?.name || 'unknown';
       }
       
       if (!clusterObj) {
@@ -332,9 +773,19 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
         return;
       }
       
-      const workloadNamespace = workloadObj.namespace || 'default';
-       const policyName = `${workloadObj.name}-to-${clusterObj.labels?.name || clusterObj.name}`;
-
+      const workloadNamespace = isClusterScoped ? 'default' : (workloadObj.namespace || 'default');
+      
+      const resourceType = workloadObj.kind?.toLowerCase() || 'resource';
+      const uniqueId = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+      const randomDigits = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+      
+      const policyName = `${clusterLabelValue}-${resourceType}-${uniqueId}${randomDigits}`
+        .toLowerCase()
+        .replace(/[^a-z0-9-]/g, '-') 
+        .replace(/-+/g, '-') 
+        .replace(/^-|-$/g, ''); 
+      
+      // Prepare labels for the API request
       const workloadLabels: Record<string, string> = {};
       const clusterLabels: Record<string, string> = {};
       
@@ -357,10 +808,41 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
       }
 
       try {
+        // Adjust resources for different types of workloads
+        let resources;
+        if (isNamespace) {
+          resources = [
+            { type: 'namespaces', createOnly: true }
+          ];
+        } else if (isClusterScoped) {
+
+          resources = [
+            { type: 'namespaces', createOnly: true }
+          ];
+          
+          // For CRDs with domain in the value, add them specifically
+          if (workloadObj.kind === 'CustomResourceDefinition' && workloadObj.name.includes('.')) {
+            // Extract the resource type from the CRD name
+            const parts = workloadObj.name.split('.');
+            if (parts.length > 1) {
+              const resourceType = parts[0].toLowerCase();
+              resources.push({ type: resourceType, createOnly: false });
+              console.log(`Added specific resource type for CRD: ${resourceType}`);
+            }
+            
+            // Add CRDs as a resource type
+            resources.push({ type: 'customresourcedefinitions', createOnly: false });
+          } else {
+            resources = generateResourcesFromWorkload(workloadObj);
+          }
+        } else {
+          resources = generateResourcesFromWorkload(workloadObj);
+        }
+        
         const requestData = {
           workloadLabels,
           clusterLabels,
-          resources: generateResourcesFromWorkload(workloadObj),
+          resources,
           namespacesToSync: [workloadNamespace],
           policyName,
           namespace: workloadNamespace
@@ -402,7 +884,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
     }
   };
 
-  const handleCreateFromFile = () => {
+  const handleCreateFromFile = async () => {
     if (activeTab === "file") {
       if (!fileContent) {
         setError("Please select a YAML file first");
@@ -437,22 +919,36 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
       }
 
       let workloadInfo = "default-workload";
+      let namespace = "default";
       try {
         const parsedYaml = yaml.load(content) as YamlPolicy;
         if (parsedYaml?.spec?.downsync?.[0]?.apiGroup) {
           workloadInfo = parsedYaml.spec.downsync[0].apiGroup;
         }
+        if (parsedYaml?.metadata?.namespace) {
+          namespace = parsedYaml.metadata.namespace;
+        }
+        if (parsedYaml?.spec?.downsync?.[0]?.namespaces?.[0]) {
+          namespace = parsedYaml.spec.downsync[0].namespaces[0];
+        }
       } catch (e) {
         console.error("Error parsing YAML for workload info:", e);
       }
       
-      onCreatePolicy({
+      // First create the binding policy
+      const policyData: PolicyData = {
         name: policyName,
         workloads: [workloadInfo],
         clusters: policyCanvasEntities.clusters,
-        namespace: 'default',
+        namespace: namespace,
         yaml: content
-      });
+      };
+      
+      if (onCreatePolicy) {
+        onCreatePolicy(policyData);
+      }
+      
+      setSuccessMessage('Binding policy created successfully');
       
       setTimeout(() => {
         setEditorContent(DEFAULT_BINDING_POLICY_TEMPLATE);
@@ -461,6 +957,8 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
         setFileContent("");
         setDragDropYaml("");
       }, 500);
+      
+      setIsLoading(false);
     } catch (error) {
       console.error("Error creating binding policy:", error);
       setError(
@@ -538,164 +1036,6 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
     setShowCancelConfirmation(false);
     setIsLoading(false);
     onClose();
-  };
-
-  const handleCreateBindingPolicy = async (clusterIds: string[], workloadIds: string[], config?: PolicyConfiguration) => {
-    console.log('Creating binding policy with:', { clusterIds, workloadIds, config });
-    
-    if (clusterIds.length === 0 || workloadIds.length === 0) {
-      toast.error('Both cluster and workload are required');
-      return;
-    }
-    
-    const clusterId = clusterIds[0];
-    const workloadId = workloadIds[0];
-    
-    let workloadObj;
-    
-    if (workloadId.startsWith('label-')) {
-      const labelInfo = extractLabelInfo(workloadId);
-      console.log('Extracted workload label info:', labelInfo);
-      
-      if (labelInfo) {
-        const matchingWorkloads = workloads.filter(workload => 
-          workload.labels && 
-          workload.labels[labelInfo.key] === labelInfo.value
-        );
-        
-        console.log('Found matching workloads by label:', matchingWorkloads.length);
-        
-        if (matchingWorkloads.length > 0) {
-          workloadObj = matchingWorkloads[0];
-        } else {
-          console.error('No workloads match label:', labelInfo);
-          toast.error(`No workloads found with label ${labelInfo.key}=${labelInfo.value}`);
-          return;
-        }
-      } else {
-        console.error('Invalid workload label format:', workloadId);
-        toast.error(`Invalid workload label format: ${workloadId}`);
-        return;
-      }
-    } else {
-      workloadObj = workloads.find(w => w.name === workloadId);
-    }
-    
-    if (!workloadObj) {
-      console.error('Workload not found:', workloadId);
-      toast.error(`Workload not found: ${workloadId}`);
-      return;
-    }
-    
-    const workloadNamespace = workloadObj.namespace || 'default';
-    
-    try {
-      let clusterObj;
-      
-      if (clusterId.startsWith('label-')) {
-        const labelInfo = extractLabelInfo(clusterId);
-        console.log('Extracted cluster label info:', labelInfo);
-        
-        if (labelInfo) {
-          const matchingClusters = clusters.filter(cluster => 
-            cluster.labels && 
-            cluster.labels[labelInfo.key] === labelInfo.value
-          );
-          
-          console.log('Found matching clusters by label:', matchingClusters.length);
-          
-          if (matchingClusters.length > 0) {
-            clusterObj = matchingClusters[0];
-          } else {
-            console.error('No clusters match label:', labelInfo);
-            toast.error(`No clusters found with label ${labelInfo.key}=${labelInfo.value}`);
-            return;
-          }
-        } else {
-          console.error('Invalid cluster label format:', clusterId);
-          toast.error(`Invalid cluster label format: ${clusterId}`);
-          return;
-        }
-      } else {
-        clusterObj = clusters.find(c => c.name === clusterId);
-      }
-      
-      if (!clusterObj) {
-        console.error('Cluster not found:', clusterId);
-        toast.error(`Cluster not found: ${clusterId}`);
-        return;
-      }
-      
-      const workloadLabels: Record<string, string> = {};
-      const clusterLabels: Record<string, string> = {};
-      
-      if (workloadId.startsWith('label-')) {
-        const labelInfo = extractLabelInfo(workloadId);
-        if (labelInfo) {
-          workloadLabels[labelInfo.key] = labelInfo.value;
-        }
-      } else {
-        workloadLabels['kubernetes.io/kubestellar.workload.name'] = workloadObj.name;
-      }
-      
-      if (clusterId.startsWith('label-')) {
-        const labelInfo = extractLabelInfo(clusterId);
-        if (labelInfo) {
-          clusterLabels[labelInfo.key] = labelInfo.value;
-        }
-      } else {
-        clusterLabels['name'] = clusterObj.name;
-      }
-      
-      const resources = generateResourcesFromWorkload(workloadObj);
-      
-      const requestData = {
-        workloadLabels,
-        clusterLabels,
-        resources,
-        namespacesToSync: [workloadNamespace],
-        namespace: workloadNamespace,
-        policyName: config?.name || `${workloadObj.name}-to-${clusterObj.name}`
-      };
-      
-      // Add detailed console logging
-      console.log('📤 SENDING REQUEST TO GENERATE-YAML API (CreateBindingPolicyDialog):');
-      console.log(JSON.stringify(requestData, null, 2));
-      console.log('🔍 workloadObj:', JSON.stringify({
-        name: workloadObj.name,
-        namespace: workloadObj.namespace,
-        kind: workloadObj.kind,
-        labels: workloadObj.labels
-      }, null, 2));
-      console.log('🔍 clusterObj:', JSON.stringify({
-        name: clusterObj.name,
-        labels: clusterObj.labels
-      }, null, 2));
-      
-      // First generate the YAML preview
-      const generateYamlResponse = await generateYamlMutation.mutateAsync(requestData);
-      
-      setPreviewYaml(generateYamlResponse.yaml);
-      
-      const policyData: PolicyData = {
-        name: config?.name || `${workloadObj.name}-to-${clusterObj.name}`,
-        workloads: [workloadObj.name],
-        clusters: [clusterObj.name],
-        namespace: workloadNamespace,
-        yaml: generateYamlResponse.yaml
-      };
-      
-      if (onCreatePolicy) {
-        onCreatePolicy(policyData);
-      }
-      
-      setSuccessMessage('Binding policy created successfully');
-      handleClearPolicyCanvas();
-      onClose();
-    } catch (error) {
-      console.error('Error creating binding policy:', error);
-      toast.error('Failed to create binding policy');
-    }
   };
 
   const isDarkTheme = theme === "dark";

@@ -90,18 +90,6 @@ export const UserCreatedChartsForm = ({ handleChartSelection, setUserCharts, the
                     zIndex: 1,
                 }}
             >
-                <Typography
-                    variant="subtitle1"
-                    sx={{
-                        fontWeight: 600,
-                        fontSize: "20px",
-                        color: theme === "dark" ? "#d4d4d4" : "#333",
-                        mb: 3,
-                        mt: 1,
-                    }}
-                >
-                    List of User Created Charts
-                </Typography>
                 {selectedChart && (
                     <Box
                         sx={{

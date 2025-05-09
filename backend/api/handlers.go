@@ -129,9 +129,6 @@ func kubeconfigPath() string {
 	return fmt.Sprintf("%s/.kube/config", home)
 }
 
-// UpdateManagedClusterLabels patches the labels on a managedcluster object in ITS.
-// contextName identifies the ITS hub cluster (as defined in your kubeconfig),
-// and clusterName is the name of the managed cluster resource to update.
 func UpdateManagedClusterLabels(contextName, clusterName string, newLabels map[string]string) error {
 	kubeconfig := kubeconfigPath()
 	config, err := clientcmd.LoadFromFile(kubeconfig)
@@ -155,31 +152,50 @@ func UpdateManagedClusterLabels(contextName, clusterName string, newLabels map[s
 		return fmt.Errorf("creating clientset: %v", err)
 	}
 
-	// Build the patch payload to update only the labels field.
-	patchPayload := map[string]interface{}{
+	clearLabelsPayload := map[string]interface{}{
+		"metadata": map[string]interface{}{
+			"labels": map[string]string{},
+		},
+	}
+	clearLabelsBytes, err := json.Marshal(clearLabelsPayload)
+	if err != nil {
+		return fmt.Errorf("marshaling clear-labels payload: %v", err)
+	}
+
+	clearResult := clientset.RESTClient().Patch(types.MergePatchType).
+		AbsPath("/apis/cluster.open-cluster-management.io/v1").
+		Resource("managedclusters").
+		Name(clusterName).
+		Body(clearLabelsBytes).
+		Do(context.TODO())
+
+	if err := clearResult.Error(); err != nil {
+		return fmt.Errorf("clearing existing labels: %v", err)
+	}
+
+	// Step 2: Add the new labels
+	newLabelsPayload := map[string]interface{}{
 		"metadata": map[string]interface{}{
 			"labels": newLabels,
 		},
 	}
-
-	patchBytes, err := json.Marshal(patchPayload)
+	newLabelsBytes, err := json.Marshal(newLabelsPayload)
 	if err != nil {
-		return fmt.Errorf("marshaling patch payload: %v", err)
+		return fmt.Errorf("marshaling new-labels payload: %v", err)
 	}
 
-	// Issue a JSON merge patch request to update the managed cluster.
-	result := clientset.RESTClient().Patch(types.MergePatchType).
+	addResult := clientset.RESTClient().Patch(types.MergePatchType).
 		AbsPath("/apis/cluster.open-cluster-management.io/v1").
 		Resource("managedclusters").
 		Name(clusterName).
-		Body(patchBytes).
+		Body(newLabelsBytes).
 		Do(context.TODO())
 
-	if err := result.Error(); err != nil {
-		return fmt.Errorf("patching managed cluster: %v", err)
+	if err := addResult.Error(); err != nil {
+		return fmt.Errorf("adding new labels: %v", err)
 	}
 
-	log.Printf("Updated labels for managed cluster '%s' in context '%s'", clusterName, contextName)
+	log.Printf("Replaced labels for managed cluster '%s' in context '%s'", clusterName, contextName)
 	return nil
 }
 
