@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { HiBars3CenterLeft, HiArrowRightOnRectangle, HiUserCircle } from "react-icons/hi2";
 import { RxEnterFullScreen, RxExitFullScreen } from "react-icons/rx";
-import { FiLogIn, FiLogOut } from "react-icons/fi";
+import { FiLogOut } from "react-icons/fi";
 import { FiSun, FiMoon } from "react-icons/fi";
 import { menu } from "./menu/data";
 import MenuItem from "./menu/MenuItem";
@@ -268,42 +268,70 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
               )}
             </button>
             
-            {/* User Profile Icon with Dropdown */}
+            {/* User Profile Icon with Dropdown - Compact Button */}
             <div className="relative" ref={userMenuRef}>
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className="btn w-auto h-auto btn-ghost border-2 border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all duration-300"
+                className="btn btn-ghost border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 transition-all duration-300 
+                  rounded-md px-2.5 py-1.5 w-12 flex justify-center items-center"
               >
-                <div className="mr-3">{username}</div>
-                <ProfileIcon className="text-4xl text-primary" />
+                <ProfileIcon className="text-xl text-primary" />
               </button>
               
-              {/* User Dropdown Menu */}
-        {showUserMenu && (
-            <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-950 shadow-xl z-50
-            border border-gray-100 dark:border-gray-700 animate-fadeIn overflow-hidden rounded-xl">
-            <button 
-              onClick={handleLogout}
-              className="w-full group text-left px-4 py-3 text-sm font-medium 
-                bg-white dark:bg-transparent
-                hover:bg-gray-50 dark:hover:bg-gray-700/30 
-                text-gray-700 dark:text-gray-200
-                transition-all duration-200 flex items-center
-                focus:outline-none active:outline-none"
-            >
-              <div className="flex items-center gap-3 w-full">
-                <div className="p-2 rounded-full bg-red-50 dark:bg-red-500/10 
-                  group-hover:bg-red-100 dark:group-hover:bg-red-500/20
-                  transition-colors duration-200 flex-shrink-0">
-                  <FiLogOut className="text-red-500 dark:text-red-400" size={18} />
+              {/* Compact User Dropdown Menu */}
+              {showUserMenu && (
+                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-900 shadow-xl z-50
+                  border border-gray-100 dark:border-gray-800 animate-fadeIn overflow-hidden rounded-md
+                  backdrop-blur-sm dark:backdrop-blur-md"
+                  style={{
+                    boxShadow: theme === 'dark' ? '0 10px 25px -5px rgba(0, 0, 0, 0.5)' : '0 10px 25px -5px rgba(0, 0, 0, 0.1)'
+                  }}
+                >
+                  {/* User Info Section */}
+                  <div className="p-4 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/20">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center border-2 border-primary/30 mr-3">
+                        <ProfileIcon className="text-2xl text-primary" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Account
+                        </div>
+                        <div className="font-semibold text-gray-800 dark:text-gray-100 text-base">
+                          {username || 'Admin'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Account Actions */}
+                  <div className="p-3">
+                    {/* Sign Out Button */}
+                    <button 
+                      onClick={handleLogout}
+                      className="w-full group flex items-center p-2
+                        bg-white dark:bg-transparent
+                        hover:bg-gray-50 dark:hover:bg-gray-800 
+                        text-gray-700 dark:text-gray-200
+                        transition-all duration-200
+                        rounded-md
+                        focus:outline-none active:outline-none"
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <div className="p-1.5 rounded-md bg-red-50 dark:bg-red-500/10 
+                          group-hover:bg-red-100 dark:group-hover:bg-red-500/20
+                          transition-colors duration-200">
+                          <FiLogOut className="text-red-500 dark:text-red-400" size={18} />
+                        </div>
+                        <span className="text-sm font-medium group-hover:text-red-500 dark:group-hover:text-red-400 transition-colors duration-200">
+                          Sign Out
+                        </span>
+                      </div>
+                    </button>
+                  </div>
+                  
                 </div>
-                <span className="group-hover:text-red-500 dark:group-hover:text-red-400 transition-colors duration-200">
-                  Sign Out
-                </span>
-              </div>
-            </button>
-          </div>
-          )}
+              )}
             </div>
           </>
         ) : (
@@ -320,17 +348,6 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
                 <FiSun className="text-xl text-yellow-500" />
               )}
             </button>
-            
-            {/* Modern Login Button */}
-            <Link to="/login" className="flex items-center">
-              <button className="btn bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 
-                text-white border-none shadow-lg hover:shadow-blue-500/25 px-5 rounded-full 
-                flex items-center gap-2 transition-all duration-300 transform hover:scale-105">
-                <FiLogIn className="text-lg" />
-                <span className="font-medium">Sign In</span>
-                <span className="hidden md:inline-block ml-1 opacity-75">to KubeStellar</span>
-              </button>
-            </Link>
           </>
         )}
         
