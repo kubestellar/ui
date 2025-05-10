@@ -1,7 +1,7 @@
 import React from 'react';
 import useTheme from '../../stores/themeStore';
-import Skeleton from './Skeleton';
-import { Box, Typography } from '@mui/material';
+// import Skeleton from './Skeleton';
+import { Box } from '@mui/material';
 
 const WecsTreeviewSkeleton: React.FC = () => {
   const theme = useTheme((state) => state.theme);
