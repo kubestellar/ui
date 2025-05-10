@@ -1,19 +1,12 @@
 import { useState } from 'react';
 import { useClusterQueries } from '../hooks/queries/useClusterQueries';
 import ClustersTable from '../components/ClustersTable';
-import LoadingFallback from '../components/LoadingFallback';
 import Header from '../components/Header';
 
 const ITS = () => {
   const { useClusters } = useClusterQueries();
   const [currentPage, setCurrentPage] = useState(1);
   const { data, error, isLoading } = useClusters(currentPage);
-
-  if (isLoading) return (
-    <div className="w-full max-w-7xl mx-auto p-4">
-      <LoadingFallback message="Loading managed clusters..." size="medium" />
-    </div>
-  );
 
   if (error) return (
     <div className="w-full p-4">
@@ -57,6 +50,7 @@ const ITS = () => {
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={(page) => setCurrentPage(page)}
+            isLoading={isLoading}
           />
         </div>
       </div>
