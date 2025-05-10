@@ -5,7 +5,6 @@ import {
   CircularProgress, 
   Paper, 
   Divider,
-  useTheme,
   alpha,
   Chip,
   Tooltip,
@@ -23,6 +22,7 @@ import {
   ListItem,
   ListItemText,
   ListItemButton,
+  useTheme as useMuiTheme,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
@@ -39,6 +39,7 @@ import { usePolicyDragDropStore } from '../../stores/policyDragDropStore';
 import { useClusterQueries } from '../../hooks/queries/useClusterQueries';
 import { toast } from 'react-hot-toast';
 import { BsTagFill } from "react-icons/bs";
+import useTheme from "../../stores/themeStore";
 
 interface ClusterPanelProps {
   clusters: ManagedCluster[];
@@ -774,7 +775,8 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
   filteredLabelKeys = DEFAULT_FILTERED_LABEL_KEYS,
   onItemClick
 }) => {
-  const theme = useTheme();
+  const muiTheme = useMuiTheme(); // Keep MUI theme for certain MUI component props
+  const theme = useTheme((state) => state.theme); // Get custom theme state (dark/light)
   const navigate = useNavigate();
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -785,7 +787,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
   
   const DEFAULT_CONTEXT = 'its1';
   
-  const isDark = theme.palette.mode === 'dark';
+  const isDarkTheme = theme === "dark";
   const { useUpdateClusterLabels } = useClusterQueries();
   const updateLabelsMutation = useUpdateClusterLabels();
 
@@ -849,9 +851,9 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
             icon: '🏷️',
             style: {
               borderRadius: '10px',
-              background: isDark ? '#1e293b' : '#ffffff',
-              color: isDark ? '#f1f5f9' : '#1e293b',
-              border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+              background: isDarkTheme ? '#1e293b' : '#ffffff',
+              color: isDarkTheme ? '#f1f5f9' : '#1e293b',
+              border: `1px solid ${isDarkTheme ? '#334155' : '#e2e8f0'}`,
             },
           });
           setLoadingClusterEdit(null);
@@ -861,9 +863,9 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
             icon: '❌',
             style: {
               borderRadius: '10px',
-              background: isDark ? '#1e293b' : '#ffffff',
-              color: isDark ? '#f1f5f9' : '#1e293b',
-              border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+              background: isDarkTheme ? '#1e293b' : '#ffffff',
+              color: isDarkTheme ? '#f1f5f9' : '#1e293b',
+              border: `1px solid ${isDarkTheme ? '#334155' : '#e2e8f0'}`,
             },
           });
           console.error("Error updating cluster labels:", error);
@@ -875,20 +877,20 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
 
   // Colors for theming the LabelEditDialog
   const colors = {
-    primary: theme.palette.primary.main,
-    primaryLight: theme.palette.primary.light,
-    primaryDark: theme.palette.primary.dark,
-    secondary: theme.palette.secondary.main,
+    primary: muiTheme.palette.primary.main,
+    primaryLight: muiTheme.palette.primary.light,
+    primaryDark: muiTheme.palette.primary.dark,
+    secondary: muiTheme.palette.secondary.main,
     white: "#ffffff",
-    background: isDark ? "#0f172a" : "#ffffff",
-    paper: isDark ? "#1e293b" : "#f8fafc",
-    text: isDark ? "#f1f5f9" : "#1e293b",
-    textSecondary: isDark ? "#94a3b8" : "#64748b",
-    border: isDark ? "#334155" : "#e2e8f0",
+    background: isDarkTheme ? "#0f172a" : "#ffffff",
+    paper: isDarkTheme ? "#1e293b" : "#f8fafc",
+    text: isDarkTheme ? "#f1f5f9" : "#1e293b",
+    textSecondary: isDarkTheme ? "#94a3b8" : "#64748b",
+    border: isDarkTheme ? "#334155" : "#e2e8f0",
     success: "#67c073",
     warning: "#ffb347",
     error: "#ff6b6b",
-    disabled: isDark ? "#475569" : "#94a3b8",
+    disabled: isDarkTheme ? "#475569" : "#94a3b8",
   };
 
   // Extract unique labels from clusters
@@ -973,19 +975,23 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
           p: 1,
           m: compact ? 0.5 : 1,
           borderRadius: 1,
-          backgroundColor: theme.palette.background.paper,
-          border: `1px solid ${theme.palette.divider}`,
+          backgroundColor: isDarkTheme ? 'rgba(30, 41, 59, 0.8)' : muiTheme.palette.background.paper,
+          border: `1px solid ${isDarkTheme ? 'rgba(255, 255, 255, 0.12)' : muiTheme.palette.divider}`,
           boxShadow: 0,
-          '&:hover': {
-            backgroundColor: alpha(theme.palette.primary.main, 0.05),
-            cursor: 'pointer'
-          },
+          cursor: 'pointer',
           position: 'relative',
-          cursor: 'pointer'
+          transition: 'all 0.2s ease',
+          "&:hover": {
+            backgroundColor: isDarkTheme 
+              ? 'rgba(30, 41, 59, 0.95)' 
+              : alpha(muiTheme.palette.primary.main, 0.1),
+            boxShadow: 2,
+            transform: 'translateY(-2px)',
+          },
         }}
       >
-        {/* Position cluster count chip and edit button in absolute position */}
-        <Box sx={{ position: 'absolute', top: 4, right: 4, display: 'flex', gap: 0.5 }}>
+       {/* Position cluster count chip and edit button in absolute position */}
+       <Box sx={{ position: 'absolute', top: 4, right: 4, display: 'flex', gap: 0.5 }}>
           <Tooltip title="Edit clusters with this label">
             <IconButton 
               size="small" 
@@ -1002,10 +1008,16 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
               }}
               sx={{ 
                 p: 0.5, 
-                bgcolor: alpha(theme.palette.primary.main, 0.1),
-                color: theme.palette.primary.main,
+                bgcolor: isDarkTheme
+                  ? alpha(muiTheme.palette.primary.main, 0.2)
+                  : alpha(muiTheme.palette.primary.main, 0.1),
+                color: isDarkTheme
+                  ? muiTheme.palette.primary.light
+                  : muiTheme.palette.primary.main,
                 '&:hover': {
-                  bgcolor: alpha(theme.palette.primary.main, 0.2),
+                  bgcolor: isDarkTheme
+                    ? alpha(muiTheme.palette.primary.main, 0.3)
+                    : alpha(muiTheme.palette.primary.main, 0.2),
                 } 
               }}
             >
@@ -1021,15 +1033,19 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
                 fontSize: '0.8rem',
                 height: 16,
                 '& .MuiChip-label': { px: 0.5 },
-                bgcolor: alpha(theme.palette.info.main, 0.1),
-                color: theme.palette.info.main,
+                bgcolor: isDarkTheme
+                  ? alpha(muiTheme.palette.info.main, 0.2)
+                  : alpha(muiTheme.palette.info.main, 0.1),
+                color: isDarkTheme
+                  ? muiTheme.palette.info.light
+                  : muiTheme.palette.info.main,
               }}
             />
           </Tooltip>
         </Box>
         
-        {/* Label value */}
-        <Box sx={{ mt: 0.5 }}>
+         {/* Label value */}
+         <Box sx={{ mt: 0.5 }}>
           <Chip
             size="small"
             label={`${labelGroup.key} = ${labelGroup.value}`}
@@ -1041,14 +1057,17 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
                 textOverflow: 'ellipsis',
                 overflow: 'hidden',
               },
-              bgcolor: alpha(theme.palette.primary.main, 0.1),
-              color: theme.palette.primary.main,
+              bgcolor: isDarkTheme
+                ? alpha(muiTheme.palette.primary.main, 0.2)
+                : alpha(muiTheme.palette.primary.main, 0.1),
+              color: isDarkTheme
+                ? muiTheme.palette.primary.light
+                : muiTheme.palette.primary.main,
             }}
           />
         </Box>
-        
-        {/* Cluster summary with edit buttons */}
-        <Box sx={{ mt: 0.5 }}>
+     {/* Cluster summary with edit buttons */}
+     <Box sx={{ mt: 0.5 }}>
           <Tooltip 
             title={
               <React.Fragment>
@@ -1062,7 +1081,12 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
                     maxHeight: '150px', 
                     overflow: 'auto',
                     '&::-webkit-scrollbar': { width: '4px' },
-                    '&::-webkit-scrollbar-thumb': { background: alpha('#ffffff', 0.2), borderRadius: '4px' }
+                    '&::-webkit-scrollbar-thumb': { 
+                      background: isDarkTheme 
+                        ? alpha('#ffffff', 0.2)
+                        : alpha('#000000', 0.2),
+                      borderRadius: '4px' 
+                    }
                   }}
                 >
                   {clusterObjects.map(cluster => (
@@ -1107,7 +1131,14 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
             arrow 
             placement="top"
           >
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                color: isDarkTheme 
+                  ? "rgba(255, 255, 255, 0.7)" 
+                  : "text.secondary" 
+              }}
+            >
               {labelGroup.clusters.length === 1 
                 ? firstCluster.name
                 : labelGroup.clusters.length <= 2
@@ -1124,8 +1155,10 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
               bottom: 4,
               right: 4,
               fontSize: '1.2rem',
-              color: theme.palette.success.main,
-              backgroundColor: alpha(theme.palette.background.paper, 0.7),
+              color: muiTheme.palette.success.main,
+              backgroundColor: isDarkTheme 
+                ? 'rgba(17, 25, 40, 0.8)'
+                : alpha(muiTheme.palette.background.paper, 0.7),
               borderRadius: '50%'
             }}
           />
@@ -1143,16 +1176,33 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
         flexDirection: 'column',
         overflow: 'hidden',
         borderRadius: 2,
+        backgroundColor: isDarkTheme ? "rgba(17, 25, 40, 0.8)" : muiTheme.palette.background.paper,
+        border: isDarkTheme ? '1px solid rgba(255, 255, 255, 0.15)' : 'none',
+        backdropFilter: 'blur(10px)',
       }}
     >
-      <Box sx={{ p: compact ? 1 : 2, backgroundColor: theme.palette.primary.main, color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Box 
+        sx={{ 
+          p: compact ? 1 : 2, 
+          backgroundColor: isDarkTheme 
+            ? "rgba(37, 99, 235, 0.9)" 
+            : muiTheme.palette.primary.main, 
+          color: 'white', 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          borderBottom: isDarkTheme 
+            ? '1px solid rgba(255, 255, 255, 0.15)' 
+            : 'none',
+        }}
+      >
         <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
           {showSearch ? (
             <Box 
               sx={{ 
                 display: 'flex', 
                 alignItems: 'center', 
-                bgcolor: alpha(theme.palette.common.white, 0.15),
+                bgcolor: alpha(muiTheme.palette.common.white, 0.15),
                 borderRadius: 1,
                 px: 1,
                 flexGrow: 1,
@@ -1172,20 +1222,42 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
                 }}
                 autoFocus
               />
-              <IconButton size="small" onClick={() => {
-                setSearchTerm("");
-                setShowSearch(false);
-              }} sx={{ color: 'white', p: 0.25 }}>
+              <IconButton 
+                size="small" 
+                onClick={() => {
+                  setSearchTerm("");
+                  setShowSearch(false);
+                }} 
+                sx={{ 
+                  color: 'white', 
+                  p: 0.25,
+                  '&:hover': {
+                    backgroundColor: isDarkTheme 
+                      ? 'rgba(255, 255, 255, 0.15)' 
+                      : 'rgba(255, 255, 255, 0.25)'
+                  }
+                }}
+              >
                 <CloseIcon fontSize="small" />
               </IconButton>
             </Box>
           ) : (
-            <Typography variant={compact ? "subtitle1" : "h6"}>Clusters </Typography>
+            <Typography variant={compact ? "subtitle1" : "h6"}>
+              Clusters 
+            </Typography>
           )}
           {!showSearch && !compact && (
             <IconButton 
               size="small" 
-              sx={{ ml: 1, color: 'white' }}
+              sx={{ 
+                ml: 1, 
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: isDarkTheme 
+                    ? 'rgba(255, 255, 255, 0.15)' 
+                    : 'rgba(255, 255, 255, 0.25)'
+                }
+              }}
               onClick={() => setShowSearch(true)}
             >
               <SearchIcon fontSize="small" />
@@ -1201,10 +1273,15 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
               size="small"
               sx={{ 
                 bgcolor: 'white', 
-                color: theme.palette.primary.main,
-                '&:hover': {
-                  bgcolor: alpha(theme.palette.common.white, 0.9),
-                }
+                color: isDarkTheme 
+                  ? "rgba(37, 99, 235, 0.9)"
+                  : muiTheme.palette.primary.main,
+                transition: 'all 0.2s ease',
+                "&:hover": {
+                  bgcolor: alpha(muiTheme.palette.common.white, 0.9),
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                },
               }}
             >
               Add
@@ -1216,10 +1293,15 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
               size="small"
               sx={{ 
                 bgcolor: 'white', 
-                color: theme.palette.primary.main,
-                '&:hover': {
-                  bgcolor: alpha(theme.palette.common.white, 0.9),
-                }
+                color: isDarkTheme 
+                  ? "rgba(37, 99, 235, 0.9)"
+                  : muiTheme.palette.primary.main,
+                transition: 'all 0.2s ease',
+                "&:hover": {
+                  bgcolor: alpha(muiTheme.palette.common.white, 0.9),
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                },
               }}
             >
               Import
@@ -1227,7 +1309,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
           </Box>
         )}
       </Box>
-      <Divider />
+  
       
       <Box sx={{ 
         p: compact ? 0.5 : 1, 
@@ -1237,24 +1319,39 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
           display: 'none'
         },
         scrollbarWidth: 'none',  
-        '-ms-overflow-style': 'none',  
+        '-ms-overflow-style': 'none',
+        backgroundColor: isDarkTheme 
+          ? 'rgba(17, 25, 40, 0.8)' 
+          : 'transparent',
       }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-            <CircularProgress size={30} />
+            <CircularProgress size={30} sx={{
+              color: isDarkTheme ? '#60a5fa' : undefined
+            }} />
           </Box>
         ) : error ? (
           <Typography color="error" sx={{ p: 2 }}>
             {error}
           </Typography>
         ) : clusters.length === 0 ? (
-          <Typography sx={{ p: 2, color: 'text.secondary', textAlign: 'center' }}>
+          <Typography
+            sx={{ 
+              p: 2, 
+              color: isDarkTheme ? "rgba(255, 255, 255, 0.7)" : "text.secondary", 
+              textAlign: 'center' 
+            }}
+          >
             No cluster labels available. Please add clusters with labels to use in binding policies.
           </Typography>
         ) : (
           <Box sx={{ minHeight: '100%' }}>
             {filteredLabels.length === 0 ? (
-              <Typography sx={{ p: 2, color: 'text.secondary', textAlign: 'center' }}>
+              <Typography sx={{ 
+                p: 2, 
+                color: isDarkTheme ? "rgba(255, 255, 255, 0.7)" : "text.secondary", 
+                textAlign: 'center' 
+              }}>
                 {searchTerm ? 'No labels match your search.' : 'No labels found in available clusters.'}
               </Typography>
             ) : (
@@ -1265,6 +1362,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
           </Box>
         )}
       </Box>
+
 
       {/* Label Edit Dialog */}
       <LabelEditDialog
@@ -1277,7 +1375,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
         }}
         cluster={selectedCluster}
         onSave={handleSaveLabels}
-        isDark={isDark}
+        isDark={isDarkTheme}
         colors={colors}
       />
 
@@ -1290,7 +1388,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
           context: cluster.context || DEFAULT_CONTEXT 
         }))}
         onSelectCluster={handleEditSpecificCluster}
-        isDark={isDark}
+        isDark={isDarkTheme}
         colors={colors}
       />
     </Paper>

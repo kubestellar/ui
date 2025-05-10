@@ -3,16 +3,15 @@ import {
   Box, 
   Typography, 
   CircularProgress, 
-  Paper, 
-  Divider,
-  useTheme,
+  Paper,
   alpha,
   Button,
   Chip,
   Tooltip,
   InputBase,
   IconButton,
-  LinearProgress
+  LinearProgress,
+  useTheme as useMuiTheme
 } from '@mui/material';
 import { Workload } from '../../types/bindingPolicy';
 import AddIcon from '@mui/icons-material/Add';
@@ -22,6 +21,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import { usePolicyDragDropStore } from '../../stores/policyDragDropStore';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useBPQueries } from '../../hooks/queries/useBPQueries';
+import useTheme from "../../stores/themeStore";
 
 interface WorkloadPanelProps {
   workloads: Workload[];
@@ -49,10 +49,13 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
   compact = false,
   onItemClick,
 }) => {
-  const theme = useTheme();
+  const muiTheme = useMuiTheme(); // Keep MUI theme for certain MUI component props
+  const theme = useTheme((state) => state.theme); // Get custom theme state (dark/light)
   const navigate = useNavigate();
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  
+  const isDarkTheme = theme === "dark";
   
   // Use the SSE API to get workload data
   const { useWorkloadSSE } = useBPQueries();
@@ -193,17 +196,21 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
           p: 1,
           m: compact ? 0.5 : 1,
           borderRadius: 1,
-          backgroundColor: theme.palette.background.paper,
-          border: `1px solid ${theme.palette.divider}`,
+          backgroundColor: isDarkTheme ? 'rgba(30, 41, 59, 0.8)' : muiTheme.palette.background.paper,
+          border: `1px solid ${isDarkTheme ? 'rgba(255, 255, 255, 0.12)' : muiTheme.palette.divider}`,
           boxShadow: 0,
           cursor: "pointer",
           position: 'relative', 
+          transition: 'all 0.2s ease',
           "&:hover": {
-            backgroundColor: alpha(theme.palette.secondary.main, 0.1),
+            backgroundColor: isDarkTheme 
+              ? 'rgba(30, 41, 59, 0.95)' 
+              : alpha(muiTheme.palette.secondary.main, 0.1),
             boxShadow: 2,
+            transform: 'translateY(-2px)',
           },
           ...(isClusterScoped && {
-            borderLeft: `3px solid ${theme.palette.warning.main}`,
+            borderLeft: `3px solid ${isDarkTheme ? muiTheme.palette.warning.dark : muiTheme.palette.warning.main}`,
           }),
         }}
       >
@@ -238,8 +245,20 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
                   overflow: "hidden",
                   whiteSpace: "nowrap",
                 },
-                bgcolor: isClusterScoped ? alpha(theme.palette.warning.main, 0.1) : alpha(theme.palette.secondary.main, 0.1),
-                color: isClusterScoped ? theme.palette.warning.main : theme.palette.secondary.main,
+                bgcolor: isClusterScoped 
+                  ? isDarkTheme 
+                    ? alpha(muiTheme.palette.warning.dark, 0.2) 
+                    : alpha(muiTheme.palette.warning.main, 0.1)
+                  : isDarkTheme 
+                    ? alpha(muiTheme.palette.secondary.dark, 0.2) 
+                    : alpha(muiTheme.palette.secondary.main, 0.1),
+                color: isClusterScoped 
+                  ? isDarkTheme 
+                    ? muiTheme.palette.warning.light 
+                    : muiTheme.palette.warning.main
+                  : isDarkTheme 
+                    ? muiTheme.palette.secondary.light 
+                    : muiTheme.palette.secondary.main,
                 fontWeight: 500,
               }}
             />
@@ -252,8 +271,12 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
                 fontSize: "0.8rem",
                 height: 16,
                 "& .MuiChip-label": { px: 0.5 },
-                bgcolor: alpha(theme.palette.info.main, 0.1),
-                color: theme.palette.info.main,
+                bgcolor: isDarkTheme 
+                  ? alpha(muiTheme.palette.info.dark, 0.2)
+                  : alpha(muiTheme.palette.info.main, 0.1),
+                color: isDarkTheme 
+                  ? muiTheme.palette.info.light
+                  : muiTheme.palette.info.main,
                 ml: "auto", 
               }}
             />
@@ -262,7 +285,13 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
 
         {labelGroup.workloads.length === 1 && (
           <Box sx={{ mt: 0.5 }}>
-            <Typography variant="caption" sx={{ fontWeight: 500, color: "text.primary" }}>
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                fontWeight: 500, 
+                color: isDarkTheme ? "rgba(255, 255, 255, 0.9)" : "text.primary" 
+              }}
+            >
               {firstWorkload.name}
             </Typography>
           </Box>
@@ -271,7 +300,12 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
         {/* Namespace (if not cluster-scoped) */}
         {labelGroup.workloads.length === 1 && !isClusterScoped && (
           <Box sx={{ mt: 0.25 }}>
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                color: isDarkTheme ? "rgba(255, 255, 255, 0.7)" : "text.secondary" 
+              }}
+            >
               {firstWorkload.namespace}
             </Typography>
           </Box>
@@ -303,7 +337,12 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
               arrow
               placement="top"
             >
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  color: isDarkTheme ? "rgba(255, 255, 255, 0.7)" : "text.secondary" 
+                }}
+              >
                 {`${labelGroup.workloads.length} resource objects`}
               </Typography>
             </Tooltip>
@@ -322,8 +361,12 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
                 textOverflow: "ellipsis",
                 overflow: "hidden",
               },
-              bgcolor: alpha(theme.palette.grey[500], 0.1),
-              color: theme.palette.text.secondary,
+              bgcolor: isDarkTheme 
+                ? 'rgba(255, 255, 255, 0.1)' 
+                : alpha(muiTheme.palette.grey[500], 0.1),
+              color: isDarkTheme 
+                ? "rgba(255, 255, 255, 0.9)" 
+                : muiTheme.palette.text.secondary,
             }}
           />
         </Box>
@@ -335,8 +378,10 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
               bottom: 4,
               right: 4,
               fontSize: '1.2rem',
-              color: theme.palette.success.main,
-              backgroundColor: alpha(theme.palette.background.paper, 0.7),
+              color: muiTheme.palette.success.main,
+              backgroundColor: isDarkTheme 
+                ? 'rgba(17, 25, 40, 0.8)'
+                : alpha(muiTheme.palette.background.paper, 0.7),
               borderRadius: '50%'
             }}
           />
@@ -354,16 +399,24 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
         flexDirection: "column",
         overflow: "hidden",
         borderRadius: 2,
+        backgroundColor: isDarkTheme ? "rgba(17, 25, 40, 0.8)" : muiTheme.palette.background.paper,
+        border: isDarkTheme ? '1px solid rgba(255, 255, 255, 0.15)' : 'none',
+        backdropFilter: 'blur(10px)',
       }}
     >
       <Box
         sx={{
           p: compact ? 1 : 2,
-          backgroundColor: theme.palette.secondary.main,
+          backgroundColor: isDarkTheme 
+            ? "rgba(37, 99, 235, 0.9)" 
+            : muiTheme.palette.secondary.main,
           color: "white",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          borderBottom: isDarkTheme 
+            ? '1px solid rgba(255, 255, 255, 0.15)' 
+            : 'none',
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
@@ -374,11 +427,10 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
               display: 'flex',
               alignItems: 'center',
               borderRadius: 1,
-              px:1,
-              mr:1,
-              bgcolor: alpha(theme.palette.common.white, 0.15),
+              px: 1,
+              mr: 1,
+              bgcolor: alpha(muiTheme.palette.common.white, 0.15),
               flexGrow: 1,
-
             }}
             >
               <InputBase
@@ -394,15 +446,26 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
               }}
               autoFocus
               />
-               <IconButton size="small" onClick={() => {
-                setSearchTerm("");
-                setShowSearch(false);
-              }} sx={{ color: 'white', p: 0.25 }}>
+               <IconButton 
+                 size="small" 
+                 onClick={() => {
+                  setSearchTerm("");
+                  setShowSearch(false);
+                }} 
+                sx={{ 
+                  color: 'white', 
+                  p: 0.25,
+                  '&:hover': {
+                    backgroundColor: isDarkTheme 
+                      ? 'rgba(255, 255, 255, 0.15)' 
+                      : 'rgba(255, 255, 255, 0.25)'
+                  }
+                }}
+               >
                 <CloseIcon fontSize="small" />
               </IconButton>
-
             </Box>
-          ):(
+          ) : (
           <Typography variant={compact ? "subtitle1" : "h6"}>
             Workloads
           </Typography>
@@ -410,14 +473,20 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
         {!showSearch && !compact && (
           <IconButton 
           size="small" 
-          sx={{ ml: 1, color: 'white' }}
+          sx={{ 
+            ml: 1, 
+            color: 'white',
+            '&:hover': {
+              backgroundColor: isDarkTheme 
+                ? 'rgba(255, 255, 255, 0.15)' 
+                : 'rgba(255, 255, 255, 0.25)'
+            }
+          }}
           onClick={() => setShowSearch(true)}
         >
           <SearchIcon fontSize="small" />
         </IconButton>
-        )
-          
-        }
+        )}
         </Box>
         {!compact && (
           <Button
@@ -427,9 +496,14 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
             size="small"
             sx={{
               bgcolor: "white",
-              color: theme.palette.secondary.main,
+              color: isDarkTheme 
+                ? "rgba(37, 99, 235, 0.9)"
+                : muiTheme.palette.secondary.main,
+              transition: 'all 0.2s ease',
               "&:hover": {
-                bgcolor: alpha(theme.palette.common.white, 0.9),
+                bgcolor: alpha(muiTheme.palette.common.white, 0.9),
+                transform: 'translateY(-2px)',
+                boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
               },
             }}
           >
@@ -437,7 +511,6 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
           </Button>
         )}
       </Box>
-      <Divider />
 
       {/* Show progress bar during SSE loading */}
       {state.status === 'loading' && (
@@ -446,9 +519,13 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
             variant="determinate" 
             value={state.progress}
             sx={{
-              backgroundColor: alpha(theme.palette.primary.main, 0.1),
+              backgroundColor: isDarkTheme 
+                ? alpha(muiTheme.palette.primary.dark, 0.2)
+                : alpha(muiTheme.palette.primary.main, 0.1),
               '& .MuiLinearProgress-bar': {
-                backgroundColor: theme.palette.primary.main,
+                backgroundColor: isDarkTheme 
+                  ? muiTheme.palette.primary.light
+                  : muiTheme.palette.primary.main,
               }
             }}
           />
@@ -465,11 +542,16 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
           },
           scrollbarWidth: "none",
           "-ms-overflow-style": "none",
+          backgroundColor: isDarkTheme 
+            ? 'rgba(17, 25, 40, 0.8)' 
+            : 'transparent',
         }}
       >
         {loading && !state.data ? (
           <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
-            <CircularProgress size={30} />
+            <CircularProgress size={30} sx={{
+              color: isDarkTheme ? '#60a5fa' : undefined
+            }} />
           </Box>
         ) : error ? (
           <Typography color="error" sx={{ p: 2 }}>
@@ -477,7 +559,11 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
           </Typography>
         ) : workloads.length === 0 ? (
           <Typography
-            sx={{ p: 2, color: "text.secondary", textAlign: "center" }}
+            sx={{ 
+              p: 2, 
+              color: isDarkTheme ? "rgba(255, 255, 255, 0.7)" : "text.secondary", 
+              textAlign: "center" 
+            }}
           >
             {state.status === 'loading' 
               ? "Loading workloads and their labels..." 
@@ -486,7 +572,11 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
         ) : (
           <Box sx={{ minHeight: "100%" }}>
             {filteredLabels.length === 0 ? (
-              <Typography sx={{ p: 2, color: "text.secondary", textAlign: "center" }}>
+              <Typography sx={{ 
+                p: 2, 
+                color: isDarkTheme ? "rgba(255, 255, 255, 0.7)" : "text.secondary", 
+                textAlign: "center" 
+              }}>
                 {searchTerm 
                   ? 'No labels match your search.' 
                   : 'No suitable labels found in available workloads. Note: ConfigMaps, Secrets, and system resources are excluded.'}
@@ -494,7 +584,14 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
             ) : (
               <>
                 {(state.status === 'success' || state.status === 'loading') && state.data && (
-                  <Typography variant="caption" color="text.secondary" sx={{ px: 2, display: 'block' }}>
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      px: 2, 
+                      display: 'block',
+                      color: isDarkTheme ? "rgba(255, 255, 255, 0.7)" : "text.secondary"
+                    }}
+                  >
                     {filteredLabels.length} unique labels across {workloads.length} workloads
                     {state.status === 'loading' ? " (loading...)" : " (includes cluster-scoped resources like CRDs and Namespaces)"}
                   </Typography>
