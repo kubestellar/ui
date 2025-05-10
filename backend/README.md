@@ -26,7 +26,7 @@ A flexible and scalable platform for running Kubernetes control plane APIs.
 [kind](https://kind.sigs.k8s.io) and [kubectl](https://kubernetes.io/docs/tasks/tools/) are
 required. A kind hosting cluster is created automatically by the kubeflex CLI. You may
 also install KubeFlex on other Kube distros, as long as they support an nginx ingress
-with SSL passthru, or on OpenShift. See the [User's Guide](docs/users.md) for more details.
+with SSL passthru, or on OpenShift. See the [User's Guide](https://github.com/kubestellar/kubeflex/blob/main/docs/users.md) for more details.
 
 Download the latest kubeflex CLI binary release for your OS/Architecture from the
 [release page](https://github.com/kubestellar/kubeflex/releases) and copy it
@@ -102,7 +102,7 @@ kflex delete cp1
 
 ## Next Steps
 
-Read the [User's Guide](docs/users.md) to learn more about using KubeFlex for your project
+Read the [User's Guide](https://github.com/kubestellar/kubeflex/blob/main/docs/users.md) to learn more about using KubeFlex for your project
 and how to create and interact with different types of control planes, such as
 [vcluster](https://www.vcluster.com) and [Open Cluster Management](https://github.com/open-cluster-management-io/multicluster-controlplane).
 
