@@ -1284,7 +1284,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
                 },
               }}
             >
-              Add
+              labels
             </Button>
             <Button
               variant="contained"
