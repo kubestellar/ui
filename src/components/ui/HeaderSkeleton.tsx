@@ -31,9 +31,13 @@ const HeaderSkeleton: React.FC = () => {
         {/* Cluster select skeleton */}
         <Skeleton width={200} height={40} className="rounded mr-4" />
         
-        {/* Theme toggle (showing actual button since it's functional) */}
-        {/* Theme toggle (showing actual button since it's functional but without border) */}
-        <div className="flex items-center justify-center w-10 h-10 rounded-full">
+        {/* Theme toggle with conditional styling based on theme */}
+        <div 
+          className="flex items-center justify-center w-10 h-10 rounded-full"
+          style={{ 
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'
+          }}
+        >
           {theme === 'light' ? (
             <FiMoon className="text-xl text-indigo-500/30" />
           ) : (
@@ -41,17 +45,27 @@ const HeaderSkeleton: React.FC = () => {
           )}
         </div>
         
-        {/* User profile skeleton */}
-        <div className="btn flex items-center h-auto border-2 border-primary/20 bg-primary/5 cursor-default pointer-events-none">
+        {/* User profile skeleton with conditional border color */}
+        <div 
+          className="btn flex items-center h-auto border-2 bg-primary/5 cursor-default pointer-events-none"
+          style={{ 
+            borderColor: isDark ? 'rgba(47, 134, 255, 0.2)' : 'rgba(47, 134, 255, 0.1)'
+          }}
+        >
           <Skeleton width={80} height={16} className="mr-3 rounded" />
           <div className="flex-shrink-0">
             <Skeleton width={40} height={40} className="rounded-full" />
           </div>
         </div>
         
-        {/* Fullscreen button skeleton */}
+        {/* Fullscreen button skeleton with conditional text color */}
         <div className="hidden xl:inline-flex btn btn-circle btn-ghost pointer-events-none">
-          <RxEnterFullScreen className="xl:text-xl 2xl:text-2xl 3xl:text-3xl text-gray-400" />
+          <RxEnterFullScreen 
+            className="xl:text-xl 2xl:text-2xl 3xl:text-3xl" 
+            style={{ 
+              color: isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)'
+            }}
+          />
         </div>
       </div>
     </div>
