@@ -19,11 +19,27 @@ import (
 	"github.com/kubestellar/ui/its/manual/handlers"
 	"github.com/kubestellar/ui/k8s"
 	"github.com/kubestellar/ui/redis"
+	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
+	batchv1 "k8s.io/api/batch/v1"
+	certificatesv1 "k8s.io/api/certificates/v1"
+	coordinationv1 "k8s.io/api/coordination/v1"
 	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
+	eventsv1 "k8s.io/api/events/v1"
+	flowcontrolv1 "k8s.io/api/flowcontrol/v1"
+	networkingv1 "k8s.io/api/networking/v1"
+	nodev1 "k8s.io/api/node/v1"
+	policyv1 "k8s.io/api/policy/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	schedulingv1 "k8s.io/api/scheduling/v1"
+	storagev1 "k8s.io/api/storage/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 )
 
 var upgrader = websocket.Upgrader{
@@ -322,6 +338,226 @@ func StreamK8sDataChronologically(c *gin.Context) {
 													CreationTimestamp: res.CreationTimestamp.Time,
 												})
 											}
+										case *appsv1.ReplicaSetList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *appsv1.ControllerRevisionList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *batchv1.JobList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *corev1.EventList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *corev1.ResourceQuotaList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *corev1.LimitRangeList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *corev1.NamespaceList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *corev1.NodeList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *corev1.PersistentVolumeList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *corev1.ReplicationControllerList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *corev1.ComponentStatusList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: time.Now(),
+												})
+											}
+										case *batchv1.CronJobList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *networkingv1.IngressList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *networkingv1.NetworkPolicyList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *networkingv1.IngressClassList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *rbacv1.RoleList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *rbacv1.RoleBindingList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *rbacv1.ClusterRoleList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *rbacv1.ClusterRoleBindingList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *corev1.ServiceAccountList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *corev1.EndpointsList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *autoscalingv2.HorizontalPodAutoscalerList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
 										case *appsv1.DaemonSetList:
 											for _, res := range typed.Items {
 												rawResource, _ := json.Marshal(res)
@@ -333,6 +569,237 @@ func StreamK8sDataChronologically(c *gin.Context) {
 												})
 											}
 										case *corev1.ServiceList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *corev1.ConfigMapList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *corev1.SecretList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *corev1.PersistentVolumeClaimList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *policyv1.PodDisruptionBudgetList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *storagev1.StorageClassList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *storagev1.CSIDriverList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *storagev1.CSINodeList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *storagev1.CSIStorageCapacityList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *storagev1.VolumeAttachmentList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *schedulingv1.PriorityClassList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *nodev1.RuntimeClassList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *coordinationv1.LeaseList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *discoveryv1.EndpointSliceList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *admissionregistrationv1.MutatingWebhookConfigurationList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *admissionregistrationv1.ValidatingWebhookConfigurationList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *admissionregistrationv1.ValidatingAdmissionPolicyList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *admissionregistrationv1.ValidatingAdmissionPolicyBindingList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *apiextensionsv1.CustomResourceDefinitionList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *apiregistrationv1.APIServiceList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+
+										case *certificatesv1.CertificateSigningRequestList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *flowcontrolv1.FlowSchemaList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *flowcontrolv1.PriorityLevelConfigurationList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *eventsv1.EventList:
 											for _, res := range typed.Items {
 												rawResource, _ := json.Marshal(res)
 												resourceData = append(resourceData, ResourceData{
@@ -396,6 +863,38 @@ func StreamK8sDataChronologically(c *gin.Context) {
 												return clientset.CoreV1().Services(ns).List(context.TODO(), metav1.ListOptions{})
 											},
 											kind:    "Service",
+											group:   "core",
+											version: "v1",
+										},
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.CoreV1().Pods(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "Pod",
+											group:   "core",
+											version: "v1",
+										},
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.CoreV1().ConfigMaps(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "ConfigMap",
+											group:   "core",
+											version: "v1",
+										},
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.CoreV1().Secrets(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "Secret",
+											group:   "core",
+											version: "v1",
+										},
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.CoreV1().PersistentVolumeClaims(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "PersistentVolumeClaim",
 											group:   "core",
 											version: "v1",
 										},
