@@ -45,7 +45,7 @@ import { useWebSocket } from "../context/WebSocketProvider";
 import useTheme from "../stores/themeStore";
 import WecsDetailsPanel from "./WecsDetailsPanel";
 import { FlowCanvas } from "./Wds_Topology/FlowCanvas";
-import ListViewComponent from "../components/ListViewComponent"; // Added import
+import ListViewComponent from "../components/ListViewComponent";
 
 // Updated Interfaces
 export interface NodeData {
@@ -98,8 +98,8 @@ export interface ResourceItem {
   spec?: {
     ports?: Array<{ name: string; port: number }>;
     holderIdentity?: string;
-    replicas?: number; // Added for StatefulSet, ReplicationController, etc.
-    scaleTargetRef?: { // Added for HorizontalPodAutoscaler
+    replicas?: number;
+    scaleTargetRef?: {
       apiVersion?: string;
       kind?: string;
       name?: string;
@@ -252,9 +252,16 @@ const getLayoutedElements = (
   direction = "LR",
   prevNodes: React.MutableRefObject<CustomNode[]>
 ) => {
+  const NODE_WIDTH = 146;
+  const NODE_HEIGHT = 30;
+  const NODE_SEP = 50; // Horizontal spacing between nodes
+  const RANK_SEP = 60; // Reduced vertical spacing between ranks (groups)
+  const CHILD_SPACING = NODE_HEIGHT + 30; // Reduced spacing between child nodes (was 40)
+
+  // Step 1: Initial Dagre layout
   const dagreGraph = new dagre.graphlib.Graph();
   dagreGraph.setDefaultEdgeLabel(() => ({}));
-  dagreGraph.setGraph({ rankdir: direction, nodesep: 30, ranksep: 60 });
+  dagreGraph.setGraph({ rankdir: direction, nodesep: NODE_SEP, ranksep: RANK_SEP });
 
   const nodeMap = new Map<string, CustomNode>();
   const newNodes: CustomNode[] = [];
@@ -267,7 +274,7 @@ const getLayoutedElements = (
   nodes.forEach((node) => {
     const cachedNode = nodeMap.get(node.id);
     if (!cachedNode || !isEqual(cachedNode, node) || shouldRecalculate) {
-      dagreGraph.setNode(node.id, { width: 146, height: 30 });
+      dagreGraph.setNode(node.id, { width: NODE_WIDTH, height: NODE_HEIGHT });
       newNodes.push(node);
     } else {
       newNodes.push({ ...cachedNode, ...node });
@@ -286,23 +293,141 @@ const getLayoutedElements = (
       ? {
           ...node,
           position: {
-            x: dagreNode.x - 73 + 50,
-            y: dagreNode.y - 15 + 50,
+            x: dagreNode.x - NODE_WIDTH / 2 + 50,
+            y: dagreNode.y - NODE_HEIGHT / 2 + 50,
           },
         }
       : node;
   });
 
-  return { nodes: layoutedNodes, edges };
+  // Step 2: Build parent-to-children mapping
+  const parentToChildren = new Map<string, Set<string>>();
+  edges.forEach((edge) => {
+    if (!parentToChildren.has(edge.source)) {
+      parentToChildren.set(edge.source, new Set());
+    }
+    parentToChildren.get(edge.source)!.add(edge.target);
+  });
+
+  // Step 3: Identify parents with pod children
+  const parentsWithPods = new Set<string>();
+  const allChildrenToAlign = new Set<string>();
+
+  parentToChildren.forEach((children, parentId) => {
+    let hasPodChild = false;
+    children.forEach((childId) => {
+      if (childId.startsWith('pod:')) {
+        hasPodChild = true;
+      }
+    });
+    if (hasPodChild) {
+      parentsWithPods.add(parentId);
+      children.forEach((childId) => {
+        allChildrenToAlign.add(childId);
+      });
+    }
+  });
+
+  // Step 4: Find the deepest x-position among pods
+  let deepestPodX = 0;
+  layoutedNodes.forEach((node) => {
+    if (node.id.startsWith('pod:')) {
+      if (node.position.x > deepestPodX) {
+        deepestPodX = node.position.x;
+      }
+    }
+  });
+
+  // Step 5: Group aligned children by parent and adjust positions
+  const childToParent = new Map<string, string>();
+  edges.forEach((edge) => {
+    if (allChildrenToAlign.has(edge.target)) {
+      childToParent.set(edge.target, edge.source);
+    }
+  });
+
+  const parentToAlignedChildren = new Map<string, CustomNode[]>();
+  layoutedNodes.forEach((node) => {
+    if (allChildrenToAlign.has(node.id)) {
+      const parentId = childToParent.get(node.id);
+      if (parentId) {
+        if (!parentToAlignedChildren.has(parentId)) {
+          parentToAlignedChildren.set(parentId, []);
+        }
+        parentToAlignedChildren.get(parentId)!.push(node);
+      }
+    }
+  });
+
+  // Step 6: Adjust pod positions to align vertically and center around parent
+  parentToAlignedChildren.forEach((children, parentId) => {
+    const parentNode = layoutedNodes.find((node) => node.id === parentId);
+    if (!parentNode || children.length === 0) return;
+
+    // Sort children by their initial y-position to maintain order
+    children.sort((a, b) => a.position.y - b.position.y);
+
+    // Calculate total height of the children column
+    const totalHeight = (children.length - 1) * CHILD_SPACING;
+
+    // Center children around the parent
+    const parentY = parentNode.position.y + NODE_HEIGHT / 2;
+    const topY = parentY - totalHeight / 2;
+
+    // Update positions of aligned children
+    children.forEach((child, index) => {
+      const newY = topY + index * CHILD_SPACING;
+      const childIndex = layoutedNodes.findIndex((node) => node.id === child.id);
+      layoutedNodes[childIndex] = {
+        ...child,
+        position: {
+          x: deepestPodX,
+          y: newY,
+        },
+      };
+    });
+  });
+
+  // Step 7: Collision detection and adjustment
+  layoutedNodes.sort((a, b) => a.position.y - b.position.y);
+
+  for (let i = 1; i < layoutedNodes.length; i++) {
+    const currentNode = layoutedNodes[i];
+    const prevNode = layoutedNodes[i - 1];
+
+    if (Math.abs(currentNode.position.x - prevNode.position.x) < NODE_WIDTH / 2) {
+      const minSpacing = NODE_HEIGHT + 10; // Reduced minimum spacing (was 10)
+      if (currentNode.position.y - prevNode.position.y < minSpacing) {
+        layoutedNodes[i] = {
+          ...currentNode,
+          position: {
+            ...currentNode.position,
+            y: prevNode.position.y + minSpacing,
+          },
+        };
+      }
+    }
+  }
+
+  // Step 8: Adjust edges
+  const adjustedEdges = edges.map((edge) => {
+    const targetNode = layoutedNodes.find((node) => node.id === edge.target);
+    if (targetNode && allChildrenToAlign.has(targetNode.id)) {
+      return {
+        ...edge,
+        animated: true,
+      };
+    }
+    return edge;
+  });
+
+  return { nodes: layoutedNodes, edges: adjustedEdges };
 };
 
 const WecsTreeview = () => {
   const theme = useTheme((state) => state.theme);
   const [nodes, setNodes] = useState<CustomNode[]>([]);
   const [edges, setEdges] = useState<CustomEdge[]>([]);
-  // const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
-  // const [snackbarMessage, setSnackbarMessage] = useState<string>("");
-  // const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const [showCreateOptions, setShowCreateOptions] = useState(false);
   const [activeOption, setActiveOption] = useState<string | null>("option1");
@@ -319,13 +444,11 @@ const WecsTreeview = () => {
   const renderStartTime = useRef<number>(0);
   const panelRef = useRef<HTMLDivElement>(null);
   const prevWecsData = useRef<WecsCluster[] | null>(null);
-  const stateRef = useRef({ isCollapsed, isExpanded }); // Ref to track latest state
-  const [viewMode, setViewMode] = useState<'tiles' | 'list'>('tiles'); // Added viewMode state
+  const stateRef = useRef({ isCollapsed, isExpanded });
+  const [viewMode, setViewMode] = useState<'tiles' | 'list'>('tiles');
 
   const { wecsIsConnected, hasValidWecsData, wecsData } = useWebSocket();
-  // console.log(setSnackbarMessage);
-  // console.log(setSnackbarSeverity);
-  
+
   useEffect(() => {
     renderStartTime.current = performance.now();
   }, []);
@@ -344,7 +467,7 @@ const WecsTreeview = () => {
   }, [wecsData, dataReceived]);
 
   useEffect(() => {
-    stateRef.current = { isCollapsed, isExpanded }; // Sync ref with state
+    stateRef.current = { isCollapsed, isExpanded };
   }, [isCollapsed, isExpanded]);
 
   const getTimeAgo = useCallback((timestamp: string | undefined): string => {
@@ -1058,8 +1181,6 @@ const WecsTreeview = () => {
     [contextMenu, nodes, handleClosePanel, handleMenuClose]
   );
 
-  // const handleSnackbarClose = useCallback(() => setSnackbarOpen(false), []);
-
   const handleCancelCreateOptions = () => setShowCreateOptions(false);
 
   const handleCreateWorkloadClick = () => {
@@ -1274,12 +1395,6 @@ const WecsTreeview = () => {
             </Menu>
           )}
         </Box>
-{/* 
-        <Snackbar anchorOrigin={{ vertical: "top", horizontal: "center" }} open={snackbarOpen} autoHideDuration={4000} onClose={handleSnackbarClose}>
-          <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: "100%" }}>
-            {snackbarMessage}
-          </Alert>
-        </Snackbar> */}
       </Box>
 
       <div ref={panelRef}>

@@ -6,7 +6,7 @@ import {
   Tooltip,
   Button,
   alpha,
-  useTheme,
+  useTheme as useMuiTheme,
   CircularProgress,
   Divider,
   Chip,
@@ -23,6 +23,7 @@ import { BindingPolicyInfo, ManagedCluster, Workload } from '../../types/binding
 import StrictModeDroppable from './StrictModeDroppable';
 import CanvasItems from './CanvasItems';
 import ItemTooltip from './ItemTooltip';
+import useTheme from "../../stores/themeStore";
 
 interface PolicyCanvasProps {
   policies: BindingPolicyInfo[];
@@ -61,7 +62,10 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
   onConnectionComplete,
   dialogMode
 }) => {
-  const theme = useTheme();
+  const muiTheme = useMuiTheme();
+  const theme = useTheme((state) => state.theme);
+  const isDarkTheme = theme === "dark";
+  
   const [canvasMode] = useState<'view' | 'connect'>('view');
   const [, setIsHovered] = useState<string | null>(null);
   
@@ -701,9 +705,9 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
   // Draw grid background for the canvas
   const renderGrid = useCallback((ctx: CanvasRenderingContext2D, width: number, height: number) => {
     ctx.save();
-    ctx.strokeStyle = theme.palette.mode === 'dark' 
-      ? alpha(theme.palette.grey[700], 0.3)
-      : alpha(theme.palette.grey[300], 0.5);
+    ctx.strokeStyle = isDarkTheme 
+      ? alpha(muiTheme.palette.grey[700], 0.3)
+      : alpha(muiTheme.palette.grey[300], 0.5);
     ctx.lineWidth = 1;
     
     // Draw vertical lines
@@ -723,7 +727,8 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
     }
     
     ctx.restore();
-  }, [theme, gridSize]);
+  }, [muiTheme, gridSize, isDarkTheme]);
+
   
   // Update canvas grid when relevant props change
   useEffect(() => {
@@ -807,7 +812,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
           alignItems: 'center',
           justifyContent: 'center',
           height: '100%',
-          color: 'text.secondary',
+          color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary',
           p: 3,
           textAlign: 'center',
           position: 'absolute',
@@ -820,21 +825,21 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
       >
         {noWorkloadsOrClusters ? (
           <>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 1,  color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary' }}>
               {clusters.length === 0 && workloads.length === 0 
                 ? "No clusters and workloads available"
                 : clusters.length === 0 
                   ? "No clusters available" 
                   : "No workloads available"}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2"  sx={{ color: isDarkTheme ? 'rgba(255, 255, 255, 0.5)' : 'text.secondary' }}>
               Please ensure you have access to clusters and workloads.
             </Typography>
           </>
         ) : (
           <>
-            <AddIcon sx={{ fontSize: 40, mb: 2, opacity: 0.5 }} />
-            <Typography variant="body1" color="text.secondary" sx={{ opacity: 0.7 }}>
+            <AddIcon sx={{ fontSize: 40, mb: 2, opacity: 0.5,  color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : undefined }} />
+            <Typography variant="body1" color="text.secondary" sx={{ opacity: 0.7,  color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : undefined  }}>
             Click on clusters and workloads to add them here
             </Typography>
           </>
@@ -891,8 +896,8 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
           minHeight: '90px',
           height: '100%',
           borderLeft: '4px solid',
-          borderColor: theme.palette.info.main,
-          backgroundColor: alpha(theme.palette.info.main, 0.1),
+          borderColor: muiTheme.palette.info.main,
+          backgroundColor: alpha(muiTheme.palette.info.main, 0.1),
           transition: 'all 0.2s',
           cursor: 'pointer',
           position: 'relative',
@@ -917,7 +922,8 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
             fontWeight: 'medium',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
+            whiteSpace: 'nowrap',
+            color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined
           }}>
             Namespace: {labelInfo.value}
           </Typography>
@@ -940,7 +946,9 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
           />
         </Box>
         
-        <Typography variant="caption" color="text.secondary">
+        <Typography variant="caption" color="text.secondary" sx = {{
+          color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary' 
+        }}>
           Namespace selector
         </Typography>
         
@@ -957,11 +965,11 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
             right: 4,
             opacity: 0,
             transition: 'opacity 0.2s',
-            bgcolor: alpha(theme.palette.error.main, 0.1),
-            color: theme.palette.error.main,
+            bgcolor: alpha(muiTheme.palette.error.main, 0.1),
+            color: muiTheme.palette.error.main,
             p: '2px',
             '&:hover': {
-              bgcolor: alpha(theme.palette.error.main, 0.2),
+              bgcolor: alpha(muiTheme.palette.error.main, 0.2),
             }
           }}
         >
@@ -981,8 +989,10 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
         maxHeight: dialogMode ? '65vh' : '90vh', 
         position: 'relative',
         border: '1px solid',
-        borderColor: 'divider',
-        backgroundColor: alpha(theme.palette.background.paper, 0.95),
+        borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.15)' : 'divider',
+        backgroundColor: isDarkTheme 
+          ? "rgba(17, 25, 40, 0.8)" 
+          : alpha(muiTheme.palette.background.paper, 0.95),
         zIndex: 1,
         boxShadow: 1,
         borderRadius: 2,
@@ -1009,7 +1019,15 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
           }
           arrow
         >
-          <InfoIcon color="info" sx={{ fontSize: 20, opacity: 0.7, cursor: 'pointer', '&:hover': { opacity: 1 } }} />
+          <InfoIcon 
+            sx={{ 
+              fontSize: 20, 
+              opacity: 0.7, 
+              cursor: 'pointer', 
+              '&:hover': { opacity: 1 },
+              color: isDarkTheme ? 'rgba(255, 255, 255, 0.8)' : undefined
+            }} 
+          />
         </Tooltip>
       </Box>
       
@@ -1040,15 +1058,29 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
               size="small" 
               color="primary" 
               variant="outlined" 
+              sx={{
+                borderColor: isDarkTheme ? alpha(muiTheme.palette.primary.main, 0.5) : undefined,
+                color: isDarkTheme ? muiTheme.palette.primary.light : undefined,
+                '& .MuiChip-icon': {
+                  color: isDarkTheme ? muiTheme.palette.primary.light : undefined
+                }
+              }} 
             />
           )}
           {policyCanvasEntities?.workloads && policyCanvasEntities.workloads.length > 0 && (
             <Chip 
-              icon={<KubernetesIcon type="workload" size={16} />} 
+              icon={<KubernetesIcon type="workload" size={16} sx ={{color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,}}/>} 
               label={`${policyCanvasEntities.workloads.length} Workloads`} 
               size="small" 
               color="secondary" 
               variant="outlined" 
+              sx={{
+                borderColor: isDarkTheme ? alpha(muiTheme.palette.secondary.main, 0.5) : undefined,
+                color: isDarkTheme ? muiTheme.palette.secondary.light : undefined,
+                '& .MuiChip-icon': {
+                  color: isDarkTheme ? muiTheme.palette.secondary.light : undefined
+                }
+              }}
             />
           )}
           {connectionLines.length > 0 && (
@@ -1058,6 +1090,13 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
               size="small" 
               color="default" 
               variant="outlined" 
+              sx={{
+                borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.3)' : undefined,
+                color: isDarkTheme ? 'rgba(255, 255, 255, 0.8)' : undefined,
+                '& .MuiChip-icon': {
+                  color: isDarkTheme ? 'rgba(255, 255, 255, 0.8)' : undefined
+                }
+              }}
             />
           )}
         </Box>
@@ -1090,16 +1129,24 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
               flex: 1, 
               minHeight: { xs: 200, sm: 300 }, 
               backgroundColor: snapshot.isDraggingOver 
-                ? alpha(theme.palette.primary.main, 0.05) 
-                : alpha(theme.palette.background.default, 0.3),
+                ? isDarkTheme
+                  ? alpha(muiTheme.palette.primary.dark, 0.2)
+                  : alpha(muiTheme.palette.primary.main, 0.05) 
+                : isDarkTheme
+                  ? "rgba(17, 25, 40, 0.5)"
+                  : alpha(muiTheme.palette.background.default, 0.3),
               border: '2px dashed',
               borderColor: snapshot.isDraggingOver 
                 ? (snapshot.draggingFromThisWith?.startsWith('cluster-') 
-                  ? alpha(theme.palette.info.main, 0.7) 
+                  ? alpha(muiTheme.palette.info.main, 0.7) 
                   : snapshot.draggingFromThisWith?.startsWith('workload-') 
-                    ? alpha(theme.palette.success.main, 0.7)
-                    : 'primary.main')
-                : alpha(theme.palette.divider, 0.9),
+                    ? alpha(muiTheme.palette.success.main, 0.7)
+                    : isDarkTheme 
+                      ? muiTheme.palette.primary.light
+                      : muiTheme.palette.primary.main)
+                : isDarkTheme
+                  ? 'rgba(255, 255, 255, 0.2)'
+                  : alpha(muiTheme.palette.divider, 0.9),
               borderWidth: '3px',
               borderRadius: 2,
               transition: 'all 0.2s',
@@ -1107,7 +1154,9 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
               position: 'relative',
               display: 'flex',
               flexDirection: 'column',
-              boxShadow: 'inset 0 0 10px rgba(0,0,0,0.05)',
+              boxShadow: isDarkTheme 
+                ? 'inset 0 0 20px rgba(0, 0, 0, 0.3)'
+                : 'inset 0 0 10px rgba(0,0,0,0.05)',
               overflow: 'auto' 
             }}
           >
@@ -1148,7 +1197,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                   gap: { xs: 1, sm: 0 }
                 }}>
                   <Typography variant="subtitle2" sx={{ 
-                    color: 'text.secondary',
+                    color: isDarkTheme ? 'rgba(255, 255, 255, 0.8)' : 'text.secondary',
                     fontWeight: 'medium',
                     display: 'flex',
                     alignItems: 'center'
@@ -1156,7 +1205,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                     Clusters on Canvas:
                   </Typography>
                   <Typography variant="subtitle2" sx={{ 
-                    color: 'text.secondary',
+                    color: isDarkTheme ? 'rgba(255, 255, 255, 0.8)' : 'text.secondary',
                     fontWeight: 'medium',
                     display: 'flex',
                     alignItems: 'center'
@@ -1180,10 +1229,16 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                     mr: { xs: 0, sm: 1 },
                     p: 1, 
                     border: '1px dashed', 
-                    borderColor: alpha(theme.palette.info.main, 0.4),
+                    borderColor: isDarkTheme
+                      ? alpha(muiTheme.palette.info.main, 0.3)
+                      : alpha(muiTheme.palette.info.main, 0.4),
                     borderRadius: 1,
-                    backgroundColor: alpha(theme.palette.info.main, 0.05),
-                    boxShadow: 'inset 0 0 5px rgba(25, 118, 210, 0.1)',
+                    backgroundColor: isDarkTheme
+                      ? alpha(muiTheme.palette.info.dark, 0.15)
+                      : alpha(muiTheme.palette.info.main, 0.05),
+                    boxShadow: isDarkTheme
+                      ? 'inset 0 0 10px rgba(25, 118, 210, 0.1)'
+                      : 'inset 0 0 5px rgba(25, 118, 210, 0.1)',
                     display: 'flex',
                     flexDirection: 'column',
                     height: { xs: '250px', sm: '400px' }, 
@@ -1239,8 +1294,8 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                         minHeight: '90px',
                                         height: '100%',
                                         borderLeft: '4px solid',
-                                        borderColor: theme.palette.info.main,
-                                        backgroundColor: alpha(theme.palette.info.main, 0.1),
+                                        borderColor: muiTheme.palette.info.main,
+                                        backgroundColor: alpha(muiTheme.palette.info.main, 0.1),
                                         transition: 'all 0.2s',
                                         cursor: 'pointer',
                                         position: 'relative',
@@ -1265,7 +1320,9 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                           fontWeight: 'medium',
                                           overflow: 'hidden',
                                           textOverflow: 'ellipsis',
-                                          whiteSpace: 'nowrap'
+                                          whiteSpace: 'nowrap',
+                                          color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
+
                                         }}>
                                           {labelInfo.key}
                                         </Typography>
@@ -1279,6 +1336,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                           sx={{ 
                                             fontSize: '0.75rem',
                                             maxWidth: '100%',
+                                            
                                             '& .MuiChip-label': { 
                                               overflow: 'hidden',
                                               textOverflow: 'ellipsis'
@@ -1287,7 +1345,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                         />
                                       </Box>
                                       
-                                      <Typography variant="caption" color="text.secondary">
+                                      <Typography variant="caption" color="text.secondary" sx = {{color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary' }}>
                                         Label selector
                                       </Typography>
                                       
@@ -1304,11 +1362,11 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                           right: 4,
                                           opacity: 0,
                                           transition: 'opacity 0.2s',
-                                          bgcolor: alpha(theme.palette.error.main, 0.1),
-                                          color: theme.palette.error.main,
+                                          bgcolor: alpha(muiTheme.palette.error.main, 0.1),
+                                          color: muiTheme.palette.error.main,
                                           p: '2px',
                                           '&:hover': {
-                                            bgcolor: alpha(theme.palette.error.main, 0.2),
+                                            bgcolor: alpha(muiTheme.palette.error.main, 0.2),
                                           }
                                         }}
                                       >
@@ -1321,48 +1379,49 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                               }
                               
                               return (
-                                <Paper
-                                  key={`cluster-section-${clusterId}`}
-                                  elevation={2}
-                                  ref={(el) => {
-                                    if (el) elementsRef.current[`cluster-${clusterId}`] = el;
-                                  }}
-                                  sx={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    justifyContent: 'space-between',
-                                    p: 1.5,
-                                    mb: 1,
-                                    minHeight: '90px',
-                                    height: '100%',
-                                    borderLeft: '4px solid',
-                                    borderColor: theme.palette.info.main,
-                                    backgroundColor: alpha(theme.palette.info.main, 0.1),
-                                    transition: 'all 0.2s',
-                                    cursor: 'pointer',
-                                    position: 'relative',
-                                    '&:hover': { 
-                                      transform: 'translateY(-2px)', 
-                                      boxShadow: 3 
-                                    },
-                                    '&:hover .delete-button': {
-                                      opacity: 1,
-                                    }
-                                  }}
-                                  data-item-type="cluster"
-                                  data-item-id={clusterId}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleCanvasItemClick('cluster', clusterId);
-                                  }}
-                                >
+<Paper
+  key={`cluster-section-${clusterId}`}
+  elevation={2}
+  ref={(el) => {
+    if (el) elementsRef.current[`cluster-${clusterId}`] = el;
+  }}
+  sx={{
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    p: 1.5,
+    mb: 1,
+    minHeight: '90px',
+    height: '100%',
+    borderLeft: '4px solid',
+    borderColor: muiTheme.palette.info.main,
+    backgroundColor: alpha(muiTheme.palette.info.main, 0.1),
+    transition: 'all 0.2s',
+    cursor: 'pointer',
+    position: 'relative',
+    '&:hover': { 
+      transform: 'translateY(-2px)', 
+      boxShadow: 3 
+    },
+    '&:hover .delete-button': {
+      opacity: 1,
+    }
+  }}
+  data-item-type="cluster"
+  data-item-id={clusterId}
+  onClick={(e) => {
+    e.stopPropagation();
+    handleCanvasItemClick('cluster', clusterId);
+  }}
+>
                                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                     <KubernetesIcon type="cluster" size={16} sx={{ mr: 1 }} />
                                     <Typography variant="body2" component="div" sx={{ 
                                       fontWeight: 'medium',
                                       overflow: 'hidden',
                                       textOverflow: 'ellipsis',
-                                      whiteSpace: 'nowrap'
+                                      whiteSpace: 'nowrap',
+                                      color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
                                     }}>
                                       {labelInfo ? `${labelInfo.key}` : clusterId}
                                     </Typography>
@@ -1378,6 +1437,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                         sx={{ 
                                           fontSize: '0.75rem',
                                           maxWidth: '100%',
+                                          color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
                                           '& .MuiChip-label': { 
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis'
@@ -1389,7 +1449,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                   
                                   {/* Show count of matching clusters */}
                                   {labelInfo && (
-                                    <Typography variant="caption" color="text.secondary">
+                                    <Typography variant="caption" color="text.secondary" sx = {{color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary' }}>
                                       Matches: {matchingClusters.length} cluster(s)
                                     </Typography>
                                   )}
@@ -1438,11 +1498,11 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                       right: 4,
                                       opacity: 0,
                                       transition: 'opacity 0.2s',
-                                      bgcolor: alpha(theme.palette.error.main, 0.1),
-                                      color: theme.palette.error.main,
+                                      bgcolor: alpha(muiTheme.palette.error.main, 0.1),
+                                      color: muiTheme.palette.error.main,
                                       p: '2px',
                                       '&:hover': {
-                                        bgcolor: alpha(theme.palette.error.main, 0.2),
+                                        bgcolor: alpha(muiTheme.palette.error.main, 0.2),
                                       }
                                     }}
                                   >
@@ -1453,7 +1513,13 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                             })}
                         </Box>
                       ) : (
-                        <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 2 }}>
+                        <Typography variant="body2" 
+                        sx={{ 
+                          py: 2, 
+                          textAlign: 'center',
+                          color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary'
+                        }}
+                      >
                           Drag clusters here
                         </Typography>
                       )}
@@ -1462,20 +1528,26 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                   
                   {/* Workloads Section */}
                   <Box sx={{ 
-                    width: { xs: '100%', sm: '48%' }, 
-                    ml: { xs: 0, sm: 1 },
-                    p: 1, 
-                    border: '1px dashed', 
-                    borderColor: alpha(theme.palette.success.main, 0.4),
-                    borderRadius: 1,
-                    backgroundColor: alpha(theme.palette.success.main, 0.05),
-                    boxShadow: 'inset 0 0 5px rgba(76, 175, 80, 0.1)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    height: { xs: '250px', sm: '400px' }, 
-                    flex: 'none',
-                    overflow: 'hidden'
-                  }}>
+  width: { xs: '100%', sm: '48%' }, 
+  ml: { xs: 0, sm: 1 },
+  p: 1, 
+  border: '1px dashed', 
+  borderColor: isDarkTheme
+    ? alpha(muiTheme.palette.success.main, 0.3)
+    : alpha(muiTheme.palette.success.main, 0.4),
+  borderRadius: 1,
+  backgroundColor: isDarkTheme
+    ? alpha(muiTheme.palette.success.dark, 0.15)
+    : alpha(muiTheme.palette.success.main, 0.05),
+  boxShadow: isDarkTheme
+    ? 'inset 0 0 10px rgba(76, 175, 80, 0.2)'
+    : 'inset 0 0 5px rgba(76, 175, 80, 0.1)',
+  display: 'flex',
+  flexDirection: 'column',
+  height: { xs: '250px', sm: '400px' }, 
+  flex: 'none',
+  overflow: 'hidden'
+}}>
                     <Box sx={{ 
                       flexGrow: 1, 
                       overflowY: 'auto',
@@ -1531,8 +1603,12 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                         minHeight: '90px',
                                         height: '100%',
                                         borderLeft: '4px solid',
-                                        borderColor: theme.palette.success.main,
-                                        backgroundColor: alpha(theme.palette.success.main, 0.1),
+                                        borderColor: isDarkTheme
+                      ? alpha(muiTheme.palette.success.main, 0.3)
+                      : alpha(muiTheme.palette.success.main, 0.4),
+                      backgroundColor: isDarkTheme
+                      ? alpha(muiTheme.palette.success.dark, 0.15)
+                      : alpha(muiTheme.palette.success.main, 0.05),
                                         transition: 'all 0.2s',
                                         cursor: 'pointer',
                                         position: 'relative',
@@ -1552,12 +1628,13 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                       }}
                                     >
                                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                        <KubernetesIcon type="workload" size={16} sx={{ mr: 1 }} />
+                                        <KubernetesIcon type="workload" size={16} sx={{ mr: 1, color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined, }} />
                                         <Typography variant="body2" component="div" sx={{ 
                                           fontWeight: 'medium',
                                           overflow: 'hidden',
                                           textOverflow: 'ellipsis',
-                                          whiteSpace: 'nowrap'
+                                          whiteSpace: 'nowrap',
+                                          color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
                                         }}>
                                           {labelInfo.key}
                                         </Typography>
@@ -1569,6 +1646,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                           size="small"
                                           variant="outlined"
                                           sx={{ 
+                                            color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
                                             fontSize: '0.75rem',
                                             maxWidth: '100%',
                                             '& .MuiChip-label': { 
@@ -1579,7 +1657,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                         />
                                       </Box>
                                       
-                                      <Typography variant="caption" color="text.secondary">
+                                      <Typography variant="caption" color="text.secondary" sx ={{color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary' }}>
                                         Label selector
                                       </Typography>
                                       
@@ -1596,11 +1674,11 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                           right: 4,
                                           opacity: 0,
                                           transition: 'opacity 0.2s',
-                                          bgcolor: alpha(theme.palette.error.main, 0.1),
-                                          color: theme.palette.error.main,
+                                          bgcolor: alpha(muiTheme.palette.error.main, 0.1),
+                                          color: muiTheme.palette.error.main,
                                           p: '2px',
                                           '&:hover': {
-                                            bgcolor: alpha(theme.palette.error.main, 0.2),
+                                            bgcolor: alpha(muiTheme.palette.error.main, 0.2),
                                           }
                                         }}
                                       >
@@ -1628,8 +1706,8 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                     minHeight: '90px',
                                     height: '100%',
                                     borderLeft: '4px solid',
-                                    borderColor: theme.palette.success.main,
-                                    backgroundColor: alpha(theme.palette.success.main, 0.1),
+                                    borderColor: muiTheme.palette.success.main,
+                                    backgroundColor: alpha(muiTheme.palette.success.main, 0.1),
                                     transition: 'all 0.2s',
                                     cursor: 'pointer',
                                     position: 'relative',
@@ -1649,12 +1727,13 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                   }}
                                 >
                                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                    <KubernetesIcon type="workload" size={16} sx={{ mr: 1 }} />
+                                    <KubernetesIcon type="workload" size={16} sx={{ mr: 1, color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined, }} />
                                     <Typography variant="body2" component="div" sx={{ 
                                       fontWeight: 'medium',
                                       overflow: 'hidden',
                                       textOverflow: 'ellipsis',
-                                      whiteSpace: 'nowrap'
+                                      whiteSpace: 'nowrap',
+                                      color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
                                     }}>
                                       {labelInfo ? `${labelInfo.key}` : workloadId}
                                     </Typography>
@@ -1668,6 +1747,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                         size="small"
                                         variant="outlined"
                                         sx={{ 
+                                          color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
                                           fontSize: '0.75rem',
                                           maxWidth: '100%',
                                           '& .MuiChip-label': { 
@@ -1681,7 +1761,9 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                   
                                   {/* Show count of matching workloads */}
                                   {labelInfo && (
-                                    <Typography variant="caption" color="text.secondary">
+                                   <Typography variant="caption" sx={{ 
+                                    color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary' 
+                                  }}>
                                       Matches: {matchingWorkloads.length} workload(s)
                                     </Typography>
                                   )}
@@ -1693,7 +1775,8 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                         display: 'block',
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap'
+                                        whiteSpace: 'nowrap',
+                                        color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary' 
                                       }}>
                                         Type: {matchingWorkloads[0]?.kind || 'Unknown'}
                                       </Typography>
@@ -1701,7 +1784,9 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                         display: 'block',
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap'
+                                        whiteSpace: 'nowrap',
+                                        
+                                        
                                       }}>
                                         Namespace: {matchingWorkloads[0]?.namespace || 'default'}
                                       </Typography>
@@ -1750,11 +1835,11 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                       right: 4,
                                       opacity: 0, // Hidden by default
                                       transition: 'opacity 0.2s',
-                                      bgcolor: alpha(theme.palette.error.main, 0.1),
-                                      color: theme.palette.error.main,
+                                      bgcolor: alpha(muiTheme.palette.error.main, 0.1),
+                                      color: muiTheme.palette.error.main,
                                       p: '2px',
                                       '&:hover': {
-                                        bgcolor: alpha(theme.palette.error.main, 0.2),
+                                        bgcolor: alpha(muiTheme.palette.error.main, 0.2),
                                       }
                                     }}
                                   >
@@ -1765,7 +1850,13 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                             })}
                         </Box>
                       ) : (
-                        <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 2 }}>
+                        <Typography variant="body2" 
+                        sx={{ 
+                          py: 2, 
+                          textAlign: 'center',
+                          color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary'
+                        }}
+                      >
                           Drag workloads here
                         </Typography>
                       )}
@@ -1817,14 +1908,17 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
         display: 'flex', 
         justifyContent: 'flex-end', 
         mt: 2,
-        backgroundColor: alpha(theme.palette.background.paper, 0.8),
+        backgroundColor: isDarkTheme
+          ? "rgba(17, 25, 40, 0.9)"
+          : alpha(muiTheme.palette.background.paper, 0.8),
         backdropFilter: 'blur(8px)',
         borderRadius: 1,
         p: 1,
         position: 'relative',
         zIndex: 2,
         flexDirection: { xs: 'column', sm: 'row' },
-        gap: 1
+        gap: 1,
+        border: isDarkTheme ? '1px solid rgba(255, 255, 255, 0.1)' : 'none'
       }}>
         <Button 
           variant="outlined" 
@@ -1834,7 +1928,13 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
           disabled={isCanvasEmpty}
           sx={{ 
             alignSelf: { xs: 'flex-end', sm: 'auto' },
-            minWidth: '120px'
+            minWidth: '120px',
+            borderColor: isDarkTheme ? alpha(muiTheme.palette.warning.main, 0.5) : undefined,
+            color: isDarkTheme ? muiTheme.palette.warning.light : undefined,
+            '&:hover': {
+              borderColor: isDarkTheme ? muiTheme.palette.warning.main : undefined,
+              backgroundColor: isDarkTheme ? alpha(muiTheme.palette.warning.main, 0.1) : undefined
+            }
           }}
         >
           Clear Canvas
@@ -1850,16 +1950,28 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: alpha(theme.palette.background.paper, 0.7),
+            backgroundColor: isDarkTheme
+              ? alpha('#000000', 0.7)
+              : alpha(muiTheme.palette.background.paper, 0.7),
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
-            zIndex: 10
+            zIndex: 10,
+            backdropFilter: 'blur(4px)'
           }}
         >
-          <CircularProgress size={40} />
-          <Typography variant="body2" sx={{ mt: 2 }}>
+ <CircularProgress 
+            size={40} 
+            sx={{ color: isDarkTheme ? muiTheme.palette.primary.light : undefined }}
+          />
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              mt: 2,
+              color: isDarkTheme ? 'rgba(255, 255, 255, 0.8)' : undefined
+            }}
+          >
             Loading canvas data...
           </Typography>
         </Box>

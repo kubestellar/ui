@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/kubestellar/ui/k8s"
@@ -91,18 +92,75 @@ func isValidShellCmd(validShells []string, shell string) bool {
 	return false
 }
 
+func GetAllPodContainersName(c *gin.Context) {
+	context := c.Query("context")
+	if context == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no context present as query"})
+		return
+	}
+	clientSet, _, err := k8s.GetClientSetWithContext(context)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to get kube context"})
+		return
+	}
+	namespace := c.Param("namespace")
+	if namespace == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get the namespace"})
+		return
+	}
+	podName := c.Param("pod")
+	pod, err := clientSet.CoreV1().Pods(namespace).Get(c, podName, metav1.GetOptions{})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get the pods"})
+		return
+	}
+	type ContainerInfo struct {
+		Image         string
+		ContainerName string
+	}
+	var containerList []ContainerInfo
+	for _, container := range pod.Spec.Containers {
+		fmt.Println("Container Name:", container.Name)
+		fmt.Println("Image:", container.Image)
+		containerList = append(containerList, ContainerInfo{
+			Image:         container.Image,
+			ContainerName: container.Name,
+		})
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"data": containerList,
+	})
+}
+
+// need to remove when we add the tabs - till now keep it
+func getPodContainersName(c *gin.Context, clientSet *kubernetes.Clientset, ns string, podName string) string {
+	pod, err := clientSet.CoreV1().Pods(ns).Get(c, podName, metav1.GetOptions{})
+	if err != nil {
+		// handle error
+
+	}
+	containerName := ""
+	for _, container := range pod.Spec.Containers {
+		fmt.Println("Container Name:", container.Name)
+		fmt.Println("Image:", container.Image)
+		containerName = container.Name
+	}
+	return containerName
+}
 func startShellProcess(c *gin.Context, clientSet *kubernetes.Clientset, cfg *rest.Config, cmd []string, conn *websocket.Conn, namespace string) error {
 	//namespace := c.Param("namespace")
 	podName := c.Param("pod")
 	containerName := c.Param("container")
-
+	cN := getPodContainersName(c, clientSet, namespace, podName)
+	fmt.Println(containerName)
+	fmt.Println(cN)
 	req := clientSet.CoreV1().RESTClient().Post().Resource("pods").
 		Name(podName).
 		Namespace(namespace).
 		SubResource("exec")
 
 	req.VersionedParams(&v1.PodExecOptions{
-		Container: containerName,
+		Container: cN,
 		Command:   cmd,
 		Stdin:     true,
 		Stdout:    true,
