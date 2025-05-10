@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect,  useState, useCallback } from 'react';
+import React, { useMemo, useEffect, useState, useCallback } from 'react';
 import { 
   Box, 
   Typography, 
@@ -7,12 +7,13 @@ import {
   Chip, 
   Divider,
   alpha,
-  Badge
+  Badge,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { BindingPolicyInfo, ManagedCluster, Workload } from '../../types/bindingPolicy';
 import KubernetesIcon from './KubernetesIcon';
 import ConnectionIcon from './ConnectionIcon.tsx';
+import useTheme from "../../stores/themeStore";
 
 interface ConnectionLine {
   source: string;
@@ -107,7 +108,6 @@ const getClustersForLabel = (clusters: ManagedCluster[], key: string, value: str
     cluster.labels && cluster.labels[key] === value
   );
 };
-
 const CanvasItems: React.FC<CanvasItemsProps> = ({
   policies,
   clusters,
@@ -124,6 +124,9 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
   snapToGrid = true,
   gridSize = 20
 }) => {
+  const theme = useTheme((state) => state.theme);
+  const isDarkTheme = theme === "dark";
+  
   const [itemPositions, setItemPositions] = useState<Record<string, { x: number, y: number }>>({});
   
   const snapItemToGrid = (itemId: string, rawX: number, rawY: number) => {
@@ -188,14 +191,26 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
   }, [canvasEntities, snapToGrid, gridSize, itemPositions]);
   
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Active':
-        return '#4caf50'; 
-      case 'Pending':
-        return '#ff9800';  
-      case 'Inactive':
-      default:
-        return '#f44336';
+    if (isDarkTheme) {
+      switch (status) {
+        case 'Active':
+          return '#66bb6a'; // Lighter green for dark mode
+        case 'Pending':
+          return '#ffb74d'; // Lighter orange for dark mode
+        case 'Inactive':
+        default:
+          return '#ef5350'; // Lighter red for dark mode
+      }
+    } else {
+      switch (status) {
+        case 'Active':
+          return '#4caf50';
+        case 'Pending':
+          return '#ff9800';
+        case 'Inactive':
+        default:
+          return '#f44336';
+      }
     }
   };
 
@@ -258,10 +273,12 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
     return {
       borderLeft: `4px solid ${defaultColor}`,
       boxShadow: isActiveItem 
-        ? '0 0 0 3px rgba(156, 39, 176, 0.5)' 
+        ? `0 0 0 3px ${isDarkTheme ? alpha('#ce93d8', 0.6) : alpha('#9c27b0', 0.5)}` 
         : isItemConnected 
-          ? '0 0 0 2px rgba(33, 150, 243, 0.3)' 
+          ? `0 0 0 2px ${isDarkTheme ? alpha('#90caf9', 0.4) : alpha('#2196f3', 0.3)}` 
           : 'none',
+      backgroundColor: isDarkTheme ? 'rgba(30, 41, 59, 0.8)' : undefined,
+      color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
       cursor: connectMode && (itemType === 'cluster' || itemType === 'workload') ? 'pointer' : 'default'
     };
   };
@@ -297,7 +314,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
   const getConnectableStyles = (itemType: string, itemId: string) => {
     if (isItemConnectable(itemType, itemId)) {
       return {
-        boxShadow: '0 0 0 2px #1976d2, 0 0 10px #1976d2',
+        boxShadow: `0 0 0 2px ${isDarkTheme ? '#90caf9' : '#1976d2'}, 0 0 10px ${isDarkTheme ? '#90caf9' : '#1976d2'}`,
         position: 'relative',
         '&::after': {
           content: '""',
@@ -307,7 +324,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
           width: '20px',
           height: '20px',
           borderRadius: '50%',
-          backgroundColor: '#1976d2',
+          backgroundColor: isDarkTheme ? '#90caf9' : '#1976d2',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -364,10 +381,14 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      {/* Policies on Canvas */}
-      {canvasEntities.policies.length > 0 && (
+     {/* Policies on Canvas */}
+     {canvasEntities.policies.length > 0 && (
         <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
+          <Typography variant="subtitle2" sx={{ 
+            mb: 1, 
+            fontWeight: 'bold',
+            color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined
+          }}>
             Policies on Canvas:
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -406,9 +427,13 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                     top: position.y,
                     zIndex: 3,
                     cursor: 'move',
+                    backdropFilter: isDarkTheme ? 'blur(8px)' : 'none',
+                    border: isDarkTheme ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
                     '&:hover': {
                       transform: 'translateY(-2px)',
-                      boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                      boxShadow: isDarkTheme 
+                        ? '0 4px 12px rgba(0,0,0,0.5)' 
+                        : '0 4px 8px rgba(0,0,0,0.2)'
                     }
                   }}
                 >
@@ -419,9 +444,14 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                     mb: 0.5,
                     width: '100%'
                   }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <KubernetesIcon type="policy" size={20} sx={{ mr: 1 }} />
-                      <Typography variant="subtitle2" noWrap>
+                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <KubernetesIcon type="policy" size={20} sx={{ 
+                        mr: 1,
+                        color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined
+                      }} />
+                      <Typography variant="subtitle2" noWrap sx={{
+                        color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined
+                      }}>
                         {policy.name}
                       </Typography>
                     </Box>
@@ -431,9 +461,15 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                         <Badge 
                           badgeContent={connectionCounts.policies[policyId]} 
                           color="primary" 
-                          sx={{ mr: 1 }}
+                          sx={{ 
+                            mr: 1,
+                            '& .MuiBadge-badge': {
+                              backgroundColor: isDarkTheme ? '#90caf9' : undefined,
+                              color: isDarkTheme ? '#0f172a' : undefined
+                            }
+                          }}
                         >
-                          <ConnectionIcon size={20} />
+                          <ConnectionIcon size={20} color={isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined} />
                         </Badge>
                       )}
                       <IconButton 
@@ -444,28 +480,44 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                           e.preventDefault();
                           removeFromCanvas('policy', policyId);
                         }}
+                        sx={{
+                          color: isDarkTheme ? '#f48fb1' : undefined,
+                          '&:hover': {
+                            backgroundColor: isDarkTheme 
+                              ? alpha('#f44336', 0.15) 
+                              : alpha('#f44336', 0.1)
+                          }
+                        }}
                       >
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </Box>
                   </Box>
                   
-                  <Divider sx={{ mb: 0.5 }} />
+                  <Divider sx={{ 
+                    mb: 0.5,
+                    borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : undefined
+                  }} />
                   
-                  <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5 }}>
+                  <Typography variant="caption" sx={{ 
+                    mb: 0.5,
+                    color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary'
+                  }}>
                     Status: <Chip 
                       label={policy.status} 
                       size="small" 
                       sx={{ 
                         height: 18, 
                         fontSize: '0.6rem',
-                        backgroundColor: alpha(getStatusColor(policy.status), 0.1),
+                        backgroundColor: alpha(getStatusColor(policy.status), isDarkTheme ? 0.2 : 0.1),
                         color: getStatusColor(policy.status)
                       }} 
                     />
                   </Typography>
                   
-                  <Typography variant="caption" color="text.secondary" noWrap>
+                  <Typography variant="caption" sx={{ 
+                    color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary'
+                  }} noWrap>
                     Namespace: {policy.namespace}
                   </Typography>
                 </Paper>
@@ -506,7 +558,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                   data-item-id={clusterId}
                   sx={{
                     p: 1,
-                    ...getConnectionBorderStyle('cluster', clusterId, '#2196f3'),
+                    ...getConnectionBorderStyle('cluster', clusterId, isDarkTheme ? '#90caf9' : '#2196f3'),
                     display: 'flex',
                     flexDirection: 'column',
                     width: 'fit-content',
@@ -518,12 +570,20 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                     top: position.y,
                     zIndex: 3,
                     cursor: 'move',
+                    backdropFilter: isDarkTheme ? 'blur(8px)' : 'none',
+                    border: isDarkTheme ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
                     backgroundColor: isItemConnectable('cluster', clusterId) 
-                      ? alpha('#2196f3', 0.1) 
-                      : undefined,
+                      ? isDarkTheme 
+                        ? alpha('#90caf9', 0.15) 
+                        : alpha('#2196f3', 0.1) 
+                      : isDarkTheme 
+                        ? 'rgba(30, 41, 59, 0.8)'
+                        : undefined,
                     '&:hover': {
                       transform: 'translateY(-2px)',
-                      boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                      boxShadow: isDarkTheme 
+                        ? '0 4px 12px rgba(0,0,0,0.5)' 
+                        : '0 4px 8px rgba(0,0,0,0.2)'
                     }
                   }}
                 >
@@ -535,8 +595,13 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                     width: '100%'
                   }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <KubernetesIcon type="cluster" size={20} sx={{ mr: 1 }} />
-                      <Typography variant="subtitle2" noWrap>
+                      <KubernetesIcon type="cluster" size={20} sx={{ 
+                        mr: 1,
+                        color: isDarkTheme ? '#90caf9' : undefined 
+                      }} />
+                      <Typography variant="subtitle2" noWrap sx={{
+                        color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined
+                      }}>
                         {labelInfo ? `${labelInfo.key}` : clusterId}
                       </Typography>
                     </Box>
@@ -546,20 +611,33 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                         <Badge 
                           badgeContent={connectionCounts.clusters[clusterId]} 
                           color="primary" 
-                          sx={{ mr: 1 }}
+                          sx={{ 
+                            mr: 1,
+                            '& .MuiBadge-badge': {
+                              backgroundColor: isDarkTheme ? '#90caf9' : undefined,
+                              color: isDarkTheme ? '#0f172a' : undefined
+                            }
+                          }}
                         >
-                          <ConnectionIcon size={20} />
+                        <ConnectionIcon size={20} color={isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined} />
                         </Badge>
                       )}
                       
                       {labelInfo && matchingClusters.length > 1 && (
-                        <Badge 
-                          badgeContent={matchingClusters.length} 
-                          color="info" 
-                          sx={{ mr: 1 }}
-                        >
-                          <KubernetesIcon type="cluster" size={16} />
-                        </Badge>
+                       <Badge 
+                       badgeContent={matchingClusters.length} 
+                       color="info" 
+                       sx={{ 
+                         mr: 1,
+                         '& .MuiBadge-badge': {
+                           backgroundColor: isDarkTheme ? '#90caf9' : undefined,
+                           color: isDarkTheme ? '#0f172a' : undefined
+                         }
+                       }}
+                     >
+        
+              <KubernetesIcon type="cluster" size={16} sx={{ color: isDarkTheme ? '#90caf9' : undefined }} />
+</Badge>
                       )}
                       
                       <IconButton 
@@ -569,6 +647,14 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                           e.stopPropagation();
                           e.preventDefault();
                           removeFromCanvas('cluster', clusterId);
+                        }}
+                        sx={{
+                          color: isDarkTheme ? '#f48fb1' : undefined,
+                          '&:hover': {
+                            backgroundColor: isDarkTheme 
+                              ? alpha('#f44336', 0.15) 
+                              : alpha('#f44336', 0.1)
+                          }
                         }}
                       >
                         <DeleteIcon fontSize="small" />
@@ -594,13 +680,22 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                   
                   {labelInfo && matchingClusters.length > 0 && (
                     <>
-                      <Divider sx={{ my: 0.5 }} />
-                      <Typography variant="caption" color="text.secondary">
-                        Clusters: {matchingClusters.length <= 2 
-                          ? matchingClusters.map(c => c.name).join(', ')
-                          : `${matchingClusters.slice(0, 2).map(c => c.name).join(', ')} +${matchingClusters.length - 2} more`
-                        }
-                      </Typography>
+                      <Divider sx={{ 
+                        my: 0.5,
+                        borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : undefined
+                      }} />
+                      <Chip 
+                        label={labelInfo.value}
+                        size="small"
+                        variant="outlined"
+                        sx={{ 
+                          height: 20,
+                          fontSize: '0.75rem',
+                          mb: 0.5,
+                          color: isDarkTheme ? '#90caf9' : undefined,
+                          borderColor: isDarkTheme ? alpha('#90caf9', 0.5) : undefined
+                        }}
+                      />
                     </>
                   )}
                 </Paper>
@@ -629,41 +724,49 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
               
               return (
                 <Paper
-                  key={workloadId}
-                  ref={(el: HTMLElement | null) => {
-                    if (el) elementsRef.current[`workload-${workloadId}`] = el;
-                  }}
-                  elevation={2}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, 'workload', workloadId)}
-                  onClick={(e) => captureItemClick(e, 'workload', workloadId)}
-                  onMouseEnter={(e) => handleItemHover(e, 'workload', workloadId)}
-                  onMouseLeave={(e) => handleItemHover(e, null, null)}
-                  data-item-type="workload"
-                  data-item-id={workloadId}
-                  sx={{
-                    p: 1,
-                    ...getConnectionBorderStyle('workload', workloadId, '#4caf50'),
-                    display: 'flex',
-                    flexDirection: 'column',
-                    width: 'fit-content',
-                    maxWidth: 250,
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    ...(connectMode ? getConnectableStyles('workload', workloadId) : {}),
-                    position: 'absolute',
-                    left: position.x,
-                    top: position.y,
-                    zIndex: 3,
-                    cursor: 'move',
-                    backgroundColor: isItemConnectable('workload', workloadId) 
-                      ? alpha('#4caf50', 0.1) 
+                key={workloadId}
+                ref={(el: HTMLElement | null) => {
+                  if (el) elementsRef.current[`workload-${workloadId}`] = el;
+                }}
+                elevation={2}
+                draggable
+                onDragStart={(e) => handleDragStart(e, 'workload', workloadId)}
+                onClick={(e) => captureItemClick(e, 'workload', workloadId)}
+                onMouseEnter={(e) => handleItemHover(e, 'workload', workloadId)}
+                onMouseLeave={(e) => handleItemHover(e, null, null)}
+                data-item-type="workload"
+                data-item-id={workloadId}
+                sx={{
+                  p: 1,
+                  ...getConnectionBorderStyle('workload', workloadId, isDarkTheme ? '#81c784' : '#4caf50'),
+                  display: 'flex',
+                  flexDirection: 'column',
+                  width: 'fit-content',
+                  maxWidth: 250,
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  ...(connectMode ? getConnectableStyles('workload', workloadId) : {}),
+                  position: 'absolute',
+                  left: position.x,
+                  top: position.y,
+                  zIndex: 3,
+                  cursor: 'move',
+                  backdropFilter: isDarkTheme ? 'blur(8px)' : 'none',
+                  border: isDarkTheme ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
+                  backgroundColor: isItemConnectable('workload', workloadId) 
+                    ? isDarkTheme 
+                      ? alpha('#81c784', 0.15) 
+                      : alpha('#4caf50', 0.1) 
+                    : isDarkTheme 
+                      ? 'rgba(30, 41, 59, 0.8)'
                       : undefined,
-                    '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
-                    }
-                  }}
-                >
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: isDarkTheme 
+                      ? '0 4px 12px rgba(0,0,0,0.5)' 
+                      : '0 4px 8px rgba(0,0,0,0.2)'
+                  }
+                }}
+              >
                   <Box sx={{ 
                     display: 'flex', 
                     alignItems: 'center', 
@@ -673,7 +776,10 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                   }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       {getWorkloadIcon()}
-                      <Typography variant="subtitle2" sx={{ ml: 1 }} noWrap>
+                      <Typography variant="subtitle2" sx={{ 
+                        ml: 1,
+                        color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined
+                      }} noWrap>
                         {labelInfo ? `${labelInfo.key}` : workloadId}
                       </Typography>
                     </Box>
@@ -683,9 +789,15 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                         <Badge 
                           badgeContent={connectionCounts.workloads[workloadId]} 
                           color="primary" 
-                          sx={{ mr: 1 }}
+                          sx={{ 
+                            mr: 1,
+                            '& .MuiBadge-badge': {
+                              backgroundColor: isDarkTheme ? '#90caf9' : undefined,
+                              color: isDarkTheme ? '#0f172a' : undefined
+                            }
+                          }}
                         >
-                          <ConnectionIcon size={20} />
+                         <ConnectionIcon size={20} color={isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined} />
                         </Badge>
                       )}
                       
@@ -693,10 +805,17 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                         <Badge 
                           badgeContent={matchingWorkloads.length} 
                           color="success" 
-                          sx={{ mr: 1 }}
+                          sx={{ 
+                            mr: 1,
+                            '& .MuiBadge-badge': {
+                              backgroundColor: isDarkTheme ? '#81c784' : undefined,
+                              color: isDarkTheme ? '#0f172a' : undefined
+                            }
+                          }}
                         >
-                          <KubernetesIcon type="workload" size={16} />
-                        </Badge>
+                   
+<KubernetesIcon type="cluster" size={16} sx={{ color: isDarkTheme ? '#90caf9' : undefined }} />
+</Badge>
                       )}
                       
                       <IconButton 
@@ -707,15 +826,26 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                           e.preventDefault();
                           removeFromCanvas('workload', workloadId);
                         }}
+                        sx={{
+                          color: isDarkTheme ? '#f48fb1' : undefined,
+                          '&:hover': {
+                            backgroundColor: isDarkTheme 
+                              ? alpha('#f44336', 0.15) 
+                              : alpha('#f44336', 0.1)
+                          }
+                        }}
                       >
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </Box>
                   </Box>
-                  
+
                   {labelInfo && (
                     <>
-                      <Divider sx={{ my: 0.5 }} />
+                      <Divider sx={{ 
+                        my: 0.5,
+                        borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : undefined
+                      }} />
                       <Chip 
                         label={labelInfo.value}
                         size="small"
@@ -723,14 +853,22 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                         sx={{ 
                           height: 20,
                           fontSize: '0.75rem',
-                          mb: 0.5
+                          mb: 0.5,
+                          color: isDarkTheme ? '#81c784' : undefined,
+                          borderColor: isDarkTheme ? alpha('#81c784', 0.5) : undefined
                         }}
                       />
                     </>
                   )}
                   
-                  {namespaces.length > 0 && (
-                    <Typography variant="caption" color="text.secondary" noWrap>
+     {namespaces.length > 0 && (
+                    <Typography 
+                      variant="caption" 
+                      noWrap
+                      sx={{
+                        color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary'
+                      }}
+                    >
                       {namespaces.length === 1 
                         ? `Namespace: ${namespaces[0]}`
                         : `Namespaces: ${namespaces.length}`
@@ -740,8 +878,16 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                   
                   {labelInfo && matchingWorkloads.length > 0 && (
                     <>
-                      <Divider sx={{ my: 0.5 }} />
-                      <Typography variant="caption" color="text.secondary">
+                      <Divider sx={{ 
+                        my: 0.5,
+                        borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : undefined
+                      }} />
+                      <Typography 
+                        variant="caption" 
+                        sx={{
+                          color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary'
+                        }}
+                      >
                         {matchingWorkloads.length <= 2 
                           ? matchingWorkloads.map(w => `${w.name} (${w.kind})`).join(', ')
                           : `${matchingWorkloads.slice(0, 2).map(w => w.name).join(', ')} +${matchingWorkloads.length - 2} more`
@@ -759,4 +905,4 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
   );
 };
 
-export default CanvasItems; 
+export default CanvasItems;
