@@ -86,6 +86,29 @@ export const useResourceLogsWebSocket = (
   return queryResult;
 };
 
+export const useContextCreationWebSocket = (
+  contextName: string, 
+  contextVersion: string, 
+  onRawMessage?: (event: MessageEvent) => void, 
+  onError?: (error: Error) => void, 
+  onClose?: (event: CloseEvent) => void
+) => {
+  return useWebSocketQuery<string[]>({
+    url: `/api/wds/context?context=${contextName}&version=${contextVersion}`,
+    queryKey: ['context-creation', contextName, contextVersion],
+    enabled: false,
+    parseData: false,
+    transform: (data: unknown) => {
+      if (typeof data !== 'string') return [];
+      return [data as string];
+    },
+    autoReconnect: false,
+    onRawMessage: onRawMessage,
+    onError: onError,
+    onDisconnect: onClose,
+  });
+};
+
 export const useWebSocket = () => {
   const namespaces = useNamespacesWebSocket();
   const wecs = useWecsWebSocket();

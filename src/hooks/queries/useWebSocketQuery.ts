@@ -9,7 +9,7 @@ interface UseWebSocketOptions<TData, TRawData = unknown> {
   onMessage?: (data: TData) => void;
   onRawMessage?: (event: MessageEvent) => void;
   onConnect?: () => void;
-  onDisconnect?: () => void;
+  onDisconnect?: (event: CloseEvent) => void;
   onError?: (error: Error) => void;
   transform?: (data: TRawData) => TData;
   autoReconnect?: boolean;
@@ -59,8 +59,6 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
   });
 
   const connectWebSocket = () => {
-    if (!enabled) return;
-
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.close();
     }
@@ -98,18 +96,17 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
     };
 
     ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
       const wsError = error instanceof Error ? error : new Error('WebSocket error');
       setWsState({ isConnected: false, error: wsError });
       queryClient.setQueryData(queryKey, null);
       onError?.(wsError);
     };
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
       setWsState({ isConnected: false, error: null });
       queryClient.setQueryData(queryKey, null);
       wsRef.current = null;
-      onDisconnect?.();
+      onDisconnect?.(event);
 
       if (autoReconnect && enabled) {
         reconnectTimeoutRef.current = window.setTimeout(() => {
@@ -132,8 +129,14 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
   const disconnect = () => {
     if (!wsRef.current) return;
 
-    wsRef.current.close();
-    wsRef.current = null;
+    // Force close by setting readyState to CLOSED (3)
+    if (wsRef.current.readyState !== WebSocket.CLOSED) {
+      try {
+        wsRef.current.close();
+      } catch (e) {
+        console.warn('Error closing WebSocket:', e);
+      }
+    }
 
     if (reconnectTimeoutRef.current) {
       window.clearTimeout(reconnectTimeoutRef.current);
