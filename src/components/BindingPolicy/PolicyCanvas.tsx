@@ -1940,7 +1940,6 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
       backgroundColor: isDarkTheme ? alpha(muiTheme.palette.error.main, 0.15) : alpha(muiTheme.palette.error.main, 0.05),
       color: isDarkTheme ? 'rgba(255, 255, 255, 0.95)' : muiTheme.palette.error.main,
       '& .MuiSvgIcon-root': {
-        transform: 'rotate(-5deg)',
         color: isDarkTheme ? 'rgba(255, 255, 255, 0.95)' : muiTheme.palette.error.main,
       }
     },

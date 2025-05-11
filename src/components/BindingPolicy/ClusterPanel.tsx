@@ -1279,7 +1279,6 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
                ? muiTheme.palette.common.white
                : muiTheme.palette.secondary.main,
              borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.3)' : undefined,
-             border: isDarkTheme ? '1px solid' : 'none',
              transition: 'all 0.2s ease',
              fontWeight: 500,
              "&:hover": {
@@ -1308,7 +1307,6 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
       ? muiTheme.palette.common.white
       : muiTheme.palette.secondary.main,
     borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.3)' : undefined,
-    border: isDarkTheme ? '1px solid' : 'none',
     transition: 'all 0.2s ease',
     fontWeight: 500,
     "&:hover": {
