@@ -1,5 +1,4 @@
 import { Box, Button, FormControlLabel, Radio, RadioGroup } from "@mui/material";
-import { StyledContainer } from "../../StyledComponents";
 import useTheme from "../../../stores/themeStore";
 import { useState, useEffect } from "react";
 import { AxiosError } from "axios";
@@ -66,7 +65,7 @@ interface Props {
 }
 
 export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) => {
-  const { theme } = useTheme();
+  const theme = useTheme((state) => state.theme);
   const [selectedOption, setSelectedOption] = useState("searchPackages");
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [reposLoading, setReposLoading] = useState(false);
@@ -264,15 +263,21 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
   };
 
   return (
-    <StyledContainer>
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          flex: 1,
-          minHeight: 0,
-        }}
-      >
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        height: "100%",
+        overflow: "hidden",
+        pt: 2,
+      }}
+    >
+      {/* Workload Label Input with better positioning and spacing */}
+      <Box sx={{ 
+        mb: 3, 
+        mt: 1,
+      }}>
         <WorkloadLabelInput 
           value={selectedOption === "searchPackages" ? searchFormData.workloadLabel : directDeployFormData.workloadLabel}
           handleChange={(e) => {
@@ -285,122 +290,140 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
           isError={false}
           theme={theme}
         />
-        
-        <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 1, mt: 2 }}>
-          <RadioGroup
-            row
-            value={selectedOption}
-            onChange={handleOptionChange}
-            sx={{ gap: 4 }}
-          >
-            <FormControlLabel
-              value="searchPackages"
-              control={<Radio />}
-              label="Search Packages"
-              sx={{
-                "& .MuiTypography-root": {
-                  color: theme === "dark" ? "#d4d4d4" : "#333",
-                  fontSize: "0.875rem",
-                },
-              }}
-            />
-            <FormControlLabel
-              value="directDeploy"
-              control={<Radio />}
-              label="Deploy Helm Chart from Artifact Hub"
-              sx={{
-                "& .MuiTypography-root": {
-                  color: theme === "dark" ? "#d4d4d4" : "#333",
-                  fontSize: "0.875rem",
-                },
-              }}
-            />
-            <FormControlLabel
-              value="repositories"
-              control={<Radio />}
-              label="List Repositories"
-              sx={{
-                "& .MuiTypography-root": {
-                  color: theme === "dark" ? "#d4d4d4" : "#333",
-                  fontSize: "0.875rem",
-                },
-              }}
-            />
-          </RadioGroup>
-        </Box>
-
-        {/* Wrapper Box to maintain consistent height */}
-        <Box sx={{ height: "55vh", overflow: "hidden" }}>
-          {selectedOption === "searchPackages" ? (
-            <SearchPackagesForm
-              theme={theme}
-              handlePackageSelection={handlePackageSelection}
-              formData={searchFormData}
-              setFormData={setSearchFormData}
-              onCancel={onCancel}
-              onDeploy={handleArtifactHubDeploy}
-            />
-          ) : selectedOption === "repositories" ? (
-              <RepositoriesListForm 
-                repositories={repositories}
-                loading={reposLoading}
-                theme={theme}
-              />
-          ) : (
-              <DirectDeployForm 
-                theme={theme}
-                formData={directDeployFormData}
-                setFormData={setDirectDeployFormData}
-                error={error}
-              />
-          )}
-        </Box>
-
-        {/* Button section */}
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "flex-end",
-            mt: 2,
-            gap: 2,
-          }}
+      </Box>
+      
+      {/* Radio Group for Options */}
+      <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 2 }}>
+        <RadioGroup
+          row
+          value={selectedOption}
+          onChange={handleOptionChange}
+          sx={{ gap: 4 }}
         >
-          {selectedOption !== "repositories" && (
-            <Button
-              variant="outlined"
-              onClick={onCancel}
-              sx={{
-                borderColor: theme === "dark" ? "#444" : "#e0e0e0",
-                color: theme === "dark" ? "#d4d4d4" : "#333",
-                "&:hover": {
-                  borderColor: theme === "dark" ? "#666" : "#bdbdbd",
-                  backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)",
-                },
-              }}
-            >
-              Cancel
-            </Button>
-          )}
-          <Button
-            variant="contained"
-            onClick={() => handleArtifactHubDeploy()}
-            disabled={isApplyDisabled()}
+          <FormControlLabel
+            value="searchPackages"
+            control={<Radio />}
+            label="Search Packages"
             sx={{
-              backgroundColor: theme === "dark" ? "#1976d2" : "#1976d2",
-              color: "#fff",
-              "&:hover": {
-                backgroundColor: theme === "dark" ? "#1565c0" : "#1565c0",
+              "& .MuiTypography-root": {
+                color: theme === "dark" ? "#d4d4d4" : "#333",
+                fontSize: "0.875rem",
               },
             }}
-          >
-            {deployLoading ? (
-              <CircularProgress size={24} sx={{ color: "#fff" }} />
-            ) : (
-              selectedOption === "repositories" ? "Close" : "Apply"
-            )}
-          </Button>
-        </Box>
+          />
+          <FormControlLabel
+            value="directDeploy"
+            control={<Radio />}
+            label="Deploy Helm Chart from Artifact Hub"
+            sx={{
+              "& .MuiTypography-root": {
+                color: theme === "dark" ? "#d4d4d4" : "#333",
+                fontSize: "0.875rem",
+              },
+            }}
+          />
+          <FormControlLabel
+            value="repositories"
+            control={<Radio />}
+            label="List Repositories"
+            sx={{
+              "& .MuiTypography-root": {
+                color: theme === "dark" ? "#d4d4d4" : "#333",
+                fontSize: "0.875rem",
+              },
+            }}
+          />
+        </RadioGroup>
       </Box>
-    </StyledContainer>
+
+      {/* Content Area - Using consistent box styling and height */}
+      <Box 
+        sx={{ 
+          flex: 1,
+          height: "calc(75vh - 240px)",
+          overflow: "hidden",
+          mb: 2,
+          border: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
+          borderRadius: "8px",
+          backgroundColor: theme === "dark" ? "rgba(0,0,0,0.1)" : "rgba(0,0,0,0.02)",
+          p: 2,
+        }}
+      >
+        {selectedOption === "searchPackages" ? (
+          <SearchPackagesForm
+            theme={theme}
+            handlePackageSelection={handlePackageSelection}
+            formData={searchFormData}
+            setFormData={setSearchFormData}
+            onCancel={onCancel}
+            onDeploy={handleArtifactHubDeploy}
+          />
+        ) : selectedOption === "repositories" ? (
+          <RepositoriesListForm 
+            repositories={repositories}
+            loading={reposLoading}
+            theme={theme}
+          />
+        ) : (
+          <DirectDeployForm 
+            theme={theme}
+            formData={directDeployFormData}
+            setFormData={setDirectDeployFormData}
+            error={error}
+          />
+        )}
+      </Box>
+
+      {/* Bottom Buttons - Consistent with other tabs */}
+      <Box sx={{ 
+        display: "flex", 
+        justifyContent: "flex-end", 
+        gap: 1, 
+        mt: 2,
+        py: 1,
+      }}>
+        <Button
+          onClick={onCancel}
+          disabled={loading || searchLoading || reposLoading || deployLoading}
+          sx={{
+            textTransform: "none",
+            fontWeight: 600,
+            color: theme === "dark" ? "#d4d4d4" : "#666",
+            padding: "8px 16px",
+            "&:hover": {
+              backgroundColor: theme === "dark" ? "#333" : "#f5f5f5",
+            },
+          }}
+        >
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          onClick={() => handleArtifactHubDeploy()}
+          disabled={isApplyDisabled()}
+          sx={{
+            textTransform: "none",
+            fontWeight: "600",
+            backgroundColor: "#1976d2",
+            color: "#fff",
+            padding: "8px 16px",
+            borderRadius: "8px",
+            "&:hover": {
+              backgroundColor: "#1565c0",
+            },
+            "&:disabled": {
+              backgroundColor: "#b0bec5",
+              color: "#fff",
+            },
+          }}
+        >
+          {deployLoading ? (
+            <CircularProgress size={20} sx={{ color: "#fff" }} />
+          ) : (
+            selectedOption === "repositories" ? "Close" : "Apply"
+          )}
+        </Button>
+      </Box>
+    </Box>
   );
-}; 
+};
