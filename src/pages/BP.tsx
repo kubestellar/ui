@@ -674,7 +674,7 @@ const BP = () => {
           maxWidth: "100%",
           margin: "auto",
           p: 3,
-          backgroundColor: theme === "dark" ? "#1A1E2A" : "#fff",
+          backgroundColor: theme === "dark" ? "#0F172A" : "#fff",
           boxShadow: theme === "dark" ? "0px 4px 10px rgba(0, 0, 0, 0.6)" : undefined,
           color: theme === "dark" ? "#E5E7EB" : "inherit",
           '& .MuiTypography-root': {
