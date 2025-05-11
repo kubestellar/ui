@@ -1,7 +1,6 @@
 import { Box, Button, FormControl, MenuItem, Select, SelectChangeEvent, TextField, Typography, FormControlLabel, Radio, RadioGroup, Checkbox, Dialog, DialogTitle, DialogContent, DialogActions, Menu } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import { StyledContainer } from "../StyledComponents";
 import useTheme from "../../stores/themeStore";
 import { useState, useEffect, useCallback } from "react";
 import { AxiosError } from "axios";
@@ -51,7 +50,7 @@ const CreateFromYourGitHub = ({ formData, setFormData, error, credentialsList, h
   handleOpenWebhookDialog: () => void;
   theme: string;
 }) => (
-  <Box
+<Box
     sx={{
       display: "flex",
       flexDirection: "column",
@@ -59,11 +58,15 @@ const CreateFromYourGitHub = ({ formData, setFormData, error, credentialsList, h
       flex: 1,
       overflowY: "auto",
       "&::-webkit-scrollbar": {
-        display: "none",
+        width: "8px",
       },
-      scrollbarWidth: "none",
-      "-ms-overflow-style": "none",
-      height: "55vh",
+      "&::-webkit-scrollbar-thumb": {
+        backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.2)",
+        borderRadius: "4px",
+      },
+      scrollbarWidth: "thin",
+      height: "calc(75vh - 280px)", // Consistent with other tabs
+      pr: 1, // Add padding for the scrollbar
     }}
   >
     <Box>
@@ -945,66 +948,85 @@ export const GitHubTab = ({
   );
 
   return (
-    <StyledContainer>
+    
       <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          flex: 1,
-          minHeight: 0,
-        }}
-      >
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        height: "100%",
+        overflow: "hidden",
+        pt: 2,
+      }}
+    >
+       <Box sx={{ 
+        mb: 3, 
+        mt: 1,
+      }}>
         <WorkloadLabelInput 
           value={formData.workload_label || ''} 
           handleChange={(e) => setFormData({ ...formData, workload_label: e.target.value })} 
           isError={false}
           theme={theme} 
         />
-        
-        <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 1, mt: 2 }}>
-          <RadioGroup
-            row
-            value={selectedOption}
-            onChange={handleOptionChange}
-            sx={{ gap: 4 }}
-          >
-            <FormControlLabel
-              value="createOwn"
-              control={<Radio />}
-              label="Create from your GitHub"
-              sx={{
-                "& .MuiTypography-root": {
-                  color: theme === "dark" ? "#d4d4d4" : "#333",
-                  fontSize: "0.875rem",
-                },
-              }}
-            />
-            <FormControlLabel
-              value="popularRepos"
-              control={<Radio />}
-              label="Deploy from popular Repositories"
-              sx={{
-                "& .MuiTypography-root": {
-                  color: theme === "dark" ? "#d4d4d4" : "#333",
-                  fontSize: "0.875rem",
-                },
-              }}
-            />
-            <FormControlLabel
-              value="previousDeployments"
-              control={<Radio />}
-              label="List of Previous Deployments"
-              sx={{
-                "& .MuiTypography-root": {
-                  color: theme === "dark" ? "#d4d4d4" : "#333",
-                  fontSize: "0.875rem",
-                },
-              }}
-            />
-          </RadioGroup>
         </Box>
+        
+ {/* Radio Group for Options */}
+ <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 2 }}>
+        <RadioGroup
+          row
+          value={selectedOption}
+          onChange={handleOptionChange}
+          sx={{ gap: 4 }}
+        >
+          <FormControlLabel
+            value="createOwn"
+            control={<Radio />}
+            label="Create from your GitHub"
+            sx={{
+              "& .MuiTypography-root": {
+                color: theme === "dark" ? "#d4d4d4" : "#333",
+                fontSize: "0.875rem",
+              },
+            }}
+          />
+          <FormControlLabel
+            value="popularRepos"
+            control={<Radio />}
+            label="Deploy from popular Repositories"
+            sx={{
+              "& .MuiTypography-root": {
+                color: theme === "dark" ? "#d4d4d4" : "#333",
+                fontSize: "0.875rem",
+              },
+            }}
+          />
+          <FormControlLabel
+            value="previousDeployments"
+            control={<Radio />}
+            label="List of Previous Deployments"
+            sx={{
+              "& .MuiTypography-root": {
+                color: theme === "dark" ? "#d4d4d4" : "#333",
+                fontSize: "0.875rem",
+              },
+            }}
+          />
+        </RadioGroup>
+      </Box>
 
-        <Box sx={{ height: "55vh", overflow: "hidden" }}>
+      <Box 
+        sx={{ 
+          flex: 1,
+          height: "calc(75vh - 240px)",
+          overflow: "hidden",
+          mb: 2,
+          border: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
+          borderRadius: "8px",
+          backgroundColor: theme === "dark" ? "rgba(0,0,0,0.1)" : "rgba(0,0,0,0.02)",
+          p: 2,
+        }}
+      >
           {selectedOption === "createOwn" ? (
             <CreateFromYourGitHub
               formData={formData}
@@ -1021,22 +1043,18 @@ export const GitHubTab = ({
           ) : (
             <PreviousDeploymentsForm />
           )}
-        </Box>
+        
       </Box>
 
-      <Box sx={{
-        display: "flex",
-        justifyContent: "flex-end",
-        gap: 1,
+      <Box sx={{ 
+        display: "flex", 
+        justifyContent: "flex-end", 
+        gap: 1, 
         mt: 2,
-        position: "relative",
-        width: "100%",
-        height: "auto",
-        minHeight: "40px",
-        padding: "8px 0",
-        zIndex: 1
+        py: 1,
       }}>
-        <Button
+
+   <Button
           onClick={handleCancelClick}
           disabled={loading || popularLoading || previousLoading}
           sx={{
@@ -1050,7 +1068,7 @@ export const GitHubTab = ({
           }}
         >
           Cancel
-        </Button>
+          </Button>
         <Button
           variant="contained"
           onClick={() => {
@@ -1088,7 +1106,7 @@ export const GitHubTab = ({
             : "Apply"}
         </Button>
       </Box>
-    </StyledContainer>
+    </Box>
   );
 };
 

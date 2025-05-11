@@ -1,5 +1,5 @@
 import { Box, Button, FormControlLabel, Radio, RadioGroup} from "@mui/material";
-import { StyledContainer } from "../../StyledComponents";
+// Remove StyledContainer import
 import useTheme from "../../../stores/themeStore";
 import { useState, useEffect } from "react";
 import { AxiosError } from "axios";
@@ -44,7 +44,6 @@ export interface Deployment {
   chartVersion: string;
   values: Record<string, unknown>;
 }
-
 
 export const HelmTab = ({
   formData,
@@ -148,148 +147,170 @@ export const HelmTab = ({
     }
   };
 
-  
-
-
-
   return (
-    <StyledContainer>
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          flex: 1,
-          minHeight: 0,
-        }}
-      >
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        height: "100%",
+        overflow: "hidden",
+        pt: 2,
+      }}
+    >
+      {/* Workload Label Input with better positioning and spacing */}
+      <Box sx={{ 
+        mb: 3, 
+        mt: 1,
+      }}>
         <WorkloadLabelInput 
           value={formData.workload_label || ''} 
           handleChange={(e) => setFormData({ ...formData, workload_label: e.target.value })} 
           isError={false}
           theme={theme} 
         />
-        
-        <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 1, mt: 2 }}>
-          <RadioGroup
-            row
-            value={selectedOption}
-            onChange={handleOptionChange}
-            sx={{ gap: 4 }}
-          >
-            <FormControlLabel
-              value="createOwn"
-              control={<Radio />}
-              label="Create your own Helm chart"
-              sx={{
-                "& .MuiTypography-root": {
-                  color: theme === "dark" ? "#d4d4d4" : "#333",
-                  fontSize: "0.875rem",
-                },
-              }}
-            />
-            <FormControlLabel
-              value="popularCharts"
-              control={<Radio />}
-              label="Deploy from popular Helm charts"
-              sx={{
-                "& .MuiTypography-root": {
-                  color: theme === "dark" ? "#d4d4d4" : "#333",
-                  fontSize: "0.875rem",
-                },
-              }}
-            />
-            <FormControlLabel
-              value="userCharts"
-              control={<Radio />}
-              label="List of user created Charts"
-              sx={{
-                "& .MuiTypography-root": {
-                  color: theme === "dark" ? "#d4d4d4" : "#333",
-                  fontSize: "0.875rem",
-                },
-              }}
-            />
-          </RadioGroup>
-        </Box>
-
-        <Box sx={{ height: "55vh", overflow: "hidden" }}>
-          {selectedOption === "createOwn" ? (
-            <CreateOwnHelmForm
-              formData={formData}
-              setFormData={setFormData}
-              error={error}
-              theme={theme}
-            />
-          ) : selectedOption === "popularCharts" ? (
-              <PopularHelmChartsForm handleChartSelection={handleChartSelection} theme={theme} selectedChart={selectedChart} />
-          ) : (
-                <UserCreatedChartsForm handleChartSelection={handleChartSelection} setUserCharts={setUserCharts} theme={theme} selectedChart={selectedChart} userCharts={userCharts} userLoading={userLoading} />
-          )}
-        </Box>
-
-        <Box sx={{ 
-          display: "flex", 
-          justifyContent: "flex-end", 
-          gap: 1, 
-          mt: 2,
-          position: "relative",
-          width: "100%",
-          height: "auto",
-          minHeight: "40px",
-          padding: "8px 0",
-          zIndex: 1
-        }}>
-          <Button
-            onClick={handleCancelClick}
-            disabled={loading || popularLoading || userLoading}
-            sx={{
-              textTransform: "none",
-              fontWeight: 600,
-              color: theme === "dark" ? "#d4d4d4" : "#666",
-              padding: "8px 16px",
-              "&:hover": {
-                backgroundColor: theme === "dark" ? "#333" : "#f5f5f5",
-              },
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={() => {
-              if (selectedOption === "createOwn") {
-                if (validateForm()) handleDeploy();
-              } else {
-                handlePopularHelmDeploy();
-              }
-            }}
-            disabled={
-              (selectedOption === "createOwn" && (!hasChanges || loading)) ||
-              (selectedOption === "popularCharts" && (!selectedChart || popularLoading)) ||
-              (selectedOption === "userCharts" && (!selectedChart || userLoading))
-            }
-            sx={{
-              textTransform: "none",
-              fontWeight: "600",
-              backgroundColor: "#1976d2",
-              color: "#fff",
-              padding: "8px 16px",
-              borderRadius: "8px",
-              "&:hover": {
-                backgroundColor: "#1565c0",
-              },
-              "&:disabled": {
-                backgroundColor: "#b0bec5",
-                color: "#fff",
-              },
-            }}
-          >
-            {(selectedOption === "createOwn" && loading) || (selectedOption === "popularCharts" && popularLoading) || (selectedOption === "userCharts" && userLoading)
-              ? "Deploying..."
-              : "Apply"}
-          </Button>
-        </Box>
       </Box>
-    </StyledContainer>
+      
+      {/* Radio Group for Options */}
+      <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 2 }}>
+        <RadioGroup
+          row
+          value={selectedOption}
+          onChange={handleOptionChange}
+          sx={{ gap: 4 }}
+        >
+          <FormControlLabel
+            value="createOwn"
+            control={<Radio />}
+            label="Create your own Helm chart"
+            sx={{
+              "& .MuiTypography-root": {
+                color: theme === "dark" ? "#d4d4d4" : "#333",
+                fontSize: "0.875rem",
+              },
+            }}
+          />
+          <FormControlLabel
+            value="popularCharts"
+            control={<Radio />}
+            label="Deploy from popular Helm charts"
+            sx={{
+              "& .MuiTypography-root": {
+                color: theme === "dark" ? "#d4d4d4" : "#333",
+                fontSize: "0.875rem",
+              },
+            }}
+          />
+          <FormControlLabel
+            value="userCharts"
+            control={<Radio />}
+            label="List of user created Charts"
+            sx={{
+              "& .MuiTypography-root": {
+                color: theme === "dark" ? "#d4d4d4" : "#333",
+                fontSize: "0.875rem",
+              },
+            }}
+          />
+        </RadioGroup>
+      </Box>
+
+      {/* Form Content Area - Using consistent box styling and height */}
+      <Box 
+        sx={{ 
+          flex: 1,
+          height: "calc(75vh - 240px)",
+          overflow: "hidden",
+          mb: 2,
+          border: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
+          borderRadius: "8px",
+          backgroundColor: theme === "dark" ? "rgba(0,0,0,0.1)" : "rgba(0,0,0,0.02)",
+          p: 2,
+        }}
+      >
+        {selectedOption === "createOwn" ? (
+          <CreateOwnHelmForm
+            formData={formData}
+            setFormData={setFormData}
+            error={error}
+            theme={theme}
+          />
+        ) : selectedOption === "popularCharts" ? (
+          <PopularHelmChartsForm 
+            handleChartSelection={handleChartSelection} 
+            theme={theme} 
+            selectedChart={selectedChart} 
+          />
+        ) : (
+          <UserCreatedChartsForm 
+            handleChartSelection={handleChartSelection} 
+            setUserCharts={setUserCharts} 
+            theme={theme} 
+            selectedChart={selectedChart} 
+            userCharts={userCharts} 
+            userLoading={userLoading} 
+          />
+        )}
+      </Box>
+
+      {/* Bottom Buttons - Consistent with other tabs */}
+      <Box sx={{ 
+        display: "flex", 
+        justifyContent: "flex-end", 
+        gap: 1, 
+        mt: 2,
+        py: 1,
+      }}>
+        <Button
+          onClick={handleCancelClick}
+          disabled={loading || popularLoading || userLoading}
+          sx={{
+            textTransform: "none",
+            fontWeight: 600,
+            color: theme === "dark" ? "#d4d4d4" : "#666",
+            padding: "8px 16px",
+            "&:hover": {
+              backgroundColor: theme === "dark" ? "#333" : "#f5f5f5",
+            },
+          }}
+        >
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          onClick={() => {
+            if (selectedOption === "createOwn") {
+              if (validateForm()) handleDeploy();
+            } else {
+              handlePopularHelmDeploy();
+            }
+          }}
+          disabled={
+            (selectedOption === "createOwn" && (!hasChanges || loading)) ||
+            (selectedOption === "popularCharts" && (!selectedChart || popularLoading)) ||
+            (selectedOption === "userCharts" && (!selectedChart || userLoading))
+          }
+          sx={{
+            textTransform: "none",
+            fontWeight: "600",
+            backgroundColor: "#1976d2",
+            color: "#fff",
+            padding: "8px 16px",
+            borderRadius: "8px",
+            "&:hover": {
+              backgroundColor: "#1565c0",
+            },
+            "&:disabled": {
+              backgroundColor: "#b0bec5",
+              color: "#fff",
+            },
+          }}
+        >
+          {(selectedOption === "createOwn" && loading) || (selectedOption === "popularCharts" && popularLoading) || (selectedOption === "userCharts" && userLoading)
+            ? "Deploying..."
+            : "Apply"}
+        </Button>
+      </Box>
+    </Box>
   );  
-};  
+};

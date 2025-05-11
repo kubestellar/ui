@@ -1,6 +1,5 @@
 import Editor from "@monaco-editor/react";
-import { Box, Button, FormControlLabel, Checkbox } from "@mui/material"; // Added Checkbox and FormControlLabel
-import { StyledContainer } from "../StyledComponents";
+import { Box, Button, FormControlLabel, Checkbox, Paper } from "@mui/material";
 import yaml from "js-yaml";
 import { useState, useEffect } from "react";
 import useTheme from "../../stores/themeStore";
@@ -13,8 +12,9 @@ interface Props {
   detectContentType: (content: string) => "json" | "yaml";
   isEditorContentEdited: boolean;
   loading: boolean;
-  handleRawUpload: (autoNs: boolean) => void; // Updated to accept autoNs parameter
+  handleRawUpload: (autoNs: boolean) => void;
   handleCancelClick: () => void;
+  height?: string; // Added height prop for consistency with other modals
 }
 
 interface YamlDocument {
@@ -33,16 +33,16 @@ export const YamlTab = ({
   loading,
   handleRawUpload,
   handleCancelClick,
+  height = "calc(75vh - 200px)", // Default height that matches CreateBindingPolicyDialog
 }: Props) => {
   const theme = useTheme((state) => state.theme);
   const [localWorkloadLabel, setLocalWorkloadLabel] = useState("");
   const [nameDocumentIndex, setNameDocumentIndex] = useState<number | null>(null);
-  const [autoNs, setAutoNs] = useState(false); // Added state for checkbox
-  const [hasLabelsError, setHasLabelsError] = useState(true); // Default to true until checked
+  const [autoNs, setAutoNs] = useState(false);
+  const [hasLabelsError, setHasLabelsError] = useState(true);
 
   useEffect(() => {
     const checkLabels = () => {
-      
       try {
         const documents: YamlDocument[] = [];
         yaml.loadAll(editorContent, (doc) => documents.push(doc as YamlDocument), {});
@@ -50,7 +50,7 @@ export const YamlTab = ({
         let foundValue = "";
         for (let i = 0; i < documents.length; i++) {
           const doc = documents[i];
-          if(doc?.metadata?.labels?.["kubestellar.io/workload"]){
+          if (doc?.metadata?.labels?.["kubestellar.io/workload"]) {
             foundValue = doc.metadata.labels["kubestellar.io/workload"];
             foundIndex = i;
             break;
@@ -83,13 +83,13 @@ export const YamlTab = ({
     try {
       const documents: YamlDocument[] = [];
       yaml.loadAll(editorContent, (doc) => documents.push(doc as YamlDocument), {});
-      const key="kubestellar.io/workload";
+      const key = "kubestellar.io/workload";
       const value = newLabel;
 
       if (
         nameDocumentIndex !== null &&
         documents[nameDocumentIndex] &&
-        documents[nameDocumentIndex].metadata 
+        documents[nameDocumentIndex].metadata
       ) {
         if (!documents[nameDocumentIndex].metadata!.labels) {
           documents[nameDocumentIndex].metadata!.labels = {};
@@ -97,15 +97,15 @@ export const YamlTab = ({
         documents[nameDocumentIndex].metadata!.labels[key] = value;
       } else {
         if (documents.length === 0) {
-          documents.push({ 
-            metadata: { 
-              labels: { [key]: value }
-            } 
+          documents.push({
+            metadata: {
+              labels: { [key]: value },
+            },
           });
         } else {
           if (!documents[0].metadata) {
-            documents[0].metadata = { 
-              labels: { [key]: value }
+            documents[0].metadata = {
+              labels: { [key]: value },
             };
           } else {
             if (!documents[0].metadata.labels) {
@@ -117,9 +117,7 @@ export const YamlTab = ({
         }
       }
 
-      const updatedYaml = documents
-        .map((doc) => yaml.dump(doc))
-        .join("---\n");
+      const updatedYaml = documents.map((doc) => yaml.dump(doc)).join("---\n");
       setEditorContent(updatedYaml);
     } catch (error) {
       console.error("Error updating YAML:", error);
@@ -130,7 +128,9 @@ export const YamlTab = ({
     try {
       const documents: YamlDocument[] = [];
       yaml.loadAll(editorContent, (doc) => documents.push(doc as YamlDocument), {});
-      return documents.some(doc => doc.metadata && doc.metadata.labels && Object.keys(doc.metadata.labels).length > 0);
+      return documents.some(
+        (doc) => doc.metadata && doc.metadata.labels && Object.keys(doc.metadata.labels).length > 0
+      );
     } catch (error) {
       console.error("Error checking labels:", error);
       return false;
@@ -138,17 +138,30 @@ export const YamlTab = ({
   };
 
   return (
-    <StyledContainer>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        height: "100%",
+        overflow: "hidden",
+        pt: 2, // Add top padding to push content down
+      }}
+    >
+      {/* Add proper spacing around the workload label section */}
       <Box
         sx={{
-          display: "flex",
-          flexDirection: "column",
-          flex: 1,
-          minHeight: 0,
+          mb: 3, // Increased from 2 to 3 for more space below
+          mt: 1, // Added top margin for better positioning
         }}
       >
-        <WorkloadLabelInput handleChange={(e) => handleWorkloadLabelChange(e.target.value)} isError={hasLabelsError} theme={theme} value={localWorkloadLabel} />
-        {/* Added Checkbox */}
+        <WorkloadLabelInput
+          handleChange={(e) => handleWorkloadLabelChange(e.target.value)}
+          isError={hasLabelsError}
+          theme={theme}
+          value={localWorkloadLabel}
+        />
+
         <FormControlLabel
           control={
             <Checkbox
@@ -164,50 +177,52 @@ export const YamlTab = ({
           }
           label="Create Namespace Automatically"
           sx={{
-            mb: 2,
+            mt: 1.5, // Increased from 0.5 to 1.5 for better spacing
             ml: -1.2,
             color: theme === "dark" ? "#d4d4d4" : "#333",
           }}
         />
-        <Box
-          sx={{
-            border: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
-            borderRadius: "8px",
-            overflow: "hidden",
-            mt: 1,
-            width: "100%",
-            margin: "0 auto",
-          }}
-        >
-          <Editor
-            height="435px"
-            language={detectContentType(editorContent)}
-            value={editorContent}
-            theme={theme === "dark" ? "vs-dark" : "light"}
-            options={{
-              minimap: { enabled: false },
-              fontSize: 14,
-              lineNumbers: "on",
-              scrollBeyondLastLine: false,
-              automaticLayout: true,
-              padding: { top: 27, bottom: 20 },
-            }}
-            onChange={(value) => setEditorContent(value || "")}
-          />
-        </Box>
       </Box>
-      <Box sx={{ 
-        display: "flex", 
-        justifyContent: "flex-end", 
-        gap: 1, 
-        mt: 2,
-        position: "relative",
-        width: "100%",
-        height: "auto",
-        minHeight: "40px",
-        padding: "8px 0",
-        zIndex: 1
-      }}>
+
+      <Paper
+        elevation={0}
+        sx={{
+          height: height,
+          overflow: "auto",
+          flexGrow: 1,
+          border: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
+          borderRadius: "8px",
+          display: "flex",
+          flexDirection: "column",
+          bgcolor: theme === "dark" ? "#1e1e1e" : "#fff",
+        }}
+      >
+        <Editor
+          height="100%"
+          language={detectContentType(editorContent)}
+          value={editorContent}
+          theme={theme === "dark" ? "vs-dark" : "light"}
+          options={{
+            minimap: { enabled: false },
+            fontSize: 14,
+            lineNumbers: "on",
+            scrollBeyondLastLine: false,
+            automaticLayout: true,
+            padding: { top: 18, bottom: 18 },
+          }}
+          onChange={(value) => setEditorContent(value || "")}
+        />
+      </Paper>
+
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 1,
+          mt: 2,
+          py: 1,
+        }}
+      >
         <Button
           onClick={handleCancelClick}
           disabled={loading}
@@ -225,7 +240,7 @@ export const YamlTab = ({
         </Button>
         <Button
           variant="contained"
-          onClick={() => handleRawUpload(autoNs)} // Pass autoNs to handleRawUpload
+          onClick={() => handleRawUpload(autoNs)}
           disabled={hasLabelsError || !isEditorContentEdited || loading || !hasLabels()}
           sx={{
             textTransform: "none",
@@ -246,6 +261,6 @@ export const YamlTab = ({
           Deploy
         </Button>
       </Box>
-    </StyledContainer>
+    </Box>
   );
 };

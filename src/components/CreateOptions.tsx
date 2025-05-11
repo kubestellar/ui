@@ -857,7 +857,7 @@ spec:
             fontSize: "13px", 
             color: theme === "dark" ? "#858585" : "gray",
           }}>
-            Create Workloads
+        
           </Typography>
           <Tabs
             value={activeOption}

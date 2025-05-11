@@ -1,7 +1,6 @@
-import { Box, Button, Typography, Snackbar, FormControlLabel, Checkbox } from "@mui/material";
+import { Box, Button, Typography, FormControlLabel, Checkbox, Paper } from "@mui/material";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { StyledContainer, StyledPaper } from "../StyledComponents";
 import yaml from "js-yaml";
 import { useState, useEffect } from "react";
 import useTheme from "../../stores/themeStore";
@@ -29,6 +28,7 @@ interface Props {
   formatFileSize: (size: number) => string;
   handleFileUpload: (autoNs: boolean) => void;
   handleCancelClick: () => void;
+  height?: string; // Added height prop for consistency with other modals
 }
 
 export const UploadFileTab = ({
@@ -42,14 +42,14 @@ export const UploadFileTab = ({
   formatFileSize,
   handleFileUpload,
   handleCancelClick,
+  height = "calc(75vh - 140px)", // Increased height from -180px to -140px for more space
 }: Props) => {
   const theme = useTheme((state) => state.theme);
   const [localWorkloadLabel, setLocalWorkloadLabel] = useState("");
   const [fileContent, setFileContent] = useState<string | null>(null);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [autoNs, setAutoNs] = useState(false);
   const [hasLabelsError, setHasLabelsError] = useState<boolean>(false);
-  const [isLabelEdited, setIsLabelEdited] = useState(false); // Flag to track manual edits
+  const [isLabelEdited, setIsLabelEdited] = useState(false);
 
   useEffect(() => {
     if (selectedFile && !isLabelEdited) {
@@ -73,34 +73,34 @@ export const UploadFileTab = ({
             }
           }
 
-          setHasLabelsError(!found); // Set error only if no labels found after file is uploaded
+          setHasLabelsError(!found);
           if (!found) {
             setLocalWorkloadLabel("");
           }
         } catch (error) {
           console.error("Error parsing YAML:", error);
           setLocalWorkloadLabel("");
-          setHasLabelsError(true); // Set error on parsing failure
+          setHasLabelsError(true);
         }
       };
       reader.onerror = (error) => {
         console.error("Error reading file:", error);
         setLocalWorkloadLabel("");
         setFileContent(null);
-        setHasLabelsError(true); // Set error on file read failure
+        setHasLabelsError(true);
       };
       reader.readAsText(selectedFile);
     } else if (!selectedFile) {
       setLocalWorkloadLabel("");
       setFileContent(null);
-      setHasLabelsError(false); // Reset error when no file is selected
-      setIsLabelEdited(false); // Reset edit flag when no file
+      setHasLabelsError(false);
+      setIsLabelEdited(false);
     }
   }, [selectedFile, isLabelEdited]);
 
   const handleWorkloadLabelChange = (newLabel: string) => {
     setLocalWorkloadLabel(newLabel);
-    setIsLabelEdited(true); // Mark as edited when user types
+    setIsLabelEdited(true);
 
     if (fileContent && selectedFile) {
       try {
@@ -120,7 +120,7 @@ export const UploadFileTab = ({
           });
           setSelectedFile(updatedFile);
           setFileContent(updatedYaml);
-          setHasLabelsError(false); // Reset error when label is added manually
+          setHasLabelsError(false);
         }
       } catch (error) {
         console.error("Error updating YAML:", error);
@@ -128,21 +128,29 @@ export const UploadFileTab = ({
     }
   };
 
-  const handleSnackbarClose = () => {
-    setSnackbarOpen(false);
-  };
-
   return (
-    <StyledContainer>
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          flex: 1,
-          minHeight: 0,
-        }}
-      >
-        <WorkloadLabelInput handleChange={(e) => handleWorkloadLabelChange(e.target.value)} isError={selectedFile ? hasLabelsError : false} theme={theme} value={localWorkloadLabel} />
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        height: "100%",
+        overflow: "hidden",
+        pt: 2, // Add top padding to push content down
+      }}
+    >
+      {/* Improved workload label section with better visibility */}
+      <Box sx={{ 
+        mb: 3, // Increased bottom margin
+        mt: 1, // Added top margin for better positioning
+      }}>
+        <WorkloadLabelInput 
+          handleChange={(e) => handleWorkloadLabelChange(e.target.value)} 
+          isError={selectedFile ? hasLabelsError : false} 
+          theme={theme} 
+          value={localWorkloadLabel} 
+        />
+
         <FormControlLabel
           control={
             <Checkbox
@@ -158,139 +166,181 @@ export const UploadFileTab = ({
           }
           label="Create Namespace Automatically"
           sx={{
-            mb: 2,
+            mt: 1.5, 
             ml: -1.2,
             color: theme === "dark" ? "#d4d4d4" : "#333",
           }}
         />
-        {selectedFile ? (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <Box
-              sx={{
-                width: "100%",
-                margin: "0 auto 10px auto",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                p: 1.6,
-                borderRadius: "4px",
-                border: "1px solid",
-                borderColor: theme === "dark" ? "#444" : "#e0e0e0",
-              }}
-            >
-              <Box sx={{ display: "flex", alignItems: "center", borderColor: theme === "dark" ? "rgba(25, 118, 210, 0.2)" : "rgba(25, 118, 210, 0.1)" }}>
-                <CheckCircleIcon color="success" sx={{ mr: 1 }} />
-                <Typography variant="body1" sx={{ color: theme === "dark" ? "#fff" : "#333" }}>
-                  <strong>{selectedFile.name}</strong> ({formatFileSize(selectedFile.size)})
-                </Typography>
-              </Box>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() => {
-                  setSelectedFile(null);
-                  setFileContent("");
-                  setLocalWorkloadLabel("");
-                }}
-                sx={{
-                  textTransform: "none",
-                  borderRadius: "8px",
-                  color: theme === "dark" ? "#fff" : "#333",
-                  borderColor: theme === "dark" ? "#444" : "#e0e0e0",
-                }}
-              >
-                Choose Different YAML File
-              </Button>
-            </Box>
-            <Typography variant="subtitle1" ml={2} fontWeight={500} sx={{ color: theme === "dark" ? "#fff" : "#333" }}>
-              File Preview:
-            </Typography>
-            <StyledPaper
-              elevation={0}
-              sx={{
-                flexGrow: 1,
-                height: "calc(100% - 90px)",
-                overflow: "auto",
-                border: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.12)"}`,
-                borderRadius: "8px",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <Editor
-                height="27vh"
-                language="yaml"
-                value={fileContent || ""}
-                theme={theme === "dark" ? "vs-dark" : "light"}
-                options={{
-                  minimap: { enabled: false },
-                  fontSize: 14,
-                  lineNumbers: "on",
-                  scrollBeyondLastLine: true,
-                  automaticLayout: true,
-                  fontFamily: "'JetBrains Mono', monospace",
-                  padding: { top: 0, bottom: 10 },
-                  readOnly: true,
-                }}
-              />
-            </StyledPaper>
-          </Box>
-        ) : (
-          <StyledPaper
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
+      </Box>
+
+      {selectedFile ? (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2, flex: 1, overflow: "hidden" }}>
+          <Box
             sx={{
-              border: theme === "dark" ? "2px dashed #444" : "2px dashed #e0e0e0",
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              p: 2,
+              borderRadius: "8px",
+              backgroundColor: theme === "dark" ? "rgba(25, 118, 210, 0.08)" : "rgba(25, 118, 210, 0.04)",
+              border: "1px solid",
+              borderColor: theme === "dark" ? "rgba(25, 118, 210, 0.2)" : "rgba(25, 118, 210, 0.1)",
+              mb: 2,
             }}
           >
-            <span role="img" aria-label="upload" style={{ fontSize: "1.75rem" }}>
-              📤
-            </span>
-            <Typography variant="h6" sx={{ color: theme === "dark" ? "#d4d4d4" : "#333" }}>
-              Choose or Drag & Drop a YAML File
-            </Typography>
-            <Typography variant="body2" sx={{ color: theme === "dark" ? "#858585" : "gray" }}>
-              - or -
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <CheckCircleIcon color="success" sx={{ mr: 1 }} />
+              <Typography variant="body1" sx={{ color: theme === "dark" ? "#fff" : "#333" }}>
+                <strong>{selectedFile.name}</strong> ({formatFileSize(selectedFile.size)})
+              </Typography>
+            </Box>
             <Button
-              variant="contained"
-              component="label"
-              startIcon={<FileUploadIcon />}
+              variant="outlined"
+              size="small"
+              onClick={() => {
+                setSelectedFile(null);
+                setFileContent("");
+                setLocalWorkloadLabel("");
+              }}
               sx={{
                 textTransform: "none",
-                padding: "8px 24px",
                 borderRadius: "8px",
-                backgroundColor: "#1976d2",
-                color: "#fff",
-                "&:hover": {
-                  backgroundColor: "#1565c0",
-                },
+                color: theme === "dark" ? "#fff" : "#333",
+                borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.23)" : "rgba(0, 0, 0, 0.23)",
               }}
             >
-              Choose YAML File
-              <input
-                type="file"
-                hidden
-                accept=".yaml,.yml,.json"
-                onClick={(e) => (e.currentTarget.value = "")}
-                onChange={handleFileChange}
-              />
+              Choose Different File
             </Button>
-          </StyledPaper>
-        )}
-      </Box>
+          </Box>
+          
+          <Typography variant="subtitle1" fontWeight={500} sx={{ 
+            mb: 1, 
+            color: theme === "dark" ? "#fff" : "#333" 
+          }}>
+            File Preview:
+          </Typography>
+          
+          <Paper
+            elevation={0}
+            sx={{
+              flex: 1,
+              height: "calc(100% - 72px)",
+              overflow: "auto",
+              border: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
+              borderRadius: "8px",
+              display: "flex",
+              flexDirection: "column",
+              bgcolor: theme === "dark" ? "#1e1e1e" : "#fff",
+            }}
+          >
+            <Editor
+              height="100%"
+              language="yaml"
+              value={fileContent || ""}
+              theme={theme === "dark" ? "vs-dark" : "light"}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 14,
+                lineNumbers: "on",
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                fontFamily: "'JetBrains Mono', monospace",
+                padding: { top: 18, bottom: 18 },
+                readOnly: true,
+              }}
+            />
+          </Paper>
+        </Box>
+      ) : (
+        <Paper
+          elevation={0}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          sx={{
+            height: height,
+            minHeight: "650px", 
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            border: "2px dashed",
+            borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.2)" : "divider",
+            borderRadius: "8px",
+            padding: 5, 
+            backgroundColor: "transparent",
+            transition: "all 0.2s ease",
+            flex: 1,
+            "&:hover": {
+              borderColor: theme === "dark" ? "#90caf9" : "#1976d2",
+              backgroundColor: theme === "dark" ? "rgba(25, 118, 210, 0.08)" : "rgba(25, 118, 210, 0.04)",
+            },
+          }}
+        >
+          <span role="img" aria-label="upload" style={{ fontSize: "3rem", marginBottom: "24px" }}>
+            📤
+          </span>
+          <Typography variant="h6" gutterBottom sx={{ color: theme === "dark" ? "#d4d4d4" : "#333" }}>
+            Choose or Drag & Drop a YAML File
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{
+              color: theme === "dark" ? "#858585" : "gray",
+              mb: 3,
+              mt: 1,
+            }}
+          >
+            - or -
+          </Typography>
+          <Button
+            variant="contained"
+            component="label"
+            startIcon={<FileUploadIcon />}
+            sx={{
+              textTransform: "none",
+              padding: "8px 24px",
+              borderRadius: "8px",
+              backgroundColor: "#1976d2",
+              color: "#fff",
+              fontWeight: 500,
+              "&:hover": {
+                backgroundColor: "#1565c0",
+                transform: "translateY(-2px)",
+                boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
+              },
+              transition: "all 0.2s ease",
+            }}
+          >
+            Select YAML File
+            <input
+              type="file"
+              hidden
+              accept=".yaml,.yml,.json"
+              onClick={(e) => (e.currentTarget.value = "")}
+              onChange={handleFileChange}
+            />
+          </Button>
+          <Typography
+            variant="body2"
+            sx={{
+              mt: 2,
+              color: theme === "dark" ? "rgba(255,255,255,0.6)" : "text.secondary",
+              fontSize: "0.8rem",
+            }}
+          >
+            Accepted formats: .yaml, .yml, .json
+          </Typography>
+        </Paper>
+      )}
+
       <Box sx={{ 
         display: "flex", 
         justifyContent: "flex-end", 
         gap: 1, 
         mt: 2,
-        position: "relative",
-        width: "100%",
-        height: "auto",
-        minHeight: "40px",
-        padding: "8px 0",
-        zIndex: 1
+        py: 1, // Consistent padding with YamlTab
       }}>
         <Button
           onClick={handleCancelClick}
@@ -327,21 +377,9 @@ export const UploadFileTab = ({
             },
           }}
         >
-          Upload & Deploy
+          Deploy
         </Button>
       </Box>
-
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={3000}
-        onClose={handleSnackbarClose}
-        sx={{
-          "& .MuiSnackbarContent-root": {
-            backgroundColor: theme === "dark" ? "#333" : "#fff",
-            color: theme === "dark" ? "#d4d4d4" : "#333",
-          },
-        }}
-      />
-    </StyledContainer>
+    </Box>
   );
 };
