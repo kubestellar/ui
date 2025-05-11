@@ -350,9 +350,13 @@ func autoApproveCSRs(conn *websocket.Conn, clusterName string) error {
 			aCtx, aCancel := context.WithTimeout(context.Background(), 20*time.Second)
 			approveCmd := exec.CommandContext(aCtx,
 				"kubectl", "--context", "its1", "certificate", "approve", item.Metadata.Name)
-			aOut, aErr := approveCmd.CombinedOutput()
+			_, aErr := approveCmd.CombinedOutput()
 			aCancel()
 
+			if aErr != nil {
+				
+				return fmt.Errorf("approval error: %w", aErr)
+			}
 
 			conn.WriteMessage(websocket.TextMessage,
 				[]byte(fmt.Sprintf("✅ [CSR] Approved %s\n", item.Metadata.Name)))
