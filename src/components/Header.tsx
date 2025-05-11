@@ -194,7 +194,7 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
                   <img
                     src="/KubeStellar.png"
                     alt="logo"
-                    className="w-44 h-auto object-contain"
+                    className="w-52 h-auto object-contain"
                   />
                 </span>
               </Link>
@@ -231,17 +231,17 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
             <img
               src="/KubeStellar.png"
               alt="logo"
-              className="w-44 h-auto object-contain"
+              className="w-52 h-auto object-contain"
             />
           </span>
         </Link>
       </div>
 
-      <div className="flex items-center gap-0 xl:gap-1 2xl:gap-2 3xl:gap-5">
+      <div className="flex items-center gap-4 xl:gap-5 3xl:gap-6">
         {isLoggedIn ? (
           <>
             <select
-              className="select select-bordered w-[200px] mr-4"
+              className="select select-bordered w-[200px] mr-2"
               value={currentContext}
               onChange={handleClusterChange}
             >
@@ -255,7 +255,74 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
               ))}
             </select>
             
-            {/* Theme Toggle Button */}
+            {/* User Profile Icon with Enhanced Dropdown */}
+            <div className="relative" ref={userMenuRef}>
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="btn btn-circle btn-ghost border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 transition-all duration-300 hover:scale-105"
+              >
+                <ProfileIcon className="text-xl text-primary" />
+              </button>
+              
+              {/* Enhanced User Dropdown Menu - CENTERED */}
+              {showUserMenu && (
+                <div className="absolute transform -translate-x-1/2 left-1/2 mt-2 w-64 bg-white dark:bg-gray-900 shadow-xl z-50
+                  border border-gray-100 dark:border-gray-800 animate-fadeIn overflow-hidden rounded-xl
+                  backdrop-blur-sm dark:backdrop-blur-md"
+                  style={{
+                    boxShadow: theme === 'dark' ? '0 10px 25px -5px rgba(0, 0, 0, 0.5)' : '0 10px 25px -5px rgba(0, 0, 0, 0.1)'
+                  }}
+                >
+                  {/* User Info Section */}
+                  <div className="p-5 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/20">
+                    <div className="flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="w-14 h-14 mx-auto rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20 dark:border-primary/30 mb-3">
+                          <ProfileIcon className="text-3xl text-primary" />
+                        </div>
+                        <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Account
+                        </div>
+                        <div className="font-semibold text-gray-800 dark:text-gray-100 text-lg">
+                          {username || 'Admin'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Sign Out Button - Red Hover Only */}
+                  <div className="p-3">
+  <button 
+    onClick={handleLogout}
+    className="w-full group text-center px-4 py-3 text-sm font-medium 
+      rounded-lg
+      bg-white dark:bg-transparent
+      hover:bg-red-50 dark:hover:bg-red-900/20 
+      text-gray-700 dark:text-gray-200
+      transition-all duration-200
+      border-0 outline-none
+      focus:outline-none focus:ring-0 focus:ring-offset-0
+      focus:border-0 dark:focus:border-0
+      active:outline-none"
+  >
+    <div className="flex items-center justify-start pl-9 gap-3 w-full">
+      <div className="p-2 rounded-full bg-red-50 dark:bg-red-500/10 
+        group-hover:bg-red-100 dark:group-hover:bg-red-500/20
+        transition-colors duration-200">
+        <FiLogOut className="text-red-500 dark:text-red-400" size={18} />
+      </div>
+      <span className="group-hover:text-red-500 dark:group-hover:text-red-400 transition-colors duration-200">
+        Sign Out
+      </span>
+    </div>
+  </button>
+</div>
+                  
+                </div>
+              )}
+            </div>
+            
+            {/* Theme Toggle Button - MOVED AFTER profile button */}
             <button
               onClick={toggleTheme}
               className="btn btn-circle btn-ghost hover:bg-base-200 transition-colors duration-200"
@@ -267,72 +334,6 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
                 <FiSun className="text-xl text-yellow-500" />
               )}
             </button>
-            
-            {/* User Profile Icon with Dropdown - Compact Button */}
-            <div className="relative" ref={userMenuRef}>
-              <button
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                className="btn btn-ghost border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 transition-all duration-300 
-                  rounded-md px-2.5 py-1.5 w-12 flex justify-center items-center"
-              >
-                <ProfileIcon className="text-xl text-primary" />
-              </button>
-              
-              {/* Compact User Dropdown Menu */}
-              {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-900 shadow-xl z-50
-                  border border-gray-100 dark:border-gray-800 animate-fadeIn overflow-hidden rounded-md
-                  backdrop-blur-sm dark:backdrop-blur-md"
-                  style={{
-                    boxShadow: theme === 'dark' ? '0 10px 25px -5px rgba(0, 0, 0, 0.5)' : '0 10px 25px -5px rgba(0, 0, 0, 0.1)'
-                  }}
-                >
-                  {/* User Info Section */}
-                  <div className="p-4 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/20">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center border-2 border-primary/30 mr-3">
-                        <ProfileIcon className="text-2xl text-primary" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Account
-                        </div>
-                        <div className="font-semibold text-gray-800 dark:text-gray-100 text-base">
-                          {username || 'Admin'}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Account Actions */}
-                  <div className="p-3">
-                    {/* Sign Out Button */}
-                    <button 
-                      onClick={handleLogout}
-                      className="w-full group flex items-center p-2
-                        bg-white dark:bg-transparent
-                        hover:bg-gray-50 dark:hover:bg-gray-800 
-                        text-gray-700 dark:text-gray-200
-                        transition-all duration-200
-                        rounded-md
-                        focus:outline-none active:outline-none"
-                    >
-                      <div className="flex items-center gap-3 w-full">
-                        <div className="p-1.5 rounded-md bg-red-50 dark:bg-red-500/10 
-                          group-hover:bg-red-100 dark:group-hover:bg-red-500/20
-                          transition-colors duration-200">
-                          <FiLogOut className="text-red-500 dark:text-red-400" size={18} />
-                        </div>
-                        <span className="text-sm font-medium group-hover:text-red-500 dark:group-hover:text-red-400 transition-colors duration-200">
-                          Sign Out
-                        </span>
-                      </div>
-                    </button>
-                  </div>
-                  
-                </div>
-              )}
-            </div>
           </>
         ) : (
           <>
