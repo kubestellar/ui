@@ -42,4 +42,6 @@ func setupClusterRoutes(router *gin.Engine) {
 	// Remote Tree View Cluster details
 	router.GET("/api/cluster/details/:name", handlers.GetClusterDetailsHandler)
 
+	router.GET("/api/cluster/import/exec", api.CommandStreamHandler)
+
 }
