@@ -1123,7 +1123,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
             p: 2,
             flex: 1,
             overflow: "hidden",
-            mt: 2,
+            mt: 0,
             height: "calc(95vh - 140px)" 
           }}
         >
@@ -1256,78 +1256,104 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                 </Box>
               )}
 
-              {activeTab === "file" && (
-                <Box sx={{
-                  ...enhancedTabContentStyles,
-                  height: "75vh",
-                  border: "none",
-                  boxShadow: "none",
-                  bgcolor: "transparent",
-                  p: 0,
-                  overflow: "hidden"
-                }}>
-                  {!selectedFile ? (
-                    <StyledPaper
-                      elevation={0}
-                      onDragOver={handleDragOver}
-                      onDragLeave={handleDragLeave}
-                      onDrop={handleDrop}
-                      sx={{
-                        height: "100%",
-                        border: "2px dashed",
-                        borderColor: isDragging ? 'primary.main' : theme === "dark" ? "rgba(255, 255, 255, 0.2)" : "divider",
-                        borderRadius: '8px',
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        transition: 'all 0.2s ease',
-                        
-                        backgroundColor: isDragging 
-                          ? (isDarkTheme ? 'rgba(25, 118, 210, 0.12)' : 'rgba(25, 118, 210, 0.04)') 
-                          : 'transparent',
-                        '&:hover': {
-                          borderColor: 'primary.main',
-                          backgroundColor: isDarkTheme ? 'rgba(25, 118, 210, 0.08)' : 'rgba(25, 118, 210, 0.04)'
-                        }
-                      }}
-                    >
-                      <Box sx={{ textAlign: "center" }}>
-                        <span role="img" aria-label="upload" style={{ fontSize: "1.75rem" }}>📤</span>
-                        <Typography variant="h6" gutterBottom sx={{ color: theme === "dark" ? "#d4d4d4" : "#333" }}>
-                          {isDragging ? 'Drop YAML File Here' : 'Choose or Drag & Drop a YAML File'}
-                        </Typography>
-                        <Box sx={{ color: theme === "dark" ? "#d4d4d4" : "#333", mb: 2, fontSize: "0.85rem" }}>
-                          - or -
-                        </Box>
-                        <Button
-                          variant="contained"
-                          component="label"
-                          sx={{ 
-                            mb: 2,
-                            textTransform: 'none',
-                            borderRadius: '8px',
-                            fontWeight: 500,
-                            px: 3,
-                            py: 1,
-                            transition: 'all 0.2s ease',
-                            '&:hover': {
-                              transform: 'translateY(-2px)',
-                              boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
-                            }
-                          }}
-                          startIcon={<FileUploadIcon />}
-                        >
-                          Choose YAML File
-                          <input
-                            type="file"
-                            hidden
-                            accept=".yaml,.yml"
-                            onChange={handleFileChange}
-                          />
-                        </Button>
-                      </Box>
-                    </StyledPaper>
-                  ) : (
+{activeTab === "file" && (
+  <Box sx={{
+    ...enhancedTabContentStyles,
+    height: "calc(100% - 32px)",  // Match CreateOptions height
+    border: "none",
+    boxShadow: "none",
+    bgcolor: "transparent",
+    p: 0,
+    borderRadius: 2,
+    minHeight: "400px",
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden"
+  }}>
+    {!selectedFile ? (
+      <StyledPaper
+        elevation={0}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        sx={{
+          height: "100%",
+          border: "2px dashed",
+          borderColor: isDragging ? 'primary.main' : theme === "dark" ? "rgba(255, 255, 255, 0.2)" : "divider",
+          borderRadius: '8px',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          transition: 'all 0.2s ease',
+          flexGrow: 1,
+          backgroundColor: isDragging 
+            ? (isDarkTheme ? 'rgba(25, 118, 210, 0.12)' : 'rgba(25, 118, 210, 0.04)') 
+            : 'transparent',
+          '&:hover': {
+            borderColor: 'primary.main',
+            backgroundColor: isDarkTheme ? 'rgba(25, 118, 210, 0.08)' : 'rgba(25, 118, 210, 0.04)'
+          }
+        }}
+      >
+        <Box sx={{ 
+          textAlign: "center", 
+          maxWidth: "80%",
+          py: 4
+        }}>
+          <span role="img" aria-label="upload" style={{ fontSize: "2.5rem", display: "block", marginBottom: "16px" }}>📤</span>
+          <Typography variant="h6" gutterBottom sx={{ 
+            color: theme === "dark" ? "#d4d4d4" : "#333",
+            fontWeight: 500,
+            mb: 2
+          }}>
+            {isDragging ? 'Drop YAML File Here' : 'Choose or Drag & Drop a YAML File'}
+          </Typography>
+          <Box sx={{ 
+            color: theme === "dark" ? "#d4d4d4" : "#333", 
+            mb: 3, 
+            fontSize: "0.9rem",
+            opacity: 0.7 
+          }}>
+            - or -
+          </Box>
+          <Button
+            variant="contained"
+            component="label"
+            startIcon={<FileUploadIcon />}
+            sx={{ 
+              mb: 2,
+              textTransform: 'none',
+              borderRadius: '8px',
+              fontWeight: 500,
+              px: 3,
+              py: 1.2,
+              bgcolor: isDarkTheme ? "#2563eb" : undefined,
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                bgcolor: isDarkTheme ? "#1d4ed8" : undefined
+              }
+            }}
+          >
+            Select YAML File
+            <input
+              type="file"
+              hidden
+              accept=".yaml,.yml"
+              onChange={handleFileChange}
+            />
+          </Button>
+          <Typography variant="body2" sx={{ 
+            mt: 2, 
+            color: theme === "dark" ? "rgba(255,255,255,0.6)" : "text.secondary",
+            fontSize: "0.8rem"
+          }}>
+            Accepted formats: .yaml, .yml
+          </Typography>
+        </Box>
+      </StyledPaper>
+    ) : (
                     <Box sx={{ 
                       height: '100%', 
                       display: 'flex',
