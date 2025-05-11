@@ -529,6 +529,11 @@ const DynamicDetailsPanel = ({
           .map(([key, value]) => `${key}: ${value}`)
       : ["None"];
 
+    // Check if this is a context node type and set namespace to N/A
+    const namespaceValue = resource.kind === "context" ? "N/A" : resource.namespace;
+    
+    // Format creation time to avoid redundant N/A display
+    const creationTimeValue = resource.createdAt === "N/A" ? "N/A" : `${resource.createdAt} (${resource.age})`;
 
     return (
       <Table sx={{ borderRadius: 1 }}>
@@ -536,9 +541,8 @@ const DynamicDetailsPanel = ({
           {[
             { label: "KIND", value: resource.kind },
             { label: "NAME", value: resource.name },
-            { label: "NAMESPACE", value: resource.namespace },
-            { label: "CREATED AT", value: `${resource.createdAt} (${resource.age})` },
-            // { label: "LABELS", value: labelsString }, // New row for labels
+            { label: "NAMESPACE", value: namespaceValue },
+            { label: "CREATED AT", value: creationTimeValue },
           ].map((row, index) => (
             <TableRow key={index}>
               <TableCell
