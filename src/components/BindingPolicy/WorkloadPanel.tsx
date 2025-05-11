@@ -108,7 +108,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
   const theme = useTheme((state) => state.theme); // Get custom theme state (dark/light)
   const navigate = useNavigate();
   const [showSearch, setShowSearch] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState("kubestellar.io/workload");
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedWorkload, setSelectedWorkload] = useState<Workload | null>(null);
   const [loadingWorkloadEdit, setLoadingWorkloadEdit] = useState<string | null>(null);
@@ -799,7 +799,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
                <IconButton 
                  size="small" 
                  onClick={() => {
-                  setSearchTerm("");
+                  setSearchTerm("kubestellar.io/workload");
                   setShowSearch(false);
                 }} 
                 sx={{ 
