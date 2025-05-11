@@ -230,18 +230,15 @@ func UpdateManagedClusterLabelsHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Labels updated successfully"})
 }
 
-
-
 var wsUpgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
-		return true 
+		return true
 	},
 }
 
 type wsRequest struct {
 	ClusterName string `json:"clusterName"`
 }
-
 
 func CommandStreamHandler(c *gin.Context) {
 	conn, err := wsUpgrader.Upgrade(c.Writer, c.Request, nil)
@@ -264,7 +261,6 @@ func CommandStreamHandler(c *gin.Context) {
 
 	conn.WriteMessage(websocket.TextMessage, []byte("\n🎉 Cluster ‘"+req.ClusterName+"’ onboarded successfully!"))
 }
-
 
 func runClusterCommands(conn *websocket.Conn, clusterName string) error {
 	conn.WriteMessage(websocket.TextMessage, []byte("🔑 [JOIN] Fetching join token…\n"))
@@ -301,7 +297,6 @@ func runClusterCommands(conn *websocket.Conn, clusterName string) error {
 
 	return nil
 }
-
 
 func fetchClusteradmToken() (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -354,7 +349,7 @@ func autoApproveCSRs(conn *websocket.Conn, clusterName string) error {
 			aCancel()
 
 			if aErr != nil {
-				
+
 				return fmt.Errorf("approval error: %w", aErr)
 			}
 
@@ -370,7 +365,6 @@ func autoApproveCSRs(conn *websocket.Conn, clusterName string) error {
 	}
 	return nil
 }
-
 
 func streamSingleCommand(conn *websocket.Conn, prefix, raw string, timeout time.Duration) error {
 	conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("%s→ %s\n", prefix, raw)))
