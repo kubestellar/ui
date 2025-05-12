@@ -193,33 +193,7 @@ const ListViewComponent = ({
           
           // Process each kind of resource in this namespace
           Object.entries(resourcesByKind).forEach(([kind, items]) => {
-            // Special handling for namespace metadata
-            if (kind === "__namespaceMetaData") {
-              if (Array.isArray(items)) {
-                rawNamespacedCount += items.length;
-                (items as ResourceItem[]).forEach((item: ResourceItem) => {
-                  // Get context for this namespace from the contexts map
-                  const resourceUid = item.uid || `Namespace/${item.name || namespace}`;
-                  const context = resourceContexts[resourceUid] || "default";
-                  
-                resourceList.push({
-                  createdAt: item.createdAt,
-                    kind: "Namespace",
-                    name: item.name || namespace,
-                    namespace: namespace,
-                    project: "default",
-                    source: `https://github.com/onkarr17/${namespace.toLowerCase()}-gitrepo.io/k8s`,
-                    destination: `in-cluster/${namespace}`,
-                    context: context // Add context information
-                  });
-                });
-              }
-              return;
-            }
-            
-            // Skip if items is not an array
-            if (!Array.isArray(items)) return;
-            
+            if (kind === "__namespaceMetaData" || !Array.isArray(items)) return;
             rawNamespacedCount += items.length;
             (items as ResourceItem[]).forEach((item: ResourceItem) => {
               const sourceUrl = `https://github.com/onkarr17/${item.name.toLowerCase()}-gitrepo.io/k8s`;
