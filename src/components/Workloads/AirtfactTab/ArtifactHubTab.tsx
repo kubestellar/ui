@@ -362,19 +362,26 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
             display: "flex",
             justifyContent: "flex-end",
             mt: 2,
-            gap: 2,
+            gap: 1,
+            position: "relative",
+            width: "100%",
+            height: "auto",
+            minHeight: "40px",
+            padding: "8px 0",
+            zIndex: 1
           }}
         >
           {selectedOption !== "repositories" && (
             <Button
-              variant="outlined"
+              variant="text"
               onClick={onCancel}
               sx={{
-                borderColor: theme === "dark" ? "#444" : "#e0e0e0",
-                color: theme === "dark" ? "#d4d4d4" : "#333",
+                textTransform: "none",
+                fontWeight: 600,
+                color: theme === "dark" ? "#d4d4d4" : "#666",
+                padding: "8px 16px",
                 "&:hover": {
-                  borderColor: theme === "dark" ? "#666" : "#bdbdbd",
-                  backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)",
+                  backgroundColor: theme === "dark" ? "#333" : "#f5f5f5",
                 },
               }}
             >
@@ -386,15 +393,23 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
             onClick={() => handleArtifactHubDeploy()}
             disabled={isApplyDisabled()}
             sx={{
-              backgroundColor: theme === "dark" ? "#1976d2" : "#1976d2",
+              textTransform: "none",
+              fontWeight: "600",
+              backgroundColor: "#1976d2",
               color: "#fff",
+              padding: "8px 16px",
+              borderRadius: "8px",
               "&:hover": {
-                backgroundColor: theme === "dark" ? "#1565c0" : "#1565c0",
+                backgroundColor: "#1565c0",
+              },
+              "&:disabled": {
+                backgroundColor: "#b0bec5",
+                color: "#fff",
               },
             }}
           >
             {deployLoading ? (
-              <CircularProgress size={24} sx={{ color: "#fff" }} />
+              <CircularProgress size={20} sx={{ color: "#fff" }} />
             ) : (
               selectedOption === "repositories" ? "Close" : "Apply"
             )}
