@@ -6,6 +6,7 @@ import useTheme from "../stores/themeStore";
 import { api } from "../lib/api";
 import FilterListIcon from '@mui/icons-material/FilterList';
 import AddIcon from "@mui/icons-material/Add";
+import { useContextCreationWebSocket } from "../hooks/useWebSocket";
 
 interface ContextDropdownProps {
   onContextFilter: (context: string) => void;
@@ -27,6 +28,7 @@ const ContextDropdown = ({
   const [isCreating, setIsCreating] = useState(false);
   const [creationError, setCreationError] = useState("");
   const [creationSuccess, setCreationSuccess] = useState("");
+  const [messages, setMessages] = useState<string[]>([]);
 
   useEffect(() => {
     api.get("/wds/get/context")
@@ -75,6 +77,36 @@ const ContextDropdown = ({
     setCreateDialogOpen(false);
   };
 
+  const handleSocketError = (error: Error) => {
+    setCreationError(error.message);
+  };
+
+  const handleSocketMessage = (event: MessageEvent) => {
+    setMessages([...messages, event.data]);
+    // eslint-disable-next-line no-control-regex
+    const cleanData = event.data.replace(/\x1b\[[0-9;]*m/g, '').trim(); 
+    if (cleanData.includes("Context") && cleanData.includes("set successfully:")) {
+      contextCreationWs.disconnect();
+      handleCloseCreateDialog();
+      setCreationSuccess("Context created successfully!");
+      window.location.reload();
+    }
+  };
+
+  const handleSocketClose = (event: CloseEvent) => {
+    console.log("WebSocket connection closed:", event.code, event.reason);
+    if (messages.join("").includes("Error") || messages.join("").includes("Failed")) {
+      setCreationError(messages.join("\n"));
+    } else if (messages.length > 0) {
+      setCreationSuccess("Context created successfully!");
+    } else {
+      setCreationError("WebSocket connection closed unexpectedly");
+    }
+  };
+
+  const contextCreationWs = useContextCreationWebSocket(contextName, contextVersion, handleSocketMessage, handleSocketError, handleSocketClose);
+
+
   const handleCreateContext = async () => {
     if (!contextName) {
       setCreationError("Context name is required");
@@ -91,75 +123,30 @@ const ContextDropdown = ({
     setCreationSuccess("");
 
     try {
-      // Create a WebSocket connection directly
-      const wsUrl = `ws://localhost:4000/api/wds/context?context=${contextName}&version=${contextVersion}`;
-      console.log("Connecting to WebSocket:", wsUrl);
-      
+      contextCreationWs.connect();
+
       // Use a promise to handle WebSocket connection
       const connectWebSocket = () => {
         return new Promise<{success: boolean, messages: string[]}>((resolve, reject) => {
-          const ws = new WebSocket(wsUrl);
           const messages: string[] = [];
-          
-          // Connection opened
-          ws.onopen = () => {
-            console.log("WebSocket connection established");
-          };
-          
-          // Listen for messages
-          ws.onmessage = (event) => {
-            console.log("WebSocket message:", event.data);
-            messages.push(event.data);
-            
-            // If we see a success message, resolve
-            if (event.data.includes("Context") && event.data.includes("set successfully")) {
-              resolve({
-                success: true,
-                messages
-              });
-              ws.close();
-            }
-          };
-          
-          // Handle errors
-          ws.onerror = (error) => {
-            console.error("WebSocket error:", error);
-            reject(new Error("WebSocket connection failed"));
-          };
-          
-          // Connection closed
-          ws.onclose = (event) => {
-            console.log("WebSocket connection closed:", event.code, event.reason);
-            // If closed without resolution, this might be an error
-            if (messages.join("").includes("Error") || messages.join("").includes("Failed")) {
-              reject(new Error(messages.join("\n")));
-            } else if (messages.length > 0) {
-              // Otherwise, if we have messages, consider it a success
-              resolve({
-                success: true,
-                messages
-              });
-            } else {
-              reject(new Error("WebSocket connection closed unexpectedly"));
-            }
-          };
+        
           
           // Set a timeout in case the socket doesn't close
           setTimeout(() => {
-            if (ws.readyState === WebSocket.OPEN) {
+            if (contextCreationWs.isConnected) {
               const msgText = messages.join("");
               // Check if we've received enough indicators of progress to consider it a success
               if (msgText.includes("Switching to kind-kubeflex context") || 
                  (msgText.includes("Context") && messages.length > 2)) {
                 // If we've made good progress, close the socket and consider it a success
-                ws.close();
+                contextCreationWs.disconnect();
                 resolve({
                   success: true,
                   messages
                 });
               } else {
                 // Otherwise, this is taking too long or something went wrong
-                ws.close();
+                contextCreationWs.disconnect();
                 reject(new Error("Operation timed out. The process might still be running in the background."));
               }
             }
@@ -168,7 +155,7 @@ const ContextDropdown = ({
       };
       
       const result = await connectWebSocket();
-       
+      
       if (result.success) {
         setCreationSuccess(`Context "${contextName}" created successfully!`);
         setTimeout(() => {
@@ -193,6 +180,7 @@ const ContextDropdown = ({
       }
     } finally {
       setIsCreating(false);
+
     }
   };
 
@@ -487,3 +475,4 @@ const ContextDropdown = ({
 };
 
 export default ContextDropdown;
+

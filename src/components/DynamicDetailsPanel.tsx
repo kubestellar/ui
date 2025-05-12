@@ -27,7 +27,8 @@ import "xterm/css/xterm.css";
 import { ResourceItem } from "./TreeViewComponent"; // Adjust the import path to your TreeView file
 import useTheme from "../stores/themeStore"; // Import the useTheme hook
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import { api, getWebSocketUrl } from "../lib/api";
+import { api } from "../lib/api";
+import { useResourceLogsWebSocket } from "../hooks/useWebSocket";
 
 interface DynamicDetailsProps {
   namespace: string;
@@ -178,7 +179,6 @@ const DynamicDetailsPanel = ({
   const panelRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminalInstance = useRef<Terminal | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
   const [logs, setLogs] = useState<string[]>([]); // New state to store logs
   const wsParamsRef = useRef<{ kind: string; namespace: string; name: string } | null>(null); // Store WebSocket parameters
   const [isPanelVisible, setIsPanelVisible] = useState(false);
@@ -258,85 +258,29 @@ const DynamicDetailsPanel = ({
     fetchNamespaceManifest();
   }, [namespace, name, type, resourceData]);
 
-  // Function to establish WebSocket connection
-  const connectWebSocket = useCallback(() => {
-    if (!wsParamsRef.current) return;
+  const handleRawLogMessage = useCallback((event: MessageEvent) => {
+    setLogs((prev) => [...prev, event.data]);
+  }, []);
 
-    const { kind, namespace, name } = wsParamsRef.current;
-
-    // Skip WebSocket connection for Namespace resources
-    if (kind === "Namespace") {
-      setLogs(["No logs available for Namespace"]);
-      return;
-    }
-
-    const pluralForm = kindToPluralMap[kind] || `${kind.toLowerCase()}s`;
-    const wsUrl = getWebSocketUrl(`/api/${pluralForm}/${namespace}/log?name=${name}`);
-    console.log(`Connecting to WebSocket: ${wsUrl}`);
-
-    const socket = new WebSocket(wsUrl);
-    wsRef.current = socket;
-
-    socket.onopen = () => {
-      setLogs((prev) => [...prev, "\x1b[32m✔ Connected to log stream...\x1b[0m"]);
-    };
-
-    socket.onmessage = (event) => {
-      setLogs((prev) => [...prev, event.data]);
-    };
-
-    socket.onerror = (event) => {
-      console.error("WebSocket encountered an issue:", event);
-      setLogs((prev) => [...prev, "\x1b[31m⚠ WebSocket error occurred.\x1b[0m"]);
-    };
-
-    socket.onclose = () => {
-      setLogs((prev) => [...prev, "\x1b[31m⚠ Complete Logs. Connection closed.\x1b[0m"]);
-      wsRef.current = null;
-      // Reconnect if the panel is still open
-      if (isOpen) {
-        setTimeout(() => {
-          if (isOpen && !wsRef.current) {
-            connectWebSocket();
-          }
-        }, 100); // Reduced from 1000ms to 100ms for faster reconnection
-      }
-    };
-  }, [isOpen]);
-
-  // Dedicated useEffect for WebSocket connection, only dependent on isOpen and wsParamsRef
+  const { 
+    isConnected: isLogStreamConnected, 
+    isError: logStreamError,
+  } = useResourceLogsWebSocket(
+    wsParamsRef.current?.kind || '',
+    wsParamsRef.current?.namespace || '',
+    wsParamsRef.current?.name || '',
+    handleRawLogMessage,
+  );
+  
   useEffect(() => {
-    if (!isOpen) {
-      // Close the WebSocket connection when the panel is closed
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
-      }
-      setLogs([]);
-      wsParamsRef.current = null; // Reset WebSocket parameters
-      return;
+    if (isLogStreamConnected && logs.length === 0) {
+      setLogs(["\x1b[32m✔ Connected to log stream...\x1b[0m"]);
     }
-
-    // If the panel is open but no WebSocket parameters are available yet, wait
-    if (!wsParamsRef.current) {
-      return;
+    
+    if (logStreamError) {
+      setLogs((prev) => [...prev, "\x1b[31m⚠ WebSocket error occurred.\x1b[0m"]);
     }
-
-    // Establish WebSocket connection only if not already connected
-    if (!wsRef.current && wsParamsRef.current.kind !== "Namespace") {
-      connectWebSocket();
-    }
-
-    // Cleanup function: only runs when isOpen changes to false
-    return () => {
-      if (!isOpen) {
-        if (wsRef.current) {
-          wsRef.current.close();
-          wsRef.current = null;
-        }
-      }
-    };
-  }, [isOpen, connectWebSocket]); // Removed wsParamsRef.current since it's a mutable ref value
+  }, [isLogStreamConnected, logStreamError, logs.length]);
 
   // UseEffect to initialize terminal and display logs when "LOGS" tab is selected
   useEffect(() => {
