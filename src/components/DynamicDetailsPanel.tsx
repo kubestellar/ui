@@ -604,6 +604,13 @@ const DynamicDetailsPanel = ({
     );
   };
 
+  // Additional useEffect to reset tab to SUMMARY when type is "context"
+  useEffect(() => {
+    if (type === "context" && tabValue !== 0) {
+      setTabValue(0);
+    }
+  }, [type, tabValue]);
+
   return (
     <Box
       sx={{
@@ -704,9 +711,13 @@ const DynamicDetailsPanel = ({
               },
             }}
           >
-           <StyledTab label={<span><i className="fa fa-file-alt" style={{ marginRight: "8px" }}></i>SUMMARY</span>} />
-            <StyledTab label={<span><i className="fa fa-edit" style={{ marginRight: "8px" }}></i>EDIT</span>} />
-            <StyledTab label={<span><i className="fa fa-align-left" style={{ marginRight: "8px" }}></i>LOGS</span>} />
+            <StyledTab label={<span><i className="fa fa-file-alt" style={{ marginRight: "8px" }}></i>SUMMARY</span>} />
+            {type !== "context" && (
+              <StyledTab label={<span><i className="fa fa-edit" style={{ marginRight: "8px" }}></i>EDIT</span>} />
+            )}
+            {type !== "context" && (
+              <StyledTab label={<span><i className="fa fa-align-left" style={{ marginRight: "8px" }}></i>LOGS</span>} />
+            )}
           </Tabs>
 
           <Box
