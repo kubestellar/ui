@@ -10,6 +10,7 @@ import { api } from "../lib/api";
 import useClusterStore from "../stores/clusterStore";
 import useTheme from "../stores/themeStore";
 import { useHeaderQueries } from '../hooks/queries/useHeaderQueries';
+import { useAuth, useAuthActions } from '../hooks/useAuth';
 import LoadingFallback from './LoadingFallback';
 
 interface Context {
@@ -27,17 +28,19 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
   const [isFullScreen, setIsFullScreen] = React.useState(false);
   const element = document.getElementById("root");
   const { useContexts } = useHeaderQueries();
-  const { data, error } = useContexts();
+  const { data: contextsData, error } = useContexts();
   const setSelectedCluster = useClusterStore((state) => state.setSelectedCluster)
   const setHasAvailableClusters = useClusterStore((state) => state.setHasAvailableClusters)
   const navigate = useNavigate();
 
   const [isDrawerOpen, setDrawerOpen] = React.useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState("");
 
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  
+  const { data: authData } = useAuth();
+  const { logout } = useAuthActions();
   
   // Randomly select a profile icon
   const [ProfileIcon] = useState(() => {
@@ -51,25 +54,25 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
     setIsFullScreen((prev) => !prev);
   };
 
-  // Check if user is logged in
   useEffect(() => {
-    const token = localStorage.getItem("jwtToken");
-    if (token) {
-      api
-        .get("/api/me", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-        .then((response) => {
-          setUsername(response.data.username);
-        })
-        .catch((error) => {
-          console.error("Error fetching user data:", error);
-        });
+    if (authData?.isAuthenticated) {
+      const token = localStorage.getItem("jwtToken");
+      if (token) {
+        api
+          .get("/api/me", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
+          .then((response) => {
+            setUsername(response.data.username);
+          })
+          .catch((error) => {
+            console.error("Error fetching user data:", error);
+          });
+      }
     }
-    setIsLoggedIn(!!token);
-  }, []);
+  }, [authData?.isAuthenticated]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -135,12 +138,7 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
   };
 
   const handleLogout = () => {
-    // Record logout timestamp
-    localStorage.setItem("tokenRemovalTime", Date.now().toString());
-    
-    // Remove JWT token
-    localStorage.removeItem("jwtToken");
-    setIsLoggedIn(false);
+    logout();
     setShowUserMenu(false);
     
     // Navigate to login page
@@ -157,8 +155,8 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
   if (isLoading) return <LoadingFallback message="Loading contexts..." size="small" />;
   if (error) return <div>Error loading contexts: {error.message}</div>;
 
-  const contexts = data?.contexts || [];
-  const currentContext = data?.currentContext || '';
+  const contexts = contextsData?.contexts || [];
+  const currentContext = contextsData?.currentContext || '';
 
   return (
     <div className="fixed z-[3] top-0 left-0 right-0 bg-base-100 w-full flex justify-between px-3 xl:px-4 py-3 xl:py-5 gap-4 xl:gap-0">
@@ -208,7 +206,7 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
               ))}
               
               {/* Mobile Logout Button */}
-              {isLoggedIn && (
+              {authData?.isAuthenticated && (
                 <div className="mt-6 border-t border-base-300 pt-4">
                   <button 
                     onClick={() => {
@@ -238,7 +236,7 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
       </div>
 
       <div className="flex items-center gap-4 xl:gap-5 3xl:gap-6">
-        {isLoggedIn ? (
+        {authData?.isAuthenticated ? (
           <>
             <select
               className="select select-bordered w-[200px] mr-2"
