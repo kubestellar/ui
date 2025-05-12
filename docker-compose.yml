@@ -6,6 +6,8 @@ services:
       - "5173:80"
     depends_on:
       - backend
+    environment:
+      - VITE_SKIP_PREREQUISITES_CHECK=true
 
   backend:
     build:

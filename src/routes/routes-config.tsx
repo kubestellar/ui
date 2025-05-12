@@ -11,6 +11,7 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import PublicRoute from "../components/PublicRoute";
 import KubeStellarVisualization from "../components/login/index";
 import Terminal from "../components/Terminal.tsx";
+import InstallationPage from "../pages/InstallationPage";
 
 const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ "../components/Clusters"));
 const ITSLazy = lazy(() => import(/* webpackPrefetch: true */ "../pages/ITS"));
@@ -23,6 +24,14 @@ export const routesConfig: RouteObject[] = [
         <KubeStellarVisualization />
       </PublicRoute>
     ) 
+  },
+  {
+    path: "/install",
+    element: (
+      <PublicRoute>
+        <InstallationPage />
+      </PublicRoute>
+    )
   },
   {
     path: "/",
