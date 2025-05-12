@@ -185,7 +185,7 @@ For ongoing development, use the following steps:
 
 - **Step 2: Pull the Latest Source Code Changes**:
   ```bash
-  git pull origin main
+  git pull origin dev
   ```
 
 - **Step 3: Rebuild and Restart the Application**:
