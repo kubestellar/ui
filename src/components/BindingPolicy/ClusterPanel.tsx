@@ -1266,46 +1266,62 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
         </Box>
         {!compact && (
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              variant="contained"
-              endIcon={<BsTagFill />}
-              onClick={handleAddLabels}
-              size="small"
-              sx={{ 
-                bgcolor: 'white', 
-                color: isDarkTheme 
-                  ? "rgba(37, 99, 235, 0.9)"
-                  : muiTheme.palette.primary.main,
-                transition: 'all 0.2s ease',
-                "&:hover": {
-                  bgcolor: alpha(muiTheme.palette.common.white, 0.9),
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
-                },
-              }}
-            >
-              labels
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleImportClusters}
-              size="small"
-              sx={{ 
-                bgcolor: 'white', 
-                color: isDarkTheme 
-                  ? "rgba(37, 99, 235, 0.9)"
-                  : muiTheme.palette.primary.main,
-                transition: 'all 0.2s ease',
-                "&:hover": {
-                  bgcolor: alpha(muiTheme.palette.common.white, 0.9),
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
-                },
-              }}
-            >
-              Import
-            </Button>
+           <Button
+           variant="contained"
+           endIcon={<BsTagFill />}
+           onClick={handleAddLabels}
+           size="small"
+           sx={{ 
+             bgcolor: isDarkTheme 
+               ? alpha(muiTheme.palette.common.white, 0.15)  
+               : muiTheme.palette.common.white,
+             color: isDarkTheme 
+               ? muiTheme.palette.common.white
+               : muiTheme.palette.secondary.main,
+             borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.3)' : undefined,
+             transition: 'all 0.2s ease',
+             fontWeight: 500,
+             "&:hover": {
+               bgcolor: isDarkTheme 
+                 ? alpha(muiTheme.palette.common.white, 0.25)
+                 : alpha(muiTheme.palette.common.white, 0.9),
+               transform: 'translateY(-2px)',
+               boxShadow: isDarkTheme
+                 ? '0 4px 12px rgba(0,0,0,0.4)'
+                 : '0 4px 8px rgba(0,0,0,0.2)'
+             },
+           }}
+         >
+  Labels
+</Button>
+<Button
+  variant="contained"
+  startIcon={<AddIcon />}
+  onClick={handleImportClusters}
+  size="small"
+  sx={{
+    bgcolor: isDarkTheme 
+      ? alpha(muiTheme.palette.common.white, 0.15)
+      : muiTheme.palette.common.white,
+    color: isDarkTheme 
+      ? muiTheme.palette.common.white
+      : muiTheme.palette.secondary.main,
+    borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.3)' : undefined,
+    transition: 'all 0.2s ease',
+    fontWeight: 500,
+    "&:hover": {
+      bgcolor: isDarkTheme 
+        ? alpha(muiTheme.palette.common.white, 0.25)
+        : alpha(muiTheme.palette.common.white, 0.9),
+      transform: 'translateY(-2px)',
+      boxShadow: isDarkTheme
+        ? '0 4px 12px rgba(0,0,0,0.4)'
+        : '0 4px 8px rgba(0,0,0,0.2)'
+    },
+  }}
+>
+  Import
+</Button>
           </Box>
         )}
       </Box>
