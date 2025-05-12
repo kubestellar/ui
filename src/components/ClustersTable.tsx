@@ -929,7 +929,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
             )}
           >
             <MenuItem value="">All Status</MenuItem>
-            <MenuItem value="active✓">
+            <MenuItem value="active">
               <span className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.success }}></span>
                 Active
