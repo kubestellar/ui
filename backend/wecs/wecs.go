@@ -303,7 +303,7 @@ func StreamK8sDataChronologically(c *gin.Context) {
 									nsData = NamespaceData{Name: nsName}
 									var resourceTypes []ResourceTypeData
 
-									// Helper function to fetch and process resources
+									// Process namespaced resources
 									processResources := func(
 										listFunc func(namespace string) (interface{}, error),
 										kind, group, version string,
@@ -768,7 +768,6 @@ func StreamK8sDataChronologically(c *gin.Context) {
 													CreationTimestamp: res.CreationTimestamp.Time,
 												})
 											}
-
 										case *certificatesv1.CertificateSigningRequestList:
 											for _, res := range typed.Items {
 												rawResource, _ := json.Marshal(res)
@@ -827,6 +826,97 @@ func StreamK8sDataChronologically(c *gin.Context) {
 										version        string
 										getReplicaFunc func(clientset *kubernetes.Clientset, resource interface{}, namespace string) ([]ResourceData, error)
 									}{
+										// Core resources (v1)
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.CoreV1().Pods(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "Pod",
+											group:   "core",
+											version: "v1",
+										},
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.CoreV1().Services(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "Service",
+											group:   "core",
+											version: "v1",
+										},
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.CoreV1().ConfigMaps(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "ConfigMap",
+											group:   "core",
+											version: "v1",
+										},
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.CoreV1().Secrets(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "Secret",
+											group:   "core",
+											version: "v1",
+										},
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.CoreV1().PersistentVolumeClaims(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "PersistentVolumeClaim",
+											group:   "core",
+											version: "v1",
+										},
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.CoreV1().Endpoints(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "Endpoints",
+											group:   "core",
+											version: "v1",
+										},
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.CoreV1().Events(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "Event",
+											group:   "core",
+											version: "v1",
+										},
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.CoreV1().LimitRanges(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "LimitRange",
+											group:   "core",
+											version: "v1",
+										},
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.CoreV1().ServiceAccounts(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "ServiceAccount",
+											group:   "core",
+											version: "v1",
+										},
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.CoreV1().ResourceQuotas(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "ResourceQuota",
+											group:   "core",
+											version: "v1",
+										},
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.CoreV1().ReplicationControllers(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "ReplicationController",
+											group:   "core",
+											version: "v1",
+										},
+
+										// Apps resources (apps/v1)
 										{
 											listFunc: func(ns string) (interface{}, error) {
 												return clientset.AppsV1().Deployments(ns).List(context.TODO(), metav1.ListOptions{})
@@ -860,44 +950,146 @@ func StreamK8sDataChronologically(c *gin.Context) {
 										},
 										{
 											listFunc: func(ns string) (interface{}, error) {
-												return clientset.CoreV1().Services(ns).List(context.TODO(), metav1.ListOptions{})
+												return clientset.AppsV1().ReplicaSets(ns).List(context.TODO(), metav1.ListOptions{})
 											},
-											kind:    "Service",
-											group:   "core",
+											kind:    "ReplicaSet",
+											group:   "apps",
 											version: "v1",
 										},
 										{
 											listFunc: func(ns string) (interface{}, error) {
-												return clientset.CoreV1().Pods(ns).List(context.TODO(), metav1.ListOptions{})
+												return clientset.AppsV1().ControllerRevisions(ns).List(context.TODO(), metav1.ListOptions{})
 											},
-											kind:    "Pod",
-											group:   "core",
+											kind:    "ControllerRevision",
+											group:   "apps",
+											version: "v1",
+										},
+
+										// Batch resources (batch/v1)
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.BatchV1().Jobs(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "Job",
+											group:   "batch",
 											version: "v1",
 										},
 										{
 											listFunc: func(ns string) (interface{}, error) {
-												return clientset.CoreV1().ConfigMaps(ns).List(context.TODO(), metav1.ListOptions{})
+												return clientset.BatchV1().CronJobs(ns).List(context.TODO(), metav1.ListOptions{})
 											},
-											kind:    "ConfigMap",
-											group:   "core",
+											kind:    "CronJob",
+											group:   "batch",
+											version: "v1",
+										},
+
+										// Networking resources (networking.k8s.io/v1)
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.NetworkingV1().Ingresses(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "Ingress",
+											group:   "networking.k8s.io",
 											version: "v1",
 										},
 										{
 											listFunc: func(ns string) (interface{}, error) {
-												return clientset.CoreV1().Secrets(ns).List(context.TODO(), metav1.ListOptions{})
+												return clientset.NetworkingV1().NetworkPolicies(ns).List(context.TODO(), metav1.ListOptions{})
 											},
-											kind:    "Secret",
-											group:   "core",
+											kind:    "NetworkPolicy",
+											group:   "networking.k8s.io",
+											version: "v1",
+										},
+
+										// RBAC resources (rbac.authorization.k8s.io/v1)
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.RbacV1().Roles(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "Role",
+											group:   "rbac.authorization.k8s.io",
 											version: "v1",
 										},
 										{
 											listFunc: func(ns string) (interface{}, error) {
-												return clientset.CoreV1().PersistentVolumeClaims(ns).List(context.TODO(), metav1.ListOptions{})
+												return clientset.RbacV1().RoleBindings(ns).List(context.TODO(), metav1.ListOptions{})
 											},
-											kind:    "PersistentVolumeClaim",
-											group:   "core",
+											kind:    "RoleBinding",
+											group:   "rbac.authorization.k8s.io",
 											version: "v1",
 										},
+
+										// Autoscaling resources (autoscaling/v2)
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.AutoscalingV2().HorizontalPodAutoscalers(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "HorizontalPodAutoscaler",
+											group:   "autoscaling",
+											version: "v2",
+										},
+
+										// Policy resources (policy/v1)
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.PolicyV1().PodDisruptionBudgets(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "PodDisruptionBudget",
+											group:   "policy",
+											version: "v1",
+										},
+
+										// Discovery resources (discovery.k8s.io/v1)
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.DiscoveryV1().EndpointSlices(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "EndpointSlice",
+											group:   "discovery.k8s.io",
+											version: "v1",
+										},
+
+										// Coordination resources (coordination.k8s.io/v1)
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.CoordinationV1().Leases(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "Lease",
+											group:   "coordination.k8s.io",
+											version: "v1",
+										},
+
+										// Storage resources (storage.k8s.io/v1) - CSIStorageCapacity is namespaced
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.StorageV1().CSIStorageCapacities(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "CSIStorageCapacity",
+											group:   "storage.k8s.io",
+											version: "v1",
+										},
+
+										// Events resources (events.k8s.io/v1)
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.EventsV1().Events(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "Event",
+											group:   "events.k8s.io",
+											version: "v1",
+										},
+
+										// Certificate resources that are namespaced
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.CertificatesV1().CertificateSigningRequests().List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "CertificateSigningRequest",
+											group:   "certificates.k8s.io",
+											version: "v1",
+										},
+
+										// Add more namespaced resources here
 									}
 
 									for _, resourceFunc := range resourceFuncs {
