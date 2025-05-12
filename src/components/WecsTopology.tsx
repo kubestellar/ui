@@ -142,6 +142,12 @@ export interface WecsResource {
     }>;
     creationTimestamp?: string;
   }>;
+  pods?: Array<{
+    name: string;
+    kind: string;
+    raw: ResourceItem;
+    creationTimestamp?: string;
+  }>;
 }
 
 export interface WecsResourceType {
@@ -661,6 +667,9 @@ const WecsTreeview = () => {
                   const resourceGroups: Record<string, ResourceItem[]> = {};
 
                   namespace.resourceTypes.forEach((resourceType) => {
+                    // Skip Event type resources
+                    if (resourceType.kind.toLowerCase() === "event") return;
+                    
                     resourceType.resources.forEach((resource) => {
                       const kindLower = resourceType.kind.toLowerCase();
                       if (!resourceGroups[kindLower]) {
@@ -690,12 +699,40 @@ const WecsTreeview = () => {
                     );
                   });
                 } else {
+                  // Process all resource types for the expanded view
+                  // First collect all ReplicaSet names that are children of deployments
+                  const childReplicaSets = new Set<string>();
+                  
                   namespace.resourceTypes.forEach((resourceType) => {
+                    if (resourceType.kind.toLowerCase() === "deployment") {
+                      resourceType.resources.forEach((resource) => {
+                        if (resource && resource.replicaSets && Array.isArray(resource.replicaSets)) {
+                          resource.replicaSets.forEach((rs) => {
+                            if (rs && rs.name) {
+                              childReplicaSets.add(rs.name);
+                            }
+                          });
+                        }
+                      });
+                    }
+                  });
+                  
+                  // Now process all resources while filtering ReplicaSets that are children
+                  namespace.resourceTypes.forEach((resourceType) => {
+                    // Skip Event type resources
+                    if (resourceType.kind.toLowerCase() === "event") return;
+                    
                     const kindLower = resourceType.kind.toLowerCase();
+                    
                     resourceType.resources.forEach((resource, index) => {
                       if (!resource || typeof resource !== "object" || !resource.raw) return;
                       const rawResource = resource.raw;
                       if (!rawResource.metadata || typeof rawResource.metadata !== "object" || !rawResource.metadata.name) return;
+                      
+                      // Skip ReplicaSets that are already children of Deployments
+                      if (kindLower === "replicaset" && childReplicaSets.has(rawResource.metadata.name)) {
+                        return;
+                      }
 
                       const resourceId = `${kindLower}:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}:${index}`;
                       const status = rawResource.status?.phase || "Active";
@@ -769,295 +806,106 @@ const WecsTreeview = () => {
                           }
                         }
                       } else if (kindLower === "statefulset" && rawResource.spec) {
-                        const podCount = rawResource.spec.replicas || 2;
-                        for (let i = 0; i < podCount; i++) {
-                          const podId = `pod:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-${i}:${i}`;
+                        // Display actual pods from the data
+                        if (resource.pods && Array.isArray(resource.pods)) {
+                          resource.pods.forEach((pod, podIndex) => {
+                            const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
                           createNode(
                             podId,
-                            `${rawResource.metadata.name}-${i}`,
+                              pod.name,
                             "pod",
-                            status,
-                            rawResource.metadata.creationTimestamp,
+                              pod.raw.status?.phase || status,
+                              pod.raw.metadata.creationTimestamp,
                             namespace.namespace,
-                            {
-                              apiVersion: "v1",
-                              kind: "Pod",
-                              metadata: { name: `${rawResource.metadata.name}-${i}`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                              status: { phase: status }
-                            },
+                              pod.raw,
                             resourceId,
                             newNodes,
                             newEdges
                           );
+                          });
                         }
-                        createNode(
-                          `${resourceId}:pvc`,
-                          `pvc-${rawResource.metadata.name}`,
-                          "persistentvolumeclaim",
-                          status,
-                          rawResource.metadata.creationTimestamp,
-                          namespace.namespace,
-                          {
-                            apiVersion: "v1",
-                            kind: "PersistentVolumeClaim",
-                            metadata: { name: `pvc-${rawResource.metadata.name}`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                            status: { phase: status }
-                          },
-                          resourceId,
-                          newNodes,
-                          newEdges
-                        );
                       } else if (kindLower === "daemonset" && rawResource.spec) {
-                        const podCount = 2;
-                        for (let i = 0; i < podCount; i++) {
-                          const podId = `pod:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-node${i}:${i}`;
+                        // Display actual pods from the data
+                        if (resource.pods && Array.isArray(resource.pods)) {
+                          resource.pods.forEach((pod, podIndex) => {
+                            const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
                           createNode(
                             podId,
-                            `${rawResource.metadata.name}-node${i}`,
+                              pod.name,
                             "pod",
-                            status,
-                            rawResource.metadata.creationTimestamp,
+                              pod.raw.status?.phase || status,
+                              pod.raw.metadata.creationTimestamp,
                             namespace.namespace,
-                            {
-                              apiVersion: "v1",
-                              kind: "Pod",
-                              metadata: { name: `${rawResource.metadata.name}-node${i}`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                              status: { phase: status }
-                            },
+                              pod.raw,
                             resourceId,
                             newNodes,
                             newEdges
                           );
+                          });
                         }
                       } else if (kindLower === "replicationcontroller" && rawResource.spec) {
-                        const podCount = rawResource.spec.replicas || 2;
-                        for (let i = 0; i < podCount; i++) {
-                          const podId = `pod:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-${i}:${i}`;
+                        // Display actual pods from the data
+                        if (resource.pods && Array.isArray(resource.pods)) {
+                          resource.pods.forEach((pod, podIndex) => {
+                            const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
                           createNode(
                             podId,
-                            `${rawResource.metadata.name}-${i}`,
+                              pod.name,
                             "pod",
-                            status,
-                            rawResource.metadata.creationTimestamp,
+                              pod.raw.status?.phase || status,
+                              pod.raw.metadata.creationTimestamp,
                             namespace.namespace,
-                            {
-                              apiVersion: "v1",
-                              kind: "Pod",
-                              metadata: { name: `${rawResource.metadata.name}-${i}`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                              status: { phase: status }
-                            },
+                              pod.raw,
                             resourceId,
                             newNodes,
                             newEdges
                           );
+                          });
                         }
                       } else if (kindLower === "cronjob" && rawResource.spec) {
-                        const jobId = `job:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}:0`;
-                        createNode(
-                          jobId,
-                          `${rawResource.metadata.name}-job`,
-                          "job",
-                          status,
-                          rawResource.metadata.creationTimestamp,
-                          namespace.namespace,
-                          {
-                            apiVersion: "batch/v1",
-                            kind: "Job",
-                            metadata: { name: `${rawResource.metadata.name}-job`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                            status: { phase: status }
-                          },
-                          resourceId,
-                          newNodes,
-                          newEdges
-                        );
-                        const podId = `pod:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-job-pod:0`;
-                        createNode(
-                          podId,
-                          `${rawResource.metadata.name}-job-pod`,
-                          "pod",
-                          status,
-                          rawResource.metadata.creationTimestamp,
-                          namespace.namespace,
-                          {
-                            apiVersion: "v1",
-                            kind: "Pod",
-                            metadata: { name: `${rawResource.metadata.name}-job-pod`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                            status: { phase: status }
-                          },
-                          jobId,
-                          newNodes,
-                          newEdges
-                        );
+                        // Display actual jobs and pods from the data if they exist
+                        // No hardcoding
                       } else if (kindLower === "job" && rawResource.spec) {
-                        const podId = `pod:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-pod:0`;
+                        // Display actual pods from the data
+                        if (resource.pods && Array.isArray(resource.pods)) {
+                          resource.pods.forEach((pod, podIndex) => {
+                            const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
                         createNode(
                           podId,
-                          `${rawResource.metadata.name}-pod`,
+                              pod.name,
                           "pod",
-                          status,
-                          rawResource.metadata.creationTimestamp,
+                              pod.raw.status?.phase || status,
+                              pod.raw.metadata.creationTimestamp,
                           namespace.namespace,
-                          {
-                            apiVersion: "v1",
-                            kind: "Pod",
-                            metadata: { name: `${rawResource.metadata.name}-pod`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                            status: { phase: status }
-                          },
+                              pod.raw,
                           resourceId,
                           newNodes,
                           newEdges
                         );
+                          });
+                        }
                       } else if (kindLower === "service" && rawResource.spec) {
-                        const endpointsId = `endpoints:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}:0`;
-                        createNode(
-                          endpointsId,
-                          `${rawResource.metadata.name}-endpoints`,
-                          "endpoints",
-                          status,
-                          rawResource.metadata.creationTimestamp,
-                          namespace.namespace,
-                          {
-                            apiVersion: "v1",
-                            kind: "Endpoints",
-                            metadata: { name: `${rawResource.metadata.name}-endpoints`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                            status: { phase: status }
-                          },
-                          resourceId,
-                          newNodes,
-                          newEdges
-                        );
+                        // Only show the Service without creating endpoints automatically
+                        // Endpoints will be shown if they exist in the actual data
                       } else if (kindLower === "ingress" && rawResource.spec) {
-                        const serviceId = `service:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-svc:0`;
-                        createNode(
-                          serviceId,
-                          `${rawResource.metadata.name}-svc`,
-                          "service",
-                          status,
-                          rawResource.metadata.creationTimestamp,
-                          namespace.namespace,
-                          {
-                            apiVersion: "v1",
-                            kind: "Service",
-                            metadata: { name: `${rawResource.metadata.name}-svc`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                            status: { phase: status }
-                          },
-                          resourceId,
-                          newNodes,
-                          newEdges
-                        );
+                        // Only show the Ingress without creating services automatically
+                        // Services will be shown if they exist in the actual data
                       } else if (kindLower === "configmap" || kindLower === "secret") {
-                        createNode(
-                          `${resourceId}:volume`,
-                          `volume-${rawResource.metadata.name}`,
-                          "volume",
-                          status,
-                          rawResource.metadata.creationTimestamp,
-                          namespace.namespace,
-                          {
-                            apiVersion: "v1",
-                            kind: "Volume",
-                            metadata: { name: `volume-${rawResource.metadata.name}`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                            status: { phase: status }
-                          },
-                          resourceId,
-                          newNodes,
-                          newEdges
-                        );
+                        // Only show the ConfigMap/Secret without creating volumes automatically
+                        // Volumes will be shown if they exist in the actual data
                       } else if (kindLower === "persistentvolumeclaim" && rawResource.spec) {
-                        createNode(
-                          `${resourceId}:pv`,
-                          `pv-${rawResource.metadata.name}`,
-                          "persistentvolume",
-                          status,
-                          rawResource.metadata.creationTimestamp,
-                          namespace.namespace,
-                          {
-                            apiVersion: "v1",
-                            kind: "PersistentVolume",
-                            metadata: { name: `pv-${rawResource.metadata.name}`, namespace: "", creationTimestamp: rawResource.metadata.creationTimestamp },
-                            status: { phase: status }
-                          },
-                          resourceId,
-                          newNodes,
-                          newEdges
-                        );
+                        // Only show the PVC without creating a PV automatically
                       } else if (kindLower === "storageclass" && rawResource.spec) {
-                        createNode(
-                          `${resourceId}:pv`,
-                          `pv-${rawResource.metadata.name}`,
-                          "persistentvolume",
-                          status,
-                          rawResource.metadata.creationTimestamp,
-                          namespace.namespace,
-                          {
-                            apiVersion: "v1",
-                            kind: "PersistentVolume",
-                            metadata: { name: `pv-${rawResource.metadata.name}`, namespace: "", creationTimestamp: rawResource.metadata.creationTimestamp },
-                            status: { phase: status }
-                          },
-                          resourceId,
-                          newNodes,
-                          newEdges
-                        );
+                        // Only show the StorageClass without creating a PV automatically
                       } else if (kindLower === "horizontalpodautoscaler" && rawResource.spec) {
-                        const targetKind = rawResource.spec.scaleTargetRef?.kind?.toLowerCase() || "deployment";
-                        const targetName = rawResource.spec.scaleTargetRef?.name || `${rawResource.metadata.name}-target`;
-                        const targetId = `${targetKind}:${cluster.cluster}:${namespace.namespace}:${targetName}:0`;
-                        createNode(
-                          targetId,
-                          targetName,
-                          targetKind,
-                          status,
-                          rawResource.metadata.creationTimestamp,
-                          namespace.namespace,
-                          {
-                            apiVersion: rawResource.spec.scaleTargetRef?.apiVersion || "apps/v1",
-                            kind: rawResource.spec.scaleTargetRef?.kind || "Deployment",
-                            metadata: { name: targetName, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                            status: { phase: status }
-                          },
-                          resourceId,
-                          newNodes,
-                          newEdges
-                        );
+                        // Only show the HPA without creating target resources automatically
+                        // Target resources will be shown if they exist in the actual data
                       } else if (kindLower === "rolebinding" && rawResource.roleRef) {
-                        const roleId = `role:${cluster.cluster}:${namespace.namespace}:${rawResource.roleRef.name}:0`;
-                        createNode(
-                          roleId,
-                          rawResource.roleRef.name,
-                          "role",
-                          status,
-                          rawResource.metadata.creationTimestamp,
-                          namespace.namespace,
-                          {
-                            apiVersion: "rbac.authorization.k8s.io/v1",
-                            kind: "Role",
-                            metadata: { name: rawResource.roleRef.name, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                            status: { phase: status }
-                          },
-                          resourceId,
-                          newNodes,
-                          newEdges
-                        );
+                        // Only show the RoleBinding without creating roles automatically
+                        // Roles will be shown if they exist in the actual data
                       } else if (kindLower === "clusterrolebinding" && rawResource.roleRef) {
-                        const clusterRoleId = `clusterrole:${cluster.cluster}:${rawResource.roleRef.name}:0`;
-                        createNode(
-                          clusterRoleId,
-                          rawResource.roleRef.name,
-                          "clusterrole",
-                          status,
-                          rawResource.metadata.creationTimestamp,
-                          namespace.namespace,
-                          {
-                            apiVersion: "rbac.authorization.k8s.io/v1",
-                            kind: "ClusterRole",
-                            metadata: { name: rawResource.roleRef.name, namespace: "", creationTimestamp: rawResource.metadata.creationTimestamp },
-                            status: { phase: status }
-                          },
-                          resourceId,
-                          newNodes,
-                          newEdges
-                        );
+                        // Only show the ClusterRoleBinding without creating cluster roles automatically
+                        // ClusterRoles will be shown if they exist in the actual data
                       } else if (kindLower === "poddisruptionbudget" && rawResource.spec) {
                         // Intentionally empty
                       } else if (kindLower === "networkpolicy" && rawResource.spec) {

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -17,8 +17,12 @@ import {
   Snackbar,
   styled,
   Chip,
+  Select,
+  MenuItem,
+  FormControl,
+  SelectChangeEvent,
 } from "@mui/material";
-import { FiX, FiGitPullRequest, FiTrash2 } from "react-icons/fi";
+import { FiX, FiGitPullRequest, FiTrash2, FiMaximize2, FiMinimize2} from "react-icons/fi";
 import Editor from "@monaco-editor/react";
 import jsyaml from "js-yaml";
 import { Terminal } from "xterm";
@@ -61,6 +65,11 @@ interface ClusterDetails {
     creationTime: string;
     context: string;
   }[];
+}
+
+interface ContainerInfo {
+  ContainerName: string;
+  Image: string;
 }
 
 const StyledTab = styled(Tab)(({ theme }) => {
@@ -130,6 +139,14 @@ const WecsDetailsPanel = ({
   const hasShownConnectedMessageRef = useRef<boolean>(false);
   const execTerminalRef = useRef<HTMLDivElement>(null);
   const execTerminalInstance = useRef<Terminal | null>(null);
+  const execSocketRef = useRef<WebSocket | null>(null);
+  const currentPodRef = useRef<string | null>(null);
+  const [execTerminalKey, setExecTerminalKey] = useState<string>(`${cluster}-${namespace}-${name}`);
+  const [isTerminalMaximized, setIsTerminalMaximized] = useState(false);
+  const [containers, setContainers] = useState<ContainerInfo[]>([]);
+  const [selectedContainer, setSelectedContainer] = useState<string>("");
+  const [loadingContainers, setLoadingContainers] = useState<boolean>(false);
+  const [isContainerSelectActive, setIsContainerSelectActive] = useState<boolean>(false);
 
   useEffect(() => {
     if (isOpen && initialTab !== undefined) {
@@ -395,56 +412,194 @@ const WecsDetailsPanel = ({
     };
   }, [tabValue, theme, type, logs]); // Add logs as dependency with logic to prevent re-initialization
 
-  // Add the Exec terminal initialization
+  // Add a useEffect to clean up exec terminal when pod changes or panel closes
+  useEffect(() => {
+    // This effect runs whenever the pod (name) or visibility (isOpen) changes
+    if (currentPodRef.current !== name || !isOpen) {
+      // Clean up existing exec terminal resources
+      if (execSocketRef.current) {
+        console.log(`Closing exec socket for previous pod: ${currentPodRef.current}`);
+        execSocketRef.current.close();
+        execSocketRef.current = null;
+      }
+      
+      if (execTerminalInstance.current) {
+        console.log(`Disposing exec terminal for previous pod: ${currentPodRef.current}`);
+        execTerminalInstance.current.dispose();
+        execTerminalInstance.current = null;
+      }
+
+      // Update current pod reference
+      currentPodRef.current = isOpen ? name : null;
+    }
+  }, [name, isOpen]);
+
+  // Add useEffect to fetch containers for the current pod when in exec tab
+  useEffect(() => {
+    // Only fetch containers when the exec tab is active and for pod resources
+    if (tabValue !== 3 || type.toLowerCase() !== "pod" || !isOpen) return;
+
+    const fetchContainers = async () => {
+      setLoadingContainers(true);
+      try {
+        console.log(`Fetching containers for pod: ${name}`);
+        const response = await api.get(`/list/container/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}?context=${encodeURIComponent(cluster)}`);
+        if (response.data && response.data.data) {
+          setContainers(response.data.data);
+          // Set the first container as selected by default if available
+          if (response.data.data.length > 0) {
+            console.log(`Setting default container to: ${response.data.data[0].ContainerName}`);
+            setSelectedContainer(response.data.data[0].ContainerName);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch containers:", error);
+        setSnackbarMessage("Failed to fetch container list");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
+      } finally {
+        setLoadingContainers(false);
+      }
+    };
+
+    fetchContainers();
+  }, [tabValue, namespace, name, cluster, type, isOpen]);
+
+  // Modify the terminal key update to include the selected container
+  useEffect(() => {
+    if (type.toLowerCase() === "pod") {
+      const newKey = `${cluster}-${namespace}-${name}-${selectedContainer}-${Date.now()}`;
+      console.log(`Updating exec terminal key: ${newKey}`);
+      setExecTerminalKey(newKey);
+    }
+  }, [cluster, namespace, name, type, selectedContainer]);
+
+  // Handle container selection change
+  const handleContainerChange = (event: SelectChangeEvent<string>) => {
+    // Just use stopPropagation without checking for nativeEvent
+    event.stopPropagation();
+    
+    // Set the selected container
+    setSelectedContainer(event.target.value);
+  };
+
+  // Also make sure the container is still selected after switching tabs
+  useEffect(() => {
+    // If we're going to the exec tab and we have containers but no container selected,
+    // select the first one
+    if (tabValue === 3 && type.toLowerCase() === "pod" && containers.length > 0 && !selectedContainer) {
+      setSelectedContainer(containers[0].ContainerName);
+    }
+  }, [tabValue, type, containers, selectedContainer]);
+
+  // Add the Exec terminal initialization - modified to use selectedContainer
   useEffect(() => {
     // Only initialize exec terminal when the exec tab is active
     if (!execTerminalRef.current || type.toLowerCase() !== "pod" || tabValue !== 3) return;
     
-    // Skip re-initialization if terminal already exists
-    if (execTerminalInstance.current) return;
+    console.log(`Initializing exec terminal for pod: ${name}, container: ${selectedContainer}, key: ${execTerminalKey}`);
+    
+    // Always clean up previous terminal when switching to the exec tab
+    if (execTerminalInstance.current) {
+      console.log(`Disposing previous exec terminal for pod: ${currentPodRef.current}`);
+      execTerminalInstance.current.dispose();
+      execTerminalInstance.current = null;
+    }
+    
+    if (execSocketRef.current) {
+      console.log(`Closing previous exec socket for pod: ${currentPodRef.current}`);
+      execSocketRef.current.close();
+      execSocketRef.current = null;
+    }
 
+    // Small delay to ensure the DOM is ready with the new terminal div
+    setTimeout(() => {
+      if (!execTerminalRef.current) {
+        console.error("Terminal reference is null after timeout");
+        return;
+      }
+      
+      // Create enhanced terminal with better styling
     const term = new Terminal({
       theme: {
-        background: theme === "dark" ? "#1E1E1E" : "#FFFFFF",
-        foreground: theme === "dark" ? "#D4D4D4" : "#222222",
-        cursor: "#00FF00",
+          background: theme === "dark" ? "#1A1A1A" : "#FAFAFA",
+          foreground: theme === "dark" ? "#E0E0E0" : "#333333",
+          cursor: theme === "dark" ? "#4D8FCA" : "#2B7DE9",
+          black: theme === "dark" ? "#000000" : "#333333",
+          red: "#E06C75",
+          green: "#98C379",
+          yellow: "#E5C07B",
+          blue: "#61AFEF",
+          magenta: "#C678DD",
+          cyan: "#56B6C2",
+          white: theme === "dark" ? "#FFFFFF" : "#FAFAFA",
       },
       cursorBlink: true,
       fontSize: 14,
-      fontFamily: "monospace",
-      scrollback: 1000,
-      disableStdin: false, // Enable stdin for exec
+        fontFamily: '"Menlo", "Monaco", "Consolas", "Ubuntu Mono", monospace',
+        lineHeight: 1.3,
+        scrollback: 3000,
+        disableStdin: false,
       convertEol: true,
-      allowProposedApi: true
+        allowProposedApi: true,
+        cursorStyle: 'bar',
+        cursorWidth: 2,
+        windowsMode: false
     });
 
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
-    term.open(execTerminalRef.current);
-
-    setTimeout(() => fitAddon.fit(), 100);
-    execTerminalInstance.current = term;
-    
-    // Get the container name from the pod status if available
-    let containerName = "";
-    
-    if (resourceData?.status?.containerStatuses && Array.isArray(resourceData.status.containerStatuses)) {
-      const containerStatus = resourceData.status.containerStatuses[0];
-      if (containerStatus && containerStatus.name) {
-        containerName = containerStatus.name;
+        
+      try {
+        // First make sure the container is empty
+        if (execTerminalRef.current) {
+          execTerminalRef.current.innerHTML = '';
+        }
+        
+        term.open(execTerminalRef.current);
+        console.log(`Terminal opened successfully for pod: ${name}`);
+        
+        setTimeout(() => {
+          try {
+            fitAddon.fit();
+          } catch (error) {
+            console.error("Failed to fit terminal:", error);
+          }
+        }, 100);
+      } catch (error) {
+        console.error("Failed to open terminal:", error);
+        return;
       }
-    }
+      
+      execTerminalInstance.current = term;
+      
+      // Use selectedContainer if available, otherwise use fallback
+      const containerName = selectedContainer || "container";
     
-    const wsUrl = getWebSocketUrl(`/ws/pod/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/shell/${encodeURIComponent(containerName || "container")}?context=${encodeURIComponent(cluster)}&shell=sh`);
+      const wsUrl = getWebSocketUrl(`/ws/pod/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/shell/${encodeURIComponent(containerName)}?context=${encodeURIComponent(cluster)}&shell=sh`);
     
-    // Show a simple connecting message
-    term.writeln("\x1b[33mConnecting to pod shell...\x1b[0m");
+      // Show a minimal connecting message with a spinner effect
+      term.writeln(`\x1b[33mConnecting to pod shell in container ${containerName}...\x1b[0m`);
+      
+      // Log full details to console for debugging but don't show in UI
+      console.log(`Creating WebSocket connection:`, {
+        pod: name,
+        namespace,
+        container: containerName,
+        context: cluster,
+        url: wsUrl
+      });
     
     const socket = new WebSocket(wsUrl);
+      execSocketRef.current = socket;
     
     socket.onopen = () => {
-      // Clear the terminal once connected
+        console.log(`WebSocket connection established for pod: ${name}, container: ${containerName}`);
+      // Completely clear the terminal once connected
+      term.reset();
       term.clear();
+      term.writeln(`\x1b[32mConnected to pod shell in container ${containerName}\x1b[0m`);
+      term.writeln('');
     };
     
     socket.onmessage = (event) => {
@@ -452,23 +607,27 @@ const WecsDetailsPanel = ({
         const msg = JSON.parse(event.data);
         if (msg.Op === "stdout") {
           term.write(msg.Data);
+          } else {
+            console.log(`Received non-stdout message:`, msg);
         }
       } catch {
         // If it's not JSON, write it directly
+          console.log(`Received raw message: ${event.data}`);
         term.writeln(event.data);
       }
     };
     
     socket.onerror = (error) => {
       console.error("WebSocket error:", error);
-      term.writeln(`\x1b[31mError connecting to pod. Please check console for details.\x1b[0m`);
+        term.writeln(`\x1b[31mError connecting to pod. Please try again.\x1b[0m`);
     };
     
     socket.onclose = (event) => {
-      console.log("WebSocket closed:", event);
+        console.log(`WebSocket closed for pod ${name}:`, event);
       if (event.code !== 1000 && event.code !== 1001) {
-        term.writeln(`\x1b[31mConnection closed (code: ${event.code})\x1b[0m`);
+          term.writeln(`\x1b[31mConnection closed\x1b[0m`);
       }
+        execSocketRef.current = null;
     };
     
     // Handle user input including Tab completion
@@ -482,13 +641,10 @@ const WecsDetailsPanel = ({
           const msg = JSON.stringify({ Op: "stdin", Data: data });
           socket.send(msg);
         }
-      }
-    });
-    
-    // Handle key events for special keys (arrow up/down, etc.)
-    term.onKey(() => {
-      // Handle special key combinations if needed
-      // This allows for history navigation etc.
+        } else {
+          console.warn(`Cannot send data: WebSocket not in OPEN state (state: ${socket.readyState})`);
+          term.writeln(`\x1b[31mConnection not active. Cannot send command.\x1b[0m`);
+        }
     });
     
     // Add ping to keep connection alive
@@ -497,14 +653,38 @@ const WecsDetailsPanel = ({
         socket.send(JSON.stringify({ Op: "ping" }));
       }
     }, 30000);
+      
+      // Update current pod reference
+      currentPodRef.current = name;
     
     return () => {
+        console.log(`Cleaning up exec terminal resources for pod: ${name}`);
       clearInterval(pingInterval);
+        
+        if (socket && socket.readyState === WebSocket.OPEN) {
       socket.close();
+        }
+        
+        execSocketRef.current = null;
+        
+        if (term) {
       term.dispose();
+        }
+        
       execTerminalInstance.current = null;
     };
-  }, [tabValue, theme, type, name, namespace, cluster, resourceData]); // Add necessary dependencies
+    }, 50); // Small delay to ensure DOM is ready
+  }, [tabValue, theme, type, name, namespace, cluster, resourceData, execTerminalKey, selectedContainer]); // Added selectedContainer as dependency
+
+  // Add a useEffect that resets container selection when the pod changes
+  useEffect(() => {
+    // Reset container selection and containers list when pod changes
+    if (type.toLowerCase() === "pod") {
+      console.log(`Pod changed to ${name}, resetting container selection`);
+      setSelectedContainer("");
+      setContainers([]);
+    }
+  }, [name, type]);
 
   const calculateAge = (creationTimestamp: string | undefined): string => {
     if (!creationTimestamp) return "N/A";
@@ -540,6 +720,12 @@ const WecsDetailsPanel = ({
   };
 
   const handleClose = () => {
+    // Don't close if container selection is active
+    if (isContainerSelectActive) {
+      console.log("Container select is active, preventing panel close");
+      return;
+    }
+    
     setIsClosing(true);
     setTimeout(() => {
       setIsClosing(false);
@@ -775,6 +961,10 @@ const WecsDetailsPanel = ({
         borderTopLeftRadius: "8px",
         borderBottomLeftRadius: "8px",
       }}
+      onClick={(e: React.MouseEvent<HTMLDivElement>) => {
+        // Stop propagation for all clicks in the panel
+        e.stopPropagation();
+      }}
     >
       {isClosing ? (
         <Box sx={{ height: "100%", width: "100%" }} />
@@ -979,19 +1169,232 @@ const WecsDetailsPanel = ({
               {tabValue === 3 && type.toLowerCase() === "pod" && (
                 <Box
                   sx={{
-                    height: "500px",
-                    bgcolor: theme === "dark" ? "#1E1E1E" : "#FFFFFF",
-                    borderRadius: 1,
-                    p: 1,
+                    height: isTerminalMaximized ? "calc(100vh - 220px)" : "500px",
+                    bgcolor: theme === "dark" ? "#1A1A1A" : "#FAFAFA",
+                    borderRadius: "8px",
+                    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1)",
+                    overflow: "hidden",
+                    border: theme === "dark" ? "1px solid #333" : "1px solid #E0E0E0",
+                    p: 0,
+                    pb: 0.5,
                     display: "flex",
-                    justifyContent: "center",
+                    flexDirection: "column",
+                    position: "relative",
+                    transition: "height 0.3s ease-in-out"
+                  }}
+                  onClick={(e: React.MouseEvent<HTMLDivElement>) => {
+                    e.stopPropagation(); // Stop clicks inside this box from bubbling
+                  }}
+                >
+                  {/* Terminal header */}
+                  <Box
+                    sx={{
+                      display: "flex",
                     alignItems: "center",
+                      justifyContent: "space-between",
+                      px: 2,
+                      py: 0.75,
+                      backgroundColor: theme === "dark" ? "#252525" : "#F0F0F0",
+                      borderBottom: theme === "dark" ? "1px solid #333" : "1px solid #E0E0E0",
+                      fontSize: "13px",
+                      fontWeight: 500,
+                      color: theme === "dark" ? "#CCC" : "#444",
+                      fontFamily: '"Segoe UI", "Helvetica", "Arial", sans-serif'
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <span 
+                        style={{ 
+                          display: "inline-block", 
+                          width: "12px", 
+                          height: "12px", 
+                          borderRadius: "50%", 
+                          backgroundColor: "#98C379", 
+                          marginRight: "8px"
+                        }} 
+                      />
+                      {name}
+                    </Box>
+                    
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      {/* Container selection dropdown */}
+                      <FormControl 
+                        size="small" 
+                        className="container-dropdown"
+                        onMouseDown={() => {
+                          console.log("Container dropdown interaction started");
+                          setIsContainerSelectActive(true);
+                        }}
+                        sx={{ 
+                          minWidth: 150,
+                          "& .MuiInputBase-root": {
+                            color: theme === "dark" ? "#CCC" : "#444",
+                            fontSize: "13px",
+                            backgroundColor: theme === "dark" ? "#333" : "#FFF",
+                            border: theme === "dark" ? "1px solid #444" : "1px solid #DDD",
+                            borderRadius: "4px",
+                            height: "30px"
+                          },
+                          "& .MuiOutlinedInput-notchedOutline": {
+                            border: "none"
+                          }
+                        }}
+                        onClick={(e: React.MouseEvent<HTMLDivElement>) => {
+                          e.stopPropagation();
+                        }}
+                      >
+                        <Select
+                          value={selectedContainer}
+                          onChange={handleContainerChange}
+                          displayEmpty
+                          onMouseDown={(e: React.MouseEvent<HTMLElement>) => {
+                            e.stopPropagation();
+                            console.log("Select mousedown");
+                            setIsContainerSelectActive(true);
+                          }}
+                          onClose={() => {
+                            console.log("Select dropdown closed");
+                            // Delay setting this to false to allow click events to process first
+                            setTimeout(() => setIsContainerSelectActive(false), 300);
+                          }}
+                          MenuProps={{
+                            slotProps: {
+                              paper: {
+                                onClick: (e: React.MouseEvent<HTMLDivElement>) => {
+                                  e.stopPropagation();
+                                },
+                                onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => {
+                                  e.stopPropagation();
+                                  setIsContainerSelectActive(true);
+                                },
+                                style: {
+                                  zIndex: 9999
+                                }
+                              },
+                              root: {
+                                onClick: (e: React.MouseEvent<HTMLDivElement>) => {
+                                  e.stopPropagation();
+                                },
+                                onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => {
+                                  e.stopPropagation();
+                                  setIsContainerSelectActive(true);
+                                }
+                              }
+                            },
+                            // Prevent menu from closing the panel by setting anchorOrigin and transformOrigin
+                            anchorOrigin: {
+                              vertical: 'bottom',
+                              horizontal: 'left',
+                            },
+                            transformOrigin: {
+                              vertical: 'top',
+                              horizontal: 'left',
+                            }
+                          }}
+                          renderValue={(value) => (
+                            <Box 
+                              sx={{ display: "flex", alignItems: "center" }}
+                              onClick={(e: React.MouseEvent<HTMLDivElement>) => {
+                                e.stopPropagation();
+                              }}
+                            >
+                              {loadingContainers ? (
+                                <CircularProgress size={14} sx={{ mr: 1 }} />
+                              ) : (
+                                <span className="fas fa-cube" style={{ marginRight: "8px", fontSize: "12px" }} />
+                              )}
+                              {value || "Select container"}
+                            </Box>
+                          )}
+                        >
+                          {containers.map((container) => (
+                            <MenuItem 
+                              key={container.ContainerName} 
+                              value={container.ContainerName}
+                              sx={{
+                                fontSize: "13px",
+                                py: 0.75
+                              }}
+                              onMouseDown={(e: React.MouseEvent<HTMLLIElement>) => {
+                                e.stopPropagation();
+                                console.log(`MenuItem ${container.ContainerName} mousedown`);
+                                setIsContainerSelectActive(true);
+                              }}
+                            >
+                              <Box sx={{ display: "flex", flexDirection: "column" }}>
+                                <Typography variant="body2">{container.ContainerName}</Typography>
+                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: "11px" }}>
+                                  {container.Image.length > 40 ? container.Image.substring(0, 37) + '...' : container.Image}
+                                </Typography>
+                              </Box>
+                            </MenuItem>
+                          ))}
+                          {containers.length === 0 && !loadingContainers && (
+                            <MenuItem disabled>
+                              <Typography variant="body2">No containers found</Typography>
+                            </MenuItem>
+                          )}
+                        </Select>
+                      </FormControl>
+                      
+                      {/* Existing buttons */}
+                      <Tooltip title="Clear Terminal">
+                        <IconButton 
+                          size="small" 
+                          onClick={() => {
+                            if (execTerminalInstance.current) {
+                              execTerminalInstance.current.clear();
+                            }
+                          }}
+                          sx={{ 
+                            color: theme === "dark" ? "#CCC" : "#666",
+                            padding: "2px",
+                            '&:hover': {
+                              backgroundColor: theme === "dark" ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
+                            }
+                          }}
+                        >
+                          <FiTrash2 size={16} />
+                        </IconButton>
+                      </Tooltip>
+                      
+                      <Tooltip title={isTerminalMaximized ? "Minimize" : "Maximize"}>
+                        <IconButton 
+                          size="small" 
+                          onClick={() => setIsTerminalMaximized(!isTerminalMaximized)}
+                          sx={{ 
+                            color: theme === "dark" ? "#CCC" : "#666",
+                            padding: "2px",
+                            '&:hover': {
+                              backgroundColor: theme === "dark" ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
+                            }
+                          }}
+                        >
+                          {isTerminalMaximized ? <FiMinimize2 size={16} /> : <FiMaximize2 size={16} />}
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </Box>
+                  
+                  {/* Terminal content */}
+                  <Box
+                    sx={{
+                      flex: 1,
+                      p: 1,
+                      overflow: "hidden"
                   }}
                 >
                   <div
+                      key={execTerminalKey}
                     ref={execTerminalRef}
-                    style={{ height: "100%", width: "100%" }}
+                      style={{ 
+                        height: "100%", 
+                        width: "100%", 
+                        padding: "4px",
+                        overflow: "hidden"
+                      }}
                   />
+                  </Box>
                 </Box>
               )}
             </Box>
