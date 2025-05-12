@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   ExternalLink, 
   Copy, 
@@ -94,7 +94,7 @@ const initialPrerequisites: Prerequisite[] = [
     minVersion: '0.7.0',
     maxVersion: '0.11.0',
     installCommand: 'bash <(curl -L https://raw.githubusercontent.com/open-cluster-management-io/clusteradm/main/install.sh) 0.10.1',
-    installUrl: 'https://open-cluster-management.io/getting-started/installation/start-the-control-plane/',
+    installUrl: 'https://docs.kubestellar.io/release-0.27.2/direct/pre-reqs/',
     versionCommand: 'clusteradm version',
     status: PrereqStatus.Checking,
     aliasNames: ['ocm cli', 'ocmcli']
@@ -117,7 +117,7 @@ const initialPrerequisites: Prerequisite[] = [
     description: 'Kubernetes command-line tool (required version ≥ 1.27.0)',
     minVersion: '1.27.0',
     installCommand: 'curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && chmod +x kubectl && sudo mv kubectl /usr/local/bin/',
-    installUrl: 'https://kubernetes.io/docs/tasks/tools/install-kubectl/',
+    installUrl: 'https://kubernetes.io/docs/tasks/tools/',
     versionCommand: 'kubectl version --client',
     status: PrereqStatus.Checking
   },
@@ -220,7 +220,10 @@ const CodeBlock = ({
 }) => {
   const [copied, setCopied] = useState(false);
 
-  const copyToClipboard = () => {
+  const copyToClipboard = (e: React.MouseEvent) => {
+    // Stop propagation to prevent toggle
+    e.stopPropagation();
+    
     navigator.clipboard.writeText(code)
       .then(() => {
         setCopied(true);
@@ -233,7 +236,7 @@ const CodeBlock = ({
   };
 
   return (
-    <div className="relative rounded-md overflow-hidden mb-4">
+    <div className="relative rounded-md overflow-hidden mb-4" onClick={(e) => e.stopPropagation()}>
       <div className="flex items-center justify-between bg-slate-950/80 px-4 py-2 border-b border-slate-800">
         <span className="text-xs text-slate-400 font-mono">{language}</span>
         <button
@@ -308,21 +311,22 @@ const StatusBadge = ({ status }: { status: PrereqStatus }) => {
   );
 };
 
-// Prerequisite card component
-const PrerequisiteCard = ({ 
-  prerequisite,
-  onToggleExpand,
-  isExpanded
-}: { 
-  prerequisite: Prerequisite;
-  onToggleExpand: (name: string) => void;
-  isExpanded: boolean;
-}) => {
+// Prerequisite card component with internal state management
+const PrerequisiteCard = ({ prerequisite }: { prerequisite: Prerequisite }) => {
+  // Use local state for expansion instead of props
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Local toggle function that doesn't depend on parent state
+  const handleToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsExpanded(!isExpanded);
+  };
+
   return (
     <div className={`mb-3 border border-slate-800/60 rounded-lg overflow-hidden transition-all duration-200 ${isExpanded ? 'bg-slate-900/60' : 'bg-slate-900/30 hover:bg-slate-900/50'}`}>
       <div 
         className="flex items-center justify-between p-3 cursor-pointer"
-        onClick={() => onToggleExpand(prerequisite.name)}
+        onClick={handleToggle}
       >
         <div className="flex items-center">
           <div className="mr-3">
@@ -348,67 +352,58 @@ const PrerequisiteCard = ({
         </div>
       </div>
 
-      <AnimatePresence>
-        {isExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="p-4 pt-0 border-t border-slate-800/60">
-              {prerequisite.status === PrereqStatus.Error && (
-                <div className="mb-4">
-                  <h4 className="text-sm font-medium text-white mb-2">
-                    Installation Instructions
-                  </h4>
-                  {prerequisite.installCommand && (
-                    <CodeBlock code={prerequisite.installCommand} />
-                  )}
-                  {prerequisite.installUrl && (
-                    <a 
-                      href={prerequisite.installUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center text-blue-400 hover:text-blue-300 text-sm"
-                    >
-                      View installation guide
-                      <ExternalLink size={14} className="ml-1" />
-                    </a>
-                  )}
-                </div>
+      {isExpanded && (
+        <div className="p-4 pt-0 border-t border-slate-800/60">
+          {prerequisite.status === PrereqStatus.Error && (
+            <div className="mb-4">
+              <h4 className="text-sm font-medium text-white mb-2">
+                Installation Instructions
+              </h4>
+              {prerequisite.installCommand && (
+                <CodeBlock code={prerequisite.installCommand} />
               )}
-
-              {prerequisite.status === PrereqStatus.Warning && (
-                <div className="mb-4">
-                  <div className="flex items-start bg-amber-950/20 border border-amber-800/30 rounded-md p-3 mb-3">
-                    <AlertTriangle size={18} className="text-amber-400 mt-0.5 mr-2 flex-shrink-0" />
-                    <p className="text-sm text-amber-200">
-                      {prerequisite.details || `The installed version doesn't meet the requirements. Expected: ${prerequisite.minVersion}${prerequisite.maxVersion ? ` to ${prerequisite.maxVersion}` : ' or higher'}.`}
-                    </p>
-                  </div>
-                  <h4 className="text-sm font-medium text-white mb-2">
-                    Update Instructions
-                  </h4>
-                  {prerequisite.installCommand && (
-                    <CodeBlock code={prerequisite.installCommand} />
-                  )}
-                </div>
-              )}
-
-              {prerequisite.status === PrereqStatus.Success && (
-                <div className="flex items-start bg-emerald-950/20 border border-emerald-800/30 rounded-md p-3">
-                  <CheckCircle2 size={18} className="text-emerald-400 mt-0.5 mr-2 flex-shrink-0" />
-                  <p className="text-sm text-emerald-200">
-                    {prerequisite.displayName} is correctly installed and meets the version requirements.
-                  </p>
-                </div>
+              {prerequisite.installUrl && (
+                <a 
+                  href={prerequisite.installUrl} 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center text-blue-400 hover:text-blue-300 text-sm"
+                  onClick={(e) => e.stopPropagation()} // Prevent toggle when clicking link
+                >
+                  View installation guide
+                  <ExternalLink size={14} className="ml-1" />
+                </a>
               )}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+
+          {prerequisite.status === PrereqStatus.Warning && (
+            <div className="mb-4">
+              <div className="flex items-start bg-amber-950/20 border border-amber-800/30 rounded-md p-3 mb-3">
+                <AlertTriangle size={18} className="text-amber-400 mt-0.5 mr-2 flex-shrink-0" />
+                <p className="text-sm text-amber-200">
+                  {prerequisite.details || `The installed version doesn't meet the requirements. Expected: ${prerequisite.minVersion}${prerequisite.maxVersion ? ` to ${prerequisite.maxVersion}` : ' or higher'}.`}
+                </p>
+              </div>
+              <h4 className="text-sm font-medium text-white mb-2">
+                Update Instructions
+              </h4>
+              {prerequisite.installCommand && (
+                <CodeBlock code={prerequisite.installCommand} />
+              )}
+            </div>
+          )}
+
+          {prerequisite.status === PrereqStatus.Success && (
+            <div className="flex items-start bg-emerald-950/20 border border-emerald-800/30 rounded-md p-3">
+              <CheckCircle2 size={18} className="text-emerald-400 mt-0.5 mr-2 flex-shrink-0" />
+              <p className="text-sm text-emerald-200">
+                {prerequisite.displayName} is correctly installed and meets the version requirements.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
@@ -519,7 +514,6 @@ const InstallationPage = () => {
       ? initialPrerequisites.map(p => ({ ...p, status: PrereqStatus.Success }))
       : initialPrerequisites
   );
-  const [expandedPrereqs, setExpandedPrereqs] = useState<string[]>([]);
   
   // State for installation step tracking
   const [currentStep, setCurrentStep] = useState<InstallStepType>(
@@ -528,15 +522,6 @@ const InstallationPage = () => {
   
   const navigate = useNavigate();
   
-  // Toggle expanded state for prerequisites
-  const togglePrereqExpanded = (name: string) => {
-    if (expandedPrereqs.includes(name)) {
-      setExpandedPrereqs(expandedPrereqs.filter(item => item !== name));
-    } else {
-      setExpandedPrereqs([...expandedPrereqs, name]);
-    }
-  };
-
   // Initial status check
   useEffect(() => {
     const checkStatus = async () => {
@@ -655,7 +640,7 @@ const InstallationPage = () => {
         );
         
         if (firstProblem) {
-          setExpandedPrereqs([firstProblem.name]);
+          setCurrentStep('install');
         }
       } catch (error) {
         console.error('Error checking prerequisites:', error);
@@ -1085,12 +1070,11 @@ const InstallationPage = () => {
                         Core Requirements
                       </h3>
                       
+                      {/* Map all core prerequisites */}
                       {getPrereqsByCategory(PrereqCategory.Core).map((prereq) => (
                         <PrerequisiteCard
-                          key={prereq.name}
+                          key={`prereq-${prereq.name}`}
                           prerequisite={prereq}
-                          onToggleExpand={togglePrereqExpanded}
-                          isExpanded={expandedPrereqs.includes(prereq.name)}
                         />
                       ))}
                     </div>
@@ -1101,12 +1085,11 @@ const InstallationPage = () => {
                         Demo Environment Requirements
                       </h3>
                       
+                      {/* Map all setup prerequisites */}
                       {getPrereqsByCategory(PrereqCategory.Setup).map((prereq) => (
                         <PrerequisiteCard
-                          key={prereq.name}
+                          key={`prereq-${prereq.name}`}
                           prerequisite={prereq}
-                          onToggleExpand={togglePrereqExpanded}
-                          isExpanded={expandedPrereqs.includes(prereq.name)}
                         />
                       ))}
                     </div>
