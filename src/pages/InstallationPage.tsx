@@ -94,7 +94,7 @@ const initialPrerequisites: Prerequisite[] = [
     minVersion: '0.7.0',
     maxVersion: '0.11.0',
     installCommand: 'bash <(curl -L https://raw.githubusercontent.com/open-cluster-management-io/clusteradm/main/install.sh) 0.10.1',
-    installUrl: 'https://open-cluster-management.io/getting-started/installation/start-the-control-plane/',
+    installUrl: 'https://docs.kubestellar.io/release-0.27.2/direct/pre-reqs/',
     versionCommand: 'clusteradm version',
     status: PrereqStatus.Checking,
     aliasNames: ['ocm cli', 'ocmcli']
@@ -117,7 +117,7 @@ const initialPrerequisites: Prerequisite[] = [
     description: 'Kubernetes command-line tool (required version ≥ 1.27.0)',
     minVersion: '1.27.0',
     installCommand: 'curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && chmod +x kubectl && sudo mv kubectl /usr/local/bin/',
-    installUrl: 'https://kubernetes.io/docs/tasks/tools/install-kubectl/',
+    installUrl: 'https://kubernetes.io/docs/tasks/tools/',
     versionCommand: 'kubectl version --client',
     status: PrereqStatus.Checking
   },
