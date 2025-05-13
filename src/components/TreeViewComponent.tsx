@@ -51,6 +51,7 @@ import ListViewComponent from "../components/ListViewComponent";
 import ContextDropdown from "../components/ContextDropdown";
 import { ResourceItem as ListResourceItem } from "./ListViewComponent"; // Import ResourceItem from ListViewComponent
 import useLabelHighlightStore from "../stores/labelHighlightStore";
+import CancelButton from "./common/CancelButton";
 
 // Interfaces
 export interface NodeData {
@@ -1775,17 +1776,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
             </Typography>
           </DialogContent>
           <DialogActions sx={{ justifyContent: "space-between", padding: "0 16px 16px 16px" }}>
-            <Button
-              onClick={handleDeleteCancel}
-              sx={{
-                textTransform: "none",
-                color: "#2F86FF",
-                fontWeight: 600,
-                "&:hover": { backgroundColor: "rgba(47, 134, 255, 0.1)" },
-              }}
-            >
-              Cancel
-            </Button>
+            <CancelButton onClick={handleDeleteCancel} />
             <Button
               onClick={handleDeleteConfirm}
               sx={{

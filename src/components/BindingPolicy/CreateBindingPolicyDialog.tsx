@@ -35,6 +35,7 @@ import { PolicyConfiguration } from "./ConfigurationSidebar";
 import { usePolicyDragDropStore } from "../../stores/policyDragDropStore";
 import { useBPQueries } from "../../hooks/queries/useBPQueries";
 import { toast } from "react-hot-toast";
+import CancelButton from "../common/CancelButton";
 
 export interface PolicyData {
   name: string;
@@ -1460,23 +1461,16 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                 borderTop: `1px solid ${isDarkTheme ? 'rgba(255, 255, 255, 0.12)' : 'transparent'}`,
               }}
             >
-              <Button
+                <CancelButton
                 onClick={handleCancelClick} 
                 disabled={isLoading}
                 sx={{
-                  px: 3,
-                  py: 1,
-                  textTransform: 'none',
-                  fontWeight: 500,
-                  borderRadius: '8px',
                   color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
                   '&:hover': {
                     backgroundColor: isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.04)'
                   }
                 }}
-              >
-                Cancel
-              </Button>
+              />
               <Button
                 variant="contained"
                 onClick={activeTab === "dragdrop" ? prepareForDeployment : handleCreateFromFile}
