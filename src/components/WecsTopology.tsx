@@ -394,7 +394,95 @@ const getLayoutedElements = (
     });
   });
 
-  // Step 7: Collision detection and adjustment
+  // Step 7: Build a comprehensive child-to-parent mapping for all relationships
+  const allChildToParent = new Map<string, string>();
+  edges.forEach((edge) => {
+    allChildToParent.set(edge.target, edge.source);
+  });
+
+  // Step 8: Build a reverse mapping from parent to all children (all types of relationships)
+  const allParentToChildren = new Map<string, CustomNode[]>();
+  layoutedNodes.forEach((node) => {
+    const parentId = allChildToParent.get(node.id);
+    if (parentId) {
+      if (!allParentToChildren.has(parentId)) {
+        allParentToChildren.set(parentId, []);
+      }
+      allParentToChildren.get(parentId)!.push(node);
+    }
+  });
+
+  // Step 9: Center all parent nodes with their children
+  // Process from deepest nodes to root to ensure proper alignment through the hierarchy
+  const processedNodes = new Set<string>();
+  
+  // Helper function to adjust parent position based on its children
+  const centerParentWithChildren = (parentId: string) => {
+    if (processedNodes.has(parentId)) return;
+    
+    const children = allParentToChildren.get(parentId);
+    if (!children || children.length === 0) return;
+    
+    // First ensure all children are processed
+    children.forEach(child => {
+      if (allParentToChildren.has(child.id)) {
+        centerParentWithChildren(child.id);
+      }
+    });
+    
+    // Get updated positions of children after they might have been repositioned
+    const updatedChildren = children.map(child => 
+      layoutedNodes.find(node => node.id === child.id)!
+    );
+    
+    // Sort children by y position
+    updatedChildren.sort((a, b) => a.position.y - b.position.y);
+    
+    // Find the middle child to align with
+    const middleChildIndex = Math.floor(updatedChildren.length / 2);
+    let targetY: number;
+    
+    if (updatedChildren.length % 2 === 1) {
+      // Odd number of children: align with the middle child
+      targetY = updatedChildren[middleChildIndex].position.y;
+    } else {
+      // Even number of children: align with the midpoint between the two middle children
+      const midLower = updatedChildren[middleChildIndex - 1].position.y;
+      const midUpper = updatedChildren[middleChildIndex].position.y;
+      targetY = (midLower + midUpper) / 2;
+    }
+    
+    // Adjust parent position
+    const parentIndex = layoutedNodes.findIndex(node => node.id === parentId);
+    if (parentIndex !== -1) {
+      layoutedNodes[parentIndex] = {
+        ...layoutedNodes[parentIndex],
+        position: {
+          x: layoutedNodes[parentIndex].position.x,
+          y: targetY
+        }
+      };
+    }
+    
+    processedNodes.add(parentId);
+  };
+  
+  // Start with nodes that don't have parents (roots)
+  allParentToChildren.forEach((_, parentId) => {
+    // Skip nodes that are someone else's children
+    if (!allChildToParent.has(parentId)) {
+      centerParentWithChildren(parentId);
+    }
+  });
+  
+  // Process all remaining parent nodes
+  allParentToChildren.forEach((_, parentId) => {
+    if (!processedNodes.has(parentId)) {
+      centerParentWithChildren(parentId);
+    }
+  });
+
+  // Step 10: Collision detection and adjustment
   layoutedNodes.sort((a, b) => a.position.y - b.position.y);
 
   for (let i = 1; i < layoutedNodes.length; i++) {
@@ -415,7 +503,7 @@ const getLayoutedElements = (
     }
   }
 
-  // Step 8: Adjust edges
+  // Step 11: Adjust edges
   const adjustedEdges = edges.map((edge) => {
     const targetNode = layoutedNodes.find((node) => node.id === edge.target);
     if (targetNode && allChildrenToAlign.has(targetNode.id)) {
