@@ -45,7 +45,7 @@ import { useWebSocket } from "../context/WebSocketProvider";
 import useTheme from "../stores/themeStore";
 import WecsDetailsPanel from "./WecsDetailsPanel";
 import { FlowCanvas } from "./Wds_Topology/FlowCanvas";
-import ListViewComponent from "../components/ListViewComponent"; // Added import
+import ListViewComponent from "../components/ListViewComponent";
 
 // Updated Interfaces
 export interface NodeData {
@@ -98,8 +98,8 @@ export interface ResourceItem {
   spec?: {
     ports?: Array<{ name: string; port: number }>;
     holderIdentity?: string;
-    replicas?: number; // Added for StatefulSet, ReplicationController, etc.
-    scaleTargetRef?: { // Added for HorizontalPodAutoscaler
+    replicas?: number;
+    scaleTargetRef?: {
       apiVersion?: string;
       kind?: string;
       name?: string;
@@ -140,6 +140,12 @@ export interface WecsResource {
       raw: ResourceItem;
       creationTimestamp?: string;
     }>;
+    creationTimestamp?: string;
+  }>;
+  pods?: Array<{
+    name: string;
+    kind: string;
+    raw: ResourceItem;
     creationTimestamp?: string;
   }>;
 }
@@ -252,9 +258,16 @@ const getLayoutedElements = (
   direction = "LR",
   prevNodes: React.MutableRefObject<CustomNode[]>
 ) => {
+  const NODE_WIDTH = 146;
+  const NODE_HEIGHT = 30;
+  const NODE_SEP = 50; // Horizontal spacing between nodes
+  const RANK_SEP = 60; // Reduced vertical spacing between ranks (groups)
+  const CHILD_SPACING = NODE_HEIGHT + 30; // Reduced spacing between child nodes (was 40)
+
+  // Step 1: Initial Dagre layout
   const dagreGraph = new dagre.graphlib.Graph();
   dagreGraph.setDefaultEdgeLabel(() => ({}));
-  dagreGraph.setGraph({ rankdir: direction, nodesep: 30, ranksep: 60 });
+  dagreGraph.setGraph({ rankdir: direction, nodesep: NODE_SEP, ranksep: RANK_SEP });
 
   const nodeMap = new Map<string, CustomNode>();
   const newNodes: CustomNode[] = [];
@@ -267,7 +280,7 @@ const getLayoutedElements = (
   nodes.forEach((node) => {
     const cachedNode = nodeMap.get(node.id);
     if (!cachedNode || !isEqual(cachedNode, node) || shouldRecalculate) {
-      dagreGraph.setNode(node.id, { width: 146, height: 30 });
+      dagreGraph.setNode(node.id, { width: NODE_WIDTH, height: NODE_HEIGHT });
       newNodes.push(node);
     } else {
       newNodes.push({ ...cachedNode, ...node });
@@ -286,23 +299,229 @@ const getLayoutedElements = (
       ? {
           ...node,
           position: {
-            x: dagreNode.x - 73 + 50,
-            y: dagreNode.y - 15 + 50,
+            x: dagreNode.x - NODE_WIDTH / 2 + 50,
+            y: dagreNode.y - NODE_HEIGHT / 2 + 50,
           },
         }
       : node;
   });
 
-  return { nodes: layoutedNodes, edges };
+  // Step 2: Build parent-to-children mapping
+  const parentToChildren = new Map<string, Set<string>>();
+  edges.forEach((edge) => {
+    if (!parentToChildren.has(edge.source)) {
+      parentToChildren.set(edge.source, new Set());
+    }
+    parentToChildren.get(edge.source)!.add(edge.target);
+  });
+
+  // Step 3: Identify parents with pod children
+  const parentsWithPods = new Set<string>();
+  const allChildrenToAlign = new Set<string>();
+
+  parentToChildren.forEach((children, parentId) => {
+    let hasPodChild = false;
+    children.forEach((childId) => {
+      if (childId.startsWith('pod:')) {
+        hasPodChild = true;
+      }
+    });
+    if (hasPodChild) {
+      parentsWithPods.add(parentId);
+      children.forEach((childId) => {
+        allChildrenToAlign.add(childId);
+      });
+    }
+  });
+
+  // Step 4: Find the deepest x-position among pods
+  let deepestPodX = 0;
+  layoutedNodes.forEach((node) => {
+    if (node.id.startsWith('pod:')) {
+      if (node.position.x > deepestPodX) {
+        deepestPodX = node.position.x;
+      }
+    }
+  });
+
+  // Step 5: Group aligned children by parent and adjust positions
+  const childToParent = new Map<string, string>();
+  edges.forEach((edge) => {
+    if (allChildrenToAlign.has(edge.target)) {
+      childToParent.set(edge.target, edge.source);
+    }
+  });
+
+  const parentToAlignedChildren = new Map<string, CustomNode[]>();
+  layoutedNodes.forEach((node) => {
+    if (allChildrenToAlign.has(node.id)) {
+      const parentId = childToParent.get(node.id);
+      if (parentId) {
+        if (!parentToAlignedChildren.has(parentId)) {
+          parentToAlignedChildren.set(parentId, []);
+        }
+        parentToAlignedChildren.get(parentId)!.push(node);
+      }
+    }
+  });
+
+  // Step 6: Adjust pod positions to align vertically and center around parent
+  parentToAlignedChildren.forEach((children, parentId) => {
+    const parentNode = layoutedNodes.find((node) => node.id === parentId);
+    if (!parentNode || children.length === 0) return;
+
+    // Sort children by their initial y-position to maintain order
+    children.sort((a, b) => a.position.y - b.position.y);
+
+    // Calculate total height of the children column
+    const totalHeight = (children.length - 1) * CHILD_SPACING;
+
+    // Center children around the parent
+    const parentY = parentNode.position.y + NODE_HEIGHT / 2;
+    const topY = parentY - totalHeight / 2;
+
+    // Update positions of aligned children
+    children.forEach((child, index) => {
+      const newY = topY + index * CHILD_SPACING;
+      const childIndex = layoutedNodes.findIndex((node) => node.id === child.id);
+      layoutedNodes[childIndex] = {
+        ...child,
+        position: {
+          x: deepestPodX,
+          y: newY,
+        },
+      };
+    });
+  });
+
+  // Step 7: Build a comprehensive child-to-parent mapping for all relationships
+  const allChildToParent = new Map<string, string>();
+  edges.forEach((edge) => {
+    allChildToParent.set(edge.target, edge.source);
+  });
+
+  // Step 8: Build a reverse mapping from parent to all children (all types of relationships)
+  const allParentToChildren = new Map<string, CustomNode[]>();
+  layoutedNodes.forEach((node) => {
+    const parentId = allChildToParent.get(node.id);
+    if (parentId) {
+      if (!allParentToChildren.has(parentId)) {
+        allParentToChildren.set(parentId, []);
+      }
+      allParentToChildren.get(parentId)!.push(node);
+    }
+  });
+
+  // Step 9: Center all parent nodes with their children
+  // Process from deepest nodes to root to ensure proper alignment through the hierarchy
+  const processedNodes = new Set<string>();
+  
+  // Helper function to adjust parent position based on its children
+  const centerParentWithChildren = (parentId: string) => {
+    if (processedNodes.has(parentId)) return;
+    
+    const children = allParentToChildren.get(parentId);
+    if (!children || children.length === 0) return;
+    
+    // First ensure all children are processed
+    children.forEach(child => {
+      if (allParentToChildren.has(child.id)) {
+        centerParentWithChildren(child.id);
+      }
+    });
+    
+    // Get updated positions of children after they might have been repositioned
+    const updatedChildren = children.map(child => 
+      layoutedNodes.find(node => node.id === child.id)!
+    );
+    
+    // Sort children by y position
+    updatedChildren.sort((a, b) => a.position.y - b.position.y);
+    
+    // Find the middle child to align with
+    const middleChildIndex = Math.floor(updatedChildren.length / 2);
+    let targetY: number;
+    
+    if (updatedChildren.length % 2 === 1) {
+      // Odd number of children: align with the middle child
+      targetY = updatedChildren[middleChildIndex].position.y;
+    } else {
+      // Even number of children: align with the midpoint between the two middle children
+      const midLower = updatedChildren[middleChildIndex - 1].position.y;
+      const midUpper = updatedChildren[middleChildIndex].position.y;
+      targetY = (midLower + midUpper) / 2;
+    }
+    
+    // Adjust parent position
+    const parentIndex = layoutedNodes.findIndex(node => node.id === parentId);
+    if (parentIndex !== -1) {
+      layoutedNodes[parentIndex] = {
+        ...layoutedNodes[parentIndex],
+        position: {
+          x: layoutedNodes[parentIndex].position.x,
+          y: targetY
+        }
+      };
+    }
+    
+    processedNodes.add(parentId);
+  };
+  
+  // Start with nodes that don't have parents (roots)
+  allParentToChildren.forEach((_, parentId) => {
+    // Skip nodes that are someone else's children
+    if (!allChildToParent.has(parentId)) {
+      centerParentWithChildren(parentId);
+    }
+  });
+  
+  // Process all remaining parent nodes
+  allParentToChildren.forEach((_, parentId) => {
+    if (!processedNodes.has(parentId)) {
+      centerParentWithChildren(parentId);
+    }
+  });
+
+  // Step 10: Collision detection and adjustment
+  layoutedNodes.sort((a, b) => a.position.y - b.position.y);
+
+  for (let i = 1; i < layoutedNodes.length; i++) {
+    const currentNode = layoutedNodes[i];
+    const prevNode = layoutedNodes[i - 1];
+
+    if (Math.abs(currentNode.position.x - prevNode.position.x) < NODE_WIDTH / 2) {
+      const minSpacing = NODE_HEIGHT + 10; // Reduced minimum spacing (was 10)
+      if (currentNode.position.y - prevNode.position.y < minSpacing) {
+        layoutedNodes[i] = {
+          ...currentNode,
+          position: {
+            ...currentNode.position,
+            y: prevNode.position.y + minSpacing,
+          },
+        };
+      }
+    }
+  }
+
+  // Step 11: Adjust edges
+  const adjustedEdges = edges.map((edge) => {
+    const targetNode = layoutedNodes.find((node) => node.id === edge.target);
+    if (targetNode && allChildrenToAlign.has(targetNode.id)) {
+      return {
+        ...edge,
+        animated: true,
+      };
+    }
+    return edge;
+  });
+
+  return { nodes: layoutedNodes, edges: adjustedEdges };
 };
 
 const WecsTreeview = () => {
   const theme = useTheme((state) => state.theme);
   const [nodes, setNodes] = useState<CustomNode[]>([]);
   const [edges, setEdges] = useState<CustomEdge[]>([]);
-  // const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
-  // const [snackbarMessage, setSnackbarMessage] = useState<string>("");
-  // const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const [showCreateOptions, setShowCreateOptions] = useState(false);
   const [activeOption, setActiveOption] = useState<string | null>("option1");
@@ -319,13 +538,11 @@ const WecsTreeview = () => {
   const renderStartTime = useRef<number>(0);
   const panelRef = useRef<HTMLDivElement>(null);
   const prevWecsData = useRef<WecsCluster[] | null>(null);
-  const stateRef = useRef({ isCollapsed, isExpanded }); // Ref to track latest state
-  const [viewMode, setViewMode] = useState<'tiles' | 'list'>('tiles'); // Added viewMode state
+  const stateRef = useRef({ isCollapsed, isExpanded });
+  const [viewMode, setViewMode] = useState<'tiles' | 'list'>('tiles');
 
   const { wecsIsConnected, hasValidWecsData, wecsData } = useWebSocket();
-  // console.log(setSnackbarMessage);
-  // console.log(setSnackbarSeverity);
-  
+
   useEffect(() => {
     renderStartTime.current = performance.now();
   }, []);
@@ -344,7 +561,7 @@ const WecsTreeview = () => {
   }, [wecsData, dataReceived]);
 
   useEffect(() => {
-    stateRef.current = { isCollapsed, isExpanded }; // Sync ref with state
+    stateRef.current = { isCollapsed, isExpanded };
   }, [isCollapsed, isExpanded]);
 
   const getTimeAgo = useCallback((timestamp: string | undefined): string => {
@@ -538,6 +755,9 @@ const WecsTreeview = () => {
                   const resourceGroups: Record<string, ResourceItem[]> = {};
 
                   namespace.resourceTypes.forEach((resourceType) => {
+                    // Skip Event type resources
+                    if (resourceType.kind.toLowerCase() === "event") return;
+                    
                     resourceType.resources.forEach((resource) => {
                       const kindLower = resourceType.kind.toLowerCase();
                       if (!resourceGroups[kindLower]) {
@@ -567,12 +787,40 @@ const WecsTreeview = () => {
                     );
                   });
                 } else {
+                  // Process all resource types for the expanded view
+                  // First collect all ReplicaSet names that are children of deployments
+                  const childReplicaSets = new Set<string>();
+                  
                   namespace.resourceTypes.forEach((resourceType) => {
+                    if (resourceType.kind.toLowerCase() === "deployment") {
+                      resourceType.resources.forEach((resource) => {
+                        if (resource && resource.replicaSets && Array.isArray(resource.replicaSets)) {
+                          resource.replicaSets.forEach((rs) => {
+                            if (rs && rs.name) {
+                              childReplicaSets.add(rs.name);
+                            }
+                          });
+                        }
+                      });
+                    }
+                  });
+                  
+                  // Now process all resources while filtering ReplicaSets that are children
+                  namespace.resourceTypes.forEach((resourceType) => {
+                    // Skip Event type resources
+                    if (resourceType.kind.toLowerCase() === "event") return;
+                    
                     const kindLower = resourceType.kind.toLowerCase();
+                    
                     resourceType.resources.forEach((resource, index) => {
                       if (!resource || typeof resource !== "object" || !resource.raw) return;
                       const rawResource = resource.raw;
                       if (!rawResource.metadata || typeof rawResource.metadata !== "object" || !rawResource.metadata.name) return;
+                      
+                      // Skip ReplicaSets that are already children of Deployments
+                      if (kindLower === "replicaset" && childReplicaSets.has(rawResource.metadata.name)) {
+                        return;
+                      }
 
                       const resourceId = `${kindLower}:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}:${index}`;
                       const status = rawResource.status?.phase || "Active";
@@ -646,295 +894,106 @@ const WecsTreeview = () => {
                           }
                         }
                       } else if (kindLower === "statefulset" && rawResource.spec) {
-                        const podCount = rawResource.spec.replicas || 2;
-                        for (let i = 0; i < podCount; i++) {
-                          const podId = `pod:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-${i}:${i}`;
+                        // Display actual pods from the data
+                        if (resource.pods && Array.isArray(resource.pods)) {
+                          resource.pods.forEach((pod, podIndex) => {
+                            const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
                           createNode(
                             podId,
-                            `${rawResource.metadata.name}-${i}`,
+                              pod.name,
                             "pod",
-                            status,
-                            rawResource.metadata.creationTimestamp,
+                              pod.raw.status?.phase || status,
+                              pod.raw.metadata.creationTimestamp,
                             namespace.namespace,
-                            {
-                              apiVersion: "v1",
-                              kind: "Pod",
-                              metadata: { name: `${rawResource.metadata.name}-${i}`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                              status: { phase: status }
-                            },
+                              pod.raw,
                             resourceId,
                             newNodes,
                             newEdges
                           );
+                          });
                         }
-                        createNode(
-                          `${resourceId}:pvc`,
-                          `pvc-${rawResource.metadata.name}`,
-                          "persistentvolumeclaim",
-                          status,
-                          rawResource.metadata.creationTimestamp,
-                          namespace.namespace,
-                          {
-                            apiVersion: "v1",
-                            kind: "PersistentVolumeClaim",
-                            metadata: { name: `pvc-${rawResource.metadata.name}`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                            status: { phase: status }
-                          },
-                          resourceId,
-                          newNodes,
-                          newEdges
-                        );
                       } else if (kindLower === "daemonset" && rawResource.spec) {
-                        const podCount = 2;
-                        for (let i = 0; i < podCount; i++) {
-                          const podId = `pod:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-node${i}:${i}`;
+                        // Display actual pods from the data
+                        if (resource.pods && Array.isArray(resource.pods)) {
+                          resource.pods.forEach((pod, podIndex) => {
+                            const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
                           createNode(
                             podId,
-                            `${rawResource.metadata.name}-node${i}`,
+                              pod.name,
                             "pod",
-                            status,
-                            rawResource.metadata.creationTimestamp,
+                              pod.raw.status?.phase || status,
+                              pod.raw.metadata.creationTimestamp,
                             namespace.namespace,
-                            {
-                              apiVersion: "v1",
-                              kind: "Pod",
-                              metadata: { name: `${rawResource.metadata.name}-node${i}`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                              status: { phase: status }
-                            },
+                              pod.raw,
                             resourceId,
                             newNodes,
                             newEdges
                           );
+                          });
                         }
                       } else if (kindLower === "replicationcontroller" && rawResource.spec) {
-                        const podCount = rawResource.spec.replicas || 2;
-                        for (let i = 0; i < podCount; i++) {
-                          const podId = `pod:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-${i}:${i}`;
+                        // Display actual pods from the data
+                        if (resource.pods && Array.isArray(resource.pods)) {
+                          resource.pods.forEach((pod, podIndex) => {
+                            const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
                           createNode(
                             podId,
-                            `${rawResource.metadata.name}-${i}`,
+                              pod.name,
                             "pod",
-                            status,
-                            rawResource.metadata.creationTimestamp,
+                              pod.raw.status?.phase || status,
+                              pod.raw.metadata.creationTimestamp,
                             namespace.namespace,
-                            {
-                              apiVersion: "v1",
-                              kind: "Pod",
-                              metadata: { name: `${rawResource.metadata.name}-${i}`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                              status: { phase: status }
-                            },
+                              pod.raw,
                             resourceId,
                             newNodes,
                             newEdges
                           );
+                          });
                         }
                       } else if (kindLower === "cronjob" && rawResource.spec) {
-                        const jobId = `job:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}:0`;
-                        createNode(
-                          jobId,
-                          `${rawResource.metadata.name}-job`,
-                          "job",
-                          status,
-                          rawResource.metadata.creationTimestamp,
-                          namespace.namespace,
-                          {
-                            apiVersion: "batch/v1",
-                            kind: "Job",
-                            metadata: { name: `${rawResource.metadata.name}-job`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                            status: { phase: status }
-                          },
-                          resourceId,
-                          newNodes,
-                          newEdges
-                        );
-                        const podId = `pod:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-job-pod:0`;
-                        createNode(
-                          podId,
-                          `${rawResource.metadata.name}-job-pod`,
-                          "pod",
-                          status,
-                          rawResource.metadata.creationTimestamp,
-                          namespace.namespace,
-                          {
-                            apiVersion: "v1",
-                            kind: "Pod",
-                            metadata: { name: `${rawResource.metadata.name}-job-pod`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                            status: { phase: status }
-                          },
-                          jobId,
-                          newNodes,
-                          newEdges
-                        );
+                        // Display actual jobs and pods from the data if they exist
+                        // No hardcoding
                       } else if (kindLower === "job" && rawResource.spec) {
-                        const podId = `pod:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-pod:0`;
+                        // Display actual pods from the data
+                        if (resource.pods && Array.isArray(resource.pods)) {
+                          resource.pods.forEach((pod, podIndex) => {
+                            const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
                         createNode(
                           podId,
-                          `${rawResource.metadata.name}-pod`,
+                              pod.name,
                           "pod",
-                          status,
-                          rawResource.metadata.creationTimestamp,
+                              pod.raw.status?.phase || status,
+                              pod.raw.metadata.creationTimestamp,
                           namespace.namespace,
-                          {
-                            apiVersion: "v1",
-                            kind: "Pod",
-                            metadata: { name: `${rawResource.metadata.name}-pod`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                            status: { phase: status }
-                          },
+                              pod.raw,
                           resourceId,
                           newNodes,
                           newEdges
                         );
+                          });
+                        }
                       } else if (kindLower === "service" && rawResource.spec) {
-                        const endpointsId = `endpoints:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}:0`;
-                        createNode(
-                          endpointsId,
-                          `${rawResource.metadata.name}-endpoints`,
-                          "endpoints",
-                          status,
-                          rawResource.metadata.creationTimestamp,
-                          namespace.namespace,
-                          {
-                            apiVersion: "v1",
-                            kind: "Endpoints",
-                            metadata: { name: `${rawResource.metadata.name}-endpoints`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                            status: { phase: status }
-                          },
-                          resourceId,
-                          newNodes,
-                          newEdges
-                        );
+                        // Only show the Service without creating endpoints automatically
+                        // Endpoints will be shown if they exist in the actual data
                       } else if (kindLower === "ingress" && rawResource.spec) {
-                        const serviceId = `service:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}-svc:0`;
-                        createNode(
-                          serviceId,
-                          `${rawResource.metadata.name}-svc`,
-                          "service",
-                          status,
-                          rawResource.metadata.creationTimestamp,
-                          namespace.namespace,
-                          {
-                            apiVersion: "v1",
-                            kind: "Service",
-                            metadata: { name: `${rawResource.metadata.name}-svc`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                            status: { phase: status }
-                          },
-                          resourceId,
-                          newNodes,
-                          newEdges
-                        );
+                        // Only show the Ingress without creating services automatically
+                        // Services will be shown if they exist in the actual data
                       } else if (kindLower === "configmap" || kindLower === "secret") {
-                        createNode(
-                          `${resourceId}:volume`,
-                          `volume-${rawResource.metadata.name}`,
-                          "volume",
-                          status,
-                          rawResource.metadata.creationTimestamp,
-                          namespace.namespace,
-                          {
-                            apiVersion: "v1",
-                            kind: "Volume",
-                            metadata: { name: `volume-${rawResource.metadata.name}`, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                            status: { phase: status }
-                          },
-                          resourceId,
-                          newNodes,
-                          newEdges
-                        );
+                        // Only show the ConfigMap/Secret without creating volumes automatically
+                        // Volumes will be shown if they exist in the actual data
                       } else if (kindLower === "persistentvolumeclaim" && rawResource.spec) {
-                        createNode(
-                          `${resourceId}:pv`,
-                          `pv-${rawResource.metadata.name}`,
-                          "persistentvolume",
-                          status,
-                          rawResource.metadata.creationTimestamp,
-                          namespace.namespace,
-                          {
-                            apiVersion: "v1",
-                            kind: "PersistentVolume",
-                            metadata: { name: `pv-${rawResource.metadata.name}`, namespace: "", creationTimestamp: rawResource.metadata.creationTimestamp },
-                            status: { phase: status }
-                          },
-                          resourceId,
-                          newNodes,
-                          newEdges
-                        );
+                        // Only show the PVC without creating a PV automatically
                       } else if (kindLower === "storageclass" && rawResource.spec) {
-                        createNode(
-                          `${resourceId}:pv`,
-                          `pv-${rawResource.metadata.name}`,
-                          "persistentvolume",
-                          status,
-                          rawResource.metadata.creationTimestamp,
-                          namespace.namespace,
-                          {
-                            apiVersion: "v1",
-                            kind: "PersistentVolume",
-                            metadata: { name: `pv-${rawResource.metadata.name}`, namespace: "", creationTimestamp: rawResource.metadata.creationTimestamp },
-                            status: { phase: status }
-                          },
-                          resourceId,
-                          newNodes,
-                          newEdges
-                        );
+                        // Only show the StorageClass without creating a PV automatically
                       } else if (kindLower === "horizontalpodautoscaler" && rawResource.spec) {
-                        const targetKind = rawResource.spec.scaleTargetRef?.kind?.toLowerCase() || "deployment";
-                        const targetName = rawResource.spec.scaleTargetRef?.name || `${rawResource.metadata.name}-target`;
-                        const targetId = `${targetKind}:${cluster.cluster}:${namespace.namespace}:${targetName}:0`;
-                        createNode(
-                          targetId,
-                          targetName,
-                          targetKind,
-                          status,
-                          rawResource.metadata.creationTimestamp,
-                          namespace.namespace,
-                          {
-                            apiVersion: rawResource.spec.scaleTargetRef?.apiVersion || "apps/v1",
-                            kind: rawResource.spec.scaleTargetRef?.kind || "Deployment",
-                            metadata: { name: targetName, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                            status: { phase: status }
-                          },
-                          resourceId,
-                          newNodes,
-                          newEdges
-                        );
+                        // Only show the HPA without creating target resources automatically
+                        // Target resources will be shown if they exist in the actual data
                       } else if (kindLower === "rolebinding" && rawResource.roleRef) {
-                        const roleId = `role:${cluster.cluster}:${namespace.namespace}:${rawResource.roleRef.name}:0`;
-                        createNode(
-                          roleId,
-                          rawResource.roleRef.name,
-                          "role",
-                          status,
-                          rawResource.metadata.creationTimestamp,
-                          namespace.namespace,
-                          {
-                            apiVersion: "rbac.authorization.k8s.io/v1",
-                            kind: "Role",
-                            metadata: { name: rawResource.roleRef.name, namespace: namespace.namespace, creationTimestamp: rawResource.metadata.creationTimestamp },
-                            status: { phase: status }
-                          },
-                          resourceId,
-                          newNodes,
-                          newEdges
-                        );
+                        // Only show the RoleBinding without creating roles automatically
+                        // Roles will be shown if they exist in the actual data
                       } else if (kindLower === "clusterrolebinding" && rawResource.roleRef) {
-                        const clusterRoleId = `clusterrole:${cluster.cluster}:${rawResource.roleRef.name}:0`;
-                        createNode(
-                          clusterRoleId,
-                          rawResource.roleRef.name,
-                          "clusterrole",
-                          status,
-                          rawResource.metadata.creationTimestamp,
-                          namespace.namespace,
-                          {
-                            apiVersion: "rbac.authorization.k8s.io/v1",
-                            kind: "ClusterRole",
-                            metadata: { name: rawResource.roleRef.name, namespace: "", creationTimestamp: rawResource.metadata.creationTimestamp },
-                            status: { phase: status }
-                          },
-                          resourceId,
-                          newNodes,
-                          newEdges
-                        );
+                        // Only show the ClusterRoleBinding without creating cluster roles automatically
+                        // ClusterRoles will be shown if they exist in the actual data
                       } else if (kindLower === "poddisruptionbudget" && rawResource.spec) {
                         // Intentionally empty
                       } else if (kindLower === "networkpolicy" && rawResource.spec) {
@@ -1057,8 +1116,6 @@ const WecsTreeview = () => {
     },
     [contextMenu, nodes, handleClosePanel, handleMenuClose]
   );
-
-  // const handleSnackbarClose = useCallback(() => setSnackbarOpen(false), []);
 
   const handleCancelCreateOptions = () => setShowCreateOptions(false);
 
@@ -1274,12 +1331,6 @@ const WecsTreeview = () => {
             </Menu>
           )}
         </Box>
-{/* 
-        <Snackbar anchorOrigin={{ vertical: "top", horizontal: "center" }} open={snackbarOpen} autoHideDuration={4000} onClose={handleSnackbarClose}>
-          <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: "100%" }}>
-            {snackbarMessage}
-          </Alert>
-        </Snackbar> */}
       </Box>
 
       <div ref={panelRef}>

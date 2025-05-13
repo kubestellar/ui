@@ -180,7 +180,7 @@ func DeployManifests(deployPath string, dryRun bool, dryRunStrategy string, work
 
 		// Ensure namespace exists before applying resources
 		if !dryRun && obj.GetKind() != "Namespace" {
-			err = EnsureNamespaceExists(dynamicClient, finalNamespace)
+			err = EnsureNamespaceExists(dynamicClient, finalNamespace, workloadLabel)
 			if err != nil {
 				return nil, fmt.Errorf("failed to ensure namespace %s exists: %v", finalNamespace, err)
 			}
@@ -210,8 +210,8 @@ func DeployManifests(deployPath string, dryRun bool, dryRunStrategy string, work
 	return tree, nil
 }
 
-// EnsureNamespaceExists checks if a namespace exists and creates it if it doesn't
-func EnsureNamespaceExists(dynamicClient dynamic.Interface, namespace string) error {
+// Now applies the workload label to namespaces if provided
+func EnsureNamespaceExists(dynamicClient dynamic.Interface, namespace string, workloadLabel string) error {
 	// Skip for default namespace which always exists
 	if namespace == "default" {
 		return nil
@@ -221,9 +221,36 @@ func EnsureNamespaceExists(dynamicClient dynamic.Interface, namespace string) er
 	nsGVR := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}
 
 	// Check if namespace exists
-	_, err := dynamicClient.Resource(nsGVR).Get(context.TODO(), namespace, v1.GetOptions{})
+	existingNs, err := dynamicClient.Resource(nsGVR).Get(context.TODO(), namespace, v1.GetOptions{})
 	if err == nil {
-		// Namespace exists
+		// Namespace exists, add label if needed and if workloadLabel is provided
+		if workloadLabel != "" {
+			metadata, exists := existingNs.Object["metadata"].(map[string]interface{})
+			if !exists {
+				return fmt.Errorf("unexpected namespace structure, metadata missing")
+			}
+
+			labels, exists := metadata["labels"].(map[string]interface{})
+			if !exists {
+				// No labels exist, create labels map
+				labels = make(map[string]interface{})
+				metadata["labels"] = labels
+			}
+
+			// Check if label already exists with the same value
+			existingValue, hasLabel := labels["kubestellar.io/workload"]
+			if !hasLabel || existingValue != workloadLabel {
+				// Add or update the workload label
+				labels["kubestellar.io/workload"] = workloadLabel
+
+				// Update the namespace
+				_, err = dynamicClient.Resource(nsGVR).Update(context.TODO(), existingNs, v1.UpdateOptions{})
+				if err != nil {
+					return fmt.Errorf("failed to update namespace %s with workload label: %v", namespace, err)
+				}
+				fmt.Printf("Updated namespace %s with workload label\n", namespace)
+			}
+		}
 		return nil
 	}
 
@@ -237,6 +264,14 @@ func EnsureNamespaceExists(dynamicClient dynamic.Interface, namespace string) er
 				"name": namespace,
 			},
 		},
+	}
+
+	// Add workload label if provided
+	if workloadLabel != "" {
+		metadata := nsObj.Object["metadata"].(map[string]interface{})
+		metadata["labels"] = map[string]interface{}{
+			"kubestellar.io/workload": workloadLabel,
+		}
 	}
 
 	_, err = dynamicClient.Resource(nsGVR).Create(context.TODO(), nsObj, v1.CreateOptions{})
@@ -315,8 +350,8 @@ func storeConfigMapData(configMapName string, data map[string]string) error {
 		return fmt.Errorf("failed to get Kubernetes client: %v", err)
 	}
 
-	// Ensure the namespace exists
-	if err := EnsureNamespaceExists(dynamicClient, KubeStellarNamespace); err != nil {
+	// Ensure the namespace exists (without workload label as this is an internal storage operation)
+	if err := EnsureNamespaceExists(dynamicClient, KubeStellarNamespace, ""); err != nil {
 		return fmt.Errorf("failed to ensure namespace for ConfigMap: %v", err)
 	}
 
@@ -389,8 +424,8 @@ func StoreHelmDeployment(deploymentData map[string]string) error {
 		return fmt.Errorf("failed to get Kubernetes client: %v", err)
 	}
 
-	// Ensure the namespace exists
-	if err := EnsureNamespaceExists(dynamicClient, KubeStellarNamespace); err != nil {
+	// Ensure the namespace exists (without workload label for internal storage)
+	if err := EnsureNamespaceExists(dynamicClient, KubeStellarNamespace, ""); err != nil {
 		return fmt.Errorf("failed to ensure namespace for ConfigMap: %v", err)
 	}
 
@@ -495,8 +530,8 @@ func StoreGitHubDeployment(deploymentData map[string]string) error {
 		return fmt.Errorf("failed to get Kubernetes client: %v", err)
 	}
 
-	// Ensure the namespace exists
-	if err := EnsureNamespaceExists(dynamicClient, KubeStellarNamespace); err != nil {
+	// Ensure the namespace exists (without workload label for internal storage)
+	if err := EnsureNamespaceExists(dynamicClient, KubeStellarNamespace, ""); err != nil {
 		return fmt.Errorf("failed to ensure namespace for ConfigMap: %v", err)
 	}
 

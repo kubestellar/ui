@@ -1,48 +1,15 @@
-import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import LoadingFallback from "./LoadingFallback";
 import { motion, AnimatePresence } from "framer-motion";
-import { api } from "../lib/api";
+import { useAuth } from "../hooks/useAuth";
 
 interface PublicRouteProps {
   children: JSX.Element;
 }
 
 const PublicRoute = ({ children }: PublicRouteProps) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { data, isLoading } = useAuth();
   const location = useLocation();
-
-  useEffect(() => {
-    const verifyToken = async () => {
-      setIsLoading(true);
-      const token = localStorage.getItem("jwtToken");
-
-      if (!token) {
-        setIsAuthenticated(false);
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        await api.get("/api/me", {
-          headers: {
-            "Authorization": `Bearer ${token}`,
-          },
-        });
-        
-        setIsAuthenticated(true);
-      } catch (error) {
-        setIsAuthenticated(false);
-        console.error("Public route error:", error);
-      } finally {
-        // Add a small delay to make transitions feel more natural
-        setTimeout(() => setIsLoading(false), 300);
-      }
-    };
-
-    verifyToken();
-  }, []);
 
   // Show loading state
   if (isLoading) {
@@ -66,7 +33,7 @@ const PublicRoute = ({ children }: PublicRouteProps) => {
   const { from } = location.state || { from: "/" };
 
   // Redirect to home or previous location if authenticated
-  if (isAuthenticated) {
+  if (data?.isAuthenticated) {
     return <Navigate to={from} replace />; 
   }
 

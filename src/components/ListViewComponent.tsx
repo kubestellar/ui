@@ -193,33 +193,7 @@ const ListViewComponent = ({
           
           // Process each kind of resource in this namespace
           Object.entries(resourcesByKind).forEach(([kind, items]) => {
-            // Special handling for namespace metadata
-            if (kind === "__namespaceMetaData") {
-              if (Array.isArray(items)) {
-                rawNamespacedCount += items.length;
-                (items as ResourceItem[]).forEach((item: ResourceItem) => {
-                  // Get context for this namespace from the contexts map
-                  const resourceUid = item.uid || `Namespace/${item.name || namespace}`;
-                  const context = resourceContexts[resourceUid] || "default";
-                  
-                resourceList.push({
-                  createdAt: item.createdAt,
-                    kind: "Namespace",
-                    name: item.name || namespace,
-                    namespace: namespace,
-                    project: "default",
-                    source: `https://github.com/onkarr17/${namespace.toLowerCase()}-gitrepo.io/k8s`,
-                    destination: `in-cluster/${namespace}`,
-                    context: context // Add context information
-                  });
-                });
-              }
-              return;
-            }
-            
-            // Skip if items is not an array
-            if (!Array.isArray(items)) return;
-            
+            if (kind === "__namespaceMetaData" || !Array.isArray(items)) return;
             rawNamespacedCount += items.length;
             (items as ResourceItem[]).forEach((item: ResourceItem) => {
               const sourceUrl = `https://github.com/onkarr17/${item.name.toLowerCase()}-gitrepo.io/k8s`;
@@ -788,15 +762,14 @@ const ListViewComponent = ({
               p: { xs: 2, sm: 3 },
               pt: { xs: 2, sm: 2 },
               borderTop: theme === "dark" ? "1px solid #334155" : "1px solid #e5e7eb",
-              backgroundColor: theme === "dark" ? "rgba(30, 41, 59, 0.9)" : "rgba(248, 250, 252, 0.95)", 
+              backgroundColor: theme === "dark" ? "rgb(30, 41, 59)" : "rgb(248, 250, 252)", 
               borderRadius: "0 0 8px 8px",
               position: "sticky",
-              bottom: 0,
+              bottom: 14,
               left: 0,
               right: 0,
               zIndex: 20,
               boxShadow: theme === "dark" ? "0 -4px 6px rgba(0,0,0,0.3)" : "0 -4px 6px rgba(0,0,0,0.1)",
-              backdropFilter: "blur(4px)",
               margin: 0,
             }}
           >

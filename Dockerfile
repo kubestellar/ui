@@ -22,6 +22,8 @@ RUN git rev-parse HEAD > commit_hash.txt
 
 ENV VITE_BASE_URL=http://localhost:4000
 ENV VITE_APP_VERSION=0.1.0
+# Skip prerequisites check in Docker environment
+ENV VITE_SKIP_PREREQUISITES_CHECK=true
 # Build frontend
 RUN npm run build
 
@@ -32,6 +34,9 @@ RUN mv commit_hash.txt dist/
 FROM nginx:alpine AS frontend
 COPY --from=frontend-builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Pass environment variables to runtime (needed for client-side apps)
+ENV VITE_SKIP_PREREQUISITES_CHECK=true
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
