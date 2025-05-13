@@ -67,7 +67,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
   const updateLabelsMutation = useUpdateClusterLabels();
 
   const handleImportClusters = () => {
-    navigate('/its');
+    navigate('/its?import=true');
   };
 
   const handleAddLabels = () => {

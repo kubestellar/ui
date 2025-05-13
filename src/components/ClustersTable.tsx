@@ -61,6 +61,8 @@ interface ClustersTableProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  initialShowCreateOptions?: boolean;
+  initialActiveOption?: string;
 }
 
 // Add a new ColorTheme interface before the LabelEditDialogProps interface
@@ -544,14 +546,16 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
   currentPage,
   totalPages,
   onPageChange,
+  initialShowCreateOptions = false,
+  initialActiveOption = "option1",
 }) => {
   const [query, setQuery] = useState("");
   const [filteredClusters, setFilteredClusters] = useState<ManagedClusterInfo[]>(clusters);
   const [filter, setFilter] = useState<string>("");
   const [selectAll, setSelectAll] = useState(false);
   const [selectedClusters, setSelectedClusters] = useState<string[]>([]);
-  const [showCreateOptions, setShowCreateOptions] = useState(false);
-  const [activeOption, setActiveOption] = useState<string | null>("option1");
+  const [showCreateOptions, setShowCreateOptions] = useState(initialShowCreateOptions);
+  const [activeOption, setActiveOption] = useState<string | null>(initialActiveOption);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedCluster, setSelectedCluster] = useState<ManagedClusterInfo | null>(null);
   const [loadingClusterEdit, setLoadingClusterEdit] = useState<string | null>(null);
@@ -564,6 +568,15 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
 
   const { useUpdateClusterLabels } = useClusterQueries();
   const updateLabelsMutation = useUpdateClusterLabels();
+
+  // Initialize with initial props if provided
+  useEffect(() => {
+    if (initialShowCreateOptions) {
+      setShowCreateOptions(true);
+      // Set the active option to "kubeconfig" for import dialog
+      setActiveOption(initialActiveOption);
+    }
+  }, [initialShowCreateOptions, initialActiveOption]);
 
   // Add useEffect for keyboard shortcuts
   useEffect(() => {
@@ -929,7 +942,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
             )}
           >
             <MenuItem value="">All Status</MenuItem>
-            <MenuItem value="active">
+            <MenuItem value="active✓">
               <span className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.success }}></span>
                 Active

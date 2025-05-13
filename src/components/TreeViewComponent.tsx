@@ -51,6 +51,7 @@ import ListViewComponent from "../components/ListViewComponent";
 import ContextDropdown from "../components/ContextDropdown";
 import { ResourceItem as ListResourceItem } from "./ListViewComponent"; // Import ResourceItem from ListViewComponent
 import useLabelHighlightStore from "../stores/labelHighlightStore";
+import { useLocation } from "react-router-dom";
 
 // Interfaces
 export interface NodeData {
@@ -535,6 +536,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
   const [resources, setResources] = useState<ResourceItem[]>([]);
   const [contextResourceCounts, setContextResourceCounts] = useState<Record<string, number>>({});
   const [totalResourceCount, setTotalResourceCount] = useState<number>(0);
+  const location = useLocation();
 
   const { isConnected, connect, hasValidData } = useWebSocket();
   const NAMESPACE_QUERY_KEY = ["namespaces"];
@@ -584,6 +586,15 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
       setDataReceived(true);
     }
   }, [websocketData, dataReceived]);
+
+  // Check for create=true in URL parameter to automatically open dialog
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get('create') === 'true') {
+      setShowCreateOptions(true);
+      setActiveOption("option1");
+    }
+  }, [location.search]);
 
   const getTimeAgo = useCallback((timestamp: string | undefined): string => {
     if (!timestamp) return "Unknown";

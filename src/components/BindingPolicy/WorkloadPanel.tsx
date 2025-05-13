@@ -130,7 +130,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
   const { state, startSSEConnection, extractWorkloads } = useWorkloadSSE();
 
   // Use SSE or prop workloads based on SSE connection status
-  const workloads = state.data ? extractWorkloads() : propWorkloads;
+  const workloads = state.data ? extractWorkloads() || [] : propWorkloads || [];
   const loading = (state.status === 'loading' || state.status === 'idle') && propLoading;
   const error = state.error?.message || propError;
 
@@ -147,7 +147,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
   }, []);
 
   const handleCreateWorkload = () => {
-    navigate("/workloads/manage");
+    navigate("/workloads/manage?create=true");
   };
 
   const handleAddLabels = () => {
