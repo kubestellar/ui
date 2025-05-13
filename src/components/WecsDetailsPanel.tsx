@@ -44,6 +44,7 @@ interface WecsDetailsProps {
   onDelete?: () => void;
   initialTab?: number;
   cluster: string;
+  isDeploymentOrJobPod?: boolean;
 }
 
 interface ResourceInfo {
@@ -117,6 +118,7 @@ const WecsDetailsPanel = ({
   onDelete,
   initialTab,
   cluster,
+  isDeploymentOrJobPod,
 }: WecsDetailsProps) => {
   const theme = useTheme((state) => state.theme);
   const [resource, setResource] = useState<ResourceInfo | null>(null);
@@ -147,12 +149,38 @@ const WecsDetailsPanel = ({
   const [selectedContainer, setSelectedContainer] = useState<string>("");
   const [loadingContainers, setLoadingContainers] = useState<boolean>(false);
   const [isContainerSelectActive, setIsContainerSelectActive] = useState<boolean>(false);
+  // Track the previous node to detect node changes
+  const previousNodeRef = useRef<{ name: string; namespace: string; type: string }>({ name: '', namespace: '', type: '' });
 
   useEffect(() => {
     if (isOpen && initialTab !== undefined) {
       setTabValue(initialTab);
     }
   }, [isOpen, initialTab]);
+
+  // Add a new effect to reset tab if logs tab is selected but unavailable
+  useEffect(() => {
+    // If the logs tab (index 2) is selected, but this is not a deployment/job pod, switch to summary tab
+    if (tabValue === 2 && !(type.toLowerCase() === "pod" && isDeploymentOrJobPod)) {
+      setTabValue(0);
+    }
+  }, [tabValue, type, isDeploymentOrJobPod]);
+
+  // Add a new effect to reset tab when node changes
+  useEffect(() => {
+    // Check if node identity has changed
+    const isNewNode = 
+      previousNodeRef.current.name !== name || 
+      previousNodeRef.current.namespace !== namespace || 
+      previousNodeRef.current.type !== type;
+    
+    // Reset to initialTab or default to summary tab (0) if it's a new node
+    if (isOpen && isNewNode) {
+      setTabValue(initialTab ?? 0);
+      // Update the reference to current node
+      previousNodeRef.current = { name, namespace, type };
+    }
+  }, [name, namespace, type, isOpen, initialTab]);
 
   useEffect(() => {
     // Reset states when panel closes
@@ -1051,7 +1079,8 @@ const WecsDetailsPanel = ({
           >
             <StyledTab label={<span><i className="fa fa-file-alt" style={{ marginRight: "8px" }}></i>SUMMARY</span>} />
             <StyledTab label={<span><i className="fa fa-edit" style={{ marginRight: "8px" }}></i>EDIT</span>} />
-            {type.toLowerCase() !== "cluster" && (
+            {/* Only show logs tab for deployment/job pods */}
+            {type.toLowerCase() === "pod" && isDeploymentOrJobPod && type.toLowerCase() !== "cluster" && (
               <StyledTab label={<span><i className="fa fa-align-left" style={{ marginRight: "8px" }}></i>LOGS</span>} />
             )}
             {/* Only show Exec Pods tab for pod resources */}
@@ -1150,7 +1179,7 @@ const WecsDetailsPanel = ({
                   </Box>
                 </Box>
               )}
-              {tabValue === 2 && type.toLowerCase() !== "cluster" && (
+              {tabValue === 2 && type.toLowerCase() === "pod" && isDeploymentOrJobPod && (
                 <Box
                   sx={{
                     height: "500px",
