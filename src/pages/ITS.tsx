@@ -1,12 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useClusterQueries } from '../hooks/queries/useClusterQueries';
 import ClustersTable from '../components/ClustersTable';
 import Header from '../components/Header';
+import { useLocation } from 'react-router-dom';
 
 const ITS = () => {
   const { useClusters } = useClusterQueries();
   const [currentPage, setCurrentPage] = useState(1);
   const { data, error, isLoading } = useClusters(currentPage);
+  const [openImportDialog, setOpenImportDialog] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    // Check if the URL has the import=true parameter
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get('import') === 'true') {
+      setOpenImportDialog(true);
+    }
+  }, [location.search]);
 
   if (error) return (
     <div className="w-full p-4">
@@ -51,6 +62,8 @@ const ITS = () => {
             totalPages={totalPages}
             onPageChange={(page) => setCurrentPage(page)}
             isLoading={isLoading}
+            initialShowCreateOptions={openImportDialog}
+            initialActiveOption="kubeconfig"
           />
         </div>
       </div>

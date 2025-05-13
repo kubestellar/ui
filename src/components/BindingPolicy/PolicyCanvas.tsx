@@ -1157,7 +1157,8 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
               boxShadow: isDarkTheme 
                 ? 'inset 0 0 20px rgba(0, 0, 0, 0.3)'
                 : 'inset 0 0 10px rgba(0,0,0,0.05)',
-              overflow: 'auto' 
+              overflow: 'auto' ,
+               cursor: 'pointer'
             }}
           >
             {/* Canvas for drawing connections and grid */}
@@ -1920,25 +1921,36 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
         gap: 1,
         border: isDarkTheme ? '1px solid rgba(255, 255, 255, 0.1)' : 'none'
       }}>
-        <Button 
-          variant="outlined" 
-          color="warning" 
-          onClick={clearCanvas}
-          startIcon={<DeleteIcon />}
-          disabled={isCanvasEmpty}
-          sx={{ 
-            alignSelf: { xs: 'flex-end', sm: 'auto' },
-            minWidth: '120px',
-            borderColor: isDarkTheme ? alpha(muiTheme.palette.warning.main, 0.5) : undefined,
-            color: isDarkTheme ? muiTheme.palette.warning.light : undefined,
-            '&:hover': {
-              borderColor: isDarkTheme ? muiTheme.palette.warning.main : undefined,
-              backgroundColor: isDarkTheme ? alpha(muiTheme.palette.warning.main, 0.1) : undefined
-            }
-          }}
-        >
-          Clear Canvas
-        </Button>
+      <Button 
+  variant="outlined" 
+  color="warning" 
+  onClick={clearCanvas}
+  startIcon={<DeleteIcon sx={{ 
+    transition: 'transform 0.2s ease',
+  }} />}
+  disabled={isCanvasEmpty}
+  sx={{ 
+    alignSelf: { xs: 'flex-end', sm: 'auto' },
+    minWidth: '120px',
+    borderColor: isDarkTheme ? alpha(muiTheme.palette.warning.main, 0.6) : undefined,
+    color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
+    transition: 'all 0.2s ease',
+    '&:hover': {
+      borderColor: isDarkTheme ? muiTheme.palette.error.main : muiTheme.palette.error.main,
+      backgroundColor: isDarkTheme ? alpha(muiTheme.palette.error.main, 0.15) : alpha(muiTheme.palette.error.main, 0.05),
+      color: isDarkTheme ? 'rgba(255, 255, 255, 0.95)' : muiTheme.palette.error.main,
+      '& .MuiSvgIcon-root': {
+        color: isDarkTheme ? 'rgba(255, 255, 255, 0.95)' : muiTheme.palette.error.main,
+      }
+    },
+    '&.Mui-disabled': {
+      borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.2)' : undefined,
+      color: isDarkTheme ? 'rgba(255, 255, 255, 0.3)' : undefined
+    }
+  }}
+>
+  Clear Canvas
+</Button>
       </Box>
       
       {/* Loading overlay */}

@@ -3,28 +3,21 @@ import { motion } from "framer-motion";
 import { Eye, EyeOff, Lock, User, Globe } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { useWebSocket } from "../../context/WebSocketProvider";
-import { api } from "../../lib/api";
-import axios from "axios";
+import { useLogin } from "../../hooks/queries/useLogin";
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({
     username: "",
     password: "",
   });
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const renderStartTime = useRef<number>(performance.now());
-  const hasTriggeredConnection = useRef(false);
-
-  const { connect, connectWecs } = useWebSocket();
-
   const navigate = useNavigate();
   const location = useLocation();
+  const { mutate: login, isPending } = useLogin();
 
   useEffect(() => {
     console.log(`[LoginForm] Component mounted at ${performance.now() - renderStartTime.current}ms`);
@@ -79,15 +72,6 @@ const LoginForm = () => {
     }
   }, [location, navigate]);
 
-  useEffect(() => {
-    if (isLoggedIn && !hasTriggeredConnection.current) {
-      console.log(`[LoginForm] Triggering WebSocket connections at ${performance.now() - renderStartTime.current}ms`);
-      connect(true); // Namespaces WebSocket
-      connectWecs(true); // WECS WebSocket
-      hasTriggeredConnection.current = true;
-    }
-  }, [isLoggedIn, connect, connectWecs]);
-
   const validateForm = () => {
     const newErrors = {
       username: "",
@@ -114,71 +98,11 @@ const LoginForm = () => {
       return;
     }
 
-    setIsLoading(true);
     console.log(`[LoginForm] Form submission started at ${performance.now() - renderStartTime.current}ms`);
-
     toast.dismiss();
-    const loadingToastId = toast.loading("Signing in...", { id: "auth-loading" });
+    toast.loading("Signing in...", { id: "auth-loading" });
 
-    try {
-      const { data: responseData } = await api.post("/login", { username, password });
-      
-      localStorage.setItem("jwtToken", responseData.token);
-      console.log(`[LoginForm] JWT token stored at ${performance.now() - renderStartTime.current}ms`);
-
-      if (rememberMe) {
-        localStorage.setItem("rememberedUsername", username);
-        localStorage.setItem("rememberedPassword", btoa(password));
-        console.log(`[LoginForm] Saved credentials for "Remember Me" at ${performance.now() - renderStartTime.current}ms`);
-      } else {
-        localStorage.removeItem("rememberedUsername");
-        localStorage.removeItem("rememberedPassword");
-        console.log(`[LoginForm] Cleared remembered credentials at ${performance.now() - renderStartTime.current}ms`);
-      }
-
-      const token = localStorage.getItem("jwtToken");
-      
-      try {
-        await api.get("/api/me", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        toast.success("Login successful", { id: loadingToastId });
-        console.log(`[LoginForm] Login successful at ${performance.now() - renderStartTime.current}ms`);
-
-        setIsLoggedIn(true);
-
-        const redirectPath = localStorage.getItem("redirectAfterLogin") || "/";
-        localStorage.removeItem("redirectAfterLogin");
-        console.log(`[LoginForm] Redirecting to "${redirectPath}" at ${performance.now() - renderStartTime.current}ms`);
-
-        setTimeout(() => {
-          navigate(redirectPath);
-        }, 1000);
-      } catch (error) {
-        const errorMessage = axios.isAxiosError(error) 
-          ? error.response?.data?.error || "Authentication failed"
-          : "Authentication failed";
-        toast.error(errorMessage, { id: loadingToastId });
-        console.log(`[LoginForm] Token verification failed at ${performance.now() - renderStartTime.current}ms: ${errorMessage}`);
-        localStorage.removeItem("jwtToken");
-      }
-    } catch (error) {
-      const errorMessage = axios.isAxiosError(error)
-        ? error.response?.data?.error || "Invalid credentials"
-        : "Invalid credentials";
-      setErrors((prev) => ({
-        ...prev,
-        password: errorMessage,
-      }));
-      toast.error(errorMessage, { id: loadingToastId });
-      console.log(`[LoginForm] Login failed at ${performance.now() - renderStartTime.current}ms: ${errorMessage}`);
-    } finally {
-      setIsLoading(false);
-      console.log(`[LoginForm] Form submission completed at ${performance.now() - renderStartTime.current}ms`);
-    }
+    login({ username, password, rememberMe });
   };
 
   // JSX remains unchanged
@@ -310,9 +234,9 @@ const LoginForm = () => {
         transition={{ delay: 0.4 }}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        disabled={isLoading}
+        disabled={isPending}
       >
-        {isLoading ? (
+        {isPending ? (
           <>
             <div className="w-5 h-5 border-2 border-t-transparent border-white rounded-full animate-spin mr-2"></div>
             <span>Signing in...</span>

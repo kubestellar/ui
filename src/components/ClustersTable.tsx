@@ -33,7 +33,6 @@ import {
   ListItemText,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import LabelIcon from "@mui/icons-material/Label";
@@ -48,6 +47,7 @@ import InboxIcon from "@mui/icons-material/Inbox";
 import PostAddIcon from "@mui/icons-material/PostAdd";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import TableSkeleton from "./ui/TableSkeleton";
+import { MdLabel } from "react-icons/md";
 
 interface ManagedClusterInfo {
   name: string;
@@ -63,6 +63,8 @@ interface ClustersTableProps {
   totalPages: number;
   onPageChange: (page: number) => void;
   isLoading?: boolean;
+  initialShowCreateOptions?: boolean;
+  initialActiveOption?: string;
 }
 
 // Add a new ColorTheme interface before the LabelEditDialogProps interface
@@ -547,14 +549,16 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
   totalPages,
   onPageChange,
   isLoading = false,
+  initialShowCreateOptions = false,
+  initialActiveOption = "option1",
 }) => {
   const [query, setQuery] = useState("");
   const [filteredClusters, setFilteredClusters] = useState<ManagedClusterInfo[]>(clusters);
   const [filter, setFilter] = useState<string>("");
   const [selectAll, setSelectAll] = useState(false);
   const [selectedClusters, setSelectedClusters] = useState<string[]>([]);
-  const [showCreateOptions, setShowCreateOptions] = useState(false);
-  const [activeOption, setActiveOption] = useState<string | null>("option1");
+  const [showCreateOptions, setShowCreateOptions] = useState(initialShowCreateOptions);
+  const [activeOption, setActiveOption] = useState<string | null>(initialActiveOption);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedCluster, setSelectedCluster] = useState<ManagedClusterInfo | null>(null);
   const [loadingClusterEdit, setLoadingClusterEdit] = useState<string | null>(null);
@@ -567,6 +571,15 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
 
   const { useUpdateClusterLabels } = useClusterQueries();
   const updateLabelsMutation = useUpdateClusterLabels();
+
+  // Initialize with initial props if provided
+  useEffect(() => {
+    if (initialShowCreateOptions) {
+      setShowCreateOptions(true);
+      // Set the active option to "kubeconfig" for import dialog
+      setActiveOption(initialActiveOption);
+    }
+  }, [initialShowCreateOptions, initialActiveOption]);
 
   // Add useEffect for keyboard shortcuts
   useEffect(() => {
@@ -659,7 +672,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
     // Apply status filter
     if (filter && filter !== "All") {
       result = result.filter((cluster) => {
-        const currentStatus = cluster.status || "Active✓";
+        const currentStatus = cluster.status || "Active";
         return currentStatus.toLowerCase() === filter.toLowerCase();
       });
     }
@@ -1136,25 +1149,27 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                           <span style={{ color: colors.textSecondary }}>No labels</span>
                         )}
                       </div>
-                      <Tooltip title="Edit Labels">
-                        <IconButton
-                          size="small"
-                          onClick={() => handleEditLabels(cluster)}
-                          disabled={loadingClusterEdit === cluster.name}
-                          style={{ 
-                            color: colors.textSecondary,
-                            backgroundColor: isDark ? 'rgba(47, 134, 255, 0.08)' : 'rgba(47, 134, 255, 0.05)',
-                            transition: 'all 0.2s ease',
-                          }}
-                          className="hover:bg-opacity-80 hover:scale-105"
-                        >
-                          {loadingClusterEdit === cluster.name ? (
-                            <CircularProgress size={16} style={{ color: colors.primary }} />
-                          ) : (
-                            <EditIcon fontSize="small" />
-                          )}
-                        </IconButton>
-                      </Tooltip>
+                      {selectedClusters.length <= 1 && (
+                        <Tooltip title="Edit Labels">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleEditLabels(cluster)}
+                            disabled={loadingClusterEdit === cluster.name}
+                            style={{ 
+                              color: colors.textSecondary,
+                              backgroundColor: isDark ? 'rgba(47, 134, 255, 0.08)' : 'rgba(47, 134, 255, 0.05)',
+                              transition: 'all 0.2s ease',
+                            }}
+                            className="hover:bg-opacity-80 hover:scale-105"
+                          >
+                            {loadingClusterEdit === cluster.name ? (
+                              <CircularProgress size={16} style={{ color: colors.primary }} />
+                            ) : (
+                              <MdLabel fontSize="24px" />
+                            )}
+                          </IconButton>
+                        </Tooltip>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>{new Date(cluster.creationTime).toLocaleString()}</TableCell>
@@ -1172,7 +1187,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                   </TableCell>
                   <TableCell>
                     <span
-                      className="px-2 py-1 text-xs font-medium rounded-lg inline-flex items-center gap-1"
+                      className="px-2 py-1 text-xs font-medium rounded-lg inline-flex items-center gap-2"
                       style={{
                         backgroundColor:
                           cluster.status === "Inactive"
@@ -1200,8 +1215,8 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                             : `1px solid ${isDark ? "rgba(103, 192, 115, 0.4)" : "rgba(103, 192, 115, 0.3)"}`,
                       }}
                     >
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cluster.status === "Inactive" ? colors.error : cluster.status === "Pending" ? colors.warning : colors.success }}></span>
-                      {cluster.status || "Active✓"}
+                      <span className="w-3 h-3 rounded-full" style={{ backgroundColor: cluster.status === "Inactive" ? colors.error : cluster.status === "Pending" ? colors.warning : colors.success }}></span>
+                      {cluster.status || "Active"}
                     </span>
                   </TableCell>
                 </TableRow>

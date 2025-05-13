@@ -19,11 +19,19 @@ import (
 	"github.com/kubestellar/ui/its/manual/handlers"
 	"github.com/kubestellar/ui/k8s"
 	"github.com/kubestellar/ui/redis"
+	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
+	certificatesv1 "k8s.io/api/certificates/v1"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
+	policyv1 "k8s.io/api/policy/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 )
 
 var upgrader = websocket.Upgrader{
@@ -287,11 +295,258 @@ func StreamK8sDataChronologically(c *gin.Context) {
 									nsData = NamespaceData{Name: nsName}
 									var resourceTypes []ResourceTypeData
 
-									// Helper function to fetch and process resources
-									processResources := func(
+									// Process deployments first to establish hierarchy
+									deployments, err := clientset.AppsV1().Deployments(nsName).List(context.TODO(), metav1.ListOptions{})
+									if err == nil && len(deployments.Items) > 0 {
+										var deploymentResources []ResourceData
+
+										for _, deploy := range deployments.Items {
+											// Get ReplicaSets for this deployment
+											replicaSets, _ := getReplicaSetsForDeployment(clientset, deploy, nsName)
+
+											rawResource, _ := json.Marshal(deploy)
+											deploymentResources = append(deploymentResources, ResourceData{
+												Name:              deploy.Name,
+												Kind:              "Deployment",
+												Raw:               rawResource,
+												ReplicaSets:       replicaSets,
+												CreationTimestamp: deploy.CreationTimestamp.Time,
+											})
+										}
+
+										// Sort deployments by creation timestamp
+										sort.Slice(deploymentResources, func(i, j int) bool {
+											return deploymentResources[i].CreationTimestamp.Before(deploymentResources[j].CreationTimestamp)
+										})
+
+										resourceTypes = append(resourceTypes, ResourceTypeData{
+											Kind:      "Deployment",
+											Group:     "apps",
+											Version:   "v1",
+											Resources: deploymentResources,
+										})
+									}
+
+									// Process StatefulSets
+									statefulSets, err := clientset.AppsV1().StatefulSets(nsName).List(context.TODO(), metav1.ListOptions{})
+									if err == nil && len(statefulSets.Items) > 0 {
+										var statefulSetResources []ResourceData
+
+										for _, sts := range statefulSets.Items {
+											// Find pods controlled by this StatefulSet
+											podList, err := clientset.CoreV1().Pods(nsName).List(context.TODO(), metav1.ListOptions{
+												LabelSelector: metav1.FormatLabelSelector(sts.Spec.Selector),
+											})
+
+											var podResources []ResourceData
+											if err == nil {
+												for _, pod := range podList.Items {
+													rawPod, _ := json.Marshal(pod)
+													podResources = append(podResources, ResourceData{
+														Name:              pod.Name,
+														Kind:              "Pod",
+														Raw:               rawPod,
+														CreationTimestamp: pod.CreationTimestamp.Time,
+													})
+												}
+
+												// Sort pods by name to maintain StatefulSet order
+												sort.Slice(podResources, func(i, j int) bool {
+													return podResources[i].Name < podResources[j].Name
+												})
+											}
+
+											rawResource, _ := json.Marshal(sts)
+											statefulSetResources = append(statefulSetResources, ResourceData{
+												Name:              sts.Name,
+												Kind:              "StatefulSet",
+												Raw:               rawResource,
+												Pods:              podResources,
+												CreationTimestamp: sts.CreationTimestamp.Time,
+											})
+										}
+
+										sort.Slice(statefulSetResources, func(i, j int) bool {
+											return statefulSetResources[i].CreationTimestamp.Before(statefulSetResources[j].CreationTimestamp)
+										})
+
+										resourceTypes = append(resourceTypes, ResourceTypeData{
+											Kind:      "StatefulSet",
+											Group:     "apps",
+											Version:   "v1",
+											Resources: statefulSetResources,
+										})
+									}
+
+									// Process DaemonSets
+									daemonSets, err := clientset.AppsV1().DaemonSets(nsName).List(context.TODO(), metav1.ListOptions{})
+									if err == nil && len(daemonSets.Items) > 0 {
+										var daemonSetResources []ResourceData
+
+										for _, ds := range daemonSets.Items {
+											// Find pods controlled by this DaemonSet
+											podList, err := clientset.CoreV1().Pods(nsName).List(context.TODO(), metav1.ListOptions{
+												LabelSelector: metav1.FormatLabelSelector(ds.Spec.Selector),
+											})
+
+											var podResources []ResourceData
+											if err == nil {
+												for _, pod := range podList.Items {
+													rawPod, _ := json.Marshal(pod)
+													podResources = append(podResources, ResourceData{
+														Name:              pod.Name,
+														Kind:              "Pod",
+														Raw:               rawPod,
+														CreationTimestamp: pod.CreationTimestamp.Time,
+													})
+												}
+
+												// Sort pods by node name
+												sort.Slice(podResources, func(i, j int) bool {
+													return podResources[i].Name < podResources[j].Name
+												})
+											}
+
+											rawResource, _ := json.Marshal(ds)
+											daemonSetResources = append(daemonSetResources, ResourceData{
+												Name:              ds.Name,
+												Kind:              "DaemonSet",
+												Raw:               rawResource,
+												Pods:              podResources,
+												CreationTimestamp: ds.CreationTimestamp.Time,
+											})
+										}
+
+										sort.Slice(daemonSetResources, func(i, j int) bool {
+											return daemonSetResources[i].CreationTimestamp.Before(daemonSetResources[j].CreationTimestamp)
+										})
+
+										resourceTypes = append(resourceTypes, ResourceTypeData{
+											Kind:      "DaemonSet",
+											Group:     "apps",
+											Version:   "v1",
+											Resources: daemonSetResources,
+										})
+									}
+
+									// Process Jobs
+									jobs, err := clientset.BatchV1().Jobs(nsName).List(context.TODO(), metav1.ListOptions{})
+									if err == nil && len(jobs.Items) > 0 {
+										var jobResources []ResourceData
+
+										for _, job := range jobs.Items {
+											// Find pods controlled by this Job
+											podList, err := clientset.CoreV1().Pods(nsName).List(context.TODO(), metav1.ListOptions{
+												LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector),
+											})
+
+											var podResources []ResourceData
+											if err == nil {
+												for _, pod := range podList.Items {
+													rawPod, _ := json.Marshal(pod)
+													podResources = append(podResources, ResourceData{
+														Name:              pod.Name,
+														Kind:              "Pod",
+														Raw:               rawPod,
+														CreationTimestamp: pod.CreationTimestamp.Time,
+													})
+												}
+											}
+
+											rawResource, _ := json.Marshal(job)
+											jobResources = append(jobResources, ResourceData{
+												Name:              job.Name,
+												Kind:              "Job",
+												Raw:               rawResource,
+												Pods:              podResources,
+												CreationTimestamp: job.CreationTimestamp.Time,
+											})
+										}
+
+										sort.Slice(jobResources, func(i, j int) bool {
+											return jobResources[i].CreationTimestamp.Before(jobResources[j].CreationTimestamp)
+										})
+
+										resourceTypes = append(resourceTypes, ResourceTypeData{
+											Kind:      "Job",
+											Group:     "batch",
+											Version:   "v1",
+											Resources: jobResources,
+										})
+									}
+
+									// Process CronJobs
+									cronJobs, err := clientset.BatchV1().CronJobs(nsName).List(context.TODO(), metav1.ListOptions{})
+									if err == nil && len(cronJobs.Items) > 0 {
+										var cronJobResources []ResourceData
+
+										for _, cronJob := range cronJobs.Items {
+											// Get Jobs owned by this CronJob
+											var jobResources []ResourceData
+
+											jobList, err := clientset.BatchV1().Jobs(nsName).List(context.TODO(), metav1.ListOptions{})
+											if err == nil {
+												for _, job := range jobList.Items {
+													for _, owner := range job.OwnerReferences {
+														if owner.Kind == "CronJob" && owner.Name == cronJob.Name {
+															// For each job, get pods
+															podList, err := clientset.CoreV1().Pods(nsName).List(context.TODO(), metav1.ListOptions{
+																LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector),
+															})
+
+															var podResources []ResourceData
+															if err == nil {
+																for _, pod := range podList.Items {
+																	rawPod, _ := json.Marshal(pod)
+																	podResources = append(podResources, ResourceData{
+																		Name:              pod.Name,
+																		Kind:              "Pod",
+																		Raw:               rawPod,
+																		CreationTimestamp: pod.CreationTimestamp.Time,
+																	})
+																}
+															}
+
+															rawJob, _ := json.Marshal(job)
+															jobResources = append(jobResources, ResourceData{
+																Name:              job.Name,
+																Kind:              "Job",
+																Raw:               rawJob,
+																Pods:              podResources,
+																CreationTimestamp: job.CreationTimestamp.Time,
+															})
+															break
+														}
+													}
+												}
+											}
+
+											rawResource, _ := json.Marshal(cronJob)
+											cronJobResources = append(cronJobResources, ResourceData{
+												Name:              cronJob.Name,
+												Kind:              "CronJob",
+												Raw:               rawResource,
+												ReplicaSets:       jobResources, // Using ReplicaSets field to store jobs
+												CreationTimestamp: cronJob.CreationTimestamp.Time,
+											})
+										}
+
+										sort.Slice(cronJobResources, func(i, j int) bool {
+											return cronJobResources[i].CreationTimestamp.Before(cronJobResources[j].CreationTimestamp)
+										})
+
+										resourceTypes = append(resourceTypes, ResourceTypeData{
+											Kind:      "CronJob",
+											Group:     "batch",
+											Version:   "v1",
+											Resources: cronJobResources,
+										})
+									}
+
+									// Process remaining resource types that aren't hierarchical
+									processNonHierarchicalResources := func(
 										listFunc func(namespace string) (interface{}, error),
 										kind, group, version string,
-										getReplicaFunc func(clientset *kubernetes.Clientset, resource interface{}, namespace string) ([]ResourceData, error),
 									) []ResourceData {
 										resources, err := listFunc(nsName)
 										if err != nil {
@@ -299,39 +554,9 @@ func StreamK8sDataChronologically(c *gin.Context) {
 										}
 
 										var resourceData []ResourceData
+
+										// Handle different resource types
 										switch typed := resources.(type) {
-										case *appsv1.DeploymentList:
-											for _, res := range typed.Items {
-												replicaSets, _ := getReplicaSetsForDeployment(clientset, res, nsName)
-												rawResource, _ := json.Marshal(res)
-												resourceData = append(resourceData, ResourceData{
-													Name:              res.Name,
-													Kind:              kind,
-													Raw:               rawResource,
-													ReplicaSets:       replicaSets,
-													CreationTimestamp: res.CreationTimestamp.Time,
-												})
-											}
-										case *appsv1.StatefulSetList:
-											for _, res := range typed.Items {
-												rawResource, _ := json.Marshal(res)
-												resourceData = append(resourceData, ResourceData{
-													Name:              res.Name,
-													Kind:              kind,
-													Raw:               rawResource,
-													CreationTimestamp: res.CreationTimestamp.Time,
-												})
-											}
-										case *appsv1.DaemonSetList:
-											for _, res := range typed.Items {
-												rawResource, _ := json.Marshal(res)
-												resourceData = append(resourceData, ResourceData{
-													Name:              res.Name,
-													Kind:              kind,
-													Raw:               rawResource,
-													CreationTimestamp: res.CreationTimestamp.Time,
-												})
-											}
 										case *corev1.ServiceList:
 											for _, res := range typed.Items {
 												rawResource, _ := json.Marshal(res)
@@ -342,55 +567,178 @@ func StreamK8sDataChronologically(c *gin.Context) {
 													CreationTimestamp: res.CreationTimestamp.Time,
 												})
 											}
+										case *corev1.ConfigMapList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *corev1.SecretList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *corev1.PersistentVolumeClaimList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *networkingv1.IngressList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *networkingv1.NetworkPolicyList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *rbacv1.RoleList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *rbacv1.RoleBindingList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *corev1.ServiceAccountList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *autoscalingv2.HorizontalPodAutoscalerList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *policyv1.PodDisruptionBudgetList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *admissionregistrationv1.ValidatingWebhookConfigurationList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *admissionregistrationv1.MutatingWebhookConfigurationList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *apiextensionsv1.CustomResourceDefinitionList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *certificatesv1.CertificateSigningRequestList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										case *apiregistrationv1.APIServiceList:
+											for _, res := range typed.Items {
+												rawResource, _ := json.Marshal(res)
+												resourceData = append(resourceData, ResourceData{
+													Name:              res.Name,
+													Kind:              kind,
+													Raw:               rawResource,
+													CreationTimestamp: res.CreationTimestamp.Time,
+												})
+											}
+										// Other resource types...
+										default:
+											// Skip unknown types
 										}
 
 										// Sort resources by creation timestamp
-										sort.Slice(resourceData, func(i, j int) bool {
-											return resourceData[i].CreationTimestamp.Before(resourceData[j].CreationTimestamp)
-										})
+										if len(resourceData) > 0 {
+											sort.Slice(resourceData, func(i, j int) bool {
+												return resourceData[i].CreationTimestamp.Before(resourceData[j].CreationTimestamp)
+											})
+										}
 
 										return resourceData
 									}
 
-									// Define resource type list functions
-									resourceFuncs := []struct {
-										listFunc       func(namespace string) (interface{}, error)
-										kind           string
-										group          string
-										version        string
-										getReplicaFunc func(clientset *kubernetes.Clientset, resource interface{}, namespace string) ([]ResourceData, error)
+									// Define non-hierarchical resources to fetch
+									nonHierarchicalResources := []struct {
+										listFunc func(namespace string) (interface{}, error)
+										kind     string
+										group    string
+										version  string
 									}{
-										{
-											listFunc: func(ns string) (interface{}, error) {
-												return clientset.AppsV1().Deployments(ns).List(context.TODO(), metav1.ListOptions{})
-											},
-											kind:    "Deployment",
-											group:   "apps",
-											version: "v1",
-											getReplicaFunc: func(cs *kubernetes.Clientset, res interface{}, ns string) ([]ResourceData, error) {
-												deployment, ok := res.(appsv1.Deployment)
-												if !ok {
-													return nil, fmt.Errorf("invalid type")
-												}
-												return getReplicaSetsForDeployment(cs, deployment, ns)
-											},
-										},
-										{
-											listFunc: func(ns string) (interface{}, error) {
-												return clientset.AppsV1().StatefulSets(ns).List(context.TODO(), metav1.ListOptions{})
-											},
-											kind:    "StatefulSet",
-											group:   "apps",
-											version: "v1",
-										},
-										{
-											listFunc: func(ns string) (interface{}, error) {
-												return clientset.AppsV1().DaemonSets(ns).List(context.TODO(), metav1.ListOptions{})
-											},
-											kind:    "DaemonSet",
-											group:   "apps",
-											version: "v1",
-										},
 										{
 											listFunc: func(ns string) (interface{}, error) {
 												return clientset.CoreV1().Services(ns).List(context.TODO(), metav1.ListOptions{})
@@ -399,29 +747,136 @@ func StreamK8sDataChronologically(c *gin.Context) {
 											group:   "core",
 											version: "v1",
 										},
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.CoreV1().ConfigMaps(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "ConfigMap",
+											group:   "core",
+											version: "v1",
+										},
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.CoreV1().Secrets(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "Secret",
+											group:   "core",
+											version: "v1",
+										},
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.CoreV1().PersistentVolumeClaims(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "PersistentVolumeClaim",
+											group:   "core",
+											version: "v1",
+										},
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.NetworkingV1().Ingresses(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "Ingress",
+											group:   "networking.k8s.io",
+											version: "v1",
+										},
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.NetworkingV1().NetworkPolicies(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "NetworkPolicy",
+											group:   "networking.k8s.io",
+											version: "v1",
+										},
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.RbacV1().Roles(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "Role",
+											group:   "rbac.authorization.k8s.io",
+											version: "v1",
+										},
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.RbacV1().RoleBindings(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "RoleBinding",
+											group:   "rbac.authorization.k8s.io",
+											version: "v1",
+										},
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.CoreV1().ServiceAccounts(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "ServiceAccount",
+											group:   "core",
+											version: "v1",
+										},
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.AutoscalingV2().HorizontalPodAutoscalers(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "HorizontalPodAutoscaler",
+											group:   "autoscaling",
+											version: "v2",
+										},
+										{
+											listFunc: func(ns string) (interface{}, error) {
+												return clientset.PolicyV1().PodDisruptionBudgets(ns).List(context.TODO(), metav1.ListOptions{})
+											},
+											kind:    "PodDisruptionBudget",
+											group:   "policy",
+											version: "v1",
+										},
+										// Cluster-scoped resources typically wouldn't be in this loop as they're not namespaced,
+										// but we could add them to a separate processing section if needed
 									}
 
-									for _, resourceFunc := range resourceFuncs {
-										resourceData := processResources(
-											resourceFunc.listFunc,
-											resourceFunc.kind,
-											resourceFunc.group,
-											resourceFunc.version,
-											resourceFunc.getReplicaFunc,
+									for _, resource := range nonHierarchicalResources {
+										resourceData := processNonHierarchicalResources(
+											resource.listFunc,
+											resource.kind,
+											resource.group,
+											resource.version,
 										)
 
 										if len(resourceData) > 0 {
 											resourceTypes = append(resourceTypes, ResourceTypeData{
-												Kind:      resourceFunc.kind,
-												Group:     resourceFunc.group,
-												Version:   resourceFunc.version,
+												Kind:      resource.kind,
+												Group:     resource.group,
+												Version:   resource.version,
 												Resources: resourceData,
 											})
 										}
 									}
 
-									// Sort resource types to maintain consistent order
+									// Sort resource types by kind for consistent order
 									sort.Slice(resourceTypes, func(i, j int) bool {
+										// Prioritize workloads first
+										workloadKinds := map[string]int{
+											"Deployment":  1,
+											"StatefulSet": 2,
+											"DaemonSet":   3,
+											"Job":         4,
+											"CronJob":     5,
+										}
+
+										wi, wok := workloadKinds[resourceTypes[i].Kind]
+										wj, wjok := workloadKinds[resourceTypes[j].Kind]
+
+										// If both are workloads, sort by priority
+										if wok && wjok {
+											return wi < wj
+										}
+
+										// If only one is a workload, prioritize it
+										if wok {
+											return true
+										}
+										if wjok {
+											return false
+										}
+
+										// Otherwise sort alphabetically
 										return resourceTypes[i].Kind < resourceTypes[j].Kind
 									})
 

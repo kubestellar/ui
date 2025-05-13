@@ -204,7 +204,7 @@ func autoLabelling(obj *unstructured.Unstructured, labelName string) {
 	if labels == nil {
 		labels = make(map[string]string)
 	}
-	labelKey := "kubernetes.io/kubestellar.workload.name"
+	labelKey := "kubestellar.io/workload"
 
 	if _, exists := labels[labelKey]; !exists {
 		labels[labelKey] = labelName
