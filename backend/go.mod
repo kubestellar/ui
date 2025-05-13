@@ -12,7 +12,6 @@ require (
 	github.com/kubestellar/kubestellar v0.26.0
 	github.com/lib/pq v1.10.9
 	github.com/redis/go-redis/v9 v9.7.3
-	go.etcd.io/etcd/client/v3 v3.5.16
 	go.uber.org/zap v1.27.0
 	helm.sh/helm/v3 v3.17.3
 	k8s.io/api v0.33.0
@@ -40,8 +39,6 @@ require (
 	github.com/containerd/errdefs v0.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
-	github.com/coreos/go-semver v0.3.1 // indirect
-	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/cyphar/filepath-securejoin v0.3.6 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/distribution/reference v0.6.0 // indirect

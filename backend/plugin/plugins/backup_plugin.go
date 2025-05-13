@@ -1,12 +1,10 @@
 package plugins
 
 import (
-	"fmt"
 	"net/http"
 
-	"os/exec"
-
 	"github.com/gin-gonic/gin"
+	"github.com/kubestellar/ui/k8s"
 	"github.com/kubestellar/ui/log"
 	"github.com/kubestellar/ui/plugin"
 	"go.uber.org/zap"
@@ -57,46 +55,24 @@ func (p backupPlugin) Routes() []plugin.PluginRoutesMeta {
 }
 
 func rootHandler(c *gin.Context) {
-	c.JSON(200, gin.H{"name": pluginName, "version": pluginVersion})
+
 }
 
 func takeSnapshot(c *gin.Context) {
 
-	cmd := exec.Command("etcdtl",
-		fmt.Sprintf("--endppoints=%s", bp.ep), fmt.Sprintf("--cacert=%s", bp.caCert),
-		fmt.Sprintf("--cert=%s", bp.cert), fmt.Sprintf("--key=%s", bp.key), "save")
-	err := cmd.Run()
-	if err != nil {
-		log.LogError("failed to take snapshot", zap.String("error", err.Error()))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"message": "success"})
-
 }
 func restoreFromSnapshot(c *gin.Context) {
-
-	cmd := exec.Command("etcdtl",
-		fmt.Sprintf("--endppoints=%s", bp.ep), fmt.Sprintf("--cacert=%s", bp.caCert),
-		fmt.Sprintf("--cert=%s", bp.cert), fmt.Sprintf("--key=%s", bp.key), "restore")
-	err := cmd.Run()
-	if err != nil {
-		log.LogError("failed to restore from snapshot", zap.String("error", err.Error()))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"message": "success"})
 
 }
 
 var bp backupPlugin
 
 func init() {
-	cmd := exec.Command("kubectl",
-		"--context", "kind-kubeflex", "-n", "kube-system", "port-forward", "pods/etcd-kubeflex-control-plane", "2379:2379")
-	err := cmd.Start()
+
+	// check if etcd service exist if not create it
+	_, _, err := k8s.GetClientSetWithConfigContext("kind-kubeflex")
 	if err != nil {
-		log.LogError("failed to start cmd", zap.String("error", err.Error()))
+		log.LogError("", zap.String("err", err.Error()))
 	}
 
 	bp = backupPlugin{
