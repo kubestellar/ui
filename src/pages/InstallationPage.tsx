@@ -540,11 +540,13 @@ const InstallationPage = () => {
           // Only log the message, don't show toast as it'll be redundant with the page content
           console.log('KubeStellar not installed, showing installation page');
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error checking initial KubeStellar status:', error);
         
         // Ignore 401 errors which are expected if not logged in
-        if (error.response && error.response.status === 401) {
+        if (error && typeof error === 'object' && 'response' in error && 
+            error.response && typeof error.response === 'object' && 'status' in error.response && 
+            error.response.status === 401) {
           console.warn('Authentication required (401) - this is expected for non-authenticated users');
           // Don't set error state for auth errors, treat as not installed
           setIsChecking(false);
@@ -684,9 +686,11 @@ const InstallationPage = () => {
           // Automatically navigate to login
           navigate('/login');
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Only log error but don't show toast for periodic checks
-        if (error.response && error.response.status === 401) {
+        if (error && typeof error === 'object' && 'response' in error && 
+            error.response && typeof error.response === 'object' && 'status' in error.response && 
+            error.response.status === 401) {
           console.warn('Periodic check: Authentication required (401)');
         } else {
           console.error('Error in periodic KubeStellar status check:', error);
