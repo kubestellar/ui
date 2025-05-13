@@ -19,37 +19,56 @@ export const useLogin = () => {
 
   return useMutation({
     mutationFn: async ({ username, password, rememberMe = false }: LoginCredentials) => {
-      const response = await LoginUser({ username, password });
-      
-      localStorage.setItem('jwtToken', response.token);
-      
-      if (rememberMe) {
-        localStorage.setItem('rememberedUsername', username);
-        localStorage.setItem('rememberedPassword', btoa(password));
-      } else {
-        localStorage.removeItem('rememberedUsername');
-        localStorage.removeItem('rememberedPassword');
+      try {
+        const response = await LoginUser({ username, password });
+        
+        if (!response.token) {
+          throw new Error('No token received from server');
+        }
+        
+        localStorage.setItem('jwtToken', response.token);
+        
+        if (rememberMe) {
+          localStorage.setItem('rememberedUsername', username);
+          localStorage.setItem('rememberedPassword', btoa(password));
+        } else {
+          localStorage.removeItem('rememberedUsername');
+          localStorage.removeItem('rememberedPassword');
+        }
+        
+        // Verify token to ensure it's valid
+        try {
+          const token = localStorage.getItem('jwtToken');
+          if (token) {
+            await VerifyToken(token);
+          }
+        } catch (verifyError) {
+          console.error('Token verification failed:', verifyError);
+          // Continue anyway since we just received the token
+        }
+        
+        return response;
+      } catch (error) {
+        console.error('Login error:', error);
+        throw error;
       }
-      
-      const token = localStorage.getItem('jwtToken');
-      if (token) {
-        await VerifyToken(token);
-      }
-      
-      return response;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.dismiss('auth-loading');
       
       toast.success('Login successful');
       
+      // Connect to websockets with new token
       connect(true);
       connectWecs(true);
       
+      // Update auth state
       queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
       
       const redirectPath = localStorage.getItem('redirectAfterLogin') || '/';
       localStorage.removeItem('redirectAfterLogin');
+      
+      console.log(`Login successful for user: ${data.user.username}. Redirecting to ${redirectPath}`);
       
       setTimeout(() => {
         navigate(redirectPath);
@@ -57,10 +76,17 @@ export const useLogin = () => {
     },
     onError: (error) => {
       toast.dismiss('auth-loading');
-      console.log('error', error);
-      const errorMessage = axios.isAxiosError(error)
-        ? error.response?.data?.error || 'Invalid credentials'
-        : 'Invalid credentials';
+      console.error('Login error:', error);
+      
+      let errorMessage = 'Invalid credentials';
+      
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.error || 
+                       error.response?.data?.message || 
+                       'Authentication failed. Please check your credentials.';
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
       
       toast.error(errorMessage);
     },
