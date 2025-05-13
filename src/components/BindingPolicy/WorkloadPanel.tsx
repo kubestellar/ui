@@ -22,7 +22,9 @@ import {
   List,
   ListItemText,
   ListItemButton,
-  Divider
+  Divider,
+  Checkbox,
+  FormControlLabel
 } from '@mui/material';
 import { Workload } from '../../types/bindingPolicy';
 import AddIcon from '@mui/icons-material/Add';
@@ -66,7 +68,10 @@ interface LabelEditDialogProps {
   open: boolean;
   onClose: () => void;
   workload: Workload | null;
+  workloads: Workload[];
+  isBulkEdit: boolean;
   onSave: (workloadName: string, namespace: string, kind: string, labels: { [key: string]: string }) => void;
+  onBulkSave: (workloads: Workload[], labels: { [key: string]: string }) => void;
   isDark: boolean;
   colors: ColorTheme;
 }
@@ -76,6 +81,7 @@ interface SelectWorkloadDialogProps {
   onClose: () => void;
   workloads: Workload[];
   onSelectWorkload: (workload: Workload) => void;
+  onSelectWorkloads: (workloads: Workload[]) => void;
   isDark: boolean;
   colors: ColorTheme;
 }
@@ -111,6 +117,8 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedWorkload, setSelectedWorkload] = useState<Workload | null>(null);
+  const [selectedWorkloads, setSelectedWorkloads] = useState<Workload[]>([]);
+  const [isBulkEdit, setIsBulkEdit] = useState(false);
   const [loadingWorkloadEdit, setLoadingWorkloadEdit] = useState<string | null>(null);
   const [selectWorkloadDialogOpen, setSelectWorkloadDialogOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0); // Add refresh trigger state
@@ -122,7 +130,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
   const { state, startSSEConnection, extractWorkloads } = useWorkloadSSE();
 
   // Use SSE or prop workloads based on SSE connection status
-  const workloads = state.data ? extractWorkloads() : propWorkloads;
+  const workloads = state.data ? extractWorkloads() || [] : propWorkloads || [];
   const loading = (state.status === 'loading' || state.status === 'idle') && propLoading;
   const error = state.error?.message || propError;
 
@@ -139,12 +147,14 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
   }, []);
 
   const handleCreateWorkload = () => {
-    navigate("/workloads/manage");
+    navigate("/workloads/manage?create=true");
   };
 
   const handleAddLabels = () => {
     if (workloads.length > 0) {
       setSelectWorkloadDialogOpen(true);
+      setIsBulkEdit(false);
+      setSelectedWorkloads([]);
     } else {
       toast.error('No workloads available to edit');
     }
@@ -172,6 +182,21 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
     }
     setEditDialogOpen(true);
     setSelectWorkloadDialogOpen(false);
+    setIsBulkEdit(false);
+  };
+
+  const handleEditMultipleWorkloads = (workloads: Workload[]) => {
+    console.log("handleEditMultipleWorkloads called with:", JSON.stringify(workloads, null, 2));
+    
+    if (workloads.length === 0) {
+      toast.error('No workloads selected');
+      return;
+    }
+    
+    setSelectedWorkloads(workloads);
+    setEditDialogOpen(true);
+    setSelectWorkloadDialogOpen(false);
+    setIsBulkEdit(true);
   };
 
   const handleSaveLabels = async (
@@ -361,6 +386,129 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
     } finally {
       setLoadingWorkloadEdit(null);
     }
+  };
+
+  const handleBulkSaveLabels = async (workloads: Workload[], labels: { [key: string]: string }) => {
+    if (workloads.length === 0) return;
+    
+    let successCount = 0;
+    let failureCount = 0;
+    
+    setLoadingWorkloadEdit("bulk-edit");
+    
+    for (const workload of workloads) {
+      try {
+        // Special handling for Namespace resources
+        if (workload.kind === "Namespace") {
+          // Get the current namespace details
+          const getUrl = `/api/namespaces/${workload.name}`;
+          const getResponse = await api.get(getUrl);
+          const currentResource = getResponse.data;
+          
+          if (!currentResource) {
+            console.error(`No namespace data returned for ${workload.name}`);
+            failureCount++;
+            continue;
+          }
+          
+          const updatedResource = {
+            ...currentResource,
+            labels: {
+              ...currentResource.labels,
+              ...labels // Only add/update the new labels, keep existing ones
+            }
+          };
+          
+          const updateUrl = `/api/namespaces/update/${workload.name}`;
+          await api.put(updateUrl, updatedResource);
+          successCount++;
+        } else {
+          const kindToPluralMap: Record<string, string> = {
+            Deployment: "deployments",
+            StatefulSet: "statefulsets",
+            DaemonSet: "daemonsets",
+            Pod: "pods",
+            Service: "services",
+            ConfigMap: "configmaps",
+            Secret: "secrets",
+            // need to add more mappings here
+          };
+          
+          const pluralForm = kindToPluralMap[workload.kind] || `${workload.kind.toLowerCase()}s`;
+          const namespace = workload.namespace || "default";
+          
+          // Get the current resource
+          const getUrl = `/api/${pluralForm}/${namespace}/${workload.name}`;
+          const getResponse = await api.get(getUrl);
+          const currentResource = getResponse.data;
+          
+          if (!currentResource) {
+            console.error(`Resource ${workload.kind}/${namespace}/${workload.name} not found`);
+            failureCount++;
+            continue;
+          }
+          
+          // Update the resource with new labels
+          const updatedResource = {
+            ...currentResource,
+            metadata: {
+              ...currentResource.metadata,
+              labels: {
+                ...(currentResource.metadata.labels || {}),
+                ...labels // Only add/update the new labels, keep existing ones
+              }
+            }
+          };
+          
+          // Update the resource
+          const updateUrl = `/api/${pluralForm}/${namespace}/${workload.name}`;
+          await api.put(updateUrl, updatedResource);
+          successCount++;
+        }
+      } catch (error) {
+        console.error(`Error updating workload ${workload.kind}/${workload.name}:`, error);
+        failureCount++;
+      }
+    }
+    
+    if (successCount > 0 && failureCount === 0) {
+      toast.success(`Labels updated for all ${successCount} resources`, {
+        icon: '🏷️',
+        style: {
+          borderRadius: '10px',
+          background: isDarkTheme ? '#1e293b' : '#ffffff',
+          color: isDarkTheme ? '#f1f5f9' : '#1e293b',
+          border: `1px solid ${isDarkTheme ? '#334155' : '#e2e8f0'}`,
+        },
+      });
+    } else if (successCount > 0 && failureCount > 0) {
+      toast(`Labels updated for ${successCount} resources, failed for ${failureCount} resources`, {
+        icon: '⚠️',
+        style: {
+          borderRadius: '10px',
+          background: isDarkTheme ? '#1e293b' : '#ffffff',
+          color: isDarkTheme ? '#f1f5f9' : '#1e293b',
+          border: `1px solid ${isDarkTheme ? '#334155' : '#e2e8f0'}`,
+        },
+      });
+    } else {
+      toast.error(`Failed to update labels for all ${failureCount} resources`, {
+        icon: '❌',
+        style: {
+          borderRadius: '10px',
+          background: isDarkTheme ? '#1e293b' : '#ffffff',
+          color: isDarkTheme ? '#f1f5f9' : '#1e293b',
+          border: `1px solid ${isDarkTheme ? '#334155' : '#e2e8f0'}`,
+        },
+      });
+    }
+    
+    setLoadingWorkloadEdit(null);
+    
+    // Schedule a refresh after the save is complete
+    setTimeout(() => {
+      refreshWorkloads();
+    }, 1000);
   };
 
   // Colors for theming the dialogs
@@ -589,7 +737,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
                     handleEditSpecificWorkload(workloadObjects[0]);
                   } else if (workloadObjects.length > 0) {
                     // If multiple workloads, open the select dialog
-                    setSelectWorkloadDialogOpen(true);
+                    handleEditMultipleWorkloads(workloadObjects);
                   }
                 }}
                 sx={{ 
@@ -845,61 +993,45 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
           <Box sx={{ display: 'flex', gap: 1 }}>
             {/* "Add Labels" button */}
             <Button
-  variant="contained"
-  endIcon={<BsTagFill />}
-  onClick={handleAddLabels}
-  size="small"
-  sx={{ 
-    bgcolor: isDarkTheme 
-      ? alpha(muiTheme.palette.common.white, 0.15)  
-      : muiTheme.palette.common.white,
-    color: isDarkTheme 
-      ? muiTheme.palette.common.white
-      : muiTheme.palette.secondary.main,
-    borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.3)' : undefined,
-    transition: 'all 0.2s ease',
-    fontWeight: 500,
-    "&:hover": {
-      bgcolor: isDarkTheme 
-        ? alpha(muiTheme.palette.common.white, 0.25)
-        : alpha(muiTheme.palette.common.white, 0.9),
-      transform: 'translateY(-2px)',
-      boxShadow: isDarkTheme
-        ? '0 4px 12px rgba(0,0,0,0.4)'
-        : '0 4px 8px rgba(0,0,0,0.2)'
-    },
-  }}
->
-  Labels
-</Button>
-<Button
-  variant="contained"
-  startIcon={<AddIcon />}
-  onClick={handleCreateWorkload}
-  size="small"
-  sx={{
-    bgcolor: isDarkTheme 
-      ? alpha(muiTheme.palette.common.white, 0.15)
-      : muiTheme.palette.common.white,
-    color: isDarkTheme 
-      ? muiTheme.palette.common.white
-      : muiTheme.palette.secondary.main,
-    borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.3)' : undefined,
-    transition: 'all 0.2s ease',
-    fontWeight: 500,
-    "&:hover": {
-      bgcolor: isDarkTheme 
-        ? alpha(muiTheme.palette.common.white, 0.25)
-        : alpha(muiTheme.palette.common.white, 0.9),
-      transform: 'translateY(-2px)',
-      boxShadow: isDarkTheme
-        ? '0 4px 12px rgba(0,0,0,0.4)'
-        : '0 4px 8px rgba(0,0,0,0.2)'
-    },
-  }}
->
-  Create
-</Button>
+              variant="contained"
+              endIcon={<BsTagFill />}
+              onClick={handleAddLabels}
+              size="small"
+              sx={{ 
+                bgcolor: 'white', 
+                color: isDarkTheme 
+                  ? "rgba(37, 99, 235, 0.9)"
+                  : muiTheme.palette.secondary.main,
+                transition: 'all 0.2s ease',
+                "&:hover": {
+                  bgcolor: alpha(muiTheme.palette.common.white, 0.9),
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                },
+              }}
+            >
+              Labels
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleCreateWorkload}
+              size="small"
+              sx={{
+                bgcolor: "white",
+                color: isDarkTheme 
+                  ? "rgba(37, 99, 235, 0.9)"
+                  : muiTheme.palette.secondary.main,
+                transition: 'all 0.2s ease',
+                "&:hover": {
+                  bgcolor: alpha(muiTheme.palette.common.white, 0.9),
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                },
+              }}
+            >
+              Create
+            </Button>
           </Box>
         )}
       </Box>
@@ -1005,7 +1137,10 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
           }
         }}
         workload={selectedWorkload}
+        workloads={selectedWorkloads}
+        isBulkEdit={isBulkEdit}
         onSave={handleSaveLabels}
+        onBulkSave={handleBulkSaveLabels}
         isDark={isDarkTheme}
         colors={colors}
       />
@@ -1016,6 +1151,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
         onClose={() => setSelectWorkloadDialogOpen(false)}
         workloads={workloads}
         onSelectWorkload={handleEditSpecificWorkload}
+        onSelectWorkloads={handleEditMultipleWorkloads}
         isDark={isDarkTheme}
         colors={colors}
       />
@@ -1028,7 +1164,10 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
   open, 
   onClose, 
   workload, 
+  workloads,
+  isBulkEdit,
   onSave,
+  onBulkSave,
   isDark,
   colors
 }) => {
@@ -1039,6 +1178,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
   const [isSearching, setIsSearching] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selectedLabelIndex, setSelectedLabelIndex] = useState<number | null>(null);
+  const [appendLabels, setAppendLabels] = useState(true);
   const keyInputRef = useRef<HTMLInputElement>(null);
   const valueInputRef = useRef<HTMLInputElement>(null);
 
@@ -1051,22 +1191,30 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
       );
 
   useEffect(() => {
-    if (workload && open) {
-      console.log("LabelEditDialog opened with workload:", JSON.stringify(workload, null, 2));
-      
-      const labelArray = Object.entries(workload.labels || {}).map(([key, value]) => ({
-        key,
-        value,
-      }));
-      console.log("Initial labels array:", JSON.stringify(labelArray, null, 2));
-      
-      setLabels(labelArray);
+    if (open) {
+      if (isBulkEdit) {
+        console.log("LabelEditDialog opened for bulk edit with workloads:", workloads.length);
+        
+        // For bulk edit, start with empty labels
+        setLabels([]);
+      } else if (workload) {
+        console.log("LabelEditDialog opened with workload:", JSON.stringify(workload, null, 2));
+        
+        const labelArray = Object.entries(workload.labels || {}).map(([key, value]) => ({
+          key,
+          value,
+        }));
+        console.log("Initial labels array:", JSON.stringify(labelArray, null, 2));
+        
+        setLabels(labelArray);
+      }
       
       setNewKey("");
       setNewValue("");
       setLabelSearch("");
       setIsSearching(false);
       setSelectedLabelIndex(null);
+      setAppendLabels(true);
       
       setTimeout(() => {
         if (keyInputRef.current) {
@@ -1074,7 +1222,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
         }
       }, 100);
     }
-  }, [workload, open]);
+  }, [workload, workloads, isBulkEdit, open]);
 
   const handleAddLabel = () => {
     if (newKey.trim() && newValue.trim()) {
@@ -1128,32 +1276,52 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
   };
 
   const handleSave = () => {
-    if (!workload) return;
-    
-    setSaving(true);
-    
-    // Convert array back to object format
-    const labelObject: { [key: string]: string } = {};
-    labels.forEach(({ key, value }) => {
-      labelObject[key] = value;
-    });
+    if (isBulkEdit) {
+      if (workloads.length === 0) return;
+      
+      setSaving(true);
+      
+      // Convert array back to object format
+      const labelObject: { [key: string]: string } = {};
+      labels.forEach(({ key, value }) => {
+        labelObject[key] = value;
+      });
+      
+      console.log("===== BULK LABEL SAVE DEBUG =====");
+      console.log("Workloads being saved:", workloads.length);
+      console.log("Labels being saved:", JSON.stringify(labelObject, null, 2));
+      console.log("Append mode:", appendLabels);
+      
+      // Add a slight delay to show loading state
+      setTimeout(() => {
+        onBulkSave(workloads, labelObject);
+        setSaving(false);
+        onClose();
+      }, 300);
+    } else if (workload) {
+      setSaving(true);
+      
+      const labelObject: { [key: string]: string } = {};
+      labels.forEach(({ key, value }) => {
+        labelObject[key] = value;
+      });
 
-    console.log("===== LABEL SAVE DEBUG =====");
-    console.log("Workload being saved:", JSON.stringify(workload, null, 2));
-    console.log("Labels being saved:", JSON.stringify(labelObject, null, 2));
-    
-    
-    // Add a slight delay to show loading state
-    setTimeout(() => {
-      onSave(
-        workload.name, 
-        workload.namespace || "default", 
-        workload.kind, 
-        labelObject
-      );
-      setSaving(false);
-      onClose();
-    }, 300);
+      console.log("===== LABEL SAVE DEBUG =====");
+      console.log("Workload being saved:", JSON.stringify(workload, null, 2));
+      console.log("Labels being saved:", JSON.stringify(labelObject, null, 2));
+      
+      // Add a slight delay to show loading state
+      setTimeout(() => {
+        onSave(
+          workload.name, 
+          workload.namespace || "default", 
+          workload.kind, 
+          labelObject
+        );
+        setSaving(false);
+        onClose();
+      }, 300);
+    }
   };
 
   const toggleSearchMode = () => {
@@ -1204,10 +1372,15 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
         <div className="flex items-center gap-2">
           <LabelIcon style={{ color: colors.primary }} />
           <Typography variant="h6" component="span">
-            Edit Labels for <span style={{ fontWeight: 'bold' }}>{workload?.name}</span> 
-            <Typography component="span" style={{ fontSize: '0.8rem', marginLeft: '8px', color: colors.textSecondary }}>
-              ({workload?.kind})
-            </Typography>
+            {isBulkEdit 
+              ? `Edit Labels for ${workloads.length} Resources` 
+              : `Edit Labels for ${workload?.name}`}
+            
+            {!isBulkEdit && workload && (
+              <Typography component="span" style={{ fontSize: '0.8rem', marginLeft: '8px', color: colors.textSecondary }}>
+                ({workload.kind})
+              </Typography>
+            )}
           </Typography>
         </div>
         <IconButton onClick={onClose} size="small" style={{ color: colors.textSecondary }}>
@@ -1215,7 +1388,38 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
         </IconButton>
       </DialogTitle>
       
-      <DialogContent style={{ padding: '24px' }}>
+      <DialogContent style={{ padding: '20px 24px' }}>
+        {isBulkEdit && (
+          <Box mb={2} pb={2} borderBottom={`1px solid ${colors.border}`}>
+            <Typography variant="subtitle2" style={{ marginBottom: '8px', color: colors.textSecondary }}>
+              Bulk Edit Mode
+            </Typography>
+            <Typography variant="body2" style={{ marginBottom: '12px', color: colors.textSecondary }}>
+              You are editing labels for {workloads.length} resources. The changes will be applied to all selected resources.
+            </Typography>
+            
+            <FormControlLabel
+              control={
+                <Checkbox 
+                  checked={appendLabels} 
+                  onChange={(e) => setAppendLabels(e.target.checked)}
+                  sx={{
+                    color: colors.primary,
+                    '&.Mui-checked': {
+                      color: colors.primary,
+                    },
+                  }}
+                />
+              }
+              label={
+                <Typography variant="body2">
+                  Append to existing labels (unchecking will replace all existing labels)
+                </Typography>
+              }
+            />
+          </Box>
+        )}
+        
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <Typography variant="body2" style={{ color: colors.textSecondary }}>
@@ -1446,21 +1650,19 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
         </div>
       </DialogContent>
       
-      <DialogActions 
+      <DialogActions
         style={{ 
           padding: '16px 24px',
           borderTop: `1px solid ${colors.border}`,
-          justifyContent: 'space-between',
         }}
       >
         <Button 
           onClick={onClose}
+          variant="outlined"
           style={{ 
+            borderColor: colors.border,
             color: colors.textSecondary,
           }}
-          variant="text"
-          startIcon={<CloseIcon />}
-          disabled={saving}
         >
           Cancel
         </Button>
@@ -1489,10 +1691,22 @@ const SelectWorkloadDialog: React.FC<SelectWorkloadDialogProps> = ({
   onClose,
   workloads,
   onSelectWorkload,
+  onSelectWorkloads,
   isDark,
   colors
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedItems, setSelectedItems] = useState<Record<string, boolean>>({});
+  const [bulkSelectMode, setBulkSelectMode] = useState(false);
+  
+  // Reset selections when dialog opens
+  useEffect(() => {
+    if (open) {
+      setSelectedItems({});
+      setBulkSelectMode(false);
+      setSearchTerm('');
+    }
+  }, [open]);
   
   const filteredWorkloads = searchTerm 
     ? workloads.filter(workload => 
@@ -1506,6 +1720,31 @@ const SelectWorkloadDialog: React.FC<SelectWorkloadDialogProps> = ({
         )
       )
     : workloads;
+    
+  const toggleItemSelection = (workload: Workload) => {
+    const workloadId = `${workload.kind}-${workload.namespace || 'default'}-${workload.name}`;
+    setSelectedItems(prev => ({
+      ...prev,
+      [workloadId]: !prev[workloadId]
+    }));
+  };
+  
+  const toggleBulkSelectMode = () => {
+    setBulkSelectMode(!bulkSelectMode);
+    if (!bulkSelectMode) {
+      // When entering bulk mode, clear any existing selections
+      setSelectedItems({});
+    }
+  };
+  
+  const getSelectedWorkloads = () => {
+    return workloads.filter(workload => {
+      const workloadId = `${workload.kind}-${workload.namespace || 'default'}-${workload.name}`;
+      return selectedItems[workloadId];
+    });
+  };
+  
+  const selectedCount = Object.values(selectedItems).filter(Boolean).length;
 
   return (
     <Dialog
@@ -1538,7 +1777,7 @@ const SelectWorkloadDialog: React.FC<SelectWorkloadDialogProps> = ({
       >
         <div className="flex items-center gap-2">
           <Typography variant="h6" component="span">
-            Select Workload to Edit
+            {bulkSelectMode ? "Select Multiple Workloads" : "Select Workload to Edit"}
           </Typography>
         </div>
         <IconButton onClick={onClose} size="small" style={{ color: colors.textSecondary }}>
@@ -1547,6 +1786,32 @@ const SelectWorkloadDialog: React.FC<SelectWorkloadDialogProps> = ({
       </DialogTitle>
       
       <DialogContent style={{ padding: '16px 24px' }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <FormControlLabel
+            control={
+              <Checkbox 
+                checked={bulkSelectMode} 
+                onChange={toggleBulkSelectMode}
+                sx={{
+                  color: colors.primary,
+                  '&.Mui-checked': {
+                    color: colors.primary,
+                  },
+                }}
+              />
+            }
+            label="Bulk Edit Mode"
+          />
+          
+          {bulkSelectMode && selectedCount > 0 && (
+            <Chip 
+              label={`${selectedCount} selected`}
+              color="primary"
+              size="small"
+            />
+          )}
+        </Box>
+        
         <TextField
           placeholder="Search workloads..."
           value={searchTerm}
@@ -1607,94 +1872,127 @@ const SelectWorkloadDialog: React.FC<SelectWorkloadDialogProps> = ({
           }}
         >
           {filteredWorkloads.length > 0 ? (
-            filteredWorkloads.map((workload) => (
-              <ListItemButton
-                key={`${workload.kind}-${workload.namespace || 'default'}-${workload.name}`}
-                onClick={() => onSelectWorkload(workload)}
-                sx={{
-                  borderRadius: '8px',
-                  mb: 1,
-                  border: `1px solid ${colors.border}`,
-                  backgroundColor: isDark ? 'rgba(47, 134, 255, 0.08)' : 'rgba(47, 134, 255, 0.04)',
-                  '&:hover': {
-                    backgroundColor: isDark ? 'rgba(47, 134, 255, 0.15)' : 'rgba(47, 134, 255, 0.08)',
-                  },
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                <ListItemText 
-                  primary={
-                    <React.Fragment>
-                      {workload.name}
-                      <Chip
-                        size="small"
-                        label={workload.kind}
-                        sx={{
-                          ml: 1,
-                          fontSize: '0.7rem',
-                          height: 20,
-                          bgcolor: isDark
-                            ? alpha(colors.secondary, 0.2)
-                            : alpha(colors.secondary, 0.1),
-                          color: isDark
-                            ? colors.secondary
-                            : colors.secondary,
-                        }}
-                      />
-                    </React.Fragment>
-                  } 
-                  secondary={
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5 }}>
-                      <Typography variant="caption" sx={{ color: colors.textSecondary }}>
-                        {workload.namespace || 'default'}
-                      </Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {Object.entries(workload.labels || {}).slice(0, 3).map(([key, value]) => (
-                          <Chip
-                            key={`${key}-${value}`}
-                            size="small"
-                            label={`${key}=${value}`}
-                            sx={{ 
-                              height: 20,
-                              fontSize: '0.7rem',
-                              bgcolor: alpha(colors.primary, 0.1),
-                              color: colors.primary,
-                            }}
-                          />
-                        ))}
-                        {Object.keys(workload.labels || {}).length > 3 && (
-                          <Chip
-                            size="small"
-                            label={`+${Object.keys(workload.labels || {}).length - 3} more`}
-                            sx={{ 
-                              height: 20,
-                              fontSize: '0.7rem',
-                              bgcolor: alpha(colors.secondary, 0.1),
-                              color: colors.secondary,
-                            }}
-                          />
-                        )}
-                      </Box>
-                    </Box>
-                  }
-                  primaryTypographyProps={{
-                    style: { 
-                      color: colors.text,
-                      fontWeight: 500,
-                      display: 'flex',
-                      alignItems: 'center',
+            filteredWorkloads.map((workload) => {
+              const workloadId = `${workload.kind}-${workload.namespace || 'default'}-${workload.name}`;
+              const isSelected = !!selectedItems[workloadId];
+              
+              return (
+                <ListItemButton
+                  key={workloadId}
+                  onClick={() => {
+                    if (bulkSelectMode) {
+                      toggleItemSelection(workload);
+                    } else {
+                      onSelectWorkload(workload);
                     }
                   }}
-                  secondaryTypographyProps={{
-                    style: { 
-                      color: colors.textSecondary,
+                  sx={{
+                    borderRadius: '8px',
+                    mb: 1,
+                    border: `1px solid ${colors.border}`,
+                    backgroundColor: isSelected
+                      ? (isDark ? 'rgba(47, 134, 255, 0.2)' : 'rgba(47, 134, 255, 0.1)')
+                      : (isDark ? 'rgba(47, 134, 255, 0.08)' : 'rgba(47, 134, 255, 0.04)'),
+                    '&:hover': {
+                      backgroundColor: isSelected 
+                        ? (isDark ? 'rgba(47, 134, 255, 0.25)' : 'rgba(47, 134, 255, 0.15)')
+                        : (isDark ? 'rgba(47, 134, 255, 0.15)' : 'rgba(47, 134, 255, 0.08)'),
                     },
-                    component: 'div'
+                    transition: 'all 0.2s ease',
                   }}
-                />
-                <EditIcon fontSize="small" sx={{ color: colors.primary, opacity: 0.7 }} />
-              </ListItemButton>
-            ))
+                >
+                  {bulkSelectMode && (
+                    <Checkbox 
+                      checked={isSelected}
+                      onChange={() => toggleItemSelection(workload)}
+                      onClick={(e) => e.stopPropagation()}
+                      sx={{
+                        color: colors.primary,
+                        '&.Mui-checked': {
+                          color: colors.primary,
+                        },
+                        marginRight: 1,
+                        padding: 0,
+                      }}
+                    />
+                  )}
+                  
+                  <ListItemText 
+                    primary={
+                      <React.Fragment>
+                        {workload.name}
+                        <Chip
+                          size="small"
+                          label={workload.kind}
+                          sx={{
+                            ml: 1,
+                            fontSize: '0.7rem',
+                            height: 20,
+                            bgcolor: isDark
+                              ? alpha(colors.secondary, 0.2)
+                              : alpha(colors.secondary, 0.1),
+                            color: isDark
+                              ? colors.secondary
+                              : colors.secondary,
+                          }}
+                        />
+                      </React.Fragment>
+                    } 
+                    secondary={
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5 }}>
+                        <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                          {workload.namespace || 'default'}
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {Object.entries(workload.labels || {}).slice(0, 3).map(([key, value]) => (
+                            <Chip
+                              key={`${key}-${value}`}
+                              size="small"
+                              label={`${key}=${value}`}
+                              sx={{ 
+                                height: 20,
+                                fontSize: '0.7rem',
+                                bgcolor: alpha(colors.primary, 0.1),
+                                color: colors.primary,
+                              }}
+                            />
+                          ))}
+                          {Object.keys(workload.labels || {}).length > 3 && (
+                            <Chip
+                              size="small"
+                              label={`+${Object.keys(workload.labels || {}).length - 3} more`}
+                              sx={{ 
+                                height: 20,
+                                fontSize: '0.7rem',
+                                bgcolor: alpha(colors.secondary, 0.1),
+                                color: colors.secondary,
+                              }}
+                            />
+                          )}
+                        </Box>
+                      </Box>
+                    }
+                    primaryTypographyProps={{
+                      style: { 
+                        color: colors.text,
+                        fontWeight: 500,
+                        display: 'flex',
+                        alignItems: 'center',
+                      }
+                    }}
+                    secondaryTypographyProps={{
+                      style: { 
+                        color: colors.textSecondary,
+                      },
+                      component: 'div'
+                    }}
+                  />
+                  {!bulkSelectMode && (
+                    <EditIcon fontSize="small" sx={{ color: colors.primary, opacity: 0.7 }} />
+                  )}
+                </ListItemButton>
+              );
+            })
           ) : (
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4 }}>
               <Typography variant="body1" sx={{ color: colors.text, fontWeight: 500, mb: 1 }}>
@@ -1716,13 +2014,28 @@ const SelectWorkloadDialog: React.FC<SelectWorkloadDialogProps> = ({
       >
         <Button 
           onClick={onClose}
+          variant="outlined"
           style={{ 
+            borderColor: colors.border,
             color: colors.textSecondary,
           }}
-          variant="text"
         >
           Cancel
         </Button>
+        
+        {bulkSelectMode && (
+          <Button 
+            onClick={() => onSelectWorkloads(getSelectedWorkloads())}
+            variant="contained"
+            disabled={selectedCount === 0}
+            style={{ 
+              backgroundColor: colors.primary,
+              color: colors.white,
+            }}
+          >
+            Edit {selectedCount} Resources
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );
