@@ -37,7 +37,8 @@ import CreateOptions from "../components/CreateOptions";
 import { NodeLabel } from "../components/Wds_Topology/NodeLabel";
 import { ZoomControls } from "../components/Wds_Topology/ZoomControls";
 import { FlowCanvas } from "../components/Wds_Topology/FlowCanvas";
-import LoadingFallback from "./LoadingFallback";
+import ListViewSkeleton from "./ui/ListViewSkeleton";
+import TreeViewSkeleton from "./ui/TreeViewSkeleton";
 import DynamicDetailsPanel from "./DynamicDetailsPanel";
 import GroupPanel from "./GroupPanel";
 import ReactDOM from "react-dom";
@@ -1684,7 +1685,11 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
 
         <Box sx={{ width: "100%", height: "calc(100% - 80px)", position: "relative" }}>
           {isLoading ? (
-            <LoadingFallback message="Loading the tree..." size="medium" />
+            viewMode === 'list' ? (
+              <ListViewSkeleton itemCount={8} />
+            ) : (
+              <TreeViewSkeleton />
+            )
           ) : viewMode === 'tiles' && (nodes.length > 0 || edges.length > 0) ? (
             <Box sx={{ width: "100%", height: "100%", position: "relative" }}>
               <ReactFlowProvider>

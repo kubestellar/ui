@@ -38,7 +38,8 @@ import { Plus } from "lucide-react";
 import CreateOptions from "../components/CreateOptions";
 import { NodeLabel } from "../components/Wds_Topology/NodeLabel";
 import { ZoomControls } from "../components/Wds_Topology/ZoomControls";
-import LoadingFallback from "./LoadingFallback";
+import WecsTreeviewSkeleton from "./ui/WecsTreeviewSkeleton";
+import ListViewSkeleton from "./ui/ListViewSkeleton";
 import ReactDOM from "react-dom";
 import { isEqual } from "lodash";
 import { useWebSocket } from "../context/WebSocketProvider";
@@ -1276,7 +1277,11 @@ const WecsTreeview = () => {
 
         <Box sx={{ width: "100%", height: "calc(100% - 80px)", position: "relative" }}>
           {isLoading ? (
-            <LoadingFallback message="Loading the tree..." size="medium" />
+              viewMode === 'list' ? (
+                <ListViewSkeleton itemCount={8} />
+              ) : (
+                <WecsTreeviewSkeleton />
+              )
           ) : viewMode === 'list' ? (
             <ListViewComponent />
           ) : nodes.length > 0 || edges.length > 0 ? (

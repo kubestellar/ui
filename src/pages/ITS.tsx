@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useClusterQueries } from '../hooks/queries/useClusterQueries';
 import ClustersTable from '../components/ClustersTable';
-import LoadingFallback from '../components/LoadingFallback';
 import Header from '../components/Header';
 import { useLocation } from 'react-router-dom';
 
@@ -19,12 +18,6 @@ const ITS = () => {
       setOpenImportDialog(true);
     }
   }, [location.search]);
-
-  if (isLoading) return (
-    <div className="w-full max-w-7xl mx-auto p-4">
-      <LoadingFallback message="Loading managed clusters..." size="medium" />
-    </div>
-  );
 
   if (error) return (
     <div className="w-full p-4">
@@ -68,6 +61,7 @@ const ITS = () => {
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={(page) => setCurrentPage(page)}
+            isLoading={isLoading}
             initialShowCreateOptions={openImportDialog}
             initialActiveOption="kubeconfig"
           />

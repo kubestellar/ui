@@ -1,5 +1,5 @@
 import { Navigate, useLocation } from "react-router-dom";
-import LoadingFallback from "./LoadingFallback";
+import PublicRouteSkeleton from "./ui/PublicRouteSkeleton";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../hooks/useAuth";
 
@@ -13,20 +13,7 @@ const PublicRoute = ({ children }: PublicRouteProps) => {
 
   // Show loading state
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-[#0a0f1c]">
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <LoadingFallback 
-            message="Preparing your experience..." 
-            size="medium" 
-          />
-        </motion.div>
-      </div>
-    );
+    return <PublicRouteSkeleton />;
   }
 
   // Get the location state for redirecting after login if needed
