@@ -522,6 +522,14 @@ const InstallationPage = () => {
   
   const navigate = useNavigate();
   
+  // Auto-set activeTab to 'install' if we're skipping prerequisites
+  // This ensures Docker users see the installation script immediately
+  useEffect(() => {
+    if (skipPrerequisitesCheck) {
+      setActiveTab('install');
+    }
+  }, [skipPrerequisitesCheck]);
+  
   // Initial status check
   useEffect(() => {
     const checkStatus = async () => {
@@ -529,21 +537,36 @@ const InstallationPage = () => {
       try {
         const { data } = await api.get('/api/kubestellar/status');
         if (data.allReady) {
-          // For testing, don't automatically redirect
-          // navigate('/login');
-          console.log('KubeStellar is installed but not redirecting (testing mode)');
-          toast.success('KubeStellar is installed! Testing mode: not redirecting');
+          // KubeStellar is installed
+          console.log('KubeStellar is installed');
+          toast.success('KubeStellar is installed!');
+          
+          // Auto-redirect to login after a short delay
+          setTimeout(() => {
+            navigate('/login');
+          }, 1500);
+        } else if (skipPrerequisitesCheck) {
+          // KubeStellar is not installed but we're in Docker mode - go directly to install tab
+          console.log('Docker environment detected - skipping prerequisites check');
+          setActiveTab('install');
+          setCurrentStep('install');
         }
       } catch (error) {
         console.error('Error checking initial KubeStellar status:', error);
         setCheckError(true);
+        
+        // Even on error, if we're in Docker mode, go to install tab
+        if (skipPrerequisitesCheck) {
+          setActiveTab('install');
+          setCurrentStep('install');
+        }
       } finally {
         setIsChecking(false);
       }
     };
     
     checkStatus();
-  }, [navigate]);
+  }, [navigate, skipPrerequisitesCheck]);
 
   // Check prerequisites
   useEffect(() => {
@@ -1232,15 +1255,16 @@ const InstallationPage = () => {
         </motion.div>
 
         {/* Add a notice when prerequisites check is skipped */}
-        {skipPrerequisitesCheck && activeTab === 'prerequisites' && (
+        {skipPrerequisitesCheck && (
           <div className="max-w-5xl mx-auto mb-6">
             <div className="bg-blue-950/30 border border-blue-800/50 rounded-xl p-4 text-center">
               <div className="flex items-center justify-center mb-2">
                 <Info size={20} className="text-blue-400 mr-2" />
-                <h3 className="text-lg font-medium text-white">Prerequisites Check Skipped</h3>
+                <h3 className="text-lg font-medium text-white">Docker Environment Detected</h3>
               </div>
               <p className="text-slate-300">
-                Prerequisites check has been disabled in this environment. You can proceed directly to installation.
+                You are running in a Docker environment where prerequisites are already satisfied.
+                Please proceed with the KubeStellar installation using the script below.
               </p>
             </div>
           </div>
