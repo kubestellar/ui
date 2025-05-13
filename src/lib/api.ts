@@ -13,10 +13,16 @@ export const api = axios.create({
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError<{ message: string }>) => {
-    // Handle global error cases
-    const errorMessage = error.response?.data?.message || error.message;
-    console.error("API Error:", errorMessage);
-    toast.error(errorMessage);
+    // Don't show error toasts for authentication errors (401)
+    if (error.response?.status !== 401) {
+      // Handle global error cases
+      const errorMessage = error.response?.data?.message || error.message;
+      console.error("API Error:", errorMessage);
+      toast.error(errorMessage);
+    } else {
+      // Just log authentication errors but don't show toast
+      console.warn("Authentication required (401)");
+    }
     return Promise.reject(error);
   }
 );
