@@ -12,7 +12,6 @@ import PublicRoute from "../components/PublicRoute";
 import KubeStellarVisualization from "../components/login/index";
 import Terminal from "../components/Terminal.tsx";
 import InstallationPage from "../pages/InstallationPage";
-import KubeStellarStatusChecker from "../components/KubeStellarStatusChecker";
 
 const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ "../components/Clusters"));
 const ITSLazy = lazy(() => import(/* webpackPrefetch: true */ "../pages/ITS"));
@@ -22,9 +21,8 @@ export const routesConfig: RouteObject[] = [
     path: "/login", 
     element: (
       <PublicRoute>
-        <KubeStellarStatusChecker>
+        
           <KubeStellarVisualization />
-        </KubeStellarStatusChecker>
       </PublicRoute>
     ) 
   },
@@ -32,18 +30,14 @@ export const routesConfig: RouteObject[] = [
     path: "/install",
     element: (
       <PublicRoute>
-        <KubeStellarStatusChecker>
           <InstallationPage />
-        </KubeStellarStatusChecker>
       </PublicRoute>
     )
   },
   {
     path: "/",
     element: (
-      <KubeStellarStatusChecker>
         <Layout />
-      </KubeStellarStatusChecker>
     ), 
     children: [
       { 
