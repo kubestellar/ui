@@ -12,7 +12,6 @@ import useTheme from "../stores/themeStore";
 import { useHeaderQueries } from '../hooks/queries/useHeaderQueries';
 import HeaderSkeleton from "./ui/HeaderSkeleton";
 import { useAuth, useAuthActions } from '../hooks/useAuth';
-import LoadingFallback from './LoadingFallback';
 
 interface Context {
   name: string;
