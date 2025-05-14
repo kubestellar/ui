@@ -116,14 +116,14 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
     }
   }, [manualCommand]);
 
-  // Update useEffect to handle initial tab selection with new option names
+  // Update useEffect to handle initial tab selection with new order
   useEffect(() => {
-    // If activeOption is null or invalid, set to first available tab
+    // If activeOption is null or invalid, set to first available tab (now "manual")
     if (!activeOption || 
-        (activeOption !== "kubeconfig" && 
-         activeOption !== "apiurl" && 
-         activeOption !== "manual")) {
-      setActiveOption("kubeconfig");
+        (activeOption !== "manual" && 
+         activeOption !== "kubeconfig" && 
+         activeOption !== "apiurl")) {
+      setActiveOption("manual");
     }
   }, [activeOption, setActiveOption]);
 
@@ -578,6 +578,29 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                       transition: "all 0.25s ease",
                     }}
                   >
+                    <span role="img" aria-label="manual" style={{ fontSize: "0.9rem" }}>⚙️</span>
+                  </Box>
+                  Manual
+                </Box>
+              } 
+              value="manual" 
+            />
+            <Tab 
+              label={
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box 
+                    className="iconContainer"
+                    sx={{ 
+                      width: 26, 
+                      height: 26, 
+                      borderRadius: "8px", 
+                      display: "flex", 
+                      alignItems: "center", 
+                      justifyContent: "center",
+                      bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)",
+                      transition: "all 0.25s ease",
+                    }}
+                  >
                     <span role="img" aria-label="kubeconfig" style={{ fontSize: "0.9rem" }}>📁</span>
                   </Box>
                   Kubeconfig
@@ -607,29 +630,6 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                 </Box>
               } 
               value="apiurl" 
-            />
-            <Tab 
-              label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Box 
-                    className="iconContainer"
-                    sx={{ 
-                      width: 26, 
-                      height: 26, 
-                      borderRadius: "8px", 
-                      display: "flex", 
-                      alignItems: "center", 
-                      justifyContent: "center",
-                      bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)",
-                      transition: "all 0.25s ease",
-                    }}
-                  >
-                    <span role="img" aria-label="manual" style={{ fontSize: "0.9rem" }}>⚙️</span>
-                  </Box>
-                  Manual
-                </Box>
-              } 
-              value="manual" 
             />
             </Tabs>
         </Box>

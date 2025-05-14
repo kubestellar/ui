@@ -45,7 +45,7 @@ enum PrereqStatus {
 }
 
 // Define installation steps
-type InstallStepType = 'prerequisites' | 'install' | 'using';
+type InstallStepType = 'prerequisites' | 'install';
 
 // Define prerequisite data structure
 interface Prerequisite {
@@ -502,10 +502,14 @@ const InstallationPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   const [checkError, setCheckError] = useState(false);
-  const [activeTab, setActiveTab] = useState<'prerequisites' | 'install'>('prerequisites');
   
   // Check if we should skip prerequisites check (e.g., in Docker environments)
   const skipPrerequisitesCheck = import.meta.env.VITE_SKIP_PREREQUISITES_CHECK === 'true';
+  
+  // Initialize the active tab based on whether prerequisites check is skipped
+  const [activeTab, setActiveTab] = useState<'prerequisites' | 'install'>(
+    skipPrerequisitesCheck ? 'install' : 'prerequisites'
+  );
   
   // State for prerequisites
   const [prerequisites, setPrerequisites] = useState<Prerequisite[]>(
@@ -529,14 +533,26 @@ const InstallationPage = () => {
       try {
         const { data } = await api.get('/api/kubestellar/status');
         if (data.allReady) {
-          // For testing, don't automatically redirect
-          // navigate('/login');
-          console.log('KubeStellar is installed but not redirecting (testing mode)');
-          toast.success('KubeStellar is installed! Testing mode: not redirecting');
+          navigate('/login');
+          console.log('KubeStellar is installed');
+          toast.success('KubeStellar is already installed! Redirecting to login...');
+        } else {
+          // Only log the message, don't show toast as it'll be redundant with the page content
+          console.log('KubeStellar not installed, showing installation page');
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Error checking initial KubeStellar status:', error);
-        setCheckError(true);
+        
+        // Ignore 401 errors which are expected if not logged in
+        if (error && typeof error === 'object' && 'response' in error && 
+            error.response && typeof error.response === 'object' && 'status' in error.response && 
+            error.response.status === 401) {
+          console.warn('Authentication required (401) - this is expected for non-authenticated users');
+          // Don't set error state for auth errors, treat as not installed
+          setIsChecking(false);
+        } else {
+          setCheckError(true);
+        }
       } finally {
         setIsChecking(false);
       }
@@ -666,21 +682,33 @@ const InstallationPage = () => {
         const { data } = await api.get('/api/kubestellar/status');
         if (data.allReady) {
           clearInterval(intervalId);
-          toast.success('KubeStellar installation detected!');
-          // Update the installation step to StartUsing
-          setCurrentStep('using');
-          // Optionally auto-redirect to login
-          // navigate('/login');
+          toast.success('KubeStellar installation detected! Redirecting to login page...');
+          // Automatically navigate to login
+          navigate('/login');
         }
-      } catch (error) {
-        console.error('Error checking KubeStellar status:', error);
-        // Don't set error state for periodic checks
+      } catch (error: unknown) {
+        // Only log error but don't show toast for periodic checks
+        if (error && typeof error === 'object' && 'response' in error && 
+            error.response && typeof error.response === 'object' && 'status' in error.response && 
+            error.response.status === 401) {
+          console.warn('Periodic check: Authentication required (401)');
+        } else {
+          console.error('Error in periodic KubeStellar status check:', error);
+        }
       }
     };
 
     // Only start the interval if we're not already checking
     if (!isChecking && !checkError) {
+      // Only show the message once when starting the interval
+      toast('KubeStellar is not installed. Installation progress will be checked automatically.', {
+        icon: 'ℹ️',
+        duration: 5000,
+      });
+      
+      // Start the interval
       intervalId = window.setInterval(checkStatus, 30000); // Check every 30 seconds
+      console.log('Started periodic check for KubeStellar installation');
     }
 
     return () => {
@@ -715,22 +743,20 @@ const InstallationPage = () => {
     try {
       // Simply move to the next step and show CLI instructions
       toast.dismiss(loadingToast);
-      toast.success('Please follow the CLI installation instructions below');
+      toast.success('Follow the CLI installation instructions below to install KubeStellar');
       setCurrentStep('install');
+      
+      // Don't show additional toast, to reduce message clutter
     } catch (error) {
       toast.dismiss(loadingToast);
-      toast.error('Failed to load installation instructions');
+      toast.error('Failed to load installation instructions. Please refresh the page and try again.');
       console.error('Error:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handler for going to dashboard
-  const goToDashboard = () => {
-    navigate('/login');
-  };
-
+  
   // Get counts for prerequisites by status
   const getPrereqStatusCounts = () => {
     const counts = {
@@ -773,7 +799,10 @@ const InstallationPage = () => {
             />
           </div>
           <div className="w-10 h-10 border-4 border-t-blue-500 border-blue-200/30 rounded-full animate-spin"></div>
-          <p className="text-white text-lg">Checking KubeStellar status...</p>
+          <p className="text-white text-lg">Checking KubeStellar installation status...</p>
+          <p className="text-slate-400 text-sm max-w-md text-center">
+            This should only take a moment. We're checking if KubeStellar is already installed on your system.
+          </p>
         </div>
       </div>
     );
@@ -794,15 +823,20 @@ const InstallationPage = () => {
           <AlertTriangle size={40} className="text-yellow-400 mx-auto mb-4" />
           <h2 className="text-2xl font-semibold text-white mb-2">Status Check Failed</h2>
           <p className="text-slate-300 mb-6">
-            Unable to check if KubeStellar is installed. This could be due to a connection issue or the server may be unavailable.
+            Unable to check if KubeStellar is installed. This could be due to a connection issue with the backend service or the server may be temporarily unavailable.
           </p>
-          <button
-            onClick={retryStatusCheck}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg flex items-center mx-auto"
-          >
-            <RefreshCw size={16} className="mr-2" />
-            Retry
-          </button>
+          <div className="space-y-4">
+            <button
+              onClick={retryStatusCheck}
+              className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg flex items-center justify-center transition-colors"
+            >
+              <RefreshCw size={18} className="mr-2" />
+              Retry Connection
+            </button>
+            <p className="text-sm text-slate-400">
+              If the problem persists, please check your network connection or contact your system administrator.
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -932,13 +966,13 @@ const InstallationPage = () => {
                 
                 <div className="space-y-4">
                   <div className="flex items-start">
-                    <div className={`flex-shrink-0 ${currentStep === 'prerequisites' ? 'bg-blue-600' : (currentStep === 'install' || currentStep === 'using' ? 'bg-emerald-600' : 'bg-slate-700')} rounded-full h-6 w-6 flex items-center justify-center mt-0.5 mr-3`}>
+                    <div className={`flex-shrink-0 ${currentStep === 'prerequisites' ? 'bg-blue-600' : (currentStep === 'install' ? 'bg-emerald-600' : 'bg-slate-700')} rounded-full h-6 w-6 flex items-center justify-center mt-0.5 mr-3`}>
                       <span className="text-white text-xs font-bold">
-                        {currentStep === 'install' || currentStep === 'using' ? <CheckCircle2 size={12} /> : '1'}
+                        {currentStep === 'install' ? <CheckCircle2 size={12} /> : '1'}
                       </span>
                     </div>
                     <div>
-                      <h3 className={`font-medium ${currentStep === 'prerequisites' ? 'text-white' : (currentStep === 'install' || currentStep === 'using' ? 'text-emerald-400' : 'text-slate-300')}`}>Check Prerequisites</h3>
+                      <h3 className={`font-medium ${currentStep === 'prerequisites' ? 'text-white' : (currentStep === 'install' ? 'text-emerald-400' : 'text-slate-300')}`}>Check Prerequisites</h3>
                       <p className="text-slate-400 text-sm mt-1">
                         Ensure you have all the required tools installed
                       </p>
@@ -946,13 +980,11 @@ const InstallationPage = () => {
                   </div>
                   
                   <div className="flex items-start">
-                    <div className={`flex-shrink-0 ${currentStep === 'install' ? 'bg-blue-600' : (currentStep === 'using' ? 'bg-emerald-600' : 'bg-slate-700')} rounded-full h-6 w-6 flex items-center justify-center mt-0.5 mr-3`}>
-                      <span className="text-white text-xs font-bold">
-                        {currentStep === 'using' ? <CheckCircle2 size={12} /> : '2'}
-                      </span>
+                    <div className={`flex-shrink-0 ${currentStep === 'install' ? 'bg-blue-600' : 'bg-slate-700'} rounded-full h-6 w-6 flex items-center justify-center mt-0.5 mr-3`}>
+                      <span className="text-white text-xs font-bold">2</span>
                     </div>
                     <div>
-                      <h3 className={`font-medium ${currentStep === 'install' ? 'text-white' : (currentStep === 'using' ? 'text-emerald-400' : 'text-slate-300')}`}>Install KubeStellar</h3>
+                      <h3 className={`font-medium ${currentStep === 'install' ? 'text-white' : 'text-slate-300'}`}>Install KubeStellar</h3>
                       <p className="text-slate-400 text-sm mt-1">
                         Deploy KubeStellar using the CLI commands
                       </p>
@@ -960,23 +992,14 @@ const InstallationPage = () => {
                   </div>
                   
                   <div className="flex items-start">
-                    <div className={`flex-shrink-0 ${currentStep === 'using' ? 'bg-blue-600' : 'bg-slate-700'} rounded-full h-6 w-6 flex items-center justify-center mt-0.5 mr-3`}>
+                    <div className={`flex-shrink-0 ${currentStep === 'install' ? 'bg-blue-600' : 'bg-slate-700'} rounded-full h-6 w-6 flex items-center justify-center mt-0.5 mr-3`}>
                       <span className="text-white text-xs font-bold">3</span>
                     </div>
                     <div>
-                      <h3 className={`font-medium ${currentStep === 'using' ? 'text-white' : 'text-slate-300'}`}>Start Using KubeStellar</h3>
+                      <h3 className={`font-medium ${currentStep === 'install' ? 'text-white' : 'text-slate-300'}`}>Start Using KubeStellar</h3>
                       <p className="text-slate-400 text-sm mt-1">
                         Log in and begin managing your clusters
                       </p>
-                      {currentStep === 'using' && (
-                        <button 
-                          onClick={goToDashboard}
-                          className="mt-2 text-xs flex items-center bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded transition-colors"
-                        >
-                          <ArrowRight size={14} className="mr-1" />
-                          Go to login page
-                        </button>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -1239,8 +1262,11 @@ const InstallationPage = () => {
                 <Info size={20} className="text-blue-400 mr-2" />
                 <h3 className="text-lg font-medium text-white">Prerequisites Check Skipped</h3>
               </div>
-              <p className="text-slate-300">
+              <p className="text-slate-300 mb-2">
                 Prerequisites check has been disabled in this environment. You can proceed directly to installation.
+              </p>
+              <p className="text-xs text-slate-400">
+                Note: Ensure you have installed all required tools manually before running the installation commands.
               </p>
             </div>
           </div>

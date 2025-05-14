@@ -44,6 +44,7 @@ interface WecsDetailsProps {
   onDelete?: () => void;
   initialTab?: number;
   cluster: string;
+  isDeploymentOrJobPod?: boolean;
 }
 
 interface ResourceInfo {
@@ -117,6 +118,7 @@ const WecsDetailsPanel = ({
   onDelete,
   initialTab,
   cluster,
+  isDeploymentOrJobPod,
 }: WecsDetailsProps) => {
   const theme = useTheme((state) => state.theme);
   const [resource, setResource] = useState<ResourceInfo | null>(null);
@@ -147,12 +149,38 @@ const WecsDetailsPanel = ({
   const [selectedContainer, setSelectedContainer] = useState<string>("");
   const [loadingContainers, setLoadingContainers] = useState<boolean>(false);
   const [isContainerSelectActive, setIsContainerSelectActive] = useState<boolean>(false);
+  // Track the previous node to detect node changes
+  const previousNodeRef = useRef<{ name: string; namespace: string; type: string }>({ name: '', namespace: '', type: '' });
 
   useEffect(() => {
     if (isOpen && initialTab !== undefined) {
       setTabValue(initialTab);
     }
   }, [isOpen, initialTab]);
+
+  // Add a new effect to reset tab if logs tab is selected but unavailable
+  useEffect(() => {
+    // If the logs tab (index 2) is selected, but this is not a deployment/job pod, switch to summary tab
+    if (tabValue === 2 && !(type.toLowerCase() === "pod" && isDeploymentOrJobPod)) {
+      setTabValue(0);
+    }
+  }, [tabValue, type, isDeploymentOrJobPod]);
+
+  // Add a new effect to reset tab when node changes
+  useEffect(() => {
+    // Check if node identity has changed
+    const isNewNode = 
+      previousNodeRef.current.name !== name || 
+      previousNodeRef.current.namespace !== namespace || 
+      previousNodeRef.current.type !== type;
+    
+    // Reset to initialTab or default to summary tab (0) if it's a new node
+    if (isOpen && isNewNode) {
+      setTabValue(initialTab ?? 0);
+      // Update the reference to current node
+      previousNodeRef.current = { name, namespace, type };
+    }
+  }, [name, namespace, type, isOpen, initialTab]);
 
   useEffect(() => {
     // Reset states when panel closes
@@ -418,13 +446,13 @@ const WecsDetailsPanel = ({
     if (currentPodRef.current !== name || !isOpen) {
       // Clean up existing exec terminal resources
       if (execSocketRef.current) {
-        console.log(`Closing exec socket for previous pod: ${currentPodRef.current}`);
+        // console.log(`Closing exec socket for previous pod: ${currentPodRef.current}`);
         execSocketRef.current.close();
         execSocketRef.current = null;
       }
       
       if (execTerminalInstance.current) {
-        console.log(`Disposing exec terminal for previous pod: ${currentPodRef.current}`);
+        // console.log(`Disposing exec terminal for previous pod: ${currentPodRef.current}`);
         execTerminalInstance.current.dispose();
         execTerminalInstance.current = null;
       }
@@ -442,13 +470,13 @@ const WecsDetailsPanel = ({
     const fetchContainers = async () => {
       setLoadingContainers(true);
       try {
-        console.log(`Fetching containers for pod: ${name}`);
+        // console.log(`Fetching containers for pod: ${name}`);
         const response = await api.get(`/list/container/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}?context=${encodeURIComponent(cluster)}`);
         if (response.data && response.data.data) {
           setContainers(response.data.data);
           // Set the first container as selected by default if available
           if (response.data.data.length > 0) {
-            console.log(`Setting default container to: ${response.data.data[0].ContainerName}`);
+            // console.log(`Setting default container to: ${response.data.data[0].ContainerName}`);
             setSelectedContainer(response.data.data[0].ContainerName);
           }
         }
@@ -469,7 +497,7 @@ const WecsDetailsPanel = ({
   useEffect(() => {
     if (type.toLowerCase() === "pod") {
       const newKey = `${cluster}-${namespace}-${name}-${selectedContainer}-${Date.now()}`;
-      console.log(`Updating exec terminal key: ${newKey}`);
+      // console.log(`Updating exec terminal key: ${newKey}`);
       setExecTerminalKey(newKey);
     }
   }, [cluster, namespace, name, type, selectedContainer]);
@@ -497,17 +525,17 @@ const WecsDetailsPanel = ({
     // Only initialize exec terminal when the exec tab is active
     if (!execTerminalRef.current || type.toLowerCase() !== "pod" || tabValue !== 3) return;
     
-    console.log(`Initializing exec terminal for pod: ${name}, container: ${selectedContainer}, key: ${execTerminalKey}`);
+    // console.log(`Initializing exec terminal for pod: ${name}, container: ${selectedContainer}, key: ${execTerminalKey}`);
     
     // Always clean up previous terminal when switching to the exec tab
     if (execTerminalInstance.current) {
-      console.log(`Disposing previous exec terminal for pod: ${currentPodRef.current}`);
+      // console.log(`Disposing previous exec terminal for pod: ${currentPodRef.current}`);
       execTerminalInstance.current.dispose();
       execTerminalInstance.current = null;
     }
     
     if (execSocketRef.current) {
-      console.log(`Closing previous exec socket for pod: ${currentPodRef.current}`);
+      // console.log(`Closing previous exec socket for pod: ${currentPodRef.current}`);
       execSocketRef.current.close();
       execSocketRef.current = null;
     }
@@ -557,7 +585,7 @@ const WecsDetailsPanel = ({
         }
         
         term.open(execTerminalRef.current);
-        console.log(`Terminal opened successfully for pod: ${name}`);
+        // console.log(`Terminal opened successfully for pod: ${name}`);
         
         setTimeout(() => {
           try {
@@ -594,7 +622,7 @@ const WecsDetailsPanel = ({
       execSocketRef.current = socket;
     
     socket.onopen = () => {
-        console.log(`WebSocket connection established for pod: ${name}, container: ${containerName}`);
+        // console.log(`WebSocket connection established for pod: ${name}, container: ${containerName}`);
       // Completely clear the terminal once connected
       term.reset();
       term.clear();
@@ -612,7 +640,7 @@ const WecsDetailsPanel = ({
         }
       } catch {
         // If it's not JSON, write it directly
-          console.log(`Received raw message: ${event.data}`);
+          // console.log(`Received raw message: ${event.data}`);
         term.writeln(event.data);
       }
     };
@@ -623,7 +651,7 @@ const WecsDetailsPanel = ({
     };
     
     socket.onclose = (event) => {
-        console.log(`WebSocket closed for pod ${name}:`, event);
+        // console.log(`WebSocket closed for pod ${name}:`, event);
       if (event.code !== 1000 && event.code !== 1001) {
           term.writeln(`\x1b[31mConnection closed\x1b[0m`);
       }
@@ -658,7 +686,7 @@ const WecsDetailsPanel = ({
       currentPodRef.current = name;
     
     return () => {
-        console.log(`Cleaning up exec terminal resources for pod: ${name}`);
+        // console.log(`Cleaning up exec terminal resources for pod: ${name}`);
       clearInterval(pingInterval);
         
         if (socket && socket.readyState === WebSocket.OPEN) {
@@ -680,7 +708,7 @@ const WecsDetailsPanel = ({
   useEffect(() => {
     // Reset container selection and containers list when pod changes
     if (type.toLowerCase() === "pod") {
-      console.log(`Pod changed to ${name}, resetting container selection`);
+      // console.log(`Pod changed to ${name}, resetting container selection`);
       setSelectedContainer("");
       setContainers([]);
     }
@@ -722,7 +750,7 @@ const WecsDetailsPanel = ({
   const handleClose = () => {
     // Don't close if container selection is active
     if (isContainerSelectActive) {
-      console.log("Container select is active, preventing panel close");
+      // console.log("Container select is active, preventing panel close");
       return;
     }
     
@@ -1051,7 +1079,8 @@ const WecsDetailsPanel = ({
           >
             <StyledTab label={<span><i className="fa fa-file-alt" style={{ marginRight: "8px" }}></i>SUMMARY</span>} />
             <StyledTab label={<span><i className="fa fa-edit" style={{ marginRight: "8px" }}></i>EDIT</span>} />
-            {type.toLowerCase() !== "cluster" && (
+            {/* Only show logs tab for deployment/job pods */}
+            {type.toLowerCase() === "pod" && isDeploymentOrJobPod && type.toLowerCase() !== "cluster" && (
               <StyledTab label={<span><i className="fa fa-align-left" style={{ marginRight: "8px" }}></i>LOGS</span>} />
             )}
             {/* Only show Exec Pods tab for pod resources */}
@@ -1150,7 +1179,7 @@ const WecsDetailsPanel = ({
                   </Box>
                 </Box>
               )}
-              {tabValue === 2 && type.toLowerCase() !== "cluster" && (
+              {tabValue === 2 && type.toLowerCase() === "pod" && isDeploymentOrJobPod && (
                 <Box
                   sx={{
                     height: "500px",
@@ -1222,7 +1251,7 @@ const WecsDetailsPanel = ({
                         size="small" 
                         className="container-dropdown"
                         onMouseDown={() => {
-                          console.log("Container dropdown interaction started");
+                          // console.log("Container dropdown interaction started");
                           setIsContainerSelectActive(true);
                         }}
                         sx={{ 
@@ -1249,11 +1278,11 @@ const WecsDetailsPanel = ({
                           displayEmpty
                           onMouseDown={(e: React.MouseEvent<HTMLElement>) => {
                             e.stopPropagation();
-                            console.log("Select mousedown");
+                            // console.log("Select mousedown");
                             setIsContainerSelectActive(true);
                           }}
                           onClose={() => {
-                            console.log("Select dropdown closed");
+                            // console.log("Select dropdown closed");
                             // Delay setting this to false to allow click events to process first
                             setTimeout(() => setIsContainerSelectActive(false), 300);
                           }}
@@ -1317,7 +1346,7 @@ const WecsDetailsPanel = ({
                               }}
                               onMouseDown={(e: React.MouseEvent<HTMLLIElement>) => {
                                 e.stopPropagation();
-                                console.log(`MenuItem ${container.ContainerName} mousedown`);
+                                // console.log(`MenuItem ${container.ContainerName} mousedown`);
                                 setIsContainerSelectActive(true);
                               }}
                             >

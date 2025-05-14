@@ -636,7 +636,7 @@ export const useBPQueries = () => {
         if (!formattedRequest.workloadLabels || Object.keys(formattedRequest.workloadLabels).length === 0) {
           console.warn("No workload labels provided");
           formattedRequest.workloadLabels = {
-            'kubernetes.io/kubestellar.workload.name': 'unknown' // Fallback default
+            'kubestellar.io/workload': 'unknown' // Fallback default
           };
         }
         
@@ -703,7 +703,7 @@ export const useBPQueries = () => {
         if (!formattedRequest.workloadLabels || Object.keys(formattedRequest.workloadLabels).length === 0) {
           console.warn("No workload labels provided for YAML generation");
           formattedRequest.workloadLabels = {
-            'kubernetes.io/kubestellar.workload.name': 'unknown' // Fallback default
+            'kubestellar.io/workload': 'unknown' // Fallback default
           };
         }
         
@@ -1019,6 +1019,12 @@ export const useBPQueries = () => {
               return;
             }
             
+            // Check if resources is null or undefined before processing
+            if (!resources) {
+              console.warn(`Resources is null for namespace ${namespace}, resourceType ${resourceType}`);
+              return;
+            }
+            
             // Process workload resources
             resources.forEach(resource => {
               if (resource.labels) {
@@ -1045,6 +1051,12 @@ export const useBPQueries = () => {
 
         Object.entries(state.data.clusterScoped).forEach(([resourceType, resources]) => {
           if (excludedTypes.has(resourceType) || !includeClusterResourceTypes.has(resourceType)) {
+            return;
+          }
+          
+          // Check if resources is null or undefined before processing
+          if (!resources) {
+            console.warn(`Resources is null for cluster-scoped resourceType ${resourceType}`);
             return;
           }
           

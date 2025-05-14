@@ -38,7 +38,8 @@ import { Plus } from "lucide-react";
 import CreateOptions from "../components/CreateOptions";
 import { NodeLabel } from "../components/Wds_Topology/NodeLabel";
 import { ZoomControls } from "../components/Wds_Topology/ZoomControls";
-import LoadingFallback from "./LoadingFallback";
+import WecsTreeviewSkeleton from "./ui/WecsTreeviewSkeleton";
+import ListViewSkeleton from "./ui/ListViewSkeleton";
 import ReactDOM from "react-dom";
 import { isEqual } from "lodash";
 import { useWebSocket } from "../context/WebSocketProvider";
@@ -50,6 +51,7 @@ import ListViewComponent from "../components/ListViewComponent";
 // Updated Interfaces
 export interface NodeData {
   label: JSX.Element;
+  isDeploymentOrJobPod?: boolean;
 }
 
 export interface BaseNode {
@@ -175,6 +177,7 @@ interface SelectedNode {
   resourceData?: ResourceItem;
   initialTab?: number;
   cluster?: string;
+  isDeploymentOrJobPod?: boolean;
 }
 
 interface ContextMenuState {
@@ -394,7 +397,95 @@ const getLayoutedElements = (
     });
   });
 
-  // Step 7: Collision detection and adjustment
+  // Step 7: Build a comprehensive child-to-parent mapping for all relationships
+  const allChildToParent = new Map<string, string>();
+  edges.forEach((edge) => {
+    allChildToParent.set(edge.target, edge.source);
+  });
+
+  // Step 8: Build a reverse mapping from parent to all children (all types of relationships)
+  const allParentToChildren = new Map<string, CustomNode[]>();
+  layoutedNodes.forEach((node) => {
+    const parentId = allChildToParent.get(node.id);
+    if (parentId) {
+      if (!allParentToChildren.has(parentId)) {
+        allParentToChildren.set(parentId, []);
+      }
+      allParentToChildren.get(parentId)!.push(node);
+    }
+  });
+
+  // Step 9: Center all parent nodes with their children
+  // Process from deepest nodes to root to ensure proper alignment through the hierarchy
+  const processedNodes = new Set<string>();
+  
+  // Helper function to adjust parent position based on its children
+  const centerParentWithChildren = (parentId: string) => {
+    if (processedNodes.has(parentId)) return;
+    
+    const children = allParentToChildren.get(parentId);
+    if (!children || children.length === 0) return;
+    
+    // First ensure all children are processed
+    children.forEach(child => {
+      if (allParentToChildren.has(child.id)) {
+        centerParentWithChildren(child.id);
+      }
+    });
+    
+    // Get updated positions of children after they might have been repositioned
+    const updatedChildren = children.map(child => 
+      layoutedNodes.find(node => node.id === child.id)!
+    );
+    
+    // Sort children by y position
+    updatedChildren.sort((a, b) => a.position.y - b.position.y);
+    
+    // Find the middle child to align with
+    const middleChildIndex = Math.floor(updatedChildren.length / 2);
+    let targetY: number;
+    
+    if (updatedChildren.length % 2 === 1) {
+      // Odd number of children: align with the middle child
+      targetY = updatedChildren[middleChildIndex].position.y;
+    } else {
+      // Even number of children: align with the midpoint between the two middle children
+      const midLower = updatedChildren[middleChildIndex - 1].position.y;
+      const midUpper = updatedChildren[middleChildIndex].position.y;
+      targetY = (midLower + midUpper) / 2;
+    }
+    
+    // Adjust parent position
+    const parentIndex = layoutedNodes.findIndex(node => node.id === parentId);
+    if (parentIndex !== -1) {
+      layoutedNodes[parentIndex] = {
+        ...layoutedNodes[parentIndex],
+        position: {
+          x: layoutedNodes[parentIndex].position.x,
+          y: targetY
+        }
+      };
+    }
+    
+    processedNodes.add(parentId);
+  };
+  
+  // Start with nodes that don't have parents (roots)
+  allParentToChildren.forEach((_, parentId) => {
+    // Skip nodes that are someone else's children
+    if (!allChildToParent.has(parentId)) {
+      centerParentWithChildren(parentId);
+    }
+  });
+  
+  // Process all remaining parent nodes
+  allParentToChildren.forEach((_, parentId) => {
+    if (!processedNodes.has(parentId)) {
+      centerParentWithChildren(parentId);
+    }
+  });
+
+  // Step 10: Collision detection and adjustment
   layoutedNodes.sort((a, b) => a.position.y - b.position.y);
 
   for (let i = 1; i < layoutedNodes.length; i++) {
@@ -415,7 +506,7 @@ const getLayoutedElements = (
     }
   }
 
-  // Step 8: Adjust edges
+  // Step 11: Adjust edges
   const adjustedEdges = edges.map((edge) => {
     const targetNode = layoutedNodes.find((node) => node.id === edge.target);
     if (targetNode && allChildrenToAlign.has(targetNode.id)) {
@@ -520,6 +611,13 @@ const WecsTreeview = () => {
       const timeAgo = getTimeAgo(timestamp);
       const cachedNode = nodeCache.current.get(id);
 
+      // Check if this is a pod that belongs to a Deployment, ReplicaSet, or Job
+      let isDeploymentOrJobPod = false;
+      if (type.toLowerCase() === "pod" && parent) {
+        const parentType = parent.split(":")[0]?.toLowerCase();
+        isDeploymentOrJobPod = ["deployment", "replicaset", "job"].includes(parentType);
+      }
+
       const node =
         cachedNode ||
         ({
@@ -552,12 +650,15 @@ const WecsTreeview = () => {
                     onClose: handleClosePanel,
                     isOpen: true,
                     resourceData,
+                    initialTab: 0,
                     cluster,
+                    isDeploymentOrJobPod,
                   });
                 }}
                 onMenuClick={(e) => handleMenuOpen(e, id)}
               />
             ),
+            isDeploymentOrJobPod,
           },
           position: { x: 0, y: 0 },
           style: {
@@ -973,7 +1074,7 @@ const WecsTreeview = () => {
             namespace = nodeIdParts[2];
             cluster = nodeIdParts[1];
           } else if (nodeIdParts.length >= 4) {
-            nodeType = "pod";
+            nodeType = nodeIdParts[0].toLowerCase();
             namespace = nodeIdParts[2];
             cluster = nodeIdParts[1];
           } else {
@@ -981,6 +1082,7 @@ const WecsTreeview = () => {
           }
 
           const resourceData = node.data.label.props.resourceData;
+          const isDeploymentOrJobPod = node.data.isDeploymentOrJobPod;
 
           switch (action) {
             case "Details":
@@ -993,6 +1095,7 @@ const WecsTreeview = () => {
                 resourceData,
                 initialTab: 0,
                 cluster,
+                isDeploymentOrJobPod,
               });
               break;
             case "Edit":
@@ -1005,19 +1108,23 @@ const WecsTreeview = () => {
                 resourceData,
                 initialTab: 1,
                 cluster,
+                isDeploymentOrJobPod,
               });
               break;
             case "Logs":
-              setSelectedNode({
-                namespace: namespace || "default",
-                name: nodeName,
-                type: nodeType,
-                onClose: handleClosePanel,
-                isOpen: true,
-                resourceData,
-                initialTab: 2,
-                cluster,
-              });
+              if (nodeType === "pod" && isDeploymentOrJobPod) {
+                setSelectedNode({
+                  namespace: namespace || "default",
+                  name: nodeName,
+                  type: nodeType,
+                  onClose: handleClosePanel,
+                  isOpen: true,
+                  resourceData,
+                  initialTab: 2,
+                  cluster,
+                  isDeploymentOrJobPod,
+                });
+              }
               break;
             default:
               break;
@@ -1188,7 +1295,11 @@ const WecsTreeview = () => {
 
         <Box sx={{ width: "100%", height: "calc(100% - 80px)", position: "relative" }}>
           {isLoading ? (
-            <LoadingFallback message="Loading the tree..." size="medium" />
+              viewMode === 'list' ? (
+                <ListViewSkeleton itemCount={8} />
+              ) : (
+                <WecsTreeviewSkeleton />
+              )
           ) : viewMode === 'list' ? (
             <ListViewComponent />
           ) : nodes.length > 0 || edges.length > 0 ? (
@@ -1255,6 +1366,7 @@ const WecsTreeview = () => {
           isOpen={selectedNode?.isOpen || false}
           initialTab={selectedNode?.initialTab}
           cluster={selectedNode?.cluster || ""}
+          isDeploymentOrJobPod={selectedNode?.isDeploymentOrJobPod}
         />
       </div>
     </Box>

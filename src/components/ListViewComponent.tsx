@@ -1,7 +1,7 @@
 import { Box, Typography, Button } from "@mui/material";
 import { useEffect, useState, useCallback, useRef } from "react";
 import useTheme from "../stores/themeStore";
-import LoadingFallback from "./LoadingFallback";
+import ListViewSkeleton from './ui/ListViewSkeleton'; 
 import { api } from "../lib/api";
 
 // Define the response interfaces
@@ -526,17 +526,9 @@ const ListViewComponent = ({
           borderBottom: theme === "dark" ? "1px solid #334155" : "1px solid #ccc",
         }}
       />
-      {initialLoading ? (
-        <Box sx={{ 
-          display: "flex", 
-          flexDirection: "column",
-          alignItems: "center", 
-          justifyContent: "center", 
-          height: "70vh" 
-        }}>
-          <LoadingFallback message={loadingMessage} size="medium" />
-        </Box>
-      ) : error ? (
+        {initialLoading ? (
+          <ListViewSkeleton itemCount={6} />
+        ) : error ? (
         <Box
           sx={{
             width: "100%",

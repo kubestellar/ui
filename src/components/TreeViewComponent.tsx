@@ -37,7 +37,8 @@ import CreateOptions from "../components/CreateOptions";
 import { NodeLabel } from "../components/Wds_Topology/NodeLabel";
 import { ZoomControls } from "../components/Wds_Topology/ZoomControls";
 import { FlowCanvas } from "../components/Wds_Topology/FlowCanvas";
-import LoadingFallback from "./LoadingFallback";
+import ListViewSkeleton from "./ui/ListViewSkeleton";
+import TreeViewSkeleton from "./ui/TreeViewSkeleton";
 import DynamicDetailsPanel from "./DynamicDetailsPanel";
 import GroupPanel from "./GroupPanel";
 import ReactDOM from "react-dom";
@@ -51,6 +52,7 @@ import ListViewComponent from "../components/ListViewComponent";
 import ContextDropdown from "../components/ContextDropdown";
 import { ResourceItem as ListResourceItem } from "./ListViewComponent"; // Import ResourceItem from ListViewComponent
 import useLabelHighlightStore from "../stores/labelHighlightStore";
+import { useLocation } from "react-router-dom";
 
 // Interfaces
 export interface NodeData {
@@ -535,6 +537,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
   const [resources, setResources] = useState<ResourceItem[]>([]);
   const [contextResourceCounts, setContextResourceCounts] = useState<Record<string, number>>({});
   const [totalResourceCount, setTotalResourceCount] = useState<number>(0);
+  const location = useLocation();
 
   const { isConnected, connect, hasValidData } = useWebSocket();
   const NAMESPACE_QUERY_KEY = ["namespaces"];
@@ -584,6 +587,15 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
       setDataReceived(true);
     }
   }, [websocketData, dataReceived]);
+
+  // Check for create=true in URL parameter to automatically open dialog
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get('create') === 'true') {
+      setShowCreateOptions(true);
+      setActiveOption("option1");
+    }
+  }, [location.search]);
 
   const getTimeAgo = useCallback((timestamp: string | undefined): string => {
     if (!timestamp) return "Unknown";
@@ -1673,7 +1685,11 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
 
         <Box sx={{ width: "100%", height: "calc(100% - 80px)", position: "relative" }}>
           {isLoading ? (
-            <LoadingFallback message="Loading the tree..." size="medium" />
+            viewMode === 'list' ? (
+              <ListViewSkeleton itemCount={8} />
+            ) : (
+              <TreeViewSkeleton />
+            )
           ) : viewMode === 'tiles' && (nodes.length > 0 || edges.length > 0) ? (
             <Box sx={{ width: "100%", height: "100%", position: "relative" }}>
               <ReactFlowProvider>

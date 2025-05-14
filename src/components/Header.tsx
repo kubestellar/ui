@@ -10,8 +10,8 @@ import { api } from "../lib/api";
 import useClusterStore from "../stores/clusterStore";
 import useTheme from "../stores/themeStore";
 import { useHeaderQueries } from '../hooks/queries/useHeaderQueries';
+import HeaderSkeleton from "./ui/HeaderSkeleton";
 import { useAuth, useAuthActions } from '../hooks/useAuth';
-import LoadingFallback from './LoadingFallback';
 
 interface Context {
   name: string;
@@ -152,7 +152,7 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
   // Access the theme store
   const { theme, toggleTheme } = useTheme();
 
-  if (isLoading) return <LoadingFallback message="Loading contexts..." size="small" />;
+  if (isLoading) return <HeaderSkeleton />;
   if (error) return <div>Error loading contexts: {error.message}</div>;
 
   const contexts = contextsData?.contexts || [];
