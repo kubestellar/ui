@@ -46,6 +46,7 @@ import { toast } from "react-hot-toast";
 import InboxIcon from "@mui/icons-material/Inbox";
 import PostAddIcon from "@mui/icons-material/PostAdd";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import TableSkeleton from "./ui/TableSkeleton";
 import { MdLabel } from "react-icons/md";
 
 interface ManagedClusterInfo {
@@ -61,6 +62,7 @@ interface ClustersTableProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  isLoading?: boolean;
   initialShowCreateOptions?: boolean;
   initialActiveOption?: string;
 }
@@ -546,6 +548,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
   currentPage,
   totalPages,
   onPageChange,
+  isLoading = false,
   initialShowCreateOptions = false,
   initialActiveOption = "option1",
 }) => {
@@ -1039,7 +1042,9 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
           )}
         </div>
       </div>
-
+      {isLoading ? (
+        <TableSkeleton rows={6} />
+      ) : (
       <TableContainer
         component={Paper}
         className="overflow-auto"
@@ -1284,6 +1289,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
           </TableBody>
         </Table>
       </TableContainer>
+      )}
 
       {filterByLabel && (
         <div className="flex items-center mt-4 p-2 rounded-lg bg-opacity-10" style={{ backgroundColor: isDark ? 'rgba(47, 134, 255, 0.1)' : 'rgba(47, 134, 255, 0.05)', border: `1px solid ${colors.border}` }}>
@@ -1308,8 +1314,8 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
           </Button>
         </div>
       )}
-
-      <div className="flex justify-between items-center mt-6 px-2">
+      {!isLoading && (
+        <div className="flex justify-between items-center mt-6 px-2">
         <Button
           disabled={currentPage === 1}
           onClick={() => onPageChange(currentPage - 1)}
@@ -1363,7 +1369,8 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
         >
           Next
         </Button>
-      </div>
+        </div>
+      )}
 
       <LabelEditDialog
         open={editDialogOpen}
