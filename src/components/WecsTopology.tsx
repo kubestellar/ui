@@ -51,6 +51,7 @@ import ListViewComponent from "../components/ListViewComponent";
 // Updated Interfaces
 export interface NodeData {
   label: JSX.Element;
+  isDeploymentOrJobPod?: boolean;
 }
 
 export interface BaseNode {
@@ -176,6 +177,7 @@ interface SelectedNode {
   resourceData?: ResourceItem;
   initialTab?: number;
   cluster?: string;
+  isDeploymentOrJobPod?: boolean;
 }
 
 interface ContextMenuState {
@@ -609,6 +611,13 @@ const WecsTreeview = () => {
       const timeAgo = getTimeAgo(timestamp);
       const cachedNode = nodeCache.current.get(id);
 
+      // Check if this is a pod that belongs to a Deployment, ReplicaSet, or Job
+      let isDeploymentOrJobPod = false;
+      if (type.toLowerCase() === "pod" && parent) {
+        const parentType = parent.split(":")[0]?.toLowerCase();
+        isDeploymentOrJobPod = ["deployment", "replicaset", "job"].includes(parentType);
+      }
+
       const node =
         cachedNode ||
         ({
@@ -641,12 +650,15 @@ const WecsTreeview = () => {
                     onClose: handleClosePanel,
                     isOpen: true,
                     resourceData,
+                    initialTab: 0,
                     cluster,
+                    isDeploymentOrJobPod,
                   });
                 }}
                 onMenuClick={(e) => handleMenuOpen(e, id)}
               />
             ),
+            isDeploymentOrJobPod,
           },
           position: { x: 0, y: 0 },
           style: {
@@ -1062,7 +1074,7 @@ const WecsTreeview = () => {
             namespace = nodeIdParts[2];
             cluster = nodeIdParts[1];
           } else if (nodeIdParts.length >= 4) {
-            nodeType = "pod";
+            nodeType = nodeIdParts[0].toLowerCase();
             namespace = nodeIdParts[2];
             cluster = nodeIdParts[1];
           } else {
@@ -1070,6 +1082,7 @@ const WecsTreeview = () => {
           }
 
           const resourceData = node.data.label.props.resourceData;
+          const isDeploymentOrJobPod = node.data.isDeploymentOrJobPod;
 
           switch (action) {
             case "Details":
@@ -1082,6 +1095,7 @@ const WecsTreeview = () => {
                 resourceData,
                 initialTab: 0,
                 cluster,
+                isDeploymentOrJobPod,
               });
               break;
             case "Edit":
@@ -1094,19 +1108,23 @@ const WecsTreeview = () => {
                 resourceData,
                 initialTab: 1,
                 cluster,
+                isDeploymentOrJobPod,
               });
               break;
             case "Logs":
-              setSelectedNode({
-                namespace: namespace || "default",
-                name: nodeName,
-                type: nodeType,
-                onClose: handleClosePanel,
-                isOpen: true,
-                resourceData,
-                initialTab: 2,
-                cluster,
-              });
+              if (nodeType === "pod" && isDeploymentOrJobPod) {
+                setSelectedNode({
+                  namespace: namespace || "default",
+                  name: nodeName,
+                  type: nodeType,
+                  onClose: handleClosePanel,
+                  isOpen: true,
+                  resourceData,
+                  initialTab: 2,
+                  cluster,
+                  isDeploymentOrJobPod,
+                });
+              }
               break;
             default:
               break;
@@ -1348,6 +1366,7 @@ const WecsTreeview = () => {
           isOpen={selectedNode?.isOpen || false}
           initialTab={selectedNode?.initialTab}
           cluster={selectedNode?.cluster || ""}
+          isDeploymentOrJobPod={selectedNode?.isDeploymentOrJobPod}
         />
       </div>
     </Box>
