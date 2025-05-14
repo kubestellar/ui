@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import { BindingPolicyInfo } from "../../../types/bindingPolicy";
 import useTheme from "../../../stores/themeStore";
+import CancelButton from "../../common/CancelButton";
 
 interface EditBindingPolicyDialogProps {
   open: boolean;
@@ -172,19 +173,7 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
           borderTop: 1,
           borderColor: 'divider'
         }}>
-          <Button 
-            onClick={handleClose}
-            variant="outlined"
-            sx={{
-              color: isDarkTheme ? '#fff' : undefined,
-              borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.23)' : undefined,
-              '&:hover': {
-                borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.4)' : undefined,
-              },
-            }}
-          >
-            Cancel
-          </Button>
+          <CancelButton onClick={handleClose} />
           <Button
             variant="contained"
             onClick={handleSave}

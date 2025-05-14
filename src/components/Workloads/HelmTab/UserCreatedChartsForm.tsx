@@ -1,4 +1,5 @@
 import { Box,Typography, Checkbox, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions, Button,Menu } from "@mui/material";
+import CancelButton from "../../common/CancelButton";
 import  { AxiosError } from "axios";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
@@ -223,17 +224,7 @@ export const UserCreatedChartsForm = ({ handleChartSelection, setUserCharts, the
                     </Typography>
                 </DialogContent>
                 <DialogActions sx={{ justifyContent: "space-between", padding: "0 16px 16px 16px" }}>
-                    <Button
-                        onClick={handleDeleteCancel}
-                        sx={{
-                            textTransform: "none",
-                            color: "#2F86FF",
-                            fontWeight: 600,
-                            "&:hover": { backgroundColor: "rgba(47, 134, 255, 0.1)" },
-                        }}
-                    >
-                        Cancel
-                    </Button>
+                    <CancelButton onClick={handleDeleteCancel} />
                     <Button
                         onClick={handleDeleteConfirm}
                         sx={{

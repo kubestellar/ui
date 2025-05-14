@@ -1,4 +1,5 @@
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Typography } from "@mui/material";
+import CancelButton from "../common/CancelButton";
 import { getWebhookAndCredentialDialogPaperProps } from "../../utils/dialogUtils";
 import useTheme from "../../stores/themeStore"; // Import useTheme for dark mode support
 
@@ -150,20 +151,7 @@ export const AddCredentialsDialog = ({
         </Box>
       </DialogContent>
       <DialogActions sx={{ padding: "16px 24px", borderTop: "1px solid #e0e0e0" }}>
-        <Button
-          onClick={handleCloseCredentialDialog}
-          sx={{
-            textTransform: "none",
-            fontWeight: 600,
-            color: "#666",
-            padding: "8px 16px",
-            "&:hover": {
-              backgroundColor: "#f5f5f5",
-            },
-          }}
-        >
-          Cancel
-        </Button>
+        <CancelButton onClick={handleCloseCredentialDialog} />
         <Button
           variant="contained"
           onClick={handleAddCredential}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, KeyboardEvent as ReactKeyboardEvent } from "react";
+import CancelButton from "./common/CancelButton";
 import {
   Button,
   Checkbox,
@@ -509,17 +510,10 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
           justifyContent: 'space-between',
         }}
       >
-        <Button 
+        <CancelButton
           onClick={onClose}
-          style={{ 
-            color: colors.textSecondary,
-          }}
-          variant="text"
-          startIcon={<CloseIcon />}
           disabled={saving}
-        >
-          Cancel
-        </Button>
+        />
         
         <Button 
           onClick={handleSave}

@@ -8,6 +8,7 @@ import {
   Typography,
 } from "@mui/material";
 import useTheme from "../../../stores/themeStore";
+import CancelButton from "../../common/CancelButton";
 
 interface DeleteDialogProps {
   open: boolean;
@@ -46,7 +47,7 @@ const DeleteDialog: React.FC<DeleteDialogProps> = ({
         </Typography>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <CancelButton onClick={onClose} />
         <Button variant="contained" color="error" onClick={onConfirm}>
           Delete
         </Button>

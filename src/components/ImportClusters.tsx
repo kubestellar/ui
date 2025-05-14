@@ -12,6 +12,7 @@ import {
   Snackbar,
 } from "@mui/material";
 import useTheme from "../stores/themeStore";
+import CancelButton from "./common/CancelButton";
 import { api } from "../lib/api";
 
 // Common styling objects
@@ -785,13 +786,9 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                       position: "relative",
                       zIndex: 2,
                     }}>
-                      <Button 
+                      <CancelButton 
                         onClick={handleCancel}
-                        variant="outlined"
-                        sx={secondaryButtonStyles}
-                      >
-                        Cancel
-                      </Button>
+                      />
                     <Button
                       variant="contained"
                       onClick={handleFileUpload}
@@ -940,13 +937,9 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                 </Box>
 
                     <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
-                      <Button 
+                      <CancelButton 
                         onClick={handleCancel} 
-                        variant="outlined"
-                        sx={secondaryButtonStyles}
-                      >
-                      Cancel
-                    </Button>
+                    />
                       <Button 
                         variant="contained" 
                         disabled={!formData.clusterName.trim()}
@@ -1488,19 +1481,9 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                           pt: 2.5,
                           borderTop: `1px solid ${theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"}`,
                         }}>
-                          <Button 
-                            variant="outlined"
+                          <CancelButton
                             onClick={onCancel}
-                            sx={{
-                              ...secondaryButtonStyles,
-                              "&:focus-visible": {
-                                outline: `2px solid ${colors.primary}`,
-                                outlineOffset: 2
-                              }
-                            }}
-                          >
-                            Cancel
-                          </Button>
+                          />
                           <Button
                             variant="contained"
                             onClick={handleGenerateCommand}
@@ -2298,13 +2281,9 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                             >
                               Back
                             </Button>
-                            <Button
-                              variant="outlined"
+                            <CancelButton
                               onClick={onCancel}
-                            sx={secondaryButtonStyles}
-                          >
-                              Cancel
-                            </Button>
+                            />
                           </Box>
                           <Button
                             variant="contained"

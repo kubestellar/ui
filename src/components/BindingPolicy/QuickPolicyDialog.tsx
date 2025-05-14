@@ -19,6 +19,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import CodeIcon from '@mui/icons-material/Code';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
+import CancelButton from '../common/CancelButton';
 import { PolicyConfiguration } from './ConfigurationSidebar';
 import Editor from "@monaco-editor/react";
 import yaml from "js-yaml";
@@ -358,7 +359,7 @@ const QuickPolicyDialog: React.FC<QuickPolicyDialogProps> = ({ open, onClose, on
         {activeTab === 'form' ? renderFormContent() : renderYamlPreview()}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <CancelButton onClick={onClose} />
         <Button onClick={handleSave} variant="contained" color="primary" disabled={!name || !namespace}>
           Create Policy
         </Button>

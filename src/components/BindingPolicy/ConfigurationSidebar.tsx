@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import CancelButton from "../common/CancelButton";
 import {
   Drawer,
   Box,
@@ -718,13 +719,10 @@ const ConfigurationSidebar: React.FC<ConfigurationSidebarProps> = ({
       
       {/* Action Buttons (always shown) */}
       <Box sx={{ mt: 'auto', pt: 2, display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid', borderColor: 'divider' }}>
-        <Button
-          variant="outlined"
+        <CancelButton
           onClick={onClose}
           sx={{ mr: 1 }}
-        >
-          Cancel
-        </Button>
+        />
         <Button
           variant="contained"
           color="primary"
