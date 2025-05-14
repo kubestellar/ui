@@ -1345,11 +1345,51 @@ const WecsTreeview = () => {
               onClose={handleMenuClose}
               anchorReference="anchorPosition"
               anchorPosition={contextMenu ? { top: contextMenu.y, left: contextMenu.x } : undefined}
+              PaperProps={{
+                style: {
+                  backgroundColor: theme === "dark" ? "#1F2937" : "#fff",
+                  color: theme === "dark" ? "#fff" : "inherit",
+                  boxShadow: theme === "dark" ? "0 4px 20px rgba(0, 0, 0, 0.5)" : "0 4px 20px rgba(0, 0, 0, 0.15)"
+                }
+              }}
             >
-              <MenuItem onClick={() => handleMenuAction("Details")}>Details</MenuItem>
-              <MenuItem onClick={() => handleMenuAction("Edit")}>Edit</MenuItem>
-              {contextMenu.nodeType !== "cluster" && (
-                <MenuItem onClick={() => handleMenuAction("Logs")}>Logs</MenuItem>
+              <MenuItem 
+                onClick={() => handleMenuAction("Details")}
+                sx={{
+                  color: theme === "dark" ? "#fff" : "inherit",
+                  "&:hover": {
+                    backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)"
+                  }
+                }}
+              >
+                Details
+              </MenuItem>
+              <MenuItem 
+                onClick={() => handleMenuAction("Edit")}
+                sx={{
+                  color: theme === "dark" ? "#fff" : "inherit",
+                  "&:hover": {
+                    backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)"
+                  }
+                }}
+              >
+                Edit
+              </MenuItem>
+              {contextMenu.nodeType === "pod" && 
+               contextMenu.nodeId && 
+               contextMenu.nodeId.startsWith("pod:") &&
+               nodes.find(n => n.id === contextMenu.nodeId)?.data?.isDeploymentOrJobPod && (
+                <MenuItem 
+                  onClick={() => handleMenuAction("Logs")}
+                  sx={{
+                    color: theme === "dark" ? "#fff" : "inherit",
+                    "&:hover": {
+                      backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)"
+                    }
+                  }}
+                >
+                  Logs
+                </MenuItem>
               )}
             </Menu>
           )}
