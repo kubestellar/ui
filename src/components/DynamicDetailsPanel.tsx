@@ -686,36 +686,38 @@ const DynamicDetailsPanel = ({
               {tabValue === 1 && (
                 <Box sx={{ display: "flex", flexDirection: "column" }}>
                   <Stack direction="row" spacing={4} mb={3} ml={4}>
+                                  <Button
+                variant={editFormat === "yaml" ? "contained" : "outlined"}
+                onClick={() => handleFormatChange("yaml")}
+                sx={{
+                  textTransform: "none",
+                  backgroundColor: editFormat === "yaml" ? "#2F86FF" : "transparent",
+                  borderRadius: "8px",
+                  color: editFormat === "yaml" ? "#fff" : "#2F86FF",
+                  border: editFormat === "yaml" ? "none" : "1px solid #2F86FF",
+                  "&:hover": {
+                    backgroundColor: editFormat === "yaml" ? "#1565c0" : "rgba(47, 134, 255, 0.08)",
+                  },
+                }}
+              >
+                YAML
+              </Button>
                     <Button
-                      variant={editFormat === "yaml" ? "contained" : "outlined"}
-                      onClick={() => handleFormatChange("yaml")}
-                      sx={{
-                        textTransform: "none",
-                        backgroundColor: "#2F86FF",
-                        borderRadius: "8px",
-                        color: "#fff",
-                        "&:hover": {
-                          backgroundColor: "#1565c0",
-                        },
-                      }}
-                    >
-                      YAML
-                    </Button>
-                    <Button
-                      variant={editFormat === "json" ? "contained" : "outlined"}
-                      onClick={() => handleFormatChange("json")}
-                      sx={{
-                        textTransform: "none",
-                        backgroundColor: "#2F86FF",
-                        borderRadius: "8px",
-                        color: "#fff",
-                        "&:hover": {
-                          backgroundColor: "#1565c0",
-                        },
-                      }}
-                    >
-                      JSON
-                    </Button>
+  variant={editFormat === "json" ? "contained" : "outlined"}
+  onClick={() => handleFormatChange("json")}
+  sx={{
+    textTransform: "none",
+    backgroundColor: editFormat === "json" ? "#2F86FF" : "transparent",
+    borderRadius: "8px",
+    color: editFormat === "json" ? "#fff" : "#2F86FF",
+    border: editFormat === "json" ? "none" : "1px solid #2F86FF",
+    "&:hover": {
+      backgroundColor: editFormat === "json" ? "#1565c0" : "rgba(47, 134, 255, 0.08)",
+    },
+  }}
+>
+  JSON
+</Button>
                   </Stack>
                   <Box sx={{ overflow: "auto", maxHeight: "500px" }}>
                     <Editor
