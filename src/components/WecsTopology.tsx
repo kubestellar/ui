@@ -550,6 +550,58 @@ const WecsTreeview = () => {
     renderStartTime.current = performance.now();
   }, []);
 
+  // Add effect to update node styles when theme changes
+  useEffect(() => {
+    if (nodes.length > 0) {
+      console.log("[WecsTopology] Theme changed, updating node styles");
+      
+      // Create a new array with updated node styles for the current theme
+      setNodes(currentNodes => {
+        return currentNodes.map(node => {
+          // Update style with the current theme
+          return {
+            ...node,
+            style: {
+              ...node.style,
+              backgroundColor: theme === "dark" ? "#333" : "#fff",
+              color: theme === "dark" ? "#fff" : "#000",
+              transition: "all 0.2s ease-in-out"
+            }
+          };
+        });
+      });
+      
+      // Update edge styles for the current theme
+      setEdges(currentEdges => {
+        return currentEdges.map(edge => {
+          // Make a type-safe copy of the marker end
+          const markerEnd: { type: MarkerType; color?: string; width?: number; height?: number } = {
+            type: edge.markerEnd?.type || MarkerType.ArrowClosed,
+            color: theme === "dark" ? "#ccc" : "#a3a3a3"
+          };
+          
+          // If the original marker has width and height, preserve them
+          if (edge.markerEnd?.width) {
+            markerEnd.width = edge.markerEnd.width;
+          }
+          
+          if (edge.markerEnd?.height) {
+            markerEnd.height = edge.markerEnd.height;
+          }
+          
+          return {
+            ...edge,
+            style: { 
+              stroke: theme === "dark" ? "#ccc" : "#a3a3a3", 
+              strokeDasharray: "2,2" 
+            },
+            markerEnd
+          };
+        });
+      });
+    }
+  }, [theme, nodes.length]);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setMinimumLoadingTimeElapsed(true);
@@ -669,10 +721,21 @@ const WecsTreeview = () => {
             padding: "2px 12px",
             backgroundColor: theme === "dark" ? "#333" : "#fff",
             color: theme === "dark" ? "#fff" : "#000",
+            transition: "all 0.2s ease-in-out",
           },
           sourcePosition: Position.Right,
           targetPosition: Position.Left,
         } as CustomNode);
+
+      // If node is cached, ensure its style is updated for the current theme
+      if (cachedNode) {
+        node.style = {
+          ...node.style,
+          backgroundColor: theme === "dark" ? "#333" : "#fff",
+          color: theme === "dark" ? "#fff" : "#000",
+          transition: "all 0.2s ease-in-out",
+        };
+      }
 
       if (!cachedNode) nodeCache.current.set(id, node);
       newNodes.push(node);
@@ -694,7 +757,18 @@ const WecsTreeview = () => {
           newEdges.push(edge);
           edgeCache.current.set(edgeId, edge);
         } else {
-          newEdges.push(cachedEdge);
+          // Update cached edge styles for the current theme
+          const markerEnd: { type: MarkerType; color?: string; width?: number; height?: number } = {
+            type: cachedEdge.markerEnd?.type || MarkerType.ArrowClosed,
+            color: theme === "dark" ? "#ccc" : "#a3a3a3"
+          };
+          
+          const updatedEdge = {
+            ...cachedEdge,
+            style: { stroke: theme === "dark" ? "#ccc" : "#a3a3a3", strokeDasharray: "2,2" },
+            markerEnd
+          };
+          newEdges.push(updatedEdge);
         }
       }
     },
@@ -711,6 +785,11 @@ const WecsTreeview = () => {
         });
         return;
       }
+
+      // Clear caches when theme changes to ensure proper styling
+      nodeCache.current.clear();
+      edgeCache.current.clear();
+      edgeIdCounter.current = 0;
 
       const newNodes: CustomNode[] = [];
       const newEdges: CustomEdge[] = [];
@@ -1113,17 +1192,17 @@ const WecsTreeview = () => {
               break;
             case "Logs":
               if (nodeType === "pod" && isDeploymentOrJobPod) {
-                setSelectedNode({
-                  namespace: namespace || "default",
-                  name: nodeName,
-                  type: nodeType,
-                  onClose: handleClosePanel,
-                  isOpen: true,
-                  resourceData,
-                  initialTab: 2,
-                  cluster,
+              setSelectedNode({
+                namespace: namespace || "default",
+                name: nodeName,
+                type: nodeType,
+                onClose: handleClosePanel,
+                isOpen: true,
+                resourceData,
+                initialTab: 2,
+                cluster,
                   isDeploymentOrJobPod,
-                });
+              });
               }
               break;
             default:
@@ -1345,11 +1424,51 @@ const WecsTreeview = () => {
               onClose={handleMenuClose}
               anchorReference="anchorPosition"
               anchorPosition={contextMenu ? { top: contextMenu.y, left: contextMenu.x } : undefined}
+              PaperProps={{
+                style: {
+                  backgroundColor: theme === "dark" ? "#1F2937" : "#fff",
+                  color: theme === "dark" ? "#fff" : "inherit",
+                  boxShadow: theme === "dark" ? "0 4px 20px rgba(0, 0, 0, 0.5)" : "0 4px 20px rgba(0, 0, 0, 0.15)"
+                }
+              }}
             >
-              <MenuItem onClick={() => handleMenuAction("Details")}>Details</MenuItem>
-              <MenuItem onClick={() => handleMenuAction("Edit")}>Edit</MenuItem>
-              {contextMenu.nodeType !== "cluster" && (
-                <MenuItem onClick={() => handleMenuAction("Logs")}>Logs</MenuItem>
+              <MenuItem 
+                onClick={() => handleMenuAction("Details")}
+                sx={{
+                  color: theme === "dark" ? "#fff" : "inherit",
+                  "&:hover": {
+                    backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)"
+                  }
+                }}
+              >
+                Details
+              </MenuItem>
+              <MenuItem 
+                onClick={() => handleMenuAction("Edit")}
+                sx={{
+                  color: theme === "dark" ? "#fff" : "inherit",
+                  "&:hover": {
+                    backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)"
+                  }
+                }}
+              >
+                Edit
+              </MenuItem>
+              {contextMenu.nodeType === "pod" && 
+               contextMenu.nodeId && 
+               contextMenu.nodeId.startsWith("pod:") &&
+               nodes.find(n => n.id === contextMenu.nodeId)?.data?.isDeploymentOrJobPod && (
+                <MenuItem 
+                  onClick={() => handleMenuAction("Logs")}
+                  sx={{
+                    color: theme === "dark" ? "#fff" : "inherit",
+                    "&:hover": {
+                      backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)"
+                    }
+                  }}
+                >
+                  Logs
+                </MenuItem>
               )}
             </Menu>
           )}

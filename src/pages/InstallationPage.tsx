@@ -18,7 +18,8 @@ import {
   HelpCircle,
   Zap,
   Book,
-  Globe
+  Globe,
+  FileText
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
@@ -412,19 +413,24 @@ const PrerequisiteCard = ({ prerequisite }: { prerequisite: Prerequisite }) => {
 const TabButton = ({ 
   active, 
   onClick, 
-  children 
+  children,
+  disabled = false
 }: { 
   active: boolean; 
   onClick: () => void; 
   children: React.ReactNode;
+  disabled?: boolean;
 }) => {
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
       className={`px-4 py-2 rounded-md text-sm transition-colors ${
-        active 
-          ? 'bg-blue-600 text-white font-medium' 
-          : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+        disabled 
+          ? 'bg-slate-800/50 text-slate-500 cursor-not-allowed' 
+          : active 
+            ? 'bg-blue-600 text-white font-medium' 
+            : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
       }`}
     >
       {children}
@@ -1029,6 +1035,7 @@ const InstallationPage = () => {
                       setActiveTab('prerequisites');
                       setCurrentStep('prerequisites');
                     }}
+                    disabled={skipPrerequisitesCheck}
                   >
                     Prerequisites
                   </TabButton>
@@ -1150,6 +1157,30 @@ const InstallationPage = () => {
                       title="Install KubeStellar" 
                       description="Choose your platform and run the installation script"
                     />
+                    
+                    {/* Prerequisites Documentation Link */}
+                    <div className="mb-6 p-4 bg-blue-950/30 border border-blue-800/40 rounded-lg">
+                      <div className="flex items-start">
+                        <FileText size={24} className="text-blue-400 mt-0.5 mr-3 flex-shrink-0" />
+                        <div>
+                          <h3 className="text-lg font-medium text-white mb-2">
+                            Install Prerequisites First
+                          </h3>
+                          <p className="text-slate-300 mb-3">
+                            Before running the installation script, ensure you have all the required prerequisites installed on your system.
+                          </p>
+                          <a
+                            href="https://docs.kubestellar.io/release-0.27.2/direct/pre-reqs/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md transition-colors"
+                          >
+                            <Book size={16} className="mr-2" />
+                            View Install Prerequisites
+                          </a>
+                        </div>
+                      </div>
+                    </div>
                     
                     {/* Platform selection */}
                     <div className="mb-6">
