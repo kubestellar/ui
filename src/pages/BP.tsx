@@ -15,6 +15,7 @@ import {
 import useTheme from "../stores/themeStore";
 // Import React Query hooks
 import { useClusterQueries } from "../hooks/queries/useClusterQueries";
+import BPSkeleton from '../components/ui/BPSkeleton';
 import { useWDSQueries } from "../hooks/queries/useWDSQueries";
 import { useBPQueries } from "../hooks/queries/useBPQueries";
 import { PolicyData } from "../components/BindingPolicy/CreateBindingPolicyDialog";
@@ -97,20 +98,6 @@ const EmptyState: React.FC<{
       >
         {buttonText}
       </Button>
-    </Box>
-  );
-};
-
-// Create a separate LoadingIndicator component outside of the BP component
-const LoadingIndicator: React.FC = () => {
-  const theme = useTheme(state => state.theme);
-  return (
-    <Box sx={{ 
-      textAlign: "center", 
-      color: theme === "dark" ? "#E5E7EB" : "text.secondary", 
-      py: 3 
-    }}>
-      Loading KubeStellar Binding Policies...
     </Box>
   );
 };
@@ -663,9 +650,9 @@ const BP = () => {
   }, [selectedPolicies, setSuccessMessage, setSelectedPolicies, setBindingPolicies, deleteMultiplePoliciesMutation]);
 
   // Modify the conditional return for loading to use the component:
-  if (loading) {
-    return <LoadingIndicator />;
-  }
+  // if (loading) {
+  //   return <BPSkeleton />;
+  // }
 
   return (
     <>
@@ -730,7 +717,9 @@ const BP = () => {
 
         {viewMode === 'table' ? (
           <>
-            {clusters.length === 0 && workloads.length === 0 ? (
+            {loading ? (
+            <BPSkeleton rows={5} />
+            ) : clusters.length === 0 && workloads.length === 0 ? (
               <EmptyState onCreateClick={() => navigate('/its')} type="both" />
             ) : clusters.length === 0 ? (
               <EmptyState onCreateClick={() => navigate('/its')} type="clusters" />
