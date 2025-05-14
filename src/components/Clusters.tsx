@@ -1,11 +1,11 @@
 import { useK8sQueries } from '../hooks/queries/useK8sQueries';
-import LoadingFallback from './LoadingFallback';
+import ClusterSkeleton from './ui/ClusterSkeleton.tsx'
 
 const K8sInfo = () => {
   const { useK8sInfo } = useK8sQueries();
   const { data, error, isLoading } = useK8sInfo();
 
-  if (isLoading) return <LoadingFallback message="Loading cluster information..." size="medium" />;
+  if (isLoading) return <ClusterSkeleton/>;
   if (error) return <div>Error loading contexts: {error.message}</div>;
 
   const contexts = data?.contexts.filter(ctx => ctx.name.endsWith("-kubeflex")) || [];

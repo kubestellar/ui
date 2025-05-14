@@ -1,7 +1,7 @@
 import { useWDSQueries } from "../hooks/queries/useWDSQueries";
 import TreeView from "../components/TreeViewComponent"; // Replace with your TreeView component path
 // import useTheme from "../stores/themeStore";
-import LoadingFallback from "../components/LoadingFallback";
+import WDSSkeleton from "../components/ui/WDSSkeleton";
 
 const WDS = () => {
   // const theme = useTheme((state) => state.theme);
@@ -10,7 +10,7 @@ const WDS = () => {
   const { isLoading, isError } = useWorkloads();
 
 
-  if (isLoading) return <LoadingFallback message="Loading WDS Workloads..." size="medium" />;
+  if (isLoading) return <WDSSkeleton/>;
   if (isError) {
     return (
       <div className="text-center p-4 text-red-600 dark:text-red-400">

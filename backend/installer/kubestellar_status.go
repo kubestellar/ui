@@ -57,7 +57,20 @@ func CheckKubeStellarStatus() KubeStellarStatus {
 			}
 
 			status.AllReady = status.WDS1Namespace && status.ITS1Namespace
-			status.Message = "KubeStellar context and required namespaces verified"
+
+			// Set the appropriate message based on namespace status
+			if status.AllReady {
+				status.Message = "KubeStellar context and required namespaces verified"
+			} else {
+				missingNamespaces := []string{}
+				if !status.WDS1Namespace {
+					missingNamespaces = append(missingNamespaces, "wds1-system")
+				}
+				if !status.ITS1Namespace {
+					missingNamespaces = append(missingNamespaces, "its1-system")
+				}
+				status.Message = fmt.Sprintf("KubeStellar context found, but required namespaces are missing: %s", strings.Join(missingNamespaces, ", "))
+			}
 			break
 		}
 	}

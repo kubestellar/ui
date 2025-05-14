@@ -547,7 +547,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
           workloadLabels[labelInfo.key] = labelInfo.value;
         }
       } else {
-        workloadLabels['kubernetes.io/kubestellar.workload.name'] = workloadObj.name;
+        workloadLabels['kubestellar.io/workload'] = workloadObj.name;
       }
       
       if (clusterId.startsWith('label-')) {
@@ -796,7 +796,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
           workloadLabels[labelInfo.key] = labelInfo.value;
         }
       } else {
-        workloadLabels['kubernetes.io/kubestellar.workload.name'] = workloadObj.name;
+        workloadLabels['kubestellar.io/workload'] = workloadObj.name;
       }
       
       if (clusterId.startsWith('label-')) {

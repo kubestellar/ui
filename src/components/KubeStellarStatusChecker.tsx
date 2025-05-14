@@ -33,17 +33,14 @@ const KubeStellarStatusChecker = ({ children }: KubeStellarStatusCheckerProps) =
         }
         
         // Prevent infinite loop, if not at login or install, check other paths
-        if (!['/login', '/install', '/', ''].includes(location.pathname) && 
-            !location.pathname.startsWith('/installation/logs/') && 
-            !data.allReady) {
+        if (!['/login', '/install', '/', ''].includes(location.pathname) && !data.allReady) {
           navigate('/install');
         }
       } catch (error) {
         console.error('Error checking KubeStellar status:', error);
         
         // On error, redirect to installation page to be safe
-        if (!['/install'].includes(location.pathname) && 
-            !location.pathname.startsWith('/installation/logs/')) {
+        if (!['/install'].includes(location.pathname)) {
           navigate('/install');
         }
       } finally {
@@ -51,12 +48,7 @@ const KubeStellarStatusChecker = ({ children }: KubeStellarStatusCheckerProps) =
       }
     };
 
-    // Only check if we're not on a path that's specifically for installation
-    if (!location.pathname.startsWith('/installation/logs/')) {
-      checkInstallation();
-    } else {
-      setIsChecking(false);
-    }
+    checkInstallation();
   }, [navigate, location.pathname]);
 
   // If still checking, show nothing and wait

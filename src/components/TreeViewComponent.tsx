@@ -37,7 +37,8 @@ import CreateOptions from "../components/CreateOptions";
 import { NodeLabel } from "../components/Wds_Topology/NodeLabel";
 import { ZoomControls } from "../components/Wds_Topology/ZoomControls";
 import { FlowCanvas } from "../components/Wds_Topology/FlowCanvas";
-import LoadingFallback from "./LoadingFallback";
+import ListViewSkeleton from "./ui/ListViewSkeleton";
+import TreeViewSkeleton from "./ui/TreeViewSkeleton";
 import DynamicDetailsPanel from "./DynamicDetailsPanel";
 import GroupPanel from "./GroupPanel";
 import ReactDOM from "react-dom";
@@ -51,7 +52,9 @@ import ListViewComponent from "../components/ListViewComponent";
 import ContextDropdown from "../components/ContextDropdown";
 import { ResourceItem as ListResourceItem } from "./ListViewComponent"; // Import ResourceItem from ListViewComponent
 import useLabelHighlightStore from "../stores/labelHighlightStore";
+
 import CancelButton from "./common/CancelButton";
+import { useLocation } from "react-router-dom";
 
 // Interfaces
 export interface NodeData {
@@ -536,6 +539,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
   const [resources, setResources] = useState<ResourceItem[]>([]);
   const [contextResourceCounts, setContextResourceCounts] = useState<Record<string, number>>({});
   const [totalResourceCount, setTotalResourceCount] = useState<number>(0);
+  const location = useLocation();
 
   const { isConnected, connect, hasValidData } = useWebSocket();
   const NAMESPACE_QUERY_KEY = ["namespaces"];
@@ -585,6 +589,15 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
       setDataReceived(true);
     }
   }, [websocketData, dataReceived]);
+
+  // Check for create=true in URL parameter to automatically open dialog
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get('create') === 'true') {
+      setShowCreateOptions(true);
+      setActiveOption("option1");
+    }
+  }, [location.search]);
 
   const getTimeAgo = useCallback((timestamp: string | undefined): string => {
     if (!timestamp) return "Unknown";
@@ -1674,7 +1687,11 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
 
         <Box sx={{ width: "100%", height: "calc(100% - 80px)", position: "relative" }}>
           {isLoading ? (
-            <LoadingFallback message="Loading the tree..." size="medium" />
+            viewMode === 'list' ? (
+              <ListViewSkeleton itemCount={8} />
+            ) : (
+              <TreeViewSkeleton />
+            )
           ) : viewMode === 'tiles' && (nodes.length > 0 || edges.length > 0) ? (
             <Box sx={{ width: "100%", height: "100%", position: "relative" }}>
               <ReactFlowProvider>
@@ -1731,13 +1748,60 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
               onClose={handleMenuClose}
               anchorReference="anchorPosition"
               anchorPosition={contextMenu ? { top: contextMenu.y, left: contextMenu.x } : undefined}
+              PaperProps={{
+                style: {
+                  backgroundColor: theme === "dark" ? "#1F2937" : "#fff",
+                  color: theme === "dark" ? "#fff" : "inherit",
+                  boxShadow: theme === "dark" ? "0 4px 20px rgba(0, 0, 0, 0.5)" : "0 4px 20px rgba(0, 0, 0, 0.15)"
+                }
+              }}
             >
-              <MenuItem onClick={() => handleMenuAction("Details")}>Details</MenuItem>
+              <MenuItem 
+                onClick={() => handleMenuAction("Details")}
+                sx={{
+                  color: theme === "dark" ? "#fff" : "inherit",
+                  "&:hover": {
+                    backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)"
+                  }
+                }}
+              >
+                Details
+              </MenuItem>
               {contextMenu.nodeType !== "context" && (
                 <React.Fragment>
-                  <MenuItem onClick={() => handleMenuAction("Delete")}>Delete</MenuItem>
-                  <MenuItem onClick={() => handleMenuAction("Edit")}>Edit</MenuItem>
-                  <MenuItem onClick={() => handleMenuAction("Logs")}>Logs</MenuItem>
+                  <MenuItem 
+                    onClick={() => handleMenuAction("Delete")}
+                    sx={{
+                      color: theme === "dark" ? "#fff" : "inherit",
+                      "&:hover": {
+                        backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)"
+                      }
+                    }}
+                  >
+                    Delete
+                  </MenuItem>
+                  <MenuItem 
+                    onClick={() => handleMenuAction("Edit")}
+                    sx={{
+                      color: theme === "dark" ? "#fff" : "inherit",
+                      "&:hover": {
+                        backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)"
+                      }
+                    }}
+                  >
+                    Edit
+                  </MenuItem>
+                  <MenuItem 
+                    onClick={() => handleMenuAction("Logs")}
+                    sx={{
+                      color: theme === "dark" ? "#fff" : "inherit",
+                      "&:hover": {
+                        backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)"
+                      }
+                    }}
+                  >
+                    Logs
+                  </MenuItem>
                 </React.Fragment>
               )}
             </Menu>
@@ -1842,5 +1906,6 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
     </Box>
   );
 };
+
 
 export default memo(TreeViewComponent);
