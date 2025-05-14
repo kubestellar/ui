@@ -16,7 +16,7 @@ import {
   ListItemText,
   IconButton,
   Tooltip,
-  useTheme,
+  useTheme as useMuiTheme,
   FormGroup,
   FormControlLabel,
   Checkbox
@@ -24,6 +24,7 @@ import {
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import PublishIcon from '@mui/icons-material/Publish';
+import useTheme from "../../stores/themeStore";
 
 interface PolicyDragDropProps {
   policies?: BindingPolicyInfo[];
@@ -35,8 +36,9 @@ interface PolicyDragDropProps {
 }
 
 const HelpDialog: React.FC<{open: boolean, onClose: () => void}> = ({open, onClose}) => {
-  const theme = useTheme();
-  const isDarkMode = theme.palette.mode === 'dark';
+  const muiTheme = useMuiTheme();
+  const theme = useTheme((state) => state.theme);
+  const isDarkTheme = theme === "dark";  // Use your custom theme implementation
   const [isChecked, setIsChekcked] = useState(!!localStorage.getItem("donot_show_again"));
   
   return (
@@ -47,9 +49,9 @@ const HelpDialog: React.FC<{open: boolean, onClose: () => void}> = ({open, onClo
       PaperProps={{
         sx: {
           maxWidth: '600px',
-          bgcolor: isDarkMode ? "rgba(17, 25, 40, 0.95)" : undefined,
-          color: isDarkMode ? "#FFFFFF" : undefined,
-          border: isDarkMode ? '1px solid rgba(255, 255, 255, 0.15)' : undefined,
+          bgcolor: isDarkTheme ? "rgba(17, 25, 40, 0.95)" : undefined,
+          color: isDarkTheme ? "#FFFFFF" : undefined,
+          border: isDarkTheme ? '1px solid rgba(255, 255, 255, 0.15)' : undefined,
           backdropFilter: 'blur(10px)'
         }
       }}
@@ -58,10 +60,10 @@ const HelpDialog: React.FC<{open: boolean, onClose: () => void}> = ({open, onClo
         <Box display="flex" alignItems="center">
           <DragIndicatorIcon sx={{ 
             mr: 1,
-            color: isDarkMode ? "rgba(255, 255, 255, 0.9)" : undefined 
+            color: isDarkTheme ? "rgba(255, 255, 255, 0.9)" : undefined 
           }} />
           <Typography variant="h6" sx={{ 
-            color: isDarkMode ? "rgba(255, 255, 255, 0.9)" : undefined 
+            color: isDarkTheme ? "rgba(255, 255, 255, 0.9)" : undefined 
           }}>
            How to Use Click-to-Add
           </Typography>
@@ -69,23 +71,23 @@ const HelpDialog: React.FC<{open: boolean, onClose: () => void}> = ({open, onClo
       </DialogTitle>
       <DialogContent>
         <Typography paragraph sx={{ 
-          color: isDarkMode ? "rgba(255, 255, 255, 0.9)" : undefined 
+          color: isDarkTheme ? "rgba(255, 255, 255, 0.9)" : undefined 
         }}>
           Follow these steps to create binding policies using the label-based interface:
         </Typography>
         <List>
           <ListItem>
             <ListItemIcon>
-              <DragIndicatorIcon color={isDarkMode ? "info" : "primary"} />
+              <DragIndicatorIcon color={isDarkTheme ? "info" : "primary"} />
             </ListItemIcon>
             <ListItemText 
               primary={
-                <Typography sx={{ color: isDarkMode ? "rgba(255, 255, 255, 0.9)" : undefined }}>
+                <Typography sx={{ color: isDarkTheme ? "rgba(255, 255, 255, 0.9)" : undefined }}>
                   1. Add labels to the canvas
                 </Typography>
               }
               secondary={
-                <Typography variant="body2" sx={{ color: isDarkMode ? "rgba(255, 255, 255, 0.7)" : undefined }}>
+                <Typography variant="body2" sx={{ color: isDarkTheme ? "rgba(255, 255, 255, 0.7)" : undefined }}>
                   Click on cluster from the left panel and workload from the right panel to add them to the binding policy canvas
                 </Typography>
               }
@@ -93,16 +95,16 @@ const HelpDialog: React.FC<{open: boolean, onClose: () => void}> = ({open, onClo
           </ListItem>
           <ListItem>
             <ListItemIcon>
-              <PublishIcon color={isDarkMode ? "info" : "primary"} />
+              <PublishIcon color={isDarkTheme ? "info" : "primary"} />
             </ListItemIcon>
             <ListItemText 
               primary={
-                <Typography sx={{ color: isDarkMode ? "rgba(255, 255, 255, 0.9)" : undefined }}>
+                <Typography sx={{ color: isDarkTheme ? "rgba(255, 255, 255, 0.9)" : undefined }}>
                   2. Deploy your policies
                 </Typography>
               }
               secondary={
-                <Typography variant="body2" sx={{ color: isDarkMode ? "rgba(255, 255, 255, 0.7)" : undefined }}>
+                <Typography variant="body2" sx={{ color: isDarkTheme ? "rgba(255, 255, 255, 0.7)" : undefined }}>
                  Click 'Deploy Binding Policies' to create and deploy binding policies that connect workloads to clusters based on the selected labels
                 </Typography>
               }
@@ -114,15 +116,15 @@ const HelpDialog: React.FC<{open: boolean, onClose: () => void}> = ({open, onClo
           sx={{ 
             mt: 2, 
             fontStyle: 'italic',
-            color: isDarkMode ? "rgba(255, 255, 255, 0.7)" : "text.secondary"
+            color: isDarkTheme ? "rgba(255, 255, 255, 0.7)" : "text.secondary"
           }}
         >
           Tip: The label-based approach allows you to create powerful binding policies that automatically apply to all resources matching the selected labels, both now and in the future.
         </Typography>
       </DialogContent>
       <DialogActions sx={{
-        bgcolor: isDarkMode ? "rgba(17, 25, 40, 0.95)" : undefined,
-        borderTop: isDarkMode ? '1px solid rgba(255, 255, 255, 0.15)' : undefined
+        bgcolor: isDarkTheme ? "rgba(17, 25, 40, 0.95)" : undefined,
+        borderTop: isDarkTheme ? '1px solid rgba(255, 255, 255, 0.15)' : undefined
       }}>
         <Box display="flex" alignItems="center" justifyContent="space-between" width="100%">
           <Box display="flex" alignItems="center">
@@ -130,37 +132,43 @@ const HelpDialog: React.FC<{open: boolean, onClose: () => void}> = ({open, onClo
           <FormControlLabel 
             control={
             <Checkbox 
-            checked={isChecked}
+              checked={isChecked}
               onChange={(event) => setIsChekcked(event.target.checked)}
+              sx={{
+                color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : undefined,
+                '&.Mui-checked': {
+                  color: isDarkTheme ? muiTheme.palette.primary.light : undefined,
+                },
+              }}
             />
             } 
             label={
-            <Typography sx={{ color: isDarkMode ? "rgba(255, 255, 255, 0.9)" : undefined }}>
+            <Typography sx={{ color: isDarkTheme ? "rgba(255, 255, 255, 0.9)" : undefined }}>
               Don't Show Again
             </Typography>
             }
           />
           </FormGroup>
           </Box>
-            <Button 
+          <Button 
             onClick={()=>{
-            if (isChecked) {
-              localStorage.setItem("donot_show_again", "true");
-            } else {
-              localStorage.removeItem("donot_show_again");
-            }
-            onClose();
-          }} 
-          variant="contained"
-          sx={{
-            bgcolor: isDarkMode ? "#2563eb" : undefined,
-            color: isDarkMode ? "#FFFFFF" : undefined,
-            '&:hover': {
-              bgcolor: isDarkMode ? "#1d4ed8" : undefined,
-            }
-          }}
+              if (isChecked) {
+                localStorage.setItem("donot_show_again", "true");
+              } else {
+                localStorage.removeItem("donot_show_again");
+              }
+              onClose();
+            }} 
+            variant="contained"
+            sx={{
+              bgcolor: isDarkTheme ? "#2563eb" : undefined,
+              color: isDarkTheme ? "#FFFFFF" : undefined,
+              '&:hover': {
+                bgcolor: isDarkTheme ? "#1d4ed8" : undefined,
+              }
+            }}
           >
-        Got it
+            Got it
           </Button>
         </Box>
       </DialogActions>
@@ -170,21 +178,21 @@ const HelpDialog: React.FC<{open: boolean, onClose: () => void}> = ({open, onClo
 
 const PolicyDragDrop: React.FC<PolicyDragDropProps> = (props) => {
   const [helpDialogOpen, setHelpDialogOpen] = useState(false);
-  const theme = useTheme();
-  const isDarkMode = theme.palette.mode === 'dark';
+
+  const theme = useTheme((state) => state.theme);
+  const isDarkTheme = theme === "dark";  // Use your custom theme implementation
 
   useEffect(() => {
     const donot_show_again = !!localStorage.getItem("donot_show_again");
     if (donot_show_again) {
       setHelpDialogOpen(false);
-    }  else {
+    } else {
       setHelpDialogOpen(true);
     }
   }, []);
   
-  
   return (
-    <Box sx={{ position: 'relative',height:"100%" }}>
+    <Box sx={{ position: 'relative', height:"100%" }}>
       <Box sx={{ 
         position: 'fixed', 
         top: 40, 
@@ -196,12 +204,12 @@ const PolicyDragDrop: React.FC<PolicyDragDropProps> = (props) => {
             onClick={() => setHelpDialogOpen(true)} 
             size="small"
             sx={{ 
-              bgcolor: isDarkMode ? "rgba(17, 25, 40, 0.95)" : 'background.paper',
-              color: isDarkMode ? "rgba(255, 255, 255, 0.9)" : undefined,
-              boxShadow: isDarkMode ? '0 2px 8px rgba(0, 0, 0, 0.3)' : 1,
-              border: isDarkMode ? '1px solid rgba(255, 255, 255, 0.15)' : 'none',
+              bgcolor: isDarkTheme ? "rgba(17, 25, 40, 0.95)" : 'background.paper',
+              color: isDarkTheme ? "rgba(255, 255, 255, 0.9)" : undefined,
+              boxShadow: isDarkTheme ? '0 2px 8px rgba(0, 0, 0, 0.3)' : 1,
+              border: isDarkTheme ? '1px solid rgba(255, 255, 255, 0.15)' : 'none',
               '&:hover': {
-                bgcolor: isDarkMode ? "rgba(30, 41, 59, 0.95)" : 'background.paper',
+                bgcolor: isDarkTheme ? "rgba(30, 41, 59, 0.95)" : 'background.paper',
               }
             }}
           >

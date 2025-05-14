@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, memo } from "react";
+import React, { useState, useEffect, useCallback, useRef, memo } from "react";
 import { Box, Typography, Menu, MenuItem, Button, Alert, Snackbar, Dialog, DialogTitle, DialogContent, DialogActions, IconButton } from "@mui/material";
 import { ReactFlowProvider, Position, MarkerType } from "reactflow";
 import * as dagre from "dagre";
@@ -37,7 +37,8 @@ import CreateOptions from "../components/CreateOptions";
 import { NodeLabel } from "../components/Wds_Topology/NodeLabel";
 import { ZoomControls } from "../components/Wds_Topology/ZoomControls";
 import { FlowCanvas } from "../components/Wds_Topology/FlowCanvas";
-import LoadingFallback from "./LoadingFallback";
+import ListViewSkeleton from "./ui/ListViewSkeleton";
+import TreeViewSkeleton from "./ui/TreeViewSkeleton";
 import DynamicDetailsPanel from "./DynamicDetailsPanel";
 import GroupPanel from "./GroupPanel";
 import ReactDOM from "react-dom";
@@ -51,6 +52,7 @@ import ListViewComponent from "../components/ListViewComponent";
 import ContextDropdown from "../components/ContextDropdown";
 import { ResourceItem as ListResourceItem } from "./ListViewComponent"; // Import ResourceItem from ListViewComponent
 import useLabelHighlightStore from "../stores/labelHighlightStore";
+import { useLocation } from "react-router-dom";
 
 // Interfaces
 export interface NodeData {
@@ -490,6 +492,14 @@ interface ResourceDataChangeEvent {
   totalCount: number;
 }
 
+interface ContextMenuState {
+  nodeId: string | null;
+  x: number;
+  y: number; 
+  nodeType: string | null;
+}
+
+
 const TreeViewComponent = (_props: TreeViewComponentProps) => {
   const theme = useTheme((state) => state.theme);
   const highlightedLabels = useLabelHighlightStore((state) => state.highlightedLabels);
@@ -498,7 +508,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string>("");
   const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
-  const [contextMenu, setContextMenu] = useState<{ nodeId: string | null; x: number; y: number } | null>(null);
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const [showCreateOptions, setShowCreateOptions] = useState(false);
   const [activeOption, setActiveOption] = useState<string | null>("option1");
   const [selectedNode, setSelectedNode] = useState<SelectedNode | null>(null);
@@ -523,10 +533,11 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
   } | null>(null);
   const [viewMode, setViewMode] = useState<'tiles' | 'list'>('tiles');
   const [filteredContext, setFilteredContext] = useState<string>("all");
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   const [resources, setResources] = useState<ResourceItem[]>([]);
   const [contextResourceCounts, setContextResourceCounts] = useState<Record<string, number>>({});
   const [totalResourceCount, setTotalResourceCount] = useState<number>(0);
+  const location = useLocation();
 
   const { isConnected, connect, hasValidData } = useWebSocket();
   const NAMESPACE_QUERY_KEY = ["namespaces"];
@@ -577,6 +588,15 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
     }
   }, [websocketData, dataReceived]);
 
+  // Check for create=true in URL parameter to automatically open dialog
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get('create') === 'true') {
+      setShowCreateOptions(true);
+      setActiveOption("option1");
+    }
+  }, [location.search]);
+
   const getTimeAgo = useCallback((timestamp: string | undefined): string => {
     if (!timestamp) return "Unknown";
     const now = new Date();
@@ -589,7 +609,8 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
   const handleMenuOpen = useCallback((event: React.MouseEvent, nodeId: string) => {
     event.preventDefault();
     event.stopPropagation();
-    setContextMenu({ nodeId, x: event.clientX, y: event.clientY });
+    const nodeType : string = nodeId.split(":")[0] || '';
+    setContextMenu({ nodeId, x: event.clientX, y: event.clientY, nodeType: nodeType });
   }, []);
 
   const handleClosePanel = useCallback(() => {
@@ -1194,13 +1215,14 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
           } else if (nodeIdParts.length >= 4) {
             namespace = nodeIdParts[1];
             nodeType = nodeIdParts[2];
+          } else if(node.id.startsWith("context:") && nodeIdParts.length === 2){
+            nodeType = "context";
+            namespace = nodeIdParts[0];
           } else {
             console.error(`[TreeView] Invalid node ID format: ${node.id}`);
             return;
           }
-
           const resourceData = node.data.label.props.resourceData;
-
           switch (action) {
             case "Details":
               if (node.isGroup && resourceData) {
@@ -1663,7 +1685,11 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
 
         <Box sx={{ width: "100%", height: "calc(100% - 80px)", position: "relative" }}>
           {isLoading ? (
-            <LoadingFallback message="Loading the tree..." size="medium" />
+            viewMode === 'list' ? (
+              <ListViewSkeleton itemCount={8} />
+            ) : (
+              <TreeViewSkeleton />
+            )
           ) : viewMode === 'tiles' && (nodes.length > 0 || edges.length > 0) ? (
             <Box sx={{ width: "100%", height: "100%", position: "relative" }}>
               <ReactFlowProvider>
@@ -1722,9 +1748,13 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
               anchorPosition={contextMenu ? { top: contextMenu.y, left: contextMenu.x } : undefined}
             >
               <MenuItem onClick={() => handleMenuAction("Details")}>Details</MenuItem>
-              <MenuItem onClick={() => handleMenuAction("Delete")}>Delete</MenuItem>
-              <MenuItem onClick={() => handleMenuAction("Edit")}>Edit</MenuItem>
-              <MenuItem onClick={() => handleMenuAction("Logs")}>Logs</MenuItem>
+              {contextMenu.nodeType !== "context" && (
+                <React.Fragment>
+                  <MenuItem onClick={() => handleMenuAction("Delete")}>Delete</MenuItem>
+                  <MenuItem onClick={() => handleMenuAction("Edit")}>Edit</MenuItem>
+                  <MenuItem onClick={() => handleMenuAction("Logs")}>Logs</MenuItem>
+                </React.Fragment>
+              )}
             </Menu>
           )}
         </Box>

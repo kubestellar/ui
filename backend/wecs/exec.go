@@ -132,35 +132,16 @@ func GetAllPodContainersName(c *gin.Context) {
 	})
 }
 
-// need to remove when we add the tabs - till now keep it
-func getPodContainersName(c *gin.Context, clientSet *kubernetes.Clientset, ns string, podName string) string {
-	pod, err := clientSet.CoreV1().Pods(ns).Get(c, podName, metav1.GetOptions{})
-	if err != nil {
-		// handle error
-
-	}
-	containerName := ""
-	for _, container := range pod.Spec.Containers {
-		fmt.Println("Container Name:", container.Name)
-		fmt.Println("Image:", container.Image)
-		containerName = container.Name
-	}
-	return containerName
-}
 func startShellProcess(c *gin.Context, clientSet *kubernetes.Clientset, cfg *rest.Config, cmd []string, conn *websocket.Conn, namespace string) error {
-	//namespace := c.Param("namespace")
 	podName := c.Param("pod")
 	containerName := c.Param("container")
-	cN := getPodContainersName(c, clientSet, namespace, podName)
-	fmt.Println(containerName)
-	fmt.Println(cN)
 	req := clientSet.CoreV1().RESTClient().Post().Resource("pods").
 		Name(podName).
 		Namespace(namespace).
 		SubResource("exec")
 
 	req.VersionedParams(&v1.PodExecOptions{
-		Container: cN,
+		Container: containerName,
 		Command:   cmd,
 		Stdin:     true,
 		Stdout:    true,

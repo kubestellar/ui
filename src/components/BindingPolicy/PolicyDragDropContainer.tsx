@@ -940,7 +940,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
           "Workload info not in expected label format:",
           workloadInfo
         );
-        workloadLabels["kubernetes.io/kubestellar.workload.name"] =
+        workloadLabels["kubestellar.io/workload"] =
           workloadInfo;
       }
 
