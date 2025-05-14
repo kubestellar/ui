@@ -57,7 +57,7 @@ func CheckKubeStellarStatus() KubeStellarStatus {
 			}
 
 			status.AllReady = status.WDS1Namespace && status.ITS1Namespace
-			
+
 			// Set the appropriate message based on namespace status
 			if status.AllReady {
 				status.Message = "KubeStellar context and required namespaces verified"
