@@ -36,10 +36,10 @@ func CheckKubeStellarStatus() KubeStellarStatus {
 	}
 
 	contexts := strings.Split(strings.TrimSpace(string(contextsOutput)), "\n")
-	
+
 	// Define the compatible context types to check
 	compatibleTypes := []string{"kubeflex", "kind", "k3d"}
-	
+
 	// Check all contexts to find any compatible one
 	for _, ctx := range contexts {
 		isCompatible := false
@@ -49,7 +49,7 @@ func CheckKubeStellarStatus() KubeStellarStatus {
 				break
 			}
 		}
-		
+
 		if isCompatible {
 			// Found a compatible context
 			status.Context = ctx
@@ -75,7 +75,7 @@ func CheckKubeStellarStatus() KubeStellarStatus {
 				status.Message = fmt.Sprintf("KubeStellar ready on context %s with all required namespaces", ctx)
 				return status // Found a fully working context, return immediately
 			}
-			
+
 			// If not ready, update the message and continue checking other contexts
 			missingNamespaces := []string{}
 			if !status.WDS1Namespace {
@@ -84,11 +84,11 @@ func CheckKubeStellarStatus() KubeStellarStatus {
 			if !status.ITS1Namespace {
 				missingNamespaces = append(missingNamespaces, "its1-system")
 			}
-			status.Message = fmt.Sprintf("Compatible context %s found, but required namespaces are missing: %s", 
+			status.Message = fmt.Sprintf("Compatible context %s found, but required namespaces are missing: %s",
 				ctx, strings.Join(missingNamespaces, ", "))
 		}
 	}
-	
+
 	// If we get here, we didn't find any fully working context
 	return status
 }
