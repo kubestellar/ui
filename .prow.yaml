@@ -1,0 +1,152 @@
+presubmits:
+  - name: pull-kubestellar-ui-verify
+    always_run: true
+    decorate: true
+    clone_uri: "https://github.com/kubestellar/ui"
+    spec:
+      containers:
+        - image: node:16
+          command:
+            - /bin/bash
+            - -c
+            - |
+              cd frontend
+              npm ci
+              npm run lint
+          resources:
+            requests:
+              memory: 2Gi
+              cpu: 1
+  - name: pull-kubestellar-ui-build
+    always_run: true
+    decorate: true
+    clone_uri: "https://github.com/kubestellar/ui"
+    spec:
+      containers:
+        - image: node:16
+          command:
+            - /bin/bash
+            - -c
+            - |
+              cd frontend
+              npm ci
+              npm run build
+          resources:
+            requests:
+              memory: 2Gi
+              cpu: 1
+  - name: pull-kubestellar-ui-test
+    always_run: true
+    decorate: true
+    clone_uri: "https://github.com/kubestellar/ui"
+    spec:
+      containers:
+        - image: node:16
+          command:
+            - /bin/bash
+            - -c
+            - |
+              cd frontend
+              npm ci
+              npm test
+          resources:
+            requests:
+              memory: 2Gi
+              cpu: 1
+  - name: pull-kubestellar-ui-backend-verify
+    always_run: true
+    decorate: true
+    clone_uri: "https://github.com/kubestellar/ui"
+    spec:
+      containers:
+        - image: golang:1.18
+          command:
+            - /bin/bash
+            - -c
+            - |
+              cd backend
+              go mod download
+              go vet ./...
+          resources:
+            requests:
+              memory: 1Gi
+              cpu: 1
+  - name: pull-kubestellar-ui-backend-test
+    always_run: true
+    decorate: true
+    clone_uri: "https://github.com/kubestellar/ui"
+    spec:
+      containers:
+        - image: golang:1.18
+          command:
+            - /bin/bash
+            - -c
+            - |
+              cd backend
+              go mod download
+              go test ./...
+          resources:
+            requests:
+              memory: 1Gi
+              cpu: 1
+
+postsubmits:
+  - name: post-kubestellar-ui-build-main
+    branches:
+    - ^main$
+    decorate: true
+    clone_uri: "https://github.com/kubestellar/ui"
+    spec:
+      containers:
+      - image: quay.io/buildah/stable:latest
+        securityContext:
+          privileged: true
+        command:
+        - /bin/bash
+        - -c
+        - |
+          # Build and push frontend
+          cd frontend
+          buildah bud -t quay.io/kubestellar/ui:frontend-$(git rev-parse --short HEAD) -t quay.io/kubestellar/ui:frontend-latest .
+          buildah push quay.io/kubestellar/ui:frontend-$(git rev-parse --short HEAD)
+          buildah push quay.io/kubestellar/ui:frontend-latest
+
+          # Build and push backend
+          cd ../backend
+          buildah bud -t quay.io/kubestellar/ui:backend-$(git rev-parse --short HEAD) -t quay.io/kubestellar/ui:backend-latest .
+          buildah push quay.io/kubestellar/ui:backend-$(git rev-parse --short HEAD)
+          buildah push quay.io/kubestellar/ui:backend-latest
+        resources:
+          requests:
+            memory: 2Gi
+            cpu: 1
+  
+  - name: post-kubestellar-ui-build-dev
+    branches:
+    - ^dev$
+    decorate: true
+    clone_uri: "https://github.com/kubestellar/ui"
+    spec:
+      containers:
+      - image: quay.io/buildah/stable:latest
+        securityContext:
+          privileged: true
+        command:
+        - /bin/bash
+        - -c
+        - |
+          # Build and push frontend
+          cd frontend
+          buildah bud -t quay.io/kubestellar/ui:frontend-dev-$(git rev-parse --short HEAD) -t quay.io/kubestellar/ui:frontend-dev-latest .
+          buildah push quay.io/kubestellar/ui:frontend-dev-$(git rev-parse --short HEAD)
+          buildah push quay.io/kubestellar/ui:frontend-dev-latest
+
+          # Build and push backend
+          cd ../backend
+          buildah bud -t quay.io/kubestellar/ui:backend-dev-$(git rev-parse --short HEAD) -t quay.io/kubestellar/ui:backend-dev-latest .
+          buildah push quay.io/kubestellar/ui:backend-dev-$(git rev-parse --short HEAD)
+          buildah push quay.io/kubestellar/ui:backend-dev-latest
+        resources:
+          requests:
+            memory: 2Gi
+            cpu: 1
