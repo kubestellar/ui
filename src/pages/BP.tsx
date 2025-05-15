@@ -27,7 +27,6 @@ import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 import { useLocation, useNavigate } from "react-router-dom";
 import { getTabsStyles, StyledTab } from "../components/BindingPolicy/styles/CreateBindingPolicyStyles";
 import { api } from "../lib/api";
-import BPTableSkeleton from "../components/ui/BPSkeleton";
 import BPSkeleton from "../components/ui/BPSkeleton";
 
 // Define EmptyState component outside of the BP component
@@ -650,11 +649,6 @@ const BP = () => {
     }
   }, [selectedPolicies, setSuccessMessage, setSelectedPolicies, setBindingPolicies, deleteMultiplePoliciesMutation]);
 
-  // Modify the conditional return for loading to use the component:
-  if (loading) {
-    return <BPSkeleton />;
-  }
-
   return (
     <>
       <Paper
@@ -719,7 +713,7 @@ const BP = () => {
         {viewMode === 'table' ? (
           <>
           {loading ? (
-            <BPTableSkeleton rows={5} />
+            <BPSkeleton rows={5} />
             ):clusters.length === 0 && workloads.length === 0 ? (
               <EmptyState onCreateClick={() => navigate('/its')} type="both" />
             ) : clusters.length === 0 ? (
