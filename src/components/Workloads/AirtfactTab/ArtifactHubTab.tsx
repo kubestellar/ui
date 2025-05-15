@@ -1,4 +1,5 @@
-import { Box, Button, FormControlLabel, Radio, RadioGroup } from "@mui/material";
+import { Box, Button, FormControlLabel, Radio, RadioGroup, CircularProgress } from "@mui/material";
+import CancelButton from "../../common/CancelButton";
 import { StyledContainer } from "../../StyledComponents";
 import useTheme from "../../../stores/themeStore";
 import { useState, useEffect } from "react";
@@ -8,7 +9,6 @@ import { SearchPackagesForm } from "./SearchPackagesForm";
 import { RepositoriesListForm } from "./RepositoriesListForm";
 import { DirectDeployForm } from "./DirectDeployForm";
 import { api } from "../../../lib/api";
-import { CircularProgress } from "@mui/material";
 import WorkloadLabelInput from "../WorkloadLabelInput";
 
 export interface Repository {
@@ -372,21 +372,7 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
           }}
         >
           {selectedOption !== "repositories" && (
-            <Button
-              variant="text"
-              onClick={onCancel}
-              sx={{
-                textTransform: "none",
-                fontWeight: 600,
-                color: theme === "dark" ? "#d4d4d4" : "#666",
-                padding: "8px 16px",
-                "&:hover": {
-                  backgroundColor: theme === "dark" ? "#333" : "#f5f5f5",
-                },
-              }}
-            >
-              Cancel
-            </Button>
+            <CancelButton onClick={onCancel} />
           )}
           <Button
             variant="contained"

@@ -1,4 +1,6 @@
+// import { Box, Typography, TextField, FormControl, Select, MenuItem, Button, SelectChangeEvent, Checkbox, Radio, RadioGroup, FormControlLabel } from "@mui/material";
 import { Box, Button, FormControl, MenuItem, Select, SelectChangeEvent, TextField, Typography, FormControlLabel, Radio, RadioGroup, Checkbox, Dialog, DialogTitle, DialogContent, DialogActions, Menu } from "@mui/material";
+import CancelButton from "../common/CancelButton";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { StyledContainer } from "../StyledComponents";
@@ -909,21 +911,11 @@ export const GitHubTab = ({
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          <Button
-            variant="text"
-            disableRipple
-            disableElevation
-            disableFocusRipple
-            disableTouchRipple
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
+          <CancelButton
+            onClick={() => {
               handleDeleteCancel();
             }}
-            sx={createStableButtonStyle(false)}
-          >
-            Cancel
-          </Button>
+          />
           <Button
             variant="contained"
             disableRipple
@@ -1036,21 +1028,10 @@ export const GitHubTab = ({
         padding: "8px 0",
         zIndex: 1
       }}>
-        <Button
+        <CancelButton
           onClick={handleCancelClick}
           disabled={loading || popularLoading || previousLoading}
-          sx={{
-            textTransform: "none",
-            fontWeight: 600,
-            color: theme === "dark" ? "#d4d4d4" : "#666",
-            padding: "8px 16px",
-            "&:hover": {
-              backgroundColor: theme === "dark" ? "#333" : "#f5f5f5",
-            },
-          }}
-        >
-          Cancel
-        </Button>
+        />
         <Button
           variant="contained"
           onClick={() => {

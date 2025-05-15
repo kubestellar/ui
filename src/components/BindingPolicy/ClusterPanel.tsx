@@ -40,6 +40,7 @@ import { useClusterQueries } from '../../hooks/queries/useClusterQueries';
 import { toast } from 'react-hot-toast';
 import { BsTagFill } from "react-icons/bs";
 import useTheme from "../../stores/themeStore";
+import CancelButton from "../common/CancelButton";
 
 interface ClusterPanelProps {
   clusters: ManagedCluster[];
@@ -520,17 +521,13 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
           justifyContent: 'space-between',
         }}
       >
-        <Button 
+        <CancelButton 
           onClick={onClose}
-          style={{ 
-            color: colors.textSecondary,
-          }}
-          variant="text"
-          startIcon={<CloseIcon />}
           disabled={saving}
-        >
-          Cancel
-        </Button>
+          sx={{ 
+            color: colors.textSecondary 
+          }}
+        />
         
         <Button 
           onClick={handleSave}
