@@ -109,7 +109,27 @@ interface QuickConnectResponse {
   };
   message: string;
 }
+interface FieldV1 {
+  raw?: number[] | string | object;
+  [key: string]: unknown;
+}
 
+interface ManagedField {
+  fieldsv1?: FieldV1;
+  [key: string]: unknown;
+}
+
+interface Metadata {
+  managedfields?: ManagedField[];
+  [key: string]: unknown;
+}
+
+interface ParsedYaml {
+  objectmeta?: Metadata;
+  objectMeta?: Metadata;
+  ObjectMeta?: Metadata;
+  [key: string]: unknown;
+}
 interface WorkloadSSEData {
   namespaced: Record<string, Record<string, Array<{
     createdAt: string;
@@ -173,27 +193,33 @@ export const useBPQueries = () => {
             return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
           };
           
-          var yamlContent = policy.yaml || '';
+          let yamlContent = policy.yaml || '';
+
 
           try {
-            const parsedYaml: any = yaml.load(yamlContent) || {};          
-            const metadata = parsedYaml?.objectmeta || parsedYaml?.objectMeta || parsedYaml?.ObjectMeta;
+            const parsedYaml: ParsedYaml = (yaml.load(yamlContent) as ParsedYaml) || {};
+            console.log('Parsed YAML:', parsedYaml);
+          
+            const metadata: Metadata | undefined =
+              parsedYaml.objectmeta || parsedYaml.objectMeta || parsedYaml.ObjectMeta;
           
             if (metadata?.managedfields) {
-              metadata.managedfields = metadata.managedfields.map((field: any) => {
-                if (field?.fieldsv1?.raw) {
-                  const originalString = String.fromCharCode(...field.fieldsv1.raw);
-                  
+              metadata.managedfields = metadata.managedfields.map((field: ManagedField) => {
+                if (field?.fieldsv1?.raw && Array.isArray(field.fieldsv1.raw)) {
+                  // Convert ASCII codes to actual string
+                  const originalString = String.fromCharCode(...field.fieldsv1.raw as number[]);
+          
                   try {
                     const parsedFields = JSON.parse(originalString);
                     field.fieldsv1 = {
                       ...field.fieldsv1,
-                      raw: parsedFields  
+                      raw: parsedFields,
                     };
                   } catch (e) {
+                    console.log("Error parsing JSON from raw fieldsv1:", e);
                     field.fieldsv1 = {
                       ...field.fieldsv1,
-                      raw: originalString
+                      raw: originalString,
                     };
                   }
                 }
@@ -202,8 +228,7 @@ export const useBPQueries = () => {
             }
           
             const cleanedYaml = yaml.dump(parsedYaml);
-            yamlContent = cleanedYaml; 
-            console.log('Cleaned YAML:', cleanedYaml);
+            yamlContent = cleanedYaml; // Update the yamlContent with cleaned YAML
           } catch (err) {
             console.error("Error parsing YAML:", err);
           }
@@ -314,28 +339,31 @@ export const useBPQueries = () => {
         } else {
           console.log(`No YAML content found for policy ${policyName}`);
         }
+
         try {
-          const parsedYaml: any = yaml.load(yamlContent) || {};
+          const parsedYaml: ParsedYaml = (yaml.load(yamlContent) as ParsedYaml) || {};
           console.log('Parsed YAML:', parsedYaml);
         
-          const metadata = parsedYaml?.objectmeta || parsedYaml?.objectMeta || parsedYaml?.ObjectMeta;
+          const metadata: Metadata | undefined =
+            parsedYaml.objectmeta || parsedYaml.objectMeta || parsedYaml.ObjectMeta;
         
           if (metadata?.managedfields) {
-            metadata.managedfields = metadata.managedfields.map((field: any) => {
-              if (field?.fieldsv1?.raw) {
+            metadata.managedfields = metadata.managedfields.map((field: ManagedField) => {
+              if (field?.fieldsv1?.raw && Array.isArray(field.fieldsv1.raw)) {
                 // Convert ASCII codes to actual string
-                const originalString = String.fromCharCode(...field.fieldsv1.raw);
-                
+                const originalString = String.fromCharCode(...field.fieldsv1.raw as number[]);
+        
                 try {
                   const parsedFields = JSON.parse(originalString);
                   field.fieldsv1 = {
                     ...field.fieldsv1,
-                    raw: parsedFields  
+                    raw: parsedFields,
                   };
                 } catch (e) {
+                  console.log("Error parsing JSON from raw fieldsv1:", e);
                   field.fieldsv1 = {
                     ...field.fieldsv1,
-                    raw: originalString
+                    raw: originalString,
                   };
                 }
               }
