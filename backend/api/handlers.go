@@ -4,29 +4,254 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/kubestellar/ui/models"
 	"github.com/kubestellar/ui/services"
 	"github.com/kubestellar/ui/utils"
+	certv1 "k8s.io/api/certificates/v1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
 var (
 	clusterStatuses = make(map[string]string)
 	mutex           sync.Mutex
+	wsUpgrader      = websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool { return true },
+	}
 )
+
+func getOCMClient(contextName string) (dynamic.Interface, error) {
+	config, err := getRestConfig(contextName)
+	if err != nil {
+		return nil, err
+	}
+	return dynamic.NewForConfig(config)
+}
+
+func getRestConfig(contextName string) (*rest.Config, error) {
+	rules := clientcmd.NewDefaultClientConfigLoadingRules()
+	overrides := &clientcmd.ConfigOverrides{CurrentContext: contextName}
+	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(rules, overrides).ClientConfig()
+}
+
+func getBootstrapToken(contextName string) (string, error) {
+	config, err := getRestConfig(contextName)
+	if err != nil {
+		return "", err
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return "", err
+	}
+
+	secrets, err := clientset.CoreV1().Secrets("open-cluster-management").List(context.TODO(), metav1.ListOptions{
+		LabelSelector: "open-cluster-management.io/clusteradm=true",
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to list secrets: %w", err)
+	}
+
+	for _, secret := range secrets.Items {
+		if token, ok := secret.Data["token"]; ok {
+			return string(token), nil
+		}
+	}
+
+	return "", fmt.Errorf("bootstrap token not found")
+}
+
+func createManagedCluster(client dynamic.Interface, clusterName string) error {
+	managedClusterRes := schema.GroupVersionResource{
+		Group:    "cluster.open-cluster-management.io",
+		Version:  "v1",
+		Resource: "managedclusters",
+	}
+
+	managedCluster := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "cluster.open-cluster-management.io/v1",
+			"kind":       "ManagedCluster",
+			"metadata": map[string]interface{}{
+				"name": clusterName,
+			},
+			"spec": map[string]interface{}{
+				"hubAcceptsClient": false,
+			},
+		},
+	}
+
+	_, err := client.Resource(managedClusterRes).Create(context.TODO(), managedCluster, metav1.CreateOptions{})
+	if errors.IsAlreadyExists(err) {
+		log.Printf("ManagedCluster %s already exists", clusterName)
+		return nil
+	}
+	return err
+}
+
+func acceptManagedCluster(client dynamic.Interface, clusterName string) error {
+	managedClusterRes := schema.GroupVersionResource{
+		Group:    "cluster.open-cluster-management.io",
+		Version:  "v1",
+		Resource: "managedclusters",
+	}
+
+	patch := []byte(`{"spec":{"hubAcceptsClient": true}}`)
+	_, err := client.Resource(managedClusterRes).Patch(
+		context.TODO(),
+		clusterName,
+		types.MergePatchType,
+		patch,
+		metav1.PatchOptions{},
+	)
+	return err
+}
+
+func approveCSR(contextName string, csrName string) error {
+	config, err := getRestConfig(contextName)
+	if err != nil {
+		return err
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+
+	csr, err := clientset.CertificatesV1().CertificateSigningRequests().Get(context.TODO(), csrName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	approval := certv1.CertificateSigningRequestCondition{
+		Type:    certv1.CertificateApproved,
+		Status:  corev1.ConditionTrue,
+		Reason:  "KubestellarApproved",
+		Message: "Approved by Kubestellar UI",
+	}
+
+	csr.Status.Conditions = append(csr.Status.Conditions, approval)
+	_, err = clientset.CertificatesV1().CertificateSigningRequests().UpdateApproval(
+		context.TODO(),
+		csrName,
+		csr,
+		metav1.UpdateOptions{},
+	)
+	return err
+}
+
+func CommandStreamHandler(c *gin.Context) {
+	conn, err := wsUpgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "WebSocket upgrade failed: " + err.Error()})
+		return
+	}
+	defer conn.Close()
+
+	var req struct {
+		ClusterName string `json:"clusterName"`
+	}
+	if err := conn.ReadJSON(&req); err != nil {
+		conn.WriteMessage(websocket.TextMessage, []byte("❌ Invalid payload: "+err.Error()))
+		return
+	}
+
+	if err := onboardCluster(conn, req.ClusterName); err != nil {
+		conn.WriteMessage(websocket.TextMessage, []byte("\n🛑 "+err.Error()+"\n"))
+		return
+	}
+
+	conn.WriteMessage(websocket.TextMessage, []byte("\n🎉 Cluster ‘"+req.ClusterName+"’ onboarded successfully!"))
+}
+
+func onboardCluster(conn *websocket.Conn, clusterName string) error {
+	hubClient, err := getOCMClient("its1")
+	if err != nil {
+		return fmt.Errorf("failed to create OCM client: %w", err)
+	}
+
+	sendProgress(conn, "🔑 [JOIN]", "Creating ManagedCluster resource")
+	if err := createManagedCluster(hubClient, clusterName); err != nil {
+		return fmt.Errorf("failed to create ManagedCluster: %w", err)
+	}
+
+	sendProgress(conn, "🤝 [ACCEPT]", "Accepting cluster on hub")
+	if err := acceptManagedCluster(hubClient, clusterName); err != nil {
+		return fmt.Errorf("failed to accept cluster: %w", err)
+	}
+
+	sendProgress(conn, "🤖 [CSR]", "Searching for pending CSRs")
+	if err := processCSRs(conn, clusterName); err != nil {
+		return fmt.Errorf("failed processing CSRs: %w", err)
+	}
+
+	return nil
+}
+
+func processCSRs(conn *websocket.Conn, clusterName string) error {
+	config, err := getRestConfig("its1")
+	if err != nil {
+		return err
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+
+	csrs, err := clientset.CertificatesV1().CertificateSigningRequests().List(context.TODO(), metav1.ListOptions{
+		FieldSelector: "spec.signerName=kubernetes.io/kube-apiserver-client",
+	})
+	if err != nil {
+		return err
+	}
+
+	approved := 0
+	for _, csr := range csrs.Items {
+		if strings.HasPrefix(csr.Name, clusterName) && isCSRPending(csr) {
+			sendProgress(conn, "⚙️ [CSR]", fmt.Sprintf("Approving %s", csr.Name))
+			if err := approveCSR("its1", csr.Name); err != nil {
+				return fmt.Errorf("failed to approve CSR %s: %w", csr.Name, err)
+			}
+			approved++
+		}
+	}
+
+	if approved == 0 {
+		sendProgress(conn, "⚠️ [CSR]", "No pending CSRs found")
+	}
+	return nil
+}
+
+func isCSRPending(csr certv1.CertificateSigningRequest) bool {
+	for _, cond := range csr.Status.Conditions {
+		if cond.Type == certv1.CertificateApproved {
+			return false
+		}
+	}
+	return true
+}
+
+func sendProgress(conn *websocket.Conn, prefix string, message string) {
+	fullMsg := fmt.Sprintf("%s %s\n", prefix, message)
+	conn.WriteMessage(websocket.TextMessage, []byte(fullMsg))
+}
 
 func OnboardClusterHandler(c *gin.Context) {
 	file, err := c.FormFile("kubeconfig")
@@ -228,178 +453,4 @@ func UpdateManagedClusterLabelsHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Labels updated successfully"})
-}
-
-var wsUpgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
-}
-
-type wsRequest struct {
-	ClusterName string `json:"clusterName"`
-}
-
-func CommandStreamHandler(c *gin.Context) {
-	conn, err := wsUpgrader.Upgrade(c.Writer, c.Request, nil)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "💔 WS upgrade failed: " + err.Error()})
-		return
-	}
-	defer conn.Close()
-
-	var req wsRequest
-	if err := conn.ReadJSON(&req); err != nil {
-		conn.WriteMessage(websocket.TextMessage, []byte("❌ Invalid payload: "+err.Error()))
-		return
-	}
-
-	if err := runClusterCommands(conn, req.ClusterName); err != nil {
-		conn.WriteMessage(websocket.TextMessage, []byte("\n🛑 "+err.Error()+"\n"))
-		return
-	}
-
-	conn.WriteMessage(websocket.TextMessage, []byte("\n🎉 Cluster ‘"+req.ClusterName+"’ onboarded successfully!"))
-}
-
-func runClusterCommands(conn *websocket.Conn, clusterName string) error {
-	conn.WriteMessage(websocket.TextMessage, []byte("🔑 [JOIN] Fetching join token…\n"))
-	token, err := fetchClusteradmToken()
-	if err != nil {
-		return fmt.Errorf("failed to fetch token: %w", err)
-	}
-
-	// 2) Run join
-	joinCmd := fmt.Sprintf(
-		"clusteradm join --hub-token %s --hub-apiserver https://its1.localtest.me:9443 "+
-			"--cluster-name %s --force-internal-endpoint-lookup",
-		token, clusterName,
-	)
-	if err := streamSingleCommand(conn, "🔗 [JOIN] ", joinCmd, 2*time.Minute); err != nil {
-		return err
-	}
-
-	// 3) Run accept
-	conn.WriteMessage(websocket.TextMessage, []byte("🤝 [ACCEPT] Running accept command…\n"))
-	acceptCmd := fmt.Sprintf(
-		"clusteradm accept --context its1 --clusters %s",
-		clusterName,
-	)
-	if err := streamSingleCommand(conn, "🤝 [ACCEPT] ", acceptCmd, 2*time.Minute); err != nil {
-		return err
-	}
-
-	conn.WriteMessage(websocket.TextMessage, []byte("🤖 [CSR] Auto-approving CSRs…\n"))
-	if err := autoApproveCSRs(conn, clusterName); err != nil {
-		return err
-	}
-	conn.WriteMessage(websocket.TextMessage, []byte("✅ [CSR] All matching CSRs approved!\n"))
-
-	return nil
-}
-
-func fetchClusteradmToken() (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	cmd := exec.CommandContext(ctx, "clusteradm", "--context", "its1", "get", "token")
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return "", fmt.Errorf("clusteradm token failed: %s (output: %s)",
-			err, strings.TrimSpace(string(out)))
-	}
-	for _, line := range strings.Split(string(out), "\n") {
-		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "token=") {
-			return strings.TrimPrefix(line, "token="), nil
-		}
-	}
-	return "", fmt.Errorf("token not found in output: %s", strings.TrimSpace(string(out)))
-}
-
-func autoApproveCSRs(conn *websocket.Conn, clusterName string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	cmd := exec.CommandContext(ctx,
-		"kubectl", "--context", "its1", "get", "csr", "-o", "json")
-	out, err := cmd.Output()
-	cancel()
-	if err != nil {
-		return fmt.Errorf("failed to list CSRs: %w", err)
-	}
-
-	var list struct {
-		Items []struct {
-			Metadata struct{ Name string } `json:"metadata"`
-		} `json:"items"`
-	}
-	if err := json.Unmarshal(out, &list); err != nil {
-		return fmt.Errorf("failed to parse CSR list: %w", err)
-	}
-
-	approvedAny := false
-	for _, item := range list.Items {
-		if strings.HasPrefix(item.Metadata.Name, clusterName) {
-			conn.WriteMessage(websocket.TextMessage,
-				[]byte(fmt.Sprintf("⚙️ [CSR] Approving %s…\n", item.Metadata.Name)))
-
-			aCtx, aCancel := context.WithTimeout(context.Background(), 20*time.Second)
-			approveCmd := exec.CommandContext(aCtx,
-				"kubectl", "--context", "its1", "certificate", "approve", item.Metadata.Name)
-			_, aErr := approveCmd.CombinedOutput()
-			aCancel()
-
-			if aErr != nil {
-
-				return fmt.Errorf("approval error: %w", aErr)
-			}
-
-			conn.WriteMessage(websocket.TextMessage,
-				[]byte(fmt.Sprintf("✅ [CSR] Approved %s\n", item.Metadata.Name)))
-			approvedAny = true
-		}
-	}
-
-	if !approvedAny {
-		conn.WriteMessage(websocket.TextMessage,
-			[]byte("⚠️ [CSR] No matching CSRs found to approve\n"))
-	}
-	return nil
-}
-
-func streamSingleCommand(conn *websocket.Conn, prefix, raw string, timeout time.Duration) error {
-	conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("%s→ %s\n", prefix, raw)))
-
-	parts := strings.Fields(raw)
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	cmd := exec.CommandContext(ctx, parts[0], parts[1:]...)
-	stdout, _ := cmd.StdoutPipe()
-	stderr, _ := cmd.StderrPipe()
-
-	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("could not start '%s': %w", raw, err)
-	}
-
-	stream := func(r io.Reader) {
-		buf := make([]byte, 512)
-		for {
-			n, err := r.Read(buf)
-			if n > 0 {
-				conn.WriteMessage(websocket.TextMessage, buf[:n])
-			}
-			if err != nil {
-				break
-			}
-		}
-	}
-	go stream(stdout)
-	go stream(stderr)
-
-	if err := cmd.Wait(); err != nil {
-		return fmt.Errorf("command '%s' failed: %w", raw, err)
-	}
-
-	conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("%s[✓] Done\n", prefix)))
-	return nil
 }
