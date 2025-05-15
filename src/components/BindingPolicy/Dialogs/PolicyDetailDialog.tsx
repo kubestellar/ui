@@ -26,6 +26,55 @@ interface PolicyCondition {
   message?: string;
 }
 
+// Clean up YAML content by handling problematic sections like raw ASCII arrays
+const cleanYamlContent = (yaml: string): string => {
+  if (!yaml) return '';
+  
+  // Convert raw ASCII arrays to readable format 
+  // This regex matches arrays of numbers that represent ASCII characters
+  let processedYaml = yaml.replace(
+    /raw:\s*(\s*-\s*\d+\s*)+/g, 
+    () => {
+      return 'raw: [... binary data omitted ...]';
+    }
+  );
+  
+  processedYaml = processedYaml.replace(
+    /(typemeta:(?:\s+[\w]+:.+\s+)+)(\w+)/gi,
+    (_, typemetaSection, nextSection) => {
+      // Add a folding region for typemeta
+      return `${typemetaSection}${nextSection}`;
+    }
+  );
+  
+  // Capture the entire managedfields section including all entries
+  processedYaml = processedYaml.replace(
+    /(managedfields:(?:\s+-[\s\S]+?)(?=\n\w+:|$))/g,
+    (match) => {
+      // Clean up managedfields content
+      let cleanedSection = match.replace(
+        /raw:\s*\[\.\.\.\s*binary\s*data\s*omitted\s*\.\.\.\]/g,
+        'raw: [... binary data omitted ...]'
+      );
+      
+      cleanedSection = cleanedSection.replace(
+        /raw: \[\.\.\. binary data omitted \.\.\.\]subresource:/g,
+        'raw: [... binary data omitted ...]     subresource:'
+      );
+      
+      // Add a single folding region for the entire managedfields section
+      return `\n${cleanedSection}\n`;
+    }
+  );
+  
+  processedYaml = processedYaml.replace(
+    /subresource: ""(\s+[^-\s])/g,
+    'subresource: ""\n$1'
+  );
+  
+  return processedYaml;
+};
+
 const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
   open,
   onClose,
@@ -82,7 +131,8 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
         // Use the YAML content directly from the policy object
         if (currentPolicy?.yaml) {
           console.log(`Using YAML content from policy object (${currentPolicy.yaml.length} chars)`);
-          setYamlContent(currentPolicy.yaml);
+          // Clean up the YAML content before setting it
+          setYamlContent(cleanYamlContent(currentPolicy.yaml));
         } else {
           console.log("No YAML content found in policy object");
           
@@ -514,7 +564,7 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                             
                             setTimeout(() => {
                               if (policyData?.yaml) {
-                                setYamlContent(policyData.yaml);
+                                setYamlContent(cleanYamlContent(policyData.yaml));
                                 setFetchLoading(false);
                               } else {
                                 setFetchError("YAML content still not available after retry. The YAML data is retrieved from the main API, while status comes from the status API.");
@@ -547,9 +597,36 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                       lineNumbers: "on",
                       scrollBeyondLastLine: false,
                       automaticLayout: true,
+                      folding: true,
+                      foldingStrategy: 'indentation',
+                      showFoldingControls: 'always',
+                      foldingHighlight: true,
                     }}
-                    onMount={() => {
+                    onMount={(editor) => {
                       console.log("Editor mounted. YAML content length:", yamlContent?.length || 0);
+                      
+                      setTimeout(() => {
+                        const model = editor.getModel();
+                        if (model) {
+                          const text = model.getValue();
+                          const lines = text.split('\n');
+                          
+                          for (let i = 0; i < lines.length; i++) {
+                            if (lines[i].includes('# region [Collapsed by default]')) {
+                              let endLine = i + 1;
+                              while (endLine < lines.length && !lines[endLine].includes('# endregion')) {
+                                endLine++;
+                              }
+                              
+                              if (endLine < lines.length) {
+                                editor.trigger('fold', 'editor.fold', {
+                                  selectionLines: [i + 1]
+                                });
+                              }
+                            }
+                          }
+                        }
+                      }, 100);
                     }}
                   />
                 )}
