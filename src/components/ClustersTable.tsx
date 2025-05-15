@@ -110,7 +110,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
   const keyInputRef = useRef<HTMLInputElement>(null);
   const valueInputRef = useRef<HTMLInputElement>(null);
 
-  // Filter labels based on search
+  // Filter labels based on  search
   const filteredLabels = labelSearch.trim() === "" 
     ? labels 
     : labels.filter(label => 
