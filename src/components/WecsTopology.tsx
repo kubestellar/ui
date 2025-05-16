@@ -1065,14 +1065,50 @@ const WecsTreeview = () => {
                           });
                         }
                       } else if (kindLower === "service" && rawResource.spec) {
-                        // Only show the Service without creating endpoints automatically
-                        // Endpoints will be shown if they exist in the actual data
+                        // Create Endpoints node for the Service
+                        createNode(
+                          `${resourceId}:endpoints`,
+                          `endpoints-${rawResource.metadata.name}`,
+                          "endpoints",
+                          status,
+                          undefined,
+                          namespace.namespace,
+                          rawResource,
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
                       } else if (kindLower === "ingress" && rawResource.spec) {
                         // Only show the Ingress without creating services automatically
                         // Services will be shown if they exist in the actual data
-                      } else if (kindLower === "configmap" || kindLower === "secret") {
-                        // Only show the ConfigMap/Secret without creating volumes automatically
-                        // Volumes will be shown if they exist in the actual data
+                      } else if (kindLower === "configmap") {
+                        // Create Volume nodes for ConfigMap
+                        createNode(
+                          `${resourceId}:volume`,
+                          `volume-${rawResource.metadata.name}`,
+                          "volume",
+                          status,
+                          undefined,
+                          namespace.namespace,
+                          rawResource,
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                      }
+                      else if(kindLower === "secret"){
+                          createNode(
+                            `${resourceId}:envvar`,
+                            `envvar-${rawResource.metadata.name}`,
+                            "envvar",
+                            status,
+                            undefined,
+                            namespace.namespace,
+                            rawResource,
+                            resourceId,
+                            newNodes,
+                            newEdges
+                          );
                       } else if (kindLower === "persistentvolumeclaim" && rawResource.spec) {
                         // Only show the PVC without creating a PV automatically
                       } else if (kindLower === "storageclass" && rawResource.spec) {
