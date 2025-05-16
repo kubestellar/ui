@@ -8,6 +8,8 @@ services:
       - backend
     environment:
       - VITE_SKIP_PREREQUISITES_CHECK=true
+    networks:
+      - kubestellar-network
 
   backend:
     build:
@@ -18,17 +20,22 @@ services:
     volumes:
       - ~/.kube:/root/.kube
     environment:
-      - REDIS_HOST=localhost
+      - REDIS_HOST=redis
       - REDIS_PORT=6379
     depends_on:
       - redis
-    network_mode: "host"
-
+    networks:
+      - kubestellar-network
 
   redis:
     image: "redis:latest"
     container_name: "kubestellar-redis"
     ports:
       - "6379:6379"
-    network_mode: "host"
+    networks:
+      - kubestellar-network
+
+networks:
+  kubestellar-network:
+    driver: bridge
 
