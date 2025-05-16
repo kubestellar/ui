@@ -48,6 +48,7 @@ import PostAddIcon from "@mui/icons-material/PostAdd";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import TableSkeleton from "./ui/TableSkeleton";
 import { MdLabel } from "react-icons/md";
+import LockIcon from "@mui/icons-material/Lock";
 
 interface ManagedClusterInfo {
   name: string;
@@ -92,6 +93,7 @@ interface LabelEditDialogProps {
   onSave: (clusterName: string, contextName: string, labels: { [key: string]: string }) => void;
   isDark: boolean;
   colors: ColorTheme;
+  selectedClusters?: string[]; // Add this prop
 }
 
 const LabelEditDialog: React.FC<LabelEditDialogProps> = ({ 
@@ -100,7 +102,8 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
   cluster, 
   onSave,
   isDark,
-  colors
+  colors,
+  selectedClusters = [] // Provide a default empty array
 }) => {
   const [labels, setLabels] = useState<Array<{ key: string; value: string }>>([]);
   const [newKey, setNewKey] = useState("");
@@ -109,8 +112,149 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
   const [isSearching, setIsSearching] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selectedLabelIndex, setSelectedLabelIndex] = useState<number | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  // Track binding policy labels
+  const [bindingPolicyLabels, setBindingPolicyLabels] = useState<string[]>([]);
+  const [errorShown, setErrorShown] = useState(false);
   const keyInputRef = useRef<HTMLInputElement>(null);
   const valueInputRef = useRef<HTMLInputElement>(null);
+  
+  const { useDeleteClusterLabel } = useClusterQueries();
+  const deleteLabelMutation = useDeleteClusterLabel();
+
+  // Function to determine if a label is protected
+  const isProtectedLabel = (key: string): boolean => {
+    // Check if label is protected
+    if (key === "cluster.open-cluster-management.io/clusterset") {
+      return true;
+    }
+    
+    if (key.startsWith("feature.open-cluster-management.io/addon-")) {
+      return true;
+    }
+    
+    return false;
+  };
+  
+  // Check if label is used in binding policy
+  const isBindingPolicyLabel = (key: string): boolean => {
+    return bindingPolicyLabels.includes(key);
+  };
+
+  // Update handleRemoveLabel to check for protected labels
+  const handleRemoveLabel = (index: number) => {
+    const labelToRemove = labels[index];
+    const labelKey = labelToRemove.key;
+    
+    // Reset error shown state
+    setErrorShown(false);
+    
+    // Check if it's a bulk operation (don't allow bulk delete of protected labels)
+    const isBulkOperation = selectedClusters && selectedClusters.length > 1;
+    
+    // Check if label is protected
+    if (isProtectedLabel(labelKey)) {
+      toast.error(`Cannot delete protected default label: ${labelKey}`, {
+        icon: '🔒',
+        style: {
+          borderRadius: '10px',
+          background: isDark ? '#1e293b' : '#ffffff',
+          color: isDark ? '#f1f5f9' : '#1e293b',
+          border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+        },
+        duration: 5000,
+      });
+      return;
+    }
+    
+    // Check if label is used in binding policy - prevent even trying API call
+    if (isBindingPolicyLabel(labelKey)) {
+      toast.error(`Cannot delete label used in binding policy: ${labelKey}`, {
+        icon: '🔗',
+        style: {
+          borderRadius: '10px',
+          background: isDark ? '#1e293b' : '#ffffff',
+          color: isDark ? '#f1f5f9' : '#1e293b',
+          border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+        },
+        duration: 5000,
+      });
+      return;
+    }
+    
+    // If this is just a local edit before saving to the server
+    if (!cluster || isBulkOperation) {
+      setLabels(labels.filter((_, i) => i !== index));
+      toast.success(`Removed label: ${labelToRemove.key}`);
+      return;
+    }
+    
+    // Otherwise, call the API to delete the label
+    setDeleteLoading(labelKey);
+    
+    deleteLabelMutation.mutate(
+      {
+        contextName: cluster.context,
+        clusterName: cluster.name,
+        labelKey: labelKey
+      },
+      {
+        onSuccess: () => {
+          // Remove from local state
+          setLabels(labels.filter((_, i) => i !== index));
+          setDeleteLoading(null);
+          
+          toast.success(`Deleted label: ${labelKey}`, {
+            icon: '🏷️',
+            style: {
+              borderRadius: '10px',
+              background: isDark ? '#1e293b' : '#ffffff',
+              color: isDark ? '#f1f5f9' : '#1e293b',
+              border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+            },
+          });
+        },
+        onError: (error) => {
+          console.error("Error deleting label:", error);
+          setDeleteLoading(null);
+          
+          // Check if the error is related to binding policy usage
+          const errorMessage = error.message || "";
+          
+          if (errorMessage.includes("used in binding policy")) {
+            // Add this label to binding policy labels to prevent future attempts
+            setBindingPolicyLabels(prev => [...prev, labelKey]);
+            
+            // Only show the error message once
+            if (!errorShown) {
+              setErrorShown(true);
+              toast.error(`Cannot delete label used in binding policy: ${labelKey}`, {
+                icon: '🔗',
+                style: {
+                  borderRadius: '10px',
+                  background: isDark ? '#1e293b' : '#ffffff',
+                  color: isDark ? '#f1f5f9' : '#1e293b',
+                  border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+                },
+                duration: 5000,
+              });
+            }
+          } else {
+            toast.error(`Failed to delete label: ${error.message}`, {
+              icon: '❌',
+              style: {
+                borderRadius: '10px',
+                background: isDark ? '#1e293b' : '#ffffff',
+                color: isDark ? '#f1f5f9' : '#1e293b',
+                border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+              },
+              duration: 5000,
+            });
+          }
+        }
+      }
+    );
+  };
 
   // Filter labels based on search
   const filteredLabels = labelSearch.trim() === "" 
@@ -135,7 +279,9 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
       setLabelSearch("");
       setIsSearching(false);
       setSelectedLabelIndex(null);
-      
+      setBindingPolicyLabels([]); // Reset binding policy labels
+      setErrorShown(false); // Reset error shown state
+    
       // Focus key input after a short delay
       setTimeout(() => {
         if (keyInputRef.current) {
@@ -192,12 +338,6 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
         keyInputRef.current.focus();
       }
     }
-  };
-
-  const handleRemoveLabel = (index: number) => {
-    const labelToRemove = labels[index];
-    setLabels(labels.filter((_, i) => i !== index));
-    toast.success(`Removed label: ${labelToRemove.key}`);
   };
 
   const handleSave = () => {
@@ -455,23 +595,64 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                           <span style={{ color: colors.textSecondary }}> = </span>
                           <span>{label.value}</span>
                         </span>
+                        {isProtectedLabel(label.key) && (
+                          <Tooltip title="Default label (protected)">
+                            <span style={{ 
+                              fontSize: '10px', 
+                              padding: '1px 4px', 
+                              borderRadius: '3px', 
+                              backgroundColor: isDark ? 'rgba(255, 179, 71, 0.2)' : 'rgba(255, 179, 71, 0.1)',
+                              color: colors.warning, 
+                              marginLeft: '4px' 
+                            }}>
+                              DEFAULT
+                            </span>
+                          </Tooltip>
+                        )}
+                        {isBindingPolicyLabel(label.key) && !isProtectedLabel(label.key) && (
+                          <Tooltip title="Used in binding policy">
+                            <span style={{ 
+                              fontSize: '10px', 
+                              padding: '1px 4px', 
+                              borderRadius: '3px', 
+                              backgroundColor: isDark ? 'rgba(47, 134, 255, 0.2)' : 'rgba(47, 134, 255, 0.1)',
+                              color: colors.primary, 
+                              marginLeft: '4px' 
+                            }}>
+                              POLICY
+                            </span>
+                          </Tooltip>
+                        )}
                       </div>
-                      <Tooltip title="Remove Label">
-                        <IconButton 
-                          size="small" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveLabel(labels.findIndex(l => l.key === label.key && l.value === label.value));
-                          }}
-                          style={{ 
-                            color: selectedLabelIndex === index ? colors.primary : colors.textSecondary,
-                            opacity: 0.8,
-                            transition: 'all 0.2s ease',
-                          }}
-                          className="hover:opacity-100"
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
+                      <Tooltip title={
+                        isProtectedLabel(label.key) 
+                          ? "Cannot delete default label" 
+                          : "Remove Label"
+                      }>
+                        <div>
+                          <IconButton 
+                            size="small" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveLabel(labels.findIndex(l => l.key === label.key && l.value === label.value));
+                            }}
+                            style={{ 
+                              color: selectedLabelIndex === index ? colors.primary : colors.textSecondary,
+                              opacity: 0.8,
+                              transition: 'all 0.2s ease',
+                            }}
+                            className="hover:opacity-100"
+                            disabled={isProtectedLabel(label.key) || deleteLoading === label.key}
+                          >
+                            {deleteLoading === label.key ? (
+                              <CircularProgress size={16} style={{ color: colors.primary }} />
+                            ) : isProtectedLabel(label.key) ? (
+                              <LockIcon fontSize="small" style={{ color: colors.warning }} />
+                            ) : (
+                              <DeleteIcon fontSize="small" />
+                            )}
+                          </IconButton>
+                        </div>
                       </Tooltip>
                     </div>
                   </Zoom>
@@ -1385,6 +1566,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
         onSave={handleSaveLabels}
         isDark={isDark}
         colors={colors}
+        selectedClusters={selectedClusters} // Pass the selected clusters
       />
     </div>
   );

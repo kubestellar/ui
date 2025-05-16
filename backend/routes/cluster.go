@@ -41,5 +41,7 @@ func setupClusterRoutes(router *gin.Engine) {
 	router.POST("/clusters/import", handlers.ImportClusterHandler)
 	// Remote Tree View Cluster details
 	router.GET("/api/cluster/details/:name", handlers.GetClusterDetailsHandler)
-
+	
+	router.DELETE("/api/clusters/:context/:cluster/labels/:key", api.DeleteClusterLabel)
+	
 }

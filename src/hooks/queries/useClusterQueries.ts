@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 
@@ -110,11 +111,42 @@ export const useClusterQueries = () => {
     });
   };
 
+  // Delete cluster label mutation
+  const useDeleteClusterLabel = () => {
+    return useMutation({
+      mutationFn: async ({
+        contextName,
+        clusterName,
+        labelKey,
+      }: {
+        contextName: string;
+        clusterName: string;
+        labelKey: string;
+      }) => {
+        try {
+          // Use the api client instead of direct fetch
+          const response = await api.delete(`/api/clusters/${contextName}/${clusterName}/labels/${labelKey}`);
+          return response.data;
+        } catch (error: any) {
+          console.error("Label deletion error:", error);
+          if (error.response) {
+            throw new Error(error.response.data?.error || `HTTP ${error.response.status}: Failed to delete label`);
+          }
+          throw error;
+        }
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["clusters"] });
+      },
+    });
+  };
+
   return {
     useClusters,
     useClusterStatus,
     useImportCluster,
     useOnboardCluster,
     useUpdateClusterLabels,
+    useDeleteClusterLabel,
   };
-}; 
+};
