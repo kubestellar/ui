@@ -140,11 +140,11 @@ func extractWorkloads(bp *v1alpha1.BindingPolicy) []string {
 
 	// Safety check
 	if bp == nil {
-		fmt.Printf("Debug - extractWorkloads - BP is nil\n")
+		log.LogDebug("extractWorkloads - BP is nil")
 		return workloads
 	}
 
-	fmt.Printf("Debug - extractWorkloads - Processing %d Downsync rules\n", len(bp.Spec.Downsync))
+	log.LogDebug("extractWorkloads - Processing downsync rules", zap.Int("downsyncCount", len(bp.Spec.Downsync)))
 
 	// Load kubeconfig
 	kubeconfigPath := clientcmd.RecommendedHomeFile
@@ -152,7 +152,8 @@ func extractWorkloads(bp *v1alpha1.BindingPolicy) []string {
 	// Load raw kubeconfig and select context "wds1"
 	rawConfig, err := clientcmd.LoadFromFile(kubeconfigPath)
 	if err != nil {
-		panic(fmt.Errorf("failed to load kubeconfig file: %v", err))
+		log.LogError("failed to load kubeconfig file", zap.String("path", kubeconfigPath), zap.Error(err))
+		return workloads // Return an empty list of workloads on failure
 	}
 
 	// Explicitly set context to "wds1"
@@ -164,13 +165,15 @@ func extractWorkloads(bp *v1alpha1.BindingPolicy) []string {
 		&clientcmd.ConfigOverrides{CurrentContext: "wds1"},
 	).ClientConfig()
 	if err != nil {
-		panic(fmt.Errorf("failed to load kubeconfig for context 'wds1': %v", err))
+		log.LogError("failed to load kubeconfig for context 'wds1'", zap.Error(err))
+		return workloads // Return an empty list of workloads on failure
 	}
 
 	// Create dynamic client
 	dynClient, err := dynamic.NewForConfig(config)
 	if err != nil {
-		panic(fmt.Errorf("failed to create dynamic client: %v", err))
+		log.LogError("failed to create dynamic client", zap.Error(err))
+		return workloads // Return an empty list of workloads on failure
 	}
 
 	// Define GVR for the Binding CRD
@@ -183,7 +186,8 @@ func extractWorkloads(bp *v1alpha1.BindingPolicy) []string {
 	// List all Bindings across all namespaces
 	bindings, err := dynClient.Resource(bindingGVR).List(context.TODO(), v1.ListOptions{})
 	if err != nil {
-		panic(fmt.Errorf("failed to list bindings: %v", err))
+		log.LogError("failed to list bindings", zap.Error(err))
+		return workloads // Return an empty list of workloads on failure
 	}
 
 	var results []string
@@ -195,6 +199,7 @@ func extractWorkloads(bp *v1alpha1.BindingPolicy) []string {
 		// Extract .spec.workload
 		workload, found, err := unstructured.NestedMap(binding.Object, "spec", "workload")
 		if err != nil || !found {
+			log.LogDebug("extractWorkloads - no workload found in binding", zap.String("binding", binding.GetName()))
 			continue
 		}
 
@@ -233,7 +238,8 @@ func extractWorkloads(bp *v1alpha1.BindingPolicy) []string {
 	// formatted, _ := json.MarshalIndent(results, "", "  ")
 	// fmt.Println(string(formatted))
 
-	fmt.Printf("Debug - extractWorkloads - Extracted %d workloads: %v\n", len(workloads), workloads)
+	log.LogInfo("extractWorkloads - extracted workloads",
+		zap.Int("count", len(workloads)), zap.Strings("workloads", workloads))
 	return workloads
 }
 
@@ -243,34 +249,35 @@ func extractTargetClusters(bp *v1alpha1.BindingPolicy) []string {
 
 	// Safety check
 	if bp == nil {
-		fmt.Printf("Debug - extractTargetClusters - BP is nil\n")
+		log.LogWarn("extractTargetClusters - BP is nil")
 		return clusters
 	}
 
 	if len(bp.Spec.ClusterSelectors) == 0 {
-		fmt.Printf("Debug - extractTargetClusters - No ClusterSelectors found\n")
+		log.LogInfo("extractTargetClusters - No ClusterSelectors found")
 		return clusters
 	}
 
-	fmt.Printf("Debug - extractTargetClusters - Processing %d ClusterSelectors\n", len(bp.Spec.ClusterSelectors))
+	log.LogDebug("extractTargetClusters - processing ClusterSelectors", zap.Int("count", len(bp.Spec.ClusterSelectors)))
 
 	// Iterate through each cluster selector
 	for i, selector := range bp.Spec.ClusterSelectors {
-		fmt.Printf("Debug - extractTargetClusters - Processing selector #%d\n", i)
+		log.LogDebug("extractTargetClusters - Processing selector", zap.Int("index", i))
 
 		// Check if MatchLabels is nil
 		if selector.MatchLabels == nil {
-			fmt.Printf("Debug - extractTargetClusters - MatchLabels is nil for selector #%d\n", i)
+			log.LogDebug("extractTargetClusters - MatchLabels is nil for selector", zap.Int("index", i))
 			continue
 		}
 
 		// Debug all labels in this selector
 		for k, v := range selector.MatchLabels {
-			fmt.Printf("Debug - extractTargetClusters - Label %s=%s\n", k, v)
+			log.LogDebug("extractTargetClusters - found label",
+				zap.String("key", k), zap.String("value", v))
 
 			// Check specifically for kubernetes.io/cluster-name label
 			if k == "kubernetes.io/cluster-name" {
-				fmt.Printf("Debug - extractTargetClusters - Found cluster name: %s\n", v)
+				log.LogInfo("extractTargetClusters - found cluster name", zap.String("cluster", v))
 				clusters = append(clusters, v)
 			}
 		}
@@ -278,19 +285,20 @@ func extractTargetClusters(bp *v1alpha1.BindingPolicy) []string {
 
 	// If no clusters found using the selector labels, try general labels
 	if len(clusters) == 0 {
-		fmt.Printf("Debug - extractTargetClusters - No clusters found via kubernetes.io/cluster-name, checking all labels\n")
+		log.LogDebug("extractTargetClusters - no clusters found via kubernetes.io/cluster-name, checking all labels")
 		for i, selector := range bp.Spec.ClusterSelectors {
 			if selector.MatchLabels != nil {
 				for k, v := range selector.MatchLabels {
 					// Add any label that might identify a cluster
 					clusters = append(clusters, fmt.Sprintf("%s:%s", k, v))
-					fmt.Printf("Debug - extractTargetClusters - Added generic label #%d: %s:%s\n", i, k, v)
+					log.LogDebug("extractTargetClusters - added generic label", zap.Int("selectorIndex", i),
+						zap.String("labelKey", k), zap.String("labelValue", v))
 				}
 			}
 		}
 	}
 
-	fmt.Printf("Debug - extractTargetClusters - Returning %d clusters: %v\n", len(clusters), clusters)
+	log.LogInfo("ectractTargetCLusters - returning clusters", zap.Int("count", len(clusters)), zap.Strings("clusters", clusters))
 	return clusters
 }
 

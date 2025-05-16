@@ -56,7 +56,7 @@ func GetAllBp(ctx *gin.Context) {
 	c, err := getClientForBp()
 	if err != nil {
 		log.LogError("failed to create client for Bp", zap.String("error", err.Error()))
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Errorf("failed to create client for BP: %s", err.Error())})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -67,8 +67,8 @@ func GetAllBp(ctx *gin.Context) {
 	// Get all binding policies
 	bpList, err := c.BindingPolicies().List(context.TODO(), listOptions)
 	if err != nil {
-		fmt.Printf("Debug - List error: %v\n", err)
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Errorf("failed to list binding policies: %s", err.Error())})
+		log.LogError("failed to list binding policies", zap.Error(err))
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -107,7 +107,7 @@ func GetAllBp(ctx *gin.Context) {
 		storedBP, exists := uiCreatedPolicies[policyName]
 
 		if exists {
-			fmt.Printf("Debug - GetAllBp - Found stored BP in memory with key: %s\n", policyName)
+			log.LogDebug("GetAllBp - Found stored BP in memory with key", zap.String("key", policyName))
 			// Use the stored cluster selectors for more detailed information
 			if len(storedBP.ClusterSelectors) > 0 {
 				for _, selector := range storedBP.ClusterSelectors {
@@ -115,7 +115,7 @@ func GetAllBp(ctx *gin.Context) {
 						// Check if already in the clusters array
 						if !contains(clusters, clusterName) {
 							clusters = append(clusters, clusterName)
-							fmt.Printf("Debug - GetAllBp - Added cluster from stored data: %s\n", clusterName)
+							log.LogDebug("GetAllBp - Added cluster from stored data", zap.String("ClusterLabels", clusterName))
 						}
 					}
 				}
@@ -123,7 +123,7 @@ func GetAllBp(ctx *gin.Context) {
 
 			// If we still have no clusters but have YAML data, try to parse it
 			if len(clusters) == 0 && storedBP.RawYAML != "" {
-				fmt.Printf("Debug - GetAllBp - Trying to parse stored raw YAML for clusters\n")
+				log.LogDebug("GetAllBp - Trying to parse stored raw YAML for clusters")
 				var yamlMap map[string]interface{}
 				if err := yaml.Unmarshal([]byte(storedBP.RawYAML), &yamlMap); err == nil {
 					if spec, ok := yamlMap["spec"].(map[interface{}]interface{}); ok {
@@ -135,7 +135,7 @@ func GetAllBp(ctx *gin.Context) {
 											if kStr, ok := k.(string); ok && kStr == "kubernetes.io/cluster-name" {
 												if vStr, ok := v.(string); ok && !contains(clusters, vStr) {
 													clusters = append(clusters, vStr)
-													fmt.Printf("Debug - GetAllBp - Added cluster from YAML: %s\n", vStr)
+													log.LogDebug("GetAllBp - Added cluster from YAML", zap.String("cluster", vStr))
 												}
 											}
 										}
@@ -153,7 +153,7 @@ func GetAllBp(ctx *gin.Context) {
 
 		// If we have stored data for workloads, use it first for detailed information
 		if exists {
-			fmt.Printf("Debug - GetAllBp - Using stored policy data for workloads\n")
+			log.LogDebug("GetAllBp - Using stored policy data for workloads")
 			// Try to use stored API groups and resources for more detail
 			for i, apiGroup := range storedBP.APIGroups {
 				if i < len(storedBP.Resources) {
@@ -166,12 +166,12 @@ func GetAllBp(ctx *gin.Context) {
 							workloadItem := fmt.Sprintf("%s (ns:%s)", workloadType, ns)
 							if !contains(workloads, workloadItem) {
 								workloads = append(workloads, workloadItem)
-								fmt.Printf("Debug - GetAllBp - Added workload from stored data: %s\n", workloadItem)
+								log.LogDebug("GetAllBp - Added workload from stored data", zap.String("workloadItem", workloadItem))
 							}
 						}
 					} else if !contains(workloads, workloadType) {
 						workloads = append(workloads, workloadType)
-						fmt.Printf("Debug - GetAllBp - Added workload from stored data: %s\n", workloadType)
+						log.LogDebug("GetAllBp - Added workload from stored data", zap.String("workloadType", workloadType))
 					}
 				}
 			}
@@ -187,12 +187,12 @@ func GetAllBp(ctx *gin.Context) {
 				}
 				if !contains(workloads, workloadDesc) {
 					workloads = append(workloads, workloadDesc)
-					fmt.Printf("Debug - GetAllBp - Added specific workload from stored data: %s\n", workloadDesc)
+					log.LogDebug("GetAllBp - Added specific workload from stored data", zap.String("workloadDesc", workloadDesc))
 				}
 			}
 		} else {
 			// If no stored data, extract from BP directly
-			fmt.Printf("Debug - GetAllBp - Extracting workloads from API response for %s\n", policyName)
+			log.LogDebug("GetAllBp - Extracting workloads from API response for", zap.String("policyName", policyName))
 
 			// Extract from the policy's downsync field
 			for i, ds := range bpList.Items[i].Spec.Downsync {
@@ -201,8 +201,8 @@ func GetAllBp(ctx *gin.Context) {
 					apiGroupValue = *ds.APIGroup
 				}
 
-				fmt.Printf("Debug - GetAllBp - Downsync #%d: APIGroup=%s, Resources=%v, Namespaces=%v\n",
-					i, apiGroupValue, ds.Resources, ds.Namespaces)
+				log.LogDebug("GetAllBp - extract from the policy's downsync", zap.Int("index", i),
+					zap.String("apiGroup", apiGroupValue), zap.Any("resources", ds.Resources), zap.Any("namespace", ds.Namespaces))
 
 				for _, resource := range ds.Resources {
 					// Convert resource to lowercase for consistent handling
@@ -214,12 +214,12 @@ func GetAllBp(ctx *gin.Context) {
 							workloadItem := fmt.Sprintf("%s (ns:%s)", workloadType, ns)
 							if !contains(workloads, workloadItem) {
 								workloads = append(workloads, workloadItem)
-								fmt.Printf("Debug - GetAllBp - Added workload from API: %s\n", workloadItem)
+								log.LogDebug("GetAllBp - Added workload from API", zap.String("workloadItem", workloadItem))
 							}
 						}
 					} else if !contains(workloads, workloadType) {
 						workloads = append(workloads, workloadType)
-						fmt.Printf("Debug - GetAllBp - Added workload from API: %s\n", workloadType)
+						log.LogDebug("GetAllBp - Added workload from API", zap.String("workloadType", workloadType))
 					}
 				}
 			}
@@ -255,14 +255,14 @@ func GetAllBp(ctx *gin.Context) {
 
 					if !contains(workloads, workloadDesc) {
 						workloads = append(workloads, workloadDesc)
-						fmt.Printf("Debug - GetAllBp - Added specific workload from annotations: %s\n", workloadDesc)
+						log.LogDebug("GetAllBp - Added specific workload from annotations", zap.String("workloadDesc", workloadDesc))
 					}
 				}
 
 				// Check for workload-id annotation (used in quick binding policies)
 				if workloadId, ok := annotations["workload-id"]; ok && workloadId != "" && !contains(workloads, workloadId) {
 					workloads = append(workloads, workloadId)
-					fmt.Printf("Debug - GetAllBp - Added workload from workload-id annotation: %s\n", workloadId)
+					log.LogDebug("GetAllBp - Added workload from workload-id annotation", zap.String("workloadId", workloadId))
 				}
 			}
 		}
@@ -275,15 +275,18 @@ func GetAllBp(ctx *gin.Context) {
 		// If still no workloads after all attempts, add a default
 		if len(workloads) == 0 {
 			workloads = append(workloads, "No workload specified")
-			fmt.Printf("Debug - GetAllBp - No workloads found, adding default\n")
+			log.LogDebug("GetAllBp - No workloads found, adding default")
 		}
 
 		// Ensure we have cluster count consistent with the array
 		clustersCount := len(clusters)
 
 		// Set explicit cluster count for clarity in logs
-		fmt.Printf("Debug - GetAllBp - Policy %s: Found %d clusters and %d workloads\n",
-			policyName, clustersCount, len(workloads))
+		log.LogInfo("GetAllBp - Found clusters and workloads for policy",
+			zap.String("policy", policyName),
+			zap.Int("clustersCount", clustersCount),
+			zap.Int("workloadsCount", len(workloads)),
+		)
 
 		// Create the enhanced policy with status
 		bpWithStatus := BindingPolicyWithStatus{
@@ -517,8 +520,8 @@ func CreateBp(ctx *gin.Context) {
 	}
 
 	// Add debug for byte length
-	fmt.Printf("Debug - YAML byte length: %d\n", len(bpRawYamlBytes))
-	fmt.Printf("Debug - YAML content: %s\n", string(bpRawYamlBytes))
+	log.LogDebug("YAML byte length", zap.Int("length", len(bpRawYamlBytes)))
+	log.LogDebug("YAML content", zap.String("content", string(bpRawYamlBytes)))
 
 	// Try using the more robust Kubernetes deserializer
 	bp, err := getBpObjFromYaml(bpRawYamlBytes)
@@ -603,7 +606,8 @@ func GetBpStatus(ctx *gin.Context) {
 	name := ctx.Query("name")
 	namespace := ctx.Query("namespace")
 
-	fmt.Printf("Debug - GetBpStatus - Requested name: '%s', namespace: '%s'\n", name, namespace)
+	log.LogDebug("GetBpStatus - Received request",
+		zap.String("name", name), zap.String("namespace", namespace))
 
 	if name == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "name parameter is required"})
@@ -614,11 +618,11 @@ func GetBpStatus(ctx *gin.Context) {
 		namespace = "default" // Set default namespace
 	}
 
-	fmt.Printf("Debug - GetBpStatus - Using namespace: '%s'\n", namespace)
+	log.LogDebug("GetBpStatus - Using namespace", zap.String("namespace", namespace))
 
 	c, err := getClientForBp()
 	if err != nil {
-		fmt.Printf("Debug - GetBpStatus - Client error: %v\n", err)
+		log.LogError("GetBpStatus - Client error", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -626,12 +630,12 @@ func GetBpStatus(ctx *gin.Context) {
 	// Try to get binding policy directly
 	bp, err := c.BindingPolicies().Get(context.TODO(), name, v1.GetOptions{})
 	if err != nil {
-		fmt.Printf("Debug - GetBpStatus - Direct Get error: %v\n", err)
+		log.LogDebug("GetBpStatus - Direct Get error", zap.Error(err))
 
 		// Try to list all binding policies to see if it exists
 		bpList, listErr := c.BindingPolicies().List(context.TODO(), v1.ListOptions{})
 		if listErr != nil {
-			fmt.Printf("Debug - GetBpStatus - List error: %v\n", listErr)
+			log.LogError("GetBpStatus - List error", zap.Error(listErr))
 			ctx.JSON(http.StatusNotFound, gin.H{
 				"error": fmt.Sprintf("Binding policy '%s' not found and failed to list policies: %v", name, listErr),
 			})
@@ -640,9 +644,9 @@ func GetBpStatus(ctx *gin.Context) {
 
 		// Check if we can find the policy with the given name
 		var foundBP *v1alpha1.BindingPolicy
-		fmt.Printf("Debug - GetBpStatus - Listing all BPs to find '%s'\n", name)
+		log.LogInfo("GetBpStatus - Listing all BPs to find", zap.String("name", name))
 		for i, item := range bpList.Items {
-			fmt.Printf("Debug - BP #%d: %s/%s\n", i, item.Namespace, item.Name)
+			log.LogDebug("inspecting binding policy", zap.Int("index", i), zap.String("namespace", namespace), zap.String("name", name))
 			if item.Name == name {
 				foundBP = &bpList.Items[i]
 				break
@@ -657,17 +661,17 @@ func GetBpStatus(ctx *gin.Context) {
 		}
 
 		bp = foundBP
-		fmt.Printf("Debug - GetBpStatus - Found BP with matching name in namespace '%s'\n", bp.Namespace)
+		log.LogDebug("GetBpStatus - Found BP with matching name in namespace", zap.String("namespace", bp.Namespace))
 	}
 
 	// Look for this binding policy in the uiCreatedPolicies map
 	storedBP, exists := uiCreatedPolicies[name]
 	if exists {
-		fmt.Printf("Debug - GetBpStatus - Found stored BP in memory with key: %s\n", name)
+		log.LogDebug("GetBpStatus - Found stored BP in memory with key", zap.String("name", name))
 		// Debug the stored policy
-		fmt.Printf("Debug - Stored BP ClusterSelectors: %+v\n", storedBP.ClusterSelectors)
+		log.LogDebug(" Stored BP ClusterSelectors", zap.Any("clustersSelectors", storedBP.ClusterSelectors))
 	} else {
-		fmt.Printf("Debug - GetBpStatus - No stored BP found in memory with key: %s\n", name)
+		log.LogDebug("GetBpStatus - No stored BP found in memory with key", zap.String("name", name))
 	}
 
 	// Determine if the policy is active based on status fields
@@ -681,13 +685,13 @@ func GetBpStatus(ctx *gin.Context) {
 
 	// If we have a stored policy with cluster selectors, use that
 	if exists && len(storedBP.ClusterSelectors) > 0 {
-		fmt.Printf("Debug - Using cluster selectors from stored policy\n")
+		log.LogDebug("GetBpStatus - Using cluster selectors from stored policy")
 		for i, selector := range storedBP.ClusterSelectors {
 			if clusterName, ok := selector["kubernetes.io/cluster-name"]; ok {
-				fmt.Printf("Debug - Found cluster from stored data: %s\n", clusterName)
+				log.LogDebug("GetBpStatus - Found cluster from stored data", zap.String("clusterName", clusterName))
 				clusters = append(clusters, clusterName)
 			} else {
-				fmt.Printf("Debug - Selector #%d has no kubernetes.io/cluster-name: %+v\n", i, selector)
+				log.LogDebug("GetBpStatus - Selector missing cluster-name", zap.Int("index", i), zap.Any("selector", selector))
 			}
 		}
 
@@ -718,12 +722,12 @@ func GetBpStatus(ctx *gin.Context) {
 			if workload.Namespace != "" {
 				workloadDesc += fmt.Sprintf(" (ns:%s)", workload.Namespace)
 			}
-			fmt.Printf("Debug - Adding specific workload from storage: %s\n", workloadDesc)
+			log.LogDebug("GetAllBp - Adding specific workload from storage", zap.String("workloadDesc", workloadDesc))
 			workloads = append(workloads, workloadDesc)
 		}
 	} else {
 		// Try to extract from the API response
-		fmt.Printf("Debug - Trying to extract from API response\n")
+		log.LogInfo("GetAllBp - Trying to extract from API response")
 
 		// Extract clusters from BP
 		for i, selector := range bp.Spec.ClusterSelectors {
@@ -731,11 +735,12 @@ func GetBpStatus(ctx *gin.Context) {
 				continue
 			}
 
-			fmt.Printf("Debug - Processing selector #%d for clusters: %+v\n", i, selector.MatchLabels)
+			log.LogDebug("GetAllBp - Processing cluster selector",
+				zap.Int("index", i), zap.Any("matchLabels", selector.MatchLabels))
 
 			// Check for kubernetes.io/cluster-name label
 			if clusterName, ok := selector.MatchLabels["kubernetes.io/cluster-name"]; ok {
-				fmt.Printf("Debug - Found cluster from API: %s\n", clusterName)
+				log.LogDebug("GetAllBp - Found cluster from API", zap.String("clusterName", clusterName))
 				clusters = append(clusters, clusterName)
 			}
 		}
@@ -747,8 +752,9 @@ func GetBpStatus(ctx *gin.Context) {
 				apiGroupValue = *ds.APIGroup
 			}
 
-			fmt.Printf("Debug - Downsync #%d: APIGroup=%s, Resources=%v, Namespaces=%v\n",
-				i, apiGroupValue, ds.Resources, ds.Namespaces)
+			log.LogDebug("GetAllBp - Processing Downsync entry",
+				zap.Int("index", i), zap.String("apiGroup", apiGroupValue),
+				zap.Any("resources", ds.Resources), zap.Any("namespaces", ds.Namespaces))
 
 			for _, resource := range ds.Resources {
 				// Convert resource to lowercase for consistent handling
@@ -780,23 +786,24 @@ func GetBpStatus(ctx *gin.Context) {
 
 	// If we still don't have clusters or workloads, try to parse the stored rawYAML if available
 	if (len(clusters) == 0 || len(workloads) == 0) && exists && storedBP.RawYAML != "" {
-		fmt.Printf("Debug - Trying to parse stored raw YAML\n")
+		log.LogDebug("GetAllBp - Trying to parse stored raw YAML")
 		// Parse the raw YAML to extract information
 		var yamlMap map[string]interface{}
 		if err := yaml.Unmarshal([]byte(storedBP.RawYAML), &yamlMap); err != nil {
-			fmt.Printf("Debug - Failed to parse raw YAML: %v\n", err)
+			log.LogDebug("GetAllBp - Failed to parse raw YAML", zap.Error(err))
+
 		} else {
 			// Try to extract cluster selectors from YAML
 			if spec, ok := yamlMap["spec"].(map[interface{}]interface{}); ok {
 				if selectors, ok := spec["clusterSelectors"].([]interface{}); ok {
-					fmt.Printf("Debug - Found %d cluster selectors in YAML\n", len(selectors))
+					log.LogDebug("GetAllBp - Found cluster selectors in YAML", zap.Int("count", len(selectors)))
 					for _, selectorObj := range selectors {
 						if selector, ok := selectorObj.(map[interface{}]interface{}); ok {
 							if matchLabels, ok := selector["matchLabels"].(map[interface{}]interface{}); ok {
 								for k, v := range matchLabels {
 									if kStr, ok := k.(string); ok && kStr == "kubernetes.io/cluster-name" {
 										if vStr, ok := v.(string); ok {
-											fmt.Printf("Debug - Found cluster from YAML: %s\n", vStr)
+											log.LogDebug("GetAllBp - Found cluster from YAML", zap.String("cluster", vStr))
 											// Check if already in the list
 											alreadyExists := false
 											for _, c := range clusters {
@@ -818,7 +825,7 @@ func GetBpStatus(ctx *gin.Context) {
 
 				// Try to extract downsync resources from YAML
 				if downsyncList, ok := spec["downsync"].([]interface{}); ok {
-					fmt.Printf("Debug - Found %d downsync entries in YAML\n", len(downsyncList))
+					log.LogDebug("GetAllBp - Found downsync entries in YAML", zap.Int("count", len(downsyncList)))
 					for _, downsyncObj := range downsyncList {
 						if downsync, ok := downsyncObj.(map[interface{}]interface{}); ok {
 							// Extract API group
@@ -888,7 +895,7 @@ func GetBpStatus(ctx *gin.Context) {
 
 				// Try to extract specific workloads from YAML
 				if workloadsList, ok := spec["workloads"].([]interface{}); ok {
-					fmt.Printf("Debug - Found %d specific workloads in YAML\n", len(workloadsList))
+					log.LogDebug("GetAllBp - Found specific workloads in YAML", zap.Int("count", len(workloadsList)))
 					for i, workloadObj := range workloadsList {
 						if workload, ok := workloadObj.(map[interface{}]interface{}); ok {
 							// Extract apiVersion
@@ -925,7 +932,7 @@ func GetBpStatus(ctx *gin.Context) {
 									workloadDesc += fmt.Sprintf(" (ns:%s)", namespace)
 								}
 
-								fmt.Printf("Debug - Found specific workload #%d in YAML: %s\n", i, workloadDesc)
+								log.LogDebug("GetAllBp - Found specific workload in YAML", zap.Int("index", i), zap.String("workload", workloadDesc))
 
 								// Check if already in the list
 								alreadyExists := false
@@ -947,9 +954,13 @@ func GetBpStatus(ctx *gin.Context) {
 	}
 
 	// Print debug info before returning
-	fmt.Printf("Debug - Returning response - name: %s, namespace: %s\n", bp.Name, bp.Namespace)
-	fmt.Printf("Debug - Returning %d clusters: %v\n", len(clusters), clusters)
-	fmt.Printf("Debug - Returning %d workloads: %v\n", len(workloads), workloads)
+	log.LogDebug("GetAllBp - Returning response",
+		zap.String("name", bp.Name),
+		zap.String("namespace", bp.Namespace),
+		zap.Int("clusters_count", len(clusters)),
+		zap.Any("clusters", clusters),
+		zap.Int("workloads_count", len(workloads)),
+		zap.Any("workloads", workloads))
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"name":              bp.Name,
@@ -995,13 +1006,13 @@ func UpdateBp(ctx *gin.Context) {
 
 // CreateBpFromJson creates a new BindingPolicy from JSON data sent by the UI
 func CreateBpFromJson(ctx *gin.Context) {
-	fmt.Printf("Debug - Starting CreateBpFromJson handler\n")
-	fmt.Printf("Debug - KUBECONFIG: %s\n", os.Getenv("KUBECONFIG"))
-	fmt.Printf("Debug - wds_context: %s\n", os.Getenv("wds_context"))
+	log.LogInfo("Starting CreateBpFromJson handler")
+	log.LogDebug("KUBECONFIG", zap.String("KUBECONFIG", os.Getenv("KUBECONFIG")))
+	log.LogDebug("wds_context", zap.String("wds_context", os.Getenv("wds_context")))
 
 	// Check Content-Type header
 	contentType := ctx.GetHeader("Content-Type")
-	fmt.Printf("Debug - Content-Type: %s\n", contentType)
+	log.LogDebug("Content-Type", zap.String("contentType", contentType))
 	if !strings.Contains(contentType, "application/json") {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Content-Type must be application/json"})
 		return
@@ -1029,7 +1040,7 @@ func CreateBpFromJson(ctx *gin.Context) {
 
 	var bpRequest BindingPolicyRequest
 	if err := ctx.ShouldBindJSON(&bpRequest); err != nil {
-		fmt.Printf("Debug - JSON binding error: %v\n", err)
+		log.LogError("JSON binding error", zap.Error(err))
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid JSON format: %s", err.Error())})
 		return
 	}
@@ -1044,7 +1055,7 @@ func CreateBpFromJson(ctx *gin.Context) {
 		bpRequest.Namespace = "default" // Default namespace if not provided
 	}
 
-	fmt.Printf("Debug - Received policy request: %+v\n", bpRequest)
+	log.LogDebug("Received policy request", zap.Any("bpRequest", bpRequest))
 
 	// Create a KubeStellar BindingPolicy using a generic approach
 	// type policyMatchLabels struct {
@@ -1230,17 +1241,17 @@ func CreateBpFromJson(ctx *gin.Context) {
 	// Generate YAML for the policy object
 	yamlData, err := yaml.Marshal(policyObj)
 	if err != nil {
-		fmt.Printf("Debug - YAML marshaling error: %v\n", err)
+		log.LogError("YAML marshaling error", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to generate YAML: %s", err.Error())})
 		return
 	}
 	rawYAML := string(yamlData)
-	fmt.Printf("Debug - Generated YAML:\n%s\n", rawYAML)
+	log.LogDebug("Generated YAML", zap.String("yaml", rawYAML))
 
 	// Now parse back into a BindingPolicy struct
 	newBP := &v1alpha1.BindingPolicy{}
 	if err := yaml.Unmarshal(yamlData, newBP); err != nil {
-		fmt.Printf("Debug - Error parsing generated YAML back into BindingPolicy: %v\n", err)
+		log.LogError("Error parsing generated YAML back into BindingPolicy", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to parse generated YAML: %s", err.Error())})
 		return
 	}
@@ -1248,7 +1259,7 @@ func CreateBpFromJson(ctx *gin.Context) {
 	// Ensure the name is set
 	if newBP.Name == "" {
 		newBP.Name = bpRequest.Name
-		fmt.Printf("Debug - Name was empty, setting to: %s\n", bpRequest.Name)
+		log.LogDebug("Name was empty, setting to", zap.String("name", bpRequest.Name))
 	}
 
 	// Ensure each downsync rule has a non-empty apiGroup
@@ -1256,7 +1267,7 @@ func CreateBpFromJson(ctx *gin.Context) {
 		if newBP.Spec.Downsync[i].APIGroup == nil || *newBP.Spec.Downsync[i].APIGroup == "" {
 			coreGroup := "core"
 			newBP.Spec.Downsync[i].APIGroup = &coreGroup
-			fmt.Printf("Debug - Fixed empty APIGroup in downsync[%d] to 'core'\n", i)
+			log.LogDebug("Fixed empty APIGroup in downsync", zap.Int("index", i), zap.String("apiGroup", "core"))
 		}
 	}
 
@@ -1274,12 +1285,12 @@ func CreateBpFromJson(ctx *gin.Context) {
 
 	// Store policy before API call
 	uiCreatedPolicies[newBP.Name] = storedBP
-	fmt.Printf("Debug - Stored policy in memory cache with key: %s\n", newBP.Name)
+	log.LogInfo("Stored policy in memory cache", zap.String("key", newBP.Name))
 
 	// Get client
 	c, err := getClientForBp()
 	if err != nil {
-		fmt.Printf("Debug - Client creation error: %v\n", err)
+		log.LogError("Client creation error", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create client: %s", err.Error())})
 		return
 	}
@@ -1294,7 +1305,7 @@ func CreateBpFromJson(ctx *gin.Context) {
 			})
 			return
 		}
-		fmt.Printf("Debug - BP creation error: %v\n", err)
+		log.LogError("BP creation error", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create binding policy: %s", err.Error())})
 		return
 	}
@@ -1374,7 +1385,7 @@ func contains(slice []string, str string) bool {
 
 // CreateQuickBindingPolicy creates a simple binding policy connecting workload(s) to cluster(s)
 func CreateQuickBindingPolicy(ctx *gin.Context) {
-	fmt.Printf("Debug - Starting CreateQuickBindingPolicy handler\n")
+	log.LogInfo("Starting CreateQuickBindingPolicy handler")
 
 	// Define a struct to parse the quick connection request
 	type ResourceConfig struct {
@@ -1397,12 +1408,12 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 
 	var request QuickBindingPolicyRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		fmt.Printf("Debug - JSON binding error: %v\n", err)
+		log.LogError("JSON binding error", zap.Error(err))
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid JSON format: %s", err.Error())})
 		return
 	}
 
-	fmt.Printf("Debug - Received request: %+v\n", request)
+	log.LogDebug("Received request", zap.Any("request", request))
 
 	// Validate required fields
 	if len(request.WorkloadLabels) == 0 {
@@ -1553,7 +1564,7 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 
 	// If we have custom resources, add rule(s) for CustomResourceDefinitions
 	if hasCRDs {
-		fmt.Printf("Debug - Adding CustomResourceDefinitions to binding policy\n")
+		log.LogInfo("Adding CustomResourceDefinitions to binding policy")
 
 		// Check if customresourcedefinitions is already in the resources list
 		hasExplicitCRDResource := false
@@ -1565,7 +1576,7 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 		}
 
 		if hasExplicitCRDResource {
-			fmt.Printf("Debug - User explicitly specified CustomResourceDefinitions resource, using workload labels\n")
+			log.LogInfo("User explicitly specified CustomResourceDefinitions resource, using workload labels")
 			crdRule := map[string]interface{}{
 				"apiGroup":  "apiextensions.k8s.io",
 				"resources": []string{"customresourcedefinitions"},
@@ -1580,10 +1591,10 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 			specificCRDNames := getCRDNamesFromResources(crdAPIGroups)
 
 			if len(specificCRDNames) > 0 {
-				fmt.Printf("Debug - Adding specific CRDs to binding policy: %v\n", specificCRDNames)
+				log.LogDebug("Adding specific CRDs to binding policy", zap.Any("specificCRDNames", specificCRDNames))
 
 				for _, crdName := range specificCRDNames {
-					fmt.Printf("Debug - Adding individual CRD rule for %s\n", crdName)
+					log.LogDebug("Adding individual CRD rule", zap.String("crdName", crdName))
 
 					// Individual CRD rule with explicit name matching
 					crdRule := map[string]interface{}{
@@ -1627,7 +1638,7 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 			// For CRDs, we need to specify the apiGroup
 			apiGroup := crdAPIGroups[resource]
 			downsyncRule["apiGroup"] = apiGroup
-			fmt.Printf("Debug - Adding CRD resource %s with apiGroup %s\n", resource, apiGroup)
+			log.LogDebug("Adding CRD resource with apiGroup", zap.String("resource", resource), zap.String("apiGroup", apiGroup))
 		}
 
 		// Only add createOnly if it's true
@@ -1650,17 +1661,17 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 	// Generate YAML for the policy object
 	yamlData, err := yaml.Marshal(policyObj)
 	if err != nil {
-		fmt.Printf("Debug - YAML marshaling error: %v\n", err)
+		log.LogError("YAML marshaling error", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to generate YAML: %s", err.Error())})
 		return
 	}
 	rawYAML := string(yamlData)
-	fmt.Printf("Debug - Generated YAML:\n%s\n", rawYAML)
+	log.LogDebug("Generated YAML", zap.String("yaml", rawYAML))
 
 	// Now parse back into a BindingPolicy struct
 	newBP, err := getBpObjFromYaml(yamlData)
 	if err != nil {
-		fmt.Printf("Debug - Error parsing generated YAML back into BindingPolicy: %v\n", err)
+		log.LogError("Error parsing generated YAML back into BindingPolicy", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to parse generated YAML: %s", err.Error())})
 		return
 	}
@@ -1676,7 +1687,7 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 	// Get client and create the binding policy
 	c, err := getClientForBp()
 	if err != nil {
-		fmt.Printf("Debug - Client creation error: %v\n", err)
+		log.LogError("Client creation error", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create client: %s", err.Error())})
 		return
 	}
@@ -1691,7 +1702,7 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 			})
 			return
 		}
-		fmt.Printf("Debug - BP creation error: %v\n", err)
+		log.LogError("BP creation error", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create binding policy: %s", err.Error())})
 		return
 	}
@@ -1753,7 +1764,7 @@ func getFirstMapEntry(m map[string]string) (string, string) {
 // GenerateQuickBindingPolicyYAML generates the YAML for a binding policy connecting workload(s) to cluster(s)
 // without actually creating the policy
 func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
-	fmt.Printf("Debug - Starting GenerateQuickBindingPolicyYAML handler\n")
+	log.LogInfo("Starting GenerateQuickBindingPolicyYAML handler")
 
 	// Define a struct to parse the request - same as CreateQuickBindingPolicy
 	type ResourceConfig struct {
@@ -1776,12 +1787,12 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 
 	var request QuickBindingPolicyRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		fmt.Printf("Debug - JSON binding error: %v\n", err)
+		log.LogError("JSON binding error", zap.Error(err))
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid JSON format: %s", err.Error())})
 		return
 	}
 
-	fmt.Printf("Debug - Received request: %+v\n", request)
+	log.LogError("Receiced request", zap.Any("request", request))
 
 	// Validate required fields
 	if len(request.WorkloadLabels) == 0 {
@@ -1929,7 +1940,7 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 
 	// If we have custom resources, add rule(s) for CustomResourceDefinitions
 	if hasCRDs {
-		fmt.Printf("Debug - Adding CustomResourceDefinitions to binding policy\n")
+		log.LogDebug("Adding CustomResourceDefinitions to binding policy")
 
 		// Check if customresourcedefinitions is already in the resources list
 		hasExplicitCRDResource := false
@@ -1941,7 +1952,7 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 		}
 
 		if hasExplicitCRDResource {
-			fmt.Printf("Debug - User explicitly specified CustomResourceDefinitions resource, using workload labels\n")
+			log.LogDebug("User explicitly specified CustomResourceDefinitions resource, using workload labels")
 
 			crdRule := map[string]interface{}{
 				"apiGroup":  "apiextensions.k8s.io",
@@ -1957,10 +1968,10 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 			specificCRDNames := getCRDNamesFromResources(crdAPIGroups)
 
 			if len(specificCRDNames) > 0 {
-				fmt.Printf("Debug - Adding specific CRDs to binding policy: %v\n", specificCRDNames)
+				log.LogDebug("Adding specific CRDs to binding policy", zap.Any("specificCRDNames", specificCRDNames))
 
 				for _, crdName := range specificCRDNames {
-					fmt.Printf("Debug - Adding individual CRD rule for %s\n", crdName)
+					log.LogDebug("Adding individual CRD rule", zap.String("crdName", crdName))
 
 					// Individual CRD rule with explicit name matching
 					crdRule := map[string]interface{}{
@@ -2003,7 +2014,7 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 			// For CRDs, we need to specify the apiGroup
 			apiGroup := crdAPIGroups[resource]
 			downsyncRule["apiGroup"] = apiGroup
-			fmt.Printf("Debug - Adding CRD resource %s with apiGroup %s\n", resource, apiGroup)
+			log.LogDebug("Adding CRD resource with apiGroup", zap.String("resource", resource), zap.String("apiGroup", apiGroup))
 		}
 
 		// Only add createOnly if it's true
@@ -2026,12 +2037,12 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 	// Generate YAML for the policy object
 	yamlData, err := yaml.Marshal(policyObj)
 	if err != nil {
-		fmt.Printf("Debug - YAML marshaling error: %v\n", err)
+		log.LogError("YAML marshaling error", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to generate YAML: %s", err.Error())})
 		return
 	}
 	rawYAML := string(yamlData)
-	fmt.Printf("Debug - Generated YAML:\n%s\n", rawYAML)
+	log.LogDebug("Generated YAML", zap.String("rawYAML", rawYAML))
 
 	// Format the response
 	clusterLabelsFormatted := []string{}
@@ -2114,7 +2125,7 @@ func getCRDNamesFromResources(resourceAPIGroups map[string]string) []string {
 	for resource, apiGroup := range resourceAPIGroups {
 		crdName := fmt.Sprintf("%s.%s", resource, apiGroup)
 
-		fmt.Printf("Debug - Generated CRD name: %s for resource type %s\n", crdName, resource)
+		log.LogDebug("Generated CRD name for resource type", zap.String("crdName", crdName), zap.String("resource", resource))
 		crdNames = append(crdNames, crdName)
 	}
 
