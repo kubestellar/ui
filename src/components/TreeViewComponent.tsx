@@ -106,6 +106,21 @@ export interface ResourceItem {
   spec?: {
     ports?: Array<{ name: string; port: number }>;
     holderIdentity?: string;
+    replicas?: number;
+    scaleTargetRef?: {
+      apiVersion?: string;
+      kind?: string;
+      name?: string;
+    };
+    configMap?: {
+      name: string;
+      items?: Array<{ key: string; path: string }>;
+    };
+    secret?: {
+      secretName: string;
+      items?: Array<{ key: string; path: string }>;
+    };
+    [key: string]: unknown;
   };
   status?: {
     conditions?: Array<{ type: string; status: string }>;
@@ -131,12 +146,27 @@ export interface ResourceItem {
     ports?: Array<{ name?: string; port?: number }>;
   }>;
   ports?: Array<{ name: string; port: number }>;
-  subjects?: Array<{ name: string }>;
+  subjects?: Array<{ 
+    name: string;
+    kind?: string;
+    namespace?: string;
+  }>;
   roleRef?: { name: string };
   rules?: Array<{
     verbs?: string[];
     resources?: string[];
   }>;
+  parentConfigMap?: {
+    name: string;
+    namespace: string;
+    kind: string;
+  };
+  parentSecret?: {
+    name: string;
+    namespace: string;
+    kind: string;
+  };
+  [key: string]: unknown;
 }
 
 export interface NamespaceResource {
@@ -886,16 +916,113 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
 
                     switch (kindLower) {
                       case "configmap":
-                        createNode(`${resourceId}:volume`, `volume-${item.metadata.name}`, "volume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                        createNode(`${resourceId}:envvar`, `envvar-${item.metadata.name}`, "envvar", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                        createNode(`${resourceId}:volume`, `volume-${item.metadata.name}`, "volume", status, undefined, namespace.name, {
+                          ...item,
+                          kind: "Volume",
+                          parentConfigMap: {
+                            name: item.metadata.name,
+                            namespace: namespace.name,
+                            kind: "ConfigMap"
+                          },
+                          spec: {
+                            configMap: {
+                              name: item.metadata.name,
+                              items: item.data ? Object.keys(item.data).map(key => ({ key, path: key })) : []
+                            }
+                          }
+                        }, resourceId, newNodes, newEdges);
+                        
+                        createNode(`${resourceId}:envvar`, `envvar-${item.metadata.name}`, "envvar", status, undefined, namespace.name, {
+                          ...item,
+                          kind: "EnvVar",
+                          parentConfigMap: {
+                            name: item.metadata.name,
+                            namespace: namespace.name,
+                            kind: "ConfigMap"
+                          }
+                        }, resourceId, newNodes, newEdges);
                         break;
 
                       case "clusterrolebinding": {
                         const crbClusterRoleId = `${resourceId}:clusterrole`;
-                        createNode(crbClusterRoleId, `clusterrole-${item.metadata.name}`, "clusterrole", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                        createNode(`${crbClusterRoleId}:user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, crbClusterRoleId, newNodes, newEdges);
-                        createNode(`${crbClusterRoleId}:serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, item, crbClusterRoleId, newNodes, newEdges);
-                        createNode(`${crbClusterRoleId}:group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, item, crbClusterRoleId, newNodes, newEdges);
+                        createNode(crbClusterRoleId, `clusterrole-${item.metadata.name}`, "clusterrole", status, undefined, namespace.name, {
+                          apiVersion: "rbac.authorization.k8s.io/v1",
+                          kind: "ClusterRole",
+                          metadata: {
+                            name: item.roleRef?.name || `${item.metadata.name}-clusterrole`,
+                            namespace: namespace.name,
+                            creationTimestamp: item.metadata.creationTimestamp
+                          },
+                          parentClusterRoleBinding: {
+                            name: item.metadata.name,
+                            namespace: namespace.name,
+                            kind: "ClusterRoleBinding"
+                          },
+                          rules: []
+                        }, resourceId, newNodes, newEdges);
+                        
+                        // User subject for clusterrole
+                        createNode(`${crbClusterRoleId}:user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, {
+                          apiVersion: "rbac.authorization.k8s.io/v1",
+                          kind: "User",
+                          metadata: {
+                            name: item.subjects?.find(s => s.kind === "User")?.name || `${item.metadata.name}-user`,
+                            namespace: namespace.name,
+                            creationTimestamp: item.metadata.creationTimestamp
+                          },
+                          parentClusterRole: {
+                            name: item.roleRef?.name || `${item.metadata.name}-clusterrole`,
+                            namespace: namespace.name,
+                            kind: "ClusterRole"
+                          },
+                          parentClusterRoleBinding: {
+                            name: item.metadata.name,
+                            namespace: namespace.name,
+                            kind: "ClusterRoleBinding"
+                          }
+                        }, crbClusterRoleId, newNodes, newEdges);
+                        
+                        // ServiceAccount subject for clusterrole
+                        createNode(`${crbClusterRoleId}:serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, {
+                          apiVersion: "v1",
+                          kind: "ServiceAccount",
+                          metadata: {
+                            name: item.subjects?.find(s => s.kind === "ServiceAccount")?.name || `${item.metadata.name}-sa`,
+                            namespace: namespace.name,
+                            creationTimestamp: item.metadata.creationTimestamp
+                          },
+                          parentClusterRole: {
+                            name: item.roleRef?.name || `${item.metadata.name}-clusterrole`,
+                            namespace: namespace.name,
+                            kind: "ClusterRole"
+                          },
+                          parentClusterRoleBinding: {
+                            name: item.metadata.name,
+                            namespace: namespace.name,
+                            kind: "ClusterRoleBinding"
+                          }
+                        }, crbClusterRoleId, newNodes, newEdges);
+                        
+                        // Group subject for clusterrole
+                        createNode(`${crbClusterRoleId}:group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, {
+                          apiVersion: "rbac.authorization.k8s.io/v1",
+                          kind: "Group",
+                          metadata: {
+                            name: item.subjects?.find(s => s.kind === "Group")?.name || `${item.metadata.name}-group`,
+                            namespace: namespace.name,
+                            creationTimestamp: item.metadata.creationTimestamp
+                          },
+                          parentClusterRole: {
+                            name: item.roleRef?.name || `${item.metadata.name}-clusterrole`,
+                            namespace: namespace.name,
+                            kind: "ClusterRole"
+                          },
+                          parentClusterRoleBinding: {
+                            name: item.metadata.name,
+                            namespace: namespace.name,
+                            kind: "ClusterRoleBinding"
+                          }
+                        }, crbClusterRoleId, newNodes, newEdges);
                         break;
                       }
 
@@ -926,7 +1053,23 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                         break;
 
                       case "service":
-                        createNode(`${resourceId}:endpoints`, `endpoints-${item.metadata.name}`, "endpoints", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                        createNode(`${resourceId}:endpoints`, `endpoints-${item.metadata.name}`, "endpoints", status, undefined, namespace.name, {
+                          apiVersion: "v1",
+                          kind: "Endpoints",
+                          metadata: {
+                            name: item.metadata.name,
+                            namespace: namespace.name,
+                            creationTimestamp: item.metadata.creationTimestamp,
+                            labels: item.metadata.labels
+                          },
+                          parentService: {
+                            name: item.metadata.name,
+                            namespace: namespace.name,
+                            kind: "Service"
+                          },
+                          subsets: item.subsets || [],
+                          ports: item.spec?.ports || []
+                        }, resourceId, newNodes, newEdges);
                         break;
 
                       case "endpoints":
@@ -976,10 +1119,84 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
 
                       case "rolebinding": {
                         const rbRoleId = `${resourceId}:role`;
-                        createNode(rbRoleId, `role-${item.metadata.name}`, "role", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                        createNode(`${rbRoleId}:user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, rbRoleId, newNodes, newEdges);
-                        createNode(`${rbRoleId}:serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, item, rbRoleId, newNodes, newEdges);
-                        createNode(`${rbRoleId}:group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, item, rbRoleId, newNodes, newEdges);
+                        createNode(rbRoleId, `role-${item.metadata.name}`, "role", status, undefined, namespace.name, {
+                          apiVersion: "rbac.authorization.k8s.io/v1",
+                          kind: "Role",
+                          metadata: {
+                            name: item.roleRef?.name || `${item.metadata.name}-role`,
+                            namespace: namespace.name,
+                            creationTimestamp: item.metadata.creationTimestamp
+                          },
+                          parentRoleBinding: {
+                            name: item.metadata.name,
+                            namespace: namespace.name,
+                            kind: "RoleBinding"
+                          },
+                          rules: []
+                        }, resourceId, newNodes, newEdges);
+                        
+                        // User subject for role
+                        createNode(`${rbRoleId}:user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, {
+                          apiVersion: "rbac.authorization.k8s.io/v1",
+                          kind: "User",
+                          metadata: {
+                            name: item.subjects?.find(s => s.kind === "User")?.name || `${item.metadata.name}-user`,
+                            namespace: namespace.name,
+                            creationTimestamp: item.metadata.creationTimestamp
+                          },
+                          parentRole: {
+                            name: item.roleRef?.name || `${item.metadata.name}-role`,
+                            namespace: namespace.name,
+                            kind: "Role"
+                          },
+                          parentRoleBinding: {
+                            name: item.metadata.name,
+                            namespace: namespace.name,
+                            kind: "RoleBinding"
+                          }
+                        }, rbRoleId, newNodes, newEdges);
+                        
+                        // ServiceAccount subject for role
+                        createNode(`${rbRoleId}:serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, {
+                          apiVersion: "v1",
+                          kind: "ServiceAccount",
+                          metadata: {
+                            name: item.subjects?.find(s => s.kind === "ServiceAccount")?.name || `${item.metadata.name}-sa`,
+                            namespace: namespace.name,
+                            creationTimestamp: item.metadata.creationTimestamp
+                          },
+                          parentRole: {
+                            name: item.roleRef?.name || `${item.metadata.name}-role`,
+                            namespace: namespace.name,
+                            kind: "Role"
+                          },
+                          parentRoleBinding: {
+                            name: item.metadata.name,
+                            namespace: namespace.name,
+                            kind: "RoleBinding"
+                          }
+                        }, rbRoleId, newNodes, newEdges);
+                        
+                        // Group subject for role
+                        createNode(`${rbRoleId}:group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, {
+                          apiVersion: "rbac.authorization.k8s.io/v1",
+                          kind: "Group",
+                          metadata: {
+                            name: item.subjects?.find(s => s.kind === "Group")?.name || `${item.metadata.name}-group`,
+                            namespace: namespace.name,
+                            creationTimestamp: item.metadata.creationTimestamp
+                          },
+                          parentRole: {
+                            name: item.roleRef?.name || `${item.metadata.name}-role`,
+                            namespace: namespace.name,
+                            kind: "Role"
+                          },
+                          parentRoleBinding: {
+                            name: item.metadata.name,
+                            namespace: namespace.name,
+                            kind: "RoleBinding"
+                          }
+                        }, rbRoleId, newNodes, newEdges);
                         break;
                       }
 
@@ -998,8 +1215,31 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                         break;
 
                       case "secret":
-                        createNode(`${resourceId}:volume`, `volume-${item.metadata.name}`, "volume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                        createNode(`${resourceId}:envvar`, `envvar-${item.metadata.name}`, "envvar", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                        createNode(`${resourceId}:volume`, `volume-${item.metadata.name}`, "volume", status, undefined, namespace.name, {
+                          ...item,
+                          kind: "Volume",
+                          parentSecret: {
+                            name: item.metadata.name,
+                            namespace: namespace.name,
+                            kind: "Secret"
+                          },
+                          spec: {
+                            secret: {
+                              secretName: item.metadata.name,
+                              items: item.data ? Object.keys(item.data).map(key => ({ key, path: key })) : []
+                            }
+                          }
+                        }, resourceId, newNodes, newEdges);
+                        
+                        createNode(`${resourceId}:envvar`, `envvar-${item.metadata.name}`, "envvar", status, undefined, namespace.name, {
+                          ...item,
+                          kind: "EnvVar",
+                          parentSecret: {
+                            name: item.metadata.name,
+                            namespace: namespace.name,
+                            kind: "Secret"
+                          }
+                        }, resourceId, newNodes, newEdges);
                         break;
 
                       case "statefulset":

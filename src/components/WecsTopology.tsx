@@ -127,6 +127,7 @@ export interface ResourceItem {
     verbs?: string[];
     resources?: string[];
   }>;
+  [key: string]: unknown; // Add index signature to make compatible with TreeViewComponent
 }
 
 export interface WecsResource {
