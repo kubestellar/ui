@@ -92,7 +92,7 @@ func init() {
 // create job that takes backup
 func createBackupJob(c *kubernetes.Clientset) error {
 	//get db password
-	s, err := c.CoreV1().Secrets("kubeflex-system").Get(context.TODO(), "postgres-postgresql")
+	s, err := c.CoreV1().Secrets("kubeflex-system").Get(context.TODO(), "postgres-postgresql", metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
