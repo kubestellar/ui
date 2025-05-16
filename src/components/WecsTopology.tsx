@@ -263,9 +263,9 @@ const getLayoutedElements = (
 ) => {
   const NODE_WIDTH = 146;
   const NODE_HEIGHT = 30;
-  const NODE_SEP = 50; // Horizontal spacing between nodes
-  const RANK_SEP = 60; // Reduced vertical spacing between ranks (groups)
-  const CHILD_SPACING = NODE_HEIGHT + 30; // Reduced spacing between child nodes (was 40)
+  const NODE_SEP = 20; 
+  const RANK_SEP = 60; 
+  const CHILD_SPACING = NODE_HEIGHT + 30; 
 
   // Step 1: Initial Dagre layout
   const dagreGraph = new dagre.graphlib.Graph();
