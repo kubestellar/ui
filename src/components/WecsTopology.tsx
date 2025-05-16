@@ -263,9 +263,9 @@ const getLayoutedElements = (
 ) => {
   const NODE_WIDTH = 146;
   const NODE_HEIGHT = 30;
-  const NODE_SEP = 50; // Horizontal spacing between nodes
-  const RANK_SEP = 60; // Reduced vertical spacing between ranks (groups)
-  const CHILD_SPACING = NODE_HEIGHT + 30; // Reduced spacing between child nodes (was 40)
+  const NODE_SEP = 20; 
+  const RANK_SEP = 60; 
+  const CHILD_SPACING = NODE_HEIGHT + 30; 
 
   // Step 1: Initial Dagre layout
   const dagreGraph = new dagre.graphlib.Graph();
@@ -1065,14 +1065,50 @@ const WecsTreeview = () => {
                           });
                         }
                       } else if (kindLower === "service" && rawResource.spec) {
-                        // Only show the Service without creating endpoints automatically
-                        // Endpoints will be shown if they exist in the actual data
+                        // Create Endpoints node for the Service
+                        createNode(
+                          `${resourceId}:endpoints`,
+                          `endpoints-${rawResource.metadata.name}`,
+                          "endpoints",
+                          status,
+                          undefined,
+                          namespace.namespace,
+                          rawResource,
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
                       } else if (kindLower === "ingress" && rawResource.spec) {
                         // Only show the Ingress without creating services automatically
                         // Services will be shown if they exist in the actual data
-                      } else if (kindLower === "configmap" || kindLower === "secret") {
-                        // Only show the ConfigMap/Secret without creating volumes automatically
-                        // Volumes will be shown if they exist in the actual data
+                      } else if (kindLower === "configmap") {
+                        // Create Volume nodes for ConfigMap
+                        createNode(
+                          `${resourceId}:volume`,
+                          `volume-${rawResource.metadata.name}`,
+                          "volume",
+                          status,
+                          undefined,
+                          namespace.namespace,
+                          rawResource,
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                      }
+                      else if(kindLower === "secret"){
+                          createNode(
+                            `${resourceId}:envvar`,
+                            `envvar-${rawResource.metadata.name}`,
+                            "envvar",
+                            status,
+                            undefined,
+                            namespace.namespace,
+                            rawResource,
+                            resourceId,
+                            newNodes,
+                            newEdges
+                          );
                       } else if (kindLower === "persistentvolumeclaim" && rawResource.spec) {
                         // Only show the PVC without creating a PV automatically
                       } else if (kindLower === "storageclass" && rawResource.spec) {

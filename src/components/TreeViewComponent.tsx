@@ -450,7 +450,7 @@ const getLayoutedElements = (
   nodes.forEach((node) => {
     const cachedNode = nodeMap.get(node.id);
     if (!cachedNode || !isEqual(cachedNode, node) || shouldRecalculate) {
-      dagreGraph.setNode(node.id, { width: 146, height: 30 });
+      dagreGraph.setNode(node.id, { width: 146, height: 20 });
       newNodes.push(node);
     } else {
       newNodes.push({ ...cachedNode, ...node });
