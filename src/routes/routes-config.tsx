@@ -10,7 +10,6 @@ import WecsTreeview from "../components/WecsTopology";
 import ProtectedRoute from "../components/ProtectedRoute";
 import PublicRoute from "../components/PublicRoute";
 import KubeStellarVisualization from "../components/login/index";
-import Terminal from "../components/Terminal.tsx";
 import InstallationPage from "../pages/InstallationPage";
 import KubeStellarStatusChecker from "../components/KubeStellarStatusChecker";
 
@@ -103,12 +102,6 @@ export const routesConfig: RouteObject[] = [
         element: (
           <NotFoundPage />
         ) 
-      },
-      {
-        path: "/shell",
-        element: (
-            <Terminal />
-        )
       },
     ],
   },
