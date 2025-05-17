@@ -1,1 +1,7 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Format files with Prettier
+npx prettier --write --list-different .
+# Run linting
 npm run lint
