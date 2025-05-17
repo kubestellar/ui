@@ -34,6 +34,7 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from "@mui/icons-material/Add";
 import LabelIcon from "@mui/icons-material/Label";
 import SaveIcon from "@mui/icons-material/Save";
@@ -47,8 +48,10 @@ import InboxIcon from "@mui/icons-material/Inbox";
 import PostAddIcon from "@mui/icons-material/PostAdd";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import TableSkeleton from "./ui/TableSkeleton";
+
 import { MdLabel } from "react-icons/md";
 import LockIcon from "@mui/icons-material/Lock";
+
 
 interface ManagedClusterInfo {
   name: string;
@@ -1103,49 +1106,72 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
           }}
         />
 
-        <FormControl className="w-40">
-          <InputLabel style={{ color: colors.textSecondary }}>Status Filter</InputLabel>
-          <Select
-            value={filter}
-            label="Status Filter"
-            onChange={handleFilterChange}
-            sx={{
-              "& .MuiSelect-select": {
-                color: colors.text,
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-              },
-              "& .MuiOutlinedInput-notchedOutline": { borderColor: colors.border },
-              "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: colors.primaryLight },
-              "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: colors.primary },
-              "& .MuiSelect-icon": { color: colors.textSecondary },
-            }}
-            IconComponent={() => (
-              <Filter size={18} style={{ color: colors.textSecondary, marginRight: "8px" }} />
-            )}
-          >
-            <MenuItem value="">All Status</MenuItem>
-            <MenuItem value="active✓">
-              <span className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.success }}></span>
-                Active
-              </span>
-            </MenuItem>
-            <MenuItem value="inactive">
-              <span className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.error }}></span>
-                Inactive
-              </span>
-            </MenuItem>
-            <MenuItem value="pending">
-              <span className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.warning }}></span>
-                Pending
-              </span>
-            </MenuItem>
-          </Select>
-        </FormControl>
+<FormControl className="w-40">
+  <InputLabel style={{ color: colors.textSecondary }}>Status Filter</InputLabel>
+  <Select
+    value={filter}
+    label="Status Filter"
+    onChange={handleFilterChange}
+    sx={{
+      backgroundColor: isDark ? '#1e1e2f' : '#fff', // Dropdown field background
+      borderRadius: "4px",
+      "& .MuiSelect-select": {
+        color: colors.text,
+        display: "flex",
+        alignItems: "center",
+        backgroundColor: isDark ? 'rgba(47, 134, 255, 0.08)' : 'rgba(47, 134, 255, 0.05)',
+        gap: "0.5rem",
+      },
+      "& .MuiOutlinedInput-notchedOutline": {
+        borderColor: isDark ? '#333' : colors.border,
+      },
+      "&:hover .MuiOutlinedInput-notchedOutline": {
+        borderColor: isDark ? colors.primaryLight : colors.primary,
+      },
+      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+        borderColor: colors.primary,
+      },
+      "& .MuiSelect-icon": {
+        color: colors.textSecondary,
+      },
+      "& .MuiPaper-root": {
+        backgroundColor: isDark ? '#2a2a3c' : '#fff',
+        color: colors.text,
+      },
+    }}
+    IconComponent={() => (
+      <Filter size={18} style={{ color: colors.textSecondary, marginRight: "8px" }} />
+    )}
+    MenuProps={{
+      PaperProps: {
+        style: {
+          backgroundColor: isDark ? '#2a2a3c' : '#fff',
+          color: colors.text,
+        },
+      },
+    }}
+  >
+    <MenuItem value="">All Status</MenuItem>
+    <MenuItem value="active✓">
+      <span className="flex items-center gap-2">
+        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.success }}></span>
+        Active
+      </span>
+    </MenuItem>
+    <MenuItem value="inactive">
+      <span className="flex items-center gap-2">
+        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.error }}></span>
+        Inactive
+      </span>
+    </MenuItem>
+    <MenuItem value="pending">
+      <span className="flex items-center gap-2">
+        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.warning }}></span>
+        Pending
+      </span>
+    </MenuItem>
+  </Select>
+</FormControl>
 
         {hasSelectedClusters && (
           <div className="flex ml-auto">
@@ -1331,25 +1357,25 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                         )}
                       </div>
                       {selectedClusters.length <= 1 && (
-                        <Tooltip title="Edit Labels">
-                          <IconButton
-                            size="small"
-                            onClick={() => handleEditLabels(cluster)}
-                            disabled={loadingClusterEdit === cluster.name}
-                            style={{ 
-                              color: colors.textSecondary,
-                              backgroundColor: isDark ? 'rgba(47, 134, 255, 0.08)' : 'rgba(47, 134, 255, 0.05)',
-                              transition: 'all 0.2s ease',
-                            }}
-                            className="hover:bg-opacity-80 hover:scale-105"
-                          >
-                            {loadingClusterEdit === cluster.name ? (
-                              <CircularProgress size={16} style={{ color: colors.primary }} />
-                            ) : (
-                              <MdLabel fontSize="24px" />
-                            )}
-                          </IconButton>
-                        </Tooltip>
+                    <Tooltip title="Edit Labels">
+                    <IconButton
+                      size="small"
+                      onClick={() => handleEditLabels(cluster)}
+                      disabled={loadingClusterEdit === cluster.name}
+                      style={{ 
+                        color: colors.textSecondary,
+                        backgroundColor: isDark ? 'rgba(47, 134, 255, 0.08)' : 'rgba(47, 134, 255, 0.05)',
+                        transition: 'all 0.2s ease',
+                      }}
+                      className="hover:bg-opacity-80 hover:scale-105"
+                    >
+                      {loadingClusterEdit === cluster.name ? (
+                        <CircularProgress size={16} style={{ color: colors.primary }} />
+                      ) : (
+                        <EditIcon fontSize="small" /> 
+                      )}
+                    </IconButton>
+                  </Tooltip>
                       )}
                     </div>
                   </TableCell>
