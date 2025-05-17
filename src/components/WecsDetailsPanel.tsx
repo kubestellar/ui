@@ -684,7 +684,17 @@ const WecsDetailsPanel = ({
       
       // Update current pod reference
       currentPodRef.current = name;
-    
+      
+      // Add Ctrl+L keybinding to clear the terminal
+    term.attachCustomKeyEventHandler((event) => {
+      if (event.ctrlKey && event.key.toLowerCase() === 'l') {
+        term.clear();
+        event.preventDefault();
+        return false; // Prevent default and xterm.js handling
+      }
+      return true;
+    });
+
     return () => {
         // console.log(`Cleaning up exec terminal resources for pod: ${name}`);
       clearInterval(pingInterval);
