@@ -3,6 +3,7 @@ import { api } from '../../lib/api';
 import { toast } from 'react-hot-toast';
 import { BindingPolicyInfo, Workload } from '../../types/bindingPolicy';
 import { useState, useCallback } from 'react';
+import yaml from 'js-yaml';
 
 interface RawBindingPolicy {
   kind: string;
@@ -108,7 +109,27 @@ interface QuickConnectResponse {
   };
   message: string;
 }
+interface FieldV1 {
+  raw?: number[] | string | object;
+  [key: string]: unknown;
+}
 
+interface ManagedField {
+  fieldsv1?: FieldV1;
+  [key: string]: unknown;
+}
+
+interface Metadata {
+  managedfields?: ManagedField[];
+  [key: string]: unknown;
+}
+
+interface ParsedYaml {
+  objectmeta?: Metadata;
+  objectMeta?: Metadata;
+  ObjectMeta?: Metadata;
+  [key: string]: unknown;
+}
 interface WorkloadSSEData {
   namespaced: Record<string, Record<string, Array<{
     createdAt: string;
@@ -146,7 +167,6 @@ export const useBPQueries = () => {
       queryKey: ['binding-policies'],
       queryFn: async () => {
         const response = await api.get('/api/bp');
-        console.log("Response:", response.data);
         
         // Check if data exists and has bindingPolicies property
         let rawPolicies: RawBindingPolicy[] = [];
@@ -173,9 +193,46 @@ export const useBPQueries = () => {
             return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
           };
           
-          // Use the raw YAML content directly from the response
-          const yamlContent = policy.yaml || '';
+          let yamlContent = policy.yaml || '';
+
+
+          try {
+            const parsedYaml: ParsedYaml = (yaml.load(yamlContent) as ParsedYaml) || {};
+            console.log('Parsed YAML:', parsedYaml);
           
+            const metadata: Metadata | undefined =
+              parsedYaml.objectmeta || parsedYaml.objectMeta || parsedYaml.ObjectMeta;
+          
+            if (metadata?.managedfields) {
+              metadata.managedfields = metadata.managedfields.map((field: ManagedField) => {
+                if (field?.fieldsv1?.raw && Array.isArray(field.fieldsv1.raw)) {
+                  // Convert ASCII codes to actual string
+                  const originalString = String.fromCharCode(...field.fieldsv1.raw as number[]);
+          
+                  try {
+                    const parsedFields = JSON.parse(originalString);
+                    field.fieldsv1 = {
+                      ...field.fieldsv1,
+                      raw: parsedFields,
+                    };
+                  } catch (e) {
+                    console.log("Error parsing JSON from raw fieldsv1:", e);
+                    field.fieldsv1 = {
+                      ...field.fieldsv1,
+                      raw: originalString,
+                    };
+                  }
+                }
+                return field;
+              });
+            }
+          
+            const cleanedYaml = yaml.dump(parsedYaml);
+            yamlContent = cleanedYaml; // Update the yamlContent with cleaned YAML
+          } catch (err) {
+            console.error("Error parsing YAML:", err);
+          }
+                  
           // Extract clusters information - use already processed data if available
           const clusterList = policy.clusterList || policy.clusters || [];
           
@@ -186,7 +243,6 @@ export const useBPQueries = () => {
           const mainWorkload = workloadList.length > 0 ? workloadList[0] : 'No workload specified';
           
           console.log(`Policy ${policy.name} YAML exists: ${!!yamlContent}`);
-          
           return {
             name: policy.name || 'Unknown',
             namespace: policy.namespace || 'default',
@@ -211,7 +267,6 @@ export const useBPQueries = () => {
       toast.error('Failed to fetch binding policies');
       console.error('Error fetching binding policies:', queryResult.error);
     }
-
     return queryResult;
   };
 
@@ -284,7 +339,44 @@ export const useBPQueries = () => {
         } else {
           console.log(`No YAML content found for policy ${policyName}`);
         }
+
+        try {
+          const parsedYaml: ParsedYaml = (yaml.load(yamlContent) as ParsedYaml) || {};
+          console.log('Parsed YAML:', parsedYaml);
         
+          const metadata: Metadata | undefined =
+            parsedYaml.objectmeta || parsedYaml.objectMeta || parsedYaml.ObjectMeta;
+        
+          if (metadata?.managedfields) {
+            metadata.managedfields = metadata.managedfields.map((field: ManagedField) => {
+              if (field?.fieldsv1?.raw && Array.isArray(field.fieldsv1.raw)) {
+                // Convert ASCII codes to actual string
+                const originalString = String.fromCharCode(...field.fieldsv1.raw as number[]);
+        
+                try {
+                  const parsedFields = JSON.parse(originalString);
+                  field.fieldsv1 = {
+                    ...field.fieldsv1,
+                    raw: parsedFields,
+                  };
+                } catch (e) {
+                  console.log("Error parsing JSON from raw fieldsv1:", e);
+                  field.fieldsv1 = {
+                    ...field.fieldsv1,
+                    raw: originalString,
+                  };
+                }
+              }
+              return field;
+            });
+          }
+        
+          const cleanedYaml = yaml.dump(parsedYaml);
+          yamlContent = cleanedYaml; // Update the yamlContent with cleaned YAML
+        } catch (err) {
+          console.error("Error parsing YAML:", err);
+        }
+                  
         // Use the status from the status API, not from the main API
         const statusFromStatusApi = statusData.status || 'unknown';
         const capitalizedStatus = statusFromStatusApi.charAt(0).toUpperCase() + statusFromStatusApi.slice(1).toLowerCase();
@@ -365,7 +457,7 @@ export const useBPQueries = () => {
     return useMutation({
       mutationFn: async (policyData: Omit<BindingPolicyInfo, 'creationDate' | 'clusters' | 'status'>) => {
         console.log("Creating binding policy with data:", policyData);
-        
+        console.log("Policy data:", policyData);
         // Check if the policy data contains YAML content
         if (policyData.yaml) {
           // If we have YAML content, send it as a FormData
