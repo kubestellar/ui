@@ -1,42 +1,42 @@
-# **📜 Contribution Guide - Setting Up Redis, JWT Authentication, Testing, and Loggin into Kubestellar UI**  
+# **Contributing to Kubestellar UI**  
 
 This guide will help you set up a **Redis container**, configure **JWT authentication**, test the authentication flow using different tools, and log into Kubestellar UI.  
 
 ---
 
-## **📋 Contents**
+## **Contents**
 
-- [Prerequisites](#1️⃣-prerequisites)
-- [Setup Redis Container with Docker](#2️⃣-setup-redis-container-with-docker)
-- [Verify Redis is Running](#3️⃣-verify-redis-is-running)
-- [Setting Up JWT Authentication](#4️⃣-setting-up-jwt-authentication)
-- [Set Up Environment Variables](#5️⃣-set-up-environment-variables)
-- [Export Environment Variables](#6️⃣-export-environment-variables-linuxmac)
-- [Running the Go Backend](#7️⃣-running-the-go-backend)
-- [Testing JWT Authentication](#8️⃣-testing-jwt-authentication)
-- [Stopping and Removing Redis Container](#9️⃣-stopping-and-removing-redis-container)
-- [Login to Kubestellar UI](#🔟-login-to-kubestellar-ui)
-- [Docker Compose Development Cycle](#-docker-compose-development-cycle)
-- [Docker Image Versioning and Pulling](#-docker-image-versioning-and-pulling)
-- [Installing GolangCI-Lint](#-installing-golangci-lint)
-- [Linting & Fixing Code](#-linting--fixing-code)
-- [Conclusion](#-conclusion)
+- [Prerequisites](#prerequisites)
+- [Setup Redis Container with Docker](#setup-redis-container-with-docker)
+- [Verify Redis is Running](#verify-redis-is-running)
+- [Setting Up JWT Authentication](#setting-up-jwt-authentication)
+- [Set Up Environment Variables](#set-up-environment-variables)
+- [Export Environment Variables](#export-environment-variables-linuxmac)
+- [Running the Go Backend](#running-the-go-backend)
+- [Testing JWT Authentication](#testing-jwt-authentication)
+- [Stopping and Removing Redis Container](#stopping-and-removing-redis-container)
+- [Login to Kubestellar UI](#login-to-kubestellar-ui)
+- [Docker Compose Development Cycle](#docker-compose-development-cycle)
+- [Docker Image Versioning and Pulling](#docker-image-versioning-and-pulling)
+- [Installing GolangCI-Lint](#installing-golangci-lint)
+- [Linting & Fixing Code](#linting--fixing-code)
+- [Conclusion](#conclusion)
 
 ---
 
-## **1️⃣ Prerequisites**  
+## **Prerequisites**  
 Before proceeding, ensure you have the following installed: 
 - **Redis** 
-- **Docker** 🐳 (For running Redis in a container)  
+- **Docker** (For running Redis in a container)  
 - **Postman or cURL** (For API testing)  
 - **Go** (For running the backend)  
 - **OpenSSL** (For generating JWT secrets securely)  
 
 ---
 
-## **2️⃣ Setup Redis Container with Docker**  
+## **Setup Redis Container with Docker**  
 
-🔹 **Run Redis using Docker if you haven't already**  
+**Run Redis using Docker if you haven't already**  
 ```sh
 docker run --name redis -d -p 6379:6379 redis
 ```
@@ -48,18 +48,18 @@ docker run --name redis -d -p 6379:6379 redis
 
 ---
 
-## **3️⃣ Verify Redis is Running**  
+## **Verify Redis is Running**  
 
-🔹 **Check running containers:**  
+**Check running containers:**  
 ```sh
 docker ps | grep redis
 ```
 
 ---
 
-## **4️⃣ Setting Up JWT Authentication**  
+## **Setting Up JWT Authentication**  
 
-### **🔐 Generate a JWT Secret Key**  
+### **Generate a JWT Secret Key**  
 There are multiple ways to generate a secure JWT secret key.
 
 #### **(1) Using OpenSSL**
@@ -80,9 +80,9 @@ JWT_SECRET=mysecurekeygeneratedhere
 
 ---
 
-## **5️⃣ Set Up Environment Variables**  
+## **Set Up Environment Variables**  
 
-🔹 Create a **`.env`** file in the **`/backend`** directory (where `main.go` is located):  
+Create a **`.env`** file in the **`/backend`** directory (where `main.go` is located):  
 ```ini
 # Redis Configuration
 REDIS_HOST=localhost
@@ -94,7 +94,7 @@ JWT_SECRET=mysecurekeygeneratedhere
 
 ---
 
-## **6️⃣ Export Environment Variables (Linux/Mac)**
+## **Export Environment Variables (Linux/Mac)**
 If you prefer not to use a `.env` file, you can export variables manually in your terminal:
 
 ```sh
@@ -105,23 +105,23 @@ export JWT_SECRET=mysecurekeygeneratedhere
 
 ---
 
-## **7️⃣ Running the Go Backend**
+## **Running the Go Backend**
 Ensure you have Go installed, then run:
 
 ```sh
 go run main.go
 ```
 
-🚀 **Your API is now running!**
+**Your API is now running!**
 
 ---
 
-## **8️⃣ Testing JWT Authentication**  
+## **Testing JWT Authentication**  
 
 You can either generate your JWT Token with **Postman** or **cURL.**
 
-### ***With Postman***
-### **🔹 Step 1: Login and Get JWT Token**
+### **With Postman**
+### **Step 1: Login and Get JWT Token**
 #### **Request:**
 - **Method:** `POST`
 - **Endpoint:** `/login`
@@ -145,7 +145,7 @@ You can either generate your JWT Token with **Postman** or **cURL.**
 
 ---
 
-### **🔹 Step 2: Access Protected Route**  
+### **Step 2: Access Protected Route**  
 
 #### **Request:**
 - **Method:** `GET`
@@ -179,7 +179,7 @@ You can either generate your JWT Token with **Postman** or **cURL.**
 
 ---
 
-### **🔹 Step 3: Testing with Postman**   
+### **Step 3: Testing with Postman**   
 
 1. **Login and Get a Token**
    - Open **Postman** and make a `POST` request to `http://localhost:4000/login`
@@ -202,7 +202,7 @@ You can either generate your JWT Token with **Postman** or **cURL.**
 
 ---
 
-### ***With cURL***
+### **With cURL**
 If you prefer the terminal, you can use `cURL`:
 
 ### **Login**
@@ -220,29 +220,29 @@ curl -X GET http://localhost:4000/protected -H "Authorization: Bearer <your_toke
 
 ---
 
-## **9️⃣ Stopping and Removing Redis Container**  
+## **Stopping and Removing Redis Container**  
 
-🔹 **Stop the container:**  
+**Stop the container:**  
 ```sh
 docker stop redis
 ```
-🔹 **Remove the container:**  
+**Remove the container:**  
 ```sh
 docker docker rm redis
 ```
 
 ---
 
- ## **🔟 Login to Kubestellar UI**
+## **Login to Kubestellar UI**
 
-🔹 Run the Frontend if you haven't already
+Run the Frontend if you haven't already
 ```sh
 npm install
 
 npm run dev
 ```
 
-🔹 Login with these credentials
+Login with these credentials
 * **Username: admin**
 * **Password: admin**
 
@@ -250,21 +250,21 @@ npm run dev
 
 ---
 
-## **🔄 Docker Compose Development Cycle**
+## **Docker Compose Development Cycle**
 
 For ongoing development with Docker Compose, follow these steps:
 
-### **🔹 Step 1: Stop the running Application**
+### **Step 1: Stop the running Application**
 ```sh
 docker compose down
 ```
 
-### **🔹 Step 2: Pull the Latest Source Code Changes**
+### **Step 2: Pull the Latest Source Code Changes**
 ```sh
 git pull origin main
 ```
 
-### **🔹 Step 3: Rebuild and Restart the Application**
+### **Step 3: Rebuild and Restart the Application**
 ```sh
 docker compose up --build
 ```
@@ -276,11 +276,11 @@ This will:
 
 ---
 
-## **🐳 Docker Image Versioning and Pulling**
+## **Docker Image Versioning and Pulling**
 
 If you'd like to work with the Docker images for the **KubestellarUI** project, here's how you can use the `latest` and versioned tags:
 
-### **🔹 Available Images**
+### **Available Images**
 
 1. **Frontend Image**:
    - Tag: `quay.io/kubestellar/ui:frontend`
@@ -292,7 +292,7 @@ If you'd like to work with the Docker images for the **KubestellarUI** project, 
    - Latest Version: `latest`
    - Specific Version (Commit Hash): `backend-<commit-hash>`
 
-### **🔹 How to Pull the Latest Images**
+### **How to Pull the Latest Images**
 
 - **Frontend Image**:
   ```sh
@@ -304,7 +304,7 @@ If you'd like to work with the Docker images for the **KubestellarUI** project, 
   docker pull quay.io/kubestellar/ui:backend
   ```
 
-### **🔹 How to Pull Specific Version (Commit Hash)**
+### **How to Pull Specific Version (Commit Hash)**
 
 If you want to pull an image for a specific version (e.g., commit hash), use:
 
@@ -320,11 +320,11 @@ If you want to pull an image for a specific version (e.g., commit hash), use:
 
 ---
 
-## **🚀 Installing GolangCI-Lint**
+## **Installing GolangCI-Lint**
 
 To install **GolangCI-Lint** for code quality checks, follow these steps:
 
-### **🔹 Linux & macOS**
+### **Linux & macOS**
 Run the following command:
 ```sh
 curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.54.2
@@ -334,7 +334,7 @@ Ensure `$(go env GOPATH)/bin` is in your `PATH`:
 export PATH=$(go env GOPATH)/bin:$PATH
 ```
 
-### **🔹 Windows**
+### **Windows**
 Use **scoop** (recommended):
 ```powershell
 scoop install golangci-lint
@@ -344,7 +344,7 @@ Or **Go install**:
 go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 ```
 
-### **🔹 Verify Installation**
+### **Verify Installation**
 Run:
 ```sh
 golangci-lint --version
@@ -352,28 +352,28 @@ golangci-lint --version
 
 ---
 
-## **🛠 Linting & Fixing Code**
+## **Linting & Fixing Code**
 
 Maintaining code quality is essential for collaboration. Use these commands to check and fix linting issues:
 
-### **🔹 Check for Issues**
+### **Check for Issues**
 ```sh
 make check-lint
 ```
 
-### **🔹 Auto-Fix Issues**
+### **Auto-Fix Issues**
 ```sh
 make fix-lint
 ```
 
-### **🔹 Run Both**
+### **Run Both**
 ```sh
 make lint
 ```
 
 ---
 
-## **🎯 Conclusion**
+## **Conclusion**
 You have successfully:
 
 ✅ Set up a Redis container using Docker  
@@ -385,4 +385,4 @@ You have successfully:
 
 ---
 
-🔥 **Happy coding!** 🚀
+**Happy coding!**
