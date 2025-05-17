@@ -922,49 +922,72 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
           }}
         />
 
-        <FormControl className="w-40">
-          <InputLabel style={{ color: colors.textSecondary }}>Status Filter</InputLabel>
-          <Select
-            value={filter}
-            label="Status Filter"
-            onChange={handleFilterChange}
-            sx={{
-              "& .MuiSelect-select": {
-                color: colors.text,
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-              },
-              "& .MuiOutlinedInput-notchedOutline": { borderColor: colors.border },
-              "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: colors.primaryLight },
-              "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: colors.primary },
-              "& .MuiSelect-icon": { color: colors.textSecondary },
-            }}
-            IconComponent={() => (
-              <Filter size={18} style={{ color: colors.textSecondary, marginRight: "8px" }} />
-            )}
-          >
-            <MenuItem value="">All Status</MenuItem>
-            <MenuItem value="active✓">
-              <span className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.success }}></span>
-                Active
-              </span>
-            </MenuItem>
-            <MenuItem value="inactive">
-              <span className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.error }}></span>
-                Inactive
-              </span>
-            </MenuItem>
-            <MenuItem value="pending">
-              <span className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.warning }}></span>
-                Pending
-              </span>
-            </MenuItem>
-          </Select>
-        </FormControl>
+<FormControl className="w-40">
+  <InputLabel style={{ color: colors.textSecondary }}>Status Filter</InputLabel>
+  <Select
+    value={filter}
+    label="Status Filter"
+    onChange={handleFilterChange}
+    sx={{
+      backgroundColor: isDark ? '#1e1e2f' : '#fff', // Dropdown field background
+      borderRadius: "4px",
+      "& .MuiSelect-select": {
+        color: colors.text,
+        display: "flex",
+        alignItems: "center",
+        backgroundColor: isDark ? 'rgba(47, 134, 255, 0.08)' : 'rgba(47, 134, 255, 0.05)',
+        gap: "0.5rem",
+      },
+      "& .MuiOutlinedInput-notchedOutline": {
+        borderColor: isDark ? '#333' : colors.border,
+      },
+      "&:hover .MuiOutlinedInput-notchedOutline": {
+        borderColor: isDark ? colors.primaryLight : colors.primary,
+      },
+      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+        borderColor: colors.primary,
+      },
+      "& .MuiSelect-icon": {
+        color: colors.textSecondary,
+      },
+      "& .MuiPaper-root": {
+        backgroundColor: isDark ? '#2a2a3c' : '#fff',
+        color: colors.text,
+      },
+    }}
+    IconComponent={() => (
+      <Filter size={18} style={{ color: colors.textSecondary, marginRight: "8px" }} />
+    )}
+    MenuProps={{
+      PaperProps: {
+        style: {
+          backgroundColor: isDark ? '#2a2a3c' : '#fff',
+          color: colors.text,
+        },
+      },
+    }}
+  >
+    <MenuItem value="">All Status</MenuItem>
+    <MenuItem value="active✓">
+      <span className="flex items-center gap-2">
+        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.success }}></span>
+        Active
+      </span>
+    </MenuItem>
+    <MenuItem value="inactive">
+      <span className="flex items-center gap-2">
+        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.error }}></span>
+        Inactive
+      </span>
+    </MenuItem>
+    <MenuItem value="pending">
+      <span className="flex items-center gap-2">
+        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.warning }}></span>
+        Pending
+      </span>
+    </MenuItem>
+  </Select>
+</FormControl>
 
         {hasSelectedClusters && (
           <div className="flex ml-auto">
