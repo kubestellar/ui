@@ -15,7 +15,6 @@ Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI 
 - [Installation Steps](#installation-steps)
   - [Local Setup](#local-setup)
   - [Local Setup with Docker Compose](#local-setup-with-docker-compose)
-- [Docker Image Versioning and Pulling](#docker-image-versioning-and-pulling)
 - [Accessing the Application](#accessing-the-application)
 
 ## Prerequisites
@@ -176,71 +175,6 @@ To stop the application
 ```bash
 docker compose down
 ```
-
-#### Use Docker Compose in Development Cycle
-
-For ongoing development, use the following steps:
-
-- **Step 1: Stop the running Application**:
-  ```bash
-  docker compose down
-  ```
-
-- **Step 2: Pull the Latest Source Code Changes**:
-  ```bash
-  git pull origin main
-  ```
-
-- **Step 3: Rebuild and Restart the Application**:
-  ```bash
-  docker compose up --build
-  ```
-This will:
-
-- Stop the running containers.
-- Pull the latest source code changes.
-- Rebuild and restart the application.
-
-### Docker Image Versioning and Pulling
-
-If you'd like to work with the Docker images for the **KubestellarUI** project, here's how you can use the `latest` and versioned tags:
-
-1. **Frontend Image**:
-   - Tag: `quay.io/kubestellar/ui:frontend`
-   - Latest Version: `latest`
-   - Specific Version (Commit Hash): `frontend-<commit-hash>`
-
-2. **Backend Image**:
-   - Tag: `quay.io/kubestellar/ui:backend`
-   - Latest Version: `latest`
-   - Specific Version (Commit Hash): `backend-<commit-hash>`
-
-#### How to Pull the Latest Images:
-
-- **Frontend Image**:
-  ```bash
-  docker pull quay.io/kubestellar/ui:frontend
-  ```
-
-- **Backend Image**:
-  ```bash
-  docker pull quay.io/kubestellar/ui:backend
-  ```
-
-#### How to Pull Specific Version (Commit Hash):
-
-If you want to pull an image for a specific version (e.g., commit hash), use:
-
-- **Frontend Image with Version**:
-  ```bash
-  docker pull quay.io/kubestellar/ui:frontend-abcd1234
-  ```
-
-- **Backend Image with Version**:
-  ```bash
-  docker pull quay.io/kubestellar/ui:backend-abcd1234
-  ```
-
 
 ### Accessing the Application
 

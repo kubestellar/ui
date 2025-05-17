@@ -16,6 +16,8 @@ This guide will help you set up a **Redis container**, configure **JWT authentic
 - [Testing JWT Authentication](#8️⃣-testing-jwt-authentication)
 - [Stopping and Removing Redis Container](#9️⃣-stopping-and-removing-redis-container)
 - [Login to Kubestellar UI](#🔟-login-to-kubestellar-ui)
+- [Docker Compose Development Cycle](#-docker-compose-development-cycle)
+- [Docker Image Versioning and Pulling](#-docker-image-versioning-and-pulling)
 - [Installing GolangCI-Lint](#-installing-golangci-lint)
 - [Linting & Fixing Code](#-linting--fixing-code)
 - [Conclusion](#-conclusion)
@@ -245,6 +247,76 @@ npm run dev
 * **Password: admin**
 
 *Note: You can input any word or strings of letters and numbers. Just as long as you have the username **admin.***
+
+---
+
+## **🔄 Docker Compose Development Cycle**
+
+For ongoing development with Docker Compose, follow these steps:
+
+### **🔹 Step 1: Stop the running Application**
+```sh
+docker compose down
+```
+
+### **🔹 Step 2: Pull the Latest Source Code Changes**
+```sh
+git pull origin main
+```
+
+### **🔹 Step 3: Rebuild and Restart the Application**
+```sh
+docker compose up --build
+```
+
+This will:
+- Stop the running containers.
+- Pull the latest source code changes.
+- Rebuild and restart the application.
+
+---
+
+## **🐳 Docker Image Versioning and Pulling**
+
+If you'd like to work with the Docker images for the **KubestellarUI** project, here's how you can use the `latest` and versioned tags:
+
+### **🔹 Available Images**
+
+1. **Frontend Image**:
+   - Tag: `quay.io/kubestellar/ui:frontend`
+   - Latest Version: `latest`
+   - Specific Version (Commit Hash): `frontend-<commit-hash>`
+
+2. **Backend Image**:
+   - Tag: `quay.io/kubestellar/ui:backend`
+   - Latest Version: `latest`
+   - Specific Version (Commit Hash): `backend-<commit-hash>`
+
+### **🔹 How to Pull the Latest Images**
+
+- **Frontend Image**:
+  ```sh
+  docker pull quay.io/kubestellar/ui:frontend
+  ```
+
+- **Backend Image**:
+  ```sh
+  docker pull quay.io/kubestellar/ui:backend
+  ```
+
+### **🔹 How to Pull Specific Version (Commit Hash)**
+
+If you want to pull an image for a specific version (e.g., commit hash), use:
+
+- **Frontend Image with Version**:
+  ```sh
+  docker pull quay.io/kubestellar/ui:frontend-abcd1234
+  ```
+
+- **Backend Image with Version**:
+  ```sh
+  docker pull quay.io/kubestellar/ui:backend-abcd1234
+  ```
 
 ---
 
