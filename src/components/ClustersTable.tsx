@@ -34,6 +34,7 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from "@mui/icons-material/Add";
 import LabelIcon from "@mui/icons-material/Label";
 import SaveIcon from "@mui/icons-material/Save";
@@ -47,7 +48,6 @@ import InboxIcon from "@mui/icons-material/Inbox";
 import PostAddIcon from "@mui/icons-material/PostAdd";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import TableSkeleton from "./ui/TableSkeleton";
-import { MdLabel } from "react-icons/md";
 
 interface ManagedClusterInfo {
   name: string;
@@ -1150,25 +1150,25 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                         )}
                       </div>
                       {selectedClusters.length <= 1 && (
-                        <Tooltip title="Edit Labels">
-                          <IconButton
-                            size="small"
-                            onClick={() => handleEditLabels(cluster)}
-                            disabled={loadingClusterEdit === cluster.name}
-                            style={{ 
-                              color: colors.textSecondary,
-                              backgroundColor: isDark ? 'rgba(47, 134, 255, 0.08)' : 'rgba(47, 134, 255, 0.05)',
-                              transition: 'all 0.2s ease',
-                            }}
-                            className="hover:bg-opacity-80 hover:scale-105"
-                          >
-                            {loadingClusterEdit === cluster.name ? (
-                              <CircularProgress size={16} style={{ color: colors.primary }} />
-                            ) : (
-                              <MdLabel fontSize="24px" />
-                            )}
-                          </IconButton>
-                        </Tooltip>
+                    <Tooltip title="Edit Labels">
+                    <IconButton
+                      size="small"
+                      onClick={() => handleEditLabels(cluster)}
+                      disabled={loadingClusterEdit === cluster.name}
+                      style={{ 
+                        color: colors.textSecondary,
+                        backgroundColor: isDark ? 'rgba(47, 134, 255, 0.08)' : 'rgba(47, 134, 255, 0.05)',
+                        transition: 'all 0.2s ease',
+                      }}
+                      className="hover:bg-opacity-80 hover:scale-105"
+                    >
+                      {loadingClusterEdit === cluster.name ? (
+                        <CircularProgress size={16} style={{ color: colors.primary }} />
+                      ) : (
+                        <EditIcon fontSize="small" /> 
+                      )}
+                    </IconButton>
+                  </Tooltip>
                       )}
                     </div>
                   </TableCell>
