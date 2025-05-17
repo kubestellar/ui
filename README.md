@@ -15,7 +15,6 @@ Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI 
 - [Installation Steps](#installation-steps)
   - [Local Setup](#local-setup)
   - [Local Setup with Docker Compose](#local-setup-with-docker-compose)
-- [Docker Image Versioning and Pulling](#docker-image-versioning-and-pulling)
 - [Accessing the Application](#accessing-the-application)
 
 ## Prerequisites
@@ -155,6 +154,9 @@ If you prefer to run the application using Docker Compose, follow these steps:
 - **Download Link**: [Docker Downloads](https://www.docker.com/products/docker-desktop)
 
 > [!NOTE] 
+> If you are using Docker Desktop, please enable host networking. To do so navigate to Settings > Resources > Network, and check the "Enable host networking" option. Finally, apply the changes and restart Docker Desktop.
+
+> [!NOTE] 
 > If you are using Compose V1, change the `docker compose` command to `docker-compose` in the following steps.
 > Checkout [Migrating to Compose V2](https://docs.docker.com/compose/releases/migrate/) for more info.
 
@@ -173,117 +175,6 @@ To stop the application
 ```bash
 docker compose down
 ```
-
-#### Use Docker Compose in Development Cycle
-
-For ongoing development, use the following steps:
-
-- **Step 1: Stop the running Application**:
-  ```bash
-  docker compose down
-  ```
-
-- **Step 2: Pull the Latest Source Code Changes**:
-  ```bash
-  git pull origin main
-  ```
-
-- **Step 3: Rebuild and Restart the Application**:
-  ```bash
-  docker compose up --build
-  ```
-This will:
-
-- Stop the running containers.
-- Pull the latest source code changes.
-- Rebuild and restart the application.
-
-## **🚀 Install GolangCI-Lint**
-
-To install **GolangCI-Lint**, follow these steps:
-
-### **🔹 Linux & macOS**
-Run the following command:
-```sh
-curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.54.2
-```
-Ensure `$(go env GOPATH)/bin` is in your `PATH`:
-```sh
-export PATH=$(go env GOPATH)/bin:$PATH
-```
-
-### **🔹 Windows**
-Use **scoop** (recommended):
-```powershell
-scoop install golangci-lint
-```
-Or **Go install**:
-```sh
-go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-```
-
-### **🔹 Verify Installation**
-Run:
-```sh
-golangci-lint --version
-```
-
----
-
-## **🛠 Linting & Fixing Code**
-### **🔹 Check for Issues**
-```sh
-make check-lint
-```
-### **🔹 Auto-Fix Issues**
-```sh
-make fix-lint
-```
-### **🔹 Run Both**
-```sh
-make lint
-```
-
-### Docker Image Versioning and Pulling
-
-If you'd like to work with the Docker images for the **KubestellarUI** project, here's how you can use the `latest` and versioned tags:
-
-1. **Frontend Image**:
-   - Tag: `quay.io/kubestellar/ui:frontend`
-   - Latest Version: `latest`
-   - Specific Version (Commit Hash): `frontend-<commit-hash>`
-
-2. **Backend Image**:
-   - Tag: `quay.io/kubestellar/ui:backend`
-   - Latest Version: `latest`
-   - Specific Version (Commit Hash): `backend-<commit-hash>`
-
-#### How to Pull the Latest Images:
-
-- **Frontend Image**:
-  ```bash
-  docker pull quay.io/kubestellar/ui:frontend
-  ```
-
-- **Backend Image**:
-  ```bash
-  docker pull quay.io/kubestellar/ui:backend
-  ```
-
-#### How to Pull Specific Version (Commit Hash):
-
-If you want to pull an image for a specific version (e.g., commit hash), use:
-
-- **Frontend Image with Version**:
-  ```bash
-  docker pull quay.io/kubestellar/ui:frontend-abcd1234
-  ```
-
-- **Backend Image with Version**:
-  ```bash
-  docker pull quay.io/kubestellar/ui:backend-abcd1234
-  ```
-
 
 ### Accessing the Application
 
