@@ -47,6 +47,7 @@ import useTheme from "../stores/themeStore";
 import WecsDetailsPanel from "./WecsDetailsPanel";
 import { FlowCanvas } from "./Wds_Topology/FlowCanvas";
 import ListViewComponent from "../components/ListViewComponent";
+import FullScreenToggle from "./ui/FullScreenToggle";
 
 // Updated Interfaces
 export interface NodeData {
@@ -544,6 +545,7 @@ const WecsTreeview = () => {
   const prevWecsData = useRef<WecsCluster[] | null>(null);
   const stateRef = useRef({ isCollapsed, isExpanded });
   const [viewMode, setViewMode] = useState<'tiles' | 'list'>('tiles');
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const { wecsIsConnected, hasValidWecsData, wecsData } = useWebSocket();
 
@@ -1292,7 +1294,7 @@ const WecsTreeview = () => {
   const isLoading = !wecsIsConnected || !hasValidWecsData || isTransforming || !minimumLoadingTimeElapsed;
 
   return (
-    <Box sx={{ display: "flex", height: "85vh", width: "100%", position: "relative" }}>
+    <Box ref={containerRef} sx={{ display: "flex", height: "85vh", width: "100%", position: "relative" }}>
       <Box
         sx={{
           flex: 1,
@@ -1423,6 +1425,12 @@ const WecsTreeview = () => {
               <ReactFlowProvider>
                 <FlowCanvas nodes={nodes} edges={edges} renderStartTime={renderStartTime} theme={theme} />
                 <ZoomControls theme={theme} onToggleCollapse={handleToggleCollapse} isCollapsed={isCollapsed} onExpandAll={handleExpandAll} onCollapseAll={handleCollapseAll} />
+                <FullScreenToggle 
+                  containerRef={containerRef} 
+                  position="top-right" 
+                  tooltipPosition="left"
+                  tooltipText="Toggle fullscreen view" 
+                />
               </ReactFlowProvider>
             </Box>
           ) : (
