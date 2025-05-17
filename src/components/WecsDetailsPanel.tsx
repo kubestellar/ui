@@ -764,7 +764,7 @@ const WecsDetailsPanel = ({
   useEffect(() => {
     if (!isOpen) return;
 
-    function handleEsc(event:any) {
+    function handleEsc(event:KeyboardEvent) {
       if (event.key === "Escape") {
         handleClose();
       }
