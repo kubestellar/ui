@@ -37,7 +37,7 @@ export const YamlTab = ({
   const theme = useTheme((state) => state.theme);
   const [localWorkloadLabel, setLocalWorkloadLabel] = useState("");
   const [nameDocumentIndex, setNameDocumentIndex] = useState<number | null>(null);
-  const [autoNs, setAutoNs] = useState(false); // Added state for checkbox
+  const [autoNs, setAutoNs] = useState(true); // Added state for checkbox
   const [hasLabelsError, setHasLabelsError] = useState(true); // Default to true until checked
 
   useEffect(() => {

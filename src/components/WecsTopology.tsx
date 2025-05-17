@@ -47,6 +47,7 @@ import useTheme from "../stores/themeStore";
 import WecsDetailsPanel from "./WecsDetailsPanel";
 import { FlowCanvas } from "./Wds_Topology/FlowCanvas";
 import ListViewComponent from "../components/ListViewComponent";
+import FullScreenToggle from "./ui/FullScreenToggle";
 
 // Updated Interfaces
 export interface NodeData {
@@ -127,6 +128,7 @@ export interface ResourceItem {
     verbs?: string[];
     resources?: string[];
   }>;
+  [key: string]: unknown; // Add index signature to make compatible with TreeViewComponent
 }
 
 export interface WecsResource {
@@ -263,9 +265,9 @@ const getLayoutedElements = (
 ) => {
   const NODE_WIDTH = 146;
   const NODE_HEIGHT = 30;
-  const NODE_SEP = 50; // Horizontal spacing between nodes
-  const RANK_SEP = 60; // Reduced vertical spacing between ranks (groups)
-  const CHILD_SPACING = NODE_HEIGHT + 30; // Reduced spacing between child nodes (was 40)
+  const NODE_SEP = 20; 
+  const RANK_SEP = 60; 
+  const CHILD_SPACING = NODE_HEIGHT + 30; 
 
   // Step 1: Initial Dagre layout
   const dagreGraph = new dagre.graphlib.Graph();
@@ -543,12 +545,65 @@ const WecsTreeview = () => {
   const prevWecsData = useRef<WecsCluster[] | null>(null);
   const stateRef = useRef({ isCollapsed, isExpanded });
   const [viewMode, setViewMode] = useState<'tiles' | 'list'>('tiles');
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const { wecsIsConnected, hasValidWecsData, wecsData } = useWebSocket();
 
   useEffect(() => {
     renderStartTime.current = performance.now();
   }, []);
+
+  // Add effect to update node styles when theme changes
+  useEffect(() => {
+    if (nodes.length > 0) {
+      console.log("[WecsTopology] Theme changed, updating node styles");
+      
+      // Create a new array with updated node styles for the current theme
+      setNodes(currentNodes => {
+        return currentNodes.map(node => {
+          // Update style with the current theme
+          return {
+            ...node,
+            style: {
+              ...node.style,
+              backgroundColor: theme === "dark" ? "#333" : "#fff",
+              color: theme === "dark" ? "#fff" : "#000",
+              transition: "all 0.2s ease-in-out"
+            }
+          };
+        });
+      });
+      
+      // Update edge styles for the current theme
+      setEdges(currentEdges => {
+        return currentEdges.map(edge => {
+          // Make a type-safe copy of the marker end
+          const markerEnd: { type: MarkerType; color?: string; width?: number; height?: number } = {
+            type: edge.markerEnd?.type || MarkerType.ArrowClosed,
+            color: theme === "dark" ? "#ccc" : "#a3a3a3"
+          };
+          
+          // If the original marker has width and height, preserve them
+          if (edge.markerEnd?.width) {
+            markerEnd.width = edge.markerEnd.width;
+          }
+          
+          if (edge.markerEnd?.height) {
+            markerEnd.height = edge.markerEnd.height;
+          }
+          
+          return {
+            ...edge,
+            style: { 
+              stroke: theme === "dark" ? "#ccc" : "#a3a3a3", 
+              strokeDasharray: "2,2" 
+            },
+            markerEnd
+          };
+        });
+      });
+    }
+  }, [theme, nodes.length]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -669,10 +724,21 @@ const WecsTreeview = () => {
             padding: "2px 12px",
             backgroundColor: theme === "dark" ? "#333" : "#fff",
             color: theme === "dark" ? "#fff" : "#000",
+            transition: "all 0.2s ease-in-out",
           },
           sourcePosition: Position.Right,
           targetPosition: Position.Left,
         } as CustomNode);
+
+      // If node is cached, ensure its style is updated for the current theme
+      if (cachedNode) {
+        node.style = {
+          ...node.style,
+          backgroundColor: theme === "dark" ? "#333" : "#fff",
+          color: theme === "dark" ? "#fff" : "#000",
+          transition: "all 0.2s ease-in-out",
+        };
+      }
 
       if (!cachedNode) nodeCache.current.set(id, node);
       newNodes.push(node);
@@ -694,7 +760,18 @@ const WecsTreeview = () => {
           newEdges.push(edge);
           edgeCache.current.set(edgeId, edge);
         } else {
-          newEdges.push(cachedEdge);
+          // Update cached edge styles for the current theme
+          const markerEnd: { type: MarkerType; color?: string; width?: number; height?: number } = {
+            type: cachedEdge.markerEnd?.type || MarkerType.ArrowClosed,
+            color: theme === "dark" ? "#ccc" : "#a3a3a3"
+          };
+          
+          const updatedEdge = {
+            ...cachedEdge,
+            style: { stroke: theme === "dark" ? "#ccc" : "#a3a3a3", strokeDasharray: "2,2" },
+            markerEnd
+          };
+          newEdges.push(updatedEdge);
         }
       }
     },
@@ -711,6 +788,11 @@ const WecsTreeview = () => {
         });
         return;
       }
+
+      // Clear caches when theme changes to ensure proper styling
+      nodeCache.current.clear();
+      edgeCache.current.clear();
+      edgeIdCounter.current = 0;
 
       const newNodes: CustomNode[] = [];
       const newEdges: CustomEdge[] = [];
@@ -986,14 +1068,50 @@ const WecsTreeview = () => {
                           });
                         }
                       } else if (kindLower === "service" && rawResource.spec) {
-                        // Only show the Service without creating endpoints automatically
-                        // Endpoints will be shown if they exist in the actual data
+                        // Create Endpoints node for the Service
+                        createNode(
+                          `${resourceId}:endpoints`,
+                          `endpoints-${rawResource.metadata.name}`,
+                          "endpoints",
+                          status,
+                          undefined,
+                          namespace.namespace,
+                          rawResource,
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
                       } else if (kindLower === "ingress" && rawResource.spec) {
                         // Only show the Ingress without creating services automatically
                         // Services will be shown if they exist in the actual data
-                      } else if (kindLower === "configmap" || kindLower === "secret") {
-                        // Only show the ConfigMap/Secret without creating volumes automatically
-                        // Volumes will be shown if they exist in the actual data
+                      } else if (kindLower === "configmap") {
+                        // Create Volume nodes for ConfigMap
+                        createNode(
+                          `${resourceId}:volume`,
+                          `volume-${rawResource.metadata.name}`,
+                          "volume",
+                          status,
+                          undefined,
+                          namespace.namespace,
+                          rawResource,
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                      }
+                      else if(kindLower === "secret"){
+                          createNode(
+                            `${resourceId}:envvar`,
+                            `envvar-${rawResource.metadata.name}`,
+                            "envvar",
+                            status,
+                            undefined,
+                            namespace.namespace,
+                            rawResource,
+                            resourceId,
+                            newNodes,
+                            newEdges
+                          );
                       } else if (kindLower === "persistentvolumeclaim" && rawResource.spec) {
                         // Only show the PVC without creating a PV automatically
                       } else if (kindLower === "storageclass" && rawResource.spec) {
@@ -1113,17 +1231,17 @@ const WecsTreeview = () => {
               break;
             case "Logs":
               if (nodeType === "pod" && isDeploymentOrJobPod) {
-                setSelectedNode({
-                  namespace: namespace || "default",
-                  name: nodeName,
-                  type: nodeType,
-                  onClose: handleClosePanel,
-                  isOpen: true,
-                  resourceData,
-                  initialTab: 2,
-                  cluster,
+              setSelectedNode({
+                namespace: namespace || "default",
+                name: nodeName,
+                type: nodeType,
+                onClose: handleClosePanel,
+                isOpen: true,
+                resourceData,
+                initialTab: 2,
+                cluster,
                   isDeploymentOrJobPod,
-                });
+              });
               }
               break;
             default:
@@ -1176,7 +1294,7 @@ const WecsTreeview = () => {
   const isLoading = !wecsIsConnected || !hasValidWecsData || isTransforming || !minimumLoadingTimeElapsed;
 
   return (
-    <Box sx={{ display: "flex", height: "85vh", width: "100%", position: "relative" }}>
+    <Box ref={containerRef} sx={{ display: "flex", height: "85vh", width: "100%", position: "relative" }}>
       <Box
         sx={{
           flex: 1,
@@ -1307,6 +1425,12 @@ const WecsTreeview = () => {
               <ReactFlowProvider>
                 <FlowCanvas nodes={nodes} edges={edges} renderStartTime={renderStartTime} theme={theme} />
                 <ZoomControls theme={theme} onToggleCollapse={handleToggleCollapse} isCollapsed={isCollapsed} onExpandAll={handleExpandAll} onCollapseAll={handleCollapseAll} />
+                <FullScreenToggle 
+                  containerRef={containerRef} 
+                  position="top-right" 
+                  tooltipPosition="left"
+                  tooltipText="Toggle fullscreen view" 
+                />
               </ReactFlowProvider>
             </Box>
           ) : (
@@ -1345,11 +1469,51 @@ const WecsTreeview = () => {
               onClose={handleMenuClose}
               anchorReference="anchorPosition"
               anchorPosition={contextMenu ? { top: contextMenu.y, left: contextMenu.x } : undefined}
+              PaperProps={{
+                style: {
+                  backgroundColor: theme === "dark" ? "#1F2937" : "#fff",
+                  color: theme === "dark" ? "#fff" : "inherit",
+                  boxShadow: theme === "dark" ? "0 4px 20px rgba(0, 0, 0, 0.5)" : "0 4px 20px rgba(0, 0, 0, 0.15)"
+                }
+              }}
             >
-              <MenuItem onClick={() => handleMenuAction("Details")}>Details</MenuItem>
-              <MenuItem onClick={() => handleMenuAction("Edit")}>Edit</MenuItem>
-              {contextMenu.nodeType !== "cluster" && (
-                <MenuItem onClick={() => handleMenuAction("Logs")}>Logs</MenuItem>
+              <MenuItem 
+                onClick={() => handleMenuAction("Details")}
+                sx={{
+                  color: theme === "dark" ? "#fff" : "inherit",
+                  "&:hover": {
+                    backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)"
+                  }
+                }}
+              >
+                Details
+              </MenuItem>
+              <MenuItem 
+                onClick={() => handleMenuAction("Edit")}
+                sx={{
+                  color: theme === "dark" ? "#fff" : "inherit",
+                  "&:hover": {
+                    backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)"
+                  }
+                }}
+              >
+                Edit
+              </MenuItem>
+              {contextMenu.nodeType === "pod" && 
+               contextMenu.nodeId && 
+               contextMenu.nodeId.startsWith("pod:") &&
+               nodes.find(n => n.id === contextMenu.nodeId)?.data?.isDeploymentOrJobPod && (
+                <MenuItem 
+                  onClick={() => handleMenuAction("Logs")}
+                  sx={{
+                    color: theme === "dark" ? "#fff" : "inherit",
+                    "&:hover": {
+                      backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)"
+                    }
+                  }}
+                >
+                  Logs
+                </MenuItem>
               )}
             </Menu>
           )}

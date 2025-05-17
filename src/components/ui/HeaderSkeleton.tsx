@@ -3,7 +3,7 @@ import React from 'react';
 import useTheme from '../../stores/themeStore';
 import Skeleton from './Skeleton';
 import { FiSun, FiMoon } from 'react-icons/fi';
-import { RxEnterFullScreen } from 'react-icons/rx';
+import FullScreenToggle from './FullScreenToggle';
 
 const HeaderSkeleton: React.FC = () => {
   const theme = useTheme((state) => state.theme);
@@ -59,13 +59,10 @@ const HeaderSkeleton: React.FC = () => {
         </div>
         
         {/* Fullscreen button skeleton with conditional text color */}
-        <div className="hidden xl:inline-flex btn btn-circle btn-ghost pointer-events-none">
-          <RxEnterFullScreen 
-            className="xl:text-xl 2xl:text-2xl 3xl:text-3xl" 
-            style={{ 
-              color: isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)'
-            }}
-          />
+        <div className="hidden xl:inline-flex">
+          <div className="btn btn-circle btn-ghost pointer-events-none opacity-50">
+            <FullScreenToggle position="inline" className="pointer-events-none" />
+          </div>
         </div>
       </div>
     </div>

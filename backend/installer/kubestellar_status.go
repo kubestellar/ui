@@ -16,7 +16,7 @@ type KubeStellarStatus struct {
 	Message       string `json:"message"`
 }
 
-// CheckKubeStellarStatus checks for a context containing "kubestellar" and required namespaces
+// CheckKubeStellarStatus checks for contexts containing "kubeflex", "kind", or "k3d" and required namespaces
 func CheckKubeStellarStatus() KubeStellarStatus {
 	status := KubeStellarStatus{
 		Context:       "",
@@ -24,7 +24,7 @@ func CheckKubeStellarStatus() KubeStellarStatus {
 		WDS1Namespace: false,
 		ITS1Namespace: false,
 		AllReady:      false,
-		Message:       "KubeStellar context not found",
+		Message:       "No compatible KubeStellar context found",
 	}
 
 	// Get all kubectl contexts
@@ -37,8 +37,21 @@ func CheckKubeStellarStatus() KubeStellarStatus {
 
 	contexts := strings.Split(strings.TrimSpace(string(contextsOutput)), "\n")
 
+	// Define the compatible context types to check
+	compatibleTypes := []string{"kubeflex", "kind", "k3d"}
+
+	// Check all contexts to find any compatible one
 	for _, ctx := range contexts {
-		if strings.Contains(ctx, "kubeflex") {
+		isCompatible := false
+		for _, ctxType := range compatibleTypes {
+			if strings.Contains(ctx, ctxType) {
+				isCompatible = true
+				break
+			}
+		}
+
+		if isCompatible {
+			// Found a compatible context
 			status.Context = ctx
 			status.ContextFound = true
 
@@ -56,24 +69,26 @@ func CheckKubeStellarStatus() KubeStellarStatus {
 				status.ITS1Namespace = true
 			}
 
-			status.AllReady = status.WDS1Namespace && status.ITS1Namespace
-
-			// Set the appropriate message based on namespace status
-			if status.AllReady {
-				status.Message = "KubeStellar context and required namespaces verified"
-			} else {
-				missingNamespaces := []string{}
-				if !status.WDS1Namespace {
-					missingNamespaces = append(missingNamespaces, "wds1-system")
-				}
-				if !status.ITS1Namespace {
-					missingNamespaces = append(missingNamespaces, "its1-system")
-				}
-				status.Message = fmt.Sprintf("KubeStellar context found, but required namespaces are missing: %s", strings.Join(missingNamespaces, ", "))
+			// If this context has all required namespaces, it's ready
+			if status.WDS1Namespace && status.ITS1Namespace {
+				status.AllReady = true
+				status.Message = fmt.Sprintf("KubeStellar ready on context %s with all required namespaces", ctx)
+				return status // Found a fully working context, return immediately
 			}
-			break
+
+			// If not ready, update the message and continue checking other contexts
+			missingNamespaces := []string{}
+			if !status.WDS1Namespace {
+				missingNamespaces = append(missingNamespaces, "wds1-system")
+			}
+			if !status.ITS1Namespace {
+				missingNamespaces = append(missingNamespaces, "its1-system")
+			}
+			status.Message = fmt.Sprintf("Compatible context %s found, but required namespaces are missing: %s",
+				ctx, strings.Join(missingNamespaces, ", "))
 		}
 	}
 
+	// If we get here, we didn't find any fully working context
 	return status
 }

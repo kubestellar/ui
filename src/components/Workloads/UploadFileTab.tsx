@@ -47,7 +47,7 @@ export const UploadFileTab = ({
   const [localWorkloadLabel, setLocalWorkloadLabel] = useState("");
   const [fileContent, setFileContent] = useState<string | null>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [autoNs, setAutoNs] = useState(false);
+  const [autoNs, setAutoNs] = useState(true);
   const [hasLabelsError, setHasLabelsError] = useState<boolean>(false);
   const [isLabelEdited, setIsLabelEdited] = useState(false); // Flag to track manual edits
 
