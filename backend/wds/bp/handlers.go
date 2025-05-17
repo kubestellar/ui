@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/kubestellar/api/control/v1alpha1"
 	"github.com/kubestellar/ui/log"
+	"github.com/kubestellar/ui/redis"
 	"github.com/kubestellar/ui/utils"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v2"
@@ -53,6 +54,49 @@ func GetAllBp(ctx *gin.Context) {
 	log.LogDebug("retrieving all binding policies")
 	log.LogDebug("Using wds context: ", zap.String("wds_context", os.Getenv("wds_context")))
 
+	// Try to get from Redis cache first
+	cachedPolicies, err := redis.GetAllBindingPolicies()
+	if err != nil {
+		log.LogWarn("failed to get binding policies from Redis cache", zap.Error(err))
+	} else if len(cachedPolicies) > 0 {
+		// Convert cached policies to response format
+		responseArray := make([]map[string]interface{}, len(cachedPolicies))
+		for i, bpolicy := range cachedPolicies {
+			responseArray[i] = map[string]interface{}{
+				"name":              bpolicy.Name,
+				"namespace":         bpolicy.Namespace,
+				"status":            bpolicy.Status,
+				"bindingMode":       bpolicy.BindingMode,
+				"clusters":          bpolicy.Clusters,
+				"clusterList":       bpolicy.Clusters,
+				"workloads":         bpolicy.Workloads,
+				"workloadList":      bpolicy.Workloads,
+				"clustersCount":     len(bpolicy.Clusters),
+				"workloadsCount":    len(bpolicy.Workloads),
+				"creationTimestamp": bpolicy.CreationTimestamp,
+				"yaml":              bpolicy.RawYAML,
+			}
+		}
+
+		// Filter by namespace if specified
+		namespace := ctx.Query("namespace")
+		if namespace != "" {
+			filteredBPs, count := filterBPsByNamespace(responseArray, namespace)
+			ctx.JSON(http.StatusOK, gin.H{
+				"bindingPolicies": filteredBPs,
+				"count":           count,
+			})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"bindingPolicies": responseArray,
+			"count":           len(responseArray),
+		})
+		return
+	}
+
+	// If cache miss or error, proceed with normal flow
 	c, err := getClientForBp()
 	if err != nil {
 		log.LogError("failed to create client for Bp", zap.String("error", err.Error()))
@@ -435,10 +479,10 @@ func GetAllBp(ctx *gin.Context) {
 	// Filter by namespace if specified
 	if namespace != "" {
 		log.LogDebug("filtering by namespace", zap.String("namespace", namespace))
-		filteredBPs := filterBPsByNamespace(bpsWithStatus, namespace)
+		filteredBPs, count := filterBPsByNamespace(bpsWithStatus, namespace)
 		ctx.JSON(http.StatusOK, gin.H{
 			"bindingPolicies": filteredBPs,
-			"count":           len(filteredBPs),
+			"count":           count,
 		})
 		return
 	}
@@ -477,6 +521,24 @@ func GetAllBp(ctx *gin.Context) {
 		"bindingPolicies": responseArray,
 		"count":           len(responseArray),
 	})
+
+	// After getting policies from Kubernetes, store them in Redis
+	for _, bp := range bpsWithStatus {
+		cachedPolicy := &redis.BindingPolicyCache{
+			Name:              bp.Name,
+			Namespace:         bp.Namespace,
+			Status:            bp.Status,
+			BindingMode:       bp.BindingMode,
+			Clusters:          bp.Clusters,
+			Workloads:         bp.Workloads,
+			CreationTimestamp: bp.CreationTimestamp.Format(time.RFC3339),
+			RawYAML:           bp.Annotations["yaml"],
+		}
+
+		if err := redis.StoreBindingPolicy(cachedPolicy); err != nil {
+			log.LogWarn("failed to cache binding policy", zap.Error(err))
+		}
+	}
 }
 
 // CreateBp creates a new BindingPolicy
@@ -543,6 +605,20 @@ func CreateBp(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
+	// After successful creation, store in Redis
+	cachedBPolicy := &redis.BindingPolicyCache{
+		Name:              bp.Name,
+		Namespace:         bp.Namespace,
+		Status:            "inactive", // New policies start as inactive
+		BindingMode:       "Downsync", // Only Downsync is supported
+		CreationTimestamp: time.Now().Format(time.RFC3339),
+		RawYAML:           string(bpRawYamlBytes),
+	}
+
+	if err := redis.StoreBindingPolicy(cachedBPolicy); err != nil {
+		log.LogWarn("failed to cache new binding policy", zap.Error(err))
+	}
+
 }
 
 // DeleteBp deletes a BindingPolicy by name and namespace
@@ -553,6 +629,12 @@ func DeleteBp(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "name parameter is required"})
 		return
 	}
+
+	// Delete from Redis first
+	if err := redis.DeleteBindingPolicy(name); err != nil {
+		log.LogWarn("failed to delete binding policy from Redis cache", zap.Error(err))
+	}
+
 	log.LogInfo("", zap.String("deleting bp: ", name))
 	c, err := getClientForBp()
 	if err != nil {
@@ -575,6 +657,11 @@ func DeleteBp(ctx *gin.Context) {
 
 // DeleteAllBp deletes all BindingPolicies
 func DeleteAllBp(ctx *gin.Context) {
+	// Delete from Redis first
+	if err := redis.DeleteAllBindingPolicies(); err != nil {
+		log.LogWarn("failed to delete all binding policies from Redis cache", zap.Error(err))
+	}
+
 	c, err := getClientForBp()
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -606,13 +693,34 @@ func GetBpStatus(ctx *gin.Context) {
 	name := ctx.Query("name")
 	namespace := ctx.Query("namespace")
 
-	log.LogDebug("GetBpStatus - Received request",
-		zap.String("name", name), zap.String("namespace", namespace))
-
 	if name == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "name parameter is required"})
 		return
 	}
+
+	// Try to get from Redis cache first
+	cachedPolicy, err := redis.GetBindingPolicy(name)
+	if err != nil {
+		log.LogWarn("failed to get binding policy from Redis cache", zap.Error(err))
+	} else if cachedPolicy != nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"name":              cachedPolicy.Name,
+			"namespace":         cachedPolicy.Namespace,
+			"status":            cachedPolicy.Status,
+			"conditions":        nil, // We don't cache conditions
+			"bindingMode":       cachedPolicy.BindingMode,
+			"clusters":          cachedPolicy.Clusters,
+			"workloads":         cachedPolicy.Workloads,
+			"clustersCount":     len(cachedPolicy.Clusters),
+			"workloadsCount":    len(cachedPolicy.Workloads),
+			"creationTimestamp": cachedPolicy.CreationTimestamp,
+			"yaml":              cachedPolicy.RawYAML,
+		})
+		return
+	}
+
+	log.LogDebug("GetBpStatus - Received request",
+		zap.String("name", name), zap.String("namespace", namespace))
 
 	if namespace == "" {
 		namespace = "default" // Set default namespace
@@ -2130,4 +2238,28 @@ func getCRDNamesFromResources(resourceAPIGroups map[string]string) []string {
 	}
 
 	return crdNames
+}
+
+// filterBPsByNamespace filters binding policies by namespace
+func filterBPsByNamespace(bpolicies interface{}, namespace string) (interface{}, int) {
+	switch p := bpolicies.(type) {
+	case []BindingPolicyWithStatus:
+		filtered := make([]BindingPolicyWithStatus, 0)
+		for _, bp := range p {
+			if bp.Namespace == namespace {
+				filtered = append(filtered, bp)
+			}
+		}
+		return filtered, len(filtered)
+	case []map[string]interface{}:
+		filtered := make([]map[string]interface{}, 0)
+		for _, bp := range p {
+			if ns, ok := bp["namespace"].(string); ok && ns == namespace {
+				filtered = append(filtered, bp)
+			}
+		}
+		return filtered, len(filtered)
+	default:
+		return bpolicies, 0
+	}
 }
