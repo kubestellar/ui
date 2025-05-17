@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { HiBars3CenterLeft, HiArrowRightOnRectangle, HiUserCircle } from "react-icons/hi2";
-import { RxEnterFullScreen, RxExitFullScreen } from "react-icons/rx";
 import { FiLogOut } from "react-icons/fi";
 import { FiSun, FiMoon } from "react-icons/fi";
 import { menu } from "./menu/data";
@@ -12,6 +11,7 @@ import useTheme from "../stores/themeStore";
 import { useHeaderQueries } from '../hooks/queries/useHeaderQueries';
 import HeaderSkeleton from "./ui/HeaderSkeleton";
 import { useAuth, useAuthActions } from '../hooks/useAuth';
+import FullScreenToggle from "./ui/FullScreenToggle";
 
 interface Context {
   name: string;
@@ -25,8 +25,6 @@ const profileIcons = [
 ];
 
 const Header = ({ isLoading }: { isLoading: boolean }) => {
-  const [isFullScreen, setIsFullScreen] = React.useState(false);
-  const element = document.getElementById("root");
   const { useContexts } = useHeaderQueries();
   const { data: contextsData, error } = useContexts();
   const setSelectedCluster = useClusterStore((state) => state.setSelectedCluster)
@@ -49,10 +47,6 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
   });
 
   const toggleDrawer = () => setDrawerOpen(!isDrawerOpen);
-
-  const toggleFullScreen = () => {
-    setIsFullScreen((prev) => !prev);
-  };
 
   useEffect(() => {
     if (authData?.isAuthenticated) {
@@ -119,18 +113,6 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
         setSelectedCluster(null);
       });
   }, [setSelectedCluster, setHasAvailableClusters]);
-
-  React.useEffect(() => {
-    if (!isFullScreen && document.fullscreenElement) {
-      document.exitFullscreen().catch((err) => {
-        console.error("Error exiting full screen:", err.message);
-      });
-    } else if (isFullScreen && !document.fullscreenElement) {
-      element?.requestFullscreen({ navigationUI: "auto" }).catch((err) => {
-        console.error("Error entering full screen:", err.message);
-      });
-    }
-  }, [element, isFullScreen]);
 
   const handleClusterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newCluster = e.target.value;
@@ -350,16 +332,14 @@ const Header = ({ isLoading }: { isLoading: boolean }) => {
           </>
         )}
         
-        <button
-          onClick={toggleFullScreen}
-          className="hidden xl:inline-flex btn btn-circle btn-ghost"
-        >
-          {!isFullScreen ? (
-            <RxEnterFullScreen className="xl:text-xl 2xl:text-2xl 3xl:text-3xl" />
-          ) : (
-            <RxExitFullScreen className="xl:text-xl 2xl:text-2xl 3xl:text-3xl" />
-          )}
-        </button>
+        {/* Replace the fullscreen button with our component */}
+        <div className="hidden xl:inline-flex">
+          <FullScreenToggle 
+            position="inline" 
+            className="btn btn-circle btn-ghost" 
+            iconSize={20}
+          />
+        </div>
       </div>
     </div>
   );

@@ -53,6 +53,7 @@ import ContextDropdown from "../components/ContextDropdown";
 import { ResourceItem as ListResourceItem } from "./ListViewComponent"; // Import ResourceItem from ListViewComponent
 import useLabelHighlightStore from "../stores/labelHighlightStore";
 import { useLocation } from "react-router-dom";
+import FullScreenToggle from "./ui/FullScreenToggle";
 
 // Interfaces
 export interface NodeData {
@@ -1781,8 +1782,10 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
     }
   }, [highlightedLabels, dataReceived, websocketData, theme]);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+
   return (
-    <Box sx={{ display: "flex", height: "85vh", width: "100%", position: "relative" }}>
+    <Box ref={containerRef} sx={{ display: "flex", height: "85vh", width: "100%", position: "relative" }}>
       <Box
         sx={{
           flex: 1,
@@ -1935,6 +1938,12 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
               <ReactFlowProvider>
                 <FlowCanvas nodes={nodes} edges={edges} renderStartTime={renderStartTime} theme={theme} />
                 <ZoomControls theme={theme} onToggleCollapse={handleToggleCollapse} isCollapsed={isCollapsed} onExpandAll={handleExpandAll} onCollapseAll={handleCollapseAll} />
+                <FullScreenToggle 
+                  containerRef={containerRef} 
+                  position="top-right" 
+                  tooltipPosition="left"
+                  tooltipText="Toggle fullscreen view" 
+                />
               </ReactFlowProvider>
             </Box>
           ) : viewMode === 'list' ? (
@@ -1976,6 +1985,12 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                     </Button>
                   </Box>
                 </Box>
+                <FullScreenToggle 
+                  containerRef={containerRef} 
+                  position="top-right" 
+                  tooltipPosition="left"
+                  tooltipText="Toggle fullscreen view" 
+                />
               </ReactFlowProvider>
             </Box>
           )}
