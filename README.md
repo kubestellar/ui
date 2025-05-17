@@ -155,6 +155,9 @@ If you prefer to run the application using Docker Compose, follow these steps:
 - **Download Link**: [Docker Downloads](https://www.docker.com/products/docker-desktop)
 
 > [!NOTE] 
+> If you are using Docker Desktop, please enable host networking. To do so navigate to Settings > Resources > Network, and check the "Enable host networking" option. Finally, apply the changes and restart Docker Desktop.
+
+> [!NOTE] 
 > If you are using Compose V1, change the `docker compose` command to `docker-compose` in the following steps.
 > Checkout [Migrating to Compose V2](https://docs.docker.com/compose/releases/migrate/) for more info.
 
@@ -197,52 +200,6 @@ This will:
 - Stop the running containers.
 - Pull the latest source code changes.
 - Rebuild and restart the application.
-
-## **🚀 Install GolangCI-Lint**
-
-To install **GolangCI-Lint**, follow these steps:
-
-### **🔹 Linux & macOS**
-Run the following command:
-```sh
-curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.54.2
-```
-Ensure `$(go env GOPATH)/bin` is in your `PATH`:
-```sh
-export PATH=$(go env GOPATH)/bin:$PATH
-```
-
-### **🔹 Windows**
-Use **scoop** (recommended):
-```powershell
-scoop install golangci-lint
-```
-Or **Go install**:
-```sh
-go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-```
-
-### **🔹 Verify Installation**
-Run:
-```sh
-golangci-lint --version
-```
-
----
-
-## **🛠 Linting & Fixing Code**
-### **🔹 Check for Issues**
-```sh
-make check-lint
-```
-### **🔹 Auto-Fix Issues**
-```sh
-make fix-lint
-```
-### **🔹 Run Both**
-```sh
-make lint
-```
 
 ### Docker Image Versioning and Pulling
 

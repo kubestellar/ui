@@ -230,6 +230,59 @@ npm run dev
 
 ---
 
+## **🚀 Installing GolangCI-Lint**
+
+To install **GolangCI-Lint** for code quality checks, follow these steps:
+
+### **🔹 Linux & macOS**
+Run the following command:
+```sh
+curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.54.2
+```
+Ensure `$(go env GOPATH)/bin` is in your `PATH`:
+```sh
+export PATH=$(go env GOPATH)/bin:$PATH
+```
+
+### **🔹 Windows**
+Use **scoop** (recommended):
+```powershell
+scoop install golangci-lint
+```
+Or **Go install**:
+```sh
+go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+```
+
+### **🔹 Verify Installation**
+Run:
+```sh
+golangci-lint --version
+```
+
+---
+
+## **🛠 Linting & Fixing Code**
+
+Maintaining code quality is essential for collaboration. Use these commands to check and fix linting issues:
+
+### **🔹 Check for Issues**
+```sh
+make check-lint
+```
+
+### **🔹 Auto-Fix Issues**
+```sh
+make fix-lint
+```
+
+### **🔹 Run Both**
+```sh
+make lint
+```
+
+---
+
 ## **🎯 Conclusion**
 You have successfully:
 
@@ -238,6 +291,7 @@ You have successfully:
 ✅ Configured JWT authentication in your Go backend  
 ✅ Tested the authentication process using Postman and or cURL   
 ✅ Logged into the Kubestellar UI 
+✅ Set up GolangCI-Lint for code quality
 
 ---
 
