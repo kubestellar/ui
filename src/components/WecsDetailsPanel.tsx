@@ -147,6 +147,8 @@ const WecsDetailsPanel = ({
   const [isTerminalMaximized, setIsTerminalMaximized] = useState(false);
   const [containers, setContainers] = useState<ContainerInfo[]>([]);
   const [selectedContainer, setSelectedContainer] = useState<string>("");
+  const [selectedLogsContainer, setSelectedLogsContainer] = useState<string>("");
+  const [showPreviousLogs, setShowPreviousLogs] = useState<boolean>(false);
   const [loadingContainers, setLoadingContainers] = useState<boolean>(false);
   const [isContainerSelectActive, setIsContainerSelectActive] = useState<boolean>(false);
   // Track the previous node to detect node changes
@@ -320,21 +322,57 @@ const WecsDetailsPanel = ({
   const connectWebSocket = useCallback(() => {
     if (!wsParamsRef.current || !isOpen) return;
 
-    const { cluster, namespace, pod } = wsParamsRef.current;
-    const wsUrl = getWebSocketUrl(`/ws/logs?cluster=${cluster}&namespace=${namespace}&pod=${pod}`);
+    // Clear old logs to prevent accumulation of errors
+    setLogs([]);
     
-    setLogs((prev) => [...prev, 
-      `\x1b[33m[Connecting] WebSocket Request\x1b[0m`,
+    if (terminalInstance.current) {
+      try {
+        terminalInstance.current.clear();
+      } catch (e) {
+        console.error("Error clearing terminal:", e);
+      }
+    }
+
+    const { cluster, namespace, pod } = wsParamsRef.current;
+    
+    // Build URL with container and previous logs parameters if provided
+    let wsUrl = getWebSocketUrl(`/ws/logs?cluster=${cluster}&namespace=${namespace}&pod=${pod}`);
+    
+    // Add container parameter if selected
+    if (selectedLogsContainer) {
+      wsUrl += `&container=${selectedLogsContainer}`;
+    }
+    
+    // Add previous parameter if that option is selected
+    if (showPreviousLogs) {
+      wsUrl += `&previous=true`;
+    }
+    
+    setLogs([`\x1b[33m[Connecting] WebSocket Request\x1b[0m`,
       `URL: ${wsUrl}`,
       `Timestamp: ${new Date().toISOString()}`,
+      showPreviousLogs ? `Log type: Previous logs` : `Log type: Current logs`,
+      selectedLogsContainer ? `Container: ${selectedLogsContainer}` : `Container: default`,
       `-----------------------------------`
     ]);
 
-    const socket = new WebSocket(wsUrl);
-    wsRef.current = socket;
+    // Create a new WebSocket with error handling
+    let socket: WebSocket | null = null;
+    try {
+      socket = new WebSocket(wsUrl);
+      wsRef.current = socket;
+    } catch (error) {
+      console.error("Error creating WebSocket:", error);
+      setLogs(prev => [...prev, 
+        `\x1b[31m[Error] Failed to create WebSocket connection\x1b[0m`,
+        `Timestamp: ${new Date().toISOString()}`,
+        `-----------------------------------`
+      ]);
+      return;
+    }
 
     socket.onopen = () => {
-      setLogs((prev) => [...prev,
+      setLogs(logs => [...logs,
         `\x1b[32m[Connected] WebSocket Connection Established\x1b[0m`,
         `Status: OPEN`,
         `Timestamp: ${new Date().toISOString()}`,
@@ -344,46 +382,69 @@ const WecsDetailsPanel = ({
     };
 
     socket.onmessage = (event) => {
-      const messageLines = event.data.split('\n').filter((line: string) => line.trim() !== '');
-      const messageLog = messageLines.map((line: string) => line.trim());
-      messageLog.push(`Timestamp: ${new Date().toISOString()}`);
-      messageLog.push(`-----------------------------------`);
-      setLogs((prev) => [...prev, ...messageLog]);
+      try {
+        const messageLines = event.data.split('\n').filter((line: string) => line.trim() !== '');
+        const messageLog = messageLines.map((line: string) => line.trim());
+        messageLog.push(`Timestamp: ${new Date().toISOString()}`);
+        messageLog.push(`-----------------------------------`);
+        
+        // Update logs state (use function form to ensure we get the latest state)
+        setLogs(logs => [...logs, ...messageLog]);
+      } catch (error) {
+        console.error("Error processing message:", error);
+      }
     };
 
     socket.onerror = (event) => {
-      setLogs((prev) => [...prev,
+      console.error("WebSocket error:", event);
+      setLogs(logs => [...logs,
         `\x1b[31m[Error] WebSocket Connection Failed\x1b[0m`,
-        `Details: ${JSON.stringify(event)}`,
+        `Error details available in browser console`,
         `Timestamp: ${new Date().toISOString()}`,
         `-----------------------------------`
       ]);
     };
 
-    socket.onclose = () => {
-      setLogs((prev) => [...prev,
-        `\x1b[31m[Closed] WebSocket Connection Terminated\x1b[0m`,
-        `Timestamp: ${new Date().toISOString()}`,
-        `-----------------------------------`
-      ]);
+    socket.onclose = (event) => {
+      // Only add closed message if it wasn't from a manual close
+      if (event.code !== 1000) {
+        setLogs(logs => [...logs,
+          `\x1b[31m[Closed] WebSocket Connection Terminated\x1b[0m`,
+          `Code: ${event.code}, Reason: ${event.reason || 'No reason provided'}`,
+          `Timestamp: ${new Date().toISOString()}`,
+          `-----------------------------------`
+        ]);
+      }
       wsRef.current = null;
     };
-  }, [isOpen]); // Add isOpen as dependency
+  }, [isOpen, selectedLogsContainer, showPreviousLogs]); // Add dependencies needed for the WebSocket URL
 
-  // Initialize WebSocket connection only once when the panel opens
+  // Initialize WebSocket connection when the panel opens or when the tab changes
   useEffect(() => {
-    if (!isOpen || type.toLowerCase() !== "pod") {
+    if (!isOpen || type.toLowerCase() !== "pod" || tabValue !== 2) {
       if (wsRef.current) {
         wsRef.current.close();
         wsRef.current = null;
       }
-      setLogs([]);
-      hasShownConnectedMessageRef.current = false;
+      if (tabValue !== 2) {
+        // Only clear logs when not on logs tab
+        setLogs([]);
+        hasShownConnectedMessageRef.current = false;
+      }
       return;
     }
 
-    if (!wsRef.current && wsParamsRef.current) {
-      connectWebSocket();
+    // Reconnect WebSocket when tab is logs tab
+    if (tabValue === 2 && wsParamsRef.current) {
+      // Close existing connection before creating a new one
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      // Small delay to ensure clean closure
+      setTimeout(() => {
+        connectWebSocket();
+      }, 100);
     }
 
     return () => {
@@ -392,22 +453,47 @@ const WecsDetailsPanel = ({
         wsRef.current = null;
       }
     };
-  }, [isOpen, type, connectWebSocket]); // Add connectWebSocket to dependencies
+  }, [isOpen, type, tabValue, connectWebSocket, wsParamsRef]); // Add tabValue and wsParamsRef to dependencies
 
   useEffect(() => {
-    // Only initialize terminal if needed and if it doesn't exist yet
-    if (!terminalRef.current || type.toLowerCase() !== "pod" || tabValue !== 2) return;
-    
-    // Skip re-initialization if terminal already exists
-    if (terminalInstance.current) {
-      // Update existing terminal with latest logs instead of re-creating it
-      const term = terminalInstance.current;
-      const lastLogIndex = term.buffer.active.length - 1; // Approximate last written log
-      const newLogs = logs.slice(lastLogIndex > 0 ? lastLogIndex : 0);
-      newLogs.forEach((log) => {
-        term.writeln(log);
-      });
+    // Only initialize terminal if needed and terminal element exists
+    if (!terminalRef.current || type.toLowerCase() !== "pod" || tabValue !== 2) {
       return;
+    }
+    
+    // If terminal instance already exists, use it
+    if (terminalInstance.current) {
+      try {
+        // Update existing terminal with latest logs
+        const term = terminalInstance.current;
+        // Clear any previous error messages that might be causing the issues
+        if (logs.some(log => log.includes("Error streaming logs"))) {
+          term.clear();
+        }
+        
+        // Only write new logs to avoid duplicates
+        const lastLogIndex = term.buffer.active.length - 1;
+        const newLogs = logs.slice(lastLogIndex > 0 ? lastLogIndex : 0);
+        newLogs.forEach((log) => {
+          term.writeln(log);
+        });
+      } catch (error) {
+        console.error("Error updating terminal with new logs:", error);
+        // If there's an error, dispose and recreate the terminal
+        if (terminalInstance.current) {
+          try {
+            terminalInstance.current.dispose();
+          } catch (e) {
+            console.error("Error disposing terminal:", e);
+          }
+          terminalInstance.current = null;
+        }
+      }
+      
+      // If we had an error and needed to recreate the terminal, continue execution
+      if (terminalInstance.current) {
+        return;
+      }
     }
 
     const term = new Terminal({
@@ -440,21 +526,31 @@ const WecsDetailsPanel = ({
     };
   }, [tabValue, theme, type, logs]); // Add logs as dependency with logic to prevent re-initialization
 
-  // Add a useEffect to clean up exec terminal when pod changes or panel closes
+  // Add a useEffect to clean up exec terminal and logs when pod changes or panel closes
   useEffect(() => {
     // This effect runs whenever the pod (name) or visibility (isOpen) changes
     if (currentPodRef.current !== name || !isOpen) {
       // Clean up existing exec terminal resources
       if (execSocketRef.current) {
-        // console.log(`Closing exec socket for previous pod: ${currentPodRef.current}`);
         execSocketRef.current.close();
         execSocketRef.current = null;
       }
       
       if (execTerminalInstance.current) {
-        // console.log(`Disposing exec terminal for previous pod: ${currentPodRef.current}`);
         execTerminalInstance.current.dispose();
         execTerminalInstance.current = null;
+      }
+      
+      // Close logs WebSocket
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+        setLogs([]);
+      }
+      
+      if (terminalInstance.current) {
+        terminalInstance.current.dispose();
+        terminalInstance.current = null;
       }
 
       // Update current pod reference
@@ -462,10 +558,10 @@ const WecsDetailsPanel = ({
     }
   }, [name, isOpen]);
 
-  // Add useEffect to fetch containers for the current pod when in exec tab
+  // Add useEffect to fetch containers for the current pod when in exec or logs tab
   useEffect(() => {
-    // Only fetch containers when the exec tab is active and for pod resources
-    if (tabValue !== 3 || type.toLowerCase() !== "pod" || !isOpen) return;
+    // Fetch containers when the exec tab or logs tab is active and for pod resources
+    if ((tabValue !== 3 && tabValue !== 2) || type.toLowerCase() !== "pod" || !isOpen) return;
 
     const fetchContainers = async () => {
       setLoadingContainers(true);
@@ -518,7 +614,12 @@ const WecsDetailsPanel = ({
     if (tabValue === 3 && type.toLowerCase() === "pod" && containers.length > 0 && !selectedContainer) {
       setSelectedContainer(containers[0].ContainerName);
     }
-  }, [tabValue, type, containers, selectedContainer]);
+    
+    // Similarly for logs tab, select the first container if available and none is currently selected
+    if (tabValue === 2 && type.toLowerCase() === "pod" && containers.length > 0 && !selectedLogsContainer) {
+      setSelectedLogsContainer(containers[0].ContainerName);
+    }
+  }, [tabValue, type, containers, selectedContainer, selectedLogsContainer]);
 
   // Add the Exec terminal initialization - modified to use selectedContainer
   useEffect(() => {
@@ -704,12 +805,14 @@ const WecsDetailsPanel = ({
     }, 50); // Small delay to ensure DOM is ready
   }, [tabValue, theme, type, name, namespace, cluster, resourceData, execTerminalKey, selectedContainer]); // Added selectedContainer as dependency
 
-  // Add a useEffect that resets container selection when the pod changes
+  // Add a useEffect that resets container selections when the pod changes
   useEffect(() => {
     // Reset container selection and containers list when pod changes
     if (type.toLowerCase() === "pod") {
       // console.log(`Pod changed to ${name}, resetting container selection`);
       setSelectedContainer("");
+      setSelectedLogsContainer("");
+      setShowPreviousLogs(false);
       setContainers([]);
     }
   }, [name, type]);
@@ -724,6 +827,28 @@ const WecsDetailsPanel = ({
   };
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
+    // If switching to logs tab, reset any previous error state
+    if (newValue === 2 && tabValue !== 2) {
+      // Clear previous error logs
+      setLogs([]);
+      
+      // If there's an existing terminal, dispose it to get a fresh start
+      if (terminalInstance.current) {
+        try {
+          terminalInstance.current.dispose();
+        } catch (e) {
+          console.error("Error disposing terminal during tab change:", e);
+        }
+        terminalInstance.current = null;
+      }
+      
+      // Close any existing websocket connections
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+    }
+    
     setTabValue(newValue);
   };
 
@@ -1185,16 +1310,301 @@ const WecsDetailsPanel = ({
                 <Box
                   sx={{
                     height: "500px",
-                    bgcolor: theme === "dark" ? "#1E1E1E" : "#FFFFFF",
-                    borderRadius: 1,
-                    p: 1,
-                    overflow: "auto",
+                    bgcolor: theme === "dark" ? "#1A1A1A" : "#FAFAFA",
+                    borderRadius: "8px",
+                    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1)",
+                    overflow: "hidden",
+                    border: theme === "dark" ? "1px solid #333" : "1px solid #E0E0E0",
+                    p: 0,
+                    pb: 0.5,
+                    display: "flex",
+                    flexDirection: "column",
+                    position: "relative",
+                  }}
+                  onClick={(e: React.MouseEvent<HTMLDivElement>) => {
+                    e.stopPropagation(); // Stop clicks inside this box from bubbling
                   }}
                 >
-                  <div
-                    ref={terminalRef}
-                    style={{ height: "100%", width: "100%" }}
-                  />
+                  {/* Logs header with controls */}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      px: 2,
+                      py: 0.75,
+                      backgroundColor: theme === "dark" ? "#252525" : "#F0F0F0",
+                      borderBottom: theme === "dark" ? "1px solid #333" : "1px solid #E0E0E0",
+                      fontSize: "13px",
+                      fontWeight: 500,
+                      color: theme === "dark" ? "#CCC" : "#444",
+                      fontFamily: '"Segoe UI", "Helvetica", "Arial", sans-serif'
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <span 
+                        style={{ 
+                          display: "inline-block", 
+                          width: "12px", 
+                          height: "12px", 
+                          borderRadius: "50%", 
+                          backgroundColor: "#61AFEF", 
+                          marginRight: "8px"
+                        }} 
+                      />
+                      {name}
+                    </Box>
+                    
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      {/* Log type selection (current/previous) */}
+                      <FormControl 
+                        size="small" 
+                        className="logs-type-dropdown"
+                        onMouseDown={() => {
+                          setIsContainerSelectActive(true);
+                        }}
+                        sx={{ 
+                          minWidth: 120,
+                          "& .MuiInputBase-root": {
+                            color: theme === "dark" ? "#CCC" : "#444",
+                            fontSize: "13px",
+                            backgroundColor: theme === "dark" ? "#333" : "#FFF",
+                            border: theme === "dark" ? "1px solid #444" : "1px solid #DDD",
+                            borderRadius: "4px",
+                            height: "30px",
+                            display: "flex",
+                            alignItems: "center"
+                          },
+                          "& .MuiOutlinedInput-notchedOutline": {
+                            border: "none"
+                          },
+                          "& .MuiSelect-select": {
+                            display: "flex",
+                            alignItems: "center",
+                            paddingLeft: "4px"
+                          }
+                        }}
+                        onClick={(e: React.MouseEvent<HTMLDivElement>) => {
+                          e.stopPropagation();
+                        }}
+                      >
+                        <Select
+                          value={showPreviousLogs ? "previous" : "current"}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            setShowPreviousLogs(e.target.value === "previous");
+                            // Reconnect websocket with new parameters
+                            if (wsRef.current) {
+                              wsRef.current.close();
+                              wsRef.current = null;
+                              // Clear logs when switching log type
+                              setLogs([]);
+                              if (terminalInstance.current) {
+                                terminalInstance.current.clear();
+                              }
+                              setTimeout(() => connectWebSocket(), 300);
+                            }
+                          }}
+                          displayEmpty
+                          onMouseDown={(e: React.MouseEvent<HTMLElement>) => {
+                            e.stopPropagation();
+                            setIsContainerSelectActive(true);
+                          }}
+                          onClose={() => {
+                            setTimeout(() => setIsContainerSelectActive(false), 300);
+                          }}
+                          renderValue={(selected) => (
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <span style={{ marginRight: 8, display: 'inline-block' }}>
+                                <i className="fa fa-cube" style={{ fontSize: '14px' }}></i>
+                              </span>
+                              {selected === "current" ? "Current" : "Previous"}
+                            </Box>
+                          )}
+                          MenuProps={{
+                            slotProps: {
+                              paper: {
+                                onClick: (e: React.MouseEvent<HTMLDivElement>) => {
+                                  e.stopPropagation();
+                                },
+                                onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => {
+                                  e.stopPropagation();
+                                  setIsContainerSelectActive(true);
+                                },
+                                style: {
+                                  backgroundColor: theme === "dark" ? "#333" : "#FAFAFA",
+                                  color: theme === "dark" ? "#CCC" : "#444",
+                                  border: theme === "dark" ? "1px solid #444" : "1px solid #DDD",
+                                  borderRadius: "4px",
+                                  boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)"
+                                }
+                              }
+                            }
+                          }}
+                        >
+                          <MenuItem value="current">
+                            <Box sx={{ display: "flex", flexDirection: "column" }}>
+                              <Typography variant="body2">Current</Typography>
+                              <Typography variant="caption" color="text.secondary" sx={{ fontSize: "11px" }}>
+                                Default logs
+                              </Typography>
+                            </Box>
+                          </MenuItem>
+                          <MenuItem value="previous">
+                            <Box sx={{ display: "flex", flexDirection: "column" }}>
+                              <Typography variant="body2">Previous</Typography>
+                              <Typography variant="caption" color="text.secondary" sx={{ fontSize: "11px" }}>
+                                Previous terminated container
+                              </Typography>
+                            </Box>
+                          </MenuItem>
+                        </Select>
+                      </FormControl>
+
+                      {/* Container selection dropdown */}
+                      <FormControl 
+                        size="small" 
+                        className="container-dropdown"
+                        onMouseDown={() => {
+                          setIsContainerSelectActive(true);
+                        }}
+                        sx={{ 
+                          minWidth: 150,
+                          "& .MuiInputBase-root": {
+                            color: theme === "dark" ? "#CCC" : "#444",
+                            fontSize: "13px",
+                            backgroundColor: theme === "dark" ? "#333" : "#FFF",
+                            border: theme === "dark" ? "1px solid #444" : "1px solid #DDD",
+                            borderRadius: "4px",
+                            height: "30px",
+                            display: "flex",
+                            alignItems: "center"
+                          },
+                          "& .MuiOutlinedInput-notchedOutline": {
+                            border: "none"
+                          },
+                          "& .MuiSelect-select": {
+                            display: "flex",
+                            alignItems: "center",
+                            paddingLeft: "4px"
+                          }
+                        }}
+                        onClick={(e: React.MouseEvent<HTMLDivElement>) => {
+                          e.stopPropagation();
+                        }}
+                      >
+                        <Select
+                          value={selectedLogsContainer}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            setSelectedLogsContainer(e.target.value as string);
+                            // Reconnect websocket with new container
+                            if (wsRef.current) {
+                              wsRef.current.close();
+                              wsRef.current = null;
+                              // Clear logs when switching containers
+                              setLogs([]);
+                              if (terminalInstance.current) {
+                                terminalInstance.current.clear();
+                              }
+                              setTimeout(() => connectWebSocket(), 300);
+                            }
+                          }}
+                          displayEmpty
+                          onMouseDown={(e: React.MouseEvent<HTMLElement>) => {
+                            e.stopPropagation();
+                            setIsContainerSelectActive(true);
+                          }}
+                          onClose={() => {
+                            setTimeout(() => setIsContainerSelectActive(false), 300);
+                          }}
+                          renderValue={(selected) => (
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <span style={{ marginRight: 8, display: 'inline-block' }}>
+                                <i className="fa fa-cube" style={{ fontSize: '14px' }}></i>
+                              </span>
+                              {selected as string}
+                            </Box>
+                          )}
+                          MenuProps={{
+                            slotProps: {
+                              paper: {
+                                onClick: (e: React.MouseEvent<HTMLDivElement>) => {
+                                  e.stopPropagation();
+                                },
+                                onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => {
+                                  e.stopPropagation();
+                                  setIsContainerSelectActive(true);
+                                },
+                                style: {
+                                  backgroundColor: theme === "dark" ? "#333" : "#FAFAFA",
+                                  color: theme === "dark" ? "#CCC" : "#444",
+                                  border: theme === "dark" ? "1px solid #444" : "1px solid #DDD",
+                                  borderRadius: "4px",
+                                  boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)"
+                                }
+                              }
+                            }
+                          }}
+                        >
+                          {loadingContainers ? (
+                            <MenuItem disabled>
+                              <Box display="flex" alignItems="center">
+                                <CircularProgress size={14} sx={{ mr: 1 }} />
+                                <Typography variant="body2">Loading containers...</Typography>
+                              </Box>
+                            </MenuItem>
+                          ) : null}
+                          {containers.map((container) => (
+                            <MenuItem key={container.ContainerName} value={container.ContainerName}>
+                              <Box sx={{ display: "flex", flexDirection: "column" }}>
+                                <Typography variant="body2">{container.ContainerName}</Typography>
+                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: "11px" }}>
+                                  {container.Image.length > 40 ? container.Image.substring(0, 37) + '...' : container.Image}
+                                </Typography>
+                              </Box>
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      
+                      {/* Clear logs button */}
+                      <Tooltip title="Clear Logs">
+                        <IconButton 
+                          size="small" 
+                          onClick={() => {
+                            setLogs([]);
+                            if (terminalInstance.current) {
+                              terminalInstance.current.clear();
+                            }
+                          }}
+                          sx={{ 
+                            color: theme === "dark" ? "#CCC" : "#666",
+                            padding: "2px",
+                            '&:hover': {
+                              backgroundColor: theme === "dark" ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
+                            }
+                          }}
+                        >
+                          <FiTrash2 size={16} />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </Box>
+                  
+                  {/* Terminal content */}
+                  <Box
+                    sx={{
+                      flex: 1,
+                      p: 1,
+                      overflow: "hidden"
+                    }}
+                  >
+                    <div
+                      ref={terminalRef}
+                      style={{ height: "100%", width: "100%" }}
+                    />
+                  </Box>
                 </Box>
               )}
               {tabValue === 3 && type.toLowerCase() === "pod" && (
