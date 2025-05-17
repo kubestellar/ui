@@ -4,6 +4,24 @@ This guide will help you set up a **Redis container**, configure **JWT authentic
 
 ---
 
+## **📋 Contents**
+
+- [Prerequisites](#1️⃣-prerequisites)
+- [Setup Redis Container with Docker](#2️⃣-setup-redis-container-with-docker)
+- [Verify Redis is Running](#3️⃣-verify-redis-is-running)
+- [Setting Up JWT Authentication](#4️⃣-setting-up-jwt-authentication)
+- [Set Up Environment Variables](#5️⃣-set-up-environment-variables)
+- [Export Environment Variables](#6️⃣-export-environment-variables-linuxmac)
+- [Running the Go Backend](#7️⃣-running-the-go-backend)
+- [Testing JWT Authentication](#8️⃣-testing-jwt-authentication)
+- [Stopping and Removing Redis Container](#9️⃣-stopping-and-removing-redis-container)
+- [Login to Kubestellar UI](#🔟-login-to-kubestellar-ui)
+- [Installing GolangCI-Lint](#-installing-golangci-lint)
+- [Linting & Fixing Code](#-linting--fixing-code)
+- [Conclusion](#-conclusion)
+
+---
+
 ## **1️⃣ Prerequisites**  
 Before proceeding, ensure you have the following installed: 
 - **Redis** 
