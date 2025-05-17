@@ -370,19 +370,3 @@ make fix-lint
 ```sh
 make lint
 ```
-
----
-
-## **Conclusion**
-You have successfully:
-
-✅ Set up a Redis container using Docker  
-✅ Created and managed environment variables  
-✅ Configured JWT authentication in your Go backend  
-✅ Tested the authentication process using Postman and or cURL   
-✅ Logged into the Kubestellar UI 
-✅ Set up GolangCI-Lint for code quality
-
----
-
-**Happy coding!**
