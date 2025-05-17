@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import jsyaml from "js-yaml";
 import { Dialog, DialogContent, DialogTitle, Tabs, Box, Alert, SelectChangeEvent, Typography, Snackbar } from "@mui/material";
 import GitHubIcon from "@mui/icons-material/GitHub";
@@ -145,14 +145,14 @@ spec:
   };
   const [helmFormData, setHelmFormData] = useState<HelmFormData>(initialHelmFormData);
 
-  const initialArtifactHubFormData: ArtifactHubFormData = {
+  const initialArtifactHubFormData: ArtifactHubFormData = useMemo(() => ({
     packageId: "",
     version: "",
     namespace: "default",
     releaseName: "",
     values: {},
     workloadLabel: "",
-  };
+  }), []);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [artifactHubFormData, _] = useState<ArtifactHubFormData>(initialArtifactHubFormData);
 

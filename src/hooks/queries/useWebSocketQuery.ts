@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useQuery, useQueryClient, UseQueryResult } from '@tanstack/react-query';
 import { getWebSocketUrl } from '../../lib/api';
 
@@ -58,33 +58,27 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
     error: null,
   });
 
-  const connectWebSocket = () => {
+  const connectWebSocket = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.close();
     }
-
     const wsUrl = getWebSocketUrl(url);
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
-
     ws.onopen = () => {
       setWsState({ isConnected: true, error: null });
       queryClient.setQueryData(queryKey, null);
       onConnect?.();
     };
-
     ws.onmessage = (event) => {
       onRawMessage?.(event);
-
       try {
         let data: TRawData = event.data;
-
         if (parseData && typeof event.data === 'string') {
           data = JSON.parse(event.data) as TRawData;
         } else if (parseData) {
           throw new Error('Expected string data for JSON parsing');
         }
-
         const transformedData = transform(data);
         queryClient.setQueryData(queryKey, transformedData);
         onMessage?.(transformedData);
@@ -94,27 +88,24 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
         onError?.(wsError);
       }
     };
-
     ws.onerror = (error) => {
       const wsError = error instanceof Error ? error : new Error('WebSocket error');
       setWsState({ isConnected: false, error: wsError });
       queryClient.setQueryData(queryKey, null);
       onError?.(wsError);
     };
-
     ws.onclose = (event) => {
       setWsState({ isConnected: false, error: null });
       queryClient.setQueryData(queryKey, null);
       wsRef.current = null;
       onDisconnect?.(event);
-
       if (autoReconnect && enabled) {
         reconnectTimeoutRef.current = window.setTimeout(() => {
           connectWebSocket();
         }, reconnectInterval);
       }
     };
-  };
+  }, [url, queryClient, queryKey, onConnect, onRawMessage, parseData, transform, onMessage, onError, onDisconnect, autoReconnect, enabled, reconnectInterval]);
 
   const sendMessage = (data: string | object) => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
@@ -150,11 +141,10 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
     } else {
       disconnect();
     }
-
     return () => {
       disconnect();
     };
-  }, [enabled, url]);
+  }, [enabled, url, connectWebSocket]);
 
   const queryResult = useQuery<TData, Error>({
     queryKey,

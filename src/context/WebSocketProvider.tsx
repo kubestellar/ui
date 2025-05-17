@@ -4,8 +4,6 @@ import ReactDOM from "react-dom";
 import { isEqual } from "lodash";
 import { WebSocketContext, NamespaceData, WecsCluster } from "./WebSocketContext";
 import { getWebSocketUrl } from "../lib/api";
-// Still importing useWebSocket to maintain exports order if needed
-export { useWebSocket } from './useWebSocket';
 
 interface WebSocketProviderProps {
   children: React.ReactNode;

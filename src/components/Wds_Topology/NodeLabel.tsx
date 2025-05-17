@@ -28,7 +28,6 @@ export const NodeLabel = memo<NodeLabelProps>(({
 }) => {
   const theme = useTheme((state) => state.theme); // Get the current theme
   // We're not using isHovering state for now, but may use it later for additional effects
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isHovering, setIsHovering] = useState(false);
   console.log(isHovering);
 

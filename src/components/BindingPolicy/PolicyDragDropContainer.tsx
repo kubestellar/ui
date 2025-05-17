@@ -332,7 +332,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
   );
 
   //  function to detect CRDs and other cluster-scoped resources
-  const isClusterScopedResource = (labelInfo: { key: string; value: string }): boolean => {
+  const isClusterScopedResource = useCallback((labelInfo: { key: string; value: string }): boolean => {
     if (labelInfo.value.includes('.') && 
         (labelInfo.value.endsWith('.io') || 
          labelInfo.value.includes('.k8s.io') || 
@@ -340,16 +340,13 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
       console.log(`Detected potential cluster-scoped resource by API group pattern: ${labelInfo.value}`);
       return true;
     }
-    
     // Check if part-of label indicates a cluster-level component
     if (labelInfo.key === 'app.kubernetes.io/part-of') {
       console.log(`Detected resource with part-of label: ${labelInfo.value}`);
       return true;
     }
-    
     // Known cluster-scoped Kubernetes resources
     const knownClusterScopedResources = [
-      // Core cluster-scoped resources
       'customresourcedefinitions',
       'clusterroles',
       'clusterrolebindings',
@@ -360,8 +357,6 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
       'csidrivers',
       'csinodes',
       'volumeattachments',
-      
-      // Common API group patterns for cluster resources
       '.apiextensions.k8s.io',
       '.rbac.authorization.k8s.io',
       '.admissionregistration.k8s.io',
@@ -372,32 +367,25 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
       '.coordination.k8s.io',
       '.node.k8s.io'
     ];
-    
     if (knownClusterScopedResources.some(r => labelInfo.value === r || labelInfo.value.includes(r))) {
       console.log(`Detected known cluster-scoped resource: ${labelInfo.value}`);
       return true;
     }
-    
     return false;
-  };
+  }, []);
 
-  const determineResourceKind = (labelInfo: { key: string; value: string }): string => {
+  const determineResourceKind = useCallback((labelInfo: { key: string; value: string }): string => {
     if (labelInfo.key === 'app.kubernetes.io/part-of') {
       return labelInfo.value.charAt(0).toUpperCase() + labelInfo.value.slice(1);
     }
-    
     if (labelInfo.key === 'app.kubernetes.io/name') {
       return labelInfo.value.charAt(0).toUpperCase() + labelInfo.value.slice(1);
     }
-    
-    // For labels where the value contains a domain (API group)
     if (labelInfo.value.includes('.')) {
       return 'CustomResourceDefinition';
     }
-    
-    // Default to 'Resource' with proper capitalization
     return labelInfo.value.charAt(0).toUpperCase() + labelInfo.value.slice(1);
-  };
+  }, []);
 
   // Helper function to find workloads matching a label
   const findWorkloadsByLabel = useCallback(

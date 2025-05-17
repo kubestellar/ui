@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, KeyboardEvent as ReactKeyboardEvent, useCallback } from 'react';
+import React, { useState, useEffect, useRef, KeyboardEvent as ReactKeyboardEvent, useCallback, useMemo } from 'react';
 import { 
   Box, 
   Typography, 
@@ -130,7 +130,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
   const { state, startSSEConnection, extractWorkloads } = useWorkloadSSE();
 
   // Use SSE or prop workloads based on SSE connection status
-  const workloads = state.data ? extractWorkloads() || [] : propWorkloads || [];
+  const workloads = useMemo(() => state.data ? extractWorkloads() || [] : propWorkloads || [], [state.data, extractWorkloads, propWorkloads]);
   const loading = (state.status === 'loading' || state.status === 'idle') && propLoading;
   const error = state.error?.message || propError;
 
