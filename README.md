@@ -1,3 +1,17 @@
+<p align="center">
+  <img alt="KubeStellar Logo" width="250px" src="public/Kubestellar-logo.png" />
+</p>
+
+<h2 align="center">Multi-cluster Configuration Management for Edge, Multi-Cloud, and Hybrid Cloud</h2>
+
+<p align="center">
+  <strong>
+    <a href="https://kubestellar.io/">Read more about KubeStellar</a>
+  </strong>
+</p>
+
+> Check out the main [KubeStellar project](https://github.com/kubestellar/kubestellar)
+
 # KubestellarUI Setup Guide
 
 Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI application on your local machine after cloning the repository for development. The application consists of two main parts:
