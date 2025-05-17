@@ -1064,6 +1064,7 @@ func StreamPodLogs(c *gin.Context) {
 	namespace := c.Query("namespace")
 	podName := c.Query("pod")
 	previous := c.Query("previous")
+	containerName := c.Query("container")
 
 	if cluster == "" || namespace == "" || podName == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "missing query parameters: cluster, namespace, and pod are required"})
@@ -1130,6 +1131,11 @@ func StreamPodLogs(c *gin.Context) {
 				podLogOpts := &corev1.PodLogOptions{
 					Timestamps: true,
 					Previous:   previous == "true",
+				}
+
+				// Add container parameter if specified
+				if containerName != "" {
+					podLogOpts.Container = containerName
 				}
 
 				// Build and execute the log request.
