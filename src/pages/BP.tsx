@@ -27,6 +27,7 @@ import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 import { useLocation, useNavigate } from "react-router-dom";
 import { getTabsStyles, StyledTab } from "../components/BindingPolicy/styles/CreateBindingPolicyStyles";
 import { api } from "../lib/api";
+import BPSkeleton from "../components/ui/BPSkeleton";
 
 // Define EmptyState component outside of the BP component
 const EmptyState: React.FC<{ 
@@ -97,20 +98,6 @@ const EmptyState: React.FC<{
       >
         {buttonText}
       </Button>
-    </Box>
-  );
-};
-
-// Create a separate LoadingIndicator component outside of the BP component
-const LoadingIndicator: React.FC = () => {
-  const theme = useTheme(state => state.theme);
-  return (
-    <Box sx={{ 
-      textAlign: "center", 
-      color: theme === "dark" ? "#E5E7EB" : "text.secondary", 
-      py: 3 
-    }}>
-      Loading KubeStellar Binding Policies...
     </Box>
   );
 };
@@ -662,11 +649,6 @@ const BP = () => {
     }
   }, [selectedPolicies, setSuccessMessage, setSelectedPolicies, setBindingPolicies, deleteMultiplePoliciesMutation]);
 
-  // Modify the conditional return for loading to use the component:
-  if (loading) {
-    return <LoadingIndicator />;
-  }
-
   return (
     <>
       <Paper
@@ -730,7 +712,9 @@ const BP = () => {
 
         {viewMode === 'table' ? (
           <>
-            {clusters.length === 0 && workloads.length === 0 ? (
+          {loading ? (
+            <BPSkeleton rows={5} />
+            ):clusters.length === 0 && workloads.length === 0 ? (
               <EmptyState onCreateClick={() => navigate('/its')} type="both" />
             ) : clusters.length === 0 ? (
               <EmptyState onCreateClick={() => navigate('/its')} type="clusters" />
