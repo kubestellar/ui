@@ -303,60 +303,63 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
   }, []);
 
   //  function to detect CRDs and other cluster-scoped resources
-  const isClusterScopedResource = useCallback((labelInfo: { key: string; value: string }): boolean => {
-    if (
-      labelInfo.value.includes('.') &&
-      (labelInfo.value.endsWith('.io') ||
-        labelInfo.value.includes('.k8s.io') ||
-        labelInfo.value.includes('.internal'))
-    ) {
-      console.log(
-        `Detected potential cluster-scoped resource by API group pattern: ${labelInfo.value}`
-      );
-      return true;
-    }
+  const isClusterScopedResource = useCallback(
+    (labelInfo: { key: string; value: string }): boolean => {
+      if (
+        labelInfo.value.includes('.') &&
+        (labelInfo.value.endsWith('.io') ||
+          labelInfo.value.includes('.k8s.io') ||
+          labelInfo.value.includes('.internal'))
+      ) {
+        console.log(
+          `Detected potential cluster-scoped resource by API group pattern: ${labelInfo.value}`
+        );
+        return true;
+      }
 
-    // Check if part-of label indicates a cluster-level component
-    if (labelInfo.key === 'app.kubernetes.io/part-of') {
-      console.log(`Detected resource with part-of label: ${labelInfo.value}`);
-      return true;
-    }
+      // Check if part-of label indicates a cluster-level component
+      if (labelInfo.key === 'app.kubernetes.io/part-of') {
+        console.log(`Detected resource with part-of label: ${labelInfo.value}`);
+        return true;
+      }
 
-    // Known cluster-scoped Kubernetes resources
-    const knownClusterScopedResources = [
-      // Core cluster-scoped resources
-      'customresourcedefinitions',
-      'clusterroles',
-      'clusterrolebindings',
-      'validatingwebhookconfigurations',
-      'mutatingwebhookconfigurations',
-      'priorityclasses',
-      'storageclasses',
-      'csidrivers',
-      'csinodes',
-      'volumeattachments',
+      // Known cluster-scoped Kubernetes resources
+      const knownClusterScopedResources = [
+        // Core cluster-scoped resources
+        'customresourcedefinitions',
+        'clusterroles',
+        'clusterrolebindings',
+        'validatingwebhookconfigurations',
+        'mutatingwebhookconfigurations',
+        'priorityclasses',
+        'storageclasses',
+        'csidrivers',
+        'csinodes',
+        'volumeattachments',
 
-      // Common API group patterns for cluster resources
-      '.apiextensions.k8s.io',
-      '.rbac.authorization.k8s.io',
-      '.admissionregistration.k8s.io',
-      '.storage.k8s.io',
-      '.networking.k8s.io',
-      '.apiserver.k8s.io',
-      '.certificates.k8s.io',
-      '.coordination.k8s.io',
-      '.node.k8s.io',
-    ];
+        // Common API group patterns for cluster resources
+        '.apiextensions.k8s.io',
+        '.rbac.authorization.k8s.io',
+        '.admissionregistration.k8s.io',
+        '.storage.k8s.io',
+        '.networking.k8s.io',
+        '.apiserver.k8s.io',
+        '.certificates.k8s.io',
+        '.coordination.k8s.io',
+        '.node.k8s.io',
+      ];
 
-    if (
-      knownClusterScopedResources.some(r => labelInfo.value === r || labelInfo.value.includes(r))
-    ) {
-      console.log(`Detected known cluster-scoped resource: ${labelInfo.value}`);
-      return true;
-    }
+      if (
+        knownClusterScopedResources.some(r => labelInfo.value === r || labelInfo.value.includes(r))
+      ) {
+        console.log(`Detected known cluster-scoped resource: ${labelInfo.value}`);
+        return true;
+      }
 
-    return false;
-  }, []);
+      return false;
+    },
+    []
+  );
 
   const determineResourceKind = useCallback((labelInfo: { key: string; value: string }): string => {
     if (labelInfo.key === 'app.kubernetes.io/part-of') {

@@ -916,7 +916,6 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                 const resourceGroups: Record<string, ResourceItem[]> = {};
 
                 Object.entries(resourcesMap).forEach(([key, items]) => {
-                   
                   console.log(key);
                   items.forEach((item: ResourceItem) => {
                     const kindLower = item.kind.toLowerCase();
@@ -2431,7 +2430,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
             ) : (
               <TreeViewSkeleton />
             )
-          ) : viewMode === 'tiles' && ( nodes.length > 0 || edges.length > 0) ? (
+          ) : viewMode === 'tiles' && (nodes.length > 0 || edges.length > 0) ? (
             <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
               <ReactFlowProvider>
                 <FlowCanvas

@@ -138,7 +138,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
 
   // Use the SSE API to get workload data
   const { useWorkloadSSE } = useBPQueries();
-  const { state, startSSEConnection} = useWorkloadSSE();
+  const { state, startSSEConnection } = useWorkloadSSE();
 
   // Replace conditional workloads initialization with useMemo
   const workloads = React.useMemo(() => {

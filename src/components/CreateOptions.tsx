@@ -151,14 +151,17 @@ spec:
   };
   const [helmFormData, setHelmFormData] = useState<HelmFormData>(initialHelmFormData);
 
-  const initialArtifactHubFormData = useMemo(() => ({
-    packageId: '',
-    version: '',
-    namespace: 'default',
-    releaseName: '',
-    values: {},
-    workloadLabel: '',
-  }), []);
+  const initialArtifactHubFormData = useMemo(
+    () => ({
+      packageId: '',
+      version: '',
+      namespace: 'default',
+      releaseName: '',
+      values: {},
+      workloadLabel: '',
+    }),
+    []
+  );
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [artifactHubFormData, _] = useState<ArtifactHubFormData>(initialArtifactHubFormData);
 
