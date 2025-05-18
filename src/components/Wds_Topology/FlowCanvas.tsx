@@ -10,14 +10,20 @@ interface FlowCanvasProps {
   theme: string; // Add theme prop
 }
 
+/**
+ * Renders a flow diagram canvas with custom nodes and edges in a ReactFlow container.
+ * Provides zooming, panning, and auto-centering functionality for the Kubernetes resource visualization.
+ * Handles viewport positioning and maintains view state between renders.
+ */
 export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
-  // renderStartTime betwwen the nodes and edges 
   const { setViewport, getViewport } = useReactFlow();
-  // Access the highlighted labels from the store for component rerendering
   const highlightedLabels = useLabelHighlightStore((state) => state.highlightedLabels);
-  // Add ref to store the viewport position
   const viewportRef = useRef({ x: 0, y: 0, zoom: 1.6 });
 
+  /**
+   * Calculates the boundaries of all nodes in the flow to determine positioning and scaling.
+   * Returns the minimum and maximum x/y coordinates considering both node positions and dimensions.
+   */
   const positions = useMemo(() => {
     if (nodes.length === 0) return { minX: 0, maxX: 0, minY: 0, maxY: 0 };
     const minX = Math.min(...nodes.map((node) => node.position.x));
@@ -37,7 +43,10 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
     return { minX, maxX, minY, maxY };
   }, [nodes]);
 
-  // This effect runs only once when the component mounts with nodes
+  /**
+   * Initializes the viewport based on node positions or restores a previously saved viewport.
+   * Adjusts the container height based on the content and sets proper zoom level for optimal viewing.
+   */
   useEffect(() => {
     if (nodes.length > 0) {
       const { minX, minY, maxY } = positions;
@@ -57,24 +66,30 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
         reactFlowContainer.style.minHeight = `${Math.max(treeHeight * initialZoom + padding * 2 + topMargin, viewportHeight)}px`;
       }
       
-      // Only set initial viewport if we don't have a stored one
       if (viewportRef.current.zoom === 1.6 && viewportRef.current.x === 0 && viewportRef.current.y === 0) {
         const initialViewport = { x: centerX, y: centerY, zoom: initialZoom };
         setViewport(initialViewport);
         viewportRef.current = initialViewport;
       } else {
-        // Restore saved viewport position
         setViewport(viewportRef.current);
       }
     }
   }, [nodes, edges, setViewport, positions]);
 
-  // Save viewport position on any viewport change
+  /**
+   * Saves the current viewport position and zoom level when user stops panning or zooming.
+   * This persists the view state between component re-renders.
+   */
   const onMoveEnd = useCallback(() => {
     const currentViewport = getViewport();
     viewportRef.current = currentViewport;
   }, [getViewport]);
 
+  /**
+   * Custom wheel event handler that provides enhanced control over panning and zooming.
+   * Enables horizontal scrolling with Shift key, zooming with Ctrl key, and vertical scrolling by default.
+   * Clamps scrolling within appropriate boundaries based on tree dimensions.
+   */
   const handleWheel = useCallback(
     (event: React.WheelEvent) => {
       const reactFlowContainer = document.querySelector(".react-flow");
@@ -110,9 +125,12 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
     [getViewport, setViewport, positions]
   );
 
-  // Ensure we re-render when highlighted labels change, but we don't reset the viewport
+  /**
+   * Updates visualization when label highlighting state changes.
+   * Allows nodes with highlighted labels to be visually distinct without resetting the viewport.
+   */
   useEffect(() => {
-    console.log('FlowCanvas reacting to highlightedLabels change:', highlightedLabels);
+    
   }, [highlightedLabels]);
 
   return (
@@ -137,7 +155,7 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
         variant={BackgroundVariant.Dots} 
         gap={12} 
         size={1} 
-        color={theme === "dark" ? "#555" : "#bbb"} // Dark mode background dots
+        color={theme === "dark" ? "#555" : "#bbb"} 
       />
     </ReactFlow>
   );

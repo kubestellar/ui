@@ -306,8 +306,8 @@ const iconMap: Record<string, string> = {
   Volume: vol,
 };
 
-const getNodeConfig = (type: string, label: string) => {
-  console.log(label);
+const getNodeConfig = (type: string) => {
+  // console.log(label);
   const normalizedType = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
   let icon = iconMap[normalizedType] || cm;
   let dynamicText = type.toLowerCase();
@@ -530,7 +530,7 @@ interface ContextMenuState {
   nodeType: string | null;
 }
 
-
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const TreeViewComponent = (_props: TreeViewComponentProps) => {
   const theme = useTheme((state) => state.theme);
   const highlightedLabels = useLabelHighlightStore((state) => state.highlightedLabels);
@@ -565,7 +565,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
   const [viewMode, setViewMode] = useState<'tiles' | 'list'>('tiles');
   const [filteredContext, setFilteredContext] = useState<string>("all");
    
-  const [resources, setResources] = useState<ResourceItem[]>([]);
+  // const [resources, setResources] = useState<ResourceItem[]>([]);
   const [contextResourceCounts, setContextResourceCounts] = useState<Record<string, number>>({});
   const [totalResourceCount, setTotalResourceCount] = useState<number>(0);
   const location = useLocation();
@@ -584,37 +584,30 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
 
   // Use a ref to track if this is the initial render
   const isInitialRender = useRef(true);
-  console.log(resources);
-  console.log(_props);
+  // console.log(resources);
+  // console.log(_props);
   
   // Component mount effect - only run once using a ref flag
   useEffect(() => {
     if (isInitialRender.current) {
       renderStartTime.current = performance.now();
-      console.log(`[TreeView] Component mounted at 0ms`);
-      console.log(`[TreeView] Initial state - isConnected: ${isConnected}, dataReceived: ${dataReceived}, isTransforming: ${isTransforming}, minimumLoadingTimeElapsed: ${minimumLoadingTimeElapsed}, nodes: ${nodes.length}, edges: ${edges.length}`);
       isInitialRender.current = false;
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array with lint disable - this should only run once on mount
+  }, []); // Empty dependency array - this should only run once on mount
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setMinimumLoadingTimeElapsed(true);
-      console.log(`[TreeView] Minimum loading time elapsed at ${performance.now() - renderStartTime.current}ms`);
     }, 1000);
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    console.log(`[TreeView] Initiating WebSocket connection at ${performance.now() - renderStartTime.current}ms`);
     connect(true);
   }, [connect]);
 
   useEffect(() => {
     if (websocketData !== undefined && !dataReceived) {
-      console.log(`[TreeView] Setting dataReceived to true at ${performance.now() - renderStartTime.current}ms`);
-      console.log(`[TreeView] websocketData length: ${websocketData?.length || 0}`);
       setDataReceived(true);
     }
   }, [websocketData, dataReceived]);
@@ -673,7 +666,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
       newEdges: CustomEdge[],
       groupItems?: ResourceItem[]
     ) => {
-      const config = getNodeConfig(type.toLowerCase(), label);
+      const config = getNodeConfig(type.toLowerCase());
       const timeAgo = getTimeAgo(timestamp);
       const cachedNode = nodeCache.current.get(id);
 
@@ -874,7 +867,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
               if (isCollapsed) {
                 const resourceGroups: Record<string, ResourceItem[]> = {};
 
-                Object.entries(resourcesMap).forEach(([key, items]) => {
+                Object.entries(resourcesMap).forEach(([key, items]) => { // eslint-disable-line @typescript-eslint/no-unused-vars
                   console.log(key);
                   items.forEach((item: ResourceItem) => {
                     const kindLower = item.kind.toLowerCase();
@@ -928,7 +921,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           spec: {
                             configMap: {
                               name: item.metadata.name,
-                              items: item.data ? Object.keys(item.data).map(key => ({ key, path: key })) : []
+                              items: item.data ? Object.keys(item.data).map(keyName => ({ key: keyName, path: keyName })) : []
                             }
                           }
                         }, resourceId, newNodes, newEdges);
@@ -1227,7 +1220,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           spec: {
                             secret: {
                               secretName: item.metadata.name,
-                              items: item.data ? Object.keys(item.data).map(key => ({ key, path: key })) : []
+                              items: item.data ? Object.keys(item.data).map(keyName => ({ key: keyName, path: keyName })) : []
                             }
                           }
                         }, resourceId, newNodes, newEdges);
@@ -1298,10 +1291,10 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
         setContextResourceCounts(tempContextCounts);
         setTotalResourceCount(tempTotalCount);
         
-        console.log("[TreeViewComponent] Tree resources calculated:", {
-          byContext: tempContextCounts,
-          total: tempTotalCount
-        });
+        // console.log("[TreeViewComponent] Tree resources calculated:", {
+        //   byContext: tempContextCounts,
+        //   total: tempTotalCount
+        // });
       } catch (error) {
         console.error("Error transforming data to tree:", error);
       } finally {
@@ -1313,25 +1306,22 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
 
   useEffect(() => {
     if (websocketData !== undefined) {
-      console.log(
-        `[TreeView] websocketData received with ${websocketData.length} namespaces at ${performance.now() - renderStartTime.current}ms`
-      );
       setIsTransforming(true);
       transformDataToTree(websocketData);
     }
   }, [websocketData, transformDataToTree]);
 
-  useEffect(() => {
-    console.log(`[TreeView] State update at ${performance.now() - renderStartTime.current}ms`);
-    console.log(`[TreeView] isConnected: ${isConnected}, hasValidData: ${hasValidData}, isTransforming: ${isTransforming}, minimumLoadingTimeElapsed: ${minimumLoadingTimeElapsed}, nodes: ${nodes.length}, edges: ${edges.length}`);
-    if (nodes.length > 0 || edges.length > 0) {
-      console.log(
-        `[TreeView] Rendered successfully with ${nodes.length} nodes and ${edges.length} edges`
-      );
-    } else {
-      console.log(`[TreeView] Nodes and edges are empty`);
-    }
-  }, [nodes, edges, isConnected, hasValidData, isTransforming, minimumLoadingTimeElapsed, dataReceived]);
+  // useEffect(() => {
+  //   console.log(`[TreeView] State update at ${performance.now() - renderStartTime.current}ms`);
+  //   console.log(`[TreeView] isConnected: ${isConnected}, hasValidData: ${hasValidData}, isTransforming: ${isTransforming}, minimumLoadingTimeElapsed: ${minimumLoadingTimeElapsed}, nodes: ${nodes.length}, edges: ${edges.length}`);
+  //   if (nodes.length > 0 || edges.length > 0) {
+  //     console.log(
+  //       `[TreeView] Rendered successfully with ${nodes.length} nodes and ${edges.length} edges`
+  //     );
+  //   } else {
+  //     console.log(`[TreeView] Nodes and edges are empty`);
+  //   }
+  // }, [nodes, edges, isConnected, hasValidData, isTransforming, minimumLoadingTimeElapsed, dataReceived]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1425,7 +1415,6 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
         setSnackbarMessage(`"${nodeName}" and its children deleted successfully`);
         setSnackbarSeverity("success");
         setSnackbarOpen(true);
-        console.log(`[TreeView] Node "${nodeName}" and its ${descendantNodeIds.length} descendants deleted successfully at ${performance.now() - renderStartTime.current}ms`);
       } catch (error) {
         console.error(`[TreeView] Failed to delete node ${nodeId} at ${performance.now() - renderStartTime.current}ms:`, error);
         setSnackbarMessage(`Failed to delete "${nodeName}"`);
@@ -1460,7 +1449,6 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
             nodeType = "context";
             namespace = nodeIdParts[0];
           } else {
-            console.error(`[TreeView] Invalid node ID format: ${node.id}`);
             return;
           }
           const resourceData = node.data.label.props.resourceData;
@@ -1573,23 +1561,23 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
 
   const isLoading = !isConnected || !hasValidData || isTransforming || !minimumLoadingTimeElapsed;
 
-  useEffect(() => {
-    // Only log to console when specific values change to reduce unnecessary renders
-    const logState = () => {
-      console.log(`[TreeView] Rendering decision at ${performance.now() - renderStartTime.current}ms`);
-      console.log(`[TreeView] isLoading: ${isLoading}, nodes: ${nodes.length}, edges: ${edges.length}`);
-      if (isLoading) {
-        console.log(`[TreeView] Showing loading spinner because isLoading is true`);
-      } else if (nodes.length > 0 || edges.length > 0) {
-        console.log(`[TreeView] Showing React Flow canvas with ${nodes.length} nodes and ${edges.length} edges`);
-      } else {
-        console.log(`[TreeView] Showing "No Workloads Found" because nodes and edges are empty`);
-      }
-    };
+  // useEffect(() => {
+  //   // Only log to console when specific values change to reduce unnecessary renders
+  //   const logState = () => {
+  //     console.log(`[TreeView] Rendering decision at ${performance.now() - renderStartTime.current}ms`);
+  //     console.log(`[TreeView] isLoading: ${isLoading}, nodes: ${nodes.length}, edges: ${edges.length}`);
+  //     if (isLoading) {
+  //       console.log(`[TreeView] Showing loading spinner because isLoading is true`);
+  //     } else if (nodes.length > 0 || edges.length > 0) {
+  //       console.log(`[TreeView] Showing React Flow canvas with ${nodes.length} nodes and ${edges.length} edges`);
+  //     } else {
+  //       console.log(`[TreeView] Showing "No Workloads Found" because nodes and edges are empty`);
+  //     }
+  //   };
 
-    // Only call logState for actual rendering changes
-    logState();
-  }, [isLoading, nodes, edges, dataReceived, isConnected, isTransforming, minimumLoadingTimeElapsed]);
+  //   // Only call logState for actual rendering changes
+  //   logState();
+  // }, [isLoading, nodes, edges, dataReceived, isConnected, isTransforming, minimumLoadingTimeElapsed]);
 
   // Update resource handling for initial data load - this runs for both view modes
   useEffect(() => {
@@ -1624,10 +1612,10 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
             setContextResourceCounts(initialContextCounts);
             setTotalResourceCount(initialTotalCount);
             
-            console.log("[TreeViewComponent] Initial resources calculated:", {
-              byContext: initialContextCounts,
-              total: initialTotalCount
-            });
+            // console.log("[TreeViewComponent] Initial resources calculated:", {
+            //   byContext: initialContextCounts,
+            //   total: initialTotalCount
+            // });
           }
         } catch (error) {
           console.error("Error calculating initial resource counts:", error);
@@ -1640,15 +1628,15 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
   const handleResourceDataChange = useCallback((data: ResourceDataChangeEvent) => {
     // Only update counts if we're in list view to avoid overriding tree view counts
     if (viewMode === 'list') {
-      setResources(data.resources as unknown as ResourceItem[]);
+      // setResources(data.resources as unknown as ResourceItem[]);
       setContextResourceCounts(data.contextCounts);
       setTotalResourceCount(data.totalCount);
       
-      console.log("[TreeViewComponent] List view resource data received:", {
-        totalResources: data.totalCount,
-        filteredCount: data.filteredResources.length,
-        contextCounts: data.contextCounts
-      });
+      // console.log("[TreeViewComponent] List view resource data received:", {
+      //   totalResources: data.totalCount,
+      //   filteredCount: data.filteredResources.length,
+      //   contextCounts: data.contextCounts
+      // });
     }
   }, [viewMode]);
 
@@ -1684,10 +1672,10 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
         setContextResourceCounts(treeViewContextCounts);
         setTotalResourceCount(treeViewTotalCount);
         
-        console.log("[TreeViewComponent] Tree view activated, recalculated resource counts:", {
-          byContext: treeViewContextCounts,
-          total: treeViewTotalCount
-        });
+        // console.log("[TreeViewComponent] Tree view activated, recalculated resource counts:", {
+        //   byContext: treeViewContextCounts,
+        //   total: treeViewTotalCount
+        // });
       } catch (error) {
         console.error("Error calculating tree view resource counts:", error);
       }
@@ -1697,7 +1685,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
   // Add a specific effect to handle theme changes
   useEffect(() => {
     if (nodes.length > 0) {
-      console.log("[TreeView] Theme changed, updating node styles");
+      // console.log("[TreeView] Theme changed, updating node styles");
       
       // Update node styles when theme changes without recreating the nodes
       setNodes(currentNodes => {
@@ -1740,7 +1728,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
   // Force a re-render when highlighted labels change
   useEffect(() => {
     if (dataReceived && websocketData) {
-      console.log("[TreeView] Highlighted labels changed, updating node styles");
+      // console.log("[TreeView] Highlighted labels changed, updating node styles");
       
       // Update node styles directly based on highlighted labels without recreating the nodes
       setNodes(currentNodes => {

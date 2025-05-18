@@ -265,7 +265,7 @@ const getLayoutedElements = (
 ) => {
   const NODE_WIDTH = 146;
   const NODE_HEIGHT = 30;
-  const NODE_SEP = 20; 
+  const NODE_SEP = 22; 
   const RANK_SEP = 60; 
   const CHILD_SPACING = NODE_HEIGHT + 30; 
 
@@ -556,7 +556,6 @@ const WecsTreeview = () => {
   // Add effect to update node styles when theme changes
   useEffect(() => {
     if (nodes.length > 0) {
-      console.log("[WecsTopology] Theme changed, updating node styles");
       
       // Create a new array with updated node styles for the current theme
       setNodes(currentNodes => {
