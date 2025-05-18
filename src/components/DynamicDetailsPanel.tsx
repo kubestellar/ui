@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -17,18 +17,18 @@ import {
   Snackbar,
   styled,
   Chip,
-} from "@mui/material";
-import { FiX, FiGitPullRequest, FiTrash2 } from "react-icons/fi";
-import Editor from "@monaco-editor/react";
-import jsyaml from "js-yaml";
-import { Terminal } from "xterm";
-import { FitAddon } from "xterm-addon-fit";
-import "xterm/css/xterm.css";
-import { ResourceItem } from "./TreeViewComponent"; // Adjust the import path to your TreeView file
-import useTheme from "../stores/themeStore"; // Import the useTheme hook
+} from '@mui/material';
+import { FiX, FiGitPullRequest, FiTrash2 } from 'react-icons/fi';
+import Editor from '@monaco-editor/react';
+import jsyaml from 'js-yaml';
+import { Terminal } from 'xterm';
+import { FitAddon } from 'xterm-addon-fit';
+import 'xterm/css/xterm.css';
+import { ResourceItem } from './TreeViewComponent'; // Adjust the import path to your TreeView file
+import useTheme from '../stores/themeStore'; // Import the useTheme hook
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import { api } from "../lib/api";
-import { useResourceLogsWebSocket } from "../hooks/useWebSocket";
+import { api } from '../lib/api';
+import { useResourceLogsWebSocket } from '../hooks/useWebSocket';
 
 interface DynamicDetailsProps {
   namespace: string;
@@ -54,89 +54,89 @@ interface ResourceInfo {
 
 // Mapping of kind to the correct plural form for API endpoints
 const kindToPluralMap: Record<string, string> = {
-  Binding: "bindings",
-  ComponentStatus: "componentstatuses",
-  ConfigMap: "configmaps",
-  Endpoints: "endpoints",
-  Event: "events",
-  LimitRange: "limitranges",
-  Namespace: "namespaces",
-  Node: "nodes",
-  PersistentVolumeClaim: "persistentvolumeclaims",
-  PersistentVolume: "persistentvolumes",
-  Pod: "pods",
-  PodTemplate: "podtemplates",
-  ReplicationController: "replicationcontrollers",
-  ResourceQuota: "resourcequotas",
-  Secret: "secrets",
-  ServiceAccount: "serviceaccounts",
-  Service: "services",
-  MutatingWebhookConfiguration: "mutatingwebhookconfigurations",
-  ValidatingWebhookConfiguration: "validatingwebhookconfigurations",
-  CustomResourceDefinition: "customresourcedefinitions",
-  APIService: "apiservices",
-  ControllerRevision: "controllerrevisions",
-  DaemonSet: "daemonsets",
-  Deployment: "deployments",
-  ReplicaSet: "replicasets",
-  StatefulSet: "statefulsets",
-  Application: "applications",
-  ApplicationSet: "applicationsets",
-  AppProject: "appprojects",
-  SelfSubjectReview: "selfsubjectreviews",
-  TokenReview: "tokenreviews",
-  LocalSubjectAccessReview: "localsubjectaccessreviews",
-  SelfSubjectAccessReview: "selfsubjectaccessreviews",
-  SelfSubjectRulesReview: "selfsubjectrulesreviews",
-  SubjectAccessReview: "subjectaccessreviews",
-  HorizontalPodAutoscaler: "horizontalpodautoscalers",
-  CronJob: "cronjobs",
-  Job: "jobs",
-  CertificateSigningRequest: "certificatesigningrequests",
-  BindingPolicy: "bindingpolicies",
-  CombinedStatus: "combinedstatuses",
-  CustomTransform: "customtransforms",
-  StatusCollector: "statuscollectors",
-  Lease: "leases",
-  EndpointSlice: "endpointslices",
-  FlowSchema: "flowschemas",
-  PriorityLevelConfiguration: "prioritylevelconfigurations",
-  IngressClass: "ingressclasses",
-  Ingress: "ingresses",
-  NetworkPolicy: "networkpolicies",
-  RuntimeClass: "runtimeclasses",
-  PodDisruptionBudget: "poddisruptionbudgets",
-  ClusterRoleBinding: "clusterrolebindings",
-  ClusterRole: "clusterroles",
-  RoleBinding: "rolebindings",
-  Role: "roles",
-  PriorityClass: "priorityclasses",
-  CSIDriver: "csidrivers",
-  CSINode: "csinodes",
-  CSIStorageCapacity: "csistoragecapacities",
-  StorageClass: "storageclasses",
-  VolumeAttachment: "volumeattachments",
+  Binding: 'bindings',
+  ComponentStatus: 'componentstatuses',
+  ConfigMap: 'configmaps',
+  Endpoints: 'endpoints',
+  Event: 'events',
+  LimitRange: 'limitranges',
+  Namespace: 'namespaces',
+  Node: 'nodes',
+  PersistentVolumeClaim: 'persistentvolumeclaims',
+  PersistentVolume: 'persistentvolumes',
+  Pod: 'pods',
+  PodTemplate: 'podtemplates',
+  ReplicationController: 'replicationcontrollers',
+  ResourceQuota: 'resourcequotas',
+  Secret: 'secrets',
+  ServiceAccount: 'serviceaccounts',
+  Service: 'services',
+  MutatingWebhookConfiguration: 'mutatingwebhookconfigurations',
+  ValidatingWebhookConfiguration: 'validatingwebhookconfigurations',
+  CustomResourceDefinition: 'customresourcedefinitions',
+  APIService: 'apiservices',
+  ControllerRevision: 'controllerrevisions',
+  DaemonSet: 'daemonsets',
+  Deployment: 'deployments',
+  ReplicaSet: 'replicasets',
+  StatefulSet: 'statefulsets',
+  Application: 'applications',
+  ApplicationSet: 'applicationsets',
+  AppProject: 'appprojects',
+  SelfSubjectReview: 'selfsubjectreviews',
+  TokenReview: 'tokenreviews',
+  LocalSubjectAccessReview: 'localsubjectaccessreviews',
+  SelfSubjectAccessReview: 'selfsubjectaccessreviews',
+  SelfSubjectRulesReview: 'selfsubjectrulesreviews',
+  SubjectAccessReview: 'subjectaccessreviews',
+  HorizontalPodAutoscaler: 'horizontalpodautoscalers',
+  CronJob: 'cronjobs',
+  Job: 'jobs',
+  CertificateSigningRequest: 'certificatesigningrequests',
+  BindingPolicy: 'bindingpolicies',
+  CombinedStatus: 'combinedstatuses',
+  CustomTransform: 'customtransforms',
+  StatusCollector: 'statuscollectors',
+  Lease: 'leases',
+  EndpointSlice: 'endpointslices',
+  FlowSchema: 'flowschemas',
+  PriorityLevelConfiguration: 'prioritylevelconfigurations',
+  IngressClass: 'ingressclasses',
+  Ingress: 'ingresses',
+  NetworkPolicy: 'networkpolicies',
+  RuntimeClass: 'runtimeclasses',
+  PodDisruptionBudget: 'poddisruptionbudgets',
+  ClusterRoleBinding: 'clusterrolebindings',
+  ClusterRole: 'clusterroles',
+  RoleBinding: 'rolebindings',
+  Role: 'roles',
+  PriorityClass: 'priorityclasses',
+  CSIDriver: 'csidrivers',
+  CSINode: 'csinodes',
+  CSIStorageCapacity: 'csistoragecapacities',
+  StorageClass: 'storageclasses',
+  VolumeAttachment: 'volumeattachments',
 };
 
 // StyledTab to match CreateOptions, defined directly in this file
 const StyledTab = styled(Tab)(({ theme }) => {
-  const appTheme = useTheme((state) => state.theme);
+  const appTheme = useTheme(state => state.theme);
   return {
-    textTransform: "none",
+    textTransform: 'none',
     fontWeight: 500,
-    fontSize: "0.8rem",
-    color: appTheme === "dark" ? "#d4d4d4" : theme.palette.grey[600],
-    padding: "10px 17px",
-    minHeight: "40px",
-    marginLeft: "16px",
-    marginTop: "4px",
-    borderRadius: "12px 12px 12px 12px",
-    border: "1px solid transparent",
-    transition: "background-color 0.2s ease, border-color 0.2s ease",
-    "&.Mui-selected": {
-      color: "#1976d2",
+    fontSize: '0.8rem',
+    color: appTheme === 'dark' ? '#d4d4d4' : theme.palette.grey[600],
+    padding: '10px 17px',
+    minHeight: '40px',
+    marginLeft: '16px',
+    marginTop: '4px',
+    borderRadius: '12px 12px 12px 12px',
+    border: '1px solid transparent',
+    transition: 'background-color 0.2s ease, border-color 0.2s ease',
+    '&.Mui-selected': {
+      color: '#1976d2',
       fontWeight: 600,
-      border: "1px solid rgba(25, 118, 210, 0.7)",
+      border: '1px solid rgba(25, 118, 210, 0.7)',
       boxShadow: `
         -2px 0 6px rgba(47, 134, 255, 0.2),
         2px 0 6px rgba(47, 134, 255, 0.2),
@@ -144,11 +144,11 @@ const StyledTab = styled(Tab)(({ theme }) => {
         0 2px 6px rgba(47, 134, 255, 0.2)
       `,
       zIndex: 1,
-      position: "relative",
+      position: 'relative',
     },
-    "&:hover": {
-      backgroundColor: appTheme === "dark" ? "#333" : "#f4f4f4",
-      border: appTheme === "dark" ? "1px solid #444" : "1px solid rgba(0, 0, 0, 0.1)",
+    '&:hover': {
+      backgroundColor: appTheme === 'dark' ? '#333' : '#f4f4f4',
+      border: appTheme === 'dark' ? '1px solid #444' : '1px solid rgba(0, 0, 0, 0.1)',
     },
   };
 });
@@ -164,18 +164,18 @@ const DynamicDetailsPanel = ({
   onDelete,
   initialTab,
 }: DynamicDetailsProps) => {
-  const theme = useTheme((state) => state.theme); // Use the theme from the store
-  const isDarkTheme = theme === "dark";
+  const theme = useTheme(state => state.theme); // Use the theme from the store
+  const isDarkTheme = theme === 'dark';
   const [resource, setResource] = useState<ResourceInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tabValue, setTabValue] = useState(initialTab ?? 0); // Initialize with initialTab, default to 0
   const [isClosing, setIsClosing] = useState(false);
-  const [editFormat, setEditFormat] = useState<"yaml" | "json">("yaml");
-  const [editedManifest, setEditedManifest] = useState<string>("");
+  const [editFormat, setEditFormat] = useState<'yaml' | 'json'>('yaml');
+  const [editedManifest, setEditedManifest] = useState<string>('');
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
-  const [snackbarMessage, setSnackbarMessage] = useState<string>("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
+  const [snackbarMessage, setSnackbarMessage] = useState<string>('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
   const panelRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminalInstance = useRef<Terminal | null>(null);
@@ -187,31 +187,38 @@ const DynamicDetailsPanel = ({
   const isChildNode = useCallback(() => {
     // Check for specific child node types that shouldn't show logs
     const childNodeTypes = [
-      'volume', 'envvar', // ConfigMap/Secret children
-      'user', 'group', // RoleBinding/ClusterRoleBinding children
+      'volume',
+      'envvar', // ConfigMap/Secret children
+      'user',
+      'group', // RoleBinding/ClusterRoleBinding children
       'clusterrole', // RoleBinding/ClusterRoleBinding children
-      'customresource', 'controller', // CRD children
+      'customresource',
+      'controller', // CRD children
       'job', // CronJob children
-      'endpoints', 'endpointslice', // Service children
+      'endpoints',
+      'endpointslice', // Service children
       'namespace', // ResourceQuota/LimitRange children
       'replicaset', // HPA children
-      'persistentvolume', 'persistentvolumeclaim', // PV/PVC relationship nodes
+      'persistentvolume',
+      'persistentvolumeclaim', // PV/PVC relationship nodes
       // 'service', // Ingress children
       'ingresscontroller', // Ingress children
     ];
-    
+
     // Check if node type is in the list
-    return childNodeTypes.includes(type.toLowerCase()) || 
-           // Check if this is a child node by examining resourceData
-           Boolean(
-             resourceData?.parentConfigMap || 
-             resourceData?.parentSecret || 
-             resourceData?.parentClusterRole ||
-             resourceData?.parentClusterRoleBinding ||
-             resourceData?.parentRole ||
-             resourceData?.parentRoleBinding ||
-             resourceData?.parentService
-           );
+    return (
+      childNodeTypes.includes(type.toLowerCase()) ||
+      // Check if this is a child node by examining resourceData
+      Boolean(
+        resourceData?.parentConfigMap ||
+          resourceData?.parentSecret ||
+          resourceData?.parentClusterRole ||
+          resourceData?.parentClusterRoleBinding ||
+          resourceData?.parentRole ||
+          resourceData?.parentRoleBinding ||
+          resourceData?.parentService
+      )
+    );
   }, [type, resourceData]);
 
   // Update panel visibility with a slight delay when isOpen changes to create proper transition
@@ -238,7 +245,7 @@ const DynamicDetailsPanel = ({
       }
     }
   }, [isOpen, initialTab, isChildNode]);
-  
+
   useEffect(() => {
     if (!namespace || !name) {
       setResource(null);
@@ -253,24 +260,28 @@ const DynamicDetailsPanel = ({
         let manifestData: string;
 
         // If the resource is a Namespace, fetch the manifest from the API
-        if (kind === "Namespace") {
+        if (kind === 'Namespace') {
           const response = await api.get(`/api/namespaces/${name}`);
-          manifestData = response.data ? JSON.stringify(response.data, null, 2) : "No manifest available";
+          manifestData = response.data
+            ? JSON.stringify(response.data, null, 2)
+            : 'No manifest available';
         } else {
           // For all other resources, use the resourceData prop
-          manifestData = resourceData ? JSON.stringify(resourceData, null, 2) : "No manifest available";
+          manifestData = resourceData
+            ? JSON.stringify(resourceData, null, 2)
+            : 'No manifest available';
         }
 
         const resourceInfo: ResourceInfo = {
           name: resourceData?.metadata?.name ?? name,
           namespace: resourceData?.metadata?.namespace ?? namespace,
           kind: kind,
-          createdAt: resourceData?.metadata?.creationTimestamp ?? "N/A",
+          createdAt: resourceData?.metadata?.creationTimestamp ?? 'N/A',
           age: calculateAge(resourceData?.metadata?.creationTimestamp),
           status:
             resourceData?.status?.conditions?.[0]?.status ??
             resourceData?.status?.phase ??
-            "Unknown",
+            'Unknown',
           manifest: manifestData,
         };
 
@@ -296,26 +307,23 @@ const DynamicDetailsPanel = ({
   }, [namespace, name, type, resourceData]);
 
   const handleRawLogMessage = useCallback((event: MessageEvent) => {
-    setLogs((prev) => [...prev, event.data]);
+    setLogs(prev => [...prev, event.data]);
   }, []);
 
-  const { 
-    isConnected: isLogStreamConnected, 
-    isError: logStreamError,
-  } = useResourceLogsWebSocket(
+  const { isConnected: isLogStreamConnected, isError: logStreamError } = useResourceLogsWebSocket(
     wsParamsRef.current?.kind || '',
     wsParamsRef.current?.namespace || '',
     wsParamsRef.current?.name || '',
-    handleRawLogMessage,
+    handleRawLogMessage
   );
-  
+
   useEffect(() => {
     if (isLogStreamConnected && logs.length === 0) {
-      setLogs(["\x1b[32m✔ Connected to log stream...\x1b[0m"]);
+      setLogs(['\x1b[32m✔ Connected to log stream...\x1b[0m']);
     }
-    
+
     if (logStreamError) {
-      setLogs((prev) => [...prev, "\x1b[31m⚠ WebSocket error occurred.\x1b[0m"]);
+      setLogs(prev => [...prev, '\x1b[31m⚠ WebSocket error occurred.\x1b[0m']);
     }
   }, [isLogStreamConnected, logStreamError, logs.length]);
 
@@ -325,13 +333,13 @@ const DynamicDetailsPanel = ({
 
     const term = new Terminal({
       theme: {
-        background: theme === "dark" ? "#1E1E1E" : "#FFFFFF", // Dark or light background
-        foreground: theme === "dark" ? "#D4D4D4" : "#222222", // Light or dark text
-        cursor: "#00FF00", // Green cursor
+        background: theme === 'dark' ? '#1E1E1E' : '#FFFFFF', // Dark or light background
+        foreground: theme === 'dark' ? '#D4D4D4' : '#222222', // Light or dark text
+        cursor: '#00FF00', // Green cursor
       },
       cursorBlink: true,
       fontSize: 14,
-      fontFamily: "monospace",
+      fontFamily: 'monospace',
       scrollback: 1000,
       disableStdin: true,
     });
@@ -347,11 +355,11 @@ const DynamicDetailsPanel = ({
     terminalInstance.current = term;
 
     // If the resource is a Namespace, display the "No logs available" message
-    if (resource.kind === "Namespace") {
-      term.writeln("No logs available for Namespace");
+    if (resource.kind === 'Namespace') {
+      term.writeln('No logs available for Namespace');
     } else {
       // Write existing logs once
-      logs.forEach((log) => {
+      logs.forEach(log => {
         term.writeln(log);
       });
 
@@ -363,7 +371,7 @@ const DynamicDetailsPanel = ({
         if (logs.length > lastLogIndex + 1) {
           // Only write new logs that haven't been displayed yet
           const newLogs = logs.slice(lastLogIndex + 1);
-          newLogs.forEach((log) => term.writeln(log));
+          newLogs.forEach(log => term.writeln(log));
           lastLogIndex = logs.length - 1;
         }
       }, 100);
@@ -382,12 +390,12 @@ const DynamicDetailsPanel = ({
   }, [tabValue, resource, logs, theme]); // Add theme as dependency
 
   const calculateAge = (creationTimestamp: string | undefined): string => {
-    if (!creationTimestamp) return "N/A";
+    if (!creationTimestamp) return 'N/A';
     const createdDate = new Date(creationTimestamp);
     const currentDate = new Date();
     const diffMs = currentDate.getTime() - createdDate.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    return diffDays > 0 ? `${diffDays} days ago` : "Today";
+    return diffDays > 0 ? `${diffDays} days ago` : 'Today';
   };
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
@@ -423,11 +431,11 @@ const DynamicDetailsPanel = ({
     }, 400);
   };
 
-  const handleFormatChange = (format: "yaml" | "json") => {
-    if (editFormat === "yaml" && format === "json") {
+  const handleFormatChange = (format: 'yaml' | 'json') => {
+    if (editFormat === 'yaml' && format === 'json') {
       const jsonContent = yamlToJson(editedManifest);
       setEditedManifest(jsonContent);
-    } else if (editFormat === "json" && format === "yaml") {
+    } else if (editFormat === 'json' && format === 'yaml') {
       const yamlContent = jsonToYaml(editedManifest);
       setEditedManifest(yamlContent);
     }
@@ -451,7 +459,7 @@ const DynamicDetailsPanel = ({
     let fetchEndpoint: string;
 
     // Check if the resource is a Namespace
-    if (kind === "Namespace") {
+    if (kind === 'Namespace') {
       // Use the specific API for updating a Namespace
       updateEndpoint = `/api/namespaces/update/${resourceName}`;
       fetchEndpoint = `/api/namespaces/${resourceName}`;
@@ -465,7 +473,7 @@ const DynamicDetailsPanel = ({
     }
 
     try {
-      const manifestToUpdate = editFormat === "yaml" ? yamlToJson(editedManifest) : editedManifest;
+      const manifestToUpdate = editFormat === 'yaml' ? yamlToJson(editedManifest) : editedManifest;
       const editedData = JSON.parse(manifestToUpdate);
 
       // Update the resource using the appropriate endpoint
@@ -476,13 +484,13 @@ const DynamicDetailsPanel = ({
       const updatedResource = response.data;
 
       const newManifestString = JSON.stringify(updatedResource, null, 2);
-      setResource((prev) => (prev ? { ...prev, manifest: newManifestString } : prev));
+      setResource(prev => (prev ? { ...prev, manifest: newManifestString } : prev));
       setEditedManifest(newManifestString);
 
       // Only show the snackbar if it's not already open
       if (!snackbarOpen) {
         setSnackbarMessage(`${resourceName} updated successfully`);
-        setSnackbarSeverity("success");
+        setSnackbarSeverity('success');
         setSnackbarOpen(true);
       }
     } catch (error: unknown) {
@@ -490,7 +498,7 @@ const DynamicDetailsPanel = ({
       // Only show the snackbar if it's not already open
       if (!snackbarOpen) {
         setSnackbarMessage(`Failed to update ${resourceName}`);
-        setSnackbarSeverity("error");
+        setSnackbarSeverity('error');
         setSnackbarOpen(true);
       }
     }
@@ -506,31 +514,31 @@ const DynamicDetailsPanel = ({
     // Extract labels from resourceData.metadata.labels and format them
     const labels = resourceData?.metadata?.labels;
     const labelsArray = labels
-      ? Object.entries(labels)
-          .map(([key, value]) => `${key}: ${value}`)
-      : ["None"];
+      ? Object.entries(labels).map(([key, value]) => `${key}: ${value}`)
+      : ['None'];
 
     // Check if this is a context node type and set namespace to N/A
-    const namespaceValue = resource.kind === "context" ? "N/A" : resource.namespace;
-    
+    const namespaceValue = resource.kind === 'context' ? 'N/A' : resource.namespace;
+
     // Format creation time to avoid redundant N/A display
-    const creationTimeValue = resource.createdAt === "N/A" ? "N/A" : `${resource.createdAt} (${resource.age})`;
+    const creationTimeValue =
+      resource.createdAt === 'N/A' ? 'N/A' : `${resource.createdAt} (${resource.age})`;
 
     return (
       <Table sx={{ borderRadius: 1 }}>
         <TableBody>
           {[
-            { label: "KIND", value: resource.kind },
-            { label: "NAME", value: resource.name },
-            { label: "NAMESPACE", value: namespaceValue },
-            { label: "CREATED AT", value: creationTimeValue },
+            { label: 'KIND', value: resource.kind },
+            { label: 'NAME', value: resource.name },
+            { label: 'NAMESPACE', value: namespaceValue },
+            { label: 'CREATED AT', value: creationTimeValue },
           ].map((row, index) => (
             <TableRow key={index}>
               <TableCell
                 sx={{
-                  borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
-                  color: theme === "dark" ? "#D4D4D4" : "#333333",
-                  fontSize: "14px",
+                  borderBottom: theme === 'dark' ? '1px solid #444' : '1px solid #e0e0e0',
+                  color: theme === 'dark' ? '#D4D4D4' : '#333333',
+                  fontSize: '14px',
                   fontWeight: 500,
                 }}
               >
@@ -538,9 +546,9 @@ const DynamicDetailsPanel = ({
               </TableCell>
               <TableCell
                 sx={{
-                  borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
-                  color: theme === "dark" ? "#D4D4D4" : "#333333",
-                  fontSize: "14px",
+                  borderBottom: theme === 'dark' ? '1px solid #444' : '1px solid #e0e0e0',
+                  color: theme === 'dark' ? '#D4D4D4' : '#333333',
+                  fontSize: '14px',
                 }}
               >
                 {row.value}
@@ -550,9 +558,9 @@ const DynamicDetailsPanel = ({
           <TableRow>
             <TableCell
               sx={{
-                borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
-                color: theme === "dark" ? "#D4D4D4" : "#333333",
-                fontSize: "14px",
+                borderBottom: theme === 'dark' ? '1px solid #444' : '1px solid #e0e0e0',
+                color: theme === 'dark' ? '#D4D4D4' : '#333333',
+                fontSize: '14px',
                 fontWeight: 500,
               }}
             >
@@ -560,9 +568,9 @@ const DynamicDetailsPanel = ({
             </TableCell>
             <TableCell
               sx={{
-                borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
-                color: theme === "dark" ? "#D4D4D4" : "#333333",
-                fontSize: "14px",
+                borderBottom: theme === 'dark' ? '1px solid #444' : '1px solid #e0e0e0',
+                color: theme === 'dark' ? '#D4D4D4' : '#333333',
+                fontSize: '14px',
               }}
             >
               <Box sx={{ mt: 1 }}>
@@ -574,10 +582,8 @@ const DynamicDetailsPanel = ({
                     sx={{
                       mr: 1,
                       mb: 1,
-                      backgroundColor: isDarkTheme
-                        ? "#334155"
-                        : undefined,
-                      color: isDarkTheme ? "#fff" : undefined,
+                      backgroundColor: isDarkTheme ? '#334155' : undefined,
+                      color: isDarkTheme ? '#fff' : undefined,
                     }}
                   />
                 ))}
@@ -591,7 +597,7 @@ const DynamicDetailsPanel = ({
 
   // Additional useEffect to reset tab to SUMMARY when type is "context" or a child node
   useEffect(() => {
-    if ((type === "context" || isChildNode()) && tabValue === 2) {
+    if ((type === 'context' || isChildNode()) && tabValue === 2) {
       setTabValue(0);
     }
   }, [type, tabValue, isChildNode]);
@@ -599,22 +605,22 @@ const DynamicDetailsPanel = ({
   return (
     <Box
       sx={{
-        position: "fixed",
-        right: isPanelVisible ? 0 : "-80vw",
+        position: 'fixed',
+        right: isPanelVisible ? 0 : '-80vw',
         top: 0,
         bottom: 0,
-        width: "80vw",
-        bgcolor: theme === "dark" ? "#1F2937" : "#eff3f5", // Dark or light background
-        boxShadow: "-2px 0 10px rgba(0,0,0,0.2)",
-        transition: "right 0.4s ease-in-out",
+        width: '80vw',
+        bgcolor: theme === 'dark' ? '#1F2937' : '#eff3f5', // Dark or light background
+        boxShadow: '-2px 0 10px rgba(0,0,0,0.2)',
+        transition: 'right 0.4s ease-in-out',
         zIndex: 1001,
-        overflowY: "auto",
-        borderTopLeftRadius: "8px",
-        borderBottomLeftRadius: "8px",
+        overflowY: 'auto',
+        borderTopLeftRadius: '8px',
+        borderBottomLeftRadius: '8px',
       }}
     >
       {isClosing ? (
-        <Box sx={{ height: "100%", width: "100%" }} />
+        <Box sx={{ height: '100%', width: '100%' }} />
       ) : loading ? (
         <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
           <CircularProgress />
@@ -624,25 +630,19 @@ const DynamicDetailsPanel = ({
           <Alert severity="error">{error}</Alert>
         </Box>
       ) : resource && isOpen ? (
-        <Box ref={panelRef} sx={{ p: 4, height: "100%" }}>
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            mb={3}
-          >
+        <Box ref={panelRef} sx={{ p: 4, height: '100%' }}>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
             <Typography
-            variant="h4"
-            fontWeight="bold"
-            sx={{
-              color: theme === "dark" ? "#FFFFFF" : "#000000",
-              fontSize: "30px",
-              marginLeft: "4px"
-            }}
-          >
-            {type.toUpperCase()} :{" "}
-            <span style={{ color: "#2F86FF" }}>{name}</span>
-          </Typography>
+              variant="h4"
+              fontWeight="bold"
+              sx={{
+                color: theme === 'dark' ? '#FFFFFF' : '#000000',
+                fontSize: '30px',
+                marginLeft: '4px',
+              }}
+            >
+              {type.toUpperCase()} : <span style={{ color: '#2F86FF' }}>{name}</span>
+            </Typography>
             <Stack direction="row" spacing={1}>
               {onSync && (
                 <Tooltip title="Sync Resource">
@@ -651,8 +651,8 @@ const DynamicDetailsPanel = ({
                     startIcon={<FiGitPullRequest />}
                     onClick={onSync}
                     sx={{
-                      bgcolor: "#00b4d8",
-                      "&:hover": { bgcolor: "#009bbd" },
+                      bgcolor: '#00b4d8',
+                      '&:hover': { bgcolor: '#009bbd' },
                     }}
                   >
                     Sync
@@ -675,7 +675,7 @@ const DynamicDetailsPanel = ({
               <Tooltip title="Close">
                 <IconButton
                   onClick={handleClose}
-                  sx={{ color: theme === "dark" ? "#B0B0B0" : "#6d7f8b" }}
+                  sx={{ color: theme === 'dark' ? '#B0B0B0' : '#6d7f8b' }}
                 >
                   <FiX />
                 </IconButton>
@@ -688,33 +688,51 @@ const DynamicDetailsPanel = ({
             onChange={handleTabChange}
             sx={{
               mt: 2,
-              ".MuiTabs-indicator": {
-                display: "none",
+              '.MuiTabs-indicator': {
+                display: 'none',
               },
-              "& .MuiTab-root": {
-                color: theme === "dark" ? "#fff" : "#333",
+              '& .MuiTab-root': {
+                color: theme === 'dark' ? '#fff' : '#333',
               },
             }}
           >
-            <StyledTab label={<span><i className="fa fa-file-alt" style={{ marginRight: "8px" }}></i>SUMMARY</span>} />
-            {type !== "context" && (
-              <StyledTab label={<span><i className="fa fa-edit" style={{ marginRight: "8px" }}></i>EDIT</span>} />
+            <StyledTab
+              label={
+                <span>
+                  <i className="fa fa-file-alt" style={{ marginRight: '8px' }}></i>SUMMARY
+                </span>
+              }
+            />
+            {type !== 'context' && (
+              <StyledTab
+                label={
+                  <span>
+                    <i className="fa fa-edit" style={{ marginRight: '8px' }}></i>EDIT
+                  </span>
+                }
+              />
             )}
             {/* Only show logs tab for non-child nodes */}
-            {type !== "context" && !isChildNode() && (
-              <StyledTab label={<span><i className="fa fa-align-left" style={{ marginRight: "8px" }}></i>LOGS</span>} />
+            {type !== 'context' && !isChildNode() && (
+              <StyledTab
+                label={
+                  <span>
+                    <i className="fa fa-align-left" style={{ marginRight: '8px' }}></i>LOGS
+                  </span>
+                }
+              />
             )}
           </Tabs>
 
           <Box
             sx={{
-              backgroundColor: theme === "dark" ? "#00000033" : "rgba(255, 255, 255, 0.8)",
-              borderRadius: "8px",
-              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
-              border: theme === "dark" ? "1px solid #444" : "1px solid rgba(0, 0, 0, 0.1)",
+              backgroundColor: theme === 'dark' ? '#00000033' : 'rgba(255, 255, 255, 0.8)',
+              borderRadius: '8px',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+              border: theme === 'dark' ? '1px solid #444' : '1px solid rgba(0, 0, 0, 0.1)',
               padding: 3,
-              display: "flex",
-              flexDirection: "column",
+              display: 'flex',
+              flexDirection: 'column',
               mt: 2,
               mb: 4,
             }}
@@ -722,74 +740,76 @@ const DynamicDetailsPanel = ({
             <Box sx={{ mt: 1, p: 1 }}>
               {tabValue === 0 && renderSummary()}
               {tabValue === 1 && (
-                <Box sx={{ display: "flex", flexDirection: "column" }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                   <Stack direction="row" spacing={4} mb={3} ml={4}>
-                                  <Button
-                variant={editFormat === "yaml" ? "contained" : "outlined"}
-                onClick={() => handleFormatChange("yaml")}
-                sx={{
-                  textTransform: "none",
-                  backgroundColor: editFormat === "yaml" ? "#2F86FF" : "transparent",
-                  borderRadius: "8px",
-                  color: editFormat === "yaml" ? "#fff" : "#2F86FF",
-                  border: editFormat === "yaml" ? "none" : "1px solid #2F86FF",
-                  "&:hover": {
-                    backgroundColor: editFormat === "yaml" ? "#1565c0" : "rgba(47, 134, 255, 0.08)",
-                  },
-                }}
-              >
-                YAML
-              </Button>
                     <Button
-                    variant={editFormat === "json" ? "contained" : "outlined"}
-                    onClick={() => handleFormatChange("json")}
-                    sx={{
-                      textTransform: "none",
-                      backgroundColor: editFormat === "json" ? "#2F86FF" : "transparent",
-                      borderRadius: "8px",
-                      color: editFormat === "json" ? "#fff" : "#2F86FF",
-                      border: editFormat === "json" ? "none" : "1px solid #2F86FF",
-                      "&:hover": {
-                        backgroundColor: editFormat === "json" ? "#1565c0" : "rgba(47, 134, 255, 0.08)",
-                      },
-                    }}
-                  >
-                    JSON
-                  </Button>
+                      variant={editFormat === 'yaml' ? 'contained' : 'outlined'}
+                      onClick={() => handleFormatChange('yaml')}
+                      sx={{
+                        textTransform: 'none',
+                        backgroundColor: editFormat === 'yaml' ? '#2F86FF' : 'transparent',
+                        borderRadius: '8px',
+                        color: editFormat === 'yaml' ? '#fff' : '#2F86FF',
+                        border: editFormat === 'yaml' ? 'none' : '1px solid #2F86FF',
+                        '&:hover': {
+                          backgroundColor:
+                            editFormat === 'yaml' ? '#1565c0' : 'rgba(47, 134, 255, 0.08)',
+                        },
+                      }}
+                    >
+                      YAML
+                    </Button>
+                    <Button
+                      variant={editFormat === 'json' ? 'contained' : 'outlined'}
+                      onClick={() => handleFormatChange('json')}
+                      sx={{
+                        textTransform: 'none',
+                        backgroundColor: editFormat === 'json' ? '#2F86FF' : 'transparent',
+                        borderRadius: '8px',
+                        color: editFormat === 'json' ? '#fff' : '#2F86FF',
+                        border: editFormat === 'json' ? 'none' : '1px solid #2F86FF',
+                        '&:hover': {
+                          backgroundColor:
+                            editFormat === 'json' ? '#1565c0' : 'rgba(47, 134, 255, 0.08)',
+                        },
+                      }}
+                    >
+                      JSON
+                    </Button>
                   </Stack>
-                  <Box sx={{ overflow: "auto", maxHeight: "500px" }}>
+                  <Box sx={{ overflow: 'auto', maxHeight: '500px' }}>
                     <Editor
                       height="500px"
                       language={editFormat}
                       value={
-                        editFormat === "yaml"
+                        editFormat === 'yaml'
                           ? jsonToYaml(editedManifest)
-                          : editedManifest || "No manifest available"
+                          : editedManifest || 'No manifest available'
                       }
                       onChange={handleEditorChange}
-                      theme={theme === "dark" ? "vs-dark" : "light"}
+                      theme={theme === 'dark' ? 'vs-dark' : 'light'}
                       options={{
                         minimap: { enabled: false },
                         fontSize: 14,
-                        lineNumbers: "on",
+                        lineNumbers: 'on',
                         scrollBeyondLastLine: false,
                         readOnly: false,
                         automaticLayout: true,
-                        wordWrap: "on",
+                        wordWrap: 'on',
                       }}
                     />
                   </Box>
-                  <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                     <Button
                       variant="contained"
                       onClick={handleUpdate}
                       sx={{
-                        textTransform: "none",
-                        backgroundColor: "#2F86FF",
-                        borderRadius: "8px",
-                        color: "#fff",
-                        "&:hover": {
-                          backgroundColor: "#1565c0",
+                        textTransform: 'none',
+                        backgroundColor: '#2F86FF',
+                        borderRadius: '8px',
+                        color: '#fff',
+                        '&:hover': {
+                          backgroundColor: '#1565c0',
                         },
                       }}
                     >
@@ -801,16 +821,16 @@ const DynamicDetailsPanel = ({
               {tabValue === 2 && (
                 <Box
                   sx={{
-                    maxHeight: "500px",
-                    bgcolor: theme === "dark" ? "#1E1E1E" : "#FFFFFF",
+                    maxHeight: '500px',
+                    bgcolor: theme === 'dark' ? '#1E1E1E' : '#FFFFFF',
                     borderRadius: 1,
                     p: 1,
-                    overflow: "auto",
+                    overflow: 'auto',
                   }}
                 >
                   <div
                     ref={terminalRef}
-                    style={{ height: "100%", width: "100%", overflow: "auto" }}
+                    style={{ height: '100%', width: '100%', overflow: 'auto' }}
                   />
                 </Box>
               )}
@@ -818,7 +838,7 @@ const DynamicDetailsPanel = ({
           </Box>
 
           <Snackbar
-            anchorOrigin={{ vertical: "top", horizontal: "center" }}
+            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
             open={snackbarOpen}
             autoHideDuration={4000}
             onClose={handleSnackbarClose}
@@ -827,9 +847,9 @@ const DynamicDetailsPanel = ({
               onClose={handleSnackbarClose}
               severity={snackbarSeverity}
               sx={{
-                width: "100%",
-                backgroundColor: theme === "dark" ? "#333" : "#fff",
-                color: theme === "dark" ? "#d4d4d4" : "#333",
+                width: '100%',
+                backgroundColor: theme === 'dark' ? '#333' : '#fff',
+                color: theme === 'dark' ? '#d4d4d4' : '#333',
               }}
             >
               {snackbarMessage}

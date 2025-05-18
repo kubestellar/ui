@@ -9,10 +9,10 @@ interface LabelHighlightState {
   clearHighlightedLabels: () => void;
 }
 
-const useLabelHighlightStore = create<LabelHighlightState>((set) => ({
+const useLabelHighlightStore = create<LabelHighlightState>(set => ({
   highlightedLabels: null,
-  setHighlightedLabels: (labels) => set({ highlightedLabels: labels }),
+  setHighlightedLabels: labels => set({ highlightedLabels: labels }),
   clearHighlightedLabels: () => set({ highlightedLabels: null }),
 }));
 
-export default useLabelHighlightStore; 
+export default useLabelHighlightStore;

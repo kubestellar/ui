@@ -10,7 +10,7 @@ import {
   TableCell,
   Paper,
   Checkbox,
-} from "@mui/material";
+} from '@mui/material';
 import useTheme from '../../stores/themeStore';
 
 interface TableSkeletonProps {
@@ -18,14 +18,14 @@ interface TableSkeletonProps {
 }
 
 const TableSkeleton: React.FC<TableSkeletonProps> = ({ rows = 5 }) => {
-  const theme = useTheme((state) => state.theme);
+  const theme = useTheme(state => state.theme);
   const isDark = theme === 'dark';
-  
+
   // Use the same colors and styling as your existing table
   return (
-    <TableContainer 
+    <TableContainer
       component={Paper}
-      sx={{ 
+      sx={{
         backgroundColor: isDark ? '#1e293b' : '#f8fafc',
         borderRadius: '12px',
         border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
@@ -58,31 +58,33 @@ const TableSkeleton: React.FC<TableSkeletonProps> = ({ rows = 5 }) => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {Array(rows).fill(0).map((_, index) => (
-            <TableRow key={index}>
-              <TableCell>
-                <Checkbox disabled />
-              </TableCell>
-              <TableCell>
-                <Skeleton width="80%" height={20} />
-              </TableCell>
-              <TableCell>
-                <div className="flex gap-2">
+          {Array(rows)
+            .fill(0)
+            .map((_, index) => (
+              <TableRow key={index}>
+                <TableCell>
+                  <Checkbox disabled />
+                </TableCell>
+                <TableCell>
+                  <Skeleton width="80%" height={20} />
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-2">
+                    <Skeleton width={60} height={24} />
+                    <Skeleton width={70} height={24} />
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Skeleton width="90%" height={20} />
+                </TableCell>
+                <TableCell>
+                  <Skeleton width={80} height={24} />
+                </TableCell>
+                <TableCell>
                   <Skeleton width={60} height={24} />
-                  <Skeleton width={70} height={24} />
-                </div>
-              </TableCell>
-              <TableCell>
-                <Skeleton width="90%" height={20} />
-              </TableCell>
-              <TableCell>
-                <Skeleton width={80} height={24} />
-              </TableCell>
-              <TableCell>
-                <Skeleton width={60} height={24} />
-              </TableCell>
-            </TableRow>
-          ))}
+                </TableCell>
+              </TableRow>
+            ))}
         </TableBody>
       </Table>
     </TableContainer>

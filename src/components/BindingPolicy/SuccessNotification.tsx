@@ -12,15 +12,15 @@ interface SuccessNotificationProps {
   onClose?: () => void;
 }
 
-const SuccessNotification: React.FC<SuccessNotificationProps> = ({ 
-  open: propOpen, 
-  message: propMessage, 
-  onClose: propOnClose 
+const SuccessNotification: React.FC<SuccessNotificationProps> = ({
+  open: propOpen,
+  message: propMessage,
+  onClose: propOnClose,
 }) => {
-  const { 
-    successMessage: storeMessage, 
-    clearSuccessMessageAfterDelay, 
-    setSuccessMessage 
+  const {
+    successMessage: storeMessage,
+    clearSuccessMessageAfterDelay,
+    setSuccessMessage,
   } = usePolicyDragDropStore();
 
   // Use provided props or fallback to store values
@@ -48,17 +48,17 @@ const SuccessNotification: React.FC<SuccessNotificationProps> = ({
   // Determine the type of notification to customize the appearance
   const isLabelNotification = successMessage.includes('Labels automatically assigned');
   const isPolicyAssignment = successMessage.includes('Successfully assigned');
-  
+
   // Choose icon based on message type
-  const NotificationIcon = isLabelNotification 
-    ? LabelIcon 
-    : isPolicyAssignment 
-      ? LinkIcon 
+  const NotificationIcon = isLabelNotification
+    ? LabelIcon
+    : isPolicyAssignment
+      ? LinkIcon
       : CheckCircleIcon;
 
   return (
     <Fade in={open}>
-      <Paper 
+      <Paper
         elevation={4}
         sx={{
           position: 'fixed',
@@ -76,43 +76,43 @@ const SuccessNotification: React.FC<SuccessNotificationProps> = ({
           maxWidth: 500,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between'
+          justifyContent: 'space-between',
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <NotificationIcon 
-            color={isLabelNotification ? "info" : "success"}
+          <NotificationIcon
+            color={isLabelNotification ? 'info' : 'success'}
             sx={{ mr: 1.5, fontSize: 24 }}
           />
           <Box>
             <Typography variant="body1" fontWeight="medium" color="text.primary">
-              {isLabelNotification 
-                ? 'Labels Assigned' 
-                : isPolicyAssignment 
-                  ? 'Policy Binding Created' 
+              {isLabelNotification
+                ? 'Labels Assigned'
+                : isPolicyAssignment
+                  ? 'Policy Binding Created'
                   : 'Success'}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               {successMessage}
             </Typography>
-            
+
             {/* Additional context for label assignments */}
             {isLabelNotification && (
-              <Chip 
-                size="small" 
-                icon={<LabelIcon />} 
+              <Chip
+                size="small"
+                icon={<LabelIcon />}
                 label="Labels help target policies to specific resources"
                 variant="outlined"
                 color="info"
                 sx={{ mt: 1, fontSize: '0.75rem' }}
               />
             )}
-            
+
             {/* Additional context for policy assignments */}
             {isPolicyAssignment && (
-              <Chip 
-                size="small" 
-                icon={<LinkIcon />} 
+              <Chip
+                size="small"
+                icon={<LinkIcon />}
                 label="Binding created for policy propagation"
                 variant="outlined"
                 color="success"
@@ -121,10 +121,10 @@ const SuccessNotification: React.FC<SuccessNotificationProps> = ({
             )}
           </Box>
         </Box>
-        
-        <IconButton 
-          size="small" 
-          onClick={handleClose} 
+
+        <IconButton
+          size="small"
+          onClick={handleClose}
           sx={{ ml: 1 }}
           aria-label="close notification"
         >
@@ -135,4 +135,4 @@ const SuccessNotification: React.FC<SuccessNotificationProps> = ({
   );
 };
 
-export default SuccessNotification; 
+export default SuccessNotification;

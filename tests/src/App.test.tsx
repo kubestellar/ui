@@ -13,7 +13,7 @@ const routesConfig = [
   },
   {
     path: '*',
-    element: <div>404 Not Found</div>, 
+    element: <div>404 Not Found</div>,
   },
 ];
 

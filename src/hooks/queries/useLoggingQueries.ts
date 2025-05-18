@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 
 export const useLoggingQueries = () => {
-  const useLogs = () => 
+  const useLogs = () =>
     useQuery({
       queryKey: ['logs'],
       queryFn: async () => {
@@ -14,4 +14,4 @@ export const useLoggingQueries = () => {
     });
 
   return { useLogs };
-}; 
+};

@@ -1,10 +1,6 @@
-import {
-  HiOutlineHome,
-  HiOutlineCube,
-  HiOutlineCommandLine,
-} from 'react-icons/hi2';
+import { HiOutlineHome, HiOutlineCube, HiOutlineCommandLine } from 'react-icons/hi2';
 
-import { MdPolicy, MdAssuredWorkload } from "react-icons/md";
+import { MdPolicy, MdAssuredWorkload } from 'react-icons/md';
 
 export const menu = [
   {
