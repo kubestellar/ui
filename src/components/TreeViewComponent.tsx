@@ -57,7 +57,7 @@ import GroupPanel from './GroupPanel';
 import ReactDOM from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import { isEqual } from 'lodash';
-import { useWebSocket } from '../context/WebSocketProvider';
+import { useWebSocket } from '../context/webSocketExports';
 import useTheme from '../stores/themeStore';
 import axios from 'axios';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
@@ -916,7 +916,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                 const resourceGroups: Record<string, ResourceItem[]> = {};
 
                 Object.entries(resourcesMap).forEach(([key, items]) => {
-                  // eslint-disable-line @typescript-eslint/no-unused-vars
+                   
                   console.log(key);
                   items.forEach((item: ResourceItem) => {
                     const kindLower = item.kind.toLowerCase();
@@ -2431,7 +2431,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
             ) : (
               <TreeViewSkeleton />
             )
-          ) : viewMode === 'tiles' && (nodes.length > 0 || edges.length > 0) ? (
+          ) : viewMode === 'tiles' && ( nodes.length > 0 || edges.length > 0) ? (
             <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
               <ReactFlowProvider>
                 <FlowCanvas

@@ -303,7 +303,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
   }, []);
 
   //  function to detect CRDs and other cluster-scoped resources
-  const isClusterScopedResource = (labelInfo: { key: string; value: string }): boolean => {
+  const isClusterScopedResource = useCallback((labelInfo: { key: string; value: string }): boolean => {
     if (
       labelInfo.value.includes('.') &&
       (labelInfo.value.endsWith('.io') ||
@@ -356,9 +356,9 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     }
 
     return false;
-  };
+  }, []);
 
-  const determineResourceKind = (labelInfo: { key: string; value: string }): string => {
+  const determineResourceKind = useCallback((labelInfo: { key: string; value: string }): string => {
     if (labelInfo.key === 'app.kubernetes.io/part-of') {
       return labelInfo.value.charAt(0).toUpperCase() + labelInfo.value.slice(1);
     }
@@ -374,7 +374,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
 
     // Default to 'Resource' with proper capitalization
     return labelInfo.value.charAt(0).toUpperCase() + labelInfo.value.slice(1);
-  };
+  }, []);
 
   // Helper function to find workloads matching a label
   const findWorkloadsByLabel = useCallback(

@@ -42,7 +42,7 @@ import WecsTreeviewSkeleton from './ui/WecsTreeviewSkeleton';
 import ListViewSkeleton from './ui/ListViewSkeleton';
 import ReactDOM from 'react-dom';
 import { isEqual } from 'lodash';
-import { useWebSocket } from '../context/WebSocketProvider';
+import { useWebSocket } from '../context/webSocketExports';
 import useTheme from '../stores/themeStore';
 import WecsDetailsPanel from './WecsDetailsPanel';
 import { FlowCanvas } from './Wds_Topology/FlowCanvas';
