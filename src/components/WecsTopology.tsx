@@ -556,7 +556,6 @@ const WecsTreeview = () => {
   // Add effect to update node styles when theme changes
   useEffect(() => {
     if (nodes.length > 0) {
-      console.log("[WecsTopology] Theme changed, updating node styles");
       
       // Create a new array with updated node styles for the current theme
       setNodes(currentNodes => {
