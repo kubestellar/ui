@@ -183,6 +183,37 @@ const DynamicDetailsPanel = ({
   const wsParamsRef = useRef<{ kind: string; namespace: string; name: string } | null>(null); // Store WebSocket parameters
   const [isPanelVisible, setIsPanelVisible] = useState(false);
 
+  // Determine if this is a child node that should hide logs tab
+  const isChildNode = useCallback(() => {
+    // Check for specific child node types that shouldn't show logs
+    const childNodeTypes = [
+      'volume', 'envvar', // ConfigMap/Secret children
+      'user', 'group', // RoleBinding/ClusterRoleBinding children
+      'clusterrole', // RoleBinding/ClusterRoleBinding children
+      'customresource', 'controller', // CRD children
+      'job', // CronJob children
+      'endpoints', 'endpointslice', // Service children
+      'namespace', // ResourceQuota/LimitRange children
+      'replicaset', // HPA children
+      'persistentvolume', 'persistentvolumeclaim', // PV/PVC relationship nodes
+      // 'service', // Ingress children
+      'ingresscontroller', // Ingress children
+    ];
+    
+    // Check if node type is in the list
+    return childNodeTypes.includes(type.toLowerCase()) || 
+           // Check if this is a child node by examining resourceData
+           Boolean(
+             resourceData?.parentConfigMap || 
+             resourceData?.parentSecret || 
+             resourceData?.parentClusterRole ||
+             resourceData?.parentClusterRoleBinding ||
+             resourceData?.parentRole ||
+             resourceData?.parentRoleBinding ||
+             resourceData?.parentService
+           );
+  }, [type, resourceData]);
+
   // Update panel visibility with a slight delay when isOpen changes to create proper transition
   useEffect(() => {
     if (isOpen) {
@@ -198,10 +229,16 @@ const DynamicDetailsPanel = ({
   // Update tabValue when the panel opens with a new initialTab
   useEffect(() => {
     if (isOpen && initialTab !== undefined) {
-      setTabValue(initialTab);
+      // If logs tab was selected but we're a child node that shouldn't show logs,
+      // automatically fall back to summary tab
+      if (initialTab === 2 && isChildNode()) {
+        setTabValue(0);
+      } else {
+        setTabValue(initialTab);
+      }
     }
-  }, [isOpen, initialTab]);
-
+  }, [isOpen, initialTab, isChildNode]);
+  
   useEffect(() => {
     if (!namespace || !name) {
       setResource(null);
@@ -552,12 +589,12 @@ const DynamicDetailsPanel = ({
     );
   };
 
-  // Additional useEffect to reset tab to SUMMARY when type is "context"
+  // Additional useEffect to reset tab to SUMMARY when type is "context" or a child node
   useEffect(() => {
-    if (type === "context" && tabValue !== 0) {
+    if ((type === "context" || isChildNode()) && tabValue === 2) {
       setTabValue(0);
     }
-  }, [type, tabValue]);
+  }, [type, tabValue, isChildNode]);
 
   return (
     <Box
@@ -663,7 +700,8 @@ const DynamicDetailsPanel = ({
             {type !== "context" && (
               <StyledTab label={<span><i className="fa fa-edit" style={{ marginRight: "8px" }}></i>EDIT</span>} />
             )}
-            {type !== "context" && (
+            {/* Only show logs tab for non-child nodes */}
+            {type !== "context" && !isChildNode() && (
               <StyledTab label={<span><i className="fa fa-align-left" style={{ marginRight: "8px" }}></i>LOGS</span>} />
             )}
           </Tabs>
@@ -703,21 +741,21 @@ const DynamicDetailsPanel = ({
                 YAML
               </Button>
                     <Button
-  variant={editFormat === "json" ? "contained" : "outlined"}
-  onClick={() => handleFormatChange("json")}
-  sx={{
-    textTransform: "none",
-    backgroundColor: editFormat === "json" ? "#2F86FF" : "transparent",
-    borderRadius: "8px",
-    color: editFormat === "json" ? "#fff" : "#2F86FF",
-    border: editFormat === "json" ? "none" : "1px solid #2F86FF",
-    "&:hover": {
-      backgroundColor: editFormat === "json" ? "#1565c0" : "rgba(47, 134, 255, 0.08)",
-    },
-  }}
->
-  JSON
-</Button>
+                    variant={editFormat === "json" ? "contained" : "outlined"}
+                    onClick={() => handleFormatChange("json")}
+                    sx={{
+                      textTransform: "none",
+                      backgroundColor: editFormat === "json" ? "#2F86FF" : "transparent",
+                      borderRadius: "8px",
+                      color: editFormat === "json" ? "#fff" : "#2F86FF",
+                      border: editFormat === "json" ? "none" : "1px solid #2F86FF",
+                      "&:hover": {
+                        backgroundColor: editFormat === "json" ? "#1565c0" : "rgba(47, 134, 255, 0.08)",
+                      },
+                    }}
+                  >
+                    JSON
+                  </Button>
                   </Stack>
                   <Box sx={{ overflow: "auto", maxHeight: "500px" }}>
                     <Editor

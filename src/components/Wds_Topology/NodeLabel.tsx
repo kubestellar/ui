@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import { memo} from "react";
 import { FiMoreVertical } from "react-icons/fi";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import { ResourceItem } from "../TreeViewComponent";
@@ -27,10 +27,7 @@ export const NodeLabel = memo<NodeLabelProps>(({
   resourceData,
 }) => {
   const theme = useTheme((state) => state.theme); // Get the current theme
-  // We're not using isHovering state for now, but may use it later for additional effects
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [isHovering, setIsHovering] = useState(false);
-  console.log(isHovering);
+
 
   // Get highlighted labels state from the store
   const { highlightedLabels, setHighlightedLabels, clearHighlightedLabels } = useLabelHighlightStore();
@@ -147,8 +144,6 @@ export const NodeLabel = memo<NodeLabelProps>(({
           transition: "all 0.1s ease",
           width: "calc(100% + 24px)", // Ensure width coverage with the negative margins
         }}
-        onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => setIsHovering(false)}
       >
         <div
           style={{ 
