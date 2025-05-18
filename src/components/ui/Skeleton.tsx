@@ -25,14 +25,10 @@ interface SkeletonProps {
   height?: string | number;
 }
 
-const Skeleton: React.FC<SkeletonProps> = ({ 
-  className = '',
-  width, 
-  height 
-}) => {
-  const theme = useTheme((state) => state.theme);
+const Skeleton: React.FC<SkeletonProps> = ({ className = '', width, height }) => {
+  const theme = useTheme(state => state.theme);
   const isDark = theme === 'dark';
-  
+
   // Inject keyframes on component mount
   useEffect(() => {
     injectKeyframes();
@@ -44,7 +40,7 @@ const Skeleton: React.FC<SkeletonProps> = ({
       }
     };
   }, []);
-  
+
   const style: React.CSSProperties = {
     width: width,
     height: height,
@@ -52,7 +48,7 @@ const Skeleton: React.FC<SkeletonProps> = ({
     backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
     animation: 'pulse 1.5s ease-in-out infinite',
   };
-   
+
   return <div className={className} style={style} data-skeleton aria-hidden="true" />;
 };
 

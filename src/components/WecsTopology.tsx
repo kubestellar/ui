@@ -1,53 +1,53 @@
-import { useState, useEffect, useCallback, useRef, memo } from "react";
-import { Box, Typography, Menu, MenuItem, Button, IconButton } from "@mui/material";
-import { ReactFlowProvider, Position, MarkerType } from "reactflow";
-import * as dagre from "dagre";
-import "reactflow/dist/style.css";
-import cm from "../assets/k8s_resources_logo/cm.svg";
-import crb from "../assets/k8s_resources_logo/crb.svg";
-import crd from "../assets/k8s_resources_logo/crd.svg";
-import cRole from "../assets/k8s_resources_logo/c-role.svg";
-import cronjob from "../assets/k8s_resources_logo/cronjob.svg";
-import deployicon from "../assets/k8s_resources_logo/deploy.svg";
-import ds from "../assets/k8s_resources_logo/ds.svg";
-import ep from "../assets/k8s_resources_logo/ep.svg";
-import group from "../assets/k8s_resources_logo/group.svg";
-import hpa from "../assets/k8s_resources_logo/hpa.svg";
-import ing from "../assets/k8s_resources_logo/ing.svg";
-import job from "../assets/k8s_resources_logo/job.svg";
-import limits from "../assets/k8s_resources_logo/limits.svg";
-import netpol from "../assets/k8s_resources_logo/netpol.svg";
-import ns from "../assets/k8s_resources_logo/ns.svg";
-import psp from "../assets/k8s_resources_logo/psp.svg";
-import pv from "../assets/k8s_resources_logo/pv.svg";
-import pvc from "../assets/k8s_resources_logo/pvc.svg";
-import quota from "../assets/k8s_resources_logo/quota.svg";
-import rb from "../assets/k8s_resources_logo/rb.svg";
-import role from "../assets/k8s_resources_logo/role.svg";
-import rs from "../assets/k8s_resources_logo/rs.svg";
-import sa from "../assets/k8s_resources_logo/sa.svg";
-import sc from "../assets/k8s_resources_logo/sc.svg";
-import secret from "../assets/k8s_resources_logo/secret.svg";
-import sts from "../assets/k8s_resources_logo/sts.svg";
-import svc from "../assets/k8s_resources_logo/svc.svg";
-import cluster from "../assets/k8s_resources_logo/kubernetes-logo.svg";
-import pod from "../assets/k8s_resources_logo/pod.png";
-import user from "../assets/k8s_resources_logo/user.svg";
-import vol from "../assets/k8s_resources_logo/vol.svg";
-import { Plus } from "lucide-react";
-import CreateOptions from "../components/CreateOptions";
-import { NodeLabel } from "../components/Wds_Topology/NodeLabel";
-import { ZoomControls } from "../components/Wds_Topology/ZoomControls";
-import WecsTreeviewSkeleton from "./ui/WecsTreeviewSkeleton";
-import ListViewSkeleton from "./ui/ListViewSkeleton";
-import ReactDOM from "react-dom";
-import { isEqual } from "lodash";
-import { useWebSocket } from "../context/WebSocketProvider";
-import useTheme from "../stores/themeStore";
-import WecsDetailsPanel from "./WecsDetailsPanel";
-import { FlowCanvas } from "./Wds_Topology/FlowCanvas";
-import ListViewComponent from "../components/ListViewComponent";
-import FullScreenToggle from "./ui/FullScreenToggle";
+import { useState, useEffect, useCallback, useRef, memo } from 'react';
+import { Box, Typography, Menu, MenuItem, Button, IconButton } from '@mui/material';
+import { ReactFlowProvider, Position, MarkerType } from 'reactflow';
+import * as dagre from 'dagre';
+import 'reactflow/dist/style.css';
+import cm from '../assets/k8s_resources_logo/cm.svg';
+import crb from '../assets/k8s_resources_logo/crb.svg';
+import crd from '../assets/k8s_resources_logo/crd.svg';
+import cRole from '../assets/k8s_resources_logo/c-role.svg';
+import cronjob from '../assets/k8s_resources_logo/cronjob.svg';
+import deployicon from '../assets/k8s_resources_logo/deploy.svg';
+import ds from '../assets/k8s_resources_logo/ds.svg';
+import ep from '../assets/k8s_resources_logo/ep.svg';
+import group from '../assets/k8s_resources_logo/group.svg';
+import hpa from '../assets/k8s_resources_logo/hpa.svg';
+import ing from '../assets/k8s_resources_logo/ing.svg';
+import job from '../assets/k8s_resources_logo/job.svg';
+import limits from '../assets/k8s_resources_logo/limits.svg';
+import netpol from '../assets/k8s_resources_logo/netpol.svg';
+import ns from '../assets/k8s_resources_logo/ns.svg';
+import psp from '../assets/k8s_resources_logo/psp.svg';
+import pv from '../assets/k8s_resources_logo/pv.svg';
+import pvc from '../assets/k8s_resources_logo/pvc.svg';
+import quota from '../assets/k8s_resources_logo/quota.svg';
+import rb from '../assets/k8s_resources_logo/rb.svg';
+import role from '../assets/k8s_resources_logo/role.svg';
+import rs from '../assets/k8s_resources_logo/rs.svg';
+import sa from '../assets/k8s_resources_logo/sa.svg';
+import sc from '../assets/k8s_resources_logo/sc.svg';
+import secret from '../assets/k8s_resources_logo/secret.svg';
+import sts from '../assets/k8s_resources_logo/sts.svg';
+import svc from '../assets/k8s_resources_logo/svc.svg';
+import cluster from '../assets/k8s_resources_logo/kubernetes-logo.svg';
+import pod from '../assets/k8s_resources_logo/pod.png';
+import user from '../assets/k8s_resources_logo/user.svg';
+import vol from '../assets/k8s_resources_logo/vol.svg';
+import { Plus } from 'lucide-react';
+import CreateOptions from '../components/CreateOptions';
+import { NodeLabel } from '../components/Wds_Topology/NodeLabel';
+import { ZoomControls } from '../components/Wds_Topology/ZoomControls';
+import WecsTreeviewSkeleton from './ui/WecsTreeviewSkeleton';
+import ListViewSkeleton from './ui/ListViewSkeleton';
+import ReactDOM from 'react-dom';
+import { isEqual } from 'lodash';
+import { useWebSocket } from '../context/WebSocketProvider';
+import useTheme from '../stores/themeStore';
+import WecsDetailsPanel from './WecsDetailsPanel';
+import { FlowCanvas } from './Wds_Topology/FlowCanvas';
+import ListViewComponent from '../components/ListViewComponent';
+import FullScreenToggle from './ui/FullScreenToggle';
 
 // Updated Interfaces
 export interface NodeData {
@@ -190,11 +190,11 @@ interface ContextMenuState {
 }
 
 const nodeStyle: React.CSSProperties = {
-  padding: "2px 12px",
-  fontSize: "6px",
-  border: "none",
-  width: "146px",
-  height: "30px",
+  padding: '2px 12px',
+  fontSize: '6px',
+  border: 'none',
+  width: '146px',
+  height: '30px',
 };
 
 const iconMap: Record<string, string> = {
@@ -233,22 +233,22 @@ const iconMap: Record<string, string> = {
 
 const getNodeConfig = (type: string) => {
   const normalizedType = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
-  
+
   let icon = iconMap[normalizedType] || cm;
   let dynamicText = type.toLowerCase();
 
   switch (type.toLowerCase()) {
-    case "cluster":
+    case 'cluster':
       icon = cluster;
-      dynamicText = "cluster";
+      dynamicText = 'cluster';
       break;
-    case "namespace":
+    case 'namespace':
       icon = ns;
-      dynamicText = "ns";
+      dynamicText = 'ns';
       break;
-    case "pod":
+    case 'pod':
       icon = pod;
-      dynamicText = "pod";
+      dynamicText = 'pod';
       break;
     default:
       break;
@@ -260,14 +260,14 @@ const getNodeConfig = (type: string) => {
 const getLayoutedElements = (
   nodes: CustomNode[],
   edges: CustomEdge[],
-  direction = "LR",
+  direction = 'LR',
   prevNodes: React.MutableRefObject<CustomNode[]>
 ) => {
   const NODE_WIDTH = 146;
   const NODE_HEIGHT = 30;
-  const NODE_SEP = 22; 
-  const RANK_SEP = 60; 
-  const CHILD_SPACING = NODE_HEIGHT + 30; 
+  const NODE_SEP = 22;
+  const RANK_SEP = 60;
+  const CHILD_SPACING = NODE_HEIGHT + 30;
 
   // Step 1: Initial Dagre layout
   const dagreGraph = new dagre.graphlib.Graph();
@@ -279,10 +279,10 @@ const getLayoutedElements = (
 
   const shouldRecalculate = true;
   if (!shouldRecalculate && Math.abs(nodes.length - prevNodes.current.length) <= 5) {
-    prevNodes.current.forEach((node) => nodeMap.set(node.id, node));
+    prevNodes.current.forEach(node => nodeMap.set(node.id, node));
   }
 
-  nodes.forEach((node) => {
+  nodes.forEach(node => {
     const cachedNode = nodeMap.get(node.id);
     if (!cachedNode || !isEqual(cachedNode, node) || shouldRecalculate) {
       dagreGraph.setNode(node.id, { width: NODE_WIDTH, height: NODE_HEIGHT });
@@ -292,13 +292,13 @@ const getLayoutedElements = (
     }
   });
 
-  edges.forEach((edge) => {
+  edges.forEach(edge => {
     dagreGraph.setEdge(edge.source, edge.target);
   });
 
   dagre.layout(dagreGraph);
 
-  const layoutedNodes = newNodes.map((node) => {
+  const layoutedNodes = newNodes.map(node => {
     const dagreNode = dagreGraph.node(node.id);
     return dagreNode
       ? {
@@ -313,7 +313,7 @@ const getLayoutedElements = (
 
   // Step 2: Build parent-to-children mapping
   const parentToChildren = new Map<string, Set<string>>();
-  edges.forEach((edge) => {
+  edges.forEach(edge => {
     if (!parentToChildren.has(edge.source)) {
       parentToChildren.set(edge.source, new Set());
     }
@@ -326,14 +326,14 @@ const getLayoutedElements = (
 
   parentToChildren.forEach((children, parentId) => {
     let hasPodChild = false;
-    children.forEach((childId) => {
+    children.forEach(childId => {
       if (childId.startsWith('pod:')) {
         hasPodChild = true;
       }
     });
     if (hasPodChild) {
       parentsWithPods.add(parentId);
-      children.forEach((childId) => {
+      children.forEach(childId => {
         allChildrenToAlign.add(childId);
       });
     }
@@ -341,7 +341,7 @@ const getLayoutedElements = (
 
   // Step 4: Find the deepest x-position among pods
   let deepestPodX = 0;
-  layoutedNodes.forEach((node) => {
+  layoutedNodes.forEach(node => {
     if (node.id.startsWith('pod:')) {
       if (node.position.x > deepestPodX) {
         deepestPodX = node.position.x;
@@ -351,14 +351,14 @@ const getLayoutedElements = (
 
   // Step 5: Group aligned children by parent and adjust positions
   const childToParent = new Map<string, string>();
-  edges.forEach((edge) => {
+  edges.forEach(edge => {
     if (allChildrenToAlign.has(edge.target)) {
       childToParent.set(edge.target, edge.source);
     }
   });
 
   const parentToAlignedChildren = new Map<string, CustomNode[]>();
-  layoutedNodes.forEach((node) => {
+  layoutedNodes.forEach(node => {
     if (allChildrenToAlign.has(node.id)) {
       const parentId = childToParent.get(node.id);
       if (parentId) {
@@ -372,7 +372,7 @@ const getLayoutedElements = (
 
   // Step 6: Adjust pod positions to align vertically and center around parent
   parentToAlignedChildren.forEach((children, parentId) => {
-    const parentNode = layoutedNodes.find((node) => node.id === parentId);
+    const parentNode = layoutedNodes.find(node => node.id === parentId);
     if (!parentNode || children.length === 0) return;
 
     // Sort children by their initial y-position to maintain order
@@ -388,7 +388,7 @@ const getLayoutedElements = (
     // Update positions of aligned children
     children.forEach((child, index) => {
       const newY = topY + index * CHILD_SPACING;
-      const childIndex = layoutedNodes.findIndex((node) => node.id === child.id);
+      const childIndex = layoutedNodes.findIndex(node => node.id === child.id);
       layoutedNodes[childIndex] = {
         ...child,
         position: {
@@ -401,13 +401,13 @@ const getLayoutedElements = (
 
   // Step 7: Build a comprehensive child-to-parent mapping for all relationships
   const allChildToParent = new Map<string, string>();
-  edges.forEach((edge) => {
+  edges.forEach(edge => {
     allChildToParent.set(edge.target, edge.source);
   });
 
   // Step 8: Build a reverse mapping from parent to all children (all types of relationships)
   const allParentToChildren = new Map<string, CustomNode[]>();
-  layoutedNodes.forEach((node) => {
+  layoutedNodes.forEach(node => {
     const parentId = allChildToParent.get(node.id);
     if (parentId) {
       if (!allParentToChildren.has(parentId)) {
@@ -420,33 +420,33 @@ const getLayoutedElements = (
   // Step 9: Center all parent nodes with their children
   // Process from deepest nodes to root to ensure proper alignment through the hierarchy
   const processedNodes = new Set<string>();
-  
+
   // Helper function to adjust parent position based on its children
   const centerParentWithChildren = (parentId: string) => {
     if (processedNodes.has(parentId)) return;
-    
+
     const children = allParentToChildren.get(parentId);
     if (!children || children.length === 0) return;
-    
+
     // First ensure all children are processed
     children.forEach(child => {
       if (allParentToChildren.has(child.id)) {
         centerParentWithChildren(child.id);
       }
     });
-    
+
     // Get updated positions of children after they might have been repositioned
-    const updatedChildren = children.map(child => 
-      layoutedNodes.find(node => node.id === child.id)!
+    const updatedChildren = children.map(
+      child => layoutedNodes.find(node => node.id === child.id)!
     );
-    
+
     // Sort children by y position
     updatedChildren.sort((a, b) => a.position.y - b.position.y);
-    
+
     // Find the middle child to align with
     const middleChildIndex = Math.floor(updatedChildren.length / 2);
     let targetY: number;
-    
+
     if (updatedChildren.length % 2 === 1) {
       // Odd number of children: align with the middle child
       targetY = updatedChildren[middleChildIndex].position.y;
@@ -456,7 +456,7 @@ const getLayoutedElements = (
       const midUpper = updatedChildren[middleChildIndex].position.y;
       targetY = (midLower + midUpper) / 2;
     }
-    
+
     // Adjust parent position
     const parentIndex = layoutedNodes.findIndex(node => node.id === parentId);
     if (parentIndex !== -1) {
@@ -464,14 +464,14 @@ const getLayoutedElements = (
         ...layoutedNodes[parentIndex],
         position: {
           x: layoutedNodes[parentIndex].position.x,
-          y: targetY
-        }
+          y: targetY,
+        },
       };
     }
-    
+
     processedNodes.add(parentId);
   };
-  
+
   // Start with nodes that don't have parents (roots)
   allParentToChildren.forEach((_, parentId) => {
     // Skip nodes that are someone else's children
@@ -479,7 +479,7 @@ const getLayoutedElements = (
       centerParentWithChildren(parentId);
     }
   });
-  
+
   // Process all remaining parent nodes
   allParentToChildren.forEach((_, parentId) => {
     if (!processedNodes.has(parentId)) {
@@ -509,8 +509,8 @@ const getLayoutedElements = (
   }
 
   // Step 11: Adjust edges
-  const adjustedEdges = edges.map((edge) => {
-    const targetNode = layoutedNodes.find((node) => node.id === edge.target);
+  const adjustedEdges = edges.map(edge => {
+    const targetNode = layoutedNodes.find(node => node.id === edge.target);
     if (targetNode && allChildrenToAlign.has(targetNode.id)) {
       return {
         ...edge,
@@ -524,12 +524,12 @@ const getLayoutedElements = (
 };
 
 const WecsTreeview = () => {
-  const theme = useTheme((state) => state.theme);
+  const theme = useTheme(state => state.theme);
   const [nodes, setNodes] = useState<CustomNode[]>([]);
   const [edges, setEdges] = useState<CustomEdge[]>([]);
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const [showCreateOptions, setShowCreateOptions] = useState(false);
-  const [activeOption, setActiveOption] = useState<string | null>("option1");
+  const [activeOption, setActiveOption] = useState<string | null>('option1');
   const [selectedNode, setSelectedNode] = useState<SelectedNode | null>(null);
   const [isTransforming, setIsTransforming] = useState<boolean>(false);
   const [dataReceived, setDataReceived] = useState<boolean>(false);
@@ -556,7 +556,6 @@ const WecsTreeview = () => {
   // Add effect to update node styles when theme changes
   useEffect(() => {
     if (nodes.length > 0) {
-      
       // Create a new array with updated node styles for the current theme
       setNodes(currentNodes => {
         return currentNodes.map(node => {
@@ -565,39 +564,39 @@ const WecsTreeview = () => {
             ...node,
             style: {
               ...node.style,
-              backgroundColor: theme === "dark" ? "#333" : "#fff",
-              color: theme === "dark" ? "#fff" : "#000",
-              transition: "all 0.2s ease-in-out"
-            }
+              backgroundColor: theme === 'dark' ? '#333' : '#fff',
+              color: theme === 'dark' ? '#fff' : '#000',
+              transition: 'all 0.2s ease-in-out',
+            },
           };
         });
       });
-      
+
       // Update edge styles for the current theme
       setEdges(currentEdges => {
         return currentEdges.map(edge => {
           // Make a type-safe copy of the marker end
           const markerEnd: { type: MarkerType; color?: string; width?: number; height?: number } = {
             type: edge.markerEnd?.type || MarkerType.ArrowClosed,
-            color: theme === "dark" ? "#ccc" : "#a3a3a3"
+            color: theme === 'dark' ? '#ccc' : '#a3a3a3',
           };
-          
+
           // If the original marker has width and height, preserve them
           if (edge.markerEnd?.width) {
             markerEnd.width = edge.markerEnd.width;
           }
-          
+
           if (edge.markerEnd?.height) {
             markerEnd.height = edge.markerEnd.height;
           }
-          
+
           return {
             ...edge,
-            style: { 
-              stroke: theme === "dark" ? "#ccc" : "#a3a3a3", 
-              strokeDasharray: "2,2" 
+            style: {
+              stroke: theme === 'dark' ? '#ccc' : '#a3a3a3',
+              strokeDasharray: '2,2',
             },
-            markerEnd
+            markerEnd,
           };
         });
       });
@@ -622,20 +621,20 @@ const WecsTreeview = () => {
   }, [isCollapsed, isExpanded]);
 
   const getTimeAgo = useCallback((timestamp: string | undefined): string => {
-    if (!timestamp) return "Unknown";
+    if (!timestamp) return 'Unknown';
     const now = new Date();
     const then = new Date(timestamp);
     const diffMs = now.getTime() - then.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    return diffDays === 0 ? "Today" : `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
+    return diffDays === 0 ? 'Today' : `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
   }, []);
 
   const handleMenuOpen = useCallback((event: React.MouseEvent, nodeId: string) => {
     event.preventDefault();
     event.stopPropagation();
     let nodeType: string | null = null;
-    if (nodeId.includes(":")) {
-      const nodeIdParts = nodeId.split(":");
+    if (nodeId.includes(':')) {
+      const nodeIdParts = nodeId.split(':');
       nodeType = nodeIdParts[0];
     }
     setContextMenu({ nodeId, x: event.clientX, y: event.clientY, nodeType });
@@ -667,9 +666,9 @@ const WecsTreeview = () => {
 
       // Check if this is a pod that belongs to a Deployment, ReplicaSet, or Job
       let isDeploymentOrJobPod = false;
-      if (type.toLowerCase() === "pod" && parent) {
-        const parentType = parent.split(":")[0]?.toLowerCase();
-        isDeploymentOrJobPod = ["deployment", "replicaset", "job"].includes(parentType);
+      if (type.toLowerCase() === 'pod' && parent) {
+        const parentType = parent.split(':')[0]?.toLowerCase();
+        isDeploymentOrJobPod = ['deployment', 'replicaset', 'job'].includes(parentType);
       }
 
       const node =
@@ -685,20 +684,24 @@ const WecsTreeview = () => {
                 status={status}
                 timeAgo={timeAgo}
                 resourceData={resourceData}
-                onClick={(e) => {
-                  if ((e.target as HTMLElement).tagName === "svg" || (e.target as HTMLElement).closest("svg")) return;
-                  if (type.toLowerCase() === "namespace") return;
-                  const nodeIdParts = id.split(":");
-                  let cluster = "";
-                  if (type.toLowerCase() === "cluster" && nodeIdParts.length === 2) {
+                onClick={e => {
+                  if (
+                    (e.target as HTMLElement).tagName === 'svg' ||
+                    (e.target as HTMLElement).closest('svg')
+                  )
+                    return;
+                  if (type.toLowerCase() === 'namespace') return;
+                  const nodeIdParts = id.split(':');
+                  let cluster = '';
+                  if (type.toLowerCase() === 'cluster' && nodeIdParts.length === 2) {
                     cluster = nodeIdParts[1];
-                  } else if (type.toLowerCase() === "namespace" && nodeIdParts.length === 3) {
+                  } else if (type.toLowerCase() === 'namespace' && nodeIdParts.length === 3) {
                     cluster = nodeIdParts[1];
                   } else if (nodeIdParts.length >= 4) {
                     cluster = nodeIdParts[1];
                   }
                   setSelectedNode({
-                    namespace: namespace || "default",
+                    namespace: namespace || 'default',
                     name: label,
                     type: type.toLowerCase(),
                     onClose: handleClosePanel,
@@ -709,7 +712,7 @@ const WecsTreeview = () => {
                     isDeploymentOrJobPod,
                   });
                 }}
-                onMenuClick={(e) => handleMenuOpen(e, id)}
+                onMenuClick={e => handleMenuOpen(e, id)}
               />
             ),
             isDeploymentOrJobPod,
@@ -717,13 +720,13 @@ const WecsTreeview = () => {
           position: { x: 0, y: 0 },
           style: {
             ...nodeStyle,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "2px 12px",
-            backgroundColor: theme === "dark" ? "#333" : "#fff",
-            color: theme === "dark" ? "#fff" : "#000",
-            transition: "all 0.2s ease-in-out",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '2px 12px',
+            backgroundColor: theme === 'dark' ? '#333' : '#fff',
+            color: theme === 'dark' ? '#fff' : '#000',
+            transition: 'all 0.2s ease-in-out',
           },
           sourcePosition: Position.Right,
           targetPosition: Position.Left,
@@ -733,9 +736,9 @@ const WecsTreeview = () => {
       if (cachedNode) {
         node.style = {
           ...node.style,
-          backgroundColor: theme === "dark" ? "#333" : "#fff",
-          color: theme === "dark" ? "#fff" : "#000",
-          transition: "all 0.2s ease-in-out",
+          backgroundColor: theme === 'dark' ? '#333' : '#fff',
+          color: theme === 'dark' ? '#fff' : '#000',
+          transition: 'all 0.2s ease-in-out',
         };
       }
 
@@ -751,10 +754,13 @@ const WecsTreeview = () => {
             id: edgeId,
             source: parent,
             target: id,
-            type: "step",
+            type: 'step',
             animated: true,
-            style: { stroke: theme === "dark" ? "#ccc" : "#a3a3a3", strokeDasharray: "2,2" },
-            markerEnd: { type: MarkerType.ArrowClosed, color: theme === "dark" ? "#ccc" : "#a3a3a3" },
+            style: { stroke: theme === 'dark' ? '#ccc' : '#a3a3a3', strokeDasharray: '2,2' },
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              color: theme === 'dark' ? '#ccc' : '#a3a3a3',
+            },
           };
           newEdges.push(edge);
           edgeCache.current.set(edgeId, edge);
@@ -762,13 +768,13 @@ const WecsTreeview = () => {
           // Update cached edge styles for the current theme
           const markerEnd: { type: MarkerType; color?: string; width?: number; height?: number } = {
             type: cachedEdge.markerEnd?.type || MarkerType.ArrowClosed,
-            color: theme === "dark" ? "#ccc" : "#a3a3a3"
+            color: theme === 'dark' ? '#ccc' : '#a3a3a3',
           };
-          
+
           const updatedEdge = {
             ...cachedEdge,
-            style: { stroke: theme === "dark" ? "#ccc" : "#a3a3a3", strokeDasharray: "2,2" },
-            markerEnd
+            style: { stroke: theme === 'dark' ? '#ccc' : '#a3a3a3', strokeDasharray: '2,2' },
+            markerEnd,
           };
           newEdges.push(updatedEdge);
         }
@@ -797,48 +803,67 @@ const WecsTreeview = () => {
       const newEdges: CustomEdge[] = [];
 
       if (!stateRef.current.isExpanded) {
-        data.forEach((cluster) => {
+        data.forEach(cluster => {
           const clusterId = `cluster:${cluster.cluster}`;
           createNode(
             clusterId,
             cluster.cluster,
-            "cluster",
-            "Active",
-            "",
+            'cluster',
+            'Active',
+            '',
             undefined,
-            { apiVersion: "v1", kind: "Cluster", metadata: { name: cluster.cluster, namespace: "", creationTimestamp: "" }, status: { phase: "Active" } },
+            {
+              apiVersion: 'v1',
+              kind: 'Cluster',
+              metadata: { name: cluster.cluster, namespace: '', creationTimestamp: '' },
+              status: { phase: 'Active' },
+            },
             null,
             newNodes,
             newEdges
           );
         });
       } else {
-        data.forEach((cluster) => {
+        data.forEach(cluster => {
           const clusterId = `cluster:${cluster.cluster}`;
           createNode(
             clusterId,
             cluster.cluster,
-            "cluster",
-            "Active",
-            "",
+            'cluster',
+            'Active',
+            '',
             undefined,
-            { apiVersion: "v1", kind: "Cluster", metadata: { name: cluster.cluster, namespace: "", creationTimestamp: "" }, status: { phase: "Active" } },
+            {
+              apiVersion: 'v1',
+              kind: 'Cluster',
+              metadata: { name: cluster.cluster, namespace: '', creationTimestamp: '' },
+              status: { phase: 'Active' },
+            },
             null,
             newNodes,
             newEdges
           );
 
           if (cluster.namespaces && Array.isArray(cluster.namespaces)) {
-            cluster.namespaces.forEach((namespace) => {
+            cluster.namespaces.forEach(namespace => {
               const namespaceId = `ns:${cluster.cluster}:${namespace.namespace}`;
               createNode(
                 namespaceId,
                 namespace.namespace,
-                "namespace",
-                "Active",
-                "",
+                'namespace',
+                'Active',
+                '',
                 namespace.namespace,
-                { apiVersion: "v1", kind: "Namespace", metadata: { name: namespace.namespace, namespace: namespace.namespace, creationTimestamp: "" }, status: { phase: "Active" } },
+                {
+                  apiVersion: 'v1',
+                  kind: 'Namespace',
+                  metadata: {
+                    name: namespace.namespace,
+                    namespace: namespace.namespace,
+                    creationTimestamp: '',
+                  },
+                  status: { phase: 'Active' },
+                },
                 clusterId,
                 newNodes,
                 newEdges
@@ -848,11 +873,11 @@ const WecsTreeview = () => {
                 if (stateRef.current.isCollapsed) {
                   const resourceGroups: Record<string, ResourceItem[]> = {};
 
-                  namespace.resourceTypes.forEach((resourceType) => {
+                  namespace.resourceTypes.forEach(resourceType => {
                     // Skip Event type resources
-                    if (resourceType.kind.toLowerCase() === "event") return;
-                    
-                    resourceType.resources.forEach((resource) => {
+                    if (resourceType.kind.toLowerCase() === 'event') return;
+
+                    resourceType.resources.forEach(resource => {
                       const kindLower = resourceType.kind.toLowerCase();
                       if (!resourceGroups[kindLower]) {
                         resourceGroups[kindLower] = [];
@@ -864,8 +889,10 @@ const WecsTreeview = () => {
                   Object.entries(resourceGroups).forEach(([kindLower, items]) => {
                     const count = items.length;
                     const groupId = `ns:${cluster.cluster}:${namespace.namespace}:${kindLower}:group`;
-                    const status = items.some(item => item.status?.phase === "Running") ? "Active" : "Inactive";
-                    const label = `${count} ${kindLower}${count !== 1 ? "s" : ""}`;
+                    const status = items.some(item => item.status?.phase === 'Running')
+                      ? 'Active'
+                      : 'Inactive';
+                    const label = `${count} ${kindLower}${count !== 1 ? 's' : ''}`;
 
                     createNode(
                       groupId,
@@ -884,12 +911,16 @@ const WecsTreeview = () => {
                   // Process all resource types for the expanded view
                   // First collect all ReplicaSet names that are children of deployments
                   const childReplicaSets = new Set<string>();
-                  
-                  namespace.resourceTypes.forEach((resourceType) => {
-                    if (resourceType.kind.toLowerCase() === "deployment") {
-                      resourceType.resources.forEach((resource) => {
-                        if (resource && resource.replicaSets && Array.isArray(resource.replicaSets)) {
-                          resource.replicaSets.forEach((rs) => {
+
+                  namespace.resourceTypes.forEach(resourceType => {
+                    if (resourceType.kind.toLowerCase() === 'deployment') {
+                      resourceType.resources.forEach(resource => {
+                        if (
+                          resource &&
+                          resource.replicaSets &&
+                          Array.isArray(resource.replicaSets)
+                        ) {
+                          resource.replicaSets.forEach(rs => {
                             if (rs && rs.name) {
                               childReplicaSets.add(rs.name);
                             }
@@ -898,26 +929,34 @@ const WecsTreeview = () => {
                       });
                     }
                   });
-                  
+
                   // Now process all resources while filtering ReplicaSets that are children
-                  namespace.resourceTypes.forEach((resourceType) => {
+                  namespace.resourceTypes.forEach(resourceType => {
                     // Skip Event type resources
-                    if (resourceType.kind.toLowerCase() === "event") return;
-                    
+                    if (resourceType.kind.toLowerCase() === 'event') return;
+
                     const kindLower = resourceType.kind.toLowerCase();
-                    
+
                     resourceType.resources.forEach((resource, index) => {
-                      if (!resource || typeof resource !== "object" || !resource.raw) return;
+                      if (!resource || typeof resource !== 'object' || !resource.raw) return;
                       const rawResource = resource.raw;
-                      if (!rawResource.metadata || typeof rawResource.metadata !== "object" || !rawResource.metadata.name) return;
-                      
+                      if (
+                        !rawResource.metadata ||
+                        typeof rawResource.metadata !== 'object' ||
+                        !rawResource.metadata.name
+                      )
+                        return;
+
                       // Skip ReplicaSets that are already children of Deployments
-                      if (kindLower === "replicaset" && childReplicaSets.has(rawResource.metadata.name)) {
+                      if (
+                        kindLower === 'replicaset' &&
+                        childReplicaSets.has(rawResource.metadata.name)
+                      ) {
                         return;
                       }
 
                       const resourceId = `${kindLower}:${cluster.cluster}:${namespace.namespace}:${rawResource.metadata.name}:${index}`;
-                      const status = rawResource.status?.phase || "Active";
+                      const status = rawResource.status?.phase || 'Active';
                       createNode(
                         resourceId,
                         rawResource.metadata.name,
@@ -931,14 +970,14 @@ const WecsTreeview = () => {
                         newEdges
                       );
 
-                      if (kindLower === "deployment" && rawResource.spec) {
+                      if (kindLower === 'deployment' && rawResource.spec) {
                         if (resource.replicaSets && Array.isArray(resource.replicaSets)) {
                           resource.replicaSets.forEach((rs, rsIndex) => {
                             const replicaSetId = `replicaset:${cluster.cluster}:${namespace.namespace}:${rs.name}:${rsIndex}`;
                             createNode(
                               replicaSetId,
                               rs.name,
-                              "replicaset",
+                              'replicaset',
                               rs.raw.status?.phase || status,
                               rs.raw.metadata.creationTimestamp,
                               namespace.namespace,
@@ -953,7 +992,7 @@ const WecsTreeview = () => {
                                 createNode(
                                   podId,
                                   pod.name,
-                                  "pod",
+                                  'pod',
                                   pod.raw.status?.phase || status,
                                   pod.raw.metadata.creationTimestamp,
                                   namespace.namespace,
@@ -966,8 +1005,12 @@ const WecsTreeview = () => {
                             }
                           });
                         }
-                      } else if (kindLower === "replicaset" && rawResource.spec) {
-                        if (resource.replicaSets && Array.isArray(resource.replicaSets) && resource.replicaSets.length > 0) {
+                      } else if (kindLower === 'replicaset' && rawResource.spec) {
+                        if (
+                          resource.replicaSets &&
+                          Array.isArray(resource.replicaSets) &&
+                          resource.replicaSets.length > 0
+                        ) {
                           const pods = resource.replicaSets[0].pods;
                           if (pods && Array.isArray(pods)) {
                             pods.forEach((pod, podIndex) => {
@@ -975,7 +1018,7 @@ const WecsTreeview = () => {
                               createNode(
                                 podId,
                                 pod.name,
-                                "pod",
+                                'pod',
                                 pod.raw.status?.phase || status,
                                 pod.raw.metadata.creationTimestamp,
                                 namespace.namespace,
@@ -987,91 +1030,91 @@ const WecsTreeview = () => {
                             });
                           }
                         }
-                      } else if (kindLower === "statefulset" && rawResource.spec) {
+                      } else if (kindLower === 'statefulset' && rawResource.spec) {
                         // Display actual pods from the data
                         if (resource.pods && Array.isArray(resource.pods)) {
                           resource.pods.forEach((pod, podIndex) => {
                             const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
-                          createNode(
-                            podId,
+                            createNode(
+                              podId,
                               pod.name,
-                            "pod",
+                              'pod',
                               pod.raw.status?.phase || status,
                               pod.raw.metadata.creationTimestamp,
-                            namespace.namespace,
+                              namespace.namespace,
                               pod.raw,
-                            resourceId,
-                            newNodes,
-                            newEdges
-                          );
+                              resourceId,
+                              newNodes,
+                              newEdges
+                            );
                           });
                         }
-                      } else if (kindLower === "daemonset" && rawResource.spec) {
+                      } else if (kindLower === 'daemonset' && rawResource.spec) {
                         // Display actual pods from the data
                         if (resource.pods && Array.isArray(resource.pods)) {
                           resource.pods.forEach((pod, podIndex) => {
                             const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
-                          createNode(
-                            podId,
+                            createNode(
+                              podId,
                               pod.name,
-                            "pod",
+                              'pod',
                               pod.raw.status?.phase || status,
                               pod.raw.metadata.creationTimestamp,
-                            namespace.namespace,
+                              namespace.namespace,
                               pod.raw,
-                            resourceId,
-                            newNodes,
-                            newEdges
-                          );
+                              resourceId,
+                              newNodes,
+                              newEdges
+                            );
                           });
                         }
-                      } else if (kindLower === "replicationcontroller" && rawResource.spec) {
+                      } else if (kindLower === 'replicationcontroller' && rawResource.spec) {
                         // Display actual pods from the data
                         if (resource.pods && Array.isArray(resource.pods)) {
                           resource.pods.forEach((pod, podIndex) => {
                             const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
-                          createNode(
-                            podId,
+                            createNode(
+                              podId,
                               pod.name,
-                            "pod",
+                              'pod',
                               pod.raw.status?.phase || status,
                               pod.raw.metadata.creationTimestamp,
-                            namespace.namespace,
+                              namespace.namespace,
                               pod.raw,
-                            resourceId,
-                            newNodes,
-                            newEdges
-                          );
+                              resourceId,
+                              newNodes,
+                              newEdges
+                            );
                           });
                         }
-                      } else if (kindLower === "cronjob" && rawResource.spec) {
+                      } else if (kindLower === 'cronjob' && rawResource.spec) {
                         // Display actual jobs and pods from the data if they exist
                         // No hardcoding
-                      } else if (kindLower === "job" && rawResource.spec) {
+                      } else if (kindLower === 'job' && rawResource.spec) {
                         // Display actual pods from the data
                         if (resource.pods && Array.isArray(resource.pods)) {
                           resource.pods.forEach((pod, podIndex) => {
                             const podId = `pod:${cluster.cluster}:${namespace.namespace}:${pod.name}:${podIndex}`;
-                        createNode(
-                          podId,
+                            createNode(
+                              podId,
                               pod.name,
-                          "pod",
+                              'pod',
                               pod.raw.status?.phase || status,
                               pod.raw.metadata.creationTimestamp,
-                          namespace.namespace,
+                              namespace.namespace,
                               pod.raw,
-                          resourceId,
-                          newNodes,
-                          newEdges
-                        );
+                              resourceId,
+                              newNodes,
+                              newEdges
+                            );
                           });
                         }
-                      } else if (kindLower === "service" && rawResource.spec) {
+                      } else if (kindLower === 'service' && rawResource.spec) {
                         // Create Endpoints node for the Service
                         createNode(
                           `${resourceId}:endpoints`,
                           `endpoints-${rawResource.metadata.name}`,
-                          "endpoints",
+                          'endpoints',
                           status,
                           undefined,
                           namespace.namespace,
@@ -1080,15 +1123,15 @@ const WecsTreeview = () => {
                           newNodes,
                           newEdges
                         );
-                      } else if (kindLower === "ingress" && rawResource.spec) {
+                      } else if (kindLower === 'ingress' && rawResource.spec) {
                         // Only show the Ingress without creating services automatically
                         // Services will be shown if they exist in the actual data
-                      } else if (kindLower === "configmap") {
+                      } else if (kindLower === 'configmap') {
                         // Create Volume nodes for ConfigMap
                         createNode(
                           `${resourceId}:volume`,
                           `volume-${rawResource.metadata.name}`,
-                          "volume",
+                          'volume',
                           status,
                           undefined,
                           namespace.namespace,
@@ -1097,38 +1140,41 @@ const WecsTreeview = () => {
                           newNodes,
                           newEdges
                         );
-                      }
-                      else if(kindLower === "secret"){
-                          createNode(
-                            `${resourceId}:envvar`,
-                            `envvar-${rawResource.metadata.name}`,
-                            "envvar",
-                            status,
-                            undefined,
-                            namespace.namespace,
-                            rawResource,
-                            resourceId,
-                            newNodes,
-                            newEdges
-                          );
-                      } else if (kindLower === "persistentvolumeclaim" && rawResource.spec) {
+                      } else if (kindLower === 'secret') {
+                        createNode(
+                          `${resourceId}:envvar`,
+                          `envvar-${rawResource.metadata.name}`,
+                          'envvar',
+                          status,
+                          undefined,
+                          namespace.namespace,
+                          rawResource,
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                      } else if (kindLower === 'persistentvolumeclaim' && rawResource.spec) {
                         // Only show the PVC without creating a PV automatically
-                      } else if (kindLower === "storageclass" && rawResource.spec) {
+                      } else if (kindLower === 'storageclass' && rawResource.spec) {
                         // Only show the StorageClass without creating a PV automatically
-                      } else if (kindLower === "horizontalpodautoscaler" && rawResource.spec) {
+                      } else if (kindLower === 'horizontalpodautoscaler' && rawResource.spec) {
                         // Only show the HPA without creating target resources automatically
                         // Target resources will be shown if they exist in the actual data
-                      } else if (kindLower === "rolebinding" && rawResource.roleRef) {
+                      } else if (kindLower === 'rolebinding' && rawResource.roleRef) {
                         // Only show the RoleBinding without creating roles automatically
                         // Roles will be shown if they exist in the actual data
-                      } else if (kindLower === "clusterrolebinding" && rawResource.roleRef) {
+                      } else if (kindLower === 'clusterrolebinding' && rawResource.roleRef) {
                         // Only show the ClusterRoleBinding without creating cluster roles automatically
                         // ClusterRoles will be shown if they exist in the actual data
-                      } else if (kindLower === "poddisruptionbudget" && rawResource.spec) {
+                      } else if (kindLower === 'poddisruptionbudget' && rawResource.spec) {
                         // Intentionally empty
-                      } else if (kindLower === "networkpolicy" && rawResource.spec) {
+                      } else if (kindLower === 'networkpolicy' && rawResource.spec) {
                         // Intentionally empty
-                      } else if (kindLower === "ingressclass" || kindLower === "mutatingwebhookconfiguration" || kindLower === "validatingwebhookconfiguration") {
+                      } else if (
+                        kindLower === 'ingressclass' ||
+                        kindLower === 'mutatingwebhookconfiguration' ||
+                        kindLower === 'validatingwebhookconfiguration'
+                      ) {
                         // Intentionally empty
                       }
                     });
@@ -1140,7 +1186,12 @@ const WecsTreeview = () => {
         });
       }
 
-      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(newNodes, newEdges, "LR", prevNodes);
+      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+        newNodes,
+        newEdges,
+        'LR',
+        prevNodes
+      );
       ReactDOM.unstable_batchedUpdates(() => {
         if (!isEqual(nodes, layoutedNodes)) setNodes(layoutedNodes);
         if (!isEqual(edges, layoutedEdges)) setEdges(layoutedEdges);
@@ -1161,12 +1212,16 @@ const WecsTreeview = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (selectedNode?.isOpen && panelRef.current && !panelRef.current.contains(event.target as Node)) {
+      if (
+        selectedNode?.isOpen &&
+        panelRef.current &&
+        !panelRef.current.contains(event.target as Node)
+      ) {
         handleClosePanel();
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [selectedNode, handleClosePanel]);
 
   const handleMenuClose = useCallback(() => setContextMenu(null), []);
@@ -1174,20 +1229,20 @@ const WecsTreeview = () => {
   const handleMenuAction = useCallback(
     async (action: string) => {
       if (contextMenu?.nodeId) {
-        const node = nodes.find((n) => n.id === contextMenu.nodeId);
+        const node = nodes.find(n => n.id === contextMenu.nodeId);
         if (node) {
-          const nodeIdParts = node.id.split(":");
+          const nodeIdParts = node.id.split(':');
           const nodeName = node.data.label.props.label;
-          let namespace = "";
-          let nodeType = "";
-          let cluster = "";
+          let namespace = '';
+          let nodeType = '';
+          let cluster = '';
 
-          if (node.id.startsWith("cluster:") && nodeIdParts.length === 2) {
-            nodeType = "cluster";
-            namespace = "";
+          if (node.id.startsWith('cluster:') && nodeIdParts.length === 2) {
+            nodeType = 'cluster';
+            namespace = '';
             cluster = nodeIdParts[1];
-          } else if (node.id.startsWith("ns:") && nodeIdParts.length === 3) {
-            nodeType = "namespace";
+          } else if (node.id.startsWith('ns:') && nodeIdParts.length === 3) {
+            nodeType = 'namespace';
             namespace = nodeIdParts[2];
             cluster = nodeIdParts[1];
           } else if (nodeIdParts.length >= 4) {
@@ -1202,9 +1257,9 @@ const WecsTreeview = () => {
           const isDeploymentOrJobPod = node.data.isDeploymentOrJobPod;
 
           switch (action) {
-            case "Details":
+            case 'Details':
               setSelectedNode({
-                namespace: namespace || "default",
+                namespace: namespace || 'default',
                 name: nodeName,
                 type: nodeType,
                 onClose: handleClosePanel,
@@ -1215,9 +1270,9 @@ const WecsTreeview = () => {
                 isDeploymentOrJobPod,
               });
               break;
-            case "Edit":
+            case 'Edit':
               setSelectedNode({
-                namespace: namespace || "default",
+                namespace: namespace || 'default',
                 name: nodeName,
                 type: nodeType,
                 onClose: handleClosePanel,
@@ -1228,19 +1283,19 @@ const WecsTreeview = () => {
                 isDeploymentOrJobPod,
               });
               break;
-            case "Logs":
-              if (nodeType === "pod" && isDeploymentOrJobPod) {
-              setSelectedNode({
-                namespace: namespace || "default",
-                name: nodeName,
-                type: nodeType,
-                onClose: handleClosePanel,
-                isOpen: true,
-                resourceData,
-                initialTab: 2,
-                cluster,
+            case 'Logs':
+              if (nodeType === 'pod' && isDeploymentOrJobPod) {
+                setSelectedNode({
+                  namespace: namespace || 'default',
+                  name: nodeName,
+                  type: nodeType,
+                  onClose: handleClosePanel,
+                  isOpen: true,
+                  resourceData,
+                  initialTab: 2,
+                  cluster,
                   isDeploymentOrJobPod,
-              });
+                });
               }
               break;
             default:
@@ -1257,11 +1312,11 @@ const WecsTreeview = () => {
 
   const handleCreateWorkloadClick = () => {
     setShowCreateOptions(true);
-    setActiveOption("option1");
+    setActiveOption('option1');
   };
 
   const handleToggleCollapse = useCallback(() => {
-    setIsCollapsed((prev) => {
+    setIsCollapsed(prev => {
       const newCollapsed = !prev;
       stateRef.current.isCollapsed = newCollapsed;
       setIsTransforming(true);
@@ -1290,86 +1345,97 @@ const WecsTreeview = () => {
     });
   }, [wecsData, transformDataToTree]);
 
-  const isLoading = !wecsIsConnected || !hasValidWecsData || isTransforming || !minimumLoadingTimeElapsed;
+  const isLoading =
+    !wecsIsConnected || !hasValidWecsData || isTransforming || !minimumLoadingTimeElapsed;
 
   return (
-    <Box ref={containerRef} sx={{ display: "flex", height: "85vh", width: "100%", position: "relative" }}>
+    <Box
+      ref={containerRef}
+      sx={{ display: 'flex', height: '85vh', width: '100%', position: 'relative' }}
+    >
       <Box
         sx={{
           flex: 1,
-          position: "relative",
-          filter: selectedNode?.isOpen ? "blur(5px)" : "none",
-          transition: "filter 0.2s ease-in-out",
-          pointerEvents: selectedNode?.isOpen ? "none" : "auto",
+          position: 'relative',
+          filter: selectedNode?.isOpen ? 'blur(5px)' : 'none',
+          transition: 'filter 0.2s ease-in-out',
+          pointerEvents: selectedNode?.isOpen ? 'none' : 'auto',
         }}
       >
         <Box
           sx={{
             mb: 4,
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: 2,
             flex: 1,
-            justifyContent: "space-between",
+            justifyContent: 'space-between',
             padding: 2,
             borderRadius: 1,
-            boxShadow: "0 6px 6px rgba(0,0,0,0.1)",
-            background: theme === "dark" ? "rgb(15, 23, 42)" : "#fff",
+            boxShadow: '0 6px 6px rgba(0,0,0,0.1)',
+            background: theme === 'dark' ? 'rgb(15, 23, 42)' : '#fff',
           }}
         >
-          <Typography variant="h4" sx={{ color: "#4498FF", fontWeight: 700, fontSize: "30px", letterSpacing: "0.5px" }}>
+          <Typography
+            variant="h4"
+            sx={{ color: '#4498FF', fontWeight: 700, fontSize: '30px', letterSpacing: '0.5px' }}
+          >
             Remote-Cluster Treeview
           </Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <IconButton
-              color={viewMode === 'tiles' ? "primary" : "default"}
+              color={viewMode === 'tiles' ? 'primary' : 'default'}
               onClick={() => setViewMode('tiles')}
-              sx={{ 
+              sx={{
                 padding: 1,
-                borderRadius: "50%",
+                borderRadius: '50%',
                 width: 40,
                 height: 40,
-                bgcolor: theme === "dark" && viewMode === 'tiles' ? "rgba(144, 202, 249, 0.15)" : "transparent",
-                "&:hover": {
-                  bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.05)",
-                }
+                bgcolor:
+                  theme === 'dark' && viewMode === 'tiles'
+                    ? 'rgba(144, 202, 249, 0.15)'
+                    : 'transparent',
+                '&:hover': {
+                  bgcolor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                },
               }}
             >
               <span>
-                <i 
-                  className="fa fa-th menu_icon" 
+                <i
+                  className="fa fa-th menu_icon"
                   title="Tiles"
-                  style={{ 
-                    color: theme === "dark" 
-                      ? viewMode === 'tiles' ? "#90CAF9" : "#FFFFFF" 
-                      : undefined 
+                  style={{
+                    color:
+                      theme === 'dark' ? (viewMode === 'tiles' ? '#90CAF9' : '#FFFFFF') : undefined,
                   }}
                 ></i>
               </span>
             </IconButton>
             <IconButton
-              color={viewMode === 'list' ? "primary" : "default"}
+              color={viewMode === 'list' ? 'primary' : 'default'}
               onClick={() => setViewMode('list')}
-              sx={{ 
+              sx={{
                 padding: 1,
-                borderRadius: "50%", 
-                width: 40,         
-                height: 40,         
-              
-                bgcolor: theme === "dark" && viewMode === 'list' ? "rgba(144, 202, 249, 0.15)" : "transparent",
-                "&:hover": {
-                  bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.05)",
-                }
+                borderRadius: '50%',
+                width: 40,
+                height: 40,
+
+                bgcolor:
+                  theme === 'dark' && viewMode === 'list'
+                    ? 'rgba(144, 202, 249, 0.15)'
+                    : 'transparent',
+                '&:hover': {
+                  bgcolor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                },
               }}
             >
               <span>
-                <i 
-                  className="fa fa-th-list menu_icon" 
+                <i
+                  className="fa fa-th-list menu_icon"
                   title="List"
-                  style={{ 
-                    color: theme === "dark" 
-                      ? viewMode === 'list' ? "#90CAF9" : "#FFFFFF" 
-                      : undefined 
+                  style={{
+                    color:
+                      theme === 'dark' ? (viewMode === 'list' ? '#90CAF9' : '#FFFFFF') : undefined,
                   }}
                 ></i>
               </span>
@@ -1379,12 +1445,12 @@ const WecsTreeview = () => {
               startIcon={<Plus size={20} />}
               onClick={handleCreateWorkloadClick}
               sx={{
-                color: "#FFFFFF",
-                backgroundColor: "#2F86FF",
-                padding: "8px 20px",
-                fontWeight: "600",
-                borderRadius: "8px",
-                textTransform: "none",
+                color: '#FFFFFF',
+                backgroundColor: '#2F86FF',
+                padding: '8px 20px',
+                fontWeight: '600',
+                borderRadius: '8px',
+                textTransform: 'none',
               }}
             >
               Create Workload
@@ -1392,69 +1458,103 @@ const WecsTreeview = () => {
           </Box>
         </Box>
 
-        {showCreateOptions && <CreateOptions activeOption={activeOption} setActiveOption={setActiveOption} onCancel={handleCancelCreateOptions} />}
+        {showCreateOptions && (
+          <CreateOptions
+            activeOption={activeOption}
+            setActiveOption={setActiveOption}
+            onCancel={handleCancelCreateOptions}
+          />
+        )}
 
-        <Box 
-          sx={{ 
-            width: "100%", 
-            padding: "8px 16px",
-            backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.04)",
-            borderRadius: "4px",
-            marginBottom: "12px",
-            display: "flex",
-            alignItems: "center"
+        <Box
+          sx={{
+            width: '100%',
+            padding: '8px 16px',
+            backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+            borderRadius: '4px',
+            marginBottom: '12px',
+            display: 'flex',
+            alignItems: 'center',
           }}
         >
-          <Typography variant="body2" sx={{ color: theme === "dark" ? "rgba(255, 255, 255, 0.7)" : "rgba(0, 0, 0, 0.6)" }}>
-            Note: Default, Kubernetes system, and OpenShift namespaces are filtered out from this view.
+          <Typography
+            variant="body2"
+            sx={{ color: theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)' }}
+          >
+            Note: Default, Kubernetes system, and OpenShift namespaces are filtered out from this
+            view.
           </Typography>
         </Box>
 
-        <Box sx={{ width: "100%", height: "calc(100% - 80px)", position: "relative" }}>
+        <Box sx={{ width: '100%', height: 'calc(100% - 80px)', position: 'relative' }}>
           {isLoading ? (
-              viewMode === 'list' ? (
-                <ListViewSkeleton itemCount={8} />
-              ) : (
-                <WecsTreeviewSkeleton />
-              )
+            viewMode === 'list' ? (
+              <ListViewSkeleton itemCount={8} />
+            ) : (
+              <WecsTreeviewSkeleton />
+            )
           ) : viewMode === 'list' ? (
             <ListViewComponent />
           ) : nodes.length > 0 || edges.length > 0 ? (
-            <Box sx={{ width: "100%", height: "100%", position: "relative" }}>
+            <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
               <ReactFlowProvider>
-                <FlowCanvas nodes={nodes} edges={edges} renderStartTime={renderStartTime} theme={theme} />
-                <ZoomControls theme={theme} onToggleCollapse={handleToggleCollapse} isCollapsed={isCollapsed} onExpandAll={handleExpandAll} onCollapseAll={handleCollapseAll} />
-                <FullScreenToggle 
-                  containerRef={containerRef} 
-                  position="top-right" 
+                <FlowCanvas
+                  nodes={nodes}
+                  edges={edges}
+                  renderStartTime={renderStartTime}
+                  theme={theme}
+                />
+                <ZoomControls
+                  theme={theme}
+                  onToggleCollapse={handleToggleCollapse}
+                  isCollapsed={isCollapsed}
+                  onExpandAll={handleExpandAll}
+                  onCollapseAll={handleCollapseAll}
+                />
+                <FullScreenToggle
+                  containerRef={containerRef}
+                  position="top-right"
                   tooltipPosition="left"
-                  tooltipText="Toggle fullscreen view" 
+                  tooltipText="Toggle fullscreen view"
                 />
               </ReactFlowProvider>
             </Box>
           ) : (
             <Box
               sx={{
-                width: "100%",
-                backgroundColor: theme === "dark" ? "var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity)))" : "#fff",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                marginTop: "250px",
+                width: '100%',
+                backgroundColor:
+                  theme === 'dark'
+                    ? 'var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity)))'
+                    : '#fff',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginTop: '250px',
               }}
             >
-              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-                <Typography sx={{ color: theme === "dark" ? "#fff" : "#333", fontWeight: 500, fontSize: "22px" }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                <Typography
+                  sx={{
+                    color: theme === 'dark' ? '#fff' : '#333',
+                    fontWeight: 500,
+                    fontSize: '22px',
+                  }}
+                >
                   No Workloads Found
                 </Typography>
-                <Typography variant="body2" sx={{ color: "#00000099", fontSize: "17px", mb: 2 }}>
+                <Typography variant="body2" sx={{ color: '#00000099', fontSize: '17px', mb: 2 }}>
                   Get started by creating your first workload
                 </Typography>
                 <Button
                   variant="contained"
                   startIcon={<Plus size={20} />}
                   onClick={handleCreateWorkloadClick}
-                  sx={{ backgroundColor: "#2f86ff", color: "#fff", "&:hover": { backgroundColor: "#1f76e5" } }}
+                  sx={{
+                    backgroundColor: '#2f86ff',
+                    color: '#fff',
+                    '&:hover': { backgroundColor: '#1f76e5' },
+                  }}
                 >
                   Create Workload
                 </Button>
@@ -1470,50 +1570,56 @@ const WecsTreeview = () => {
               anchorPosition={contextMenu ? { top: contextMenu.y, left: contextMenu.x } : undefined}
               PaperProps={{
                 style: {
-                  backgroundColor: theme === "dark" ? "#1F2937" : "#fff",
-                  color: theme === "dark" ? "#fff" : "inherit",
-                  boxShadow: theme === "dark" ? "0 4px 20px rgba(0, 0, 0, 0.5)" : "0 4px 20px rgba(0, 0, 0, 0.15)"
-                }
+                  backgroundColor: theme === 'dark' ? '#1F2937' : '#fff',
+                  color: theme === 'dark' ? '#fff' : 'inherit',
+                  boxShadow:
+                    theme === 'dark'
+                      ? '0 4px 20px rgba(0, 0, 0, 0.5)'
+                      : '0 4px 20px rgba(0, 0, 0, 0.15)',
+                },
               }}
             >
-              <MenuItem 
-                onClick={() => handleMenuAction("Details")}
+              <MenuItem
+                onClick={() => handleMenuAction('Details')}
                 sx={{
-                  color: theme === "dark" ? "#fff" : "inherit",
-                  "&:hover": {
-                    backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)"
-                  }
+                  color: theme === 'dark' ? '#fff' : 'inherit',
+                  '&:hover': {
+                    backgroundColor:
+                      theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                  },
                 }}
               >
                 Details
               </MenuItem>
-              <MenuItem 
-                onClick={() => handleMenuAction("Edit")}
+              <MenuItem
+                onClick={() => handleMenuAction('Edit')}
                 sx={{
-                  color: theme === "dark" ? "#fff" : "inherit",
-                  "&:hover": {
-                    backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)"
-                  }
+                  color: theme === 'dark' ? '#fff' : 'inherit',
+                  '&:hover': {
+                    backgroundColor:
+                      theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                  },
                 }}
               >
                 Edit
               </MenuItem>
-              {contextMenu.nodeType === "pod" && 
-               contextMenu.nodeId && 
-               contextMenu.nodeId.startsWith("pod:") &&
-               nodes.find(n => n.id === contextMenu.nodeId)?.data?.isDeploymentOrJobPod && (
-                <MenuItem 
-                  onClick={() => handleMenuAction("Logs")}
-                  sx={{
-                    color: theme === "dark" ? "#fff" : "inherit",
-                    "&:hover": {
-                      backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)"
-                    }
-                  }}
-                >
-                  Logs
-                </MenuItem>
-              )}
+              {contextMenu.nodeType === 'pod' &&
+                contextMenu.nodeId &&
+                contextMenu.nodeId.startsWith('pod:') &&
+                nodes.find(n => n.id === contextMenu.nodeId)?.data?.isDeploymentOrJobPod && (
+                  <MenuItem
+                    onClick={() => handleMenuAction('Logs')}
+                    sx={{
+                      color: theme === 'dark' ? '#fff' : 'inherit',
+                      '&:hover': {
+                        backgroundColor:
+                          theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                      },
+                    }}
+                  >
+                    Logs
+                  </MenuItem>
+                )}
             </Menu>
           )}
         </Box>
@@ -1521,14 +1627,14 @@ const WecsTreeview = () => {
 
       <div ref={panelRef}>
         <WecsDetailsPanel
-          namespace={selectedNode?.namespace || ""}
-          name={selectedNode?.name || ""}
-          type={selectedNode?.type || ""}
+          namespace={selectedNode?.namespace || ''}
+          name={selectedNode?.name || ''}
+          type={selectedNode?.type || ''}
           resourceData={selectedNode?.resourceData}
           onClose={handleClosePanel}
           isOpen={selectedNode?.isOpen || false}
           initialTab={selectedNode?.initialTab}
-          cluster={selectedNode?.cluster || ""}
+          cluster={selectedNode?.cluster || ''}
           isDeploymentOrJobPod={selectedNode?.isDeploymentOrJobPod}
         />
       </div>

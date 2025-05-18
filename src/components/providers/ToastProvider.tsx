@@ -94,9 +94,9 @@ const ToastProvider: React.FC<ToastProviderProps> = ({ children, toastOptions })
   return (
     <>
       {children}
-      <Toaster 
-        position="top-center" 
-        reverseOrder={false} 
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
         gutter={18}
         containerClassName="toast-container"
         containerStyle={{

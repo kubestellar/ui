@@ -16,11 +16,11 @@ interface PolicyNodeData {
 
 const PolicyNode: React.FC<NodeProps<PolicyNodeData>> = ({ data }) => {
   const { policy, label, isActive, theme } = data;
-  
+
   return (
     <>
       <Handle type="target" position={Position.Left} style={{ background: '#555' }} />
-      
+
       <Box
         sx={{
           textAlign: 'center',
@@ -41,28 +41,28 @@ const PolicyNode: React.FC<NodeProps<PolicyNodeData>> = ({ data }) => {
           }}
         >
           <KubernetesIcon type="policy" size={30} sx={{ mr: 1 }} />
-          <Typography 
-            variant="subtitle2" 
-            sx={{ 
-              fontWeight: 600, 
+          <Typography
+            variant="subtitle2"
+            sx={{
+              fontWeight: 600,
               color: theme === 'dark' ? '#fff' : '#000',
             }}
           >
             {label}
           </Typography>
         </Box>
-        
-        <Chip 
-          label={policy.status} 
+
+        <Chip
+          label={policy.status}
           size="small"
-          color={isActive ? "success" : "default"}
-          sx={{ 
+          color={isActive ? 'success' : 'default'}
+          sx={{
             mb: 1,
             fontWeight: 500,
-            fontSize: '0.7rem'
-          }} 
+            fontSize: '0.7rem',
+          }}
         />
-        
+
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <KubernetesIcon type="cluster" size={16} sx={{ mr: 0.5 }} />
@@ -78,7 +78,7 @@ const PolicyNode: React.FC<NodeProps<PolicyNodeData>> = ({ data }) => {
           </Box>
         </Box>
       </Box>
-      
+
       <Handle type="source" position={Position.Right} style={{ background: '#555' }} />
     </>
   );

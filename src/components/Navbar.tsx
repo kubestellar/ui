@@ -1,26 +1,26 @@
-import { Link } from "react-router-dom";
-import { Sun, Moon } from "lucide-react";
-import { api } from "../lib/api";
-import useTheme from "../stores/themeStore";
+import { Link } from 'react-router-dom';
+import { Sun, Moon } from 'lucide-react';
+import { api } from '../lib/api';
+import useTheme from '../stores/themeStore';
 
 const Navbar = () => {
-  const theme = useTheme((state) => state.theme);
-  const toggleTheme = useTheme((state) => state.toggleTheme);
+  const theme = useTheme(state => state.theme);
+  const toggleTheme = useTheme(state => state.toggleTheme);
 
   const generateLog = async () => {
     try {
-      const response = await api.get("/api/log", {
-        responseType: "blob",
+      const response = await api.get('/api/log', {
+        responseType: 'blob',
       });
 
       // Create a Blob from the response data
-      const blob = new Blob([response.data], { type: "text/plain" });
+      const blob = new Blob([response.data], { type: 'text/plain' });
       const url = window.URL.createObjectURL(blob);
 
       // Create a link element
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = url;
-      link.setAttribute("download", "kubestellarui.log");
+      link.setAttribute('download', 'kubestellarui.log');
 
       // Append to the document and trigger click
       document.body.appendChild(link);
@@ -30,13 +30,13 @@ const Navbar = () => {
       link.parentNode?.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Error generating log:", error);
-      alert("Failed to generate log. Please try again.");
+      console.error('Error generating log:', error);
+      alert('Failed to generate log. Please try again.');
     }
   };
 
   return (
-    <div className="navbar bg-base-100 w-full px-4 shadow-md">
+    <div className="navbar w-full bg-base-100 px-4 shadow-md">
       <div className="navbar-start">
         <div className="dropdown">
           <div tabIndex={0} role="button" className="btn btn-ghost lg:hidden">
@@ -57,7 +57,7 @@ const Navbar = () => {
           </div>
           <ul
             tabIndex={0}
-            className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
+            className="menu dropdown-content menu-sm z-[1] mt-3 w-52 rounded-box bg-base-100 p-2 shadow"
           >
             <li>
               <Link to="/its">ITS</Link>
@@ -82,15 +82,8 @@ const Navbar = () => {
         </ul>
       </div>
       <div className="navbar-end space-x-2">
-        <button
-          onClick={toggleTheme}
-          className="btn btn-ghost btn-circle rounded p-2"
-        >
-          {theme === "dark" ? (
-            <Sun className="w-6 h-6" />
-          ) : (
-            <Moon className="w-6 h-6" />
-          )}
+        <button onClick={toggleTheme} className="btn btn-circle btn-ghost rounded p-2">
+          {theme === 'dark' ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
         </button>
 
         <button className="btn" onClick={generateLog}>

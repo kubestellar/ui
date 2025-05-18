@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Button } from "@mui/material";
+import { Box, Typography, Button } from '@mui/material';
 import useTheme from '../../stores/themeStore';
 
 interface PaginationProps {
@@ -15,14 +15,14 @@ const BPPagination: React.FC<PaginationProps> = ({
   totalCount,
   itemsPerPage = 10,
   currentPage,
-  onPageChange
+  onPageChange,
 }) => {
-  const theme = useTheme((state) => state.theme)
+  const theme = useTheme(state => state.theme);
   const totalPages = Math.ceil(filteredCount / itemsPerPage);
-  
+
   const getPageNumbers = (): (number | string)[] => {
     if (totalPages <= 1) return [1];
-    
+
     const range: (number | string)[] = [];
     let lastNumber: number | null = null;
 
@@ -54,29 +54,29 @@ const BPPagination: React.FC<PaginationProps> = ({
     }
   };
 
-  const startRange = ((currentPage - 1) * itemsPerPage) + 1;
+  const startRange = (currentPage - 1) * itemsPerPage + 1;
   const endRange = Math.min(currentPage * itemsPerPage, filteredCount);
 
   return (
     <Box
       sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         mt: 2,
       }}
     >
-      <Typography 
-        variant="body2" 
-        sx={{ 
-          color: theme === "dark" ? "white" : "text.secondary"
+      <Typography
+        variant="body2"
+        sx={{
+          color: theme === 'dark' ? 'white' : 'text.secondary',
         }}
       >
         Showing {startRange} to {endRange} of {filteredCount} entries
         {filteredCount !== totalCount && ` (filtered from ${totalCount} total entries)`}
       </Typography>
-      
-      <Box sx={{ display: "flex", gap: 0.5 }}>
+
+      <Box sx={{ display: 'flex', gap: 0.5 }}>
         <Button
           variant="outlined"
           size="small"
@@ -85,19 +85,21 @@ const BPPagination: React.FC<PaginationProps> = ({
           sx={{
             minWidth: 'auto',
             px: 1,
-            color: theme === "dark" ? "white" : "primary.main",
-            borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.23)" : "rgba(25, 118, 210, 0.5)",
+            color: theme === 'dark' ? 'white' : 'primary.main',
+            borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.23)' : 'rgba(25, 118, 210, 0.5)',
             '&:hover': {
-              borderColor: theme === "dark" ? "white" : "primary.main",
-              backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(25, 118, 210, 0.04)"
+              borderColor: theme === 'dark' ? 'white' : 'primary.main',
+              backgroundColor:
+                theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(25, 118, 210, 0.04)',
             },
             '&.Mui-disabled': {
               cursor: 'not-allowed',
-              pointerEvents: "all !important",
-              backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.12)",
-              borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.3)" : "rgba(0, 0, 0, 0.26)",
-              color: theme === "dark" ? "rgba(255, 255, 255, 0.4)" : "rgba(0, 0, 0, 0.26)"
-            }
+              pointerEvents: 'all !important',
+              backgroundColor:
+                theme === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)',
+              borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.26)',
+              color: theme === 'dark' ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.26)',
+            },
           }}
         >
           Prev
@@ -106,35 +108,41 @@ const BPPagination: React.FC<PaginationProps> = ({
         {getPageNumbers().map((pageNumber, index) => (
           <Button
             key={index}
-            variant={pageNumber === currentPage ? "contained" : "outlined"}
+            variant={pageNumber === currentPage ? 'contained' : 'outlined'}
             size="small"
             disabled={pageNumber === '...'}
-            onClick={() => typeof pageNumber === 'number' ? handlePageChange(pageNumber) : undefined}
+            onClick={() =>
+              typeof pageNumber === 'number' ? handlePageChange(pageNumber) : undefined
+            }
             sx={{
               minWidth: 35,
               px: 1,
-              color: pageNumber === currentPage 
-                ? "white" 
-                : theme === "dark" ? "white" : "primary.main",
-              borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.23)" : "rgba(25, 118, 210, 0.5)",
-              backgroundColor: pageNumber === currentPage 
-                ? "primary.main" 
-                : "transparent",
+              color:
+                pageNumber === currentPage ? 'white' : theme === 'dark' ? 'white' : 'primary.main',
+              borderColor:
+                theme === 'dark' ? 'rgba(255, 255, 255, 0.23)' : 'rgba(25, 118, 210, 0.5)',
+              backgroundColor: pageNumber === currentPage ? 'primary.main' : 'transparent',
               '&:hover': {
-                borderColor: theme === "dark" ? "white" : "primary.main",
-                backgroundColor: pageNumber === currentPage 
-                  ? "primary.dark"
-                  : theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(25, 118, 210, 0.04)"
+                borderColor: theme === 'dark' ? 'white' : 'primary.main',
+                backgroundColor:
+                  pageNumber === currentPage
+                    ? 'primary.dark'
+                    : theme === 'dark'
+                      ? 'rgba(255, 255, 255, 0.08)'
+                      : 'rgba(25, 118, 210, 0.04)',
               },
               '&.Mui-disabled': {
                 cursor: 'not-allowed',
-                pointerEvents: "all !important",
-                backgroundColor: pageNumber === '...' 
-                  ? 'transparent' 
-                  : theme === "dark" ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.12)",
-                borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.3)" : "rgba(0, 0, 0, 0.26)",
-                color: theme === "dark" ? "rgba(255, 255, 255, 0.4)" : "rgba(0, 0, 0, 0.26)"
-              }
+                pointerEvents: 'all !important',
+                backgroundColor:
+                  pageNumber === '...'
+                    ? 'transparent'
+                    : theme === 'dark'
+                      ? 'rgba(255, 255, 255, 0.12)'
+                      : 'rgba(0, 0, 0, 0.12)',
+                borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.26)',
+                color: theme === 'dark' ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.26)',
+              },
             }}
           >
             {pageNumber}
@@ -149,19 +157,21 @@ const BPPagination: React.FC<PaginationProps> = ({
           sx={{
             minWidth: 'auto',
             px: 1,
-            color: theme === "dark" ? "white" : "primary.main",
-            borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.23)" : "rgba(25, 118, 210, 0.5)",
+            color: theme === 'dark' ? 'white' : 'primary.main',
+            borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.23)' : 'rgba(25, 118, 210, 0.5)',
             '&:hover': {
-              borderColor: theme === "dark" ? "white" : "primary.main",
-              backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(25, 118, 210, 0.04)"
+              borderColor: theme === 'dark' ? 'white' : 'primary.main',
+              backgroundColor:
+                theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(25, 118, 210, 0.04)',
             },
             '&.Mui-disabled': {
               cursor: 'not-allowed',
-              pointerEvents: "all !important",
-              backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.12)",
-              borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.3)" : "rgba(0, 0, 0, 0.26)",
-              color: theme === "dark" ? "rgba(255, 255, 255, 0.4)" : "rgba(0, 0, 0, 0.26)"
-            }
+              pointerEvents: 'all !important',
+              backgroundColor:
+                theme === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)',
+              borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.26)',
+              color: theme === 'dark' ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.26)',
+            },
           }}
         >
           Next

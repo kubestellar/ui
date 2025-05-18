@@ -18,7 +18,7 @@ interface ClusterPanelContainerProps {
   loading: boolean;
   error: string | undefined;
   compact?: boolean;
-  onItemClick?: (itemOrId: TreeItem | string) => void; 
+  onItemClick?: (itemOrId: TreeItem | string) => void;
 }
 
 interface WorkloadPanelContainerProps {
@@ -26,26 +26,18 @@ interface WorkloadPanelContainerProps {
   loading: boolean;
   error: string | undefined;
   compact?: boolean;
-  onItemClick?: (itemOrId: TreeItem | string) => void; 
+  onItemClick?: (itemOrId: TreeItem | string) => void;
 }
 
 export const ClusterPanelContainer: React.FC<ClusterPanelContainerProps> = ({
   clusters,
   loading,
   error,
-  onItemClick
-
+  onItemClick,
 }) => {
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-     
-      <ClusterPanel 
-        clusters={clusters} 
-        loading={loading}
-        error={error}
-        
-        onItemClick={onItemClick} 
-      />
+      <ClusterPanel clusters={clusters} loading={loading} error={error} onItemClick={onItemClick} />
     </Box>
   );
 };
@@ -54,17 +46,14 @@ export const WorkloadPanelContainer: React.FC<WorkloadPanelContainerProps> = ({
   workloads,
   loading,
   error,
-  onItemClick // Missing
-
+  onItemClick, // Missing
 }) => {
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-     
-      <WorkloadPanel 
-        workloads={workloads} 
+      <WorkloadPanel
+        workloads={workloads}
         loading={loading}
         error={error}
-        
         onItemClick={onItemClick} // Add this
       />
     </Box>
@@ -87,21 +76,16 @@ interface PolicyPanelsProps {
   };
 }
 
-const PolicyPanels: React.FC<PolicyPanelsProps> = ({
-  clusters,
-  workloads,
-  loading,
-  error
-}) => {
+const PolicyPanels: React.FC<PolicyPanelsProps> = ({ clusters, workloads, loading, error }) => {
   return (
     <>
-      <ClusterPanelContainer 
-        clusters={clusters} 
+      <ClusterPanelContainer
+        clusters={clusters}
         loading={loading.clusters}
         error={error.clusters}
       />
-      <WorkloadPanelContainer 
-        workloads={workloads} 
+      <WorkloadPanelContainer
+        workloads={workloads}
         loading={loading.workloads}
         error={error.workloads}
       />
@@ -109,4 +93,4 @@ const PolicyPanels: React.FC<PolicyPanelsProps> = ({
   );
 };
 
-export default React.memo(PolicyPanels); 
+export default React.memo(PolicyPanels);

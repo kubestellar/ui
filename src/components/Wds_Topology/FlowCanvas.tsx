@@ -1,7 +1,7 @@
-import { memo, useMemo, useEffect, useCallback, useRef } from "react";
-import ReactFlow, { Background, useReactFlow, BackgroundVariant } from "reactflow";
-import { CustomNode, CustomEdge } from "../TreeViewComponent";
-import useLabelHighlightStore from "../../stores/labelHighlightStore";
+import { memo, useMemo, useEffect, useCallback, useRef } from 'react';
+import ReactFlow, { Background, useReactFlow, BackgroundVariant } from 'reactflow';
+import { CustomNode, CustomEdge } from '../TreeViewComponent';
+import useLabelHighlightStore from '../../stores/labelHighlightStore';
 
 interface FlowCanvasProps {
   nodes: CustomNode[];
@@ -17,7 +17,7 @@ interface FlowCanvasProps {
  */
 export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
   const { setViewport, getViewport } = useReactFlow();
-  const highlightedLabels = useLabelHighlightStore((state) => state.highlightedLabels);
+  const highlightedLabels = useLabelHighlightStore(state => state.highlightedLabels);
   const viewportRef = useRef({ x: 0, y: 0, zoom: 1.6 });
 
   /**
@@ -26,17 +26,23 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
    */
   const positions = useMemo(() => {
     if (nodes.length === 0) return { minX: 0, maxX: 0, minY: 0, maxY: 0 };
-    const minX = Math.min(...nodes.map((node) => node.position.x));
+    const minX = Math.min(...nodes.map(node => node.position.x));
     const maxX = Math.max(
-      ...nodes.map((node) => {
-        const width = typeof node.style?.width === "string" ? parseInt(node.style.width) : node.style?.width || 146;
+      ...nodes.map(node => {
+        const width =
+          typeof node.style?.width === 'string'
+            ? parseInt(node.style.width)
+            : node.style?.width || 146;
         return node.position.x + width;
       })
     );
-    const minY = Math.min(...nodes.map((node) => node.position.y));
+    const minY = Math.min(...nodes.map(node => node.position.y));
     const maxY = Math.max(
-      ...nodes.map((node) => {
-        const height = typeof node.style?.height === "string" ? parseInt(node.style.height) : node.style?.height || 30;
+      ...nodes.map(node => {
+        const height =
+          typeof node.style?.height === 'string'
+            ? parseInt(node.style.height)
+            : node.style?.height || 30;
         return node.position.y + height;
       })
     );
@@ -52,8 +58,10 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
       const { minX, minY, maxY } = positions;
       const treeHeight = maxY - minY;
 
-      const reactFlowContainer = document.querySelector(".react-flow") as HTMLElement;
-      const viewportHeight = reactFlowContainer ? reactFlowContainer.offsetHeight : window.innerHeight;
+      const reactFlowContainer = document.querySelector('.react-flow') as HTMLElement;
+      const viewportHeight = reactFlowContainer
+        ? reactFlowContainer.offsetHeight
+        : window.innerHeight;
 
       const padding = 20;
       const topMargin = 100;
@@ -65,8 +73,12 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
       if (reactFlowContainer) {
         reactFlowContainer.style.minHeight = `${Math.max(treeHeight * initialZoom + padding * 2 + topMargin, viewportHeight)}px`;
       }
-      
-      if (viewportRef.current.zoom === 1.6 && viewportRef.current.x === 0 && viewportRef.current.y === 0) {
+
+      if (
+        viewportRef.current.zoom === 1.6 &&
+        viewportRef.current.x === 0 &&
+        viewportRef.current.y === 0
+      ) {
         const initialViewport = { x: centerX, y: centerY, zoom: initialZoom };
         setViewport(initialViewport);
         viewportRef.current = initialViewport;
@@ -92,7 +104,7 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
    */
   const handleWheel = useCallback(
     (event: React.WheelEvent) => {
-      const reactFlowContainer = document.querySelector(".react-flow");
+      const reactFlowContainer = document.querySelector('.react-flow');
       const isInsideTree = reactFlowContainer && reactFlowContainer.contains(event.target as Node);
 
       if (isInsideTree) {
@@ -105,7 +117,10 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
           setViewport({ x: newX, y, zoom });
           viewportRef.current = { x: newX, y, zoom };
         } else if (event.ctrlKey) {
-          const newZoom = Math.min(Math.max(zoom + (event.deltaY > 0 ? -zoomSpeed : zoomSpeed), 0.1), 2);
+          const newZoom = Math.min(
+            Math.max(zoom + (event.deltaY > 0 ? -zoomSpeed : zoomSpeed), 0.1),
+            2
+          );
           setViewport({ x, y, zoom: newZoom });
           viewportRef.current = { x, y, zoom: newZoom };
         } else {
@@ -129,9 +144,7 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
    * Updates visualization when label highlighting state changes.
    * Allows nodes with highlighted labels to be visually distinct without resetting the viewport.
    */
-  useEffect(() => {
-    
-  }, [highlightedLabels]);
+  useEffect(() => {}, [highlightedLabels]);
 
   return (
     <ReactFlow
@@ -143,19 +156,19 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
       zoomOnDoubleClick={false}
       zoomOnPinch={false}
       onMoveEnd={onMoveEnd}
-      style={{ 
-        background: theme === "dark" ? "rgb(15, 23, 42)" : "rgb(222, 230, 235)", 
-        width: "100%", 
-        height: "100%", 
-        borderRadius:"4px"
+      style={{
+        background: theme === 'dark' ? 'rgb(15, 23, 42)' : 'rgb(222, 230, 235)',
+        width: '100%',
+        height: '100%',
+        borderRadius: '4px',
       }}
       onWheel={handleWheel}
     >
-      <Background 
-        variant={BackgroundVariant.Dots} 
-        gap={12} 
-        size={1} 
-        color={theme === "dark" ? "#555" : "#bbb"} 
+      <Background
+        variant={BackgroundVariant.Dots}
+        gap={12}
+        size={1}
+        color={theme === 'dark' ? '#555' : '#bbb'}
       />
     </ReactFlow>
   );
