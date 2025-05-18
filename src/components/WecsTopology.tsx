@@ -265,7 +265,7 @@ const getLayoutedElements = (
 ) => {
   const NODE_WIDTH = 146;
   const NODE_HEIGHT = 30;
-  const NODE_SEP = 20; 
+  const NODE_SEP = 22; 
   const RANK_SEP = 60; 
   const CHILD_SPACING = NODE_HEIGHT + 30; 
 
