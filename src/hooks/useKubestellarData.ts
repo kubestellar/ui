@@ -44,14 +44,17 @@ interface BindingPolicyApiData {
   namespace?: string;
 }
 
-export function useKubestellarData({ onDataLoaded, skipFetch = false }: UseKubestellarDataProps = {}) {
-    const [clusters, setClusters] = useState<ManagedCluster[]>([]);
+export function useKubestellarData({
+  onDataLoaded,
+  skipFetch = false,
+}: UseKubestellarDataProps = {}) {
+  const [clusters, setClusters] = useState<ManagedCluster[]>([]);
   const [workloads, setWorkloads] = useState<Workload[]>([]);
   const [policies, setPolicies] = useState<BindingPolicyInfo[]>([]);
   const [loading, setLoading] = useState({
     clusters: !skipFetch,
     workloads: !skipFetch,
-    policies: !skipFetch
+    policies: !skipFetch,
   });
   const [error, setError] = useState<{
     clusters?: string;
@@ -61,41 +64,45 @@ export function useKubestellarData({ onDataLoaded, skipFetch = false }: UseKubes
 
   // Fetch clusters from Inventory Space
   const fetchClusters = useCallback(async () => {
-    if(skipFetch) return;
+    if (skipFetch) return;
     try {
       setLoading(prev => ({ ...prev, clusters: true }));
       const response = await api.get('/api/clusters');
       console.log('Clusters API Response:', response.data);
-      
+
       let clusterData: ManagedCluster[] = [];
-      
+
       // Process the itsData first since it has more information
       if (response.data.itsData && Array.isArray(response.data.itsData)) {
         clusterData = response.data.itsData.map((cluster: ClusterApiData) => ({
           name: cluster.name,
           labels: cluster.labels || {},
-          status: cluster.status || 'Ready', 
+          status: cluster.status || 'Ready',
           context: cluster.context,
           creationTime: cluster.creationTime,
           // Add any additional fields that might be useful
           location: cluster.location || 'Unknown', // Geographical location if available
           provider: cluster.provider || 'Unknown', // Cloud provider if available
           version: cluster.version || 'Unknown', // Kubernetes version if available
-          capacity: cluster.capacity || {} // Resource capacity if available
+          capacity: cluster.capacity || {}, // Resource capacity if available
         }));
       }
-      
+
       // If there are no ITS clusters, or if we want to include the simple cluster list too
-      if (clusterData.length === 0 && response.data.clusters && Array.isArray(response.data.clusters)) {
+      if (
+        clusterData.length === 0 &&
+        response.data.clusters &&
+        Array.isArray(response.data.clusters)
+      ) {
         // Just use the simple cluster names
         clusterData = response.data.clusters.map((clusterName: string) => ({
           name: clusterName,
           labels: {},
           status: 'Unknown',
-          creationTime: new Date().toISOString() // Default to current time
+          creationTime: new Date().toISOString(), // Default to current time
         }));
       }
-      
+
       console.log('Processed clusters:', clusterData);
       setClusters(clusterData);
       setError(prev => ({ ...prev, clusters: undefined }));
@@ -110,11 +117,11 @@ export function useKubestellarData({ onDataLoaded, skipFetch = false }: UseKubes
 
   // Fetch workloads from Workload Description Space
   const fetchWorkloads = useCallback(async () => {
-    if(skipFetch) return;
+    if (skipFetch) return;
     try {
       setLoading(prev => ({ ...prev, workloads: true }));
       const response = await api.get('/api/wds/workloads');
-      
+
       // Map the response data to our Workload type
       const workloadData = response.data.map((workload: WorkloadApiData) => ({
         name: workload.name,
@@ -126,9 +133,9 @@ export function useKubestellarData({ onDataLoaded, skipFetch = false }: UseKubes
         status: workload.status || 'Active',
         replicas: workload.replicas || 1,
         selector: workload.selector || {},
-        apiVersion: workload.apiVersion || 'apps/v1'
+        apiVersion: workload.apiVersion || 'apps/v1',
       }));
-      
+
       console.log('Processed workloads:', workloadData);
       setWorkloads(workloadData);
       setError(prev => ({ ...prev, workloads: undefined }));
@@ -143,11 +150,11 @@ export function useKubestellarData({ onDataLoaded, skipFetch = false }: UseKubes
 
   // Fetch binding policies
   const fetchPolicies = useCallback(async () => {
-    if(skipFetch) return;
+    if (skipFetch) return;
     try {
       setLoading(prev => ({ ...prev, policies: true }));
       const response = await api.get('/api/bp');
-      
+
       if (response.data.error) {
         throw new Error(response.data.error);
       }
@@ -167,9 +174,9 @@ export function useKubestellarData({ onDataLoaded, skipFetch = false }: UseKubes
         workloadList: policy.workloadList || [],
         creationDate: policy.creationTime || new Date().toLocaleString(),
         bindingMode: policy.bindingMode || 'AlwaysMatch',
-        namespace: policy.namespace || 'default'
+        namespace: policy.namespace || 'default',
       }));
-      
+
       setPolicies(policyData);
       setError(prev => ({ ...prev, policies: undefined }));
     } catch (err) {
@@ -186,7 +193,7 @@ export function useKubestellarData({ onDataLoaded, skipFetch = false }: UseKubes
     fetchClusters();
     fetchWorkloads();
     fetchPolicies();
-    
+
     if (onDataLoaded) {
       onDataLoaded();
     }
@@ -195,45 +202,44 @@ export function useKubestellarData({ onDataLoaded, skipFetch = false }: UseKubes
   // Fetch all data on initial load
   useEffect(() => {
     if (!skipFetch) {
-        refreshAllData();
-      }
-    }, [refreshAllData, skipFetch]);
+      refreshAllData();
+    }
+  }, [refreshAllData, skipFetch]);
 
   // Function to assign policy to target
-  const assignPolicyToTarget = useCallback(async (
-    policyName: string, 
-    targetType: 'cluster' | 'workload', 
-    targetName: string
-  ) => {
-    try {
-      console.log(`Assigning policy ${policyName} to ${targetType} ${targetName}`);
-      // This would normally call your API
-      // For now, just log and return success
-      return {
-        success: true,
-        message: `Successfully assigned ${policyName} to ${targetType} ${targetName}`
-      };
-    } catch (err) {
-      console.error('Error assigning policy:', err);
-      return {
-        success: false,
-        message: `Failed to assign ${policyName} to ${targetType} ${targetName}`
-      };
-    }
-  }, []);
+  const assignPolicyToTarget = useCallback(
+    async (policyName: string, targetType: 'cluster' | 'workload', targetName: string) => {
+      try {
+        console.log(`Assigning policy ${policyName} to ${targetType} ${targetName}`);
+        // This would normally call your API
+        // For now, just log and return success
+        return {
+          success: true,
+          message: `Successfully assigned ${policyName} to ${targetType} ${targetName}`,
+        };
+      } catch (err) {
+        console.error('Error assigning policy:', err);
+        return {
+          success: false,
+          message: `Failed to assign ${policyName} to ${targetType} ${targetName}`,
+        };
+      }
+    },
+    []
+  );
 
   return {
     data: {
       clusters,
       workloads,
-      policies
+      policies,
     },
     loading,
     error,
     refreshData: refreshAllData,
 
     actions: {
-      assignPolicyToTarget
-    }
+      assignPolicyToTarget,
+    },
   };
-} 
+}

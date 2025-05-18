@@ -59,7 +59,7 @@ Before you begin, ensure that your system meets the following requirements:
 - Ensure you have access to a Kubernetes clusters setup with Kubestellar Getting Started Guide & Kubestellar prerequisites installed
 
 - **Kubestellar guide**: [Guide](https://docs.kubestellar.io/release-0.25.1/direct/get-started/)
- 
+
 ### 5. Make and Air
 
 - Make sure you have "make" installed to directly execute the backend script via makefile
@@ -75,7 +75,9 @@ git clone https://github.com/your-github-username/ui.git
 
 cd ui
 ```
+
 Then go through one of the setup options below:
+
 - [Local Setup](#local-setup)
 - [Local Setup with Docker Compose](#local-setup-with-docker-compose)
 
@@ -89,7 +91,7 @@ To configure the frontend, copy the `.env.example` file to a `.env` file in the 
 cp .env.example .env
 ```
 
-**Example `.env` file:**  
+**Example `.env` file:**
 
 ```
 VITE_BASE_URL=http://localhost:4000
@@ -97,33 +99,32 @@ VITE_APP_VERSION=0.1.0
 VITE_GIT_COMMIT_HASH=$GIT_COMMIT_HASH
 ```
 
-> [!NOTE] 
+> [!NOTE]
 > This is because `.env` files are intended to be a personal environment configuration file. The included `.env.example` in the repo is a standard that most other node projects include for the same purpose. You rename the file to `.env` and then change its contents to align with your system and personal needs.
 
 ##### Tracking Application Version and Git Commit Hash
 
-KubestellarUI uses environment variables to track the app version and the current Git commit hash.  
+KubestellarUI uses environment variables to track the app version and the current Git commit hash.
 
-**Environment Variables**  
+**Environment Variables**
 
-| Variable               | Purpose                                 | Example |
-|------------------------|-----------------------------------------|---------|
-| `VITE_BASE_URL`        | Defines the base URL for API calls     | `http://localhost:4000` |
-| `VITE_APP_VERSION`     | Defines the current application version | `0.1.0` |
-| `VITE_GIT_COMMIT_HASH` | Captures the current Git commit hash   | (Set during build) |
-
+| Variable               | Purpose                                 | Example                 |
+| ---------------------- | --------------------------------------- | ----------------------- |
+| `VITE_BASE_URL`        | Defines the base URL for API calls      | `http://localhost:4000` |
+| `VITE_APP_VERSION`     | Defines the current application version | `0.1.0`                 |
+| `VITE_GIT_COMMIT_HASH` | Captures the current Git commit hash    | (Set during build)      |
 
 #### Step 2: Run Redis Container (Optional)
 
-KubestellarUI uses Redis for caching real-time WebSocket updates to prevent excessive Kubernetes API calls.  
+KubestellarUI uses Redis for caching real-time WebSocket updates to prevent excessive Kubernetes API calls.
 
-Run Redis using Docker:  
+Run Redis using Docker:
 
 ```bash
 docker run --name redis -d -p 6379:6379 redis
 ```
 
-Verify Redis is running:  
+Verify Redis is running:
 
 ```bash
 docker ps | grep redis
@@ -167,10 +168,10 @@ If you prefer to run the application using Docker Compose, follow these steps:
 
 - **Download Link**: [Docker Downloads](https://www.docker.com/products/docker-desktop)
 
-> [!NOTE] 
+> [!NOTE]
 > If you are using Docker Desktop, please enable host networking. To do so navigate to Settings > Resources > Network, and check the "Enable host networking" option. Finally, apply the changes and restart Docker Desktop.
 
-> [!NOTE] 
+> [!NOTE]
 > If you are using Compose V1, change the `docker compose` command to `docker-compose` in the following steps.
 > Checkout [Migrating to Compose V2](https://docs.docker.com/compose/releases/migrate/) for more info.
 
@@ -195,11 +196,10 @@ docker compose down
 1. **Backend API**: [http://localhost:4000](http://localhost:4000)
 2. **Frontend UI**: [http://localhost:5173](http://localhost:5173)
 
-
 #### Dashboard Default Login Credentials
 
-* **Username: admin**
-* **Password: admin**
+- **Username: admin**
+- **Password: admin**
 
 <div>
 <h2><font size="6"><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Red%20Heart.png" alt="Red Heart" width="40" height="40" /> Contributors </font></h2>

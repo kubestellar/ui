@@ -1,6 +1,6 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import EnvironmentPlugin from 'vite-plugin-environment'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import EnvironmentPlugin from 'vite-plugin-environment';
 import { execSync } from 'child_process';
 
 // Utility function to extract the current git commit hash
@@ -41,21 +41,21 @@ export default defineConfig({
         manualChunks: {
           // Core vendor dependencies
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          
+
           // MUI core and icons in separate chunks
           'vendor-mui-core': ['@mui/material'],
           'vendor-mui-icons': ['@mui/icons-material'],
           'vendor-mui-tree': ['@mui/x-tree-view'],
-          
+
           // Feature-specific chunks
-          'charts': ['recharts'],
-          'editor': ['@monaco-editor/react'],
-          'terminal': ['xterm', 'xterm-addon-fit'],
-          
+          charts: ['recharts'],
+          editor: ['@monaco-editor/react'],
+          terminal: ['xterm', 'xterm-addon-fit'],
+
           // Utility libraries
-          'utils': ['axios', 'js-yaml', 'nanoid'],
+          utils: ['axios', 'js-yaml', 'nanoid'],
         },
-      }
+      },
     },
   },
 
@@ -66,6 +66,6 @@ export default defineConfig({
         return { relative: true, preload: true };
       }
       return { relative: true };
-    }
+    },
   },
-})
+});

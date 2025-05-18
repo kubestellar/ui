@@ -73,7 +73,7 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
       onConnect?.();
     };
 
-    ws.onmessage = (event) => {
+    ws.onmessage = event => {
       onRawMessage?.(event);
 
       try {
@@ -89,20 +89,21 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
         queryClient.setQueryData(queryKey, transformedData);
         onMessage?.(transformedData);
       } catch (error) {
-        const wsError = error instanceof Error ? error : new Error('Failed to process WebSocket message');
-        setWsState((prev) => ({ ...prev, error: wsError }));
+        const wsError =
+          error instanceof Error ? error : new Error('Failed to process WebSocket message');
+        setWsState(prev => ({ ...prev, error: wsError }));
         onError?.(wsError);
       }
     };
 
-    ws.onerror = (error) => {
+    ws.onerror = error => {
       const wsError = error instanceof Error ? error : new Error('WebSocket error');
       setWsState({ isConnected: false, error: wsError });
       queryClient.setQueryData(queryKey, null);
       onError?.(wsError);
     };
 
-    ws.onclose = (event) => {
+    ws.onclose = event => {
       setWsState({ isConnected: false, error: null });
       queryClient.setQueryData(queryKey, null);
       wsRef.current = null;
@@ -158,7 +159,7 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
 
   const queryResult = useQuery<TData, Error>({
     queryKey,
-    queryFn: () => Promise.resolve(queryClient.getQueryData(queryKey) ?? null as TData),
+    queryFn: () => Promise.resolve(queryClient.getQueryData(queryKey) ?? (null as TData)),
     enabled,
     refetchOnWindowFocus: false,
     refetchOnMount: false,

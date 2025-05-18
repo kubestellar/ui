@@ -1,19 +1,19 @@
-import React, { useEffect, useState } from "react";
-import { Home, RefreshCw, Rocket } from "lucide-react";
+import React, { useEffect, useState } from 'react';
+import { Home, RefreshCw, Rocket } from 'lucide-react';
 
 const quotes = [
   {
-    text: "In space, no one can hear you 404.",
-    author: "Space Explorer"
+    text: 'In space, no one can hear you 404.',
+    author: 'Space Explorer',
   },
   {
-    text: "Lost among the stars, but not forgotten.",
-    author: "Cosmic Wanderer"
+    text: 'Lost among the stars, but not forgotten.',
+    author: 'Cosmic Wanderer',
   },
   {
-    text: "Every wrong turn is just another adventure in the cosmos.",
-    author: "Stellar Navigator"
-  }
+    text: 'Every wrong turn is just another adventure in the cosmos.',
+    author: 'Stellar Navigator',
+  },
 ];
 
 const NotFoundPage: React.FC = () => {
@@ -21,13 +21,13 @@ const NotFoundPage: React.FC = () => {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentQuote((prev) => (prev + 1) % quotes.length);
+      setCurrentQuote(prev => (prev + 1) % quotes.length);
     }, 5000);
     return () => clearInterval(timer);
   }, []);
 
   return (
-    <div className="w-full h-full flex items-center justify-center overflow-hidden bg-base-200 relative">
+    <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-base-200">
       <style>
         {`
         layer base {
@@ -191,12 +191,12 @@ const NotFoundPage: React.FC = () => {
         `}
       </style>
       {/* Background Elements */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {/* Stars */}
         {[...Array(50)].map((_, i) => (
           <div
             key={i}
-            className="absolute w-1 h-1 bg-primary/40 rounded-full animate-twinkle"
+            className="animate-twinkle absolute h-1 w-1 rounded-full bg-primary/40"
             style={{
               top: `${Math.random() * 100}%`,
               left: `${Math.random() * 100}%`,
@@ -206,63 +206,83 @@ const NotFoundPage: React.FC = () => {
         ))}
 
         {/* Planets */}
-        <svg className="absolute top-20 left-20 w-24 h-24 text-primary/20 animate-float" viewBox="0 0 100 100">
+        <svg
+          className="animate-float absolute left-20 top-20 h-24 w-24 text-primary/20"
+          viewBox="0 0 100 100"
+        >
           <circle cx="50" cy="50" r="45" fill="currentColor" />
         </svg>
-        <svg className="absolute bottom-20 right-20 w-32 h-32 text-primary/15 animate-float-delayed" viewBox="0 0 100 100">
+        <svg
+          className="animate-float-delayed absolute bottom-20 right-20 h-32 w-32 text-primary/15"
+          viewBox="0 0 100 100"
+        >
           <circle cx="50" cy="50" r="45" fill="currentColor" />
         </svg>
 
         {/* Shooting Stars */}
-        <div className="absolute w-[2px] h-[2px] bg-primary animate-shooting-star" style={{ top: '20%', left: '10%' }} />
-        <div className="absolute w-[2px] h-[2px] bg-primary animate-shooting-star-delayed" style={{ top: '40%', right: '20%' }} />
+        <div
+          className="animate-shooting-star absolute h-[2px] w-[2px] bg-primary"
+          style={{ top: '20%', left: '10%' }}
+        />
+        <div
+          className="animate-shooting-star-delayed absolute h-[2px] w-[2px] bg-primary"
+          style={{ top: '40%', right: '20%' }}
+        />
 
         {/* Rocket */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -left-8 animate-rocket-main">
-          <Rocket size={80} className="text-primary/30 transform rotate-45" />
-        </div>
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="animate-rocket-main absolute -left-8">
+            <Rocket size={80} className="rotate-45 transform text-primary/30" />
+          </div>
 
-        {/* Small Rockets */}
+          {/* Small Rockets */}
           {[...Array(5)].map((_, i) => (
             <div
               key={i}
-              className="absolute animate-rocket-small opacity-20"
+              className="animate-rocket-small absolute opacity-20"
               style={{
                 top: `${Math.random() * 100}%`,
                 left: '-100%',
                 animation: `rocketSmall ${10 + i * 3}s linear infinite`,
                 animationDelay: `${i * 3}s`,
               }}
-          >
-            <Rocket size={40} className="text-primary transform rotate-45" />
-          </div>
-        ))}
-      </div>
+            >
+              <Rocket size={40} className="rotate-45 transform text-primary" />
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Main Content */}
-      <div className="relative text-center space-y-6 max-w-2xl w-full px-4">
+      <div className="relative w-full max-w-2xl space-y-6 px-4 text-center">
         {/* Logo */}
         <div className="flex justify-center">
-          <img src="/KubeStellar.png" alt="KubeStellar Logo" className="h-16 md:h-24 transition-transform hover:scale-105 duration-300 mr-11" />
+          <img
+            src="/KubeStellar.png"
+            alt="KubeStellar Logo"
+            className="mr-11 h-16 transition-transform duration-300 hover:scale-105 md:h-24"
+          />
         </div>
 
         {/* 404 Text */}
         <div className="space-y-4">
-          <h2 className="text-2xl md:text-3xl font-semibold text-base-content">Houston, We Have a Problem</h2>
-          <p className="text-base-content/70 max-w-md mx-auto">
-            The page you're looking for has drifted into deep space. 
+          <h2 className="text-2xl font-semibold text-base-content md:text-3xl">
+            Houston, We Have a Problem
+          </h2>
+          <p className="mx-auto max-w-md text-base-content/70">
+            The page you're looking for has drifted into deep space.
           </p>
         </div>
 
         {/* Quote Section */}
-        <div className="h-24 relative">
+        <div className="relative h-24">
           {quotes.map((quote, index) => (
             <div
               key={index}
               className={`absolute w-full transition-all duration-500 ${
-                index === currentQuote ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-4'
+                index === currentQuote
+                  ? 'translate-y-0 transform opacity-100'
+                  : 'translate-y-4 transform opacity-0'
               }`}
             >
               <p className="text-lg italic text-base-content/80">{quote.text}</p>
@@ -272,13 +292,16 @@ const NotFoundPage: React.FC = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button onClick={() => (window.location.href = "/")} className="btn btn-primary">
+        <div className="flex flex-col justify-center gap-4 sm:flex-row">
+          <button onClick={() => (window.location.href = '/')} className="btn btn-primary">
             <Home size={20} />
             Return Home
           </button>
-          <button onClick={() => window.location.reload()} className="btn btn-ghost gap-2 transition-all duration-300 hover:scale-105 group">
-            <RefreshCw className="group-hover:rotate-180 transition-transform" size={20} />
+          <button
+            onClick={() => window.location.reload()}
+            className="group btn btn-ghost gap-2 transition-all duration-300 hover:scale-105"
+          >
+            <RefreshCw className="transition-transform group-hover:rotate-180" size={20} />
             Try Again
           </button>
         </div>

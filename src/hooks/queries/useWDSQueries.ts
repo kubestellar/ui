@@ -119,12 +119,12 @@ export const useWDSQueries = () => {
       staleTime: 5000,
       gcTime: 300000,
     });
-    
+
     if (query.error) {
       toast.error('Failed to fetch workloads');
       console.error('Error fetching workloads:', query.error);
     }
-    
+
     return query;
   };
 
@@ -141,12 +141,12 @@ export const useWDSQueries = () => {
       enabled: Boolean(name && namespace),
       retry: 1,
     });
-    
+
     if (query.error) {
       toast.error('Failed to fetch workload details');
       console.error('Error fetching workload details:', query.error);
     }
-    
+
     return query;
   };
 
@@ -163,11 +163,11 @@ export const useWDSQueries = () => {
       staleTime: 5000,
       gcTime: 300000,
     });
-    
+
     if (query.error) {
       console.warn('Status fetch failed:', query.error);
     }
-    
+
     return query;
   };
 
@@ -176,8 +176,8 @@ export const useWDSQueries = () => {
     useMutation({
       mutationFn: async ({ data }: { data: WorkloadData }) => {
         // Extract 'kind' and 'namespace' from the raw data
-        const kind = data.kind?.toLowerCase() || "deployment"; // Default to 'deployment' if not present
-        const namespace = data.metadata?.namespace || "default"; // Default to 'default' if not present
+        const kind = data.kind?.toLowerCase() || 'deployment'; // Default to 'deployment' if not present
+        const namespace = data.metadata?.namespace || 'default'; // Default to 'default' if not present
 
         // Construct the dynamic endpoint (e.g., /api/deployments/default)
         const endpoint = `/api/${kind}s/${namespace}`; // Pluralize 'kind' (e.g., 'deployment' -> 'deployments')
@@ -199,7 +199,8 @@ export const useWDSQueries = () => {
   // Updated mutation for file uploads with custom headers and auto_ns query parameter
   const useUploadWorkloadFile = () =>
     useMutation({
-      mutationFn: async ({ data, autoNs }: { data: FormData; autoNs: boolean }) => { // Added autoNs parameter
+      mutationFn: async ({ data, autoNs }: { data: FormData; autoNs: boolean }) => {
+        // Added autoNs parameter
         const response = await api.post(`/api/resource/upload?auto_ns=${autoNs}`, data, {
           headers: {
             // Override the default Content-Type to let Axios handle multipart/form-data
@@ -245,13 +246,13 @@ export const useWDSQueries = () => {
   // Scale operation using PUT /api/wds/update
   const useScaleWorkload = () =>
     useMutation({
-      mutationFn: async ({ 
-        namespace, 
-        name, 
-        replicas 
-      }: { 
-        namespace: string; 
-        name: string; 
+      mutationFn: async ({
+        namespace,
+        name,
+        replicas,
+      }: {
+        namespace: string;
+        name: string;
         replicas: number;
       }) => {
         const response = await api.put('/api/wds/update', {
@@ -262,8 +263,8 @@ export const useWDSQueries = () => {
       },
       onSuccess: (_, variables) => {
         queryClient.invalidateQueries({ queryKey: ['workloads'] });
-        queryClient.invalidateQueries({ 
-          queryKey: ['workload', variables.namespace, variables.name] 
+        queryClient.invalidateQueries({
+          queryKey: ['workload', variables.namespace, variables.name],
         });
         toast.success(`Scaled workload to ${variables.replicas} replicas`);
       },
@@ -284,8 +285,8 @@ export const useWDSQueries = () => {
       },
       onSuccess: (_, variables) => {
         queryClient.invalidateQueries({ queryKey: ['workloads'] });
-        queryClient.invalidateQueries({ 
-          queryKey: ['workload', variables.namespace, variables.name] 
+        queryClient.invalidateQueries({
+          queryKey: ['workload', variables.namespace, variables.name],
         });
         toast.success('Workload deleted successfully');
       },
@@ -306,12 +307,12 @@ export const useWDSQueries = () => {
       enabled: Boolean(options?.namespace && options?.podName),
       refetchInterval: options?.follow ? 1000 : false,
     });
-    
+
     if (query.error) {
       toast.error('Failed to fetch workload logs');
       console.error('Error fetching workload logs:', query.error);
     }
-    
+
     return query;
   };
 
@@ -320,7 +321,7 @@ export const useWDSQueries = () => {
     useWorkloadDetails,
     useWorkloadStatus,
     useCreateWorkload,
-    useUploadWorkloadFile, 
+    useUploadWorkloadFile,
     useUpdateWorkload,
     useScaleWorkload,
     useDeleteWorkload,

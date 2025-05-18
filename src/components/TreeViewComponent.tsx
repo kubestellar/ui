@@ -1,59 +1,72 @@
-import React, { useState, useEffect, useCallback, useRef, memo } from "react";
-import { Box, Typography, Menu, MenuItem, Button, Alert, Snackbar, Dialog, DialogTitle, DialogContent, DialogActions, IconButton } from "@mui/material";
-import { ReactFlowProvider, Position, MarkerType } from "reactflow";
-import * as dagre from "dagre";
-import "reactflow/dist/style.css";
-import cm from "../assets/k8s_resources_logo/cm.svg";
-import crb from "../assets/k8s_resources_logo/crb.svg";
-import crd from "../assets/k8s_resources_logo/crd.svg";
-import cRole from "../assets/k8s_resources_logo/c-role.svg";
-import cronjob from "../assets/k8s_resources_logo/cronjob.svg";
-import deployicon from "../assets/k8s_resources_logo/deploy.svg";
-import ds from "../assets/k8s_resources_logo/ds.svg";
-import ep from "../assets/k8s_resources_logo/ep.svg";
-import group from "../assets/k8s_resources_logo/group.svg";
-import hpa from "../assets/k8s_resources_logo/hpa.svg";
-import ing from "../assets/k8s_resources_logo/ing.svg";
-import job from "../assets/k8s_resources_logo/job.svg";
-import limits from "../assets/k8s_resources_logo/limits.svg";
-import netpol from "../assets/k8s_resources_logo/netpol.svg";
-import ns from "../assets/k8s_resources_logo/ns.svg";
-import psp from "../assets/k8s_resources_logo/psp.svg";
-import pv from "../assets/k8s_resources_logo/pv.svg";
-import pvc from "../assets/k8s_resources_logo/pvc.svg";
-import quota from "../assets/k8s_resources_logo/quota.svg";
-import rb from "../assets/k8s_resources_logo/rb.svg";
-import role from "../assets/k8s_resources_logo/role.svg";
-import rs from "../assets/k8s_resources_logo/rs.svg";
-import sa from "../assets/k8s_resources_logo/sa.svg";
-import sc from "../assets/k8s_resources_logo/sc.svg";
-import secret from "../assets/k8s_resources_logo/secret.svg";
-import sts from "../assets/k8s_resources_logo/sts.svg";
-import svc from "../assets/k8s_resources_logo/svc.svg";
-import user from "../assets/k8s_resources_logo/user.svg";
-import vol from "../assets/k8s_resources_logo/vol.svg";
-import { Plus } from "lucide-react";
-import CreateOptions from "../components/CreateOptions";
-import { NodeLabel } from "../components/Wds_Topology/NodeLabel";
-import { ZoomControls } from "../components/Wds_Topology/ZoomControls";
-import { FlowCanvas } from "../components/Wds_Topology/FlowCanvas";
-import ListViewSkeleton from "./ui/ListViewSkeleton";
-import TreeViewSkeleton from "./ui/TreeViewSkeleton";
-import DynamicDetailsPanel from "./DynamicDetailsPanel";
-import GroupPanel from "./GroupPanel";
-import ReactDOM from "react-dom";
-import { useQuery } from "@tanstack/react-query";
-import { isEqual } from "lodash";
-import { useWebSocket } from "../context/WebSocketProvider";
-import useTheme from "../stores/themeStore";
-import axios from "axios";
+import React, { useState, useEffect, useCallback, useRef, memo } from 'react';
+import {
+  Box,
+  Typography,
+  Menu,
+  MenuItem,
+  Button,
+  Alert,
+  Snackbar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+} from '@mui/material';
+import { ReactFlowProvider, Position, MarkerType } from 'reactflow';
+import * as dagre from 'dagre';
+import 'reactflow/dist/style.css';
+import cm from '../assets/k8s_resources_logo/cm.svg';
+import crb from '../assets/k8s_resources_logo/crb.svg';
+import crd from '../assets/k8s_resources_logo/crd.svg';
+import cRole from '../assets/k8s_resources_logo/c-role.svg';
+import cronjob from '../assets/k8s_resources_logo/cronjob.svg';
+import deployicon from '../assets/k8s_resources_logo/deploy.svg';
+import ds from '../assets/k8s_resources_logo/ds.svg';
+import ep from '../assets/k8s_resources_logo/ep.svg';
+import group from '../assets/k8s_resources_logo/group.svg';
+import hpa from '../assets/k8s_resources_logo/hpa.svg';
+import ing from '../assets/k8s_resources_logo/ing.svg';
+import job from '../assets/k8s_resources_logo/job.svg';
+import limits from '../assets/k8s_resources_logo/limits.svg';
+import netpol from '../assets/k8s_resources_logo/netpol.svg';
+import ns from '../assets/k8s_resources_logo/ns.svg';
+import psp from '../assets/k8s_resources_logo/psp.svg';
+import pv from '../assets/k8s_resources_logo/pv.svg';
+import pvc from '../assets/k8s_resources_logo/pvc.svg';
+import quota from '../assets/k8s_resources_logo/quota.svg';
+import rb from '../assets/k8s_resources_logo/rb.svg';
+import role from '../assets/k8s_resources_logo/role.svg';
+import rs from '../assets/k8s_resources_logo/rs.svg';
+import sa from '../assets/k8s_resources_logo/sa.svg';
+import sc from '../assets/k8s_resources_logo/sc.svg';
+import secret from '../assets/k8s_resources_logo/secret.svg';
+import sts from '../assets/k8s_resources_logo/sts.svg';
+import svc from '../assets/k8s_resources_logo/svc.svg';
+import user from '../assets/k8s_resources_logo/user.svg';
+import vol from '../assets/k8s_resources_logo/vol.svg';
+import { Plus } from 'lucide-react';
+import CreateOptions from '../components/CreateOptions';
+import { NodeLabel } from '../components/Wds_Topology/NodeLabel';
+import { ZoomControls } from '../components/Wds_Topology/ZoomControls';
+import { FlowCanvas } from '../components/Wds_Topology/FlowCanvas';
+import ListViewSkeleton from './ui/ListViewSkeleton';
+import TreeViewSkeleton from './ui/TreeViewSkeleton';
+import DynamicDetailsPanel from './DynamicDetailsPanel';
+import GroupPanel from './GroupPanel';
+import ReactDOM from 'react-dom';
+import { useQuery } from '@tanstack/react-query';
+import { isEqual } from 'lodash';
+import { useWebSocket } from '../context/WebSocketProvider';
+import useTheme from '../stores/themeStore';
+import axios from 'axios';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import ListViewComponent from "../components/ListViewComponent";
-import ContextDropdown from "../components/ContextDropdown";
-import { ResourceItem as ListResourceItem } from "./ListViewComponent"; // Import ResourceItem from ListViewComponent
-import useLabelHighlightStore from "../stores/labelHighlightStore";
-import { useLocation } from "react-router-dom";
-import FullScreenToggle from "./ui/FullScreenToggle";
+import ListViewComponent from '../components/ListViewComponent';
+import ContextDropdown from '../components/ContextDropdown';
+import { ResourceItem as ListResourceItem } from './ListViewComponent'; // Import ResourceItem from ListViewComponent
+import useLabelHighlightStore from '../stores/labelHighlightStore';
+import { useLocation } from 'react-router-dom';
+import FullScreenToggle from './ui/FullScreenToggle';
 
 // Interfaces
 export interface NodeData {
@@ -147,7 +160,7 @@ export interface ResourceItem {
     ports?: Array<{ name?: string; port?: number }>;
   }>;
   ports?: Array<{ name: string; port: number }>;
-  subjects?: Array<{ 
+  subjects?: Array<{
     name: string;
     kind?: string;
     namespace?: string;
@@ -202,76 +215,76 @@ interface ResourcesMap {
 }
 
 const nodeStyle: React.CSSProperties = {
-  padding: "2px 12px",
-  fontSize: "6px",
-  border: "none",
-  width: "146px",
-  height: "30px",
+  padding: '2px 12px',
+  fontSize: '6px',
+  border: 'none',
+  width: '146px',
+  height: '30px',
 };
 
 const kindToPluralMap: Record<string, string> = {
-  Binding: "bindings",
-  ComponentStatus: "componentstatuses",
-  ConfigMap: "configmaps",
-  Endpoints: "endpoints",
-  Event: "events",
-  LimitRange: "limitranges",
-  Namespace: "namespaces",
-  Node: "nodes",
-  PersistentVolumeClaim: "persistentvolumeclaims",
-  PersistentVolume: "persistentvolumes",
-  Pod: "pods",
-  PodTemplate: "podtemplates",
-  ReplicationController: "replicationcontrollers",
-  ResourceQuota: "resourcequotas",
-  Secret: "secrets",
-  ServiceAccount: "serviceaccounts",
-  Service: "services",
-  MutatingWebhookConfiguration: "mutatingwebhookconfigurations",
-  ValidatingWebhookConfiguration: "validatingwebhookconfigurations",
-  CustomResourceDefinition: "customresourcedefinitions",
-  APIService: "apiservices",
-  ControllerRevision: "controllerrevisions",
-  DaemonSet: "daemonsets",
-  Deployment: "deployments",
-  ReplicaSet: "replicasets",
-  StatefulSet: "statefulsets",
-  Application: "applications",
-  ApplicationSet: "applicationsets",
-  AppProject: "appprojects",
-  SelfSubjectReview: "selfsubjectreviews",
-  TokenReview: "tokenreviews",
-  LocalSubjectAccessReview: "localsubjectaccessreviews",
-  SelfSubjectAccessReview: "selfsubjectaccessreviews",
-  SelfSubjectRulesReview: "selfsubjectrulesreviews",
-  SubjectAccessReview: "subjectaccessreviews",
-  HorizontalPodAutoscaler: "horizontalpodautoscalers",
-  CronJob: "cronjobs",
-  Job: "jobs",
-  CertificateSigningRequest: "certificatesigningrequests",
-  BindingPolicy: "bindingpolicies",
-  CombinedStatus: "combinedstatuses",
-  CustomTransform: "customtransforms",
-  StatusCollector: "statuscollectors",
-  Lease: "leases",
-  EndpointSlice: "endpointslices",
-  FlowSchema: "flowschemas",
-  PriorityLevelConfiguration: "prioritylevelconfigurations",
-  IngressClass: "ingressclasses",
-  Ingress: "ingresses",
-  NetworkPolicy: "networkpolicies",
-  RuntimeClass: "runtimeclasses",
-  PodDisruptionBudget: "poddisruptionbudgets",
-  ClusterRoleBinding: "clusterrolebindings",
-  ClusterRole: "clusterroles",
-  RoleBinding: "rolebindings",
-  Role: "roles",
-  PriorityClass: "priorityclasses",
-  CSIDriver: "csidrivers",
-  CSINode: "csinodes",
-  CSIStorageCapacity: "csistoragecapacities",
-  StorageClass: "storageclasses",
-  VolumeAttachment: "volumeattachments",
+  Binding: 'bindings',
+  ComponentStatus: 'componentstatuses',
+  ConfigMap: 'configmaps',
+  Endpoints: 'endpoints',
+  Event: 'events',
+  LimitRange: 'limitranges',
+  Namespace: 'namespaces',
+  Node: 'nodes',
+  PersistentVolumeClaim: 'persistentvolumeclaims',
+  PersistentVolume: 'persistentvolumes',
+  Pod: 'pods',
+  PodTemplate: 'podtemplates',
+  ReplicationController: 'replicationcontrollers',
+  ResourceQuota: 'resourcequotas',
+  Secret: 'secrets',
+  ServiceAccount: 'serviceaccounts',
+  Service: 'services',
+  MutatingWebhookConfiguration: 'mutatingwebhookconfigurations',
+  ValidatingWebhookConfiguration: 'validatingwebhookconfigurations',
+  CustomResourceDefinition: 'customresourcedefinitions',
+  APIService: 'apiservices',
+  ControllerRevision: 'controllerrevisions',
+  DaemonSet: 'daemonsets',
+  Deployment: 'deployments',
+  ReplicaSet: 'replicasets',
+  StatefulSet: 'statefulsets',
+  Application: 'applications',
+  ApplicationSet: 'applicationsets',
+  AppProject: 'appprojects',
+  SelfSubjectReview: 'selfsubjectreviews',
+  TokenReview: 'tokenreviews',
+  LocalSubjectAccessReview: 'localsubjectaccessreviews',
+  SelfSubjectAccessReview: 'selfsubjectaccessreviews',
+  SelfSubjectRulesReview: 'selfsubjectrulesreviews',
+  SubjectAccessReview: 'subjectaccessreviews',
+  HorizontalPodAutoscaler: 'horizontalpodautoscalers',
+  CronJob: 'cronjobs',
+  Job: 'jobs',
+  CertificateSigningRequest: 'certificatesigningrequests',
+  BindingPolicy: 'bindingpolicies',
+  CombinedStatus: 'combinedstatuses',
+  CustomTransform: 'customtransforms',
+  StatusCollector: 'statuscollectors',
+  Lease: 'leases',
+  EndpointSlice: 'endpointslices',
+  FlowSchema: 'flowschemas',
+  PriorityLevelConfiguration: 'prioritylevelconfigurations',
+  IngressClass: 'ingressclasses',
+  Ingress: 'ingresses',
+  NetworkPolicy: 'networkpolicies',
+  RuntimeClass: 'runtimeclasses',
+  PodDisruptionBudget: 'poddisruptionbudgets',
+  ClusterRoleBinding: 'clusterrolebindings',
+  ClusterRole: 'clusterroles',
+  RoleBinding: 'rolebindings',
+  Role: 'roles',
+  PriorityClass: 'priorityclasses',
+  CSIDriver: 'csidrivers',
+  CSINode: 'csinodes',
+  CSIStorageCapacity: 'csistoragecapacities',
+  StorageClass: 'storageclasses',
+  VolumeAttachment: 'volumeattachments',
 };
 
 const iconMap: Record<string, string> = {
@@ -313,145 +326,145 @@ const getNodeConfig = (type: string) => {
   let dynamicText = type.toLowerCase();
 
   switch (type.toLowerCase()) {
-    case "namespace":
+    case 'namespace':
       icon = ns;
-      dynamicText = "ns";
+      dynamicText = 'ns';
       break;
-    case "deployment":
+    case 'deployment':
       icon = deployicon;
-      dynamicText = "deploy";
+      dynamicText = 'deploy';
       break;
-    case "replicaset":
+    case 'replicaset':
       icon = rs;
-      dynamicText = "replica";
+      dynamicText = 'replica';
       break;
-    case "service":
+    case 'service':
       icon = svc;
-      dynamicText = "svc";
+      dynamicText = 'svc';
       break;
-    case "endpoints":
+    case 'endpoints':
       icon = ep;
-      dynamicText = "endpoints";
+      dynamicText = 'endpoints';
       break;
-    case "endpointslice":
+    case 'endpointslice':
       icon = ep;
-      dynamicText = "endpointslice";
+      dynamicText = 'endpointslice';
       break;
-    case "configmap":
+    case 'configmap':
       icon = cm;
-      dynamicText = "configmap";
+      dynamicText = 'configmap';
       break;
-    case "clusterrolebinding":
+    case 'clusterrolebinding':
       icon = crb;
-      dynamicText = "clusterrolebinding";
+      dynamicText = 'clusterrolebinding';
       break;
-    case "customresourcedefinition":
+    case 'customresourcedefinition':
       icon = crd;
-      dynamicText = "crd";
+      dynamicText = 'crd';
       break;
-    case "clusterrole":
+    case 'clusterrole':
       icon = cRole;
-      dynamicText = "clusterrole";
+      dynamicText = 'clusterrole';
       break;
-    case "cronjob":
+    case 'cronjob':
       icon = cronjob;
-      dynamicText = "cronjob";
+      dynamicText = 'cronjob';
       break;
-    case "daemonset":
+    case 'daemonset':
       icon = ds;
-      dynamicText = "daemonset";
+      dynamicText = 'daemonset';
       break;
-    case "group":
+    case 'group':
       icon = group;
-      dynamicText = "group";
+      dynamicText = 'group';
       break;
-    case "horizontalpodautoscaler":
+    case 'horizontalpodautoscaler':
       icon = hpa;
-      dynamicText = "hpa";
+      dynamicText = 'hpa';
       break;
-    case "ingress":
+    case 'ingress':
       icon = ing;
-      dynamicText = "ingress";
+      dynamicText = 'ingress';
       break;
-    case "job":
+    case 'job':
       icon = job;
-      dynamicText = "job";
+      dynamicText = 'job';
       break;
-    case "limitrange":
+    case 'limitrange':
       icon = limits;
-      dynamicText = "limitrange";
+      dynamicText = 'limitrange';
       break;
-    case "networkpolicy":
+    case 'networkpolicy':
       icon = netpol;
-      dynamicText = "netpol";
+      dynamicText = 'netpol';
       break;
-    case "podsecuritypolicy":
+    case 'podsecuritypolicy':
       icon = psp;
-      dynamicText = "psp";
+      dynamicText = 'psp';
       break;
-    case "persistentvolume":
+    case 'persistentvolume':
       icon = pv;
-      dynamicText = "pv";
+      dynamicText = 'pv';
       break;
-    case "persistentvolumeclaim":
+    case 'persistentvolumeclaim':
       icon = pvc;
-      dynamicText = "pvc";
+      dynamicText = 'pvc';
       break;
-    case "resourcequota":
+    case 'resourcequota':
       icon = quota;
-      dynamicText = "quota";
+      dynamicText = 'quota';
       break;
-    case "rolebinding":
+    case 'rolebinding':
       icon = rb;
-      dynamicText = "rolebinding";
+      dynamicText = 'rolebinding';
       break;
-    case "role":
+    case 'role':
       icon = role;
-      dynamicText = "role";
+      dynamicText = 'role';
       break;
-    case "serviceaccount":
+    case 'serviceaccount':
       icon = sa;
-      dynamicText = "sa";
+      dynamicText = 'sa';
       break;
-    case "storageclass":
+    case 'storageclass':
       icon = sc;
-      dynamicText = "storageclass";
+      dynamicText = 'storageclass';
       break;
-    case "secret":
+    case 'secret':
       icon = secret;
-      dynamicText = "secret";
+      dynamicText = 'secret';
       break;
-    case "statefulset":
+    case 'statefulset':
       icon = sts;
-      dynamicText = "statefulset";
+      dynamicText = 'statefulset';
       break;
-    case "user":
+    case 'user':
       icon = user;
-      dynamicText = "user";
+      dynamicText = 'user';
       break;
-    case "volume":
+    case 'volume':
       icon = vol;
-      dynamicText = "volume";
+      dynamicText = 'volume';
       break;
-    case "envvar":
+    case 'envvar':
       icon = cm;
-      dynamicText = "envvar";
+      dynamicText = 'envvar';
       break;
-    case "customresource":
+    case 'customresource':
       icon = crd;
-      dynamicText = "cr";
+      dynamicText = 'cr';
       break;
-    case "controller":
+    case 'controller':
       icon = deployicon;
-      dynamicText = "controller";
+      dynamicText = 'controller';
       break;
-    case "ingresscontroller":
+    case 'ingresscontroller':
       icon = ing;
-      dynamicText = "ingresscontroller";
+      dynamicText = 'ingresscontroller';
       break;
-    case "context":
+    case 'context':
       icon = group;
-      dynamicText = "context";
+      dynamicText = 'context';
       break;
     default:
       break;
@@ -463,7 +476,7 @@ const getNodeConfig = (type: string) => {
 const getLayoutedElements = (
   nodes: CustomNode[],
   edges: CustomEdge[],
-  direction = "LR",
+  direction = 'LR',
   prevNodes: React.MutableRefObject<CustomNode[]>
 ) => {
   const dagreGraph = new dagre.graphlib.Graph();
@@ -475,10 +488,10 @@ const getLayoutedElements = (
 
   const shouldRecalculate = true;
   if (!shouldRecalculate && Math.abs(nodes.length - prevNodes.current.length) <= 5) {
-    prevNodes.current.forEach((node) => nodeMap.set(node.id, node));
+    prevNodes.current.forEach(node => nodeMap.set(node.id, node));
   }
 
-  nodes.forEach((node) => {
+  nodes.forEach(node => {
     const cachedNode = nodeMap.get(node.id);
     if (!cachedNode || !isEqual(cachedNode, node) || shouldRecalculate) {
       dagreGraph.setNode(node.id, { width: 146, height: 20 });
@@ -488,13 +501,13 @@ const getLayoutedElements = (
     }
   });
 
-  edges.forEach((edge) => {
+  edges.forEach(edge => {
     dagreGraph.setEdge(edge.source, edge.target);
   });
 
   dagre.layout(dagreGraph);
 
-  const layoutedNodes = newNodes.map((node) => {
+  const layoutedNodes = newNodes.map(node => {
     const dagreNode = dagreGraph.node(node.id);
     return dagreNode
       ? {
@@ -526,22 +539,22 @@ interface ResourceDataChangeEvent {
 interface ContextMenuState {
   nodeId: string | null;
   x: number;
-  y: number; 
+  y: number;
   nodeType: string | null;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const TreeViewComponent = (_props: TreeViewComponentProps) => {
-  const theme = useTheme((state) => state.theme);
-  const highlightedLabels = useLabelHighlightStore((state) => state.highlightedLabels);
+  const theme = useTheme(state => state.theme);
+  const highlightedLabels = useLabelHighlightStore(state => state.highlightedLabels);
   const [nodes, setNodes] = useState<CustomNode[]>([]);
   const [edges, setEdges] = useState<CustomEdge[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
-  const [snackbarMessage, setSnackbarMessage] = useState<string>("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
+  const [snackbarMessage, setSnackbarMessage] = useState<string>('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const [showCreateOptions, setShowCreateOptions] = useState(false);
-  const [activeOption, setActiveOption] = useState<string | null>("option1");
+  const [activeOption, setActiveOption] = useState<string | null>('option1');
   const [selectedNode, setSelectedNode] = useState<SelectedNode | null>(null);
   const [isTransforming, setIsTransforming] = useState<boolean>(false);
   const [dataReceived, setDataReceived] = useState<boolean>(false);
@@ -563,20 +576,20 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
     nodeId: string;
   } | null>(null);
   const [viewMode, setViewMode] = useState<'tiles' | 'list'>('tiles');
-  const [filteredContext, setFilteredContext] = useState<string>("all");
-   
+  const [filteredContext, setFilteredContext] = useState<string>('all');
+
   // const [resources, setResources] = useState<ResourceItem[]>([]);
   const [contextResourceCounts, setContextResourceCounts] = useState<Record<string, number>>({});
   const [totalResourceCount, setTotalResourceCount] = useState<number>(0);
   const location = useLocation();
 
   const { isConnected, connect, hasValidData } = useWebSocket();
-  const NAMESPACE_QUERY_KEY = ["namespaces"];
+  const NAMESPACE_QUERY_KEY = ['namespaces'];
 
   const { data: websocketData } = useQuery<NamespaceResource[]>({
     queryKey: NAMESPACE_QUERY_KEY,
     queryFn: async () => {
-      throw new Error("API not implemented");
+      throw new Error('API not implemented');
     },
     enabled: false,
     initialData: [],
@@ -586,7 +599,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
   const isInitialRender = useRef(true);
   // console.log(resources);
   // console.log(_props);
-  
+
   // Component mount effect - only run once using a ref flag
   useEffect(() => {
     if (isInitialRender.current) {
@@ -617,35 +630,35 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
     const searchParams = new URLSearchParams(location.search);
     if (searchParams.get('create') === 'true') {
       setShowCreateOptions(true);
-      setActiveOption("option1");
+      setActiveOption('option1');
     }
   }, [location.search]);
 
   const getTimeAgo = useCallback((timestamp: string | undefined): string => {
-    if (!timestamp) return "Unknown";
+    if (!timestamp) return 'Unknown';
     const now = new Date();
     const then = new Date(timestamp);
     const diffMs = now.getTime() - then.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    return diffDays === 0 ? "Today" : `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
+    return diffDays === 0 ? 'Today' : `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
   }, []);
 
   const handleMenuOpen = useCallback((event: React.MouseEvent, nodeId: string) => {
     event.preventDefault();
     event.stopPropagation();
-    const nodeType : string = nodeId.split(":")[0] || '';
+    const nodeType: string = nodeId.split(':')[0] || '';
     setContextMenu({ nodeId, x: event.clientX, y: event.clientY, nodeType: nodeType });
   }, []);
 
   const handleClosePanel = useCallback(() => {
     if (selectedNode) {
-      setSelectedNode((prev) => (prev ? { ...prev, isOpen: false } : null));
+      setSelectedNode(prev => (prev ? { ...prev, isOpen: false } : null));
       setTimeout(() => {
         setSelectedNode(null);
       }, 400);
     }
     if (groupPanel) {
-      setGroupPanel((prev) => (prev ? { ...prev, isOpen: false } : null));
+      setGroupPanel(prev => (prev ? { ...prev, isOpen: false } : null));
       setTimeout(() => {
         setGroupPanel(null);
       }, 400);
@@ -670,11 +683,12 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
       const timeAgo = getTimeAgo(timestamp);
       const cachedNode = nodeCache.current.get(id);
 
-      const isGroupNode = id.includes(":group");
-      
+      const isGroupNode = id.includes(':group');
+
       // Check if this node has the highlighted label
-      const hasHighlightedLabel = highlightedLabels && 
-        resourceData?.metadata?.labels && 
+      const hasHighlightedLabel =
+        highlightedLabels &&
+        resourceData?.metadata?.labels &&
         resourceData.metadata.labels[highlightedLabels.key] === highlightedLabels.value;
 
       const node =
@@ -690,18 +704,22 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                 status={status}
                 timeAgo={timeAgo}
                 resourceData={resourceData}
-                onClick={(e) => {
-                  if ((e.target as HTMLElement).tagName === "svg" || (e.target as HTMLElement).closest("svg")) return;
+                onClick={e => {
+                  if (
+                    (e.target as HTMLElement).tagName === 'svg' ||
+                    (e.target as HTMLElement).closest('svg')
+                  )
+                    return;
                   if (isGroupNode && groupItems) {
                     setGroupPanel({
                       isOpen: true,
-                      namespace: namespace || "default",
+                      namespace: namespace || 'default',
                       groupType: type.toLowerCase(),
                       groupItems: groupItems,
                     });
                   } else {
                     setSelectedNode({
-                      namespace: namespace || "default",
+                      namespace: namespace || 'default',
                       name: label,
                       type: type.toLowerCase(),
                       onClose: handleClosePanel,
@@ -710,33 +728,38 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                     });
                   }
                 }}
-                onMenuClick={(e) => handleMenuOpen(e, id)}
+                onMenuClick={e => handleMenuOpen(e, id)}
               />
             ),
           },
           position: { x: 0, y: 0 },
           style: {
             ...nodeStyle,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "2px 12px",
-            color: theme === "dark" ? "#fff" : "#000",
-            ...(hasHighlightedLabel ? {
-              boxShadow: `0 0 0 2px ${theme === "dark" ? '#41dc8e' : '#41dc8e'}`,
-              backgroundColor: theme === "dark" ? 'rgba(68, 152, 255, 0.15)' : 'rgba(68, 152, 255, 0.08)',
-              zIndex: 1000, // Bring highlighted nodes to front
-              opacity: 1,
-              transition: "all 0.2s ease-in-out"
-            } : {
-              // Always set default bg color even when not highlighted
-              backgroundColor: theme === "dark" ? "#333" : "#fff",
-              transition: "all 0.2s ease-in-out",
-              ...(highlightedLabels ? {
-                // If highlighting is active but this node doesn't match
-                opacity: 0.5
-              } : {})
-            }),
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '2px 12px',
+            color: theme === 'dark' ? '#fff' : '#000',
+            ...(hasHighlightedLabel
+              ? {
+                  boxShadow: `0 0 0 2px ${theme === 'dark' ? '#41dc8e' : '#41dc8e'}`,
+                  backgroundColor:
+                    theme === 'dark' ? 'rgba(68, 152, 255, 0.15)' : 'rgba(68, 152, 255, 0.08)',
+                  zIndex: 1000, // Bring highlighted nodes to front
+                  opacity: 1,
+                  transition: 'all 0.2s ease-in-out',
+                }
+              : {
+                  // Always set default bg color even when not highlighted
+                  backgroundColor: theme === 'dark' ? '#333' : '#fff',
+                  transition: 'all 0.2s ease-in-out',
+                  ...(highlightedLabels
+                    ? {
+                        // If highlighting is active but this node doesn't match
+                        opacity: 0.5,
+                      }
+                    : {}),
+                }),
           },
           sourcePosition: Position.Right,
           targetPosition: Position.Left,
@@ -748,21 +771,29 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
         // Always update theme-dependent styles for cached nodes
         node.style = {
           ...node.style,
-          backgroundColor: hasHighlightedLabel 
-            ? (theme === "dark" ? 'rgba(68, 152, 255, 0.15)' : 'rgba(68, 152, 255, 0.08)')
-            : (theme === "dark" ? "#333" : "#fff"),
-          color: theme === "dark" ? "#fff" : "#000",
-          ...(hasHighlightedLabel ? {
-            boxShadow: `0 0 0 2px ${theme === "dark" ? '#41dc8e' : '#41dc8e'}`,
-            zIndex: 1000,
-            opacity: 1,
-            transition: "all 0.2s ease-in-out"
-          } : highlightedLabels ? {
-            boxShadow: 'none',
-            zIndex: 0,
-            opacity: 0.5,
-            transition: "all 0.2s ease-in-out"
-          } : {}),
+          backgroundColor: hasHighlightedLabel
+            ? theme === 'dark'
+              ? 'rgba(68, 152, 255, 0.15)'
+              : 'rgba(68, 152, 255, 0.08)'
+            : theme === 'dark'
+              ? '#333'
+              : '#fff',
+          color: theme === 'dark' ? '#fff' : '#000',
+          ...(hasHighlightedLabel
+            ? {
+                boxShadow: `0 0 0 2px ${theme === 'dark' ? '#41dc8e' : '#41dc8e'}`,
+                zIndex: 1000,
+                opacity: 1,
+                transition: 'all 0.2s ease-in-out',
+              }
+            : highlightedLabels
+              ? {
+                  boxShadow: 'none',
+                  zIndex: 0,
+                  opacity: 0.5,
+                  transition: 'all 0.2s ease-in-out',
+                }
+              : {}),
         };
       }
 
@@ -779,10 +810,13 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
             id: edgeId,
             source: parent,
             target: id,
-            type: "step",
+            type: 'step',
             animated: true,
-            style: { stroke: theme === "dark" ? "#777" : "#a3a3a3", strokeDasharray: "2,2" },
-            markerEnd: { type: MarkerType.ArrowClosed, color: theme === "dark" ? "#777" : "#a3a3a3" },
+            style: { stroke: theme === 'dark' ? '#777' : '#a3a3a3', strokeDasharray: '2,2' },
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              color: theme === 'dark' ? '#777' : '#a3a3a3',
+            },
           };
           newEdges.push(edge);
           edgeCache.current.set(edgeId, edge);
@@ -790,8 +824,11 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
           // Update the cached edge with current theme colors
           const updatedEdge = {
             ...cachedEdge,
-            style: { stroke: theme === "dark" ? "#777" : "#a3a3a3", strokeDasharray: "2,2" },
-            markerEnd: { type: MarkerType.ArrowClosed, color: theme === "dark" ? "#777" : "#a3a3a3" }
+            style: { stroke: theme === 'dark' ? '#777' : '#a3a3a3', strokeDasharray: '2,2' },
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              color: theme === 'dark' ? '#777' : '#a3a3a3',
+            },
           };
           newEdges.push(updatedEdge);
         }
@@ -807,7 +844,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
   const transformDataToTree = useCallback(
     (data: NamespaceResource[]) => {
       setIsTransforming(true);
-      
+
       try {
         // Clear caches to ensure proper redraw with current theme
         nodeCache.current.clear();
@@ -816,11 +853,12 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
 
         const newNodes: CustomNode[] = [];
         const newEdges: CustomEdge[] = [];
-        
+
         // Filter by selected context if not "all"
-        const filteredData = filteredContext === "all" 
-          ? data 
-          : data.filter((namespace) => namespace.context === filteredContext);
+        const filteredData =
+          filteredContext === 'all'
+            ? data
+            : data.filter(namespace => namespace.context === filteredContext);
 
         if (filteredData && filteredData.length > 0) {
           // First, create all context nodes
@@ -829,9 +867,9 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
             createNode(
               contextId,
               namespace.context,
-              "context",
-              "Active",
-              "",
+              'context',
+              'Active',
+              '',
               undefined,
               undefined,
               null,
@@ -848,26 +886,37 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
               createNode(
                 namespaceId,
                 namespace.name,
-                "namespace",
+                'namespace',
                 namespace.status,
-                "",
+                '',
                 namespace.name,
-                { apiVersion: "v1", kind: "Namespace", metadata: { name: namespace.name, namespace: namespace.name, creationTimestamp: "", labels: namespace.labels }, status: { phase: namespace.status } },
+                {
+                  apiVersion: 'v1',
+                  kind: 'Namespace',
+                  metadata: {
+                    name: namespace.name,
+                    namespace: namespace.name,
+                    creationTimestamp: '',
+                    labels: namespace.labels,
+                  },
+                  status: { phase: namespace.status },
+                },
                 contextId,
                 newNodes,
                 newEdges
               );
 
               const resourcesMap: ResourcesMap = {
-                endpoints: namespace.resources[".v1/endpoints"] || [],
-                endpointSlices: namespace.resources["discovery.k8s.io.v1/endpointslices"] || [],
+                endpoints: namespace.resources['.v1/endpoints'] || [],
+                endpointSlices: namespace.resources['discovery.k8s.io.v1/endpointslices'] || [],
                 ...namespace.resources,
               };
 
               if (isCollapsed) {
                 const resourceGroups: Record<string, ResourceItem[]> = {};
 
-                Object.entries(resourcesMap).forEach(([key, items]) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+                Object.entries(resourcesMap).forEach(([key, items]) => {
+                  // eslint-disable-line @typescript-eslint/no-unused-vars
                   console.log(key);
                   items.forEach((item: ResourceItem) => {
                     const kindLower = item.kind.toLowerCase();
@@ -881,8 +930,14 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                 Object.entries(resourceGroups).forEach(([kindLower, items]) => {
                   const count = items.length;
                   const groupId = `ns:${namespace.name}:${kindLower}:group`;
-                  const status = items.some(item => item.status?.conditions?.some((c) => c.type === "Available" && c.status === "True")) ? "Active" : "Inactive";
-                  const label = `${count} ${kindLower}${count !== 1 ? "s" : ""}`;
+                  const status = items.some(item =>
+                    item.status?.conditions?.some(
+                      c => c.type === 'Available' && c.status === 'True'
+                    )
+                  )
+                    ? 'Active'
+                    : 'Inactive';
+                  const label = `${count} ${kindLower}${count !== 1 ? 's' : ''}`;
 
                   createNode(
                     groupId,
@@ -904,347 +959,758 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                   .forEach((item: ResourceItem, index: number) => {
                     const kindLower = item.kind.toLowerCase();
                     const resourceId = `ns:${namespace.name}:${kindLower}:${item.metadata.name}:${index}`;
-                    const status = item.status?.conditions?.some((c) => c.type === "Available" && c.status === "True") ? "Active" : "Inactive";
+                    const status = item.status?.conditions?.some(
+                      c => c.type === 'Available' && c.status === 'True'
+                    )
+                      ? 'Active'
+                      : 'Inactive';
 
-                    createNode(resourceId, item.metadata.name, kindLower, status, item.metadata.creationTimestamp, namespace.name, item, namespaceId, newNodes, newEdges);
+                    createNode(
+                      resourceId,
+                      item.metadata.name,
+                      kindLower,
+                      status,
+                      item.metadata.creationTimestamp,
+                      namespace.name,
+                      item,
+                      namespaceId,
+                      newNodes,
+                      newEdges
+                    );
 
                     switch (kindLower) {
-                      case "configmap":
-                        createNode(`${resourceId}:volume`, `volume-${item.metadata.name}`, "volume", status, undefined, namespace.name, {
-                          ...item,
-                          kind: "Volume",
-                          parentConfigMap: {
-                            name: item.metadata.name,
-                            namespace: namespace.name,
-                            kind: "ConfigMap"
-                          },
-                          spec: {
-                            configMap: {
+                      case 'configmap':
+                        createNode(
+                          `${resourceId}:volume`,
+                          `volume-${item.metadata.name}`,
+                          'volume',
+                          status,
+                          undefined,
+                          namespace.name,
+                          {
+                            ...item,
+                            kind: 'Volume',
+                            parentConfigMap: {
                               name: item.metadata.name,
-                              items: item.data ? Object.keys(item.data).map(keyName => ({ key: keyName, path: keyName })) : []
-                            }
-                          }
-                        }, resourceId, newNodes, newEdges);
-                        
-                        createNode(`${resourceId}:envvar`, `envvar-${item.metadata.name}`, "envvar", status, undefined, namespace.name, {
-                          ...item,
-                          kind: "EnvVar",
-                          parentConfigMap: {
-                            name: item.metadata.name,
-                            namespace: namespace.name,
-                            kind: "ConfigMap"
-                          }
-                        }, resourceId, newNodes, newEdges);
+                              namespace: namespace.name,
+                              kind: 'ConfigMap',
+                            },
+                            spec: {
+                              configMap: {
+                                name: item.metadata.name,
+                                items: item.data
+                                  ? Object.keys(item.data).map(keyName => ({
+                                      key: keyName,
+                                      path: keyName,
+                                    }))
+                                  : [],
+                              },
+                            },
+                          },
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+
+                        createNode(
+                          `${resourceId}:envvar`,
+                          `envvar-${item.metadata.name}`,
+                          'envvar',
+                          status,
+                          undefined,
+                          namespace.name,
+                          {
+                            ...item,
+                            kind: 'EnvVar',
+                            parentConfigMap: {
+                              name: item.metadata.name,
+                              namespace: namespace.name,
+                              kind: 'ConfigMap',
+                            },
+                          },
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
                         break;
 
-                      case "clusterrolebinding": {
+                      case 'clusterrolebinding': {
                         const crbClusterRoleId = `${resourceId}:clusterrole`;
-                        createNode(crbClusterRoleId, `clusterrole-${item.metadata.name}`, "clusterrole", status, undefined, namespace.name, {
-                          apiVersion: "rbac.authorization.k8s.io/v1",
-                          kind: "ClusterRole",
-                          metadata: {
-                            name: item.roleRef?.name || `${item.metadata.name}-clusterrole`,
-                            namespace: namespace.name,
-                            creationTimestamp: item.metadata.creationTimestamp
+                        createNode(
+                          crbClusterRoleId,
+                          `clusterrole-${item.metadata.name}`,
+                          'clusterrole',
+                          status,
+                          undefined,
+                          namespace.name,
+                          {
+                            apiVersion: 'rbac.authorization.k8s.io/v1',
+                            kind: 'ClusterRole',
+                            metadata: {
+                              name: item.roleRef?.name || `${item.metadata.name}-clusterrole`,
+                              namespace: namespace.name,
+                              creationTimestamp: item.metadata.creationTimestamp,
+                            },
+                            parentClusterRoleBinding: {
+                              name: item.metadata.name,
+                              namespace: namespace.name,
+                              kind: 'ClusterRoleBinding',
+                            },
+                            rules: [],
                           },
-                          parentClusterRoleBinding: {
-                            name: item.metadata.name,
-                            namespace: namespace.name,
-                            kind: "ClusterRoleBinding"
-                          },
-                          rules: []
-                        }, resourceId, newNodes, newEdges);
-                        
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+
                         // User subject for clusterrole
-                        createNode(`${crbClusterRoleId}:user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, {
-                          apiVersion: "rbac.authorization.k8s.io/v1",
-                          kind: "User",
-                          metadata: {
-                            name: item.subjects?.find(s => s.kind === "User")?.name || `${item.metadata.name}-user`,
-                            namespace: namespace.name,
-                            creationTimestamp: item.metadata.creationTimestamp
+                        createNode(
+                          `${crbClusterRoleId}:user`,
+                          `user-${item.metadata.name}`,
+                          'user',
+                          status,
+                          undefined,
+                          namespace.name,
+                          {
+                            apiVersion: 'rbac.authorization.k8s.io/v1',
+                            kind: 'User',
+                            metadata: {
+                              name:
+                                item.subjects?.find(s => s.kind === 'User')?.name ||
+                                `${item.metadata.name}-user`,
+                              namespace: namespace.name,
+                              creationTimestamp: item.metadata.creationTimestamp,
+                            },
+                            parentClusterRole: {
+                              name: item.roleRef?.name || `${item.metadata.name}-clusterrole`,
+                              namespace: namespace.name,
+                              kind: 'ClusterRole',
+                            },
+                            parentClusterRoleBinding: {
+                              name: item.metadata.name,
+                              namespace: namespace.name,
+                              kind: 'ClusterRoleBinding',
+                            },
                           },
-                          parentClusterRole: {
-                            name: item.roleRef?.name || `${item.metadata.name}-clusterrole`,
-                            namespace: namespace.name,
-                            kind: "ClusterRole"
-                          },
-                          parentClusterRoleBinding: {
-                            name: item.metadata.name,
-                            namespace: namespace.name,
-                            kind: "ClusterRoleBinding"
-                          }
-                        }, crbClusterRoleId, newNodes, newEdges);
-                        
+                          crbClusterRoleId,
+                          newNodes,
+                          newEdges
+                        );
+
                         // ServiceAccount subject for clusterrole
-                        createNode(`${crbClusterRoleId}:serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, {
-                          apiVersion: "v1",
-                          kind: "ServiceAccount",
-                          metadata: {
-                            name: item.subjects?.find(s => s.kind === "ServiceAccount")?.name || `${item.metadata.name}-sa`,
-                            namespace: namespace.name,
-                            creationTimestamp: item.metadata.creationTimestamp
+                        createNode(
+                          `${crbClusterRoleId}:serviceaccount`,
+                          `serviceaccount-${item.metadata.name}`,
+                          'serviceaccount',
+                          status,
+                          undefined,
+                          namespace.name,
+                          {
+                            apiVersion: 'v1',
+                            kind: 'ServiceAccount',
+                            metadata: {
+                              name:
+                                item.subjects?.find(s => s.kind === 'ServiceAccount')?.name ||
+                                `${item.metadata.name}-sa`,
+                              namespace: namespace.name,
+                              creationTimestamp: item.metadata.creationTimestamp,
+                            },
+                            parentClusterRole: {
+                              name: item.roleRef?.name || `${item.metadata.name}-clusterrole`,
+                              namespace: namespace.name,
+                              kind: 'ClusterRole',
+                            },
+                            parentClusterRoleBinding: {
+                              name: item.metadata.name,
+                              namespace: namespace.name,
+                              kind: 'ClusterRoleBinding',
+                            },
                           },
-                          parentClusterRole: {
-                            name: item.roleRef?.name || `${item.metadata.name}-clusterrole`,
-                            namespace: namespace.name,
-                            kind: "ClusterRole"
-                          },
-                          parentClusterRoleBinding: {
-                            name: item.metadata.name,
-                            namespace: namespace.name,
-                            kind: "ClusterRoleBinding"
-                          }
-                        }, crbClusterRoleId, newNodes, newEdges);
-                        
+                          crbClusterRoleId,
+                          newNodes,
+                          newEdges
+                        );
+
                         // Group subject for clusterrole
-                        createNode(`${crbClusterRoleId}:group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, {
-                          apiVersion: "rbac.authorization.k8s.io/v1",
-                          kind: "Group",
-                          metadata: {
-                            name: item.subjects?.find(s => s.kind === "Group")?.name || `${item.metadata.name}-group`,
-                            namespace: namespace.name,
-                            creationTimestamp: item.metadata.creationTimestamp
+                        createNode(
+                          `${crbClusterRoleId}:group`,
+                          `group-${item.metadata.name}`,
+                          'group',
+                          status,
+                          undefined,
+                          namespace.name,
+                          {
+                            apiVersion: 'rbac.authorization.k8s.io/v1',
+                            kind: 'Group',
+                            metadata: {
+                              name:
+                                item.subjects?.find(s => s.kind === 'Group')?.name ||
+                                `${item.metadata.name}-group`,
+                              namespace: namespace.name,
+                              creationTimestamp: item.metadata.creationTimestamp,
+                            },
+                            parentClusterRole: {
+                              name: item.roleRef?.name || `${item.metadata.name}-clusterrole`,
+                              namespace: namespace.name,
+                              kind: 'ClusterRole',
+                            },
+                            parentClusterRoleBinding: {
+                              name: item.metadata.name,
+                              namespace: namespace.name,
+                              kind: 'ClusterRoleBinding',
+                            },
                           },
-                          parentClusterRole: {
-                            name: item.roleRef?.name || `${item.metadata.name}-clusterrole`,
-                            namespace: namespace.name,
-                            kind: "ClusterRole"
-                          },
-                          parentClusterRoleBinding: {
-                            name: item.metadata.name,
-                            namespace: namespace.name,
-                            kind: "ClusterRoleBinding"
-                          }
-                        }, crbClusterRoleId, newNodes, newEdges);
+                          crbClusterRoleId,
+                          newNodes,
+                          newEdges
+                        );
                         break;
                       }
 
-                      case "customresourcedefinition": {
+                      case 'customresourcedefinition': {
                         const crdCrId = `${resourceId}:customresource`;
-                        createNode(crdCrId, `cr-${item.metadata.name}`, "customresource", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                        createNode(`${crdCrId}:controller`, `controller-${item.metadata.name}`, "controller", status, undefined, namespace.name, item, crdCrId, newNodes, newEdges);
+                        createNode(
+                          crdCrId,
+                          `cr-${item.metadata.name}`,
+                          'customresource',
+                          status,
+                          undefined,
+                          namespace.name,
+                          item,
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                        createNode(
+                          `${crdCrId}:controller`,
+                          `controller-${item.metadata.name}`,
+                          'controller',
+                          status,
+                          undefined,
+                          namespace.name,
+                          item,
+                          crdCrId,
+                          newNodes,
+                          newEdges
+                        );
                         break;
                       }
 
-                      case "clusterrole": {
+                      case 'clusterrole': {
                         const crClusterRoleBindingId = `${resourceId}:clusterrolebinding`;
-                        createNode(crClusterRoleBindingId, `clusterrolebinding-${item.metadata.name}`, "clusterrolebinding", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                        createNode(`${crClusterRoleBindingId}:user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, crClusterRoleBindingId, newNodes, newEdges);
-                        createNode(`${crClusterRoleBindingId}:group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, item, crClusterRoleBindingId, newNodes, newEdges);
-                        createNode(`${crClusterRoleBindingId}:serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, item, crClusterRoleBindingId, newNodes, newEdges);
+                        createNode(
+                          crClusterRoleBindingId,
+                          `clusterrolebinding-${item.metadata.name}`,
+                          'clusterrolebinding',
+                          status,
+                          undefined,
+                          namespace.name,
+                          item,
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                        createNode(
+                          `${crClusterRoleBindingId}:user`,
+                          `user-${item.metadata.name}`,
+                          'user',
+                          status,
+                          undefined,
+                          namespace.name,
+                          item,
+                          crClusterRoleBindingId,
+                          newNodes,
+                          newEdges
+                        );
+                        createNode(
+                          `${crClusterRoleBindingId}:group`,
+                          `group-${item.metadata.name}`,
+                          'group',
+                          status,
+                          undefined,
+                          namespace.name,
+                          item,
+                          crClusterRoleBindingId,
+                          newNodes,
+                          newEdges
+                        );
+                        createNode(
+                          `${crClusterRoleBindingId}:serviceaccount`,
+                          `serviceaccount-${item.metadata.name}`,
+                          'serviceaccount',
+                          status,
+                          undefined,
+                          namespace.name,
+                          item,
+                          crClusterRoleBindingId,
+                          newNodes,
+                          newEdges
+                        );
                         break;
                       }
 
-                      case "cronjob":
-                        createNode(`${resourceId}:job`, `job-${item.metadata.name}`, "job", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      case 'cronjob':
+                        createNode(
+                          `${resourceId}:job`,
+                          `job-${item.metadata.name}`,
+                          'job',
+                          status,
+                          undefined,
+                          namespace.name,
+                          item,
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
                         break;
 
-                      case "deployment":
+                      case 'deployment':
                         break;
 
-                      case "daemonset":
+                      case 'daemonset':
                         break;
 
-                      case "service":
-                        createNode(`${resourceId}:endpoints`, `endpoints-${item.metadata.name}`, "endpoints", status, undefined, namespace.name, {
-                          apiVersion: "v1",
-                          kind: "Endpoints",
-                          metadata: {
-                            name: item.metadata.name,
-                            namespace: namespace.name,
-                            creationTimestamp: item.metadata.creationTimestamp,
-                            labels: item.metadata.labels
+                      case 'service':
+                        createNode(
+                          `${resourceId}:endpoints`,
+                          `endpoints-${item.metadata.name}`,
+                          'endpoints',
+                          status,
+                          undefined,
+                          namespace.name,
+                          {
+                            apiVersion: 'v1',
+                            kind: 'Endpoints',
+                            metadata: {
+                              name: item.metadata.name,
+                              namespace: namespace.name,
+                              creationTimestamp: item.metadata.creationTimestamp,
+                              labels: item.metadata.labels,
+                            },
+                            parentService: {
+                              name: item.metadata.name,
+                              namespace: namespace.name,
+                              kind: 'Service',
+                            },
+                            subsets: item.subsets || [],
+                            ports: item.spec?.ports || [],
                           },
-                          parentService: {
-                            name: item.metadata.name,
-                            namespace: namespace.name,
-                            kind: "Service"
-                          },
-                          subsets: item.subsets || [],
-                          ports: item.spec?.ports || []
-                        }, resourceId, newNodes, newEdges);
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
                         break;
 
-                      case "endpoints":
+                      case 'endpoints':
                         break;
 
-                      case "group":
-                        createNode(`${resourceId}:user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      case 'group':
+                        createNode(
+                          `${resourceId}:user`,
+                          `user-${item.metadata.name}`,
+                          'user',
+                          status,
+                          undefined,
+                          namespace.name,
+                          item,
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
                         break;
 
-                      case "horizontalpodautoscaler":
-                        createNode(`${resourceId}:deployment`, `deployment-${item.metadata.name}`, "deployment", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                        createNode(`${resourceId}:replicaset`, `replicaset-${item.metadata.name}`, "replicaset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                        createNode(`${resourceId}:statefulset`, `statefulset-${item.metadata.name}`, "statefulset", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      case 'horizontalpodautoscaler':
+                        createNode(
+                          `${resourceId}:deployment`,
+                          `deployment-${item.metadata.name}`,
+                          'deployment',
+                          status,
+                          undefined,
+                          namespace.name,
+                          item,
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                        createNode(
+                          `${resourceId}:replicaset`,
+                          `replicaset-${item.metadata.name}`,
+                          'replicaset',
+                          status,
+                          undefined,
+                          namespace.name,
+                          item,
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                        createNode(
+                          `${resourceId}:statefulset`,
+                          `statefulset-${item.metadata.name}`,
+                          'statefulset',
+                          status,
+                          undefined,
+                          namespace.name,
+                          item,
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
                         break;
 
-                      case "ingress": {
+                      case 'ingress': {
                         const ingControllerId = `${resourceId}:ingresscontroller`;
-                        createNode(ingControllerId, `ingresscontroller-${item.metadata.name}`, "ingresscontroller", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                        createNode(`${ingControllerId}:service`, `service-${item.metadata.name}`, "service", status, undefined, namespace.name, item, ingControllerId, newNodes, newEdges);
+                        createNode(
+                          ingControllerId,
+                          `ingresscontroller-${item.metadata.name}`,
+                          'ingresscontroller',
+                          status,
+                          undefined,
+                          namespace.name,
+                          item,
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                        createNode(
+                          `${ingControllerId}:service`,
+                          `service-${item.metadata.name}`,
+                          'service',
+                          status,
+                          undefined,
+                          namespace.name,
+                          item,
+                          ingControllerId,
+                          newNodes,
+                          newEdges
+                        );
                         break;
                       }
 
-                      case "job":
+                      case 'job':
                         break;
 
-                      case "limitrange":
-                        createNode(`${resourceId}:namespace`, `namespace-${item.metadata.name}`, "namespace", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      case 'limitrange':
+                        createNode(
+                          `${resourceId}:namespace`,
+                          `namespace-${item.metadata.name}`,
+                          'namespace',
+                          status,
+                          undefined,
+                          namespace.name,
+                          item,
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
                         break;
 
-                      case "networkpolicy":
+                      case 'networkpolicy':
                         break;
 
-                      case "podsecuritypolicy":
+                      case 'podsecuritypolicy':
                         break;
 
-                      case "persistentvolume":
-                        createNode(`${resourceId}:persistentvolumeclaim`, `pvc-${item.metadata.name}`, "persistentvolumeclaim", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      case 'persistentvolume':
+                        createNode(
+                          `${resourceId}:persistentvolumeclaim`,
+                          `pvc-${item.metadata.name}`,
+                          'persistentvolumeclaim',
+                          status,
+                          undefined,
+                          namespace.name,
+                          item,
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
                         break;
 
-                      case "persistentvolumeclaim":
-                        createNode(`${resourceId}:persistentvolume`, `pv-${item.metadata.name}`, "persistentvolume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      case 'persistentvolumeclaim':
+                        createNode(
+                          `${resourceId}:persistentvolume`,
+                          `pv-${item.metadata.name}`,
+                          'persistentvolume',
+                          status,
+                          undefined,
+                          namespace.name,
+                          item,
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
                         break;
 
-                      case "resourcequota":
-                        createNode(`${resourceId}:namespace`, `namespace-${item.metadata.name}`, "namespace", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      case 'resourcequota':
+                        createNode(
+                          `${resourceId}:namespace`,
+                          `namespace-${item.metadata.name}`,
+                          'namespace',
+                          status,
+                          undefined,
+                          namespace.name,
+                          item,
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
                         break;
 
-                      case "rolebinding": {
+                      case 'rolebinding': {
                         const rbRoleId = `${resourceId}:role`;
-                        createNode(rbRoleId, `role-${item.metadata.name}`, "role", status, undefined, namespace.name, {
-                          apiVersion: "rbac.authorization.k8s.io/v1",
-                          kind: "Role",
-                          metadata: {
-                            name: item.roleRef?.name || `${item.metadata.name}-role`,
-                            namespace: namespace.name,
-                            creationTimestamp: item.metadata.creationTimestamp
+                        createNode(
+                          rbRoleId,
+                          `role-${item.metadata.name}`,
+                          'role',
+                          status,
+                          undefined,
+                          namespace.name,
+                          {
+                            apiVersion: 'rbac.authorization.k8s.io/v1',
+                            kind: 'Role',
+                            metadata: {
+                              name: item.roleRef?.name || `${item.metadata.name}-role`,
+                              namespace: namespace.name,
+                              creationTimestamp: item.metadata.creationTimestamp,
+                            },
+                            parentRoleBinding: {
+                              name: item.metadata.name,
+                              namespace: namespace.name,
+                              kind: 'RoleBinding',
+                            },
+                            rules: [],
                           },
-                          parentRoleBinding: {
-                            name: item.metadata.name,
-                            namespace: namespace.name,
-                            kind: "RoleBinding"
-                          },
-                          rules: []
-                        }, resourceId, newNodes, newEdges);
-                        
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+
                         // User subject for role
-                        createNode(`${rbRoleId}:user`, `user-${item.metadata.name}`, "user", status, undefined, namespace.name, {
-                          apiVersion: "rbac.authorization.k8s.io/v1",
-                          kind: "User",
-                          metadata: {
-                            name: item.subjects?.find(s => s.kind === "User")?.name || `${item.metadata.name}-user`,
-                            namespace: namespace.name,
-                            creationTimestamp: item.metadata.creationTimestamp
+                        createNode(
+                          `${rbRoleId}:user`,
+                          `user-${item.metadata.name}`,
+                          'user',
+                          status,
+                          undefined,
+                          namespace.name,
+                          {
+                            apiVersion: 'rbac.authorization.k8s.io/v1',
+                            kind: 'User',
+                            metadata: {
+                              name:
+                                item.subjects?.find(s => s.kind === 'User')?.name ||
+                                `${item.metadata.name}-user`,
+                              namespace: namespace.name,
+                              creationTimestamp: item.metadata.creationTimestamp,
+                            },
+                            parentRole: {
+                              name: item.roleRef?.name || `${item.metadata.name}-role`,
+                              namespace: namespace.name,
+                              kind: 'Role',
+                            },
+                            parentRoleBinding: {
+                              name: item.metadata.name,
+                              namespace: namespace.name,
+                              kind: 'RoleBinding',
+                            },
                           },
-                          parentRole: {
-                            name: item.roleRef?.name || `${item.metadata.name}-role`,
-                            namespace: namespace.name,
-                            kind: "Role"
-                          },
-                          parentRoleBinding: {
-                            name: item.metadata.name,
-                            namespace: namespace.name,
-                            kind: "RoleBinding"
-                          }
-                        }, rbRoleId, newNodes, newEdges);
-                        
+                          rbRoleId,
+                          newNodes,
+                          newEdges
+                        );
+
                         // ServiceAccount subject for role
-                        createNode(`${rbRoleId}:serviceaccount`, `serviceaccount-${item.metadata.name}`, "serviceaccount", status, undefined, namespace.name, {
-                          apiVersion: "v1",
-                          kind: "ServiceAccount",
-                          metadata: {
-                            name: item.subjects?.find(s => s.kind === "ServiceAccount")?.name || `${item.metadata.name}-sa`,
-                            namespace: namespace.name,
-                            creationTimestamp: item.metadata.creationTimestamp
+                        createNode(
+                          `${rbRoleId}:serviceaccount`,
+                          `serviceaccount-${item.metadata.name}`,
+                          'serviceaccount',
+                          status,
+                          undefined,
+                          namespace.name,
+                          {
+                            apiVersion: 'v1',
+                            kind: 'ServiceAccount',
+                            metadata: {
+                              name:
+                                item.subjects?.find(s => s.kind === 'ServiceAccount')?.name ||
+                                `${item.metadata.name}-sa`,
+                              namespace: namespace.name,
+                              creationTimestamp: item.metadata.creationTimestamp,
+                            },
+                            parentRole: {
+                              name: item.roleRef?.name || `${item.metadata.name}-role`,
+                              namespace: namespace.name,
+                              kind: 'Role',
+                            },
+                            parentRoleBinding: {
+                              name: item.metadata.name,
+                              namespace: namespace.name,
+                              kind: 'RoleBinding',
+                            },
                           },
-                          parentRole: {
-                            name: item.roleRef?.name || `${item.metadata.name}-role`,
-                            namespace: namespace.name,
-                            kind: "Role"
-                          },
-                          parentRoleBinding: {
-                            name: item.metadata.name,
-                            namespace: namespace.name,
-                            kind: "RoleBinding"
-                          }
-                        }, rbRoleId, newNodes, newEdges);
-                        
+                          rbRoleId,
+                          newNodes,
+                          newEdges
+                        );
+
                         // Group subject for role
-                        createNode(`${rbRoleId}:group`, `group-${item.metadata.name}`, "group", status, undefined, namespace.name, {
-                          apiVersion: "rbac.authorization.k8s.io/v1",
-                          kind: "Group",
-                          metadata: {
-                            name: item.subjects?.find(s => s.kind === "Group")?.name || `${item.metadata.name}-group`,
-                            namespace: namespace.name,
-                            creationTimestamp: item.metadata.creationTimestamp
+                        createNode(
+                          `${rbRoleId}:group`,
+                          `group-${item.metadata.name}`,
+                          'group',
+                          status,
+                          undefined,
+                          namespace.name,
+                          {
+                            apiVersion: 'rbac.authorization.k8s.io/v1',
+                            kind: 'Group',
+                            metadata: {
+                              name:
+                                item.subjects?.find(s => s.kind === 'Group')?.name ||
+                                `${item.metadata.name}-group`,
+                              namespace: namespace.name,
+                              creationTimestamp: item.metadata.creationTimestamp,
+                            },
+                            parentRole: {
+                              name: item.roleRef?.name || `${item.metadata.name}-role`,
+                              namespace: namespace.name,
+                              kind: 'Role',
+                            },
+                            parentRoleBinding: {
+                              name: item.metadata.name,
+                              namespace: namespace.name,
+                              kind: 'RoleBinding',
+                            },
                           },
-                          parentRole: {
-                            name: item.roleRef?.name || `${item.metadata.name}-role`,
-                            namespace: namespace.name,
-                            kind: "Role"
-                          },
-                          parentRoleBinding: {
-                            name: item.metadata.name,
-                            namespace: namespace.name,
-                            kind: "RoleBinding"
-                          }
-                        }, rbRoleId, newNodes, newEdges);
+                          rbRoleId,
+                          newNodes,
+                          newEdges
+                        );
                         break;
                       }
 
-                      case "role":
-                        createNode(`${resourceId}:namespace`, `namespace-${item.metadata.name}`, "namespace", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      case 'role':
+                        createNode(
+                          `${resourceId}:namespace`,
+                          `namespace-${item.metadata.name}`,
+                          'namespace',
+                          status,
+                          undefined,
+                          namespace.name,
+                          item,
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
                         break;
 
-                      case "replicaset":
+                      case 'replicaset':
                         break;
 
-                      case "serviceaccount":
+                      case 'serviceaccount':
                         break;
 
-                      case "storageclass":
-                        createNode(`${resourceId}:persistentvolume`, `pv-${item.metadata.name}`, "persistentvolume", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      case 'storageclass':
+                        createNode(
+                          `${resourceId}:persistentvolume`,
+                          `pv-${item.metadata.name}`,
+                          'persistentvolume',
+                          status,
+                          undefined,
+                          namespace.name,
+                          item,
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
                         break;
 
-                      case "secret":
-                        createNode(`${resourceId}:volume`, `volume-${item.metadata.name}`, "volume", status, undefined, namespace.name, {
-                          ...item,
-                          kind: "Volume",
-                          parentSecret: {
-                            name: item.metadata.name,
-                            namespace: namespace.name,
-                            kind: "Secret"
+                      case 'secret':
+                        createNode(
+                          `${resourceId}:volume`,
+                          `volume-${item.metadata.name}`,
+                          'volume',
+                          status,
+                          undefined,
+                          namespace.name,
+                          {
+                            ...item,
+                            kind: 'Volume',
+                            parentSecret: {
+                              name: item.metadata.name,
+                              namespace: namespace.name,
+                              kind: 'Secret',
+                            },
+                            spec: {
+                              secret: {
+                                secretName: item.metadata.name,
+                                items: item.data
+                                  ? Object.keys(item.data).map(keyName => ({
+                                      key: keyName,
+                                      path: keyName,
+                                    }))
+                                  : [],
+                              },
+                            },
                           },
-                          spec: {
-                            secret: {
-                              secretName: item.metadata.name,
-                              items: item.data ? Object.keys(item.data).map(keyName => ({ key: keyName, path: keyName })) : []
-                            }
-                          }
-                        }, resourceId, newNodes, newEdges);
-                        
-                        createNode(`${resourceId}:envvar`, `envvar-${item.metadata.name}`, "envvar", status, undefined, namespace.name, {
-                          ...item,
-                          kind: "EnvVar",
-                          parentSecret: {
-                            name: item.metadata.name,
-                            namespace: namespace.name,
-                            kind: "Secret"
-                          }
-                        }, resourceId, newNodes, newEdges);
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+
+                        createNode(
+                          `${resourceId}:envvar`,
+                          `envvar-${item.metadata.name}`,
+                          'envvar',
+                          status,
+                          undefined,
+                          namespace.name,
+                          {
+                            ...item,
+                            kind: 'EnvVar',
+                            parentSecret: {
+                              name: item.metadata.name,
+                              namespace: namespace.name,
+                              kind: 'Secret',
+                            },
+                          },
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
                         break;
 
-                      case "statefulset":
+                      case 'statefulset':
                         break;
 
-                      case "user":
-                        createNode(`${resourceId}:role`, `role-${item.metadata.name}`, "role", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
-                        createNode(`${resourceId}:clusterrole`, `clusterrole-${item.metadata.name}`, "clusterrole", status, undefined, namespace.name, item, resourceId, newNodes, newEdges);
+                      case 'user':
+                        createNode(
+                          `${resourceId}:role`,
+                          `role-${item.metadata.name}`,
+                          'role',
+                          status,
+                          undefined,
+                          namespace.name,
+                          item,
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
+                        createNode(
+                          `${resourceId}:clusterrole`,
+                          `clusterrole-${item.metadata.name}`,
+                          'clusterrole',
+                          status,
+                          undefined,
+                          namespace.name,
+                          item,
+                          resourceId,
+                          newNodes,
+                          newEdges
+                        );
                         break;
 
-                      case "volume":
+                      case 'volume':
                         break;
 
                       default:
@@ -1256,7 +1722,12 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
           }
         }
 
-        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(newNodes, newEdges, "LR", prevNodes);
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+          newNodes,
+          newEdges,
+          'LR',
+          prevNodes
+        );
         ReactDOM.unstable_batchedUpdates(() => {
           setNodes(layoutedNodes);
           setEdges(layoutedEdges);
@@ -1267,12 +1738,12 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
         // Calculate resource counts for context filtering
         const tempContextCounts: Record<string, number> = {};
         let tempTotalCount = 0;
-        
+
         // Count resources by context
         data.forEach(namespace => {
           // Get the context for this namespace
-          const context = namespace.context || "default";
-          
+          const context = namespace.context || 'default';
+
           // Count all resources in this namespace
           let namespaceResourceCount = 0;
           Object.keys(namespace.resources).forEach(resourceType => {
@@ -1281,22 +1752,22 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
               namespaceResourceCount += resourceList.length;
             }
           });
-          
+
           // Add to context count
           tempContextCounts[context] = (tempContextCounts[context] || 0) + namespaceResourceCount;
           tempTotalCount += namespaceResourceCount;
         });
-        
+
         // Update counts
         setContextResourceCounts(tempContextCounts);
         setTotalResourceCount(tempTotalCount);
-        
+
         // console.log("[TreeViewComponent] Tree resources calculated:", {
         //   byContext: tempContextCounts,
         //   total: tempTotalCount
         // });
       } catch (error) {
-        console.error("Error transforming data to tree:", error);
+        console.error('Error transforming data to tree:', error);
       } finally {
         setIsTransforming(false);
       }
@@ -1325,15 +1796,19 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if ((selectedNode?.isOpen || groupPanel?.isOpen) && panelRef.current && !panelRef.current.contains(event.target as Node)) {
+      if (
+        (selectedNode?.isOpen || groupPanel?.isOpen) &&
+        panelRef.current &&
+        !panelRef.current.contains(event.target as Node)
+      ) {
         if (selectedNode?.isOpen) {
-          setSelectedNode((prev) => (prev ? { ...prev, isOpen: false } : null));
+          setSelectedNode(prev => (prev ? { ...prev, isOpen: false } : null));
           setTimeout(() => {
             setSelectedNode(null);
           }, 400);
         }
         if (groupPanel?.isOpen) {
-          setGroupPanel((prev) => (prev ? { ...prev, isOpen: false } : null));
+          setGroupPanel(prev => (prev ? { ...prev, isOpen: false } : null));
           setTimeout(() => {
             setGroupPanel(null);
           }, 400);
@@ -1341,9 +1816,9 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [selectedNode, groupPanel]);
 
@@ -1357,11 +1832,9 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
       if (visited.has(currentNodeId)) continue;
       visited.add(currentNodeId);
 
-      const children = edges
-        .filter((edge) => edge.source === currentNodeId)
-        .map((edge) => edge.target);
+      const children = edges.filter(edge => edge.source === currentNodeId).map(edge => edge.target);
 
-      children.forEach((childId) => {
+      children.forEach(childId => {
         if (!visited.has(childId)) {
           descendants.push(childId);
           queue.push(childId);
@@ -1377,7 +1850,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
       try {
         let endpoint: string;
 
-        if (nodeType.toLowerCase() === "namespace") {
+        if (nodeType.toLowerCase() === 'namespace') {
           endpoint = `${process.env.VITE_BASE_URL}/api/namespaces/delete/${namespace}`;
         } else {
           const kind = nodeType.charAt(0).toUpperCase() + nodeType.slice(1);
@@ -1390,22 +1863,22 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
         const descendantNodeIds = findDescendantNodes(nodeId, edges);
         const nodesToDelete = [nodeId, ...descendantNodeIds];
 
-        setNodes((prevNodes) => {
-          const remainingNodes = prevNodes.filter((n) => !nodesToDelete.includes(n.id));
+        setNodes(prevNodes => {
+          const remainingNodes = prevNodes.filter(n => !nodesToDelete.includes(n.id));
           return remainingNodes;
         });
 
-        setEdges((prevEdges) => {
+        setEdges(prevEdges => {
           const remainingEdges = prevEdges.filter(
-            (e) => !nodesToDelete.includes(e.source) && !nodesToDelete.includes(e.target)
+            e => !nodesToDelete.includes(e.source) && !nodesToDelete.includes(e.target)
           );
           return remainingEdges;
         });
 
-        nodesToDelete.forEach((id) => {
+        nodesToDelete.forEach(id => {
           nodeCache.current.delete(id);
         });
-        
+
         edgeCache.current.forEach((edge, edgeId) => {
           if (nodesToDelete.includes(edge.source) || nodesToDelete.includes(edge.target)) {
             edgeCache.current.delete(edgeId);
@@ -1413,12 +1886,15 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
         });
 
         setSnackbarMessage(`"${nodeName}" and its children deleted successfully`);
-        setSnackbarSeverity("success");
+        setSnackbarSeverity('success');
         setSnackbarOpen(true);
       } catch (error) {
-        console.error(`[TreeView] Failed to delete node ${nodeId} at ${performance.now() - renderStartTime.current}ms:`, error);
+        console.error(
+          `[TreeView] Failed to delete node ${nodeId} at ${performance.now() - renderStartTime.current}ms:`,
+          error
+        );
         setSnackbarMessage(`Failed to delete "${nodeName}"`);
-        setSnackbarSeverity("error");
+        setSnackbarSeverity('error');
         setSnackbarOpen(true);
       }
     },
@@ -1432,38 +1908,40 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
   const handleMenuAction = useCallback(
     async (action: string) => {
       if (contextMenu?.nodeId) {
-        const node = nodes.find((n) => n.id === contextMenu.nodeId);
+        const node = nodes.find(n => n.id === contextMenu.nodeId);
         if (node) {
-          const nodeIdParts = node.id.split(":");
+          const nodeIdParts = node.id.split(':');
           const nodeName = node.data.label.props.label;
-          let namespace = "";
-          let nodeType = "";
+          let namespace = '';
+          let nodeType = '';
 
-          if (node.id.startsWith("ns:") && nodeIdParts.length === 2) {
-            nodeType = "namespace";
+          if (node.id.startsWith('ns:') && nodeIdParts.length === 2) {
+            nodeType = 'namespace';
             namespace = nodeIdParts[1];
           } else if (nodeIdParts.length >= 4) {
             namespace = nodeIdParts[1];
             nodeType = nodeIdParts[2];
-          } else if(node.id.startsWith("context:") && nodeIdParts.length === 2){
-            nodeType = "context";
+          } else if (node.id.startsWith('context:') && nodeIdParts.length === 2) {
+            nodeType = 'context';
             namespace = nodeIdParts[0];
           } else {
             return;
           }
           const resourceData = node.data.label.props.resourceData;
           switch (action) {
-            case "Details":
+            case 'Details':
               if (node.isGroup && resourceData) {
                 setGroupPanel({
                   isOpen: true,
-                  namespace: namespace || "default",
+                  namespace: namespace || 'default',
                   groupType: nodeType,
-                  groupItems: nodeCache.current.get(node.id)?.data.label.props.resourceData ? [resourceData] : [],
+                  groupItems: nodeCache.current.get(node.id)?.data.label.props.resourceData
+                    ? [resourceData]
+                    : [],
                 });
               } else {
                 setSelectedNode({
-                  namespace: namespace || "default",  
+                  namespace: namespace || 'default',
                   name: nodeName,
                   type: nodeType,
                   onClose: handleClosePanel,
@@ -1473,7 +1951,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                 });
               }
               break;
-            case "Delete":
+            case 'Delete':
               setDeleteNodeDetails({
                 namespace,
                 nodeType,
@@ -1482,9 +1960,9 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
               });
               setDeleteDialogOpen(true);
               break;
-            case "Edit":
+            case 'Edit':
               setSelectedNode({
-                namespace: namespace || "default",
+                namespace: namespace || 'default',
                 name: nodeName,
                 type: nodeType,
                 onClose: handleClosePanel,
@@ -1493,9 +1971,9 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                 initialTab: 1,
               });
               break;
-            case "Logs":
+            case 'Logs':
               setSelectedNode({
-                namespace: namespace || "default",
+                namespace: namespace || 'default',
                 name: nodeName,
                 type: nodeType,
                 onClose: handleClosePanel,
@@ -1538,11 +2016,11 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
 
   const handleCreateWorkloadClick = () => {
     setShowCreateOptions(true);
-    setActiveOption("option1");
+    setActiveOption('option1');
   };
 
   const handleToggleCollapse = useCallback(() => {
-    setIsCollapsed((prev) => !prev);
+    setIsCollapsed(prev => !prev);
     setIsTransforming(true);
     transformDataToTree(websocketData);
   }, [websocketData, transformDataToTree]);
@@ -1588,11 +2066,11 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
           // Calculate resource counts for context filtering
           const initialContextCounts: Record<string, number> = {};
           let initialTotalCount = 0;
-          
+
           websocketData.forEach(namespace => {
             // Get the context for this namespace
-            const context = namespace.context || "default";
-            
+            const context = namespace.context || 'default';
+
             // Count all resources in this namespace
             let namespaceResourceCount = 0;
             Object.keys(namespace.resources).forEach(resourceType => {
@@ -1601,44 +2079,48 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                 namespaceResourceCount += resourceList.length;
               }
             });
-            
+
             // Add to context count
-            initialContextCounts[context] = (initialContextCounts[context] || 0) + namespaceResourceCount;
+            initialContextCounts[context] =
+              (initialContextCounts[context] || 0) + namespaceResourceCount;
             initialTotalCount += namespaceResourceCount;
           });
-          
+
           // Update counts - only if we don't already have counts from ListView
           if (totalResourceCount === 0) {
             setContextResourceCounts(initialContextCounts);
             setTotalResourceCount(initialTotalCount);
-            
+
             // console.log("[TreeViewComponent] Initial resources calculated:", {
             //   byContext: initialContextCounts,
             //   total: initialTotalCount
             // });
           }
         } catch (error) {
-          console.error("Error calculating initial resource counts:", error);
+          console.error('Error calculating initial resource counts:', error);
         }
       }
     }
   }, [dataReceived, websocketData, isTransforming, totalResourceCount]);
 
   // Handle resource data changes from ListViewComponent
-  const handleResourceDataChange = useCallback((data: ResourceDataChangeEvent) => {
-    // Only update counts if we're in list view to avoid overriding tree view counts
-    if (viewMode === 'list') {
-      // setResources(data.resources as unknown as ResourceItem[]);
-      setContextResourceCounts(data.contextCounts);
-      setTotalResourceCount(data.totalCount);
-      
-      // console.log("[TreeViewComponent] List view resource data received:", {
-      //   totalResources: data.totalCount,
-      //   filteredCount: data.filteredResources.length,
-      //   contextCounts: data.contextCounts
-      // });
-    }
-  }, [viewMode]);
+  const handleResourceDataChange = useCallback(
+    (data: ResourceDataChangeEvent) => {
+      // Only update counts if we're in list view to avoid overriding tree view counts
+      if (viewMode === 'list') {
+        // setResources(data.resources as unknown as ResourceItem[]);
+        setContextResourceCounts(data.contextCounts);
+        setTotalResourceCount(data.totalCount);
+
+        // console.log("[TreeViewComponent] List view resource data received:", {
+        //   totalResources: data.totalCount,
+        //   filteredCount: data.filteredResources.length,
+        //   contextCounts: data.contextCounts
+        // });
+      }
+    },
+    [viewMode]
+  );
 
   // Within the TreeViewComponent function, add this useEffect
   useEffect(() => {
@@ -1649,11 +2131,11 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
         // Calculate resource counts for tree view specifically
         const treeViewContextCounts: Record<string, number> = {};
         let treeViewTotalCount = 0;
-        
+
         websocketData.forEach(namespace => {
           // Get the context for this namespace
-          const context = namespace.context || "default";
-          
+          const context = namespace.context || 'default';
+
           // Count all resources in this namespace
           let namespaceResourceCount = 0;
           Object.keys(namespace.resources).forEach(resourceType => {
@@ -1662,22 +2144,23 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
               namespaceResourceCount += resourceList.length;
             }
           });
-          
+
           // Add to context count
-          treeViewContextCounts[context] = (treeViewContextCounts[context] || 0) + namespaceResourceCount;
+          treeViewContextCounts[context] =
+            (treeViewContextCounts[context] || 0) + namespaceResourceCount;
           treeViewTotalCount += namespaceResourceCount;
         });
-        
+
         // Update counts
         setContextResourceCounts(treeViewContextCounts);
         setTotalResourceCount(treeViewTotalCount);
-        
+
         // console.log("[TreeViewComponent] Tree view activated, recalculated resource counts:", {
         //   byContext: treeViewContextCounts,
         //   total: treeViewTotalCount
         // });
       } catch (error) {
-        console.error("Error calculating tree view resource counts:", error);
+        console.error('Error calculating tree view resource counts:', error);
       }
     }
   }, [viewMode, websocketData]);
@@ -1686,40 +2169,44 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
   useEffect(() => {
     if (nodes.length > 0) {
       // console.log("[TreeView] Theme changed, updating node styles");
-      
+
       // Update node styles when theme changes without recreating the nodes
       setNodes(currentNodes => {
         // Create a new array with updated styles but preserve all other node properties
         const updatedNodes = currentNodes.map(node => {
           // Extract resourceData from node label props
           const resourceData = node.data?.label?.props?.resourceData;
-          
+
           // Check if this node has the highlighted label
-          const hasHighlightedLabel = 
-            resourceData?.metadata?.labels && 
+          const hasHighlightedLabel =
+            resourceData?.metadata?.labels &&
             highlightedLabels &&
             resourceData.metadata.labels[highlightedLabels.key] === highlightedLabels.value;
-          
+
           // Create a new style object with the correct properties
           const newStyle = {
             ...node.style,
-            backgroundColor: hasHighlightedLabel 
-              ? (theme === "dark" ? 'rgba(47, 134, 255, 0.2)' : 'rgba(47, 134, 255, 0.12)')
-              : (theme === "dark" ? "#333" : "#fff"),
-            color: theme === "dark" ? "#fff" : "#000",
-            boxShadow: hasHighlightedLabel 
-              ? `0 0 0 2px ${theme === "dark" ? '#41dc8e' : '#41dc8e'}`
+            backgroundColor: hasHighlightedLabel
+              ? theme === 'dark'
+                ? 'rgba(47, 134, 255, 0.2)'
+                : 'rgba(47, 134, 255, 0.12)'
+              : theme === 'dark'
+                ? '#333'
+                : '#fff',
+            color: theme === 'dark' ? '#fff' : '#000',
+            boxShadow: hasHighlightedLabel
+              ? `0 0 0 2px ${theme === 'dark' ? '#41dc8e' : '#41dc8e'}`
               : 'none',
-            transition: "all 0.2s ease-in-out"
+            transition: 'all 0.2s ease-in-out',
           };
-          
+
           // Return the node with updated style
           return {
             ...node,
-            style: newStyle
+            style: newStyle,
           };
         });
-        
+
         return updatedNodes;
       });
     }
@@ -1729,42 +2216,44 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
   useEffect(() => {
     if (dataReceived && websocketData) {
       // console.log("[TreeView] Highlighted labels changed, updating node styles");
-      
+
       // Update node styles directly based on highlighted labels without recreating the nodes
       setNodes(currentNodes => {
         // Create a new array with updated styles but preserve all other node properties
         const updatedNodes = currentNodes.map(node => {
           // Extract resourceData from node label props
           const resourceData = node.data?.label?.props?.resourceData;
-          
+
           // Check if this node has the highlighted label
-          const hasHighlightedLabel = 
-            resourceData?.metadata?.labels && 
+          const hasHighlightedLabel =
+            resourceData?.metadata?.labels &&
             highlightedLabels &&
             resourceData.metadata.labels[highlightedLabels.key] === highlightedLabels.value;
-          
+
           // Create a new style object with the correct properties
           const newStyle = {
             ...node.style,
-            boxShadow: hasHighlightedLabel 
-              ? `0 0 0 2px #2F86FF` 
-              : 'none',
-            backgroundColor: hasHighlightedLabel 
-              ? (theme === "dark" ? 'rgba(47, 134, 255, 0.2)' : 'rgba(47, 134, 255, 0.12)')
-              : (theme === "dark" ? "#333" : "#fff"),
-            color: theme === "dark" ? "#fff" : "#000",
+            boxShadow: hasHighlightedLabel ? `0 0 0 2px #2F86FF` : 'none',
+            backgroundColor: hasHighlightedLabel
+              ? theme === 'dark'
+                ? 'rgba(47, 134, 255, 0.2)'
+                : 'rgba(47, 134, 255, 0.12)'
+              : theme === 'dark'
+                ? '#333'
+                : '#fff',
+            color: theme === 'dark' ? '#fff' : '#000',
             zIndex: hasHighlightedLabel ? 1000 : 0,
-            opacity: !highlightedLabels ? 1 : (hasHighlightedLabel ? 1 : 0.5),
-            transition: "all 0.2s ease-in-out"
+            opacity: !highlightedLabels ? 1 : hasHighlightedLabel ? 1 : 0.5,
+            transition: 'all 0.2s ease-in-out',
           };
-          
+
           // Return the node with updated style
           return {
             ...node,
-            style: newStyle
+            style: newStyle,
           };
         });
-        
+
         return updatedNodes;
       });
     }
@@ -1773,89 +2262,99 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   return (
-    <Box ref={containerRef} sx={{ display: "flex", height: "85vh", width: "100%", position: "relative" }}>
+    <Box
+      ref={containerRef}
+      sx={{ display: 'flex', height: '85vh', width: '100%', position: 'relative' }}
+    >
       <Box
         sx={{
           flex: 1,
-          position: "relative",
-          filter: (selectedNode?.isOpen || groupPanel?.isOpen) ? "blur(5px)" : "none",
-          transition: "filter 0.2s ease-in-out",
-          pointerEvents: (selectedNode?.isOpen || groupPanel?.isOpen) ? "none" : "auto",
+          position: 'relative',
+          filter: selectedNode?.isOpen || groupPanel?.isOpen ? 'blur(5px)' : 'none',
+          transition: 'filter 0.2s ease-in-out',
+          pointerEvents: selectedNode?.isOpen || groupPanel?.isOpen ? 'none' : 'auto',
         }}
       >
         <Box
           sx={{
             mb: 4,
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: 2,
             flex: 1,
-            justifyContent: "space-between",
+            justifyContent: 'space-between',
             padding: 2,
             borderRadius: 1,
-            boxShadow: "0 6px 6px rgba(0,0,0,0.1)",
-            background: theme === "dark" ? "rgb(15, 23, 42)" : "#fff",
+            boxShadow: '0 6px 6px rgba(0,0,0,0.1)',
+            background: theme === 'dark' ? 'rgb(15, 23, 42)' : '#fff',
           }}
         >
-          <Typography variant="h4" sx={{ color: "#4498FF", fontWeight: 700, fontSize: "30px", letterSpacing: "0.5px" }}>
+          <Typography
+            variant="h4"
+            sx={{ color: '#4498FF', fontWeight: 700, fontSize: '30px', letterSpacing: '0.5px' }}
+          >
             Manage Workloads
           </Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <ContextDropdown 
-              onContextFilter={handleContextFilter} 
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <ContextDropdown
+              onContextFilter={handleContextFilter}
               resourceCounts={contextResourceCounts}
               totalResourceCount={totalResourceCount}
             />
             <IconButton
-              color={viewMode === 'tiles' ? "primary" : "default"}
+              color={viewMode === 'tiles' ? 'primary' : 'default'}
               onClick={() => setViewMode('tiles')}
-              sx={{ 
-                  padding: 1,
-                  borderRadius: "50%",
-                  width: 40,         
-                  height: 40,         
-                  
-                  bgcolor: theme === "dark" && viewMode === 'tiles' ? "rgba(144, 202, 249, 0.15)" : "transparent",
-                  "&:hover": {
-                    bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.05)",
-                  }
+              sx={{
+                padding: 1,
+                borderRadius: '50%',
+                width: 40,
+                height: 40,
+
+                bgcolor:
+                  theme === 'dark' && viewMode === 'tiles'
+                    ? 'rgba(144, 202, 249, 0.15)'
+                    : 'transparent',
+                '&:hover': {
+                  bgcolor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                },
               }}
             >
               <span>
-                <i 
-                  className="fa fa-th menu_icon" 
+                <i
+                  className="fa fa-th menu_icon"
                   title="Tiles"
-                  style={{ 
-                    color: theme === "dark" 
-                      ? viewMode === 'tiles' ? "#90CAF9" : "#FFFFFF" 
-                      : undefined 
+                  style={{
+                    color:
+                      theme === 'dark' ? (viewMode === 'tiles' ? '#90CAF9' : '#FFFFFF') : undefined,
                   }}
                 ></i>
               </span>
             </IconButton>
             <IconButton
-              color={viewMode === 'list' ? "primary" : "default"}
+              color={viewMode === 'list' ? 'primary' : 'default'}
               onClick={() => setViewMode('list')}
               sx={{
                 padding: 1,
-                borderRadius: "50%", 
-                width: 40,         
-                height: 40,         
-                
-                bgcolor: theme === "dark" && viewMode === 'list' ? "rgba(144, 202, 249, 0.15)" : "transparent",
-                "&:hover": {
-                  bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.05)",
-                }
+                borderRadius: '50%',
+                width: 40,
+                height: 40,
+
+                bgcolor:
+                  theme === 'dark' && viewMode === 'list'
+                    ? 'rgba(144, 202, 249, 0.15)'
+                    : 'transparent',
+                '&:hover': {
+                  bgcolor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                },
               }}
             >
               <span>
-                <i 
-                  className="fa fa-th-list selected menu_icon" 
+                <i
+                  className="fa fa-th-list selected menu_icon"
                   title="List"
-                  style={{ 
-                    color: theme === "dark" 
-                      ? viewMode === 'list' ? "#90CAF9" : "#FFFFFF" 
-                      : undefined 
+                  style={{
+                    color:
+                      theme === 'dark' ? (viewMode === 'list' ? '#90CAF9' : '#FFFFFF') : undefined,
                   }}
                 ></i>
               </span>
@@ -1865,12 +2364,12 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
               startIcon={<Plus size={20} />}
               onClick={handleCreateWorkloadClick}
               sx={{
-                color: "#FFFFFF",
-                backgroundColor: "#2F86FF",
-                padding: "8px 20px",
-                fontWeight: "600",
-                borderRadius: "8px",
-                textTransform: "none",
+                color: '#FFFFFF',
+                backgroundColor: '#2F86FF',
+                padding: '8px 20px',
+                fontWeight: '600',
+                borderRadius: '8px',
+                textTransform: 'none',
               }}
             >
               Create Workload
@@ -1878,43 +2377,54 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
           </Box>
         </Box>
 
-        {showCreateOptions && <CreateOptions activeOption={activeOption} setActiveOption={setActiveOption} onCancel={handleCancelCreateOptions} />}
+        {showCreateOptions && (
+          <CreateOptions
+            activeOption={activeOption}
+            setActiveOption={setActiveOption}
+            onCancel={handleCancelCreateOptions}
+          />
+        )}
 
-        <Box 
-          sx={{ 
-            width: "100%", 
-            padding: "8px 16px",
-            backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.04)",
-            borderRadius: "4px",
-            marginBottom: "12px",
-            display: "flex",
-            alignItems: "center"
+        <Box
+          sx={{
+            width: '100%',
+            padding: '8px 16px',
+            backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+            borderRadius: '4px',
+            marginBottom: '12px',
+            display: 'flex',
+            alignItems: 'center',
           }}
         >
-          <Typography variant="body2" sx={{ color: theme === "dark" ? "rgba(255, 255, 255, 0.7)" : "rgba(0, 0, 0, 0.6)" }}>
-            Note: Default, Kubernetes system, and OpenShift namespaces are filtered out from this view.
+          <Typography
+            variant="body2"
+            sx={{ color: theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)' }}
+          >
+            Note: Default, Kubernetes system, and OpenShift namespaces are filtered out from this
+            view.
           </Typography>
         </Box>
 
-        {filteredContext !== "all" && (
-          <Box 
-            sx={{ 
-              width: "100%", 
-              padding: "8px 16px",
-              backgroundColor: theme === "dark" ? "rgba(144, 202, 249, 0.08)" : "rgba(25, 118, 210, 0.08)",
-              borderRadius: "4px",
-              marginBottom: "12px",
-              display: "flex",
-              alignItems: "center"
+        {filteredContext !== 'all' && (
+          <Box
+            sx={{
+              width: '100%',
+              padding: '8px 16px',
+              backgroundColor:
+                theme === 'dark' ? 'rgba(144, 202, 249, 0.08)' : 'rgba(25, 118, 210, 0.08)',
+              borderRadius: '4px',
+              marginBottom: '12px',
+              display: 'flex',
+              alignItems: 'center',
             }}
           >
-            <Typography variant="body2" sx={{ color: theme === "dark" ? "#90CAF9" : "#1976d2" }}>
+            <Typography variant="body2" sx={{ color: theme === 'dark' ? '#90CAF9' : '#1976d2' }}>
               Filtering: Showing only resources from the <strong>{filteredContext}</strong> context.
             </Typography>
           </Box>
         )}
 
-        <Box sx={{ width: "100%", height: "calc(100% - 80px)", position: "relative" }}>
+        <Box sx={{ width: '100%', height: 'calc(100% - 80px)', position: 'relative' }}>
           {isLoading ? (
             viewMode === 'list' ? (
               <ListViewSkeleton itemCount={8} />
@@ -1922,62 +2432,101 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
               <TreeViewSkeleton />
             )
           ) : viewMode === 'tiles' && (nodes.length > 0 || edges.length > 0) ? (
-            <Box sx={{ width: "100%", height: "100%", position: "relative" }}>
+            <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
               <ReactFlowProvider>
-                <FlowCanvas nodes={nodes} edges={edges} renderStartTime={renderStartTime} theme={theme} />
-                <ZoomControls theme={theme} onToggleCollapse={handleToggleCollapse} isCollapsed={isCollapsed} onExpandAll={handleExpandAll} onCollapseAll={handleCollapseAll} />
-                <FullScreenToggle 
-                  containerRef={containerRef} 
-                  position="top-right" 
+                <FlowCanvas
+                  nodes={nodes}
+                  edges={edges}
+                  renderStartTime={renderStartTime}
+                  theme={theme}
+                />
+                <ZoomControls
+                  theme={theme}
+                  onToggleCollapse={handleToggleCollapse}
+                  isCollapsed={isCollapsed}
+                  onExpandAll={handleExpandAll}
+                  onCollapseAll={handleCollapseAll}
+                />
+                <FullScreenToggle
+                  containerRef={containerRef}
+                  position="top-right"
                   tooltipPosition="left"
-                  tooltipText="Toggle fullscreen view" 
+                  tooltipText="Toggle fullscreen view"
                 />
               </ReactFlowProvider>
             </Box>
           ) : viewMode === 'list' ? (
-            <ListViewComponent 
-              filteredContext={filteredContext} 
+            <ListViewComponent
+              filteredContext={filteredContext}
               onResourceDataChange={handleResourceDataChange}
             />
           ) : (
-            <Box sx={{ width: "100%", height: "100%", position: "relative" }}>
+            <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
               <ReactFlowProvider>
                 <FlowCanvas nodes={[]} edges={[]} renderStartTime={renderStartTime} theme={theme} />
                 <Box
                   sx={{
-                    position: "absolute",
+                    position: 'absolute',
                     top: 0,
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
                     zIndex: 10,
                   }}
                 >
-                  <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1, backgroundColor: theme === "dark" ? "rgba(15, 23, 42, 0.8)" : "rgba(255, 255, 255, 0.8)", padding: 4, borderRadius: 2 }}>
-                    <Typography sx={{ color: theme === "dark" ? "#fff" : "#333", fontWeight: 500, fontSize: "22px" }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 1,
+                      backgroundColor:
+                        theme === 'dark' ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+                      padding: 4,
+                      borderRadius: 2,
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        color: theme === 'dark' ? '#fff' : '#333',
+                        fontWeight: 500,
+                        fontSize: '22px',
+                      }}
+                    >
                       No Workloads Found
                     </Typography>
-                    <Typography variant="body2" sx={{ color: theme === "dark" ? "rgba(255, 255, 255, 0.7)" : "#00000099", fontSize: "17px", mb: 2 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : '#00000099',
+                        fontSize: '17px',
+                        mb: 2,
+                      }}
+                    >
                       Get started by creating your first workload
                     </Typography>
                     <Button
                       variant="contained"
                       startIcon={<Plus size={20} />}
                       onClick={handleCreateWorkloadClick}
-                      sx={{ backgroundColor: "#2f86ff", color: "#fff", "&:hover": { backgroundColor: "#1f76e5" } }}
+                      sx={{
+                        backgroundColor: '#2f86ff',
+                        color: '#fff',
+                        '&:hover': { backgroundColor: '#1f76e5' },
+                      }}
                     >
                       Create Workload
                     </Button>
                   </Box>
                 </Box>
-                <FullScreenToggle 
-                  containerRef={containerRef} 
-                  position="top-right" 
+                <FullScreenToggle
+                  containerRef={containerRef}
+                  position="top-right"
                   tooltipPosition="left"
-                  tooltipText="Toggle fullscreen view" 
+                  tooltipText="Toggle fullscreen view"
                 />
               </ReactFlowProvider>
             </Box>
@@ -1991,54 +2540,61 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
               anchorPosition={contextMenu ? { top: contextMenu.y, left: contextMenu.x } : undefined}
               PaperProps={{
                 style: {
-                  backgroundColor: theme === "dark" ? "#1F2937" : "#fff",
-                  color: theme === "dark" ? "#fff" : "inherit",
-                  boxShadow: theme === "dark" ? "0 4px 20px rgba(0, 0, 0, 0.5)" : "0 4px 20px rgba(0, 0, 0, 0.15)"
-                }
+                  backgroundColor: theme === 'dark' ? '#1F2937' : '#fff',
+                  color: theme === 'dark' ? '#fff' : 'inherit',
+                  boxShadow:
+                    theme === 'dark'
+                      ? '0 4px 20px rgba(0, 0, 0, 0.5)'
+                      : '0 4px 20px rgba(0, 0, 0, 0.15)',
+                },
               }}
             >
-              <MenuItem 
-                onClick={() => handleMenuAction("Details")}
+              <MenuItem
+                onClick={() => handleMenuAction('Details')}
                 sx={{
-                  color: theme === "dark" ? "#fff" : "inherit",
-                  "&:hover": {
-                    backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)"
-                  }
+                  color: theme === 'dark' ? '#fff' : 'inherit',
+                  '&:hover': {
+                    backgroundColor:
+                      theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                  },
                 }}
               >
                 Details
               </MenuItem>
-              {contextMenu.nodeType !== "context" && (
+              {contextMenu.nodeType !== 'context' && (
                 <React.Fragment>
-                  <MenuItem 
-                    onClick={() => handleMenuAction("Delete")}
+                  <MenuItem
+                    onClick={() => handleMenuAction('Delete')}
                     sx={{
-                      color: theme === "dark" ? "#fff" : "inherit",
-                      "&:hover": {
-                        backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)"
-                      }
+                      color: theme === 'dark' ? '#fff' : 'inherit',
+                      '&:hover': {
+                        backgroundColor:
+                          theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                      },
                     }}
                   >
                     Delete
                   </MenuItem>
-                  <MenuItem 
-                    onClick={() => handleMenuAction("Edit")}
+                  <MenuItem
+                    onClick={() => handleMenuAction('Edit')}
                     sx={{
-                      color: theme === "dark" ? "#fff" : "inherit",
-                      "&:hover": {
-                        backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)"
-                      }
+                      color: theme === 'dark' ? '#fff' : 'inherit',
+                      '&:hover': {
+                        backgroundColor:
+                          theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                      },
                     }}
                   >
                     Edit
                   </MenuItem>
-                  <MenuItem 
-                    onClick={() => handleMenuAction("Logs")}
+                  <MenuItem
+                    onClick={() => handleMenuAction('Logs')}
                     sx={{
-                      color: theme === "dark" ? "#fff" : "inherit",
-                      "&:hover": {
-                        backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)"
-                      }
+                      color: theme === 'dark' ? '#fff' : 'inherit',
+                      '&:hover': {
+                        backgroundColor:
+                          theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                      },
                     }}
                   >
                     Logs
@@ -2049,8 +2605,13 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
           )}
         </Box>
 
-        <Snackbar anchorOrigin={{ vertical: "top", horizontal: "center" }} open={snackbarOpen} autoHideDuration={4000} onClose={handleSnackbarClose}>
-          <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: "100%" }}>
+        <Snackbar
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          open={snackbarOpen}
+          autoHideDuration={4000}
+          onClose={handleSnackbarClose}
+        >
+          <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
             {snackbarMessage}
           </Alert>
         </Snackbar>
@@ -2060,34 +2621,45 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
           onClose={handleDeleteCancel}
           aria-labelledby="delete-confirmation-dialog-title"
           sx={{
-            "& .MuiDialog-paper": {
-              padding: "16px",
-              width: "500px",
-              backgroundColor: theme === "dark" ? "rgb(15, 23, 42)" : "#fff",
-              borderRadius: "4px",
-              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
-              maxWidth: "480px",
-              height: "250px",
+            '& .MuiDialog-paper': {
+              padding: '16px',
+              width: '500px',
+              backgroundColor: theme === 'dark' ? 'rgb(15, 23, 42)' : '#fff',
+              borderRadius: '4px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+              maxWidth: '480px',
+              height: '250px',
             },
           }}
         >
-          <DialogTitle id="delete-confirmation-dialog-title" sx={{ display: "flex", alignItems: "center", gap: 1, fontSize: "18px", fontWeight: 600, color: theme === "dark" ? "#fff" : "333" }}>
-            <WarningAmberIcon sx={{ color: "#FFA500", fontSize: "34px" }} />
+          <DialogTitle
+            id="delete-confirmation-dialog-title"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              fontSize: '18px',
+              fontWeight: 600,
+              color: theme === 'dark' ? '#fff' : '333',
+            }}
+          >
+            <WarningAmberIcon sx={{ color: '#FFA500', fontSize: '34px' }} />
             Confirm Resource Deletion
           </DialogTitle>
           <DialogContent>
-            <Typography sx={{ fontSize: "16px", color: theme === "dark" ? "#fff" : "333", mt: 2 }}>
-              Are you sure you want to delete "{deleteNodeDetails?.nodeName}"? This action cannot be undone.
+            <Typography sx={{ fontSize: '16px', color: theme === 'dark' ? '#fff' : '333', mt: 2 }}>
+              Are you sure you want to delete "{deleteNodeDetails?.nodeName}"? This action cannot be
+              undone.
             </Typography>
           </DialogContent>
-          <DialogActions sx={{ justifyContent: "space-between", padding: "0 16px 16px 16px" }}>
+          <DialogActions sx={{ justifyContent: 'space-between', padding: '0 16px 16px 16px' }}>
             <Button
               onClick={handleDeleteCancel}
               sx={{
-                textTransform: "none",
-                color: "#2F86FF",
+                textTransform: 'none',
+                color: '#2F86FF',
                 fontWeight: 600,
-                "&:hover": { backgroundColor: "rgba(47, 134, 255, 0.1)" },
+                '&:hover': { backgroundColor: 'rgba(47, 134, 255, 0.1)' },
               }}
             >
               Cancel
@@ -2095,14 +2667,14 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
             <Button
               onClick={handleDeleteConfirm}
               sx={{
-                textTransform: "none",
+                textTransform: 'none',
                 fontWeight: 500,
-                backgroundColor: "#d32f2f",
-                color: "#fff",
-                padding: "6px 16px",
-                borderRadius: "4px",
-                "&:hover": {
-                  backgroundColor: "#b71c1c",
+                backgroundColor: '#d32f2f',
+                color: '#fff',
+                padding: '6px 16px',
+                borderRadius: '4px',
+                '&:hover': {
+                  backgroundColor: '#b71c1c',
                 },
               }}
             >
@@ -2122,12 +2694,17 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
             onClose={handleClosePanel}
             isOpen={selectedNode.isOpen}
             initialTab={selectedNode.initialTab}
-            onDelete={deleteNodeDetails ? () => handleDeleteNode(
-              deleteNodeDetails.namespace,
-              deleteNodeDetails.nodeType,
-              deleteNodeDetails.nodeName,
-              deleteNodeDetails.nodeId
-            ) : undefined}
+            onDelete={
+              deleteNodeDetails
+                ? () =>
+                    handleDeleteNode(
+                      deleteNodeDetails.namespace,
+                      deleteNodeDetails.nodeType,
+                      deleteNodeDetails.nodeName,
+                      deleteNodeDetails.nodeId
+                    )
+                : undefined
+            }
           />
         )}
         {groupPanel && (
@@ -2137,7 +2714,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
             groupItems={groupPanel.groupItems}
             onClose={handleClosePanel}
             isOpen={groupPanel.isOpen}
-            onItemSelect={(item) => {
+            onItemSelect={item => {
               setSelectedNode({
                 namespace: groupPanel.namespace,
                 name: item.metadata.name,
@@ -2146,7 +2723,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                 isOpen: true,
                 resourceData: item,
               });
-              setGroupPanel((prev) => (prev ? { ...prev, isOpen: false } : null));
+              setGroupPanel(prev => (prev ? { ...prev, isOpen: false } : null));
               setTimeout(() => {
                 setGroupPanel(null);
               }, 400);
@@ -2157,6 +2734,5 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
     </Box>
   );
 };
-
 
 export default memo(TreeViewComponent);

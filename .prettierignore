@@ -1,0 +1,22 @@
+# Build artifacts
+dist
+build
+coverage
+
+# Node modules
+node_modules
+
+# Logs
+*.log
+
+# Cache directories
+.cache
+.temp
+
+# Environment variables
+.env*
+!.env.example
+
+# IDE specific files
+.idea
+.vscode
