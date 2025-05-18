@@ -18,6 +18,7 @@ import {
   TableRow,
   TableCell
 } from '@mui/material';
+import CancelButton from '../common/CancelButton';
 import CodeIcon from '@mui/icons-material/Code';
 import { PolicyConfiguration } from './ConfigurationSidebar';
 import { ManagedCluster, Workload } from '../../types/bindingPolicy';
@@ -218,18 +219,13 @@ const DeploymentConfirmationDialog: React.FC<DeploymentConfirmationDialogProps> 
         bgcolor: darkMode ? 'rgba(17, 25, 40, 0.95)' : undefined,
         borderTop: darkMode ? '1px solid rgba(255, 255, 255, 0.15)' : undefined 
       }}>
-        <Button 
+        <CancelButton 
           onClick={onClose} 
           disabled={loading}
           sx={{ 
-            color: darkMode ? 'rgba(255, 255, 255, 0.9)' : undefined,
-            '&:hover': {
-              bgcolor: darkMode ? 'rgba(255, 255, 255, 0.1)' : undefined
-            }
+            color: darkMode ? 'rgba(255, 255, 255, 0.9)' : undefined
           }}
-        >
-          Cancel
-        </Button>
+        />
         <Button
           variant="contained"
           color="primary"
@@ -310,17 +306,14 @@ const DeploymentConfirmationDialog: React.FC<DeploymentConfirmationDialogProps> 
           bgcolor: darkMode ? 'rgba(17, 25, 40, 0.95)' : undefined,
           borderTop: darkMode ? '1px solid rgba(255, 255, 255, 0.15)' : undefined 
         }}>
-          <Button 
+          <CancelButton 
             onClick={() => setSelectedPolicy(null)}
             sx={{
-              color: darkMode ? 'rgba(255, 255, 255, 0.9)' : undefined,
-              '&:hover': {
-                bgcolor: darkMode ? 'rgba(255, 255, 255, 0.1)' : undefined
-              }
+              color: darkMode ? 'rgba(255, 255, 255, 0.9)' : undefined
             }}
           >
             Close
-          </Button>
+          </CancelButton>
         </DialogActions>
       </Dialog>
     </Dialog>
