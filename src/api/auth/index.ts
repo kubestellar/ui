@@ -1,4 +1,3 @@
-
 import { api } from '../../lib/api';
 import { LoginDetails, LoginResponse, VerifyTokenResponse } from './types';
 

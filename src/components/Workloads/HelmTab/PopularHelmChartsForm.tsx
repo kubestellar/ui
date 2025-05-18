@@ -8,7 +8,7 @@ interface Props {
 }
 
 export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedChart }:Props) => {
-  const color=theme === "dark" ? "#d4d4d4" : "#333"
+  // const color=theme === "dark" ? "#d4d4d4" : "#333"
 
     const popularHelmCharts = [
         "airflow", "apache", "apisix", "appsmith", "argo-cd", "argo-workflows", "aspnet-core", "cassandra",
@@ -50,27 +50,36 @@ export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedCha
                         label="Search Helm Chart"
                         variant="outlined"
                         sx={{
-                          mb: 3, '& .MuiInputLabel-root': {
-                            color,
+                          mb: 3, 
+                          '& .MuiInputLabel-root': {
+                            color: theme === "dark" ? "#90caf9" : "#1976d2",
+                            fontSize: "0.875rem",
                           },
                           '& .MuiInputLabel-root.Mui-focused': {
-                            color, 
+                            color: theme === "dark" ? "#90caf9" : "#1976d2",
                           },
                           '& .MuiOutlinedInput-root': {
-                            color, 
+                            color: theme === "dark" ? "#d4d4d4" : "#333",
+                            backgroundColor: theme === "dark" ? "#00000033" : "#fff",
                             '& fieldset': {
-                              borderColor:color, 
+                              borderColor: theme === "dark" ? "#444" : "#e0e0e0",
+                              borderWidth: "1px",
                             },
                             '&:hover fieldset': {
-                              borderColor:color, 
+                              borderColor: theme === "dark" ? "#90caf9" : "#1976d2",
                             },
                             '&.Mui-focused fieldset': {
-                              borderColor:color, 
+                              borderColor: theme === "dark" ? "#90caf9" : "#1976d2",
+                              borderWidth: "1px",
                             },
                             '& .MuiAutocomplete-endAdornment': {
-                              color 
+                              color: theme === "dark" ? "#d4d4d4" : "#666",
                             },
-                          }, }}
+                            '& input': {
+                              color: theme === "dark" ? "#d4d4d4" : "#333",
+                            },
+                          },
+                        }}
                       />
                     )}
                     sx={{
@@ -80,12 +89,40 @@ export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedCha
                     slotProps={{
                       popupIndicator: {
                         sx: {
-                          color, 
+                          color: theme === "dark" ? "#d4d4d4" : "#666",
                         },
                       },
                       clearIndicator: {
                         sx: {
-                          color , 
+                          color: theme === "dark" ? "#d4d4d4" : "#666",
+                        },
+                      },
+                      paper: {
+                        sx: {
+                          backgroundColor: theme === "dark" ? "#00000033" : "#fff",
+                          color: theme === "dark" ? "#d4d4d4" : "#333",
+                          '& .MuiAutocomplete-option': {
+                            '&:hover': {
+                              backgroundColor: theme === "dark" ? "#333" : "rgba(25, 118, 210, 0.08)",
+                            },
+                            '&.Mui-focused': {
+                              backgroundColor: theme === "dark" ? "#333" : "rgba(25, 118, 210, 0.08)",
+                            },
+                          },
+                        },
+                      },
+                      listbox: {
+                        sx: {
+                          '&::-webkit-scrollbar': {
+                            width: '8px',
+                          },
+                          '&::-webkit-scrollbar-thumb': {
+                            backgroundColor: theme === "dark" ? "#555" : "#bdbdbd",
+                            borderRadius: '4px',
+                          },
+                          '&::-webkit-scrollbar-track': {
+                            backgroundColor: theme === "dark" ? "#2a2a2a" : "#f5f5f5",
+                          },
                         },
                       },
                     }}
@@ -104,6 +141,7 @@ export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedCha
                           borderRadius: "4px",
                           border: "1px solid",
                           borderColor: theme === "dark" ? "#444" : "#e0e0e0",
+                          backgroundColor: theme === "dark" ? "#1e1e1e" : "#f8f8f8",
                       }}
                   >
                       <Box sx={{ display: "flex", alignItems: "center" }}>

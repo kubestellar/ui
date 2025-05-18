@@ -35,6 +35,7 @@ const ContextDropdown = ({
       .then((response) => {
         const contextList = response.data["other-wds-context"] || [];
         const uniqueContexts = [...new Set([...contextList])];
+        uniqueContexts.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
         setContexts(uniqueContexts);
       })
       .catch((error) => console.error("Error fetching contexts:", error));
