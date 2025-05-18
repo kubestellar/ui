@@ -1063,6 +1063,7 @@ func StreamPodLogs(c *gin.Context) {
 	cluster := c.Query("cluster")
 	namespace := c.Query("namespace")
 	podName := c.Query("pod")
+	containerName := c.Query("container") // Add container parameter
 	previous := c.Query("previous")
 
 	if cluster == "" || namespace == "" || podName == "" {
@@ -1105,7 +1106,8 @@ func StreamPodLogs(c *gin.Context) {
 		return
 	}
 
-	cacheKey := getCacheKey("podlogs", cluster, namespace, podName)
+	// Create cache key that includes container name and previous flag
+	cacheKey := getCacheKey("podlogs", cluster, namespace, podName, containerName, previous)
 	var lastSentLogs string
 
 	// Continuously stream logs.
@@ -1132,13 +1134,28 @@ func StreamPodLogs(c *gin.Context) {
 					Previous:   previous == "true",
 				}
 
+				// Set container name if provided
+				if containerName != "" {
+					podLogOpts.Container = containerName
+				}
+
 				// Build and execute the log request.
 				req := clientset.CoreV1().Pods(namespace).GetLogs(podName, podLogOpts)
 				podLogsStream, err := req.Stream(context.TODO())
 				if err != nil {
 					errMsg := fmt.Sprintf("Error streaming logs for pod %s in namespace %s: %v", podName, namespace, err)
 					log.Print(errMsg)
-					conn.WriteMessage(websocket.TextMessage, []byte(errMsg))
+
+					// Handle "previous logs not found" error with better message
+					if previous == "true" && strings.Contains(err.Error(), "previous terminated container") &&
+						strings.Contains(err.Error(), "not found") {
+						friendlyMsg := fmt.Sprintf("No previous logs available for container '%s' in pod '%s'. The container hasn't terminated previously.",
+							containerName, podName)
+						conn.WriteMessage(websocket.TextMessage, []byte(friendlyMsg))
+					} else {
+						conn.WriteMessage(websocket.TextMessage, []byte(errMsg))
+					}
+
 					time.Sleep(5 * time.Second) // Wait longer before retrying on error
 					continue
 				}
