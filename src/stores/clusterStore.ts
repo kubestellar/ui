@@ -1,21 +1,20 @@
-import { create } from "zustand";
+import { create } from 'zustand';
 
 interface ClusterStoreType {
-    selectedCluster: string | null;
-    setSelectedCluster: (cluster: string | null) => void;
-    hasAvailableClusters: boolean;
-    setHasAvailableClusters: (hasAvailable: boolean) => void;
+  selectedCluster: string | null;
+  setSelectedCluster: (cluster: string | null) => void;
+  hasAvailableClusters: boolean;
+  setHasAvailableClusters: (hasAvailable: boolean) => void;
 }
 
-const useClusterStore = create<ClusterStoreType>((set) => ({
-    selectedCluster: null,
+const useClusterStore = create<ClusterStoreType>(set => ({
+  selectedCluster: null,
 
-    hasAvailableClusters: false,
+  hasAvailableClusters: false,
 
-    setSelectedCluster: (cluster) => set({ selectedCluster: cluster }),
+  setSelectedCluster: cluster => set({ selectedCluster: cluster }),
 
-    setHasAvailableClusters: (hasAvailable) =>
-        set({ hasAvailableClusters: hasAvailable }),
+  setHasAvailableClusters: hasAvailable => set({ hasAvailableClusters: hasAvailable }),
 }));
 
-export default useClusterStore; 
+export default useClusterStore;

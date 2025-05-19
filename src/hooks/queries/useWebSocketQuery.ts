@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useQuery, useQueryClient, UseQueryResult } from '@tanstack/react-query';
 import { getWebSocketUrl } from '../../lib/api';
 
@@ -58,7 +58,7 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
     error: null,
   });
 
-  const connectWebSocket = () => {
+  const connectWebSocket = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.close();
     }
@@ -73,7 +73,7 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
       onConnect?.();
     };
 
-    ws.onmessage = (event) => {
+    ws.onmessage = event => {
       onRawMessage?.(event);
 
       try {
@@ -89,20 +89,21 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
         queryClient.setQueryData(queryKey, transformedData);
         onMessage?.(transformedData);
       } catch (error) {
-        const wsError = error instanceof Error ? error : new Error('Failed to process WebSocket message');
-        setWsState((prev) => ({ ...prev, error: wsError }));
+        const wsError =
+          error instanceof Error ? error : new Error('Failed to process WebSocket message');
+        setWsState(prev => ({ ...prev, error: wsError }));
         onError?.(wsError);
       }
     };
 
-    ws.onerror = (error) => {
+    ws.onerror = error => {
       const wsError = error instanceof Error ? error : new Error('WebSocket error');
       setWsState({ isConnected: false, error: wsError });
       queryClient.setQueryData(queryKey, null);
       onError?.(wsError);
     };
 
-    ws.onclose = (event) => {
+    ws.onclose = event => {
       setWsState({ isConnected: false, error: null });
       queryClient.setQueryData(queryKey, null);
       wsRef.current = null;
@@ -114,7 +115,21 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
         }, reconnectInterval);
       }
     };
-  };
+  }, [
+    url,
+    queryKey,
+    enabled,
+    onConnect,
+    onRawMessage,
+    parseData,
+    transform,
+    queryClient,
+    onMessage,
+    onError,
+    onDisconnect,
+    autoReconnect,
+    reconnectInterval,
+  ]);
 
   const sendMessage = (data: string | object) => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
@@ -126,7 +141,7 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
     wsRef.current.send(message);
   };
 
-  const disconnect = () => {
+  const disconnect = useCallback(() => {
     if (!wsRef.current) return;
 
     // Force close by setting readyState to CLOSED (3)
@@ -142,7 +157,7 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
       window.clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (enabled) {
@@ -154,11 +169,11 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
     return () => {
       disconnect();
     };
-  }, [enabled, url]);
+  }, [enabled, url, connectWebSocket, disconnect]);
 
   const queryResult = useQuery<TData, Error>({
     queryKey,
-    queryFn: () => Promise.resolve(queryClient.getQueryData(queryKey) ?? null as TData),
+    queryFn: () => Promise.resolve(queryClient.getQueryData(queryKey) ?? (null as TData)),
     enabled,
     refetchOnWindowFocus: false,
     refetchOnMount: false,

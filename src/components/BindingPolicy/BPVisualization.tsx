@@ -1,8 +1,8 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import ReactFlow, { 
-  Node, 
-  Edge, 
-  Background, 
+import ReactFlow, {
+  Node,
+  Edge,
+  Background,
   Controls,
   MarkerType,
   useNodesState,
@@ -15,21 +15,21 @@ import ReactFlow, {
   BackgroundVariant,
   ReactFlowInstance,
   OnNodesChange,
-  OnEdgesChange
+  OnEdgesChange,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { 
-  Box, 
-  Typography, 
-  CircularProgress, 
-  Chip, 
-  FormControlLabel, 
-  Switch, 
-  Tooltip, 
+import {
+  Box,
+  Typography,
+  CircularProgress,
+  Chip,
+  FormControlLabel,
+  Switch,
+  Tooltip,
   Button,
   IconButton,
   ButtonGroup,
-  Paper
+  Paper,
 } from '@mui/material';
 import {
   ZoomIn as ZoomInIcon,
@@ -97,8 +97,8 @@ const FlowControls: React.FC<FlowControlsProps> = ({ theme, layout, onLayoutChan
   };
 
   return (
-    <Panel position="top-right" style={{ zIndex: 10, marginTop:"8rem"}}>
-      <Box 
+    <Panel position="top-right" style={{ zIndex: 10, marginTop: '8rem' }}>
+      <Box
         sx={{
           p: 1.5,
           borderRadius: 1,
@@ -109,87 +109,147 @@ const FlowControls: React.FC<FlowControlsProps> = ({ theme, layout, onLayoutChan
           flexDirection: 'column',
           gap: 1.5,
           border: '1px solid',
-          borderColor: theme === 'dark' ? 'rgba(75, 85, 99, 0.4)' : 'rgba(229, 231, 235, 0.8)'
+          borderColor: theme === 'dark' ? 'rgba(75, 85, 99, 0.4)' : 'rgba(229, 231, 235, 0.8)',
         }}
       >
-        <Typography variant="subtitle2" sx={{ color: theme === 'dark' ? '#E5E7EB' : '#374151', fontWeight: 600, mb: 0.5 }}>
+        <Typography
+          variant="subtitle2"
+          sx={{ color: theme === 'dark' ? '#E5E7EB' : '#374151', fontWeight: 600, mb: 0.5 }}
+        >
           View Controls
         </Typography>
-        
+
         <Box>
-          <Typography variant="caption" sx={{ color: theme === 'dark' ? '#D1D5DB' : '#4B5563', display: 'block', mb: 0.5, fontWeight: 500 }}>
-          Zoom
-        </Typography>
-        
-          <ButtonGroup size="small" variant="outlined" sx={{ 
-            '& .MuiButton-root': {
-              borderColor: theme === 'dark' ? 'rgba(75, 85, 99, 0.6)' : 'rgba(209, 213, 219, 0.8)',
+          <Typography
+            variant="caption"
+            sx={{
               color: theme === 'dark' ? '#D1D5DB' : '#4B5563',
-              '&:hover': {
-                bgcolor: theme === 'dark' ? 'rgba(55, 65, 81, 0.5)' : 'rgba(243, 244, 246, 0.8)',
-              }
-            }
-          }}>
-          <Button onClick={handleZoomIn}>
-            <ZoomInIcon fontSize="small" />
-          </Button>
-          <Button onClick={handleZoomOut}>
-            <ZoomOutIcon fontSize="small" />
-          </Button>
-          <Button onClick={handleFitView}>
-            <FitViewIcon fontSize="small" />
-          </Button>
-        </ButtonGroup>
-        </Box>
-        
-        {onLayoutChange && (
-          <Box>
-            <Typography variant="caption" sx={{ color: theme === 'dark' ? '#D1D5DB' : '#4B5563', display: 'block', mb: 0.5, fontWeight: 500 }}>
-              Layout
-            </Typography>
-            
-            <ButtonGroup size="small" variant="outlined" sx={{ 
+              display: 'block',
+              mb: 0.5,
+              fontWeight: 500,
+            }}
+          >
+            Zoom
+          </Typography>
+
+          <ButtonGroup
+            size="small"
+            variant="outlined"
+            sx={{
               '& .MuiButton-root': {
-                borderColor: theme === 'dark' ? 'rgba(75, 85, 99, 0.6)' : 'rgba(209, 213, 219, 0.8)',
+                borderColor:
+                  theme === 'dark' ? 'rgba(75, 85, 99, 0.6)' : 'rgba(209, 213, 219, 0.8)',
                 color: theme === 'dark' ? '#D1D5DB' : '#4B5563',
-                fontSize: '0.75rem',
                 '&:hover': {
                   bgcolor: theme === 'dark' ? 'rgba(55, 65, 81, 0.5)' : 'rgba(243, 244, 246, 0.8)',
-                }
-              }
-            }}>
-              <Button 
+                },
+              },
+            }}
+          >
+            <Button onClick={handleZoomIn}>
+              <ZoomInIcon fontSize="small" />
+            </Button>
+            <Button onClick={handleZoomOut}>
+              <ZoomOutIcon fontSize="small" />
+            </Button>
+            <Button onClick={handleFitView}>
+              <FitViewIcon fontSize="small" />
+            </Button>
+          </ButtonGroup>
+        </Box>
+
+        {onLayoutChange && (
+          <Box>
+            <Typography
+              variant="caption"
+              sx={{
+                color: theme === 'dark' ? '#D1D5DB' : '#4B5563',
+                display: 'block',
+                mb: 0.5,
+                fontWeight: 500,
+              }}
+            >
+              Layout
+            </Typography>
+
+            <ButtonGroup
+              size="small"
+              variant="outlined"
+              sx={{
+                '& .MuiButton-root': {
+                  borderColor:
+                    theme === 'dark' ? 'rgba(75, 85, 99, 0.6)' : 'rgba(209, 213, 219, 0.8)',
+                  color: theme === 'dark' ? '#D1D5DB' : '#4B5563',
+                  fontSize: '0.75rem',
+                  '&:hover': {
+                    bgcolor:
+                      theme === 'dark' ? 'rgba(55, 65, 81, 0.5)' : 'rgba(243, 244, 246, 0.8)',
+                  },
+                },
+              }}
+            >
+              <Button
                 onClick={() => onLayoutChange('horizontal')}
-                sx={{ 
-                  bgcolor: layout === 'horizontal' ? (theme === 'dark' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)') : 'transparent',
+                sx={{
+                  bgcolor:
+                    layout === 'horizontal'
+                      ? theme === 'dark'
+                        ? 'rgba(59, 130, 246, 0.2)'
+                        : 'rgba(59, 130, 246, 0.1)'
+                      : 'transparent',
                   borderColor: layout === 'horizontal' ? '#3B82F6' : 'inherit',
                   '&:hover': {
-                    bgcolor: layout === 'horizontal' ? (theme === 'dark' ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)') : 'inherit'
-                  }
+                    bgcolor:
+                      layout === 'horizontal'
+                        ? theme === 'dark'
+                          ? 'rgba(59, 130, 246, 0.3)'
+                          : 'rgba(59, 130, 246, 0.2)'
+                        : 'inherit',
+                  },
                 }}
               >
                 Horizontal
               </Button>
-              <Button 
+              <Button
                 onClick={() => onLayoutChange('vertical')}
-                sx={{ 
-                  bgcolor: layout === 'vertical' ? (theme === 'dark' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)') : 'transparent',
+                sx={{
+                  bgcolor:
+                    layout === 'vertical'
+                      ? theme === 'dark'
+                        ? 'rgba(59, 130, 246, 0.2)'
+                        : 'rgba(59, 130, 246, 0.1)'
+                      : 'transparent',
                   borderColor: layout === 'vertical' ? '#3B82F6' : 'inherit',
                   '&:hover': {
-                    bgcolor: layout === 'vertical' ? (theme === 'dark' ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)') : 'inherit'
-                  }
+                    bgcolor:
+                      layout === 'vertical'
+                        ? theme === 'dark'
+                          ? 'rgba(59, 130, 246, 0.3)'
+                          : 'rgba(59, 130, 246, 0.2)'
+                        : 'inherit',
+                  },
                 }}
               >
                 Vertical
               </Button>
-              <Button 
+              <Button
                 onClick={() => onLayoutChange('radial')}
-                sx={{ 
-                  bgcolor: layout === 'radial' ? (theme === 'dark' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)') : 'transparent',
+                sx={{
+                  bgcolor:
+                    layout === 'radial'
+                      ? theme === 'dark'
+                        ? 'rgba(59, 130, 246, 0.2)'
+                        : 'rgba(59, 130, 246, 0.1)'
+                      : 'transparent',
                   borderColor: layout === 'radial' ? '#3B82F6' : 'inherit',
                   '&:hover': {
-                    bgcolor: layout === 'radial' ? (theme === 'dark' ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)') : 'inherit'
-                  }
+                    bgcolor:
+                      layout === 'radial'
+                        ? theme === 'dark'
+                          ? 'rgba(59, 130, 246, 0.3)'
+                          : 'rgba(59, 130, 246, 0.2)'
+                        : 'inherit',
+                  },
                 }}
               >
                 Radial
@@ -223,7 +283,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ nodes, theme, onNodeSelect })
         inputRef.current?.focus();
       }
     };
-    
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
@@ -233,7 +293,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ nodes, theme, onNodeSelect })
       setSearchResults([]);
       return;
     }
-    
+
     const term = searchTerm.toLowerCase();
     const results = nodes.filter(node => {
       if (node.data.label) {
@@ -241,7 +301,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ nodes, theme, onNodeSelect })
       }
       return false;
     });
-    
+
     setSearchResults(results);
     setShowResults(true);
   }, [searchTerm, nodes]);
@@ -251,7 +311,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ nodes, theme, onNodeSelect })
     const timer = setTimeout(() => {
       handleSearch();
     }, 300);
-    
+
     return () => clearTimeout(timer);
   }, [searchTerm, handleSearch]);
 
@@ -274,14 +334,14 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ nodes, theme, onNodeSelect })
         setShowResults(false);
       }
     };
-    
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   return (
-    <Panel position="top-left" style={{ marginTop: "70px" }}>
-      <Box 
+    <Panel position="top-left" style={{ marginTop: '70px' }}>
+      <Box
         sx={{
           p: 1.5,
           borderRadius: 1,
@@ -291,18 +351,21 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ nodes, theme, onNodeSelect })
           width: 300,
           position: 'relative',
           border: '1px solid',
-          borderColor: theme === 'dark' ? 'rgba(75, 85, 99, 0.4)' : 'rgba(229, 231, 235, 0.8)'
+          borderColor: theme === 'dark' ? 'rgba(75, 85, 99, 0.4)' : 'rgba(229, 231, 235, 0.8)',
         }}
       >
-        <Typography variant="subtitle2" sx={{ color: theme === 'dark' ? '#E5E7EB' : '#374151', fontWeight: 600, mb: 1 }}>
+        <Typography
+          variant="subtitle2"
+          sx={{ color: theme === 'dark' ? '#E5E7EB' : '#374151', fontWeight: 600, mb: 1 }}
+        >
           Search Resources
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              flex: 1, 
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              flex: 1,
               border: '1px solid',
               borderColor: theme === 'dark' ? '#4B5563' : '#D1D5DB',
               borderRadius: '4px',
@@ -310,80 +373,80 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ nodes, theme, onNodeSelect })
               bgcolor: theme === 'dark' ? '#374151' : '#FFFFFF',
               '&:focus-within': {
                 borderColor: '#3B82F6',
-                boxShadow: `0 0 0 2px ${theme === 'dark' ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)'}`
-              }
+                boxShadow: `0 0 0 2px ${theme === 'dark' ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)'}`,
+              },
             }}
           >
-            <SearchIcon 
-              fontSize="small" 
-              sx={{ 
-                ml: 1, 
-                color: theme === 'dark' ? '#9CA3AF' : '#6B7280'
-              }} 
+            <SearchIcon
+              fontSize="small"
+              sx={{
+                ml: 1,
+                color: theme === 'dark' ? '#9CA3AF' : '#6B7280',
+              }}
             />
-          <input
+            <input
               ref={inputRef}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
               placeholder="Search nodes... (⌘+K)"
-            style={{
-              padding: '8px 12px',
+              style={{
+                padding: '8px 12px',
                 border: 'none',
                 outline: 'none',
                 backgroundColor: 'transparent',
-              color: theme === 'dark' ? '#F9FAFB' : '#111827',
-              width: '100%',
-              fontSize: '0.875rem',
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleSearch();
+                color: theme === 'dark' ? '#F9FAFB' : '#111827',
+                width: '100%',
+                fontSize: '0.875rem',
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  handleSearch();
                 } else if (e.key === 'Escape') {
                   setShowResults(false);
-              }
-            }}
-          />
+                }
+              }}
+            />
             {searchTerm && (
-              <IconButton 
-                size="small" 
+              <IconButton
+                size="small"
                 onClick={() => setSearchTerm('')}
                 sx={{ mr: 0.5, color: theme === 'dark' ? '#9CA3AF' : '#6B7280' }}
               >
                 &times;
-          </IconButton>
+              </IconButton>
             )}
           </Box>
         </Box>
-        
+
         <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
-          <Chip 
-            label="All" 
-            size="small" 
-            variant={!searchTerm ? "filled" : "outlined"}
-            color={!searchTerm ? "primary" : "default"}
+          <Chip
+            label="All"
+            size="small"
+            variant={!searchTerm ? 'filled' : 'outlined'}
+            color={!searchTerm ? 'primary' : 'default'}
             onClick={() => setSearchTerm('')}
             sx={{ fontSize: '0.75rem' }}
           />
-          <Chip 
-            label="Policies" 
-            size="small" 
-            variant={searchTerm === 'policy' ? "filled" : "outlined"}
-            color={searchTerm === 'policy' ? "primary" : "default"}
+          <Chip
+            label="Policies"
+            size="small"
+            variant={searchTerm === 'policy' ? 'filled' : 'outlined'}
+            color={searchTerm === 'policy' ? 'primary' : 'default'}
             onClick={() => setSearchTerm('policy')}
             sx={{ fontSize: '0.75rem' }}
           />
-          <Chip 
-            label="Clusters" 
-            size="small" 
-            variant={searchTerm === 'cluster' ? "filled" : "outlined"}
-            color={searchTerm === 'cluster' ? "primary" : "default"}
+          <Chip
+            label="Clusters"
+            size="small"
+            variant={searchTerm === 'cluster' ? 'filled' : 'outlined'}
+            color={searchTerm === 'cluster' ? 'primary' : 'default'}
             onClick={() => setSearchTerm('cluster')}
             sx={{ fontSize: '0.75rem' }}
           />
         </Box>
-        
+
         {showResults && searchResults.length > 0 && (
-          <Box 
+          <Box
             sx={{
               mt: 1,
               maxHeight: 200,
@@ -393,8 +456,8 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ nodes, theme, onNodeSelect })
               backgroundColor: theme === 'dark' ? '#1F2937' : '#FFFFFF',
             }}
           >
-            {searchResults.map((node) => (
-              <Box 
+            {searchResults.map(node => (
+              <Box
                 key={node.id}
                 onClick={() => handleNodeSelect(node.id)}
                 sx={{
@@ -405,27 +468,34 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ nodes, theme, onNodeSelect })
                   },
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 1
+                  gap: 1,
                 }}
               >
-                <Box 
+                <Box
                   sx={{
                     width: 8,
                     height: 8,
                     borderRadius: '50%',
-                    backgroundColor: node.type === 'policyNode' 
-                      ? '#2563EB' 
-                      : node.type === 'workloadNode'
-                        ? '#3B82F6'
-                        : '#6B7280'
+                    backgroundColor:
+                      node.type === 'policyNode'
+                        ? '#2563EB'
+                        : node.type === 'workloadNode'
+                          ? '#3B82F6'
+                          : '#6B7280',
                   }}
                 />
-                <Typography variant="body2" sx={{ color: theme === 'dark' ? '#F9FAFB' : '#111827' }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: theme === 'dark' ? '#F9FAFB' : '#111827' }}
+                >
                   {node.data.label}
                 </Typography>
-                <Typography variant="caption" sx={{ color: theme === 'dark' ? '#9CA3AF' : '#6B7280', ml: 'auto' }}>
-                  {node.type === 'policyNode' 
-                    ? 'Policy' 
+                <Typography
+                  variant="caption"
+                  sx={{ color: theme === 'dark' ? '#9CA3AF' : '#6B7280', ml: 'auto' }}
+                >
+                  {node.type === 'policyNode'
+                    ? 'Policy'
                     : node.type === 'workloadNode'
                       ? 'Workload'
                       : 'Cluster'}
@@ -434,10 +504,20 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ nodes, theme, onNodeSelect })
             ))}
           </Box>
         )}
-        
+
         {showResults && searchResults.length === 0 && searchTerm && (
-          <Box sx={{ mt: 1, p: 1, borderRadius: '4px', bgcolor: theme === 'dark' ? 'rgba(31, 41, 55, 0.5)' : 'rgba(243, 244, 246, 0.8)' }}>
-            <Typography variant="body2" sx={{ color: theme === 'dark' ? '#D1D5DB' : '#6B7280', fontSize: '0.875rem' }}>
+          <Box
+            sx={{
+              mt: 1,
+              p: 1,
+              borderRadius: '4px',
+              bgcolor: theme === 'dark' ? 'rgba(31, 41, 55, 0.5)' : 'rgba(243, 244, 246, 0.8)',
+            }}
+          >
+            <Typography
+              variant="body2"
+              sx={{ color: theme === 'dark' ? '#D1D5DB' : '#6B7280', fontSize: '0.875rem' }}
+            >
               No nodes found matching "{searchTerm}"
             </Typography>
           </Box>
@@ -452,17 +532,17 @@ interface EntityDetailsPanelProps {
   theme: string;
   isOpen: boolean;
   onClose: () => void;
-  entity: {type: string; data: Record<string, unknown>} | null;
+  entity: { type: string; data: Record<string, unknown> } | null;
 }
 
 const EntityDetailsPanel: React.FC<EntityDetailsPanelProps> = ({
   theme,
   isOpen,
   onClose,
-  entity
+  entity,
 }) => {
   if (!isOpen || !entity) return null;
-  
+
   return (
     <Paper
       sx={{
@@ -476,7 +556,7 @@ const EntityDetailsPanel: React.FC<EntityDetailsPanelProps> = ({
         bgcolor: theme === 'dark' ? '#1F2937' : '#FFFFFF',
         border: '1px solid',
         borderColor: theme === 'dark' ? '#374151' : '#E5E7EB',
-        borderRadius: 1
+        borderRadius: 1,
       }}
     >
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -487,11 +567,14 @@ const EntityDetailsPanel: React.FC<EntityDetailsPanelProps> = ({
           &times;
         </IconButton>
       </Box>
-      
+
       <Box sx={{ maxHeight: 400, overflowY: 'auto' }}>
         {Object.entries(entity.data).map(([key, value]) => (
           <Box key={key} sx={{ mb: 1 }}>
-            <Typography variant="caption" sx={{ color: theme === 'dark' ? '#D1D5DB' : '#6B7280', display: 'block' }}>
+            <Typography
+              variant="caption"
+              sx={{ color: theme === 'dark' ? '#D1D5DB' : '#6B7280', display: 'block' }}
+            >
               {key.charAt(0).toUpperCase() + key.slice(1)}
             </Typography>
             <Typography variant="body2">
@@ -517,8 +600,12 @@ const nodeTypes: NodeTypes = {
   clusterNode: ClusterNode,
 };
 
-const BPVisualization: React.FC<BPVisualizationProps> = ({ policies, clusters: propClusters, workloads: propWorkloads }) => {
-  const theme = useTheme((state) => state.theme);
+const BPVisualization: React.FC<BPVisualizationProps> = ({
+  policies,
+  clusters: propClusters,
+  workloads: propWorkloads,
+}) => {
+  const theme = useTheme(state => state.theme);
   const [nodes, setNodes, onNodesChange] = useNodesState<Node[]>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -528,23 +615,26 @@ const BPVisualization: React.FC<BPVisualizationProps> = ({ policies, clusters: p
   const [layout, setLayout] = useState<'radial' | 'horizontal' | 'vertical'>('horizontal');
   const [, setSelectedNodeId] = useState<string | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState<boolean>(false);
-  const [selectedEntity, setSelectedEntity] = useState<{type: string; data: Record<string, unknown>} | null>(null);
+  const [selectedEntity, setSelectedEntity] = useState<{
+    type: string;
+    data: Record<string, unknown>;
+  } | null>(null);
   const reactFlowInstance = useReactFlow();
 
   // Extract unique clusters and workloads from all policies
   const { uniqueClusters, uniqueWorkloads } = useMemo(() => {
     // Input validation
     if (!Array.isArray(policies)) {
-      setError("Invalid policies data");
+      setError('Invalid policies data');
       return { uniqueClusters: [], uniqueWorkloads: [] };
     }
-    
+
     const clusters = new Set<string>();
     const workloads = new Set<string>();
-    
+
     policies.forEach((policy: BindingPolicyInfo) => {
       if (!policy) return;
-      
+
       // Try to extract cluster names from the policy's matchedClusters property if it exists
       if ('matchedClusters' in policy && Array.isArray(policy.matchedClusters)) {
         policy.matchedClusters.forEach((cluster: { name: string }) => {
@@ -553,7 +643,7 @@ const BPVisualization: React.FC<BPVisualizationProps> = ({ policies, clusters: p
           }
         });
       }
-      
+
       // Extract workload names from the policy if available
       if ('matchedWorkloads' in policy && Array.isArray(policy.matchedWorkloads)) {
         policy.matchedWorkloads.forEach((workload: { name: string }) => {
@@ -563,48 +653,52 @@ const BPVisualization: React.FC<BPVisualizationProps> = ({ policies, clusters: p
         });
       }
     });
-    
-    return { 
-      uniqueClusters: Array.from(clusters), 
-      uniqueWorkloads: Array.from(workloads) 
+
+    return {
+      uniqueClusters: Array.from(clusters),
+      uniqueWorkloads: Array.from(workloads),
     };
   }, [policies]);
-  
+
   // Handle node click to show details
-  const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
-    setSelectedNodeId(node.id);
-    
-    // Determine the entity type and set data for details panel
-    if (node.type === 'policyNode') {
-      setSelectedEntity({
-        type: 'Policy',
-        data: node.data.policy
-      });
-    } else if (node.type === 'workloadNode') {
-      setSelectedEntity({
-        type: 'Workload',
-        data: {
-          name: node.data.label,
-          policy: node.data.policy
-        }
-      });
-    } else if (node.type === 'clusterNode') {
-      // Find policies that target this cluster
-      const targetingPolicies = policies.filter((policy: BindingPolicyInfo) => 
-        policy.clusterList && policy.clusterList.includes(node.data.label)
-      );
-      
-      setSelectedEntity({
-        type: 'Cluster',
-        data: {
-          name: node.data.label,
-          targetedBy: targetingPolicies.map(p => p.name)
-        }
-      });
-    }
-    
-    setIsDetailsOpen(true);
-  }, [policies]);
+  const onNodeClick = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      setSelectedNodeId(node.id);
+
+      // Determine the entity type and set data for details panel
+      if (node.type === 'policyNode') {
+        setSelectedEntity({
+          type: 'Policy',
+          data: node.data.policy,
+        });
+      } else if (node.type === 'workloadNode') {
+        setSelectedEntity({
+          type: 'Workload',
+          data: {
+            name: node.data.label,
+            policy: node.data.policy,
+          },
+        });
+      } else if (node.type === 'clusterNode') {
+        // Find policies that target this cluster
+        const targetingPolicies = policies.filter(
+          (policy: BindingPolicyInfo) =>
+            policy.clusterList && policy.clusterList.includes(node.data.label)
+        );
+
+        setSelectedEntity({
+          type: 'Cluster',
+          data: {
+            name: node.data.label,
+            targetedBy: targetingPolicies.map(p => p.name),
+          },
+        });
+      }
+
+      setIsDetailsOpen(true);
+    },
+    [policies]
+  );
 
   // Handle layout changes
   const handleLayoutChange = useCallback((newLayout: string) => {
@@ -612,355 +706,435 @@ const BPVisualization: React.FC<BPVisualizationProps> = ({ policies, clusters: p
   }, []);
 
   // Function to handle node selection from search panel
-  const handleNodeSelect = useCallback((nodeId: string) => {
-    setSelectedNodeId(nodeId);
-    const node = nodes.find(n => n.id === nodeId);
-    if (node) {
-      onNodeClick({} as React.MouseEvent, node);
-    }
-  }, [nodes, onNodeClick]);
-  
+  const handleNodeSelect = useCallback(
+    (nodeId: string) => {
+      setSelectedNodeId(nodeId);
+      const node = nodes.find(n => n.id === nodeId);
+      if (node) {
+        onNodeClick({} as React.MouseEvent, node);
+      }
+    },
+    [nodes, onNodeClick]
+  );
+
   // This effect regenerates the graph when policies or visualization settings change
-  useEffect(() => {
-    const generateGraph = () => {
-      setLoading(true);
-      
-      // Group nodes and edges
-      const newNodes: Node[] = [];
-      const newEdges: Edge[] = [];
-      
-      // Define WorkloadObject type for use throughout the function
-      type WorkloadObject = { name: string; policy: string };
-      
-      // Process policies and create graph nodes/edges
-      if (policies.length > 0) {
-        const uniqueClusters: string[] = [];
-        const uniqueWorkloads: string[] = [];
-        
-        // Collect all unique clusters and workloads from policies
-        policies.forEach(policy => {
-          // Get all clusters matched by this policy
-          // Extract cluster names from the policy if available
-         // const clustersForPolicy: string[] = [];
-          
-          // Try to extract cluster names from the policy's matchedClusters property if it exists
-          if ('matchedClusters' in policy && Array.isArray(policy.matchedClusters)) {
-            policy.matchedClusters.forEach((cluster: { name: string }) => {
-              if (cluster && cluster.name && !uniqueClusters.includes(cluster.name)) {
+  useEffect(
+    () => {
+      const generateGraph = () => {
+        setLoading(true);
+
+        // Group nodes and edges
+        const newNodes: Node[] = [];
+        const newEdges: Edge[] = [];
+
+        // Define WorkloadObject type for use throughout the function
+        type WorkloadObject = { name: string; policy: string };
+
+        // Process policies and create graph nodes/edges
+        if (policies.length > 0) {
+          const uniqueClusters: string[] = [];
+          const uniqueWorkloads: string[] = [];
+
+          // Collect all unique clusters and workloads from policies
+          policies.forEach(policy => {
+            // Get all clusters matched by this policy
+            // Extract cluster names from the policy if available
+            // const clustersForPolicy: string[] = [];
+
+            // Try to extract cluster names from the policy's matchedClusters property if it exists
+            if ('matchedClusters' in policy && Array.isArray(policy.matchedClusters)) {
+              policy.matchedClusters.forEach((cluster: { name: string }) => {
+                if (cluster && cluster.name && !uniqueClusters.includes(cluster.name)) {
+                  uniqueClusters.push(cluster.name);
+                }
+              });
+            }
+
+            // Get all workloads matched by this policy
+            // Extract workload names from the policy if available
+            if ('matchedWorkloads' in policy && Array.isArray(policy.matchedWorkloads)) {
+              policy.matchedWorkloads.forEach((workload: { name: string }) => {
+                if (workload && workload.name && !uniqueWorkloads.includes(workload.name)) {
+                  uniqueWorkloads.push(workload.name);
+                }
+              });
+            }
+          });
+
+          // If propClusters is provided, add any additional clusters
+          if (propClusters && propClusters.length > 0) {
+            propClusters.forEach(cluster => {
+              if (!uniqueClusters.includes(cluster.name)) {
                 uniqueClusters.push(cluster.name);
               }
             });
           }
-          
-          // Get all workloads matched by this policy
-          // Extract workload names from the policy if available
-          if ('matchedWorkloads' in policy && Array.isArray(policy.matchedWorkloads)) {
-            policy.matchedWorkloads.forEach((workload: { name: string }) => {
-              if (workload && workload.name && !uniqueWorkloads.includes(workload.name)) {
+
+          // If propWorkloads is provided, add any additional workloads
+          if (propWorkloads && propWorkloads.length > 0) {
+            propWorkloads.forEach(workload => {
+              if (!uniqueWorkloads.includes(workload.name)) {
                 uniqueWorkloads.push(workload.name);
               }
             });
           }
-        });
-        
-        // If propClusters is provided, add any additional clusters
-        if (propClusters && propClusters.length > 0) {
-          propClusters.forEach(cluster => {
-            if (!uniqueClusters.includes(cluster.name)) {
-              uniqueClusters.push(cluster.name);
-            }
-          });
-        }
-        
-        // If propWorkloads is provided, add any additional workloads
-        if (propWorkloads && propWorkloads.length > 0) {
-          propWorkloads.forEach(workload => {
-            if (!uniqueWorkloads.includes(workload.name)) {
-              uniqueWorkloads.push(workload.name);
-            }
-          });
-        }
-        
-        // Different layout configurations
-        let policyRadius = 400;
-        let clusterRadius = 600;
-        let workloadRadius = 200;
-        
-        if (layout === 'horizontal') {
-          policyRadius = 0; // Will position differently
-          clusterRadius = 0; // Will position differently
-          workloadRadius = 200;
-        } else if (layout === 'vertical') {
-          policyRadius = 0; // Will position differently
-          clusterRadius = 0; // Will position differently
-          workloadRadius = 250;
-        }
-        
-        // Position nodes differently based on layout
-        if (layout === 'radial') {
-          // Radial layout - policies in inner circle, clusters in outer circle
-          const policyAngleStep = (2 * Math.PI) / policies.length;
-          
-          policies.forEach((policy: BindingPolicyInfo, policyIndex: number) => {
-            const policyAngle = policyAngleStep * policyIndex;
-            const policyX = 0 + policyRadius * Math.cos(policyAngle);
-            const policyY = 0 + policyRadius * Math.sin(policyAngle);
-            
-            // Add policy node
-            const policyId = `policy-${policy.name}`;
-            newNodes.push({
-              id: policyId,
-              type: 'policyNode',
-              position: { x: policyX, y: policyY },
-              data: { 
-                policy,
-                label: policy.name,
-                isActive: policy.status === 'Active',
-                theme
-              },
-            });
-          });
-          
-          // Create cluster nodes in outer circle for radial layout
-          const clusterAngleStep = (2 * Math.PI) / uniqueClusters.length;
-          
-          uniqueClusters.forEach((clusterName: string, clusterIndex: number) => {
-            const clusterAngle = clusterAngleStep * clusterIndex;
-            const clusterX = 0 + clusterRadius * Math.cos(clusterAngle);
-            const clusterY = 0 + clusterRadius * Math.sin(clusterAngle);
-            
-            // Add cluster node
-            const clusterId = `cluster-${clusterName}`;
-            newNodes.push({
-              id: clusterId,
-              type: 'clusterNode',
-              position: { x: clusterX, y: clusterY },
-              data: { 
-                label: clusterName,
-                theme
-              },
-            });
-            
-            // Connect policies to this cluster
-            policies.forEach((policy: BindingPolicyInfo) => {
-              if (policy.clusterList && policy.clusterList.includes(clusterName)) {
-                newEdges.push({
-                  id: `policy-${policy.name}-to-cluster-${clusterName}`,
-                  source: `policy-${policy.name}`,
-                  target: clusterId,
-                  type: 'smoothstep',
-                  animated: true,
-                  style: { 
-                    stroke: policy.status === 'Active' ? '#10B981' : '#9CA3AF',
-                    strokeWidth: 2,
-                    opacity: highlightActive && policy.status !== 'Active' ? 0.4 : 1
-                  },
-                  markerEnd: {
-                    type: MarkerType.ArrowClosed,
-                    color: policy.status === 'Active' ? '#10B981' : '#9CA3AF',
-                  },
-                });
-              }
-            });
-          });
-        } else if (layout === 'horizontal') {
-          // Horizontal layout - clusters on right, policies in middle, workloads on left
-          const policySpacing = 200;
-          const policyStartY = -((policies.length - 1) * policySpacing) / 2;
-          
-          // Create policy nodes in vertical line
-          policies.forEach((policy: BindingPolicyInfo, policyIndex: number) => {
-            const policyX = 0;
-            const policyY = policyStartY + policyIndex * policySpacing;
-            
-            // Add policy node
-            const policyId = `policy-${policy.name}`;
-            newNodes.push({
-              id: policyId,
-              type: 'policyNode',
-              position: { x: policyX, y: policyY },
-              data: { 
-                policy,
-                label: policy.name,
-                isActive: policy.status === 'Active',
-                theme
-              },
-            });
-          });
-          
-          // Create cluster nodes on the right
-          const clusterSpacing = 180;
-          const clusterStartY = -((uniqueClusters.length - 1) * clusterSpacing) / 2;
-          
-          uniqueClusters.forEach((clusterName: string, clusterIndex: number) => {
-            const clusterX = 500;
-            const clusterY = clusterStartY + clusterIndex * clusterSpacing;
-            
-            // Add cluster node
-            const clusterId = `cluster-${clusterName}`;
-            newNodes.push({
-              id: clusterId,
-              type: 'clusterNode',
-              position: { x: clusterX, y: clusterY },
-              data: { 
-                label: clusterName,
-                theme
-              },
-            });
-            
-            // Connect policies to this cluster
-            policies.forEach((policy: BindingPolicyInfo) => {
-              if (policy.clusterList && policy.clusterList.includes(clusterName)) {
-                newEdges.push({
-                  id: `policy-${policy.name}-to-cluster-${clusterName}`,
-                  source: `policy-${policy.name}`,
-                  target: clusterId,
-                  type: 'smoothstep',
-                  animated: true,
-                  style: { 
-                    stroke: policy.status === 'Active' ? '#10B981' : '#9CA3AF',
-                    strokeWidth: 2,
-                    opacity: highlightActive && policy.status !== 'Active' ? 0.4 : 1
-                  },
-                  markerEnd: {
-                    type: MarkerType.ArrowClosed,
-                    color: policy.status === 'Active' ? '#10B981' : '#9CA3AF',
-                  },
-                });
-              }
-            });
-          });
-        } else if (layout === 'vertical') {
-          // Vertical layout - clusters on bottom, policies in middle, workloads on top
-          const policySpacing = 200;
-          const policyStartX = -((policies.length - 1) * policySpacing) / 2;
-          
-          // Create policy nodes in horizontal line
-          policies.forEach((policy: BindingPolicyInfo, policyIndex: number) => {
-            const policyX = policyStartX + policyIndex * policySpacing;
-            const policyY = 0;
-            
-            // Add policy node
-            const policyId = `policy-${policy.name}`;
-            newNodes.push({
-              id: policyId,
-              type: 'policyNode',
-              position: { x: policyX, y: policyY },
-              data: { 
-                policy,
-                label: policy.name,
-                isActive: policy.status === 'Active',
-                theme
-              },
-            });
-          });
-          
-          // Create cluster nodes at the bottom
-          const clusterSpacing = 180;
-          const clusterStartX = -((uniqueClusters.length - 1) * clusterSpacing) / 2;
-          
-          uniqueClusters.forEach((clusterName: string, clusterIndex: number) => {
-            const clusterX = clusterStartX + clusterIndex * clusterSpacing;
-            const clusterY = 300;
-            
-            // Add cluster node
-            const clusterId = `cluster-${clusterName}`;
-            newNodes.push({
-              id: clusterId,
-              type: 'clusterNode',
-              position: { x: clusterX, y: clusterY },
-              data: { 
-                label: clusterName,
-                theme
-              },
-            });
-            
-            // Connect policies to this cluster
-            policies.forEach((policy: BindingPolicyInfo) => {
-              if (policy.clusterList && policy.clusterList.includes(clusterName)) {
-                newEdges.push({
-                  id: `policy-${policy.name}-to-cluster-${clusterName}`,
-                  source: `policy-${policy.name}`,
-                  target: clusterId,
-                  type: 'smoothstep',
-                  animated: true,
-                  style: { 
-                    stroke: policy.status === 'Active' ? '#10B981' : '#9CA3AF',
-                    strokeWidth: 2,
-                    opacity: highlightActive && policy.status !== 'Active' ? 0.4 : 1
-                  },
-                  markerEnd: {
-                    type: MarkerType.ArrowClosed,
-                    color: policy.status === 'Active' ? '#10B981' : '#9CA3AF',
-                  },
-                });
-              }
-            });
-          });
-        }
-        
-        // Only add workloads if toggled on
-        if (showWorkloads) {
+
+          // Different layout configurations
+          let policyRadius = 400;
+          let clusterRadius = 600;
+          let workloadRadius = 200;
+
+          if (layout === 'horizontal') {
+            policyRadius = 0; // Will position differently
+            clusterRadius = 0; // Will position differently
+            workloadRadius = 200;
+          } else if (layout === 'vertical') {
+            policyRadius = 0; // Will position differently
+            clusterRadius = 0; // Will position differently
+            workloadRadius = 250;
+          }
+
+          // Position nodes differently based on layout
           if (layout === 'radial') {
-            // Create workload nodes in inner circles around each policy
+            // Radial layout - policies in inner circle, clusters in outer circle
             const policyAngleStep = (2 * Math.PI) / policies.length;
+
             policies.forEach((policy: BindingPolicyInfo, policyIndex: number) => {
-              if (!policy.workloadList || policy.workloadList.length === 0) return;
-              
               const policyAngle = policyAngleStep * policyIndex;
               const policyX = 0 + policyRadius * Math.cos(policyAngle);
               const policyY = 0 + policyRadius * Math.sin(policyAngle);
-            
-              const workloadAngleStep = (2 * Math.PI) / policy.workloadList.length;
-              
-              policy.workloadList.forEach((workloadName: string, workloadIndex: number) => {
-                const workloadAngle = workloadAngleStep * workloadIndex;
-                const workloadX = policyX + workloadRadius * Math.cos(workloadAngle);
-                const workloadY = policyY + workloadRadius * Math.sin(workloadAngle);
-                
+
+              // Add policy node
+              const policyId = `policy-${policy.name}`;
+              newNodes.push({
+                id: policyId,
+                type: 'policyNode',
+                position: { x: policyX, y: policyY },
+                data: {
+                  policy,
+                  label: policy.name,
+                  isActive: policy.status === 'Active',
+                  theme,
+                },
+              });
+            });
+
+            // Create cluster nodes in outer circle for radial layout
+            const clusterAngleStep = (2 * Math.PI) / uniqueClusters.length;
+
+            uniqueClusters.forEach((clusterName: string, clusterIndex: number) => {
+              const clusterAngle = clusterAngleStep * clusterIndex;
+              const clusterX = 0 + clusterRadius * Math.cos(clusterAngle);
+              const clusterY = 0 + clusterRadius * Math.sin(clusterAngle);
+
+              // Add cluster node
+              const clusterId = `cluster-${clusterName}`;
+              newNodes.push({
+                id: clusterId,
+                type: 'clusterNode',
+                position: { x: clusterX, y: clusterY },
+                data: {
+                  label: clusterName,
+                  theme,
+                },
+              });
+
+              // Connect policies to this cluster
+              policies.forEach((policy: BindingPolicyInfo) => {
+                if (policy.clusterList && policy.clusterList.includes(clusterName)) {
+                  newEdges.push({
+                    id: `policy-${policy.name}-to-cluster-${clusterName}`,
+                    source: `policy-${policy.name}`,
+                    target: clusterId,
+                    type: 'smoothstep',
+                    animated: true,
+                    style: {
+                      stroke: policy.status === 'Active' ? '#10B981' : '#9CA3AF',
+                      strokeWidth: 2,
+                      opacity: highlightActive && policy.status !== 'Active' ? 0.4 : 1,
+                    },
+                    markerEnd: {
+                      type: MarkerType.ArrowClosed,
+                      color: policy.status === 'Active' ? '#10B981' : '#9CA3AF',
+                    },
+                  });
+                }
+              });
+            });
+          } else if (layout === 'horizontal') {
+            // Horizontal layout - clusters on right, policies in middle, workloads on left
+            const policySpacing = 200;
+            const policyStartY = -((policies.length - 1) * policySpacing) / 2;
+
+            // Create policy nodes in vertical line
+            policies.forEach((policy: BindingPolicyInfo, policyIndex: number) => {
+              const policyX = 0;
+              const policyY = policyStartY + policyIndex * policySpacing;
+
+              // Add policy node
+              const policyId = `policy-${policy.name}`;
+              newNodes.push({
+                id: policyId,
+                type: 'policyNode',
+                position: { x: policyX, y: policyY },
+                data: {
+                  policy,
+                  label: policy.name,
+                  isActive: policy.status === 'Active',
+                  theme,
+                },
+              });
+            });
+
+            // Create cluster nodes on the right
+            const clusterSpacing = 180;
+            const clusterStartY = -((uniqueClusters.length - 1) * clusterSpacing) / 2;
+
+            uniqueClusters.forEach((clusterName: string, clusterIndex: number) => {
+              const clusterX = 500;
+              const clusterY = clusterStartY + clusterIndex * clusterSpacing;
+
+              // Add cluster node
+              const clusterId = `cluster-${clusterName}`;
+              newNodes.push({
+                id: clusterId,
+                type: 'clusterNode',
+                position: { x: clusterX, y: clusterY },
+                data: {
+                  label: clusterName,
+                  theme,
+                },
+              });
+
+              // Connect policies to this cluster
+              policies.forEach((policy: BindingPolicyInfo) => {
+                if (policy.clusterList && policy.clusterList.includes(clusterName)) {
+                  newEdges.push({
+                    id: `policy-${policy.name}-to-cluster-${clusterName}`,
+                    source: `policy-${policy.name}`,
+                    target: clusterId,
+                    type: 'smoothstep',
+                    animated: true,
+                    style: {
+                      stroke: policy.status === 'Active' ? '#10B981' : '#9CA3AF',
+                      strokeWidth: 2,
+                      opacity: highlightActive && policy.status !== 'Active' ? 0.4 : 1,
+                    },
+                    markerEnd: {
+                      type: MarkerType.ArrowClosed,
+                      color: policy.status === 'Active' ? '#10B981' : '#9CA3AF',
+                    },
+                  });
+                }
+              });
+            });
+          } else if (layout === 'vertical') {
+            // Vertical layout - clusters on bottom, policies in middle, workloads on top
+            const policySpacing = 200;
+            const policyStartX = -((policies.length - 1) * policySpacing) / 2;
+
+            // Create policy nodes in horizontal line
+            policies.forEach((policy: BindingPolicyInfo, policyIndex: number) => {
+              const policyX = policyStartX + policyIndex * policySpacing;
+              const policyY = 0;
+
+              // Add policy node
+              const policyId = `policy-${policy.name}`;
+              newNodes.push({
+                id: policyId,
+                type: 'policyNode',
+                position: { x: policyX, y: policyY },
+                data: {
+                  policy,
+                  label: policy.name,
+                  isActive: policy.status === 'Active',
+                  theme,
+                },
+              });
+            });
+
+            // Create cluster nodes at the bottom
+            const clusterSpacing = 180;
+            const clusterStartX = -((uniqueClusters.length - 1) * clusterSpacing) / 2;
+
+            uniqueClusters.forEach((clusterName: string, clusterIndex: number) => {
+              const clusterX = clusterStartX + clusterIndex * clusterSpacing;
+              const clusterY = 300;
+
+              // Add cluster node
+              const clusterId = `cluster-${clusterName}`;
+              newNodes.push({
+                id: clusterId,
+                type: 'clusterNode',
+                position: { x: clusterX, y: clusterY },
+                data: {
+                  label: clusterName,
+                  theme,
+                },
+              });
+
+              // Connect policies to this cluster
+              policies.forEach((policy: BindingPolicyInfo) => {
+                if (policy.clusterList && policy.clusterList.includes(clusterName)) {
+                  newEdges.push({
+                    id: `policy-${policy.name}-to-cluster-${clusterName}`,
+                    source: `policy-${policy.name}`,
+                    target: clusterId,
+                    type: 'smoothstep',
+                    animated: true,
+                    style: {
+                      stroke: policy.status === 'Active' ? '#10B981' : '#9CA3AF',
+                      strokeWidth: 2,
+                      opacity: highlightActive && policy.status !== 'Active' ? 0.4 : 1,
+                    },
+                    markerEnd: {
+                      type: MarkerType.ArrowClosed,
+                      color: policy.status === 'Active' ? '#10B981' : '#9CA3AF',
+                    },
+                  });
+                }
+              });
+            });
+          }
+
+          // Only add workloads if toggled on
+          if (showWorkloads) {
+            if (layout === 'radial') {
+              // Create workload nodes in inner circles around each policy
+              const policyAngleStep = (2 * Math.PI) / policies.length;
+              policies.forEach((policy: BindingPolicyInfo, policyIndex: number) => {
+                if (!policy.workloadList || policy.workloadList.length === 0) return;
+
+                const policyAngle = policyAngleStep * policyIndex;
+                const policyX = 0 + policyRadius * Math.cos(policyAngle);
+                const policyY = 0 + policyRadius * Math.sin(policyAngle);
+
+                const workloadAngleStep = (2 * Math.PI) / policy.workloadList.length;
+
+                policy.workloadList.forEach((workloadName: string, workloadIndex: number) => {
+                  const workloadAngle = workloadAngleStep * workloadIndex;
+                  const workloadX = policyX + workloadRadius * Math.cos(workloadAngle);
+                  const workloadY = policyY + workloadRadius * Math.sin(workloadAngle);
+
+                  // Add workload node
+                  const workloadId = `workload-${policy.name}-${workloadName}`;
+
+                  // Check if this workload node already exists
+                  if (!newNodes.some(node => node.id === workloadId)) {
+                    newNodes.push({
+                      id: workloadId,
+                      type: 'workloadNode',
+                      position: { x: workloadX, y: workloadY },
+                      data: {
+                        label: workloadName,
+                        policy: policy.name,
+                        theme,
+                      },
+                    });
+                  }
+
+                  // Connect workload to policy
+                  newEdges.push({
+                    id: `workload-${workloadName}-to-policy-${policy.name}`,
+                    source: workloadId,
+                    target: `policy-${policy.name}`,
+                    type: 'smoothstep',
+                    style: {
+                      stroke: theme === 'dark' ? '#4B5563' : '#9CA3AF',
+                      strokeWidth: 1,
+                      opacity: 0.8,
+                    },
+                  });
+
+                  // Direct connections from workloads to clusters (the feature you requested)
+                  if (policy.clusterList) {
+                    policy.clusterList.forEach(clusterName => {
+                      newEdges.push({
+                        id: `workload-${workloadName}-to-cluster-${clusterName}-via-${policy.name}`,
+                        source: workloadId,
+                        target: `cluster-${clusterName}`,
+                        type: 'straight',
+                        style: {
+                          stroke: '#3B82F6',
+                          strokeWidth: 1,
+                          strokeDasharray: '5,5',
+                          opacity: highlightActive && policy.status !== 'Active' ? 0.2 : 0.4,
+                        },
+                        animated: policy.status === 'Active',
+                        markerEnd: {
+                          type: MarkerType.Arrow,
+                          color: '#3B82F6',
+                        },
+                      });
+                    });
+                  }
+                });
+              });
+            } else if (layout === 'horizontal') {
+              // Create workload nodes on the left
+              const allWorkloads = policies.flatMap((policy: BindingPolicyInfo) =>
+                policy.workloadList
+                  ? policy.workloadList.map((w: string) => ({ name: w, policy: policy.name }))
+                  : []
+              );
+
+              // Remove duplicates (if a workload is used by multiple policies)
+              const uniqueWorkloadObjects = allWorkloads.filter(
+                (workload: WorkloadObject, index: number, self: WorkloadObject[]) =>
+                  index === self.findIndex((w: WorkloadObject) => w.name === workload.name)
+              );
+
+              const workloadSpacing = 150;
+              const workloadStartY = -((uniqueWorkloadObjects.length - 1) * workloadSpacing) / 2;
+
+              uniqueWorkloadObjects.forEach((workload: WorkloadObject, workloadIndex: number) => {
+                const workloadX = -500;
+                const workloadY = workloadStartY + workloadIndex * workloadSpacing;
+
                 // Add workload node
-                const workloadId = `workload-${policy.name}-${workloadName}`;
-                
+                const workloadId = `workload-${workload.policy}-${workload.name}`;
+
                 // Check if this workload node already exists
                 if (!newNodes.some(node => node.id === workloadId)) {
                   newNodes.push({
                     id: workloadId,
                     type: 'workloadNode',
                     position: { x: workloadX, y: workloadY },
-                    data: { 
-                      label: workloadName,
-                      policy: policy.name,
-                      theme
+                    data: {
+                      label: workload.name,
+                      policy: workload.policy,
+                      theme,
                     },
                   });
                 }
-                
+
                 // Connect workload to policy
                 newEdges.push({
-                  id: `workload-${workloadName}-to-policy-${policy.name}`,
+                  id: `workload-${workload.name}-to-policy-${workload.policy}`,
                   source: workloadId,
-                  target: `policy-${policy.name}`,
+                  target: `policy-${workload.policy}`,
                   type: 'smoothstep',
-                  style: { 
+                  style: {
                     stroke: theme === 'dark' ? '#4B5563' : '#9CA3AF',
                     strokeWidth: 1,
-                    opacity: 0.8
+                    opacity: 0.8,
                   },
                 });
-                
-                // Direct connections from workloads to clusters (the feature you requested)
-                if (policy.clusterList) {
-                  policy.clusterList.forEach(clusterName => {
+
+                // Direct connections from workloads to clusters
+                const policy = policies.find((p: BindingPolicyInfo) => p.name === workload.policy);
+                if (policy && policy.clusterList) {
+                  policy.clusterList.forEach((clusterName: string) => {
                     newEdges.push({
-                      id: `workload-${workloadName}-to-cluster-${clusterName}-via-${policy.name}`,
+                      id: `workload-${workload.name}-to-cluster-${clusterName}-via-${workload.policy}`,
                       source: workloadId,
                       target: `cluster-${clusterName}`,
                       type: 'straight',
-                      style: { 
+                      style: {
                         stroke: '#3B82F6',
                         strokeWidth: 1,
                         strokeDasharray: '5,5',
-                        opacity: highlightActive && policy.status !== 'Active' ? 0.2 : 0.4
+                        opacity: highlightActive && policy.status !== 'Active' ? 0.2 : 0.4,
                       },
                       animated: policy.status === 'Active',
                       markerEnd: {
@@ -971,184 +1145,120 @@ const BPVisualization: React.FC<BPVisualizationProps> = ({ policies, clusters: p
                   });
                 }
               });
-            });
-          } else if (layout === 'horizontal') {
-            // Create workload nodes on the left
-            const allWorkloads = policies.flatMap((policy: BindingPolicyInfo) => 
-              policy.workloadList ? policy.workloadList.map((w: string) => ({ name: w, policy: policy.name })) : []
-            );
-            
-            // Remove duplicates (if a workload is used by multiple policies)
-            const uniqueWorkloadObjects = allWorkloads.filter((workload: WorkloadObject, index: number, self: WorkloadObject[]) =>
-              index === self.findIndex((w: WorkloadObject) => w.name === workload.name)
-            );
-            
-            const workloadSpacing = 150;
-            const workloadStartY = -((uniqueWorkloadObjects.length - 1) * workloadSpacing) / 2;
-            
-            uniqueWorkloadObjects.forEach((workload: WorkloadObject, workloadIndex: number) => {
-              const workloadX = -500;
-              const workloadY = workloadStartY + workloadIndex * workloadSpacing;
-              
-              // Add workload node
-              const workloadId = `workload-${workload.policy}-${workload.name}`;
-              
-              // Check if this workload node already exists
-              if (!newNodes.some(node => node.id === workloadId)) {
-                newNodes.push({
-                  id: workloadId,
-                  type: 'workloadNode',
-                  position: { x: workloadX, y: workloadY },
-                  data: { 
-                    label: workload.name,
-                    policy: workload.policy,
-                    theme
-                  },
-                });
-              }
-              
-              // Connect workload to policy
-              newEdges.push({
-                id: `workload-${workload.name}-to-policy-${workload.policy}`,
-                source: workloadId,
-                target: `policy-${workload.policy}`,
-                type: 'smoothstep',
-                style: { 
-                  stroke: theme === 'dark' ? '#4B5563' : '#9CA3AF',
-                  strokeWidth: 1,
-                  opacity: 0.8
-                },
-              });
-              
-              // Direct connections from workloads to clusters
-              const policy = policies.find((p: BindingPolicyInfo) => p.name === workload.policy);
-              if (policy && policy.clusterList) {
-                policy.clusterList.forEach((clusterName: string) => {
-                  newEdges.push({
-                    id: `workload-${workload.name}-to-cluster-${clusterName}-via-${workload.policy}`,
-                    source: workloadId,
-                    target: `cluster-${clusterName}`,
-                    type: 'straight',
-                    style: { 
-                      stroke: '#3B82F6',
-                      strokeWidth: 1,
-                      strokeDasharray: '5,5',
-                      opacity: highlightActive && policy.status !== 'Active' ? 0.2 : 0.4
-                    },
-                    animated: policy.status === 'Active',
-                    markerEnd: {
-                      type: MarkerType.Arrow,
-                      color: '#3B82F6',
+            } else if (layout === 'vertical') {
+              // Create workload nodes at the top
+              const allWorkloads = policies.flatMap((policy: BindingPolicyInfo) =>
+                policy.workloadList
+                  ? policy.workloadList.map((w: string) => ({ name: w, policy: policy.name }))
+                  : []
+              );
+
+              // Remove duplicates (if a workload is used by multiple policies)
+              const uniqueWorkloadObjects = allWorkloads.filter(
+                (
+                  workload: { name: string; policy: string },
+                  index: number,
+                  self: Array<{ name: string; policy: string }>
+                ) =>
+                  index ===
+                  self.findIndex((w: { name: string; policy: string }) => w.name === workload.name)
+              );
+
+              const workloadSpacing = 150;
+
+              // Calculate total width needed for workloads
+              const totalWorkloadWidth = uniqueWorkloadObjects.length * workloadSpacing;
+              const workloadStartX = -totalWorkloadWidth / 2;
+
+              uniqueWorkloadObjects.forEach((workload: WorkloadObject, workloadIndex: number) => {
+                const workloadX = workloadStartX + workloadIndex * workloadSpacing;
+                const workloadY = -300;
+
+                // Add workload node
+                const workloadId = `workload-${workload.policy}-${workload.name}`;
+
+                // Check if this workload node already exists
+                if (!newNodes.some(node => node.id === workloadId)) {
+                  newNodes.push({
+                    id: workloadId,
+                    type: 'workloadNode',
+                    position: { x: workloadX, y: workloadY },
+                    data: {
+                      label: workload.name,
+                      policy: workload.policy,
+                      theme,
                     },
                   });
-                });
-              }
-            });
-          } else if (layout === 'vertical') {
-            // Create workload nodes at the top
-            const allWorkloads = policies.flatMap((policy: BindingPolicyInfo) => 
-              policy.workloadList ? policy.workloadList.map((w: string) => ({ name: w, policy: policy.name })) : []
-            );
-            
-            // Remove duplicates (if a workload is used by multiple policies)
-            const uniqueWorkloadObjects = allWorkloads.filter((workload: { name: string, policy: string }, index: number, self: Array<{ name: string, policy: string }>) =>
-              index === self.findIndex((w: { name: string, policy: string }) => w.name === workload.name)
-            );
-            
-            const workloadSpacing = 150;
-            
-            // Calculate total width needed for workloads
-            const totalWorkloadWidth = uniqueWorkloadObjects.length * workloadSpacing;
-            const workloadStartX = -totalWorkloadWidth / 2;
-            
-            uniqueWorkloadObjects.forEach((workload: WorkloadObject, workloadIndex: number) => {
-              const workloadX = workloadStartX + workloadIndex * workloadSpacing;
-              const workloadY = -300;
-              
-              // Add workload node
-              const workloadId = `workload-${workload.policy}-${workload.name}`;
-              
-              // Check if this workload node already exists
-              if (!newNodes.some(node => node.id === workloadId)) {
-                newNodes.push({
-                  id: workloadId,
-                  type: 'workloadNode',
-                  position: { x: workloadX, y: workloadY },
-                  data: { 
-                    label: workload.name,
-                    policy: workload.policy,
-                    theme
+                }
+
+                // Connect workload to policy
+                newEdges.push({
+                  id: `workload-${workload.name}-to-policy-${workload.policy}`,
+                  source: workloadId,
+                  target: `policy-${workload.policy}`,
+                  type: 'smoothstep',
+                  style: {
+                    stroke: theme === 'dark' ? '#4B5563' : '#9CA3AF',
+                    strokeWidth: 1,
+                    opacity: 0.8,
                   },
                 });
-              }
-              
-              // Connect workload to policy
-              newEdges.push({
-                id: `workload-${workload.name}-to-policy-${workload.policy}`,
-                source: workloadId,
-                target: `policy-${workload.policy}`,
-                type: 'smoothstep',
-                style: { 
-                  stroke: theme === 'dark' ? '#4B5563' : '#9CA3AF',
-                  strokeWidth: 1,
-                  opacity: 0.8
-                },
-              });
-              
-              // Direct connections from workloads to clusters
-              const policy = policies.find((p: BindingPolicyInfo) => p.name === workload.policy);
-              if (policy && policy.clusterList) {
-                policy.clusterList.forEach((clusterName: string) => {
-                  newEdges.push({
-                    id: `workload-${workload.name}-to-cluster-${clusterName}-via-${workload.policy}`,
-                    source: workloadId,
-                    target: `cluster-${clusterName}`,
-                    type: 'straight',
-                    style: { 
-                      stroke: '#3B82F6',
-                      strokeWidth: 1,
-                      strokeDasharray: '5,5',
-                      opacity: highlightActive && policy.status !== 'Active' ? 0.2 : 0.4
-                    },
-                    animated: policy.status === 'Active',
-                    markerEnd: {
-                      type: MarkerType.Arrow,
-                      color: '#3B82F6',
-                    },
+
+                // Direct connections from workloads to clusters
+                const policy = policies.find((p: BindingPolicyInfo) => p.name === workload.policy);
+                if (policy && policy.clusterList) {
+                  policy.clusterList.forEach((clusterName: string) => {
+                    newEdges.push({
+                      id: `workload-${workload.name}-to-cluster-${clusterName}-via-${workload.policy}`,
+                      source: workloadId,
+                      target: `cluster-${clusterName}`,
+                      type: 'straight',
+                      style: {
+                        stroke: '#3B82F6',
+                        strokeWidth: 1,
+                        strokeDasharray: '5,5',
+                        opacity: highlightActive && policy.status !== 'Active' ? 0.2 : 0.4,
+                      },
+                      animated: policy.status === 'Active',
+                      markerEnd: {
+                        type: MarkerType.Arrow,
+                        color: '#3B82F6',
+                      },
+                    });
                   });
-                });
-              }
-            });
+                }
+              });
+            }
           }
+
+          setNodes(newNodes);
+          setEdges(newEdges);
         }
-        
-        setNodes(newNodes);
-        setEdges(newEdges);
-      }
-      
 
-      setLoading(false);
-    };
+        setLoading(false);
+      };
 
-    generateGraph();
-  }, [
-    policies, 
-    theme, 
-    showWorkloads, 
-    highlightActive, 
-    setNodes, 
-    setEdges, 
-    uniqueClusters, 
-    layout,
-    propClusters,
-    propWorkloads
-  ] as const);
+      generateGraph();
+    },
+    [
+      policies,
+      theme,
+      showWorkloads,
+      highlightActive,
+      setNodes,
+      setEdges,
+      uniqueClusters,
+      layout,
+      propClusters,
+      propWorkloads,
+    ] as const
+  );
 
   return (
-    <Box 
-      sx={{ 
-        width: '100%', 
-        height: '100%', 
+    <Box
+      sx={{
+        width: '100%',
+        height: '100%',
         position: 'relative',
         flex: 1,
         display: 'flex',
@@ -1156,21 +1266,21 @@ const BPVisualization: React.FC<BPVisualizationProps> = ({ policies, clusters: p
         '.react-flow': {
           flex: 1,
           borderRadius: 1,
-          overflow: 'hidden'
-        }
+          overflow: 'hidden',
+        },
       }}
     >
       {loading ? (
         <LoadingState theme={theme} />
       ) : error ? (
         <ErrorState message={error} theme={theme} />
-      ) : (!Array.isArray(policies) || policies.length === 0) && 
-           (!Array.isArray(propClusters) || propClusters.length === 0) && 
-           (!Array.isArray(propWorkloads) || propWorkloads.length === 0) ? (
+      ) : (!Array.isArray(policies) || policies.length === 0) &&
+        (!Array.isArray(propClusters) || propClusters.length === 0) &&
+        (!Array.isArray(propWorkloads) || propWorkloads.length === 0) ? (
         <EmptyState theme={theme} />
       ) : (
         <>
-          <VisualizationControls 
+          <VisualizationControls
             theme={theme}
             policies={policies}
             uniqueClusters={uniqueClusters}
@@ -1182,20 +1292,20 @@ const BPVisualization: React.FC<BPVisualizationProps> = ({ policies, clusters: p
             setLoading={setLoading}
             reactFlowInstance={reactFlowInstance}
           />
-          
+
           <VisualizationCanvas
             theme={theme}
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onNodeClick={onNodeClick}
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onNodeClick={onNodeClick}
             nodeTypes={nodeTypes}
             layout={layout}
             handleLayoutChange={handleLayoutChange}
             onNodeSelect={handleNodeSelect}
           />
-          
+
           <EntityDetailsPanel
             theme={theme}
             isOpen={isDetailsOpen}
@@ -1250,7 +1360,10 @@ const ErrorState: React.FC<{ message: string; theme: string }> = ({ message, the
       <Typography variant="h6" sx={{ mb: 1, color: theme === 'dark' ? '#F9FAFB' : '#111827' }}>
         Visualization Error
       </Typography>
-      <Typography variant="body2" sx={{ color: theme === 'dark' ? '#D1D5DB' : '#6B7280', maxWidth: '400px' }}>
+      <Typography
+        variant="body2"
+        sx={{ color: theme === 'dark' ? '#D1D5DB' : '#6B7280', maxWidth: '400px' }}
+      >
         {message || 'An error occurred while rendering the visualization.'}
       </Typography>
       <Button
@@ -1267,10 +1380,10 @@ const ErrorState: React.FC<{ message: string; theme: string }> = ({ message, the
 
 const EmptyState: React.FC<{ theme: string }> = ({ theme }) => {
   return (
-            <Box 
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         height: '100%',
@@ -1280,7 +1393,7 @@ const EmptyState: React.FC<{ theme: string }> = ({ theme }) => {
       }}
     >
       <Box
-                  sx={{ 
+        sx={{
           bgcolor: theme === 'dark' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)',
           borderRadius: '50%',
           p: 2,
@@ -1288,15 +1401,31 @@ const EmptyState: React.FC<{ theme: string }> = ({ theme }) => {
           color: '#3B82F6',
         }}
       >
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 6V4M12 6C10.8954 6 10 6.89543 10 8C10 9.10457 10.8954 10 12 10M12 6C13.1046 6 14 6.89543 14 8C14 9.10457 13.1046 10 12 10M12 10V20M7 20H17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <svg
+          width="40"
+          height="40"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M12 6V4M12 6C10.8954 6 10 6.89543 10 8C10 9.10457 10.8954 10 12 10M12 6C13.1046 6 14 6.89543 14 8C14 9.10457 13.1046 10 12 10M12 10V20M7 20H17"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </Box>
       <Typography variant="h6" sx={{ mb: 1, color: theme === 'dark' ? '#F9FAFB' : '#111827' }}>
         No Visualization Data
       </Typography>
-      <Typography variant="body2" sx={{ color: theme === 'dark' ? '#D1D5DB' : '#6B7280', maxWidth: '400px' }}>
-        There are no binding policies, clusters, or workloads to visualize. Create some resources to see them in this view.
+      <Typography
+        variant="body2"
+        sx={{ color: theme === 'dark' ? '#D1D5DB' : '#6B7280', maxWidth: '400px' }}
+      >
+        There are no binding policies, clusters, or workloads to visualize. Create some resources to
+        see them in this view.
       </Typography>
     </Box>
   );
@@ -1347,7 +1476,7 @@ const VisualizationControls: React.FC<VisualizationControlsProps> = ({
   highlightActive,
   setHighlightActive,
   setLoading,
-  reactFlowInstance
+  reactFlowInstance,
 }) => {
   return (
     <Paper
@@ -1356,68 +1485,77 @@ const VisualizationControls: React.FC<VisualizationControlsProps> = ({
         mb: 2,
         p: 1.5,
         borderRadius: 1,
-        boxShadow: theme === 'dark' 
-          ? '0 1px 3px rgba(0,0,0,0.24)' 
-          : '0 1px 3px rgba(0,0,0,0.12)',
+        boxShadow: theme === 'dark' ? '0 1px 3px rgba(0,0,0,0.24)' : '0 1px 3px rgba(0,0,0,0.12)',
         bgcolor: theme === 'dark' ? '#1F2937' : '#FFFFFF',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
         border: '1px solid',
-        borderColor: theme === 'dark' ? 'rgba(75, 85, 99, 0.4)' : 'rgba(229, 231, 235, 0.8)'
+        borderColor: theme === 'dark' ? 'rgba(75, 85, 99, 0.4)' : 'rgba(229, 231, 235, 0.8)',
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
         <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600, mr: 2 }}>
           Binding Policy Network
         </Typography>
-        
-        <Chip 
-          size="small" 
+
+        <Chip
+          size="small"
           label={`${policies.length} Policies`}
-          sx={{ mr: 1, bgcolor: theme === 'dark' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.1)', color: '#3B82F6' }} 
-                />
-                <Chip 
-                  size="small" 
+          sx={{
+            mr: 1,
+            bgcolor: theme === 'dark' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.1)',
+            color: '#3B82F6',
+          }}
+        />
+        <Chip
+          size="small"
           label={`${uniqueClusters.length} Clusters`}
-          sx={{ mr: 1, bgcolor: theme === 'dark' ? 'rgba(107, 114, 128, 0.15)' : 'rgba(107, 114, 128, 0.1)', color: '#6B7280' }} 
+          sx={{
+            mr: 1,
+            bgcolor: theme === 'dark' ? 'rgba(107, 114, 128, 0.15)' : 'rgba(107, 114, 128, 0.1)',
+            color: '#6B7280',
+          }}
         />
         {uniqueWorkloads && uniqueWorkloads.length > 0 && (
-                <Chip 
-                  size="small" 
+          <Chip
+            size="small"
             label={`${uniqueWorkloads.length} Workloads`}
-            sx={{ bgcolor: theme === 'dark' ? 'rgba(96, 165, 250, 0.15)' : 'rgba(96, 165, 250, 0.1)', color: '#60A5FA' }} 
+            sx={{
+              bgcolor: theme === 'dark' ? 'rgba(96, 165, 250, 0.15)' : 'rgba(96, 165, 250, 0.1)',
+              color: '#60A5FA',
+            }}
           />
         )}
-              </Box>
-              
+      </Box>
+
       <Box sx={{ display: 'flex', alignItems: 'center', mt: { xs: 1, sm: 0 } }}>
-                <FormControlLabel 
-                  control={
-                    <Switch 
-                      checked={showWorkloads} 
-                      onChange={(e) => setShowWorkloads(e.target.checked)} 
-                      size="small"
-              color="primary"
-                    />
-                  } 
-                  label={<Typography variant="body2">Show Workloads</Typography>}
-          sx={{ mr: 2 }}
-                />
-              
-                <FormControlLabel 
-                  control={
-                    <Switch 
-                      checked={highlightActive} 
-                      onChange={(e) => setHighlightActive(e.target.checked)} 
-                      size="small"
+        <FormControlLabel
+          control={
+            <Switch
+              checked={showWorkloads}
+              onChange={e => setShowWorkloads(e.target.checked)}
+              size="small"
               color="primary"
             />
-          } 
+          }
+          label={<Typography variant="body2">Show Workloads</Typography>}
+          sx={{ mr: 2 }}
+        />
+
+        <FormControlLabel
+          control={
+            <Switch
+              checked={highlightActive}
+              onChange={e => setHighlightActive(e.target.checked)}
+              size="small"
+              color="primary"
+            />
+          }
           label={<Typography variant="body2">Highlight Active</Typography>}
         />
-        
+
         <Tooltip title="Refresh visualization">
           <Button
             size="small"
@@ -1431,8 +1569,8 @@ const VisualizationControls: React.FC<VisualizationControlsProps> = ({
           >
             Refresh
           </Button>
-            </Tooltip>
-        
+        </Tooltip>
+
         <Button
           size="small"
           variant="outlined"
@@ -1441,7 +1579,7 @@ const VisualizationControls: React.FC<VisualizationControlsProps> = ({
         >
           Fit View
         </Button>
-    </Box>
+      </Box>
     </Paper>
   );
 };
@@ -1470,7 +1608,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   nodeTypes,
   layout,
   handleLayoutChange,
-  onNodeSelect
+  onNodeSelect,
 }) => {
   return (
     <Box sx={{ flex: 1, position: 'relative', borderRadius: 1, overflow: 'hidden' }}>
@@ -1484,33 +1622,33 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
         minZoom={0.1}
         maxZoom={2}
         onNodeClick={onNodeClick}
-        style={{ 
-          width: '100%', 
-          height: '100%', 
-          background: theme === 'dark' ? '#111827' : '#F9FAFB' 
+        style={{
+          width: '100%',
+          height: '100%',
+          background: theme === 'dark' ? '#111827' : '#F9FAFB',
         }}
         defaultEdgeOptions={{
           type: 'smoothstep',
-          animated: true
+          animated: true,
         }}
       >
-        <Background 
-          color={theme === 'dark' ? '#374151' : '#E5E7EB'} 
-          gap={16} 
-          size={1} 
+        <Background
+          color={theme === 'dark' ? '#374151' : '#E5E7EB'}
+          gap={16}
+          size={1}
           variant={BackgroundVariant.Dots}
         />
-        <Controls 
+        <Controls
           style={{
-            display: 'none' // Using custom controls instead
+            display: 'none', // Using custom controls instead
           }}
         />
         <CustomMiniMap theme={theme} />
         <FlowControls theme={theme} layout={layout} onLayoutChange={handleLayoutChange} />
         <SearchPanel nodes={nodes} theme={theme} onNodeSelect={onNodeSelect} />
-        
+
         <Panel position="bottom-right">
-          <Box 
+          <Box
             sx={{
               p: 1.5,
               borderRadius: 1,
@@ -1523,66 +1661,79 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
               mb: 2,
               mr: 2,
               border: '1px solid',
-              borderColor: theme === 'dark' ? 'rgba(75, 85, 99, 0.4)' : 'rgba(229, 231, 235, 0.8)'
+              borderColor: theme === 'dark' ? 'rgba(75, 85, 99, 0.4)' : 'rgba(229, 231, 235, 0.8)',
             }}
           >
-            <Typography variant="subtitle2" sx={{ color: theme === 'dark' ? '#E5E7EB' : '#374151', fontWeight: 600, mb: 0.5 }}>
+            <Typography
+              variant="subtitle2"
+              sx={{ color: theme === 'dark' ? '#E5E7EB' : '#374151', fontWeight: 600, mb: 0.5 }}
+            >
               Legend
             </Typography>
-            
+
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box sx={{ 
-                width: 16, 
-                height: 16, 
-                borderRadius: '50%', 
-                bgcolor: theme === 'dark' ? '#3B82F6' : '#2563EB',
-                border: '1px solid',
-                borderColor: theme === 'dark' ? '#2563EB' : '#1D4ED8'
-              }} />
+              <Box
+                sx={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: '50%',
+                  bgcolor: theme === 'dark' ? '#3B82F6' : '#2563EB',
+                  border: '1px solid',
+                  borderColor: theme === 'dark' ? '#2563EB' : '#1D4ED8',
+                }}
+              />
               <Typography variant="body2">Active Policy</Typography>
             </Box>
-            
+
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box sx={{ 
-                width: 16, 
-                height: 16, 
-                borderRadius: '50%', 
-                bgcolor: theme === 'dark' ? '#9CA3AF' : '#6B7280',
-                border: '1px solid',
-                borderColor: theme === 'dark' ? '#6B7280' : '#4B5563'
-              }} />
+              <Box
+                sx={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: '50%',
+                  bgcolor: theme === 'dark' ? '#9CA3AF' : '#6B7280',
+                  border: '1px solid',
+                  borderColor: theme === 'dark' ? '#6B7280' : '#4B5563',
+                }}
+              />
               <Typography variant="body2">Cluster</Typography>
             </Box>
-            
+
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box sx={{ 
-                width: 16, 
-                height: 16, 
-                borderRadius: '50%', 
-                bgcolor: theme === 'dark' ? '#60A5FA' : '#3B82F6',
-                border: '1px solid',
-                borderColor: theme === 'dark' ? '#3B82F6' : '#2563EB'
-              }} />
+              <Box
+                sx={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: '50%',
+                  bgcolor: theme === 'dark' ? '#60A5FA' : '#3B82F6',
+                  border: '1px solid',
+                  borderColor: theme === 'dark' ? '#3B82F6' : '#2563EB',
+                }}
+              />
               <Typography variant="body2">Workload</Typography>
             </Box>
-            
+
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box sx={{ 
-                width: 40, 
-                height: 4, 
-                bgcolor: '#10B981',
-                borderRadius: 1
-              }} />
+              <Box
+                sx={{
+                  width: 40,
+                  height: 4,
+                  bgcolor: '#10B981',
+                  borderRadius: 1,
+                }}
+              />
               <Typography variant="body2">Active Connection</Typography>
             </Box>
-            
+
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box sx={{ 
-                width: 40, 
-                height: 4, 
-                bgcolor: '#9CA3AF',
-                borderRadius: 1
-              }} />
+              <Box
+                sx={{
+                  width: 40,
+                  height: 4,
+                  bgcolor: '#9CA3AF',
+                  borderRadius: 1,
+                }}
+              />
               <Typography variant="body2">Inactive Connection</Typography>
             </Box>
           </Box>

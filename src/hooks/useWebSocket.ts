@@ -11,8 +11,14 @@ export const useNamespacesWebSocket = (enabled = true) => {
     transform: (data: unknown) => {
       if (!Array.isArray(data)) return [];
       return data.filter(
-        (namespace: NamespaceData) => 
-          !["kubestellar-report", "kube-node-lease", "kube-public", "default", "kube-system"].includes(namespace.name)
+        (namespace: NamespaceData) =>
+          ![
+            'kubestellar-report',
+            'kube-node-lease',
+            'kube-public',
+            'default',
+            'kube-system',
+          ].includes(namespace.name)
       );
     },
   });
@@ -25,19 +31,26 @@ export const useWecsWebSocket = (enabled = true) => {
     enabled,
     transform: (data: unknown) => {
       if (!Array.isArray(data)) return [];
-      
-      return (data as WecsCluster[]).map((cluster) => ({
+
+      return (data as WecsCluster[]).map(cluster => ({
         ...cluster,
         namespaces: cluster.namespaces?.filter(
-          (ns) => 
-            !["kubestellar-report", "kube-node-lease", "kube-public", "default", "kube-system", 
-              "open-cluster-management-hub", "open-cluster-management", "local-path-storage"].includes(ns.namespace)
+          ns =>
+            ![
+              'kubestellar-report',
+              'kube-node-lease',
+              'kube-public',
+              'default',
+              'kube-system',
+              'open-cluster-management-hub',
+              'open-cluster-management',
+              'local-path-storage',
+            ].includes(ns.namespace)
         ),
       }));
     },
   });
 };
-
 
 export const useResourceLogsWebSocket = (
   kind: string,
@@ -49,8 +62,8 @@ export const useResourceLogsWebSocket = (
   const [queryResult, setQueryResult] = useState({
     isConnected: false,
     data: [] as string[],
-    isLoading: false, 
-    isError: false
+    isLoading: false,
+    isError: false,
   });
 
   const wsQuery = useWebSocketQuery<string[]>({
@@ -71,14 +84,14 @@ export const useResourceLogsWebSocket = (
         isConnected: false,
         data: [],
         isLoading: false,
-        isError: false
+        isError: false,
       });
     } else {
       setQueryResult({
         isConnected: wsQuery.isConnected,
         data: wsQuery.data || [],
         isLoading: wsQuery.isLoading,
-        isError: wsQuery.isError
+        isError: wsQuery.isError,
       });
     }
   }, [namespace, name, wsQuery.isConnected, wsQuery.data, wsQuery.isLoading, wsQuery.isError]);
@@ -87,10 +100,10 @@ export const useResourceLogsWebSocket = (
 };
 
 export const useContextCreationWebSocket = (
-  contextName: string, 
-  contextVersion: string, 
-  onRawMessage?: (event: MessageEvent) => void, 
-  onError?: (error: Error) => void, 
+  contextName: string,
+  contextVersion: string,
+  onRawMessage?: (event: MessageEvent) => void,
+  onError?: (error: Error) => void,
   onClose?: (event: CloseEvent) => void
 ) => {
   return useWebSocketQuery<string[]>({
@@ -112,10 +125,10 @@ export const useContextCreationWebSocket = (
 export const useWebSocket = () => {
   const namespaces = useNamespacesWebSocket();
   const wecs = useWecsWebSocket();
-  
+
   return {
-    ws: namespaces.isConnected ? {} as WebSocket : null,
-    wecsWs: wecs.isConnected ? {} as WebSocket : null,
+    ws: namespaces.isConnected ? ({} as WebSocket) : null,
+    wecsWs: wecs.isConnected ? ({} as WebSocket) : null,
     isConnected: namespaces.isConnected,
     wecsIsConnected: wecs.isConnected,
     connect: (shouldConnect: boolean) => {
@@ -138,4 +151,4 @@ export const useWebSocket = () => {
     namespaces,
     wecs,
   };
-}; 
+};

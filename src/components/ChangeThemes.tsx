@@ -1,7 +1,7 @@
-import useTheme from "../stores/themeStore";
+import useTheme from '../stores/themeStore';
 
 const ChangeThemes = () => {
-  const toggleTheme = useTheme((state) => state.toggleTheme);
+  const toggleTheme = useTheme(state => state.toggleTheme);
 
   return (
     <div className="w-full">
@@ -13,7 +13,7 @@ const ChangeThemes = () => {
           className="theme-controller"
         />
         <svg
-          className="swap-off fill-current w-6 h-6 xl:w-5 xl:h-5 2xl:w-6 2xl:h-6 3xl:w-[30px] 3xl:h-[30px]"
+          className="3xl:w-[30px] 3xl:h-[30px] swap-off h-6 w-6 fill-current xl:h-5 xl:w-5 2xl:h-6 2xl:w-6"
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
         >
@@ -21,7 +21,7 @@ const ChangeThemes = () => {
         </svg>
 
         <svg
-          className="swap-on fill-current w-6 h-6 xl:w-5 xl:h-5 2xl:w-6 2xl:h-6 3xl:w-[30px] 3xl:h-[30px]"
+          className="3xl:w-[30px] 3xl:h-[30px] swap-on h-6 w-6 fill-current xl:h-5 xl:w-5 2xl:h-6 2xl:w-6"
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
         >

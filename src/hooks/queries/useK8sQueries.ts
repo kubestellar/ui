@@ -30,4 +30,4 @@ export const useK8sQueries = () => {
   return {
     useK8sInfo,
   };
-}; 
+};

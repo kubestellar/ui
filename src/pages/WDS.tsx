@@ -1,23 +1,22 @@
-import { useWDSQueries } from "../hooks/queries/useWDSQueries";
-import TreeView from "../components/TreeViewComponent"; // Replace with your TreeView component path
+import { useWDSQueries } from '../hooks/queries/useWDSQueries';
+import TreeView from '../components/TreeViewComponent'; // Replace with your TreeView component path
 // import useTheme from "../stores/themeStore";
-import WDSSkeleton from "../components/ui/WDSSkeleton";
+import WDSSkeleton from '../components/ui/WDSSkeleton';
 
 const WDS = () => {
   // const theme = useTheme((state) => state.theme);
-  
+
   const { useWorkloads } = useWDSQueries();
   const { isLoading, isError } = useWorkloads();
 
-
-  if (isLoading) return <WDSSkeleton/>;
+  if (isLoading) return <WDSSkeleton />;
   if (isError) {
     return (
-      <div className="text-center p-4 text-red-600 dark:text-red-400">
+      <div className="p-4 text-center text-red-600 dark:text-red-400">
         <p>Failed to fetch WDS workloads. Please try again.</p>
-        <button 
-          onClick={() => window.location.reload()} 
-          className="mt-4 px-4 py-2 bg-primary rounded-md text-white hover:bg-primary/90 transition-colors duration-200"
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 rounded-md bg-primary px-4 py-2 text-white transition-colors duration-200 hover:bg-primary/90"
         >
           Retry
         </button>
@@ -27,7 +26,7 @@ const WDS = () => {
 
   return (
     <div className={`w-full`}>
-        <TreeView />
+      <TreeView />
     </div>
   );
 };

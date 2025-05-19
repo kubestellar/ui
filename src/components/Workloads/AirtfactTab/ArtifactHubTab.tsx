@@ -1,15 +1,15 @@
-import { Box, Button, FormControlLabel, Radio, RadioGroup } from "@mui/material";
-import { StyledContainer } from "../../StyledComponents";
-import useTheme from "../../../stores/themeStore";
-import { useState, useEffect } from "react";
-import { AxiosError } from "axios";
-import { toast } from "react-hot-toast";
-import { SearchPackagesForm } from "./SearchPackagesForm";
-import { RepositoriesListForm } from "./RepositoriesListForm";
-import { DirectDeployForm } from "./DirectDeployForm";
-import { api } from "../../../lib/api";
-import { CircularProgress } from "@mui/material";
-import WorkloadLabelInput from "../WorkloadLabelInput";
+import { Box, Button, FormControlLabel, Radio, RadioGroup } from '@mui/material';
+import { StyledContainer } from '../../StyledComponents';
+import useTheme from '../../../stores/themeStore';
+import { useState, useEffect } from 'react';
+import { AxiosError } from 'axios';
+import { toast } from 'react-hot-toast';
+import { SearchPackagesForm } from './SearchPackagesForm';
+import { RepositoriesListForm } from './RepositoriesListForm';
+import { DirectDeployForm } from './DirectDeployForm';
+import { api } from '../../../lib/api';
+import { CircularProgress } from '@mui/material';
+import WorkloadLabelInput from '../WorkloadLabelInput';
 
 export interface Repository {
   name: string;
@@ -67,28 +67,28 @@ interface Props {
 
 export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) => {
   const { theme } = useTheme();
-  const [selectedOption, setSelectedOption] = useState("searchPackages");
+  const [selectedOption, setSelectedOption] = useState('searchPackages');
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [reposLoading, setReposLoading] = useState(false);
   const [deployLoading, setDeployLoading] = useState(false);
   const [searchLoading] = useState(false);
-  
+
   // Create separate form data for search tab and direct deploy tab
   const [searchFormData, setSearchFormData] = useState<ArtifactHubFormData>({
-    workloadLabel: "",
-    packageId: "",
-    version: "",
-    releaseName: "",
-    namespace: "default",
+    workloadLabel: '',
+    packageId: '',
+    version: '',
+    releaseName: '',
+    namespace: 'default',
     values: {},
   });
 
   const [directDeployFormData, setDirectDeployFormData] = useState<ArtifactHubFormData>({
-    workloadLabel: "",
-    packageId: "",
-    version: "",
-    releaseName: "",
-    namespace: "default",
+    workloadLabel: '',
+    packageId: '',
+    version: '',
+    releaseName: '',
+    namespace: 'default',
     values: {},
   });
 
@@ -97,22 +97,22 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
     const fetchRepositories = async () => {
       setReposLoading(true);
       try {
-        const response = await api.get("/api/v1/artifact-hub/repositories/list");
+        const response = await api.get('/api/v1/artifact-hub/repositories/list');
         if (response.status === 200) {
           setRepositories(response.data.repositories);
         } else {
-          throw new Error("Failed to fetch repositories");
+          throw new Error('Failed to fetch repositories');
         }
       } catch (error: unknown) {
         const err = error as AxiosError;
-        console.error("Repositories Fetch error:", err);
-        toast.error("Failed to load repositories!");
+        console.error('Repositories Fetch error:', err);
+        toast.error('Failed to load repositories!');
       } finally {
         setReposLoading(false);
       }
     };
 
-    if (selectedOption === "repositories") {
+    if (selectedOption === 'repositories') {
       fetchRepositories();
     }
   }, [selectedOption]);
@@ -126,29 +126,29 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
     if (!pkg.name) {
       setSearchFormData({
         ...searchFormData,
-        packageId: "",
-        version: "",
-        releaseName: "",
+        packageId: '',
+        version: '',
+        releaseName: '',
       });
       return;
     }
-    
+
     // The packageId is exactly as it appears in the API search response
     const packageId = `helm/${pkg.repository.name}/${pkg.name}`;
-    console.log("Selected package:", pkg);
-    console.log("Constructed packageId:", packageId);
-    
+    console.log('Selected package:', pkg);
+    console.log('Constructed packageId:', packageId);
+
     setSearchFormData({
       ...searchFormData,
       packageId: packageId,
       version: pkg.version,
       releaseName: pkg.name,
-      namespace: "default",
+      namespace: 'default',
       values: {
-        "service.port": "80",
-        "service.type": "LoadBalancer"
+        'service.port': '80',
+        'service.type': 'LoadBalancer',
       },
-      workloadLabel: searchFormData.workloadLabel || ""
+      workloadLabel: searchFormData.workloadLabel || '',
     });
   };
 
@@ -157,46 +157,46 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
     // If this is from direct deploy tab, use direct deploy form data
     // If data is explicitly passed, use that
     let dataToUse: ArtifactHubFormData;
-    
+
     if (deployData) {
       dataToUse = deployData;
-    } else if (selectedOption === "searchPackages") {
+    } else if (selectedOption === 'searchPackages') {
       dataToUse = searchFormData;
     } else {
       dataToUse = directDeployFormData;
     }
 
     // For "repositories", just close the dialog
-    if (selectedOption === "repositories") {
+    if (selectedOption === 'repositories') {
       onCancel();
       return;
     }
 
     // For "searchPackages", proceed with deployment if a package is selected
-    if (selectedOption === "searchPackages") {
+    if (selectedOption === 'searchPackages') {
       if (!searchFormData.packageId) {
-        toast.error("Please select a package first");
+        toast.error('Please select a package first');
         return;
       }
-      
+
       if (!searchFormData.workloadLabel) {
-        toast.error("Please enter a workload label");
+        toast.error('Please enter a workload label');
         return;
       }
     }
 
     // For "directDeploy", validate and proceed with deployment
-    if (selectedOption === "directDeploy") {
+    if (selectedOption === 'directDeploy') {
       if (!dataToUse.packageId) {
-        toast.error("Please enter a package ID.");
+        toast.error('Please enter a package ID.');
         return;
       }
       if (!dataToUse.releaseName) {
-        toast.error("Please enter a release name.");
+        toast.error('Please enter a release name.');
         return;
       }
       if (!dataToUse.workloadLabel) {
-        toast.error("Please enter a workload label");
+        toast.error('Please enter a workload label');
         return;
       }
     }
@@ -205,32 +205,32 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
 
     try {
       // Enhanced logging for debugging
-      console.log("Sending deployment request with:", {
+      console.log('Sending deployment request with:', {
         packageId: dataToUse.packageId,
         namespace: dataToUse.namespace,
         releaseName: dataToUse.releaseName,
         values: dataToUse.values,
-        workloadLabel: dataToUse.workloadLabel
+        workloadLabel: dataToUse.workloadLabel,
       });
-      
+
       // Call the onDeploy function with the data, but without version
       const apiPayload = {
         packageId: dataToUse.packageId,
         namespace: dataToUse.namespace,
         releaseName: dataToUse.releaseName,
         values: dataToUse.values,
-        workloadLabel: dataToUse.workloadLabel
+        workloadLabel: dataToUse.workloadLabel,
       };
-      
-      console.log("Final payload:", JSON.stringify(apiPayload));
-      
+
+      console.log('Final payload:', JSON.stringify(apiPayload));
+
       // Pass the payload to onDeploy without the _requestOptions property
       onDeploy(apiPayload);
     } catch (error: unknown) {
       const err = error as AxiosError;
-      console.error("Artifact Hub Deploy error:", err);
-      
-      toast.error("Failed to deploy Artifact Hub package!");
+      console.error('Artifact Hub Deploy error:', err);
+
+      toast.error('Failed to deploy Artifact Hub package!');
     } finally {
       setDeployLoading(false);
     }
@@ -241,25 +241,27 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
     if (loading || searchLoading || reposLoading || deployLoading) {
       return true;
     }
-    
+
     // For repositories tab, never disable button since it just closes
-    if (selectedOption === "repositories") {
+    if (selectedOption === 'repositories') {
       return false;
     }
-    
+
     // For search packages tab, disable if no package is selected or no workload label
-    if (selectedOption === "searchPackages") {
+    if (selectedOption === 'searchPackages') {
       return !searchFormData.packageId || !searchFormData.workloadLabel;
     }
-    
+
     // For direct deploy, disable if no required fields
-    if (selectedOption === "directDeploy" && 
-        (!directDeployFormData.packageId || 
-         !directDeployFormData.releaseName || 
-         !directDeployFormData.workloadLabel)) {
+    if (
+      selectedOption === 'directDeploy' &&
+      (!directDeployFormData.packageId ||
+        !directDeployFormData.releaseName ||
+        !directDeployFormData.workloadLabel)
+    ) {
       return true;
     }
-    
+
     return false;
   };
 
@@ -267,16 +269,20 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
     <StyledContainer>
       <Box
         sx={{
-          display: "flex",
-          flexDirection: "column",
+          display: 'flex',
+          flexDirection: 'column',
           flex: 1,
           minHeight: 0,
         }}
       >
-        <WorkloadLabelInput 
-          value={selectedOption === "searchPackages" ? searchFormData.workloadLabel : directDeployFormData.workloadLabel}
-          handleChange={(e) => {
-            if (selectedOption === "searchPackages") {
+        <WorkloadLabelInput
+          value={
+            selectedOption === 'searchPackages'
+              ? searchFormData.workloadLabel
+              : directDeployFormData.workloadLabel
+          }
+          handleChange={e => {
+            if (selectedOption === 'searchPackages') {
               setSearchFormData({ ...searchFormData, workloadLabel: e.target.value });
             } else {
               setDirectDeployFormData({ ...directDeployFormData, workloadLabel: e.target.value });
@@ -285,22 +291,17 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
           isError={false}
           theme={theme}
         />
-        
-        <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 1, mt: 2 }}>
-          <RadioGroup
-            row
-            value={selectedOption}
-            onChange={handleOptionChange}
-            sx={{ gap: 4 }}
-          >
+
+        <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 1, mt: 2 }}>
+          <RadioGroup row value={selectedOption} onChange={handleOptionChange} sx={{ gap: 4 }}>
             <FormControlLabel
               value="searchPackages"
               control={<Radio />}
               label="Search Packages"
               sx={{
-                "& .MuiTypography-root": {
-                  color: theme === "dark" ? "#d4d4d4" : "#333",
-                  fontSize: "0.875rem",
+                '& .MuiTypography-root': {
+                  color: theme === 'dark' ? '#d4d4d4' : '#333',
+                  fontSize: '0.875rem',
                 },
               }}
             />
@@ -309,9 +310,9 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
               control={<Radio />}
               label="Deploy Helm Chart from Artifact Hub"
               sx={{
-                "& .MuiTypography-root": {
-                  color: theme === "dark" ? "#d4d4d4" : "#333",
-                  fontSize: "0.875rem",
+                '& .MuiTypography-root': {
+                  color: theme === 'dark' ? '#d4d4d4' : '#333',
+                  fontSize: '0.875rem',
                 },
               }}
             />
@@ -320,9 +321,9 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
               control={<Radio />}
               label="List Repositories"
               sx={{
-                "& .MuiTypography-root": {
-                  color: theme === "dark" ? "#d4d4d4" : "#333",
-                  fontSize: "0.875rem",
+                '& .MuiTypography-root': {
+                  color: theme === 'dark' ? '#d4d4d4' : '#333',
+                  fontSize: '0.875rem',
                 },
               }}
             />
@@ -330,8 +331,8 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
         </Box>
 
         {/* Wrapper Box to maintain consistent height */}
-        <Box sx={{ height: "55vh", overflow: "hidden" }}>
-          {selectedOption === "searchPackages" ? (
+        <Box sx={{ height: '55vh', overflow: 'hidden' }}>
+          {selectedOption === 'searchPackages' ? (
             <SearchPackagesForm
               theme={theme}
               handlePackageSelection={handlePackageSelection}
@@ -340,48 +341,48 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
               onCancel={onCancel}
               onDeploy={handleArtifactHubDeploy}
             />
-          ) : selectedOption === "repositories" ? (
-              <RepositoriesListForm 
-                repositories={repositories}
-                loading={reposLoading}
-                theme={theme}
-              />
+          ) : selectedOption === 'repositories' ? (
+            <RepositoriesListForm
+              repositories={repositories}
+              loading={reposLoading}
+              theme={theme}
+            />
           ) : (
-              <DirectDeployForm 
-                theme={theme}
-                formData={directDeployFormData}
-                setFormData={setDirectDeployFormData}
-                error={error}
-              />
+            <DirectDeployForm
+              theme={theme}
+              formData={directDeployFormData}
+              setFormData={setDirectDeployFormData}
+              error={error}
+            />
           )}
         </Box>
 
         {/* Button section */}
         <Box
           sx={{
-            display: "flex",
-            justifyContent: "flex-end",
+            display: 'flex',
+            justifyContent: 'flex-end',
             mt: 2,
             gap: 1,
-            position: "relative",
-            width: "100%",
-            height: "auto",
-            minHeight: "40px",
-            padding: "8px 0",
-            zIndex: 1
+            position: 'relative',
+            width: '100%',
+            height: 'auto',
+            minHeight: '40px',
+            padding: '8px 0',
+            zIndex: 1,
           }}
         >
-          {selectedOption !== "repositories" && (
+          {selectedOption !== 'repositories' && (
             <Button
               variant="text"
               onClick={onCancel}
               sx={{
-                textTransform: "none",
+                textTransform: 'none',
                 fontWeight: 600,
-                color: theme === "dark" ? "#d4d4d4" : "#666",
-                padding: "8px 16px",
-                "&:hover": {
-                  backgroundColor: theme === "dark" ? "#333" : "#f5f5f5",
+                color: theme === 'dark' ? '#d4d4d4' : '#666',
+                padding: '8px 16px',
+                '&:hover': {
+                  backgroundColor: theme === 'dark' ? '#333' : '#f5f5f5',
                 },
               }}
             >
@@ -393,29 +394,31 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
             onClick={() => handleArtifactHubDeploy()}
             disabled={isApplyDisabled()}
             sx={{
-              textTransform: "none",
-              fontWeight: "600",
-              backgroundColor: "#1976d2",
-              color: "#fff",
-              padding: "8px 16px",
-              borderRadius: "8px",
-              "&:hover": {
-                backgroundColor: "#1565c0",
+              textTransform: 'none',
+              fontWeight: '600',
+              backgroundColor: '#1976d2',
+              color: '#fff',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              '&:hover': {
+                backgroundColor: '#1565c0',
               },
-              "&:disabled": {
-                backgroundColor: "#b0bec5",
-                color: "#fff",
+              '&:disabled': {
+                backgroundColor: '#b0bec5',
+                color: '#fff',
               },
             }}
           >
             {deployLoading ? (
-              <CircularProgress size={20} sx={{ color: "#fff" }} />
+              <CircularProgress size={20} sx={{ color: '#fff' }} />
+            ) : selectedOption === 'repositories' ? (
+              'Close'
             ) : (
-              selectedOption === "repositories" ? "Close" : "Apply"
+              'Apply'
             )}
           </Button>
         </Box>
       </Box>
     </StyledContainer>
   );
-}; 
+};
