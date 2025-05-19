@@ -64,7 +64,7 @@ export const useClusterQueries = () => {
       queryKey: ['clusters', page],
       queryFn: async (): Promise<ClusterResponse> => {
         const response = await api.get('/api/new/clusters', { params: { page } });
-        
+
         const clusters = response.data.clusters.map((cluster: ClusterApiResponse) => ({
           name: cluster.name,
           uid: cluster.uid,
@@ -76,7 +76,7 @@ export const useClusterQueries = () => {
           joined: cluster.joined,
           labels: cluster.labels || {},
         }));
-        
+
         return {
           clusters,
           count: response.data.count || 0,
