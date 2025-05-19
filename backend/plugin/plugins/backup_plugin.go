@@ -2,7 +2,6 @@ package plugins
 
 import (
 	"context"
-	"encoding/base64"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -51,11 +50,7 @@ func (p backupPlugin) Routes() []plugin.PluginRoutesMeta {
 		Path:    "/plugins/backup-plugin/snapshot",
 		Handler: takeSnapshot,
 	})
-	routes = append(routes, plugin.PluginRoutesMeta{
-		Method:  http.MethodGet,
-		Path:    "/plugins/backup-plugin/restore",
-		Handler: restoreFromSnapshot,
-	})
+
 	return routes
 }
 
@@ -72,9 +67,6 @@ func takeSnapshot(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, nil)
-}
-func restoreFromSnapshot(c *gin.Context) {
-
 }
 
 var bp backupPlugin
@@ -103,16 +95,13 @@ func createBackupJob(c *kubernetes.Clientset) error {
 	if err != nil {
 		return err
 	}
-	var password []byte
-	_, err = base64.StdEncoding.Decode(s.Data["postgres-password"], password)
-	if err != nil {
-		return err
-	}
+	password := string(s.Data["postgres-password"])
 	err = pvc(c)
 	if err != nil {
 		return err
 	}
 	// create job
+	var bl, ttl int32 = 1, 120
 	j, err := c.BatchV1().Jobs("default").Create(context.TODO(), &v1.Job{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "batch/v1",
@@ -130,15 +119,15 @@ func createBackupJob(c *kubernetes.Clientset) error {
 							Name:    "pg-jobc",
 							Image:   "postgres:16",
 							Command: []string{"/bin/sh", "-c"},
-							Args:    []string{"pg_dump -p $password -u $user -h $host"},
+							Args:    []string{"pg_dump -U $user -h $host -F c -f /mnt/backup-vol/pgdump wds1 && ls /mnt/backup-vol/"},
 							Env: []corev1.EnvVar{
 								corev1.EnvVar{
-									Name:  "password",
-									Value: string(password),
+									Name:  "PGPASSWORD",
+									Value: password,
 								},
 								corev1.EnvVar{
 									Name:  "host",
-									Value: "postgres`-postgressql.kubeflex-system.svc.cluster.local",
+									Value: "postgres-postgresql.kubeflex-system.svc.cluster.local",
 								},
 								corev1.EnvVar{
 									Name:  "user",
@@ -163,8 +152,11 @@ func createBackupJob(c *kubernetes.Clientset) error {
 							},
 						},
 					},
+					RestartPolicy: corev1.RestartPolicyNever,
 				},
 			},
+			BackoffLimit:            &bl,
+			TTLSecondsAfterFinished: &ttl,
 		},
 	}, metav1.CreateOptions{})
 
@@ -204,6 +196,6 @@ func pvc(c *kubernetes.Clientset) error {
 }
 
 func freeBackupResources(c *kubernetes.Clientset) {
-	c.BatchV1().Jobs("default").Delete(context.TODO(), "pg-backup-job", *metav1.NewDeleteOptions(0))
+	c.BatchV1().Jobs("default").Delete(context.TODO(), "pg-job-ks", *metav1.NewDeleteOptions(0))
 	c.CoreV1().PersistentVolumeClaims("default").Delete(context.TODO(), "backup-vol-claim", *metav1.NewDeleteOptions(0))
 }
