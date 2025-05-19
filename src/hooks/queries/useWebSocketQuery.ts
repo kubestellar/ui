@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useQuery, useQueryClient, UseQueryResult } from '@tanstack/react-query';
 import { getWebSocketUrl } from '../../lib/api';
 
@@ -58,7 +58,7 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
     error: null,
   });
 
-  const connectWebSocket = () => {
+  const connectWebSocket = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.close();
     }
@@ -115,7 +115,21 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
         }, reconnectInterval);
       }
     };
-  };
+  }, [
+    url,
+    queryKey,
+    enabled,
+    onConnect,
+    onRawMessage,
+    parseData,
+    transform,
+    queryClient,
+    onMessage,
+    onError,
+    onDisconnect,
+    autoReconnect,
+    reconnectInterval,
+  ]);
 
   const sendMessage = (data: string | object) => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
@@ -127,7 +141,7 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
     wsRef.current.send(message);
   };
 
-  const disconnect = () => {
+  const disconnect = useCallback(() => {
     if (!wsRef.current) return;
 
     // Force close by setting readyState to CLOSED (3)
@@ -143,7 +157,7 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
       window.clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (enabled) {
@@ -155,7 +169,7 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
     return () => {
       disconnect();
     };
-  }, [enabled, url]);
+  }, [enabled, url, connectWebSocket, disconnect]);
 
   const queryResult = useQuery<TData, Error>({
     queryKey,

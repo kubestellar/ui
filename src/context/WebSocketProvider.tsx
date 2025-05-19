@@ -1,11 +1,18 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo, useContext } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import ReactDOM from 'react-dom';
 import { isEqual } from 'lodash';
 import { WebSocketContext, NamespaceData, WecsCluster } from './WebSocketContext';
 import { getWebSocketUrl } from '../lib/api';
-// Still importing useWebSocket to maintain exports order if needed
-export { useWebSocket } from './useWebSocket';
+
+// Add this hook to export for usage in other components
+export const useWebSocket = () => {
+  const context = useContext(WebSocketContext);
+  if (!context) {
+    throw new Error('useWebSocket must be used within a WebSocketProvider');
+  }
+  return context;
+};
 
 interface WebSocketProviderProps {
   children: React.ReactNode;

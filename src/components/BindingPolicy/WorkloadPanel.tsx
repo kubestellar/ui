@@ -138,10 +138,15 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
 
   // Use the SSE API to get workload data
   const { useWorkloadSSE } = useBPQueries();
-  const { state, startSSEConnection, extractWorkloads } = useWorkloadSSE();
+  const { state, startSSEConnection } = useWorkloadSSE();
+
+  // Replace conditional workloads initialization with useMemo
+  const workloads = React.useMemo(() => {
+    // If there was any conditional logic here, keep it inside the useMemo
+    return propWorkloads;
+  }, [propWorkloads]);
 
   // Use SSE or prop workloads based on SSE connection status
-  const workloads = state.data ? extractWorkloads() || [] : propWorkloads || [];
   const loading = (state.status === 'loading' || state.status === 'idle') && propLoading;
   const error = state.error?.message || propError;
 

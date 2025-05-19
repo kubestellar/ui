@@ -31,6 +31,9 @@ RUN apk --no-cache add ca-certificates curl openssl git bash kubectl && \
     bash /tmp/install.sh 0.10.1 && \
     rm /tmp/install.sh
 
+# Install kubeflex
+RUN bash -c "$(curl -s https://raw.githubusercontent.com/kubestellar/kubeflex/main/scripts/install-kubeflex.sh)" -- --ensure-folder /usr/local/bin --strip-bin
+
 # Set the working directory
 WORKDIR /root/
 

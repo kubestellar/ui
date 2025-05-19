@@ -806,6 +806,19 @@ export const useBPQueries = () => {
           formattedRequest.namespacesToSync = [formattedRequest.namespace || 'default'];
         }
 
+        const hasHigherLevelControllers = formattedRequest.resources.some(res =>
+          ['deployments', 'replicasets', 'statefulsets', 'daemonsets', 'jobs', 'cronjobs'].includes(
+            res.type
+          )
+        );
+
+        if (hasHigherLevelControllers) {
+          console.log('Removing pods from resources as higher-level controllers will manage them');
+          formattedRequest.resources = formattedRequest.resources.filter(
+            res => res.type !== 'pods'
+          );
+        }
+
         // Add detailed console logging with pretty printing
         console.log('📤 SENDING REQUEST TO QUICK-CONNECT API:');
         console.log(JSON.stringify(formattedRequest, null, 2));

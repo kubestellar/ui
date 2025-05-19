@@ -174,7 +174,6 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
     // Special handling for database components - always include them
     const databaseResources = [
       { type: 'statefulsets', createOnly: false },
-      { type: 'pods', createOnly: false },
       { type: 'serviceaccounts', createOnly: false },
       { type: 'roles', createOnly: false },
       { type: 'rolebindings', createOnly: false },
@@ -187,25 +186,16 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
         { type: 'deployments', createOnly: false },
         { type: 'replicasets', createOnly: false },
         { type: 'services', createOnly: false },
-        { type: 'pods', createOnly: false },
       ],
       statefulset: [
         { type: 'statefulsets', createOnly: false },
         { type: 'services', createOnly: false },
-        { type: 'pods', createOnly: false },
       ],
-      daemonset: [
-        { type: 'daemonsets', createOnly: false },
-        { type: 'pods', createOnly: false },
-      ],
-      job: [
-        { type: 'jobs', createOnly: false },
-        { type: 'pods', createOnly: false },
-      ],
+      daemonset: [{ type: 'daemonsets', createOnly: false }],
+      job: [{ type: 'jobs', createOnly: false }],
       cronjob: [
         { type: 'cronjobs', createOnly: false },
         { type: 'jobs', createOnly: false },
-        { type: 'pods', createOnly: false },
       ],
       service: [
         { type: 'services', createOnly: false },
