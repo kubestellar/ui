@@ -1,17 +1,34 @@
-import { Box, Typography, TextField, CircularProgress, Paper, Chip, Avatar, List, ListItem, ListItemAvatar, ListItemText, IconButton, FormControl, Select, MenuItem, SelectChangeEvent } from "@mui/material";
-import { useState, useEffect, useCallback } from "react";
-import { AxiosError } from "axios";
-import { api } from "../../../lib/api";
-import { Package, ArtifactHubFormData } from "./ArtifactHubTab";
-import SearchIcon from "@mui/icons-material/Search";
-import InfoIcon from "@mui/icons-material/Info";
+import {
+  Box,
+  Typography,
+  TextField,
+  CircularProgress,
+  Paper,
+  Chip,
+  Avatar,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  IconButton,
+  FormControl,
+  Select,
+  MenuItem,
+  SelectChangeEvent,
+} from '@mui/material';
+import { useState, useEffect, useCallback } from 'react';
+import { AxiosError } from 'axios';
+import { api } from '../../../lib/api';
+import { Package, ArtifactHubFormData } from './ArtifactHubTab';
+import SearchIcon from '@mui/icons-material/Search';
+import InfoIcon from '@mui/icons-material/Info';
 import ImageIcon from '@mui/icons-material/Image';
 import StarIcon from '@mui/icons-material/Star';
 import CloseIcon from '@mui/icons-material/Close';
 import SettingsIcon from '@mui/icons-material/Settings';
 // import { toast } from "react-hot-toast";
 
-// Commented out as it's currently unused 
+// Commented out as it's currently unused
 // interface ExtendedPackage extends Package {
 //   logo_image_id?: string;
 //   logo_url?: string;
@@ -75,7 +92,7 @@ interface SearchResult {
       medium: number;
       low: number;
       unknown: number;
-    }
+    };
   };
   containers_images?: ContainerImage[];
   ts?: number;
@@ -131,48 +148,48 @@ export const SearchPackagesForm = ({
   // onCancel,
   // onDeploy
 }: Props) => {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [selectedPackageDetails, setSelectedPackageDetails] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(false);
   // const [deployLoading, setDeployLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   // Function to search packages using the advanced-search endpoint
   const searchPackages = useCallback(async () => {
     if (!searchQuery.trim()) {
-      setError("Please enter a search term");
+      setError('Please enter a search term');
       return;
     }
 
     setLoading(true);
-    setError("");
+    setError('');
     setSearchResults([]);
     setSelectedPackageDetails(null);
-    
+
     try {
       const response = await api.post('/api/v1/artifact-hub/packages/advanced-search', {
         query: searchQuery,
-        kind: "0", // For Helm charts
+        kind: '0', // For Helm charts
         offset: 0,
-        limit: 10
+        limit: 10,
       });
-      
+
       if (response.status === 200) {
         const data = response.data as SearchResponse;
-        console.log("Search results:", data);
-        
+        console.log('Search results:', data);
+
         if (data.results && data.results.length > 0) {
           setSearchResults(data.results);
         } else {
           setError(`No packages found for '${searchQuery}'`);
         }
       } else {
-        throw new Error("Failed to search packages");
+        throw new Error('Failed to search packages');
       }
     } catch (error: unknown) {
       const err = error as AxiosError;
-      console.error("Package search error:", err);
+      console.error('Package search error:', err);
       setError(`Search failed: ${err.message}`);
     } finally {
       setLoading(false);
@@ -184,14 +201,14 @@ export const SearchPackagesForm = ({
     // Don't search if search query is empty
     if (!searchQuery.trim()) {
       setSearchResults([]);
-      setError("");
+      setError('');
       return;
     }
-    
+
     const debounceTimer = setTimeout(() => {
       searchPackages();
     }, 500); // 500ms debounce delay
-    
+
     return () => clearTimeout(debounceTimer);
   }, [searchQuery, searchPackages]);
 
@@ -201,7 +218,7 @@ export const SearchPackagesForm = ({
     const selectedPackage = searchResults.find(pkg => pkg.package_id === packageId);
     if (selectedPackage) {
       setSelectedPackageDetails(selectedPackage);
-      
+
       // If parent provided handlePackageSelection, call it with the package data
       if (handlePackageSelection) {
         const packageData: Package = {
@@ -219,7 +236,7 @@ export const SearchPackagesForm = ({
         };
         handlePackageSelection(packageData);
       }
-      
+
       // Update formData with selected package details
       if (setFormData && formData) {
         const chartPackageId = `helm/${selectedPackage.repository.name}/${selectedPackage.name}`;
@@ -228,30 +245,30 @@ export const SearchPackagesForm = ({
           packageId: chartPackageId,
           version: selectedPackage.version, // Store this just for UI display
           releaseName: selectedPackage.name, // Use the exact chart name as the release name
-          namespace: formData.namespace || "default", // Keep existing namespace if available
+          namespace: formData.namespace || 'default', // Keep existing namespace if available
           values: {
-            "service.port": "80",
-            "service.type": "LoadBalancer"
-          }
+            'service.port': '80',
+            'service.type': 'LoadBalancer',
+          },
         });
       }
     }
   };
-  
+
   // Handle deployment of the selected package
   // const handleDeploy = async () => {
   //   if (!selectedPackageDetails || !formData || !setFormData) {
   //     toast.error("Please select a package first");
   //     return;
   //   }
-    
+
   //   if (!formData.workloadLabel) {
   //     toast.error("Please enter a workload label");
   //     return;
   //   }
-    
+
   //   setDeployLoading(true);
-    
+
   //   try {
   //     if (onDeploy) {
   //       // Prepare the payload excluding version
@@ -262,7 +279,7 @@ export const SearchPackagesForm = ({
   //         values: formData.values,
   //         workloadLabel: formData.workloadLabel
   //       };
-        
+
   //       onDeploy(deployPayload);
   //     } else {
   //       // Direct API call if onDeploy not provided
@@ -273,7 +290,7 @@ export const SearchPackagesForm = ({
   //         values: formData.values,
   //         workloadLabel: formData.workloadLabel
   //       });
-        
+
   //       if (response.status === 200) {
   //         toast.success("Chart deployed successfully!");
   //         setSelectedPackageDetails(null);
@@ -299,8 +316,8 @@ export const SearchPackagesForm = ({
         ...formData,
         values: {
           ...formData.values,
-          "service.type": event.target.value
-        }
+          'service.type': event.target.value,
+        },
       });
     }
   };
@@ -315,75 +332,81 @@ export const SearchPackagesForm = ({
           ...formData,
           values: {
             ...formData.values,
-            "service.port": value
-          }
+            'service.port': value,
+          },
         });
       }
     }
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3, height: "100%" , mt:2}}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, height: '100%', mt: 2 }}>
       {!selectedPackageDetails && (
-      <Box>
-        <TextField
-          label="Search"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="e.g., nginx"
-          size="small"
-          fullWidth
-          InputProps={{
-            startAdornment: <SearchIcon sx={{ color: theme === "dark" ? "#90caf9" : "#1976d2", mr: 1}} />,
-          }}
-          sx={{
-            "& .MuiOutlinedInput-root": {
-              borderRadius: "8px",
-              backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(25, 118, 210, 0.05)",
-              "& fieldset": {
-                borderColor: theme === "dark" ? "#444" : "#e0e0e0",
-                borderWidth: "1px",
+        <Box>
+          <TextField
+            label="Search"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="e.g., nginx"
+            size="small"
+            fullWidth
+            InputProps={{
+              startAdornment: (
+                <SearchIcon sx={{ color: theme === 'dark' ? '#90caf9' : '#1976d2', mr: 1 }} />
+              ),
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '8px',
+                backgroundColor:
+                  theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(25, 118, 210, 0.05)',
+                '& fieldset': {
+                  borderColor: theme === 'dark' ? '#444' : '#e0e0e0',
+                  borderWidth: '1px',
+                },
+                '&:hover fieldset': {
+                  borderColor: theme === 'dark' ? '#90caf9' : '#1976d2',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: theme === 'dark' ? '#90caf9' : '#1976d2',
+                  borderWidth: '1px',
+                },
               },
-              "&:hover fieldset": {
-                borderColor: theme === "dark" ? "#90caf9" : "#1976d2",
+              '& .MuiInputBase-input': {
+                padding: '10px 14px',
+                fontSize: '0.875rem',
+                color: theme === 'dark' ? '#d4d4d4' : '#666',
               },
-              "&.Mui-focused fieldset": {
-                borderColor: theme === "dark" ? "#90caf9" : "#1976d2",
-                borderWidth: "1px",
+              '& .MuiInputLabel-root': {
+                color: theme === 'dark' ? '#90caf9' : '#1976d2',
+                fontSize: '0.875rem',
               },
-            },
-            "& .MuiInputBase-input": {
-              padding: "10px 14px",
-              fontSize: "0.875rem",
-              color: theme === "dark" ? "#d4d4d4" : "#666",
-            },
-            "& .MuiInputLabel-root": {
-              color: theme === "dark" ? "#90caf9" : "#1976d2",
-              fontSize: "0.875rem",
-            },
-            "& .MuiInputLabel-root.Mui-focused": {
-              color: theme === "dark" ? "#90caf9" : "#1976d2",
-            },
-          }}
-        />
-        
-        <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
-          <InfoIcon sx={{ color: theme === "dark" ? "#90caf9" : "#1976d2", fontSize: "1rem", mr: 1 }} />
-          <Typography variant="caption" sx={{ color: theme === "dark" ? "#90caf9" : "#1976d2" }}>
-            Start typing to search for Helm packages on Artifact Hub
-          </Typography>
+              '& .MuiInputLabel-root.Mui-focused': {
+                color: theme === 'dark' ? '#90caf9' : '#1976d2',
+              },
+            }}
+          />
+
+          <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+            <InfoIcon
+              sx={{ color: theme === 'dark' ? '#90caf9' : '#1976d2', fontSize: '1rem', mr: 1 }}
+            />
+            <Typography variant="caption" sx={{ color: theme === 'dark' ? '#90caf9' : '#1976d2' }}>
+              Start typing to search for Helm packages on Artifact Hub
+            </Typography>
+          </Box>
         </Box>
-      </Box>
       )}
 
       {error && (
-        <Box 
-          sx={{ 
-            backgroundColor: theme === "dark" ? "rgba(255, 87, 34, 0.1)" : "rgba(255, 87, 34, 0.05)", 
-            padding: 2, 
+        <Box
+          sx={{
+            backgroundColor:
+              theme === 'dark' ? 'rgba(255, 87, 34, 0.1)' : 'rgba(255, 87, 34, 0.05)',
+            padding: 2,
             borderRadius: 1,
-            border: `1px solid ${theme === "dark" ? "rgba(255, 87, 34, 0.3)" : "rgba(255, 87, 34, 0.2)"}`,
-            color: theme === "dark" ? "#ff9800" : "#d84315"
+            border: `1px solid ${theme === 'dark' ? 'rgba(255, 87, 34, 0.3)' : 'rgba(255, 87, 34, 0.2)'}`,
+            color: theme === 'dark' ? '#ff9800' : '#d84315',
           }}
         >
           <Typography variant="body2">{error}</Typography>
@@ -393,37 +416,46 @@ export const SearchPackagesForm = ({
       <Box
         sx={{
           flex: 1,
-          overflowY: "auto",
-          "&::-webkit-scrollbar": {
-            width: "0px", // Hide scrollbar while keeping functionality
-            display: "none",
+          overflowY: 'auto',
+          '&::-webkit-scrollbar': {
+            width: '0px', // Hide scrollbar while keeping functionality
+            display: 'none',
           },
-          scrollbarWidth: "none", // Firefox
-          msOverflowStyle: "none", // IE/Edge
-          display: "flex",
-          flexDirection: "column",
+          scrollbarWidth: 'none', // Firefox
+          msOverflowStyle: 'none', // IE/Edge
+          display: 'flex',
+          flexDirection: 'column',
           gap: 2,
         }}
       >
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100px" }}>
-            <CircularProgress size={32} sx={{ color: theme === "dark" ? "#90caf9" : "#1976d2" }} />
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '100px',
+            }}
+          >
+            <CircularProgress size={32} sx={{ color: theme === 'dark' ? '#90caf9' : '#1976d2' }} />
           </Box>
         ) : selectedPackageDetails ? (
           // Show detailed view of the selected package
           <Paper
             elevation={0}
             sx={{
-              width: "100%",
-              display: "flex",
-              flexDirection: "column",
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
               gap: 1.5,
               p: 2,
-              position: "relative",
-              borderRadius: "10px",
-              border: "1px solid",
-              borderColor: theme === "dark" ? "rgba(144, 202, 249, 0.3)" : "rgba(25, 118, 210, 0.3)",
-              backgroundColor: theme === "dark" ? "rgba(243, 246, 249, 0.05)" : "rgba(243, 246, 249, 0.5)",
+              position: 'relative',
+              borderRadius: '10px',
+              border: '1px solid',
+              borderColor:
+                theme === 'dark' ? 'rgba(144, 202, 249, 0.3)' : 'rgba(25, 118, 210, 0.3)',
+              backgroundColor:
+                theme === 'dark' ? 'rgba(243, 246, 249, 0.05)' : 'rgba(243, 246, 249, 0.5)',
             }}
           >
             {/* Close button */}
@@ -434,10 +466,11 @@ export const SearchPackagesForm = ({
                 position: 'absolute',
                 top: 8,
                 right: 8,
-                color: theme === "dark" ? "rgba(255, 255, 255, 0.7)" : "rgba(0, 0, 0, 0.54)",
-                "&:hover": {
-                  backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.04)",
-                }
+                color: theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.54)',
+                '&:hover': {
+                  backgroundColor:
+                    theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.04)',
+                },
               }}
             >
               <CloseIcon fontSize="small" />
@@ -445,62 +478,64 @@ export const SearchPackagesForm = ({
 
             <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
               {selectedPackageDetails.logo_url ? (
-                <Avatar 
-                  src={selectedPackageDetails.logo_url} 
+                <Avatar
+                  src={selectedPackageDetails.logo_url}
                   alt={selectedPackageDetails.name}
-                  sx={{ 
-                    width: 64, 
-                    height: 64, 
+                  sx={{
+                    width: 64,
+                    height: 64,
                     mr: 2,
-                    bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.05)" 
+                    bgcolor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
                   }}
                 />
               ) : (
-                <Avatar 
-                  sx={{ 
-                    width: 64, 
-                    height: 64, 
+                <Avatar
+                  sx={{
+                    width: 64,
+                    height: 64,
                     mr: 2,
-                    bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.05)" 
+                    bgcolor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
                   }}
                 >
                   <ImageIcon fontSize="large" />
                 </Avatar>
               )}
-              
+
               <Box sx={{ flex: 1 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <Typography 
-                    variant="h6" 
-                    sx={{ 
-                      color: theme === "dark" ? "#fff" : "#333",
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      color: theme === 'dark' ? '#fff' : '#333',
                       fontWeight: 600,
-                      mr: 1
+                      mr: 1,
                     }}
                   >
                     {selectedPackageDetails.name}
                   </Typography>
-                  <Chip 
-                    label={`v${selectedPackageDetails.version}`} 
-                    size="small" 
-                    sx={{ 
-                      height: "22px",
-                      fontSize: "0.75rem",
-                      backgroundColor: theme === "dark" ? "rgba(144, 202, 249, 0.2)" : "rgba(25, 118, 210, 0.1)",
-                      color: theme === "dark" ? "#90caf9" : "#1976d2",
-                      mr: 1
-                    }} 
+                  <Chip
+                    label={`v${selectedPackageDetails.version}`}
+                    size="small"
+                    sx={{
+                      height: '22px',
+                      fontSize: '0.75rem',
+                      backgroundColor:
+                        theme === 'dark' ? 'rgba(144, 202, 249, 0.2)' : 'rgba(25, 118, 210, 0.1)',
+                      color: theme === 'dark' ? '#90caf9' : '#1976d2',
+                      mr: 1,
+                    }}
                   />
                   {selectedPackageDetails.app_version && (
-                    <Chip 
-                      label={`App: ${selectedPackageDetails.app_version}`} 
-                      size="small" 
-                      sx={{ 
-                        height: "22px",
-                        fontSize: "0.75rem",
-                        backgroundColor: theme === "dark" ? "rgba(76, 175, 80, 0.2)" : "rgba(76, 175, 80, 0.1)",
-                        color: theme === "dark" ? "#81c784" : "#388e3c" 
-                      }} 
+                    <Chip
+                      label={`App: ${selectedPackageDetails.app_version}`}
+                      size="small"
+                      sx={{
+                        height: '22px',
+                        fontSize: '0.75rem',
+                        backgroundColor:
+                          theme === 'dark' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(76, 175, 80, 0.1)',
+                        color: theme === 'dark' ? '#81c784' : '#388e3c',
+                      }}
                     />
                   )}
                 </Box>
@@ -508,56 +543,61 @@ export const SearchPackagesForm = ({
                 {selectedPackageDetails.stars !== undefined && (
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                     <StarIcon sx={{ color: '#FFC107', fontSize: '0.875rem', mr: 0.5 }} />
-                    <Typography variant="body2" sx={{ color: theme === "dark" ? '#ddd' : '#666' }}>
+                    <Typography variant="body2" sx={{ color: theme === 'dark' ? '#ddd' : '#666' }}>
                       {selectedPackageDetails.stars} Stars
                     </Typography>
                   </Box>
                 )}
 
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      color: theme === "dark" ? '#ddd' : '#666',
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: theme === 'dark' ? '#ddd' : '#666',
                       fontWeight: 500,
-                      mr: 1
+                      mr: 1,
                     }}
                   >
                     Repository:
                   </Typography>
-                  <Chip 
-                    label={selectedPackageDetails.repository.display_name || selectedPackageDetails.repository.name} 
-                    size="small" 
-                    sx={{ 
-                      height: "20px",
-                      fontSize: "0.75rem",
-                      backgroundColor: theme === "dark" ? "rgba(156, 39, 176, 0.2)" : "rgba(156, 39, 176, 0.1)",
-                      color: theme === "dark" ? "#ce93d8" : "#7b1fa2" 
-                    }} 
+                  <Chip
+                    label={
+                      selectedPackageDetails.repository.display_name ||
+                      selectedPackageDetails.repository.name
+                    }
+                    size="small"
+                    sx={{
+                      height: '20px',
+                      fontSize: '0.75rem',
+                      backgroundColor:
+                        theme === 'dark' ? 'rgba(156, 39, 176, 0.2)' : 'rgba(156, 39, 176, 0.1)',
+                      color: theme === 'dark' ? '#ce93d8' : '#7b1fa2',
+                    }}
                   />
                   {selectedPackageDetails.repository.verified_publisher && (
-                    <Chip 
-                      label="Verified" 
-                      size="small" 
-                      sx={{ 
-                        height: "20px",
-                        fontSize: "0.75rem",
+                    <Chip
+                      label="Verified"
+                      size="small"
+                      sx={{
+                        height: '20px',
+                        fontSize: '0.75rem',
                         ml: 1,
-                        backgroundColor: theme === "dark" ? "rgba(0, 200, 83, 0.2)" : "rgba(0, 200, 83, 0.1)",
-                        color: theme === "dark" ? "#69f0ae" : "#00c853" 
-                      }} 
+                        backgroundColor:
+                          theme === 'dark' ? 'rgba(0, 200, 83, 0.2)' : 'rgba(0, 200, 83, 0.1)',
+                        color: theme === 'dark' ? '#69f0ae' : '#00c853',
+                      }}
                     />
                   )}
                 </Box>
               </Box>
             </Box>
 
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                color: theme === "dark" ? '#ddd' : '#555',
+            <Typography
+              variant="body2"
+              sx={{
+                color: theme === 'dark' ? '#ddd' : '#555',
                 mt: 1,
-                lineHeight: 1.5
+                lineHeight: 1.5,
               }}
             >
               {selectedPackageDetails.description}
@@ -566,31 +606,33 @@ export const SearchPackagesForm = ({
             {/* Namespace field outside service configuration */}
             {formData && setFormData && (
               <Box sx={{ mt: 3 }}>
-                <Typography 
-                  variant="body2" 
-                  sx={{ 
-                    color: theme === "dark" ? '#bbb' : '#666',
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: theme === 'dark' ? '#bbb' : '#666',
                     mb: 0.5,
                     fontWeight: 500,
-                    fontSize: '0.8rem'
+                    fontSize: '0.8rem',
                   }}
                 >
                   Namespace
                 </Typography>
                 <TextField
-                  value={formData.namespace || ""}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    namespace: e.target.value
-                  })}
+                  value={formData.namespace || ''}
+                  onChange={e =>
+                    setFormData({
+                      ...formData,
+                      namespace: e.target.value,
+                    })
+                  }
                   size="small"
                   type="text"
                   fullWidth
                   placeholder="default"
                   sx={{
-                    "& .MuiOutlinedInput-root": {
-                      backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "#fff",
-                    }
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#fff',
+                    },
                   }}
                 />
               </Box>
@@ -598,69 +640,77 @@ export const SearchPackagesForm = ({
 
             {/* Service configuration section */}
             {formData && setFormData && (
-              <Box 
-                sx={{ 
+              <Box
+                sx={{
                   mt: 3,
                   p: 3,
                   pt: 2,
                   pb: 3,
                   borderRadius: '8px',
-                  backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.03)" : "rgba(243, 246, 249, 0.8)",
+                  backgroundColor:
+                    theme === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(243, 246, 249, 0.8)',
                   border: '1px solid',
-                  borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"
+                  borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Box 
-                    sx={{ 
-                      width: 24, 
-                      height: 24, 
-                      borderRadius: '50%', 
-                      display: 'flex', 
-                      alignItems: 'center', 
+                  <Box
+                    sx={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
                       justifyContent: 'center',
-                      backgroundColor: theme === "dark" ? "#1976d2" : "#1976d2",
+                      backgroundColor: theme === 'dark' ? '#1976d2' : '#1976d2',
                       color: 'white',
-                      mr: 1.5
+                      mr: 1.5,
                     }}
                   >
-                    <SettingsIcon sx={{ fontSize: "1rem" }} />
+                    <SettingsIcon sx={{ fontSize: '1rem' }} />
                   </Box>
-                  <Typography variant="subtitle2" sx={{ color: theme === "dark" ? '#fff' : '#333', fontWeight: 600, fontSize: '0.95rem' }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      color: theme === 'dark' ? '#fff' : '#333',
+                      fontWeight: 600,
+                      fontSize: '0.95rem',
+                    }}
+                  >
                     Service Configuration
                   </Typography>
                 </Box>
-                
+
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mt: 1 }}>
                   <Box sx={{ minWidth: 200 }}>
-                    <Typography 
-                      variant="body2" 
-                      sx={{ 
-                        color: theme === "dark" ? '#bbb' : '#666',
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: theme === 'dark' ? '#bbb' : '#666',
                         mb: 0.5,
                         fontWeight: 500,
-                        fontSize: '0.8rem'
+                        fontSize: '0.8rem',
                       }}
                     >
                       Service Type
                     </Typography>
-                    <FormControl 
+                    <FormControl
                       fullWidth
-              size="small"
-                      sx={{ 
-                        "& .MuiOutlinedInput-root": {
-                          backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "#fff",
-                        }
+                      size="small"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#fff',
+                        },
                       }}
                     >
                       <Select
                         id="service-type"
-                        value={formData.values["service.type"] || "LoadBalancer"}
+                        value={formData.values['service.type'] || 'LoadBalancer'}
                         onChange={handleServiceTypeChange}
                         displayEmpty
-                        sx={{ 
+                        sx={{
                           borderRadius: '4px',
-                          fontSize: '0.875rem'
+                          fontSize: '0.875rem',
                         }}
                       >
                         <MenuItem value="ClusterIP">ClusterIP</MenuItem>
@@ -669,33 +719,33 @@ export const SearchPackagesForm = ({
                       </Select>
                     </FormControl>
                   </Box>
-                  
+
                   <Box sx={{ minWidth: 150 }}>
-                    <Typography 
-                      variant="body2" 
-              sx={{
-                        color: theme === "dark" ? '#bbb' : '#666',
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: theme === 'dark' ? '#bbb' : '#666',
                         mb: 0.5,
                         fontWeight: 500,
-                        fontSize: '0.8rem'
+                        fontSize: '0.8rem',
                       }}
                     >
                       Service Port
                     </Typography>
                     <TextField
-                      value={formData.values["service.port"] || ""}
+                      value={formData.values['service.port'] || ''}
                       onChange={handleServicePortChange}
                       size="small"
                       type="text"
                       fullWidth
                       placeholder="80"
                       inputProps={{
-                        inputMode: "numeric"
+                        inputMode: 'numeric',
                       }}
                       sx={{
-                        "& .MuiOutlinedInput-root": {
-                          backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "#fff",
-                        }
+                        '& .MuiOutlinedInput-root': {
+                          backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#fff',
+                        },
                       }}
                     />
                   </Box>
@@ -705,12 +755,14 @@ export const SearchPackagesForm = ({
           </Paper>
         ) : searchResults.length > 0 ? (
           // Show search results list
-          <List sx={{ 
-            width: '100%',
-            padding: 0,
-          }}>
-            {searchResults.map((result) => (
-              <ListItem 
+          <List
+            sx={{
+              width: '100%',
+              padding: 0,
+            }}
+          >
+            {searchResults.map(result => (
+              <ListItem
                 key={result.package_id}
                 onClick={() => fetchPackageDetails(result.package_id)}
                 alignItems="flex-start"
@@ -720,30 +772,35 @@ export const SearchPackagesForm = ({
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                   border: '1px solid',
-                  borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.12)",
+                  borderColor:
+                    theme === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)',
                   '&:hover': {
-                    backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.04)",
-                    borderColor: theme === "dark" ? "rgba(144, 202, 249, 0.5)" : "rgba(25, 118, 210, 0.5)",
-                  }
+                    backgroundColor:
+                      theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+                    borderColor:
+                      theme === 'dark' ? 'rgba(144, 202, 249, 0.5)' : 'rgba(25, 118, 210, 0.5)',
+                  },
                 }}
               >
                 <ListItemAvatar>
                   {result.logo_url ? (
-                    <Avatar 
-                      src={result.logo_url} 
+                    <Avatar
+                      src={result.logo_url}
                       alt={result.name}
-                      sx={{ 
-                        width: 48, 
+                      sx={{
+                        width: 48,
                         height: 48,
-                        bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.05)" 
+                        bgcolor:
+                          theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
                       }}
                     />
                   ) : (
-                    <Avatar 
-                      sx={{ 
-                        width: 48, 
+                    <Avatar
+                      sx={{
+                        width: 48,
                         height: 48,
-                        bgcolor: theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.05)" 
+                        bgcolor:
+                          theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
                       }}
                     >
                       <ImageIcon />
@@ -753,70 +810,76 @@ export const SearchPackagesForm = ({
                 <ListItemText
                   primary={
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Typography 
-                        sx={{ 
-                          fontWeight: 600, 
-                          color: theme === "dark" ? "#fff" : "#333",
-                          mr: 1
+                      <Typography
+                        sx={{
+                          fontWeight: 600,
+                          color: theme === 'dark' ? '#fff' : '#333',
+                          mr: 1,
                         }}
                       >
                         {result.name}
                       </Typography>
-                      <Chip 
-                        label={`v${result.version}`} 
-                        size="small" 
-                        sx={{ 
-                          height: "20px",
-                          fontSize: "0.75rem",
-                          backgroundColor: theme === "dark" ? "rgba(144, 202, 249, 0.2)" : "rgba(25, 118, 210, 0.1)",
-                          color: theme === "dark" ? "#90caf9" : "#1976d2",
-                          mr: 1
-                        }} 
+                      <Chip
+                        label={`v${result.version}`}
+                        size="small"
+                        sx={{
+                          height: '20px',
+                          fontSize: '0.75rem',
+                          backgroundColor:
+                            theme === 'dark'
+                              ? 'rgba(144, 202, 249, 0.2)'
+                              : 'rgba(25, 118, 210, 0.1)',
+                          color: theme === 'dark' ? '#90caf9' : '#1976d2',
+                          mr: 1,
+                        }}
                       />
                       {result.repository.verified_publisher && (
-                        <Chip 
-                          label="Verified" 
-                          size="small" 
-                          sx={{ 
-                            height: "20px",
-                            fontSize: "0.75rem",
-                            backgroundColor: theme === "dark" ? "rgba(0, 200, 83, 0.2)" : "rgba(0, 200, 83, 0.1)",
-                            color: theme === "dark" ? "#69f0ae" : "#00c853" 
-                          }} 
+                        <Chip
+                          label="Verified"
+                          size="small"
+                          sx={{
+                            height: '20px',
+                            fontSize: '0.75rem',
+                            backgroundColor:
+                              theme === 'dark' ? 'rgba(0, 200, 83, 0.2)' : 'rgba(0, 200, 83, 0.1)',
+                            color: theme === 'dark' ? '#69f0ae' : '#00c853',
+                          }}
                         />
                       )}
                     </Box>
                   }
                   secondary={
                     <Box sx={{ mt: 0.5 }}>
-                      <Typography 
-                        variant="body2" 
-                        sx={{ 
-                          color: theme === "dark" ? '#bbb' : '#666',
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: theme === 'dark' ? '#bbb' : '#666',
                           display: 'flex',
                           alignItems: 'center',
-                          mb: 0.5
+                          mb: 0.5,
                         }}
                       >
-                        <span style={{ 
-                          display: 'inline-block', 
-                          width: '60px',
-                          color: theme === "dark" ? '#999' : '#777',
-                          fontWeight: 500
-                        }}>
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            width: '60px',
+                            color: theme === 'dark' ? '#999' : '#777',
+                            fontWeight: 500,
+                          }}
+                        >
                           Repo:
-                        </span> 
+                        </span>
                         {result.repository.display_name || result.repository.name}
                       </Typography>
-                      <Typography 
-                        variant="body2" 
-                        sx={{ 
-                          color: theme === "dark" ? '#bbb' : '#666',
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: theme === 'dark' ? '#bbb' : '#666',
                           display: '-webkit-box',
                           WebkitLineClamp: 2,
                           WebkitBoxOrient: 'vertical',
                           overflow: 'hidden',
-                          textOverflow: 'ellipsis'
+                          textOverflow: 'ellipsis',
                         }}
                       >
                         {result.description}
@@ -831,4 +894,4 @@ export const SearchPackagesForm = ({
       </Box>
     </Box>
   );
-}; 
+};

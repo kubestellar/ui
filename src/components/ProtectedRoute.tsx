@@ -1,7 +1,7 @@
-import { Navigate, useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { useAuth } from "../hooks/useAuth";
-import LoadingFallback from "./LoadingFallback";
+import { Navigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../hooks/useAuth';
+import LoadingFallback from './LoadingFallback';
 
 interface ProtectedRouteProps {
   children: JSX.Element;
@@ -13,24 +13,21 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#0a0f1c]">
-        <LoadingFallback 
-          message="Verifying your session..." 
-          size="small" 
-        />
+      <div className="flex min-h-screen items-center justify-center bg-[#0a0f1c]">
+        <LoadingFallback message="Verifying your session..." size="small" />
       </div>
     );
   }
 
   if (!data?.isAuthenticated) {
     return (
-      <Navigate 
-        to="/login" 
-        state={{ 
-          errorMessage: "Please sign in to continue",
-          from: location.pathname 
-        }} 
-        replace 
+      <Navigate
+        to="/login"
+        state={{
+          errorMessage: 'Please sign in to continue',
+          from: location.pathname,
+        }}
+        replace
       />
     );
   }

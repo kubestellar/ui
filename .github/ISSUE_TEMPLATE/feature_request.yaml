@@ -1,6 +1,6 @@
-name: "Feature Request"
-description: "Suggest a new idea or improvement for the project."
-title: "[FEATURE]"
+name: 'Feature Request'
+description: 'Suggest a new idea or improvement for the project.'
+title: '[FEATURE]'
 labels:
   - enhancement
 body:
@@ -11,8 +11,8 @@ body:
   - type: textarea
     id: problem-statement
     attributes:
-      label: "Problem or Use Case"
-      description: "Is this feature request related to a specific problem or scenario? Provide context and motivations."
+      label: 'Problem or Use Case'
+      description: 'Is this feature request related to a specific problem or scenario? Provide context and motivations.'
       placeholder: "I'm always frustrated when [...]"
     validations:
       required: true
@@ -20,16 +20,16 @@ body:
   - type: textarea
     id: proposed-solution
     attributes:
-      label: "Proposed Solution"
-      description: "Describe what you’d like to see happen. How do you envision the feature working?"
-      placeholder: "We could handle this by [...]"
+      label: 'Proposed Solution'
+      description: 'Describe what you’d like to see happen. How do you envision the feature working?'
+      placeholder: 'We could handle this by [...]'
     validations:
       required: true
 
   - type: checkboxes
     id: willing-to-contribute
     attributes:
-      label: "Are you willing to contribute?"
+      label: 'Are you willing to contribute?'
       description: "Let us know if you'd like to help implement or discuss this feature further."
       options:
         - label: "Yes, I'd like to help implement this feature."
@@ -38,8 +38,8 @@ body:
   - type: textarea
     id: additional-context
     attributes:
-      label: "Additional Context"
-      description: "Add any other details or references. You can also link to screenshots or existing issues."
-      placeholder: "Relevant issue links, design references, or other resources."
+      label: 'Additional Context'
+      description: 'Add any other details or references. You can also link to screenshots or existing issues.'
+      placeholder: 'Relevant issue links, design references, or other resources.'
     validations:
       required: false

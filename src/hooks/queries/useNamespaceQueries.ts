@@ -75,4 +75,4 @@ export const useNamespaceQueries = () => {
     useUpdateNamespace,
     useDeleteNamespace,
   };
-}; 
+};

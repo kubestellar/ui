@@ -11,16 +11,16 @@ interface WorkloadNodeData {
 
 const WorkloadNode: React.FC<NodeProps<WorkloadNodeData>> = ({ data }) => {
   const { label, policy, theme } = data;
-  
+
   // Parse the workload name to display type and name separately if possible
   const parts = label.includes('/') ? label.split('/') : ['', label];
   const workloadType = parts[0] || 'Deployment';
   const workloadName = parts[1];
-  
+
   return (
     <>
       <Handle type="source" position={Position.Bottom} style={{ background: '#3B82F6' }} />
-      
+
       <Box
         sx={{
           display: 'flex',
@@ -44,22 +44,22 @@ const WorkloadNode: React.FC<NodeProps<WorkloadNodeData>> = ({ data }) => {
         >
           <KubernetesIcon type="workload" size={26} />
         </Box>
-        
-        <Typography 
-          variant="caption" 
-          sx={{ 
+
+        <Typography
+          variant="caption"
+          sx={{
             color: theme === 'dark' ? '#9CA3AF' : '#4B5563',
             fontWeight: 600,
             textTransform: 'uppercase',
-            fontSize: '0.65rem'
+            fontSize: '0.65rem',
           }}
         >
           {workloadType}
         </Typography>
-        
-        <Typography 
-          variant="body2" 
-          sx={{ 
+
+        <Typography
+          variant="body2"
+          sx={{
             fontWeight: 500,
             color: theme === 'dark' ? '#fff' : '#000',
             textAlign: 'center',
@@ -68,12 +68,12 @@ const WorkloadNode: React.FC<NodeProps<WorkloadNodeData>> = ({ data }) => {
         >
           {workloadName}
         </Typography>
-        
+
         <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
           <KubernetesIcon type="policy" size={14} sx={{ mr: 0.5 }} />
-          <Typography 
-            variant="caption" 
-            sx={{ 
+          <Typography
+            variant="caption"
+            sx={{
               color: theme === 'dark' ? '#9CA3AF' : '#6B7280',
               fontSize: '0.65rem',
             }}
@@ -82,7 +82,7 @@ const WorkloadNode: React.FC<NodeProps<WorkloadNodeData>> = ({ data }) => {
           </Typography>
         </Box>
       </Box>
-      
+
       <Handle type="target" position={Position.Top} style={{ background: '#3B82F6' }} />
     </>
   );

@@ -24,7 +24,6 @@ export interface ClusterStatus {
 
 // Assuming we have a specific type for the data being fetched
 
-
 export interface ClusterData {
   clusterName: string;
   Region: string;
@@ -89,19 +88,19 @@ export const useClusterQueries = () => {
   // Update cluster labels mutation
   const useUpdateClusterLabels = () => {
     return useMutation({
-      mutationFn: async ({ 
-        contextName, 
-        clusterName, 
-        labels 
-      }: { 
-        contextName: string; 
-        clusterName: string; 
-        labels: { [key: string]: string } 
+      mutationFn: async ({
+        contextName,
+        clusterName,
+        labels,
+      }: {
+        contextName: string;
+        clusterName: string;
+        labels: { [key: string]: string };
       }) => {
         const response = await api.patch('/api/managedclusters/labels', {
           contextName,
           clusterName,
-          labels
+          labels,
         });
         return response.data;
       },
@@ -149,4 +148,8 @@ export const useClusterQueries = () => {
     useUpdateClusterLabels,
     useDeleteClusterLabel,
   };
+
 };
+
+};
+

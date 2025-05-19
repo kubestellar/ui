@@ -53,7 +53,7 @@ const KubernetesIcon: React.FC<KubernetesIconProps> = ({ type, size = 24, sx = {
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        ...sx
+        ...sx,
       }}
     >
       {/* Kubernetes heptagon shape (7-sided) */}
@@ -78,7 +78,7 @@ const KubernetesIcon: React.FC<KubernetesIconProps> = ({ type, size = 24, sx = {
           strokeLinejoin="round"
         />
       </svg>
-      
+
       {/* Text label */}
       <Typography
         variant="caption"
@@ -90,7 +90,7 @@ const KubernetesIcon: React.FC<KubernetesIconProps> = ({ type, size = 24, sx = {
           fontSize: size * 0.35,
           lineHeight: 1,
           textAlign: 'center',
-          userSelect: 'none'
+          userSelect: 'none',
         }}
       >
         {getTypeLabel()}
@@ -99,4 +99,4 @@ const KubernetesIcon: React.FC<KubernetesIconProps> = ({ type, size = 24, sx = {
   );
 };
 
-export default KubernetesIcon; 
+export default KubernetesIcon;
