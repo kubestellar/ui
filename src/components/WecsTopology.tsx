@@ -1593,7 +1593,7 @@ const WecsTreeview = () => {
               </MenuItem>
               
               <MenuItem
-                onClick={() => handleMenuAction("Details")}
+                onClick={() => handleMenuAction("Edit")}
                 sx={{
                   color: theme === "dark" ? "#DEE6EB" : "#000000",
                   "&:hover": {
@@ -1610,7 +1610,7 @@ const WecsTreeview = () => {
                contextMenu.nodeId.startsWith("pod:") &&
                nodes.find(n => n.id === contextMenu.nodeId)?.data?.isDeploymentOrJobPod && (
               <MenuItem
-                onClick={() => handleMenuAction("Details")}
+                onClick={() => handleMenuAction("Logs")}
                 sx={{
                   color: theme === "dark" ? "#DEE6EB" : "#000000",
                   "&:hover": {
