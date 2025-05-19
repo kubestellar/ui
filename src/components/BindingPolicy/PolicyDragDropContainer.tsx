@@ -475,7 +475,6 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     // Special handling for database components - always include them
     const databaseResources = [
       { type: 'statefulsets', createOnly: false },
-      { type: 'pods', createOnly: false },
       { type: 'serviceaccounts', createOnly: false },
       { type: 'roles', createOnly: false },
       { type: 'rolebindings', createOnly: false },
@@ -488,24 +487,18 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
         { type: 'deployments', createOnly: false },
         { type: 'replicasets', createOnly: false },
         { type: 'services', createOnly: false },
-        { type: 'pods', createOnly: false },
       ],
       statefulset: [
         { type: 'statefulsets', createOnly: false },
         { type: 'services', createOnly: false },
-        { type: 'pods', createOnly: false },
       ],
-      daemonset: [
-        { type: 'daemonsets', createOnly: false },
-        { type: 'pods', createOnly: false },
-      ],
+      daemonset: [{ type: 'daemonsets', createOnly: false }],
       service: [{ type: 'services', createOnly: false }],
       namespace: [{ type: 'namespaces', createOnly: true }],
       customresourcedefinition: [{ type: 'customresourcedefinitions', createOnly: false }],
       statefulsets: [
         { type: 'statefulsets', createOnly: false },
         { type: 'services', createOnly: false },
-        { type: 'pods', createOnly: false },
       ],
     };
 

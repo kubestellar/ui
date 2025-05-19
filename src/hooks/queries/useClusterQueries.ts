@@ -3,16 +3,41 @@ import { api } from '../../lib/api';
 
 interface ManagedClusterInfo {
   name: string;
+  uid?: string;
   labels: { [key: string]: string };
-  creationTime: string;
+  creationTime?: string;
+  creationTimestamp?: string;
   status: string;
   context: string;
   namespace?: string;
+  available?: boolean;
+  joined?: boolean;
 }
 
 interface ClusterResponse {
-  itsData: ManagedClusterInfo[];
-  totalPages: number;
+  clusters: ManagedClusterInfo[];
+  count: number;
+}
+
+interface ClusterApiResponse {
+  name: string;
+  uid: string;
+  creationTimestamp: string;
+  labels: { [key: string]: string };
+  status: {
+    conditions: Array<{
+      lastTransitionTime: string;
+      message: string;
+      reason: string;
+      status: string;
+      type: string;
+    }>;
+    version?: {
+      kubernetes: string;
+    };
+  };
+  available: boolean;
+  joined: boolean;
 }
 
 export interface ClusterStatus {
@@ -38,10 +63,23 @@ export const useClusterQueries = () => {
     return useQuery({
       queryKey: ['clusters', page],
       queryFn: async (): Promise<ClusterResponse> => {
-        const response = await api.get('/api/clusters', { params: { page } });
+        const response = await api.get('/api/new/clusters', { params: { page } });
+
+        const clusters = response.data.clusters.map((cluster: ClusterApiResponse) => ({
+          name: cluster.name,
+          uid: cluster.uid,
+          creationTime: cluster.creationTimestamp,
+          creationTimestamp: cluster.creationTimestamp,
+          status: cluster.available ? 'Available' : 'Unavailable',
+          context: 'its1',
+          available: cluster.available,
+          joined: cluster.joined,
+          labels: cluster.labels || {},
+        }));
+
         return {
-          itsData: response.data.itsData || [],
-          totalPages: response.data.totalPages || 1,
+          clusters,
+          count: response.data.count || 0,
         };
       },
     });

@@ -25,10 +25,12 @@ export interface BindingPolicyInfo {
 
 export interface ManagedCluster {
   name: string;
+  uid?: string;
   labels: Record<string, string>;
   status: string;
   context?: string;
   creationTime?: string;
+  creationTimestamp?: string;
   location?: string;
   provider?: string;
   version?: string;
@@ -39,6 +41,9 @@ export interface ManagedCluster {
     memory: string;
     storage: string;
   };
+  available?: boolean;
+  joined?: boolean;
+  conditions?: BindingPolicyCondition[];
 }
 
 export interface Workload {
