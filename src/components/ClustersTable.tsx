@@ -57,10 +57,14 @@ import TableSkeleton from './ui/TableSkeleton';
 
 interface ManagedClusterInfo {
   name: string;
+  uid?: string;
   labels: { [key: string]: string };
-  creationTime: string;
+  creationTime?: string;
+  creationTimestamp?: string;
   status?: string;
   context: string;
+  available?: boolean;
+  joined?: boolean;
 }
 
 interface ClustersTableProps {
@@ -1286,7 +1290,13 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>{new Date(cluster.creationTime).toLocaleString()}</TableCell>
+                    <TableCell>
+                      {cluster.creationTime || cluster.creationTimestamp
+                        ? new Date(
+                            cluster.creationTime || cluster.creationTimestamp || ''
+                          ).toLocaleString()
+                        : 'N/A'}
+                    </TableCell>
                     <TableCell>
                       <span
                         style={{

@@ -388,24 +388,8 @@ const BP = () => {
     }
 
     // Update clusters state when clustersData changes
-    if (clustersData?.itsData) {
-      const clusterData = clustersData.itsData.map(cluster => ({
-        name: cluster.name,
-        status: 'Ready', // Default status for ITS clusters
-        labels: cluster.labels || { 'kubernetes.io/cluster-name': cluster.name },
-        metrics: {
-          cpu: 'N/A',
-          memory: 'N/A',
-          storage: 'N/A',
-        },
-      }));
-
-      setClusters(clusterData);
-      setAvailableClusters(clusterData);
-    } else {
-      // If no clusters data, set to empty array
-      setClusters([]);
-      setAvailableClusters([]);
+    if (clustersData && !clustersLoading) {
+      setAvailableClusters(clustersData.clusters || []);
     }
 
     // Update workloads state when workloadsData changes
@@ -446,6 +430,20 @@ const BP = () => {
     workloadsData,
     workloadsLoading,
   ]);
+
+  // Set up clusters for visualization/drag-drop
+  useEffect(() => {
+    // Update clusters state when clustersData changes
+    if (clustersData && !clustersLoading) {
+      const clusterData = clustersData.clusters.map(cluster => ({
+        name: cluster.name,
+        status: cluster.available ? 'Ready' : 'NotReady',
+        labels: cluster.labels || {},
+        context: cluster.context || 'its1',
+      }));
+      setClusters(clusterData);
+    }
+  }, [clustersData, clustersLoading]);
 
   // Memoize the delete handlers for consistent hook usage
   const handleDeletePolicy = useCallback(async (policy: BindingPolicyInfo) => {
