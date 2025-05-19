@@ -20,3 +20,10 @@ node_modules
 # IDE specific files
 .idea
 .vscode
+
+
+# Docker files to ignore
+Dockerfile
+docker-compose.yml
+docker-compose*.yml
+*.dockerfile

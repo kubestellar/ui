@@ -51,8 +51,13 @@ const ITS = () => {
       </div>
     );
 
-  const clusters = data?.itsData || [];
-  const totalPages = data?.totalPages || 1;
+  const clusters = data?.clusters || [];
+  const totalPages = Math.ceil((data?.count || 0) / 10);
+
+  const formattedClusters = clusters.map(cluster => ({
+    ...cluster,
+    context: cluster.context || 'its1',
+  }));
 
   return (
     <div className="w-full p-4">
@@ -60,7 +65,7 @@ const ITS = () => {
       <div className="overflow-hidden rounded-lg bg-base-100 shadow-xl">
         <div className="p-4">
           <ClustersTable
-            clusters={clusters}
+            clusters={formattedClusters}
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={page => setCurrentPage(page)}

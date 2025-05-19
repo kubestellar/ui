@@ -303,62 +303,65 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
   }, []);
 
   //  function to detect CRDs and other cluster-scoped resources
-  const isClusterScopedResource = (labelInfo: { key: string; value: string }): boolean => {
-    if (
-      labelInfo.value.includes('.') &&
-      (labelInfo.value.endsWith('.io') ||
-        labelInfo.value.includes('.k8s.io') ||
-        labelInfo.value.includes('.internal'))
-    ) {
-      console.log(
-        `Detected potential cluster-scoped resource by API group pattern: ${labelInfo.value}`
-      );
-      return true;
-    }
+  const isClusterScopedResource = useCallback(
+    (labelInfo: { key: string; value: string }): boolean => {
+      if (
+        labelInfo.value.includes('.') &&
+        (labelInfo.value.endsWith('.io') ||
+          labelInfo.value.includes('.k8s.io') ||
+          labelInfo.value.includes('.internal'))
+      ) {
+        console.log(
+          `Detected potential cluster-scoped resource by API group pattern: ${labelInfo.value}`
+        );
+        return true;
+      }
 
-    // Check if part-of label indicates a cluster-level component
-    if (labelInfo.key === 'app.kubernetes.io/part-of') {
-      console.log(`Detected resource with part-of label: ${labelInfo.value}`);
-      return true;
-    }
+      // Check if part-of label indicates a cluster-level component
+      if (labelInfo.key === 'app.kubernetes.io/part-of') {
+        console.log(`Detected resource with part-of label: ${labelInfo.value}`);
+        return true;
+      }
 
-    // Known cluster-scoped Kubernetes resources
-    const knownClusterScopedResources = [
-      // Core cluster-scoped resources
-      'customresourcedefinitions',
-      'clusterroles',
-      'clusterrolebindings',
-      'validatingwebhookconfigurations',
-      'mutatingwebhookconfigurations',
-      'priorityclasses',
-      'storageclasses',
-      'csidrivers',
-      'csinodes',
-      'volumeattachments',
+      // Known cluster-scoped Kubernetes resources
+      const knownClusterScopedResources = [
+        // Core cluster-scoped resources
+        'customresourcedefinitions',
+        'clusterroles',
+        'clusterrolebindings',
+        'validatingwebhookconfigurations',
+        'mutatingwebhookconfigurations',
+        'priorityclasses',
+        'storageclasses',
+        'csidrivers',
+        'csinodes',
+        'volumeattachments',
 
-      // Common API group patterns for cluster resources
-      '.apiextensions.k8s.io',
-      '.rbac.authorization.k8s.io',
-      '.admissionregistration.k8s.io',
-      '.storage.k8s.io',
-      '.networking.k8s.io',
-      '.apiserver.k8s.io',
-      '.certificates.k8s.io',
-      '.coordination.k8s.io',
-      '.node.k8s.io',
-    ];
+        // Common API group patterns for cluster resources
+        '.apiextensions.k8s.io',
+        '.rbac.authorization.k8s.io',
+        '.admissionregistration.k8s.io',
+        '.storage.k8s.io',
+        '.networking.k8s.io',
+        '.apiserver.k8s.io',
+        '.certificates.k8s.io',
+        '.coordination.k8s.io',
+        '.node.k8s.io',
+      ];
 
-    if (
-      knownClusterScopedResources.some(r => labelInfo.value === r || labelInfo.value.includes(r))
-    ) {
-      console.log(`Detected known cluster-scoped resource: ${labelInfo.value}`);
-      return true;
-    }
+      if (
+        knownClusterScopedResources.some(r => labelInfo.value === r || labelInfo.value.includes(r))
+      ) {
+        console.log(`Detected known cluster-scoped resource: ${labelInfo.value}`);
+        return true;
+      }
 
-    return false;
-  };
+      return false;
+    },
+    []
+  );
 
-  const determineResourceKind = (labelInfo: { key: string; value: string }): string => {
+  const determineResourceKind = useCallback((labelInfo: { key: string; value: string }): string => {
     if (labelInfo.key === 'app.kubernetes.io/part-of') {
       return labelInfo.value.charAt(0).toUpperCase() + labelInfo.value.slice(1);
     }
@@ -374,7 +377,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
 
     // Default to 'Resource' with proper capitalization
     return labelInfo.value.charAt(0).toUpperCase() + labelInfo.value.slice(1);
-  };
+  }, []);
 
   // Helper function to find workloads matching a label
   const findWorkloadsByLabel = useCallback(
@@ -472,7 +475,6 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     // Special handling for database components - always include them
     const databaseResources = [
       { type: 'statefulsets', createOnly: false },
-      { type: 'pods', createOnly: false },
       { type: 'serviceaccounts', createOnly: false },
       { type: 'roles', createOnly: false },
       { type: 'rolebindings', createOnly: false },
@@ -485,24 +487,18 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
         { type: 'deployments', createOnly: false },
         { type: 'replicasets', createOnly: false },
         { type: 'services', createOnly: false },
-        { type: 'pods', createOnly: false },
       ],
       statefulset: [
         { type: 'statefulsets', createOnly: false },
         { type: 'services', createOnly: false },
-        { type: 'pods', createOnly: false },
       ],
-      daemonset: [
-        { type: 'daemonsets', createOnly: false },
-        { type: 'pods', createOnly: false },
-      ],
+      daemonset: [{ type: 'daemonsets', createOnly: false }],
       service: [{ type: 'services', createOnly: false }],
       namespace: [{ type: 'namespaces', createOnly: true }],
       customresourcedefinition: [{ type: 'customresourcedefinitions', createOnly: false }],
       statefulsets: [
         { type: 'statefulsets', createOnly: false },
         { type: 'services', createOnly: false },
-        { type: 'pods', createOnly: false },
       ],
     };
 

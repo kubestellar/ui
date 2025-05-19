@@ -27,7 +27,14 @@ interface LabelGroup {
   }>;
 }
 
-const DEFAULT_FILTERED_LABEL_KEYS = ['open-cluster-management', 'kubernetes.io', 'k8s.io'];
+// Default labels to filter out of the UI display
+const DEFAULT_FILTERED_LABEL_KEYS = [
+  'open-cluster-management',
+  'kubernetes.io',
+  'k8s.io',
+  'cluster.open-cluster-management.io',
+  'feature.open-cluster-management.io',
+];
 
 const ClusterPanel: React.FC<ClusterPanelProps> = ({
   clusters,

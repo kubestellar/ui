@@ -14,33 +14,33 @@ run:
   modules-download-mode: readonly
 linters:
   enable:
-  # linters maintained by golang.org
-  - gofmt
-  - goimports
-  - govet
-  # linters default enabled by golangci-lint .
-  - errcheck
-  - gosimple
-  - ineffassign
-  - staticcheck
-  - typecheck
-  - unused
-  # other linters supported by golangci-lint.
-  - gci
-  - gocyclo
-  - gosec
-  - misspell
-  - whitespace
-  - revive
-  - depguard
+    # linters maintained by golang.org
+    - gofmt
+    - goimports
+    - govet
+    # linters default enabled by golangci-lint .
+    - errcheck
+    - gosimple
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    # other linters supported by golangci-lint.
+    - gci
+    - gocyclo
+    - gosec
+    - misspell
+    - whitespace
+    - revive
+    - depguard
 
 linters-settings:
   depguard:
     rules:
       main:
         deny:
-        - pkg: "io/ioutil"
-          desc: "replaced by io and os packages since Go 1.16: https://tip.golang.org/doc/go1.16#ioutil"
+          - pkg: 'io/ioutil'
+            desc: 'replaced by io and os packages since Go 1.16: https://tip.golang.org/doc/go1.16#ioutil'
   goimports:
     local-prefixes: github.com/karmada-io/karmada
   gocyclo:
@@ -86,11 +86,11 @@ linters-settings:
 issues:
   # The list of ids of default excludes to include or disable. By default it's empty.
   include:
-  # disable excluding of issues about comments from revive
-  # see https://golangci-lint.run/usage/configuration/#command-line-options for more info
-  - EXC0012
-  - EXC0013
-  - EXC0014
+    # disable excluding of issues about comments from revive
+    # see https://golangci-lint.run/usage/configuration/#command-line-options for more info
+    - EXC0012
+    - EXC0013
+    - EXC0014
   # Which dirs to exclude: issues from them won't be reported.
   # Can use regexp here: `generated.*`, regexp is applied on full path,
   # including the path prefix if one is set.
