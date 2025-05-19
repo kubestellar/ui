@@ -22,9 +22,15 @@ import {
   FormControl,
   SelectChangeEvent,
   Switch,
-  FormControlLabel
+  FormControlLabel,
 } from "@mui/material";
-import { FiX, FiGitPullRequest, FiTrash2, FiMaximize2, FiMinimize2} from "react-icons/fi";
+import {
+  FiX,
+  FiGitPullRequest,
+  FiTrash2,
+  FiMaximize2,
+  FiMinimize2,
+} from "react-icons/fi";
 import Editor from "@monaco-editor/react";
 import jsyaml from "js-yaml";
 import { Terminal } from "xterm";
@@ -32,7 +38,7 @@ import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 import { ResourceItem } from "./TreeViewComponent";
 import useTheme from "../stores/themeStore";
-import '@fortawesome/fontawesome-free/css/all.min.css';
+import "@fortawesome/fontawesome-free/css/all.min.css";
 import { api, getWebSocketUrl } from "../lib/api";
 
 interface WecsDetailsProps {
@@ -104,7 +110,8 @@ const StyledTab = styled(Tab)(({ theme }) => {
     },
     "&:hover": {
       backgroundColor: appTheme === "dark" ? "#333" : "#f4f4f4",
-      border: appTheme === "dark" ? "1px solid #444" : "1px solid rgba(0, 0, 0, 0.1)",
+      border:
+        appTheme === "dark" ? "1px solid #444" : "1px solid rgba(0, 0, 0, 0.1)",
     },
   };
 });
@@ -124,7 +131,9 @@ const WecsDetailsPanel = ({
 }: WecsDetailsProps) => {
   const theme = useTheme((state) => state.theme);
   const [resource, setResource] = useState<ResourceInfo | null>(null);
-  const [clusterDetails, setClusterDetails] = useState<ClusterDetails | null>(null);
+  const [clusterDetails, setClusterDetails] = useState<ClusterDetails | null>(
+    null,
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tabValue, setTabValue] = useState(initialTab ?? 0);
@@ -133,29 +142,44 @@ const WecsDetailsPanel = ({
   const [editedManifest, setEditedManifest] = useState<string>("");
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string>("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">(
+    "success",
+  );
   const panelRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminalInstance = useRef<Terminal | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
-  const wsParamsRef = useRef<{ cluster: string; namespace: string; pod: string } | null>(null);
+  const wsParamsRef = useRef<{
+    cluster: string;
+    namespace: string;
+    pod: string;
+  } | null>(null);
   const hasShownConnectedMessageRef = useRef<boolean>(false);
   const execTerminalRef = useRef<HTMLDivElement>(null);
   const execTerminalInstance = useRef<Terminal | null>(null);
   const execSocketRef = useRef<WebSocket | null>(null);
   const currentPodRef = useRef<string | null>(null);
-  const [execTerminalKey, setExecTerminalKey] = useState<string>(`${cluster}-${namespace}-${name}`);
+  const [execTerminalKey, setExecTerminalKey] = useState<string>(
+    `${cluster}-${namespace}-${name}`,
+  );
   const [isTerminalMaximized, setIsTerminalMaximized] = useState(false);
   const [containers, setContainers] = useState<ContainerInfo[]>([]);
   const [selectedContainer, setSelectedContainer] = useState<string>("");
   const [loadingContainers, setLoadingContainers] = useState<boolean>(false);
-  const [isContainerSelectActive, setIsContainerSelectActive] = useState<boolean>(false);
+  const [isContainerSelectActive, setIsContainerSelectActive] =
+    useState<boolean>(false);
   const [logsContainer, setLogsContainer] = useState<string>("");
   const [showPreviousLogs, setShowPreviousLogs] = useState<boolean>(false);
-  const [logsTerminalKey, setLogsTerminalKey] = useState<string>(`logs-${cluster}-${namespace}-${name}`);
+  const [logsTerminalKey, setLogsTerminalKey] = useState<string>(
+    `logs-${cluster}-${namespace}-${name}`,
+  );
   // Track the previous node to detect node changes
-  const previousNodeRef = useRef<{ name: string; namespace: string; type: string }>({ name: '', namespace: '', type: '' });
+  const previousNodeRef = useRef<{
+    name: string;
+    namespace: string;
+    type: string;
+  }>({ name: "", namespace: "", type: "" });
 
   useEffect(() => {
     if (isOpen && initialTab !== undefined) {
@@ -166,7 +190,10 @@ const WecsDetailsPanel = ({
   // Add a new effect to reset tab if logs tab is selected but unavailable
   useEffect(() => {
     // If the logs tab (index 2) is selected, but this is not a deployment/job pod, switch to summary tab
-    if (tabValue === 2 && !(type.toLowerCase() === "pod" && isDeploymentOrJobPod)) {
+    if (
+      tabValue === 2 &&
+      !(type.toLowerCase() === "pod" && isDeploymentOrJobPod)
+    ) {
       setTabValue(0);
     }
   }, [tabValue, type, isDeploymentOrJobPod]);
@@ -174,11 +201,11 @@ const WecsDetailsPanel = ({
   // Add a new effect to reset tab when node changes
   useEffect(() => {
     // Check if node identity has changed
-    const isNewNode = 
-      previousNodeRef.current.name !== name || 
-      previousNodeRef.current.namespace !== namespace || 
+    const isNewNode =
+      previousNodeRef.current.name !== name ||
+      previousNodeRef.current.namespace !== namespace ||
       previousNodeRef.current.type !== type;
-    
+
     // Reset to initialTab or default to summary tab (0) if it's a new node
     if (isOpen && isNewNode) {
       setTabValue(initialTab ?? 0);
@@ -202,32 +229,37 @@ const WecsDetailsPanel = ({
     if (type.toLowerCase() === "cluster") {
       const fetchClusterDetails = async () => {
         try {
-          const response = await api.get(`/api/cluster/details/${encodeURIComponent(name)}`);
+          const response = await api.get(
+            `/api/cluster/details/${encodeURIComponent(name)}`,
+          );
           const data = response.data;
           setClusterDetails(data);
-          
+
           // Also create a manifest representation for the edit tab
-          const creationTime = data.itsManagedClusters && data.itsManagedClusters.length > 0 
-            ? data.itsManagedClusters[0].creationTime 
-            : new Date().toISOString();
-          
+          const creationTime =
+            data.itsManagedClusters && data.itsManagedClusters.length > 0
+              ? data.itsManagedClusters[0].creationTime
+              : new Date().toISOString();
+
           const clusterManifest = {
             apiVersion: "v1",
             kind: "Cluster",
             metadata: {
               name: data.clusterName,
               creationTimestamp: creationTime,
-              labels: data.itsManagedClusters && data.itsManagedClusters.length > 0 
-                ? data.itsManagedClusters[0].labels 
-                : {}
+              labels:
+                data.itsManagedClusters && data.itsManagedClusters.length > 0
+                  ? data.itsManagedClusters[0].labels
+                  : {},
             },
             spec: {
-              context: data.itsManagedClusters && data.itsManagedClusters.length > 0 
-                ? data.itsManagedClusters[0].context 
-                : ""
-            }
+              context:
+                data.itsManagedClusters && data.itsManagedClusters.length > 0
+                  ? data.itsManagedClusters[0].context
+                  : "",
+            },
           };
-          
+
           const resourceInfo: ResourceInfo = {
             name: data.clusterName,
             namespace: "",
@@ -235,9 +267,9 @@ const WecsDetailsPanel = ({
             createdAt: creationTime,
             age: calculateAge(creationTime),
             status: "Active",
-            manifest: JSON.stringify(clusterManifest, null, 2)
+            manifest: JSON.stringify(clusterManifest, null, 2),
           };
-          
+
           setResource(resourceInfo);
           setEditedManifest(resourceInfo.manifest);
           setError(null);
@@ -248,7 +280,7 @@ const WecsDetailsPanel = ({
           setLoading(false);
         }
       };
-      
+
       fetchClusterDetails();
       return;
     }
@@ -258,7 +290,9 @@ const WecsDetailsPanel = ({
       const fetchResourceManifest = async () => {
         try {
           const kind = resourceData?.kind ?? type;
-          const manifestData = resourceData ? JSON.stringify(resourceData, null, 2) : "No manifest available";
+          const manifestData = resourceData
+            ? JSON.stringify(resourceData, null, 2)
+            : "No manifest available";
           const resourceInfo: ResourceInfo = {
             name: resourceData?.metadata?.name ?? name,
             namespace: resourceData?.metadata?.namespace ?? namespace,
@@ -292,11 +326,13 @@ const WecsDetailsPanel = ({
       fetchResourceManifest();
       return;
     }
-    
+
     // Handle other resource types
     try {
       const kind = resourceData?.kind ?? type;
-      const manifestData = resourceData ? JSON.stringify(resourceData, null, 2) : "No manifest available";
+      const manifestData = resourceData
+        ? JSON.stringify(resourceData, null, 2)
+        : "No manifest available";
       const resourceInfo: ResourceInfo = {
         name: resourceData?.metadata?.name ?? name,
         namespace: resourceData?.metadata?.namespace ?? namespace,
@@ -326,42 +362,48 @@ const WecsDetailsPanel = ({
     if (!wsParamsRef.current || !isOpen) return;
 
     const { cluster, namespace, pod } = wsParamsRef.current;
-    
+
     // Add container and previous logs parameters to WebSocket URL
-    let wsUrl = getWebSocketUrl(`/ws/logs?cluster=${cluster}&namespace=${namespace}&pod=${pod}`);
-    
+    let wsUrl = getWebSocketUrl(
+      `/ws/logs?cluster=${cluster}&namespace=${namespace}&pod=${pod}`,
+    );
+
     // Add container parameter if a container is selected
     if (logsContainer) {
       wsUrl += `&container=${encodeURIComponent(logsContainer)}`;
     }
-    
+
     // Add previous logs parameter if enabled
     if (showPreviousLogs) {
       wsUrl += `&previous=true`;
     }
-    
-    setLogs((prev) => [...prev, 
+
+    setLogs((prev) => [
+      ...prev,
       `\x1b[33m[Connecting] WebSocket Request\x1b[0m`,
       `URL: ${wsUrl}`,
       `Timestamp: ${new Date().toISOString()}`,
-      `-----------------------------------`
+      `-----------------------------------`,
     ]);
 
     const socket = new WebSocket(wsUrl);
     wsRef.current = socket;
 
     socket.onopen = () => {
-      setLogs((prev) => [...prev,
+      setLogs((prev) => [
+        ...prev,
         `\x1b[32m[Connected] WebSocket Connection Established\x1b[0m`,
         `Status: OPEN`,
         `Timestamp: ${new Date().toISOString()}`,
-        `-----------------------------------`
+        `-----------------------------------`,
       ]);
       hasShownConnectedMessageRef.current = true;
     };
 
     socket.onmessage = (event) => {
-      const messageLines = event.data.split('\n').filter((line: string) => line.trim() !== '');
+      const messageLines = event.data
+        .split("\n")
+        .filter((line: string) => line.trim() !== "");
       const messageLog = messageLines.map((line: string) => line.trim());
       messageLog.push(`Timestamp: ${new Date().toISOString()}`);
       messageLog.push(`-----------------------------------`);
@@ -369,19 +411,21 @@ const WecsDetailsPanel = ({
     };
 
     socket.onerror = (event) => {
-      setLogs((prev) => [...prev,
+      setLogs((prev) => [
+        ...prev,
         `\x1b[31m[Error] WebSocket Connection Failed\x1b[0m`,
         `Details: ${JSON.stringify(event)}`,
         `Timestamp: ${new Date().toISOString()}`,
-        `-----------------------------------`
+        `-----------------------------------`,
       ]);
     };
 
     socket.onclose = () => {
-      setLogs((prev) => [...prev,
+      setLogs((prev) => [
+        ...prev,
         `\x1b[31m[Closed] WebSocket Connection Terminated\x1b[0m`,
         `Timestamp: ${new Date().toISOString()}`,
-        `-----------------------------------`
+        `-----------------------------------`,
       ]);
       wsRef.current = null;
     };
@@ -413,8 +457,9 @@ const WecsDetailsPanel = ({
 
   useEffect(() => {
     // Only initialize terminal if needed and if it doesn't exist yet
-    if (!terminalRef.current || type.toLowerCase() !== "pod" || tabValue !== 2) return;
-    
+    if (!terminalRef.current || type.toLowerCase() !== "pod" || tabValue !== 2)
+      return;
+
     // Skip re-initialization if terminal already exists
     if (terminalInstance.current) {
       // Update existing terminal with latest logs instead of re-creating it
@@ -467,7 +512,7 @@ const WecsDetailsPanel = ({
         execSocketRef.current.close();
         execSocketRef.current = null;
       }
-      
+
       if (execTerminalInstance.current) {
         // console.log(`Disposing exec terminal for previous pod: ${currentPodRef.current}`);
         execTerminalInstance.current.dispose();
@@ -488,7 +533,9 @@ const WecsDetailsPanel = ({
       setLoadingContainers(true);
       try {
         // console.log(`Fetching containers for pod: ${name}`);
-        const response = await api.get(`/list/container/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}?context=${encodeURIComponent(cluster)}`);
+        const response = await api.get(
+          `/list/container/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}?context=${encodeURIComponent(cluster)}`,
+        );
         if (response.data && response.data.data) {
           setContainers(response.data.data);
           // Set the first container as selected by default if available
@@ -523,7 +570,7 @@ const WecsDetailsPanel = ({
   const handleContainerChange = (event: SelectChangeEvent<string>) => {
     // Just use stopPropagation without checking for nativeEvent
     event.stopPropagation();
-    
+
     // Set the selected container
     setSelectedContainer(event.target.value);
   };
@@ -532,7 +579,12 @@ const WecsDetailsPanel = ({
   useEffect(() => {
     // If we're going to the exec tab and we have containers but no container selected,
     // select the first one
-    if (tabValue === 3 && type.toLowerCase() === "pod" && containers.length > 0 && !selectedContainer) {
+    if (
+      tabValue === 3 &&
+      type.toLowerCase() === "pod" &&
+      containers.length > 0 &&
+      !selectedContainer
+    ) {
       setSelectedContainer(containers[0].ContainerName);
     }
   }, [tabValue, type, containers, selectedContainer]);
@@ -540,17 +592,22 @@ const WecsDetailsPanel = ({
   // Add the Exec terminal initialization - modified to use selectedContainer
   useEffect(() => {
     // Only initialize exec terminal when the exec tab is active
-    if (!execTerminalRef.current || type.toLowerCase() !== "pod" || tabValue !== 3) return;
-    
+    if (
+      !execTerminalRef.current ||
+      type.toLowerCase() !== "pod" ||
+      tabValue !== 3
+    )
+      return;
+
     // console.log(`Initializing exec terminal for pod: ${name}, container: ${selectedContainer}, key: ${execTerminalKey}`);
-    
+
     // Always clean up previous terminal when switching to the exec tab
     if (execTerminalInstance.current) {
       // console.log(`Disposing previous exec terminal for pod: ${currentPodRef.current}`);
       execTerminalInstance.current.dispose();
       execTerminalInstance.current = null;
     }
-    
+
     if (execSocketRef.current) {
       // console.log(`Closing previous exec socket for pod: ${currentPodRef.current}`);
       execSocketRef.current.close();
@@ -563,10 +620,10 @@ const WecsDetailsPanel = ({
         console.error("Terminal reference is null after timeout");
         return;
       }
-      
+
       // Create enhanced terminal with better styling
-    const term = new Terminal({
-      theme: {
+      const term = new Terminal({
+        theme: {
           background: theme === "dark" ? "#1A1A1A" : "#FAFAFA",
           foreground: theme === "dark" ? "#E0E0E0" : "#333333",
           cursor: theme === "dark" ? "#4D8FCA" : "#2B7DE9",
@@ -578,32 +635,32 @@ const WecsDetailsPanel = ({
           magenta: "#C678DD",
           cyan: "#56B6C2",
           white: theme === "dark" ? "#FFFFFF" : "#FAFAFA",
-      },
-      cursorBlink: true,
-      fontSize: 14,
+        },
+        cursorBlink: true,
+        fontSize: 14,
         fontFamily: '"Menlo", "Monaco", "Consolas", "Ubuntu Mono", monospace',
         lineHeight: 1.3,
         scrollback: 3000,
         disableStdin: false,
-      convertEol: true,
+        convertEol: true,
         allowProposedApi: true,
-        cursorStyle: 'bar',
+        cursorStyle: "bar",
         cursorWidth: 2,
-        windowsMode: false
-    });
+        windowsMode: false,
+      });
 
-    const fitAddon = new FitAddon();
-    term.loadAddon(fitAddon);
-        
+      const fitAddon = new FitAddon();
+      term.loadAddon(fitAddon);
+
       try {
         // First make sure the container is empty
         if (execTerminalRef.current) {
-          execTerminalRef.current.innerHTML = '';
+          execTerminalRef.current.innerHTML = "";
         }
-        
+
         term.open(execTerminalRef.current);
         // console.log(`Terminal opened successfully for pod: ${name}`);
-        
+
         setTimeout(() => {
           try {
             fitAddon.fit();
@@ -615,111 +672,133 @@ const WecsDetailsPanel = ({
         console.error("Failed to open terminal:", error);
         return;
       }
-      
+
       execTerminalInstance.current = term;
-      
+
       // Use selectedContainer if available, otherwise use fallback
       const containerName = selectedContainer || "container";
-    
-      const wsUrl = getWebSocketUrl(`/ws/pod/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/shell/${encodeURIComponent(containerName)}?context=${encodeURIComponent(cluster)}&shell=sh`);
-    
+
+      const wsUrl = getWebSocketUrl(
+        `/ws/pod/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/shell/${encodeURIComponent(containerName)}?context=${encodeURIComponent(cluster)}&shell=sh`,
+      );
+
       // Show a minimal connecting message with a spinner effect
-      term.writeln(`\x1b[33mConnecting to pod shell in container ${containerName}...\x1b[0m`);
-      
+      term.writeln(
+        `\x1b[33mConnecting to pod shell in container ${containerName}...\x1b[0m`,
+      );
+
       // Log full details to console for debugging but don't show in UI
       console.log(`Creating WebSocket connection:`, {
         pod: name,
         namespace,
         container: containerName,
         context: cluster,
-        url: wsUrl
+        url: wsUrl,
       });
-    
-    const socket = new WebSocket(wsUrl);
+
+      const socket = new WebSocket(wsUrl);
       execSocketRef.current = socket;
-    
-    socket.onopen = () => {
+
+      socket.onopen = () => {
         // console.log(`WebSocket connection established for pod: ${name}, container: ${containerName}`);
-      // Completely clear the terminal once connected
-      term.reset();
-      term.clear();
-      term.writeln(`\x1b[32mConnected to pod shell in container ${containerName}\x1b[0m`);
-      term.writeln('');
-    };
-    
-    socket.onmessage = (event) => {
-      try {
-        const msg = JSON.parse(event.data);
-        if (msg.Op === "stdout") {
-          term.write(msg.Data);
+        // Completely clear the terminal once connected
+        term.reset();
+        term.clear();
+        term.writeln(
+          `\x1b[32mConnected to pod shell in container ${containerName}\x1b[0m`,
+        );
+        term.writeln("");
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.Op === "stdout") {
+            term.write(msg.Data);
           } else {
             console.log(`Received non-stdout message:`, msg);
-        }
-      } catch {
-        // If it's not JSON, write it directly
+          }
+        } catch {
+          // If it's not JSON, write it directly
           // console.log(`Received raw message: ${event.data}`);
-        term.writeln(event.data);
-      }
-    };
-    
-    socket.onerror = (error) => {
-      console.error("WebSocket error:", error);
-        term.writeln(`\x1b[31mError connecting to pod. Please try again.\x1b[0m`);
-    };
-    
-    socket.onclose = (event) => {
+          term.writeln(event.data);
+        }
+      };
+
+      socket.onerror = (error) => {
+        console.error("WebSocket error:", error);
+        term.writeln(
+          `\x1b[31mError connecting to pod. Please try again.\x1b[0m`,
+        );
+      };
+
+      socket.onclose = (event) => {
         // console.log(`WebSocket closed for pod ${name}:`, event);
-      if (event.code !== 1000 && event.code !== 1001) {
+        if (event.code !== 1000 && event.code !== 1001) {
           term.writeln(`\x1b[31mConnection closed\x1b[0m`);
-      }
+        }
         execSocketRef.current = null;
-    };
-    
-    // Handle user input including Tab completion
-    term.onData((data) => {
-      if (socket.readyState === WebSocket.OPEN) {
-        // Special handling for Tab key for auto-completion
-        if (data === '\t') {
-          const msg = JSON.stringify({ Op: "stdin", Data: data });
-          socket.send(msg);
+      };
+
+      // Handle user input including Tab completion
+      term.onData((data) => {
+        if (socket.readyState === WebSocket.OPEN) {
+          // Special handling for Tab key for auto-completion
+          if (data === "\t") {
+            const msg = JSON.stringify({ Op: "stdin", Data: data });
+            socket.send(msg);
+          } else {
+            const msg = JSON.stringify({ Op: "stdin", Data: data });
+            socket.send(msg);
+          }
         } else {
-          const msg = JSON.stringify({ Op: "stdin", Data: data });
-          socket.send(msg);
+          console.warn(
+            `Cannot send data: WebSocket not in OPEN state (state: ${socket.readyState})`,
+          );
+          term.writeln(
+            `\x1b[31mConnection not active. Cannot send command.\x1b[0m`,
+          );
         }
-        } else {
-          console.warn(`Cannot send data: WebSocket not in OPEN state (state: ${socket.readyState})`);
-          term.writeln(`\x1b[31mConnection not active. Cannot send command.\x1b[0m`);
+      });
+
+      // Add ping to keep connection alive
+      const pingInterval = setInterval(() => {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ Op: "ping" }));
         }
-    });
-    
-    // Add ping to keep connection alive
-    const pingInterval = setInterval(() => {
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ Op: "ping" }));
-      }
-    }, 30000);
-      
+      }, 30000);
+
       // Update current pod reference
       currentPodRef.current = name;
-    
-    return () => {
+
+      return () => {
         // console.log(`Cleaning up exec terminal resources for pod: ${name}`);
-      clearInterval(pingInterval);
-        
+        clearInterval(pingInterval);
+
         if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.close();
+          socket.close();
         }
-        
+
         execSocketRef.current = null;
-        
+
         if (term) {
-      term.dispose();
+          term.dispose();
         }
-        
-      execTerminalInstance.current = null;
-    };
+
+        execTerminalInstance.current = null;
+      };
     }, 50); // Small delay to ensure DOM is ready
-  }, [tabValue, theme, type, name, namespace, cluster, resourceData, execTerminalKey, selectedContainer]); // Added selectedContainer as dependency
+  }, [
+    tabValue,
+    theme,
+    type,
+    name,
+    namespace,
+    cluster,
+    resourceData,
+    execTerminalKey,
+    selectedContainer,
+  ]); // Added selectedContainer as dependency
 
   // Add a useEffect that resets container selection when the pod changes
   useEffect(() => {
@@ -734,7 +813,7 @@ const WecsDetailsPanel = ({
   // This useEffect DOES use setLogsTerminalKey
   useEffect(() => {
     if (type.toLowerCase() === "pod") {
-      const newKey = `logs-${cluster}-${namespace}-${name}-${logsContainer}-${showPreviousLogs ? 'prev' : 'current'}-${Date.now()}`;
+      const newKey = `logs-${cluster}-${namespace}-${name}-${logsContainer}-${showPreviousLogs ? "prev" : "current"}-${Date.now()}`;
       setLogsTerminalKey(newKey);
     }
   }, [cluster, namespace, name, logsContainer, showPreviousLogs, type]);
@@ -778,7 +857,7 @@ const WecsDetailsPanel = ({
       // console.log("Container select is active, preventing panel close");
       return;
     }
-    
+
     setIsClosing(true);
     setTimeout(() => {
       setIsClosing(false);
@@ -808,7 +887,9 @@ const WecsDetailsPanel = ({
 
     const resourceName = resource.name;
 
-    setSnackbarMessage(`API not implemented for updating pod "${resourceName}"`);
+    setSnackbarMessage(
+      `API not implemented for updating pod "${resourceName}"`,
+    );
     setSnackbarSeverity("error");
     setSnackbarOpen(true);
   };
@@ -820,10 +901,12 @@ const WecsDetailsPanel = ({
   const renderSummary = () => {
     if (type.toLowerCase() === "cluster" && clusterDetails) {
       // Render cluster-specific information
-      const clusterInfo = clusterDetails.itsManagedClusters && clusterDetails.itsManagedClusters.length > 0 
-        ? clusterDetails.itsManagedClusters[0] 
-        : null;
-      
+      const clusterInfo =
+        clusterDetails.itsManagedClusters &&
+        clusterDetails.itsManagedClusters.length > 0
+          ? clusterDetails.itsManagedClusters[0]
+          : null;
+
       return (
         <Box>
           <Table sx={{ borderRadius: 1, mb: 2 }}>
@@ -832,27 +915,38 @@ const WecsDetailsPanel = ({
                 { label: "KIND", value: "Cluster" },
                 { label: "NAME", value: clusterDetails.clusterName },
                 { label: "CONTEXT", value: clusterInfo?.context || "Unknown" },
-                { label: "CREATED AT", value: clusterInfo ? `${new Date(clusterInfo.creationTime).toLocaleString()} (${calculateAge(clusterInfo.creationTime)})` : "Unknown" },
+                {
+                  label: "CREATED AT",
+                  value: clusterInfo
+                    ? `${new Date(clusterInfo.creationTime).toLocaleString()} (${calculateAge(clusterInfo.creationTime)})`
+                    : "Unknown",
+                },
               ].map((row, index) => (
                 <TableRow key={index}>
                   <TableCell
                     sx={{
-                      borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
+                      borderBottom:
+                        theme === "dark"
+                          ? "1px solid #444"
+                          : "1px solid #e0e0e0",
                       color: theme === "dark" ? "#D4D4D4" : "#333333",
                       fontSize: "14px",
                       fontWeight: 500,
-                      width: '150px',
-                      padding: '10px 16px'
+                      width: "150px",
+                      padding: "10px 16px",
                     }}
                   >
                     {row.label}
                   </TableCell>
                   <TableCell
                     sx={{
-                      borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
+                      borderBottom:
+                        theme === "dark"
+                          ? "1px solid #444"
+                          : "1px solid #e0e0e0",
                       color: theme === "dark" ? "#D4D4D4" : "#333333",
                       fontSize: "14px",
-                      padding: '10px 16px'
+                      padding: "10px 16px",
                     }}
                   >
                     {row.value}
@@ -861,60 +955,72 @@ const WecsDetailsPanel = ({
               ))}
             </TableBody>
           </Table>
-          
+
           {/* Display cluster labels if available */}
-          {clusterInfo && clusterInfo.labels && Object.keys(clusterInfo.labels).length > 0 && (
-            <Table sx={{ borderRadius: 1 }}>
-              <TableBody>
-                <TableRow>
-                  <TableCell
-                    sx={{
-                      borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
-                      color: theme === "dark" ? "#D4D4D4" : "#333333",
-                      fontSize: "14px",
-                      fontWeight: 500,
-                      width: '150px',
-                      padding: '10px 16px',
-                      verticalAlign: 'top'
-                    }}
-                  >
-                    LABELS
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
-                      color: theme === "dark" ? "#D4D4D4" : "#333333",
-                      fontSize: "14px",
-                      padding: '10px 16px'
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {clusterInfo.labels && Object.entries(clusterInfo.labels).map(([key, value], index) => (
-                        <Chip
-                          key={index}
-                          label={`${key}: ${value}`}
-                          size="small"
-                          sx={{
-                            mr: 1,
-                            mb: 1,
-                            backgroundColor: theme === "dark" ? "#334155" : undefined,
-                            color: theme === "dark" ? "#fff" : undefined,
-                          }}
-                        />
-                      ))}
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          )}
+          {clusterInfo &&
+            clusterInfo.labels &&
+            Object.keys(clusterInfo.labels).length > 0 && (
+              <Table sx={{ borderRadius: 1 }}>
+                <TableBody>
+                  <TableRow>
+                    <TableCell
+                      sx={{
+                        borderBottom:
+                          theme === "dark"
+                            ? "1px solid #444"
+                            : "1px solid #e0e0e0",
+                        color: theme === "dark" ? "#D4D4D4" : "#333333",
+                        fontSize: "14px",
+                        fontWeight: 500,
+                        width: "150px",
+                        padding: "10px 16px",
+                        verticalAlign: "top",
+                      }}
+                    >
+                      LABELS
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        borderBottom:
+                          theme === "dark"
+                            ? "1px solid #444"
+                            : "1px solid #e0e0e0",
+                        color: theme === "dark" ? "#D4D4D4" : "#333333",
+                        fontSize: "14px",
+                        padding: "10px 16px",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                        {clusterInfo.labels &&
+                          Object.entries(clusterInfo.labels).map(
+                            ([key, value], index) => (
+                              <Chip
+                                key={index}
+                                label={`${key}: ${value}`}
+                                size="small"
+                                sx={{
+                                  mr: 1,
+                                  mb: 1,
+                                  backgroundColor:
+                                    theme === "dark" ? "#334155" : undefined,
+                                  color: theme === "dark" ? "#fff" : undefined,
+                                }}
+                              />
+                            ),
+                          )}
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            )}
         </Box>
       );
     }
-    
+
     // Original resource rendering for non-cluster types
     if (!resource) return null;
-    
+
     // Create a basic summary table for any resource
     const summaryTable = (
       <Table sx={{ borderRadius: 1 }}>
@@ -923,78 +1029,90 @@ const WecsDetailsPanel = ({
             { label: "KIND", value: resource.kind },
             { label: "NAME", value: resource.name },
             { label: "NAMESPACE", value: resource.namespace },
-            { label: "CREATED AT", value: `${resource.createdAt} (${resource.age})` },
+            {
+              label: "CREATED AT",
+              value: `${resource.createdAt} (${resource.age})`,
+            },
           ].map((row, index) => (
             <TableRow key={index}>
               <TableCell
                 sx={{
-                  borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
+                  borderBottom:
+                    theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
                   color: theme === "dark" ? "#D4D4D4" : "#333333",
                   fontSize: "14px",
                   fontWeight: 500,
-                  width: '150px',
-                  padding: '10px 16px'
+                  width: "150px",
+                  padding: "10px 16px",
                 }}
               >
                 {row.label}
               </TableCell>
               <TableCell
                 sx={{
-                  borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
+                  borderBottom:
+                    theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
                   color: theme === "dark" ? "#D4D4D4" : "#333333",
                   fontSize: "14px",
-                  padding: '10px 16px'
+                  padding: "10px 16px",
                 }}
               >
                 {row.value}
               </TableCell>
             </TableRow>
           ))}
-          {resourceData?.metadata?.labels && Object.keys(resourceData.metadata.labels).length > 0 && (
-            <TableRow>
-              <TableCell
-                sx={{
-                  borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
-                  color: theme === "dark" ? "#D4D4D4" : "#333333",
-                  fontSize: "14px",
-                  fontWeight: 500,
-                  width: '150px',
-                  padding: '10px 16px',
-                  verticalAlign: 'top'
-                }}
-              >
-                LABELS
-              </TableCell>
-              <TableCell
-                sx={{
-                  borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
-                  color: theme === "dark" ? "#D4D4D4" : "#333333",
-                  fontSize: "14px",
-                  padding: '10px 16px'
-                }}
-              >
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {resourceData.metadata.labels && Object.entries(resourceData.metadata.labels).map(([key, value], index) => (
-                    <Chip
-                      key={index}
-                      label={`${key}: ${value}`}
-                      size="small"
-                      sx={{
-                        mr: 1,
-                        mb: 1,
-                        backgroundColor: theme === "dark" ? "#334155" : undefined,
-                        color: theme === "dark" ? "#fff" : undefined,
-                      }}
-                    />
-                  ))}
-                </Box>
-              </TableCell>
-            </TableRow>
-          )}
+          {resourceData?.metadata?.labels &&
+            Object.keys(resourceData.metadata.labels).length > 0 && (
+              <TableRow>
+                <TableCell
+                  sx={{
+                    borderBottom:
+                      theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
+                    color: theme === "dark" ? "#D4D4D4" : "#333333",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    width: "150px",
+                    padding: "10px 16px",
+                    verticalAlign: "top",
+                  }}
+                >
+                  LABELS
+                </TableCell>
+                <TableCell
+                  sx={{
+                    borderBottom:
+                      theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
+                    color: theme === "dark" ? "#D4D4D4" : "#333333",
+                    fontSize: "14px",
+                    padding: "10px 16px",
+                  }}
+                >
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                    {resourceData.metadata.labels &&
+                      Object.entries(resourceData.metadata.labels).map(
+                        ([key, value], index) => (
+                          <Chip
+                            key={index}
+                            label={`${key}: ${value}`}
+                            size="small"
+                            sx={{
+                              mr: 1,
+                              mb: 1,
+                              backgroundColor:
+                                theme === "dark" ? "#334155" : undefined,
+                              color: theme === "dark" ? "#fff" : undefined,
+                            }}
+                          />
+                        ),
+                      )}
+                  </Box>
+                </TableCell>
+              </TableRow>
+            )}
         </TableBody>
       </Table>
     );
-    
+
     return summaryTable;
   };
 
@@ -1022,11 +1140,21 @@ const WecsDetailsPanel = ({
       {isClosing ? (
         <Box sx={{ height: "100%", width: "100%" }} />
       ) : loading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          height="100vh"
+        >
           <CircularProgress />
         </Box>
       ) : error ? (
-        <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          height="100vh"
+        >
           <Alert severity="error">{error}</Alert>
         </Box>
       ) : (resource || clusterDetails) && isOpen ? (
@@ -1043,10 +1171,10 @@ const WecsDetailsPanel = ({
               sx={{
                 color: theme === "dark" ? "#FFFFFF" : "#000000",
                 fontSize: "30px",
-                marginLeft: "4px"
+                marginLeft: "4px",
               }}
             >
-              {type.toUpperCase()} : {" "}
+              {type.toUpperCase()} :{" "}
               <span style={{ color: "#2F86FF" }}>{name}</span>
             </Typography>
             <Stack direction="row" spacing={1}>
@@ -1102,24 +1230,67 @@ const WecsDetailsPanel = ({
               },
             }}
           >
-            <StyledTab label={<span><i className="fa fa-file-alt" style={{ marginRight: "8px" }}></i>SUMMARY</span>} />
-            <StyledTab label={<span><i className="fa fa-edit" style={{ marginRight: "8px" }}></i>EDIT</span>} />
+            <StyledTab
+              label={
+                <span>
+                  <i
+                    className="fa fa-file-alt"
+                    style={{ marginRight: "8px" }}
+                  ></i>
+                  SUMMARY
+                </span>
+              }
+            />
+            <StyledTab
+              label={
+                <span>
+                  <i className="fa fa-edit" style={{ marginRight: "8px" }}></i>
+                  EDIT
+                </span>
+              }
+            />
             {/* Only show logs tab for deployment/job pods */}
-            {type.toLowerCase() === "pod" && isDeploymentOrJobPod && type.toLowerCase() !== "cluster" && (
-              <StyledTab label={<span><i className="fa fa-align-left" style={{ marginRight: "8px" }}></i>LOGS</span>} />
-            )}
+            {type.toLowerCase() === "pod" &&
+              isDeploymentOrJobPod &&
+              type.toLowerCase() !== "cluster" && (
+                <StyledTab
+                  label={
+                    <span>
+                      <i
+                        className="fa fa-align-left"
+                        style={{ marginRight: "8px" }}
+                      ></i>
+                      LOGS
+                    </span>
+                  }
+                />
+              )}
             {/* Only show Exec Pods tab for pod resources */}
             {type.toLowerCase() === "pod" && (
-              <StyledTab label={<span><i className="fa fa-terminal" style={{ marginRight: "8px" }}></i>EXEC PODS</span>} />
+              <StyledTab
+                label={
+                  <span>
+                    <i
+                      className="fa fa-terminal"
+                      style={{ marginRight: "8px" }}
+                    ></i>
+                    EXEC PODS
+                  </span>
+                }
+              />
             )}
           </Tabs>
 
           <Box
             sx={{
-              backgroundColor: theme === "dark" ? "#00000033" : "rgba(255, 255, 255, 0.8)",
+              backgroundColor:
+                theme === "dark" ? "#00000033" : "rgba(255, 255, 255, 0.8)",
               borderRadius: "8px",
               boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
-              border: theme === "dark" ? "1px solid #444" : "1px solid rgba(0, 0, 0, 0.1)",
+              border:
+                theme === "dark"
+                  ? "1px solid #444"
+                  : "1px solid rgba(0, 0, 0, 0.1)",
               padding: 3,
               display: "flex",
               flexDirection: "column",
@@ -1133,37 +1304,47 @@ const WecsDetailsPanel = ({
                 <Box sx={{ display: "flex", flexDirection: "column" }}>
                   <Stack direction="row" spacing={4} mb={3} ml={4}>
                     <Button
-  variant={editFormat === "yaml" ? "contained" : "outlined"}
-  onClick={() => handleFormatChange("yaml")}
-  sx={{
-    textTransform: "none",
-    backgroundColor: editFormat === "yaml" ? "#2F86FF" : "transparent",
-    borderRadius: "8px",
-    color: editFormat === "yaml" ? "#fff" : "#2F86FF",
-    border: editFormat === "yaml" ? "none" : "1px solid #2F86FF",
-    "&:hover": {
-      backgroundColor: editFormat === "yaml" ? "#1565c0" : "rgba(47, 134, 255, 0.08)",
-    },
-  }}
->
-  YAML
-</Button>
-           <Button
-  variant={editFormat === "json" ? "contained" : "outlined"}
-  onClick={() => handleFormatChange("json")}
-  sx={{
-    textTransform: "none",
-    backgroundColor: editFormat === "json" ? "#2F86FF" : "transparent",
-    borderRadius: "8px",
-    color: editFormat === "json" ? "#fff" : "#2F86FF",
-    border: editFormat === "json" ? "none" : "1px solid #2F86FF",
-    "&:hover": {
-      backgroundColor: editFormat === "json" ? "#1565c0" : "rgba(47, 134, 255, 0.08)",
-    },
-  }}
->
-  JSON
-</Button>
+                      variant={editFormat === "yaml" ? "contained" : "outlined"}
+                      onClick={() => handleFormatChange("yaml")}
+                      sx={{
+                        textTransform: "none",
+                        backgroundColor:
+                          editFormat === "yaml" ? "#2F86FF" : "transparent",
+                        borderRadius: "8px",
+                        color: editFormat === "yaml" ? "#fff" : "#2F86FF",
+                        border:
+                          editFormat === "yaml" ? "none" : "1px solid #2F86FF",
+                        "&:hover": {
+                          backgroundColor:
+                            editFormat === "yaml"
+                              ? "#1565c0"
+                              : "rgba(47, 134, 255, 0.08)",
+                        },
+                      }}
+                    >
+                      YAML
+                    </Button>
+                    <Button
+                      variant={editFormat === "json" ? "contained" : "outlined"}
+                      onClick={() => handleFormatChange("json")}
+                      sx={{
+                        textTransform: "none",
+                        backgroundColor:
+                          editFormat === "json" ? "#2F86FF" : "transparent",
+                        borderRadius: "8px",
+                        color: editFormat === "json" ? "#fff" : "#2F86FF",
+                        border:
+                          editFormat === "json" ? "none" : "1px solid #2F86FF",
+                        "&:hover": {
+                          backgroundColor:
+                            editFormat === "json"
+                              ? "#1565c0"
+                              : "rgba(47, 134, 255, 0.08)",
+                        },
+                      }}
+                    >
+                      JSON
+                    </Button>
                   </Stack>
                   <Box sx={{ overflow: "auto", maxHeight: "500px" }}>
                     <Editor
@@ -1187,7 +1368,9 @@ const WecsDetailsPanel = ({
                       }}
                     />
                   </Box>
-                  <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+                  <Box
+                    sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}
+                  >
                     <Button
                       variant="contained"
                       onClick={handleUpdate}
@@ -1206,214 +1389,269 @@ const WecsDetailsPanel = ({
                   </Box>
                 </Box>
               )}
-              {tabValue === 2 && type.toLowerCase() === "pod" && isDeploymentOrJobPod && (
-                <Box
-                  sx={{
-                    height: "500px",
-                    bgcolor: theme === "dark" ? "#1E1E1E" : "#FFFFFF",
-                    borderRadius: 1,
-                    p: 0,
-                    overflow: "hidden",
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                >
-                  {/* Logs header with container selection */}
+              {tabValue === 2 &&
+                type.toLowerCase() === "pod" &&
+                isDeploymentOrJobPod && (
                   <Box
                     sx={{
+                      height: "500px",
+                      bgcolor: theme === "dark" ? "#1E1E1E" : "#FFFFFF",
+                      borderRadius: 1,
+                      p: 0,
+                      overflow: "hidden",
                       display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      px: 2,
-                      py: 0.75,
-                      backgroundColor: theme === "dark" ? "#252525" : "#F0F0F0",
-                      borderBottom: theme === "dark" ? "1px solid #333" : "1px solid #E0E0E0",
+                      flexDirection: "column",
                     }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                      <span style={{ 
-                        display: "inline-block", 
-                        width: "12px", 
-                        height: "12px", 
-                        borderRadius: "50%", 
-                        backgroundColor: "#3498db", 
-                        marginRight: "8px" 
-                      }} />
-                      <span style={{ fontSize: "13px", fontWeight: 500 }}>
-                        Pod Logs
-                      </span>
-                    </Box>
-                    
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                      {/* Container selection dropdown */}
-                      <FormControl 
-                        size="small" 
-                        className="container-dropdown"
-                        onMouseDown={() => setIsContainerSelectActive(true)}
-                        sx={{ 
-                          minWidth: 150,
-                          "& .MuiInputBase-root": {
-                            color: theme === "dark" ? "#CCC" : "#444",
-                            fontSize: "13px",
-                            backgroundColor: theme === "dark" ? "#333" : "#FFF",
-                            border: theme === "dark" ? "1px solid #444" : "1px solid #DDD",
-                            borderRadius: "4px",
-                            height: "30px"
-                          },
-                          "& .MuiOutlinedInput-notchedOutline": {
-                            border: "none"
-                          }
-                        }}
-                        onClick={(e) => e.stopPropagation()}
+                    {/* Logs header with container selection */}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        px: 2,
+                        py: 0.75,
+                        backgroundColor:
+                          theme === "dark" ? "#252525" : "#F0F0F0",
+                        borderBottom:
+                          theme === "dark"
+                            ? "1px solid #333"
+                            : "1px solid #E0E0E0",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                        <span
+                          style={{
+                            display: "inline-block",
+                            width: "12px",
+                            height: "12px",
+                            borderRadius: "50%",
+                            backgroundColor: "#3498db",
+                            marginRight: "8px",
+                          }}
+                        />
+                        <span style={{ fontSize: "13px", fontWeight: 500 }}>
+                          Pod Logs
+                        </span>
+                      </Box>
+
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 2 }}
                       >
-                        <Select
-                          value={logsContainer}
-                          onChange={(e: SelectChangeEvent<string>) => {
-                            e.stopPropagation();
-                            setLogsContainer(e.target.value);
-                            // Close and reopen WebSocket with new container
-                            if (wsRef.current) {
-                              wsRef.current.close();
-                              wsRef.current = null;
-                              setLogs([]);
-                            }
+                        {/* Container selection dropdown */}
+                        <FormControl
+                          size="small"
+                          className="container-dropdown"
+                          onMouseDown={() => setIsContainerSelectActive(true)}
+                          sx={{
+                            minWidth: 150,
+                            "& .MuiInputBase-root": {
+                              color: theme === "dark" ? "#CCC" : "#444",
+                              fontSize: "13px",
+                              backgroundColor:
+                                theme === "dark" ? "#333" : "#FFF",
+                              border:
+                                theme === "dark"
+                                  ? "1px solid #444"
+                                  : "1px solid #DDD",
+                              borderRadius: "4px",
+                              height: "30px",
+                            },
+                            "& .MuiOutlinedInput-notchedOutline": {
+                              border: "none",
+                            },
                           }}
-                          displayEmpty
-                          onMouseDown={(e: React.MouseEvent<HTMLElement>) => {
-                            e.stopPropagation();
-                            setIsContainerSelectActive(true);
-                          }}
-                          onClose={() => {
-                            setTimeout(() => setIsContainerSelectActive(false), 300);
-                          }}
-                          MenuProps={{
-                            slotProps: {
-                              paper: {
-                                onClick: (e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation(),
-                                onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => {
-                                  e.stopPropagation();
-                                  setIsContainerSelectActive(true);
-                                },
-                                style: { zIndex: 9999 }
-                              }
-                            }
-                          }}
-                          renderValue={(value) => (
-                            <Box 
-                              sx={{ display: "flex", alignItems: "center" }}
-                              onClick={(e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation()}
-                            >
-                              {loadingContainers ? (
-                                <CircularProgress size={14} sx={{ mr: 1 }} />
-                              ) : (
-                                <span className="fas fa-cube" style={{ marginRight: "8px", fontSize: "12px" }} />
-                              )}
-                              {value || "Select container"}
-                            </Box>
-                          )}
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          {containers.map((container) => (
-                            <MenuItem 
-                              key={container.ContainerName} 
-                              value={container.ContainerName}
-                              sx={{ fontSize: "13px", py: 0.75 }}
-                              onMouseDown={(e: React.MouseEvent<HTMLLIElement>) => {
-                                e.stopPropagation();
-                                setIsContainerSelectActive(true);
-                              }}
-                            >
-                              <Box sx={{ display: "flex", flexDirection: "column" }}>
-                                <Typography variant="body2">{container.ContainerName}</Typography>
-                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: "11px" }}>
-                                  {container.Image.length > 40 ? container.Image.substring(0, 37) + '...' : container.Image}
-                                </Typography>
-                              </Box>
-                            </MenuItem>
-                          ))}
-                          {containers.length === 0 && !loadingContainers && (
-                            <MenuItem disabled>
-                              <Typography variant="body2">No containers found</Typography>
-                            </MenuItem>
-                          )}
-                        </Select>
-                      </FormControl>
-                      
-                      {/* Previous logs toggle */}
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            size="small"
-                            checked={showPreviousLogs}
-                            onChange={(e) => {
-                              setShowPreviousLogs(e.target.checked);
-                              // Close and reopen WebSocket with new setting
+                          <Select
+                            value={logsContainer}
+                            onChange={(e: SelectChangeEvent<string>) => {
+                              e.stopPropagation();
+                              setLogsContainer(e.target.value);
+                              // Close and reopen WebSocket with new container
                               if (wsRef.current) {
                                 wsRef.current.close();
                                 wsRef.current = null;
                                 setLogs([]);
                               }
                             }}
-                            onClick={(e: React.MouseEvent<HTMLButtonElement>) => e.stopPropagation()}
-                          />
-                        }
-                        label={
-                          <Typography sx={{ fontSize: "12px" }}>
-                            Previous Logs
-                          </Typography>
-                        }
-                        sx={{ mr: 1 }}
+                            displayEmpty
+                            onMouseDown={(e: React.MouseEvent<HTMLElement>) => {
+                              e.stopPropagation();
+                              setIsContainerSelectActive(true);
+                            }}
+                            onClose={() => {
+                              setTimeout(
+                                () => setIsContainerSelectActive(false),
+                                300,
+                              );
+                            }}
+                            MenuProps={{
+                              slotProps: {
+                                paper: {
+                                  onClick: (
+                                    e: React.MouseEvent<HTMLDivElement>,
+                                  ) => e.stopPropagation(),
+                                  onMouseDown: (
+                                    e: React.MouseEvent<HTMLDivElement>,
+                                  ) => {
+                                    e.stopPropagation();
+                                    setIsContainerSelectActive(true);
+                                  },
+                                  style: { zIndex: 9999 },
+                                },
+                              },
+                            }}
+                            renderValue={(value) => (
+                              <Box
+                                sx={{ display: "flex", alignItems: "center" }}
+                                onClick={(
+                                  e: React.MouseEvent<HTMLDivElement>,
+                                ) => e.stopPropagation()}
+                              >
+                                {loadingContainers ? (
+                                  <CircularProgress size={14} sx={{ mr: 1 }} />
+                                ) : (
+                                  <span
+                                    className="fas fa-cube"
+                                    style={{
+                                      marginRight: "8px",
+                                      fontSize: "12px",
+                                    }}
+                                  />
+                                )}
+                                {value || "Select container"}
+                              </Box>
+                            )}
+                          >
+                            {containers.map((container) => (
+                              <MenuItem
+                                key={container.ContainerName}
+                                value={container.ContainerName}
+                                sx={{ fontSize: "13px", py: 0.75 }}
+                                onMouseDown={(
+                                  e: React.MouseEvent<HTMLLIElement>,
+                                ) => {
+                                  e.stopPropagation();
+                                  setIsContainerSelectActive(true);
+                                }}
+                              >
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                  }}
+                                >
+                                  <Typography variant="body2">
+                                    {container.ContainerName}
+                                  </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    sx={{ fontSize: "11px" }}
+                                  >
+                                    {container.Image.length > 40
+                                      ? container.Image.substring(0, 37) + "..."
+                                      : container.Image}
+                                  </Typography>
+                                </Box>
+                              </MenuItem>
+                            ))}
+                            {containers.length === 0 && !loadingContainers && (
+                              <MenuItem disabled>
+                                <Typography variant="body2">
+                                  No containers found
+                                </Typography>
+                              </MenuItem>
+                            )}
+                          </Select>
+                        </FormControl>
+
+                        {/* Previous logs toggle */}
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              size="small"
+                              checked={showPreviousLogs}
+                              onChange={(e) => {
+                                setShowPreviousLogs(e.target.checked);
+                                // Close and reopen WebSocket with new setting
+                                if (wsRef.current) {
+                                  wsRef.current.close();
+                                  wsRef.current = null;
+                                  setLogs([]);
+                                }
+                              }}
+                              onClick={(
+                                e: React.MouseEvent<HTMLButtonElement>,
+                              ) => e.stopPropagation()}
+                            />
+                          }
+                          label={
+                            <Typography sx={{ fontSize: "12px" }}>
+                              Previous Logs
+                            </Typography>
+                          }
+                          sx={{ mr: 1 }}
+                        />
+
+                        {/* Clear logs button */}
+                        <Tooltip title="Clear Logs">
+                          <IconButton
+                            size="small"
+                            onClick={() => {
+                              setLogs([]);
+                              if (terminalInstance.current) {
+                                terminalInstance.current.clear();
+                              }
+                            }}
+                            sx={{
+                              color: theme === "dark" ? "#CCC" : "#666",
+                              padding: "2px",
+                              "&:hover": {
+                                backgroundColor:
+                                  theme === "dark"
+                                    ? "rgba(255,255,255,0.1)"
+                                    : "rgba(0,0,0,0.05)",
+                              },
+                            }}
+                          >
+                            <FiTrash2 size={16} />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </Box>
+
+                    {/* Terminal for logs */}
+                    <Box sx={{ flex: 1, p: 1 }}>
+                      <div
+                        key={logsTerminalKey}
+                        ref={terminalRef}
+                        style={{ height: "100%", width: "100%" }}
                       />
-                      
-                      {/* Clear logs button */}
-                      <Tooltip title="Clear Logs">
-                        <IconButton 
-                          size="small" 
-                          onClick={() => {
-                            setLogs([]);
-                            if (terminalInstance.current) {
-                              terminalInstance.current.clear();
-                            }
-                          }}
-                          sx={{ 
-                            color: theme === "dark" ? "#CCC" : "#666",
-                            padding: "2px",
-                            '&:hover': {
-                              backgroundColor: theme === "dark" ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
-                            }
-                          }}
-                        >
-                          <FiTrash2 size={16} />
-                        </IconButton>
-                      </Tooltip>
                     </Box>
                   </Box>
-                  
-                  {/* Terminal for logs */}
-                  <Box sx={{ flex: 1, p: 1 }}>
-                    <div
-                      key={logsTerminalKey}
-                      ref={terminalRef}
-                      style={{ height: "100%", width: "100%" }}
-                    />
-                  </Box>
-                </Box>
-              )}
-              
+                )}
+
               {tabValue === 3 && type.toLowerCase() === "pod" && (
                 <Box
                   sx={{
-                    height: isTerminalMaximized ? "calc(100vh - 220px)" : "500px",
+                    height: isTerminalMaximized
+                      ? "calc(100vh - 220px)"
+                      : "500px",
                     bgcolor: theme === "dark" ? "#1A1A1A" : "#FAFAFA",
                     borderRadius: "8px",
-                    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1)",
+                    boxShadow:
+                      "0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1)",
                     overflow: "hidden",
-                    border: theme === "dark" ? "1px solid #333" : "1px solid #E0E0E0",
+                    border:
+                      theme === "dark" ? "1px solid #333" : "1px solid #E0E0E0",
                     p: 0,
                     pb: 0.5,
                     display: "flex",
                     flexDirection: "column",
                     position: "relative",
-                    transition: "height 0.3s ease-in-out"
+                    transition: "height 0.3s ease-in-out",
                   }}
                   onClick={(e: React.MouseEvent<HTMLDivElement>) => {
                     e.stopPropagation(); // Stop clicks inside this box from bubbling
@@ -1423,54 +1661,61 @@ const WecsDetailsPanel = ({
                   <Box
                     sx={{
                       display: "flex",
-                    alignItems: "center",
+                      alignItems: "center",
                       justifyContent: "space-between",
                       px: 2,
                       py: 0.75,
                       backgroundColor: theme === "dark" ? "#252525" : "#F0F0F0",
-                      borderBottom: theme === "dark" ? "1px solid #333" : "1px solid #E0E0E0",
+                      borderBottom:
+                        theme === "dark"
+                          ? "1px solid #333"
+                          : "1px solid #E0E0E0",
                       fontSize: "13px",
                       fontWeight: 500,
                       color: theme === "dark" ? "#CCC" : "#444",
-                      fontFamily: '"Segoe UI", "Helvetica", "Arial", sans-serif'
+                      fontFamily:
+                        '"Segoe UI", "Helvetica", "Arial", sans-serif',
                     }}
                   >
                     <Box sx={{ display: "flex", alignItems: "center" }}>
-                      <span 
-                        style={{ 
-                          display: "inline-block", 
-                          width: "12px", 
-                          height: "12px", 
-                          borderRadius: "50%", 
-                          backgroundColor: "#98C379", 
-                          marginRight: "8px"
-                        }} 
+                      <span
+                        style={{
+                          display: "inline-block",
+                          width: "12px",
+                          height: "12px",
+                          borderRadius: "50%",
+                          backgroundColor: "#98C379",
+                          marginRight: "8px",
+                        }}
                       />
                       {name}
                     </Box>
-                    
+
                     <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                       {/* Container selection dropdown */}
-                      <FormControl 
-                        size="small" 
+                      <FormControl
+                        size="small"
                         className="container-dropdown"
                         onMouseDown={() => {
                           // console.log("Container dropdown interaction started");
                           setIsContainerSelectActive(true);
                         }}
-                        sx={{ 
+                        sx={{
                           minWidth: 150,
                           "& .MuiInputBase-root": {
                             color: theme === "dark" ? "#CCC" : "#444",
                             fontSize: "13px",
                             backgroundColor: theme === "dark" ? "#333" : "#FFF",
-                            border: theme === "dark" ? "1px solid #444" : "1px solid #DDD",
+                            border:
+                              theme === "dark"
+                                ? "1px solid #444"
+                                : "1px solid #DDD",
                             borderRadius: "4px",
-                            height: "30px"
+                            height: "30px",
                           },
                           "& .MuiOutlinedInput-notchedOutline": {
-                            border: "none"
-                          }
+                            border: "none",
+                          },
                         }}
                         onClick={(e: React.MouseEvent<HTMLDivElement>) => {
                           e.stopPropagation();
@@ -1488,145 +1733,195 @@ const WecsDetailsPanel = ({
                           onClose={() => {
                             // console.log("Select dropdown closed");
                             // Delay setting this to false to allow click events to process first
-                            setTimeout(() => setIsContainerSelectActive(false), 300);
+                            setTimeout(
+                              () => setIsContainerSelectActive(false),
+                              300,
+                            );
                           }}
                           MenuProps={{
                             slotProps: {
                               paper: {
-                                onClick: (e: React.MouseEvent<HTMLDivElement>) => {
+                                onClick: (
+                                  e: React.MouseEvent<HTMLDivElement>,
+                                ) => {
                                   e.stopPropagation();
                                 },
-                                onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => {
+                                onMouseDown: (
+                                  e: React.MouseEvent<HTMLDivElement>,
+                                ) => {
                                   e.stopPropagation();
                                   setIsContainerSelectActive(true);
                                 },
                                 style: {
-                                  zIndex: 9999
-                                }
+                                  zIndex: 9999,
+                                },
                               },
                               root: {
-                                onClick: (e: React.MouseEvent<HTMLDivElement>) => {
+                                onClick: (
+                                  e: React.MouseEvent<HTMLDivElement>,
+                                ) => {
                                   e.stopPropagation();
                                 },
-                                onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => {
+                                onMouseDown: (
+                                  e: React.MouseEvent<HTMLDivElement>,
+                                ) => {
                                   e.stopPropagation();
                                   setIsContainerSelectActive(true);
-                                }
-                              }
+                                },
+                              },
                             },
                             // Prevent menu from closing the panel by setting anchorOrigin and transformOrigin
                             anchorOrigin: {
-                              vertical: 'bottom',
-                              horizontal: 'left',
+                              vertical: "bottom",
+                              horizontal: "left",
                             },
                             transformOrigin: {
-                              vertical: 'top',
-                              horizontal: 'left',
-                            }
+                              vertical: "top",
+                              horizontal: "left",
+                            },
                           }}
                           renderValue={(value) => (
-                            <Box 
+                            <Box
                               sx={{ display: "flex", alignItems: "center" }}
-                              onClick={(e: React.MouseEvent<HTMLDivElement>) => {
+                              onClick={(
+                                e: React.MouseEvent<HTMLDivElement>,
+                              ) => {
                                 e.stopPropagation();
                               }}
                             >
                               {loadingContainers ? (
                                 <CircularProgress size={14} sx={{ mr: 1 }} />
                               ) : (
-                                <span className="fas fa-cube" style={{ marginRight: "8px", fontSize: "12px" }} />
+                                <span
+                                  className="fas fa-cube"
+                                  style={{
+                                    marginRight: "8px",
+                                    fontSize: "12px",
+                                  }}
+                                />
                               )}
                               {value || "Select container"}
                             </Box>
                           )}
                         >
                           {containers.map((container) => (
-                            <MenuItem 
-                              key={container.ContainerName} 
+                            <MenuItem
+                              key={container.ContainerName}
                               value={container.ContainerName}
                               sx={{
                                 fontSize: "13px",
-                                py: 0.75
+                                py: 0.75,
                               }}
-                              onMouseDown={(e: React.MouseEvent<HTMLLIElement>) => {
+                              onMouseDown={(
+                                e: React.MouseEvent<HTMLLIElement>,
+                              ) => {
                                 e.stopPropagation();
                                 // console.log(`MenuItem ${container.ContainerName} mousedown`);
                                 setIsContainerSelectActive(true);
                               }}
                             >
-                              <Box sx={{ display: "flex", flexDirection: "column" }}>
-                                <Typography variant="body2">{container.ContainerName}</Typography>
-                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: "11px" }}>
-                                  {container.Image.length > 40 ? container.Image.substring(0, 37) + '...' : container.Image}
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                }}
+                              >
+                                <Typography variant="body2">
+                                  {container.ContainerName}
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{ fontSize: "11px" }}
+                                >
+                                  {container.Image.length > 40
+                                    ? container.Image.substring(0, 37) + "..."
+                                    : container.Image}
                                 </Typography>
                               </Box>
                             </MenuItem>
                           ))}
                           {containers.length === 0 && !loadingContainers && (
                             <MenuItem disabled>
-                              <Typography variant="body2">No containers found</Typography>
+                              <Typography variant="body2">
+                                No containers found
+                              </Typography>
                             </MenuItem>
                           )}
                         </Select>
                       </FormControl>
-                      
+
                       {/* Existing buttons */}
                       <Tooltip title="Clear Terminal">
-                        <IconButton 
-                          size="small" 
+                        <IconButton
+                          size="small"
                           onClick={() => {
                             if (execTerminalInstance.current) {
                               execTerminalInstance.current.clear();
                             }
                           }}
-                          sx={{ 
+                          sx={{
                             color: theme === "dark" ? "#CCC" : "#666",
                             padding: "2px",
-                            '&:hover': {
-                              backgroundColor: theme === "dark" ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
-                            }
+                            "&:hover": {
+                              backgroundColor:
+                                theme === "dark"
+                                  ? "rgba(255,255,255,0.1)"
+                                  : "rgba(0,0,0,0.05)",
+                            },
                           }}
                         >
                           <FiTrash2 size={16} />
                         </IconButton>
                       </Tooltip>
-                      
-                      <Tooltip title={isTerminalMaximized ? "Minimize" : "Maximize"}>
-                        <IconButton 
-                          size="small" 
-                          onClick={() => setIsTerminalMaximized(!isTerminalMaximized)}
-                          sx={{ 
+
+                      <Tooltip
+                        title={isTerminalMaximized ? "Minimize" : "Maximize"}
+                      >
+                        <IconButton
+                          size="small"
+                          onClick={() =>
+                            setIsTerminalMaximized(!isTerminalMaximized)
+                          }
+                          sx={{
                             color: theme === "dark" ? "#CCC" : "#666",
                             padding: "2px",
-                            '&:hover': {
-                              backgroundColor: theme === "dark" ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
-                            }
+                            "&:hover": {
+                              backgroundColor:
+                                theme === "dark"
+                                  ? "rgba(255,255,255,0.1)"
+                                  : "rgba(0,0,0,0.05)",
+                            },
                           }}
                         >
-                          {isTerminalMaximized ? <FiMinimize2 size={16} /> : <FiMaximize2 size={16} />}
+                          {isTerminalMaximized ? (
+                            <FiMinimize2 size={16} />
+                          ) : (
+                            <FiMaximize2 size={16} />
+                          )}
                         </IconButton>
                       </Tooltip>
                     </Box>
                   </Box>
-                  
+
                   {/* Terminal content */}
                   <Box
                     sx={{
                       flex: 1,
                       p: 1,
-                      overflow: "hidden"
-                  }}
-                >
-                  <div
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
                       key={execTerminalKey}
-                    ref={execTerminalRef}
-                      style={{ 
-                        height: "100%", 
-                        width: "100%", 
+                      ref={execTerminalRef}
+                      style={{
+                        height: "100%",
+                        width: "100%",
                         padding: "4px",
-                        overflow: "hidden"
+                        overflow: "hidden",
                       }}
-                  />
+                    />
                   </Box>
                 </Box>
               )}
@@ -1658,5 +1953,3 @@ const WecsDetailsPanel = ({
 };
 
 export default WecsDetailsPanel;
-
-
