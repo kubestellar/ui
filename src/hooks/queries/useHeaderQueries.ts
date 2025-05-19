@@ -19,11 +19,11 @@ export const useHeaderQueries = () => {
       queryFn: async (): Promise<ClusterContextResponse> => {
         const response = await api.get('/api/clusters');
         return {
-          contexts: response.data.contexts.filter((ctx: Context) => 
-            ctx.name.endsWith("-kubeflex") || ctx.cluster.endsWith("-kubeflex")
+          contexts: response.data.contexts.filter(
+            (ctx: Context) => ctx.name.endsWith('-kubeflex') || ctx.cluster.endsWith('-kubeflex')
           ),
           currentContext: response.data.currentContext,
-          clusters: response.data.clusters
+          clusters: response.data.clusters,
         };
       },
     });
@@ -32,4 +32,4 @@ export const useHeaderQueries = () => {
   return {
     useContexts,
   };
-}; 
+};

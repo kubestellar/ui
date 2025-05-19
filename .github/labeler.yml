@@ -41,4 +41,4 @@
 
 # Add 'other' label as a fallback for any other files
 'other':
-  - "*"
+  - '*'

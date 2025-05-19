@@ -11,7 +11,7 @@ export const useAuth = () => {
       if (!token) {
         return { isAuthenticated: false };
       }
-      
+
       try {
         await VerifyToken(token);
         return { isAuthenticated: true };
@@ -28,7 +28,7 @@ export const useAuth = () => {
 
 export const useAuthActions = () => {
   const queryClient = useQueryClient();
-  
+
   return {
     logout: () => {
       localStorage.removeItem('jwtToken');
@@ -37,7 +37,7 @@ export const useAuthActions = () => {
     },
     refreshAuth: () => {
       queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
-    }
+    },
   };
 };
 
@@ -45,4 +45,4 @@ export const logout = () => {
   localStorage.removeItem('jwtToken');
   localStorage.setItem('tokenRemovalTime', Date.now().toString());
   window.dispatchEvent(new Event('storage'));
-}; 
+};

@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: my-auto-app-container
-          image: nginx  # Change to your application image
+          image: nginx # Change to your application image
           ports:
             - containerPort: 80
 
@@ -32,7 +32,7 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 80
-  type: ClusterIP  # Internal service
+  type: ClusterIP # Internal service
 
 ---
 apiVersion: networking.k8s.io/v1
@@ -45,7 +45,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: myautoapp.local  # Change for your domain
+    - host: myautoapp.local # Change for your domain
       http:
         paths:
           - path: /

@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
-import { 
-  Paper, 
-  useTheme as useMuiTheme,
-} from '@mui/material';
+import { Paper, useTheme as useMuiTheme } from '@mui/material';
 import { ManagedCluster } from '../../types/bindingPolicy';
 import { useNavigate } from 'react-router-dom';
 import { useClusterQueries } from '../../hooks/queries/useClusterQueries';
 import { toast } from 'react-hot-toast';
-import useTheme from "../../stores/themeStore";
+import useTheme from '../../stores/themeStore';
 import ClusterPanelHeader from './ClusterPanelHeader';
 import ClusterLabelsList from './ClusterLabelsList';
 import { LabelEditDialog, SelectClusterDialog } from './ClusterDialogs';
@@ -30,16 +27,7 @@ interface LabelGroup {
   }>;
 }
 
-
-
-
-
-
-const DEFAULT_FILTERED_LABEL_KEYS = [
-  'open-cluster-management',
-  'kubernetes.io',
-  'k8s.io'
-];
+const DEFAULT_FILTERED_LABEL_KEYS = ['open-cluster-management', 'kubernetes.io', 'k8s.io'];
 
 const ClusterPanel: React.FC<ClusterPanelProps> = ({
   clusters,
@@ -47,22 +35,22 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
   error,
   compact = false,
   filteredLabelKeys = DEFAULT_FILTERED_LABEL_KEYS,
-  onItemClick
+  onItemClick,
 }) => {
-  const muiTheme = useMuiTheme(); 
-  const theme = useTheme((state) => state.theme); 
+  const muiTheme = useMuiTheme();
+  const theme = useTheme(state => state.theme);
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedCluster, setSelectedCluster] = useState<ManagedCluster | null>(null);
   const [selectedClusters, setSelectedClusters] = useState<ManagedCluster[]>([]);
   const [isBulkEdit, setIsBulkEdit] = useState(false);
   const [loadingClusterEdit, setLoadingClusterEdit] = useState<string | null>(null);
   const [selectClusterDialogOpen, setSelectClusterDialogOpen] = useState(false);
-  
+
   const DEFAULT_CONTEXT = 'its1';
-  
-  const isDarkTheme = theme === "dark";
+
+  const isDarkTheme = theme === 'dark';
   const { useUpdateClusterLabels } = useClusterQueries();
   const updateLabelsMutation = useUpdateClusterLabels();
 
@@ -84,17 +72,17 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
   const handleEditSpecificCluster = (cluster: ManagedCluster) => {
     console.log('ClusterPanel - handleEditSpecificCluster - cluster:', cluster);
     console.log('ClusterPanel - handleEditSpecificCluster - cluster.context:', cluster.context);
-    
+
     // Log all cluster contexts for debugging
     logClusterContexts();
-    
+
     // Clone the cluster object and ensure it has a valid context
     // Use the cluster's original context if available, or fall back to the default context
     const clusterWithContext = {
       ...cluster,
-      context: cluster.context || DEFAULT_CONTEXT
+      context: cluster.context || DEFAULT_CONTEXT,
     };
-    
+
     setSelectedCluster(clusterWithContext);
     setEditDialogOpen(true);
     setSelectClusterDialogOpen(false);
@@ -102,19 +90,26 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
   };
 
   const handleEditMultipleClusters = (clusters: ManagedCluster[]) => {
-    console.log("handleEditMultipleClusters called with:", JSON.stringify(clusters.map(c => c.name), null, 2));
-    
+    console.log(
+      'handleEditMultipleClusters called with:',
+      JSON.stringify(
+        clusters.map(c => c.name),
+        null,
+        2
+      )
+    );
+
     if (clusters.length === 0) {
       toast.error('No clusters selected');
       return;
     }
-    
+
     // Ensure all clusters have valid contexts
     const clustersWithContext = clusters.map(cluster => ({
       ...cluster,
-      context: cluster.context || DEFAULT_CONTEXT
+      context: cluster.context || DEFAULT_CONTEXT,
     }));
-    
+
     setSelectedClusters(clustersWithContext);
     setEditDialogOpen(true);
     setSelectClusterDialogOpen(false);
@@ -129,23 +124,27 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
     });
   };
 
-  const handleSaveLabels = (clusterName: string, contextName: string, labels: { [key: string]: string }) => {
+  const handleSaveLabels = (
+    clusterName: string,
+    contextName: string,
+    labels: { [key: string]: string }
+  ) => {
     setLoadingClusterEdit(clusterName);
-    
+
     console.log('ClusterPanel - handleSaveLabels - clusterName:', clusterName);
     console.log('ClusterPanel - handleSaveLabels - contextName:', contextName);
-    
+
     // Make sure the context is properly set in the mutation request
     // Use the provided context or fall back to the default context if not provided
     updateLabelsMutation.mutate(
-      { 
+      {
         contextName: contextName || DEFAULT_CONTEXT,
-        clusterName, 
-        labels
+        clusterName,
+        labels,
       },
       {
         onSuccess: () => {
-          toast.success("Labels updated successfully", {
+          toast.success('Labels updated successfully', {
             icon: '🏷️',
             style: {
               borderRadius: '10px',
@@ -157,7 +156,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
           setLoadingClusterEdit(null);
         },
         onError: (error: Error) => {
-          toast.error("Failed to update labels", {
+          toast.error('Failed to update labels', {
             icon: '❌',
             style: {
               borderRadius: '10px',
@@ -166,33 +165,35 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
               border: `1px solid ${isDarkTheme ? '#334155' : '#e2e8f0'}`,
             },
           });
-          console.error("Error updating cluster labels:", error);
+          console.error('Error updating cluster labels:', error);
           setLoadingClusterEdit(null);
-        }
+        },
       }
     );
   };
 
-  const handleBulkSaveLabels = async (clusters: ManagedCluster[], labels: { [key: string]: string }) => {
+  const handleBulkSaveLabels = async (
+    clusters: ManagedCluster[],
+    labels: { [key: string]: string }
+  ) => {
     if (clusters.length === 0) return;
-    
+
     let successCount = 0;
     let failureCount = 0;
-    
-    setLoadingClusterEdit("bulk-edit");
-    
+
+    setLoadingClusterEdit('bulk-edit');
 
     for (const cluster of clusters) {
       try {
         // Get context from cluster or use default
         const contextName = cluster.context || DEFAULT_CONTEXT;
-        
+
         await new Promise<void>((resolve, reject) => {
           updateLabelsMutation.mutate(
-            { 
+            {
               contextName,
-              clusterName: cluster.name, 
-              labels
+              clusterName: cluster.name,
+              labels,
             },
             {
               onSuccess: () => {
@@ -203,7 +204,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
                 console.error(`Error updating cluster ${cluster.name}:`, error);
                 failureCount++;
                 reject(error);
-              }
+              },
             }
           );
         });
@@ -211,7 +212,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
         console.error(`Error processing cluster ${cluster.name}:`, error);
       }
     }
-    
+
     if (successCount > 0 && failureCount === 0) {
       toast.success(`Labels updated for all ${successCount} clusters`, {
         icon: '🏷️',
@@ -243,7 +244,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
         },
       });
     }
-    
+
     setLoadingClusterEdit(null);
   };
 
@@ -253,69 +254,70 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
     primaryLight: muiTheme.palette.primary.light,
     primaryDark: muiTheme.palette.primary.dark,
     secondary: muiTheme.palette.secondary.main,
-    white: "#ffffff",
-    background: isDarkTheme ? "#0f172a" : "#ffffff",
-    paper: isDarkTheme ? "#1e293b" : "#f8fafc",
-    text: isDarkTheme ? "#f1f5f9" : "#1e293b",
-    textSecondary: isDarkTheme ? "#94a3b8" : "#64748b",
-    border: isDarkTheme ? "#334155" : "#e2e8f0",
-    success: "#67c073",
-    warning: "#ffb347",
-    error: "#ff6b6b",
-    disabled: isDarkTheme ? "#475569" : "#94a3b8",
+    white: '#ffffff',
+    background: isDarkTheme ? '#0f172a' : '#ffffff',
+    paper: isDarkTheme ? '#1e293b' : '#f8fafc',
+    text: isDarkTheme ? '#f1f5f9' : '#1e293b',
+    textSecondary: isDarkTheme ? '#94a3b8' : '#64748b',
+    border: isDarkTheme ? '#334155' : '#e2e8f0',
+    success: '#67c073',
+    warning: '#ffb347',
+    error: '#ff6b6b',
+    disabled: isDarkTheme ? '#475569' : '#94a3b8',
   };
 
   // Extract unique labels from clusters
   const uniqueLabels = React.useMemo(() => {
     const labelMap: Record<string, LabelGroup> = {};
-    
+
     clusters.forEach(cluster => {
       if (cluster.labels && Object.keys(cluster.labels).length > 0) {
         Object.entries(cluster.labels).forEach(([key, value]) => {
           if (filteredLabelKeys.some(pattern => key.includes(pattern))) return;
-          
+
           const labelId = `${key}:${value}`;
-          
+
           if (!labelMap[labelId]) {
             labelMap[labelId] = {
               key,
               value,
-              clusters: []
+              clusters: [],
             };
           }
-          
+
           if (!labelMap[labelId].clusters.some(c => c.name === cluster.name)) {
             labelMap[labelId].clusters.push({
-              name: cluster.name
+              name: cluster.name,
             });
           }
         });
       }
     });
-    
+
     return Object.values(labelMap);
   }, [clusters, filteredLabelKeys]);
 
   // Filter labels based on search term
   const filteredLabels = React.useMemo(() => {
     if (!searchTerm) return uniqueLabels;
-    
-    return uniqueLabels.filter(label => 
-      label.key.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      label.value.toLowerCase().includes(searchTerm.toLowerCase())
+
+    return uniqueLabels.filter(
+      label =>
+        label.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        label.value.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [uniqueLabels, searchTerm]);
 
   return (
-    <Paper 
+    <Paper
       elevation={2}
-      sx={{ 
-        height: '100%', 
-        display: 'flex', 
+      sx={{
+        height: '100%',
+        display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
         borderRadius: 2,
-        backgroundColor: isDarkTheme ? "rgba(17, 25, 40, 0.8)" : muiTheme.palette.background.paper,
+        backgroundColor: isDarkTheme ? 'rgba(17, 25, 40, 0.8)' : muiTheme.palette.background.paper,
         border: isDarkTheme ? '1px solid rgba(255, 255, 255, 0.15)' : 'none',
         backdropFilter: 'blur(10px)',
       }}
@@ -326,7 +328,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
         onAddLabels={handleAddLabels}
         onImportClusters={handleImportClusters}
       />
-      
+
       <ClusterLabelsList
         clusters={clusters}
         filteredLabels={filteredLabels}
@@ -362,7 +364,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
         onClose={() => setSelectClusterDialogOpen(false)}
         clusters={clusters.map(cluster => ({
           ...cluster,
-          context: cluster.context || DEFAULT_CONTEXT 
+          context: cluster.context || DEFAULT_CONTEXT,
         }))}
         onSelectCluster={handleEditSpecificCluster}
         onSelectClusters={handleEditMultipleClusters}

@@ -13,4 +13,4 @@ spec:
   downsync:
     - apiGroup: "apps"
       resources: ["Deployment"]
-      namespaces: ["default"]`; 
+      namespaces: ["default"]`;

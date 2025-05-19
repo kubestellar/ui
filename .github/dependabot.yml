@@ -1,12 +1,12 @@
 version: 2
 updates:
-  - package-ecosystem: "npm"  
-    directory: "/"             
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      interval: "weekly"       
-    versioning-strategy: "increase"
-  - package-ecosystem: "gomod"  
-    directory: "/backend"            
+      interval: 'weekly'
+    versioning-strategy: 'increase'
+  - package-ecosystem: 'gomod'
+    directory: '/backend'
     schedule:
-      interval: "weekly"     
-    versioning-strategy: "increase"
+      interval: 'weekly'
+    versioning-strategy: 'increase'
