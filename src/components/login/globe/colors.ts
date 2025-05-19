@@ -9,4 +9,4 @@ export const COLORS = {
   accent2: '#FFD166', // Secondary accent for highlights
   aiTraining: '#B83FF7', // Brighter purple for AI Training
   aiInference: '#00D6E4', // Brighter cyan for AI Inference
-}; 
+};

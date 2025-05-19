@@ -40,16 +40,16 @@ const FullScreenToggle: React.FC<FullScreenToggleProps> = ({
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isHovered, setIsHovered] = useState(false);
-  const theme = useTheme((state) => state.theme);
+  const theme = useTheme(state => state.theme);
 
   const handleFullScreenChange = useCallback(() => {
     const doc = document as FullscreenDocument;
-    const fullscreenElement = 
-      doc.fullscreenElement || 
-      doc.webkitFullscreenElement || 
-      doc.mozFullScreenElement || 
+    const fullscreenElement =
+      doc.fullscreenElement ||
+      doc.webkitFullscreenElement ||
+      doc.mozFullScreenElement ||
       doc.msFullscreenElement;
-    
+
     setIsFullScreen(!!fullscreenElement);
     onFullScreenChange?.(!!fullscreenElement);
     setError(null);
@@ -77,14 +77,16 @@ const FullScreenToggle: React.FC<FullScreenToggleProps> = ({
     try {
       setError(null);
       const doc = document as FullscreenDocument;
-      
-      if (!doc.fullscreenElement && 
-          !doc.webkitFullscreenElement && 
-          !doc.mozFullScreenElement && 
-          !doc.msFullscreenElement) {
+
+      if (
+        !doc.fullscreenElement &&
+        !doc.webkitFullscreenElement &&
+        !doc.mozFullScreenElement &&
+        !doc.msFullscreenElement
+      ) {
         // Enter full screen for the specific container or document
         const element = (containerRef?.current || document.documentElement) as FullscreenElement;
-        
+
         if (element.requestFullscreen) {
           await element.requestFullscreen();
         } else if (element.webkitRequestFullscreen) {
@@ -121,15 +123,15 @@ const FullScreenToggle: React.FC<FullScreenToggleProps> = ({
     'bottom-right': 'absolute bottom-4 right-4',
     'top-left': 'absolute top-4 left-4',
     'bottom-left': 'absolute bottom-4 left-4',
-    'inline': '',
+    inline: '',
   };
 
   // Tooltip position classes
   const tooltipClasses = {
-    'top': 'tooltip-top',
-    'bottom': 'tooltip-bottom',
-    'left': 'tooltip-left',
-    'right': 'tooltip-right',
+    top: 'tooltip-top',
+    bottom: 'tooltip-bottom',
+    left: 'tooltip-left',
+    right: 'tooltip-right',
   };
 
   // Button styles based on theme and state
@@ -172,7 +174,7 @@ const FullScreenToggle: React.FC<FullScreenToggleProps> = ({
   };
 
   return (
-    <div 
+    <div
       className={`
         tooltip 
         ${tooltipClasses[tooltipPosition]} 
@@ -195,8 +197,8 @@ const FullScreenToggle: React.FC<FullScreenToggleProps> = ({
         role="switch"
       >
         {isFullScreen ? (
-          <RxExitFullScreen 
-            size={iconSize} 
+          <RxExitFullScreen
+            size={iconSize}
             className={`
               ${iconStyles.base}
               ${theme === 'dark' ? iconStyles.dark : iconStyles.light}
@@ -204,8 +206,8 @@ const FullScreenToggle: React.FC<FullScreenToggleProps> = ({
             aria-hidden="true"
           />
         ) : (
-          <RxEnterFullScreen 
-            size={iconSize} 
+          <RxEnterFullScreen
+            size={iconSize}
             className={`
               ${iconStyles.base}
               ${theme === 'dark' ? iconStyles.dark : iconStyles.light}
@@ -218,4 +220,4 @@ const FullScreenToggle: React.FC<FullScreenToggleProps> = ({
   );
 };
 
-export default FullScreenToggle; 
+export default FullScreenToggle;

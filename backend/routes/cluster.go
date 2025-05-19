@@ -22,24 +22,34 @@ func setupClusterRoutes(router *gin.Engine) {
 			"itsData":        itsData,
 		})
 	})
-	// Cluster onboarding and status endpoints.
+
+	// Cluster onboarding, status, and detachment
 	router.POST("/clusters/onboard", api.OnboardClusterHandler)
 	router.GET("/clusters/status", api.GetClusterStatusHandler)
+	router.POST("/clusters/detach", api.DetachClusterHandler)
 
-	// API for generating command.
-	router.POST("/clusters/manual/generateCommand", handlers.GenerateCommandHandler)
+	// Logs and WebSocket
+	router.GET("/clusters/onboard/logs/:cluster", api.OnboardingLogsHandler)
+	router.GET("/clusters/detach/logs/:cluster", api.GetDetachmentLogsHandler)
+	router.GET("/ws/onboarding", api.WSOnboardingHandler)
 
-	// Watch CSR endpoint.
+	// Certificate Signing Requests
 	router.GET("/clusters/watch-csr", handlers.GetCSRsExecHandler)
 
-	// Get available clusters endpoint.
+	// Available clusters
 	router.GET("/api/clusters/available", handlers.GetAvailableClustersHandler)
 
-	// New PATCH endpoint for updating managed cluster labels in ITS.
+	// Managed cluster label update
 	router.PATCH("/api/managedclusters/labels", api.UpdateManagedClusterLabelsHandler)
 
+	router.GET("/ws/detachment", api.HandleDetachmentWebSocket)
+
+	// Import cluster
 	router.POST("/clusters/import", handlers.ImportClusterHandler)
+
 	// Remote Tree View Cluster details
 	router.GET("/api/cluster/details/:name", handlers.GetClusterDetailsHandler)
 
+	router.GET("api/new/clusters", api.GetManagedClustersHandler)
+	router.GET("api/clusters/:name", api.GetManagedClusterHandler)
 }

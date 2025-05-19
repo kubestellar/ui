@@ -10,11 +10,11 @@ interface ClusterNodeData {
 
 const ClusterNode: React.FC<NodeProps<ClusterNodeData>> = ({ data }) => {
   const { label, theme } = data;
-  
+
   return (
     <>
       <Handle type="target" position={Position.Left} style={{ background: '#555' }} />
-      
+
       <Box
         sx={{
           display: 'flex',
@@ -43,10 +43,10 @@ const ClusterNode: React.FC<NodeProps<ClusterNodeData>> = ({ data }) => {
         >
           <KubernetesIcon type="cluster" size={40} />
         </Box>
-        
-        <Typography 
-          variant="subtitle2" 
-          sx={{ 
+
+        <Typography
+          variant="subtitle2"
+          sx={{
             fontWeight: 600,
             color: theme === 'dark' ? '#fff' : '#000',
             textAlign: 'center',
@@ -55,19 +55,19 @@ const ClusterNode: React.FC<NodeProps<ClusterNodeData>> = ({ data }) => {
         >
           {label}
         </Typography>
-        
-        <Typography 
-          variant="caption" 
-          sx={{ 
+
+        <Typography
+          variant="caption"
+          sx={{
             color: theme === 'dark' ? '#9CA3AF' : '#6B7280',
             textTransform: 'uppercase',
-            mt: 0.5
+            mt: 0.5,
           }}
         >
           Target Cluster
         </Typography>
       </Box>
-      
+
       <Handle type="source" position={Position.Right} style={{ background: '#555' }} />
     </>
   );

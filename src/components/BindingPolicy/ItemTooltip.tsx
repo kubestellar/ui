@@ -15,10 +15,10 @@ const ItemTooltip: React.FC<ItemTooltipProps> = ({
   subtitle,
   labels,
   description,
-  type
+  type,
 }) => {
   const theme = useTheme();
-  
+
   // Determine color based on item type
   const getColor = () => {
     switch (type) {
@@ -32,12 +32,12 @@ const ItemTooltip: React.FC<ItemTooltipProps> = ({
         return theme.palette.primary.main;
     }
   };
-  
+
   // Get icon based on type - now using KubernetesIcon
   const getIcon = () => {
     return <KubernetesIcon type={type} size={20} />;
   };
-  
+
   return (
     <Box
       sx={{
@@ -58,17 +58,17 @@ const ItemTooltip: React.FC<ItemTooltipProps> = ({
           {title}
         </Typography>
       </Box>
-      
+
       <Typography variant="caption" component="div" color="text.secondary" sx={{ mb: 0.5 }}>
         {subtitle}
       </Typography>
-      
+
       {description && (
         <Typography variant="body2" sx={{ mb: 1, fontSize: '0.8rem' }}>
           {description}
         </Typography>
       )}
-      
+
       {Object.keys(labels).length > 0 && (
         <Box>
           <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 'medium' }}>
@@ -91,4 +91,4 @@ const ItemTooltip: React.FC<ItemTooltipProps> = ({
   );
 };
 
-export default ItemTooltip; 
+export default ItemTooltip;

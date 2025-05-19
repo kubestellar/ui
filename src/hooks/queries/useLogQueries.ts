@@ -40,4 +40,4 @@ export const useLogQueries = () => {
     useLogs,
     useWorkloadLogs,
   };
-}; 
+};

@@ -4,7 +4,7 @@
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=kubestellar_kubeflex&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=kubestellar_kubeflex)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=kubestellar_kubeflex&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=kubestellar_kubeflex)
 
-# <img alt="Logo" width="90px" src="./docs/images/kubeflex-logo.png" style="vertical-align: middle;" />  KubeFlex
+# <img alt="Logo" width="90px" src="./docs/images/kubeflex-logo.png" style="vertical-align: middle;" /> KubeFlex
 
 A flexible and scalable platform for running Kubernetes control plane APIs.
 
@@ -12,14 +12,14 @@ A flexible and scalable platform for running Kubernetes control plane APIs.
 
 - Provide lightweight Kube API Server instances and selected controllers as a service.
 - Provide a flexible architecture for the storage backend, e.g.:
-    - shared DB for API servers,
-    - dedicated DB for each API server,
-    - etcd DB or Kine + Postgres DB
+  - shared DB for API servers,
+  - dedicated DB for each API server,
+  - etcd DB or Kine + Postgres DB
 - Flexibility in choice of API Server build:
-    - upstream Kube (e.g. `registry.k8s.io/kube-apiserver:v1.27.1`),
-    - trimmed down API Server builds (e.g. [multicluster control plane](https://github.com/open-cluster-management-io/multicluster-controlplane))
+  - upstream Kube (e.g. `registry.k8s.io/kube-apiserver:v1.27.1`),
+  - trimmed down API Server builds (e.g. [multicluster control plane](https://github.com/open-cluster-management-io/multicluster-controlplane))
 - Single binary CLI for improved user experience:
-    - initialize, install operator, manage lifecycle of control planes and contexts.
+  - initialize, install operator, manage lifecycle of control planes and contexts.
 
 ## Installation
 
