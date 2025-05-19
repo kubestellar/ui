@@ -10,11 +10,11 @@ import (
 	"github.com/kubestellar/ui/installer"
 )
 
-var upgrader = websocket.Upgrader{
+var upgrade = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		return true // Allow all connections for demo purposes
+		return true
 	},
 }
 
@@ -29,7 +29,7 @@ func LogsWebSocketHandler(c *gin.Context) {
 	}
 
 	// Upgrade to WebSocket
-	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	conn, err := upgrade.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Printf("Error upgrading to WebSocket: %v", err)
 		return
