@@ -4,20 +4,19 @@ kind: ClusterRole
 metadata:
   name: allow-pods-exec
 rules:
-- apiGroups: [""]
-  resources: ["pods/exec", "pods"]
-  verbs: ["get", "create"]
+  - apiGroups: ['']
+    resources: ['pods/exec', 'pods']
+    verbs: ['get', 'create']
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: bind-allow-pods-exec
 subjects:
-- kind: User
-  name: kind-cluster2
-  apiGroup: rbac.authorization.k8s.io
+  - kind: User
+    name: kind-cluster2
+    apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
   name: allow-pods-exec
   apiGroup: rbac.authorization.k8s.io
-

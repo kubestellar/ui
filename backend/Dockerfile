@@ -10,7 +10,7 @@ COPY go.mod go.sum ./
 # Download dependencies
 RUN go mod download
 
-# Copy the source code
+# Copy the source codesudo apt  install docker-compose 
 COPY . .
 
 # Build the binary
@@ -19,16 +19,17 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -o backend main.go
 # Stage 2: Create a lightweight runtime image
 FROM alpine:latest
 
-# Install necessary packages including git, kubectl, and bash
-RUN apk --no-cache add ca-certificates curl openssl git bash kubectl
-
-# Install Helm by downloading its binary from the official release
-# Specify the Helm version you need; here v3.12.0 is used as an example.
-RUN HELM_VERSION="v3.12.0" && \
+# Install necessary packages, Helm, and clusteradm
+RUN apk --no-cache add ca-certificates curl openssl git bash kubectl && \
+    HELM_VERSION="v3.12.0" && \
     curl -LO "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz" && \
     tar -zxvf "helm-${HELM_VERSION}-linux-amd64.tar.gz" && \
     mv linux-amd64/helm /usr/local/bin/helm && \
-    rm -rf linux-amd64 "helm-${HELM_VERSION}-linux-amd64.tar.gz"
+    rm -rf linux-amd64 "helm-${HELM_VERSION}-linux-amd64.tar.gz" && \
+    curl -L https://raw.githubusercontent.com/open-cluster-management-io/clusteradm/main/install.sh -o /tmp/install.sh && \
+    chmod +x /tmp/install.sh && \
+    bash /tmp/install.sh 0.10.1 && \
+    rm /tmp/install.sh
 
 # Set the working directory
 WORKDIR /root/
