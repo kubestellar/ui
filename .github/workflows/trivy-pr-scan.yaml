@@ -1,0 +1,28 @@
+name: Trivy Vulnerability Scanner
+
+on:
+  pull_request:
+    paths:
+      - '**/package*.json'
+      - '**/go.mod'
+      - '**/go.sum'
+      - '**/Dockerfile'
+      - '**/.github/workflows/**'
+
+jobs:
+  scan:
+    name: Scan for Vulnerabilities
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner in fs mode
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
