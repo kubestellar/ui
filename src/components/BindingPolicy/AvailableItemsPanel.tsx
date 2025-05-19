@@ -1,16 +1,16 @@
 import React, { useEffect } from 'react';
-import { 
-  Box, 
-  Typography, 
-  List, 
-  ListItem, 
+import {
+  Box,
+  Typography,
+  List,
+  ListItem,
   Paper,
   alpha,
   useTheme,
   Chip,
   Tooltip,
   CircularProgress,
-  Alert
+  Alert,
 } from '@mui/material';
 import { Draggable } from '@hello-pangea/dnd';
 import { BindingPolicyInfo, ManagedCluster, Workload } from '../../types/bindingPolicy';
@@ -38,38 +38,38 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
   clusters,
   workloads,
   loading = { clusters: false, workloads: false, policies: false },
-  error = {}
+  error = {},
 }) => {
   const theme = useTheme();
-  
+
   // Debug mount/unmount cycle
   useEffect(() => {
     console.log('🔵 AvailableItemsPanel mounted with items:', {
       policies: policies.length,
       clusters: clusters.length,
-      workloads: workloads.length
+      workloads: workloads.length,
     });
-    
+
     return () => {
       console.log('🔴 AvailableItemsPanel unmounting');
     };
   }, [policies.length, clusters.length, workloads.length]);
-  
+
   // Log whenever the component re-renders due to data changes
   console.log('🔄 AvailableItemsPanel rendering with:', {
     policies: policies.length,
     clusters: clusters.length,
     workloads: workloads.length,
-    loading
+    loading,
   });
-  
+
   // Get status color for policy
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Active':
         return '#4caf50'; // Green
       case 'Pending':
-        return '#ff9800'; // Yellow/Orange  
+        return '#ff9800'; // Yellow/Orange
       case 'Inactive':
       default:
         return '#f44336'; // Red
@@ -95,47 +95,56 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
 
   // Render loading state or content for a section
   const renderSection = <T,>(
-    title: string, 
-    items: T[], 
-    isLoading: boolean, 
+    title: string,
+    items: T[],
+    isLoading: boolean,
     renderItem: (item: T, index: number) => React.ReactNode,
     droppableId: string,
     errorMessage?: string
   ) => {
-    console.log(`🔄 Rendering section: ${title} with ${items.length} items, droppableId: ${droppableId}`);
-    
+    console.log(
+      `🔄 Rendering section: ${title} with ${items.length} items, droppableId: ${droppableId}`
+    );
+
     return (
       <>
-        <Typography variant="subtitle1" sx={{ mt: 2, mb: 1, fontWeight: 'medium', display: 'flex', alignItems: 'center' }}>
-          {title === "Policies" && <KubernetesIcon type="policy" size={20} sx={{ mr: 1 }} />}
-          {title === "Clusters" && <KubernetesIcon type="cluster" size={20} sx={{ mr: 1 }} />}
-          {title === "Workloads" && <KubernetesIcon type="workload" size={20} sx={{ mr: 1 }} />}
+        <Typography
+          variant="subtitle1"
+          sx={{ mt: 2, mb: 1, fontWeight: 'medium', display: 'flex', alignItems: 'center' }}
+        >
+          {title === 'Policies' && <KubernetesIcon type="policy" size={20} sx={{ mr: 1 }} />}
+          {title === 'Clusters' && <KubernetesIcon type="cluster" size={20} sx={{ mr: 1 }} />}
+          {title === 'Workloads' && <KubernetesIcon type="workload" size={20} sx={{ mr: 1 }} />}
           {title}
           {isLoading && <CircularProgress size={16} sx={{ ml: 1 }} />}
         </Typography>
-        
+
         {errorMessage ? (
           <Alert severity="error" sx={{ mb: 2 }}>
             {errorMessage}
           </Alert>
         ) : null}
-        
+
         <StrictModeDroppable droppableId={droppableId} isDropDisabled={true}>
           {(provided, snapshot) => (
-            <Box 
+            <Box
               {...provided.droppableProps}
               ref={provided.innerRef}
-              sx={{ 
-                maxHeight: 230, 
+              sx={{
+                maxHeight: 230,
                 overflowY: 'auto',
                 border: '1px solid',
                 borderColor: 'divider',
                 borderRadius: 1,
                 mb: 2,
-                backgroundColor: snapshot.isDraggingOver ? alpha(theme.palette.primary.main, 0.05) : 'inherit'
+                backgroundColor: snapshot.isDraggingOver
+                  ? alpha(theme.palette.primary.main, 0.05)
+                  : 'inherit',
               }}
               data-rbd-droppable-id={droppableId}
-              data-rfd-droppable-context-id={provided.droppableProps['data-rfd-droppable-context-id']}
+              data-rfd-droppable-context-id={
+                provided.droppableProps['data-rfd-droppable-context-id']
+              }
             >
               {isLoading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
@@ -173,7 +182,10 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
       index={index}
     >
       {(provided, snapshot) => {
-        console.log(`🔄 Draggable policy-${policy.name} rendering, isDragging:`, snapshot.isDragging);
+        console.log(
+          `🔄 Draggable policy-${policy.name} rendering, isDragging:`,
+          snapshot.isDragging
+        );
         return (
           <ListItem
             ref={provided.innerRef}
@@ -182,23 +194,27 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
             sx={{
               borderBottom: '1px solid',
               borderColor: 'divider',
-              bgcolor: snapshot.isDragging ? alpha(theme.palette.primary.main, 0.1) : 'background.paper',
+              bgcolor: snapshot.isDragging
+                ? alpha(theme.palette.primary.main, 0.1)
+                : 'background.paper',
               '&:last-child': { borderBottom: 'none' },
               borderLeft: `4px solid ${getStatusColor(policy.status)}`,
               transition: 'all 0.2s',
               '&:hover': {
-                bgcolor: alpha(theme.palette.primary.main, 0.05)
-              }
+                bgcolor: alpha(theme.palette.primary.main, 0.05),
+              },
             }}
             data-rbd-draggable-id={`policy-${policy.name}`}
             data-rfd-draggable-context-id={provided.draggableProps['data-rfd-draggable-context-id']}
           >
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              width: '100%',
-              justifyContent: 'space-between'
-            }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                width: '100%',
+                justifyContent: 'space-between',
+              }}
+            >
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <KubernetesIcon type="policy" size={20} sx={{ mr: 1 }} />
                 <Box>
@@ -211,14 +227,14 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
                 </Box>
               </Box>
               <Tooltip title={`Status: ${policy.status}`}>
-                <Chip 
-                  label={policy.status} 
-                  size="small" 
-                  sx={{ 
+                <Chip
+                  label={policy.status}
+                  size="small"
+                  sx={{
                     bgcolor: alpha(getStatusColor(policy.status), 0.1),
                     color: getStatusColor(policy.status),
-                    fontSize: '0.7rem'
-                  }} 
+                    fontSize: '0.7rem',
+                  }}
                 />
               </Tooltip>
             </Box>
@@ -236,7 +252,10 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
       index={index}
     >
       {(provided, snapshot) => {
-        console.log(`🔄 Draggable cluster-${cluster.name} rendering, isDragging:`, snapshot.isDragging);
+        console.log(
+          `🔄 Draggable cluster-${cluster.name} rendering, isDragging:`,
+          snapshot.isDragging
+        );
         return (
           <ListItem
             ref={provided.innerRef}
@@ -245,23 +264,27 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
             sx={{
               borderBottom: '1px solid',
               borderColor: 'divider',
-              bgcolor: snapshot.isDragging ? alpha(theme.palette.primary.main, 0.1) : 'background.paper',
+              bgcolor: snapshot.isDragging
+                ? alpha(theme.palette.primary.main, 0.1)
+                : 'background.paper',
               '&:last-child': { borderBottom: 'none' },
               borderLeft: `4px solid ${getClusterStatusColor(cluster.status)}`,
               transition: 'all 0.2s',
               '&:hover': {
-                bgcolor: alpha(theme.palette.primary.main, 0.05)
-              }
+                bgcolor: alpha(theme.palette.primary.main, 0.05),
+              },
             }}
             data-rbd-draggable-id={`cluster-${cluster.name}`}
             data-rfd-draggable-context-id={provided.draggableProps['data-rfd-draggable-context-id']}
           >
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center',
-              width: '100%',
-              justifyContent: 'space-between'
-            }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                width: '100%',
+                justifyContent: 'space-between',
+              }}
+            >
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <KubernetesIcon type="cluster" size={20} sx={{ mr: 1 }} />
                 <Typography variant="body2" fontWeight="medium" noWrap>
@@ -269,14 +292,14 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
                 </Typography>
               </Box>
               <Tooltip title={`Status: ${cluster.status}`}>
-                <Chip 
-                  label={cluster.status} 
-                  size="small" 
-                  sx={{ 
+                <Chip
+                  label={cluster.status}
+                  size="small"
+                  sx={{
                     backgroundColor: alpha(getClusterStatusColor(cluster.status), 0.1),
                     color: getClusterStatusColor(cluster.status),
-                    fontSize: '0.7rem'
-                  }} 
+                    fontSize: '0.7rem',
+                  }}
                 />
               </Tooltip>
             </Box>
@@ -294,7 +317,10 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
       index={index}
     >
       {(provided, snapshot) => {
-        console.log(`🔄 Draggable workload-${workload.name} rendering, isDragging:`, snapshot.isDragging);
+        console.log(
+          `🔄 Draggable workload-${workload.name} rendering, isDragging:`,
+          snapshot.isDragging
+        );
         return (
           <ListItem
             ref={provided.innerRef}
@@ -303,22 +329,26 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
             sx={{
               borderBottom: '1px solid',
               borderColor: 'divider',
-              bgcolor: snapshot.isDragging ? alpha(theme.palette.secondary.main, 0.1) : 'background.paper',
+              bgcolor: snapshot.isDragging
+                ? alpha(theme.palette.secondary.main, 0.1)
+                : 'background.paper',
               '&:last-child': { borderBottom: 'none' },
               transition: 'all 0.2s',
               '&:hover': {
-                bgcolor: alpha(theme.palette.secondary.main, 0.05)
-              }
+                bgcolor: alpha(theme.palette.secondary.main, 0.05),
+              },
             }}
             data-rbd-draggable-id={`workload-${workload.name}`}
             data-rfd-draggable-context-id={provided.draggableProps['data-rfd-draggable-context-id']}
           >
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center',
-              width: '100%',
-              justifyContent: 'space-between'
-            }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                width: '100%',
+                justifyContent: 'space-between',
+              }}
+            >
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <KubernetesIcon type="workload" size={20} sx={{ mr: 1 }} />
                 <Box>
@@ -347,38 +377,38 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
       <Typography variant="h6" gutterBottom align="center" fontWeight="medium">
         Available Items
       </Typography>
-      
+
       {/* Policies Section */}
       {renderSection(
-        "Binding Policies", 
-        policies, 
+        'Binding Policies',
+        policies,
         loading.policies,
         renderPolicyItem,
-        "policy-list",
+        'policy-list',
         error.policies
       )}
-      
+
       {/* Clusters Section */}
       {renderSection(
-        "Clusters (Sync Targets)", 
-        clusters, 
+        'Clusters (Sync Targets)',
+        clusters,
         loading.clusters,
         renderClusterItem,
-        "cluster-list",
+        'cluster-list',
         error.clusters
       )}
-      
+
       {/* Workloads Section */}
       {renderSection(
-        "Workloads (WDS)", 
-        workloads, 
+        'Workloads (WDS)',
+        workloads,
         loading.workloads,
         renderWorkloadItem,
-        "workload-list",
+        'workload-list',
         error.workloads
       )}
     </Paper>
   );
 };
 
-export default React.memo(AvailableItemsPanel); 
+export default React.memo(AvailableItemsPanel);

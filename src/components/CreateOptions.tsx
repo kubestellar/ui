@@ -1,23 +1,33 @@
-import { useState, useEffect } from "react";
-import jsyaml from "js-yaml";
-import { Dialog, DialogContent, DialogTitle, Tabs, Box, Alert, SelectChangeEvent, Typography, Snackbar } from "@mui/material";
-import GitHubIcon from "@mui/icons-material/GitHub";
-import  { AxiosError } from "axios";
-import { useWDSQueries } from "../hooks/queries/useWDSQueries";
-import { toast } from "react-hot-toast";
-import { StyledTab } from "./StyledComponents";
-import { getDialogPaperProps } from "../utils/dialogUtils";
-import { YamlTab } from "./Workloads/YamlTab";
-import { UploadFileTab } from "./Workloads/UploadFileTab";
-import { GitHubTab } from "./Workloads/GitHubTab";
-import { HelmTab } from "./Workloads/HelmTab/HelmTab";
-import { AddCredentialsDialog } from "../components/Workloads/AddCredentialsDialog";
-import { AddWebhookDialog } from "../components/Workloads/AddWebhookDialog";
-import { CancelConfirmationDialog } from "../components/Workloads/CancelConfirmationDialog";
-import useTheme from "../stores/themeStore";
-import helmicon from "../assets/Helm.png"
-import { api } from "../lib/api";
-import { ArtifactHubTab, ArtifactHubFormData } from "./Workloads/AirtfactTab/ArtifactHubTab";
+import { useState, useEffect } from 'react';
+import jsyaml from 'js-yaml';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Tabs,
+  Box,
+  Alert,
+  SelectChangeEvent,
+  Typography,
+  Snackbar,
+} from '@mui/material';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import { AxiosError } from 'axios';
+import { useWDSQueries } from '../hooks/queries/useWDSQueries';
+import { toast } from 'react-hot-toast';
+import { StyledTab } from './StyledComponents';
+import { getDialogPaperProps } from '../utils/dialogUtils';
+import { YamlTab } from './Workloads/YamlTab';
+import { UploadFileTab } from './Workloads/UploadFileTab';
+import { GitHubTab } from './Workloads/GitHubTab';
+import { HelmTab } from './Workloads/HelmTab/HelmTab';
+import { AddCredentialsDialog } from '../components/Workloads/AddCredentialsDialog';
+import { AddWebhookDialog } from '../components/Workloads/AddWebhookDialog';
+import { CancelConfirmationDialog } from '../components/Workloads/CancelConfirmationDialog';
+import useTheme from '../stores/themeStore';
+import helmicon from '../assets/Helm.png';
+import { api } from '../lib/api';
+import { ArtifactHubTab, ArtifactHubFormData } from './Workloads/AirtfactTab/ArtifactHubTab';
 
 interface Props {
   activeOption: string | null;
@@ -64,12 +74,8 @@ function generateRandomString(length: number) {
   return result;
 }
 
-const CreateOptions = ({
-  activeOption,
-  setActiveOption,
-  onCancel,
-}: Props) => {
-  const theme = useTheme((state) => state.theme);
+const CreateOptions = ({ activeOption, setActiveOption, onCancel }: Props) => {
+  const theme = useTheme(state => state.theme);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const randomStrings = generateRandomString(5);
   const initialEditorContent = `apiVersion: apps/v1
@@ -96,62 +102,62 @@ spec:
             - containerPort: 80
 `;
   const [editorContent, setEditorContent] = useState<string>(initialEditorContent);
-  const [workloadName, setWorkloadName] = useState<string>("example");
+  const [workloadName, setWorkloadName] = useState<string>('example');
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
-    severity: "success" | "error" | "warning" | "info";
+    severity: 'success' | 'error' | 'warning' | 'info';
   }>({
     open: false,
-    message: "",
-    severity: "success",
+    message: '',
+    severity: 'success',
   });
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [credentialDialogOpen, setCredentialDialogOpen] = useState(false);
   const [webhookDialogOpen, setWebhookDialogOpen] = useState(false);
   const [cancelConfirmationOpen, setCancelConfirmationOpen] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [newCredential, setNewCredential] = useState({
-    githubUsername: "",
-    personalAccessToken: "",
+    githubUsername: '',
+    personalAccessToken: '',
   });
   const [newWebhook, setNewWebhook] = useState({
-    webhookUrl: "",
-    personalAccessToken: "",
+    webhookUrl: '',
+    personalAccessToken: '',
   });
-  const [credentialsList, setCredentialsList] = useState<string[]>(["none"]);
-  const [webhooksList, setWebhooksList] = useState<string[]>(["none"]);
+  const [credentialsList, setCredentialsList] = useState<string[]>(['none']);
+  const [webhooksList, setWebhooksList] = useState<string[]>(['none']);
   const [isEditorContentEdited, setIsEditorContentEdited] = useState(false);
 
   const initialFormData: FormData = {
-    repositoryUrl: "",
-    path: "",
-    credentials: "none",
-    branchSpecifier: "main",
-    webhook: "none",
-    workload_label: "",
+    repositoryUrl: '',
+    path: '',
+    credentials: 'none',
+    branchSpecifier: 'main',
+    webhook: 'none',
+    workload_label: '',
   };
   const [formData, setFormData] = useState<FormData>(initialFormData);
 
   const initialHelmFormData: HelmFormData = {
-    repoName: "",
-    repoUrl: "",
-    chartName: "",
-    releaseName: "",
-    version: "", // Changed from "latest" to "" to make it empty by default
-    namespace: "default",
-    workload_label: "",
+    repoName: '',
+    repoUrl: '',
+    chartName: '',
+    releaseName: '',
+    version: '', // Changed from "latest" to "" to make it empty by default
+    namespace: 'default',
+    workload_label: '',
   };
   const [helmFormData, setHelmFormData] = useState<HelmFormData>(initialHelmFormData);
 
   const initialArtifactHubFormData: ArtifactHubFormData = {
-    packageId: "",
-    version: "",
-    namespace: "default",
-    releaseName: "",
+    packageId: '',
+    version: '',
+    namespace: 'default',
+    releaseName: '',
     values: {},
-    workloadLabel: "",
+    workloadLabel: '',
   };
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [artifactHubFormData, _] = useState<ArtifactHubFormData>(initialArtifactHubFormData);
@@ -159,70 +165,70 @@ spec:
   const { useUploadWorkloadFile } = useWDSQueries();
   const uploadFileMutation = useUploadWorkloadFile();
 
-  const detectContentType = (content: string): "json" | "yaml" => {
+  const detectContentType = (content: string): 'json' | 'yaml' => {
     try {
       JSON.parse(content);
-      return "json";
+      return 'json';
     } catch {
-      return "yaml";
+      return 'yaml';
     }
   };
 
   useEffect(() => {
     if (!editorContent) {
-      setWorkloadName("");
+      setWorkloadName('');
       return;
     }
 
     try {
       let documents: Workload[] = [];
       const contentType = detectContentType(editorContent);
-      if (contentType === "json") {
+      if (contentType === 'json') {
         const parsed = JSON.parse(editorContent);
         documents = Array.isArray(parsed) ? parsed : [parsed];
       } else {
-        jsyaml.loadAll(editorContent, (doc) => documents.push(doc as Workload), {});
+        jsyaml.loadAll(editorContent, doc => documents.push(doc as Workload), {});
       }
 
-      const docWithName = documents.find((doc) => doc?.metadata?.name);
-      const name = docWithName?.metadata?.name || "";
+      const docWithName = documents.find(doc => doc?.metadata?.name);
+      const name = docWithName?.metadata?.name || '';
       setWorkloadName(name);
     } catch (error) {
-      console.error("Error parsing editor content:", error);
-      setWorkloadName("");
+      console.error('Error parsing editor content:', error);
+      setWorkloadName('');
     }
   }, [editorContent]);
 
   useEffect(() => {
     if (!selectedFile) {
-      setWorkloadName("");
+      setWorkloadName('');
       return;
     }
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = e => {
       const content = e.target?.result as string;
       if (!content) {
-        setWorkloadName("");
+        setWorkloadName('');
         return;
       }
 
       try {
         let documents: Workload[] = [];
         const contentType = detectContentType(content);
-        if (contentType === "json") {
+        if (contentType === 'json') {
           const parsed = JSON.parse(content);
           documents = Array.isArray(parsed) ? parsed : [parsed];
         } else {
-          jsyaml.loadAll(content, (doc) => documents.push(doc as Workload), {});
+          jsyaml.loadAll(content, doc => documents.push(doc as Workload), {});
         }
 
-        const docWithName = documents.find((doc) => doc?.metadata?.name);
-        const name = docWithName?.metadata?.name || "";
+        const docWithName = documents.find(doc => doc?.metadata?.name);
+        const name = docWithName?.metadata?.name || '';
         setWorkloadName(name);
       } catch (error) {
-        console.error("Error parsing uploaded file:", error);
-        setWorkloadName("");
+        console.error('Error parsing uploaded file:', error);
+        setWorkloadName('');
       }
     };
     reader.readAsText(selectedFile);
@@ -233,8 +239,8 @@ spec:
   }, [editorContent, initialEditorContent]);
 
   useEffect(() => {
-    const storedCredentials = localStorage.getItem("credentialsList");
-    const storedWebhooks = localStorage.getItem("webhooksList");
+    const storedCredentials = localStorage.getItem('credentialsList');
+    const storedWebhooks = localStorage.getItem('webhooksList');
 
     if (storedCredentials) {
       setCredentialsList(JSON.parse(storedCredentials));
@@ -247,18 +253,18 @@ spec:
   useEffect(() => {
     let changesDetected = false;
 
-    if (activeOption === "option1") {
+    if (activeOption === 'option1') {
       changesDetected = editorContent !== initialEditorContent;
-    } else if (activeOption === "option2") {
+    } else if (activeOption === 'option2') {
       changesDetected = !!selectedFile;
-    } else if (activeOption === "option3") {
+    } else if (activeOption === 'option3') {
       changesDetected =
         formData.repositoryUrl !== initialFormData.repositoryUrl ||
         formData.path !== initialFormData.path ||
         formData.credentials !== initialFormData.credentials ||
         formData.branchSpecifier !== initialFormData.branchSpecifier ||
         formData.webhook !== initialFormData.webhook;
-    } else if (activeOption === "option4") {
+    } else if (activeOption === 'option4') {
       changesDetected =
         helmFormData.repoName !== initialHelmFormData.repoName ||
         helmFormData.repoUrl !== initialHelmFormData.repoUrl ||
@@ -266,13 +272,14 @@ spec:
         helmFormData.releaseName !== initialHelmFormData.releaseName ||
         helmFormData.version !== initialHelmFormData.version ||
         helmFormData.namespace !== initialHelmFormData.namespace;
-    } else if (activeOption === "option5") {
+    } else if (activeOption === 'option5') {
       changesDetected =
         artifactHubFormData.packageId !== initialArtifactHubFormData.packageId ||
         artifactHubFormData.version !== initialArtifactHubFormData.version ||
         artifactHubFormData.namespace !== initialArtifactHubFormData.namespace ||
         artifactHubFormData.releaseName !== initialArtifactHubFormData.releaseName ||
-        JSON.stringify(artifactHubFormData.values) !== JSON.stringify(initialArtifactHubFormData.values);
+        JSON.stringify(artifactHubFormData.values) !==
+          JSON.stringify(initialArtifactHubFormData.values);
     }
 
     setHasChanges(changesDetected);
@@ -295,57 +302,59 @@ spec:
     initialHelmFormData.releaseName,
     initialHelmFormData.version,
     initialHelmFormData.namespace,
-    initialArtifactHubFormData
+    initialArtifactHubFormData,
   ]);
 
   const handleFileUpload = async (autoNs: boolean) => {
     if (!selectedFile) {
-      toast.error("No file selected.");
+      toast.error('No file selected.');
       return;
     }
 
     const formData = new FormData();
-    formData.append("wds", selectedFile);
-    console.log("FormData Entries:", [...formData.entries()]);
+    formData.append('wds', selectedFile);
+    console.log('FormData Entries:', [...formData.entries()]);
 
     try {
       const response = await uploadFileMutation.mutateAsync({ data: formData, autoNs });
-      console.log("Mutation Response:", response);
-      toast.success("Workload Deploy successful!");
+      console.log('Mutation Response:', response);
+      toast.success('Workload Deploy successful!');
       setTimeout(() => window.location.reload(), 1000);
     } catch (error) {
       const axiosError = error as AxiosError;
-      console.error("Upload Error:", {
+      console.error('Upload Error:', {
         message: axiosError.message,
         status: axiosError.response?.status,
         data: axiosError.response?.data,
         headers: axiosError.response?.headers,
       });
       const errorMessage =
-        axiosError.response?.data && typeof axiosError.response.data === "object"
+        axiosError.response?.data && typeof axiosError.response.data === 'object'
           ? JSON.stringify(axiosError.response.data)
-          : axiosError.message || "Unknown error";
+          : axiosError.message || 'Unknown error';
 
       if (axiosError.response?.status === 500) {
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = e => {
           const content = e.target?.result as string;
           if (content) {
             try {
               let documents: Workload[] = [];
               const contentType = detectContentType(content);
-              if (contentType === "json") {
+              if (contentType === 'json') {
                 const parsed = JSON.parse(content);
                 documents = Array.isArray(parsed) ? parsed : [parsed];
               } else {
-                jsyaml.loadAll(content, (doc) => documents.push(doc as Workload), {});
+                jsyaml.loadAll(content, doc => documents.push(doc as Workload), {});
               }
-              const docWithKind = documents.find((doc) => doc?.kind);
-              const kind = docWithKind?.kind || "Unknown";
-              const namespace = docWithKind?.metadata?.namespace || "default";
-              toast.error(`Failed to create ${kind} ${workloadName} in namespace ${namespace}, workload is already exists or Namspace ${namespace} not Found`);
+              const docWithKind = documents.find(doc => doc?.kind);
+              const kind = docWithKind?.kind || 'Unknown';
+              const namespace = docWithKind?.metadata?.namespace || 'default';
+              toast.error(
+                `Failed to create ${kind} ${workloadName} in namespace ${namespace}, workload is already exists or Namspace ${namespace} not Found`
+              );
             } catch (parseError) {
-              console.error("Error parsing file for kind:", parseError);
+              console.error('Error parsing file for kind:', parseError);
               toast.error(`Failed to create Unknown ${workloadName} workload is already exists`);
             }
           } else {
@@ -354,7 +363,7 @@ spec:
         };
         reader.readAsText(selectedFile);
       } else if (axiosError.response?.status === 409) {
-        toast.error("Conflict error: Deployment already in progress!");
+        toast.error('Conflict error: Deployment already in progress!');
       } else {
         toast.error(`Upload failed: ${errorMessage}`);
       }
@@ -365,64 +374,63 @@ spec:
     const fileContent = editorContent.trim();
 
     if (!fileContent) {
-      toast.error("Please enter YAML or JSON content.");
+      toast.error('Please enter YAML or JSON content.');
       return;
     }
 
     try {
       let documents: Workload[] = [];
       const contentType = detectContentType(fileContent);
-      if (contentType === "json") {
+      if (contentType === 'json') {
         const parsed = JSON.parse(fileContent);
         documents = Array.isArray(parsed) ? parsed : [parsed];
       } else {
-        jsyaml.loadAll(fileContent, (doc) => documents.push(doc as Workload), {});
+        jsyaml.loadAll(fileContent, doc => documents.push(doc as Workload), {});
       }
 
-      const hasName = documents.some((doc) => doc?.metadata?.name);
+      const hasName = documents.some(doc => doc?.metadata?.name);
       if (!hasName) {
         toast.error("At least one document must have 'metadata.name'");
         return;
       }
 
-      const response = await api.post(
-        `/api/resources?auto_ns=${autoNs}`,
-        documents,{
-          withCredentials: true,
-        }
-      );
+      const response = await api.post(`/api/resources?auto_ns=${autoNs}`, documents, {
+        withCredentials: true,
+      });
 
       if (response.status === 200 || response.status === 201) {
-        toast.success("Deployment successful!");
+        toast.success('Deployment successful!');
         setTimeout(() => window.location.reload(), 500);
       } else {
         throw new Error(`Unexpected response status: ${response.status}`);
       }
     } catch (error: unknown) {
       const err = error as AxiosError;
-      console.error("Error uploading:", error);
+      console.error('Error uploading:', error);
 
       if (err.response) {
         if (err.response.status === 500) {
           let documents: Workload[] = [];
           const contentType = detectContentType(fileContent);
-          if (contentType === "json") {
+          if (contentType === 'json') {
             const parsed = JSON.parse(fileContent);
             documents = Array.isArray(parsed) ? parsed : [parsed];
           } else {
-            jsyaml.loadAll(fileContent, (doc) => documents.push(doc as Workload), {});
+            jsyaml.loadAll(fileContent, doc => documents.push(doc as Workload), {});
           }
-          const docWithKind = documents.find((doc) => doc?.kind);
-          const kind = docWithKind?.kind || "Unknown";
-          const namespace = docWithKind?.metadata?.namespace || "default";
-          toast.error(`Failed to create ${kind}: ${workloadName} in namespace ${namespace}, workload already exists or Namspace ${namespace} not Found`);
+          const docWithKind = documents.find(doc => doc?.kind);
+          const kind = docWithKind?.kind || 'Unknown';
+          const namespace = docWithKind?.metadata?.namespace || 'default';
+          toast.error(
+            `Failed to create ${kind}: ${workloadName} in namespace ${namespace}, workload already exists or Namspace ${namespace} not Found`
+          );
         } else if (err.response.status === 409) {
-          toast.error("Conflict error: Deployment already in progress!");
+          toast.error('Conflict error: Deployment already in progress!');
         } else {
           toast.error(`Deployment failed! (${err.response.status})`);
         }
       } else {
-        toast.error("Deployment failed due to network error!");
+        toast.error('Deployment failed due to network error!');
       }
     }
   };
@@ -438,59 +446,55 @@ spec:
       const requestBody = {
         repo_url: formData.repositoryUrl,
         folder_path: formData.path,
-        branch: formData.branchSpecifier || "main",
-        webhook: formData.webhook !== "none" ? formData.webhook : undefined,
+        branch: formData.branchSpecifier || 'main',
+        webhook: formData.webhook !== 'none' ? formData.webhook : undefined,
         workload_label: formData.workload_label || undefined,
       };
 
       const queryParams: { [key: string]: string } = {};
-      if (formData.credentials !== "none") {
-        const [git_username] = formData.credentials.split("-pat");
-        const storedCredentials = JSON.parse(localStorage.getItem("credentialsListData") || "{}");
+      if (formData.credentials !== 'none') {
+        const [git_username] = formData.credentials.split('-pat');
+        const storedCredentials = JSON.parse(localStorage.getItem('credentialsListData') || '{}');
         const pat = storedCredentials[formData.credentials]?.personalAccessToken;
         queryParams.git_username = git_username;
         queryParams.git_token = pat;
-        queryParams.branch = formData.branchSpecifier || "main";
+        queryParams.branch = formData.branchSpecifier || 'main';
       }
 
-      const response = await api.post(
-        "/api/deploy?created_by_me=true",
-        requestBody,
-        {
-          params: queryParams,
-        }
-      );
+      const response = await api.post('/api/deploy?created_by_me=true', requestBody, {
+        params: queryParams,
+      });
 
-      console.log("Deploy response:", response);
+      console.log('Deploy response:', response);
 
       if (response.status === 200 || response.status === 201) {
-        toast.success("Workload deployed successfully!");
+        toast.success('Workload deployed successfully!');
         setFormData({
-          repositoryUrl: "",
-          path: "",
-          credentials: "none",
-          branchSpecifier: "main",
-          webhook: "none",
-          workload_label: "",
+          repositoryUrl: '',
+          path: '',
+          credentials: 'none',
+          branchSpecifier: 'main',
+          webhook: 'none',
+          workload_label: '',
         });
         setTimeout(() => window.location.reload(), 4000);
       } else {
-        throw new Error("Unexpected response status: " + response.status);
+        throw new Error('Unexpected response status: ' + response.status);
       }
     } catch (error: unknown) {
       const err = error as AxiosError;
-      console.error("Deploy error:", err);
+      console.error('Deploy error:', err);
 
       if (err.response) {
         if (err.response.status === 500) {
-          toast.error("Failed to clone repository, fill correct url and path !");
+          toast.error('Failed to clone repository, fill correct url and path !');
         } else if (err.response.status === 400) {
-          toast.error("Failed to deploy workload!");
+          toast.error('Failed to deploy workload!');
         } else {
           toast.error(`Deployment failed! (${err.response.status})`);
         }
       } else {
-        toast.error("Deployment failed due to network error!");
+        toast.error('Deployment failed due to network error!');
       }
     } finally {
       setLoading(false);
@@ -511,7 +515,7 @@ spec:
         repoURL: helmFormData.repoUrl,
         chartName: helmFormData.chartName,
         releaseName: helmFormData.releaseName,
-        namespace: helmFormData.namespace || "default",
+        namespace: helmFormData.namespace || 'default',
       };
 
       // Only include the version field if it's not empty
@@ -524,47 +528,45 @@ spec:
         requestBody.workloadLabel = helmFormData.workload_label;
       }
 
-      const response = await api.post(
-        "/deploy/helm",
-        requestBody,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await api.post('/deploy/helm', requestBody, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-      console.log("Helm Deploy response:", response);
+      console.log('Helm Deploy response:', response);
 
       if (response.status === 200 || response.status === 201) {
-        toast.success("Helm chart deployed successfully!");
+        toast.success('Helm chart deployed successfully!');
         setHelmFormData({
-          repoName: "",
-          repoUrl: "",
-          chartName: "",
-          releaseName: "",
-          version: "", // Reset to empty string
-          namespace: "default",
-          workload_label: "",
+          repoName: '',
+          repoUrl: '',
+          chartName: '',
+          releaseName: '',
+          version: '', // Reset to empty string
+          namespace: 'default',
+          workload_label: '',
         });
         setTimeout(() => window.location.reload(), 4000);
       } else {
-        throw new Error("Unexpected response status: " + response.status);
+        throw new Error('Unexpected response status: ' + response.status);
       }
     } catch (error: unknown) {
       const err = error as AxiosError;
-      console.error("Helm Deploy error:", err);
+      console.error('Helm Deploy error:', err);
 
       if (err.response) {
         if (err.response.status === 500) {
-          toast.error("Deployment failed: failed to install chart: cannot re-use a name that is still in use!");
+          toast.error(
+            'Deployment failed: failed to install chart: cannot re-use a name that is still in use!'
+          );
         } else if (err.response.status === 400) {
-          toast.error("Failed to deploy Helm chart!");
+          toast.error('Failed to deploy Helm chart!');
         } else {
           toast.error(`Helm deployment failed! (${err.response.status})`);
         }
       } else {
-        toast.error("Helm deployment failed due to network error!");
+        toast.error('Helm deployment failed due to network error!');
       }
     } finally {
       setLoading(false);
@@ -572,15 +574,15 @@ spec:
   };
 
   const handleArtifactHubDeploy = async (formData: ArtifactHubFormData) => {
-    console.log("Starting Artifact Hub deployment with formData:", formData);
-    
+    console.log('Starting Artifact Hub deployment with formData:', formData);
+
     if (!formData || !formData.packageId) {
-      toast.error("Please select a package.");
+      toast.error('Please select a package.');
       return;
     }
 
     if (!formData.releaseName) {
-      toast.error("Please enter a release name.");
+      toast.error('Please enter a release name.');
       return;
     }
 
@@ -594,54 +596,52 @@ spec:
         namespace: formData.namespace,
         releaseName: formData.releaseName,
         values: formData.values,
-        workloadLabel: formData.workloadLabel
+        workloadLabel: formData.workloadLabel,
       };
 
-      console.log("Sending Artifact Hub deployment request:", JSON.stringify(requestBody));
+      console.log('Sending Artifact Hub deployment request:', JSON.stringify(requestBody));
 
       // Make explicit API call to ensure it's being called
-      const response = await api.post(
-        "/api/v1/artifact-hub/helm-deploy",
-        requestBody,
-        {
-          headers: {
-            "Content-Type": "application/json"
-          }
-        }
-      );
+      const response = await api.post('/api/v1/artifact-hub/helm-deploy', requestBody, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-      console.log("Artifact Hub Deploy response:", response);
+      console.log('Artifact Hub Deploy response:', response);
 
       if (response.status === 200 || response.status === 201) {
-        toast.success("Artifact Hub deployment successful!");
+        toast.success('Artifact Hub deployment successful!');
         setTimeout(() => window.location.reload(), 4000);
       } else {
-        throw new Error("Unexpected response status: " + response.status);
+        throw new Error('Unexpected response status: ' + response.status);
       }
     } catch (error: unknown) {
       const err = error as AxiosError;
-      console.error("Artifact Hub Deploy error:", err);
+      console.error('Artifact Hub Deploy error:', err);
 
       // Enhanced error logging
-      console.error("Error details:", {
+      console.error('Error details:', {
         message: err.message,
-        response: err.response ? {
-          status: err.response.status,
-          data: err.response.data
-        } : 'No response',
-        request: err.request ? 'Request exists' : 'No request'
+        response: err.response
+          ? {
+              status: err.response.status,
+              data: err.response.data,
+            }
+          : 'No response',
+        request: err.request ? 'Request exists' : 'No request',
       });
 
       if (err.response) {
         if (err.response.status === 500) {
-          toast.error("Deployment failed: failed to deploy to Artifact Hub!");
+          toast.error('Deployment failed: failed to deploy to Artifact Hub!');
         } else if (err.response.status === 400) {
-          toast.error("Failed to deploy to Artifact Hub!");
+          toast.error('Failed to deploy to Artifact Hub!');
         } else {
           toast.error(`Artifact Hub deployment failed! (${err.response.status})`);
         }
       } else {
-        toast.error("Artifact Hub deployment failed due to network error!");
+        toast.error('Artifact Hub deployment failed due to network error!');
       }
     } finally {
       setLoading(false);
@@ -653,7 +653,7 @@ spec:
       setCancelConfirmationOpen(true);
     } else {
       setSelectedFile(null);
-      setError("");
+      setError('');
       setActiveOption(null);
       onCancel();
     }
@@ -661,7 +661,7 @@ spec:
 
   const handleConfirmCancel = () => {
     setSelectedFile(null);
-    setError("");
+    setError('');
     setActiveOption(null);
     setCancelConfirmationOpen(false);
     onCancel();
@@ -673,21 +673,22 @@ spec:
 
   const validateForm = () => {
     let isValid = true;
-    let errorMessage = "";
+    let errorMessage = '';
 
     if (!formData.workload_label) {
-      errorMessage = "Please enter Workload Label.";
+      errorMessage = 'Please enter Workload Label.';
       isValid = false;
-    } else if (formData.workload_label.includes(":")) {
-      errorMessage = "You can only enter value, key is constant and defauled to 'kubestellar.io/workload'.";
+    } else if (formData.workload_label.includes(':')) {
+      errorMessage =
+        "You can only enter value, key is constant and defauled to 'kubestellar.io/workload'.";
       isValid = false;
-    } 
-    
+    }
+
     if (!formData.repositoryUrl) {
-      errorMessage = "Please enter Git repository.";
+      errorMessage = 'Please enter Git repository.';
       isValid = false;
     } else if (!formData.path) {
-      errorMessage = "Please enter Path.";
+      errorMessage = 'Please enter Path.';
       isValid = false;
     }
 
@@ -697,32 +698,32 @@ spec:
 
   const validateHelmForm = () => {
     const { repoName, repoUrl, chartName, releaseName, namespace } = helmFormData;
-    
+
     if (!repoName) {
-      toast.error("Please enter a repository name.");
+      toast.error('Please enter a repository name.');
       return false;
     }
-    
+
     if (!repoUrl) {
-      toast.error("Please enter a repository URL.");
+      toast.error('Please enter a repository URL.');
       return false;
     }
-    
+
     if (!chartName) {
-      toast.error("Please enter a chart name.");
+      toast.error('Please enter a chart name.');
       return false;
     }
-    
+
     if (!releaseName) {
-      toast.error("Please enter a release name.");
+      toast.error('Please enter a release name.');
       return false;
     }
-    
+
     if (!namespace) {
-      toast.error("Please enter a namespace.");
+      toast.error('Please enter a namespace.');
       return false;
     }
-    
+
     return true;
   };
 
@@ -741,25 +742,25 @@ spec:
       setCredentialsList(updatedCredentialsList);
       setFormData({ ...formData, credentials: credentialId });
 
-      localStorage.setItem("credentialsList", JSON.stringify(updatedCredentialsList));
-      const storedCredentials = JSON.parse(localStorage.getItem("credentialsListData") || "{}");
+      localStorage.setItem('credentialsList', JSON.stringify(updatedCredentialsList));
+      const storedCredentials = JSON.parse(localStorage.getItem('credentialsListData') || '{}');
       storedCredentials[credentialId] = {
         githubUsername: newCredential.githubUsername,
         personalAccessToken: newCredential.personalAccessToken,
       };
-      localStorage.setItem("credentialsListData", JSON.stringify(storedCredentials));
+      localStorage.setItem('credentialsListData', JSON.stringify(storedCredentials));
 
       setCredentialDialogOpen(false);
-      toast.success("Credential added successfully!");
+      toast.success('Credential added successfully!');
     } else {
-      toast.error("Please fill in both GitHub Username and Personal Access Token.");
+      toast.error('Please fill in both GitHub Username and Personal Access Token.');
     }
   };
 
   const handleCloseCredentialDialog = () => {
     setCredentialDialogOpen(false);
-    setNewCredential({ githubUsername: "", personalAccessToken: "" });
-    setFormData({ ...formData, credentials: "none" });
+    setNewCredential({ githubUsername: '', personalAccessToken: '' });
+    setFormData({ ...formData, credentials: 'none' });
   };
 
   const handleOpenWebhookDialog = () => {
@@ -773,46 +774,49 @@ spec:
       setWebhooksList(updatedWebhooksList);
       setFormData({ ...formData, webhook: webhookId });
 
-      localStorage.setItem("webhooksList", JSON.stringify(updatedWebhooksList));
-      const storedWebhooks = JSON.parse(localStorage.getItem("webhooksListData") || "{}");
+      localStorage.setItem('webhooksList', JSON.stringify(updatedWebhooksList));
+      const storedWebhooks = JSON.parse(localStorage.getItem('webhooksListData') || '{}');
       storedWebhooks[webhookId] = {
         webhookUrl: newWebhook.webhookUrl,
         personalAccessToken: newWebhook.personalAccessToken,
       };
-      localStorage.setItem("webhooksListData", JSON.stringify(storedWebhooks));
+      localStorage.setItem('webhooksListData', JSON.stringify(storedWebhooks));
 
-      setNewWebhook({ webhookUrl: "", personalAccessToken: "" });
+      setNewWebhook({ webhookUrl: '', personalAccessToken: '' });
       setWebhookDialogOpen(false);
-      toast.success("Webhook added successfully!");
+      toast.success('Webhook added successfully!');
     } else {
-      toast.error("Please fill in both Webhook URL and Personal Access Token.");
+      toast.error('Please fill in both Webhook URL and Personal Access Token.');
     }
   };
 
   const handleCloseWebhookDialog = () => {
     setWebhookDialogOpen(false);
-    setNewWebhook({ webhookUrl: "", personalAccessToken: "" });
-    setFormData({ ...formData, webhook: "none" });
+    setNewWebhook({ webhookUrl: '', personalAccessToken: '' });
+    setFormData({ ...formData, webhook: 'none' });
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    e.currentTarget.style.borderColor = "#1976d2";
+    e.currentTarget.style.borderColor = '#1976d2';
   };
 
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    e.currentTarget.style.borderColor = "#bdbdbd";
+    e.currentTarget.style.borderColor = '#bdbdbd';
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    e.currentTarget.style.borderColor = "#bdbdbd";
+    e.currentTarget.style.borderColor = '#bdbdbd';
     const file = e.dataTransfer.files?.[0] || null;
-    if (file && (file.name.endsWith(".yaml") || file.name.endsWith(".yml") || file.name.endsWith(".json"))) {
+    if (
+      file &&
+      (file.name.endsWith('.yaml') || file.name.endsWith('.yml') || file.name.endsWith('.json'))
+    ) {
       setSelectedFile(file);
     } else {
-      toast.error("Please upload a valid YAML or JSON file.");
+      toast.error('Please upload a valid YAML or JSON file.');
     }
   };
 
@@ -833,9 +837,7 @@ spec:
 
   return (
     <>
-      {error && (
-        <Box sx={{ color: "red", mb: 1, textAlign: "center" }}>{error}</Box>
-      )}
+      {error && <Box sx={{ color: 'red', mb: 1, textAlign: 'center' }}>{error}</Box>}
       <Dialog
         open={!!activeOption}
         onClose={onCancel}
@@ -843,20 +845,27 @@ spec:
         fullWidth
         PaperProps={getDialogPaperProps(theme)}
       >
-        <DialogTitle sx={{ 
-          padding: "16px 16px", 
-          borderBottom: theme === "dark" ? "1px solid #444" : "1px solid #e0e0e0",
-        }}>
-          <Typography variant="h6" sx={{ 
-            fontWeight: 600, 
-            color: theme === "dark" ? "#d4d4d4" : "black",
-          }}>
+        <DialogTitle
+          sx={{
+            padding: '16px 16px',
+            borderBottom: theme === 'dark' ? '1px solid #444' : '1px solid #e0e0e0',
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 600,
+              color: theme === 'dark' ? '#d4d4d4' : 'black',
+            }}
+          >
             Create Workload
           </Typography>
-          <Typography sx={{ 
-            fontSize: "13px", 
-            color: theme === "dark" ? "#858585" : "gray",
-          }}>
+          <Typography
+            sx={{
+              fontSize: '13px',
+              color: theme === 'dark' ? '#858585' : 'gray',
+            }}
+          >
             Create Workloads
           </Typography>
           <Tabs
@@ -864,68 +873,86 @@ spec:
             onChange={(_event, newValue) => setActiveOption(newValue)}
             sx={{
               mt: 2,
-              ".MuiTabs-indicator": {
-                display: "none",
+              '.MuiTabs-indicator': {
+                display: 'none',
               },
-              "& .MuiTab-root": {
-                color: theme === "dark" ? "#d4d4d4" : "#333",
+              '& .MuiTab-root': {
+                color: theme === 'dark' ? '#d4d4d4' : '#333',
               },
             }}
           >
             <StyledTab
               label="YAML"
               value="option1"
-              icon={<span role="img" aria-label="yaml" style={{ fontSize: "0.9rem" }}>📄</span>}
+              icon={
+                <span role="img" aria-label="yaml" style={{ fontSize: '0.9rem' }}>
+                  📄
+                </span>
+              }
               iconPosition="start"
             />
             <StyledTab
               label="From File"
               value="option2"
-              icon={<span role="img" aria-label="file" style={{ fontSize: "0.9rem" }}>📁</span>}
+              icon={
+                <span role="img" aria-label="file" style={{ fontSize: '0.9rem' }}>
+                  📁
+                </span>
+              }
               iconPosition="start"
             />
             <StyledTab
               label="GitHub"
               value="option3"
-              icon={<GitHubIcon sx={{ fontSize: "0.9rem" }} />}
+              icon={<GitHubIcon sx={{ fontSize: '0.9rem' }} />}
               iconPosition="start"
             />
             <StyledTab
               label="Helm"
               value="option4"
               icon={
-                <img 
-                  src={helmicon} 
-                  alt="Helm" 
-                  width={24} 
-                  height={24} 
-                  style={{ filter: theme === "dark" ? "brightness(0) saturate(100%) invert(1)" : "none" }} 
+                <img
+                  src={helmicon}
+                  alt="Helm"
+                  width={24}
+                  height={24}
+                  style={{
+                    filter: theme === 'dark' ? 'brightness(0) saturate(100%) invert(1)' : 'none',
+                  }}
                 />
-              }              
+              }
               iconPosition="start"
             />
             <StyledTab
               label="Artifact Hub"
               value="option5"
-              icon={<span role="img" aria-label="artifact-hub" style={{ fontSize: "0.9rem" }}>📦</span>}
+              icon={
+                <span role="img" aria-label="artifact-hub" style={{ fontSize: '0.9rem' }}>
+                  📦
+                </span>
+              }
               iconPosition="start"
             />
           </Tabs>
         </DialogTitle>
-        <DialogContent sx={{ 
-          padding: "17px", 
-          height: "100vh", 
-          overflow: "hidden",
-          overflowY: "auto",
-        }}>
-          <Box sx={{ 
-            width: "100%", 
-            mt: 2, 
-            minHeight: "400px",
-            display: "flex",
-            flexDirection: "column",
-          }}>
-            {activeOption === "option1" && (
+        <DialogContent
+          sx={{
+            padding: '17px',
+            height: '100vh',
+            overflow: 'hidden',
+            overflowY: 'auto',
+          }}
+        >
+          <Box
+            sx={{
+              width: '100%',
+              mt: 2,
+              minHeight: '400px',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {activeOption === 'option1' && (
               <YamlTab
                 editorContent={editorContent}
                 setEditorContent={setEditorContent}
@@ -937,7 +964,7 @@ spec:
                 handleCancelClick={handleCancelClick}
               />
             )}
-            {activeOption === "option2" && (
+            {activeOption === 'option2' && (
               <UploadFileTab
                 workloadName={workloadName}
                 selectedFile={selectedFile}
@@ -952,7 +979,7 @@ spec:
                 handleCancelClick={handleCancelClick}
               />
             )}
-            {activeOption === "option3" && (
+            {activeOption === 'option3' && (
               <GitHubTab
                 formData={formData}
                 setFormData={setFormData}
@@ -968,7 +995,7 @@ spec:
                 handleCancelClick={handleCancelClick}
               />
             )}
-            {activeOption === "option4" && (
+            {activeOption === 'option4' && (
               <HelmTab
                 formData={helmFormData}
                 setFormData={setHelmFormData}
@@ -980,7 +1007,7 @@ spec:
                 handleCancelClick={handleCancelClick}
               />
             )}
-            {activeOption === "option5" && (
+            {activeOption === 'option5' && (
               <ArtifactHubTab
                 onCancel={handleCancelClick}
                 onDeploy={handleArtifactHubDeploy}
@@ -995,15 +1022,15 @@ spec:
           open={snackbar.open}
           autoHideDuration={3000}
           onClose={() => setSnackbar({ ...snackbar, open: false })}
-          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         >
           <Alert
             onClose={() => setSnackbar({ ...snackbar, open: false })}
             severity={snackbar.severity}
-            sx={{ 
-              width: "100%",
-              backgroundColor: theme === "dark" ? "#333" : "#fff",
-              color: theme === "dark" ? "#d4d4d4" : "#333",
+            sx={{
+              width: '100%',
+              backgroundColor: theme === 'dark' ? '#333' : '#fff',
+              color: theme === 'dark' ? '#d4d4d4' : '#333',
             }}
           >
             {snackbar.message}

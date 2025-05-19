@@ -8,11 +8,11 @@ interface ConnectionIconProps {
   sx?: SxProps<Theme>;
 }
 
-const ConnectionIcon: React.FC<ConnectionIconProps> = ({ 
-  size = 24, 
-  color = '#9c27b0', 
+const ConnectionIcon: React.FC<ConnectionIconProps> = ({
+  size = 24,
+  color = '#9c27b0',
   direction = 'left-to-right',
-  sx = {}
+  sx = {},
 }) => {
   return (
     <Box
@@ -23,7 +23,7 @@ const ConnectionIcon: React.FC<ConnectionIconProps> = ({
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        ...sx
+        ...sx,
       }}
     >
       <svg
@@ -34,13 +34,8 @@ const ConnectionIcon: React.FC<ConnectionIconProps> = ({
         xmlns="http://www.w3.org/2000/svg"
       >
         {/* Base connection line */}
-        <path
-          d="M4 12H20"
-          stroke={color}
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-        
+        <path d="M4 12H20" stroke={color} strokeWidth="2" strokeLinecap="round" />
+
         {/* Direction arrows */}
         {(direction === 'left-to-right' || direction === 'bidirectional') && (
           <path
@@ -51,7 +46,7 @@ const ConnectionIcon: React.FC<ConnectionIconProps> = ({
             strokeLinejoin="round"
           />
         )}
-        
+
         {(direction === 'right-to-left' || direction === 'bidirectional') && (
           <path
             d="M8 8L4 12L8 16"
@@ -61,7 +56,7 @@ const ConnectionIcon: React.FC<ConnectionIconProps> = ({
             strokeLinejoin="round"
           />
         )}
-        
+
         {/* Connection dots */}
         <circle cx="12" cy="12" r="2" fill={color} />
       </svg>
@@ -69,4 +64,4 @@ const ConnectionIcon: React.FC<ConnectionIconProps> = ({
   );
 };
 
-export default ConnectionIcon; 
+export default ConnectionIcon;

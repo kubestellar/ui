@@ -68,7 +68,8 @@ button:focus-visible {
   }
 }
 
-html, body {
+html,
+body {
   width: 100%;
   height: 100%;
   margin: 0;
@@ -76,14 +77,14 @@ html, body {
 }
 
 /* Hide only the left-side handle */
-.react-flow__handle[data-handlepos="left"] {
+.react-flow__handle[data-handlepos='left'] {
   visibility: hidden !important;
   opacity: 0 !important;
 }
 
 /* Modify the right-side handle: Change color to white & make it square */
-.react-flow__handle[data-handlepos="right"]{
-  width: 8px !important;  /* Adjust width for square shape */
+.react-flow__handle[data-handlepos='right'] {
+  width: 8px !important; /* Adjust width for square shape */
   height: 7px !important; /* Adjust height for square shape */
   border-radius: 0 !important; /* Remove the circular border */
   background: white !important; /* Change color to white */
@@ -92,7 +93,7 @@ html, body {
 
 /* Add a single dash exactly in the middle for non-terminal nodes only */
 .react-flow__node:not(.terminal-node)::after {
-  content: "-"; /* Single dash */
+  content: '-'; /* Single dash */
   position: absolute;
   top: 50%;
   left: calc(100% + 2px); /* Slightly outside the right edge */

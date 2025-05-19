@@ -13,49 +13,57 @@ const LogoElement = ({ animate = true }: LogoElementProps) => {
   const coreRef = useRef<THREE.Mesh>(null);
   const outerRingRef = useRef<THREE.Mesh>(null);
   const frameCount = useRef(0);
-  
+
   // Create shared materials for better performance
-  const coreMaterial = useMemo(() => new THREE.MeshPhongMaterial({
-    color: COLORS.highlight,
-    emissive: COLORS.highlight,
-    emissiveIntensity: 0.5,
-    shininess: 100,
-    transparent: true
-  }), []);
-  
-  const ringMaterial = useMemo(() => new THREE.MeshBasicMaterial({
-    color: COLORS.primary,
-    transparent: true,
-    wireframe: true
-  }), []);
-  
+  const coreMaterial = useMemo(
+    () =>
+      new THREE.MeshPhongMaterial({
+        color: COLORS.highlight,
+        emissive: COLORS.highlight,
+        emissiveIntensity: 0.5,
+        shininess: 100,
+        transparent: true,
+      }),
+    []
+  );
+
+  const ringMaterial = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        color: COLORS.primary,
+        transparent: true,
+        wireframe: true,
+      }),
+    []
+  );
+
   // Create shared geometries for better performance
   const coreGeometry = useMemo(() => new THREE.SphereGeometry(0.3, 16, 16), []);
   const ringGeometry = useMemo(() => new THREE.TorusGeometry(0.6, 0.02, 8, 48), []);
-  
+
   // Optimize animation frequency
-  useFrame((state) => {
+  useFrame(state => {
     // Skip animation when not animate
     if (!animate) return;
-    
+
     // Skip frames to improve performance
     frameCount.current += 1;
     if (frameCount.current % 2 !== 0) return;
-    
+
     const time = state.clock.getElapsedTime();
-    
+
     // Core pulsing effect
     if (coreRef.current) {
       const scale = 1 + Math.sin(time * 2) * 0.05;
       coreRef.current.scale.setScalar(scale);
-      
+
       // Update material opacity instead of changing instance
       if (coreRef.current.material) {
-        (coreRef.current.material as THREE.MeshPhongMaterial).emissiveIntensity = 
+        (coreRef.current.material as THREE.MeshPhongMaterial).emissiveIntensity =
           0.5 + Math.sin(time * 2) * 0.2;
       }
     }
-    
+
     // Rotate outer ring
     if (outerRingRef.current) {
       outerRingRef.current.rotation.z = time * 0.5;
@@ -67,10 +75,10 @@ const LogoElement = ({ animate = true }: LogoElementProps) => {
     <group>
       {/* Central core sphere */}
       <mesh ref={coreRef} geometry={coreGeometry} material={coreMaterial} frustumCulled />
-      
+
       {/* Outer rotating ring */}
       <mesh ref={outerRingRef} geometry={ringGeometry} material={ringMaterial} frustumCulled />
-      
+
       {/* Logo text */}
       <Billboard position={[0, 1, 0]} frustumCulled>
         <Text
@@ -101,4 +109,4 @@ const LogoElement = ({ animate = true }: LogoElementProps) => {
   );
 };
 
-export default LogoElement; 
+export default LogoElement;

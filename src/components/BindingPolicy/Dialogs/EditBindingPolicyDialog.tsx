@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import Editor from "@monaco-editor/react";
-import yaml from "js-yaml";
+import React, { useState, useEffect } from 'react';
+import Editor from '@monaco-editor/react';
+import yaml from 'js-yaml';
 import {
   Dialog,
   DialogContent,
@@ -12,9 +12,9 @@ import {
   TextField,
   Snackbar,
   Box,
-} from "@mui/material";
-import { BindingPolicyInfo } from "../../../types/bindingPolicy";
-import useTheme from "../../../stores/themeStore";
+} from '@mui/material';
+import { BindingPolicyInfo } from '../../../types/bindingPolicy';
+import useTheme from '../../../stores/themeStore';
 
 interface EditBindingPolicyDialogProps {
   open: boolean;
@@ -29,16 +29,16 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
   onSave,
   policy,
 }) => {
-  const [editorContent, setEditorContent] = useState<string>(policy.yaml || "");
-  const [policyName, setPolicyName] = useState<string>(policy.name || "");
-  const [error, setError] = useState<string>("");
+  const [editorContent, setEditorContent] = useState<string>(policy.yaml || '');
+  const [policyName, setPolicyName] = useState<string>(policy.name || '');
+  const [error, setError] = useState<string>('');
   const [showUnsavedChanges, setShowUnsavedChanges] = useState(false);
-  const theme = useTheme((state) => state.theme)
-  const isDarkTheme = theme === "dark";
+  const theme = useTheme(state => state.theme);
+  const isDarkTheme = theme === 'dark';
 
   useEffect(() => {
-    setEditorContent(policy.yaml || "");
-    setPolicyName(policy.name || "");
+    setEditorContent(policy.yaml || '');
+    setPolicyName(policy.name || '');
   }, [policy]);
 
   const validateYaml = (content: string): boolean => {
@@ -49,7 +49,7 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
       if (e instanceof Error) {
         setError(`Invalid YAML format: ${e.message}`);
       } else {
-        setError("Invalid YAML format");
+        setError('Invalid YAML format');
       }
       return false;
     }
@@ -77,10 +77,10 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
 
   return (
     <>
-      <Dialog 
-        open={open} 
-        onClose={handleClose} 
-        maxWidth="lg" 
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        maxWidth="lg"
         fullWidth
         PaperProps={{
           sx: {
@@ -91,25 +91,25 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
             overflow: 'hidden',
             backgroundColor: isDarkTheme ? '#1e293b' : '#fff',
             color: isDarkTheme ? '#fff' : 'inherit',
-          }
+          },
         }}
       >
         <DialogTitle>
-          <Box className={isDarkTheme ? 'text-white' : ''}>
-            Edit Binding Policy
-          </Box>
+          <Box className={isDarkTheme ? 'text-white' : ''}>Edit Binding Policy</Box>
         </DialogTitle>
-        <DialogContent sx={{ 
-          flex: 1,
-          overflow: 'auto',
-          p: 2,
-          '&:first-of-type': {
-            pt: 2
-          }
-        }}>
-          <Alert 
-            severity="info" 
-            sx={{ 
+        <DialogContent
+          sx={{
+            flex: 1,
+            overflow: 'auto',
+            p: 2,
+            '&:first-of-type': {
+              pt: 2,
+            },
+          }}
+        >
+          <Alert
+            severity="info"
+            sx={{
               mb: 2,
               backgroundColor: isDarkTheme ? 'rgba(59, 130, 246, 0.1)' : undefined,
               color: isDarkTheme ? '#fff' : undefined,
@@ -118,9 +118,7 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
               },
             }}
           >
-            <AlertTitle className={isDarkTheme ? 'text-blue-400' : ''}>
-              Info
-            </AlertTitle>
+            <AlertTitle className={isDarkTheme ? 'text-blue-400' : ''}>Info</AlertTitle>
             Edit your binding policy configuration. Changes will be applied after saving.
           </Alert>
 
@@ -128,7 +126,7 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
             fullWidth
             label="Binding Policy Name"
             value={policyName}
-            onChange={(e) => setPolicyName(e.target.value)}
+            onChange={e => setPolicyName(e.target.value)}
             margin="normal"
             required
             sx={{
@@ -154,25 +152,27 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
               height="400px"
               language="yaml"
               value={editorContent}
-              theme={isDarkTheme ? "vs-dark" : "light"}
+              theme={isDarkTheme ? 'vs-dark' : 'light'}
               options={{
                 minimap: { enabled: false },
                 fontSize: 14,
-                lineNumbers: "on",
+                lineNumbers: 'on',
                 scrollBeyondLastLine: false,
                 automaticLayout: true,
               }}
-              onChange={(value) => setEditorContent(value || "")}
+              onChange={value => setEditorContent(value || '')}
             />
           </Box>
         </DialogContent>
 
-        <DialogActions sx={{ 
-          p: 2,
-          borderTop: 1,
-          borderColor: 'divider'
-        }}>
-          <Button 
+        <DialogActions
+          sx={{
+            p: 2,
+            borderTop: 1,
+            borderColor: 'divider',
+          }}
+        >
+          <Button
             onClick={handleClose}
             variant="outlined"
             sx={{
@@ -211,11 +211,9 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
           },
         }}
       >
-        <DialogTitle className={isDarkTheme ? 'text-white' : ''}>
-          Unsaved Changes
-        </DialogTitle>
+        <DialogTitle className={isDarkTheme ? 'text-white' : ''}>Unsaved Changes</DialogTitle>
         <DialogContent>
-          <Alert 
+          <Alert
             severity="warning"
             sx={{
               backgroundColor: isDarkTheme ? 'rgba(234, 179, 8, 0.1)' : undefined,
@@ -225,9 +223,7 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
               },
             }}
           >
-            <AlertTitle className={isDarkTheme ? 'text-yellow-400' : ''}>
-              Warning
-            </AlertTitle>
+            <AlertTitle className={isDarkTheme ? 'text-yellow-400' : ''}>Warning</AlertTitle>
             You have unsaved changes. Are you sure you want to close without saving?
           </Alert>
         </DialogContent>
@@ -264,9 +260,9 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
       <Snackbar
         open={!!error}
         autoHideDuration={6000}
-        onClose={() => setError("")}
+        onClose={() => setError('')}
         message={error}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       />
     </>
   );

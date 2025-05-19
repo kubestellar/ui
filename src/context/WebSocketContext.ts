@@ -89,5 +89,5 @@ export type {
   WecsResourceType,
   WecsNamespace,
   WecsCluster,
-  WebSocketContextType
-}; 
+  WebSocketContextType,
+};

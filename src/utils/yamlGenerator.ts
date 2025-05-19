@@ -13,7 +13,7 @@ export const generateBindingPolicyYAML = (config: PolicyConfiguration): string =
       metadata: {
         name: config.name,
         namespace: config.namespace,
-        labels: config.customLabels
+        labels: config.customLabels,
       },
       spec: {
         deploymentType: config.deploymentType,
@@ -21,20 +21,23 @@ export const generateBindingPolicyYAML = (config: PolicyConfiguration): string =
         updateStrategy: config.updateStrategy,
         clusterSelector: {
           matchLabels: {
-            ...config.customLabels
-          }
+            ...config.customLabels,
+          },
         },
-        scheduling: config.schedulingRules.length > 0 ? {
-          rules: config.schedulingRules.map(rule => ({
-            resource: rule.resource,
-            operator: rule.operator,
-            value: rule.value
-          }))
-        } : undefined,
-        tolerations: config.tolerations.length > 0 ? config.tolerations : undefined
-      }
+        scheduling:
+          config.schedulingRules.length > 0
+            ? {
+                rules: config.schedulingRules.map(rule => ({
+                  resource: rule.resource,
+                  operator: rule.operator,
+                  value: rule.value,
+                })),
+              }
+            : undefined,
+        tolerations: config.tolerations.length > 0 ? config.tolerations : undefined,
+      },
     };
-    
+
     return convertToYAML(bindingPolicy);
   } catch (error) {
     console.error('Error generating YAML:', error);
@@ -50,12 +53,12 @@ export const generateBindingPolicyYAML = (config: PolicyConfiguration): string =
 const convertToYAML = (obj: Record<string, unknown>): string => {
   // This is a simple conversion. In a real app, you'd use a library like js-yaml
   return JSON.stringify(obj, null, 2)
-    .replace(/"([^"]+)":/g, '$1:')       // Remove quotes around property names
-    .replace(/"/g, "'")                 // Replace double quotes with single quotes
-    .replace(/'/g, '"')                 // Put back quotes for string values
-    .replace(/"/g, "'")                 // Convert back to single quotes
-    .replace(/true/g, 'true')           // Leave booleans unquoted
+    .replace(/"([^"]+)":/g, '$1:') // Remove quotes around property names
+    .replace(/"/g, "'") // Replace double quotes with single quotes
+    .replace(/'/g, '"') // Put back quotes for string values
+    .replace(/"/g, "'") // Convert back to single quotes
+    .replace(/true/g, 'true') // Leave booleans unquoted
     .replace(/false/g, 'false')
     .replace(/null/g, 'null')
-    .replace(/undefined/g, 'null');     // Convert undefined to null
-}; 
+    .replace(/undefined/g, 'null'); // Convert undefined to null
+};
