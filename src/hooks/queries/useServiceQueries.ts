@@ -54,8 +54,8 @@ export const useServiceQueries = () => {
         return response.data;
       },
       onSuccess: (_, variables) => {
-        queryClient.invalidateQueries({ 
-          queryKey: ['services', variables.namespace] 
+        queryClient.invalidateQueries({
+          queryKey: ['services', variables.namespace],
         });
       },
     });
@@ -66,4 +66,4 @@ export const useServiceQueries = () => {
     useCreateService,
     useDeleteService,
   };
-}; 
+};

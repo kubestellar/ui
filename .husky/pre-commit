@@ -1,1 +1,7 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Format files with Prettier, excluding Docker files
+npx prettier --write --list-different --ignore-path .prettierignore .
+# Run linting
 npm run lint

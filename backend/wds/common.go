@@ -190,25 +190,41 @@ func CreateWDSContextUsingCommand(w http.ResponseWriter, r *http.Request, c *gin
 		writeMessage(conn, msg)
 		return
 	}
+	var kindCtx, k3dCtx string
 	for name := range config.Contexts {
-		if strings.Contains(name, newWdsContext) {
-			msg := fmt.Sprintf("Context: %s is already present", newWdsContext)
-			log.Println(msg)
-			writeMessage(conn, msg)
-			return
+		if name == "k3d-kubeflex" {
+			k3dCtx = name
+			fmt.Println("We choose k3d-kubeflex context")
+		} else if name == "kind-kubeflex" {
+			kindCtx = name
 		}
+	}
+	if k3dCtx == "" && kindCtx == "" {
+		writeMessage(conn, "No kubeflex detected for kind, k3d type cluster, Please check is you have k3d-kubeflex or kind-kubeflex")
+		return
 	}
 	releaseName := "add-" + newWdsContext
 	writeMessage(conn, "Context is valid. Proceeding...")
-	// Step 0: Switch to "kind-kubeflex" context
-	writeMessage(conn, "Switching to kind-kubeflex context")
-	flexCmd := exec.Command("kubectl", "config", "use-context", "kind-kubeflex")
+
+	kflexContextType := k3dCtx
+	if kflexContextType == "" {
+		kflexContextType = kindCtx
+	}
+
+	fmt.Printf("Detected cluster type: %s\n", kflexContextType)
+
+	// Step 0: Switch to "kind-kubeflex" or "k3d-kubeflex" context
+	message := fmt.Sprintf("Switching to %s context", kflexContextType)
+	writeMessage(conn, message)
+	flexCmd := exec.Command("kubectl", "config", "use-context", kflexContextType)
 	output, err := flexCmd.CombinedOutput()
 	if err != nil {
 		message := fmt.Sprintf("Failed to execute kubectl command: %v\nOutput: %s", err.Error(), string(output))
 		writeMessage(conn, message)
+		return
 	} else {
-		writeMessage(conn, "Successfully switched context to kind-kubeflex\n")
+		message := fmt.Sprintf("Successfully switched context to %s\n", kflexContextType)
+		writeMessage(conn, message)
 	}
 	writeMessage(conn, "Starting upgrade --install for helm chart")
 
@@ -229,6 +245,7 @@ func CreateWDSContextUsingCommand(w http.ResponseWriter, r *http.Request, c *gin
 	if err != nil {
 		message := fmt.Sprintf("Failed to execute Helm command: %v\n%s", err.Error(), string(output))
 		writeMessage(conn, message)
+		return
 	}
 
 	writeMessage(conn, fmt.Sprintf("Helm command executed successfully:\n%s", string(output)))
@@ -250,10 +267,9 @@ func CreateWDSContextUsingCommand(w http.ResponseWriter, r *http.Request, c *gin
 
 	if kflexErr != nil {
 		writeMessage(conn, fmt.Sprintf("Failed to set context using kflex: %v\nOutput: %s", kflexErr, string(kflexOutput)))
+		return
 	}
 
 	writeMessage(conn, fmt.Sprintf("Context '%s' set successfully:\n%s\n", newWdsContext, string(kflexOutput)))
-	// keep alive
-	select {}
 
 }

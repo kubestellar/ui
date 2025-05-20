@@ -3,7 +3,7 @@ services:
     build:
       dockerfile: Dockerfile
     ports:
-      - "5173:80"
+      - '5173:80'
     depends_on:
       - backend
     environment:
@@ -14,7 +14,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "4000:4000"
+      - '4000:4000'
     volumes:
       - ~/.kube:/root/.kube
     environment:
@@ -22,13 +22,11 @@ services:
       - REDIS_PORT=6379
     depends_on:
       - redis
-    network_mode: "host"
-
+    network_mode: 'host'
 
   redis:
-    image: "redis:latest"
-    container_name: "kubestellar-redis"
+    image: 'redis:latest'
+    container_name: 'kubestellar-redis'
     ports:
-      - "6379:6379"
-    network_mode: "host"
-
+      - '6379:6379'
+    network_mode: 'host'

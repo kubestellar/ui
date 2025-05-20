@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -9,14 +9,10 @@ import {
   Box,
   Tabs,
   Tab,
-} from "@mui/material";
-import PolicyVisualization from "./PolicyVisualization";
-import {
-  BindingPolicyInfo,
-  ManagedCluster,
-  Workload,
-} from "../../types/bindingPolicy";
-import useTheme from "../../stores/themeStore";
+} from '@mui/material';
+import PolicyVisualization from './PolicyVisualization';
+import { BindingPolicyInfo, ManagedCluster, Workload } from '../../types/bindingPolicy';
+import useTheme from '../../stores/themeStore';
 
 interface PreviewDialogProps {
   open: boolean;
@@ -34,8 +30,8 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
   policy,
 }) => {
   const [tabValue, setTabValue] = React.useState(0);
-  const theme = useTheme((state) => state.theme)
-  const isDarkTheme = theme === "dark";
+  const theme = useTheme(state => state.theme);
+  const isDarkTheme = theme === 'dark';
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -44,10 +40,10 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
   if (!policy) return null;
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="md" 
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
       fullWidth
       PaperProps={{
         sx: {
@@ -58,34 +54,28 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
           overflow: 'hidden',
           backgroundColor: isDarkTheme ? '#1e293b' : '#fff',
           color: isDarkTheme ? '#fff' : 'inherit',
-        }
+        },
       }}
     >
-      <DialogTitle>
-        Policy Preview & Insights
-      </DialogTitle>
-      <DialogContent sx={{ 
-        flex: 1,
-        overflow: 'auto',
-        p: 2,
-        '&:first-of-type': {
-          pt: 2
-        }
-      }}>
-        <Tabs 
-          value={tabValue} 
+      <DialogTitle>Policy Preview & Insights</DialogTitle>
+      <DialogContent
+        sx={{
+          flex: 1,
+          overflow: 'auto',
+          p: 2,
+          '&:first-of-type': {
+            pt: 2,
+          },
+        }}
+      >
+        <Tabs
+          value={tabValue}
           onChange={handleTabChange}
           textColor={isDarkTheme ? 'inherit' : 'primary'}
           indicatorColor={isDarkTheme ? 'secondary' : 'primary'}
         >
-          <Tab 
-            label="Visualization" 
-            className={isDarkTheme ? 'text-white' : ''}
-          />
-          <Tab 
-            label="Details" 
-            className={isDarkTheme ? 'text-white' : ''}
-          />
+          <Tab label="Visualization" className={isDarkTheme ? 'text-white' : ''} />
+          <Tab label="Details" className={isDarkTheme ? 'text-white' : ''} />
         </Tabs>
 
         <Box sx={{ mt: 2 }}>
@@ -107,7 +97,7 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
               <Typography variant="subtitle1" gutterBottom>
                 Matched Clusters ({matchedClusters.length})
               </Typography>
-              {matchedClusters.map((cluster) => (
+              {matchedClusters.map(cluster => (
                 <Box key={cluster.name} sx={{ mb: 1 }}>
                   <Typography variant="body2">
                     {cluster.name} - {cluster.status}
@@ -121,7 +111,7 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
               <Typography variant="subtitle1" sx={{ mt: 2 }} gutterBottom>
                 Matched Workloads ({matchedWorkloads.length})
               </Typography>
-              {matchedWorkloads.map((workload) => (
+              {matchedWorkloads.map(workload => (
                 <Box key={workload.name} sx={{ mb: 1 }}>
                   <Typography variant="body2">
                     {workload.name} ({workload.namespace})
@@ -136,10 +126,7 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button 
-          onClick={onClose}
-          className={isDarkTheme ? 'text-white' : ''}
-        >
+        <Button onClick={onClose} className={isDarkTheme ? 'text-white' : ''}>
           Close
         </Button>
       </DialogActions>

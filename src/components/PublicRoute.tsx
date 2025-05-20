@@ -1,7 +1,7 @@
-import { Navigate, useLocation } from "react-router-dom";
-import PublicRouteSkeleton from "./ui/PublicRouteSkeleton";
-import { motion, AnimatePresence } from "framer-motion";
-import { useAuth } from "../hooks/useAuth";
+import { Navigate, useLocation } from 'react-router-dom';
+import PublicRouteSkeleton from './ui/PublicRouteSkeleton';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../hooks/useAuth';
 
 interface PublicRouteProps {
   children: JSX.Element;
@@ -17,11 +17,11 @@ const PublicRoute = ({ children }: PublicRouteProps) => {
   }
 
   // Get the location state for redirecting after login if needed
-  const { from } = location.state || { from: "/" };
+  const { from } = location.state || { from: '/' };
 
   // Redirect to home or previous location if authenticated
   if (data?.isAuthenticated) {
-    return <Navigate to={from} replace />; 
+    return <Navigate to={from} replace />;
   }
 
   // Render the public route with a fade-in effect
