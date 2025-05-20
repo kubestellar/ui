@@ -760,7 +760,7 @@ const WecsDetailsPanel = ({
       onClose();
     }, 400);
   };
-  // Add a global esc key listener to close the panel
+  // Add a global esc key  listener to close the panel
   useEffect(() => {
     if (!isOpen) return;
 
