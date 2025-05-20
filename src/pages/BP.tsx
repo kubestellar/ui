@@ -57,7 +57,8 @@ const EmptyState: React.FC<{
   switch (type) {
     case 'clusters':
       title = 'No Available Clusters';
-      description = 'No clusters are currently available for binding. You need to add and configure clusters before creating binding policies.';
+      description =
+        'No clusters are currently available for binding. You need to add and configure clusters before creating binding policies.';
       buttonText = 'Manage Clusters';
       break;
     case 'workloads':
@@ -810,7 +811,9 @@ const BP = () => {
           </>
         ) : viewMode === 'visualize' ? (
           <>
-            {clusters.length === 0 || !clusters.some(cluster => cluster.status === 'Ready' || cluster.available) || workloads.length === 0 ? (
+            {clusters.length === 0 ||
+            !clusters.some(cluster => cluster.status === 'Ready' || cluster.available) ||
+            workloads.length === 0 ? (
               <Box
                 sx={{
                   height: 'calc(100vh - 170px)',
