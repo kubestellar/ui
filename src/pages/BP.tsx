@@ -56,9 +56,9 @@ const EmptyState: React.FC<{
 
   switch (type) {
     case 'clusters':
-      title = 'No Clusters Found';
-      description = 'No clusters are available. Please ensure you have access to clusters.';
-      buttonText = 'Go to Clusters';
+      title = 'No Available Clusters';
+      description = 'No clusters are currently available for binding. You need to add and configure clusters before creating binding policies.';
+      buttonText = 'Manage Clusters';
       break;
     case 'workloads':
       title = 'No Workloads Found';
@@ -781,7 +781,7 @@ const BP = () => {
               <BPSkeleton rows={5} />
             ) : clusters.length === 0 && workloads.length === 0 ? (
               <EmptyState onCreateClick={() => navigate('/its')} type="both" />
-            ) : clusters.length === 0 ? (
+            ) : !clusters.some(cluster => cluster.status === 'Ready' || cluster.available) ? (
               <EmptyState onCreateClick={() => navigate('/its')} type="clusters" />
             ) : workloads.length === 0 ? (
               <EmptyState onCreateClick={() => navigate('/workloads/manage')} type="workloads" />
@@ -810,7 +810,7 @@ const BP = () => {
           </>
         ) : viewMode === 'visualize' ? (
           <>
-            {clusters.length === 0 || workloads.length === 0 ? (
+            {clusters.length === 0 || !clusters.some(cluster => cluster.status === 'Ready' || cluster.available) || workloads.length === 0 ? (
               <Box
                 sx={{
                   height: 'calc(100vh - 170px)',
@@ -829,7 +829,7 @@ const BP = () => {
               >
                 {clusters.length === 0 && workloads.length === 0 ? (
                   <EmptyState onCreateClick={() => navigate('/its')} type="both" />
-                ) : clusters.length === 0 ? (
+                ) : !clusters.some(cluster => cluster.status === 'Ready' || cluster.available) ? (
                   <EmptyState onCreateClick={() => navigate('/its')} type="clusters" />
                 ) : (
                   <EmptyState
