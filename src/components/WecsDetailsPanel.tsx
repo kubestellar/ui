@@ -709,7 +709,7 @@ const WecsDetailsPanel = ({
       // Update current pod reference
       currentPodRef.current = name;
 
-    return () => {
+      return () => {
         // console.log(`Cleaning up exec terminal resources for pod: ${name}`);
         clearInterval(pingInterval);
 
@@ -798,14 +798,14 @@ const WecsDetailsPanel = ({
   useEffect(() => {
     if (!isOpen) return;
 
-    function handleEsc(event:KeyboardEvent) {
-      if (event.key === "Escape") {
+    function handleEsc(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
         handleClose();
       }
     }
 
-    window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
   }, [isOpen, handleClose]);
 
   const handleFormatChange = (format: 'yaml' | 'json') => {
