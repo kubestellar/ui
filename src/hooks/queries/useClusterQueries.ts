@@ -17,6 +17,17 @@ interface ManagedClusterInfo {
 interface ClusterResponse {
   clusters: ManagedClusterInfo[];
   count: number;
+  itsData?: Array<{
+    name: string;
+    labels?: { [key: string]: string };
+    // Add other properties that might be used
+    status?: string;
+    metrics?: {
+      cpu?: string;
+      memory?: string;
+      storage?: string;
+    };
+  }>;
 }
 
 interface ClusterApiResponse {
@@ -55,6 +66,39 @@ export interface ClusterData {
   value: string[];
 }
 
+// Interface for the manual onboarding method
+export interface ClusterOnboardData {
+  clusterName: string;
+}
+
+// Add a new interface for detailed cluster information
+export interface ClusterDetails {
+  name: string;
+  uid: string;
+  creationTimestamp: string;
+  labels: { [key: string]: string };
+  status: {
+    conditions: Array<{
+      lastTransitionTime: string;
+      message: string;
+      reason: string;
+      status: string;
+      type: string;
+    }>;
+    version?: {
+      kubernetes: string;
+    };
+    capacity?: {
+      cpu: string;
+      memory: string;
+      pods: string;
+      [key: string]: string;
+    };
+  };
+  available: boolean;
+  joined: boolean;
+}
+
 export const useClusterQueries = () => {
   const queryClient = useQueryClient();
 
@@ -80,6 +124,7 @@ export const useClusterQueries = () => {
         return {
           clusters,
           count: response.data.count || 0,
+          itsData: response.data.itsData,
         };
       },
     });
@@ -109,15 +154,53 @@ export const useClusterQueries = () => {
     });
   };
 
-  // Onboard cluster mutation
+  // Updated onboard cluster mutation using both query parameter and request body for safety
   const useOnboardCluster = () => {
     return useMutation({
-      mutationFn: async (clusterData: ClusterData) => {
-        const response = await api.post('/clusters/onboard', clusterData);
+      mutationFn: async (clusterData: ClusterOnboardData) => {
+        const clusterName = clusterData.clusterName;
+
+        // Log the request payload for debugging
+        console.log('[DEBUG] Cluster onboard request payload:', {
+          url: `/clusters/onboard?name=${encodeURIComponent(clusterName)}`,
+          method: 'POST',
+          data: { clusterName: clusterName },
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        // Using both query parameter and request body for safety:
+        // 1. Query parameter: /clusters/onboard?name={clustername}
+        // 2. JSON body: { "clusterName": "{clustername}" }
+        const response = await api.post(
+          `/clusters/onboard?name=${encodeURIComponent(clusterName)}`,
+          { clusterName: clusterName },
+          { headers: { 'Content-Type': 'application/json' } }
+        );
+
+        // Log the response for debugging
+        console.log('[DEBUG] Cluster onboard response:', response.data);
+
         return response.data;
       },
       onSuccess: () => {
+        console.log(
+          '[DEBUG] Cluster onboard mutation successful, invalidating clusters query cache'
+        );
         queryClient.invalidateQueries({ queryKey: ['clusters'] });
+      },
+      onError: error => {
+        console.error('[DEBUG] Cluster onboard mutation error:', error);
+      },
+    });
+  };
+
+  const useGenerateOnboardCommand = () => {
+    return useMutation({
+      mutationFn: async (clusterName: string) => {
+        const response = await api.post('/clusters/manual/generateCommand', {
+          clusterName,
+        });
+        return response.data;
       },
     });
   };
@@ -134,16 +217,69 @@ export const useClusterQueries = () => {
         clusterName: string;
         labels: { [key: string]: string };
       }) => {
-        const response = await api.patch('/api/managedclusters/labels', {
+        console.log('[DEBUG] Updating cluster labels:', {
           contextName,
           clusterName,
           labels,
         });
+
+        const response = await api.patch(
+          '/api/managedclusters/labels',
+          {
+            contextName,
+            clusterName,
+            labels,
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        console.log('[DEBUG] Update labels response:', response.data);
         return response.data;
       },
       onSuccess: () => {
+        console.log('[DEBUG] Labels updated successfully, invalidating clusters query cache');
         queryClient.invalidateQueries({ queryKey: ['clusters'] });
       },
+      onError: error => {
+        console.error('[DEBUG] Error updating cluster labels:', error);
+      },
+    });
+  };
+
+  // Detach cluster mutation
+  const useDetachCluster = () => {
+    return useMutation({
+      mutationFn: async (clusterName: string) => {
+        console.log('[DEBUG] Detaching cluster:', clusterName);
+        const response = await api.post('/clusters/detach', {
+          clusterName,
+        });
+        return response.data;
+      },
+      onSuccess: () => {
+        console.log('[DEBUG] Cluster detach successful, invalidating clusters query cache');
+        queryClient.invalidateQueries({ queryKey: ['clusters'] });
+      },
+      onError: error => {
+        console.error('[DEBUG] Cluster detach mutation error:', error);
+      },
+    });
+  };
+
+  // Fetch details for a specific cluster
+  const useClusterDetails = (clusterName: string) => {
+    return useQuery({
+      queryKey: ['cluster-details', clusterName],
+      queryFn: async (): Promise<ClusterDetails> => {
+        const response = await api.get(`/api/clusters/${clusterName}`);
+        return response.data;
+      },
+      enabled: !!clusterName,
+      staleTime: 1000 * 60,
     });
   };
 
@@ -153,5 +289,8 @@ export const useClusterQueries = () => {
     useImportCluster,
     useOnboardCluster,
     useUpdateClusterLabels,
+    useGenerateOnboardCommand,
+    useDetachCluster,
+    useClusterDetails,
   };
 };

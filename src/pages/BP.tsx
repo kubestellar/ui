@@ -56,9 +56,10 @@ const EmptyState: React.FC<{
 
   switch (type) {
     case 'clusters':
-      title = 'No Clusters Found';
-      description = 'No clusters are available. Please ensure you have access to clusters.';
-      buttonText = 'Go to Clusters';
+      title = 'No Available Clusters';
+      description =
+        'No clusters are currently available for binding. You need to add and configure clusters before creating binding policies.';
+      buttonText = 'Manage Clusters';
       break;
     case 'workloads':
       title = 'No Workloads Found';
@@ -388,8 +389,26 @@ const BP = () => {
     }
 
     // Update clusters state when clustersData changes
-    if (clustersData && !clustersLoading) {
-      setAvailableClusters(clustersData.clusters || []);
+    if (clustersData?.itsData) {
+      const clusterData = clustersData.itsData.map(
+        (cluster: { name: string; labels?: { [key: string]: string } }) => ({
+          name: cluster.name,
+          status: 'Ready', // Default status for ITS clusters
+          labels: cluster.labels || { 'kubernetes.io/cluster-name': cluster.name },
+          metrics: {
+            cpu: 'N/A',
+            memory: 'N/A',
+            storage: 'N/A',
+          },
+        })
+      );
+
+      setClusters(clusterData);
+      setAvailableClusters(clusterData);
+    } else {
+      // If no clusters data, set to empty array
+      setClusters([]);
+      setAvailableClusters([]);
     }
 
     // Update workloads state when workloadsData changes
@@ -763,7 +782,7 @@ const BP = () => {
               <BPSkeleton rows={5} />
             ) : clusters.length === 0 && workloads.length === 0 ? (
               <EmptyState onCreateClick={() => navigate('/its')} type="both" />
-            ) : clusters.length === 0 ? (
+            ) : !clusters.some(cluster => cluster.status === 'Ready' || cluster.available) ? (
               <EmptyState onCreateClick={() => navigate('/its')} type="clusters" />
             ) : workloads.length === 0 ? (
               <EmptyState onCreateClick={() => navigate('/workloads/manage')} type="workloads" />
@@ -792,7 +811,9 @@ const BP = () => {
           </>
         ) : viewMode === 'visualize' ? (
           <>
-            {clusters.length === 0 || workloads.length === 0 ? (
+            {clusters.length === 0 ||
+            !clusters.some(cluster => cluster.status === 'Ready' || cluster.available) ||
+            workloads.length === 0 ? (
               <Box
                 sx={{
                   height: 'calc(100vh - 170px)',
@@ -811,7 +832,7 @@ const BP = () => {
               >
                 {clusters.length === 0 && workloads.length === 0 ? (
                   <EmptyState onCreateClick={() => navigate('/its')} type="both" />
-                ) : clusters.length === 0 ? (
+                ) : !clusters.some(cluster => cluster.status === 'Ready' || cluster.available) ? (
                   <EmptyState onCreateClick={() => navigate('/its')} type="clusters" />
                 ) : (
                   <EmptyState

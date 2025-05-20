@@ -37,14 +37,18 @@ import {
   Menu,
   ListItemIcon,
   ListItemText,
+  Box,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import LabelIcon from '@mui/icons-material/Label';
 import SaveIcon from '@mui/icons-material/Save';
 import CloseIcon from '@mui/icons-material/Close';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import LinkOffIcon from '@mui/icons-material/LinkOff';
 import { Plus, CloudOff, Filter, Tag, Tags } from 'lucide-react';
 import CreateOptions from './ImportClusters'; // Dialog for cluster import (if needed)
 import useTheme from '../stores/themeStore';
@@ -54,6 +58,8 @@ import InboxIcon from '@mui/icons-material/Inbox';
 import PostAddIcon from '@mui/icons-material/PostAdd';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import TableSkeleton from './ui/TableSkeleton';
+import ClusterDetailDialog from './ClusterDetailDialog'; // Import the new component
+import DetachmentLogsDialog from './DetachmentLogsDialog'; // Import the new component
 
 interface ManagedClusterInfo {
   name: string;
@@ -594,6 +600,171 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
     </Dialog>
   );
 };
+interface DetachClusterDialogProps {
+  open: boolean;
+  onClose: () => void;
+  cluster: ManagedClusterInfo | null;
+  onDetach: (clusterName: string) => void;
+  isLoading: boolean;
+  isDark: boolean;
+  colors: ColorTheme;
+}
+
+const DetachClusterDialog: React.FC<DetachClusterDialogProps> = ({
+  open,
+  onClose,
+  cluster,
+  onDetach,
+  isLoading,
+  isDark,
+  colors,
+}) => {
+  const handleDetach = () => {
+    if (cluster) {
+      onDetach(cluster.name);
+    }
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      TransitionComponent={Zoom}
+      transitionDuration={300}
+      PaperProps={{
+        style: {
+          backgroundColor: colors.paper,
+          color: colors.text,
+          border: `1px solid ${colors.border}`,
+          borderRadius: '12px',
+          overflow: 'hidden',
+          boxShadow: isDark
+            ? '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4)'
+            : '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+        },
+      }}
+    >
+      <DialogTitle
+        style={{
+          color: colors.error,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '20px 24px',
+          borderBottom: `1px solid ${colors.border}`,
+        }}
+      >
+        <div className="flex items-center gap-2">
+          <LinkOffIcon style={{ color: colors.error }} />
+          <Typography variant="h6" component="span">
+            Detach Cluster
+          </Typography>
+        </div>
+        <IconButton onClick={onClose} size="small" style={{ color: colors.textSecondary }}>
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent style={{ padding: '24px' }}>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="body1" style={{ fontWeight: 500, marginBottom: '8px' }}>
+            Are you sure you want to detach the following cluster?
+          </Typography>
+
+          <Box
+            sx={{
+              p: 2,
+              mt: 2,
+              border: `1px solid ${colors.border}`,
+              borderRadius: 1,
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
+            }}
+          >
+            <Typography variant="h6" style={{ color: colors.text, fontWeight: 600 }}>
+              {cluster?.name}
+            </Typography>
+            <Typography variant="body2" style={{ color: colors.textSecondary, marginTop: '8px' }}>
+              Context: {cluster?.name}
+            </Typography>
+            {cluster?.labels && Object.keys(cluster.labels).length > 0 && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="caption" style={{ color: colors.textSecondary }}>
+                  Labels:
+                </Typography>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {Object.entries(cluster.labels).map(([key, value]) => (
+                    <Chip
+                      key={key}
+                      size="small"
+                      label={`${key}=${value}`}
+                      sx={{
+                        backgroundColor: isDark
+                          ? 'rgba(47, 134, 255, 0.15)'
+                          : 'rgba(47, 134, 255, 0.08)',
+                        color: colors.primary,
+                        fontSize: '0.75rem',
+                      }}
+                    />
+                  ))}
+                </div>
+              </Box>
+            )}
+          </Box>
+        </Box>
+
+        <Box
+          sx={{
+            mt: 3,
+            backgroundColor: isDark ? 'rgba(255, 107, 107, 0.1)' : 'rgba(255, 107, 107, 0.05)',
+            p: 2,
+            borderRadius: 1,
+          }}
+        >
+          <Typography variant="body2" style={{ color: colors.error }}>
+            Warning: This action will remove the cluster from management. It will no longer be
+            visible or controlled from this interface.
+          </Typography>
+        </Box>
+      </DialogContent>
+
+      <DialogActions
+        style={{
+          padding: '16px 24px',
+          borderTop: `1px solid ${colors.border}`,
+          justifyContent: 'space-between',
+        }}
+      >
+        <Button
+          onClick={onClose}
+          style={{
+            color: colors.textSecondary,
+          }}
+          variant="text"
+          startIcon={<CloseIcon />}
+          disabled={isLoading}
+        >
+          Cancel
+        </Button>
+
+        <Button
+          onClick={handleDetach}
+          variant="contained"
+          disabled={isLoading}
+          startIcon={isLoading ? <CircularProgress size={16} color="inherit" /> : <LinkOffIcon />}
+          style={{
+            backgroundColor: colors.error,
+            color: colors.white,
+            minWidth: '120px',
+          }}
+        >
+          {isLoading ? 'Detaching...' : 'Detach Cluster'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
 
 const ClustersTable: React.FC<ClustersTableProps> = ({
   clusters,
@@ -620,9 +791,16 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
   const hasSelectedClusters = selectedClusters.length > 0;
   const theme = useTheme(state => state.theme);
   const isDark = theme === 'dark';
+  const [anchorElActions, setAnchorElActions] = useState<{ [key: string]: HTMLElement | null }>({});
+  const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
+  const [detachClusterOpen, setDetachClusterOpen] = useState(false);
+  const [detachLogsOpen, setDetachLogsOpen] = useState(false);
+  const [loadingClusterDetach, setLoadingClusterDetach] = useState<string | null>(null);
+  const [refetchClusters] = useState<(() => void) | null>(null);
 
-  const { useUpdateClusterLabels } = useClusterQueries();
+  const { useUpdateClusterLabels, useDetachCluster } = useClusterQueries();
   const updateLabelsMutation = useUpdateClusterLabels();
+  const detachClusterMutation = useDetachCluster();
 
   // Initialize with initial props if provided
   useEffect(() => {
@@ -779,6 +957,11 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
     setEditDialogOpen(true);
   };
 
+  // Function to get the actual context to use for a cluster
+  const getClusterContext = (cluster: ManagedClusterInfo): string => {
+    return cluster.context || 'its1';
+  };
+
   const handleSaveLabels = (
     clusterName: string,
     contextName: string,
@@ -847,7 +1030,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
           await new Promise(resolve => {
             updateLabelsMutation.mutate(
               {
-                contextName: cluster.context,
+                contextName: getClusterContext(cluster), // Get correct context
                 clusterName: cluster.name,
                 labels: newLabels,
               },
@@ -883,11 +1066,25 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
       return;
     }
 
-    // Regular single-cluster operation continues as before
+    // Regular single-cluster operation
     setLoadingClusterEdit(clusterName);
 
+    // Find the actual cluster to get the correct context
+    const actualCluster = clusters.find(c => c.name === clusterName);
+    const actualContext = actualCluster ? getClusterContext(actualCluster) : contextName;
+
+    // Log the operation
+    console.log(
+      `Updating labels for cluster "${clusterName}" with context "${actualContext}"`,
+      labels
+    );
+
     updateLabelsMutation.mutate(
-      { contextName, clusterName, labels },
+      {
+        contextName: actualContext,
+        clusterName: clusterName,
+        labels,
+      },
       {
         onSuccess: () => {
           toast.success('Labels updated successfully', {
@@ -900,23 +1097,110 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
             },
           });
           setLoadingClusterEdit(null);
+          setEditDialogOpen(false);
         },
         onError: error => {
-          toast.error('Failed to update labels', {
-            icon: '❌',
-            style: {
-              borderRadius: '10px',
-              background: isDark ? '#1e293b' : '#ffffff',
-              color: isDark ? '#f1f5f9' : '#1e293b',
-              border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
-            },
-          });
+          toast.error(
+            'Failed to update labels: ' +
+              (error instanceof Error ? error.message : 'Unknown error'),
+            {
+              icon: '❌',
+              style: {
+                borderRadius: '10px',
+                background: isDark ? '#1e293b' : '#ffffff',
+                color: isDark ? '#f1f5f9' : '#1e293b',
+                border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+              },
+              duration: 5000,
+            }
+          );
           console.error('Error updating cluster labels:', error);
           setLoadingClusterEdit(null);
         },
       }
     );
   };
+
+  const handleActionsClick = (event: React.MouseEvent<HTMLButtonElement>, clusterName: string) => {
+    setAnchorElActions(prev => ({ ...prev, [clusterName]: event.currentTarget }));
+  };
+
+  const handleActionsClose = (clusterName: string) => {
+    setAnchorElActions(prev => ({ ...prev, [clusterName]: null }));
+  };
+
+  const handleViewDetails = (cluster: ManagedClusterInfo) => {
+    setSelectedCluster(cluster);
+    handleActionsClose(cluster.name);
+    setViewDetailsOpen(true);
+  };
+
+  const handleCopyName = (clusterName: string) => {
+    navigator.clipboard.writeText(clusterName);
+    handleActionsClose(clusterName);
+    toast.success(`Cluster name copied to clipboard: ${clusterName}`, {
+      duration: 2000,
+    });
+  };
+
+  const handleDetachCluster = (cluster: ManagedClusterInfo) => {
+    setSelectedCluster(cluster);
+    handleActionsClose(cluster.name);
+    setDetachClusterOpen(true);
+  };
+
+  const handleConfirmDetach = (clusterName: string) => {
+    setLoadingClusterDetach(clusterName);
+
+    // Close the confirmation dialog and open logs dialog immediately
+    setDetachClusterOpen(false);
+    setDetachLogsOpen(true);
+
+    detachClusterMutation.mutate(clusterName, {
+      onSuccess: () => {
+        setLoadingClusterDetach(null);
+
+        // Explicitly refetch clusters data
+        if (refetchClusters) {
+          refetchClusters();
+        } else {
+          // Fallback if refetch function is not available
+          window.location.reload();
+        }
+
+        // Remove the detached cluster from selected clusters if it was selected
+        setSelectedClusters(prev => prev.filter(name => name !== clusterName));
+      },
+      onError: () => {
+        setLoadingClusterDetach(null);
+      },
+    });
+  };
+
+  // Handle the closing of detachment logs dialog
+  const handleCloseDetachLogs = () => {
+    setDetachLogsOpen(false);
+    // Refetch clusters to ensure UI is updated
+    if (refetchClusters) {
+      refetchClusters();
+    }
+  };
+
+  // Expose the refetch function from the parent component
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('refetch-clusters', () => {
+        // Force an immediate refetch by reloading the page
+        window.location.reload();
+      });
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('refetch-clusters', () => {});
+      }
+    };
+  }, []);
 
   const colors = {
     primary: '#2f86ff',
@@ -1099,7 +1383,6 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                   backgroundColor: colors.paper,
                   border: `1px solid ${colors.border}`,
                   borderRadius: '8px',
-                  minWidth: '200px',
                 },
               }}
             >
@@ -1188,6 +1471,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                 <TableCell>Creation Time</TableCell>
                 <TableCell>Context</TableCell>
                 <TableCell>Status</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -1265,29 +1549,6 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                             <span style={{ color: colors.textSecondary }}>No labels</span>
                           )}
                         </div>
-                        {selectedClusters.length <= 1 && (
-                          <Tooltip title="Edit Labels">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleEditLabels(cluster)}
-                              disabled={loadingClusterEdit === cluster.name}
-                              style={{
-                                color: colors.textSecondary,
-                                backgroundColor: isDark
-                                  ? 'rgba(47, 134, 255, 0.08)'
-                                  : 'rgba(47, 134, 255, 0.05)',
-                                transition: 'all 0.2s ease',
-                              }}
-                              className="hover:scale-105 hover:bg-opacity-80"
-                            >
-                              {loadingClusterEdit === cluster.name ? (
-                                <CircularProgress size={16} style={{ color: colors.primary }} />
-                              ) : (
-                                <EditIcon fontSize="small" />
-                              )}
-                            </IconButton>
-                          </Tooltip>
-                        )}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -1306,9 +1567,9 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                           color: isDark ? 'rgb(154, 214, 249)' : 'rgb(47, 134, 255)',
                           border: `1px solid ${isDark ? 'rgba(103, 192, 115, 0.4)' : 'rgba(103, 192, 115, 0.3)'}`,
                         }}
-                        className="rounded-lg px-2 py-1 text-xs font-medium"
+                        className="mx-4 rounded-lg px-2 py-1 text-xs font-medium"
                       >
-                        {cluster.context}
+                        {getClusterContext(cluster)}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -1354,6 +1615,126 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                         ></span>
                         {cluster.status || 'Active'}
                       </span>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <IconButton
+                          aria-label="more"
+                          id={`actions-button-${cluster.name}`}
+                          aria-controls={
+                            anchorElActions[cluster.name]
+                              ? `actions-menu-${cluster.name}`
+                              : undefined
+                          }
+                          aria-expanded={anchorElActions[cluster.name] ? 'true' : undefined}
+                          onClick={event => handleActionsClick(event, cluster.name)}
+                          size="small"
+                          style={{
+                            color: colors.textSecondary,
+                            backgroundColor: isDark
+                              ? 'rgba(47, 134, 255, 0.08)'
+                              : 'rgba(47, 134, 255, 0.05)',
+                          }}
+                          className="hover:bg-opacity-80"
+                        >
+                          <MoreVertIcon fontSize="small" />
+                        </IconButton>
+                        <Menu
+                          id={`actions-menu-${cluster.name}`}
+                          anchorEl={anchorElActions[cluster.name]}
+                          open={Boolean(anchorElActions[cluster.name])}
+                          onClose={() => handleActionsClose(cluster.name)}
+                          MenuListProps={{
+                            'aria-labelledby': `actions-button-${cluster.name}`,
+                          }}
+                          anchorOrigin={{
+                            vertical: 'bottom',
+                            horizontal: 'right',
+                          }}
+                          transformOrigin={{
+                            vertical: 'top',
+                            horizontal: 'right',
+                          }}
+                          PaperProps={{
+                            style: {
+                              backgroundColor: colors.paper,
+                              border: `1px solid ${colors.border}`,
+                              boxShadow: isDark
+                                ? '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4)'
+                                : '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+                              borderRadius: '8px',
+                            },
+                          }}
+                        >
+                          <MenuItem
+                            onClick={() => handleViewDetails(cluster)}
+                            sx={{
+                              color: colors.text,
+                              '&:hover': {
+                                backgroundColor: isDark
+                                  ? 'rgba(255, 255, 255, 0.05)'
+                                  : 'rgba(0, 0, 0, 0.04)',
+                              },
+                            }}
+                          >
+                            <ListItemIcon>
+                              <VisibilityIcon fontSize="small" style={{ color: colors.primary }} />
+                            </ListItemIcon>
+                            <ListItemText>View Details</ListItemText>
+                          </MenuItem>
+                          <MenuItem
+                            onClick={() => {
+                              handleEditLabels(cluster);
+                              handleActionsClose(cluster.name);
+                            }}
+                            sx={{
+                              color: colors.text,
+                              '&:hover': {
+                                backgroundColor: isDark
+                                  ? 'rgba(255, 255, 255, 0.05)'
+                                  : 'rgba(0, 0, 0, 0.04)',
+                              },
+                            }}
+                          >
+                            <ListItemIcon>
+                              <LabelIcon fontSize="small" style={{ color: colors.primary }} />
+                            </ListItemIcon>
+                            <ListItemText>Edit Labels</ListItemText>
+                          </MenuItem>
+                          <MenuItem
+                            onClick={() => handleCopyName(cluster.name)}
+                            sx={{
+                              color: colors.text,
+                              '&:hover': {
+                                backgroundColor: isDark
+                                  ? 'rgba(255, 255, 255, 0.05)'
+                                  : 'rgba(0, 0, 0, 0.04)',
+                              },
+                            }}
+                          >
+                            <ListItemIcon>
+                              <ContentCopyIcon fontSize="small" style={{ color: colors.primary }} />
+                            </ListItemIcon>
+                            <ListItemText>Copy Name</ListItemText>
+                          </MenuItem>
+                          <MenuItem
+                            onClick={() => handleDetachCluster(cluster)}
+                            sx={{
+                              color: colors.error,
+                              '&:hover': {
+                                backgroundColor: isDark
+                                  ? 'rgba(255, 107, 107, 0.1)'
+                                  : 'rgba(255, 107, 107, 0.05)',
+                              },
+                            }}
+                          >
+                            <ListItemIcon>
+                              <LinkOffIcon fontSize="small" style={{ color: colors.error }} />
+                            </ListItemIcon>
+                            <ListItemText>Detach Cluster</ListItemText>
+                          </MenuItem>
+                        </Menu>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -1525,6 +1906,21 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
         </div>
       )}
 
+      <DetachClusterDialog
+        open={detachClusterOpen}
+        onClose={() => {
+          setDetachClusterOpen(false);
+          if (loadingClusterDetach) {
+            setLoadingClusterDetach(null);
+          }
+        }}
+        cluster={selectedCluster}
+        onDetach={handleConfirmDetach}
+        isLoading={!!loadingClusterDetach}
+        isDark={isDark}
+        colors={colors}
+      />
+
       <LabelEditDialog
         open={editDialogOpen}
         onClose={() => {
@@ -1536,6 +1932,22 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
         }}
         cluster={selectedCluster}
         onSave={handleSaveLabels}
+        isDark={isDark}
+        colors={colors}
+      />
+
+      <ClusterDetailDialog
+        open={viewDetailsOpen}
+        onClose={() => setViewDetailsOpen(false)}
+        clusterName={selectedCluster?.name || null}
+        isDark={isDark}
+        colors={colors}
+      />
+
+      <DetachmentLogsDialog
+        open={detachLogsOpen}
+        onClose={handleCloseDetachLogs}
+        clusterName={selectedCluster?.name || ''}
         isDark={isDark}
         colors={colors}
       />
