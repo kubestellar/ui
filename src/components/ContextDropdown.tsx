@@ -37,7 +37,7 @@ const ContextDropdown = ({
   const { theme } = useTheme();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [contextName, setContextName] = useState('');
-  const [contextVersion, setContextVersion] = useState('0.27.0');
+  const [contextVersion, setContextVersion] = useState('0.27.2');
   const [isCreating, setIsCreating] = useState(false);
   const [creationError, setCreationError] = useState('');
   const [creationSuccess, setCreationSuccess] = useState('');
@@ -82,7 +82,7 @@ const ContextDropdown = ({
 
   const handleOpenCreateDialog = () => {
     setContextName('');
-    setContextVersion('0.27.0');
+    setContextVersion('0.27.2');
     setCreationError('');
     setCreationSuccess('');
     setCreateDialogOpen(true);
@@ -130,6 +130,11 @@ const ContextDropdown = ({
   const handleCreateContext = async () => {
     if (!contextName) {
       setCreationError('Context name is required');
+      return;
+    }
+    
+    if (contextName === 'wds2') {
+      setCreationError("Cannot create context named 'wds2' as it's reserved as host");
       return;
     }
 
