@@ -211,33 +211,33 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
     if (!formData.clusterName.trim()) return;
     setManualError('');
     setManualLoading(true);
-    
+
     const clusterName = formData.clusterName.trim();
-    
+
     // Log the request data for debugging
     console.log('[DEBUG] Starting cluster onboarding process for:', clusterName);
     console.log('[DEBUG] Using hybrid approach:');
     console.log(`[DEBUG] - URL: /clusters/onboard?name=${encodeURIComponent(clusterName)}`);
     console.log(`[DEBUG] - Body: { clusterName: "${clusterName}" }`);
-    
+
     try {
       // Use the onboardCluster mutation with both query parameter and request body
-      await onboardClusterMutation.mutateAsync({ 
-        clusterName: clusterName 
+      await onboardClusterMutation.mutateAsync({
+        clusterName: clusterName,
       });
-      
+
       console.log('[DEBUG] Onboarding initiated successfully');
-      
+
       setTimeout(() => {
         if (!manualCommand) {
           setManualCommand({
             clusterName: clusterName,
             token: '',
-            command: 'Cluster onboarded successfully! The cluster is now being added to the platform.'
+            command:
+              'Cluster onboarded successfully! The cluster is now being added to the platform.',
           });
         }
-      }, 5000); 
-
+      }, 5000);
     } catch (error) {
       console.error('[DEBUG] Cluster onboarding error details:', error);
       let errorMessage = 'An unknown error occurred.';
@@ -245,15 +245,18 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
       // Type guard to check if error is an Error object
       if (error instanceof Error) {
         // Log error object structure for debugging
-        console.log('[DEBUG] Error object structure:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
-        
+        console.log(
+          '[DEBUG] Error object structure:',
+          JSON.stringify(error, Object.getOwnPropertyNames(error))
+        );
+
         // Check if it's an Axios error with response data
         const axiosError = error as AxiosError;
         if (axiosError.response) {
           // Server responded with an error
           const status = axiosError.response.status;
           const responseData = axiosError.response.data;
-          
+
           console.log('[DEBUG] API error response:', { status, data: responseData });
 
           if (status === 500) {
@@ -304,7 +307,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
 
       setManualError(errorMessage);
       setManualLoading(false);
-      
+
       // Added notification for WebSocket connection failure
       setSnackbar({
         open: true,
@@ -317,7 +320,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
   // File upload handler for YAML/Kubeconfig (if needed)
   const handleFileUpload = async () => {
     console.log('File upload triggered');
-     // This is a placeholder
+    // This is a placeholder
     if (selectedFile) {
       setSnackbar({
         open: true,
@@ -769,7 +772,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                   primaryButtonStyles={primaryButtonStyles}
                   secondaryButtonStyles={secondaryButtonStyles}
                   formData={formData}
-                  setFormData={(data) => setFormData(prev => ({...prev, ...data}))}
+                  setFormData={data => setFormData(prev => ({ ...prev, ...data }))}
                   handleCancel={handleCancel}
                 />
               )}

@@ -41,13 +41,10 @@ const ApiUrlImportTab: React.FC<ApiUrlImportTabProps> = ({
         sx={{
           p: { xs: 1.5, sm: 2, md: 2.5 },
           borderRadius: { xs: 1.5, sm: 2 },
-          backgroundColor:
-            theme === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.8)',
+          backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.8)',
           border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
           boxShadow:
-            theme === 'dark'
-              ? '0 4px 12px rgba(0, 0, 0, 0.3)'
-              : '0 4px 12px rgba(0, 0, 0, 0.05)',
+            theme === 'dark' ? '0 4px 12px rgba(0, 0, 0, 0.3)' : '0 4px 12px rgba(0, 0, 0, 0.05)',
           mb: 1.5,
           width: '100%',
           maxWidth: '100%',
@@ -65,10 +62,7 @@ const ApiUrlImportTab: React.FC<ApiUrlImportTabProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              bgcolor:
-                theme === 'dark'
-                  ? 'rgba(47, 134, 255, 0.15)'
-                  : 'rgba(47, 134, 255, 0.1)',
+              bgcolor: theme === 'dark' ? 'rgba(47, 134, 255, 0.15)' : 'rgba(47, 134, 255, 0.1)',
               color: theme === 'dark' ? colors.primaryLight : colors.primary,
             }}
           >
@@ -81,8 +75,7 @@ const ApiUrlImportTab: React.FC<ApiUrlImportTabProps> = ({
               Connect via API/URL
             </Box>
             <Box sx={{ color: colors.textSecondary, fontSize: '0.875rem', mt: 0.5 }}>
-              Import your cluster by providing the API endpoint and authentication
-              details
+              Import your cluster by providing the API endpoint and authentication details
             </Box>
           </Box>
         </Box>
@@ -92,15 +85,13 @@ const ApiUrlImportTab: React.FC<ApiUrlImportTabProps> = ({
             fullWidth
             label="API/URL Endpoint"
             placeholder="https://kubernetes.example.com:6443"
-            value={formData.clusterName} 
+            value={formData.clusterName}
             onChange={e => setFormData({ ...formData, clusterName: e.target.value })}
             InputProps={{
               sx: {
                 borderRadius: 1.5,
                 backgroundColor:
-                  theme === 'dark'
-                    ? 'rgba(255, 255, 255, 0.05)'
-                    : 'rgba(0, 0, 0, 0.02)',
+                  theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
                 color: theme === 'dark' ? '#ffffff' : 'inherit',
               },
               startAdornment: <Box sx={{ color: colors.textSecondary, mr: 1 }}>🔗</Box>,
@@ -140,9 +131,7 @@ const ApiUrlImportTab: React.FC<ApiUrlImportTabProps> = ({
               sx: {
                 borderRadius: 1.5,
                 backgroundColor:
-                  theme === 'dark'
-                    ? 'rgba(255, 255, 255, 0.05)'
-                    : 'rgba(0, 0, 0, 0.02)',
+                  theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
                 color: theme === 'dark' ? '#ffffff' : 'inherit',
               },
               startAdornment: <Box sx={{ color: colors.textSecondary, mr: 1 }}>🔒</Box>,
@@ -180,7 +169,7 @@ const ApiUrlImportTab: React.FC<ApiUrlImportTabProps> = ({
           </Button>
           <Button
             variant="contained"
-            disabled={!formData.clusterName.trim()} 
+            disabled={!formData.clusterName.trim()}
             sx={primaryButtonStyles}
             // onClick={handleConnect} // Add a handler for connect if needed
           >
@@ -192,4 +181,4 @@ const ApiUrlImportTab: React.FC<ApiUrlImportTabProps> = ({
   );
 };
 
-export default ApiUrlImportTab; 
+export default ApiUrlImportTab;

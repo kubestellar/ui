@@ -128,10 +128,12 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
         </IconButton>
       </DialogTitle>
 
-      <DialogContent style={{ 
-        padding: '24px', 
-        backgroundColor: isDark ? colors.background : undefined 
-      }}>
+      <DialogContent
+        style={{
+          padding: '24px',
+          backgroundColor: isDark ? colors.background : undefined,
+        }}
+      >
         {isLoading ? (
           <Box
             sx={{
@@ -170,9 +172,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                 p: 3,
                 mb: 3,
                 borderRadius: 2,
-                backgroundColor: isDark
-                  ? 'rgba(47, 134, 255, 0.08)'
-                  : 'rgba(47, 134, 255, 0.04)',
+                backgroundColor: isDark ? 'rgba(47, 134, 255, 0.08)' : 'rgba(47, 134, 255, 0.04)',
                 border: `1px solid ${isDark ? 'rgba(47, 134, 255, 0.2)' : 'rgba(47, 134, 255, 0.1)'}`,
               }}
             >
@@ -193,7 +193,13 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                   </Typography>
                 </Grid>
                 <Grid item xs={12} md={4} sx={{ textAlign: { xs: 'left', md: 'right' } }}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: { xs: 'flex-start', md: 'flex-end' } }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: { xs: 'flex-start', md: 'flex-end' },
+                    }}
+                  >
                     <Chip
                       icon={
                         clusterDetails.available ? (
@@ -240,12 +246,9 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                   </Box>
                 </Grid>
               </Grid>
-              
+
               <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <AccessTimeIcon
-                  fontSize="small"
-                  style={{ color: colors.textSecondary }}
-                />
+                <AccessTimeIcon fontSize="small" style={{ color: colors.textSecondary }} />
                 <Typography variant="body2" style={{ color: colors.textSecondary }}>
                   Created on {formatDate(clusterDetails.creationTimestamp)}
                 </Typography>
@@ -340,14 +343,9 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                           : 'rgba(0, 0, 0, 0.02)',
                       }}
                     >
-                      <MemoryIcon
-                        sx={{ fontSize: 28, mb: 1, color: colors.primary }}
-                      />
+                      <MemoryIcon sx={{ fontSize: 28, mb: 1, color: colors.primary }} />
                       <Typography variant="h6">{clusterDetails.status.capacity.cpu}</Typography>
-                      <Typography
-                        variant="body2"
-                        style={{ color: colors.textSecondary }}
-                      >
+                      <Typography variant="body2" style={{ color: colors.textSecondary }}>
                         CPU Cores
                       </Typography>
                     </Box>
@@ -365,18 +363,13 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                           : 'rgba(0, 0, 0, 0.02)',
                       }}
                     >
-                      <StorageIcon
-                        sx={{ fontSize: 28, mb: 1, color: colors.primary }}
-                      />
+                      <StorageIcon sx={{ fontSize: 28, mb: 1, color: colors.primary }} />
                       <Typography variant="h6">
                         {parseInt(clusterDetails.status.capacity.memory) / 1024 / 1024 > 1
                           ? `${Math.round(parseInt(clusterDetails.status.capacity.memory) / 1024 / 1024)} GB`
                           : clusterDetails.status.capacity.memory}
                       </Typography>
-                      <Typography
-                        variant="body2"
-                        style={{ color: colors.textSecondary }}
-                      >
+                      <Typography variant="body2" style={{ color: colors.textSecondary }}>
                         Memory
                       </Typography>
                     </Box>
@@ -394,14 +387,9 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                           : 'rgba(0, 0, 0, 0.02)',
                       }}
                     >
-                      <InfoOutlinedIcon
-                        sx={{ fontSize: 28, mb: 1, color: colors.primary }}
-                      />
+                      <InfoOutlinedIcon sx={{ fontSize: 28, mb: 1, color: colors.primary }} />
                       <Typography variant="h6">{clusterDetails.status.capacity.pods}</Typography>
-                      <Typography
-                        variant="body2"
-                        style={{ color: colors.textSecondary }}
-                      >
+                      <Typography variant="body2" style={{ color: colors.textSecondary }}>
                         Pods Capacity
                       </Typography>
                     </Box>
@@ -437,4 +425,4 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
   );
 };
 
-export default ClusterDetailDialog; 
+export default ClusterDetailDialog;

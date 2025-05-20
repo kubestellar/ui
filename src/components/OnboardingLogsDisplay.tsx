@@ -57,16 +57,16 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
           setError(null);
         };
 
-        ws.onmessage = (event) => {
+        ws.onmessage = event => {
           try {
             const data = JSON.parse(event.data) as LogMessage;
-            setLogs((prevLogs) => [...prevLogs, data]);
+            setLogs(prevLogs => [...prevLogs, data]);
 
             // If status is Completed, trigger the onComplete callback
             if (data.status === 'Completed') {
               setTimeout(() => {
                 onComplete();
-              }, 1000); 
+              }, 1000);
             }
           } catch (err) {
             console.error('Error parsing WebSocket message:', err);
@@ -78,7 +78,7 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
           setConnected(false);
         };
 
-        ws.onerror = (error) => {
+        ws.onerror = error => {
           console.error('WebSocket error:', error);
           setError('WebSocket connection failed. Please try again.');
           setConnected(false);
@@ -166,8 +166,8 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
-      <Box 
-        sx={{ 
+      <Box
+        sx={{
           position: 'sticky',
           top: 0,
           zIndex: 10,
@@ -175,14 +175,17 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
           pb: 2,
           backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.8)',
           borderBottom: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`,
-          boxShadow: theme === 'dark' ? '0 2px 8px rgba(0, 0, 0, 0.2)' : '0 2px 8px rgba(0, 0, 0, 0.05)',
+          boxShadow:
+            theme === 'dark' ? '0 2px 8px rgba(0, 0, 0, 0.2)' : '0 2px 8px rgba(0, 0, 0, 0.05)',
           borderTopLeftRadius: theme === 'dark' ? 8 : 10,
           borderTopRightRadius: theme === 'dark' ? 8 : 10,
-          mx: -2.5, 
+          mx: -2.5,
           px: 2.5,
         }}
       >
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5, alignItems: 'center' }}>
+        <Box
+          sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5, alignItems: 'center' }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Box
               sx={{
@@ -197,33 +200,43 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
               }}
             >
               {logs.length > 0 && logs[logs.length - 1].status === 'Completed' ? (
-                <span role="img" aria-label="completed">✓</span>
+                <span role="img" aria-label="completed">
+                  ✓
+                </span>
               ) : (
-                <span role="img" aria-label="loading">⚡</span>
+                <span role="img" aria-label="loading">
+                  ⚡
+                </span>
               )}
             </Box>
-            <Typography 
-              variant="subtitle2" 
+            <Typography
+              variant="subtitle2"
               color={theme === 'dark' ? colors.white : colors.text}
               sx={{ fontWeight: 600 }}
             >
               Onboarding: {clusterName}
             </Typography>
           </Box>
-          <Box sx={{ 
-            display: 'flex',
-            alignItems: 'center',
-            backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.5)',
-            borderRadius: '12px',
-            px: 1.5,
-            py: 0.5,
-            border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`
-          }}>
-            <Typography 
-              variant="caption" 
-              color={logs.length > 0 && logs[logs.length - 1].status === 'Completed' 
-                ? (theme === 'dark' ? colors.success : '#00a845') 
-                : colors.textSecondary}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.5)',
+              borderRadius: '12px',
+              px: 1.5,
+              py: 0.5,
+              border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}`,
+            }}
+          >
+            <Typography
+              variant="caption"
+              color={
+                logs.length > 0 && logs[logs.length - 1].status === 'Completed'
+                  ? theme === 'dark'
+                    ? colors.success
+                    : '#00a845'
+                  : colors.textSecondary
+              }
               sx={{ fontWeight: 600 }}
             >
               {getProgress()}% Complete
@@ -238,57 +251,59 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
             borderRadius: 3,
             backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
             '& .MuiLinearProgress-bar': {
-              backgroundColor: logs.length > 0 && logs[logs.length - 1].status === 'Completed' 
-                ? colors.success 
-                : colors.primary,
+              backgroundColor:
+                logs.length > 0 && logs[logs.length - 1].status === 'Completed'
+                  ? colors.success
+                  : colors.primary,
               borderRadius: 3,
             },
           }}
         />
         {logs.length > 0 && (
-          <Box 
-            sx={{ 
-              mt: 1, 
-              display: 'flex', 
-              alignItems: 'center', 
+          <Box
+            sx={{
+              mt: 1,
+              display: 'flex',
+              alignItems: 'center',
               justifyContent: 'center',
               gap: 1,
             }}
           >
-            <Box sx={{ 
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 0.5,
-              color: getStatusColor(logs[logs.length - 1].status),
-              backgroundColor: theme === 'dark' 
-                ? 'rgba(0, 0, 0, 0.15)' 
-                : 'rgba(255, 255, 255, 0.7)',
-              borderRadius: '12px',
-              px: 1,
-              py: 0.25,
-              border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`
-            }}>
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.5,
+                color: getStatusColor(logs[logs.length - 1].status),
+                backgroundColor:
+                  theme === 'dark' ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.7)',
+                borderRadius: '12px',
+                px: 1,
+                py: 0.25,
+                border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`,
+              }}
+            >
               <span role="img" aria-label={logs[logs.length - 1].status.toLowerCase()}>
                 {getStatusIcon(logs[logs.length - 1].status)}
               </span>
-              <Typography 
-                variant="caption" 
-                sx={{ 
-                  fontWeight: 600, 
-                  color: getStatusColor(logs[logs.length - 1].status)
+              <Typography
+                variant="caption"
+                sx={{
+                  fontWeight: 600,
+                  color: getStatusColor(logs[logs.length - 1].status),
                 }}
               >
                 {logs[logs.length - 1].status}
               </Typography>
             </Box>
-            <Typography 
-              variant="caption" 
-              sx={{ 
+            <Typography
+              variant="caption"
+              sx={{
                 color: colors.textSecondary,
                 fontSize: '0.7rem',
                 flex: 1,
                 textAlign: 'center',
-                fontStyle: 'italic'
+                fontStyle: 'italic',
               }}
             >
               {logs[logs.length - 1].message}
@@ -304,15 +319,14 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
           backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.9)',
           borderRadius: 2,
           p: 2,
-          mt: 2, 
+          mt: 2,
           overflowY: 'auto',
           fontFamily: 'monospace',
           fontSize: '0.875rem',
           color: '#eee',
           border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.2)'}`,
-          boxShadow: theme === 'dark' 
-            ? '0 4px 12px rgba(0, 0, 0, 0.4)' 
-            : '0 4px 12px rgba(0, 0, 0, 0.15)',
+          boxShadow:
+            theme === 'dark' ? '0 4px 12px rgba(0, 0, 0, 0.4)' : '0 4px 12px rgba(0, 0, 0, 0.15)',
         }}
       >
         {!connected && !logs.length && !error && (
@@ -330,13 +344,19 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
               },
             }}
           >
-            <span role="img" aria-label="connecting">⏳</span> Connecting to log stream...
+            <span role="img" aria-label="connecting">
+              ⏳
+            </span>{' '}
+            Connecting to log stream...
           </Box>
         )}
 
         {error && (
           <Box sx={{ color: '#ff6b6b', display: 'flex', alignItems: 'center', gap: 1 }}>
-            <span role="img" aria-label="error">⚠️</span> {error}
+            <span role="img" aria-label="error">
+              ⚠️
+            </span>{' '}
+            {error}
           </Box>
         )}
 
@@ -354,31 +374,37 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
               },
             }}
           >
-            <Box sx={{ 
-              color: '#888', 
-              mr: 1.5, 
-              minWidth: '80px',
-              fontSize: '0.75rem' 
-            }}>
+            <Box
+              sx={{
+                color: '#888',
+                mr: 1.5,
+                minWidth: '80px',
+                fontSize: '0.75rem',
+              }}
+            >
               {formatTime(log.timestamp)}
             </Box>
-            <Box sx={{ 
-              color: getStatusColor(log.status),
-              fontWeight: 600,
-              minWidth: '120px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1
-            }}>
+            <Box
+              sx={{
+                color: getStatusColor(log.status),
+                fontWeight: 600,
+                minWidth: '120px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              }}
+            >
               <span role="img" aria-label={log.status.toLowerCase()}>
                 {getStatusIcon(log.status)}
               </span>
               {log.status}
             </Box>
-            <Box sx={{ 
-              flex: 1,
-              wordBreak: 'break-word'
-            }}>
+            <Box
+              sx={{
+                flex: 1,
+                wordBreak: 'break-word',
+              }}
+            >
               {log.message}
             </Box>
           </Box>
@@ -414,4 +440,4 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
   );
 };
 
-export default OnboardingLogsDisplay; 
+export default OnboardingLogsDisplay;

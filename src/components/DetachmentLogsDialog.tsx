@@ -105,17 +105,17 @@ const DetachmentLogsDialog: React.FC<DetachmentLogsDialogProps> = ({
       // Create a new WebSocket connection
       const websocketUrl = `ws://localhost:4000/ws/detachment?cluster=${encodeURIComponent(clusterName)}`;
       const ws = new WebSocket(websocketUrl);
-      
+
       ws.onopen = () => {
         setIsConnected(true);
         console.log('WebSocket connection established for detachment logs');
       };
 
-      ws.onmessage = (event) => {
+      ws.onmessage = event => {
         try {
           const data = JSON.parse(event.data) as DetachmentLog;
           setLogs(prev => [...prev, data]);
-          
+
           // Check if this is a completion message
           if (data.type === 'STATUS' && data.status === 'Detached') {
             setIsCompleted(true);
@@ -125,7 +125,7 @@ const DetachmentLogsDialog: React.FC<DetachmentLogsDialogProps> = ({
         }
       };
 
-      ws.onerror = (event) => {
+      ws.onerror = event => {
         console.error('WebSocket error:', event);
         setError('Connection error. Please try again.');
       };
@@ -162,10 +162,9 @@ const DetachmentLogsDialog: React.FC<DetachmentLogsDialogProps> = ({
     }
   };
 
-  
   const getLogIcon = (log: DetachmentLog) => {
     const status = log.status.toLowerCase();
-    
+
     if (status === 'success' || status === 'detached') {
       return <CheckCircleIcon fontSize="small" style={{ color: colors.success }} />;
     } else if (status === 'error' || status === 'failed') {
@@ -206,7 +205,7 @@ const DetachmentLogsDialog: React.FC<DetachmentLogsDialogProps> = ({
     >
       <DialogTitle
         style={{
-          color: colors.error, 
+          color: colors.error,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -225,43 +224,47 @@ const DetachmentLogsDialog: React.FC<DetachmentLogsDialogProps> = ({
         </IconButton>
       </DialogTitle>
 
-      <DialogContent 
-        style={{ 
-          padding: '24px', 
+      <DialogContent
+        style={{
+          padding: '24px',
           backgroundColor: isDark ? colors.background : undefined,
         }}
       >
         <Box sx={{ mb: 3 }}>
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
               justifyContent: 'space-between',
-              mb: 2 
+              mb: 2,
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Terminal size={20} style={{ color: colors.primary }} />
               <Typography variant="h6">Detachment Logs</Typography>
             </Box>
-            
+
             <Chip
               label={isConnected ? 'Connected' : 'Disconnected'}
               size="small"
               sx={{
-                backgroundColor: isConnected 
-                  ? isDark ? 'rgba(103, 192, 115, 0.15)' : 'rgba(103, 192, 115, 0.1)'
-                  : isDark ? 'rgba(255, 107, 107, 0.15)' : 'rgba(255, 107, 107, 0.1)',
+                backgroundColor: isConnected
+                  ? isDark
+                    ? 'rgba(103, 192, 115, 0.15)'
+                    : 'rgba(103, 192, 115, 0.1)'
+                  : isDark
+                    ? 'rgba(255, 107, 107, 0.15)'
+                    : 'rgba(255, 107, 107, 0.1)',
                 color: isConnected ? colors.success : colors.error,
                 fontWeight: 500,
               }}
             />
           </Box>
-          
+
           {error && (
-            <Alert 
-              severity="error" 
-              sx={{ 
+            <Alert
+              severity="error"
+              sx={{
                 mb: 2,
                 backgroundColor: isDark ? 'rgba(255, 107, 107, 0.1)' : 'rgba(255, 107, 107, 0.05)',
                 color: colors.error,
@@ -270,7 +273,7 @@ const DetachmentLogsDialog: React.FC<DetachmentLogsDialogProps> = ({
               {error}
             </Alert>
           )}
-          
+
           <Paper
             elevation={0}
             sx={{
@@ -300,7 +303,7 @@ const DetachmentLogsDialog: React.FC<DetachmentLogsDialogProps> = ({
               </Box>
             ) : (
               logs.map((log, index) => (
-                <Box 
+                <Box
                   key={index}
                   sx={{
                     mb: 2,
@@ -314,7 +317,14 @@ const DetachmentLogsDialog: React.FC<DetachmentLogsDialogProps> = ({
                     },
                   }}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      mb: 1,
+                    }}
+                  >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       {getLogIcon(log)}
                       <Chip
@@ -331,14 +341,19 @@ const DetachmentLogsDialog: React.FC<DetachmentLogsDialogProps> = ({
                         label={log.type}
                         size="small"
                         sx={{
-                          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                          backgroundColor: isDark
+                            ? 'rgba(255, 255, 255, 0.05)'
+                            : 'rgba(0, 0, 0, 0.05)',
                           color: colors.textSecondary,
                           fontSize: '0.7rem',
                         }}
                       />
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <AccessTimeIcon fontSize="small" style={{ color: colors.textSecondary, fontSize: '0.9rem' }} />
+                      <AccessTimeIcon
+                        fontSize="small"
+                        style={{ color: colors.textSecondary, fontSize: '0.9rem' }}
+                      />
                       <Typography variant="caption" style={{ color: colors.textSecondary }}>
                         {formatDate(log.timestamp)}
                       </Typography>
@@ -353,7 +368,7 @@ const DetachmentLogsDialog: React.FC<DetachmentLogsDialogProps> = ({
             <div ref={logsEndRef} />
           </Paper>
         </Box>
-        
+
         {isCompleted && (
           <Alert
             severity="success"
@@ -391,4 +406,4 @@ const DetachmentLogsDialog: React.FC<DetachmentLogsDialogProps> = ({
   );
 };
 
-export default DetachmentLogsDialog; 
+export default DetachmentLogsDialog;

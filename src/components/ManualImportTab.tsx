@@ -1,13 +1,6 @@
 import React, { ChangeEvent, RefObject, useState } from 'react';
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Alert,
-  SxProps,
-  Theme,
-} from '@mui/material';
-import { CommandResponse, Colors } from './ImportClusters'; 
+import { Box, Button, CircularProgress, Alert, SxProps, Theme } from '@mui/material';
+import { CommandResponse, Colors } from './ImportClusters';
 import OnboardingLogsDisplay from './OnboardingLogsDisplay';
 
 interface ManualImportTabProps {
@@ -18,7 +11,7 @@ interface ManualImportTabProps {
   primaryButtonStyles: SxProps<Theme>;
   secondaryButtonStyles: SxProps<Theme>;
   formData: { clusterName: string; token: string; hubApiServer: string };
-  handleChange: (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void; 
+  handleChange: (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   handleGenerateCommand: () => void;
   manualCommand: CommandResponse | null;
   manualLoading: boolean;
@@ -29,9 +22,13 @@ interface ManualImportTabProps {
   availableClustersError: string;
   fetchAvailableClusters: () => void;
   clearManualCommand: () => void;
-  onCancel: () => void; 
+  onCancel: () => void;
   snackbar: { open: boolean; message: string; severity: 'success' | 'error' | 'warning' | 'info' };
-  setSnackbar: (snackbar: { open: boolean; message: string; severity: 'success' | 'error' | 'warning' | 'info' }) => void;
+  setSnackbar: (snackbar: {
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error' | 'warning' | 'info';
+  }) => void;
   successAlertRef: RefObject<HTMLDivElement>;
   setManualCommand: (command: CommandResponse | null) => void;
 }
@@ -54,14 +51,14 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
   availableClustersError,
   fetchAvailableClusters,
   clearManualCommand,
-  onCancel, 
+  onCancel,
   setSnackbar,
   successAlertRef,
   setManualCommand,
 }) => {
   const textColor = theme === 'dark' ? colors.white : colors.text;
   const [showLogs, setShowLogs] = useState(false);
-  
+
   // This function will be called when the onboarding is completed via logs
   const handleOnboardingComplete = () => {
     // Wait a moment for last logs to be visible
@@ -72,7 +69,8 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
         const successCommand = {
           clusterName: formData.clusterName,
           token: '',
-          command: 'Cluster onboarded successfully! The cluster is now being added to the platform.'
+          command:
+            'Cluster onboarded successfully! The cluster is now being added to the platform.',
         };
         clearManualCommand(); // Clear any existing command
         setTimeout(() => {
@@ -87,12 +85,11 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
     }, 2000);
   };
 
-
   const handleOnboard = () => {
     if (!formData.clusterName.trim()) return;
     setShowLogs(true);
     handleGenerateCommand();
-    
+
     // Reset loading state after WebSocket takes over
     setTimeout(() => {
       if (showLogs) {
@@ -118,13 +115,10 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
         sx={{
           p: { xs: 1.5, sm: 2, md: 2.5 },
           borderRadius: { xs: 1.5, sm: 2 },
-          backgroundColor:
-            theme === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.8)',
+          backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.8)',
           border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
           boxShadow:
-            theme === 'dark'
-              ? '0 4px 12px rgba(0, 0, 0, 0.3)'
-              : '0 4px 12px rgba(0, 0, 0, 0.05)',
+            theme === 'dark' ? '0 4px 12px rgba(0, 0, 0, 0.3)' : '0 4px 12px rgba(0, 0, 0, 0.05)',
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
@@ -154,10 +148,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              bgcolor:
-                theme === 'dark'
-                  ? 'rgba(47, 134, 255, 0.15)'
-                  : 'rgba(47, 134, 255, 0.1)',
+              bgcolor: theme === 'dark' ? 'rgba(47, 134, 255, 0.15)' : 'rgba(47, 134, 255, 0.1)',
               color: theme === 'dark' ? colors.primaryLight : colors.primary,
               flexShrink: 0,
               mt: 0.5,
@@ -190,9 +181,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                   py: 0.3,
                   borderRadius: '10px',
                   bgcolor:
-                    theme === 'dark'
-                      ? 'rgba(103, 192, 115, 0.15)'
-                      : 'rgba(103, 192, 115, 0.1)',
+                    theme === 'dark' ? 'rgba(103, 192, 115, 0.15)' : 'rgba(103, 192, 115, 0.1)',
                   color: theme === 'dark' ? '#97e6a5' : '#3d9950',
                   border: `1px solid ${theme === 'dark' ? 'rgba(103, 192, 115, 0.2)' : 'rgba(103, 192, 115, 0.15)'}`,
                 }}
@@ -200,10 +189,17 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                 Recommended
               </Box>
             </Box>
-            <Box sx={{ color: colors.textSecondary, fontSize: '0.825rem', lineHeight: 1.5, maxWidth: '90%' }}>
-                This is the simplest way to connect your Kubernetes cluster. Select a
-                cluster and click the Onboard Cluster button to directly connect it to your 
-                platform without any manual commands.
+            <Box
+              sx={{
+                color: colors.textSecondary,
+                fontSize: '0.825rem',
+                lineHeight: 1.5,
+                maxWidth: '90%',
+              }}
+            >
+              This is the simplest way to connect your Kubernetes cluster. Select a cluster and
+              click the Onboard Cluster button to directly connect it to your platform without any
+              manual commands.
             </Box>
           </Box>
         </Box>
@@ -222,9 +218,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
             <Box
               sx={{
                 backgroundColor:
-                  theme === 'dark'
-                    ? 'rgba(255, 255, 255, 0.02)'
-                    : 'rgba(0, 0, 0, 0.01)',
+                  theme === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.01)',
                 borderRadius: 2,
                 p: 2.5,
                 mb: 2,
@@ -256,8 +250,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                     justifyContent: 'center',
                     py: 3,
                     minHeight: '56px',
-                    bgcolor:
-                      theme === 'dark' ? 'rgba(0, 0, 0, 0.1)' : 'rgba(0, 0, 0, 0.02)',
+                    bgcolor: theme === 'dark' ? 'rgba(0, 0, 0, 0.1)' : 'rgba(0, 0, 0, 0.02)',
                     borderRadius: 1.5,
                     border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`,
                   }}
@@ -296,11 +289,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                     }}
                     onClick={fetchAvailableClusters}
                     startIcon={
-                      <span
-                        role="img"
-                        aria-label="retry"
-                        style={{ fontSize: '0.8rem' }}
-                      >
+                      <span role="img" aria-label="retry" style={{ fontSize: '0.8rem' }}>
                         🔄
                       </span>
                     }
@@ -315,9 +304,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                       border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)'}`,
                       borderRadius: 1.5,
                       backgroundColor:
-                        theme === 'dark'
-                          ? 'rgba(0, 0, 0, 0.3)'
-                          : 'rgba(255, 255, 255, 0.8)',
+                        theme === 'dark' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.8)',
                       position: 'relative',
                       overflow: 'hidden',
                       cursor: 'pointer',
@@ -337,8 +324,8 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                     <Box
                       component="select"
                       value={formData.clusterName}
-                      onChange={handleChange} // 
-                      name="clusterName" 
+                      onChange={handleChange} //
+                      name="clusterName"
                       sx={{
                         width: '100%',
                         height: '52px',
@@ -403,8 +390,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                             theme === 'dark'
                               ? 'rgba(47, 134, 255, 0.15)'
                               : 'rgba(47, 134, 255, 0.1)',
-                          color:
-                            theme === 'dark' ? colors.primaryLight : colors.primary,
+                          color: theme === 'dark' ? colors.primaryLight : colors.primary,
                         }}
                       ></Box>
                     </Box>
@@ -445,9 +431,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                       p: 1.5,
                       borderRadius: 1.5,
                       backgroundColor:
-                        theme === 'dark'
-                          ? 'rgba(255, 215, 0, 0.05)'
-                          : 'rgba(255, 215, 0, 0.08)',
+                        theme === 'dark' ? 'rgba(255, 215, 0, 0.05)' : 'rgba(255, 215, 0, 0.08)',
                       border: `1px solid ${theme === 'dark' ? 'rgba(255, 215, 0, 0.1)' : 'rgba(255, 215, 0, 0.15)'}`,
                     }}
                   >
@@ -461,8 +445,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                         flex: 1,
                       }}
                     >
-                      These are clusters discovered in your environment. Select one to
-                      continue.
+                      These are clusters discovered in your environment. Select one to continue.
                     </Box>
                     <Button
                       size="small"
@@ -544,9 +527,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                   border: `1px solid ${theme === 'dark' ? 'rgba(255, 107, 107, 0.2)' : 'rgba(255, 107, 107, 0.15)'}`,
                 }}
               >
-                <Box sx={{ fontWeight: 600, fontSize: '0.9rem', mb: 0.5 }}>
-                  Connection Error
-                </Box>
+                <Box sx={{ fontWeight: 600, fontSize: '0.9rem', mb: 0.5 }}>Connection Error</Box>
                 <Box sx={{ whiteSpace: 'pre-line' }}>{manualError}</Box>
                 {manualError.includes('clusteradm') && (
                   <Box
@@ -565,9 +546,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                       sx={{
                         fontFamily: "'Fira Code', monospace",
                         backgroundColor:
-                          theme === 'dark'
-                            ? 'rgba(0, 0, 0, 0.3)'
-                            : 'rgba(0, 0, 0, 0.04)',
+                          theme === 'dark' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.04)',
                         p: 1.5,
                         mt: 0.5,
                         borderRadius: 1,
@@ -606,8 +585,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                             theme === 'dark'
                               ? 'rgba(47, 134, 255, 0.2)'
                               : 'rgba(47, 134, 255, 0.1)',
-                          color:
-                            theme === 'dark' ? colors.primaryLight : colors.primary,
+                          color: theme === 'dark' ? colors.primaryLight : colors.primary,
                           boxShadow: 'none',
                           '&:hover': {
                             bgcolor:
@@ -617,11 +595,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                           },
                         }}
                       >
-                        <span
-                          role="img"
-                          aria-label="copy"
-                          style={{ fontSize: '0.7rem' }}
-                        >
+                        <span role="img" aria-label="copy" style={{ fontSize: '0.7rem' }}>
                           📋
                         </span>
                       </Button>
@@ -637,9 +611,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                 mt: 2,
                 borderRadius: 2,
                 backgroundColor:
-                  theme === 'dark'
-                    ? 'rgba(47, 134, 255, 0.05)'
-                    : 'rgba(47, 134, 255, 0.03)',
+                  theme === 'dark' ? 'rgba(47, 134, 255, 0.05)' : 'rgba(47, 134, 255, 0.03)',
                 border: `1px solid ${theme === 'dark' ? 'rgba(47, 134, 255, 0.1)' : 'rgba(47, 134, 255, 0.08)'}`,
                 display: 'flex',
                 flexDirection: 'column',
@@ -662,9 +634,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                     alignItems: 'center',
                     justifyContent: 'center',
                     bgcolor:
-                      theme === 'dark'
-                        ? 'rgba(47, 134, 255, 0.15)'
-                        : 'rgba(47, 134, 255, 0.1)',
+                      theme === 'dark' ? 'rgba(47, 134, 255, 0.15)' : 'rgba(47, 134, 255, 0.1)',
                     color: theme === 'dark' ? colors.primaryLight : colors.primary,
                   }}
                 >
@@ -694,9 +664,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                     alignItems: 'center',
                     justifyContent: 'center',
                     bgcolor:
-                      theme === 'dark'
-                        ? 'rgba(47, 134, 255, 0.1)'
-                        : 'rgba(47, 134, 255, 0.05)',
+                      theme === 'dark' ? 'rgba(47, 134, 255, 0.1)' : 'rgba(47, 134, 255, 0.05)',
                     color: theme === 'dark' ? colors.primaryLight : colors.primary,
                     fontSize: '0.7rem',
                     fontWeight: 600,
@@ -727,9 +695,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                     alignItems: 'center',
                     justifyContent: 'center',
                     bgcolor:
-                      theme === 'dark'
-                        ? 'rgba(47, 134, 255, 0.1)'
-                        : 'rgba(47, 134, 255, 0.05)',
+                      theme === 'dark' ? 'rgba(47, 134, 255, 0.1)' : 'rgba(47, 134, 255, 0.05)',
                     color: theme === 'dark' ? colors.primaryLight : colors.primary,
                     fontSize: '0.7rem',
                     fontWeight: 600,
@@ -760,9 +726,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                     alignItems: 'center',
                     justifyContent: 'center',
                     bgcolor:
-                      theme === 'dark'
-                        ? 'rgba(47, 134, 255, 0.1)'
-                        : 'rgba(47, 134, 255, 0.05)',
+                      theme === 'dark' ? 'rgba(47, 134, 255, 0.1)' : 'rgba(47, 134, 255, 0.05)',
                     color: theme === 'dark' ? colors.primaryLight : colors.primary,
                     fontSize: '0.7rem',
                     fontWeight: 600,
@@ -803,11 +767,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
               <Button
                 variant="contained"
                 onClick={handleOnboard}
-                disabled={
-                  !formData.clusterName.trim() ||
-                  manualLoading ||
-                  availableClustersLoading
-                }
+                disabled={!formData.clusterName.trim() || manualLoading || availableClustersLoading}
                 sx={{
                   ...primaryButtonStyles,
                   '&:focus-visible': {
@@ -819,20 +779,12 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                   manualLoading ? (
                     <CircularProgress size={16} color="inherit" />
                   ) : (
-                    <span
-                      role="img"
-                      aria-label="onboard"
-                      style={{ fontSize: '0.9rem' }}
-                    >
+                    <span role="img" aria-label="onboard" style={{ fontSize: '0.9rem' }}>
                       ⚡
                     </span>
                   )
                 }
-                aria-label={
-                  manualLoading
-                    ? 'Onboarding cluster...'
-                    : 'Onboard Cluster'
-                }
+                aria-label={manualLoading ? 'Onboarding cluster...' : 'Onboard Cluster'}
               >
                 {manualLoading ? 'Onboarding...' : 'Onboard Cluster'}
               </Button>
@@ -870,9 +822,12 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                   },
                 }}
               >
-                <Box sx={{ fontWeight: 600, fontSize: '1.1rem' }}>Cluster Onboarded Successfully</Box>
+                <Box sx={{ fontWeight: 600, fontSize: '1.1rem' }}>
+                  Cluster Onboarded Successfully
+                </Box>
                 <Box sx={{ mt: 1 }}>
-                  Cluster <strong>{manualCommand.clusterName}</strong> has been successfully onboarded to the platform.
+                  Cluster <strong>{manualCommand.clusterName}</strong> has been successfully
+                  onboarded to the platform.
                 </Box>
               </Alert>
             </Box>
@@ -881,7 +836,8 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
               sx={{
                 p: 3,
                 borderRadius: 2,
-                backgroundColor: theme === 'dark' ? 'rgba(103, 192, 115, 0.1)' : 'rgba(103, 192, 115, 0.05)',
+                backgroundColor:
+                  theme === 'dark' ? 'rgba(103, 192, 115, 0.1)' : 'rgba(103, 192, 115, 0.05)',
                 border: `1px solid ${theme === 'dark' ? 'rgba(103, 192, 115, 0.2)' : 'rgba(103, 192, 115, 0.1)'}`,
                 display: 'flex',
                 flexDirection: 'column',
@@ -904,7 +860,8 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    bgcolor: theme === 'dark' ? 'rgba(103, 192, 115, 0.2)' : 'rgba(103, 192, 115, 0.15)',
+                    bgcolor:
+                      theme === 'dark' ? 'rgba(103, 192, 115, 0.2)' : 'rgba(103, 192, 115, 0.15)',
                     color: theme === 'dark' ? colors.success : '#3d9950',
                     flexShrink: 0,
                     fontSize: '1.2rem',
@@ -915,14 +872,21 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                     ✓
                   </span>
                 </Box>
-                <Box sx={{ fontWeight: 600, fontSize: '1rem', color: theme === 'dark' ? colors.success : '#3d9950' }}>
+                <Box
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: '1rem',
+                    color: theme === 'dark' ? colors.success : '#3d9950',
+                  }}
+                >
                   Cluster has been added to the platform
                 </Box>
               </Box>
 
               <Box sx={{ pl: 7 }}>
                 <Box sx={{ fontSize: '0.9rem', color: textColor, mb: 2 }}>
-                  Your cluster <strong>{manualCommand.clusterName}</strong> has been successfully onboarded. You can now:
+                  Your cluster <strong>{manualCommand.clusterName}</strong> has been successfully
+                  onboarded. You can now:
                 </Box>
 
                 <Box
@@ -947,7 +911,8 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        bgcolor: theme === 'dark' ? 'rgba(47, 134, 255, 0.15)' : 'rgba(47, 134, 255, 0.1)',
+                        bgcolor:
+                          theme === 'dark' ? 'rgba(47, 134, 255, 0.15)' : 'rgba(47, 134, 255, 0.1)',
                         color: theme === 'dark' ? colors.primaryLight : colors.primary,
                         flexShrink: 0,
                         fontSize: '0.75rem',
@@ -976,7 +941,8 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        bgcolor: theme === 'dark' ? 'rgba(47, 134, 255, 0.15)' : 'rgba(47, 134, 255, 0.1)',
+                        bgcolor:
+                          theme === 'dark' ? 'rgba(47, 134, 255, 0.15)' : 'rgba(47, 134, 255, 0.1)',
                         color: theme === 'dark' ? colors.primaryLight : colors.primary,
                         flexShrink: 0,
                         fontSize: '0.75rem',
@@ -1005,7 +971,8 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        bgcolor: theme === 'dark' ? 'rgba(47, 134, 255, 0.15)' : 'rgba(47, 134, 255, 0.1)',
+                        bgcolor:
+                          theme === 'dark' ? 'rgba(47, 134, 255, 0.15)' : 'rgba(47, 134, 255, 0.1)',
                         color: theme === 'dark' ? colors.primaryLight : colors.primary,
                         flexShrink: 0,
                         fontSize: '0.75rem',
@@ -1043,11 +1010,17 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                       '&:hover': {
                         bgcolor: theme === 'dark' ? 'rgba(47, 134, 255, 0.8)' : colors.primaryDark,
                         transform: 'translateY(-2px)',
-                        boxShadow: theme === 'dark' ? '0 8px 16px -2px rgba(47, 134, 255, 0.3)' : '0 8px 16px -2px rgba(47, 134, 255, 0.4)',
+                        boxShadow:
+                          theme === 'dark'
+                            ? '0 8px 16px -2px rgba(47, 134, 255, 0.3)'
+                            : '0 8px 16px -2px rgba(47, 134, 255, 0.4)',
                       },
                       '&:active': {
                         transform: 'translateY(-1px)',
-                        boxShadow: theme === 'dark' ? '0 4px 8px -2px rgba(47, 134, 255, 0.3)' : '0 4px 8px -2px rgba(47, 134, 255, 0.4)',
+                        boxShadow:
+                          theme === 'dark'
+                            ? '0 4px 8px -2px rgba(47, 134, 255, 0.3)'
+                            : '0 4px 8px -2px rgba(47, 134, 255, 0.4)',
                       },
                     }}
                   >
@@ -1076,12 +1049,20 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                     bgcolor: theme === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(0, 0, 0, 0.03)',
                     '&:hover': {
                       bgcolor: theme === 'dark' ? 'rgba(0, 0, 0, 0.25)' : 'rgba(0, 0, 0, 0.05)',
-                      borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
+                      borderColor:
+                        theme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
                       transform: 'translateY(-2px)',
-                      boxShadow: theme === 'dark' ? '0 4px 8px -2px rgba(0, 0, 0, 0.3)' : '0 4px 8px -2px rgba(0, 0, 0, 0.1)',
+                      boxShadow:
+                        theme === 'dark'
+                          ? '0 4px 8px -2px rgba(0, 0, 0, 0.3)'
+                          : '0 4px 8px -2px rgba(0, 0, 0, 0.1)',
                     },
                   }}
-                  startIcon={<span role="img" aria-label="back" style={{ fontSize: '0.8rem' }}>⬅️</span>}
+                  startIcon={
+                    <span role="img" aria-label="back" style={{ fontSize: '0.8rem' }}>
+                      ⬅️
+                    </span>
+                  }
                 >
                   Back
                 </Button>
@@ -1096,7 +1077,11 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                   onCancel();
                 }}
                 sx={primaryButtonStyles}
-                startIcon={<span role="img" aria-label="dashboard" style={{ fontSize: '0.8rem' }}>🚀</span>}
+                startIcon={
+                  <span role="img" aria-label="dashboard" style={{ fontSize: '0.8rem' }}>
+                    🚀
+                  </span>
+                }
               >
                 Go to Dashboard
               </Button>
@@ -1108,4 +1093,4 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
   );
 };
 
-export default ManualImportTab; 
+export default ManualImportTab;
