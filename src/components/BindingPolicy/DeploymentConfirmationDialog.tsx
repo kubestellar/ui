@@ -23,6 +23,7 @@ import { PolicyConfiguration } from './ConfigurationSidebar';
 import { ManagedCluster, Workload } from '../../types/bindingPolicy';
 import KubernetesIcon from './KubernetesIcon';
 import { Editor } from '@monaco-editor/react';
+import CancelButton from '../common/CancelButton';
 
 export interface DeploymentPolicy {
   id: string;
@@ -224,18 +225,9 @@ const DeploymentConfirmationDialog: React.FC<DeploymentConfirmationDialogProps> 
           borderTop: darkMode ? '1px solid rgba(255, 255, 255, 0.15)' : undefined,
         }}
       >
-        <Button
-          onClick={onClose}
-          disabled={loading}
-          sx={{
-            color: darkMode ? 'rgba(255, 255, 255, 0.9)' : undefined,
-            '&:hover': {
-              bgcolor: darkMode ? 'rgba(255, 255, 255, 0.1)' : undefined,
-            },
-          }}
-        >
+        <CancelButton onClick={onClose} disabled={loading}>
           Cancel
-        </Button>
+        </CancelButton>
         <Button
           variant="contained"
           color="primary"
@@ -323,17 +315,7 @@ const DeploymentConfirmationDialog: React.FC<DeploymentConfirmationDialogProps> 
             borderTop: darkMode ? '1px solid rgba(255, 255, 255, 0.15)' : undefined,
           }}
         >
-          <Button
-            onClick={() => setSelectedPolicy(null)}
-            sx={{
-              color: darkMode ? 'rgba(255, 255, 255, 0.9)' : undefined,
-              '&:hover': {
-                bgcolor: darkMode ? 'rgba(255, 255, 255, 0.1)' : undefined,
-              },
-            }}
-          >
-            Close
-          </Button>
+          <CancelButton onClick={() => setSelectedPolicy(null)}>Close</CancelButton>
         </DialogActions>
       </Dialog>
     </Dialog>

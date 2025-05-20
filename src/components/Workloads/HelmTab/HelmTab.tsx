@@ -9,6 +9,7 @@ import { UserCreatedChartsForm } from './UserCreatedChartsForm';
 import { CreateOwnHelmForm } from './CreateOwnHelmForm';
 import { api } from '../../../lib/api';
 import WorkloadLabelInput from '../WorkloadLabelInput';
+import CancelButton from '../../common/CancelButton';
 
 export interface HelmFormData {
   repoName: string;
@@ -242,21 +243,12 @@ export const HelmTab = ({
             zIndex: 1,
           }}
         >
-          <Button
+          <CancelButton
             onClick={handleCancelClick}
             disabled={loading || popularLoading || userLoading}
-            sx={{
-              textTransform: 'none',
-              fontWeight: 600,
-              color: theme === 'dark' ? '#d4d4d4' : '#666',
-              padding: '8px 16px',
-              '&:hover': {
-                backgroundColor: theme === 'dark' ? '#333' : '#f5f5f5',
-              },
-            }}
           >
             Cancel
-          </Button>
+          </CancelButton>
           <Button
             variant="contained"
             onClick={() => {

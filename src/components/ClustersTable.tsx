@@ -54,6 +54,7 @@ import InboxIcon from '@mui/icons-material/Inbox';
 import PostAddIcon from '@mui/icons-material/PostAdd';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import TableSkeleton from './ui/TableSkeleton';
+import CancelButton from './common/CancelButton';
 
 interface ManagedClusterInfo {
   name: string;
@@ -565,17 +566,9 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
           justifyContent: 'space-between',
         }}
       >
-        <Button
-          onClick={onClose}
-          style={{
-            color: colors.textSecondary,
-          }}
-          variant="text"
-          startIcon={<CloseIcon />}
-          disabled={saving}
-        >
+        <CancelButton onClick={onClose} disabled={saving} startIcon={<CloseIcon />}>
           Cancel
-        </Button>
+        </CancelButton>
 
         <Button
           onClick={handleSave}

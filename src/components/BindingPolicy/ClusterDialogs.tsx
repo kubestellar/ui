@@ -22,6 +22,7 @@ import {
   Checkbox,
   FormControlLabel,
 } from '@mui/material';
+import CancelButton from '../common/CancelButton';
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
 import EditIcon from '@mui/icons-material/Edit';
@@ -598,16 +599,12 @@ export const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
           borderTop: `1px solid ${colors.border}`,
         }}
       >
-        <Button
+        <CancelButton
           onClick={onClose}
-          variant="outlined"
-          style={{
-            borderColor: colors.border,
+          sx={{
             color: colors.textSecondary,
           }}
-        >
-          Cancel
-        </Button>
+        />
 
         <Button
           onClick={handleSave}
@@ -928,16 +925,12 @@ export const SelectClusterDialog: React.FC<SelectClusterDialogProps> = ({
           borderTop: `1px solid ${colors.border}`,
         }}
       >
-        <Button
+        <CancelButton
           onClick={onClose}
-          variant="outlined"
-          style={{
-            borderColor: colors.border,
+          sx={{
             color: colors.textSecondary,
           }}
-        >
-          Cancel
-        </Button>
+        />
 
         {bulkSelectMode && (
           <Button

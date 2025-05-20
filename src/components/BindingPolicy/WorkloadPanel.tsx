@@ -32,6 +32,7 @@ import {
   Checkbox,
   FormControlLabel,
 } from '@mui/material';
+import CancelButton from '../common/CancelButton';
 import { Workload } from '../../types/bindingPolicy';
 import AddIcon from '@mui/icons-material/Add';
 import { useNavigate } from 'react-router-dom';
@@ -1730,7 +1731,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
           borderTop: `1px solid ${colors.border}`,
         }}
       >
-        <Button
+        {/* <Button
           onClick={onClose}
           variant="outlined"
           style={{
@@ -1739,7 +1740,14 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
           }}
         >
           Cancel
-        </Button>
+        </Button> */}
+
+        <CancelButton
+          onClick={onClose}
+          sx={{
+            color: colors.textSecondary,
+          }}
+        />
 
         <Button
           onClick={handleSave}
@@ -2092,16 +2100,12 @@ const SelectWorkloadDialog: React.FC<SelectWorkloadDialogProps> = ({
           borderTop: `1px solid ${colors.border}`,
         }}
       >
-        <Button
+        <CancelButton
           onClick={onClose}
-          variant="outlined"
-          style={{
-            borderColor: colors.border,
+          sx={{
             color: colors.textSecondary,
           }}
-        >
-          Cancel
-        </Button>
+        />
 
         {bulkSelectMode && (
           <Button

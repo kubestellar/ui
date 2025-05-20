@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Box, Typography, TextField, Button, IconButton, CircularProgress } from '@mui/material';
 import { FiX } from 'react-icons/fi';
+import CancelButton from './common/CancelButton';
 
 interface NewAppDialogProps {
   open: boolean;
@@ -151,18 +152,7 @@ const NewAppDialog = ({ open, onClose, onDeploy, loading }: NewAppDialogProps) =
             />
 
             <Box display="flex" justifyContent="flex-end" gap={2}>
-              <Button
-                onClick={handleClose}
-                color="secondary"
-                sx={{
-                  color: '#666666',
-                  '&:hover': {
-                    bgcolor: '#f0f0f0',
-                  },
-                }}
-              >
-                Cancel
-              </Button>
+              <CancelButton onClick={handleClose}>Cancel</CancelButton>
               <Button
                 variant="contained"
                 onClick={handleDeployClick}
