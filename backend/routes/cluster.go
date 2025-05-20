@@ -39,6 +39,11 @@ func setupClusterRoutes(router *gin.Engine) {
 	// Available clusters
 	router.GET("/api/clusters/available", handlers.GetAvailableClustersHandler)
 
+	// Manual cluster setup 
+	router.POST("/clusters/manual/generateCommand", handlers.GenerateCommandHandler)
+
+
+
 	// Managed cluster label update
 	router.PATCH("/api/managedclusters/labels", api.UpdateManagedClusterLabelsHandler)
 

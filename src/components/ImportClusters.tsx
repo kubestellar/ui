@@ -1988,7 +1988,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                                 }}
                               >
                                 <Box sx={{ mb: 1, fontWeight: 500, color: textColor }}>
-                                  Switch to the correct context on your terminal
+                                   Switch to the target cluster context:
                                 </Box>
                                 <Box
                                   sx={{
@@ -2015,12 +2015,12 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                                   }}
                                 >
                                   <Box component="span" sx={{ paddingLeft: '1rem' }}>
-                                    kubectl config use-context its1
+                                    kubectl config use-context {manualCommand.clusterName}
                                   </Box>
                                   <Button
                                     onClick={() => {
                                       navigator.clipboard.writeText(
-                                        'kubectl config use-context its1'
+                                        `kubectl config use-context ${manualCommand.clusterName}`
                                       );
                                       setSnackbar({
                                         open: true,
@@ -2110,7 +2110,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                               </Box>
                             </Box>
 
-                            {/* Step 3: Check for pending clusters */}
+                             {/* Step 3: Context switching to hub cluster */}
                             <Box
                               sx={{
                                 display: 'flex',
@@ -2144,6 +2144,125 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                                 }}
                               >
                                 3
+                              </Box>
+                              <Box
+                                sx={{
+                                  fontSize: '0.825rem',
+                                  color: colors.textSecondary,
+                                  width: '100%',
+                                }}
+                              >
+                                <Box sx={{ mb: 1, fontWeight: 500, color: textColor }}>
+                                   Switch to the hub cluster context:
+                                </Box>
+                                <Box
+                                  sx={{
+                                    position: 'relative',
+                                    p: 1.5,
+                                    backgroundColor:
+                                      theme === 'dark' ? 'rgba(0, 0, 0, 0.3)' : '#f0f0f0',
+                                    color: theme === 'dark' ? '#e6e6e6' : '#333',
+                                    borderRadius: 1,
+                                    fontFamily: "'Fira Code', monospace",
+                                    fontSize: '0.75rem',
+                                    mb: 1,
+                                    overflow: 'hidden',
+                                    border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+                                    whiteSpace: 'pre',
+                                    '&::before': {
+                                      content: '"$"',
+                                      color:
+                                        theme === 'dark' ? colors.primaryLight : colors.primary,
+                                      marginRight: '6px',
+                                      fontWeight: 'bold',
+                                      display: 'inline-block',
+                                    },
+                                  }}
+                                >
+                                  <Box component="span" sx={{ paddingLeft: '1rem' }}>
+                                    kubectl config use-context its1
+                                  </Box>
+                                  <Button
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(
+                                        `kubectl config use-context its1`
+                                      );
+                                      setSnackbar({
+                                        open: true,
+                                        message: 'Context command copied!',
+                                        severity: 'success',
+                                      });
+                                    }}
+                                    sx={{
+                                      position: 'absolute',
+                                      top: 4,
+                                      right: 4,
+                                      minWidth: '28px',
+                                      width: '28px',
+                                      height: '28px',
+                                      p: 0,
+                                      borderRadius: 0.75,
+                                      bgcolor:
+                                        theme === 'dark'
+                                          ? 'rgba(47, 134, 255, 0.2)'
+                                          : 'rgba(47, 134, 255, 0.1)',
+                                      color:
+                                        theme === 'dark' ? colors.primaryLight : colors.primary,
+                                      boxShadow: 'none',
+                                      '&:hover': {
+                                        bgcolor:
+                                          theme === 'dark'
+                                            ? 'rgba(47, 134, 255, 0.3)'
+                                            : 'rgba(47, 134, 255, 0.2)',
+                                      },
+                                    }}
+                                  >
+                                    <span
+                                      role="img"
+                                      aria-label="copy"
+                                      style={{ fontSize: '0.7rem' }}
+                                    >
+                                      📋
+                                    </span>
+                                  </Button>
+                                </Box>
+                              </Box>
+                            </Box>
+
+                            {/* Step 4: Check for pending clusters */}
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: 1.5,
+                                p: 1.5,
+                                borderRadius: 1.5,
+                                bgcolor:
+                                  theme === 'dark'
+                                    ? 'rgba(0, 0, 0, 0.2)'
+                                    : 'rgba(255, 255, 255, 0.5)',
+                                border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`,
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  width: 24,
+                                  height: 24,
+                                  borderRadius: '50%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  bgcolor:
+                                    theme === 'dark'
+                                      ? 'rgba(47, 134, 255, 0.15)'
+                                      : 'rgba(47, 134, 255, 0.1)',
+                                  color: theme === 'dark' ? colors.primaryLight : colors.primary,
+                                  flexShrink: 0,
+                                  fontSize: '0.75rem',
+                                  fontWeight: 600,
+                                }}
+                              >
+                                4
                               </Box>
                               <Box
                                 sx={{
@@ -2262,7 +2381,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                               </Box>
                             </Box>
 
-                            {/* Step 4: Accept the cluster */}
+                            {/* Step 5: Accept the cluster */}
                             <Box
                               sx={{
                                 display: 'flex',
@@ -2295,7 +2414,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                                   fontWeight: 600,
                                 }}
                               >
-                                4
+                                5
                               </Box>
                               <Box
                                 sx={{
@@ -2337,12 +2456,12 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                                   }}
                                 >
                                   <Box component="span" sx={{ paddingLeft: '1rem' }}>
-                                    clusteradm accept --clusters {manualCommand.clusterName}
+                                    clusteradm accept --clusters {manualCommand.clusterName} --skip-approve-check
                                   </Box>
                                   <Button
                                     onClick={() => {
                                       navigator.clipboard.writeText(
-                                        `clusteradm accept --clusters ${manualCommand.clusterName}`
+                                        `clusteradm accept --clusters ${manualCommand.clusterName} --skip-approve-check`
                                       );
                                       setSnackbar({
                                         open: true,
@@ -2413,7 +2532,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                               </Box>
                             </Box>
 
-                            {/* Step 5: Watch the CSR status */}
+                            {/* Step 6: Watch the CSR status */}
                             <Box
                               sx={{
                                 display: 'flex',
@@ -2446,7 +2565,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                                   fontWeight: 600,
                                 }}
                               >
-                                5
+                                6
                               </Box>
                               <Box
                                 sx={{
@@ -2564,7 +2683,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                               </Box>
                             </Box>
 
-                            {/* Step 6: Verify connection */}
+                            {/* Step 7: Verify connection */}
                             <Box
                               sx={{
                                 display: 'flex',
@@ -2597,7 +2716,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                                   fontWeight: 600,
                                 }}
                               >
-                                6
+                                7
                               </Box>
                               <Box
                                 sx={{
