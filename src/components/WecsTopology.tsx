@@ -1298,10 +1298,10 @@ const WecsTreeview = () => {
                 });
               }
               break;
-            case "ExecPod":
-              if (nodeType === "pod") {
+            case 'ExecPod':
+              if (nodeType === 'pod') {
                 setSelectedNode({
-                  namespace: namespace || "default",
+                  namespace: namespace || 'default',
                   name: nodeName,
                   type: nodeType,
                   onClose: handleClosePanel,
@@ -1635,7 +1635,7 @@ const WecsTreeview = () => {
                     Logs
                   </MenuItem>
                 )}
-                {contextMenu.nodeType === 'pod' &&
+              {contextMenu.nodeType === 'pod' &&
                 contextMenu.nodeId &&
                 contextMenu.nodeId.startsWith('pod:') &&
                 nodes.find(n => n.id === contextMenu.nodeId)?.data?.isDeploymentOrJobPod && (
@@ -1651,7 +1651,7 @@ const WecsTreeview = () => {
                   >
                     Exec Pods
                   </MenuItem>
-                )}  
+                )}
             </Menu>
           )}
         </Box>
