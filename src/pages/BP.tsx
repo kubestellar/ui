@@ -389,7 +389,7 @@ const BP = () => {
 
     // Update clusters state when clustersData changes
     if (clustersData?.itsData) {
-      const clusterData = clustersData.itsData.map(cluster => ({
+      const clusterData = clustersData.itsData.map((cluster: { name: string; labels?: { [key: string]: string } }) => ({
         name: cluster.name,
         status: 'Ready', // Default status for ITS clusters
         labels: cluster.labels || { 'kubernetes.io/cluster-name': cluster.name },
