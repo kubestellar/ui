@@ -14,7 +14,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// ConfigMapName and Namespace
+// ConfigMapName and  Namespace
 const (
 	ConfigMapName = "jwt-config"
 	Namespace     = "kubestellar"
