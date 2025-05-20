@@ -132,7 +132,7 @@ const ContextDropdown = ({
       setCreationError('Context name is required');
       return;
     }
-    
+
     if (contextName === 'wds2') {
       setCreationError("Cannot create context named 'wds2' as it's reserved as host");
       return;
