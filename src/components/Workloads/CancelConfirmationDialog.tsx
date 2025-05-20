@@ -10,6 +10,7 @@ import {
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { getConfirmationDialogPaperProps } from '../../utils/dialogUtils';
 import useTheme from '../../stores/themeStore'; // Import useTheme for dark mode support
+import CancelButton from '../common/CancelButton';
 
 interface Props {
   cancelConfirmationOpen: boolean;
@@ -65,20 +66,7 @@ export const CancelConfirmationDialog = ({
         </DialogContent>
       </DialogContent>
       <DialogActions sx={{ padding: '16px 16px', borderTop: '1px solid #e0e0e0' }}>
-        <Button
-          onClick={handleCloseCancelConfirmation}
-          sx={{
-            textTransform: 'none',
-            fontWeight: 500,
-            color: '#1976d2',
-            padding: '6px 8px',
-            '&:hover': {
-              backgroundColor: '#f5f5f5',
-            },
-          }}
-        >
-          Continue Editing
-        </Button>
+        <CancelButton onClick={handleCloseCancelConfirmation}>Continue Editing</CancelButton>
         <Button
           variant="contained"
           onClick={handleConfirmCancel}

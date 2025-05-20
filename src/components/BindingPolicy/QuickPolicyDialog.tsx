@@ -23,6 +23,7 @@ import { PolicyConfiguration } from './ConfigurationSidebar';
 import Editor from '@monaco-editor/react';
 import yaml from 'js-yaml';
 import useTheme from '../../stores/themeStore';
+import CancelButton from '../common/CancelButton';
 
 export interface QuickPolicyDialogProps {
   open: boolean;
@@ -379,7 +380,7 @@ const QuickPolicyDialog: React.FC<QuickPolicyDialogProps> = ({
         {activeTab === 'form' ? renderFormContent() : renderYamlPreview()}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <CancelButton onClick={onClose}>Cancel</CancelButton>
         <Button
           onClick={handleSave}
           variant="contained"

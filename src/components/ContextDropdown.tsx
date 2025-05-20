@@ -20,6 +20,7 @@ import { api } from '../lib/api';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import AddIcon from '@mui/icons-material/Add';
 import { useContextCreationWebSocket } from '../hooks/useWebSocket';
+import CancelButton from './common/CancelButton';
 
 interface ContextDropdownProps {
   onContextFilter: (context: string) => void;
@@ -495,18 +496,7 @@ const ContextDropdown = ({
           )}
         </DialogContent>
         <DialogActions sx={{ p: 2, pt: 1, display: 'flex', justifyContent: 'space-between' }}>
-          <Button
-            onClick={handleCloseCreateDialog}
-            sx={{
-              color: theme === 'dark' ? '#fff' : '#666',
-              '&:hover': {
-                backgroundColor:
-                  theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
-              },
-            }}
-          >
-            Cancel
-          </Button>
+          <CancelButton onClick={handleCloseCreateDialog}>Cancel</CancelButton>
           <Button
             onClick={handleCreateContext}
             disabled={isCreating}
