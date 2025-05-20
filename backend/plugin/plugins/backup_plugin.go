@@ -3,6 +3,7 @@ package plugins
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/k8s"
@@ -129,7 +130,7 @@ func createBackupJob(c *kubernetes.Clientset) error {
 							Name:    "pg-jobc",
 							Image:   "postgres:16",
 							Command: []string{"/bin/sh", "-c"},
-							Args:    []string{"pg_dump -U $user -h $host -F c -f /mnt/backup-vol/pgdump wds1 && ls /mnt/backup-vol/"},
+							Args:    []string{"pg_dumpall -U $user -h $host  -f /mnt/backup-vol/pgdump.sql  && ls /mnt/backup-vol/"},
 							Env: []corev1.EnvVar{
 								corev1.EnvVar{
 									Name:  "PGPASSWORD",
@@ -206,10 +207,17 @@ func pvc(c *kubernetes.Clientset) error {
 }
 
 func freeBackupResources(c *kubernetes.Clientset) error {
-	err := c.BatchV1().Jobs("default").Delete(context.TODO(), "pg-job-ks", *metav1.NewDeleteOptions(0))
+	// check if the resource exist
+	_, err := c.CoreV1().PersistentVolumeClaims("default").Get(context.TODO(), "backup-vol-claim", metav1.GetOptions{})
 	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			return nil
+		}
 		return err
 	}
 	err = c.CoreV1().PersistentVolumeClaims("default").Delete(context.TODO(), "backup-vol-claim", *metav1.NewDeleteOptions(0))
+	if err != nil {
+		return err
+	}
 	return err
 }
