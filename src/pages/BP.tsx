@@ -447,6 +447,20 @@ const BP = () => {
     workloadsLoading,
   ]);
 
+  // Set up clusters for visualization/drag-drop
+  useEffect(() => {
+    // Update clusters state when clustersData changes
+    if (clustersData && !clustersLoading) {
+      const clusterData = clustersData.clusters.map(cluster => ({
+        name: cluster.name,
+        status: cluster.available ? 'Ready' : 'NotReady',
+        labels: cluster.labels || {},
+        context: cluster.context || 'its1',
+      }));
+      setClusters(clusterData);
+    }
+  }, [clustersData, clustersLoading]);
+
   // Memoize the delete handlers for consistent hook usage
   const handleDeletePolicy = useCallback(async (policy: BindingPolicyInfo) => {
     setSelectedPolicy(policy);

@@ -1298,6 +1298,21 @@ const WecsTreeview = () => {
                 });
               }
               break;
+            case 'ExecPod':
+              if (nodeType === 'pod') {
+                setSelectedNode({
+                  namespace: namespace || 'default',
+                  name: nodeName,
+                  type: nodeType,
+                  onClose: handleClosePanel,
+                  isOpen: true,
+                  resourceData,
+                  initialTab: 3,
+                  cluster,
+                  isDeploymentOrJobPod,
+                });
+              }
+              break;
             default:
               break;
           }
@@ -1618,6 +1633,23 @@ const WecsTreeview = () => {
                     }}
                   >
                     Logs
+                  </MenuItem>
+                )}
+              {contextMenu.nodeType === 'pod' &&
+                contextMenu.nodeId &&
+                contextMenu.nodeId.startsWith('pod:') &&
+                nodes.find(n => n.id === contextMenu.nodeId)?.data?.isDeploymentOrJobPod && (
+                  <MenuItem
+                    onClick={() => handleMenuAction('ExecPod')}
+                    sx={{
+                      color: theme === 'dark' ? '#fff' : 'inherit',
+                      '&:hover': {
+                        backgroundColor:
+                          theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                      },
+                    }}
+                  >
+                    Exec Pods
                   </MenuItem>
                 )}
             </Menu>
