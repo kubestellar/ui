@@ -60,8 +60,12 @@ func rootHandler(c *gin.Context) {
 
 // takes snapshot of the cluster
 func takeSnapshot(c *gin.Context) {
-	freeBackupResources(bp.c)
-	err := createBackupJob(bp.c)
+	err := freeBackupResources(bp.c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	err = createBackupJob(bp.c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -75,16 +79,22 @@ func init() {
 	//get k8s client
 	c, _, err := k8s.GetClientSetWithContext("kind-kubeflex")
 	if err != nil {
-		log.LogError("failed initialize backup plugin", zap.String("err", err.Error()))
-		return
+		// try with k3d
+		c, _, err = k8s.GetClientSetWithContext("k3d-kubeflex")
+		if err != nil {
+			log.LogError("failed to initialized backup plugin", zap.String("error", err.Error()))
+			return
+		}
+
 	}
-	//
+	//try for k3d if it exists
+
 	// currently only supporting postgr for structuredes backend
 	bp = backupPlugin{
 		storageType: "postgres",
 		c:           c,
 	}
-
+	// register your with plugin manager otherwise routes wont be sent to gin
 	Pm.Register(bp)
 }
 
@@ -101,7 +111,7 @@ func createBackupJob(c *kubernetes.Clientset) error {
 		return err
 	}
 	// create job
-	var bl, ttl int32 = 1, 120
+	var bl, ttl int32 = 3, 120
 	j, err := c.BatchV1().Jobs("default").Create(context.TODO(), &v1.Job{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "batch/v1",
@@ -195,7 +205,11 @@ func pvc(c *kubernetes.Clientset) error {
 
 }
 
-func freeBackupResources(c *kubernetes.Clientset) {
-	c.BatchV1().Jobs("default").Delete(context.TODO(), "pg-job-ks", *metav1.NewDeleteOptions(0))
-	c.CoreV1().PersistentVolumeClaims("default").Delete(context.TODO(), "backup-vol-claim", *metav1.NewDeleteOptions(0))
+func freeBackupResources(c *kubernetes.Clientset) error {
+	err := c.BatchV1().Jobs("default").Delete(context.TODO(), "pg-job-ks", *metav1.NewDeleteOptions(0))
+	if err != nil {
+		return err
+	}
+	err = c.CoreV1().PersistentVolumeClaims("default").Delete(context.TODO(), "backup-vol-claim", *metav1.NewDeleteOptions(0))
+	return err
 }
