@@ -1570,60 +1570,56 @@ const WecsTreeview = () => {
               anchorPosition={contextMenu ? { top: contextMenu.y, left: contextMenu.x } : undefined}
               PaperProps={{
                 sx: {
-                  backgroundColor: theme === "dark" ? "#0F172A" : "#ffffff",
-                  color: theme === "dark" ? "#ffffff" : "#000000",
-                  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
+                  backgroundColor: theme === 'dark' ? '#0F172A' : '#ffffff',
+                  color: theme === 'dark' ? '#ffffff' : '#000000',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
                   borderRadius: 1,
                   minWidth: 180,
-                }
-              }}              
+                },
+              }}
             >
               <MenuItem
-                onClick={() => handleMenuAction("Details")}
+                onClick={() => handleMenuAction('Details')}
                 sx={{
-                  color: theme === "dark" ? "#DEE6EB" : "#000000",
-                  "&:hover": {
-                    backgroundColor: theme === "dark"
-                      ? "rgba(255, 255, 255, 0.08)"
-                      : "rgba(0, 0, 0, 0.04)"
-                  }
+                  color: theme === 'dark' ? '#DEE6EB' : '#000000',
+                  '&:hover': {
+                    backgroundColor:
+                      theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                  },
                 }}
               >
                 Details
               </MenuItem>
-              
+
               <MenuItem
-                onClick={() => handleMenuAction("Edit")}
+                onClick={() => handleMenuAction('Edit')}
                 sx={{
-                  color: theme === "dark" ? "#DEE6EB" : "#000000",
-                  "&:hover": {
-                    backgroundColor: theme === "dark"
-                      ? "rgba(255, 255, 255, 0.08)"
-                      : "rgba(0, 0, 0, 0.04)"
-                  }
+                  color: theme === 'dark' ? '#DEE6EB' : '#000000',
+                  '&:hover': {
+                    backgroundColor:
+                      theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                  },
                 }}
               >
                 Edit
               </MenuItem>
-              {contextMenu.nodeType === "pod" && 
-               contextMenu.nodeId && 
-               contextMenu.nodeId.startsWith("pod:") &&
-               nodes.find(n => n.id === contextMenu.nodeId)?.data?.isDeploymentOrJobPod && (
-              <MenuItem
-                onClick={() => handleMenuAction("Logs")}
-                sx={{
-                  color: theme === "dark" ? "#DEE6EB" : "#000000",
-                  "&:hover": {
-                    backgroundColor: theme === "dark"
-                      ? "rgba(255, 255, 255, 0.08)"
-                      : "rgba(0, 0, 0, 0.04)"
-                  }
-                }}
-              >
-                Logs
-              </MenuItem>
-
-              )}
+              {contextMenu.nodeType === 'pod' &&
+                contextMenu.nodeId &&
+                contextMenu.nodeId.startsWith('pod:') &&
+                nodes.find(n => n.id === contextMenu.nodeId)?.data?.isDeploymentOrJobPod && (
+                  <MenuItem
+                    onClick={() => handleMenuAction('Logs')}
+                    sx={{
+                      color: theme === 'dark' ? '#DEE6EB' : '#000000',
+                      '&:hover': {
+                        backgroundColor:
+                          theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                      },
+                    }}
+                  >
+                    Logs
+                  </MenuItem>
+                )}
             </Menu>
           )}
         </Box>
