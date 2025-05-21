@@ -2,6 +2,7 @@ package routes
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/auth"
@@ -71,6 +72,9 @@ func LoginHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
+
+	loginData.Username = strings.TrimSpace(loginData.Username)
+	loginData.Password = strings.TrimSpace(loginData.Password)
 
 	user, err := models.AuthenticateUser(loginData.Username, loginData.Password)
 	if user == nil || err != nil {
