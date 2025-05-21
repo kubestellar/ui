@@ -17,30 +17,33 @@ func setupDeploymentRoutes(router *gin.Engine) {
 	router.GET("/api/wds/:name", deployment.GetDeploymentByName)
 	router.GET("/api/wds/status", deployment.GetDeploymentStatus)
 
-	// websocket
+	// WebSocket logs endpoint
 	router.GET("/ws", func(ctx *gin.Context) {
 		deployment.HandleDeploymentLogs(ctx.Writer, ctx.Request)
 	})
+
 	router.GET("/api/wds/logs", func(ctx *gin.Context) {
 		var upgrader = websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				return true
 			},
 		}
-		var w = ctx.Writer
-		var r = ctx.Request
+		w := ctx.Writer
+		r := ctx.Request
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			log.Println("Failed to upgrade connection:", err)
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Failed to upgrade to WebSocket"})
+			// dont call ctx.JSON here
 			return
 		}
-		//defer conn.Close()
+		defer conn.Close()
 
 		clientset, err := wds.GetClientSetKubeConfig()
 		if err != nil {
 			log.Println("Failed to get Kubernetes client:", err)
-			conn.WriteMessage(websocket.TextMessage, []byte("Error getting Kubernetes client"))
+			if writeErr := conn.WriteMessage(websocket.TextMessage, []byte("Error getting Kubernetes client")); writeErr != nil {
+				log.Printf("Failed to write error message to websocket: %v", writeErr) // adds error handling
+			}
 			return
 		}
 		ch := make(chan struct{})
@@ -50,7 +53,7 @@ func setupDeploymentRoutes(router *gin.Engine) {
 		go c.Run(ch)
 	})
 
-	// context
+	// Context info endpoint
 	router.GET("/api/context", func(c *gin.Context) {
 		currentContext, context, err := wds.ListContexts()
 		if err != nil {
@@ -62,5 +65,4 @@ func setupDeploymentRoutes(router *gin.Engine) {
 			"current-context": currentContext, // current context can be anything
 		})
 	})
-
 }
