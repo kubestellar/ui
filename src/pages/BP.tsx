@@ -391,13 +391,13 @@ const BP = () => {
     // Update clusters state when clustersData changes
     if (clustersData) {
       let clusterData: ManagedCluster[] = [];
-      
+
       // Process the main clusters array from the API response
       if (clustersData.clusters && Array.isArray(clustersData.clusters)) {
         clusterData = clustersData.clusters.map(cluster => {
           const status = cluster.status as { capacity?: { [key: string]: string } };
           const capacity = status?.capacity || {};
-            
+
           return {
             name: cluster.name,
             status: cluster.available ? 'Ready' : 'NotReady',
@@ -405,16 +405,18 @@ const BP = () => {
             metrics: {
               cpu: typeof capacity === 'object' && capacity.cpu ? capacity.cpu : 'N/A',
               memory: typeof capacity === 'object' && capacity.memory ? capacity.memory : 'N/A',
-              storage: typeof capacity === 'object' && capacity['ephemeral-storage'] ? 
-                capacity['ephemeral-storage'] : 'N/A',
+              storage:
+                typeof capacity === 'object' && capacity['ephemeral-storage']
+                  ? capacity['ephemeral-storage']
+                  : 'N/A',
             },
             available: cluster.available,
             joined: cluster.joined,
-            context: cluster.context || 'its1'
+            context: cluster.context || 'its1',
           };
         });
       }
-      
+
       // Include ITS data if it exists
       if (clustersData.itsData && Array.isArray(clustersData.itsData)) {
         const itsClusterData: ManagedCluster[] = clustersData.itsData.map(
@@ -429,10 +431,10 @@ const BP = () => {
             },
             available: true,
             joined: true,
-            context: 'its1'
+            context: 'its1',
           })
         );
-        
+
         // Merge the cluster data arrays, avoiding duplicates by name
         const existingNames = new Set(clusterData.map(c => c.name));
         const uniqueItsData = itsClusterData.filter(c => !existingNames.has(c.name));
