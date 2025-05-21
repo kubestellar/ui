@@ -2,16 +2,17 @@ package wds
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/tools/clientcmd/api"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 /*
@@ -76,42 +77,42 @@ func GetClientSetKubeConfig() (*kubernetes.Clientset, error) {
 
 // ListContexts lists all available contexts in the kubeconfig and filters for WDS contexts.
 func ListContexts() (string, []string, error) {
-    // Load the kubeconfig
-    config, err := getKubeConfig()
-    if err != nil {
-        return "", nil, fmt.Errorf("failed to load kubeconfig: %v", err)
-    }
+	// Load the kubeconfig
+	config, err := getKubeConfig()
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to load kubeconfig: %v", err)
+	}
 
-    // Get the current context
-    currentContext := config.CurrentContext
-    if currentContext == "" {
-        return "", nil, fmt.Errorf("no current context found in kubeconfig")
-    }
+	// Get the current context
+	currentContext := config.CurrentContext
+	if currentContext == "" {
+		return "", nil, fmt.Errorf("no current context found in kubeconfig")
+	}
 
-    // Filter contexts that contain "wds"
-    var wdsContexts []string
-    for name, context := range config.Contexts {
-        if strings.Contains(name, "wds") {
-            // Validate the context (e.g., ensure it has a cluster and namespace)
-            if context.Cluster == "" {
-                log.Printf("Skipping context '%s': missing cluster information", name)
-                continue
-            }
-            wdsContexts = append(wdsContexts, name)
-        }
-    }
+	// Filter contexts that contain "wds"
+	var wdsContexts []string
+	for name, context := range config.Contexts {
+		if strings.Contains(name, "wds") {
+			// Validate the context (e.g., ensure it has a cluster and namespace)
+			if context.Cluster == "" {
+				log.Printf("Skipping context '%s': missing cluster information", name)
+				continue
+			}
+			wdsContexts = append(wdsContexts, name)
+		}
+	}
 
-    // Check if no WDS contexts were found
-    if len(wdsContexts) == 0 {
-        log.Println("No WDS contexts found in kubeconfig")
-        return currentContext, nil, fmt.Errorf("no WDS contexts found in kubeconfig")
-    }
+	// Check if no WDS contexts were found
+	if len(wdsContexts) == 0 {
+		log.Println("No WDS contexts found in kubeconfig")
+		return currentContext, nil, fmt.Errorf("no WDS contexts found in kubeconfig")
+	}
 
-    // Log the found contexts for debugging
-    log.Printf("Current context: %s", currentContext)
-    log.Printf("Available WDS contexts: %v", wdsContexts)
+	// Log the found contexts for debugging
+	log.Printf("Current context: %s", currentContext)
+	log.Printf("Available WDS contexts: %v", wdsContexts)
 
-    return currentContext, wdsContexts, nil
+	return currentContext, wdsContexts, nil
 }
 
 var upgrader = websocket.Upgrader{
@@ -199,6 +200,7 @@ func CreateWDSContextUsingCommand(w http.ResponseWriter, r *http.Request, c *gin
 		log.Println("WebSocket Upgrade Error:", err)
 		return
 	}
+	c.Abort()
 	defer conn.Close()
 	if newWdsContext == "" {
 		msg := "context query must be present ?context=<your_new_context>"
