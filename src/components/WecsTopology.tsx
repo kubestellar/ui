@@ -189,6 +189,15 @@ interface ContextMenuState {
   nodeType: string | null;
 }
 
+interface OwnerReference {
+  kind: string;
+  name: string;
+  uid: string;
+  apiVersion: string;
+  controller?: boolean;
+  blockOwnerDeletion?: boolean;
+}
+
 const nodeStyle: React.CSSProperties = {
   padding: '2px 12px',
   fontSize: '6px',
@@ -668,7 +677,21 @@ const WecsTreeview = () => {
       let isDeploymentOrJobPod = false;
       if (type.toLowerCase() === 'pod' && parent) {
         const parentType = parent.split(':')[0]?.toLowerCase();
-        isDeploymentOrJobPod = ['deployment', 'replicaset', 'job'].includes(parentType);
+        isDeploymentOrJobPod = ['deployment', 'replicaset', 'job', 'statefulset', 'daemonset'].includes(parentType);
+        
+        // If not determined by parent, check resourceData for owner references
+        if (!isDeploymentOrJobPod && resourceData?.raw) {
+          try {
+            const podData = JSON.parse(resourceData.raw);
+            if (podData.metadata?.ownerReferences) {
+              isDeploymentOrJobPod = podData.metadata.ownerReferences.some((owner: OwnerReference) => 
+                ['Deployment', 'ReplicaSet', 'Job', 'StatefulSet', 'DaemonSet'].includes(owner.kind)
+              );
+            }
+          } catch (e) {
+            console.error('Error parsing pod data:', e);
+          }
+        }
       }
 
       const node =
