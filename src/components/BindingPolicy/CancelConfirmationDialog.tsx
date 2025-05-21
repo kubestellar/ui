@@ -7,9 +7,10 @@ import {
   Button,
   Alert,
   AlertTitle,
-  useTheme,
 } from '@mui/material';
 import WarningIcon from '@mui/icons-material/Warning';
+import useTheme from '../../stores/themeStore';
+
 
 interface CancelConfirmationDialogProps {
   open: boolean;
@@ -22,15 +23,25 @@ const CancelConfirmationDialog: React.FC<CancelConfirmationDialogProps> = ({
   onClose,
   onConfirm,
 }) => {
-  const theme = useTheme();
+  const theme = useTheme(state => state.theme);
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm">
-      <DialogTitle
+<Dialog
+  open={open}
+  onClose={onClose}
+  maxWidth="sm"
+  PaperProps={{
+    sx: {
+      backgroundColor: theme === 'dark' ? '#0F172A' : '#FFFFFF', 
+      color: theme === 'dark' ? '#FFFFFF' : '#000000', 
+    },
+  }}
+>      <DialogTitle
         sx={{
           display: 'flex',
           alignItems: 'center',
-          borderBottom: `1px solid ${theme.palette.divider}`,
+          color: theme === 'dark' ? '#FFFFFF' : '#000000',
+          backgroundColor: theme === 'dark' ? '#0F172A' : '#FFFFFF',
         }}
       >
         <WarningIcon color="warning" sx={{ mr: 1 }} />
@@ -43,6 +54,7 @@ const CancelConfirmationDialog: React.FC<CancelConfirmationDialogProps> = ({
           sx={{
             borderRadius: '8px',
             '& .MuiAlert-icon': { alignItems: 'center' },
+            backgroundColor: theme === 'dark' ? '#0F172A' : '#FFFFFF'
           }}
         >
           <AlertTitle>Warning</AlertTitle>
@@ -52,7 +64,6 @@ const CancelConfirmationDialog: React.FC<CancelConfirmationDialogProps> = ({
       <DialogActions
         sx={{
           p: 2,
-          borderTop: `1px solid ${theme.palette.divider}`,
         }}
       >
         <Button
