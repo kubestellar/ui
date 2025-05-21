@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/kubestellar/ui/plugin/plugins"
 )
 
 func SetupRoutes(router *gin.Engine) {
@@ -18,6 +19,8 @@ func SetupRoutes(router *gin.Engine) {
 	setupHelmRoutes(router)
 	setupGitHubRoutes(router)
 	setupDeploymentHistoryRoutes(router)
+	plugins.Pm.SetupPluginsRoutes(router)
+
 	setupAuthRoutes(router)
 	setupArtifactHubRoutes(router)
 }
