@@ -280,7 +280,7 @@ const getLayoutedElements = (
 
   // Step 1: Initial Dagre layout
   const dagreGraph = new dagre.graphlib.Graph();
-  dagreGraph.setDefaultEdgeLabel(() => ({}));
+  dagreGraph.setDefaultEdgeLabel(() => "");
   dagreGraph.setGraph({ rankdir: direction, nodesep: NODE_SEP, ranksep: RANK_SEP });
 
   const nodeMap = new Map<string, CustomNode>();
