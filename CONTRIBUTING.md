@@ -422,3 +422,13 @@ make fix-lint
 ```sh
 make lint
 ```
+
+## extending KS-UI API through Plugins
+
+### Static plugins
+
+To write static plugins define your plugin type inside `/backend/plugin/plugins`, you have to implement methods to satisfy the plugin interface basically name,version,Routes methods. you can define the functionality of the plugin as you like. follow the standard of
+definining routes for your plugin in this form `/plugins/your-plugin-name/`.after writing all the methods (name,version,routes...) make sure to call `pm.register(your-plugin-name)` so that your routes are send to gin at start time. pm is the plugin manager (defined at `/backend/plugin/plugins/manager.go`) basically a record of all static plugins.
+
+- backup plugin: currently only supporting postgres backend ,takes a snapshot of the wds on
+  `/plugins/backup-plugin/snapshot`
