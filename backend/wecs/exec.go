@@ -6,10 +6,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"sync"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/kubestellar/ui/k8s"
-	"io"
 	authorizationv1 "k8s.io/api/authorization/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,16 +21,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
 	"k8s.io/klog/v2"
-	"net/http"
-	"sync"
 )
-
-// TODO: Add the logical error message so that user can know whats the exact problem
-// TODO: Message for the user have View Only Access
-// "You do not have permission to execute into this pod. Please check your access rights."
-
-// Todo: Test with the user having not access to do pod/exec
-// Todo: Websocket improvement and remove the error message like "Connection closed"
 
 var upgrader1 = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
@@ -92,13 +86,34 @@ func isValidShellCmd(validShells []string, shell string) bool {
 	return false
 }
 
+// canI checks whether the current user can perform verb on resource in namespace.
+func canI(clientset *kubernetes.Clientset, namespace, verb, resource string) bool {
+	ssar := &authorizationv1.SelfSubjectAccessReview{
+		Spec: authorizationv1.SelfSubjectAccessReviewSpec{
+			ResourceAttributes: &authorizationv1.ResourceAttributes{
+				Namespace: namespace,
+				Verb:      verb,
+				Resource:  resource,
+			},
+		},
+	}
+	resp, err := clientset.AuthorizationV1().SelfSubjectAccessReviews().
+		Create(context.TODO(), ssar, metav1.CreateOptions{})
+	if err != nil {
+		klog.ErrorS(err, "SelfSubjectAccessReview failed", "verb", verb, "resource", resource)
+		return false
+	}
+	return resp.Status.Allowed
+}
+
+// GetAllPodContainersName returns the list of containers in a given pod.
 func GetAllPodContainersName(c *gin.Context) {
-	context := c.Query("context")
-	if context == "" {
+	contextName := c.Query("context")
+	if contextName == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "no context present as query"})
 		return
 	}
-	clientSet, _, err := k8s.GetClientSetWithContext(context)
+	clientSet, _, err := k8s.GetClientSetWithContext(contextName)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to get kube context"})
 		return
@@ -111,7 +126,7 @@ func GetAllPodContainersName(c *gin.Context) {
 	podName := c.Param("pod")
 	pod, err := clientSet.CoreV1().Pods(namespace).Get(c, podName, metav1.GetOptions{})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get the pods"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get the pod"})
 		return
 	}
 	type ContainerInfo struct {
@@ -120,34 +135,31 @@ func GetAllPodContainersName(c *gin.Context) {
 	}
 	var containerList []ContainerInfo
 	for _, container := range pod.Spec.Containers {
-		fmt.Println("Container Name:", container.Name)
-		fmt.Println("Image:", container.Image)
 		containerList = append(containerList, ContainerInfo{
 			Image:         container.Image,
 			ContainerName: container.Name,
 		})
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"data": containerList,
-	})
+	c.JSON(http.StatusOK, gin.H{"data": containerList})
 }
 
+// startShellProcess attaches stdin/stdout/stderr of a shell to the websocket.
 func startShellProcess(c *gin.Context, clientSet *kubernetes.Clientset, cfg *rest.Config, cmd []string, conn *websocket.Conn, namespace string) error {
 	podName := c.Param("pod")
 	containerName := c.Param("container")
-	req := clientSet.CoreV1().RESTClient().Post().Resource("pods").
+	req := clientSet.CoreV1().RESTClient().Post().
+		Resource("pods").
 		Name(podName).
 		Namespace(namespace).
-		SubResource("exec")
-
-	req.VersionedParams(&v1.PodExecOptions{
-		Container: containerName,
-		Command:   cmd,
-		Stdin:     true,
-		Stdout:    true,
-		Stderr:    true,
-		TTY:       true,
-	}, scheme.ParameterCodec)
+		SubResource("exec").
+		VersionedParams(&v1.PodExecOptions{
+			Container: containerName,
+			Command:   cmd,
+			Stdin:     true,
+			Stdout:    true,
+			Stderr:    true,
+			TTY:       true,
+		}, scheme.ParameterCodec)
 
 	exec, err := remotecommand.NewSPDYExecutor(cfg, "POST", req.URL())
 	if err != nil {
@@ -159,16 +171,10 @@ func startShellProcess(c *gin.Context, clientSet *kubernetes.Clientset, cfg *res
 		defer writer.Close()
 		for {
 			_, message, err := conn.ReadMessage()
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
-				klog.Warningf("Unexpected WebSocket closure: %v", err)
-			} else {
-				klog.V(5).Infof("WebSocket closed gracefully.")
-			}
 			if err != nil {
-				if websocket.IsUnexpectedCloseError(err) {
-					klog.Errorf("WebSocket unexpectedly closed: %v", err)
-				} else {
-					klog.Infof("WebSocket closed: %v", err)
+				// normal closes are ignored
+				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
+					klog.Warningf("Unexpected WebSocket closure: %v", err)
 				}
 				return
 			}
@@ -193,9 +199,11 @@ type connWriter struct {
 
 func (cw connWriter) Write(p []byte) (int, error) {
 	msg, _ := json.Marshal(TerminalMessage{Op: "stdout", Data: string(p)})
-	return len(p), cw.conn.WriteMessage(websocket.TextMessage, msg)
+	_ = cw.conn.WriteMessage(websocket.TextMessage, msg)
+	return len(p), nil
 }
 
+// HandlePodExecShell upgrades to a websocket and either execs a shell or falls back to logs.
 func HandlePodExecShell(c *gin.Context) {
 	sessionID, err := genTerminalSessionId()
 	if err != nil {
@@ -203,65 +211,95 @@ func HandlePodExecShell(c *gin.Context) {
 		return
 	}
 
-	context := c.Query("context")
-	if context == "" {
+	contextName := c.Query("context")
+	if contextName == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "no context present as query"})
 		return
 	}
-	clientset, restConfig, err := k8s.GetClientSetWithConfigContext(context)
+	clientset, restConfig, err := k8s.GetClientSetWithConfigContext(contextName)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to get kube context"})
 		return
 	}
+
 	conn, err := upgrader1.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to upgrade to websocket"})
 		return
 	}
+	defer func() {
+		conn.Close()
+		terminalSessions.Close(sessionID)
+	}()
+
 	namespace := c.Param("namespace")
 	if namespace == "" {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get the namespace"})
+		conn.WriteJSON(TerminalMessage{Op: "error", Data: "no namespace specified"})
 		return
 	}
-	ssar := &authorizationv1.SelfSubjectAccessReview{
-		Spec: authorizationv1.SelfSubjectAccessReviewSpec{
-			ResourceAttributes: &authorizationv1.ResourceAttributes{
-				Namespace: namespace,
-				Verb:      "create",
-				Resource:  "pods/exec",
-			},
-		},
-	}
-	if !CanI(clientset, ssar) {
-		conn.WriteMessage(websocket.TextMessage, []byte("Error: You do not have permission to execute into this pod. Please check your access rights."))
-		conn.Close()
+	pod := c.Param("pod")
+	if pod == "" {
+		conn.WriteJSON(TerminalMessage{Op: "error", Data: "no pod specified"})
 		return
 	}
 
-	shell := c.Query("shell")
-	validShells := []string{"bash", "sh", "powershell", "cmd"}
-	cmd := []string{shell}
-	if !isValidShellCmd(validShells, shell) {
-		cmd = []string{"sh"}
+	// 1) Exec access?
+	if canI(clientset, namespace, "create", "pods/exec") {
+		// determine shell
+		shell := c.Query("shell")
+		validShells := []string{"bash", "sh", "powershell", "cmd"}
+		cmd := []string{shell}
+		if !isValidShellCmd(validShells, shell) {
+			cmd = []string{"sh"}
+		}
+
+		conn.WriteJSON(TerminalMessage{Op: "info", Data: "Starting interactive shell..."})
+		if err := startShellProcess(c, clientset, restConfig, cmd, conn, namespace); err != nil {
+			conn.WriteJSON(TerminalMessage{Op: "error", Data: fmt.Sprintf("Exec failed: %v", err)})
+			klog.Errorf("Terminal exec error: %v", err)
+		} else {
+			conn.WriteJSON(TerminalMessage{Op: "info", Data: "Shell session ended."})
+		}
+		return
 	}
 
-	err = startShellProcess(c, clientset, restConfig, cmd, conn, namespace)
-	if err != nil {
-		conn.WriteMessage(websocket.TextMessage, []byte("Error: "+err.Error()))
-		klog.Errorf("Terminal session error: %v", err)
-	} else {
-		conn.WriteMessage(websocket.TextMessage, []byte("Terminal session ended."))
+	// 2) Logs-only access?
+	if canI(clientset, namespace, "get", "pods/log") {
+		conn.WriteJSON(TerminalMessage{
+			Op:   "info",
+			Data: "You have view-only access. Streaming live logs (ctrl-c to exit)…",
+		})
+		req := clientset.CoreV1().
+			Pods(namespace).
+			GetLogs(pod, &v1.PodLogOptions{Follow: true})
+		stream, err := req.Stream(context.Background())
+		if err != nil {
+			conn.WriteJSON(TerminalMessage{Op: "error", Data: fmt.Sprintf("Could not stream logs: %v", err)})
+			return
+		}
+		defer stream.Close()
+
+		buf := make([]byte, 1024)
+		for {
+			n, err := stream.Read(buf)
+			if n > 0 {
+				conn.WriteJSON(TerminalMessage{Op: "stdout", Data: string(buf[:n])})
+			}
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				conn.WriteJSON(TerminalMessage{Op: "error", Data: fmt.Sprintf("Log stream error: %v", err)})
+				break
+			}
+		}
+		conn.WriteJSON(TerminalMessage{Op: "info", Data: "Log stream ended."})
+		return
 	}
-	terminalSessions.Close(sessionID)
-}
 
-func CanI(clientset *kubernetes.Clientset, ssar *authorizationv1.SelfSubjectAccessReview) bool {
-
-	response, err := clientset.AuthorizationV1().SelfSubjectAccessReviews().Create(context.TODO(), ssar, metav1.CreateOptions{})
-	if err != nil {
-		klog.ErrorS(err, "Could not create SelfSubjectAccessReview")
-		return false
-	}
-
-	return response.Status.Allowed
+	// 3) No permission
+	conn.WriteJSON(TerminalMessage{
+		Op:   "error",
+		Data: "You do not have permission to exec into or view logs of this pod. Please check your access rights.",
+	})
 }
