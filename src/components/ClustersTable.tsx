@@ -1569,7 +1569,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                         }}
                         className="mx-4 rounded-lg px-2 py-1 text-xs font-medium"
                       >
-                        {getClusterContext(cluster)}
+                        {cluster.name}
                       </span>
                     </TableCell>
                     <TableCell>
