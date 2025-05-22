@@ -590,16 +590,9 @@ const BP = () => {
         // Use the mutation for creating a binding policy
         await createBindingPolicyMutation.mutateAsync(formattedPolicyData);
 
-        // Close the dialog and show success message
         setCreateDialogOpen(false);
-        setSuccessMessage(`Binding Policy "${policyData.name}" created successfully`);
       } catch (error) {
         console.error('Error creating binding policy:', error);
-        // Still close the dialog but show error message
-        setCreateDialogOpen(false);
-        setSuccessMessage(
-          `Error creating Binding Policy "${policyData.name}": ${error instanceof Error ? error.message : 'Unknown error'}`
-        );
       }
     },
     [createBindingPolicyMutation, setSuccessMessage, setCreateDialogOpen]
@@ -709,7 +702,6 @@ const BP = () => {
           current.filter(policy => !results.success.includes(policy.name))
         );
 
-        setSuccessMessage(`Successfully deleted ${results.success.length} binding policies`);
       } else {
         setSuccessMessage(
           `Deleted ${results.success.length} policies, but failed to delete ${results.failures.length} policies`
