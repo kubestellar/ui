@@ -88,7 +88,7 @@ func ListContexts() (string, []string, error) {
 
 	// Filter contexts that contain "wds"
 	var wdsContexts []string
-	for name, context := range config.Contexts {
+	for name, _ := range config.Contexts {
 		if strings.Contains(name, "wds") {
 			wdsContexts = append(wdsContexts, name)
 		}
