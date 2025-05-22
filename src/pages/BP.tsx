@@ -701,7 +701,6 @@ const BP = () => {
         setBindingPolicies(current =>
           current.filter(policy => !results.success.includes(policy.name))
         );
-
       } else {
         setSuccessMessage(
           `Deleted ${results.success.length} policies, but failed to delete ${results.failures.length} policies`
