@@ -12,6 +12,24 @@ interface ManagedClusterInfo {
   namespace?: string;
   available?: boolean;
   joined?: boolean;
+  rawStatus?: {
+    conditions: Array<{
+      lastTransitionTime: string;
+      message: string;
+      reason: string;
+      status: string;
+      type: string;
+    }>;
+    version?: {
+      kubernetes: string;
+    };
+    capacity?: {
+      cpu: string;
+      memory: string;
+      pods: string;
+      [key: string]: string;
+    };
+  };
 }
 
 interface ClusterResponse {
@@ -45,6 +63,12 @@ interface ClusterApiResponse {
     }>;
     version?: {
       kubernetes: string;
+    };
+    capacity?: {
+      cpu: string;
+      memory: string;
+      pods: string;
+      [key: string]: string;
     };
   };
   available: boolean;
@@ -119,6 +143,8 @@ export const useClusterQueries = () => {
           available: cluster.available,
           joined: cluster.joined,
           labels: cluster.labels || {},
+          // Include the raw status object with capacity data
+          rawStatus: cluster.status,
         }));
 
         return {
