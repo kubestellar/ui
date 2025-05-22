@@ -2540,7 +2540,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
               PaperProps={{
                 style: {
                   backgroundColor: theme === 'dark' ? '#1F2937' : '#fff',
-                  color: theme === 'dark' ? '#fff' : 'inherit',
+                  color: theme === 'dark' ? '#fff' : '#333',
                   boxShadow:
                     theme === 'dark'
                       ? '0 4px 20px rgba(0, 0, 0, 0.5)'
@@ -2551,7 +2551,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
               <MenuItem
                 onClick={() => handleMenuAction('Details')}
                 sx={{
-                  color: theme === 'dark' ? '#fff' : 'inherit',
+                  color: theme === 'dark' ? '#fff' : '#333',
                   '&:hover': {
                     backgroundColor:
                       theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
@@ -2565,7 +2565,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                   <MenuItem
                     onClick={() => handleMenuAction('Delete')}
                     sx={{
-                      color: theme === 'dark' ? '#fff' : 'inherit',
+                      color: theme === 'dark' ? '#fff' : '#333',
                       '&:hover': {
                         backgroundColor:
                           theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
@@ -2577,7 +2577,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                   <MenuItem
                     onClick={() => handleMenuAction('Edit')}
                     sx={{
-                      color: theme === 'dark' ? '#fff' : 'inherit',
+                      color: theme === 'dark' ? '#fff' : '#333',
                       '&:hover': {
                         backgroundColor:
                           theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
@@ -2589,7 +2589,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                   <MenuItem
                     onClick={() => handleMenuAction('Logs')}
                     sx={{
-                      color: theme === 'dark' ? '#fff' : 'inherit',
+                      color: theme === 'dark' ? '#fff' : '#333',
                       '&:hover': {
                         backgroundColor:
                           theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
