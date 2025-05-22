@@ -85,19 +85,11 @@ func ListContexts() (string, []string, error) {
 
 	// Get the current context
 	currentContext := config.CurrentContext
-	if currentContext == "" {
-		return "", nil, fmt.Errorf("no current context found in kubeconfig")
-	}
 
 	// Filter contexts that contain "wds"
 	var wdsContexts []string
 	for name, context := range config.Contexts {
 		if strings.Contains(name, "wds") {
-			// Validate the context (e.g., ensure it has a cluster and namespace)
-			if context.Cluster == "" {
-				log.Printf("Skipping context '%s': missing cluster information", name)
-				continue
-			}
 			wdsContexts = append(wdsContexts, name)
 		}
 	}
