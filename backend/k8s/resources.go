@@ -5,17 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
-	"gopkg.in/yaml.v3"
 	"io"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/dynamic/dynamicinformer"
-	"k8s.io/client-go/tools/cache"
 	"log"
 	"net/http"
 	"reflect"
@@ -23,6 +13,19 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
+	"gopkg.in/yaml.v3"
+	"k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/dynamic/dynamicinformer"
+	"k8s.io/client-go/tools/cache"
 )
 
 // mapResourceToGVR maps resource types to their GroupVersionResource (GVR)
@@ -341,7 +344,7 @@ func ListResources(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-// UpdateResource updates an existing Kubernetes resource
+// UpdateResource updates an existing Kubernetes resource with retry logic
 func UpdateResource(c *gin.Context) {
 	cookieContext, err := c.Cookie("ui-wds-context")
 	if err != nil {
@@ -355,7 +358,7 @@ func UpdateResource(c *gin.Context) {
 
 	resourceKind := c.Param("resourceKind")
 	namespace := c.Param("namespace")
-	name := c.Param("name") // Extract resource name
+	name := c.Param("name")
 
 	discoveryClient := clientset.Discovery()
 	gvr, isNamespaced, err := getGVR(discoveryClient, resourceKind)
@@ -363,8 +366,8 @@ func UpdateResource(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
 		return
 	}
-	var resource dynamic.ResourceInterface
 
+	var resource dynamic.ResourceInterface
 	if isNamespaced {
 		resource = dynamicClient.Resource(gvr).Namespace(namespace)
 	} else {
@@ -377,11 +380,44 @@ func UpdateResource(c *gin.Context) {
 		return
 	}
 
-	// Ensure the resource has a name before updating
+	// Prepare resource object
 	resourceObj := &unstructured.Unstructured{Object: resourceData}
 	resourceObj.SetName(name)
-	// TODO: Retry Logic
-	result, err := resource.Update(c, resourceObj, v1.UpdateOptions{})
+
+	var result *unstructured.Unstructured
+
+	// Retry logic with exponential backoff
+	err = wait.ExponentialBackoff(wait.Backoff{
+		Steps:    5,
+		Duration: 100 * time.Millisecond,
+		Factor:   2.0,
+		Jitter:   0.1,
+	}, func() (bool, error) {
+		// Get the latest version of the resource
+		current, getErr := resource.Get(c, name, v1.GetOptions{})
+		if getErr != nil {
+			return false, getErr
+		}
+
+		// Apply the new data to the current resource
+		current.Object = resourceObj.Object
+		current.SetResourceVersion(resourceObj.GetResourceVersion())
+
+		// Attempt to update the resource
+		updated, updateErr := resource.Update(c, current, v1.UpdateOptions{})
+		if updateErr != nil {
+			if errors.IsConflict(updateErr) {
+				// Retry if it's a conflict
+				return false, nil
+			}
+			// Stop retrying on other errors
+			return false, updateErr
+		}
+
+		result = updated
+		return true, nil // Update succeeded
+	})
+	
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
