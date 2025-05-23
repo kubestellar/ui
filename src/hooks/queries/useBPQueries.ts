@@ -549,7 +549,7 @@ export const useBPQueries = () => {
         }, 1500); // 1.5 second delay to ensure status change is captured
       },
       onError: (error: Error) => {
-        toast.error('Failed to create binding policy');
+        // toast.error('Failed to create binding policy new check');
         console.error('Mutation error:', error);
       },
     });
