@@ -2009,8 +2009,15 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                               : 'rgba(103, 192, 115, 0.1)',
                             color: isDark ? 'rgb(154, 214, 249)' : 'rgb(47, 134, 255)',
                             border: `1px solid ${isDark ? 'rgba(103, 192, 115, 0.4)' : 'rgba(103, 192, 115, 0.3)'}`,
+                            display: 'inline-block',
+                            maxWidth: '200px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            verticalAlign: 'middle'
                           }}
                           className="rounded-lg px-2 py-1 text-xs font-medium"
+                          title={cluster.name} // Add tooltip with full context name
                         >
                           {cluster.name}
                         </span>
