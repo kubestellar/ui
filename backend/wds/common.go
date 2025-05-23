@@ -192,7 +192,6 @@ func CreateWDSContextUsingCommand(w http.ResponseWriter, r *http.Request, c *gin
 		log.Println("WebSocket Upgrade Error:", err)
 		return
 	}
-	c.Abort()
 	defer conn.Close()
 	if newWdsContext == "" {
 		msg := "context query must be present ?context=<your_new_context>"
