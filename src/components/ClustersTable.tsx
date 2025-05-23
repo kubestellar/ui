@@ -2014,7 +2014,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
-                            verticalAlign: 'middle'
+                            verticalAlign: 'middle',
                           }}
                           className="rounded-lg px-2 py-1 text-xs font-medium"
                           title={cluster.name} // Add tooltip with full context name
