@@ -621,9 +621,9 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
 
           // Check if this workload is already in the group
           const existingWorkload = labelMap[labelId].workloads.find(
-            w => 
-              w.name === workload.name && 
-              w.kind === workload.kind && 
+            w =>
+              w.name === workload.name &&
+              w.kind === workload.kind &&
               (w.namespace || '') === (workload.namespace || '')
           );
           if (!existingWorkload) {
@@ -797,7 +797,9 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
           </Tooltip>
 
           <Box sx={{ display: 'flex', gap: 0.5 }}>
-            <Tooltip title={`${sortedWorkloads.length} resource${sortedWorkloads.length !== 1 ? 's' : ''}`}>
+            <Tooltip
+              title={`${sortedWorkloads.length} resource${sortedWorkloads.length !== 1 ? 's' : ''}`}
+            >
               <Chip
                 size="small"
                 label={`${sortedWorkloads.length}`}
@@ -827,7 +829,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
           >
             Resources:
           </Typography>
-          {sortedWorkloads.map((w) => (
+          {sortedWorkloads.map(w => (
             <Chip
               key={`${w.kind}-${w.namespace}-${w.name}`}
               size="small"
@@ -840,9 +842,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
                 bgcolor: isDarkTheme
                   ? alpha(muiTheme.palette.primary.dark, 0.2)
                   : alpha(muiTheme.palette.primary.main, 0.1),
-                color: isDarkTheme
-                  ? muiTheme.palette.primary.light
-                  : muiTheme.palette.primary.main,
+                color: isDarkTheme ? muiTheme.palette.primary.light : muiTheme.palette.primary.main,
               }}
             />
           ))}

@@ -1270,7 +1270,11 @@ export const useBPQueries = () => {
           const namespaceMetadataArray = resourceTypes.__namespaceMetaData;
           if (Array.isArray(namespaceMetadataArray) && namespaceMetadataArray.length > 0) {
             const namespaceMetadata = namespaceMetadataArray[0];
-            if (namespaceMetadata && namespaceMetadata.name && !processedNamespaces.has(namespaceMetadata.name)) {
+            if (
+              namespaceMetadata &&
+              namespaceMetadata.name &&
+              !processedNamespaces.has(namespaceMetadata.name)
+            ) {
               workloads.push({
                 name: namespaceMetadata.name,
                 namespace: '', // Namespaces are cluster-scoped
@@ -1284,7 +1288,9 @@ export const useBPQueries = () => {
         }
       });
 
-      const uniqueWorkloads = Array.from(new Map(workloads.map(w => [`${w.kind}-${w.namespace}-${w.name}`, w])).values());
+      const uniqueWorkloads = Array.from(
+        new Map(workloads.map(w => [`${w.kind}-${w.namespace}-${w.name}`, w])).values()
+      );
 
       console.log(`Extracted ${uniqueWorkloads.length} unique workloads total`);
       return uniqueWorkloads;

@@ -431,9 +431,7 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
                 '100%': { opacity: 1 },
               },
             }}
-          >
-            
-          </Box>
+          ></Box>
         )}
       </Paper>
     </Box>
