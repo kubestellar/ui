@@ -36,8 +36,6 @@ export const useLogin = () => {
           localStorage.removeItem('rememberedPassword');
         }
 
-        // Token is assumed valid since we just received it from the server
-
         return response;
       } catch (error) {
         console.error('Login error:', error);
