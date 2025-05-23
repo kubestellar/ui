@@ -128,15 +128,17 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
     borderRadius: { xs: 2, sm: 3 },
     p: { xs: 2, sm: 3 },
     mb: 3,
-    transition: 'all 0.2s ease-in-out',
+    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
     backgroundColor: theme === 'dark' ? 'rgba(24, 28, 33, 0.8)' : 'rgba(255, 255, 255, 0.9)',
     border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`,
     boxShadow:
       theme === 'dark' ? '0 4px 20px rgba(0, 0, 0, 0.2)' : '0 4px 20px rgba(0, 0, 0, 0.06)',
     position: 'relative',
     overflow: 'hidden',
+    transform: 'translateZ(0)', // Force GPU acceleration
+    backfaceVisibility: 'hidden', // Prevent flickering during animations
     '&:hover': {
-      transform: 'translateY(-2px)',
+      transform: 'translateY(-2px) translateZ(0)',
       boxShadow:
         theme === 'dark' ? '0 6px 24px rgba(0, 0, 0, 0.25)' : '0 6px 24px rgba(0, 0, 0, 0.08)',
     },
@@ -154,6 +156,7 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
+        minHeight: 0, // Helps with flexbox scrolling issues
       }}
     >
       <Box
@@ -174,6 +177,7 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
           flexDirection: 'column',
           position: 'relative',
           overflow: 'hidden',
+          minHeight: 0, // Helps with flexbox scrolling issues
         }}
       >
         {/* Visual elements for modern design feel */}
@@ -235,10 +239,41 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
                 background: theme === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
               },
             },
+            overflowAnchor: 'none',
+            willChange: 'transform',
+            WebkitOverflowScrolling: 'touch',
+            paddingRight: '4px',
+            // Add stable sizing to prevent content jumps
+            '& > div': {
+              minHeight: 0,
+              contain: 'content',
+            },
+            // Prevent content shifting during scrolling
+            '& > *': {
+              transformStyle: 'preserve-3d',
+              contain: 'layout paint style',
+            },
+            // Improve scroll performance
+            '&:before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '1px',
+              opacity: 0,
+              pointerEvents: 'none',
+            },
+            // Prevent paint during scrolling
+            '&:active': {
+              '& *': {
+                transition: 'none !important',
+              },
+            },
           }}
         >
           {/* Header section with title and description */}
-          <Fade in={true} timeout={800}>
+          <Fade in={true} timeout={600} easing="cubic-bezier(0.4, 0, 0.2, 1)">
             <Box sx={{ mb: 3 }}>
               <Typography
                 variant="h5"
@@ -282,7 +317,7 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
 
           {/* Main content - rendered conditionally based on state */}
           {showLogs && formData.clusterName ? (
-            <Fade in={true} timeout={400}>
+            <Fade in={true} timeout={400} easing="cubic-bezier(0.4, 0, 0.2, 1)">
               <Box>
                 <OnboardingLogsDisplay
                   clusterName={formData.clusterName}
@@ -359,7 +394,7 @@ const SuccessView: React.FC<{
   isMobile,
 }) => {
   return (
-    <Fade in={true} timeout={500}>
+    <Fade in={true} timeout={500} easing="cubic-bezier(0.4, 0, 0.2, 1)">
       <Box
         sx={{
           flex: 1,
@@ -368,7 +403,7 @@ const SuccessView: React.FC<{
         }}
       >
         <Box ref={successAlertRef}>
-          <Zoom in={true} timeout={700}>
+          <Zoom in={true} timeout={700} easing="cubic-bezier(0.4, 0, 0.2, 1)">
             <Alert
               severity="success"
               icon={
@@ -773,7 +808,7 @@ const ClusterSelectionView: React.FC<{
   isMobile,
 }) => {
   return (
-    <Fade in={true} timeout={500}>
+    <Fade in={true} timeout={500} easing="cubic-bezier(0.4, 0, 0.2, 1)">
       <Box
         sx={{
           flex: 1,
@@ -794,6 +829,8 @@ const ClusterSelectionView: React.FC<{
                 ? 'linear-gradient(145deg, rgba(47, 134, 255, 0.08) 0%, rgba(47, 134, 255, 0.03) 100%)'
                 : 'linear-gradient(145deg, rgba(47, 134, 255, 0.05) 0%, rgba(47, 134, 255, 0.02) 100%)',
             borderColor: theme === 'dark' ? 'rgba(47, 134, 255, 0.15)' : 'rgba(47, 134, 255, 0.1)',
+            willChange: 'transform, box-shadow',
+            transformOrigin: 'center center',
           }}
         >
           {/* Background decorations */}
@@ -1361,11 +1398,14 @@ const ClusterSelectionView: React.FC<{
                     backgroundColor:
                       theme === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.6)',
                     border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`,
-                    transition: 'all 0.2s ease',
+                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                    willChange: 'transform, box-shadow, background-color',
+                    transformOrigin: 'center center',
+                    transform: 'translateZ(0)',
                     '&:hover': {
                       backgroundColor:
                         theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.9)',
-                      transform: 'translateY(-2px)',
+                      transform: 'translateY(-2px) translateZ(0)',
                       boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
                     },
                   }}
@@ -1681,13 +1721,15 @@ const ClusterSelectionView: React.FC<{
                   ? `linear-gradient(45deg, ${colors.primary} 0%, ${colors.primary}CC 100%)`
                   : colors.primary,
               boxShadow: `0 4px 14px ${colors.primary}40`,
+              transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+              transform: 'translateZ(0)',
               '&:hover': {
                 background:
                   theme === 'dark'
                     ? `linear-gradient(45deg, ${colors.primary} 30%, ${colors.primary}EE 100%)`
                     : colors.primaryDark,
                 boxShadow: `0 6px 20px ${colors.primary}50`,
-                transform: 'translateY(-1px)',
+                transform: 'translateY(-1px) translateZ(0)',
               },
               '&:focus-visible': {
                 outline: `2px solid ${colors.primary}`,
@@ -1698,7 +1740,7 @@ const ClusterSelectionView: React.FC<{
                 color: theme === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
                 boxShadow: 'none',
               },
-              transition: 'all 0.2s ease',
+              position: 'relative',
             }}
             startIcon={
               manualLoading ? (
