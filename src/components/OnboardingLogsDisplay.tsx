@@ -432,7 +432,7 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
               },
             }}
           >
-            $
+            
           </Box>
         )}
       </Paper>

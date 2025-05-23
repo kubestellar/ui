@@ -138,13 +138,22 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
 
   // Use the SSE API to get workload data
   const { useWorkloadSSE } = useBPQueries();
-  const { state, startSSEConnection } = useWorkloadSSE();
+  const { state, startSSEConnection, extractWorkloads } = useWorkloadSSE();
 
-  // Replace conditional workloads initialization with useMemo
-  const workloads = React.useMemo(() => {
-    // If there was any conditional logic here, keep it inside the useMemo
+  // Use the SSE or prop workloads based on SSE connection status
+  const panelWorkloads = React.useMemo(() => {
+    if (state.status === 'success' && state.data) {
+      const extracted = extractWorkloads();
+      // console.log('Extracted workloads by useWorkloadSSE:', extracted.length, extracted); // Previous log
+      return extracted;
+    }
+    // console.log('Using propWorkloads:', propWorkloads.length, propWorkloads); // Previous log
     return propWorkloads;
-  }, [propWorkloads]);
+  }, [state.status, state.data, propWorkloads, extractWorkloads]);
+
+  useEffect(() => {
+    console.log('[WorkloadPanel] panelWorkloads updated:', panelWorkloads.length, panelWorkloads);
+  }, [panelWorkloads]);
 
   // Use SSE or prop workloads based on SSE connection status
   const loading = (state.status === 'loading' || state.status === 'idle') && propLoading;
@@ -167,7 +176,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
   };
 
   const handleAddLabels = () => {
-    if (workloads.length > 0) {
+    if (panelWorkloads.length > 0) {
       setSelectWorkloadDialogOpen(true);
       setIsBulkEdit(false);
       setSelectedWorkloads([]);
@@ -578,28 +587,30 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
       'app',
       'app.kubernetes.io/created-by',
       'app.kubernetes.io/team',
+      'kubestellar.io/workload',
     ];
 
-    const excludedKinds: string[] = [];
-
-    workloads.forEach(workload => {
-      // Skip excluded kinds
-      if (excludedKinds.includes(workload.kind)) {
-        return;
-      }
-
+    panelWorkloads.forEach(workload => {
       if (workload.labels && Object.keys(workload.labels).length > 0) {
         Object.entries(workload.labels).forEach(([key, value]) => {
+          // Special handling for kubernetes.io/metadata.name label
+          if (key === 'kubernetes.io/metadata.name') {
+            // Only filter out if it's not a namespace resource
+            if (workload.kind !== 'Namespace') {
+              return;
+            }
+          }
+
           const isSystemLabel = systemLabelPrefixes.some(prefix => key.startsWith(prefix));
 
-          const isDefaultNamespace = key === 'kubernetes.io/metadata.name' && value === 'default';
-
-          if ((isSystemLabel || isDefaultNamespace) && !importantLabelKeys.includes(key)) {
+          // Don't filter out system labels if they're in the important list
+          if (isSystemLabel && !importantLabelKeys.includes(key)) {
             return;
           }
 
           const labelId = `${key}:${value}`;
 
+          // Initialize the label group if it doesn't exist
           if (!labelMap[labelId]) {
             labelMap[labelId] = {
               key,
@@ -608,23 +619,37 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
             };
           }
 
-          if (
-            !labelMap[labelId].workloads.some(
-              w => w.name === workload.name && w.namespace === (workload.namespace || 'default')
-            )
-          ) {
+          // Check if this workload is already in the group
+          const existingWorkload = labelMap[labelId].workloads.find(
+            w => 
+              w.name === workload.name && 
+              w.kind === workload.kind && 
+              (w.namespace || '') === (workload.namespace || '')
+          );
+          if (!existingWorkload) {
             labelMap[labelId].workloads.push({
               name: workload.name,
               kind: workload.kind,
-              namespace: workload.namespace || 'default',
+              namespace: workload.namespace || '',
             });
           }
         });
       }
     });
 
-    return Object.values(labelMap);
-  }, [workloads]);
+    return Object.values(labelMap).sort((a, b) => {
+      // Give priority to kubestellar.io/workload labels
+      if (a.key === 'kubestellar.io/workload' && b.key !== 'kubestellar.io/workload') return -1;
+      if (b.key === 'kubestellar.io/workload' && a.key !== 'kubestellar.io/workload') return 1;
+
+      // Then sort by number of workloads
+      if (b.workloads.length !== a.workloads.length) {
+        return b.workloads.length - a.workloads.length;
+      }
+
+      return a.key.localeCompare(b.key);
+    });
+  }, [panelWorkloads]);
 
   // Filter labels based on search term
   const filteredLabels = React.useMemo(() => {
@@ -648,17 +673,26 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
     const isInCanvas = canvasEntities.workloads.includes(itemId);
 
     // Check if this is from a cluster-scoped resource
-    const isClusterScoped = firstWorkload.namespace === 'cluster-scoped';
+    const isClusterScoped = firstWorkload.namespace === '';
     const workloadObjects = labelGroup.workloads
       .map(w =>
-        workloads.find(
+        panelWorkloads.find(
           workload =>
             workload.name === w.name &&
             workload.kind === w.kind &&
-            (workload.namespace || 'default') === w.namespace
+            (workload.namespace || '') === (w.namespace || '')
         )
       )
       .filter((w): w is Workload => w !== undefined);
+
+    // Sort workloads by kind for consistent display
+    const sortedWorkloads = [...workloadObjects].sort((a, b) => {
+      // Put Namespace first
+      if (a.kind === 'Namespace') return -1;
+      if (b.kind === 'Namespace') return 1;
+      // Then sort by kind
+      return a.kind.localeCompare(b.kind);
+    });
 
     return (
       <Box
@@ -668,6 +702,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
           if (onItemClick) {
             console.log('Workload clicked:', itemId);
             console.log(`Label details - key: "${labelGroup.key}", value: "${labelGroup.value}"`);
+            console.log('Associated workloads:', sortedWorkloads);
 
             // Check if this item is already in the canvas
             if (isInCanvas) {
@@ -712,20 +747,25 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
         >
           <Tooltip
             title={
-              labelGroup.workloads.length > 1
-                ? `Multiple resource types: ${Array.from(new Set(labelGroup.workloads.map(w => w.kind))).join(', ')}`
-                : `Resource type: ${labelGroup.workloads[0].kind}`
+              <React.Fragment>
+                <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                  Resource Types:
+                </Typography>
+                <div style={{ marginTop: 4 }}>
+                  {Array.from(new Set(sortedWorkloads.map(w => w.kind))).join(', ')}
+                </div>
+              </React.Fragment>
             }
             arrow
           >
             <Chip
               size="small"
               label={
-                labelGroup.workloads.length > 1
-                  ? 'Label Selector'
+                sortedWorkloads.length > 1
+                  ? 'Multiple Resources'
                   : isClusterScoped
-                    ? `${labelGroup.workloads[0].kind}`
-                    : labelGroup.workloads[0].kind
+                    ? `${sortedWorkloads[0].kind}`
+                    : sortedWorkloads[0].kind
               }
               sx={{
                 fontSize: '0.75rem',
@@ -757,46 +797,10 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
           </Tooltip>
 
           <Box sx={{ display: 'flex', gap: 0.5 }}>
-            {/*  edit button */}
-            <Tooltip title="Edit workload labels">
-              <IconButton
-                size="small"
-                onClick={e => {
-                  e.stopPropagation();
-
-                  if (workloadObjects.length === 1) {
-                    // If only one workload, edit it directly
-                    handleEditSpecificWorkload(workloadObjects[0]);
-                  } else if (workloadObjects.length > 0) {
-                    // If multiple workloads, open the select dialog
-                    handleEditMultipleWorkloads(workloadObjects);
-                  }
-                }}
-                sx={{
-                  p: 0.5,
-                  bgcolor: isDarkTheme
-                    ? alpha(muiTheme.palette.secondary.main, 0.2)
-                    : alpha(muiTheme.palette.secondary.main, 0.1),
-                  color: isDarkTheme
-                    ? muiTheme.palette.secondary.light
-                    : muiTheme.palette.secondary.main,
-                  '&:hover': {
-                    bgcolor: isDarkTheme
-                      ? alpha(muiTheme.palette.secondary.main, 0.3)
-                      : alpha(muiTheme.palette.secondary.main, 0.2),
-                  },
-                  height: 24,
-                  width: 24,
-                }}
-              >
-                <EditIcon sx={{ fontSize: '0.9rem' }} />
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title={`${labelGroup.workloads.length} object(s)`}>
+            <Tooltip title={`${sortedWorkloads.length} resource${sortedWorkloads.length !== 1 ? 's' : ''}`}>
               <Chip
                 size="small"
-                label={`${labelGroup.workloads.length}`}
+                label={`${sortedWorkloads.length}`}
                 sx={{
                   fontSize: '0.8rem',
                   height: 16,
@@ -811,83 +815,45 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
           </Box>
         </Box>
 
-        {labelGroup.workloads.length === 1 && (
-          <Box sx={{ mt: 0.5 }}>
-            <Typography
-              variant="caption"
+        {/* Show resource list for multiple resources */}
+        <Box sx={{ mt: 1 }}>
+          <Typography
+            variant="caption"
+            sx={{
+              display: 'block',
+              color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary',
+              mb: 0.5,
+            }}
+          >
+            Resources:
+          </Typography>
+          {sortedWorkloads.map((w) => (
+            <Chip
+              key={`${w.kind}-${w.namespace}-${w.name}`}
+              size="small"
+              label={`${w.kind}${w.namespace ? ` (${w.namespace})` : ''}`}
               sx={{
-                fontWeight: 500,
-                color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : 'text.primary',
+                fontSize: '0.75rem',
+                height: 20,
+                mr: 0.5,
+                mb: 0.5,
+                bgcolor: isDarkTheme
+                  ? alpha(muiTheme.palette.primary.dark, 0.2)
+                  : alpha(muiTheme.palette.primary.main, 0.1),
+                color: isDarkTheme
+                  ? muiTheme.palette.primary.light
+                  : muiTheme.palette.primary.main,
               }}
-            >
-              {firstWorkload.name}
-            </Typography>
-          </Box>
-        )}
+            />
+          ))}
+        </Box>
 
-        {/* Namespace (if not cluster-scoped) */}
-        {labelGroup.workloads.length === 1 && !isClusterScoped && (
-          <Box sx={{ mt: 0.25 }}>
-            <Typography
-              variant="caption"
-              sx={{
-                color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary',
-              }}
-            >
-              {firstWorkload.namespace}
-            </Typography>
-          </Box>
-        )}
-
-        {/* Multiple objects summary */}
-        {labelGroup.workloads.length > 1 && (
-          <Box sx={{ mt: 0.5 }}>
-            <Tooltip
-              title={
-                <React.Fragment>
-                  <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
-                    Objects:
-                  </Typography>
-                  <ul style={{ margin: 0, paddingLeft: '1rem' }}>
-                    {labelGroup.workloads.map(w => (
-                      <li key={`${w.namespace}-${w.name}`}>
-                        {w.namespace === 'cluster-scoped' ? w.name : `${w.namespace}/${w.name}`} (
-                        {w.kind})
-                      </li>
-                    ))}
-                  </ul>
-                  {labelGroup.workloads.length > 1 && (
-                    <Typography
-                      variant="caption"
-                      sx={{ fontWeight: 'bold', mt: 1, display: 'block' }}
-                    >
-                      Resource types:{' '}
-                      {Array.from(new Set(labelGroup.workloads.map(w => w.kind))).join(', ')}
-                    </Typography>
-                  )}
-                </React.Fragment>
-              }
-              arrow
-              placement="top"
-            >
-              <Typography
-                variant="caption"
-                sx={{
-                  color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary',
-                }}
-              >
-                {`${labelGroup.workloads.length} resource objects`}
-              </Typography>
-            </Tooltip>
-          </Box>
-        )}
-
-        <Box sx={{ mt: 0.5 }}>
+        <Box sx={{ mt: 1 }}>
           <Chip
             size="small"
             label={`${labelGroup.key} = ${labelGroup.value}`}
             sx={{
-              fontSize: '1rem',
+              fontSize: '0.75rem',
               height: 20,
               '& .MuiChip-label': {
                 px: 0.75,
@@ -1104,7 +1070,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
           <Typography color="error" sx={{ p: 2 }}>
             {error}
           </Typography>
-        ) : workloads.length === 0 ? (
+        ) : panelWorkloads.length === 0 ? (
           <Typography
             sx={{
               p: 2,
@@ -1141,7 +1107,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
                       color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary',
                     }}
                   >
-                    {filteredLabels.length} unique labels across {workloads.length} workloads
+                    {filteredLabels.length} unique labels across {panelWorkloads.length} workloads
                     {state.status === 'loading'
                       ? ' (loading...)'
                       : ' (includes cluster-scoped resources like CRDs and Namespaces)'}
@@ -1176,7 +1142,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
       <SelectWorkloadDialog
         open={selectWorkloadDialogOpen}
         onClose={() => setSelectWorkloadDialogOpen(false)}
-        workloads={workloads}
+        workloads={panelWorkloads}
         onSelectWorkload={handleEditSpecificWorkload}
         onSelectWorkloads={handleEditMultipleWorkloads}
         isDark={isDarkTheme}
