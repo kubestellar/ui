@@ -38,7 +38,7 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
 }) => {
   const theme = useTheme(state => state.theme);
   const isDarkTheme = theme === 'dark';
-  
+
   const [policyName, setPolicyName] = useState(defaultName);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -58,7 +58,9 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
   const handleGenerateNew = () => {
     // Generate a new random policy name
     const timestamp = new Date().getTime().toString().slice(-6);
-    const randomSuffix = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+    const randomSuffix = Math.floor(Math.random() * 100)
+      .toString()
+      .padStart(2, '0');
     const newName = `policy-${timestamp}-${randomSuffix}`;
     setPolicyName(newName);
     setIsEditing(true);
@@ -82,9 +84,11 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
         sx: {
           bgcolor: isDarkTheme ? 'rgba(17, 25, 40, 0.95)' : 'rgba(255, 255, 255, 0.95)',
           backdropFilter: 'blur(20px)',
-          border: isDarkTheme ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid rgba(0, 0, 0, 0.08)',
+          border: isDarkTheme
+            ? '1px solid rgba(255, 255, 255, 0.15)'
+            : '1px solid rgba(0, 0, 0, 0.08)',
           borderRadius: '16px',
-          boxShadow: isDarkTheme 
+          boxShadow: isDarkTheme
             ? '0 24px 48px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05)'
             : '0 24px 48px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.8)',
           overflow: 'hidden',
@@ -108,19 +112,21 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              border: isDarkTheme ? '1px solid rgba(37, 99, 235, 0.3)' : '1px solid rgba(37, 99, 235, 0.2)',
+              border: isDarkTheme
+                ? '1px solid rgba(37, 99, 235, 0.3)'
+                : '1px solid rgba(37, 99, 235, 0.2)',
             }}
           >
-            <EditIcon 
-              sx={{ 
+            <EditIcon
+              sx={{
                 color: isDarkTheme ? '#60a5fa' : '#2563eb',
                 fontSize: 20,
-              }} 
+              }}
             />
           </Box>
-          <Typography 
-            variant="h6" 
-            sx={{ 
+          <Typography
+            variant="h6"
+            sx={{
               color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.9)',
               fontWeight: 600,
             }}
@@ -140,10 +146,11 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
                 p: 2,
                 borderRadius: '12px',
                 bgcolor: isDarkTheme ? 'rgba(34, 197, 94, 0.08)' : 'rgba(34, 197, 94, 0.05)',
-                border: isDarkTheme ? '1px solid rgba(34, 197, 94, 0.2)' : '1px solid rgba(34, 197, 94, 0.15)',
+                border: isDarkTheme
+                  ? '1px solid rgba(34, 197, 94, 0.2)'
+                  : '1px solid rgba(34, 197, 94, 0.15)',
               }}
             >
-              
               <Chip
                 size="small"
                 label={workloadDisplay}
@@ -207,7 +214,7 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
           <TextField
             fullWidth
             value={policyName}
-            onChange={(e) => {
+            onChange={e => {
               setPolicyName(e.target.value);
               setIsEditing(true);
             }}
@@ -252,9 +259,14 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
                 borderColor: isDarkTheme ? '#f87171' : '#dc2626',
               },
               '& .MuiFormHelperText-root': {
-                color: isEditing && !isNameValid 
-                  ? (isDarkTheme ? '#f87171' : '#dc2626')
-                  : (isDarkTheme ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'),
+                color:
+                  isEditing && !isNameValid
+                    ? isDarkTheme
+                      ? '#f87171'
+                      : '#dc2626'
+                    : isDarkTheme
+                      ? 'rgba(255, 255, 255, 0.6)'
+                      : 'rgba(0, 0, 0, 0.6)',
                 fontSize: '0.75rem',
                 mt: 1,
                 mx: 0,
@@ -267,7 +279,9 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
               p: 2,
               borderRadius: '12px',
               bgcolor: isDarkTheme ? 'rgba(59, 130, 246, 0.05)' : 'rgba(59, 130, 246, 0.03)',
-              border: isDarkTheme ? '1px solid rgba(59, 130, 246, 0.15)' : '1px solid rgba(59, 130, 246, 0.1)',
+              border: isDarkTheme
+                ? '1px solid rgba(59, 130, 246, 0.15)'
+                : '1px solid rgba(59, 130, 246, 0.1)',
             }}
           >
             <Typography
@@ -288,7 +302,8 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
                 lineHeight: 1.4,
               }}
             >
-              Use descriptive names like "frontend-to-production" or "database-sync-policy" for better organization.
+              Use descriptive names like "frontend-to-production" or "database-sync-policy" for
+              better organization.
             </Typography>
           </Box>
         </Box>
@@ -331,14 +346,14 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
             fontWeight: 600,
             bgcolor: isDarkTheme ? '#2563eb' : '#2563eb',
             color: '#ffffff',
-            boxShadow: isDarkTheme 
-              ? '0 4px 12px rgba(37, 99, 235, 0.3)' 
+            boxShadow: isDarkTheme
+              ? '0 4px 12px rgba(37, 99, 235, 0.3)'
               : '0 4px 12px rgba(37, 99, 235, 0.2)',
             '&:hover': {
               bgcolor: isDarkTheme ? '#1d4ed8' : '#1d4ed8',
               transform: 'translateY(-1px)',
-              boxShadow: isDarkTheme 
-                ? '0 6px 16px rgba(37, 99, 235, 0.4)' 
+              boxShadow: isDarkTheme
+                ? '0 6px 16px rgba(37, 99, 235, 0.4)'
                 : '0 6px 16px rgba(37, 99, 235, 0.3)',
             },
             '&:disabled': {
@@ -378,4 +393,4 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
   );
 };
 
-export default PolicyNameDialog; 
+export default PolicyNameDialog;

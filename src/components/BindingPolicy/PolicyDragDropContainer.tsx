@@ -214,7 +214,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
   const [deploymentDialogOpen, setDeploymentDialogOpen] = useState(false);
   const [deploymentLoading, setDeploymentLoading] = useState(false);
   const [deploymentError, setDeploymentError] = useState<string | null>(null);
-  const [policiesToDeploy,] = useState<DeploymentPolicy[]>([]);
+  const [policiesToDeploy] = useState<DeploymentPolicy[]>([]);
   const { useGenerateBindingPolicyYaml, useQuickConnect } = useBPQueries();
   const generateYamlMutation = useGenerateBindingPolicyYaml();
   const quickConnectMutation = useQuickConnect();
@@ -698,144 +698,162 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
   }, [canvasEntities]);
 
   // Helper function to generate default policy name
-  const generateDefaultPolicyName = useCallback((workloadLabelId: string, clusterLabelId: string): string => {
-    const workloadLabelInfo = extractLabelInfo(workloadLabelId);
-    const clusterLabelInfo = extractLabelInfo(clusterLabelId);
-
-    if (!workloadLabelInfo || !clusterLabelInfo) {
-      return 'binding-policy';
-    }
-
-    const workloadValue = workloadLabelInfo.value;
-    const clusterValue = clusterLabelInfo.value;
-    const timestamp = new Date().getTime().toString().slice(-6);
-    const randomSuffix = Math.floor(Math.random() * 100).toString().padStart(2, '0');
-
-    return `${clusterValue}-${workloadValue}-${timestamp}-${randomSuffix}`
-      .toLowerCase()
-      .replace(/[^a-z0-9-]/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '');
-  }, [extractLabelInfo]);
-
-  // Helper function to get workload display name
-  const getWorkloadDisplayName = useCallback((workloadId: string): string => {
-    if (workloadId.startsWith('label-')) {
-      const labelInfo = extractLabelInfo(workloadId);
-      if (labelInfo) {
-        return `${labelInfo.key}:${labelInfo.value}`;
-      }
-    }
-    const workloadObj = workloads.find(w => w.name === workloadId);
-    return workloadObj?.name || workloadId;
-  }, [extractLabelInfo, workloads]);
-
-  // Helper function to get cluster display name
-  const getClusterDisplayName = useCallback((clusterId: string): string => {
-    if (clusterId.startsWith('label-')) {
-      const labelInfo = extractLabelInfo(clusterId);
-      if (labelInfo) {
-        return `${labelInfo.key}:${labelInfo.value}`;
-      }
-    }
-    const clusterObj = clusters.find(c => c.name === clusterId);
-    return clusterObj?.name || clusterId;
-  }, [extractLabelInfo, clusters]);
-
-  const executeDeployment = useCallback(async (policyName: string) => {
-    if (!pendingDeploymentData) return;
-
-    const { workloadLabelId, clusterLabelId } = pendingDeploymentData;
-
-    console.log('🔍 DEBUG - executeDeployment called with:', { policyName, workloadLabelId, clusterLabelId });
-
-    setDeploymentLoading(true);
-    setDeploymentError(null);
-
-    try {
-      // Extract label information
+  const generateDefaultPolicyName = useCallback(
+    (workloadLabelId: string, clusterLabelId: string): string => {
       const workloadLabelInfo = extractLabelInfo(workloadLabelId);
       const clusterLabelInfo = extractLabelInfo(clusterLabelId);
 
       if (!workloadLabelInfo || !clusterLabelInfo) {
-        throw new Error('Invalid label format');
+        return 'binding-policy';
       }
 
-      const workloadLabelsObj: Record<string, string> = {
-        [workloadLabelInfo.key]: workloadLabelInfo.value,
-      };
+      const workloadValue = workloadLabelInfo.value;
+      const clusterValue = clusterLabelInfo.value;
+      const timestamp = new Date().getTime().toString().slice(-6);
+      const randomSuffix = Math.floor(Math.random() * 100)
+        .toString()
+        .padStart(2, '0');
 
-      const clusterLabelsObj: Record<string, string> = {
-        [clusterLabelInfo.key]: clusterLabelInfo.value,
-      };
+      return `${clusterValue}-${workloadValue}-${timestamp}-${randomSuffix}`
+        .toLowerCase()
+        .replace(/[^a-z0-9-]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+    },
+    [extractLabelInfo]
+  );
 
-      // Find all workloads and clusters that match these labels
-      const matchingWorkloads = findWorkloadsByLabel(workloadLabelInfo);
-      const matchingClusters = findClustersByLabel(clusterLabelInfo);
-
-      if (matchingWorkloads.length === 0 || matchingClusters.length === 0) {
-        throw new Error('No matching workloads or clusters found for the selected labels');
+  // Helper function to get workload display name
+  const getWorkloadDisplayName = useCallback(
+    (workloadId: string): string => {
+      if (workloadId.startsWith('label-')) {
+        const labelInfo = extractLabelInfo(workloadId);
+        if (labelInfo) {
+          return `${labelInfo.key}:${labelInfo.value}`;
+        }
       }
+      const workloadObj = workloads.find(w => w.name === workloadId);
+      return workloadObj?.name || workloadId;
+    },
+    [extractLabelInfo, workloads]
+  );
 
-      const workloadObj = matchingWorkloads[0];
-      const workloadNamespace = workloadObj.namespace || 'default';
+  // Helper function to get cluster display name
+  const getClusterDisplayName = useCallback(
+    (clusterId: string): string => {
+      if (clusterId.startsWith('label-')) {
+        const labelInfo = extractLabelInfo(clusterId);
+        if (labelInfo) {
+          return `${labelInfo.key}:${labelInfo.value}`;
+        }
+      }
+      const clusterObj = clusters.find(c => c.name === clusterId);
+      return clusterObj?.name || clusterId;
+    },
+    [extractLabelInfo, clusters]
+  );
 
-      console.log('🔍 DEBUG - Creating binding policy with labels:', {
-        workloadLabels: workloadLabelsObj,
-        clusterLabels: clusterLabelsObj,
+  const executeDeployment = useCallback(
+    async (policyName: string) => {
+      if (!pendingDeploymentData) return;
+
+      const { workloadLabelId, clusterLabelId } = pendingDeploymentData;
+
+      console.log('🔍 DEBUG - executeDeployment called with:', {
         policyName,
-        namespace: workloadNamespace,
+        workloadLabelId,
+        clusterLabelId,
       });
 
-      const resources = generateResourcesFromWorkload(workloadObj);
+      setDeploymentLoading(true);
+      setDeploymentError(null);
 
-      const requestData = {
-        workloadLabels: workloadLabelsObj,
-        clusterLabels: clusterLabelsObj,
-        resources,
-        namespacesToSync: [workloadNamespace],
-        policyName: policyName,
-        namespace: workloadNamespace,
-      };
+      try {
+        // Extract label information
+        const workloadLabelInfo = extractLabelInfo(workloadLabelId);
+        const clusterLabelInfo = extractLabelInfo(clusterLabelId);
 
-      console.log('📤 SENDING REQUEST TO QUICK-CONNECT API (executeDeployment):');
-      console.log(JSON.stringify(requestData, null, 2));
-      console.log('🔍 Matching workloads:', matchingWorkloads.length);
-      console.log('🔍 Matching clusters:', matchingClusters.length);
+        if (!workloadLabelInfo || !clusterLabelInfo) {
+          throw new Error('Invalid label format');
+        }
 
-      const result = await quickConnectMutation.mutateAsync(requestData);
-      console.log('API response:', result);
+        const workloadLabelsObj: Record<string, string> = {
+          [workloadLabelInfo.key]: workloadLabelInfo.value,
+        };
 
-      setSuccessMessage(
-        `Successfully created binding policy "${policyName}" connecting ${workloadLabelInfo.key}:${workloadLabelInfo.value} to ${clusterLabelInfo.key}:${clusterLabelInfo.value}`
-      );
+        const clusterLabelsObj: Record<string, string> = {
+          [clusterLabelInfo.key]: clusterLabelInfo.value,
+        };
 
-      if (onClearCanvas) {
-        onClearCanvas();
+        // Find all workloads and clusters that match these labels
+        const matchingWorkloads = findWorkloadsByLabel(workloadLabelInfo);
+        const matchingClusters = findClustersByLabel(clusterLabelInfo);
+
+        if (matchingWorkloads.length === 0 || matchingClusters.length === 0) {
+          throw new Error('No matching workloads or clusters found for the selected labels');
+        }
+
+        const workloadObj = matchingWorkloads[0];
+        const workloadNamespace = workloadObj.namespace || 'default';
+
+        console.log('🔍 DEBUG - Creating binding policy with labels:', {
+          workloadLabels: workloadLabelsObj,
+          clusterLabels: clusterLabelsObj,
+          policyName,
+          namespace: workloadNamespace,
+        });
+
+        const resources = generateResourcesFromWorkload(workloadObj);
+
+        const requestData = {
+          workloadLabels: workloadLabelsObj,
+          clusterLabels: clusterLabelsObj,
+          resources,
+          namespacesToSync: [workloadNamespace],
+          policyName: policyName,
+          namespace: workloadNamespace,
+        };
+
+        console.log('📤 SENDING REQUEST TO QUICK-CONNECT API (executeDeployment):');
+        console.log(JSON.stringify(requestData, null, 2));
+        console.log('🔍 Matching workloads:', matchingWorkloads.length);
+        console.log('🔍 Matching clusters:', matchingClusters.length);
+
+        const result = await quickConnectMutation.mutateAsync(requestData);
+        console.log('API response:', result);
+
+        setSuccessMessage(
+          `Successfully created binding policy "${policyName}" connecting ${workloadLabelInfo.key}:${workloadLabelInfo.value} to ${clusterLabelInfo.key}:${clusterLabelInfo.value}`
+        );
+
+        if (onClearCanvas) {
+          onClearCanvas();
+        }
+
+        setShowPolicyNameDialog(false);
+        setPendingDeploymentData(null);
+        setDeploymentLoading(false);
+      } catch (error) {
+        console.error('❌ Failed to deploy policy:', error);
+        setDeploymentError(
+          error instanceof Error
+            ? error.message
+            : 'Failed to deploy binding policy. Please try again.'
+        );
+        setDeploymentLoading(false);
       }
-      
-      setShowPolicyNameDialog(false);
-      setPendingDeploymentData(null);
-      setDeploymentLoading(false);
-    } catch (error) {
-      console.error('❌ Failed to deploy policy:', error);
-      setDeploymentError(
-        error instanceof Error
-          ? error.message
-          : 'Failed to deploy binding policy. Please try again.'
-      );
-      setDeploymentLoading(false);
-    }
-  }, [
-    pendingDeploymentData,
-    extractLabelInfo,
-    findWorkloadsByLabel,
-    findClustersByLabel,
-    generateResourcesFromWorkload,
-    quickConnectMutation,
-    setSuccessMessage,
-    onClearCanvas,
-  ]);
+    },
+    [
+      pendingDeploymentData,
+      extractLabelInfo,
+      findWorkloadsByLabel,
+      findClustersByLabel,
+      generateResourcesFromWorkload,
+      quickConnectMutation,
+      setSuccessMessage,
+      onClearCanvas,
+    ]
+  );
 
   // Update the handleCreatePolicy function to work with labels
   const handleCreatePolicy = useCallback(() => {
@@ -1358,7 +1376,6 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
 
   // Update the handleDeploymentConfirm function
   const handleDeploymentConfirm = useCallback(async () => {
-    
     console.log('handleDeploymentConfirm called - redirecting to name dialog flow');
     prepareForDeployment();
   }, [prepareForDeployment]);
@@ -1736,19 +1753,18 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
         }}
         onConfirm={executeDeployment}
         defaultName={
-          pendingDeploymentData 
-            ? generateDefaultPolicyName(pendingDeploymentData.workloadLabelId, pendingDeploymentData.clusterLabelId)
+          pendingDeploymentData
+            ? generateDefaultPolicyName(
+                pendingDeploymentData.workloadLabelId,
+                pendingDeploymentData.clusterLabelId
+              )
             : ''
         }
         workloadDisplay={
-          pendingDeploymentData
-            ? getWorkloadDisplayName(pendingDeploymentData.workloadLabelId)
-            : ''
+          pendingDeploymentData ? getWorkloadDisplayName(pendingDeploymentData.workloadLabelId) : ''
         }
         clusterDisplay={
-          pendingDeploymentData
-            ? getClusterDisplayName(pendingDeploymentData.clusterLabelId)
-            : ''
+          pendingDeploymentData ? getClusterDisplayName(pendingDeploymentData.clusterLabelId) : ''
         }
         loading={deploymentLoading}
       />

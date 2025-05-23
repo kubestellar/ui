@@ -678,10 +678,10 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
 
     const clusterIds = policyCanvasEntities.clusters;
     const workloadIds = policyCanvasEntities.workloads;
-    
+
     setPendingPolicyData({ clusterIds, workloadIds });
     setShowPolicyNameDialog(true);
-    setIsLoading(false); 
+    setIsLoading(false);
   };
 
   const handleCreateFromFile = async () => {
@@ -1573,7 +1573,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
         }}
         onConfirm={executeBindingPolicyCreation}
         defaultName={
-          pendingPolicyData 
+          pendingPolicyData
             ? generateDefaultPolicyName(pendingPolicyData.clusterIds, pendingPolicyData.workloadIds)
             : ''
         }
