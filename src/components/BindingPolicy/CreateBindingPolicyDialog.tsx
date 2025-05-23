@@ -619,10 +619,10 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
 
       setSuccessMessage('Binding policy created successfully');
       handleClearPolicyCanvas();
-      onClose();
     } catch (error) {
       console.error('Error creating binding policy:', error);
       toast.error('Failed to create binding policy');
+      setIsLoading(false);
     }
   };
 
@@ -880,7 +880,6 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
         setShowDeployDialog(false);
         handleClearPolicyCanvas();
         setIsLoading(false);
-        onClose();
       } catch (error) {
         console.error('Failed to create binding policy:', error);
         setDeploymentError(
