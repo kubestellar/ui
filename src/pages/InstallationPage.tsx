@@ -706,7 +706,7 @@ const InstallationPage = () => {
     // Only start the interval if we're not already checking
     if (!isChecking && !checkError) {
       // Only show the message once when starting the interval
-      toast('KubeStellar is not installed. Installation progress will be checked automatically.', {
+      toast('Kubeflex cluster not found. Follow steps to set up KubeStellar environment.', {
         icon: 'ℹ️',
         duration: 5000,
       });

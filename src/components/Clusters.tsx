@@ -644,15 +644,10 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
                       <div>
                         <div className="mb-1 flex items-center">
                           <h3
-                            className="group relative mr-2 font-medium text-gray-900 transition-colors dark:text-gray-100"
-                            title={item.name} // Native browser tooltip
+                            className="mr-2 font-medium text-gray-900 transition-colors dark:text-gray-100"
+                            title={item.name}
                           >
                             <span>{trimName(item.name)}</span>
-                            {item.name.length > 12 && (
-                              <div className="pointer-events-none invisible absolute -top-8 left-0 z-10 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-all duration-200 group-hover:visible group-hover:opacity-100">
-                                {item.name}
-                              </div>
-                            )}
                           </h3>
                           <span
                             className={`rounded-full px-2 py-0.5 text-xs transition-colors ${typeColors.bg} ${typeColors.text}`}
@@ -722,6 +717,7 @@ const K8sInfo = () => {
 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedCluster, setSelectedCluster] = useState<string | null>(null);
+  const [showHelpPanel, setShowHelpPanel] = useState(false);
 
   // Process and prepare clusters data from API
   const processedClusters = useMemo<ProcessedCluster[]>(() => {
@@ -929,6 +925,91 @@ const K8sInfo = () => {
     return 0;
   });
 
+  // Get system health status based on overall metrics
+  const systemHealth = (() => {
+    const healthScore = Math.round(
+      (stats.activeClusters / Math.max(stats.totalClusters, 1)) * 50 +
+        (stats.activeBindingPolicies / Math.max(stats.totalBindingPolicies, 1)) * 25 +
+        (100 - stats.cpuUsage) / 4
+    );
+
+    if (healthScore >= 90)
+      return { status: 'Excellent', color: 'text-emerald-500 dark:text-emerald-400' };
+    if (healthScore >= 75) return { status: 'Good', color: 'text-green-500 dark:text-green-400' };
+    if (healthScore >= 60) return { status: 'Fair', color: 'text-blue-500 dark:text-blue-400' };
+    if (healthScore >= 40)
+      return { status: 'Needs Attention', color: 'text-amber-500 dark:text-amber-400' };
+    return { status: 'Critical', color: 'text-red-500 dark:text-red-400' };
+  })();
+
+  const renderHelpPanel = () => {
+    if (!showHelpPanel) return null;
+
+    return (
+      <motion.div
+        className="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+        initial={{ opacity: 0, height: 0 }}
+        animate={{ opacity: 1, height: 'auto' }}
+        exit={{ opacity: 0, height: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Dashboard Guide
+          </h3>
+          <button
+            onClick={() => setShowHelpPanel(false)}
+            className="rounded-full p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-700/50">
+            <div className="mb-2 flex items-center">
+              <Server size={16} className="mr-2 text-blue-500" />
+              <span className="font-medium text-gray-800 dark:text-gray-200">Cluster Stats</span>
+            </div>
+            <p className="text-xs text-gray-600 dark:text-gray-300">
+              Shows total and active clusters. Hover over metrics to see detailed information about
+              how they're calculated.
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-700/50">
+            <div className="mb-2 flex items-center">
+              <Shield size={16} className="mr-2 text-blue-500" />
+              <span className="font-medium text-gray-800 dark:text-gray-200">Health Metrics</span>
+            </div>
+            <p className="text-xs text-gray-600 dark:text-gray-300">
+              Displays CPU, memory usage, and pod health. Green indicators show good health, amber
+              requires attention.
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-700/50">
+            <div className="mb-2 flex items-center">
+              <Clock size={16} className="mr-2 text-amber-500" />
+              <span className="font-medium text-gray-800 dark:text-gray-200">Recent Activity</span>
+            </div>
+            <p className="text-xs text-gray-600 dark:text-gray-300">
+              Shows recent changes to clusters and policies. Click on a cluster to view detailed
+              information.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50 p-3 dark:border-blue-900/30 dark:bg-blue-900/20">
+          <p className="text-sm text-blue-800 dark:text-blue-200">
+            <span className="font-medium">Pro Tip:</span> Hover over any metric or chart to see
+            detailed information about how it's calculated and what actions you can take.
+          </p>
+        </div>
+      </motion.div>
+    );
+  };
+
   const renderDashboardHeader = () => (
     <motion.div className="mb-8" variants={itemAnimationVariant}>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -1004,6 +1085,27 @@ const K8sInfo = () => {
       iconColor="text-blue-600 dark:text-blue-400"
       className="mb-6"
     >
+      {/* Add overall system health status at the top */}
+      <div className="mb-6 flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
+        <div className="flex items-center">
+          <div
+            className={`mr-3 rounded-full p-2 ${systemHealth.color.includes('emerald') || systemHealth.color.includes('green') ? 'bg-green-100 dark:bg-green-900/30' : systemHealth.color.includes('blue') ? 'bg-blue-100 dark:bg-blue-900/30' : systemHealth.color.includes('amber') ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}
+          >
+            <CheckCircle size={20} className={systemHealth.color} />
+          </div>
+          <div>
+            <h4 className="font-medium text-gray-800 dark:text-gray-200">System Health</h4>
+            <p className={`text-sm ${systemHealth.color}`}>{systemHealth.status}</p>
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="text-xs text-gray-500 dark:text-gray-400">Based on cluster metrics</div>
+          <div className="mt-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+            {stats.activeClusters} of {stats.totalClusters} clusters active
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         {/* Resource Utilization with improved visuals */}
         <div>
@@ -1016,9 +1118,44 @@ const K8sInfo = () => {
             {/* Enhanced CPU Usage with icon */}
             <div>
               <div className="mb-2 flex items-center justify-between">
-                <span className="flex items-center text-sm font-medium text-gray-600 dark:text-gray-300">
+                <span className="group relative flex items-center text-sm font-medium text-gray-600 dark:text-gray-300">
                   <Cpu size={14} className="mr-2 text-blue-500" />
                   CPU Usage
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="ml-1.5 opacity-60"
+                  >
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  </svg>
+                  <div className="pointer-events-none invisible absolute -left-4 -top-28 z-10 w-64 whitespace-normal rounded-md border border-gray-200 bg-white p-3 text-xs opacity-0 shadow-lg transition-all duration-200 group-hover:visible group-hover:opacity-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                    <div className="mb-2 font-medium text-blue-600 dark:text-blue-400">
+                      CPU Usage Formula
+                    </div>
+                    <div className="space-y-2 text-gray-600 dark:text-gray-300">
+                      <p>
+                        Calculated as the percentage of allocated CPU resources currently in use
+                        across all nodes in the cluster.
+                      </p>
+                      <div className="rounded-md bg-blue-50 p-2 dark:bg-blue-900/20">
+                        <code className="text-blue-700 dark:text-blue-300">
+                          (Used CPU Cores / Total CPU Cores) × 100%
+                        </code>
+                      </div>
+                    </div>
+                    <div className="mt-2 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                      Lower values indicate better performance
+                    </div>
+                  </div>
                 </span>
                 <HealthIndicator value={stats.cpuUsage} />
               </div>
@@ -1043,9 +1180,44 @@ const K8sInfo = () => {
             {/* Enhanced Memory Usage with icon */}
             <div>
               <div className="mb-2 flex items-center justify-between">
-                <span className="flex items-center text-sm font-medium text-gray-600 dark:text-gray-300">
+                <span className="group relative flex items-center text-sm font-medium text-gray-600 dark:text-gray-300">
                   <HardDrive size={14} className="mr-2 text-purple-500" />
                   Memory Usage
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="ml-1.5 opacity-60"
+                  >
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  </svg>
+                  <div className="pointer-events-none invisible absolute -left-4 -top-28 z-10 w-64 whitespace-normal rounded-md border border-gray-200 bg-white p-3 text-xs opacity-0 shadow-lg transition-all duration-200 group-hover:visible group-hover:opacity-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                    <div className="mb-2 font-medium text-purple-600 dark:text-purple-400">
+                      Memory Usage Formula
+                    </div>
+                    <div className="space-y-2 text-gray-600 dark:text-gray-300">
+                      <p>
+                        Calculated as the percentage of allocated memory resources currently in use
+                        across all nodes in the cluster.
+                      </p>
+                      <div className="rounded-md bg-purple-50 p-2 dark:bg-purple-900/20">
+                        <code className="text-purple-700 dark:text-purple-300">
+                          (Used Memory / Total Memory) × 100%
+                        </code>
+                      </div>
+                    </div>
+                    <div className="mt-2 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                      Lower values indicate better resource availability
+                    </div>
+                  </div>
                 </span>
                 <HealthIndicator value={stats.memoryUsage} />
               </div>
@@ -1070,9 +1242,47 @@ const K8sInfo = () => {
             {/* Pod Health with icon */}
             <div>
               <div className="mb-2 flex items-center justify-between">
-                <span className="flex items-center text-sm font-medium text-gray-600 dark:text-gray-300">
+                <span className="group relative flex items-center text-sm font-medium text-gray-600 dark:text-gray-300">
                   <Layers size={14} className="mr-2 text-green-500" />
                   Pod Health
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="ml-1.5 opacity-60"
+                  >
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  </svg>
+                  <div className="pointer-events-none invisible absolute -left-4 -top-28 z-10 w-64 whitespace-normal rounded-md border border-gray-200 bg-white p-3 text-xs opacity-0 shadow-lg transition-all duration-200 group-hover:visible group-hover:opacity-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                    <div className="mb-2 font-medium text-green-600 dark:text-green-400">
+                      Pod Health Formula
+                    </div>
+                    <div className="space-y-2 text-gray-600 dark:text-gray-300">
+                      <p>
+                        Calculated based on the ratio of healthy pods to total pods across all
+                        namespaces.
+                      </p>
+                      <div className="rounded-md bg-green-50 p-2 dark:bg-green-900/20">
+                        <code className="text-green-700 dark:text-green-300">
+                          (Running Pods / Total Pods) × 100%
+                        </code>
+                      </div>
+                      <p className="text-xs italic">
+                        Factors in pod status, readiness probes, and liveness checks
+                      </p>
+                    </div>
+                    <div className="mt-2 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                      Higher values indicate better cluster health
+                    </div>
+                  </div>
                 </span>
                 <HealthIndicator value={85} />
               </div>
@@ -1182,14 +1392,56 @@ const K8sInfo = () => {
             Overall Cluster Health
           </h3>
           <div className="flex items-center">
-            <span className="rounded-full bg-gradient-to-r from-emerald-500 to-green-500 px-3 py-1 text-sm font-semibold text-white shadow-sm">
-              {Math.round(
-                (stats.activeClusters / Math.max(stats.totalClusters, 1)) * 50 +
-                  (stats.activeBindingPolicies / Math.max(stats.totalBindingPolicies, 1)) * 25 +
-                  (100 - stats.cpuUsage) / 4
-              )}
-              %
-            </span>
+            <div className="group relative">
+              <span className="flex items-center rounded-full bg-gradient-to-r from-emerald-500 to-green-500 px-3 py-1 text-sm font-semibold text-white shadow-sm">
+                <span className="mr-1">
+                  {Math.round(
+                    (stats.activeClusters / Math.max(stats.totalClusters, 1)) * 50 +
+                      (stats.activeBindingPolicies / Math.max(stats.totalBindingPolicies, 1)) * 25 +
+                      (100 - stats.cpuUsage) / 4
+                  )}
+                  %
+                </span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="opacity-70"
+                >
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+              </span>
+              <div className="pointer-events-none invisible absolute -left-64 -top-28 z-10 w-64 whitespace-normal rounded-md border border-gray-200 bg-white p-3 text-xs opacity-0 shadow-lg transition-all duration-200 group-hover:visible group-hover:opacity-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                <div className="mb-2 font-medium text-blue-600 dark:text-blue-400">
+                  Health Score Formula
+                </div>
+                <ul className="list-inside list-disc space-y-2 text-gray-600 dark:text-gray-300">
+                  <li className="flex items-center">
+                    <span className="mr-1 h-2 w-2 rounded-full bg-blue-500"></span>
+                    <span>50% × (Active Clusters ÷ Total Clusters)</span>
+                  </li>
+                  <li className="flex items-center">
+                    <span className="mr-1 h-2 w-2 rounded-full bg-purple-500"></span>
+                    <span>25% × (Active Policies ÷ Total Policies)</span>
+                  </li>
+                  <li className="flex items-center">
+                    <span className="mr-1 h-2 w-2 rounded-full bg-green-500"></span>
+                    <span>25% × (100% - CPU Usage) ÷ 4</span>
+                  </li>
+                </ul>
+                <div className="mt-2 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                  Hover to see the formula breakdown
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1197,7 +1449,13 @@ const K8sInfo = () => {
           <motion.div
             className="h-full bg-gradient-to-r from-emerald-500 to-green-500"
             initial={{ width: 0 }}
-            animate={{ width: '85%' }}
+            animate={{
+              width: `${Math.round(
+                (stats.activeClusters / Math.max(stats.totalClusters, 1)) * 50 +
+                  (stats.activeBindingPolicies / Math.max(stats.totalBindingPolicies, 1)) * 25 +
+                  (100 - stats.cpuUsage) / 4
+              )}%`,
+            }}
             transition={{ duration: 1.2 }}
           />
         </div>
@@ -1299,9 +1557,9 @@ const K8sInfo = () => {
                               <HardDrive size={12} className="mr-1 text-purple-500" />
                               {cluster.memCapacity || 'N/A'}
                             </div>
-                            <div className="flex items-center" title="Pod Capacity">
+                            <div className="flex items-center" title="Pods Capacity">
                               <Layers size={12} className="mr-1 text-green-500" />
-                              {cluster.podsCapacity || 'N/A'} Pods
+                              {cluster.podsCapacity || 'N/A'} Pods Capacity
                             </div>
                           </div>
                         </div>
@@ -1369,6 +1627,7 @@ const K8sInfo = () => {
       exit="exit"
     >
       {renderDashboardHeader()}
+      <AnimatePresence>{showHelpPanel && renderHelpPanel()}</AnimatePresence>
 
       <AnimatePresence mode="wait">
         <motion.div key="dashboard-content" variants={pageAnimationVariant}>
