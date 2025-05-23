@@ -1137,11 +1137,10 @@ export const useBPQueries = () => {
           }
         } catch (error) {
           console.error('Error parsing progress event data:', error);
-          // Don't fail the whole connection for a single progress event parsing error
         }
       });
 
-      // Handle completed event (backend calls it 'complete', not 'completed')
+      // Handle completed event
       eventSource.addEventListener('complete', event => {
         try {
           console.log('SSE complete event received, parsing data');
@@ -1155,17 +1154,14 @@ export const useBPQueries = () => {
           });
 
           console.log('SSE data successfully processed');
-          // Close the connection since we have the complete data
           eventSource.close();
         } catch (error) {
           console.error('Error parsing complete event data:', error);
-
           setState(prevState => ({
             ...prevState,
             status: 'error',
             error: new Error('Failed to parse complete event data'),
           }));
-
           eventSource.close();
         }
       });
@@ -1176,24 +1172,14 @@ export const useBPQueries = () => {
 
       eventSource.onerror = error => {
         console.error('SSE connection error:', error);
-
-        if (error instanceof Event && !error.target) {
-          console.error('Possible CORS error with EventSource');
-        }
-
         setState(prevState => ({
           ...prevState,
           status: 'error',
-          error: new Error(
-            'Failed to connect to SSE endpoint. Please ensure you have proper permissions and the server is running.'
-          ),
+          error: new Error('Failed to connect to SSE endpoint'),
         }));
-
-        // Close the connection on error
         eventSource.close();
       };
 
-      // Return cleanup function
       return () => {
         console.log('Closing SSE connection');
         eventSource.close();
@@ -1206,10 +1192,13 @@ export const useBPQueries = () => {
 
       const workloads: Workload[] = [];
 
-      const excludedTypes = new Set(['Endpoints', 'EndpointSlice', 'ControllerRevision']);
+      // Remove excluded types that we actually want to include
+      const excludedTypes = new Set(['EndpointSlice', 'ControllerRevision']);
 
-      const excludedNamespaces = new Set(['default', 'kube-system', 'kube-public']);
+      // Remove excluded namespaces that we want to include
+      const excludedNamespaces = new Set(['kube-system', 'kube-public']);
 
+      // Process namespaced resources
       if (state.data.namespaced) {
         Object.entries(state.data.namespaced).forEach(([namespace, resourceTypes]) => {
           if (excludedNamespaces.has(namespace)) {
@@ -1232,15 +1221,15 @@ export const useBPQueries = () => {
 
             // Process workload resources
             resources.forEach(resource => {
-              if (resource.labels) {
-                workloads.push({
-                  name: resource.name,
-                  namespace: namespace,
-                  kind: resource.kind,
-                  labels: resource.labels,
-                  creationTime: resource.createdAt,
-                });
-              }
+              // Include resources even if they don't have labels
+              const labels = resource.labels || {};
+              workloads.push({
+                name: resource.name,
+                namespace: namespace,
+                kind: resource.kind,
+                labels: labels,
+                creationTime: resource.createdAt,
+              });
             });
           });
         });
@@ -1248,11 +1237,8 @@ export const useBPQueries = () => {
 
       // Process cluster-scoped resources
       if (state.data.clusterScoped) {
-        // Define which cluster-scoped resource types to include
-        const includeClusterResourceTypes = new Set(['CustomResourceDefinition', 'Namespace']);
-
         Object.entries(state.data.clusterScoped).forEach(([resourceType, resources]) => {
-          if (excludedTypes.has(resourceType) || !includeClusterResourceTypes.has(resourceType)) {
+          if (excludedTypes.has(resourceType)) {
             return;
           }
 
@@ -1264,62 +1250,56 @@ export const useBPQueries = () => {
 
           // Process cluster-scoped resources
           resources.forEach(resource => {
-            if (resource.labels) {
-              if (
-                resourceType === 'Namespace' &&
-                (resource.name === 'default' ||
-                  resource.name === 'kube-system' ||
-                  resource.name === 'kube-public' ||
-                  resource.name === 'kubestellar-report' ||
-                  resource.name === 'kube-node-lease')
-              ) {
-                return;
-              }
-
-              workloads.push({
-                name: resource.name,
-                namespace: resource.namespace || 'cluster-scoped',
-                kind: resource.kind,
-                labels: resource.labels,
-                creationTime: resource.createdAt,
-              });
-            }
+            // Include resources even if they don't have labels
+            const labels = resource.labels || {};
+            workloads.push({
+              name: resource.name,
+              namespace: resource.namespace || '',
+              kind: resource.kind,
+              labels: labels,
+              creationTime: resource.createdAt,
+            });
           });
         });
       }
 
-      console.log(
-        `Extracted ${workloads.length} workloads after filtering (default namespace excluded)`
-      );
-      return workloads;
-    }, [state.data]);
-
-    // Provide a way to get unique label keys and values for filtering
-    const extractUniqueLabels = useCallback(() => {
-      const workloads = extractWorkloads();
-      const labelMap: Record<string, Set<string>> = {};
-
-      workloads.forEach(workload => {
-        if (workload.labels) {
-          Object.entries(workload.labels).forEach(([key, value]) => {
-            if (!labelMap[key]) {
-              labelMap[key] = new Set();
+      // Add namespace resources from namespaced data
+      const processedNamespaces = new Set<string>(); // Keep track of processed namespaces
+      Object.entries(state.data.namespaced).forEach(([, resourceTypes]) => {
+        if (resourceTypes.__namespaceMetaData) {
+          const namespaceMetadataArray = resourceTypes.__namespaceMetaData;
+          if (Array.isArray(namespaceMetadataArray) && namespaceMetadataArray.length > 0) {
+            const namespaceMetadata = namespaceMetadataArray[0];
+            if (
+              namespaceMetadata &&
+              namespaceMetadata.name &&
+              !processedNamespaces.has(namespaceMetadata.name)
+            ) {
+              workloads.push({
+                name: namespaceMetadata.name,
+                namespace: '', // Namespaces are cluster-scoped
+                kind: 'Namespace',
+                labels: namespaceMetadata.labels || {},
+                creationTime: namespaceMetadata.createdAt,
+              });
+              processedNamespaces.add(namespaceMetadata.name);
             }
-            labelMap[key].add(value);
-          });
+          }
         }
       });
 
-      return Object.fromEntries(
-        Object.entries(labelMap).map(([key, values]) => [key, Array.from(values)])
+      const uniqueWorkloads = Array.from(
+        new Map(workloads.map(w => [`${w.kind}-${w.namespace}-${w.name}`, w])).values()
       );
-    }, [extractWorkloads]);
+
+      console.log(`Extracted ${uniqueWorkloads.length} unique workloads total`);
+      return uniqueWorkloads;
+    }, [state.data]);
 
     return {
       state,
       startSSEConnection,
       extractWorkloads,
-      extractUniqueLabels,
     };
   };
 
