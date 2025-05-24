@@ -246,11 +246,17 @@ export const useClusterQueries = () => {
         selectedClusters?: string[];
       }) => {
         // Handle bulk operation for virtual "X selected clusters" entity
-        if (selectedClusters && selectedClusters.length > 0 && 
-            clusterName.includes('selected clusters')) {
-          
-          console.log('[DEBUG] Processing bulk label update for', selectedClusters.length, 'clusters');
-          
+        if (
+          selectedClusters &&
+          selectedClusters.length > 0 &&
+          clusterName.includes('selected clusters')
+        ) {
+          console.log(
+            '[DEBUG] Processing bulk label update for',
+            selectedClusters.length,
+            'clusters'
+          );
+
           // Don't make a GET request for the virtual cluster name
           // Instead, directly update each individual cluster
           return {
@@ -260,7 +266,7 @@ export const useClusterQueries = () => {
             selectedClusters,
           };
         }
-        
+
         // Single cluster operation - proceed as before
         return api.patch(
           '/api/managedclusters/labels',
@@ -311,10 +317,9 @@ export const useClusterQueries = () => {
     return useQuery({
       queryKey: ['cluster-details', clusterName],
       queryFn: async (): Promise<ClusterDetails> => {
-       
         if (clusterName && clusterName.includes('selected clusters')) {
           console.log('[DEBUG] Skipping details fetch for virtual bulk cluster');
-          
+
           return {
             name: clusterName,
             uid: 'virtual-bulk-operation',
@@ -323,13 +328,13 @@ export const useClusterQueries = () => {
             status: {
               conditions: [],
               version: { kubernetes: '' },
-              capacity: { cpu: '', memory: '', pods: '' }
+              capacity: { cpu: '', memory: '', pods: '' },
             },
             available: true,
-            joined: true
+            joined: true,
           };
         }
-        
+
         // Normal flow for real clusters
         const response = await api.get(`/api/clusters/${clusterName}`);
         return response.data;

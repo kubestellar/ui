@@ -99,7 +99,7 @@ func GetManagedClusterHandler(c *gin.Context) {
 	}
 
 	if strings.Contains(clusterName, "selected clusters") {
-		
+
 		c.JSON(200, gin.H{
 			"name":              clusterName,
 			"uid":               "virtual-bulk-operation",

@@ -459,8 +459,8 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                   Enter
                 </span>{' '}
                 to move between fields or add a label
-                </Typography>
-              </div>
+              </Typography>
+            </div>
           </Fade>
 
           <Divider style={{ backgroundColor: colors.border, margin: '16px 0' }} />
@@ -876,7 +876,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
 
     setSelectedCluster(bulkOperationCluster);
     setEditDialogOpen(true);
-    
+
     handleBulkLabelsClose();
   };
 
@@ -975,11 +975,10 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
     if (isBulkOperation) {
       // Set loading for bulk operation
       setLoadingClusterEdit('bulk');
-      
+
       let successCount = 0;
       let failureCount = 0;
-      const totalClusters = selectedClusters.length;
-      
+
       // Process each cluster individually
       const processNextCluster = async (index = 0) => {
         if (index >= selectedClusters.length) {
@@ -1014,10 +1013,10 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
         try {
           await updateLabelsMutation.mutateAsync({
             contextName: getClusterContext(cluster),
-            clusterName: cluster.name,  // Use the actual cluster name, not the "X selected clusters" string
+            clusterName: cluster.name, // Use the actual cluster name, not the "X selected clusters" string
             labels: labels,
           });
-          
+
           successCount++;
           // Add a small delay between requests
           await new Promise(resolve => setTimeout(resolve, 300));
