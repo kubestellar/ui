@@ -32,6 +32,7 @@ import { ResourceItem } from './TreeViewComponent';
 import useTheme from '../stores/themeStore';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { api, getWebSocketUrl } from '../lib/api';
+import DownloadLogsButton from './DownloadLogsButton';
 
 interface WecsDetailsProps {
   namespace: string;
@@ -1246,18 +1247,34 @@ const WecsDetailsPanel = ({
                   </Box>
                 </Box>
               )}
-              {tabValue === 2 && type.toLowerCase() === 'pod' && isDeploymentOrJobPod && (
-                <Box
-                  sx={{
-                    height: '500px',
-                    bgcolor: theme === 'dark' ? '#1E1E1E' : '#FFFFFF',
-                    borderRadius: 1,
-                    p: 1,
-                    overflow: 'auto',
-                  }}
-                >
-                  <div ref={terminalRef} style={{ height: '100%', width: '100%' }} />
-                </Box>
+              {tabValue === 2 && (
+                <>
+                  {/* Add download logs button if the resource is a pod */}
+                  {type.toLowerCase() === 'pod' && (
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                      <DownloadLogsButton
+                        cluster={cluster}
+                        namespace={namespace}
+                        podName={name}
+                        logContent={logs.join('\n')}
+                      />
+                    </Box>
+                  )}
+                  <Box
+                    sx={{
+                      maxHeight: '500px',
+                      bgcolor: theme === 'dark' ? '#1E1E1E' : '#FFFFFF',
+                      borderRadius: 1,
+                      p: 1,
+                      overflow: 'auto',
+                    }}
+                  >
+                    <div
+                      ref={terminalRef}
+                      style={{ height: '100%', width: '100%', overflow: 'auto' }}
+                    />
+                  </Box>
+                </>
               )}
               {tabValue === 3 && type.toLowerCase() === 'pod' && (
                 <Box
