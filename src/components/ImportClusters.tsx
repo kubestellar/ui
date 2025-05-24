@@ -164,11 +164,11 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
   // Memoize the fetchAvailableClusters function to prevent infinite re-renders
   const fetchAvailableClusters = useCallback(async () => {
     if (availableClustersLoading) return; // Prevent multiple simultaneous requests
-    
+
     setAvailableClustersLoading(true);
     setAvailableClustersError('');
     setHasAttemptedFetch(true);
-    
+
     try {
       const response = await api.get('/api/clusters/available');
       // Debug log to inspect the data structure
@@ -203,7 +203,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
     } finally {
       setAvailableClustersLoading(false);
     }
-  }, [availableClustersLoading]); 
+  }, [availableClustersLoading]);
 
   useEffect(() => {
     if (activeOption === 'quickconnect' && !hasAttemptedFetch && !availableClustersLoading) {
