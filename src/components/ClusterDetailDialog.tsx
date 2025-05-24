@@ -471,10 +471,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                     <Chip
                       key={key}
                       icon={
-                        <Tag
-                          size={14}
-                          style={{ color: isDark ? '#9ad6f9' : colors.primary }}
-                        />
+                        <Tag size={14} style={{ color: isDark ? '#9ad6f9' : colors.primary }} />
                       }
                       label={
                         <Box component="span" sx={{ display: 'flex', alignItems: 'center' }}>
@@ -491,7 +488,10 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                           <Box component="span" sx={{ opacity: isDark ? 0.9 : 0.7 }}>
                             =
                           </Box>
-                          <Box component="span" sx={{ ml: 0.5, color: isDark ? '#ffffff' : 'inherit' }}>
+                          <Box
+                            component="span"
+                            sx={{ ml: 0.5, color: isDark ? '#ffffff' : 'inherit' }}
+                          >
                             {value}
                           </Box>
                         </Box>

@@ -84,7 +84,7 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
     availableClustersError,
     fetchAvailableClusters,
   ]);
-  
+
   // Disable transitions during loading state changes to prevent jumpiness
   useEffect(() => {
     if (containerRef.current) {
@@ -341,7 +341,7 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
                   maxWidth: '90%',
                   lineHeight: 1.6,
                   fontSize: { xs: '0.9rem', sm: '0.95rem' },
-            mb: 2,
+                  mb: 2,
                 }}
               >
                 Simplified, automated cluster onboarding with zero commands. Select your cluster and
@@ -353,11 +353,13 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
           {/* Main content - rendered conditionally based on state */}
           {showLogs && formData.clusterName ? (
             <Fade in={true} timeout={400} easing="cubic-bezier(0.4, 0, 0.2, 1)">
-              <Box sx={{ 
-                minHeight: '400px', // Consistent height
-                transform: 'translateZ(0)', // Force GPU acceleration
-                backfaceVisibility: 'hidden', // Prevent flickering
-              }}>
+              <Box
+                sx={{
+                  minHeight: '400px', // Consistent height
+                  transform: 'translateZ(0)', // Force GPU acceleration
+                  backfaceVisibility: 'hidden', // Prevent flickering
+                }}
+              >
                 <OnboardingLogsDisplay
                   clusterName={formData.clusterName}
                   onComplete={handleOnboardingComplete}
@@ -470,7 +472,7 @@ const SuccessView: React.FC<{
               }
               sx={{
                 mb: 3,
-            borderRadius: 2,
+                borderRadius: 2,
                 py: 2,
                 px: 2.5,
                 boxShadow: '0 6px 20px rgba(103,192,115,0.15)',
@@ -910,62 +912,62 @@ const ClusterSelectionView: React.FC<{
                 width: { xs: 48, sm: 56 },
                 height: { xs: 48, sm: 56 },
                 borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              bgcolor: theme === 'dark' ? 'rgba(47, 134, 255, 0.15)' : 'rgba(47, 134, 255, 0.1)',
-              color: theme === 'dark' ? colors.primaryLight : colors.primary,
-              flexShrink: 0,
-                boxShadow: `0 4px 12px ${theme === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(47, 134, 255, 0.15)'}`,
-                border: `1px solid ${theme === 'dark' ? 'rgba(47, 134, 255, 0.2)' : 'rgba(47, 134, 255, 0.15)'}`,
-            }}
-          >
-              <span role="img" aria-label="automated" style={{ fontSize: '1.3rem' }}>
-                ⚡
-            </span>
-          </Box>
-          <Box>
-              <Typography
-                variant="h6"
-              sx={{
-                fontWeight: 600,
-                color: textColor,
-                  fontSize: { xs: '1rem', sm: '1.1rem' },
                 display: 'flex',
                 alignItems: 'center',
-                  mb: 0.5,
+                justifyContent: 'center',
+                bgcolor: theme === 'dark' ? 'rgba(47, 134, 255, 0.15)' : 'rgba(47, 134, 255, 0.1)',
+                color: theme === 'dark' ? colors.primaryLight : colors.primary,
+                flexShrink: 0,
+                boxShadow: `0 4px 12px ${theme === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(47, 134, 255, 0.15)'}`,
+                border: `1px solid ${theme === 'dark' ? 'rgba(47, 134, 255, 0.2)' : 'rgba(47, 134, 255, 0.15)'}`,
               }}
             >
-                Automated Cluster Onboarding
-              <Box
-                component="span"
+              <span role="img" aria-label="automated" style={{ fontSize: '1.3rem' }}>
+                ⚡
+              </span>
+            </Box>
+            <Box>
+              <Typography
+                variant="h6"
                 sx={{
-                  ml: 1.5,
-                  fontSize: '0.7rem',
-                  fontWeight: 500,
-                  px: 1,
-                  py: 0.3,
-                  borderRadius: '10px',
-                  bgcolor:
-                    theme === 'dark' ? 'rgba(103, 192, 115, 0.15)' : 'rgba(103, 192, 115, 0.1)',
-                  color: theme === 'dark' ? '#97e6a5' : '#3d9950',
-                  border: `1px solid ${theme === 'dark' ? 'rgba(103, 192, 115, 0.2)' : 'rgba(103, 192, 115, 0.15)'}`,
-                    display: { xs: 'none', sm: 'inline-block' },
+                  fontWeight: 600,
+                  color: textColor,
+                  fontSize: { xs: '1rem', sm: '1.1rem' },
+                  display: 'flex',
+                  alignItems: 'center',
+                  mb: 0.5,
                 }}
               >
+                Automated Cluster Onboarding
+                <Box
+                  component="span"
+                  sx={{
+                    ml: 1.5,
+                    fontSize: '0.7rem',
+                    fontWeight: 500,
+                    px: 1,
+                    py: 0.3,
+                    borderRadius: '10px',
+                    bgcolor:
+                      theme === 'dark' ? 'rgba(103, 192, 115, 0.15)' : 'rgba(103, 192, 115, 0.1)',
+                    color: theme === 'dark' ? '#97e6a5' : '#3d9950',
+                    border: `1px solid ${theme === 'dark' ? 'rgba(103, 192, 115, 0.2)' : 'rgba(103, 192, 115, 0.15)'}`,
+                    display: { xs: 'none', sm: 'inline-block' },
+                  }}
+                >
                   New
-              </Box>
+                </Box>
               </Typography>
               <Typography
                 variant="body2"
-              sx={{
-                color: colors.textSecondary,
+                sx={{
+                  color: colors.textSecondary,
                   fontSize: '0.875rem',
                   lineHeight: 1.6,
                   maxWidth: { xs: '100%', md: '90%' },
-              }}
-            >
-              This is the simplest way to connect your Kubernetes cluster. Select a cluster and
+                }}
+              >
+                This is the simplest way to connect your Kubernetes cluster. Select a cluster and
                 click the Onboard button to directly connect it without any manual commands.
               </Typography>
             </Box>
@@ -975,20 +977,20 @@ const ClusterSelectionView: React.FC<{
         {/* Cluster selection card */}
         <Paper
           elevation={0}
-              sx={{
+          sx={{
             ...cardStyle,
             mb: 3,
           }}
         >
           <Typography
             variant="subtitle1"
-                sx={{
-                  fontWeight: 600,
-                  color: textColor,
+            sx={{
+              fontWeight: 600,
+              color: textColor,
               fontSize: '1rem',
               mb: 2,
-                  display: 'flex',
-                  alignItems: 'center',
+              display: 'flex',
+              alignItems: 'center',
             }}
           >
             <Box
@@ -1000,48 +1002,48 @@ const ClusterSelectionView: React.FC<{
               }}
             >
               🔍
-              </Box>
+            </Box>
             Select a Kubernetes Cluster
           </Typography>
 
-              {availableClustersLoading ? (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    py: 3,
-                    minHeight: '120px',
-                    height: '100%',
-                    bgcolor: theme === 'dark' ? 'rgba(0, 0, 0, 0.1)' : 'rgba(0, 0, 0, 0.02)',
-                    borderRadius: 2,
-                    border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`,
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    willChange: 'transform',
-                    transform: 'translateZ(0)',
-                  }}
-                >
-                  <CircularProgress
-                    size={28}
-                    sx={{
-                      color: colors.primary,
-                      mr: 2,
-                    }}
-                  />
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: colors.textSecondary,
-                      fontSize: '0.9rem',
-                    }}
-                  >
-                    Searching for available clusters...
-                  </Typography>
-                </Box>
-              ) : availableClustersError ? (
-                <Alert
-                  severity="error"
-                  icon={
+          {availableClustersLoading ? (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                py: 3,
+                minHeight: '120px',
+                height: '100%',
+                bgcolor: theme === 'dark' ? 'rgba(0, 0, 0, 0.1)' : 'rgba(0, 0, 0, 0.02)',
+                borderRadius: 2,
+                border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`,
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                willChange: 'transform',
+                transform: 'translateZ(0)',
+              }}
+            >
+              <CircularProgress
+                size={28}
+                sx={{
+                  color: colors.primary,
+                  mr: 2,
+                }}
+              />
+              <Typography
+                variant="body2"
+                sx={{
+                  color: colors.textSecondary,
+                  fontSize: '0.9rem',
+                }}
+              >
+                Searching for available clusters...
+              </Typography>
+            </Box>
+          ) : availableClustersError ? (
+            <Alert
+              severity="error"
+              icon={
                 <Box
                   sx={{
                     width: 28,
@@ -1053,159 +1055,159 @@ const ClusterSelectionView: React.FC<{
                     bgcolor: 'rgba(211, 47, 47, 0.15)',
                   }}
                 >
-                    <span role="img" aria-label="error" style={{ fontSize: '0.9rem' }}>
-                      ⚠️
-                    </span>
+                  <span role="img" aria-label="error" style={{ fontSize: '0.9rem' }}>
+                    ⚠️
+                  </span>
                 </Box>
-                  }
-                  sx={{
-                    borderRadius: 2,
-                    py: 1.5,
-                    px: 2,
-                    mb: 2,
-                    minHeight: '120px',
-                    display: 'flex',
-                    alignItems: 'flex-start',
+              }
+              sx={{
+                borderRadius: 2,
+                py: 1.5,
+                px: 2,
+                mb: 2,
+                minHeight: '120px',
+                display: 'flex',
+                alignItems: 'flex-start',
+                backgroundColor:
+                  theme === 'dark' ? 'rgba(211, 47, 47, 0.08)' : 'rgba(211, 47, 47, 0.03)',
+                border: `1px solid ${theme === 'dark' ? 'rgba(211, 47, 47, 0.15)' : 'rgba(211, 47, 47, 0.1)'}`,
+                '& .MuiAlert-message': {
+                  width: '100%',
+                },
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                willChange: 'transform',
+                transform: 'translateZ(0)',
+              }}
+            >
+              <Box sx={{ mb: 1 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                  Error Loading Clusters
+                </Typography>
+                <Typography variant="body2" sx={{ fontSize: '0.85rem', opacity: 0.9 }}>
+                  {availableClustersError}
+                </Typography>
+              </Box>
+              <Button
+                size="small"
+                sx={{
+                  mt: 1,
+                  minWidth: 'auto',
+                  fontSize: '0.8rem',
+                  color: colors.primary,
+                  borderRadius: 1,
+                  py: 0.5,
+                  px: 1.5,
+                  bgcolor:
+                    theme === 'dark' ? 'rgba(47, 134, 255, 0.1)' : 'rgba(47, 134, 255, 0.05)',
+                  border: `1px solid ${theme === 'dark' ? 'rgba(47, 134, 255, 0.2)' : 'rgba(47, 134, 255, 0.1)'}`,
+                  '&:hover': {
                     backgroundColor:
-                      theme === 'dark' ? 'rgba(211, 47, 47, 0.08)' : 'rgba(211, 47, 47, 0.03)',
-                    border: `1px solid ${theme === 'dark' ? 'rgba(211, 47, 47, 0.15)' : 'rgba(211, 47, 47, 0.1)'}`,
-                    '& .MuiAlert-message': {
-                      width: '100%',
+                      theme === 'dark' ? 'rgba(47, 134, 255, 0.15)' : 'rgba(47, 134, 255, 0.1)',
+                  },
+                }}
+                onClick={fetchAvailableClusters}
+                startIcon={
+                  <span role="img" aria-label="retry" style={{ fontSize: '0.8rem' }}>
+                    🔄
+                  </span>
+                }
+              >
+                Retry
+              </Button>
+            </Alert>
+          ) : (
+            <Box sx={{ minHeight: '120px' }}>
+              <Box
+                sx={{
+                  border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)'}`,
+                  borderRadius: 2,
+                  backgroundColor:
+                    theme === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.8)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                  mb: 2,
+                  '&:hover': {
+                    borderColor: colors.primary,
+                    boxShadow: `0 0 0 1px ${colors.primary}30`,
+                  },
+                  '&:focus-within': {
+                    borderColor: colors.primary,
+                    boxShadow: `0 0 0 2px ${colors.primary}30`,
+                  },
+                }}
+              >
+                <Box
+                  component="select"
+                  value={formData.clusterName}
+                  onChange={handleChange}
+                  name="clusterName"
+                  sx={{
+                    width: '100%',
+                    height: '56px',
+                    padding: '0 16px',
+                    paddingLeft: '48px',
+                    appearance: 'none',
+                    border: 'none',
+                    outline: 'none',
+                    backgroundColor: 'transparent',
+                    color: theme === 'dark' ? '#ffffff' : 'inherit',
+                    fontSize: '0.95rem',
+                    fontFamily: 'inherit',
+                    cursor: 'pointer',
+                    position: 'relative',
+                    zIndex: 1,
+                    '& option': {
+                      backgroundColor: theme === 'dark' ? '#1e293b' : '#ffffff',
+                      color: theme === 'dark' ? '#ffffff' : '#000000',
+                      padding: '10px',
+                      fontSize: '0.9rem',
                     },
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    willChange: 'transform',
-                    transform: 'translateZ(0)',
                   }}
                 >
-                  <Box sx={{ mb: 1 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                      Error Loading Clusters
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontSize: '0.85rem', opacity: 0.9 }}>
-                      {availableClustersError}
-                    </Typography>
-                  </Box>
-                  <Button
-                    size="small"
-                    sx={{
-                      mt: 1,
-                      minWidth: 'auto',
-                      fontSize: '0.8rem',
-                      color: colors.primary,
-                      borderRadius: 1,
-                      py: 0.5,
-                      px: 1.5,
-                      bgcolor:
-                        theme === 'dark' ? 'rgba(47, 134, 255, 0.1)' : 'rgba(47, 134, 255, 0.05)',
-                      border: `1px solid ${theme === 'dark' ? 'rgba(47, 134, 255, 0.2)' : 'rgba(47, 134, 255, 0.1)'}`,
-                      '&:hover': {
-                        backgroundColor:
-                          theme === 'dark' ? 'rgba(47, 134, 255, 0.15)' : 'rgba(47, 134, 255, 0.1)',
-                      },
-                    }}
-                    onClick={fetchAvailableClusters}
-                    startIcon={
-                      <span role="img" aria-label="retry" style={{ fontSize: '0.8rem' }}>
-                        🔄
-                      </span>
-                    }
-                  >
-                    Retry
-                  </Button>
-                </Alert>
-              ) : (
-            <Box sx={{ minHeight: '120px' }}>
+                  <option value="" disabled>
+                    Choose a cluster...
+                  </option>
+                  {availableClusters.length === 0 ? (
+                    <option value="" disabled>
+                      No clusters available
+                    </option>
+                  ) : (
+                    availableClusters.map((clusterObj, index) => {
+                      const name = clusterObj.name || `Cluster ${index + 1}`;
+                      const value = clusterObj.name || name;
+                      return (
+                        <option key={value} value={value}>
+                          {name}
+                        </option>
+                      );
+                    })
+                  )}
+                </Box>
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    left: '14px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: colors.textSecondary,
+                    zIndex: 0,
+                  }}
+                >
                   <Box
                     sx={{
-                      border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)'}`,
-                  borderRadius: 2,
-                      backgroundColor:
-                    theme === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.8)',
-                      position: 'relative',
-                      overflow: 'hidden',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                  mb: 2,
-                      '&:hover': {
-                        borderColor: colors.primary,
-                        boxShadow: `0 0 0 1px ${colors.primary}30`,
-                      },
-                      '&:focus-within': {
-                        borderColor: colors.primary,
-                        boxShadow: `0 0 0 2px ${colors.primary}30`,
-                      },
-                    }}
-                  >
-                    <Box
-                      component="select"
-                      value={formData.clusterName}
-                  onChange={handleChange}
-                      name="clusterName"
-                      sx={{
-                        width: '100%',
-                    height: '56px',
-                        padding: '0 16px',
-                    paddingLeft: '48px',
-                        appearance: 'none',
-                        border: 'none',
-                        outline: 'none',
-                        backgroundColor: 'transparent',
-                        color: theme === 'dark' ? '#ffffff' : 'inherit',
-                        fontSize: '0.95rem',
-                        fontFamily: 'inherit',
-                        cursor: 'pointer',
-                        position: 'relative',
-                        zIndex: 1,
-                        '& option': {
-                          backgroundColor: theme === 'dark' ? '#1e293b' : '#ffffff',
-                          color: theme === 'dark' ? '#ffffff' : '#000000',
-                          padding: '10px',
-                          fontSize: '0.9rem',
-                        },
-                      }}
-                    >
-                      <option value="" disabled>
-                        Choose a cluster...
-                      </option>
-                      {availableClusters.length === 0 ? (
-                        <option value="" disabled>
-                          No clusters available
-                        </option>
-                      ) : (
-                        availableClusters.map((clusterObj, index) => {
-                          const name = clusterObj.name || `Cluster ${index + 1}`;
-                          const value = clusterObj.name || name;
-                          return (
-                            <option key={value} value={value}>
-                              {name}
-                            </option>
-                          );
-                        })
-                      )}
-                    </Box>
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        left: '14px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        color: colors.textSecondary,
-                        zIndex: 0,
-                      }}
-                    >
-                      <Box
-                        sx={{
                       width: 24,
                       height: 24,
                       borderRadius: 1.5,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          bgcolor:
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor:
                         theme === 'dark' ? 'rgba(47, 134, 255, 0.15)' : 'rgba(47, 134, 255, 0.1)',
-                          color: theme === 'dark' ? colors.primaryLight : colors.primary,
-                        }}
+                      color: theme === 'dark' ? colors.primaryLight : colors.primary,
+                    }}
                   >
                     <svg
                       width="16"
@@ -1223,48 +1225,48 @@ const ClusterSelectionView: React.FC<{
                       />
                     </svg>
                   </Box>
-                    </Box>
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        right: '12px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        color: theme === 'dark' ? colors.primaryLight : colors.primary,
-                        zIndex: 0,
-                        pointerEvents: 'none',
-                      }}
-                    >
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M6 9L12 15L18 9"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </Box>
-                  </Box>
+                </Box>
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: theme === 'dark' ? colors.primaryLight : colors.primary,
+                    zIndex: 0,
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M6 9L12 15L18 9"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </Box>
+              </Box>
 
-                  <Box
-                    sx={{
-                      display: 'flex',
+              <Box
+                sx={{
+                  display: 'flex',
                   alignItems: 'flex-start',
                   gap: 1.5,
                   p: 2,
                   borderRadius: 2,
-                      backgroundColor:
-                        theme === 'dark' ? 'rgba(255, 215, 0, 0.05)' : 'rgba(255, 215, 0, 0.08)',
-                      border: `1px solid ${theme === 'dark' ? 'rgba(255, 215, 0, 0.1)' : 'rgba(255, 215, 0, 0.15)'}`,
-                    }}
-                  >
+                  backgroundColor:
+                    theme === 'dark' ? 'rgba(255, 215, 0, 0.05)' : 'rgba(255, 215, 0, 0.08)',
+                  border: `1px solid ${theme === 'dark' ? 'rgba(255, 215, 0, 0.1)' : 'rgba(255, 215, 0, 0.15)'}`,
+                }}
+              >
                 <Box
                   sx={{
                     width: 32,
@@ -1281,16 +1283,16 @@ const ClusterSelectionView: React.FC<{
                   }}
                 >
                   <span role="img" aria-label="tip">
-                      💡
-                    </span>
+                    💡
+                  </span>
                 </Box>
                 <Box>
                   <Typography
                     variant="body2"
-                      sx={{
+                    sx={{
                       fontSize: '0.85rem',
-                        color: theme === 'dark' ? 'rgba(255, 215, 0, 0.8)' : '#7d6608',
-                        flex: 1,
+                      color: theme === 'dark' ? 'rgba(255, 215, 0, 0.8)' : '#7d6608',
+                      flex: 1,
                       mb: 0.5,
                       fontWeight: 500,
                     }}
@@ -1302,61 +1304,61 @@ const ClusterSelectionView: React.FC<{
                     sx={{
                       fontSize: '0.8rem',
                       color: theme === 'dark' ? 'rgba(255, 215, 0, 0.7)' : 'rgba(125, 102, 8, 0.9)',
-                      }}
-                    >
-                      These are clusters discovered in your environment. Select one to continue.
+                    }}
+                  >
+                    These are clusters discovered in your environment. Select one to continue.
                   </Typography>
-                    </Box>
-                    <Button
-                      size="small"
-                      onClick={fetchAvailableClusters}
-                      sx={{
-                        minWidth: '36px',
-                        height: '36px',
+                </Box>
+                <Button
+                  size="small"
+                  onClick={fetchAvailableClusters}
+                  sx={{
+                    minWidth: '36px',
+                    height: '36px',
                     width: '36px',
-                        p: 0,
+                    p: 0,
                     ml: 'auto',
-                        borderRadius: '50%',
-                        color: theme === 'dark' ? colors.primaryLight : colors.primary,
-                        '&:hover': {
-                          backgroundColor:
+                    borderRadius: '50%',
+                    color: theme === 'dark' ? colors.primaryLight : colors.primary,
+                    '&:hover': {
+                      backgroundColor:
                         theme === 'dark' ? 'rgba(47, 134, 255, 0.08)' : 'rgba(47, 134, 255, 0.05)',
-                        },
-                      }}
-                      aria-label="Refresh clusters list"
-                      title="Refresh clusters list"
-                    >
-                      <svg
+                    },
+                  }}
+                  aria-label="Refresh clusters list"
+                  title="Refresh clusters list"
+                >
+                  <svg
                     width="18"
                     height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M8 12L12 16L16 12"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M12 2V16"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </Button>
-                  </Box>
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M8 12L12 16L16 12"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M12 2V16"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </Button>
+              </Box>
             </Box>
           )}
         </Paper>
@@ -1364,7 +1366,7 @@ const ClusterSelectionView: React.FC<{
         {/* Instructions card */}
         <Paper
           elevation={0}
-                sx={{
+          sx={{
             ...cardStyle,
             mb: 3,
             background:
@@ -1374,8 +1376,8 @@ const ClusterSelectionView: React.FC<{
             borderColor: theme === 'dark' ? 'rgba(47, 134, 255, 0.1)' : 'rgba(47, 134, 255, 0.08)',
           }}
         >
-                  <Box
-                    sx={{
+          <Box
+            sx={{
               display: 'flex',
               alignItems: 'flex-start',
               gap: 2,
@@ -1383,7 +1385,7 @@ const ClusterSelectionView: React.FC<{
             }}
           >
             <Box
-                      sx={{
+              sx={{
                 width: 36,
                 height: 36,
                 borderRadius: 1.5,
@@ -1401,7 +1403,7 @@ const ClusterSelectionView: React.FC<{
             </Box>
             <Typography
               variant="subtitle1"
-                        sx={{
+              sx={{
                 fontWeight: 600,
                 fontSize: '1rem',
                 color: textColor,
@@ -1410,7 +1412,7 @@ const ClusterSelectionView: React.FC<{
             >
               How to Connect Your Cluster
             </Typography>
-                    </Box>
+          </Box>
 
           <Box sx={{ pl: { xs: 1, sm: 6 }, pr: 1 }}>
             <Box
@@ -1446,8 +1448,8 @@ const ClusterSelectionView: React.FC<{
               ].map((step, index) => (
                 <Box
                   key={index}
-                sx={{
-                  display: 'flex',
+                  sx={{
+                    display: 'flex',
                     alignItems: 'flex-start',
                     gap: 2,
                     p: 2,
@@ -1465,16 +1467,16 @@ const ClusterSelectionView: React.FC<{
                       transform: 'translateY(-2px) translateZ(0)',
                       boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
                     },
-                }}
-              >
-                <Box
-                  sx={{
+                  }}
+                >
+                  <Box
+                    sx={{
                       width: 34,
                       height: 34,
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       background: `linear-gradient(135deg, ${step.color}30 0%, ${step.color}15 100%)`,
                       color: step.color,
                       border: `1px solid ${step.color}30`,
@@ -1485,32 +1487,32 @@ const ClusterSelectionView: React.FC<{
                     }}
                   >
                     {step.icon}
-                </Box>
+                  </Box>
                   <Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-              <Box
-                sx={{
+                      <Box
+                        sx={{
                           width: 22,
                           height: 22,
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    bgcolor:
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          bgcolor:
                             theme === 'dark'
                               ? 'rgba(47, 134, 255, 0.1)'
                               : 'rgba(47, 134, 255, 0.05)',
-                    color: theme === 'dark' ? colors.primaryLight : colors.primary,
-                    fontSize: '0.7rem',
-                    fontWeight: 600,
+                          color: theme === 'dark' ? colors.primaryLight : colors.primary,
+                          fontSize: '0.7rem',
+                          fontWeight: 600,
                           mr: 1.5,
-                  }}
-                >
+                        }}
+                      >
                         {step.step}
-                </Box>
+                      </Box>
                       <Typography
                         variant="subtitle2"
-                sx={{
+                        sx={{
                           fontWeight: 600,
                           fontSize: '0.9rem',
                           color: textColor,
@@ -1521,7 +1523,7 @@ const ClusterSelectionView: React.FC<{
                     </Box>
                     <Typography
                       variant="body2"
-                  sx={{
+                      sx={{
                         fontSize: '0.825rem',
                         color: colors.textSecondary,
                         pl: { xs: 0, sm: 4.5 },
@@ -1529,17 +1531,17 @@ const ClusterSelectionView: React.FC<{
                     >
                       {step.description}
                     </Typography>
-                </Box>
+                  </Box>
                 </Box>
               ))}
-              </Box>
+            </Box>
           </Box>
         </Paper>
 
         {/* Interactive feature comparison (optional) */}
         <Paper
           elevation={0}
-                sx={{
+          sx={{
             ...cardStyle,
             mb: 3,
             display: { xs: 'none', md: 'block' }, // Hide on mobile
@@ -1547,13 +1549,13 @@ const ClusterSelectionView: React.FC<{
         >
           <Typography
             variant="subtitle1"
-                  sx={{
+            sx={{
               fontWeight: 600,
               fontSize: '1rem',
               color: textColor,
               mb: 2,
-                    display: 'flex',
-                    alignItems: 'center',
+              display: 'flex',
+              alignItems: 'center',
               gap: 1.5,
             }}
           >
@@ -1563,16 +1565,16 @@ const ClusterSelectionView: React.FC<{
             Why Use Automated Onboarding?
           </Typography>
 
-            <Box
-              sx={{
+          <Box
+            sx={{
               display: 'grid',
               gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
               gap: 2.5,
               mt: 2,
             }}
           >
-          <Box
-            sx={{
+            <Box
+              sx={{
                 p: 2,
                 borderRadius: 2,
                 backgroundColor:
@@ -1584,7 +1586,7 @@ const ClusterSelectionView: React.FC<{
                 variant="subtitle2"
                 sx={{
                   fontWeight: 600,
-                    fontSize: '0.9rem',
+                  fontSize: '0.9rem',
                   color: theme === 'dark' ? '#97e6a5' : '#3d9950',
                   mb: 1.5,
                   display: 'flex',
@@ -1598,10 +1600,10 @@ const ClusterSelectionView: React.FC<{
                 Automated Approach (New)
               </Typography>
 
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
                   gap: 1.5,
                 }}
               >
@@ -1613,49 +1615,49 @@ const ClusterSelectionView: React.FC<{
                 ].map((feature, index) => (
                   <Box
                     key={index}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
                       gap: 1.5,
-                }}
-              >
-                <Box
-                  sx={{
+                    }}
+                  >
+                    <Box
+                      sx={{
                         width: 20,
                         height: 20,
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    bgcolor:
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        bgcolor:
                           theme === 'dark'
                             ? 'rgba(103, 192, 115, 0.2)'
                             : 'rgba(103, 192, 115, 0.15)',
-                    color: theme === 'dark' ? colors.success : '#3d9950',
-                    flexShrink: 0,
+                        color: theme === 'dark' ? colors.success : '#3d9950',
+                        flexShrink: 0,
                         fontSize: '0.7rem',
-                  }}
-                >
+                      }}
+                    >
                       <span role="img" aria-label="check">
-                    ✓
-                  </span>
-                </Box>
+                        ✓
+                      </span>
+                    </Box>
                     <Typography
                       variant="body2"
-                  sx={{
+                      sx={{
                         fontSize: '0.825rem',
                         color: colors.textSecondary,
-                  }}
-                >
+                      }}
+                    >
                       {feature}
                     </Typography>
-                </Box>
+                  </Box>
                 ))}
               </Box>
-                </Box>
+            </Box>
 
-                <Box
-                  sx={{
+            <Box
+              sx={{
                 p: 2,
                 borderRadius: 2,
                 backgroundColor:
@@ -1665,13 +1667,13 @@ const ClusterSelectionView: React.FC<{
             >
               <Typography
                 variant="subtitle2"
-                    sx={{
+                sx={{
                   fontWeight: 600,
                   fontSize: '0.9rem',
                   color: colors.textSecondary,
                   mb: 1.5,
-                        display: 'flex',
-                        alignItems: 'center',
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: 1,
                 }}
               >
@@ -1681,13 +1683,13 @@ const ClusterSelectionView: React.FC<{
                 Manual Approach (Legacy)
               </Typography>
 
-                  <Box
-                    sx={{
-                      display: 'flex',
+              <Box
+                sx={{
+                  display: 'flex',
                   flexDirection: 'column',
-                      gap: 1.5,
-                    }}
-                  >
+                  gap: 1.5,
+                }}
+              >
                 {[
                   'Copy and run commands manually',
                   'Multiple CLI steps required',
@@ -1696,9 +1698,9 @@ const ClusterSelectionView: React.FC<{
                 ].map((feature, index) => (
                   <Box
                     key={index}
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
                       gap: 1.5,
                     }}
                   >
@@ -1723,14 +1725,14 @@ const ClusterSelectionView: React.FC<{
                     </Box>
                     <Typography
                       variant="body2"
-                    sx={{
+                      sx={{
                         fontSize: '0.825rem',
                         color: colors.textSecondary,
                       }}
                     >
                       {feature}
                     </Typography>
-                </Box>
+                  </Box>
                 ))}
               </Box>
             </Box>
@@ -1738,22 +1740,22 @@ const ClusterSelectionView: React.FC<{
         </Paper>
 
         {/* Action buttons */}
-            <Box
-              sx={{
-                display: 'flex',
+        <Box
+          sx={{
+            display: 'flex',
             justifyContent: 'flex-end',
-                gap: 2,
-                mt: 'auto',
+            gap: 2,
+            mt: 'auto',
             pt: 2.5,
-                borderTop: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`,
+            borderTop: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`,
             flexWrap: isMobile ? 'wrap' : 'nowrap',
-              }}
-            >
-                <Button
-                  variant="outlined"
+          }}
+        >
+          <Button
+            variant="outlined"
             onClick={onCancel}
-                  sx={{
-                    ...secondaryButtonStyles,
+            sx={{
+              ...secondaryButtonStyles,
               order: isMobile ? 2 : 1,
               width: isMobile ? '100%' : 'auto',
               mt: isMobile ? 1.5 : 0,
@@ -1764,9 +1766,9 @@ const ClusterSelectionView: React.FC<{
             }}
           >
             Cancel
-                </Button>
-              <Button
-                variant="contained"
+          </Button>
+          <Button
+            variant="contained"
             onClick={handleOnboard}
             disabled={!formData.clusterName.trim() || manualLoading || availableClustersLoading}
             sx={{
@@ -1799,21 +1801,21 @@ const ClusterSelectionView: React.FC<{
               },
               position: 'relative',
             }}
-                startIcon={
+            startIcon={
               manualLoading ? (
                 <CircularProgress size={18} color="inherit" />
               ) : (
                 <span role="img" aria-label="onboard" style={{ fontSize: '0.9rem' }}>
                   ⚡
-                  </span>
+                </span>
               )
-                }
+            }
             aria-label={manualLoading ? 'Onboarding cluster...' : 'Onboard Cluster'}
-              >
+          >
             {manualLoading ? 'Onboarding...' : 'Onboard Cluster'}
-              </Button>
-            </Box>
-          </Box>
+          </Button>
+        </Box>
+      </Box>
     </Fade>
   );
 };
