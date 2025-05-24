@@ -1,20 +1,25 @@
-import React, { useState, ChangeEvent, useRef, useEffect } from 'react';
+import WarningIcon from '@mui/icons-material/Warning';
 import {
-  Dialog,
-  DialogContent,
-  Tabs,
-  Tab,
-  Box,
   Alert,
+  AlertTitle,
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Snackbar,
   SxProps,
+  Tab,
+  Tabs,
   Theme,
 } from '@mui/material';
-import useTheme from '../stores/themeStore';
-import { api } from '../lib/api';
+import React, { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useClusterQueries } from '../hooks/queries/useClusterQueries';
-import KubeconfigImportTab from './KubeconfigImportTab';
+import { api } from '../lib/api';
+import useTheme from '../stores/themeStore';
 import ApiUrlImportTab from './ApiUrlImportTab';
+import KubeconfigImportTab from './KubeconfigImportTab';
 import ManualImportTab from './ManualImportTab';
 
 // Define the Colors interface for consistent typing across components
@@ -77,6 +82,114 @@ const debugLogData = (data: unknown, label = 'Data') => {
   console.log(`${label}:`, JSON.stringify(data, null, 2));
 };
 
+interface AbortOnboardingDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}
+
+const AbortOnboardingDialog: React.FC<AbortOnboardingDialogProps> = ({
+  open,
+  onClose,
+  onConfirm,
+}) => {
+  const theme = useTheme(state => state.theme);
+  const backgroundColor = theme === 'dark' ? '#0F172A' : '#FFFFFF';
+  const titleColor = theme === 'dark' ? '#FFFFFF' : '#000000';
+  const alertBg = theme === 'dark' ? '#0F172A' : '#FFFFFF';
+  const alertBorder = '#f57c00';
+  return (
+    <Dialog
+      open={open}
+      onClose={reason => {
+        if (reason === 'backdropClick' || reason === 'escapeKeyDown') {
+          return;
+        }
+        onClose();
+      }}
+      maxWidth="sm"
+      disableEscapeKeyDown
+      PaperProps={{
+        sx: {
+          backgroundColor,
+          color: titleColor,
+          border: 'none',
+          outline: 'none',
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          color: titleColor,
+          backgroundColor,
+          border: 'none',
+          outline: 'none',
+        }}
+      >
+        <WarningIcon color="warning" sx={{ mr: 1 }} />
+        Abort Onboarding Process
+      </DialogTitle>
+      <DialogContent
+        sx={{
+          mt: 2,
+          backgroundColor,
+          border: 'none',
+          outline: 'none',
+        }}
+      >
+        <Alert
+          severity="warning"
+          variant="outlined"
+          sx={{
+            borderRadius: '8px',
+            '& .MuiAlert-icon': { alignItems: 'center' },
+            backgroundColor: alertBg,
+            border: `1px solid ${alertBorder}`,
+            outline: 'none',
+            color: titleColor,
+          }}
+        >
+          <AlertTitle>Warning</AlertTitle>
+          Are you sure you want to abort onboarding? All progress will be lost.
+        </Alert>
+      </DialogContent>
+      <DialogActions
+        sx={{
+          p: 2,
+          backgroundColor,
+          border: 'none',
+          outline: 'none',
+        }}
+      >
+        <Button
+          onClick={onClose}
+          sx={{
+            textTransform: 'none',
+            color: titleColor,
+            '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' },
+          }}
+        >
+          Continue Onboarding
+        </Button>
+        <Button
+          onClick={onConfirm}
+          color="error"
+          variant="contained"
+          sx={{
+            textTransform: 'none',
+            fontWeight: 500,
+            '&:hover': { backgroundColor: '#d32f2f' },
+          }}
+        >
+          Yes, Abort
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
 const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCancel }) => {
   const theme = useTheme(state => state.theme);
   const textColor = theme === 'dark' ? 'white' : 'black';
@@ -123,7 +236,27 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
   const [manualCommand, setManualCommand] = useState<CommandResponse | null>(null);
   const [manualLoading, setManualLoading] = useState<boolean>(false);
   const [manualError, setManualError] = useState<string>('');
+  const [showAbortDialog, setShowAbortDialog] = React.useState(false);
+  const [onboardingStarted, setOnboardingStarted] = useState(false);
 
+  const handleRequestAbort = () => {
+    if (!onboardingStarted) {
+      handleCancel();
+    } else {
+      setShowAbortDialog(true);
+    }
+  };
+
+  const handleConfirmAbort = () => {
+    setShowAbortDialog(false);
+
+    setOnboardingStarted(false);
+    handleCancel(); // or onCancel(), as appropriate
+  };
+
+  const handleCloseAbortDialog = () => {
+    setShowAbortDialog(false);
+  };
   // Add ref for scrolling to success alert
   const successAlertRef = useRef<HTMLDivElement>(null);
 
@@ -209,6 +342,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
 
   const handleGenerateCommand = async () => {
     if (!formData.clusterName.trim()) return;
+    setOnboardingStarted(true);
     setManualError('');
     setManualLoading(true);
 
@@ -339,6 +473,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
       token: '',
       hubApiServer: '',
     });
+    setOnboardingStarted(false);
     onCancel();
   };
 
@@ -442,6 +577,12 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
 
   return (
     <>
+      <AbortOnboardingDialog
+        open={showAbortDialog}
+        onClose={handleCloseAbortDialog}
+        onConfirm={handleConfirmAbort}
+      />
+
       <Snackbar
         open={snackbar.open}
         autoHideDuration={5000}
@@ -467,10 +608,9 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
           {snackbar.message}
         </Alert>
       </Snackbar>
-
       <Dialog
         open={!!activeOption}
-        onClose={onCancel}
+        onClose={handleRequestAbort}
         maxWidth="lg"
         fullWidth
         PaperProps={{
@@ -759,7 +899,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                   selectedFile={selectedFile}
                   setSelectedFile={setSelectedFile}
                   handleFileUpload={handleFileUpload}
-                  handleCancel={handleCancel}
+                  handleCancel={handleRequestAbort}
                 />
               )}
 
@@ -773,7 +913,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                   secondaryButtonStyles={secondaryButtonStyles}
                   formData={formData}
                   setFormData={data => setFormData(prev => ({ ...prev, ...data }))}
-                  handleCancel={handleCancel}
+                  handleCancel={handleRequestAbort}
                 />
               )}
 
@@ -796,7 +936,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                   availableClustersError={availableClustersError}
                   fetchAvailableClusters={fetchAvailableClusters}
                   clearManualCommand={clearManualCommand}
-                  onCancel={handleCancel}
+                  onCancel={handleRequestAbort}
                   snackbar={snackbar}
                   setSnackbar={setSnackbar}
                   successAlertRef={successAlertRef}
