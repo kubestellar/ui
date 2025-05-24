@@ -4,6 +4,7 @@ import { Eye, EyeOff, Lock, User, Globe } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useLogin } from '../../hooks/queries/useLogin';
+import { decryptData, isEncrypted, migratePassword } from '../../utils/secureStorage';
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -23,27 +24,47 @@ const LoginForm = () => {
     console.log(
       `[LoginForm] Component mounted at ${performance.now() - renderStartTime.current}ms`
     );
-    const savedUsername = localStorage.getItem('rememberedUsername');
-    const savedPassword = localStorage.getItem('rememberedPassword');
 
-    if (savedUsername && savedPassword) {
-      try {
-        const decodedPassword = atob(savedPassword);
-        setUsername(savedUsername);
-        setPassword(decodedPassword);
-        setRememberMe(true);
-        console.log(
-          `[LoginForm] Loaded remembered credentials at ${performance.now() - renderStartTime.current}ms`
-        );
-      } catch (error) {
-        console.error(
-          `[LoginForm] Error decoding stored credentials at ${performance.now() - renderStartTime.current}ms:`,
-          error
-        );
-        localStorage.removeItem('rememberedUsername');
-        localStorage.removeItem('rememberedPassword');
-      }
-    }
+    // First attempt to migrate any old base64 passwords to the new encrypted format
+    migratePassword().then(() => {
+      const loadSavedCredentials = async () => {
+        const savedUsername = localStorage.getItem('rememberedUsername');
+        const savedPassword = localStorage.getItem('rememberedPassword');
+
+        if (savedUsername && savedPassword) {
+          try {
+            let passwordToUse;
+
+            if (isEncrypted(savedPassword)) {
+              // This is an encrypted password using our new method
+              passwordToUse = await decryptData(savedPassword);
+            } else {
+              // Fallback for any passwords that weren't migrated
+              passwordToUse = atob(savedPassword);
+              // Store securely for next time
+              migratePassword();
+            }
+
+            setUsername(savedUsername);
+            setPassword(passwordToUse);
+            setRememberMe(true);
+            console.log(
+              `[LoginForm] Loaded remembered credentials at ${performance.now() - renderStartTime.current}ms`
+            );
+          } catch (error) {
+            console.error(
+              `[LoginForm] Error decoding stored credentials at ${performance.now() - renderStartTime.current}ms:`,
+              error
+            );
+            // Remove invalid credentials
+            localStorage.removeItem('rememberedUsername');
+            localStorage.removeItem('rememberedPassword');
+          }
+        }
+      };
+
+      loadSavedCredentials();
+    });
   }, []);
 
   useEffect(() => {
