@@ -1,7 +1,7 @@
-import { memo, useMemo, useEffect, useCallback, useRef } from 'react';
-import ReactFlow, { Background, useReactFlow, BackgroundVariant } from 'reactflow';
-import { CustomNode, CustomEdge } from '../TreeViewComponent';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import ReactFlow, { Background, BackgroundVariant, PanOnScrollMode, useReactFlow } from 'reactflow';
 import useLabelHighlightStore from '../../stores/labelHighlightStore';
+import { CustomEdge, CustomNode } from '../TreeViewComponent';
 
 interface FlowCanvasProps {
   nodes: CustomNode[];
@@ -155,6 +155,8 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
       zoomOnScroll={false}
       zoomOnDoubleClick={false}
       zoomOnPinch={false}
+      panOnScroll={true}
+      panOnScrollMode={PanOnScrollMode.Free}
       onMoveEnd={onMoveEnd}
       style={{
         background: theme === 'dark' ? 'rgb(15, 23, 42)' : 'rgb(222, 230, 235)',
