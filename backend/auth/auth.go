@@ -39,15 +39,23 @@ func (c *Config) GetUser(username string) (UserConfig, bool) {
 }
 
 // AddUser adds or updates a user in the configuration
-func (c *Config) AddUser(username string, password string, permissions []string) {
+func (c *Config) AddUser(username string, password string, permissions []string) error {
 	if c.Users == nil {
 		c.Users = make(map[string]UserConfig)
 	}
 
+	// Hash the password if it's not already a bcrypt hash
+	hashedPassword, _, err := MigratePasswordHash(password)
+	if err != nil {
+		return fmt.Errorf("failed to hash password: %v", err)
+	}
+
 	c.Users[username] = UserConfig{
-		Password:    password,
+		Password:    hashedPassword,
 		Permissions: permissions,
 	}
+
+	return nil
 }
 
 // LoadK8sConfigMap checks if the ConfigMap exists, creates it if not, and returns its data.
@@ -170,11 +178,17 @@ func CreateConfigMap(clientset *kubernetes.Clientset) error {
 	// Get JWT secret from environment
 	jwtSecret := jwtconfig.GetJWTSecret()
 
+	// Hash the default admin password
+	hashedPassword, err := HashPassword("admin")
+	if err != nil {
+		return fmt.Errorf("failed to hash default admin password: %v", err)
+	}
+
 	defaultConfig := Config{
 		JWTSecret: jwtSecret, // Use JWT secret from environment
 		Users: map[string]UserConfig{
 			"admin": {
-				Password:    "admin",
+				Password:    hashedPassword,
 				Permissions: []string{"read", "write", "admin"},
 			},
 		},
@@ -290,7 +304,10 @@ func AddOrUpdateUser(username, password string, permissions []string) error {
 		return fmt.Errorf("cannot remove admin permission from the last admin user")
 	}
 
-	config.AddUser(username, password, permissions)
+	// Add user with secure password hashing
+	if err := config.AddUser(username, password, permissions); err != nil {
+		return err
+	}
 
 	return SaveConfig(config)
 }
