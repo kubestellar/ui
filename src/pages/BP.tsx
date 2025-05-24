@@ -591,9 +591,7 @@ const BP = () => {
         // Use the mutation for creating a binding policy
         await createBindingPolicyMutation.mutateAsync(formattedPolicyData);
 
-        // Close the dialog and show success message
         setCreateDialogOpen(false);
-        setSuccessMessage(`Binding Policy "${policyData.name}" created successfully`);
       } catch (error) {
         console.error('Error creating binding policy:', error);
         // Still close the dialog but show error message
@@ -709,8 +707,6 @@ const BP = () => {
         setBindingPolicies(current =>
           current.filter(policy => !results.success.includes(policy.name))
         );
-
-        setSuccessMessage(`Successfully deleted ${results.success.length} binding policies`);
       } else {
         toast.error(
           `Deleted ${results.success.length} policies, but failed to delete ${results.failures.length} policies`
