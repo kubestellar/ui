@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useWebSocket } from '../../context/WebSocketProvider';
 import toast from 'react-hot-toast';
 import axios from 'axios';
-import { LoginUser, VerifyToken } from '../../api/auth';
+import { LoginUser } from '../../api/auth';
 import { AUTH_QUERY_KEY } from '../../api/auth/constant';
 
 interface LoginCredentials {
@@ -34,17 +34,6 @@ export const useLogin = () => {
         } else {
           localStorage.removeItem('rememberedUsername');
           localStorage.removeItem('rememberedPassword');
-        }
-
-        // Verify token to ensure it's valid
-        try {
-          const token = localStorage.getItem('jwtToken');
-          if (token) {
-            await VerifyToken(token);
-          }
-        } catch (verifyError) {
-          console.error('Token verification failed:', verifyError);
-          // Continue anyway since we just received the token
         }
 
         return response;
