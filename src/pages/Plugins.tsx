@@ -11,7 +11,6 @@ import {
   Divider,
   CircularProgress,
 } from '@mui/material';
-import { toast } from 'react-hot-toast';
 import { usePluginQueries, Plugin } from '../hooks/usePluginQueries';
 import PluginDetailsPanel from '../components/PluginDetailsPanel';
 import useTheme from '../stores/themeStore';
@@ -25,13 +24,6 @@ const Plugins = () => {
 
   const handleViewDetails = (plugin: Plugin) => {
     setSelectedPlugin(plugin);
-    toast(`Viewing ${plugin.name} details`, {
-      icon: '🔌',
-      style: {
-        background: isDark ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-        color: isDark ? '#fff' : '#334155',
-      },
-    });
   };
 
   const handleCloseDetails = () => {
@@ -116,7 +108,13 @@ const Plugins = () => {
                     mb: 2,
                   }}
                 >
-                  <Typography variant="h6" component="div">
+                  <Typography
+                    variant="h6"
+                    component="div"
+                    sx={{
+                      color: isDark ? '#f8fafc' : 'inherit',
+                    }}
+                  >
                     {plugin.name}
                   </Typography>
                   <Chip
@@ -125,15 +123,27 @@ const Plugins = () => {
                     size="small"
                   />
                 </Box>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    mb: 2,
+                    color: isDark ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary',
+                  }}
+                >
                   {plugin.description}
                 </Typography>
                 <Divider sx={{ my: 1.5 }} />
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography
+                    variant="caption"
+                    sx={{ color: isDark ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary' }}
+                  >
                     Version: {plugin.version}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography
+                    variant="caption"
+                    sx={{ color: isDark ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary' }}
+                  >
                     Type: {plugin.type}
                   </Typography>
                 </Box>

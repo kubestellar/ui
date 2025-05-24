@@ -109,13 +109,45 @@ const PluginDetailsPanel = ({ plugin, onClose }: PluginDetailsPanelProps) => {
           {plugin.description}
         </Typography>
         <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-          <Chip label={`Version: ${plugin.version}`} variant="outlined" />
-          <Chip label={`Type: ${plugin.type}`} variant="outlined" />
+          <Chip
+            label={`Version: ${plugin.version}`}
+            variant="outlined"
+            sx={{
+              color: isDark ? 'rgba(255, 255, 255, 0.7)' : 'inherit',
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'inherit',
+            }}
+          />
+          <Chip
+            label={`Type: ${plugin.type}`}
+            variant="outlined"
+            sx={{
+              color: isDark ? 'rgba(255, 255, 255, 0.7)' : 'inherit',
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'inherit',
+            }}
+          />
         </Box>
       </Box>
 
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={tabValue} onChange={handleTabChange} aria-label="plugin details tabs">
+      <Box sx={{ borderBottom: 1, borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'divider' }}>
+        <Tabs
+          value={tabValue}
+          onChange={handleTabChange}
+          aria-label="plugin details tabs"
+          sx={{
+            '& .MuiTabs-indicator': {
+              backgroundColor: isDark ? '#3b82f6' : '#1976d2',
+            },
+            '& .MuiTab-root': {
+              color: isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)',
+              '&.Mui-selected': {
+                color: isDark ? '#3b82f6' : '#1976d2',
+              },
+              '&:hover': {
+                color: isDark ? '#60a5fa' : '#115293',
+              },
+            },
+          }}
+        >
           <Tab label="API Endpoints" />
           {isBackupPlugin && <Tab label="Backup Operations" />}
         </Tabs>
