@@ -397,19 +397,20 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                 p: 3,
                 mb: 3,
                 borderRadius: 2,
-                backgroundColor: isDark ? 'rgba(15, 23, 42, 0.3)' : colors.paper,
-                border: `1px solid ${isDark ? 'rgba(47, 134, 255, 0.15)' : colors.border}`,
+                backgroundColor: isDark ? 'rgba(30, 41, 59, 0.95)' : colors.paper,
+                border: `1px solid ${isDark ? 'rgba(47, 134, 255, 0.25)' : colors.border}`,
                 transition: 'all 0.2s ease',
                 '&:hover': {
                   boxShadow: isDark
                     ? '0 4px 12px rgba(0, 0, 0, 0.25)'
                     : '0 4px 12px rgba(0, 0, 0, 0.08)',
-                  borderColor: isDark ? 'rgba(47, 134, 255, 0.3)' : 'rgba(47, 134, 255, 0.2)',
+                  borderColor: isDark ? 'rgba(47, 134, 255, 0.4)' : 'rgba(47, 134, 255, 0.2)',
                 },
                 background: isDark
-                  ? `linear-gradient(135deg, rgba(47, 134, 255, 0.1) 0%, rgba(15, 23, 42, 0.6) 50%, rgba(47, 134, 255, 0.05) 100%)`
+                  ? `linear-gradient(135deg, rgba(47, 134, 255, 0.15) 0%, rgba(30, 41, 59, 0.95) 50%, rgba(47, 134, 255, 0.1) 100%)`
                   : `linear-gradient(135deg, rgba(47, 134, 255, 0.03) 0%, rgba(255, 255, 255, 0) 50%, rgba(47, 134, 255, 0.01) 100%)`,
                 backdropFilter: isDark ? 'blur(8px)' : 'none',
+                boxShadow: isDark ? '0 8px 16px rgba(0, 0, 0, 0.25)' : 'none',
               }}
             >
               <Box
@@ -424,18 +425,18 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                   className="rounded-md p-1.5"
                   style={{
                     backgroundColor: isDark
-                      ? 'rgba(47, 134, 255, 0.2)'
+                      ? 'rgba(47, 134, 255, 0.3)' // Increased opacity for better visibility
                       : 'rgba(47, 134, 255, 0.08)',
-                    boxShadow: isDark ? '0 2px 4px rgba(0, 0, 0, 0.2)' : 'none',
+                    boxShadow: isDark ? '0 2px 6px rgba(0, 0, 0, 0.3)' : 'none', // Enhanced shadow
                   }}
                 >
-                  <LabelIcon style={{ color: isDark ? colors.primaryLight : colors.primary }} />
+                  <LabelIcon style={{ color: isDark ? '#9ad6f9' : colors.primary }} />
                 </div>
                 <Typography
                   variant="h6"
                   sx={{
                     fontWeight: 600,
-                    color: isDark ? colors.white : colors.text,
+                    color: isDark ? '#ffffff' : colors.text, // Ensure white text in dark mode
                     textShadow: isDark ? '0 1px 2px rgba(0, 0, 0, 0.5)' : 'none',
                   }}
                 >
@@ -445,15 +446,15 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                   variant="caption"
                   sx={{
                     ml: 'auto',
-                    color: isDark ? 'rgba(255, 255, 255, 0.7)' : colors.textSecondary,
-                    backgroundColor: isDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(0, 0, 0, 0.04)',
+                    color: isDark ? 'rgba(255, 255, 255, 0.9)' : colors.textSecondary,
+                    backgroundColor: isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.04)',
                     px: 1.5,
                     py: 0.5,
                     borderRadius: 1,
                     fontWeight: 500,
                     visibility:
                       Object.keys(clusterDetails.labels || {}).length > 0 ? 'visible' : 'hidden',
-                    border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
+                    border: isDark ? '1px solid rgba(255, 255, 255, 0.2)' : 'none',
                   }}
                 >
                   {Object.keys(clusterDetails.labels || {}).length} labels
@@ -461,7 +462,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
               </Box>
 
               <Divider
-                sx={{ mb: 3, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : colors.border }}
+                sx={{ mb: 3, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.2)' : colors.border }}
               />
 
               <Box className="flex flex-wrap gap-2">
@@ -472,7 +473,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                       icon={
                         <Tag
                           size={14}
-                          style={{ color: isDark ? colors.primaryLight : colors.primary }}
+                          style={{ color: isDark ? '#9ad6f9' : colors.primary }}
                         />
                       }
                       label={
@@ -482,15 +483,15 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                             sx={{
                               fontWeight: 600,
                               mr: 0.5,
-                              color: isDark ? colors.white : 'inherit',
+                              color: isDark ? '#ffffff' : 'inherit',
                             }}
                           >
                             {key}
                           </Box>
-                          <Box component="span" sx={{ opacity: 0.7 }}>
+                          <Box component="span" sx={{ opacity: isDark ? 0.9 : 0.7 }}>
                             =
                           </Box>
-                          <Box component="span" sx={{ ml: 0.5 }}>
+                          <Box component="span" sx={{ ml: 0.5, color: isDark ? '#ffffff' : 'inherit' }}>
                             {value}
                           </Box>
                         </Box>
@@ -595,21 +596,21 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                     className="rounded-md p-1.5"
                     style={{
                       backgroundColor: isDark
-                        ? 'rgba(47, 134, 255, 0.2)'
+                        ? 'rgba(47, 134, 255, 0.3)' // Increased opacity for better visibility
                         : 'rgba(47, 134, 255, 0.08)',
-                      boxShadow: isDark ? '0 2px 4px rgba(0, 0, 0, 0.2)' : 'none',
+                      boxShadow: isDark ? '0 2px 6px rgba(0, 0, 0, 0.3)' : 'none', // Enhanced shadow
                     }}
                   >
                     <Layers
                       size={20}
-                      style={{ color: isDark ? colors.primaryLight : colors.primary }}
+                      style={{ color: isDark ? '#9ad6f9' : colors.primary }} // Brighter color in dark mode
                     />
                   </div>
                   <Typography
                     variant="h6"
                     sx={{
                       fontWeight: 600,
-                      color: isDark ? colors.white : colors.text,
+                      color: isDark ? '#ffffff' : colors.text, // Ensure white text in dark mode
                       textShadow: isDark ? '0 1px 2px rgba(0, 0, 0, 0.5)' : 'none',
                     }}
                   >
@@ -689,6 +690,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                           WebkitBackgroundClip: 'text',
                           WebkitTextFillColor: 'transparent',
                           textShadow: isDark ? '0 1px 3px rgba(0, 0, 0, 0.5)' : 'none',
+                          filter: isDark ? 'brightness(1.2) contrast(1.2)' : 'none',
                         }}
                       >
                         {clusterDetails.status.capacity.cpu}
@@ -696,13 +698,25 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                       <Typography
                         variant="body2"
                         sx={{
-                          color: isDark ? 'rgba(255, 255, 255, 0.8)' : colors.textSecondary,
+                          color: isDark ? 'rgba(255, 255, 255, 0.95)' : colors.textSecondary,
                           textAlign: 'center',
-                          fontWeight: isDark ? 500 : 400,
+                          fontWeight: isDark ? 600 : 400,
+                          textShadow: isDark ? '0 1px 2px rgba(0, 0, 0, 0.3)' : 'none',
                         }}
                       >
                         CPU Cores
                       </Typography>
+                      {isDark && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            inset: 0,
+                            zIndex: -1,
+                            backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                            borderRadius: 1,
+                          }}
+                        />
+                      )}
                     </Box>
                   </Grid>
                   <Grid item xs={12} md={4}>
@@ -772,6 +786,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                           WebkitBackgroundClip: 'text',
                           WebkitTextFillColor: 'transparent',
                           textShadow: isDark ? '0 1px 3px rgba(0, 0, 0, 0.5)' : 'none',
+                          filter: isDark ? 'brightness(1.2) contrast(1.2)' : 'none',
                         }}
                       >
                         {parseInt(clusterDetails.status.capacity.memory) / 1024 / 1024 > 1
@@ -781,13 +796,25 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                       <Typography
                         variant="body2"
                         sx={{
-                          color: isDark ? 'rgba(255, 255, 255, 0.8)' : colors.textSecondary,
+                          color: isDark ? 'rgba(255, 255, 255, 0.95)' : colors.textSecondary,
                           textAlign: 'center',
-                          fontWeight: isDark ? 500 : 400,
+                          fontWeight: isDark ? 600 : 400,
+                          textShadow: isDark ? '0 1px 2px rgba(0, 0, 0, 0.3)' : 'none',
                         }}
                       >
                         Memory
                       </Typography>
+                      {isDark && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            inset: 0,
+                            zIndex: -1,
+                            backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                            borderRadius: 1,
+                          }}
+                        />
+                      )}
                     </Box>
                   </Grid>
                   <Grid item xs={12} md={4}>
@@ -857,6 +884,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                           WebkitBackgroundClip: 'text',
                           WebkitTextFillColor: 'transparent',
                           textShadow: isDark ? '0 1px 3px rgba(0, 0, 0, 0.5)' : 'none',
+                          filter: isDark ? 'brightness(1.2) contrast(1.2)' : 'none',
                         }}
                       >
                         {clusterDetails.status.capacity.pods}
@@ -864,7 +892,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                       <Typography
                         variant="body2"
                         sx={{
-                          color: isDark ? 'rgba(255, 255, 255, 0.8)' : colors.textSecondary,
+                          color: isDark ? 'rgba(255, 255, 255, 0.95)' : colors.textSecondary,
                           textAlign: 'center',
                           fontWeight: isDark ? 500 : 400,
                         }}
