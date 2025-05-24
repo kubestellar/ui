@@ -67,27 +67,13 @@ const DownloadLogsButton: React.FC<DownloadLogsButtonProps> = ({
       }, 100);
 
       // Show success notification
-      toast.success('Logs downloaded', {
+      toast.success(`Downloaded logs for ${podName}`, {
         duration: 3000,
-        position: 'top-center',
-        icon: '✅',
-        style: {
-          borderRadius: '10px',
-          background: theme === 'dark' ? '#1e293b' : '#fff',
-          color: theme === 'dark' ? '#fff' : '#334155',
-        },
       });
     } catch (error) {
       console.error('Error downloading logs:', error);
       toast.error('Failed to download logs', {
         duration: 3000,
-        position: 'top-center',
-        icon: '⚠️',
-        style: {
-          borderRadius: '10px',
-          background: theme === 'dark' ? '#1e293b' : '#fff',
-          color: theme === 'dark' ? '#fff' : '#334155',
-        },
       });
     } finally {
       setIsLoading(false);
