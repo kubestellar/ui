@@ -260,3 +260,114 @@ func SetWorkloadLabel(label string) error {
 func GetWorkloadLabel() (string, error) {
 	return rdb.Get(ctx, "workload_label").Result()
 }
+
+// BindingPolicyCache represents a binding policy in the cache
+type BindingPolicyCache struct {
+	Name              string              `json:"name"`
+	Namespace         string              `json:"namespace"`
+	ClusterSelectors  []map[string]string `json:"clusterSelectors"`
+	APIGroups         []string            `json:"apiGroups"`
+	Resources         []string            `json:"resources"`
+	Namespaces        []string            `json:"namespaces"`
+	SpecificWorkloads []WorkloadInfo      `json:"specificWorkloads"`
+	RawYAML           string              `json:"rawYAML"`
+	Status            string              `json:"status"`
+	BindingMode       string              `json:"bindingMode"`
+	Clusters          []string            `json:"clusters"`
+	Workloads         []string            `json:"workloads"`
+	CreationTimestamp string              `json:"creationTimestamp"`
+}
+
+type WorkloadInfo struct {
+	APIVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+	Name       string `json:"name"`
+	Namespace  string `json:"namespace"`
+}
+
+const (
+	BindingPolicyHashKey = "binding_policies"
+	DefaultExpiration    = 24 * time.Hour
+)
+
+// StoreBindingPolicy stores a binding policy in Redis with proper type handling
+func StoreBindingPolicy(policy *BindingPolicyCache) error {
+	if policy == nil {
+		return fmt.Errorf("cannot store nil binding policy")
+	}
+
+	// Marshal the policy to JSON
+	jsonData, err := json.Marshal(policy)
+	if err != nil {
+		return fmt.Errorf("failed to marshal binding policy: %v", err)
+	}
+
+	// Store in Redis hash with the policy name as the field
+	err = rdb.HSet(ctx, BindingPolicyHashKey, policy.Name, string(jsonData)).Err()
+	if err != nil {
+		return fmt.Errorf("failed to store binding policy in Redis: %v", err)
+	}
+
+	// Set expiration for the hash
+	err = rdb.Expire(ctx, BindingPolicyHashKey, DefaultExpiration).Err()
+	if err != nil {
+		log.LogWarn("failed to set expiration for binding policy", zap.Error(err))
+	}
+
+	return nil
+}
+
+// GetBindingPolicy retrieves a binding policy from Redis by name
+func GetBindingPolicy(name string) (*BindingPolicyCache, error) {
+	val, err := rdb.HGet(ctx, BindingPolicyHashKey, name).Result()
+	if err == redis.Nil {
+		return nil, nil // Policy not found
+	} else if err != nil {
+		return nil, fmt.Errorf("failed to get binding policy from Redis: %v", err)
+	}
+
+	var policy BindingPolicyCache
+	if err := json.Unmarshal([]byte(val), &policy); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal binding policy: %v", err)
+	}
+
+	return &policy, nil
+}
+
+// GetAllBindingPolicies retrieves all binding policies from Redis
+func GetAllBindingPolicies() ([]*BindingPolicyCache, error) {
+	values, err := rdb.HGetAll(ctx, BindingPolicyHashKey).Result()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get all binding policies from Redis: %v", err)
+	}
+
+	policies := make([]*BindingPolicyCache, 0, len(values))
+	for _, val := range values {
+		var policy BindingPolicyCache
+		if err := json.Unmarshal([]byte(val), &policy); err != nil {
+			log.LogWarn("failed to unmarshal binding policy", zap.Error(err))
+			continue
+		}
+		policies = append(policies, &policy)
+	}
+
+	return policies, nil
+}
+
+// DeleteBindingPolicy removes a binding policy from Redis
+func DeleteBindingPolicy(name string) error {
+	err := rdb.HDel(ctx, BindingPolicyHashKey, name).Err()
+	if err != nil {
+		return fmt.Errorf("failed to delete binding policy from Redis: %v", err)
+	}
+	return nil
+}
+
+// DeleteAllBindingPolicies removes all binding policies from Redis
+func DeleteAllBindingPolicies() error {
+	err := rdb.Del(ctx, BindingPolicyHashKey).Err()
+	if err != nil {
+		return fmt.Errorf("failed to delete all binding policies from Redis: %v", err)
+	}
+	return nil
+}
