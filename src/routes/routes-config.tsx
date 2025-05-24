@@ -12,6 +12,7 @@ import PublicRoute from '../components/PublicRoute';
 import KubeStellarVisualization from '../components/login/index';
 import InstallationPage from '../pages/InstallationPage';
 import KubeStellarStatusChecker from '../components/KubeStellarStatusChecker';
+import PluginDashboard from '../pages/PluginDashboard';
 
 const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ '../components/Clusters'));
 const ITSLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/ITS'));
@@ -30,11 +31,9 @@ export const routesConfig: RouteObject[] = [
   {
     path: '/install',
     element: (
-      <PublicRoute>
-        <KubeStellarStatusChecker>
-          <InstallationPage />
-        </KubeStellarStatusChecker>
-      </PublicRoute>
+      <KubeStellarStatusChecker>
+        <InstallationPage />
+      </KubeStellarStatusChecker>
     ),
   },
   {
@@ -49,7 +48,7 @@ export const routesConfig: RouteObject[] = [
         index: true,
         element: (
           <ProtectedRoute>
-            <Suspense fallback={<LoadingFallback message="Loading clusters..." size="medium" />}>
+            <Suspense fallback={<LoadingFallback />}>
               <ClustersLazy />
             </Suspense>
           </ProtectedRoute>
@@ -59,7 +58,7 @@ export const routesConfig: RouteObject[] = [
         path: 'its',
         element: (
           <ProtectedRoute>
-            <Suspense fallback={<LoadingFallback message="Loading ITS..." size="small" />}>
+            <Suspense fallback={<LoadingFallback />}>
               <ITSLazy />
             </Suspense>
           </ProtectedRoute>
@@ -94,6 +93,14 @@ export const routesConfig: RouteObject[] = [
         element: (
           <ProtectedRoute>
             <WecsTreeview />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'plugins',
+        element: (
+          <ProtectedRoute>
+            <PluginDashboard />
           </ProtectedRoute>
         ),
       },
