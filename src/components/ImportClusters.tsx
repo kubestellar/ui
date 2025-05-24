@@ -15,7 +15,7 @@ import { api } from '../lib/api';
 import { useClusterQueries } from '../hooks/queries/useClusterQueries';
 import KubeconfigImportTab from './KubeconfigImportTab';
 import ApiUrlImportTab from './ApiUrlImportTab';
-import ManualImportTab from './ManualImportTab';
+import QuickConnectTab from './QuickConnectTab';
 
 // Define the Colors interface for consistent typing across components
 export interface Colors {
@@ -140,12 +140,14 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
 
   // Update useEffect to handle initial tab selection with new order
   useEffect(() => {
-    // If activeOption is null or invalid, set to first available tab (now "manual")
+    // If activeOption is null or invalid, set to first available tab (now "quickconnect")
     if (
       !activeOption ||
-      (activeOption !== 'manual' && activeOption !== 'kubeconfig' && activeOption !== 'apiurl')
+      (activeOption !== 'quickconnect' &&
+        activeOption !== 'kubeconfig' &&
+        activeOption !== 'apiurl')
     ) {
-      setActiveOption('manual');
+      setActiveOption('quickconnect');
     }
   }, [activeOption, setActiveOption]);
 
@@ -158,7 +160,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
 
   // Add useEffect to fetch available clusters
   useEffect(() => {
-    if (activeOption === 'manual') {
+    if (activeOption === 'quickconnect') {
       fetchAvailableClusters();
     }
   }, [activeOption]);
@@ -345,7 +347,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const target = e.target as HTMLInputElement | HTMLSelectElement; // Type assertion
     setFormData(prev => ({ ...prev, [target.name]: target.value }));
-    if (activeOption === 'manual' && target.name === 'clusterName') {
+    if (activeOption === 'quickconnect' && target.name === 'clusterName') {
       setManualCommand(null);
       setManualError('');
     }
@@ -666,7 +668,13 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
           >
             <Tab
               label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                  }}
+                >
                   <Box
                     className="iconContainer"
                     sx={{
@@ -681,14 +689,14 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                       transition: 'all 0.25s ease',
                     }}
                   >
-                    <span role="img" aria-label="manual" style={{ fontSize: '0.9rem' }}>
-                      ⚙️
+                    <span role="img" aria-label="quickconnect" style={{ fontSize: '0.9rem' }}>
+                      ⚡
                     </span>
                   </Box>
-                  Manual
+                  Quick Connect
                 </Box>
               }
-              value="manual"
+              value="quickconnect"
             />
             <Tab
               label={
@@ -777,8 +785,8 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                 />
               )}
 
-              {activeOption === 'manual' && (
-                <ManualImportTab
+              {activeOption === 'quickconnect' && (
+                <QuickConnectTab
                   theme={theme}
                   colors={colors}
                   commonInputSx={commonInputSx}
