@@ -1,4 +1,4 @@
-import React, { ChangeEvent, RefObject, useState, useEffect, useRef } from 'react';
+import React, { ChangeEvent, RefObject, useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -71,37 +71,14 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
   const textColor = theme === 'dark' ? colors.white : colors.text;
   const [showLogs, setShowLogs] = useState(false);
   const isMobile = useMediaQuery('(max-width:600px)');
-  const containerRef = useRef<HTMLDivElement>(null);
 
   // Auto-fetch clusters when component mounts
   useEffect(() => {
-    if (!availableClusters.length && !availableClustersLoading && !availableClustersError) {
+    // Only fetch once on mount if we have no clusters and no error
+    if (availableClusters.length === 0 && !availableClustersError && !availableClustersLoading) {
       fetchAvailableClusters();
     }
-  }, [
-    availableClusters.length,
-    availableClustersLoading,
-    availableClustersError,
-    fetchAvailableClusters,
-  ]);
-
-  // Disable transitions during loading state changes to prevent jumpiness
-  useEffect(() => {
-    if (containerRef.current) {
-      if (availableClustersLoading) {
-        // Add a class to disable transitions during loading
-        containerRef.current.classList.add('loading-state');
-      } else {
-        // Small delay before re-enabling transitions to ensure smooth UI
-        const timer = setTimeout(() => {
-          if (containerRef.current) {
-            containerRef.current.classList.remove('loading-state');
-          }
-        }, 50);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [availableClustersLoading]);
+  }, []); // Empty dependency array - only run once on mount
 
   // This function will be called when the onboarding is completed via logs
   const handleOnboardingComplete = () => {
@@ -156,15 +133,11 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
     overflow: 'hidden',
     transform: 'translateZ(0)', // Force GPU acceleration
     backfaceVisibility: 'hidden', // Prevent flickering during animations
-    willChange: 'transform, box-shadow', // Hint to browser for optimization
-    contain: 'layout paint style', // Improve performance
     '&:hover': {
       transform: 'translateY(-2px) translateZ(0)',
       boxShadow:
         theme === 'dark' ? '0 6px 24px rgba(0, 0, 0, 0.25)' : '0 6px 24px rgba(0, 0, 0, 0.08)',
     },
-    // Ensure consistent height to prevent layout shifts
-    minHeight: { xs: '100px', sm: '120px' },
   };
 
   return (
@@ -180,14 +153,7 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
         flexDirection: 'column',
         overflow: 'hidden',
         minHeight: 0, // Helps with flexbox scrolling issues
-        // Add styles to prevent transitions during loading
-        '&.loading-state *': {
-          transition: 'none !important',
-          animation: 'none !important',
-        },
       }}
-      ref={containerRef}
-      className={availableClustersLoading ? 'loading-state' : ''}
     >
       <Box
         sx={{
@@ -208,11 +174,6 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
           position: 'relative',
           overflow: 'hidden',
           minHeight: 0, // Helps with flexbox scrolling issues
-          contain: 'content', // Improve performance by containing the layout
-          transform: 'translateZ(0)', // Force GPU acceleration
-          backfaceVisibility: 'hidden', // Prevent flickering
-          WebkitFontSmoothing: 'antialiased', // Smoother text
-          MozOsxFontSmoothing: 'grayscale', // Smoother text in Firefox
         }}
       >
         {/* Visual elements for modern design feel */}
@@ -353,13 +314,7 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
           {/* Main content - rendered conditionally based on state */}
           {showLogs && formData.clusterName ? (
             <Fade in={true} timeout={400} easing="cubic-bezier(0.4, 0, 0.2, 1)">
-              <Box
-                sx={{
-                  minHeight: '400px', // Consistent height
-                  transform: 'translateZ(0)', // Force GPU acceleration
-                  backfaceVisibility: 'hidden', // Prevent flickering
-                }}
-              >
+              <Box>
                 <OnboardingLogsDisplay
                   clusterName={formData.clusterName}
                   onComplete={handleOnboardingComplete}
@@ -441,10 +396,6 @@ const SuccessView: React.FC<{
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          minHeight: '400px', // Ensure consistent height
-          transform: 'translateZ(0)', // Force GPU acceleration
-          backfaceVisibility: 'hidden', // Prevent flickering
-          contain: 'content', // Improve performance
         }}
       >
         <Box ref={successAlertRef}>
@@ -859,10 +810,6 @@ const ClusterSelectionView: React.FC<{
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          minHeight: '400px', // Ensure consistent height
-          transform: 'translateZ(0)', // Force GPU acceleration
-          backfaceVisibility: 'hidden', // Prevent flickering
-          contain: 'content', // Improve performance
         }}
       >
         {/* Feature card with explanation */}
@@ -1013,14 +960,10 @@ const ClusterSelectionView: React.FC<{
                 alignItems: 'center',
                 justifyContent: 'center',
                 py: 3,
-                minHeight: '120px',
-                height: '100%',
+                minHeight: '100px',
                 bgcolor: theme === 'dark' ? 'rgba(0, 0, 0, 0.1)' : 'rgba(0, 0, 0, 0.02)',
                 borderRadius: 2,
                 border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`,
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                willChange: 'transform',
-                transform: 'translateZ(0)',
               }}
             >
               <CircularProgress
@@ -1065,18 +1008,12 @@ const ClusterSelectionView: React.FC<{
                 py: 1.5,
                 px: 2,
                 mb: 2,
-                minHeight: '120px',
-                display: 'flex',
-                alignItems: 'flex-start',
                 backgroundColor:
                   theme === 'dark' ? 'rgba(211, 47, 47, 0.08)' : 'rgba(211, 47, 47, 0.03)',
                 border: `1px solid ${theme === 'dark' ? 'rgba(211, 47, 47, 0.15)' : 'rgba(211, 47, 47, 0.1)'}`,
                 '& .MuiAlert-message': {
                   width: '100%',
                 },
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                willChange: 'transform',
-                transform: 'translateZ(0)',
               }}
             >
               <Box sx={{ mb: 1 }}>
@@ -1116,7 +1053,7 @@ const ClusterSelectionView: React.FC<{
               </Button>
             </Alert>
           ) : (
-            <Box sx={{ minHeight: '120px' }}>
+            <Box>
               <Box
                 sx={{
                   border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)'}`,
@@ -1126,7 +1063,7 @@ const ClusterSelectionView: React.FC<{
                   position: 'relative',
                   overflow: 'hidden',
                   cursor: 'pointer',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  transition: 'all 0.2s ease',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                   mb: 2,
                   '&:hover': {

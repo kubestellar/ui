@@ -1,4 +1,4 @@
-import React, { useState, ChangeEvent, useRef, useEffect } from 'react';
+import React, { useState, ChangeEvent, useRef, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -158,17 +158,17 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
   const [availableClustersLoading, setAvailableClustersLoading] = useState<boolean>(false);
   const [availableClustersError, setAvailableClustersError] = useState<string>('');
 
-  // Add useEffect to fetch available clusters
-  useEffect(() => {
-    if (activeOption === 'quickconnect') {
-      fetchAvailableClusters();
-    }
-  }, [activeOption]);
+  // Add a flag to track if we've attempted to fetch clusters
+  const [hasAttemptedFetch, setHasAttemptedFetch] = useState<boolean>(false);
 
-  // Function to fetch available clusters
-  const fetchAvailableClusters = async () => {
+  // Memoize the fetchAvailableClusters function to prevent infinite re-renders
+  const fetchAvailableClusters = useCallback(async () => {
+    if (availableClustersLoading) return; // Prevent multiple simultaneous requests
+    
     setAvailableClustersLoading(true);
     setAvailableClustersError('');
+    setHasAttemptedFetch(true);
+    
     try {
       const response = await api.get('/api/clusters/available');
       // Debug log to inspect the data structure
@@ -203,7 +203,20 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
     } finally {
       setAvailableClustersLoading(false);
     }
-  };
+  }, [availableClustersLoading]); 
+
+  useEffect(() => {
+    if (activeOption === 'quickconnect' && !hasAttemptedFetch && !availableClustersLoading) {
+      fetchAvailableClusters();
+    }
+  }, [activeOption, hasAttemptedFetch, availableClustersLoading, fetchAvailableClusters]);
+
+  // Reset fetch attempt flag when switching away from quickconnect
+  useEffect(() => {
+    if (activeOption !== 'quickconnect') {
+      setHasAttemptedFetch(false);
+    }
+  }, [activeOption]);
 
   // Get the onboard mutation from useClusterQueries
   const { useOnboardCluster } = useClusterQueries();

@@ -778,7 +778,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
   onPageChange,
   isLoading = false,
   initialShowCreateOptions = false,
-  initialActiveOption = 'option1',
+  initialActiveOption = 'quickconnect',
 }) => {
   const [query, setQuery] = useState('');
   const [filteredClusters, setFilteredClusters] = useState<ManagedClusterInfo[]>(clusters);
@@ -914,18 +914,17 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
   const handleBulkAddLabels = () => {
     if (!hasSelectedClusters) return;
 
-    const bulkOperationCluster = {
-      name: `${selectedClusters.length} selected clusters`,
-      context: 'bulk-operation',
-      labels: {},
-      // Set other required fields to avoid errors
-      uid: 'bulk-operation',
-      creationTimestamp: new Date().toISOString(),
-      status: 'Active',
-    };
-
-    setSelectedCluster(bulkOperationCluster);
-    setEditDialogOpen(true);
+    // Get the first selected cluster to prefill dialog
+    const firstCluster = clusters.find(c => selectedClusters.includes(c.name));
+    if (firstCluster) {
+      setSelectedCluster({
+        ...firstCluster,
+        name: `${selectedClusters.length} selected clusters`,
+        // Don't pass labels initially
+        labels: {},
+      });
+      setEditDialogOpen(true);
+    }
 
     handleBulkLabelsClose();
   };
@@ -1050,10 +1049,11 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
       // Set loading for bulk operation
       setLoadingClusterEdit('bulk');
 
+      // Process all selected clusters sequentially with a longer delay
       let successCount = 0;
       let failureCount = 0;
 
-      // Process each cluster individually
+      // Sequential processing with promises to ensure one request completes before starting the next
       const processNextCluster = async (index = 0) => {
         if (index >= selectedClusters.length) {
           // All clusters processed
@@ -1061,14 +1061,26 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
           setEditDialogOpen(false);
 
           if (failureCount === 0) {
-            toast.success(`Labels updated for all ${successCount} clusters`, {
+            toast.success(`Labels updated for ${successCount} clusters`, {
               icon: '🏷️',
+              style: {
+                borderRadius: '10px',
+                background: isDark ? '#1e293b' : '#ffffff',
+                color: isDark ? '#f1f5f9' : '#1e293b',
+                border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+              },
             });
           } else {
             toast.error(
               `Updated ${successCount} clusters, failed to update ${failureCount} clusters`,
               {
                 icon: '⚠️',
+                style: {
+                  borderRadius: '10px',
+                  background: isDark ? '#1e293b' : '#ffffff',
+                  color: isDark ? '#f1f5f9' : '#1e293b',
+                  border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+                },
                 duration: 5000,
               }
             );
@@ -1084,30 +1096,51 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
           return;
         }
 
+        // Apply labels on top of existing labels (don't replace)
+        const newLabels = { ...cluster.labels, ...labels };
+
         try {
-          await updateLabelsMutation.mutateAsync({
-            contextName: getClusterContext(cluster),
-            clusterName: cluster.name, // Use the actual cluster name, not the "X selected clusters" string
-            labels: labels,
+          // Wait for mutation to complete before proceeding to next cluster
+          await new Promise(resolve => {
+            updateLabelsMutation.mutate(
+              {
+                contextName: getClusterContext(cluster), // Get correct context
+                clusterName: cluster.name,
+                labels: newLabels,
+              },
+              {
+                onSuccess: () => {
+                  successCount++;
+                  resolve(undefined);
+                },
+                onError: error => {
+                  console.error(`Error updating labels for cluster ${cluster.name}:`, error);
+                  failureCount++;
+                  resolve(undefined);
+                },
+              }
+            );
           });
 
-          successCount++;
-          // Add a small delay between requests
-          await new Promise(resolve => setTimeout(resolve, 300));
+          // Add a delay between requests to reduce server load
+          await new Promise(resolve => setTimeout(resolve, 800));
+
+          // Process next cluster
           processNextCluster(index + 1);
-        } catch (error) {
+        } catch (err) {
+          console.error('Unexpected error during label update:', err);
           failureCount++;
-          console.error(`Error updating labels for ${cluster.name}:`, error);
           processNextCluster(index + 1);
         }
       };
 
-      // Start processing clusters
+      // Start processing
       processNextCluster();
+
       return;
     }
 
-    // Regular single-cluster operation (existing code)
+    // Regular single-cluster operation
     setLoadingClusterEdit(clusterName);
 
     // Find the actual cluster to get the correct context
@@ -1471,13 +1504,6 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
               TransitionComponent={Fade}
               transitionDuration={200}
             >
-              <MenuItem onClick={handleBulkAddLabels} sx={{ color: colors.text }}>
-                <ListItemIcon>
-                  <PostAddIcon fontSize="small" style={{ color: colors.primary }} />
-                </ListItemIcon>
-                <ListItemText>Bulk Labels</ListItemText>
-              </MenuItem>
-
               {statusFilterItems.map(item => (
                 <MenuItem
                   key={item.value}
@@ -1613,7 +1639,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                 startIcon={<Plus size={18} />}
                 onClick={() => {
                   setShowCreateOptions(true);
-                  setActiveOption('option1');
+                  setActiveOption('quickconnect');
                 }}
                 sx={{
                   bgcolor: colors.primary,
@@ -2277,7 +2303,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                           startIcon={<Plus size={18} />}
                           onClick={() => {
                             setShowCreateOptions(true);
-                            setActiveOption('option1');
+                            setActiveOption('quickconnect');
                           }}
                           sx={{
                             bgcolor: colors.primary,

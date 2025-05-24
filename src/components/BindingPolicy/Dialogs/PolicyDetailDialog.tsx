@@ -221,7 +221,7 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                 },
               }}
             >
-              Edit
+              
             </Button>
           )}
         </Box>
