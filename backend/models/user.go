@@ -42,8 +42,8 @@ func AuthenticateUser(username, password string) (*User, error) {
 		return nil, errors.New("invalid credentials")
 	}
 
-	// Check password (skip check if password is empty in config)
-	if userConfig.Password != "" && userConfig.Password != password {
+	// Check password using secure verification (handles both bcrypt and legacy passwords)
+	if userConfig.Password != "" && !auth.CheckPassword(password, userConfig.Password) {
 		return nil, errors.New("invalid credentials")
 	}
 
