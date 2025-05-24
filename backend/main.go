@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kubestellar/ui/auth"
 	"github.com/kubestellar/ui/routes"
 
 	"github.com/kubestellar/ui/api"
@@ -20,6 +21,9 @@ func main() {
 
 	router.Use(ZapMiddleware())
 	log.Println("Debug: KubestellarUI application started")
+	
+	// Migrate plain text passwords to bcrypt hashes
+	migratePasswords()
 
 	// CORS Middleware
 	router.Use(func(c *gin.Context) {
@@ -46,6 +50,18 @@ func main() {
 
 	if err := router.Run(":4000"); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
+	}
+}
+
+// Migrate passwords from plain text to bcrypt hashes
+func migratePasswords() {
+	migrated, err := auth.MigratePasswordsToHash()
+	if err != nil {
+		log.Printf("Warning: Password migration encountered an error: %v", err)
+	} else if migrated > 0 {
+		log.Printf("Successfully migrated %d passwords to secure bcrypt hashes", migrated)
+	} else {
+		log.Println("No password migration needed - all passwords are already secured")
 	}
 }
 
