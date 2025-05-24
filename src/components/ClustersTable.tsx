@@ -1471,7 +1471,6 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
               TransitionComponent={Fade}
               transitionDuration={200}
             >
-
               <MenuItem onClick={handleBulkAddLabels} sx={{ color: colors.text }}>
                 <ListItemIcon>
                   <PostAddIcon fontSize="small" style={{ color: colors.primary }} />
@@ -1529,7 +1528,6 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                   </Box>
                 </MenuItem>
               ))}
-
             </Menu>
 
             {hasSelectedClusters && (
