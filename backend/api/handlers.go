@@ -447,9 +447,11 @@ func GetClusterStatusHandler(c *gin.Context) {
 // UpdateManagedClusterLabelsHandler updates labels for a managed cluster
 func UpdateManagedClusterLabelsHandler(c *gin.Context) {
 	var req struct {
-		ContextName string            `json:"contextName"`
-		ClusterName string            `json:"clusterName"`
-		Labels      map[string]string `json:"labels"`
+		ContextName    string            `json:"contextName"`
+		ClusterName    string            `json:"clusterName"`
+		ClusterNames   []string          `json:"clusterNames"` // Add this field for bulk operations
+		Labels         map[string]string `json:"labels"`
+		IsBulkOperation bool             `json:"isBulkOperation"` // Flag to indicate bulk operation
 	}
 
 	if err := c.BindJSON(&req); err != nil {
@@ -457,25 +459,60 @@ func UpdateManagedClusterLabelsHandler(c *gin.Context) {
 		return
 	}
 
-	if req.ContextName == "" || req.ClusterName == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "contextName and clusterName are required"})
-		return
-	}
+	// Handle bulk operations
+	if req.IsBulkOperation && len(req.ClusterNames) > 0 {
+		successCount := 0
+		failedClusters := make([]string, 0)
 
-	clientset, restConfig, err := k8s.GetClientSetWithConfigContext(req.ContextName)
-	if err != nil {
-		log.Printf("Error getting clientset: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+		for _, clusterName := range req.ClusterNames {
+			clientset, restConfig, err := k8s.GetClientSetWithConfigContext(req.ContextName)
+			if err != nil {
+				log.Printf("Error getting clientset for cluster %s: %v", clusterName, err)
+				failedClusters = append(failedClusters, clusterName)
+				continue
+			}
 
-	if err := UpdateManagedClusterLabels(clientset, restConfig, req.ClusterName, req.Labels); err != nil {
-		log.Printf("Error updating labels: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+			if err := UpdateManagedClusterLabels(clientset, restConfig, clusterName, req.Labels); err != nil {
+				log.Printf("Error updating labels for cluster %s: %v", clusterName, err)
+				failedClusters = append(failedClusters, clusterName)
+				continue
+			}
+			
+			successCount++
+		}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Labels updated successfully"})
+		if len(failedClusters) > 0 {
+			c.JSON(http.StatusOK, gin.H{
+				"message": fmt.Sprintf("Labels updated for %d out of %d clusters", successCount, len(req.ClusterNames)),
+				"failedClusters": failedClusters,
+				"partialSuccess": true,
+			})
+		} else {
+			c.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("Labels updated for all %d clusters", successCount)})
+        }
+        return
+    }
+
+    // Handle single cluster operation (existing code)
+    if req.ContextName == "" || req.ClusterName == "" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "contextName and clusterName are required"})
+        return
+    }
+
+    clientset, restConfig, err := k8s.GetClientSetWithConfigContext(req.ContextName)
+    if err != nil {
+        log.Printf("Error getting clientset: %v", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    if err := UpdateManagedClusterLabels(clientset, restConfig, req.ClusterName, req.Labels); err != nil {
+        log.Printf("Error updating labels: %v", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{"message": "Labels updated successfully"})
 }
 
 // OnboardCluster handles the entire process of onboarding a cluster

@@ -238,18 +238,31 @@ export const useClusterQueries = () => {
         contextName,
         clusterName,
         labels,
+        selectedClusters,
       }: {
         contextName: string;
         clusterName: string;
         labels: { [key: string]: string };
+        selectedClusters?: string[];
       }) => {
-        console.log('[DEBUG] Updating cluster labels:', {
-          contextName,
-          clusterName,
-          labels,
-        });
-
-        const response = await api.patch(
+        // Handle bulk operation for virtual "X selected clusters" entity
+        if (selectedClusters && selectedClusters.length > 0 && 
+            clusterName.includes('selected clusters')) {
+          
+          console.log('[DEBUG] Processing bulk label update for', selectedClusters.length, 'clusters');
+          
+          // Don't make a GET request for the virtual cluster name
+          // Instead, directly update each individual cluster
+          return {
+            success: true,
+            message: `Will apply labels to ${selectedClusters.length} clusters`,
+            bulkOperation: true,
+            selectedClusters,
+          };
+        }
+        
+        // Single cluster operation - proceed as before
+        return api.patch(
           '/api/managedclusters/labels',
           {
             contextName,
@@ -262,9 +275,6 @@ export const useClusterQueries = () => {
             },
           }
         );
-
-        console.log('[DEBUG] Update labels response:', response.data);
-        return response.data;
       },
       onSuccess: () => {
         console.log('[DEBUG] Labels updated successfully, invalidating clusters query cache');
@@ -301,6 +311,26 @@ export const useClusterQueries = () => {
     return useQuery({
       queryKey: ['cluster-details', clusterName],
       queryFn: async (): Promise<ClusterDetails> => {
+       
+        if (clusterName && clusterName.includes('selected clusters')) {
+          console.log('[DEBUG] Skipping details fetch for virtual bulk cluster');
+          
+          return {
+            name: clusterName,
+            uid: 'virtual-bulk-operation',
+            creationTimestamp: new Date().toISOString(),
+            labels: {},
+            status: {
+              conditions: [],
+              version: { kubernetes: '' },
+              capacity: { cpu: '', memory: '', pods: '' }
+            },
+            available: true,
+            joined: true
+          };
+        }
+        
+        // Normal flow for real clusters
         const response = await api.get(`/api/clusters/${clusterName}`);
         return response.data;
       },

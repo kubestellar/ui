@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -93,6 +94,20 @@ func GetManagedClusterHandler(c *gin.Context) {
 	if clusterName == "" {
 		c.JSON(400, gin.H{
 			"error": "Cluster name is required",
+		})
+		return
+	}
+
+	if strings.Contains(clusterName, "selected clusters") {
+		
+		c.JSON(200, gin.H{
+			"name":              clusterName,
+			"uid":               "virtual-bulk-operation",
+			"creationTimestamp": time.Now(),
+			"labels":            map[string]string{},
+			"status":            ManagedClusterStatus{},
+			"available":         true,
+			"joined":            true,
 		})
 		return
 	}
