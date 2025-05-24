@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import { CommandResponse, Colors } from './ImportClusters';
 import OnboardingLogsDisplay from './OnboardingLogsDisplay';
+import CancelButton from './common/CancelButton';
 
 interface QuickConnectProps {
   theme: string;
@@ -78,7 +79,7 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
     if (availableClusters.length === 0 && !availableClustersError && !availableClustersLoading) {
       fetchAvailableClusters();
     }
-  }, []); // Empty dependency array - only run once on mount
+  }, [availableClusters.length, availableClustersError, availableClustersLoading, fetchAvailableClusters]); // Include all dependencies
 
   // This function will be called when the onboarding is completed via logs
   const handleOnboardingComplete = () => {
@@ -730,16 +731,14 @@ const SuccessView: React.FC<{
             >
               Back
             </Button>
-            <Button
-              variant="outlined"
+            <CancelButton
               onClick={onCancel}
               sx={{
-                ...secondaryButtonStyles,
                 flex: isMobile ? 1 : 'unset',
               }}
             >
               Close
-            </Button>
+            </CancelButton>
           </Box>
           <Button
             variant="contained"
@@ -800,7 +799,7 @@ const ClusterSelectionView: React.FC<{
   manualLoading,
   onCancel,
   primaryButtonStyles,
-  secondaryButtonStyles,
+  // secondaryButtonStyles,
   isMobile,
 }) => {
   return (
@@ -1688,11 +1687,9 @@ const ClusterSelectionView: React.FC<{
             flexWrap: isMobile ? 'wrap' : 'nowrap',
           }}
         >
-          <Button
-            variant="outlined"
+          <CancelButton
             onClick={onCancel}
             sx={{
-              ...secondaryButtonStyles,
               order: isMobile ? 2 : 1,
               width: isMobile ? '100%' : 'auto',
               mt: isMobile ? 1.5 : 0,
@@ -1701,9 +1698,7 @@ const ClusterSelectionView: React.FC<{
                 outlineOffset: 2,
               },
             }}
-          >
-            Cancel
-          </Button>
+          />
           <Button
             variant="contained"
             onClick={handleOnboard}
