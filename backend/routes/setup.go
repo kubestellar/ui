@@ -19,7 +19,7 @@ func SetupRoutes(router *gin.Engine) {
 	setupHelmRoutes(router)
 	setupGitHubRoutes(router)
 	setupDeploymentHistoryRoutes(router)
-	setupPluginRoutes(router) // API endpoints for plugin dashboard
+	setupPluginRoutes(router)             // API endpoints for plugin dashboard
 	plugins.Pm.SetupPluginsRoutes(router) // Plugin-specific endpoints
 
 	setupAuthRoutes(router)

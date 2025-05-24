@@ -111,7 +111,7 @@ func getRouteDescription(r common.PluginRoutesMeta) string {
 	if r.Description != "" {
 		return r.Description
 	}
-	
+
 	// Generate a default description based on the path and method
 	switch r.Method {
 	case http.MethodGet:
