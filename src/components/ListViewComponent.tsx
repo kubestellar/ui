@@ -1,8 +1,9 @@
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography, Button, Tooltip } from '@mui/material';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import useTheme from '../stores/themeStore';
 import ListViewSkeleton from './ui/ListViewSkeleton';
 import { api } from '../lib/api';
+import DownloadLogsButton from './DownloadLogsButton';
 
 // Define the response interfaces
 export interface ResourceItem {
@@ -720,19 +721,35 @@ const ListViewComponent = ({
                 >
                   {/* Name and namespace section */}
                   <Box sx={{ overflow: 'hidden' }}>
-                    <Typography
-                      sx={{
-                        color: theme === 'dark' ? '#fff' : '#6B7280',
-                        fontWeight: 500,
-                        fontSize: '1rem',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                    >
-                      {resource.name}
-                    </Typography>
-                    {resource.namespace != '' && (
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Typography
+                        sx={{
+                          color: theme === 'dark' ? '#fff' : '#6B7280',
+                          fontWeight: 500,
+                          fontSize: '1rem',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {resource.name}
+                      </Typography>
+
+                      {/* Add download logs button for pod resources */}
+                      {resource.kind.toLowerCase() === 'pod' && (
+                        <Tooltip title="Download logs">
+                          <span className="ml-2">
+                            <DownloadLogsButton
+                              cluster={resource.context || 'default'}
+                              namespace={resource.namespace}
+                              podName={resource.name}
+                            />
+                          </span>
+                        </Tooltip>
+                      )}
+                    </Box>
+
+                    {resource.namespace !== '' && (
                       <Typography
                         sx={{
                           color: theme === 'dark' ? '#A5ADBA' : '#6B7280',
