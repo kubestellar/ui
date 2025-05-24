@@ -95,14 +95,14 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
         }}
       >
         <DialogTitle>
-            <Box
+          <Box
             className={isDarkTheme ? 'text-white' : ''}
             sx={{
               color: isDarkTheme ? '#fff' : '#000',
             }}
-            >
+          >
             Edit Binding Policy
-            </Box>
+          </Box>
         </DialogTitle>
         <DialogContent
           sx={{
