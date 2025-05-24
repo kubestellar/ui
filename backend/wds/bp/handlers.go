@@ -659,7 +659,7 @@ func DeleteBp(ctx *gin.Context) {
 func DeleteAllBp(ctx *gin.Context) {
 	// Delete from Redis first
 	if err := redis.DeleteAllBindingPolicies(); err != nil {
-		log.LogWarn("failed to delete all binding policies from Redis cache", zap.Error(err))
+		log.LogError("failed to delete all binding policies from Redis cache", zap.Error(err))
 	}
 
 	c, err := getClientForBp()
