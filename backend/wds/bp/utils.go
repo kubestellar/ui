@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/kubestellar/kubestellar/api/control/v1alpha1"
 	"github.com/kubestellar/kubestellar/pkg/generated/clientset/versioned/scheme"
@@ -14,6 +15,7 @@ import (
 	"github.com/kubestellar/ui/log"
 	"github.com/kubestellar/ui/redis"
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -319,7 +321,7 @@ func contentTypeValid(t string) bool {
 	return false
 }
 
-// watches on all binding policy resources , PROTOTYPE just for now
+// watches on all binding policy resources and updates Redis cache
 func watchOnBps() {
 	c, err := getClientForBp()
 	if err != nil {
@@ -328,7 +330,6 @@ func watchOnBps() {
 	}
 
 	for {
-
 		w, err := c.BindingPolicies().Watch(context.TODO(), v1.ListOptions{})
 		if err != nil {
 			log.LogError("failed to watch on BP", zap.String("error", err.Error()))
@@ -338,32 +339,116 @@ func watchOnBps() {
 		for event := range eventChan {
 			switch event.Type {
 			case "MODIFIED":
-				bp, _ := event.Object.(*v1alpha1.BindingPolicy)
-				if bp.ObjectMeta.Generation == bp.Status.ObservedGeneration {
-					log.LogInfo("reconciled successfully", zap.String("name", bp.Name))
-				} else {
-					log.LogInfo("reconciling...", zap.String("name", bp.Name))
+				bp, ok := event.Object.(*v1alpha1.BindingPolicy)
+				if !ok {
+					log.LogError("failed to convert event object to BindingPolicy")
+					continue
 				}
-				log.LogInfo("BP modified: ", zap.String("name", bp.Name))
+
+				// Extract clusters and workloads
+				clusters := extractTargetClusters(bp)
+				workloads := extractWorkloads(bp)
+
+				// Determine status
+				status := "inactive"
+				if bp.ObjectMeta.Generation == bp.Status.ObservedGeneration {
+					status = "active"
+				}
+
+				// Create YAML representation
+				yamlData, err := yaml.Marshal(bp)
+				if err != nil {
+					log.LogError("failed to marshal binding policy to YAML", zap.Error(err))
+					continue
+				}
+
+				// Create cache entry
+				cachedPolicy := &redis.BindingPolicyCache{
+					Name:              bp.Name,
+					Namespace:         bp.Namespace,
+					Status:            status,
+					BindingMode:       "Downsync", // KubeStellar only supports Downsync
+					Clusters:          clusters,
+					Workloads:         workloads,
+					CreationTimestamp: bp.CreationTimestamp.Format(time.RFC3339),
+					RawYAML:           string(yamlData),
+				}
+
+				// Update Redis
+				if err := redis.StoreBindingPolicy(cachedPolicy); err != nil {
+					log.LogError("failed to update binding policy in Redis",
+						zap.String("name", bp.Name),
+						zap.Error(err))
+				} else {
+					log.LogInfo("updated binding policy in Redis",
+						zap.String("name", bp.Name),
+						zap.String("status", status))
+				}
 
 			case "ADDED":
-				bp, _ := event.Object.(*v1alpha1.BindingPolicy)
-				log.LogInfo("BP added: ", zap.String("name", bp.Name))
+				bp, ok := event.Object.(*v1alpha1.BindingPolicy)
+				if !ok {
+					log.LogError("failed to convert event object to BindingPolicy")
+					continue
+				}
+
+				// Extract clusters and workloads
+				clusters := extractTargetClusters(bp)
+				workloads := extractWorkloads(bp)
+
+				// Create YAML representation
+				yamlData, err := yaml.Marshal(bp)
+				if err != nil {
+					log.LogError("failed to marshal binding policy to YAML", zap.Error(err))
+					continue
+				}
+
+				// Create cache entry
+				cachedPolicy := &redis.BindingPolicyCache{
+					Name:              bp.Name,
+					Namespace:         bp.Namespace,
+					Status:            "inactive", // New policies start as inactive
+					BindingMode:       "Downsync", // KubeStellar only supports Downsync
+					Clusters:          clusters,
+					Workloads:         workloads,
+					CreationTimestamp: bp.CreationTimestamp.Format(time.RFC3339),
+					RawYAML:           string(yamlData),
+				}
+
+				// Store in Redis
+				if err := redis.StoreBindingPolicy(cachedPolicy); err != nil {
+					log.LogError("failed to store binding policy in Redis",
+						zap.String("name", bp.Name),
+						zap.Error(err))
+				} else {
+					log.LogInfo("stored new binding policy in Redis",
+						zap.String("name", bp.Name))
+				}
 
 			case "DELETED":
-				bp, _ := event.Object.(*v1alpha1.BindingPolicy)
-				err := redis.DeleteBpcmd(bp.Name)
-				if err != nil {
-					log.LogError("Error deleting bp from redis", zap.String("error", err.Error()))
+				bp, ok := event.Object.(*v1alpha1.BindingPolicy)
+				if !ok {
+					log.LogError("failed to convert event object to BindingPolicy")
+					continue
 				}
-				log.LogInfo("BP deleted: ", zap.String("name", bp.Name))
+
+				// Delete from Redis
+				if err := redis.DeleteBindingPolicy(bp.Name); err != nil {
+					log.LogError("failed to delete binding policy from Redis",
+						zap.String("name", bp.Name),
+						zap.Error(err))
+				} else {
+					log.LogInfo("deleted binding policy from Redis",
+						zap.String("name", bp.Name))
+				}
+
 			case "ERROR":
-				log.LogWarn("Some error occured while watching ON BP")
+				log.LogWarn("error occurred while watching binding policies")
 			}
 		}
-
 	}
 }
+
 func init() {
 
 	go watchOnBps()
