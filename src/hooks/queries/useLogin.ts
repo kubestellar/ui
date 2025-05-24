@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import axios from 'axios';
 import { LoginUser } from '../../api/auth';
 import { AUTH_QUERY_KEY } from '../../api/auth/constant';
+import { encryptData } from '../../utils/secureStorage';
 
 interface LoginCredentials {
   username: string;
@@ -30,7 +31,9 @@ export const useLogin = () => {
 
         if (rememberMe) {
           localStorage.setItem('rememberedUsername', username);
-          localStorage.setItem('rememberedPassword', btoa(password));
+          // Securely encrypt password instead of using base64
+          const encryptedPassword = await encryptData(password);
+          localStorage.setItem('rememberedPassword', encryptedPassword);
         } else {
           localStorage.removeItem('rememberedUsername');
           localStorage.removeItem('rememberedPassword');
