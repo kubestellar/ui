@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/k8s"
 	"github.com/kubestellar/ui/log"
-	"github.com/kubestellar/ui/plugin"
+	"github.com/kubestellar/ui/plugin/common"
 	"go.uber.org/zap"
 	v1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -34,22 +34,28 @@ func (p backupPlugin) Name() string {
 func (p backupPlugin) Version() string {
 	return pluginVersion
 }
+
+func (p backupPlugin) Description() string {
+	return "A plugin for taking database backups of the KubeStellar system"
+}
+
 func (p backupPlugin) Enabled() int {
 	return 1
-
 }
-func (p backupPlugin) Routes() []plugin.PluginRoutesMeta {
+func (p backupPlugin) Routes() []common.PluginRoutesMeta {
 
-	routes := []plugin.PluginRoutesMeta{}
-	routes = append(routes, plugin.PluginRoutesMeta{
-		Method:  http.MethodGet,
-		Path:    "/plugins/backup-plugin/",
-		Handler: rootHandler,
+	routes := []common.PluginRoutesMeta{}
+	routes = append(routes, common.PluginRoutesMeta{
+		Method:      http.MethodGet,
+		Path:        "/plugins/backup-plugin/",
+		Description: "Get basic information about the backup plugin",
+		Handler:     rootHandler,
 	})
-	routes = append(routes, plugin.PluginRoutesMeta{
-		Method:  http.MethodGet,
-		Path:    "/plugins/backup-plugin/snapshot",
-		Handler: takeSnapshot,
+	routes = append(routes, common.PluginRoutesMeta{
+		Method:      http.MethodGet,
+		Path:        "/plugins/backup-plugin/snapshot",
+		Description: "Take a snapshot backup of the KubeStellar database",
+		Handler:     takeSnapshot,
 	})
 
 	return routes

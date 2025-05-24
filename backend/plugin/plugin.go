@@ -1,25 +1,16 @@
 package plugin
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/kubestellar/ui/plugin/common"
+)
 
-// plugin interface defines methods that a KS plugin must implement
-type Plugin interface {
-	// name of the plugin
-	Name() string
-	// version of your plugin
-	Version() string
-	// plugin enabled or disabled 1 for enabled 0 for disabled
-	Enabled() int
-	// routes and http methods to communicate with this plugin to do operations
-	Routes() []PluginRoutesMeta
-}
+// Plugin is an alias for common.Plugin interface to maintain backward compatibility
+type Plugin = common.Plugin
 
-// Metadata about routes of the plugin
+// PluginRoutesMeta extends common.PluginRoutesMeta with handler functionality
 type PluginRoutesMeta struct {
-	// http method
-	Method string
-	// route path
-	Path string
+	common.PluginRoutesMeta
 	// route handler
 	Handler func(c *gin.Context)
 }

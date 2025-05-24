@@ -7,15 +7,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/log"
-	"github.com/kubestellar/ui/plugin"
+	"github.com/kubestellar/ui/plugin/common"
 	"go.uber.org/zap"
 )
 
-// this file contains the plugin Manager implementation  for KS
-// a centralized manager that handles our plugins
-
+// pluginManager is a centralized manager that handles KubeStellar plugins
 type pluginManager struct {
-	plugins map[string]plugin.Plugin
+	plugins map[string]common.Plugin
 	mx      sync.Mutex
 }
 
@@ -59,7 +57,7 @@ func (pm *pluginManager) SetupPluginsRoutes(e *gin.Engine) {
 }
 
 // registers a plugin to plugin Manager
-func (pm *pluginManager) Register(p plugin.Plugin) {
+func (pm *pluginManager) Register(p common.Plugin) {
 	pm.mx.Lock()
 	defer pm.mx.Unlock()
 	pm.plugins[p.Name()] = p
@@ -67,11 +65,29 @@ func (pm *pluginManager) Register(p plugin.Plugin) {
 }
 
 // deregisters  a plugin to plugin manager
-func (pm *pluginManager) Deregister(p plugin.Plugin) {
+func (pm *pluginManager) Deregister(p common.Plugin) {
 	pm.mx.Lock()
 	defer pm.mx.Unlock()
 	delete(pm.plugins, p.Name())
 	log.LogInfo("deregistered plugin", zap.String("NAME", p.Name()))
 }
 
-var Pm *pluginManager = &pluginManager{plugins: map[string]plugin.Plugin{}}
+// GetPlugins returns all registered plugins
+func (pm *pluginManager) GetPlugins() []common.Plugin {
+	pm.mx.Lock()
+	defer pm.mx.Unlock()
+	plugins := make([]common.Plugin, 0, len(pm.plugins))
+	for _, p := range pm.plugins {
+		plugins = append(plugins, p)
+	}
+	return plugins
+}
+
+// GetPlugin returns a specific plugin by name
+func (pm *pluginManager) GetPlugin(name string) common.Plugin {
+	pm.mx.Lock()
+	defer pm.mx.Unlock()
+	return pm.plugins[name]
+}
+
+var Pm *pluginManager = &pluginManager{plugins: map[string]common.Plugin{}}
