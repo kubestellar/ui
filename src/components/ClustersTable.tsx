@@ -1357,7 +1357,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                 <ListItemIcon>
                   <PostAddIcon fontSize="small" style={{ color: colors.primary }} />
                 </ListItemIcon>
-                <ListItemText>Add Labels</ListItemText>
+                <ListItemText>Bulk Labels</ListItemText>
               </MenuItem>
             </Menu>
           </div>
