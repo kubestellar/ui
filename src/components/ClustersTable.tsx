@@ -778,7 +778,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
   onPageChange,
   isLoading = false,
   initialShowCreateOptions = false,
-  initialActiveOption = 'option1',
+  initialActiveOption = 'quickconnect',
 }) => {
   const [query, setQuery] = useState('');
   const [filteredClusters, setFilteredClusters] = useState<ManagedClusterInfo[]>(clusters);
@@ -1613,7 +1613,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                 startIcon={<Plus size={18} />}
                 onClick={() => {
                   setShowCreateOptions(true);
-                  setActiveOption('option1');
+                  setActiveOption('quickconnect');
                 }}
                 sx={{
                   bgcolor: colors.primary,
@@ -2277,7 +2277,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                           startIcon={<Plus size={18} />}
                           onClick={() => {
                             setShowCreateOptions(true);
-                            setActiveOption('option1');
+                            setActiveOption('quickconnect');
                           }}
                           sx={{
                             bgcolor: colors.primary,

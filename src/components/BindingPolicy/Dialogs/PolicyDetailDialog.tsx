@@ -220,9 +220,7 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                   opacity: 0.8,
                 },
               }}
-            >
-              Edit
-            </Button>
+            ></Button>
           )}
         </Box>
       </DialogTitle>
