@@ -302,17 +302,6 @@ func extractTargetClusters(bp *v1alpha1.BindingPolicy) []string {
 	return clusters
 }
 
-// filterBPsByNamespace filters the binding policies by namespace
-func filterBPsByNamespace(bps []BindingPolicyWithStatus, namespace string) []BindingPolicyWithStatus {
-	var filtered []BindingPolicyWithStatus
-	for _, bp := range bps {
-		if bp.Namespace == namespace {
-			filtered = append(filtered, bp)
-		}
-	}
-	return filtered
-}
-
 // check if content type is valid
 func contentTypeValid(t string) bool {
 	// Extract the base content type (ignore parameters like boundary=...)
