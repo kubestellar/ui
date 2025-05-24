@@ -21,7 +21,7 @@ func main() {
 
 	router.Use(ZapMiddleware())
 	log.Println("Debug: KubestellarUI application started")
-	
+
 	// Migrate plain text passwords to bcrypt hashes
 	migratePasswords()
 
