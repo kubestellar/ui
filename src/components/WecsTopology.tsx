@@ -668,7 +668,14 @@ const WecsTreeview = () => {
       let isDeploymentOrJobPod = false;
       if (type.toLowerCase() === 'pod' && parent) {
         const parentType = parent.split(':')[0]?.toLowerCase();
-        isDeploymentOrJobPod = ['deployment', 'replicaset', 'job'].includes(parentType);
+        isDeploymentOrJobPod = [
+          'deployment',
+          'replicaset',
+          'job',
+          'statefulset',
+          'daemonset',
+          'cronjob',
+        ].includes(parentType);
       }
 
       const node =
