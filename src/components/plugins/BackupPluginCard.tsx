@@ -66,7 +66,7 @@ export default function BackupPluginCard({ plugin }: BackupPluginCardProps) {
     } catch (error: unknown) {
       console.error('Failed to fetch backup details:', error);
       let errorMessage = 'Failed to fetch backup details';
-      
+
       const apiError = error as ApiError;
       if (
         typeof error === 'object' &&
@@ -79,7 +79,7 @@ export default function BackupPluginCard({ plugin }: BackupPluginCardProps) {
       ) {
         errorMessage = 'API endpoint not found. The backup service may not be configured properly.';
       }
-      
+
       setApiError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -98,7 +98,7 @@ export default function BackupPluginCard({ plugin }: BackupPluginCardProps) {
     } catch (error: unknown) {
       console.error('Failed to trigger backup:', error);
       let errorMessage = 'Failed to trigger backup';
-      
+
       const apiError = error as ApiError;
       if (
         typeof error === 'object' &&
@@ -112,7 +112,7 @@ export default function BackupPluginCard({ plugin }: BackupPluginCardProps) {
         errorMessage =
           'Backup trigger endpoint not found. The backup service may not be configured properly.';
       }
-      
+
       setApiError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -148,7 +148,6 @@ export default function BackupPluginCard({ plugin }: BackupPluginCardProps) {
         </div>
       </div>
 
-      {/* Stats Quick View */}
       <div className="grid grid-cols-2 gap-4 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100/50 p-3 dark:from-gray-800/50 dark:to-gray-900/50">
         {apiError && (
           <div className="col-span-2 rounded-md bg-red-50 p-2 dark:bg-red-900/20">
