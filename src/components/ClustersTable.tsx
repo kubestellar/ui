@@ -124,8 +124,18 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
   const [saving, setSaving] = useState(false);
   const [selectedLabelIndex, setSelectedLabelIndex] = useState<number | null>(null);
   const [protectedLabels, setProtectedLabels] = useState<Set<string>>(new Set());
+
+  // ADD THESE NEW STATES FOR EDITING
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingKey, setEditingKey] = useState('');
+  const [editingValue, setEditingValue] = useState('');
+
   const keyInputRef = useRef<HTMLInputElement>(null);
   const valueInputRef = useRef<HTMLInputElement>(null);
+
+  // ADD THESE NEW REFS FOR EDITING
+  const editKeyInputRef = useRef<HTMLInputElement>(null);
+  const editValueInputRef = useRef<HTMLInputElement>(null);
 
   // Function to check if a label is protected (system or binding policy)
   const isLabelProtected = useCallback(
@@ -356,8 +366,122 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
     toast.success(`Removed label: ${labelToRemove.key}`);
   };
 
+  // ADD THESE NEW FUNCTIONS FOR EDITING
+  const handleStartEdit = (index: number) => {
+    const label = labels[index];
+
+    // Check if this is a protected label
+    if (isLabelProtected(label.key)) {
+      toast.error(`Cannot edit protected label: ${label.key}`, {
+        icon: '🔒',
+        duration: 3000,
+        style: {
+          borderLeft: `4px solid ${colors.warning}`,
+        },
+      });
+      return;
+    }
+
+    setEditingIndex(index);
+    setEditingKey(label.key);
+    setEditingValue(label.value);
+    setSelectedLabelIndex(null);
+
+    // Focus the key input after a short delay
+    setTimeout(() => {
+      if (editKeyInputRef.current) {
+        editKeyInputRef.current.focus();
+        editKeyInputRef.current.select();
+      }
+    }, 100);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingKey.trim() || !editingValue.trim()) {
+      toast.error('Both key and value are required', { duration: 2000 });
+      return;
+    }
+
+    if (editingIndex === null) return;
+
+    const originalKey = labels[editingIndex].key;
+
+    // Check if the new key is protected (but allow editing the value of existing protected labels)
+    if (editingKey.trim() !== originalKey && isLabelProtected(editingKey.trim())) {
+      toast.error(`Cannot create protected label: ${editingKey}`, {
+        icon: '🔒',
+        duration: 3000,
+      });
+      return;
+    }
+
+    // Check for duplicates only if the key has changed
+    if (editingKey.trim() !== originalKey) {
+      const isDuplicate = labels.some((label, index) => 
+        index !== editingIndex && label.key === editingKey.trim()
+      );
+
+      if (isDuplicate) {
+        toast.error(`Label with key "${editingKey}" already exists`, { duration: 3000 });
+        return;
+      }
+    }
+
+    // If the key changed, mark the old key for deletion (if it was an original label)
+    if (editingKey.trim() !== originalKey) {
+      if (cluster?.labels && cluster.labels[originalKey]) {
+        setDeletedLabels(prev => [...prev, originalKey]);
+      }
+    }
+
+    // Update the label
+    setLabels(prev => 
+      prev.map((label, index) => 
+        index === editingIndex 
+          ? { key: editingKey.trim(), value: editingValue.trim() }
+          : label
+      )
+    );
+
+    // Exit edit mode
+    setEditingIndex(null);
+    setEditingKey('');
+    setEditingValue('');
+
+    toast.success(`Label updated successfully`, { duration: 2000 });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingIndex(null);
+    setEditingKey('');
+    setEditingValue('');
+  };
+
+  const handleEditKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (editingKey && !editingValue && editValueInputRef.current) {
+        // Move to value input
+        editValueInputRef.current.focus();
+        editValueInputRef.current.select();
+      } else if (editingKey && editingValue) {
+        // Save the edit
+        handleSaveEdit();
+      }
+    } else if (e.key === 'Escape') {
+      // Cancel edit
+      handleCancelEdit();
+    }
+  };
+
+  // UPDATE YOUR EXISTING handleSave FUNCTION
   const handleSave = () => {
     if (!cluster) return;
+
+    // If currently editing, cancel the edit first
+    if (editingIndex !== null) {
+      handleCancelEdit();
+    }
 
     setSaving(true);
 
@@ -438,9 +562,9 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
         <div className="mb-6">
           <div className="mb-4 flex items-center justify-between">
             <Typography variant="body2" style={{ color: colors.textSecondary }}>
-              Add or remove labels to organize and categorize your cluster.
+              Add, edit, or remove labels to organize and categorize your cluster.
               <span style={{ color: colors.warning, marginLeft: '4px' }}>
-                🔒 Protected labels cannot be deleted.
+                🔒 Protected labels cannot be modified.
               </span>
             </Typography>
 
@@ -602,18 +726,21 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                 >
                   Enter
                 </span>{' '}
-                to move between fields or add a label
+                to move between fields, or double-click labels to edit them
               </Typography>
             </div>
           </Fade>
 
           <Divider style={{ backgroundColor: colors.border, margin: '16px 0' }} />
 
+          {/* UPDATE THE LABELS DISPLAY SECTION */}
           <div className="max-h-60 overflow-y-auto pr-1">
             {filteredLabels.length > 0 ? (
               <div className="space-y-2">
                 {filteredLabels.map((label, index) => {
                   const isProtected = isLabelProtected(label.key);
+                  const isEditing = editingIndex === index;
+                  
                   return (
                     <Zoom
                       in={true}
@@ -628,76 +755,212 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                               ? isDark
                                 ? 'rgba(47, 134, 255, 0.2)'
                                 : 'rgba(47, 134, 255, 0.1)'
-                              : isDark
-                                ? 'rgba(47, 134, 255, 0.1)'
-                                : 'rgba(47, 134, 255, 0.05)',
-                          border: `1px solid ${selectedLabelIndex === index ? colors.primary : colors.border}`,
+                              : isEditing
+                                ? isDark
+                                  ? 'rgba(103, 192, 115, 0.15)'
+                                  : 'rgba(103, 192, 115, 0.1)'
+                                : isDark
+                                  ? 'rgba(47, 134, 255, 0.1)'
+                                  : 'rgba(47, 134, 255, 0.05)',
+                          border: `1px solid ${
+                            selectedLabelIndex === index 
+                              ? colors.primary 
+                              : isEditing 
+                                ? colors.success
+                                : colors.border
+                          }`,
                           boxShadow:
                             selectedLabelIndex === index
                               ? isDark
                                 ? '0 0 0 1px rgba(47, 134, 255, 0.4)'
                                 : '0 0 0 1px rgba(47, 134, 255, 0.2)'
-                              : 'none',
-                          cursor: 'default',
+                              : isEditing
+                                ? '0 0 0 1px rgba(103, 192, 115, 0.3)'
+                                : 'none',
+                          cursor: isProtected ? 'default' : 'pointer',
                         }}
-                        onClick={() =>
-                          setSelectedLabelIndex(selectedLabelIndex === index ? null : index)
-                        }
+                        onClick={() => {
+                          if (!isProtected && !isEditing) {
+                            setSelectedLabelIndex(selectedLabelIndex === index ? null : index);
+                          }
+                        }}
+                        onDoubleClick={() => {
+                          if (!isProtected && !isEditing) {
+                            handleStartEdit(index);
+                          }
+                        }}
                       >
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-1">
                           {/* Show lock icon for protected labels */}
                           {isProtected ? (
-                            <Tooltip
+                            <Tooltip 
                               title={
                                 label.key.startsWith('cluster.open-cluster-management.io/') ||
                                 label.key.startsWith('feature.open-cluster-management.io/') ||
                                 label.key.startsWith('kubernetes.io/') ||
                                 label.key.startsWith('k8s.io/') ||
                                 label.key === 'name'
-                                  ? 'System label - Cannot be deleted'
-                                  : 'Used in binding policy - Cannot be deleted'
+                                  ? "Default label - Cannot be modified"
+                                  : "Used in binding policy - Cannot be modified"
                               }
                               placement="top"
                             >
-                              <LockIcon
+                              <LockIcon 
                                 fontSize="small"
-                                style={{
-                                  color: colors.warning,
-                                  fontSize: '16px',
-                                }}
+                                style={{ 
+                                  color: colors.warning, 
+                                  fontSize: "16px",
+                                }} 
                               />
                             </Tooltip>
                           ) : (
                             <Tag size={16} style={{ color: colors.primary }} />
                           )}
-                          <span style={{ color: colors.text }}>
-                            <span style={{ fontWeight: 500 }}>{label.key}</span>
-                            <span style={{ color: colors.textSecondary }}> = </span>
-                            <span>{label.value}</span>
-                          </span>
+
+                          {/* Label content - editable if in edit mode */}
+                          {isEditing ? (
+                            <div className="flex items-center gap-2 flex-1">
+                              <TextField
+                                value={editingKey}
+                                onChange={e => setEditingKey(e.target.value)}
+                                onKeyDown={handleEditKeyDown}
+                                inputRef={editKeyInputRef}
+                                size="small"
+                                variant="outlined"
+                                placeholder="Label key"
+                                style={{ minWidth: '120px' }}
+                                InputProps={{
+                                  style: { 
+                                    color: colors.text,
+                                    fontSize: '0.875rem',
+                                  },
+                                }}
+                                sx={{
+                                  '& .MuiOutlinedInput-root': {
+                                    '& fieldset': { borderColor: colors.success },
+                                    '&:hover fieldset': { borderColor: colors.success },
+                                    '&.Mui-focused fieldset': { borderColor: colors.success },
+                                  },
+                                }}
+                              />
+                              <span style={{ color: colors.textSecondary }}>=</span>
+                              <TextField
+                                value={editingValue}
+                                onChange={e => setEditingValue(e.target.value)}
+                                onKeyDown={handleEditKeyDown}
+                                inputRef={editValueInputRef}
+                                size="small"
+                                variant="outlined"
+                                placeholder="Label value"
+                                style={{ minWidth: '120px' }}
+                                InputProps={{
+                                  style: { 
+                                    color: colors.text,
+                                    fontSize: '0.875rem',
+                                  },
+                                }}
+                                sx={{
+                                  '& .MuiOutlinedInput-root': {
+                                    '& fieldset': { borderColor: colors.success },
+                                    '&:hover fieldset': { borderColor: colors.success },
+                                    '&.Mui-focused fieldset': { borderColor: colors.success },
+                                  },
+                                }}
+                              />
+                            </div>
+                          ) : (
+                            <span style={{ color: colors.text }}>
+                              <span style={{ fontWeight: 500 }}>{label.key}</span>
+                              <span style={{ color: colors.textSecondary }}> = </span>
+                              <span>{label.value}</span>
+                            </span>
+                          )}
                         </div>
-                        {!isProtected && (
-                          <Tooltip title="Remove Label">
-                            <IconButton
-                              size="small"
-                              onClick={e => {
-                                e.stopPropagation();
-                                handleRemoveLabel(index);
-                              }}
-                              style={{
-                                color:
-                                  selectedLabelIndex === index
-                                    ? colors.primary
-                                    : colors.textSecondary,
-                                opacity: 0.8,
-                                transition: 'all 0.2s ease',
-                              }}
-                              className="hover:opacity-100"
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        )}
+
+                        {/* Action buttons */}
+                        <div className="flex items-center gap-1">
+                          {isEditing ? (
+                            <>
+                              <Tooltip title="Save changes">
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSaveEdit();
+                                  }}
+                                  style={{ color: colors.success }}
+                                >
+                                  <SaveIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Cancel editing">
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCancelEdit();
+                                  }}
+                                  style={{ color: colors.textSecondary }}
+                                >
+                                  <CloseIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </>
+                          ) : (
+                            <>
+                              {!isProtected && (
+                                <Tooltip title="Edit label">
+                                  <IconButton
+                                    size="small"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleStartEdit(index);
+                                    }}
+                                    style={{
+                                      color: colors.textSecondary,
+                                      opacity: 0.7,
+                                      transition: 'all 0.2s ease',
+                                    }}
+                                    className="opacity-0 group-hover:opacity-100"
+                                  >
+                                    <svg
+                                      width="16"
+                                      height="16"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                      <path d="m18.5 2.5 a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                    </svg>
+                                  </IconButton>
+                                </Tooltip>
+                              )}
+                              {!isProtected && (
+                                <Tooltip title="Delete label">
+                                  <IconButton
+                                    size="small"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleRemoveLabel(index);
+                                    }}
+                                    style={{
+                                      color: colors.error,
+                                      opacity: 0.7,
+                                      transition: 'all 0.2s ease',
+                                    }}
+                                    className="opacity-0 group-hover:opacity-100"
+                                  >
+                                    <DeleteIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
+                            </>
+                          )}
+                        </div>
                       </div>
                     </Zoom>
                   );
@@ -737,6 +1000,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
         </div>
       </DialogContent>
 
+      {/* UPDATE THE DIALOG ACTIONS */}
       <DialogActions
         style={{
           padding: '16px 24px',
@@ -759,15 +1023,15 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
         <Button
           onClick={handleSave}
           variant="contained"
-          disabled={saving}
+          disabled={saving || editingIndex !== null}
           startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
           style={{
-            backgroundColor: colors.primary,
+            backgroundColor: editingIndex !== null ? colors.disabled : colors.primary,
             color: colors.white,
             minWidth: '120px',
           }}
         >
-          {saving ? 'Saving...' : 'Save Changes'}
+          {saving ? 'Saving...' : editingIndex !== null ? 'Finish Editing' : 'Save Changes'}
         </Button>
       </DialogActions>
     </Dialog>
@@ -1794,7 +2058,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                     <ListItemIcon>
                       <PostAddIcon fontSize="small" style={{ color: colors.primary }} />
                     </ListItemIcon>
-                    <ListItemText>Add Labels</ListItemText>
+                    <ListItemText>Bulk Labels</ListItemText>
                   </MenuItem>
                 </Menu>
               </div>
