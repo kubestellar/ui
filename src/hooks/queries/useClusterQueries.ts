@@ -275,7 +275,7 @@ export const useClusterQueries = () => {
 
         // Combine labels with deleted labels as empty values
         const finalLabels = { ...labels };
-        
+
         if (deletedLabels && deletedLabels.length > 0) {
           console.log('[DEBUG] Adding deleted labels as empty values:', deletedLabels);
           deletedLabels.forEach(key => {

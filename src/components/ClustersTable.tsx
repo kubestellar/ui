@@ -1,9 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-} from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Button,
   Checkbox,
@@ -101,8 +96,8 @@ interface LabelEditDialogProps {
   onClose: () => void;
   cluster: ManagedClusterInfo | null;
   onSave: (
-    clusterName: string, 
-    contextName: string, 
+    clusterName: string,
+    contextName: string,
     labels: { [key: string]: string },
     deletedLabels?: string[] // Add this parameter
   ) => void;
@@ -214,7 +209,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
 
   const handleRemoveLabel = (index: number) => {
     const labelToRemove = labels[index];
-    
+
     // If this was an original label, mark it for deletion
     if (cluster?.labels && cluster.labels[labelToRemove.key]) {
       console.log('[DEBUG] Adding to deleted labels:', labelToRemove.key);
@@ -224,7 +219,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
         return newDeleted;
       });
     }
-    
+
     setLabels(labels.filter((_, i) => i !== index));
     toast.success(`Removed label: ${labelToRemove.key}`);
   };
@@ -1110,18 +1105,18 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
         }
 
         try {
-           const finalLabels = { ...labels };
-        if (deletedLabels) {
-          deletedLabels.forEach(key => {
-            finalLabels[key] = ''; // Empty value indicates deletion
+          const finalLabels = { ...labels };
+          if (deletedLabels) {
+            deletedLabels.forEach(key => {
+              finalLabels[key] = ''; // Empty value indicates deletion
+            });
+          }
+          await updateLabelsMutation.mutateAsync({
+            contextName: getClusterContext(cluster),
+            clusterName: cluster.name,
+            labels: finalLabels, // Use finalLabels which includes deletions
+            deletedLabels, // Pass deleted labels for the mutation
           });
-        }
-    await updateLabelsMutation.mutateAsync({
-          contextName: getClusterContext(cluster),
-          clusterName: cluster.name,
-          labels: finalLabels, // Use finalLabels which includes deletions
-          deletedLabels, // Pass deleted labels for the mutation
-        });
 
           successCount++;
           // Add a small delay between requests
@@ -2093,7 +2088,6 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                             style={{
                               color: colors.textSecondary,
                               backgroundColor: isDark
-
                                 ? 'rgba(47, 134, 255, 0.08)'
                                 : 'rgba(47, 134,255, 0.05)',
                             }}
@@ -2128,30 +2122,48 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                               },
                             }}
                           >
-                            <MenuItem onClick={() => handleViewDetails(cluster)} sx={{ color: colors.text }}>
+                            <MenuItem
+                              onClick={() => handleViewDetails(cluster)}
+                              sx={{ color: colors.text }}
+                            >
                               <ListItemIcon>
-                                <VisibilityIcon fontSize="small" style={{ color: colors.primary }} />
+                                <VisibilityIcon
+                                  fontSize="small"
+                                  style={{ color: colors.primary }}
+                                />
                               </ListItemIcon>
                               <ListItemText>View Details</ListItemText>
                             </MenuItem>
-                            
-                            <MenuItem onClick={() => handleEditLabels(cluster)} sx={{ color: colors.text }}>
+
+                            <MenuItem
+                              onClick={() => handleEditLabels(cluster)}
+                              sx={{ color: colors.text }}
+                            >
                               <ListItemIcon>
                                 <LabelIcon fontSize="small" style={{ color: colors.primary }} />
                               </ListItemIcon>
                               <ListItemText>Edit Labels</ListItemText>
                             </MenuItem>
-                            
-                            <MenuItem onClick={() => handleCopyName(cluster.name)} sx={{ color: colors.text }}>
+
+                            <MenuItem
+                              onClick={() => handleCopyName(cluster.name)}
+                              sx={{ color: colors.text }}
+                            >
                               <ListItemIcon>
-                                <ContentCopyIcon fontSize="small" style={{ color: colors.primary }} />
+                                <ContentCopyIcon
+                                  fontSize="small"
+                                  style={{ color: colors.primary }}
+                                />
                               </ListItemIcon>
                               <ListItemText>Copy Name</ListItemText>
                             </MenuItem>
-                            
+
                             <Divider />
-                            
-                            <MenuItem onClick={() => handleDetachCluster(cluster)} sx={{ color: colors.error }}>
+
+                            <MenuItem
+                              onClick={() => handleDetachCluster(cluster)}
+                              sx={{ color: colors.error }}
+                            >
                               <ListItemIcon>
                                 <LinkOffIcon fontSize="small" style={{ color: colors.error }} />
                               </ListItemIcon>
