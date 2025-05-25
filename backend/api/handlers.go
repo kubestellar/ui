@@ -4,20 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/k8s"
-	"github.com/kubestellar/ui/models"
 	"io"
-	certificatesv1 "k8s.io/api/certificates/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured" // Add this import
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"log"
 	"net/http"
 	"os"
@@ -27,12 +14,35 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/kubestellar/ui/k8s"
+	"github.com/kubestellar/ui/models"
+	"github.com/kubestellar/ui/wds/bp"
+	certificatesv1 "k8s.io/api/certificates/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
 var (
 	clusterStatuses = make(map[string]string)
 	mutex           sync.RWMutex
 )
+
+// LabelUpdateResult holds the result of label operations
+type LabelUpdateResult struct {
+	Added     []string `json:"added"`
+	Modified  []string `json:"modified"`
+	Deleted   []string `json:"deleted"`
+	Protected []string `json:"protected"`
+}
 
 // OnboardClusterHandler handles HTTP requests to onboard a new cluster
 func OnboardClusterHandler(c *gin.Context) {
@@ -447,89 +457,46 @@ func GetClusterStatusHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, statuses)
 }
 
-// UpdateManagedClusterLabelsHandler updates labels for a managed cluster
 func UpdateManagedClusterLabelsHandler(c *gin.Context) {
-	log.Printf("[DEBUG] ========== HANDLER START ==========")
-	log.Printf("[DEBUG] Method: %s", c.Request.Method)
-	log.Printf("[DEBUG] Path: %s", c.Request.URL.Path)
-	log.Printf("[DEBUG] Content-Type: %s", c.GetHeader("Content-Type"))
-
 	var req struct {
-		ContextName     string            `json:"contextName"`
-		ClusterName     string            `json:"clusterName"`
-		ClusterNames    []string          `json:"clusterNames"`
-		Labels          map[string]string `json:"labels"`
-		IsBulkOperation bool              `json:"isBulkOperation"`
+		ContextName  string            `json:"contextName"`
+		ClusterName  string            `json:"clusterName"`
+		ClusterNames []string          `json:"clusterNames"`
+		Labels       map[string]string `json:"labels"`
 	}
-
-	// Read the raw body for debugging
-	bodyBytes, err := io.ReadAll(c.Request.Body)
-	if err != nil {
-		log.Printf("[ERROR] Failed to read request body: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read request body"})
-		return
-	}
-
-	log.Printf("[DEBUG] Raw request body: %s", string(bodyBytes))
-
-	// Recreate the request body for binding
-	c.Request.Body = io.NopCloser(strings.NewReader(string(bodyBytes)))
 
 	if err := c.BindJSON(&req); err != nil {
-		log.Printf("[ERROR] Failed to bind JSON: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
 		return
 	}
 
-	log.Printf("[DEBUG] Parsed request - Context: %s, Cluster: %s", req.ContextName, req.ClusterName)
-	log.Printf("[DEBUG] Parsed labels: %+v", req.Labels)
-
-	// Count how many labels have empty values (these are deletions)
-	emptyCount := 0
-	for key, value := range req.Labels {
-		if value == "" {
-			emptyCount++
-			log.Printf("[DEBUG] Found deletion request for label: %s", key)
-		}
-	}
-	log.Printf("[DEBUG] Total labels to delete: %d", emptyCount)
-
-	// Handle single cluster operation
+	// Validate required fields
 	if req.ContextName == "" || req.ClusterName == "" {
-		log.Printf("[ERROR] Missing required fields - Context: %s, Cluster: %s", req.ContextName, req.ClusterName)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "contextName and clusterName are required"})
 		return
 	}
 
-	log.Printf("[DEBUG] Getting clientset for context: %s", req.ContextName)
 	clientset, restConfig, err := k8s.GetClientSetWithConfigContext(req.ContextName)
 	if err != nil {
-		log.Printf("[ERROR] Failed to get clientset: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get Kubernetes client"})
 		return
 	}
 
-	log.Printf("[DEBUG] Updating labels for cluster: %s", req.ClusterName)
 	err = UpdateManagedClusterLabels(clientset, restConfig, req.ClusterName, req.Labels)
 	if err != nil {
-		log.Printf("[ERROR] Failed to update cluster labels: %v", err)
-
-		// Check if this is a partial success error
+		// Handle partial success
 		if strings.Contains(err.Error(), "PARTIAL_SUCCESS:") {
 			message := strings.Replace(err.Error(), "PARTIAL_SUCCESS: ", "", 1)
-			log.Printf("[WARNING] Returning partial success to frontend: %s", message)
-			// Return 400 status with PARTIAL_SUCCESS prefix so frontend can detect it
 			c.JSON(http.StatusBadRequest, gin.H{"error": "PARTIAL_SUCCESS: " + message})
 			return
 		}
-
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to update cluster labels: %v", err)})
 		return
 	}
 
-	log.Printf("[DEBUG] Successfully updated labels for cluster: %s", req.ClusterName)
-	c.JSON(http.StatusOK, gin.H{"message": "Cluster labels updated successfully"})
-	log.Printf("[DEBUG] ========== HANDLER END ==========")
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Cluster labels updated successfully",
+	})
 }
 
 // OnboardCluster handles the entire process of onboarding a cluster
@@ -934,25 +901,17 @@ func joinClusterToHub(kubeconfigPath, clusterName, joinToken string) error {
 	return nil
 }
 
-// UpdateManagedClusterLabels with dynamic binding policy protection
+// UpdateManagedClusterLabels - Optimized version
 func UpdateManagedClusterLabels(clientset *kubernetes.Clientset, config *rest.Config, clusterName string, newLabels map[string]string) error {
-	log.Printf("[DEBUG] ========== UpdateManagedClusterLabels ==========")
-	log.Printf("[DEBUG] Cluster: %s", clusterName)
-	log.Printf("[DEBUG] Received labels: %+v", newLabels)
-
-	// Get binding policies to check which labels are in use
-	bindingPolicyLabels, err := getLabelsUsedInBindingPolicies()
+	// Get binding policy protected labels once
+	protectedLabels, err := getProtectedLabels()
 	if err != nil {
-		log.Printf("[WARNING] Could not fetch binding policy labels: %v", err)
-		// Continue with empty set - will fall back to system protection only
-		bindingPolicyLabels = make(map[string]bool)
+		log.Printf("[WARNING] Could not fetch protected labels: %v", err)
+		protectedLabels = make(map[string]bool)
 	}
-
-	log.Printf("[DEBUG] Binding policy labels found: %+v", bindingPolicyLabels)
 
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
-		log.Printf("[ERROR] Failed to create dynamic client: %v", err)
 		return fmt.Errorf("failed to create dynamic client: %v", err)
 	}
 
@@ -965,7 +924,6 @@ func UpdateManagedClusterLabels(clientset *kubernetes.Clientset, config *rest.Co
 	// Get current cluster
 	currentCluster, err := dynamicClient.Resource(gvr).Get(context.TODO(), clusterName, metav1.GetOptions{})
 	if err != nil {
-		log.Printf("[ERROR] Failed to get managed cluster %s: %v", clusterName, err)
 		return fmt.Errorf("failed to get managed cluster %s: %v", clusterName, err)
 	}
 
@@ -974,15 +932,110 @@ func UpdateManagedClusterLabels(clientset *kubernetes.Clientset, config *rest.Co
 	if labels, found, err := unstructured.NestedStringMap(currentCluster.Object, "metadata", "labels"); err == nil && found {
 		currentLabels = labels
 	}
-	log.Printf("[DEBUG] Current cluster labels: %+v", currentLabels)
 
-	// Create final labels map - start with current labels
+	// Process label changes - FIX: Use two variables to capture both return values
+	finalLabels, protectedOps := processLabelChanges(currentLabels, newLabels, protectedLabels)
+
+	// Apply changes - FIX: Use finalLabels directly
+	err = applyLabelChanges(dynamicClient, gvr, clusterName, finalLabels)
+	if err != nil {
+		return fmt.Errorf("failed to apply label changes: %v", err)
+	}
+
+	// Return error if there were protected operations - FIX: Use protectedOps
+	if len(protectedOps) > 0 {
+		return fmt.Errorf("PARTIAL_SUCCESS: Cannot modify protected labels: %s", strings.Join(protectedOps, ", "))
+	}
+
+	return nil
+}
+
+// processLabelChanges handles the logic of determining what can be changed
+func processLabelChanges(currentLabels, newLabels map[string]string, protectedLabels map[string]bool) (map[string]string, []string) {
+	log.Printf("[DEBUG] === processLabelChanges START ===")
+	log.Printf("[DEBUG] Current labels: %+v", currentLabels)
+	log.Printf("[DEBUG] New labels: %+v", newLabels)
+	log.Printf("[DEBUG] Protected labels from BP: %+v", protectedLabels)
+
 	finalLabels := make(map[string]string)
+	protectedOps := []string{}
+
+	// Start with current labels
 	for k, v := range currentLabels {
 		finalLabels[k] = v
 	}
 
-	// Preserve system labels that shouldn't be removed
+	// Process each new label operation
+	for key, value := range newLabels {
+		currentValue, exists := currentLabels[key]
+		isProtected := isLabelProtected(key, protectedLabels)
+
+		log.Printf("[DEBUG] Processing label %s: value='%s', exists=%v, protected=%v", key, value, exists, isProtected)
+
+		if value == "" {
+			// Deletion request
+			if !exists {
+				log.Printf("[DEBUG] Label %s doesn't exist, skipping deletion", key)
+				continue // Nothing to delete
+			}
+
+			if isProtected {
+				log.Printf("[DEBUG] BLOCKING deletion of protected label: %s", key)
+				protectedOps = append(protectedOps, key)
+				// Keep the original value
+				finalLabels[key] = currentValue
+			} else {
+				log.Printf("[DEBUG] ALLOWING deletion of label: %s", key)
+				delete(finalLabels, key)
+			}
+		} else {
+			// Addition or modification
+			if !exists {
+				// New label
+				if isProtected {
+					log.Printf("[DEBUG] BLOCKING addition of protected label: %s", key)
+					protectedOps = append(protectedOps, key)
+					// Don't add protected labels
+				} else {
+					log.Printf("[DEBUG] ALLOWING addition of label: %s = %s", key, value)
+					finalLabels[key] = value
+				}
+			} else if currentValue != value {
+				// Modification
+				if isProtected {
+					log.Printf("[DEBUG] BLOCKING modification of protected label: %s (keeping %s)", key, currentValue)
+					protectedOps = append(protectedOps, key)
+					// Keep original value
+					finalLabels[key] = currentValue
+				} else {
+					log.Printf("[DEBUG] ALLOWING modification of label: %s = %s (was %s)", key, value, currentValue)
+					finalLabels[key] = value
+				}
+			} else {
+				log.Printf("[DEBUG] Label %s unchanged: %s", key, value)
+			}
+			// If value is same as current, no change needed
+		}
+	}
+
+	log.Printf("[DEBUG] Final labels: %+v", finalLabels)
+	log.Printf("[DEBUG] Protected operations: %+v", protectedOps)
+	log.Printf("[DEBUG] === processLabelChanges END ===")
+
+	return finalLabels, protectedOps
+}
+
+// isLabelProtected checks if a label is protected (with debug logging)
+func isLabelProtected(key string, protectedLabels map[string]bool) bool {
+	log.Printf("[DEBUG] Checking protection for label: %s", key)
+
+	// Check binding policy protection
+	if protectedLabels[key] {
+		log.Printf("[DEBUG] Label %s is protected by binding policy", key)
+		return true
+	}
+
+	// Check system label prefixes
 	systemPrefixes := []string{
 		"cluster.open-cluster-management.io/",
 		"feature.open-cluster-management.io/",
@@ -994,85 +1047,19 @@ func UpdateManagedClusterLabels(clientset *kubernetes.Clientset, config *rest.Co
 		"node-role.kubernetes.io/",
 	}
 
-	// Function to check if a label is protected
-	isLabelProtected := func(key string) (bool, string) {
-		// Check system label prefixes
-		for _, prefix := range systemPrefixes {
-			if strings.HasPrefix(key, prefix) {
-				return true, "system"
-			}
-		}
-
-		// Check if label is used in binding policies
-		if bindingPolicyLabels[key] {
-			log.Printf("[DEBUG] Label %s is protected by binding policy", key)
-			return true, "binding-policy"
-		}
-
-		return false, ""
-	}
-
-	// Track what actually happened for better error reporting
-	protectedDeletions := []string{}
-	protectedModifications := []string{}
-	successfulDeletions := []string{}
-	successfulAdditions := []string{}
-
-	// Process new labels
-	for key, value := range newLabels {
-		if value != "" {
-			// Adding/updating label
-			protected, reason := isLabelProtected(key)
-
-			if protected && currentLabels[key] != value {
-				protectedModifications = append(protectedModifications, fmt.Sprintf("%s (%s)", key, reason))
-				log.Printf("[WARNING] Attempt to modify %s label blocked: %s", reason, key)
-				// Keep the original value for protected labels
-				if originalValue, exists := currentLabels[key]; exists {
-					finalLabels[key] = originalValue
-				} else {
-					// If it's a new protected label, don't add it
-					delete(finalLabels, key)
-				}
-			} else {
-				finalLabels[key] = value
-				successfulAdditions = append(successfulAdditions, key)
-				log.Printf("[DEBUG] Adding/updating label: %s = %s", key, value)
-			}
-		} else {
-			// Deletion attempt (empty value)
-			protected, reason := isLabelProtected(key)
-
-			if protected {
-				protectedDeletions = append(protectedDeletions, fmt.Sprintf("%s (%s)", key, reason))
-				log.Printf("[WARNING] Attempt to delete %s label blocked: %s", reason, key)
-				// Preserve the original value - DO NOT DELETE
-				if originalValue, exists := currentLabels[key]; exists {
-					finalLabels[key] = originalValue
-					log.Printf("[DEBUG] Preserved %s label: %s = %s", reason, key, originalValue)
-				}
-			} else {
-				successfulDeletions = append(successfulDeletions, key)
-				log.Printf("[DEBUG] DELETING non-protected label: %s", key)
-				// Remove from finalLabels
-				delete(finalLabels, key)
-			}
+	for _, prefix := range systemPrefixes {
+		if strings.HasPrefix(key, prefix) {
+			log.Printf("[DEBUG] Label %s is protected by system prefix: %s", key, prefix)
+			return true
 		}
 	}
 
-	log.Printf("[DEBUG] Summary - Added/Updated: %v, Deleted: %v, Protected deletions: %v, Protected modifications: %v",
-		successfulAdditions, successfulDeletions, protectedDeletions, protectedModifications)
-	log.Printf("[DEBUG] Final labels to apply: %+v", finalLabels)
+	log.Printf("[DEBUG] Label %s is NOT protected", key)
+	return false
+}
 
-	// Double-check: Ensure all binding policy labels are preserved
-	for labelKey := range bindingPolicyLabels {
-		if originalValue, exists := currentLabels[labelKey]; exists {
-			finalLabels[labelKey] = originalValue
-			log.Printf("[DEBUG] Force-preserved binding policy label: %s = %s", labelKey, originalValue)
-		}
-	}
-
-	// Create a JSON patch that replaces the entire labels object
+// applyLabelChanges applies the final label state to the cluster
+func applyLabelChanges(dynamicClient dynamic.Interface, gvr schema.GroupVersionResource, clusterName string, finalLabels map[string]string) error {
 	patches := []map[string]interface{}{
 		{
 			"op":    "replace",
@@ -1083,13 +1070,9 @@ func UpdateManagedClusterLabels(clientset *kubernetes.Clientset, config *rest.Co
 
 	patchBytes, err := json.Marshal(patches)
 	if err != nil {
-		log.Printf("[ERROR] Failed to marshal patch: %v", err)
 		return fmt.Errorf("failed to marshal patch: %v", err)
 	}
 
-	log.Printf("[DEBUG] JSON Patch: %s", string(patchBytes))
-
-	// Apply the JSON patch
 	_, err = dynamicClient.Resource(gvr).Patch(
 		context.TODO(),
 		clusterName,
@@ -1098,53 +1081,38 @@ func UpdateManagedClusterLabels(clientset *kubernetes.Clientset, config *rest.Co
 		metav1.PatchOptions{},
 	)
 
+	return err
+}
+
+// getProtectedLabels fetches and caches protected labels from binding policies
+var (
+	protectedLabelsCache map[string]bool
+	cacheLastUpdated     time.Time
+	cacheMutex           sync.RWMutex
+	cacheExpiry          = 5 * time.Minute
+)
+
+func getProtectedLabels() (map[string]bool, error) {
+	cacheMutex.RLock()
+	if protectedLabelsCache != nil && time.Since(cacheLastUpdated) < cacheExpiry {
+		defer cacheMutex.RUnlock()
+		return protectedLabelsCache, nil
+	}
+	cacheMutex.RUnlock()
+
+	// Fetch fresh data
+	labels, err := getLabelsUsedInBindingPolicies()
 	if err != nil {
-		log.Printf("[ERROR] Patch failed: %v", err)
-		return fmt.Errorf("failed to patch managed cluster %s: %v", clusterName, err)
+		return make(map[string]bool), err
 	}
 
-	log.Printf("[DEBUG] Patch successful!")
+	// Update cache
+	cacheMutex.Lock()
+	protectedLabelsCache = labels
+	cacheLastUpdated = time.Now()
+	cacheMutex.Unlock()
 
-	// **THIS IS THE CRITICAL PART THAT WAS MISSING**
-	// Return an error if there were protected operations that were blocked
-	if len(protectedDeletions) > 0 || len(protectedModifications) > 0 {
-		var errorParts []string
-
-		if len(protectedDeletions) > 0 {
-			// Extract just the label names without the (binding-policy) or (system) suffix
-			var labelNames []string
-			for _, protectedLabel := range protectedDeletions {
-				// Extract just the label name before the parentheses
-				parts := strings.Split(protectedLabel, " (")
-				if len(parts) > 0 {
-					labelNames = append(labelNames, parts[0])
-				}
-			}
-			errorParts = append(errorParts, fmt.Sprintf("Cannot delete protected labels: %s", strings.Join(labelNames, ", ")))
-		}
-
-		if len(protectedModifications) > 0 {
-			var labelNames []string
-			for _, protectedLabel := range protectedModifications {
-				parts := strings.Split(protectedLabel, " (")
-				if len(parts) > 0 {
-					labelNames = append(labelNames, parts[0])
-				}
-			}
-			errorParts = append(errorParts, fmt.Sprintf("Cannot modify protected labels: %s", strings.Join(labelNames, ", ")))
-		}
-
-		errorMessage := strings.Join(errorParts, "; ")
-
-		log.Printf("[WARNING] Returning partial success error: %s", errorMessage)
-		// ADD THE MISSING PARTIAL_SUCCESS PREFIX:
-		return fmt.Errorf("PARTIAL_SUCCESS: %s", errorMessage)
-	}
-
-	log.Printf("[DEBUG] Successfully updated labels for cluster: %s", clusterName)
-	log.Printf("[DEBUG] ========== End UpdateManagedClusterLabels ==========")
-
-	return nil
+	return labels, nil
 }
 
 // getLabelsUsedInBindingPolicies fetches labels used in binding policies
@@ -1154,14 +1122,9 @@ func getLabelsUsedInBindingPolicies() (map[string]bool, error) {
 	usedLabels := make(map[string]bool)
 
 	// Make HTTP request to get binding policies
-	resp, err := http.Get("http://localhost:4000/api/bp")
+	resp, err := bp.GetBindingPolicies("")
 	if err != nil {
 		return usedLabels, fmt.Errorf("failed to fetch binding policies: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return usedLabels, fmt.Errorf("binding policies API returned status %d", resp.StatusCode)
 	}
 
 	var response struct {
@@ -1181,7 +1144,13 @@ func getLabelsUsedInBindingPolicies() (map[string]bool, error) {
 		} `json:"bindingPolicies"`
 	}
 
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+	// Convert the slice of maps to JSON bytes, then unmarshal into our struct
+	jsonData, err := json.Marshal(map[string]interface{}{"bindingPolicies": resp})
+	if err != nil {
+		return usedLabels, fmt.Errorf("failed to marshal binding policies: %v", err)
+	}
+
+	if err := json.Unmarshal(jsonData, &response); err != nil {
 		return usedLabels, fmt.Errorf("failed to decode binding policies response: %v", err)
 	}
 

@@ -50,7 +50,8 @@ type BindingPolicyWithStatus struct {
 }
 
 // GetAllBp retrieves all BindingPolicies with enhanced information
-func GetAllBp(ctx *gin.Context) {
+// GetBindingPolicies retrieves all BindingPolicies with enhanced information
+func GetBindingPolicies(namespace string) ([]map[string]interface{}, error) {
 	log.LogDebug("retrieving all binding policies")
 	log.LogDebug("Using wds context: ", zap.String("wds_context", os.Getenv("wds_context")))
 
@@ -79,41 +80,28 @@ func GetAllBp(ctx *gin.Context) {
 		}
 
 		// Filter by namespace if specified
-		namespace := ctx.Query("namespace")
 		if namespace != "" {
-			filteredBPs, count := filterBPsByNamespace(responseArray, namespace)
-			ctx.JSON(http.StatusOK, gin.H{
-				"bindingPolicies": filteredBPs,
-				"count":           count,
-			})
-			return
+			filteredBPs, _ := filterBPsByNamespace(responseArray, namespace)
+			return filteredBPs.([]map[string]interface{}), nil
 		}
 
-		ctx.JSON(http.StatusOK, gin.H{
-			"bindingPolicies": responseArray,
-			"count":           len(responseArray),
-		})
-		return
+		return responseArray, nil
 	}
 
 	// If cache miss or error, proceed with normal flow
 	c, err := getClientForBp()
 	if err != nil {
 		log.LogError("failed to create client for Bp", zap.String("error", err.Error()))
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		return nil, err
 	}
 
-	// Optional namespace filter
-	namespace := ctx.Query("namespace")
 	listOptions := v1.ListOptions{}
 
 	// Get all binding policies
 	bpList, err := c.BindingPolicies().List(context.TODO(), listOptions)
 	if err != nil {
 		log.LogError("failed to list binding policies", zap.Error(err))
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		return nil, err
 	}
 
 	// Create a slice to hold the enhanced binding policies
@@ -479,15 +467,11 @@ func GetAllBp(ctx *gin.Context) {
 	// Filter by namespace if specified
 	if namespace != "" {
 		log.LogDebug("filtering by namespace", zap.String("namespace", namespace))
-		filteredBPs, count := filterBPsByNamespace(bpsWithStatus, namespace)
-		ctx.JSON(http.StatusOK, gin.H{
-			"bindingPolicies": filteredBPs,
-			"count":           count,
-		})
-		return
+		filteredBPs, _ := filterBPsByNamespace(bpsWithStatus, namespace)
+		bpsWithStatus = filteredBPs.([]BindingPolicyWithStatus)
 	}
 
-	// Before sending the response, ensure each policy has proper clustersCount and workloadsCount
+	// Convert each binding policy to a map
 	responseArray := make([]map[string]interface{}, len(bpsWithStatus))
 	for i, bp := range bpsWithStatus {
 		// Convert each binding policy to a map for customization
@@ -517,11 +501,6 @@ func GetAllBp(ctx *gin.Context) {
 		responseArray[i] = policyMap
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"bindingPolicies": responseArray,
-		"count":           len(responseArray),
-	})
-
 	// After getting policies from Kubernetes, store them in Redis
 	for _, bp := range bpsWithStatus {
 		cachedPolicy := &redis.BindingPolicyCache{
@@ -539,6 +518,27 @@ func GetAllBp(ctx *gin.Context) {
 			log.LogWarn("failed to cache binding policy", zap.Error(err))
 		}
 	}
+
+	return responseArray, nil
+}
+
+// GetAllBp is the API handler for retrieving all binding policies
+func GetAllBp(ctx *gin.Context) {
+	// Optional namespace filter
+	namespace := ctx.Query("namespace")
+
+	// Call the core function to get binding policies
+	bpolicies, err := GetBindingPolicies(namespace)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Return the binding policies
+	ctx.JSON(http.StatusOK, gin.H{
+		"bindingPolicies": bpolicies,
+		"count":           len(bpolicies),
+	})
 }
 
 // CreateBp creates a new BindingPolicy
