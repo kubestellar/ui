@@ -13,7 +13,7 @@ import (
 	"strings"
 	"sync"
 	"time"
-
+    "regexp"
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/k8s"
 	"github.com/kubestellar/ui/models"
@@ -504,21 +504,32 @@ func UpdateManagedClusterLabelsHandler(c *gin.Context) {
     log.Printf("[DEBUG] Getting clientset for context: %s", req.ContextName)
     clientset, restConfig, err := k8s.GetClientSetWithConfigContext(req.ContextName)
     if err != nil {
-        log.Printf("[ERROR] %v", err)
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        log.Printf("[ERROR] Failed to get clientset: %v", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get Kubernetes client"})
         return
     }
 
-    log.Printf("[DEBUG] Calling UpdateManagedClusterLabels...")
-    if err := UpdateManagedClusterLabels(clientset, restConfig, req.ClusterName, req.Labels); err != nil {
-        log.Printf("[ERROR] Error updating labels: %v", err)
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+    log.Printf("[DEBUG] Updating labels for cluster: %s", req.ClusterName)
+    err = UpdateManagedClusterLabels(clientset, restConfig, req.ClusterName, req.Labels)
+    if err != nil {
+        log.Printf("[ERROR] Failed to update cluster labels: %v", err)
+        
+        // Check if this is a partial success error
+        if strings.Contains(err.Error(), "PARTIAL_SUCCESS:") {
+            message := strings.Replace(err.Error(), "PARTIAL_SUCCESS: ", "", 1)
+            log.Printf("[WARNING] Returning partial success to frontend: %s", message)
+            // Return 400 status with PARTIAL_SUCCESS prefix so frontend can detect it
+            c.JSON(http.StatusBadRequest, gin.H{"error": "PARTIAL_SUCCESS: " + message})
+            return
+        }
+        
+        c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to update cluster labels: %v", err)})
         return
     }
 
-    log.Printf("[SUCCESS] Labels updated successfully for cluster: %s", req.ClusterName)
+    log.Printf("[DEBUG] Successfully updated labels for cluster: %s", req.ClusterName)
+    c.JSON(http.StatusOK, gin.H{"message": "Cluster labels updated successfully"})
     log.Printf("[DEBUG] ========== HANDLER END ==========")
-    c.JSON(http.StatusOK, gin.H{"message": "Labels updated successfully"})
 }
 
 // OnboardCluster handles the entire process of onboarding a cluster
@@ -923,11 +934,21 @@ func joinClusterToHub(kubeconfigPath, clusterName, joinToken string) error {
 	return nil
 }
 
-// UpdateManagedClusterLabels updates labels for a managed cluster
+// UpdateManagedClusterLabels with dynamic binding policy protection
 func UpdateManagedClusterLabels(clientset *kubernetes.Clientset, config *rest.Config, clusterName string, newLabels map[string]string) error {
     log.Printf("[DEBUG] ========== UpdateManagedClusterLabels ==========")
     log.Printf("[DEBUG] Cluster: %s", clusterName)
     log.Printf("[DEBUG] Received labels: %+v", newLabels)
+
+    // Get binding policies to check which labels are in use
+    bindingPolicyLabels, err := getLabelsUsedInBindingPolicies()
+    if err != nil {
+        log.Printf("[WARNING] Could not fetch binding policy labels: %v", err)
+        // Continue with empty set - will fall back to system protection only
+        bindingPolicyLabels = make(map[string]bool)
+    }
+
+    log.Printf("[DEBUG] Binding policy labels found: %+v", bindingPolicyLabels)
 
     dynamicClient, err := dynamic.NewForConfig(config)
     if err != nil {
@@ -955,8 +976,11 @@ func UpdateManagedClusterLabels(clientset *kubernetes.Clientset, config *rest.Co
     }
     log.Printf("[DEBUG] Current cluster labels: %+v", currentLabels)
 
-    // Create final labels map
+    // Create final labels map - start with current labels
     finalLabels := make(map[string]string)
+    for k, v := range currentLabels {
+        finalLabels[k] = v
+    }
 
     // Preserve system labels that shouldn't be removed
     systemPrefixes := []string{
@@ -970,43 +994,84 @@ func UpdateManagedClusterLabels(clientset *kubernetes.Clientset, config *rest.Co
         "node-role.kubernetes.io/",
     }
 
-    // First, preserve all system labels from current labels
-    for key, value := range currentLabels {
-        isSystem := false
+    // Function to check if a label is protected
+    isLabelProtected := func(key string) (bool, string) {
+        // Check system label prefixes
         for _, prefix := range systemPrefixes {
             if strings.HasPrefix(key, prefix) {
-                isSystem = true
-                break
+                return true, "system"
             }
         }
-        if isSystem {
-            finalLabels[key] = value
-            log.Printf("[DEBUG] Preserving system label: %s = %s", key, value)
+        
+        // Check if label is used in binding policies
+        if bindingPolicyLabels[key] {
+            log.Printf("[DEBUG] Label %s is protected by binding policy", key)
+            return true, "binding-policy"
         }
+        
+        return false, ""
     }
 
-    // Count deletions for debugging
-    deletionCount := 0
-    additionCount := 0
+    // Track what actually happened for better error reporting
+    protectedDeletions := []string{}
+    protectedModifications := []string{}
+    successfulDeletions := []string{}
+    successfulAdditions := []string{}
 
-    // Add new labels (skip empty values - these are deletions)
+    // Process new labels
     for key, value := range newLabels {
         if value != "" {
-            finalLabels[key] = value
-            additionCount++
-            log.Printf("[DEBUG] Adding/updating label: %s = %s", key, value)
+            // Adding/updating label
+            protected, reason := isLabelProtected(key)
+            
+            if protected && currentLabels[key] != value {
+                protectedModifications = append(protectedModifications, fmt.Sprintf("%s (%s)", key, reason))
+                log.Printf("[WARNING] Attempt to modify %s label blocked: %s", reason, key)
+                // Keep the original value for protected labels
+                if originalValue, exists := currentLabels[key]; exists {
+                    finalLabels[key] = originalValue
+                } else {
+                    // If it's a new protected label, don't add it
+                    delete(finalLabels, key)
+                }
+            } else {
+                finalLabels[key] = value
+                successfulAdditions = append(successfulAdditions, key)
+                log.Printf("[DEBUG] Adding/updating label: %s = %s", key, value)
+            }
         } else {
-            deletionCount++
-            log.Printf("[DEBUG] DELETING label (empty value): %s", key)
-            // Explicitly ensure this label is not in finalLabels
-            delete(finalLabels, key)
+            // Deletion attempt (empty value)
+            protected, reason := isLabelProtected(key)
+            
+            if protected {
+                protectedDeletions = append(protectedDeletions, fmt.Sprintf("%s (%s)", key, reason))
+                log.Printf("[WARNING] Attempt to delete %s label blocked: %s", reason, key)
+                // Preserve the original value - DO NOT DELETE
+                if originalValue, exists := currentLabels[key]; exists {
+                    finalLabels[key] = originalValue
+                    log.Printf("[DEBUG] Preserved %s label: %s = %s", reason, key, originalValue)
+                }
+            } else {
+                successfulDeletions = append(successfulDeletions, key)
+                log.Printf("[DEBUG] DELETING non-protected label: %s", key)
+                // Remove from finalLabels
+                delete(finalLabels, key)
+            }
         }
     }
 
-    log.Printf("[DEBUG] Summary: %d labels to add/update, %d labels to delete", additionCount, deletionCount)
+    log.Printf("[DEBUG] Summary - Added/Updated: %v, Deleted: %v, Protected deletions: %v, Protected modifications: %v", 
+        successfulAdditions, successfulDeletions, protectedDeletions, protectedModifications)
     log.Printf("[DEBUG] Final labels to apply: %+v", finalLabels)
 
-    // **KEY CHANGE**: Use JSON Patch instead of Merge Patch for reliable label updates
+    // Double-check: Ensure all binding policy labels are preserved
+    for labelKey := range bindingPolicyLabels {
+        if originalValue, exists := currentLabels[labelKey]; exists {
+            finalLabels[labelKey] = originalValue
+            log.Printf("[DEBUG] Force-preserved binding policy label: %s = %s", labelKey, originalValue)
+        }
+    }
+
     // Create a JSON patch that replaces the entire labels object
     patches := []map[string]interface{}{
         {
@@ -1025,10 +1090,10 @@ func UpdateManagedClusterLabels(clientset *kubernetes.Clientset, config *rest.Co
     log.Printf("[DEBUG] JSON Patch: %s", string(patchBytes))
 
     // Apply the JSON patch
-    result, err := dynamicClient.Resource(gvr).Patch(
+    _, err = dynamicClient.Resource(gvr).Patch(
         context.TODO(),
         clusterName,
-        types.JSONPatchType, // Use JSONPatchType instead of MergePatchType
+        types.JSONPatchType,
         patchBytes,
         metav1.PatchOptions{},
     )
@@ -1040,37 +1105,236 @@ func UpdateManagedClusterLabels(clientset *kubernetes.Clientset, config *rest.Co
 
     log.Printf("[DEBUG] Patch successful!")
     
-    // Verify the update by checking the result
-    if result != nil {
-        if updatedLabels, found, err := unstructured.NestedStringMap(result.Object, "metadata", "labels"); err == nil && found {
-            log.Printf("[DEBUG] Updated cluster labels after patch: %+v", updatedLabels)
+    // **THIS IS THE CRITICAL PART THAT WAS MISSING**
+    // Return an error if there were protected operations that were blocked
+    if len(protectedDeletions) > 0 || len(protectedModifications) > 0 {
+        var errorParts []string
+        
+        if len(protectedDeletions) > 0 {
+            // Extract just the label names without the (binding-policy) or (system) suffix
+            var labelNames []string
+            for _, protectedLabel := range protectedDeletions {
+                // Extract just the label name before the parentheses
+                parts := strings.Split(protectedLabel, " (")
+                if len(parts) > 0 {
+                    labelNames = append(labelNames, parts[0])
+                }
+            }
+            errorParts = append(errorParts, fmt.Sprintf("Cannot delete protected labels: %s", strings.Join(labelNames, ", ")))
+        }
+        
+        if len(protectedModifications) > 0 {
+            var labelNames []string
+            for _, protectedLabel := range protectedModifications {
+                parts := strings.Split(protectedLabel, " (")
+                if len(parts) > 0 {
+                    labelNames = append(labelNames, parts[0])
+                }
+            }
+            errorParts = append(errorParts, fmt.Sprintf("Cannot modify protected labels: %s", strings.Join(labelNames, ", ")))
+        }
+        
+        errorMessage := strings.Join(errorParts, "; ")
+        
+        log.Printf("[WARNING] Returning partial success error: %s", errorMessage)
+        // ADD THE MISSING PARTIAL_SUCCESS PREFIX:
+        return fmt.Errorf("PARTIAL_SUCCESS: %s", errorMessage)
+    }
+    
+    log.Printf("[DEBUG] Successfully updated labels for cluster: %s", clusterName)
+    log.Printf("[DEBUG] ========== End UpdateManagedClusterLabels ==========")
+    
+    return nil
+}
+
+// getLabelsUsedInBindingPolicies fetches labels used in binding policies
+func getLabelsUsedInBindingPolicies() (map[string]bool, error) {
+    log.Printf("[DEBUG] Fetching labels used in binding policies...")
+    
+    usedLabels := make(map[string]bool)
+    
+    // Make HTTP request to get binding policies
+    resp, err := http.Get("http://localhost:4000/api/bp")
+    if err != nil {
+        return usedLabels, fmt.Errorf("failed to fetch binding policies: %v", err)
+    }
+    defer resp.Body.Close()
+    
+    if resp.StatusCode != http.StatusOK {
+        return usedLabels, fmt.Errorf("binding policies API returned status %d", resp.StatusCode)
+    }
+    
+    var response struct {
+        BindingPolicies []struct {
+            Name string `json:"name"`
+            Spec struct {
+                ClusterSelectors []struct {
+                    MatchLabels map[string]string `json:"matchLabels"`
+                    MatchExpressions []struct {
+                        Key string `json:"key"`
+                    } `json:"matchExpressions"`
+                } `json:"clusterSelectors"`
+            } `json:"spec"`
+            ClusterSelectors []map[string]string `json:"clusterSelectors"` // For stored policies
+            Clusters []string `json:"clusters"` // For cluster strings like "environment=production"
+            YAML string `json:"yaml"` // Raw YAML content
+        } `json:"bindingPolicies"`
+    }
+    
+    if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+        return usedLabels, fmt.Errorf("failed to decode binding policies response: %v", err)
+    }
+    
+    log.Printf("[DEBUG] Found %d binding policies to analyze", len(response.BindingPolicies))
+    
+    // Extract labels from binding policies
+    for _, bp := range response.BindingPolicies {
+        log.Printf("[DEBUG] Processing binding policy: %s", bp.Name)
+        
+        // Method 1: Check spec.clusterSelectors.matchLabels (standard format)
+        for _, selector := range bp.Spec.ClusterSelectors {
+            for key := range selector.MatchLabels {
+                usedLabels[key] = true
+                log.Printf("[DEBUG] Found binding policy label from spec.clusterSelectors.matchLabels: %s", key)
+            }
             
-            // Verify deletions worked
-            for key, value := range newLabels {
-                if value == "" { // This was marked for deletion
-                    if _, exists := updatedLabels[key]; exists {
-                        log.Printf("[WARNING] Label %s was supposed to be deleted but still exists!", key)
-                    } else {
-                        log.Printf("[SUCCESS] Label %s was successfully deleted", key)
+            // Also check matchExpressions
+            for _, expr := range selector.MatchExpressions {
+                if expr.Key != "" {
+                    usedLabels[expr.Key] = true
+                    log.Printf("[DEBUG] Found binding policy label from spec.clusterSelectors.matchExpressions: %s", expr.Key)
+                }
+            }
+        }
+        
+        // Method 2: Check stored clusterSelectors (for UI-created policies)
+        for _, selector := range bp.ClusterSelectors {
+            for key := range selector {
+                usedLabels[key] = true
+                log.Printf("[DEBUG] Found binding policy label from stored clusterSelectors: %s", key)
+            }
+        }
+        
+        // Method 3: Check clusters array for "key=value" format
+        for _, cluster := range bp.Clusters {
+            if strings.Contains(cluster, "=") {
+                parts := strings.Split(cluster, "=")
+                if len(parts) >= 2 {
+                    key := strings.TrimSpace(parts[0])
+                    if key != "" {
+                        usedLabels[key] = true
+                        log.Printf("[DEBUG] Found binding policy label from clusters array: %s", key)
+                    }
+                }
+            } else if strings.Contains(cluster, ":") {
+                // Handle "env:local" format
+                parts := strings.Split(cluster, ":")
+                if len(parts) >= 2 {
+                    key := strings.TrimSpace(parts[0])
+                    if key != "" {
+                        usedLabels[key] = true
+                        log.Printf("[DEBUG] Found binding policy label from clusters array (colon format): %s", key)
                     }
                 }
             }
         }
+        
+        // Method 4: Parse YAML content if available - Enhanced parsing
+        if bp.YAML != "" {
+            log.Printf("[DEBUG] Parsing YAML content for binding policy: %s", bp.Name)
+            
+            // Parse matchlabels sections (more flexible regex)
+            matchLabelsPattern := regexp.MustCompile(`(?i)matchlabels:\s*\n((?:\s+\S+:.+\n?)*)`)
+            matches := matchLabelsPattern.FindAllStringSubmatch(bp.YAML, -1)
+            
+            for _, match := range matches {
+                if len(match) > 1 {
+                    labelBlock := match[1]
+                    labelLines := strings.Split(labelBlock, "\n")
+                    for _, line := range labelLines {
+                        line = strings.TrimSpace(line)
+                        if line != "" && strings.Contains(line, ":") {
+                            parts := strings.Split(line, ":")
+                            if len(parts) >= 1 {
+                                key := strings.TrimSpace(parts[0])
+                                if key != "" {
+                                    usedLabels[key] = true
+                                    log.Printf("[DEBUG] Found binding policy label from YAML matchLabels: %s", key)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Also look for direct label references in YAML like "env: local"
+            // This handles the specific case where labels are defined directly in clusterselectors
+            yamlLines := strings.Split(bp.YAML, "\n")
+            inClusterSelectors := false
+            inMatchLabels := false
+            
+            for _, line := range yamlLines {
+                trimmed := strings.TrimSpace(line)
+                
+                if strings.Contains(trimmed, "clusterselectors:") {
+                    inClusterSelectors = true
+                    continue
+                }
+                
+                if inClusterSelectors && strings.Contains(trimmed, "matchlabels:") {
+                    inMatchLabels = true
+                    continue
+                }
+                
+                if inMatchLabels && strings.Contains(trimmed, ":") && !strings.HasPrefix(trimmed, "-") {
+                    // Check if this is a label definition (key: value)
+                    if !strings.Contains(trimmed, "matchlabels") && 
+                       !strings.Contains(trimmed, "matchexpressions") &&
+                       !strings.Contains(trimmed, "downsync") &&
+                       !strings.Contains(trimmed, "spec:") {
+                        
+                        parts := strings.Split(trimmed, ":")
+                        if len(parts) >= 1 {
+                            key := strings.TrimSpace(parts[0])
+                            // Filter out non-label keys
+                            if key != "" && 
+                               !strings.Contains(key, "apigroup") &&
+                               !strings.Contains(key, "resources") &&
+                               !strings.Contains(key, "namespaces") {
+                                usedLabels[key] = true
+                                log.Printf("[DEBUG] Found binding policy label from YAML direct parsing: %s", key)
+                            }
+                        }
+                    }
+                }
+                
+                // Reset flags when we exit sections
+                if strings.HasPrefix(trimmed, "downsync:") || strings.HasPrefix(trimmed, "spec:") {
+                    inClusterSelectors = false
+                    inMatchLabels = false
+                }
+            }
+        }
     }
-
-    log.Printf("[DEBUG] Successfully updated labels for cluster: %s", clusterName)
-    log.Printf("[DEBUG] ========== End UpdateManagedClusterLabels ==========")
-    return nil
+    
+    log.Printf("[DEBUG] Total binding policy labels found: %d", len(usedLabels))
+    for label := range usedLabels {
+        log.Printf("[DEBUG] BP Label: %s", label)
+    }
+    
+    return usedLabels, nil
 }
 
 // kubeconfigPath returns the path to the kubeconfig file
 func kubeconfigPath() string {
-	if path := os.Getenv("KUBECONFIG"); path != "" {
-		return path
-	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		log.Fatalf("Unable to get user home directory: %v", err)
-	}
-	return fmt.Sprintf("%s/.kube/config", home)
+    if path := os.Getenv("KUBECONFIG"); path != "" {
+        return path
+    }
+    home, err := os.UserHomeDir()
+    if err != nil {
+        log.Fatalf("Unable to get user home directory: %v", err)
+    }
+    return fmt.Sprintf("%s/.kube/config", home)
 }
+
+

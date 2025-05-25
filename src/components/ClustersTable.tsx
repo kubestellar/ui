@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Button,
@@ -50,6 +51,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import TableSkeleton from './ui/TableSkeleton';
 import ClusterDetailDialog from './ClusterDetailDialog'; // Import the new component
 import DetachmentLogsDialog from './DetachmentLogsDialog'; // Import the new component
+import LockIcon from '@mui/icons-material/Lock';
 
 interface ManagedClusterInfo {
   name: string;
@@ -121,8 +123,114 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
   const [isSearching, setIsSearching] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selectedLabelIndex, setSelectedLabelIndex] = useState<number | null>(null);
+  const [protectedLabels, setProtectedLabels] = useState<Set<string>>(new Set());
   const keyInputRef = useRef<HTMLInputElement>(null);
   const valueInputRef = useRef<HTMLInputElement>(null);
+
+  // Function to check if a label is protected (system or binding policy)
+  const isLabelProtected = useCallback((labelKey: string): boolean => {
+    // System label prefixes
+    const systemPrefixes = [
+      'cluster.open-cluster-management.io/',
+      'feature.open-cluster-management.io/',
+      'kubernetes.io/',
+      'k8s.io/',
+      'node.openshift.io/',
+      'beta.kubernetes.io/',
+      'topology.kubernetes.io/',
+      'node-role.kubernetes.io/',
+      'name', // Common system label
+    ];
+
+    // Check system prefixes
+    for (const prefix of systemPrefixes) {
+      if (labelKey.startsWith(prefix)) {
+        return true;
+      }
+    }
+
+    // Check if it's in the protected labels set (from binding policies)
+    return protectedLabels.has(labelKey);
+  }, [protectedLabels]);
+
+  // Fetch protected labels from binding policies when dialog opens
+  useEffect(() => {
+    if (open && cluster) {
+      const fetchProtectedLabels = async () => {
+        try {
+          // Make a request to get binding policies and extract used labels
+          const response = await fetch('/api/bp');
+          if (response.ok) {
+            const data = await response.json();
+            const usedLabels = new Set<string>();
+
+            // Extract labels from binding policies (same logic as backend)
+            data.bindingPolicies?.forEach((bp: any) => {
+              // From spec.clusterSelectors.matchLabels
+              bp.spec?.clusterSelectors?.forEach((selector: any) => {
+                Object.keys(selector.matchLabels || {}).forEach((key: string) => {
+                  usedLabels.add(key);
+                });
+                
+                // From matchExpressions
+                selector.matchExpressions?.forEach((expr: any) => {
+                  if (expr.key) {
+                    usedLabels.add(expr.key);
+                  }
+                });
+              });
+
+              // From stored clusterSelectors
+              bp.clusterSelectors?.forEach((selector: any) => {
+                Object.keys(selector || {}).forEach((key: string) => {
+                  usedLabels.add(key);
+                });
+              });
+
+              // From clusters array
+              bp.clusters?.forEach((cluster: string) => {
+                if (cluster.includes('=')) {
+                  const key = cluster.split('=')[0].trim();
+                  if (key) usedLabels.add(key);
+                } else if (cluster.includes(':')) {
+                  const key = cluster.split(':')[0].trim();
+                  if (key) usedLabels.add(key);
+                }
+              });
+
+              // From YAML parsing (simplified)
+              if (bp.yaml) {
+                const yamlLines = bp.yaml.split('\n');
+                let inMatchLabels = false;
+                
+                yamlLines.forEach((line: string) => {
+                  const trimmed = line.trim();
+                  if (trimmed.includes('matchlabels:')) {
+                    inMatchLabels = true;
+                  } else if (trimmed.startsWith('downsync:') || trimmed.startsWith('spec:')) {
+                    inMatchLabels = false;
+                  } else if (inMatchLabels && trimmed.includes(':') && !trimmed.startsWith('-')) {
+                    const key = trimmed.split(':')[0].trim();
+                    if (key && !key.includes('matchlabels') && !key.includes('apigroup')) {
+                      usedLabels.add(key);
+                    }
+                  }
+                });
+              }
+            });
+
+            setProtectedLabels(usedLabels);
+            console.log('[DEBUG] Protected labels from binding policies:', Array.from(usedLabels));
+          }
+        } catch (error) {
+          console.error('[DEBUG] Failed to fetch protected labels:', error);
+          setProtectedLabels(new Set());
+        }
+      };
+
+      fetchProtectedLabels();
+    }
+  }, [open, cluster]);
 
   // Filter labels based on search
   const filteredLabels =
@@ -160,6 +268,15 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
 
   const handleAddLabel = () => {
     if (newKey.trim() && newValue.trim()) {
+      // Check if it's a protected label being added
+      if (isLabelProtected(newKey.trim())) {
+        toast.error(`Cannot modify protected label: ${newKey}`, {
+          icon: '🔒',
+          duration: 3000,
+        });
+        return;
+      }
+
       // Check for duplicates
       const isDuplicate = labels.some(label => label.key === newKey.trim());
 
@@ -209,6 +326,18 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
 
   const handleRemoveLabel = (index: number) => {
     const labelToRemove = labels[index];
+
+    // Check if this is a protected label
+    if (isLabelProtected(labelToRemove.key)) {
+      toast.error(`Cannot delete protected label: ${labelToRemove.key}`, {
+        icon: '🔒',
+        duration: 3000,
+        style: {
+          borderLeft: `4px solid ${colors.warning}`,
+        },
+      });
+      return;
+    }
 
     // If this was an original label, mark it for deletion
     if (cluster?.labels && cluster.labels[labelToRemove.key]) {
@@ -307,6 +436,9 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
           <div className="mb-4 flex items-center justify-between">
             <Typography variant="body2" style={{ color: colors.textSecondary }}>
               Add or remove labels to organize and categorize your cluster.
+              <span style={{ color: colors.warning, marginLeft: '4px' }}>
+                🔒 Protected labels cannot be deleted.
+              </span>
             </Typography>
 
             <div className="flex gap-2">
@@ -477,65 +609,94 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
           <div className="max-h-60 overflow-y-auto pr-1">
             {filteredLabels.length > 0 ? (
               <div className="space-y-2">
-                {filteredLabels.map((label, index) => (
-                  <Zoom
-                    in={true}
-                    style={{ transitionDelay: `${index * 25}ms` }}
-                    key={`${label.key}-${index}`}
-                  >
-                    <div
-                      className={`flex items-center justify-between gap-2 rounded p-2 transition-all duration-200 ${selectedLabelIndex === index ? 'ring-1' : ''}`}
-                      style={{
-                        backgroundColor:
-                          selectedLabelIndex === index
-                            ? isDark
-                              ? 'rgba(47, 134, 255, 0.2)'
-                              : 'rgba(47, 134, 255, 0.1)'
-                            : isDark
-                              ? 'rgba(47, 134, 255, 0.1)'
-                              : 'rgba(47, 134, 255, 0.05)',
-                        border: `1px solid ${selectedLabelIndex === index ? colors.primary : colors.border}`,
-                        boxShadow:
-                          selectedLabelIndex === index
-                            ? isDark
-                              ? '0 0 0 1px rgba(47, 134, 255, 0.4)'
-                              : '0 0 0 1px rgba(47, 134, 255, 0.2)'
-                            : 'none',
-                        cursor: 'default',
-                      }}
-                      onClick={() =>
-                        setSelectedLabelIndex(selectedLabelIndex === index ? null : index)
-                      }
+                {filteredLabels.map((label, index) => {
+                  const isProtected = isLabelProtected(label.key);
+                  return (
+                    <Zoom
+                      in={true}
+                      style={{ transitionDelay: `${index * 25}ms` }}
+                      key={`${label.key}-${index}`}
                     >
-                      <div className="flex items-center gap-2">
-                        <Tag size={16} style={{ color: colors.primary }} />
-                        <span style={{ color: colors.text }}>
-                          <span style={{ fontWeight: 500 }}>{label.key}</span>
-                          <span style={{ color: colors.textSecondary }}> = </span>
-                          <span>{label.value}</span>
-                        </span>
+                      <div
+                        className={`flex items-center justify-between gap-2 rounded p-2 transition-all duration-200 ${selectedLabelIndex === index ? 'ring-1' : ''}`}
+                        style={{
+                          backgroundColor:
+                            selectedLabelIndex === index
+                              ? isDark
+                                ? 'rgba(47, 134, 255, 0.2)'
+                                : 'rgba(47, 134, 255, 0.1)'
+                              : isDark
+                                ? 'rgba(47, 134, 255, 0.1)'
+                                : 'rgba(47, 134, 255, 0.05)',
+                          border: `1px solid ${selectedLabelIndex === index ? colors.primary : colors.border}`,
+                          boxShadow:
+                            selectedLabelIndex === index
+                              ? isDark
+                                ? '0 0 0 1px rgba(47, 134, 255, 0.4)'
+                                : '0 0 0 1px rgba(47, 134, 255, 0.2)'
+                              : 'none',
+                          cursor: 'default',
+                        }}
+                        onClick={() =>
+                          setSelectedLabelIndex(selectedLabelIndex === index ? null : index)
+                        }
+                      >
+                        <div className="flex items-center gap-2">
+                          {/* Show lock icon for protected labels */}
+                          {isProtected ? (
+                            <Tooltip 
+                              title={
+                                label.key.startsWith('cluster.open-cluster-management.io/') ||
+                                label.key.startsWith('feature.open-cluster-management.io/') ||
+                                label.key.startsWith('kubernetes.io/') ||
+                                label.key.startsWith('k8s.io/') ||
+                                label.key === 'name'
+                                  ? "System label - Cannot be deleted"
+                                  : "Used in binding policy - Cannot be deleted"
+                              }
+                              placement="top"
+                            >
+                              <LockIcon 
+                                fontSize="small"
+                                style={{ 
+                                  color: colors.warning, 
+                                  fontSize: "16px",
+                                }} 
+                              />
+                            </Tooltip>
+                          ) : (
+                            <Tag size={16} style={{ color: colors.primary }} />
+                          )}
+                          <span style={{ color: colors.text }}>
+                            <span style={{ fontWeight: 500 }}>{label.key}</span>
+                            <span style={{ color: colors.textSecondary }}> = </span>
+                            <span>{label.value}</span>
+                          </span>
+                        </div>
+                        {!isProtected && (
+                          <Tooltip title="Remove Label">
+                            <IconButton
+                              size="small"
+                              onClick={e => {
+                                e.stopPropagation();
+                                handleRemoveLabel(index);
+                              }}
+                              style={{
+                                color:
+                                  selectedLabelIndex === index ? colors.primary : colors.textSecondary,
+                                opacity: 0.8,
+                                transition: 'all 0.2s ease',
+                              }}
+                              className="hover:opacity-100"
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
                       </div>
-                      <Tooltip title="Remove Label">
-                        <IconButton
-                          size="small"
-                          onClick={e => {
-                            e.stopPropagation();
-                            handleRemoveLabel(index);
-                          }}
-                          style={{
-                            color:
-                              selectedLabelIndex === index ? colors.primary : colors.textSecondary,
-                            opacity: 0.8,
-                            transition: 'all 0.2s ease',
-                          }}
-                          className="hover:opacity-100"
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </div>
-                  </Zoom>
-                ))}
+                    </Zoom>
+                  );
+                })}
               </div>
             ) : (
               <div className="mt-2 flex flex-col items-center justify-center p-6 text-center">
@@ -1169,8 +1330,8 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
         onError: error => {
           console.error('[DEBUG] Mutation error:', error);
           toast.error(
-            'Failed to update labels: ' +
-              (error instanceof Error ? error.message : 'Unknown error'),
+            'Labels are used in Binding Policy ' +
+            'and cannot be deleted. Please remove the policy first.',
             {
               icon: '❌',
               style: {
@@ -1966,6 +2127,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                                         border: `1px solid ${
                                           filterByLabel?.key === key &&
                                           filterByLabel?.value === value
+
                                             ? colors.primary
                                             : isDark
                                               ? 'rgba(47, 134, 255, 0.4)'
