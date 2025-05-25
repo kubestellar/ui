@@ -1,6 +1,6 @@
 import { HiOutlineHome, HiOutlineCube, HiOutlineCommandLine } from 'react-icons/hi2';
-
 import { MdPolicy, MdAssuredWorkload } from 'react-icons/md';
+import { FiPackage } from 'react-icons/fi';
 
 export const menu = [
   {
@@ -38,6 +38,12 @@ export const menu = [
         url: '/bp/manage',
         icon: MdPolicy,
         label: 'Binding Policies',
+      },
+      {
+        isLink: true,
+        url: '/plugins',
+        icon: FiPackage,
+        label: 'Plugins',
       },
       {
         isLink: true,

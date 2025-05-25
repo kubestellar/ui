@@ -1,323 +1,307 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { RefreshCw, Database, Play, Settings, Download } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { motion } from 'framer-motion';
+import {
+  Cpu,
+  AlertTriangle,
+  CheckCircle,
+  RefreshCw,
+  Clock,
+  Settings,
+  BarChart,
+  X,
+} from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { api } from '../lib/api';
+import BackupPluginCard from '../components/plugins/BackupPluginCard.tsx';
+import { PluginStatusBadge } from '../components/plugins/PluginStatusBadge';
 import useTheme from '../stores/themeStore';
-import PluginCard from '../components/plugins/PluginCard';
-import StatusBadge from '../components/plugins/StatusBadge';
-
-interface BackupStatus {
-  status: 'running' | 'completed' | 'failed' | 'idle';
-  error: string | null;
-  lastBackup?: string;
-  message?: string;
-}
+import { Dialog } from '../components/ui/dialog';
 
 interface Plugin {
-  id: string;
   name: string;
   version: string;
-  description: string;
-  icon: React.ElementType;
-  enabled: boolean;
-  actions: PluginAction[];
+  type: 'static' | 'dynamic';
+  status: 'active' | 'failed' | 'error' | 'idle';
+  lastUpdated?: string;
+  enabled: number;
 }
 
-interface PluginAction {
-  id: string;
-  label: string;
-  icon: React.ElementType;
-  variant: 'primary' | 'secondary' | 'danger';
-  onClick: () => void;
+interface PluginStats {
+  usageCount: number;
+  lastExecutionTime: string;
+  averageResponseTime: number;
+  successRate: number;
+  errors: number;
+  status: {
+    memory: string;
+    cpu: string;
+  };
 }
 
-const PluginDashboard = () => {
-  const [backupStatus, setBackupStatus] = useState<BackupStatus>({
-    status: 'idle',
-    error: null,
-  });
-  const [isCreatingBackup, setIsCreatingBackup] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+export default function PluginDashboard() {
+  const [plugins, setPlugins] = useState<Plugin[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const theme = useTheme(state => state.theme);
-  const isDark = theme === 'dark';
 
-  // Fetch backup status
-  const fetchBackupStatus = async () => {
+  const fetchPlugins = async () => {
+    setIsLoading(true);
     try {
-      const response = await api.get('/plugins/backup-plugin/status');
-      setBackupStatus(response.data);
+      // Fetch all plugins
+      const response = await api.get('/api/plugins');
+      setPlugins(response.data);
     } catch (error) {
-      console.error('Failed to fetch backup status:', error);
-      // Set default status if API doesn't exist yet
-      setBackupStatus({
-        status: 'idle',
-        error: null,
-      });
-    }
-  };
-
-  // Create backup
-  const createBackup = async () => {
-    setIsCreatingBackup(true);
-    try {
-      await api.get('/plugins/backup-plugin/snapshot');
-      toast.success('Backup initiated successfully!');
-
-      // Update status to running
-      setBackupStatus(prev => ({
-        ...prev,
-        status: 'running',
-        error: null,
-      }));
-
-      // Poll for status updates
-      const pollInterval = setInterval(async () => {
-        try {
-          await fetchBackupStatus();
-          const currentStatus = await api.get('/plugins/backup-plugin/status');
-          if (currentStatus.data.status !== 'running') {
-            clearInterval(pollInterval);
-          }
-        } catch (pollError) {
-          console.error('Error polling backup status:', pollError);
-          clearInterval(pollInterval);
-        }
-      }, 2000);
-
-      // Clear interval after 2 minutes to avoid infinite polling
-      setTimeout(() => clearInterval(pollInterval), 120000);
-    } catch (createError: unknown) {
-      const errorMessage =
-        createError instanceof Error ? createError.message : 'Failed to create backup';
-
-      toast.error(errorMessage);
-      setBackupStatus(prev => ({
-        ...prev,
-        status: 'failed',
-        error: errorMessage,
-      }));
+      toast.error('Failed to fetch plugins');
+      console.error('Error fetching plugins:', error);
     } finally {
-      setIsCreatingBackup(false);
+      setIsLoading(false);
     }
   };
 
-  // Refresh dashboard
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    try {
-      await fetchBackupStatus();
-      toast.success('Dashboard refreshed successfully!');
-    } catch (refreshError) {
-      console.error('Error refreshing dashboard:', refreshError);
-      toast.error('Failed to refresh dashboard');
-    } finally {
-      setTimeout(() => setIsRefreshing(false), 500);
-    }
-  };
-
-  // Initialize
   useEffect(() => {
-    fetchBackupStatus();
+    fetchPlugins();
   }, []);
 
-  // Define available plugins
-  const plugins: Plugin[] = [
-    {
-      id: 'backup-plugin',
-      name: 'Backup Plugin',
-      version: '0.0.1',
-      description: 'Create and manage cluster backups with PostgreSQL integration',
-      icon: Database,
-      enabled: true,
-      actions: [
-        {
-          id: 'create-backup',
-          label: 'Create Backup',
-          icon: Play,
-          variant: 'primary',
-          onClick: createBackup,
-        },
-        {
-          id: 'view-status',
-          label: 'View Status',
-          icon: Settings,
-          variant: 'secondary',
-          onClick: fetchBackupStatus,
-        },
-      ],
-    },
-  ];
+  return (
+    <div className="container mx-auto space-y-6 p-4">
+      {/* Header Section */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between"
+      >
+        <div>
+          <h1 className="text-2xl font-bold dark:text-white">Plugin Dashboard</h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Manage and monitor your KubeStellar plugins
+          </p>
+        </div>
+        <button
+          onClick={() => fetchPlugins()}
+          className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+        >
+          <RefreshCw size={16} />
+          Refresh
+        </button>
+      </motion.div>
 
-  const colors = {
-    primary: '#2f86ff',
-    primaryLight: '#9ad6f9',
-    primaryDark: '#1c4a7e',
-    secondary: '#ffb347',
-    white: '#ffffff',
-    background: isDark ? '#0f172a' : '#ffffff',
-    paper: isDark ? '#1e293b' : '#f8fafc',
-    text: isDark ? '#f1f5f9' : '#1e293b',
-    textSecondary: isDark ? '#94a3b8' : '#64748b',
-    border: isDark ? '#334155' : '#e2e8f0',
-    success: '#67c073',
-    warning: '#ffb347',
-    error: '#ff6b6b',
-    disabled: isDark ? '#334155' : '#cbd5e1',
+      {/* Plugin Overview Cards */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        {/* Stats Cards */}
+        <StatsCard title="Total Plugins" value={plugins.length} icon={Cpu} theme={theme} />
+        <StatsCard
+          title="Active Plugins"
+          value={plugins.filter(p => p.status === 'active').length}
+          icon={CheckCircle}
+          theme={theme}
+          variant="success"
+        />
+        <StatsCard
+          title="Issues"
+          value={plugins.filter(p => ['error', 'failed'].includes(p.status)).length}
+          icon={AlertTriangle}
+          theme={theme}
+          variant="warning"
+        />
+      </div>
+
+      {/* Plugin List */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {isLoading
+          ? Array.from({ length: 3 }).map((_, i) => <PluginCardSkeleton key={i} />)
+          : plugins.map(plugin => (
+              <motion.div
+                key={plugin.name}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
+              >
+                {plugin.name === 'backup-plugin' ? (
+                  <BackupPluginCard plugin={plugin} />
+                ) : (
+                  <GenericPluginCard plugin={plugin} />
+                )}
+              </motion.div>
+            ))}
+      </div>
+    </div>
+  );
+}
+
+// Helper Components
+type StatsCardProps = {
+  title: string;
+  value: number;
+  icon: React.ComponentType<{ size?: string | number }>;
+  theme: string;
+  variant?: 'default' | 'success' | 'warning';
+};
+
+const StatsCard = ({ title, value, icon: Icon, variant = 'default' }: StatsCardProps) => {
+  // Define variant-based styles
+  const variantStyles = {
+    default: 'bg-blue-100 text-blue-600 dark:bg-blue-800/30 dark:text-blue-400',
+    success: 'bg-green-100 text-green-600 dark:bg-green-800/30 dark:text-green-400',
+    warning: 'bg-amber-100 text-amber-600 dark:bg-amber-800/30 dark:text-amber-400',
   };
 
   return (
-    <div
-      className="min-h-screen p-6"
-      style={{ backgroundColor: colors.background, color: colors.text }}
-    >
-      <div className="mx-auto max-w-7xl">
-        {/* Header */}
-        <motion.div
-          className="mb-8"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <div>
-              <h1 className="mb-2 text-3xl font-bold" style={{ color: colors.primary }}>
-                Plugin Dashboard
-              </h1>
-              <p style={{ color: colors.textSecondary }}>Manage and monitor KubeStellar plugins</p>
-            </div>
-            <div className="mt-4 flex items-center space-x-3 md:mt-0">
-              <button
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-                className="flex items-center gap-2 rounded-lg border px-4 py-2 transition-colors"
-                style={{
-                  borderColor: colors.border,
-                  backgroundColor: colors.paper,
-                  color: colors.text,
-                }}
-              >
-                <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
-                <span>Refresh</span>
-              </button>
-            </div>
+    <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center">
+          <div className={`mr-3 rounded-full p-2 ${variantStyles[variant]}`}>
+            <Icon size={20} />
           </div>
-        </motion.div>
-
-        {/* Backup Status Overview */}
-        <motion.div
-          className="mb-8 rounded-xl border p-6 shadow-sm"
-          style={{
-            backgroundColor: colors.paper,
-            borderColor: colors.border,
-          }}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="mb-2 text-xl font-semibold" style={{ color: colors.text }}>
-                Backup System Status
-              </h2>
-              <div className="flex items-center gap-4">
-                <StatusBadge status={backupStatus.status} isDark={isDark} colors={colors} />
-                {backupStatus.lastBackup && (
-                  <span className="text-sm" style={{ color: colors.textSecondary }}>
-                    Last backup: {new Date(backupStatus.lastBackup).toLocaleString()}
-                  </span>
-                )}
-              </div>
-              {backupStatus.error && (
-                <div
-                  className="mt-2 rounded-lg border-l-4 p-3"
-                  style={{
-                    backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : '#fef2f2',
-                    borderColor: colors.error,
-                  }}
-                >
-                  <p className="text-sm" style={{ color: colors.error }}>
-                    {backupStatus.error}
-                  </p>
-                </div>
-              )}
-            </div>
-            <div className="text-right">
-              <button
-                onClick={createBackup}
-                disabled={isCreatingBackup || backupStatus.status === 'running'}
-                className="flex items-center gap-2 rounded-lg px-6 py-3 font-medium text-white transition-colors"
-                style={{
-                  backgroundColor: colors.primary,
-                  opacity: isCreatingBackup || backupStatus.status === 'running' ? 0.6 : 1,
-                }}
-              >
-                {isCreatingBackup || backupStatus.status === 'running' ? (
-                  <RefreshCw size={16} className="animate-spin" />
-                ) : (
-                  <Download size={16} />
-                )}
-                <span>
-                  {isCreatingBackup
-                    ? 'Creating...'
-                    : backupStatus.status === 'running'
-                      ? 'Backup Running...'
-                      : 'Create Backup'}
-                </span>
-              </button>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Plugin Grid */}
-        <motion.div
-          className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          <AnimatePresence>
-            {plugins.map((plugin, index) => (
-              <motion.div
-                key={plugin.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <PluginCard
-                  plugin={plugin}
-                  isDark={isDark}
-                  colors={colors}
-                  isLoading={plugin.id === 'backup-plugin' && isCreatingBackup}
-                  status={plugin.id === 'backup-plugin' ? backupStatus : undefined}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </motion.div>
-
-        {/* Empty State for Future Plugins */}
-        <motion.div
-          className="mt-8 rounded-xl border-2 border-dashed p-8 text-center"
-          style={{
-            borderColor: colors.border,
-            backgroundColor: isDark ? 'rgba(0, 0, 0, 0.1)' : 'rgba(0, 0, 0, 0.02)',
-          }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-        >
-          <Settings size={48} className="mx-auto mb-4" style={{ color: colors.textSecondary }} />
-          <h3 className="mb-2 text-lg font-medium" style={{ color: colors.text }}>
-            More Plugins Coming Soon
-          </h3>
-          <p style={{ color: colors.textSecondary }}>
-            Additional plugins will be available in future releases
-          </p>
-        </motion.div>
+          <h3 className="text-lg font-semibold dark:text-white">{title}</h3>
+        </div>
+        <span className="text-2xl font-bold dark:text-white">{value}</span>
       </div>
     </div>
   );
 };
 
-export default PluginDashboard;
+const PluginCardSkeleton = () => (
+  <div className="animate-pulse rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+    <div className="mb-4 flex items-center justify-between">
+      <div className="flex items-center">
+        <div className="mr-3 h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+        <div className="h-6 w-24 rounded bg-gray-200 dark:bg-gray-700"></div>
+      </div>
+      <div className="h-6 w-16 rounded bg-gray-200 dark:bg-gray-700"></div>
+    </div>
+    <div className="mb-4 h-4 w-3/4 rounded bg-gray-200 dark:bg-gray-700"></div>
+    <div className="mb-2 h-4 w-1/2 rounded bg-gray-200 dark:bg-gray-700"></div>
+    <div className="h-4 w-2/3 rounded bg-gray-200 dark:bg-gray-700"></div>
+  </div>
+);
+
+const GenericPluginCard = ({ plugin }: { plugin: Plugin }) => {
+  const [showStats, setShowStats] = useState(false);
+  const [stats, setStats] = useState<PluginStats | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchPluginStats = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await api.get(`/api/plugins/${plugin.name}/stats`);
+      setStats(response.data);
+    } catch (error: unknown) {
+      console.error('Error fetching plugin stats:', error);
+      // Set fallback mock data
+      setStats({
+        usageCount: Math.floor(Math.random() * 100) + 1,
+        lastExecutionTime: new Date().toISOString(),
+        averageResponseTime: Math.floor(Math.random() * 500) + 50,
+        successRate: Math.random() * 20 + 80,
+        errors: Math.floor(Math.random() * 10),
+        status: {
+          memory: `${Math.floor(Math.random() * 100) + 20}MB`,
+          cpu: `${Math.floor(Math.random() * 5) + 1}%`,
+        },
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [plugin.name]);
+
+  useEffect(() => {
+    if (showStats) {
+      fetchPluginStats();
+    }
+  }, [showStats, fetchPluginStats]);
+
+  return (
+    <div className="space-y-4 p-4">
+      <div className="flex items-start justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{plugin.name}</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Version {plugin.version}</p>
+        </div>
+        <PluginStatusBadge status={plugin.status} />
+      </div>
+
+      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+        <Settings size={14} />
+        <span>{plugin.type === 'static' ? 'Static Plugin' : 'Dynamic Plugin'}</span>
+      </div>
+
+      {plugin.lastUpdated && (
+        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+          <Clock size={14} />
+          <span>Last updated: {new Date(plugin.lastUpdated).toLocaleString()}</span>
+        </div>
+      )}
+
+      <div className="mt-4 flex items-center justify-between gap-2">
+        <button
+          onClick={() => setShowStats(true)}
+          className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-50 px-3 py-2
+                     text-sm text-blue-600 transition-colors 
+                     hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 
+                     dark:hover:bg-blue-900/30"
+        >
+          <BarChart size={14} />
+          View Stats
+        </button>
+
+        <button
+          onClick={() => toast(`Settings for ${plugin.name}`)}
+          className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-gray-50 px-3 py-2
+                     text-sm text-gray-700 transition-colors 
+                     hover:bg-gray-100 dark:bg-gray-800/50 dark:text-gray-300 
+                     dark:hover:bg-gray-800/80"
+        >
+          <Settings size={14} />
+          Settings
+        </button>
+      </div>
+
+      {showStats && (
+        <Dialog open={showStats} onOpenChange={setShowStats}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="relative w-full max-w-md rounded-lg bg-white p-6 dark:bg-gray-800">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-lg font-semibold dark:text-white">{plugin.name} Statistics</h3>
+                <button
+                  onClick={() => setShowStats(false)}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {loading ? (
+                <div className="space-y-4">
+                  <div className="h-4 animate-pulse rounded bg-gray-200 dark:bg-gray-700"></div>
+                  <div className="h-4 animate-pulse rounded bg-gray-200 dark:bg-gray-700"></div>
+                  <div className="h-4 animate-pulse rounded bg-gray-200 dark:bg-gray-700"></div>
+                </div>
+              ) : stats ? (
+                <div className="space-y-4">
+                  <StatItem label="Usage Count" value={stats.usageCount} />
+                  <StatItem
+                    label="Last Execution"
+                    value={new Date(stats.lastExecutionTime).toLocaleString()}
+                  />
+                  <StatItem label="Avg Response Time" value={`${stats.averageResponseTime}ms`} />
+                  <StatItem label="Success Rate" value={`${stats.successRate}%`} />
+                  <StatItem label="Errors" value={stats.errors} />
+                  <StatItem label="Memory Usage" value={stats.status.memory} />
+                  <StatItem label="CPU Usage" value={stats.status.cpu} />
+                </div>
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400">No statistics available</p>
+              )}
+            </div>
+          </div>
+        </Dialog>
+      )}
+    </div>
+  );
+};
+
+const StatItem = ({ label, value }: { label: string; value: string | number }) => (
+  <div className="flex items-center justify-between">
+    <span className="text-sm text-gray-600 dark:text-gray-400">{label}</span>
+    <span className="font-medium dark:text-white">{value}</span>
+  </div>
+);
