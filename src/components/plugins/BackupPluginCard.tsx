@@ -51,6 +51,9 @@ export default function BackupPluginCard({ plugin }: BackupPluginCardProps) {
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [retrying, setRetrying] = useState<boolean>(false);
+  // Add local state to track enabled status
+  const [isEnabled, setIsEnabled] = useState<boolean>(plugin.enabled === 1);
+  const [isTogglingEnabled, setIsTogglingEnabled] = useState<boolean>(false);
 
   useEffect(() => {
     fetchBackupDetails();
@@ -120,26 +123,49 @@ export default function BackupPluginCard({ plugin }: BackupPluginCardProps) {
     }
   };
 
+  // Add function to handle enable/disable
+  const handleToggleEnabled = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newEnabledState = event.target.checked;
+    setIsTogglingEnabled(true);
+
+    try {
+      await api.post(`/api/plugins/backup/enable`, {
+        enabled: newEnabledState ? 1 : 0,
+      });
+
+      setIsEnabled(newEnabledState);
+      toast.success(`Backup ${newEnabledState ? 'enabled' : 'disabled'} successfully`);
+    } catch (error) {
+      console.error('Failed to update backup enabled state:', error);
+      toast.error(`Failed to ${newEnabledState ? 'enable' : 'disable'} backup service`);
+
+      // Revert UI state on error
+      setIsEnabled(!newEnabledState);
+    } finally {
+      setIsTogglingEnabled(false);
+    }
+  };
+
   return (
     <div className="group relative space-y-4 overflow-hidden p-4 transition-all duration-300 hover:shadow-xl">
       {/* Background gradient effect */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-blue-500/5 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
       {/* Header Section with enhanced styling */}
       <div className="relative flex items-start justify-between">
         <div className="flex items-start gap-3">
-          <div className="rounded-xl bg-gradient-to-br from-purple-50 to-purple-100/80 p-2.5 shadow-sm transition-all duration-300 group-hover:shadow-md dark:from-purple-900/20 dark:to-purple-800/20">
+          <div className="rounded-xl bg-gradient-to-br from-blue-50 to-blue-100/80 p-2.5 shadow-sm transition-all duration-300 group-hover:shadow-md dark:from-blue-900/20 dark:to-blue-800/20">
             <Archive
-              className="transform text-purple-600 transition-transform duration-300 group-hover:scale-110 dark:text-purple-400"
+              className="transform text-blue-600 transition-transform duration-300 group-hover:scale-110 dark:text-blue-400"
               size={24}
             />
           </div>
           <div className="space-y-1">
-            <h3 className="text-lg font-semibold text-gray-900 transition-colors duration-300 group-hover:text-purple-600 dark:text-white dark:group-hover:text-purple-400">
+            <h3 className="text-lg font-semibold text-gray-900 transition-colors duration-300 group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
               {plugin.name}
             </h3>
             <div className="flex items-center gap-2">
-              <span className="rounded-full bg-gradient-to-r from-purple-50 to-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 dark:from-purple-900/20 dark:to-purple-800/20 dark:text-purple-300">
+              <span className="rounded-full bg-gradient-to-r from-blue-50 to-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:from-blue-900/20 dark:to-blue-800/20 dark:text-blue-300">
                 v{plugin.version}
               </span>
               <PluginStatusBadge status={plugin.status} />
@@ -198,7 +224,7 @@ export default function BackupPluginCard({ plugin }: BackupPluginCardProps) {
                 ? 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
                 : apiError
                   ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-400 hover:to-orange-500'
-                  : 'bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-500 hover:to-purple-600'
+                  : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-500 hover:to-blue-600'
             } transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg`}
         >
           {isLoading ? (
@@ -216,10 +242,11 @@ export default function BackupPluginCard({ plugin }: BackupPluginCardProps) {
 
         <button
           onClick={() => setShowSettings(!showSettings)}
-          className="flex w-full items-center justify-between rounded-lg bg-gradient-to-r from-blue-50
-                   to-blue-100/50 px-4 py-2.5 
+          className="flex w-full items-center justify-between rounded-lg bg-gradient-to-r 
+                   from-blue-100 to-blue-50 px-4 py-2.5 
                    text-blue-700 transition-all 
-                   duration-300 hover:shadow-md
+                   duration-300 hover:from-blue-200 hover:to-blue-100
+                   hover:shadow-md
                    dark:from-blue-900/20 dark:to-blue-800/20 dark:text-blue-300"
         >
           <div className="flex items-center gap-2">
@@ -268,15 +295,15 @@ export default function BackupPluginCard({ plugin }: BackupPluginCardProps) {
         </div>
       </div>
 
-      {/* Stats Dialog */}
+      {/* Stats Dialog - Fixed styling for better contrast in light mode */}
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 dark:bg-gray-800">
+          <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-700 dark:bg-gray-800">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold dark:text-white">{plugin.name} Settings</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{plugin.name} Settings</h3>
               <button
                 onClick={() => setShowSettings(false)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="rounded-full p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
               >
                 <X size={18} />
               </button>
@@ -286,18 +313,24 @@ export default function BackupPluginCard({ plugin }: BackupPluginCardProps) {
               <p className="text-gray-700 dark:text-gray-300">
                 Configure the backup settings for the {plugin.name} plugin.
               </p>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Enable Backup</span>
-                <Switch
-                  checked={plugin.enabled === 1}
-                  onChange={async event => {
-                    await api.post(`/api/plugins/backup/enable`, {
-                      enabled: event.target.checked ? 1 : 0,
-                    });
-                  }}
-                  className="h-6 w-11 rounded-full bg-gray-200 dark:bg-gray-700"
-                  inputProps={{ 'aria-label': 'Enable or disable backup' }}
-                />
+              <div className="flex items-center justify-between rounded-md bg-gray-50 p-3 dark:bg-gray-700">
+                <span className="text-sm text-gray-700 dark:text-gray-300">Enable Backup</span>
+                <div className="relative">
+                  {isTogglingEnabled && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Loader2 size={16} className="animate-spin text-blue-500" />
+                    </div>
+                  )}
+                  <Switch
+                    checked={isEnabled}
+                    onChange={handleToggleEnabled}
+                    disabled={isTogglingEnabled}
+                    className={`h-6 w-11 rounded-full ${
+                      isTogglingEnabled ? 'opacity-50' : ''
+                    } bg-gray-200 dark:bg-gray-600`}
+                    inputProps={{ 'aria-label': 'Enable or disable backup' }}
+                  />
+                </div>
               </div>
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -312,13 +345,13 @@ export default function BackupPluginCard({ plugin }: BackupPluginCardProps) {
                       locations: e.target.value.split(',').map(loc => loc.trim()),
                     })
                   }
-                  className="block w-full rounded-md border-gray-300 bg-gray-50 p-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  className="block w-full rounded-md border border-gray-300 bg-gray-50 p-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                   placeholder="Enter backup locations"
                 />
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Backup Status</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
+              <div className="flex items-center justify-between rounded-md bg-gray-50 p-3 dark:bg-gray-700">
+                <span className="text-sm text-gray-700 dark:text-gray-300">Backup Status</span>
+                <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-sm font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                   {backupDetails?.status === 'success'
                     ? 'Backup Successful'
                     : backupDetails?.status === 'failed'
