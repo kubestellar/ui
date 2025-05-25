@@ -3,7 +3,6 @@ import React, {
   useEffect,
   useCallback,
   useRef,
-  KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
 import {
   Button,
@@ -101,7 +100,12 @@ interface LabelEditDialogProps {
   open: boolean;
   onClose: () => void;
   cluster: ManagedClusterInfo | null;
-  onSave: (clusterName: string, contextName: string, labels: { [key: string]: string }) => void;
+  onSave: (
+    clusterName: string, 
+    contextName: string, 
+    labels: { [key: string]: string },
+    deletedLabels?: string[] // Add this parameter
+  ) => void;
   isDark: boolean;
   colors: ColorTheme;
 }
@@ -115,6 +119,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
   colors,
 }) => {
   const [labels, setLabels] = useState<Array<{ key: string; value: string }>>([]);
+  const [deletedLabels, setDeletedLabels] = useState<string[]>([]);
   const [newKey, setNewKey] = useState('');
   const [newValue, setNewValue] = useState('');
   const [labelSearch, setLabelSearch] = useState('');
@@ -142,8 +147,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
         value,
       }));
       setLabels(labelArray);
-
-      // Reset other states
+      setDeletedLabels([]);
       setNewKey('');
       setNewValue('');
       setLabelSearch('');
@@ -173,7 +177,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
         );
         toast.success(`Updated existing label: ${newKey}`);
       } else {
-        // Add new label with animation effect
+        // Add new label
         setLabels(prev => [...prev, { key: newKey.trim(), value: newValue.trim() }]);
         toast.success(`Added new label: ${newKey}`);
       }
@@ -187,7 +191,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
     }
   };
 
-  const handleKeyDown = (e: ReactKeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
 
@@ -210,6 +214,17 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
 
   const handleRemoveLabel = (index: number) => {
     const labelToRemove = labels[index];
+    
+    // If this was an original label, mark it for deletion
+    if (cluster?.labels && cluster.labels[labelToRemove.key]) {
+      console.log('[DEBUG] Adding to deleted labels:', labelToRemove.key);
+      setDeletedLabels(prev => {
+        const newDeleted = [...prev, labelToRemove.key];
+        console.log('[DEBUG] Updated deleted labels:', newDeleted);
+        return newDeleted;
+      });
+    }
+    
     setLabels(labels.filter((_, i) => i !== index));
     toast.success(`Removed label: ${labelToRemove.key}`);
   };
@@ -219,15 +234,18 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
 
     setSaving(true);
 
-    // Convert array back to object format
+    // Convert array back to object format (only current labels, not deleted ones)
     const labelObject: { [key: string]: string } = {};
     labels.forEach(({ key, value }) => {
       labelObject[key] = value;
     });
 
+    console.log('[DEBUG] Saving with labels:', labelObject);
+    console.log('[DEBUG] Saving with deleted labels:', deletedLabels);
+
     // Add a slight delay to show loading state
     setTimeout(() => {
-      onSave(cluster.name, cluster.context, labelObject);
+      onSave(cluster.name, cluster.context, labelObject, deletedLabels);
       setSaving(false);
       onClose();
     }, 300);
@@ -507,9 +525,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                           size="small"
                           onClick={e => {
                             e.stopPropagation();
-                            handleRemoveLabel(
-                              labels.findIndex(l => l.key === label.key && l.value === label.value)
-                            );
+                            handleRemoveLabel(index);
                           }}
                           style={{
                             color:
@@ -1040,11 +1056,20 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
   const handleSaveLabels = (
     clusterName: string,
     contextName: string,
-    labels: { [key: string]: string }
+    labels: { [key: string]: string },
+    deletedLabels?: string[]
   ) => {
+    console.log('[DEBUG] ========== SAVE LABELS START ==========');
+    console.log('[DEBUG] Cluster Name:', clusterName);
+    console.log('[DEBUG] Context Name:', contextName);
+    console.log('[DEBUG] Labels:', labels);
+    console.log('[DEBUG] Deleted Labels:', deletedLabels);
+
     // Check if this is a bulk operation
     const isBulkOperation =
       selectedClusters.length > 1 && clusterName.includes('selected clusters');
+
+    console.log('[DEBUG] Is Bulk Operation:', isBulkOperation);
 
     if (isBulkOperation) {
       // Set loading for bulk operation
@@ -1085,11 +1110,18 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
         }
 
         try {
-          await updateLabelsMutation.mutateAsync({
-            contextName: getClusterContext(cluster),
-            clusterName: cluster.name, // Use the actual cluster name, not the "X selected clusters" string
-            labels: labels,
+           const finalLabels = { ...labels };
+        if (deletedLabels) {
+          deletedLabels.forEach(key => {
+            finalLabels[key] = ''; // Empty value indicates deletion
           });
+        }
+    await updateLabelsMutation.mutateAsync({
+          contextName: getClusterContext(cluster),
+          clusterName: cluster.name,
+          labels: finalLabels, // Use finalLabels which includes deletions
+          deletedLabels, // Pass deleted labels for the mutation
+        });
 
           successCount++;
           // Add a small delay between requests
@@ -1107,27 +1139,26 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
       return;
     }
 
-    // Regular single-cluster operation (existing code)
+    // Regular single-cluster operation
     setLoadingClusterEdit(clusterName);
 
     // Find the actual cluster to get the correct context
     const actualCluster = clusters.find(c => c.name === clusterName);
     const actualContext = actualCluster ? getClusterContext(actualCluster) : contextName;
 
-    // Log the operation
-    console.log(
-      `Updating labels for cluster "${clusterName}" with context "${actualContext}"`,
-      labels
-    );
+    console.log('[DEBUG] Actual Context:', actualContext);
+    console.log('[DEBUG] Calling mutation...');
 
     updateLabelsMutation.mutate(
       {
         contextName: actualContext,
         clusterName: clusterName,
-        labels,
+        labels, // Pass original labels
+        deletedLabels, // Pass deleted labels separately
       },
       {
         onSuccess: () => {
+          console.log('[DEBUG] Mutation successful');
           toast.success('Labels updated successfully', {
             icon: '🏷️',
             style: {
@@ -1141,6 +1172,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
           setEditDialogOpen(false);
         },
         onError: error => {
+          console.error('[DEBUG] Mutation error:', error);
           toast.error(
             'Failed to update labels: ' +
               (error instanceof Error ? error.message : 'Unknown error'),
@@ -2061,8 +2093,9 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                             style={{
                               color: colors.textSecondary,
                               backgroundColor: isDark
+
                                 ? 'rgba(47, 134, 255, 0.08)'
-                                : 'rgba(47, 134, 255, 0.05)',
+                                : 'rgba(47, 134,255, 0.05)',
                             }}
                             className="transition-all duration-200 hover:scale-110 hover:bg-opacity-80"
                           >
@@ -2095,74 +2128,30 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                               },
                             }}
                           >
-                            <MenuItem
-                              onClick={() => handleViewDetails(cluster)}
-                              sx={{
-                                color: colors.text,
-                                '&:hover': {
-                                  backgroundColor: isDark
-                                    ? 'rgba(255, 255, 255, 0.05)'
-                                    : 'rgba(0, 0, 0, 0.04)',
-                                },
-                              }}
-                            >
+                            <MenuItem onClick={() => handleViewDetails(cluster)} sx={{ color: colors.text }}>
                               <ListItemIcon>
-                                <VisibilityIcon
-                                  fontSize="small"
-                                  style={{ color: colors.primary }}
-                                />
+                                <VisibilityIcon fontSize="small" style={{ color: colors.primary }} />
                               </ListItemIcon>
                               <ListItemText>View Details</ListItemText>
                             </MenuItem>
-                            <MenuItem
-                              onClick={() => {
-                                handleEditLabels(cluster);
-                                handleActionsClose(cluster.name);
-                              }}
-                              sx={{
-                                color: colors.text,
-                                '&:hover': {
-                                  backgroundColor: isDark
-                                    ? 'rgba(255, 255, 255, 0.05)'
-                                    : 'rgba(0, 0, 0, 0.04)',
-                                },
-                              }}
-                            >
+                            
+                            <MenuItem onClick={() => handleEditLabels(cluster)} sx={{ color: colors.text }}>
                               <ListItemIcon>
                                 <LabelIcon fontSize="small" style={{ color: colors.primary }} />
                               </ListItemIcon>
                               <ListItemText>Edit Labels</ListItemText>
                             </MenuItem>
-                            <MenuItem
-                              onClick={() => handleCopyName(cluster.name)}
-                              sx={{
-                                color: colors.text,
-                                '&:hover': {
-                                  backgroundColor: isDark
-                                    ? 'rgba(255, 255, 255, 0.05)'
-                                    : 'rgba(0, 0, 0, 0.04)',
-                                },
-                              }}
-                            >
+                            
+                            <MenuItem onClick={() => handleCopyName(cluster.name)} sx={{ color: colors.text }}>
                               <ListItemIcon>
-                                <ContentCopyIcon
-                                  fontSize="small"
-                                  style={{ color: colors.primary }}
-                                />
+                                <ContentCopyIcon fontSize="small" style={{ color: colors.primary }} />
                               </ListItemIcon>
                               <ListItemText>Copy Name</ListItemText>
                             </MenuItem>
-                            <MenuItem
-                              onClick={() => handleDetachCluster(cluster)}
-                              sx={{
-                                color: colors.error,
-                                '&:hover': {
-                                  backgroundColor: isDark
-                                    ? 'rgba(255, 107, 107, 0.1)'
-                                    : 'rgba(255, 107, 107, 0.05)',
-                                },
-                              }}
-                            >
+                            
+                            <Divider />
+                            
+                            <MenuItem onClick={() => handleDetachCluster(cluster)} sx={{ color: colors.error }}>
                               <ListItemIcon>
                                 <LinkOffIcon fontSize="small" style={{ color: colors.error }} />
                               </ListItemIcon>

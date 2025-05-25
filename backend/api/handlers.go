@@ -19,7 +19,10 @@ import (
 	"github.com/kubestellar/ui/models"
 	certificatesv1 "k8s.io/api/certificates/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured" // Add this import
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -446,73 +449,76 @@ func GetClusterStatusHandler(c *gin.Context) {
 
 // UpdateManagedClusterLabelsHandler updates labels for a managed cluster
 func UpdateManagedClusterLabelsHandler(c *gin.Context) {
-	var req struct {
-		ContextName     string            `json:"contextName"`
-		ClusterName     string            `json:"clusterName"`
-		ClusterNames    []string          `json:"clusterNames"` // Add this field for bulk operations
-		Labels          map[string]string `json:"labels"`
-		IsBulkOperation bool              `json:"isBulkOperation"` // Flag to indicate bulk operation
-	}
+    log.Printf("[DEBUG] ========== HANDLER START ==========")
+    log.Printf("[DEBUG] Method: %s", c.Request.Method)
+    log.Printf("[DEBUG] Path: %s", c.Request.URL.Path)
+    log.Printf("[DEBUG] Content-Type: %s", c.GetHeader("Content-Type"))
+    
+    var req struct {
+        ContextName     string            `json:"contextName"`
+        ClusterName     string            `json:"clusterName"`
+        ClusterNames    []string          `json:"clusterNames"`
+        Labels          map[string]string `json:"labels"`
+        IsBulkOperation bool              `json:"isBulkOperation"`
+    }
 
-	if err := c.BindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
-		return
-	}
+    // Read the raw body for debugging
+    bodyBytes, err := io.ReadAll(c.Request.Body)
+    if err != nil {
+        log.Printf("[ERROR] Failed to read request body: %v", err)
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read request body"})
+        return
+    }
+    
+    log.Printf("[DEBUG] Raw request body: %s", string(bodyBytes))
+    
+    // Recreate the request body for binding
+    c.Request.Body = io.NopCloser(strings.NewReader(string(bodyBytes)))
 
-	// Handle bulk operations
-	if req.IsBulkOperation && len(req.ClusterNames) > 0 {
-		successCount := 0
-		failedClusters := make([]string, 0)
+    if err := c.BindJSON(&req); err != nil {
+        log.Printf("[ERROR] Failed to bind JSON: %v", err)
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+        return
+    }
 
-		for _, clusterName := range req.ClusterNames {
-			clientset, restConfig, err := k8s.GetClientSetWithConfigContext(req.ContextName)
-			if err != nil {
-				log.Printf("Error getting clientset for cluster %s: %v", clusterName, err)
-				failedClusters = append(failedClusters, clusterName)
-				continue
-			}
+    log.Printf("[DEBUG] Parsed request - Context: %s, Cluster: %s", req.ContextName, req.ClusterName)
+    log.Printf("[DEBUG] Parsed labels: %+v", req.Labels)
 
-			if err := UpdateManagedClusterLabels(clientset, restConfig, clusterName, req.Labels); err != nil {
-				log.Printf("Error updating labels for cluster %s: %v", clusterName, err)
-				failedClusters = append(failedClusters, clusterName)
-				continue
-			}
+    // Count how many labels have empty values (these are deletions)
+    emptyCount := 0
+    for key, value := range req.Labels {
+        if value == "" {
+            emptyCount++
+            log.Printf("[DEBUG] Found deletion request for label: %s", key)
+        }
+    }
+    log.Printf("[DEBUG] Total labels to delete: %d", emptyCount)
 
-			successCount++
-		}
+    // Handle single cluster operation
+    if req.ContextName == "" || req.ClusterName == "" {
+        log.Printf("[ERROR] Missing required fields - Context: %s, Cluster: %s", req.ContextName, req.ClusterName)
+        c.JSON(http.StatusBadRequest, gin.H{"error": "contextName and clusterName are required"})
+        return
+    }
 
-		if len(failedClusters) > 0 {
-			c.JSON(http.StatusOK, gin.H{
-				"message":        fmt.Sprintf("Labels updated for %d out of %d clusters", successCount, len(req.ClusterNames)),
-				"failedClusters": failedClusters,
-				"partialSuccess": true,
-			})
-		} else {
-			c.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("Labels updated for all %d clusters", successCount)})
-		}
-		return
-	}
+    log.Printf("[DEBUG] Getting clientset for context: %s", req.ContextName)
+    clientset, restConfig, err := k8s.GetClientSetWithConfigContext(req.ContextName)
+    if err != nil {
+        log.Printf("[ERROR] %v", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
 
-	// Handle single cluster operation (existing code)
-	if req.ContextName == "" || req.ClusterName == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "contextName and clusterName are required"})
-		return
-	}
+    log.Printf("[DEBUG] Calling UpdateManagedClusterLabels...")
+    if err := UpdateManagedClusterLabels(clientset, restConfig, req.ClusterName, req.Labels); err != nil {
+        log.Printf("[ERROR] Error updating labels: %v", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
 
-	clientset, restConfig, err := k8s.GetClientSetWithConfigContext(req.ContextName)
-	if err != nil {
-		log.Printf("Error getting clientset: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	if err := UpdateManagedClusterLabels(clientset, restConfig, req.ClusterName, req.Labels); err != nil {
-		log.Printf("Error updating labels: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Labels updated successfully"})
+    log.Printf("[SUCCESS] Labels updated successfully for cluster: %s", req.ClusterName)
+    log.Printf("[DEBUG] ========== HANDLER END ==========")
+    c.JSON(http.StatusOK, gin.H{"message": "Labels updated successfully"})
 }
 
 // OnboardCluster handles the entire process of onboarding a cluster
@@ -919,52 +925,142 @@ func joinClusterToHub(kubeconfigPath, clusterName, joinToken string) error {
 
 // UpdateManagedClusterLabels updates labels for a managed cluster
 func UpdateManagedClusterLabels(clientset *kubernetes.Clientset, config *rest.Config, clusterName string, newLabels map[string]string) error {
-	// First, clear existing labels
-	clearLabelsPayload := map[string]interface{}{
-		"metadata": map[string]interface{}{
-			"labels": map[string]string{},
-		},
-	}
-	clearLabelsBytes, err := json.Marshal(clearLabelsPayload)
-	if err != nil {
-		return fmt.Errorf("marshaling clear-labels payload: %v", err)
-	}
+    log.Printf("[DEBUG] ========== UpdateManagedClusterLabels ==========")
+    log.Printf("[DEBUG] Cluster: %s", clusterName)
+    log.Printf("[DEBUG] Received labels: %+v", newLabels)
 
-	clearResult := clientset.RESTClient().Patch(types.MergePatchType).
-		AbsPath("/apis/cluster.open-cluster-management.io/v1").
-		Resource("managedclusters").
-		Name(clusterName).
-		Body(clearLabelsBytes).
-		Do(context.TODO())
+    dynamicClient, err := dynamic.NewForConfig(config)
+    if err != nil {
+        log.Printf("[ERROR] Failed to create dynamic client: %v", err)
+        return fmt.Errorf("failed to create dynamic client: %v", err)
+    }
 
-	if err := clearResult.Error(); err != nil {
-		return fmt.Errorf("clearing existing labels: %v", err)
-	}
+    gvr := schema.GroupVersionResource{
+        Group:    "cluster.open-cluster-management.io",
+        Version:  "v1",
+        Resource: "managedclusters",
+    }
 
-	// Then, add the new labels
-	newLabelsPayload := map[string]interface{}{
-		"metadata": map[string]interface{}{
-			"labels": newLabels,
-		},
-	}
-	newLabelsBytes, err := json.Marshal(newLabelsPayload)
-	if err != nil {
-		return fmt.Errorf("marshaling new-labels payload: %v", err)
-	}
+    // Get current cluster
+    currentCluster, err := dynamicClient.Resource(gvr).Get(context.TODO(), clusterName, metav1.GetOptions{})
+    if err != nil {
+        log.Printf("[ERROR] Failed to get managed cluster %s: %v", clusterName, err)
+        return fmt.Errorf("failed to get managed cluster %s: %v", clusterName, err)
+    }
 
-	addResult := clientset.RESTClient().Patch(types.MergePatchType).
-		AbsPath("/apis/cluster.open-cluster-management.io/v1").
-		Resource("managedclusters").
-		Name(clusterName).
-		Body(newLabelsBytes).
-		Do(context.TODO())
+    // Get current labels
+    currentLabels := make(map[string]string)
+    if labels, found, err := unstructured.NestedStringMap(currentCluster.Object, "metadata", "labels"); err == nil && found {
+        currentLabels = labels
+    }
+    log.Printf("[DEBUG] Current cluster labels: %+v", currentLabels)
 
-	if err := addResult.Error(); err != nil {
-		return fmt.Errorf("adding new labels: %v", err)
-	}
+    // Create final labels map
+    finalLabels := make(map[string]string)
 
-	log.Printf("Replaced labels for managed cluster '%s'", clusterName)
-	return nil
+    // Preserve system labels that shouldn't be removed
+    systemPrefixes := []string{
+        "cluster.open-cluster-management.io/",
+        "feature.open-cluster-management.io/",
+        "kubernetes.io/",
+        "k8s.io/",
+        "node.openshift.io/",
+        "beta.kubernetes.io/",
+        "topology.kubernetes.io/",
+        "node-role.kubernetes.io/",
+    }
+
+    // First, preserve all system labels from current labels
+    for key, value := range currentLabels {
+        isSystem := false
+        for _, prefix := range systemPrefixes {
+            if strings.HasPrefix(key, prefix) {
+                isSystem = true
+                break
+            }
+        }
+        if isSystem {
+            finalLabels[key] = value
+            log.Printf("[DEBUG] Preserving system label: %s = %s", key, value)
+        }
+    }
+
+    // Count deletions for debugging
+    deletionCount := 0
+    additionCount := 0
+
+    // Add new labels (skip empty values - these are deletions)
+    for key, value := range newLabels {
+        if value != "" {
+            finalLabels[key] = value
+            additionCount++
+            log.Printf("[DEBUG] Adding/updating label: %s = %s", key, value)
+        } else {
+            deletionCount++
+            log.Printf("[DEBUG] DELETING label (empty value): %s", key)
+            // Explicitly ensure this label is not in finalLabels
+            delete(finalLabels, key)
+        }
+    }
+
+    log.Printf("[DEBUG] Summary: %d labels to add/update, %d labels to delete", additionCount, deletionCount)
+    log.Printf("[DEBUG] Final labels to apply: %+v", finalLabels)
+
+    // **KEY CHANGE**: Use JSON Patch instead of Merge Patch for reliable label updates
+    // Create a JSON patch that replaces the entire labels object
+    patches := []map[string]interface{}{
+        {
+            "op":    "replace",
+            "path":  "/metadata/labels",
+            "value": finalLabels,
+        },
+    }
+
+    patchBytes, err := json.Marshal(patches)
+    if err != nil {
+        log.Printf("[ERROR] Failed to marshal patch: %v", err)
+        return fmt.Errorf("failed to marshal patch: %v", err)
+    }
+
+    log.Printf("[DEBUG] JSON Patch: %s", string(patchBytes))
+
+    // Apply the JSON patch
+    result, err := dynamicClient.Resource(gvr).Patch(
+        context.TODO(),
+        clusterName,
+        types.JSONPatchType, // Use JSONPatchType instead of MergePatchType
+        patchBytes,
+        metav1.PatchOptions{},
+    )
+
+    if err != nil {
+        log.Printf("[ERROR] Patch failed: %v", err)
+        return fmt.Errorf("failed to patch managed cluster %s: %v", clusterName, err)
+    }
+
+    log.Printf("[DEBUG] Patch successful!")
+    
+    // Verify the update by checking the result
+    if result != nil {
+        if updatedLabels, found, err := unstructured.NestedStringMap(result.Object, "metadata", "labels"); err == nil && found {
+            log.Printf("[DEBUG] Updated cluster labels after patch: %+v", updatedLabels)
+            
+            // Verify deletions worked
+            for key, value := range newLabels {
+                if value == "" { // This was marked for deletion
+                    if _, exists := updatedLabels[key]; exists {
+                        log.Printf("[WARNING] Label %s was supposed to be deleted but still exists!", key)
+                    } else {
+                        log.Printf("[SUCCESS] Label %s was successfully deleted", key)
+                    }
+                }
+            }
+        }
+    }
+
+    log.Printf("[DEBUG] Successfully updated labels for cluster: %s", clusterName)
+    log.Printf("[DEBUG] ========== End UpdateManagedClusterLabels ==========")
+    return nil
 }
 
 // kubeconfigPath returns the path to the kubeconfig file
