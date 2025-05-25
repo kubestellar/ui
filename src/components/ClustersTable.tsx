@@ -417,8 +417,8 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
 
     // Check for duplicates only if the key has changed
     if (editingKey.trim() !== originalKey) {
-      const isDuplicate = labels.some((label, index) => 
-        index !== editingIndex && label.key === editingKey.trim()
+      const isDuplicate = labels.some(
+        (label, index) => index !== editingIndex && label.key === editingKey.trim()
       );
 
       if (isDuplicate) {
@@ -435,11 +435,9 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
     }
 
     // Update the label
-    setLabels(prev => 
-      prev.map((label, index) => 
-        index === editingIndex 
-          ? { key: editingKey.trim(), value: editingValue.trim() }
-          : label
+    setLabels(prev =>
+      prev.map((label, index) =>
+        index === editingIndex ? { key: editingKey.trim(), value: editingValue.trim() } : label
       )
     );
 
@@ -740,7 +738,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                 {filteredLabels.map((label, index) => {
                   const isProtected = isLabelProtected(label.key);
                   const isEditing = editingIndex === index;
-                  
+
                   return (
                     <Zoom
                       in={true}
@@ -763,9 +761,9 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                                   ? 'rgba(47, 134, 255, 0.1)'
                                   : 'rgba(47, 134, 255, 0.05)',
                           border: `1px solid ${
-                            selectedLabelIndex === index 
-                              ? colors.primary 
-                              : isEditing 
+                            selectedLabelIndex === index
+                              ? colors.primary
+                              : isEditing
                                 ? colors.success
                                 : colors.border
                           }`,
@@ -790,27 +788,27 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                           }
                         }}
                       >
-                        <div className="flex items-center gap-2 flex-1">
+                        <div className="flex flex-1 items-center gap-2">
                           {/* Show lock icon for protected labels */}
                           {isProtected ? (
-                            <Tooltip 
+                            <Tooltip
                               title={
                                 label.key.startsWith('cluster.open-cluster-management.io/') ||
                                 label.key.startsWith('feature.open-cluster-management.io/') ||
                                 label.key.startsWith('kubernetes.io/') ||
                                 label.key.startsWith('k8s.io/') ||
                                 label.key === 'name'
-                                  ? "Default label - Cannot be modified"
-                                  : "Used in binding policy - Cannot be modified"
+                                  ? 'Default label - Cannot be modified'
+                                  : 'Used in binding policy - Cannot be modified'
                               }
                               placement="top"
                             >
-                              <LockIcon 
+                              <LockIcon
                                 fontSize="small"
-                                style={{ 
-                                  color: colors.warning, 
-                                  fontSize: "16px",
-                                }} 
+                                style={{
+                                  color: colors.warning,
+                                  fontSize: '16px',
+                                }}
                               />
                             </Tooltip>
                           ) : (
@@ -819,7 +817,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
 
                           {/* Label content - editable if in edit mode */}
                           {isEditing ? (
-                            <div className="flex items-center gap-2 flex-1">
+                            <div className="flex flex-1 items-center gap-2">
                               <TextField
                                 value={editingKey}
                                 onChange={e => setEditingKey(e.target.value)}
@@ -830,7 +828,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                                 placeholder="Label key"
                                 style={{ minWidth: '120px' }}
                                 InputProps={{
-                                  style: { 
+                                  style: {
                                     color: colors.text,
                                     fontSize: '0.875rem',
                                   },
@@ -854,7 +852,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                                 placeholder="Label value"
                                 style={{ minWidth: '120px' }}
                                 InputProps={{
-                                  style: { 
+                                  style: {
                                     color: colors.text,
                                     fontSize: '0.875rem',
                                   },
@@ -884,7 +882,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                               <Tooltip title="Save changes">
                                 <IconButton
                                   size="small"
-                                  onClick={(e) => {
+                                  onClick={e => {
                                     e.stopPropagation();
                                     handleSaveEdit();
                                   }}
@@ -896,7 +894,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                               <Tooltip title="Cancel editing">
                                 <IconButton
                                   size="small"
-                                  onClick={(e) => {
+                                  onClick={e => {
                                     e.stopPropagation();
                                     handleCancelEdit();
                                   }}
@@ -912,7 +910,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                                 <Tooltip title="Edit label">
                                   <IconButton
                                     size="small"
-                                    onClick={(e) => {
+                                    onClick={e => {
                                       e.stopPropagation();
                                       handleStartEdit(index);
                                     }}
@@ -943,7 +941,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                                 <Tooltip title="Delete label">
                                   <IconButton
                                     size="small"
-                                    onClick={(e) => {
+                                    onClick={e => {
                                       e.stopPropagation();
                                       handleRemoveLabel(index);
                                     }}
