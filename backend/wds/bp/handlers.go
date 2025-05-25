@@ -18,6 +18,7 @@ import (
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/watch"
 )
 
 type StoredBindingPolicy struct {
@@ -47,6 +48,34 @@ type BindingPolicyWithStatus struct {
 	BindingMode            string   `json:"bindingMode"`
 	Clusters               []string `json:"clusters"`
 	Workloads              []string `json:"workloads"`
+}
+
+// BindingPolicyInterface defines the interface for binding policy operations
+// This is used for both real and mock clients (for testability)
+type BindingPolicyInterface interface {
+	Create(ctx context.Context, bp *v1alpha1.BindingPolicy, opts v1.CreateOptions) (*v1alpha1.BindingPolicy, error)
+	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.BindingPolicy, error)
+	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.BindingPolicyList, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (*v1alpha1.BindingPolicy, error)
+	Update(ctx context.Context, bp *v1alpha1.BindingPolicy, opts v1.UpdateOptions) (*v1alpha1.BindingPolicy, error)
+	UpdateStatus(ctx context.Context, bp *v1alpha1.BindingPolicy, opts v1.UpdateOptions) (*v1alpha1.BindingPolicy, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+}
+
+// Helper to get the binding policy client from Gin context (for tests) or real client
+func getBindingPolicyClient(ctx *gin.Context) (BindingPolicyInterface, error) {
+	if v, exists := ctx.Get("bindingPolicyClient"); exists {
+		if client, ok := v.(BindingPolicyInterface); ok {
+			return client, nil
+		}
+	}
+	c, err := getClientForBp()
+	if err != nil {
+		return nil, err
+	}
+	return c.BindingPolicies(), nil
 }
 
 // GetAllBp retrieves all BindingPolicies with enhanced information
@@ -97,7 +126,7 @@ func GetAllBp(ctx *gin.Context) {
 	}
 
 	// If cache miss or error, proceed with normal flow
-	c, err := getClientForBp()
+	c, err := getBindingPolicyClient(ctx)
 	if err != nil {
 		log.LogError("failed to create client for Bp", zap.String("error", err.Error()))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -109,7 +138,7 @@ func GetAllBp(ctx *gin.Context) {
 	listOptions := v1.ListOptions{}
 
 	// Get all binding policies
-	bpList, err := c.BindingPolicies().List(context.TODO(), listOptions)
+	bpList, err := c.List(context.TODO(), listOptions)
 	if err != nil {
 		log.LogError("failed to list binding policies", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -593,16 +622,17 @@ func CreateBp(ctx *gin.Context) {
 		return
 
 	}
-	c, err := getClientForBp()
+	c, err := getBindingPolicyClient(ctx)
 	if err != nil {
 		log.LogInfo(err.Error())
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	_, err = c.BindingPolicies().Create(context.TODO(), bp, v1.CreateOptions{})
+	createdBP, err := c.Create(context.TODO(), bp, v1.CreateOptions{})
 	if err != nil {
 		log.LogError(err.Error())
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
 	// After successful creation, store in Redis
@@ -618,6 +648,20 @@ func CreateBp(ctx *gin.Context) {
 	if err := redis.StoreBindingPolicy(cachedBPolicy); err != nil {
 		log.LogWarn("failed to cache new binding policy", zap.Error(err))
 	}
+
+	// Return success response with the created policy details
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": fmt.Sprintf("Created binding policy '%s' in namespace '%s' successfully", createdBP.Name, createdBP.Namespace),
+		"bindingPolicy": gin.H{
+			"name":           createdBP.Name,
+			"namespace":      createdBP.Namespace,
+			"status":         "inactive", // New policies start as inactive
+			"bindingMode":    "Downsync", // Only Downsync is supported
+			"clustersCount":  0,          // Will be populated on next status check
+			"workloadsCount": 0,          // Will be populated on next status check
+			"yaml":           string(bpRawYamlBytes),
+		},
+	})
 
 }
 
@@ -636,13 +680,13 @@ func DeleteBp(ctx *gin.Context) {
 	}
 
 	log.LogInfo("", zap.String("deleting bp: ", name))
-	c, err := getClientForBp()
+	c, err := getBindingPolicyClient(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	err = c.BindingPolicies().Delete(context.TODO(), name, v1.DeleteOptions{})
+	err = c.Delete(context.TODO(), name, v1.DeleteOptions{})
 	if err != nil {
 		log.LogError("", zap.String("err", err.Error()))
 		ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -728,7 +772,7 @@ func GetBpStatus(ctx *gin.Context) {
 
 	log.LogDebug("GetBpStatus - Using namespace", zap.String("namespace", namespace))
 
-	c, err := getClientForBp()
+	c, err := getBindingPolicyClient(ctx)
 	if err != nil {
 		log.LogError("GetBpStatus - Client error", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -736,12 +780,12 @@ func GetBpStatus(ctx *gin.Context) {
 	}
 
 	// Try to get binding policy directly
-	bp, err := c.BindingPolicies().Get(context.TODO(), name, v1.GetOptions{})
+	bp, err := c.Get(context.TODO(), name, v1.GetOptions{})
 	if err != nil {
 		log.LogDebug("GetBpStatus - Direct Get error", zap.Error(err))
 
 		// Try to list all binding policies to see if it exists
-		bpList, listErr := c.BindingPolicies().List(context.TODO(), v1.ListOptions{})
+		bpList, listErr := c.List(context.TODO(), v1.ListOptions{})
 		if listErr != nil {
 			log.LogError("GetBpStatus - List error", zap.Error(listErr))
 			ctx.JSON(http.StatusNotFound, gin.H{
@@ -1098,12 +1142,12 @@ func UpdateBp(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
-	c, err := getClientForBp()
+	c, err := getBindingPolicyClient(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	updatedBp, err := c.BindingPolicies().Patch(context.TODO(), bpName, types.MergePatchType, jsonBytes, v1.PatchOptions{})
+	updatedBp, err := c.Patch(context.TODO(), bpName, types.MergePatchType, jsonBytes, v1.PatchOptions{})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -1396,7 +1440,7 @@ func CreateBpFromJson(ctx *gin.Context) {
 	log.LogInfo("Stored policy in memory cache", zap.String("key", newBP.Name))
 
 	// Get client
-	c, err := getClientForBp()
+	c, err := getBindingPolicyClient(ctx)
 	if err != nil {
 		log.LogError("Client creation error", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create client: %s", err.Error())})
@@ -1404,7 +1448,7 @@ func CreateBpFromJson(ctx *gin.Context) {
 	}
 
 	// Create the binding policy
-	_, err = c.BindingPolicies().Create(context.TODO(), newBP, v1.CreateOptions{})
+	_, err = c.Create(context.TODO(), newBP, v1.CreateOptions{})
 	if err != nil {
 		if strings.Contains(err.Error(), "already exists") {
 			ctx.JSON(http.StatusConflict, gin.H{
@@ -1793,7 +1837,7 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 	uiCreatedPolicies[policyName] = storedBP
 
 	// Get client and create the binding policy
-	c, err := getClientForBp()
+	c, err := getBindingPolicyClient(ctx)
 	if err != nil {
 		log.LogError("Client creation error", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create client: %s", err.Error())})
@@ -1801,7 +1845,7 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 	}
 
 	// Create the binding policy
-	_, err = c.BindingPolicies().Create(context.TODO(), newBP, v1.CreateOptions{})
+	_, err = c.Create(context.TODO(), newBP, v1.CreateOptions{})
 	if err != nil {
 		if strings.Contains(err.Error(), "already exists") {
 			ctx.JSON(http.StatusConflict, gin.H{
