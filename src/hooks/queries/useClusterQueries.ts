@@ -238,13 +238,21 @@ export const useClusterQueries = () => {
         contextName,
         clusterName,
         labels,
+        deletedLabels,
         selectedClusters,
       }: {
         contextName: string;
         clusterName: string;
         labels: { [key: string]: string };
+        deletedLabels?: string[];
         selectedClusters?: string[];
       }) => {
+        console.log('[DEBUG] ========== MUTATION START ==========');
+        console.log('[DEBUG] Context:', contextName);
+        console.log('[DEBUG] Cluster:', clusterName);
+        console.log('[DEBUG] Original Labels:', labels);
+        console.log('[DEBUG] Deleted Labels:', deletedLabels);
+
         // Handle bulk operation for virtual "X selected clusters" entity
         if (
           selectedClusters &&
@@ -257,8 +265,6 @@ export const useClusterQueries = () => {
             'clusters'
           );
 
-          // Don't make a GET request for the virtual cluster name
-          // Instead, directly update each individual cluster
           return {
             success: true,
             message: `Will apply labels to ${selectedClusters.length} clusters`,
@@ -267,20 +273,53 @@ export const useClusterQueries = () => {
           };
         }
 
-        // Single cluster operation - proceed as before
-        return api.patch(
-          '/api/managedclusters/labels',
-          {
-            contextName,
-            clusterName,
-            labels,
-          },
-          {
+        // Combine labels with deleted labels as empty values
+        const finalLabels = { ...labels };
+
+        if (deletedLabels && deletedLabels.length > 0) {
+          console.log('[DEBUG] Adding deleted labels as empty values:', deletedLabels);
+          deletedLabels.forEach(key => {
+            finalLabels[key] = ''; // Empty = delete
+          });
+        }
+
+        console.log('[DEBUG] Final labels being sent to backend:', finalLabels);
+
+        const payload = {
+          contextName,
+          clusterName,
+          labels: finalLabels,
+        };
+
+        console.log('[DEBUG] API payload:', JSON.stringify(payload, null, 2));
+
+        try {
+          // Single cluster operation
+          const response = await api.patch('/api/managedclusters/labels', payload, {
             headers: {
               'Content-Type': 'application/json',
             },
+          });
+
+          console.log('[DEBUG] API response:', response.data);
+          return response;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
+          console.error('[DEBUG] API error:', error);
+
+          // Handle 400 status with PARTIAL_SUCCESS specifically
+          if (
+            error.response?.status === 400 &&
+            error.response?.data?.error?.includes('PARTIAL_SUCCESS:')
+          ) {
+            // Create a custom error object that includes the protected labels info
+            const protectedError = new Error(error.response.data.error);
+            protectedError.name = 'ProtectedLabelsError';
+            throw protectedError;
           }
-        );
+
+          throw error;
+        }
       },
       onSuccess: () => {
         console.log('[DEBUG] Labels updated successfully, invalidating clusters query cache');
