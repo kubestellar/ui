@@ -72,17 +72,17 @@ export default function BackupPluginCard({ plugin }: BackupPluginCardProps) {
   useEffect(() => {
     fetchBackupDetails();
     fetchPluginStatus();
-    
+
     // Enable the plugin if it's not already enabled
     const enablePluginOnMount = async () => {
       if (plugin.enabled !== 1) {
         try {
           setIsTogglingEnabled(true);
           await api.post(`/api/plugins/backup/enable`, {
-            enabled: 1
+            enabled: 1,
           });
           // No need to setIsEnabled(true) here as it's already true by default
-          toast.success("Backup service enabled automatically");
+          toast.success('Backup service enabled automatically');
         } catch (error) {
           console.error('Failed to auto-enable backup service:', error);
           // Only update state if the automatic enabling fails
@@ -92,9 +92,9 @@ export default function BackupPluginCard({ plugin }: BackupPluginCardProps) {
         }
       }
     };
-    
+
     enablePluginOnMount();
-    
+
     // Set up polling for real-time updates
     const interval = setInterval(() => {
       if (!isLoading && !retrying) {
@@ -205,19 +205,21 @@ export default function BackupPluginCard({ plugin }: BackupPluginCardProps) {
 
     try {
       // Show loading toast for better UX
-      const toastId = toast.loading(`${newEnabledState ? 'Enabling' : 'Disabling'} backup service...`);
-      
+      const toastId = toast.loading(
+        `${newEnabledState ? 'Enabling' : 'Disabling'} backup service...`
+      );
+
       await api.post(`/api/plugins/backup/enable`, {
         enabled: newEnabledState ? 1 : 0,
       });
 
       setIsEnabled(newEnabledState);
-      
+
       // Update toast to success
       toast.success(`Backup ${newEnabledState ? 'enabled' : 'disabled'} successfully`, {
-        id: toastId
+        id: toastId,
       });
-      
+
       // Refresh data to get updated status
       fetchBackupDetails();
     } catch (error) {
@@ -233,19 +235,19 @@ export default function BackupPluginCard({ plugin }: BackupPluginCardProps) {
 
   const getStatusDisplay = () => {
     if (isLoading) return { text: 'In Progress', color: 'text-blue-600', bgColor: 'bg-blue-100' };
-    
+
     // Use plugin status if backup details are not available
     const statusSource = backupDetails || pluginStatus;
-    
+
     if (statusSource?.lastError) {
-      return { 
-        text: 'Failed', 
-        color: 'text-red-600', 
+      return {
+        text: 'Failed',
+        color: 'text-red-600',
         bgColor: 'bg-red-100',
-        details: statusSource.lastError 
+        details: statusSource.lastError,
       };
     }
-    
+
     const status = backupDetails?.status || pluginStatus?.status;
     switch (status) {
       case 'running':
@@ -261,7 +263,7 @@ export default function BackupPluginCard({ plugin }: BackupPluginCardProps) {
   };
 
   const statusDisplay = getStatusDisplay();
-  
+
   // Combine data from both sources for display
   const displayData = {
     lastRun: backupDetails?.lastRun || pluginStatus?.lastRun,
@@ -324,11 +326,16 @@ export default function BackupPluginCard({ plugin }: BackupPluginCardProps) {
         {displayData.lastError && (
           <div className="col-span-2 rounded-md bg-red-50 p-3 dark:bg-red-900/20">
             <div className="flex items-start gap-2">
-              <AlertCircle size={14} className="mt-0.5 text-red-600 dark:text-red-400 flex-shrink-0" />
+              <AlertCircle
+                size={14}
+                className="mt-0.5 flex-shrink-0 text-red-600 dark:text-red-400"
+              />
               <div className="flex-1">
                 <p className="text-xs font-medium text-red-600 dark:text-red-400">Last Error:</p>
-                <p className="text-xs text-red-700 dark:text-red-300 mt-1">{displayData.lastError}</p>
-                <div className="flex items-center gap-4 mt-2 text-xs text-red-600 dark:text-red-400">
+                <p className="mt-1 text-xs text-red-700 dark:text-red-300">
+                  {displayData.lastError}
+                </p>
+                <div className="mt-2 flex items-center gap-4 text-xs text-red-600 dark:text-red-400">
                   <span>Errors: {displayData.errorCount}</span>
                   <span>Success: {displayData.successCount}</span>
                 </div>
@@ -345,11 +352,13 @@ export default function BackupPluginCard({ plugin }: BackupPluginCardProps) {
               : 'No backups yet'}
           </p>
         </div>
-        
+
         <div className="space-y-1">
           <p className="text-xs text-gray-500 dark:text-gray-400">Status</p>
           <div className="flex items-center gap-2">
-            <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${statusDisplay.bgColor} ${statusDisplay.color}`}>
+            <span
+              className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${statusDisplay.bgColor} ${statusDisplay.color}`}
+            >
               {statusDisplay.text}
             </span>
             {displayData.jobStatus === 'running' && (
@@ -357,15 +366,13 @@ export default function BackupPluginCard({ plugin }: BackupPluginCardProps) {
             )}
           </div>
           {statusDisplay.details && (
-            <p className="text-xs text-red-600 dark:text-red-400 mt-1">
-              {statusDisplay.details}
-            </p>
+            <p className="mt-1 text-xs text-red-600 dark:text-red-400">{statusDisplay.details}</p>
           )}
         </div>
 
         {/* Plugin Statistics */}
         {(displayData.errorCount > 0 || displayData.successCount > 0) && (
-          <div className="col-span-2 grid grid-cols-2 gap-4 pt-2 border-t border-gray-200 dark:border-gray-600">
+          <div className="col-span-2 grid grid-cols-2 gap-4 border-t border-gray-200 pt-2 dark:border-gray-600">
             <div className="text-center">
               <p className="text-xs text-gray-500 dark:text-gray-400">Success Rate</p>
               <p className="text-sm font-medium text-green-600 dark:text-green-400">
@@ -441,14 +448,14 @@ export default function BackupPluginCard({ plugin }: BackupPluginCardProps) {
           {/* Real-time status based on actual data */}
           {displayData.jobStatus === 'running' && (
             <div className="flex items-start gap-3 rounded-lg bg-gradient-to-r from-blue-50 to-transparent p-3 transition-colors duration-300 hover:from-blue-100 dark:from-blue-800/50 dark:to-transparent dark:hover:from-blue-700/50">
-              <Loader2 size={14} className="mt-0.5 text-blue-500 animate-spin" />
+              <Loader2 size={14} className="mt-0.5 animate-spin text-blue-500" />
               <div className="flex-1">
                 <p className="text-gray-700 dark:text-gray-300">Backup job currently running</p>
                 <span className="text-xs text-gray-500 dark:text-gray-400">In progress...</span>
               </div>
             </div>
           )}
-          
+
           {displayData.lastError && (
             <div className="flex items-start gap-3 rounded-lg bg-gradient-to-r from-red-50 to-transparent p-3 transition-colors duration-300 hover:from-red-100 dark:from-red-800/50 dark:to-transparent dark:hover:from-red-700/50">
               <AlertCircle size={14} className="mt-0.5 text-red-500" />
@@ -467,7 +474,9 @@ export default function BackupPluginCard({ plugin }: BackupPluginCardProps) {
               <div className="flex-1">
                 <p className="text-gray-700 dark:text-gray-300">Backup completed successfully</p>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {displayData.lastRun ? new Date(displayData.lastRun).toLocaleString() : 'Recently'}
+                  {displayData.lastRun
+                    ? new Date(displayData.lastRun).toLocaleString()
+                    : 'Recently'}
                 </span>
               </div>
             </div>
@@ -534,13 +543,15 @@ export default function BackupPluginCard({ plugin }: BackupPluginCardProps) {
               </div>
               <div className="flex items-center justify-between rounded-md bg-gray-50 p-3 dark:bg-gray-700">
                 <span className="text-sm text-gray-700 dark:text-gray-300">Backup Status</span>
-                <span className={`rounded-full px-2.5 py-0.5 text-sm font-medium ${
-                  backupDetails?.status === 'success' || backupDetails?.status === 'active'
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                    : backupDetails?.status === 'failed'
-                      ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                      : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                }`}>
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-sm font-medium ${
+                    backupDetails?.status === 'success' || backupDetails?.status === 'active'
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                      : backupDetails?.status === 'failed'
+                        ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                        : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                  }`}
+                >
                   {backupDetails?.status === 'success' || backupDetails?.status === 'active'
                     ? 'Backup Successful'
                     : backupDetails?.status === 'failed'
