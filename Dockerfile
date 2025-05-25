@@ -20,7 +20,6 @@ COPY .git .git
 # Extract Git commit hash
 RUN git rev-parse HEAD > commit_hash.txt
 
-ENV VITE_BASE_URL=http://localhost:4000
 ENV VITE_APP_VERSION=0.1.0
 # Skip prerequisites check in Docker environment
 ENV VITE_SKIP_PREREQUISITES_CHECK=true
