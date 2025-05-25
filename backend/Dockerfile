@@ -31,6 +31,12 @@ RUN apk --no-cache add ca-certificates curl openssl git bash kubectl && \
     bash /tmp/install.sh 0.10.1 && \
     rm /tmp/install.sh
 
+RUN apk add --no-cache curl docker-cli
+
+# Download Docker Compose v2 binary and make it executable
+RUN curl -SL https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose && \
+    chmod +x /usr/local/bin/docker-compose
+    
 # Install kubeflex
 RUN bash -c "$(curl -s https://raw.githubusercontent.com/kubestellar/kubeflex/main/scripts/install-kubeflex.sh)" -- --ensure-folder /usr/local/bin --strip-bin
 
@@ -51,7 +57,7 @@ COPY --from=backend-builder /app/backend .
 VOLUME ["/root/.kube"]
 
 # Expose the backend service port
-EXPOSE 4000
+EXPOSE 4000 4001 5174
 
 # Source the environment variables and run the backend
 CMD ["/bin/sh", "-c", "source /root/.env && ./backend"]

@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  {{.Name}}-backend:
+    image: {{.Backend.Image}}
+    ports:
+      - '{{.Backend.Port}}:{{.Backend.Port}}'
+    environment:
+{{range $key, $value := .Backend.Env}}      - {{$key}}={{$value}}
+{{end}}    networks:
+      - plugin-network
+
+  {{.Name}}-frontend:
+    image: {{.Frontend.Image}}
+    ports:
+      - '5174:5174'
+    environment:
+      - VITE_API_URL=http://{{.Name}}-backend:{{.Backend.Port}}
+    networks:
+      - plugin-network
+
+networks:
+  plugin-network:
+    driver: bridge

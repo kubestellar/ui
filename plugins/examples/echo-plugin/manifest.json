@@ -1,0 +1,17 @@
+{
+  "name": "echo-plugin",
+  "displayName": "Echo Plugin",
+  "version": "1.0.0",
+  "description": "A simple echo plugin that demonstrates plugin system capabilities",
+  "backend": {
+    "image": "echo-plugin-backend",
+    "port": 4001,
+    "env": {
+      "PORT": "4001"
+    }
+  },
+  "frontend": {
+    "entryPoint": "/plugins/echo-plugin/frontend/index.tsx",
+    "routes": ["/echo", "/echo/*"]
+  }
+}

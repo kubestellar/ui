@@ -1,6 +1,6 @@
 import { HiOutlineHome, HiOutlineCube, HiOutlineCommandLine } from 'react-icons/hi2';
 
-import { MdPolicy, MdAssuredWorkload } from 'react-icons/md';
+import { MdPolicy, MdAssuredWorkload, MdAddShoppingCart } from 'react-icons/md';
 
 export const menu = [
   {
@@ -45,6 +45,12 @@ export const menu = [
         icon: MdAssuredWorkload,
         label: `Deployed Workloads`,
       },
+      {
+        isLink: true,
+        url: '/plugins',
+        icon: MdAddShoppingCart,
+        label: 'Plugins',
+      }
     ],
   },
 ];

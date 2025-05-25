@@ -15,8 +15,12 @@ services:
       dockerfile: Dockerfile
     ports:
       - '4000:4000'
+      - '4001:4001'
+      - '5174:5174'
     volumes:
       - ~/.kube:/root/.kube
+      - ./backend/routes:/root/routes  # Mount routes directory to /root/routes
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - REDIS_HOST=localhost
       - REDIS_PORT=6379

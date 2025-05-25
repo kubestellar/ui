@@ -13,6 +13,7 @@ import (
 )
 
 func setupDeploymentRoutes(router *gin.Engine) {
+	log.Println("Debug***********************************: Setting up deployment routes")
 	router.GET("/api/wds/workloads", deployment.GetWDSWorkloads)
 	router.GET("/api/wds/:name", deployment.GetDeploymentByName)
 	router.GET("/api/wds/status", deployment.GetDeploymentStatus)

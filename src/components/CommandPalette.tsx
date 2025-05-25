@@ -14,6 +14,7 @@ import {
   FiLogOut,
 } from 'react-icons/fi';
 import { useAuthActions } from '../hooks/useAuth';
+import { MdShoppingBasket } from 'react-icons/md';
 
 // Command types to support various actions
 type CommandType = 'navigation' | 'action' | 'documentation';
@@ -167,7 +168,7 @@ const CommandPalette: React.FC = () => {
         'configuration',
       ],
       section: 'Navigation',
-    },
+    },    
     {
       id: 'wds-treeview',
       type: 'navigation',
@@ -208,6 +209,16 @@ const CommandPalette: React.FC = () => {
         'replicasets',
       ],
       section: 'Visualizations',
+    },
+    {
+      id: 'plugins',
+      type: 'navigation',
+      icon: MdShoppingBasket,
+      title: 'Plugins',
+      description: 'Manage installed plugins',
+      action: () => navigate('/plugins'),
+      keywords: ['plugins', 'extensions', 'add-ons', 'modules'],
+      section: 'Navigation',
     },
     {
       id: 'documentation',

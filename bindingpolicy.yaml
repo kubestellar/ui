@@ -1,0 +1,12 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: BindingPolicy
+metadata:
+  name: test-binding-policy
+  namespace: default
+spec:
+  policy:
+    name: test-policy
+  placement:
+    clusterSelector:
+      matchLabels:
+        environment: production

@@ -10,6 +10,8 @@ func SetupRoutes(router *gin.Engine) {
 	setupClusterRoutes(router)
 	setupDeploymentRoutes(router)
 	setupNamespaceRoutes(router)
+	RegisterPluginAPI(router)
+	// registerGhodaaRoute(router)
 	setupBindingPolicyRoutes(router)
 	setupResourceRoutes(router)
 	getWecsResources(router)
