@@ -58,7 +58,7 @@ export const CancelConfirmationDialog = ({
                 variant="body1"
                 sx={{ color: theme === 'dark' ? '#fff' : 'rgb(102, 60, 0)', fontSize: '14px' }}
               >
-                Are you sure you want to cancel? Any changes will lost.
+                Are you sure you want to cancel? Any changes will be lost.
               </Typography>
             </Box>
           </Box>
