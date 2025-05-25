@@ -128,30 +128,33 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
   const valueInputRef = useRef<HTMLInputElement>(null);
 
   // Function to check if a label is protected (system or binding policy)
-  const isLabelProtected = useCallback((labelKey: string): boolean => {
-    // System label prefixes
-    const systemPrefixes = [
-      'cluster.open-cluster-management.io/',
-      'feature.open-cluster-management.io/',
-      'kubernetes.io/',
-      'k8s.io/',
-      'node.openshift.io/',
-      'beta.kubernetes.io/',
-      'topology.kubernetes.io/',
-      'node-role.kubernetes.io/',
-      'name', // Common system label
-    ];
+  const isLabelProtected = useCallback(
+    (labelKey: string): boolean => {
+      // System label prefixes
+      const systemPrefixes = [
+        'cluster.open-cluster-management.io/',
+        'feature.open-cluster-management.io/',
+        'kubernetes.io/',
+        'k8s.io/',
+        'node.openshift.io/',
+        'beta.kubernetes.io/',
+        'topology.kubernetes.io/',
+        'node-role.kubernetes.io/',
+        'name', // Common system label
+      ];
 
-    // Check system prefixes
-    for (const prefix of systemPrefixes) {
-      if (labelKey.startsWith(prefix)) {
-        return true;
+      // Check system prefixes
+      for (const prefix of systemPrefixes) {
+        if (labelKey.startsWith(prefix)) {
+          return true;
+        }
       }
-    }
 
-    // Check if it's in the protected labels set (from binding policies)
-    return protectedLabels.has(labelKey);
-  }, [protectedLabels]);
+      // Check if it's in the protected labels set (from binding policies)
+      return protectedLabels.has(labelKey);
+    },
+    [protectedLabels]
+  );
 
   // Fetch protected labels from binding policies when dialog opens
   useEffect(() => {
@@ -171,7 +174,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                 Object.keys(selector.matchLabels || {}).forEach((key: string) => {
                   usedLabels.add(key);
                 });
-                
+
                 // From matchExpressions
                 selector.matchExpressions?.forEach((expr: any) => {
                   if (expr.key) {
@@ -202,7 +205,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
               if (bp.yaml) {
                 const yamlLines = bp.yaml.split('\n');
                 let inMatchLabels = false;
-                
+
                 yamlLines.forEach((line: string) => {
                   const trimmed = line.trim();
                   if (trimmed.includes('matchlabels:')) {
@@ -644,24 +647,24 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                         <div className="flex items-center gap-2">
                           {/* Show lock icon for protected labels */}
                           {isProtected ? (
-                            <Tooltip 
+                            <Tooltip
                               title={
                                 label.key.startsWith('cluster.open-cluster-management.io/') ||
                                 label.key.startsWith('feature.open-cluster-management.io/') ||
                                 label.key.startsWith('kubernetes.io/') ||
                                 label.key.startsWith('k8s.io/') ||
                                 label.key === 'name'
-                                  ? "System label - Cannot be deleted"
-                                  : "Used in binding policy - Cannot be deleted"
+                                  ? 'System label - Cannot be deleted'
+                                  : 'Used in binding policy - Cannot be deleted'
                               }
                               placement="top"
                             >
-                              <LockIcon 
+                              <LockIcon
                                 fontSize="small"
-                                style={{ 
-                                  color: colors.warning, 
-                                  fontSize: "16px",
-                                }} 
+                                style={{
+                                  color: colors.warning,
+                                  fontSize: '16px',
+                                }}
                               />
                             </Tooltip>
                           ) : (
@@ -683,7 +686,9 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                               }}
                               style={{
                                 color:
-                                  selectedLabelIndex === index ? colors.primary : colors.textSecondary,
+                                  selectedLabelIndex === index
+                                    ? colors.primary
+                                    : colors.textSecondary,
                                 opacity: 0.8,
                                 transition: 'all 0.2s ease',
                               }}
@@ -1331,7 +1336,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
           console.error('[DEBUG] Mutation error:', error);
           toast.error(
             'Labels are used in Binding Policy ' +
-            'and cannot be deleted. Please remove the policy first.',
+              'and cannot be deleted. Please remove the policy first.',
             {
               icon: '❌',
               style: {
@@ -2127,7 +2132,6 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                                         border: `1px solid ${
                                           filterByLabel?.key === key &&
                                           filterByLabel?.value === value
-
                                             ? colors.primary
                                             : isDark
                                               ? 'rgba(47, 134, 255, 0.4)'

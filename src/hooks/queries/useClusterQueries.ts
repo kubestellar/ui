@@ -303,18 +303,21 @@ export const useClusterQueries = () => {
 
           console.log('[DEBUG] API response:', response.data);
           return response;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
           console.error('[DEBUG] API error:', error);
-          
+
           // Handle 400 status with PARTIAL_SUCCESS specifically
-          if (error.response?.status === 400 && error.response?.data?.error?.includes('PARTIAL_SUCCESS:')) {
+          if (
+            error.response?.status === 400 &&
+            error.response?.data?.error?.includes('PARTIAL_SUCCESS:')
+          ) {
             // Create a custom error object that includes the protected labels info
             const protectedError = new Error(error.response.data.error);
             protectedError.name = 'ProtectedLabelsError';
             throw protectedError;
           }
-          
+
           throw error;
         }
       },
