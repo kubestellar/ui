@@ -296,6 +296,12 @@ func StoreBindingPolicy(policy *BindingPolicyCache) error {
 		return fmt.Errorf("cannot store nil binding policy")
 	}
 
+	// Check if Redis is available
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		log.LogWarn("redis not available, skipping cache store", zap.Error(err))
+		return nil // Don't fail the operation if Redis is down
+	}
+
 	// Marshal the policy to JSON
 	jsonData, err := json.Marshal(policy)
 	if err != nil {
@@ -319,6 +325,11 @@ func StoreBindingPolicy(policy *BindingPolicyCache) error {
 
 // GetBindingPolicy retrieves a binding policy from Redis by name
 func GetBindingPolicy(name string) (*BindingPolicyCache, error) {
+	// Check if Redis is available
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		return nil, fmt.Errorf("redis not available: %v", err)
+	}
+
 	val, err := rdb.HGet(ctx, BindingPolicyHashKey, name).Result()
 	if err == redis.Nil {
 		return nil, nil // Policy not found
@@ -336,9 +347,18 @@ func GetBindingPolicy(name string) (*BindingPolicyCache, error) {
 
 // GetAllBindingPolicies retrieves all binding policies from Redis
 func GetAllBindingPolicies() ([]*BindingPolicyCache, error) {
+	// Check if Redis is available
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		return nil, fmt.Errorf("redis not available: %v", err)
+	}
+
 	values, err := rdb.HGetAll(ctx, BindingPolicyHashKey).Result()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all binding policies from Redis: %v", err)
+	}
+
+	if len(values) == 0 {
+		return nil, nil
 	}
 
 	policies := make([]*BindingPolicyCache, 0, len(values))
@@ -356,6 +376,12 @@ func GetAllBindingPolicies() ([]*BindingPolicyCache, error) {
 
 // DeleteBindingPolicy removes a binding policy from Redis
 func DeleteBindingPolicy(name string) error {
+	// Check if Redis is available
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		log.LogWarn("redis not available, skipping cache delete", zap.Error(err))
+		return nil // Don't fail the operation if Redis is down
+	}
+
 	err := rdb.HDel(ctx, BindingPolicyHashKey, name).Err()
 	if err != nil {
 		return fmt.Errorf("failed to delete binding policy from Redis: %v", err)
@@ -365,6 +391,12 @@ func DeleteBindingPolicy(name string) error {
 
 // DeleteAllBindingPolicies removes all binding policies from Redis
 func DeleteAllBindingPolicies() error {
+	// Check if Redis is available
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		log.LogWarn("redis not available, skipping cache delete", zap.Error(err))
+		return nil // Don't fail the operation if Redis is down
+	}
+
 	err := rdb.Del(ctx, BindingPolicyHashKey).Err()
 	if err != nil {
 		return fmt.Errorf("failed to delete all binding policies from Redis: %v", err)

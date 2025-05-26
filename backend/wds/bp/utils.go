@@ -346,13 +346,50 @@ func watchOnBps() {
 				}
 				log.LogInfo("BP modified: ", zap.String("name", bp.Name))
 
+				// Update the cache with the modified binding policy
+				status := "inactive"
+				if bp.ObjectMeta.Generation == bp.Status.ObservedGeneration {
+					status = "active"
+				}
+
+				cachedPolicy := &redis.BindingPolicyCache{
+					Name:              bp.Name,
+					Namespace:         bp.Namespace,
+					Status:            status,
+					BindingMode:       "Downsync",
+					Clusters:          extractTargetClusters(bp),
+					Workloads:         extractWorkloads(bp),
+					CreationTimestamp: bp.CreationTimestamp.Format("2006-01-02T15:04:05Z"),
+					RawYAML:           "", // We don't have the raw YAML in watch events
+				}
+
+				if err := redis.StoreBindingPolicy(cachedPolicy); err != nil {
+					log.LogWarn("failed to update binding policy in cache", zap.Error(err))
+				}
+
 			case "ADDED":
 				bp, _ := event.Object.(*v1alpha1.BindingPolicy)
 				log.LogInfo("BP added: ", zap.String("name", bp.Name))
 
+				// Add the new binding policy to cache
+				cachedPolicy := &redis.BindingPolicyCache{
+					Name:              bp.Name,
+					Namespace:         bp.Namespace,
+					Status:            "inactive", // New policies start as inactive
+					BindingMode:       "Downsync",
+					Clusters:          extractTargetClusters(bp),
+					Workloads:         extractWorkloads(bp),
+					CreationTimestamp: bp.CreationTimestamp.Format("2006-01-02T15:04:05Z"),
+					RawYAML:           "", // We don't have the raw YAML in watch events
+				}
+
+				if err := redis.StoreBindingPolicy(cachedPolicy); err != nil {
+					log.LogWarn("failed to cache new binding policy from watch", zap.Error(err))
+				}
+
 			case "DELETED":
 				bp, _ := event.Object.(*v1alpha1.BindingPolicy)
-				err := redis.DeleteBpcmd(bp.Name)
+				err := redis.DeleteBindingPolicy(bp.Name)
 				if err != nil {
 					log.LogError("Error deleting bp from redis", zap.String("error", err.Error()))
 				}
