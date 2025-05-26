@@ -101,8 +101,45 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
 
   const policyCanvasEntities = usePolicyDragDropStore(state => state.canvasEntities);
 
-  const { useGenerateBindingPolicyYaml } = useBPQueries();
+  const { useGenerateBindingPolicyYaml, useWorkloadSSE } = useBPQueries();
   const generateYamlMutation = useGenerateBindingPolicyYaml();
+
+  // Use SSE to get comprehensive workload data
+  const {
+    state: sseState,
+    startSSEConnection,
+    extractWorkloads,
+    isLoading: sseLoading,
+    isReady: sseReady,
+  } = useWorkloadSSE();
+
+  // Use SSE workloads if available, otherwise fall back to prop workloads
+  const allWorkloads = React.useMemo(() => {
+    if (sseReady && sseState.data) {
+      const sseWorkloads = extractWorkloads();
+      console.log(
+        '🔍 CreateBindingPolicyDialog - Using SSE workloads:',
+        sseWorkloads.length,
+        'total workloads'
+      );
+      return sseWorkloads;
+    }
+    console.log(
+      '🔍 CreateBindingPolicyDialog - Using prop workloads:',
+      workloads.length,
+      'total workloads'
+    );
+    return workloads;
+  }, [sseReady, sseState.data, extractWorkloads, workloads]);
+
+  // Start SSE connection when component mounts
+  useEffect(() => {
+    if (open) {
+      console.log('🔵 CreateBindingPolicyDialog - Starting SSE connection for workload data');
+      const cleanup = startSSEConnection();
+      return cleanup;
+    }
+  }, [open, startSSEConnection]);
 
   const handleTabChange = (_event: React.SyntheticEvent, value: string) => {
     setActiveTab(value);
@@ -164,91 +201,145 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
     }
   };
 
-  const generateResourcesFromWorkload = (workloadObj: Workload) => {
+  const generateResourcesFromWorkload = (
+    workloadObj: Workload,
+    labelInfo?: { key: string; value: string }
+  ) => {
     console.log('Generating resources from workload:', workloadObj);
+    console.log('Label info:', labelInfo);
 
-    const commonResources = [
-      { type: 'namespaces', createOnly: true },
-      { type: 'serviceaccounts', createOnly: false },
-      { type: 'persistentvolumeclaims', createOnly: false },
-      { type: 'configmaps', createOnly: false },
-      { type: 'secrets', createOnly: false },
-    ];
+    // If we have label info, find ALL workloads that match this label
+    let allMatchingWorkloads: Workload[] = [workloadObj];
 
-    // Special handling for database components - always include them
-    const databaseResources = [
-      { type: 'statefulsets', createOnly: false },
-      { type: 'serviceaccounts', createOnly: false },
-      { type: 'roles', createOnly: false },
-      { type: 'rolebindings', createOnly: false },
-      { type: 'clusterroles', createOnly: false },
-      { type: 'clusterrolebindings', createOnly: false },
-    ];
+    if (labelInfo) {
+      allMatchingWorkloads = allWorkloads.filter(
+        w => w.labels && w.labels[labelInfo.key] === labelInfo.value
+      );
+      console.log(
+        `Found ${allMatchingWorkloads.length} workloads matching label ${labelInfo.key}=${labelInfo.value}`
+      );
+    }
 
-    const resourceMapping: Record<string, Array<{ type: string; createOnly: boolean }>> = {
-      deployment: [
-        { type: 'deployments', createOnly: false },
-        { type: 'replicasets', createOnly: false },
-        { type: 'services', createOnly: false },
-      ],
-      statefulset: [
-        { type: 'statefulsets', createOnly: false },
-        { type: 'services', createOnly: false },
-      ],
-      daemonset: [{ type: 'daemonsets', createOnly: false }],
-      job: [{ type: 'jobs', createOnly: false }],
-      cronjob: [
-        { type: 'cronjobs', createOnly: false },
-        { type: 'jobs', createOnly: false },
-      ],
-      service: [
-        { type: 'services', createOnly: false },
-        { type: 'endpoints', createOnly: false },
-      ],
-      ingress: [{ type: 'ingresses', createOnly: false }],
-      configmap: [{ type: 'configmaps', createOnly: false }],
-      secret: [{ type: 'secrets', createOnly: false }],
-      persistentvolumeclaim: [{ type: 'persistentvolumeclaims', createOnly: false }],
-      namespace: [{ type: 'namespaces', createOnly: true }],
-      customresourcedefinition: [{ type: 'customresourcedefinitions', createOnly: false }],
-      statefulsets: [
-        { type: 'statefulsets', createOnly: false },
-        { type: 'services', createOnly: false },
-        { type: 'pods', createOnly: false },
-      ],
-    };
+    // Extract all unique resource types from matching workloads
+    const resourceTypes = new Set<string>();
+    const namespaces = new Set<string>();
 
-    let workloadSpecificResources: Array<{ type: string; createOnly: boolean }> = [];
+    allMatchingWorkloads.forEach(workload => {
+      if (workload.kind) {
+        // Convert kind to resource type (plural, lowercase)
+        let resourceType = workload.kind.toLowerCase();
 
-    // Determine resources based on workload kind
-    if (workloadObj?.kind) {
-      const kindLower = workloadObj.kind.toLowerCase();
+        // Handle special cases for pluralization
+        const pluralMapping: Record<string, string> = {
+          networkpolicy: 'networkpolicies',
+          horizontalpodautoscaler: 'horizontalpodautoscalers',
+          poddisruptionbudget: 'poddisruptionbudgets',
+          customresourcedefinition: 'customresourcedefinitions',
+          ingress: 'ingresses',
+          endpoints: 'endpoints',
+          replicaset: 'replicasets',
+          statefulset: 'statefulsets',
+          daemonset: 'daemonsets',
+          cronjob: 'cronjobs',
+          persistentvolumeclaim: 'persistentvolumeclaims',
+          serviceaccount: 'serviceaccounts',
+          rolebinding: 'rolebindings',
+          clusterrolebinding: 'clusterrolebindings',
+          clusterrole: 'clusterroles',
+        };
 
-      if (resourceMapping[kindLower]) {
-        workloadSpecificResources = resourceMapping[kindLower];
-      } else {
-        let resourceType = kindLower;
-
-        if (!resourceType.endsWith('s')) {
+        if (pluralMapping[resourceType]) {
+          resourceType = pluralMapping[resourceType];
+        } else if (!resourceType.endsWith('s')) {
           resourceType += 's';
         }
 
-        workloadSpecificResources = [{ type: resourceType, createOnly: false }];
+        resourceTypes.add(resourceType);
+        console.log(
+          `Added resource type: ${resourceType} from workload ${workload.name} (${workload.kind})`
+        );
       }
-    } else {
-      console.warn('Workload kind missing, adding deployment resources as default');
-      workloadSpecificResources = resourceMapping['deployment'];
-    }
 
-    // Combine resources in priority order: database, common, workload-specific
-    const resources = [...databaseResources, ...commonResources, ...workloadSpecificResources];
+      // Collect namespaces
+      if (workload.namespace) {
+        namespaces.add(workload.namespace);
+      }
+    });
 
-    const uniqueResources = resources.filter(
-      (resource, index, self) => index === self.findIndex(r => r.type === resource.type)
+    // For workload controllers, check if related resources actually exist in the same namespace(s)
+    const controllerTypes = [
+      'deployment',
+      'statefulset',
+      'daemonset',
+      'replicaset',
+      'job',
+      'cronjob',
+    ];
+    const hasControllers = allMatchingWorkloads.some(
+      w => w.kind && controllerTypes.includes(w.kind.toLowerCase())
     );
 
-    console.log('Final resources:', uniqueResources);
-    return uniqueResources;
+    if (hasControllers) {
+      // Only add supporting resources if they actually exist in the same namespace(s) with matching labels
+      const namespacesToCheck = Array.from(namespaces);
+
+      if (labelInfo) {
+        const matchingPods = allWorkloads.filter(
+          w =>
+            w.kind?.toLowerCase() === 'pod' &&
+            w.labels &&
+            w.labels[labelInfo.key] === labelInfo.value &&
+            namespacesToCheck.includes(w.namespace || '')
+        );
+        if (matchingPods.length > 0) {
+          resourceTypes.add('pods');
+          console.log(`Added pods - found ${matchingPods.length} matching pods`);
+        }
+      }
+
+      // Check for other supporting resources that actually exist with matching labels
+      const supportingResourceTypes = [
+        { kind: 'ServiceAccount', plural: 'serviceaccounts' },
+        { kind: 'ConfigMap', plural: 'configmaps' },
+        { kind: 'Secret', plural: 'secrets' },
+        { kind: 'PersistentVolumeClaim', plural: 'persistentvolumeclaims' },
+        { kind: 'Service', plural: 'services' },
+      ];
+
+      supportingResourceTypes.forEach(({ kind, plural }) => {
+        if (labelInfo) {
+          const matchingResources = allWorkloads.filter(
+            w =>
+              w.kind === kind &&
+              w.labels &&
+              w.labels[labelInfo.key] === labelInfo.value &&
+              namespacesToCheck.includes(w.namespace || '')
+          );
+          if (matchingResources.length > 0) {
+            resourceTypes.add(plural);
+            console.log(`Added ${plural} - found ${matchingResources.length} matching ${kind}s`);
+          }
+        }
+      });
+    }
+
+    // Always include namespaces if we have any
+    if (namespaces.size > 0) {
+      resourceTypes.add('namespaces');
+    }
+
+    // Convert to the expected format
+    const workloadSpecificResources: Array<{ type: string; createOnly: boolean }> = Array.from(
+      resourceTypes
+    ).map(type => ({
+      type,
+      createOnly: type === 'namespaces', // Only namespaces should be createOnly
+    }));
+
+    console.log('Final resources from all matching workloads:', workloadSpecificResources);
+    console.log('Namespaces found:', Array.from(namespaces));
+
+    return workloadSpecificResources;
   };
 
   const extractLabelInfo = (labelId: string): { key: string; value: string } | null => {
@@ -489,7 +580,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
             labels: { [labelInfo.key]: labelInfo.value },
           };
         } else {
-          const matchingWorkloads = workloads.filter(
+          const matchingWorkloads = allWorkloads.filter(
             workload => workload.labels && workload.labels[labelInfo.key] === labelInfo.value
           );
 
@@ -523,7 +614,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
         return;
       }
     } else {
-      workloadObj = workloads.find(w => w.name === workloadId);
+      workloadObj = allWorkloads.find(w => w.name === workloadId);
     }
 
     if (!workloadObj) {
@@ -572,11 +663,12 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
 
       const workloadLabels: Record<string, string> = {};
       const clusterLabels: Record<string, string> = {};
+      let workloadLabelInfo: { key: string; value: string } | undefined;
 
       if (workloadId.startsWith('label-')) {
-        const labelInfo = extractLabelInfo(workloadId);
-        if (labelInfo) {
-          workloadLabels[labelInfo.key] = labelInfo.value;
+        workloadLabelInfo = extractLabelInfo(workloadId) || undefined;
+        if (workloadLabelInfo) {
+          workloadLabels[workloadLabelInfo.key] = workloadLabelInfo.value;
         }
       } else {
         workloadLabels['kubestellar.io/workload'] = workloadObj.name;
@@ -600,8 +692,8 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
           { type: 'customresourcedefinitions', createOnly: false },
         ];
       } else {
-        // For regular workloads
-        resources = generateResourcesFromWorkload(workloadObj);
+        // For regular workloads - pass label info to discover all matching resources
+        resources = generateResourcesFromWorkload(workloadObj, workloadLabelInfo);
       }
 
       const requestData = {
@@ -1345,7 +1437,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                 >
                   <PolicyDragDrop
                     clusters={clusters}
-                    workloads={workloads}
+                    workloads={allWorkloads}
                     onCreateBindingPolicy={handleCreateBindingPolicy}
                     dialogMode={true}
                   />
@@ -1386,6 +1478,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                 color="primary"
                 disabled={
                   isLoading ||
+                  sseLoading ||
                   (activeTab === 'dragdrop' &&
                     (!policyCanvasEntities?.clusters?.length ||
                       !policyCanvasEntities?.workloads?.length)) ||
@@ -1414,7 +1507,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                   transition: 'all 0.2s ease',
                 }}
               >
-                {isLoading ? (
+                {isLoading || sseLoading ? (
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Box
                       component="span"
@@ -1433,7 +1526,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                         },
                       }}
                     />
-                    Creating...
+                    {sseLoading ? 'Loading Resources...' : 'Creating...'}
                   </Box>
                 ) : activeTab === 'dragdrop' ? (
                   'Deploy Binding Policies'

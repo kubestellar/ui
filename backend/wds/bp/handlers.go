@@ -1539,10 +1539,6 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 	if len(resourceConfigs) == 0 && len(request.ResourceTypes) > 0 {
 		// Convert legacy format to new format
 		for _, resType := range request.ResourceTypes {
-			// Skip pods in legacy format
-			if strings.ToLower(resType) == "pods" {
-				continue
-			}
 			resourceConfigs = append(resourceConfigs, ResourceConfig{
 				Type:       resType,
 				CreateOnly: request.CreateOnly,
@@ -1550,22 +1546,8 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 		}
 	}
 
-	// Filter out pods from resources instead of rejecting entire request
-	filteredResources := []ResourceConfig{}
-	podsDetected := false
-
-	for _, resourceCfg := range resourceConfigs {
-		if strings.ToLower(resourceCfg.Type) == "pods" {
-			podsDetected = true
-			continue
-		}
-		filteredResources = append(filteredResources, resourceCfg)
-	}
-
-	resourceConfigs = filteredResources
-
 	if len(resourceConfigs) == 0 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "at least one valid resource type is required (pods are not allowed)"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "at least one resource type is required"})
 		return
 	}
 
@@ -1853,11 +1835,6 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 		},
 	}
 
-	// Add warning if pods were filtered out
-	if podsDetected {
-		response["warning"] = "Pods were excluded from the binding policy as they should be managed through higher-level controllers"
-	}
-
 	ctx.JSON(http.StatusOK, response)
 }
 
@@ -1918,10 +1895,6 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 	if len(resourceConfigs) == 0 && len(request.ResourceTypes) > 0 {
 		// Convert legacy format to new format
 		for _, resType := range request.ResourceTypes {
-			// Skip pods in legacy format
-			if strings.ToLower(resType) == "pods" {
-				continue
-			}
 			resourceConfigs = append(resourceConfigs, ResourceConfig{
 				Type:       resType,
 				CreateOnly: request.CreateOnly,
@@ -1929,22 +1902,8 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 		}
 	}
 
-	// Filter out pods from resources instead of rejecting entire request
-	filteredResources := []ResourceConfig{}
-	podsDetected := false
-
-	for _, resourceCfg := range resourceConfigs {
-		if strings.ToLower(resourceCfg.Type) == "pods" {
-			podsDetected = true
-			continue
-		}
-		filteredResources = append(filteredResources, resourceCfg)
-	}
-
-	resourceConfigs = filteredResources
-
 	if len(resourceConfigs) == 0 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "at least one valid resource type is required (pods are not allowed)"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "at least one resource type is required"})
 		return
 	}
 
@@ -2188,11 +2147,6 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 			"clustersCount":  len(clusterLabelsFormatted),
 			"workloadsCount": len(resourcesFormatted) + len(workloadLabelsFormatted),
 		},
-	}
-
-	// Add warning if pods were filtered out
-	if podsDetected {
-		response["warning"] = "Pods were excluded from the binding policy as they should be managed through higher-level controllers"
 	}
 
 	ctx.JSON(http.StatusOK, response)

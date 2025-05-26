@@ -30,6 +30,7 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
   open,
   onClose,
   policy,
+  clusters = [],
   onEdit,
   isLoading = false,
   error,
@@ -112,9 +113,36 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
     processYaml();
   }, [policy, refreshedPolicy]);
 
-  const bindingMode = policyData.bindingMode || 'N/A';
+  // Function to map cluster labels to actual cluster names
+  const mapClusterLabelsToNames = (clusterLabels: string[]): string[] => {
+    if (!clusters || clusters.length === 0) {
+      return clusterLabels; // Return original labels if no cluster data available
+    }
 
-  const clusterNames = policyData.clusterList || [];
+    return clusterLabels.map(clusterLabel => {
+      // If it's already a cluster name (not a label), return as is
+      if (clusters.some(cluster => cluster.name === clusterLabel)) {
+        return clusterLabel;
+      }
+
+      if (clusterLabel.includes(':')) {
+        const [key, value] = clusterLabel.split(':');
+        const matchingClusters = clusters.filter(
+          cluster => cluster.labels && cluster.labels[key] === value
+        );
+
+        if (matchingClusters.length > 0) {
+          // Return the names of matching clusters
+          return matchingClusters.map(cluster => cluster.name).join(', ');
+        }
+      }
+
+      // If no matches found, return the original label
+      return clusterLabel;
+    });
+  };
+
+  const clusterNames = mapClusterLabelsToNames(policyData.clusterList || []);
 
   const workloads = policyData.workloadList || [];
 
@@ -264,18 +292,7 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                     {formattedCreationDate || policyData.creationDate || 'Not available'}
                   </Typography>
                 </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: isDarkTheme ? 'rgba(255,255,255,0.7)' : 'text.secondary' }}
-                  >
-                    Last Modified
-                  </Typography>
-                  <Typography sx={{ color: isDarkTheme ? '#fff' : 'text.primary' }}>
-                    {policyData.lastModifiedDate || 'Not available'}
-                  </Typography>
-                </Box>
-                <Box>
+                {/* <Box>
                   <Typography
                     variant="body2"
                     sx={{ color: isDarkTheme ? 'rgba(255,255,255,0.7)' : 'text.secondary' }}
@@ -285,7 +302,7 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                   <Typography sx={{ color: isDarkTheme ? '#fff' : 'text.primary' }}>
                     {bindingMode}
                   </Typography>
-                </Box>
+                </Box> */}
                 <Box>
                   <Typography
                     variant="body2"
