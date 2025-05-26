@@ -59,7 +59,7 @@ func GetBindingPolicies(namespace string) ([]map[string]interface{}, error) {
 	cachedPolicies, err := redis.GetAllBindingPolicies()
 	if err != nil {
 		log.LogWarn("failed to get binding policies from Redis cache", zap.Error(err))
-	} else if len(cachedPolicies) > 0 {
+	} else if cachedPolicies != nil && len(cachedPolicies) > 0 {
 		// Convert cached policies to response format
 		responseArray := make([]map[string]interface{}, len(cachedPolicies))
 		for i, bpolicy := range cachedPolicies {
@@ -603,6 +603,7 @@ func CreateBp(ctx *gin.Context) {
 	if err != nil {
 		log.LogError(err.Error())
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
 	// After successful creation, store in Redis
@@ -619,6 +620,7 @@ func CreateBp(ctx *gin.Context) {
 		log.LogWarn("failed to cache new binding policy", zap.Error(err))
 	}
 
+	ctx.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("Created binding policy '%s' successfully", bp.Name)})
 }
 
 // DeleteBp deletes a BindingPolicy by name and namespace
