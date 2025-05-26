@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 	"time"
 
@@ -191,11 +192,13 @@ func GetWdsContextCookies(c *gin.Context) {
 	})
 }
 
-// CreateWDSContextUsingCommand creates a new WDS context using Helm SDK
+// CreateWDSContextUsingHelmSDK creates a new WDS context using Helm SDK
 // DOCS: https://github.com/kubestellar/kubestellar/blob/main/docs/content/direct/core-chart.md
 func CreateWDSContextUsingHelmSDK(w http.ResponseWriter, r *http.Request, c *gin.Context) {
 	newWdsContext := c.Query("context")
 	version := c.Query("version")
+	wdsType := c.Query("type")        // Optional WDS type parameter
+	namespace := c.Query("namespace") // Optional namespace parameter
 
 	if version == "" {
 		version = "0.27.2" // default version
@@ -209,8 +212,16 @@ func CreateWDSContextUsingHelmSDK(w http.ResponseWriter, r *http.Request, c *gin
 	}
 	defer conn.Close()
 
+	// Validate WDS context name
 	if newWdsContext == "" {
-		msg := "context query parameter must be present: ?context=<your_new_context>"
+		msg := "Context query parameter must be present: ?context=<your_new_context>"
+		log.Println(msg)
+		writeMessage(conn, msg)
+		return
+	}
+
+	if err := validateWDSName(newWdsContext); err != nil {
+		msg := fmt.Sprintf("Invalid WDS name: %v", err)
 		log.Println(msg)
 		writeMessage(conn, msg)
 		return
@@ -219,7 +230,7 @@ func CreateWDSContextUsingHelmSDK(w http.ResponseWriter, r *http.Request, c *gin
 	// Validate kubeconfig and get kubeflex context
 	config, err := getKubeConfig()
 	if err != nil {
-		msg := fmt.Sprintf("failed to load kubeconfig: %v", err)
+		msg := fmt.Sprintf("Failed to load kubeconfig: %v. Please ensure your kubeconfig is properly configured.", err)
 		log.Println(msg)
 		writeMessage(conn, msg)
 		return
@@ -229,13 +240,13 @@ func CreateWDSContextUsingHelmSDK(w http.ResponseWriter, r *http.Request, c *gin
 	for name := range config.Contexts {
 		if name == "k3d-kubeflex" || name == "kind-kubeflex" {
 			kflexContext = name
-			writeMessage(conn, fmt.Sprintf("Using kubeflex context: %s", kflexContext))
+			writeMessage(conn, fmt.Sprintf("Found kubeflex context: %s", kflexContext))
 			break
 		}
 	}
 
 	if kflexContext == "" {
-		msg := "No kubeflex context (k3d-kubeflex or kind-kubeflex) found in kubeconfig"
+		msg := "No kubeflex context (k3d-kubeflex or kind-kubeflex) found in kubeconfig. Please make sure kubeflex is properly installed."
 		writeMessage(conn, msg)
 		return
 	}
@@ -283,9 +294,36 @@ func CreateWDSContextUsingHelmSDK(w http.ResponseWriter, r *http.Request, c *gin
 		return
 	}
 
+	// Prepare WDS configuration with additional options
+	wdsOpts := map[string]string{"name": newWdsContext}
+
+	// Add type if specified
+	if wdsType != "" {
+		// Validate WDS type
+		validTypes := map[string]bool{"k8s": true, "host": true}
+		if !validTypes[wdsType] {
+			msg := fmt.Sprintf("Invalid WDS type: %s. Supported types are: k8s, host", wdsType)
+			writeMessage(conn, msg)
+			return
+		}
+		wdsOpts["type"] = wdsType
+		writeMessage(conn, fmt.Sprintf("Using custom WDS type: %s", wdsType))
+	}
+
+	// Add namespace if specified
+	if namespace != "" {
+		if err := validateWDSName(namespace); err != nil {
+			msg := fmt.Sprintf("Invalid namespace name: %v", err)
+			writeMessage(conn, msg)
+			return
+		}
+		wdsOpts["namespace"] = namespace
+		writeMessage(conn, fmt.Sprintf("Using custom namespace: %s", namespace))
+	}
+
 	// Add WDS configuration
 	wdsConfig := map[string]interface{}{
-		"WDSes": []map[string]string{{"name": newWdsContext}},
+		"WDSes": []map[string]string{wdsOpts},
 	}
 	vals = mergeMaps(vals, wdsConfig)
 
@@ -352,4 +390,29 @@ func mergeMaps(maps ...map[string]interface{}) map[string]interface{} {
 		}
 	}
 	return result
+}
+
+// validateWDSName checks if the WDS name follows Kubernetes naming conventions
+func validateWDSName(name string) error {
+	if name == "" {
+		return fmt.Errorf("WDS name cannot be empty")
+	}
+
+	if len(name) > 63 {
+		return fmt.Errorf("WDS name cannot exceed 63 characters")
+	}
+
+	// Valid Kubernetes name regex pattern: must start/end with alphanumeric and only contain lowercase, numbers, and dashes
+	validName := regexp.MustCompile(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`)
+	if !validName.MatchString(name) {
+		return fmt.Errorf("WDS name must consist of lowercase alphanumeric characters or '-', start with an alphanumeric character, and end with an alphanumeric character")
+	}
+
+	// Check for reserved names
+	reservedNames := map[string]bool{"kube-system": true, "default": true, "kube-public": true}
+	if reservedNames[name] {
+		return fmt.Errorf("'%s' is a reserved name and cannot be used for a WDS context", name)
+	}
+
+	return nil
 }
