@@ -15,7 +15,7 @@ func setupResourceRoutes(router *gin.Engine) {
 	{
 
 		api.GET("/wds/context", func(ctx *gin.Context) {
-			wds.CreateWDSContextUsingCommand(ctx.Writer, ctx.Request, ctx)
+			wds.CreateWDSContextUsingHelmSDK(ctx.Writer, ctx.Request, ctx)
 		})
 		api.GET("/wds/list-sse", wds.ListAllResourcesDetailsSSE)
 		api.GET("/wds/list/:namespace", wds.ListAllResourcesByNamespace)
