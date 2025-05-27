@@ -1444,7 +1444,7 @@ const K8sInfo = () => {
                     rel="noopener noreferrer"
                     className="text-blue-500 underline hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                   >
-                    View detailed health metrics documentation
+                    See how health metrics is calculated
                   </a>
                 </div>
               </div>
