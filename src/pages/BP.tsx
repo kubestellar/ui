@@ -916,8 +916,8 @@ const BP = () => {
               }}
             >
               <Typography variant="body2">
-                This drag-and-drop interface is using simulated responses to create binding
-                policies. Drag clusters and workloads to the canvas, then click on a workload and
+                This interface is using simulated responses to create binding
+                policies. Select clusters and workloads from the lists to include them in the canvas, then click on a workload and
                 then a cluster to directly create a binding policy connection.
               </Typography>
             </Alert>
@@ -1001,13 +1001,13 @@ const BP = () => {
               <ListItemIcon>
                 <KubernetesIcon type="cluster" size={24} />
               </ListItemIcon>
-              <ListItemText primary="1. Drag clusters from the left panel to the canvas" />
+              <ListItemText primary="1. Select clusters from the left panel to include in the canvas" />
             </ListItem>
             <ListItem>
               <ListItemIcon>
                 <KubernetesIcon type="workload" size={24} />
               </ListItemIcon>
-              <ListItemText primary="2. Drag workloads from the right panel to the canvas" />
+              <ListItemText primary="2. Select workloads from the right panel to include in the canvas (or click and drag on the canvas to select multiple items)" />
             </ListItem>
             <ListItem>
               <ListItemIcon>
