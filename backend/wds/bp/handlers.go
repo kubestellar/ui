@@ -50,7 +50,8 @@ type BindingPolicyWithStatus struct {
 }
 
 // GetAllBp retrieves all BindingPolicies with enhanced information
-func GetAllBp(ctx *gin.Context) {
+// GetBindingPolicies retrieves all BindingPolicies with enhanced information
+func GetBindingPolicies(namespace string) ([]map[string]interface{}, error) {
 	log.LogDebug("retrieving all binding policies")
 	log.LogDebug("Using wds context: ", zap.String("wds_context", os.Getenv("wds_context")))
 
@@ -58,7 +59,7 @@ func GetAllBp(ctx *gin.Context) {
 	cachedPolicies, err := redis.GetAllBindingPolicies()
 	if err != nil {
 		log.LogWarn("failed to get binding policies from Redis cache", zap.Error(err))
-	} else if len(cachedPolicies) > 0 {
+	} else if cachedPolicies != nil && len(cachedPolicies) > 0 {
 		// Convert cached policies to response format
 		responseArray := make([]map[string]interface{}, len(cachedPolicies))
 		for i, bpolicy := range cachedPolicies {
@@ -79,41 +80,28 @@ func GetAllBp(ctx *gin.Context) {
 		}
 
 		// Filter by namespace if specified
-		namespace := ctx.Query("namespace")
 		if namespace != "" {
-			filteredBPs, count := filterBPsByNamespace(responseArray, namespace)
-			ctx.JSON(http.StatusOK, gin.H{
-				"bindingPolicies": filteredBPs,
-				"count":           count,
-			})
-			return
+			filteredBPs, _ := filterBPsByNamespace(responseArray, namespace)
+			return filteredBPs.([]map[string]interface{}), nil
 		}
 
-		ctx.JSON(http.StatusOK, gin.H{
-			"bindingPolicies": responseArray,
-			"count":           len(responseArray),
-		})
-		return
+		return responseArray, nil
 	}
 
 	// If cache miss or error, proceed with normal flow
 	c, err := getClientForBp()
 	if err != nil {
 		log.LogError("failed to create client for Bp", zap.String("error", err.Error()))
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		return nil, err
 	}
 
-	// Optional namespace filter
-	namespace := ctx.Query("namespace")
 	listOptions := v1.ListOptions{}
 
 	// Get all binding policies
 	bpList, err := c.BindingPolicies().List(context.TODO(), listOptions)
 	if err != nil {
 		log.LogError("failed to list binding policies", zap.Error(err))
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		return nil, err
 	}
 
 	// Create a slice to hold the enhanced binding policies
@@ -479,15 +467,11 @@ func GetAllBp(ctx *gin.Context) {
 	// Filter by namespace if specified
 	if namespace != "" {
 		log.LogDebug("filtering by namespace", zap.String("namespace", namespace))
-		filteredBPs, count := filterBPsByNamespace(bpsWithStatus, namespace)
-		ctx.JSON(http.StatusOK, gin.H{
-			"bindingPolicies": filteredBPs,
-			"count":           count,
-		})
-		return
+		filteredBPs, _ := filterBPsByNamespace(bpsWithStatus, namespace)
+		bpsWithStatus = filteredBPs.([]BindingPolicyWithStatus)
 	}
 
-	// Before sending the response, ensure each policy has proper clustersCount and workloadsCount
+	// Convert each binding policy to a map
 	responseArray := make([]map[string]interface{}, len(bpsWithStatus))
 	for i, bp := range bpsWithStatus {
 		// Convert each binding policy to a map for customization
@@ -517,11 +501,6 @@ func GetAllBp(ctx *gin.Context) {
 		responseArray[i] = policyMap
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"bindingPolicies": responseArray,
-		"count":           len(responseArray),
-	})
-
 	// After getting policies from Kubernetes, store them in Redis
 	for _, bp := range bpsWithStatus {
 		cachedPolicy := &redis.BindingPolicyCache{
@@ -539,6 +518,27 @@ func GetAllBp(ctx *gin.Context) {
 			log.LogWarn("failed to cache binding policy", zap.Error(err))
 		}
 	}
+
+	return responseArray, nil
+}
+
+// GetAllBp is the API handler for retrieving all binding policies
+func GetAllBp(ctx *gin.Context) {
+	// Optional namespace filter
+	namespace := ctx.Query("namespace")
+
+	// Call the core function to get binding policies
+	bpolicies, err := GetBindingPolicies(namespace)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Return the binding policies
+	ctx.JSON(http.StatusOK, gin.H{
+		"bindingPolicies": bpolicies,
+		"count":           len(bpolicies),
+	})
 }
 
 // CreateBp creates a new BindingPolicy
@@ -603,6 +603,7 @@ func CreateBp(ctx *gin.Context) {
 	if err != nil {
 		log.LogError(err.Error())
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
 	// After successful creation, store in Redis
@@ -619,6 +620,7 @@ func CreateBp(ctx *gin.Context) {
 		log.LogWarn("failed to cache new binding policy", zap.Error(err))
 	}
 
+	ctx.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("Created binding policy '%s' successfully", bp.Name)})
 }
 
 // DeleteBp deletes a BindingPolicy by name and namespace
@@ -1539,10 +1541,6 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 	if len(resourceConfigs) == 0 && len(request.ResourceTypes) > 0 {
 		// Convert legacy format to new format
 		for _, resType := range request.ResourceTypes {
-			// Skip pods in legacy format
-			if strings.ToLower(resType) == "pods" {
-				continue
-			}
 			resourceConfigs = append(resourceConfigs, ResourceConfig{
 				Type:       resType,
 				CreateOnly: request.CreateOnly,
@@ -1550,22 +1548,8 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 		}
 	}
 
-	// Filter out pods from resources instead of rejecting entire request
-	filteredResources := []ResourceConfig{}
-	podsDetected := false
-
-	for _, resourceCfg := range resourceConfigs {
-		if strings.ToLower(resourceCfg.Type) == "pods" {
-			podsDetected = true
-			continue
-		}
-		filteredResources = append(filteredResources, resourceCfg)
-	}
-
-	resourceConfigs = filteredResources
-
 	if len(resourceConfigs) == 0 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "at least one valid resource type is required (pods are not allowed)"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "at least one resource type is required"})
 		return
 	}
 
@@ -1853,11 +1837,6 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 		},
 	}
 
-	// Add warning if pods were filtered out
-	if podsDetected {
-		response["warning"] = "Pods were excluded from the binding policy as they should be managed through higher-level controllers"
-	}
-
 	ctx.JSON(http.StatusOK, response)
 }
 
@@ -1918,10 +1897,6 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 	if len(resourceConfigs) == 0 && len(request.ResourceTypes) > 0 {
 		// Convert legacy format to new format
 		for _, resType := range request.ResourceTypes {
-			// Skip pods in legacy format
-			if strings.ToLower(resType) == "pods" {
-				continue
-			}
 			resourceConfigs = append(resourceConfigs, ResourceConfig{
 				Type:       resType,
 				CreateOnly: request.CreateOnly,
@@ -1929,22 +1904,8 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 		}
 	}
 
-	// Filter out pods from resources instead of rejecting entire request
-	filteredResources := []ResourceConfig{}
-	podsDetected := false
-
-	for _, resourceCfg := range resourceConfigs {
-		if strings.ToLower(resourceCfg.Type) == "pods" {
-			podsDetected = true
-			continue
-		}
-		filteredResources = append(filteredResources, resourceCfg)
-	}
-
-	resourceConfigs = filteredResources
-
 	if len(resourceConfigs) == 0 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "at least one valid resource type is required (pods are not allowed)"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "at least one resource type is required"})
 		return
 	}
 
@@ -2188,11 +2149,6 @@ func GenerateQuickBindingPolicyYAML(ctx *gin.Context) {
 			"clustersCount":  len(clusterLabelsFormatted),
 			"workloadsCount": len(resourcesFormatted) + len(workloadLabelsFormatted),
 		},
-	}
-
-	// Add warning if pods were filtered out
-	if podsDetected {
-		response["warning"] = "Pods were excluded from the binding policy as they should be managed through higher-level controllers"
 	}
 
 	ctx.JSON(http.StatusOK, response)

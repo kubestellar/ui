@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -25,7 +26,13 @@ func main() {
 	router.Use(func(c *gin.Context) {
 		origin := c.Request.Header.Get("Origin")
 
-		if origin == "http://localhost:5173" {
+		corsOrigin := os.Getenv("CORS_ALLOWED_ORIGIN")
+		if corsOrigin == "" {
+			corsOrigin = "http://localhost:5173" // default
+		}
+
+		// Fixed: Use the corsOrigin variable instead of hardcoded value
+		if origin == corsOrigin {
 			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
 			c.Writer.Header().Set("Access-Control-Allow-Credentials", "true") // for cookies/auth
 		}
@@ -60,12 +67,35 @@ func initLogger() {
 	logger = log
 }
 
-// Middleware to log additional request/response details in structured format
+// Helper function to detect WebSocket upgrade requests
+func isWebSocketUpgrade(c *gin.Context) bool {
+	return strings.ToLower(c.GetHeader("Connection")) == "upgrade" &&
+		strings.ToLower(c.GetHeader("Upgrade")) == "websocket"
+}
+
+// Fixed Middleware to handle WebSocket connections properly
 func ZapMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 
-		// Capture Request Body
+		// Check if this is a WebSocket upgrade request
+		if isWebSocketUpgrade(c) {
+			logger.Info("WebSocket Upgrade Request",
+				zap.String("method", c.Request.Method),
+				zap.String("path", c.Request.URL.Path),
+				zap.String("ip", c.ClientIP()),
+				zap.String("user-agent", c.Request.UserAgent()),
+				zap.Any("query-params", c.Request.URL.Query()),
+			)
+
+			// Process the WebSocket upgrade
+			c.Next()
+
+			// Don't try to log response details for hijacked connections
+			return
+		}
+
+		// Regular HTTP request handling
 		var requestBody string
 		if c.Request.Body != nil {
 			bodyBytes, _ := io.ReadAll(c.Request.Body)
@@ -76,10 +106,8 @@ func ZapMiddleware() gin.HandlerFunc {
 		// Process the request
 		c.Next()
 
-		// Capture Response Size
+		// Only try to get response details if connection wasn't hijacked
 		responseSize := c.Writer.Size()
-
-		// Capture Request Headers
 		headers := c.Request.Header
 
 		// Log in structured JSON format
@@ -96,7 +124,7 @@ func ZapMiddleware() gin.HandlerFunc {
 			zap.Int("response-size", responseSize),
 		)
 
-		// Log errors separately in structured format
+		// Log errors separately for non-WebSocket requests
 		if len(c.Errors) > 0 {
 			for _, err := range c.Errors {
 				logger.Error("Request Error",

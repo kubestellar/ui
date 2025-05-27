@@ -39,7 +39,7 @@ import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   getTabsStyles,
-  StyledTab,
+  // StyledTab,
 } from '../components/BindingPolicy/styles/CreateBindingPolicyStyles';
 import { api } from '../lib/api';
 import BPSkeleton from '../components/ui/BPSkeleton';
@@ -772,6 +772,9 @@ const BP = () => {
             aria-label="binding policy view mode"
             sx={getTabsStyles(theme)}
           >
+            {/* 
+            This is commented out because the Visualize tab is not working yet. So we're only showing the Table View by default no need to show it as a tab for now.
+            
             <StyledTab
               iconPosition="start"
               label="Table View"
@@ -780,7 +783,7 @@ const BP = () => {
                 color: theme === 'dark' ? '#E5E7EB' : undefined,
               }}
             />
-            {/* <StyledTab
+            <StyledTab
               iconPosition="start"
               label="Visualize"
               value="visualize"
@@ -807,6 +810,7 @@ const BP = () => {
               <>
                 <BPTable
                   policies={paginatedPolicies}
+                  clusters={clusters}
                   onDeletePolicy={handleDeletePolicy}
                   onEditPolicy={handleEditPolicy}
                   activeFilters={activeFilters}

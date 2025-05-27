@@ -182,7 +182,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
       setIsBulkEdit(false);
       setSelectedWorkloads([]);
     } else {
-      toast.error('No workloads available to edit');
+      toast.error('No workload objects available to edit');
     }
   };
 
@@ -850,23 +850,26 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
         </Box>
 
         <Box sx={{ mt: 1 }}>
-          <Chip
-            size="small"
-            label={`${labelGroup.key} = ${labelGroup.value}`}
+          <Typography
+            variant="caption"
             sx={{
+              display: 'block',
               fontSize: '0.75rem',
-              height: 20,
-              '& .MuiChip-label': {
-                px: 0.75,
-                textOverflow: 'ellipsis',
-                overflow: 'hidden',
-              },
-              bgcolor: isDarkTheme
+              fontFamily: 'monospace',
+              backgroundColor: isDarkTheme
                 ? 'rgba(255, 255, 255, 0.1)'
                 : alpha(muiTheme.palette.grey[500], 0.1),
               color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : muiTheme.palette.text.secondary,
+              padding: '4px 8px',
+              borderRadius: '12px',
+              border: `1px solid ${isDarkTheme ? 'rgba(255, 255, 255, 0.2)' : alpha(muiTheme.palette.grey[500], 0.2)}`,
+              wordBreak: 'break-all',
+              whiteSpace: 'normal',
+              lineHeight: 1.2,
             }}
-          />
+          >
+            {labelGroup.key} = {labelGroup.value}
+          </Typography>
         </Box>
 
         {isInCanvas && (
@@ -959,7 +962,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
               </IconButton>
             </Box>
           ) : (
-            <Typography variant={compact ? 'subtitle1' : 'h6'}>Workloads</Typography>
+            <Typography variant={compact ? 'subtitle1' : 'h6'}>Labels</Typography>
           )}
           {!showSearch && !compact && (
             <IconButton
@@ -1080,8 +1083,8 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
             }}
           >
             {state.status === 'loading'
-              ? 'Loading workloads and their labels...'
-              : 'No workloads available. Please add workloads with labels to use in binding policies.'}
+              ? 'Loading workload objects and their labels...'
+              : 'No workload objects available. Please add workload objects with labels to use in binding policies.'}
           </Typography>
         ) : (
           <Box sx={{ minHeight: '100%' }}>
@@ -1095,7 +1098,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
               >
                 {searchTerm
                   ? 'No labels match your search.'
-                  : 'No suitable labels found in available workloads. Note: ConfigMaps, Secrets, and system resources are excluded.'}
+                  : 'No suitable labels found in available workload objects. Note: ConfigMaps, Secrets, and system resources are excluded.'}
               </Typography>
             ) : (
               <>
@@ -1108,7 +1111,8 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
                       color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary',
                     }}
                   >
-                    {filteredLabels.length} unique labels across {panelWorkloads.length} workloads
+                    {filteredLabels.length} unique labels across {panelWorkloads.length} workload
+                    objects
                     {state.status === 'loading'
                       ? ' (loading...)'
                       : ' (includes cluster-scoped resources like CRDs and Namespaces)'}
@@ -2053,7 +2057,9 @@ const SelectWorkloadDialog: React.FC<SelectWorkloadDialogProps> = ({
                 No workloads found
               </Typography>
               <Typography variant="body2" sx={{ color: colors.textSecondary }}>
-                {searchTerm ? 'Try a different search term' : 'No workloads available to edit'}
+                {searchTerm
+                  ? 'Try a different search term'
+                  : 'No workload objects available to edit'}
               </Typography>
             </Box>
           )}
