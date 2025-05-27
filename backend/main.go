@@ -48,7 +48,8 @@ func main() {
 		c.Next()
 	})
 
-	routes.SetupRoutes(router)
+	// Setup all routes including backup routes
+	routes.SetupAllRoutes(router)
 	router.POST("api/webhook", api.GitHubWebhookHandler)
 
 	if err := router.Run(":4000"); err != nil {

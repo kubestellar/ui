@@ -28,3 +28,22 @@ func setupResourceRoutes(router *gin.Engine) {
 		api.DELETE("/:resourceKind/:namespace/:name", k8s.DeleteResource) // Delete a resource
 	}
 }
+
+// Add this function to include backup routes
+func SetupAllRoutes(router *gin.Engine) {
+	setupResourceRoutes(router)
+	setupNamespaceRoutes(router)
+	setupAuthRoutes(router)
+	setupInstallerRoutes(router)
+	setupGitopsRoutes(router)
+	setupHelmRoutes(router)
+	setupGitHubRoutes(router)
+	setupDeploymentHistoryRoutes(router)
+	setupDeploymentRoutes(router)
+	setupWdsCookiesRoute(router)
+	setupClusterRoutes(router)
+	setupBindingPolicyRoutes(router)
+	setupArtifactHubRoutes(router)
+	SetupBackupRoutes(router)
+	getWecsResources(router)
+}
