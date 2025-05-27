@@ -304,13 +304,13 @@ const ClusterLabelsList: React.FC<ClusterLabelsListProps> = ({
             </Typography>
           ) : (
             <>
-              <Typography 
-                sx={{ 
-                  mb: 2, 
+              <Typography
+                sx={{
+                  mb: 2,
                   fontStyle: 'italic',
                   color: isDarkTheme ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
                   fontSize: '0.85rem',
-                  px: 1
+                  px: 1,
                 }}
               >
                 Click on a label to add it to the canvas

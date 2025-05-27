@@ -502,8 +502,8 @@ const ConfigurationSidebar: React.FC<ConfigurationSidebarProps> = ({
               <MenuItem value="BlueGreenDeployment">Blue-Green Deployment</MenuItem>
             </Select>
             <Typography variant="caption" sx={{ mt: 1, color: 'text.secondary' }}>
-              Select how changes to resources should be applied to clusters.
-              Add clusters and workloads by selecting them from the panels.
+              Select how changes to resources should be applied to clusters. Add clusters and
+              workloads by selecting them from the panels.
             </Typography>
           </FormControl>
 

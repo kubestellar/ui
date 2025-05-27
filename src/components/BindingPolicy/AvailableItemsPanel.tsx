@@ -399,7 +399,7 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
       <Typography variant="h6" gutterBottom align="center" fontWeight="medium">
         Available Items
       </Typography>
-      
+
       <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 2 }}>
         Select items to add them to your binding policy canvas
       </Typography>

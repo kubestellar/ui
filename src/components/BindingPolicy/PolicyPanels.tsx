@@ -38,12 +38,12 @@ export const ClusterPanelContainer: React.FC<ClusterPanelContainerProps> = ({
 }) => {
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <ClusterPanel 
-        clusters={clusters} 
-        loading={loading} 
-        error={error} 
+      <ClusterPanel
+        clusters={clusters}
+        loading={loading}
+        error={error}
         compact={compact}
-        onItemClick={onItemClick} 
+        onItemClick={onItemClick}
       />
     </Box>
   );
