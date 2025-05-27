@@ -134,12 +134,15 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
   const handleSaveLabels = (
     clusterName: string,
     contextName: string,
-    labels: { [key: string]: string }
+    labels: { [key: string]: string },
+    deletedLabels?: string[]
   ) => {
     setLoadingClusterEdit(clusterName);
 
     console.log('ClusterPanel - handleSaveLabels - clusterName:', clusterName);
     console.log('ClusterPanel - handleSaveLabels - contextName:', contextName);
+    console.log('ClusterPanel - handleSaveLabels - labels:', labels);
+    console.log('ClusterPanel - handleSaveLabels - deletedLabels:', deletedLabels);
 
     // Make sure the context is properly set in the mutation request
     // Use the provided context or fall back to the default context if not provided
@@ -148,6 +151,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
         contextName: contextName || DEFAULT_CONTEXT,
         clusterName,
         labels,
+        deletedLabels,
       },
       {
         onSuccess: () => {
@@ -163,15 +167,20 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
           setLoadingClusterEdit(null);
         },
         onError: (error: Error) => {
-          toast.error('Failed to update labels', {
-            icon: '❌',
-            style: {
-              borderRadius: '10px',
-              background: isDarkTheme ? '#1e293b' : '#ffffff',
-              color: isDarkTheme ? '#f1f5f9' : '#1e293b',
-              border: `1px solid ${isDarkTheme ? '#334155' : '#e2e8f0'}`,
-            },
-          });
+          toast.error(
+            'Labels are used in Binding Policy ' +
+              'and cannot be deleted. Please remove the policy first.',
+            {
+              icon: '❌',
+              style: {
+                borderRadius: '10px',
+                background: isDarkTheme ? '#1e293b' : '#ffffff',
+                color: isDarkTheme ? '#f1f5f9' : '#1e293b',
+                border: `1px solid ${isDarkTheme ? '#334155' : '#e2e8f0'}`,
+              },
+              duration: 5000,
+            }
+          );
           console.error('Error updating cluster labels:', error);
           setLoadingClusterEdit(null);
         },
@@ -201,6 +210,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
               contextName,
               clusterName: cluster.name,
               labels,
+              deletedLabels: [],
             },
             {
               onSuccess: () => {
