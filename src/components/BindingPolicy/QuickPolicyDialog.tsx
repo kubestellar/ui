@@ -62,10 +62,14 @@ const QuickPolicyDialog: React.FC<QuickPolicyDialogProps> = ({
   // Initialize form when connection changes
   useEffect(() => {
     if (connection) {
-      setName(`${connection.workloadName}-to-${connection.clusterName}`);
+      // Only set name if it hasn't been manually set by user
+      if (!name || name === `${connection.workloadName}-to-${connection.clusterName}`) {
+        setName(`${connection.workloadName}-to-${connection.clusterName}`);
+      }
       setNamespace(connection.workloadNamespace || 'default');
     }
-  }, [connection]);
+  }, [connection, name]);
+
   const updateYamlPreview = useCallback(() => {
     if (!connection) {
       setGeneratedYaml('# No connection selected');

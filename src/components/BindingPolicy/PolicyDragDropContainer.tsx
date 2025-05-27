@@ -807,7 +807,8 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
       const clusterLabelInfo = extractLabelInfo(clusterLabelId);
 
       if (!workloadLabelInfo || !clusterLabelInfo) {
-        return 'binding-policy';
+        const timestamp = new Date().getTime().toString().slice(-6);
+        return `binding-policy-${timestamp}`;
       }
 
       const workloadValue = workloadLabelInfo.value;

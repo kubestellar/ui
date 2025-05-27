@@ -528,15 +528,13 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
       workloadInfo = workloadObj?.kind?.toLowerCase() || 'resource';
     }
 
-    // Generate policy name
+    // Generate policy name with timestamp to ensure uniqueness
+    const timestamp = new Date().getTime().toString().slice(-6);
     const uniqueId = Math.floor(Math.random() * 100)
       .toString()
       .padStart(2, '0');
-    const randomDigits = Math.floor(Math.random() * 100)
-      .toString()
-      .padStart(2, '0');
 
-    return `${clusterLabelValue}-${workloadInfo}-${uniqueId}${randomDigits}`
+    return `${clusterLabelValue}-${workloadInfo}-${timestamp}-${uniqueId}`
       .toLowerCase()
       .replace(/[^a-z0-9-]/g, '-')
       .replace(/-+/g, '-')

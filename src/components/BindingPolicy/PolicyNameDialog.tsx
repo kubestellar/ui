@@ -40,12 +40,14 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
   const isDarkTheme = theme === 'dark';
 
   const [policyName, setPolicyName] = useState(defaultName);
-  const [isEditing, setIsEditing] = useState(false);
+  const [,setIsEditing] = useState(false);
+  const [userHasModified, setUserHasModified] = useState(false);
 
   useEffect(() => {
     if (open) {
       setPolicyName(defaultName);
       setIsEditing(false);
+      setUserHasModified(false);
     }
   }, [open, defaultName]);
 
@@ -64,6 +66,13 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
     const newName = `policy-${timestamp}-${randomSuffix}`;
     setPolicyName(newName);
     setIsEditing(true);
+    setUserHasModified(true);
+  };
+
+  const handleNameChange = (value: string) => {
+    setPolicyName(value);
+    setIsEditing(true);
+    setUserHasModified(true);
   };
 
   const isValidName = (name: string): boolean => {
@@ -214,14 +223,11 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
           <TextField
             fullWidth
             value={policyName}
-            onChange={e => {
-              setPolicyName(e.target.value);
-              setIsEditing(true);
-            }}
+            onChange={e => handleNameChange(e.target.value)}
             placeholder="Enter binding policy name..."
-            error={isEditing && !isNameValid}
+            error={userHasModified && !isNameValid}
             helperText={
-              isEditing && !isNameValid
+              userHasModified && !isNameValid
                 ? 'Name must be lowercase alphanumeric with hyphens, max 253 characters'
                 : 'Use lowercase letters, numbers, and hyphens only'
             }
@@ -260,7 +266,7 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
               },
               '& .MuiFormHelperText-root': {
                 color:
-                  isEditing && !isNameValid
+                  userHasModified && !isNameValid
                     ? isDarkTheme
                       ? '#f87171'
                       : '#dc2626'
