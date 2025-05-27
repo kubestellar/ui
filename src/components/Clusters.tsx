@@ -1419,7 +1419,7 @@ const K8sInfo = () => {
                   <line x1="12" y1="17" x2="12.01" y2="17"></line>
                 </svg>
               </span>
-              <div className="pointer-events-none invisible absolute -left-64 -top-28 z-10 w-64 whitespace-normal rounded-md border border-gray-200 bg-white p-3 text-xs opacity-0 shadow-lg transition-all duration-200 group-hover:visible group-hover:opacity-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+              <div className="invisible absolute -left-64 -top-28 z-10 w-64 whitespace-normal rounded-md border border-gray-200 bg-white p-3 text-xs opacity-0 shadow-lg transition-all duration-200 group-hover:visible group-hover:opacity-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
                 <div className="mb-2 font-medium text-blue-600 dark:text-blue-400">
                   Health Score Formula
                 </div>
@@ -1438,7 +1438,14 @@ const K8sInfo = () => {
                   </li>
                 </ul>
                 <div className="mt-2 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                  Hover to see the formula breakdown
+                  <a
+                    href="https://github.com/kubestellar/kubestellar/blob/main/docs/health-metrics.md"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 underline hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                  >
+                    View detailed health metrics documentation
+                  </a>
                 </div>
               </div>
             </div>
