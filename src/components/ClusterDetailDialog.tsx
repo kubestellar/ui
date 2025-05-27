@@ -897,7 +897,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                           fontWeight: isDark ? 500 : 400,
                         }}
                       >
-                        Pod Capacity
+                        Pods Capacity
                       </Typography>
                     </Box>
                   </Grid>
