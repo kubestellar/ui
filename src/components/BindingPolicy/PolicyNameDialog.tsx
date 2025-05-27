@@ -40,7 +40,7 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
   const isDarkTheme = theme === 'dark';
 
   const [policyName, setPolicyName] = useState(defaultName);
-  const [,setIsEditing] = useState(false);
+  const [, setIsEditing] = useState(false);
   const [userHasModified, setUserHasModified] = useState(false);
 
   useEffect(() => {
