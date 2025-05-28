@@ -58,12 +58,12 @@ type SystemMetrics struct {
 
 // RuntimeMetrics represents Go runtime metrics
 type RuntimeMetrics struct {
-	GoVersion    string  `json:"go_version"`
-	Goroutines   int     `json:"goroutines"`
-	MemoryUsage  string  `json:"memory_usage"`
-	CPUCount     int     `json:"cpu_count"`
-	GCCycles     uint32  `json:"gc_cycles"`
-	HeapObjects  uint64  `json:"heap_objects"`
+	GoVersion   string `json:"go_version"`
+	Goroutines  int    `json:"goroutines"`
+	MemoryUsage string `json:"memory_usage"`
+	CPUCount    int    `json:"cpu_count"`
+	GCCycles    uint32 `json:"gc_cycles"`
+	HeapObjects uint64 `json:"heap_objects"`
 }
 
 // setupMetricsRoutes registers metrics and monitoring routes
@@ -72,22 +72,22 @@ func setupMetricsRoutes(router *gin.Engine) {
 	{
 		// Deployment statistics
 		metrics.GET("/deployments", getDeploymentMetrics)
-		
+
 		// System metrics
 		metrics.GET("/system", getSystemMetrics)
-		
+
 		// Component health check
 		metrics.GET("/health", getComponentHealth)
-		
+
 		// Detailed GitHub metrics
 		metrics.GET("/github", getGitHubMetrics)
-		
+
 		// Detailed Helm metrics
 		metrics.GET("/helm", getHelmMetrics)
-		
+
 		// Redis metrics
 		metrics.GET("/redis", getRedisMetrics)
-		
+
 		// Kubernetes metrics
 		metrics.GET("/kubernetes", getKubernetesMetrics)
 	}
@@ -169,7 +169,7 @@ func getHelmDeploymentStats() (HelmStats, error) {
 
 	// Try to get Helm deployments from ConfigMap
 	helmConfigMapName := "kubestellar-helm-deployments" // Adjust based on your actual ConfigMap name
-	
+
 	helmData, err := k8s.GetConfigMapData("its1", helmConfigMapName)
 	if err != nil {
 		return stats, fmt.Errorf("failed to get Helm deployment data: %v", err)
@@ -206,13 +206,13 @@ func getHelmDeploymentStats() (HelmStats, error) {
 func getSystemMetrics(c *gin.Context) {
 	// Get component statuses
 	components := make(map[string]ComponentStatus)
-	
+
 	// Check Redis
 	components["redis"] = checkRedisStatus()
-	
+
 	// Check Kubernetes
 	components["kubernetes"] = checkKubernetesStatus()
-	
+
 	// Check GitHub API access (if configured)
 	components["github_api"] = checkGitHubAPIStatus()
 
@@ -238,7 +238,7 @@ func checkRedisStatus() ComponentStatus {
 
 	// Test Redis connection by trying to set and get a test value
 	testKey := "health-check-" + fmt.Sprintf("%d", time.Now().Unix())
-	
+
 	if err := redis.SetRepoURL(testKey); err != nil {
 		status.Status = "unhealthy"
 		status.Error = err.Error()
@@ -341,7 +341,7 @@ func getComponentHealth(c *gin.Context) {
 	// Calculate overall health
 	healthyComponents := 0
 	totalComponents := 3
-	
+
 	if redisStatus.Status == "healthy" {
 		healthyComponents++
 	}
@@ -405,7 +405,7 @@ func getGitHubMetrics(c *gin.Context) {
 		if len(deployments) < recentCount {
 			recentCount = len(deployments)
 		}
-		
+
 		// Get the most recent deployments (assuming they're ordered by timestamp)
 		response["recent_deployments"] = deployments[len(deployments)-recentCount:]
 	}
@@ -433,10 +433,10 @@ func getHelmMetrics(c *gin.Context) {
 // getRedisMetrics returns Redis-specific metrics
 func getRedisMetrics(c *gin.Context) {
 	status := checkRedisStatus()
-	
+
 	// Get Redis configuration information
 	config := gin.H{}
-	
+
 	if repoURL, err := redis.GetRepoURL(); err == nil {
 		config["repo_url"] = repoURL != ""
 	}
@@ -460,7 +460,7 @@ func getRedisMetrics(c *gin.Context) {
 // getKubernetesMetrics returns Kubernetes-specific metrics
 func getKubernetesMetrics(c *gin.Context) {
 	status := checkKubernetesStatus()
-	
+
 	// Try to get additional Kubernetes information
 	metrics := gin.H{
 		"status":    status,
@@ -469,14 +469,14 @@ func getKubernetesMetrics(c *gin.Context) {
 
 	// Get ConfigMap information
 	configMaps := gin.H{}
-	
+
 	// Check GitHub ConfigMap
 	if _, err := k8s.GetConfigMapData("its1", k8s.GitHubConfigMapName); err == nil {
 		configMaps["github"] = "accessible"
 	} else {
 		configMaps["github"] = "not_found"
 	}
-	
+
 	// Check Helm ConfigMap
 	if _, err := k8s.GetConfigMapData("its1", k8s.HelmConfigMapName); err == nil {
 		configMaps["helm"] = "accessible"
