@@ -42,12 +42,20 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
   const [policyName, setPolicyName] = useState(defaultName);
   const [isEditing, setIsEditing] = useState(false);
 
+  // Track whether dialog has been opened
+  const [hasOpened, setHasOpened] = useState(false);
+
   useEffect(() => {
-    if (open) {
+    if (open && !hasOpened) {
+      // Only set the policy name when the dialog first opens
       setPolicyName(defaultName);
       setIsEditing(false);
+      setHasOpened(true);
+    } else if (!open) {
+      // Reset the state when dialog closes
+      setHasOpened(false);
     }
-  }, [open, defaultName]);
+  }, [open, defaultName, hasOpened]);
 
   const handleConfirm = () => {
     if (policyName.trim()) {
