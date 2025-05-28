@@ -23,7 +23,7 @@ interface TabPanelProps {
 
 const TabPanel = (props: TabPanelProps) => {
   const { children, value, index, ...other } = props;
-  
+
   return (
     <div
       role="tabpanel"
@@ -33,9 +33,7 @@ const TabPanel = (props: TabPanelProps) => {
       {...other}
     >
       <Fade in={value === index} timeout={300}>
-        <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
-          {children}
-        </Box>
+        <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>{children}</Box>
       </Fade>
     </div>
   );
@@ -63,21 +61,25 @@ const Plugins: React.FC = () => {
   }, []);
 
   return (
-    <Box sx={{ 
-      p: { xs: 2, sm: 3, md: 4 },
-      minHeight: '100vh',
-      bgcolor: 'transparent',
-    }}>
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        mb: 3,
-        flexDirection: { xs: 'column', sm: 'row' },
-        gap: 2,
-      }}>
-        <Typography 
-          variant="h3" 
+    <Box
+      sx={{
+        p: { xs: 2, sm: 3, md: 4 },
+        minHeight: '100vh',
+        bgcolor: 'transparent',
+      }}
+    >
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 3,
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: 2,
+        }}
+      >
+        <Typography
+          variant="h3"
           component="h1"
           sx={{
             fontSize: { xs: '1.8rem', sm: '2.2rem', md: '2.5rem' },
@@ -91,7 +93,7 @@ const Plugins: React.FC = () => {
         >
           Plugin Marketplace
         </Typography>
-        
+
         <Button
           variant="outlined"
           startIcon={<RefreshIcon />}
@@ -116,9 +118,9 @@ const Plugins: React.FC = () => {
 
       {error && (
         <Slide direction="down" in={Boolean(error)} mountOnEnter unmountOnExit>
-          <Alert 
-            severity="error" 
-            sx={{ 
+          <Alert
+            severity="error"
+            sx={{
               mb: 3,
               bgcolor: 'rgba(220, 38, 38, 0.1)',
               color: '#fecaca',
@@ -135,14 +137,16 @@ const Plugins: React.FC = () => {
       )}
 
       {loading ? (
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          mt: 4,
-          height: '60vh',
-          alignItems: 'center',
-        }}>
-          <CircularProgress 
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            mt: 4,
+            height: '60vh',
+            alignItems: 'center',
+          }}
+        >
+          <CircularProgress
             size={60}
             sx={{
               color: '#3b82f6',
@@ -153,30 +157,31 @@ const Plugins: React.FC = () => {
           />
         </Box>
       ) : (
-        <Box
-          sx={{
-            bgcolor: 'transparent',
-            borderRadius: 3,
-            border: '1px solid rgba(59, 130, 246, 0.2)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-            backdropFilter: 'blur(10px)',
-            overflow: 'hidden',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '2px',
-              background: 'linear-gradient(90deg, #3b82f6, #1e40af, #3b82f6)',
-              animation: 'shimmer 3s ease-in-out infinite',
-            },
-            '@keyframes shimmer': {
-              '0%, 100%': { opacity: 0.5 },
-              '50%': { opacity: 1 },
-            },
-          }}
-        >
+<Box
+  sx={{
+    bgcolor: '#1e293b', // Dark slate background
+    borderRadius: 3,
+    border: '1px solid rgba(59, 130, 246, 0.2)',
+    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)', // softened shadow
+    overflow: 'hidden',
+    position: 'relative',
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: '2px',
+      background: 'linear-gradient(90deg, #3b82f6, #1e40af, #3b82f6)',
+      animation: 'shimmer 3s ease-in-out infinite',
+    },
+    '@keyframes shimmer': {
+      '0%, 100%': { opacity: 0.4 },
+      '50%': { opacity: 1 },
+    },
+  }}
+>
+  
           <Tabs
             value={tabValue}
             onChange={handleChange}

@@ -1,22 +1,23 @@
 // src/pages/Plugins.tsx
-import React, { useState, useEffect } from 'react';
 import {
+  Alert,
   Box,
-  Tabs,
-  Tab,
-  Typography,
-  Paper,
-//   Grid,
   Button,
   CircularProgress,
-  Alert,
-//   IconButton,
+  Paper,
+  Tab,
+  Tabs,
+  Typography,
+  // Upload as UploadIcon,
 } from '@mui/material';
+import React, { useEffect, useState } from 'react';
 // import { Add as AddIcon, Refresh as RefreshIcon } from '@mui/icons-material';
 // import { Plugin } from '../plugins/InstalledApps';
-import InstalledApps from '../plugins/InstalledApps';
-import ExploreApps from '../plugins/ExploreApps';
 import { Refresh as RefreshIcon } from '@mui/icons-material';
+import ExploreApps from '../plugins/ExploreApps';
+import InstalledApps from '../plugins/InstalledApps';
+import UploadPlugin from '../plugins/UploadPlugin'; // Assuming UploadPlugin is defined in this file
+
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
@@ -25,7 +26,7 @@ interface TabPanelProps {
 
 const TabPanel = (props: TabPanelProps) => {
   const { children, value, index, ...other } = props;
-  
+
   return (
     <div
       role="tabpanel"
@@ -34,11 +35,7 @@ const TabPanel = (props: TabPanelProps) => {
       aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
   );
 };
@@ -95,14 +92,34 @@ const Plugins: React.FC = () => {
           <CircularProgress />
         </Box>
       ) : (
-        <Paper sx={{ p: 2 }}>
+        <Paper
+          sx={{
+            p: 2,
+            bgcolor: '#1e293b',
+            color: '#e2e8f0',
+            borderRadius: 2,
+            border: '1px solid rgba(148, 163, 184, 0.2)',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4)',
+          }}
+        >
           <Tabs
             value={tabValue}
             onChange={handleChange}
-            aria-label="plugins tabs"
+            variant="fullWidth"
+            sx={{
+              mb: 2,
+              '& button': {
+                color: '#e2e8f0',
+                fontWeight: 'medium',
+                '&.Mui-selected': {
+                  color: '#3b82f6',
+                },
+              },
+            }}
           >
-            <Tab label="Installed Plugins" />
-            <Tab label="Explore Plugins" />
+            <Tab label="Installed" />
+            <Tab label="Explore" />
+            <Tab label="Upload" />
           </Tabs>
 
           <TabPanel value={tabValue} index={0}>
@@ -110,6 +127,9 @@ const Plugins: React.FC = () => {
           </TabPanel>
           <TabPanel value={tabValue} index={1}>
             <ExploreApps />
+          </TabPanel>
+          <TabPanel value={tabValue} index={2}>
+            <UploadPlugin />
           </TabPanel>
         </Paper>
       )}

@@ -58,13 +58,13 @@ export default defineConfig({
       },
     },
   },
-  
+
   server: {
     proxy: {
       '/api': {
         target: 'http://backend:4000', // Use Docker container name
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        rewrite: path => path.replace(/^\/api/, ''),
       },
     },
   },

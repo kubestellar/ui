@@ -50,7 +50,7 @@ export const menu = [
         url: '/plugins',
         icon: MdAddShoppingCart,
         label: 'Plugins',
-      }
+      },
     ],
   },
 ];

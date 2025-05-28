@@ -168,7 +168,7 @@ const CommandPalette: React.FC = () => {
         'configuration',
       ],
       section: 'Navigation',
-    },    
+    },
     {
       id: 'wds-treeview',
       type: 'navigation',

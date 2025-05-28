@@ -1,32 +1,32 @@
 [
-    {
-        "name": "calendar-sync",
-        "displayName": "Calendar Sync",
-        "version": "1.0.1",
-        "description": "Sync your calendars across different platforms and devices.",
-        "rating": 4.2,
-        "downloads": 87654,
-        "tags": ["calendar", "sync", "productivity"],
-        "enabled": false
-    },
-    {
-        "name": "note-taker",
-        "displayName": "Note Taker",
-        "version": "3.0.0",
-        "description": "Take notes quickly and easily with this intuitive note-taking plugin.",
-        "rating": 4.7,
-        "downloads": 98765,
-        "tags": ["notes", "productivity", "writing"],
-        "enabled": false
-    },
-    {
-        "name": "backup-manager",
-        "displayName": "Backup Manager",
-        "version": "1.1.0",
-        "description": "Automatically backup your important files and documents.",
-        "rating": 4.3,
-        "downloads": 45678,
-        "tags": ["backup", "security", "files"],
-        "enabled": false
-    }
+  {
+    "name": "calendar-sync",
+    "displayName": "Calendar Sync",
+    "version": "1.0.1",
+    "description": "Sync your calendars across different platforms and devices.",
+    "rating": 4.2,
+    "downloads": 87654,
+    "tags": ["calendar", "sync", "productivity"],
+    "enabled": false
+  },
+  {
+    "name": "note-taker",
+    "displayName": "Note Taker",
+    "version": "3.0.0",
+    "description": "Take notes quickly and easily with this intuitive note-taking plugin.",
+    "rating": 4.7,
+    "downloads": 98765,
+    "tags": ["notes", "productivity", "writing"],
+    "enabled": false
+  },
+  {
+    "name": "backup-manager",
+    "displayName": "Backup Manager",
+    "version": "1.1.0",
+    "description": "Automatically backup your important files and documents.",
+    "rating": 4.3,
+    "downloads": 45678,
+    "tags": ["backup", "security", "files"],
+    "enabled": false
+  }
 ]

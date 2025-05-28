@@ -13,6 +13,9 @@ import KubeStellarVisualization from '../components/login/index';
 import InstallationPage from '../pages/InstallationPage';
 import KubeStellarStatusChecker from '../components/KubeStellarStatusChecker';
 import Plugins from '../pages/Plugins';
+import LogSummarizer from '../pages/LogSummarizer';
+import QuotaVisualizer from '../pages/QuotaVisualizer';
+import SecretsManager from '../pages/SecretsManager.tsx';
 
 const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ '../components/Clusters'));
 const ITSLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/ITS'));
@@ -99,10 +102,34 @@ export const routesConfig: RouteObject[] = [
         ),
       },
       {
+        path: 'plugin/log-summarizer',
+        element: (
+          <ProtectedRoute>
+            <LogSummarizer />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'plugin/quota-visualiser',
+        element: (
+          <ProtectedRoute>
+            <QuotaVisualizer />
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: 'plugins',
         element: (
           <ProtectedRoute>
             <Plugins />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'plugins/secrets-ui-manager',
+        element: (
+          <ProtectedRoute>
+            <SecretsManager />
           </ProtectedRoute>
         ),
       },

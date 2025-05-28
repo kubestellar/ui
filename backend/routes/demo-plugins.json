@@ -1,5 +1,23 @@
 [
   {
+    "name": "log-summarizer",
+    "displayName": "Log Summarizer",
+    "version": "1.0.0",
+    "description": "A powerful log analysis and summarization tool",
+    "rating": 4.8,
+    "downloads": 1024,
+    "tags": ["logging", "analysis", "monitoring"],
+    "enabled": false,
+    "backend": {
+      "image": "peroxide/log-summarizer:latest",
+      "port": 4001
+    },
+    "frontend": {
+      "entryPoint": "/plugin/log-summarizer",
+      "routes": ["/plugin/log-summarizer", "/plugin/log-summarizer/*"]
+    }
+  },
+  {
     "name": "weather-widget",
     "displayName": "Weather Widget",
     "version": "1.2.0",

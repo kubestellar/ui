@@ -5,332 +5,240 @@ import {
   Chip,
   Tooltip,
   IconButton,
-  Switch,
+  // Switch,
   List,
   ListItem,
   CircularProgress,
-  Fade,
+  // Fade,
   Zoom,
-  Dialog,
-  DialogActions,
-  Button,
-  useTheme,
+  // Dialog,
+  // DialogActions,
+  // Button,
+  // useTheme,
 } from '@mui/material';
 import {
   Delete as DeleteIcon,
   Power as PowerIcon,
-  PowerOff as PowerOffIcon,
-  ContentCopy as ContentCopyIcon,
+  // PowerOff as PowerOffIcon,
+  // ContentCopy as ContentCopyIcon,
+  Link as LinkIcon,
 } from '@mui/icons-material';
 
-const InstalledApps: React.FC = () => {
-  const [pluginEnabled, setPluginEnabled] = useState<boolean>(false);
-  const [toggleDisabled, setToggleDisabled] = useState<boolean>(true);
-  const [processing, setProcessing] = useState<boolean>(false);
-  const [dialogOpen, setDialogOpen] = useState<boolean>(false);
-  const [dialogLoading, setDialogLoading] = useState<boolean>(false);
-  const [kubeContexts, setKubeContexts] = useState<string[]>([]);
-  const theme = useTheme();
+interface Plugin {
+  name: string;
+  description: string;
+  icon: JSX.Element;
+  enabled: boolean;
+  route: string;
+  visible: boolean;
+  version: string;
+  tags: string[];
+}
 
+const InstalledApps: React.FC = () => {
+  const [plugins, setPlugins] = useState<Plugin[]>([]);
+  const [uninstallingPlugin, setUninstallingPlugin] = useState<string | null>(null);
+
+  // const theme = useTheme();
+
+  // Initialize default plugins in localStorage if not present
   useEffect(() => {
-    // Simulate initial plugin status check
-    setTimeout(() => {
-      setToggleDisabled(false);
-      setPluginEnabled(true);
-    }, 1500);
+    const savedPlugins = localStorage.getItem('installedPlugins');
+    if (!savedPlugins) {
+      const defaultPlugins = ['log-summarizer']; // Add more default plugins as needed
+      localStorage.setItem('installedPlugins', JSON.stringify(defaultPlugins));
+    }
   }, []);
 
-  const handleToggle = () => {
-    setProcessing(true);
-    setTimeout(() => {
-      setPluginEnabled(!pluginEnabled);
-      setProcessing(false);
-    }, 800);
-  };
+  // Load plugins from localStorage
+  useEffect(() => {
+    const savedPlugins = localStorage.getItem('installedPlugins');
+    if (savedPlugins) {
+      const pluginNames = JSON.parse(savedPlugins);
+      const pluginsData = pluginNames.map((name: string) => {
+        switch (name) {
+          case 'secrets-manager':
+            return {
+              name: 'Secrets Manager',
+              description: 'Manage Kubernetes secrets and configurations',
+              icon: <PowerIcon />,
+              enabled: true,
+              route: '/plugins/secrets-ui-manager',
+              visible: true,
+              version: '1.0.0',
+              tags: ['security', 'configuration']
+            };
+          case 'log-summarizer':
+            return {
+              name: 'Log Summarizer',
+              description: 'View summarized logs for your pods',
+              icon: <LinkIcon />,
+              enabled: true,
+              route: '/plugin/log-summarizer',
+              visible: true,
+              version: '1.1.0',
+              tags: ['logging', 'monitoring']
+            };
+          case 'quota-visualiser':
+            return {
+              name: 'Quota visualiser',
+              description: 'Resource quota visualization plugin',
+              icon: <PowerIcon />,
+              enabled: true,
+              route: '/plugin/quota-visualiser',
+              visible: true,
+              version: '0.9.4',
+              tags: ['resource', 'visualization']
+            };
+          default:
+            return null;
+        }
+      }).filter(Boolean);
+      setPlugins(pluginsData);
+    }
+  }, []);
 
-  const handleRemove = () => {
-    if (!window.confirm(`Are you sure you want to remove hardcoded-plugin?`)) return;
-    alert('This is a hardcoded plugin and cannot actually be removed.');
-  };
+  // Handle URL activation parameter
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const activatePlugin = urlParams.get('activate');
+    
+    if (activatePlugin === 'quota-visualiser') {
+      // Add quota-visualiser to installed plugins
+      const installedPlugins = JSON.parse(localStorage.getItem('installedPlugins') || '[]');
+      if (!installedPlugins.includes('quota-visualiser')) {
+        localStorage.setItem('installedPlugins', JSON.stringify([...installedPlugins, 'quota-visualiser']));
+        // Refresh plugins list
+        setPlugins(prev => [...prev, {
+          name: 'Quota visualiser',
+          description: 'Resource quota visualization plugin',
+          icon: <PowerIcon />,
+          enabled: true,
+          route: '/plugin/quota-visualiser',
+          visible: true,
+          version: '0.9.4',
+          tags: ['resource', 'visualization']
+        }]);
+      }
+    }
+  }, []);
 
-  const handlePluginClick = () => {
-    if (pluginEnabled) {
-      setDialogOpen(true);
-      setDialogLoading(true);
-      
+  const handleUninstall = async (plugin: Plugin) => {
+    if (!window.confirm(`Are you sure you want to uninstall ${plugin.name}?`)) return;
+
+    setUninstallingPlugin(plugin.name);
+    try {
       // Simulate API call
-      setTimeout(() => {
-        setKubeContexts([
-          'CURRENT   NAME                    CLUSTER                 AUTHINFO                NAMESPACE',
-          '          cluster1                kind-cluster1           kind-cluster1           ',
-          '          cluster2                kind-cluster2           kind-cluster2           ',
-          '          dadu-context            dadu-cluster            dadu                    dadu-namespace',
-          '*         its1                    its1-cluster            its1-admin              ',
-          '          kind-cluster3           kind-cluster3           kind-cluster3           ',
-          '          kind-kubeflex           kind-kubeflex           kind-kubeflex           ',
-          '          kind-kubestellar        kind-kubestellar        kind-kubestellar        ',
-          '          kind-mcp-test-cluster   kind-mcp-test-cluster   kind-mcp-test-cluster   ',
-          '          kind-test-cluster       kind-test-cluster       kind-test-cluster       ',
-          '          minikube                minikube                minikube                default',
-          '          wds1                    wds1-cluster            wds1-admin              default'
-        ]);
-        setDialogLoading(false);
-      }, 1200);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Update installed plugins
+      const installedPlugins = JSON.parse(localStorage.getItem('installedPlugins') || '[]');
+      const newInstalledPlugins = installedPlugins.filter((p: string) => p !== plugin.name);
+      localStorage.setItem('installedPlugins', JSON.stringify(newInstalledPlugins));
+      
+      // Remove from plugins list
+      setPlugins(prev => prev.filter(p => p.name !== plugin.name));
+    } catch (error) {
+      console.error('Failed to uninstall plugin:', error);
+    } finally {
+      setUninstallingPlugin(null);
     }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text.split(/\s+/)[1]);
+  const handlePluginClick = (route: string) => {
+    if (route) {
+      window.location.href = route;
+    }
   };
 
   return (
-    <Fade in={true} timeout={800}>
-      <Box
-        sx={{
-          width: '100%',
-          maxWidth: 1000,
-          mx: 'auto',
-          mt: 2,
-          px: { xs: 2, sm: 3, md: 4 },
-          bgcolor: 'rgba(15, 23, 42, 0.95)',
-          borderRadius: 3,
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-          border: '1px solid rgba(59, 130, 246, 0.2)',
-          backdropFilter: 'blur(10px)',
-        }}
-      >
-        <Box sx={{ mb: 3, pt: 3 }}>
-          <Typography
-            variant="h4"
-            component="h2"
-            sx={{
-              mb: 1,
-              color: '#e2e8f0',
-              fontWeight: 700,
-              fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
-              background: 'linear-gradient(135deg, #3b82f6, #06b6d4)',
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            Installed Plugins
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: '#94a3b8',
-              fontSize: { xs: '0.875rem', sm: '1rem' },
-              mb: 2,
-            }}
-          >
-            Manage your installed plugins and their configurations
-          </Typography>
-        </Box>
-
-        <List sx={{ width: '100%', p: 0, mb: 2 }}>
-          <Zoom in={true} timeout={600}>
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h5" sx={{ mb: 3 }}>
+        Installed Plugins
+      </Typography>
+      
+      <List sx={{ width: '100%', p: 0, mb: 2 }}>
+        {plugins.map((plugin) => (
+          <Zoom in={true} timeout={600} key={plugin.name}>
             <ListItem
-              onClick={handlePluginClick}
               sx={{
-                cursor: pluginEnabled ? 'pointer' : 'default',
-                transition: '0.2s all',
-                flexDirection: { xs: 'column', sm: 'row' },
-                alignItems: { xs: 'stretch', sm: 'center' },
-                gap: { xs: 2, sm: 3 },
-                py: 3,
-                px: 3,
                 mb: 2,
+                p: 2,
                 bgcolor: 'rgba(30, 41, 59, 0.6)',
-                borderRadius: 2,
-                border: '1px solid rgba(59, 130, 246, 0.1)',
-                backdropFilter: 'blur(10px)',
-                position: 'relative',
-                overflow: 'hidden',
+                borderRadius: 1,
+                transition: 'all 0.3s ease',
                 '&:hover': {
-                  transform: pluginEnabled ? 'translateX(8px)' : 'none',
-                  boxShadow: pluginEnabled ? '0 4px 16px rgba(59, 130, 246, 0.2)' : 'none'
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: '4px',
-                  bgcolor: pluginEnabled ? '#22c55e' : '#64748b',
+                  bgcolor: 'rgba(30, 41, 59, 0.8)',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
                 },
               }}
             >
-              <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      fontSize: { xs: '1.1rem', sm: '1.25rem' },
-                      fontWeight: 600,
-                      color: '#e2e8f0',
-                    }}
-                  >
-                    Context-fetcher
-                  </Typography>
-                  <Chip label="v1.0.0" size="small" />
-                  <Chip
-                    icon={pluginEnabled ? <PowerIcon /> : <PowerOffIcon />}
-                    label={pluginEnabled ? 'Active' : 'Inactive'}
-                    size="small"
-                  />
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
+                  {plugin.icon}
+                  <Box>
+                    <Typography variant="subtitle1" sx={{ color: '#e2e8f0', fontWeight: 600 }}>
+                      {plugin.name}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#94a3b8', fontSize: '0.875rem' }}>
+                      {plugin.description}
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                      {plugin.tags?.map((tag) => (
+                        <Chip
+                          key={tag}
+                          label={tag}
+                          size="small"
+                          sx={{
+                            bgcolor: 'rgba(59, 130, 246, 0.1)',
+                            color: '#7dd3fc',
+                            fontSize: '0.75rem',
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  </Box>
                 </Box>
-                <Typography variant="body2" sx={{ color: '#94a3b8', fontSize: '0.9rem' }}>
-                  Get all the context
-                </Typography>
-              </Box>
-
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 2,
-                  flexShrink: 0,
-                  justifyContent: { xs: 'space-between', sm: 'flex-end' },
-                  width: { xs: '100%', sm: 'auto' },
-                }}
-              >
-                <Tooltip title={pluginEnabled ? 'Disable plugin' : 'Enable plugin'}>
-                  <Switch
-                    checked={pluginEnabled}
-                    onChange={handleToggle}
-                    disabled={toggleDisabled || processing}
-                  />
-                </Tooltip>
-
-                <Tooltip title="Remove plugin">
-                  <IconButton
-                    onClick={handleRemove}
-                    disabled={processing}
-                    size="small"
-                    sx={{ p: 1.5 }}
-                  >
-                    {processing ? (
-                      <CircularProgress size={18} />
-                    ) : (
-                      <DeleteIcon sx={{ fontSize: 18, color: '#f87171' }} />
-                    )}
-                  </IconButton>
-                </Tooltip>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Tooltip title="Uninstall">
+                    <IconButton
+                      onClick={() => handleUninstall(plugin)}
+                      disabled={uninstallingPlugin === plugin.name}
+                      sx={{
+                        color: '#ef4444',
+                        '&:hover': {
+                          bgcolor: 'rgba(239, 68, 68, 0.1)',
+                        },
+                      }}
+                    >
+                      {uninstallingPlugin === plugin.name ? (
+                        <CircularProgress size={20} sx={{ color: 'inherit' }} />
+                      ) : (
+                        <DeleteIcon />
+                      )}
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Open Plugin">
+                    <IconButton
+                      onClick={() => handlePluginClick(plugin.route)}
+                      sx={{
+                        color: '#3b82f6',
+                        '&:hover': {
+                          bgcolor: 'rgba(59, 130, 246, 0.1)',
+                        },
+                      }}
+                    >
+                      <LinkIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
               </Box>
             </ListItem>
           </Zoom>
-        </List>
-
-        {/* Kubernetes Context Dialog */}
-        <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md">
-          <Box sx={{
-            bgcolor: '#0f172a',
-            color: '#e2e8f0',
-            p: 3,
-            borderRadius: 2,
-            minWidth: '600px',
-            fontFamily: 'monospace',
-            position: 'relative',
-          }}>
-            <Typography variant="h6" sx={{ 
-              mb: 2, 
-              display: 'flex', 
-              alignItems: 'center',
-              color: '#3b82f6',
-              fontFamily: theme.typography.fontFamily,
-            }}>
-              <PowerIcon sx={{ color: '#22c55e', mr: 1.5, fontSize: 28 }} />
-              Cluster Context Explorer
-            </Typography>
-            
-            {dialogLoading ? (
-              <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center',
-                minHeight: 200,
-                bgcolor: 'rgba(30, 41, 59, 0.5)',
-                borderRadius: 2
-              }}>
-                <CircularProgress size={40} sx={{ color: '#3b82f6' }} />
-                <Typography variant="body2" sx={{ ml: 2, color: '#94a3b8' }}>
-                  Querying cluster contexts...
-                </Typography>
-              </Box>
-            ) : (
-              <Box sx={{ 
-                bgcolor: '#1e293b',
-                borderRadius: 2,
-                p: 2,
-                position: 'relative',
-                '&::before': {
-                  content: '" "',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  border: '1px solid rgba(59, 130, 246, 0.1)',
-                  borderRadius: 2,
-                  pointerEvents: 'none',
-                }
-              }}>
-                {kubeContexts.map((line, index) => (
-                  <Box 
-                    key={index}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      py: 0.5,
-                      borderBottom: index === 0 ? '1px solid rgba(59, 130, 246, 0.2)' : 'none',
-                      bgcolor: line.startsWith('*') ? 'rgba(34, 197, 94, 0.1)' : 'transparent',
-                    }}
-                  >
-                    <Typography variant="body2" sx={{ 
-                      flexGrow: 1, 
-                      fontSize: '0.85rem',
-                      color: line.startsWith('*') ? '#22c55e' : '#e2e8f0',
-                    }}>
-                      {line}
-                    </Typography>
-                    {index !== 0 && (
-                      <Tooltip title="Copy context name">
-                        <IconButton
-                          size="small"
-                          onClick={() => copyToClipboard(line)}
-                          sx={{ ml: 1, color: '#94a3b8', '&:hover': { color: '#3b82f6' } }}
-                        >
-                          <ContentCopyIcon fontSize="inherit" />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                  </Box>
-                ))}
-              </Box>
-            )}
-
-            <DialogActions sx={{ mt: 3, justifyContent: 'flex-end' }}>
-              <Button 
-                onClick={() => setDialogOpen(false)}
-                variant="outlined"
-                sx={{
-                  color: '#94a3b8',
-                  borderColor: 'rgba(59, 130, 246, 0.4)',
-                  '&:hover': {
-                    borderColor: '#3b82f6',
-                    bgcolor: 'rgba(59, 130, 246, 0.1)'
-                  }
-                }}
-              >
-                Close Explorer
-              </Button>
-            </DialogActions>
-          </Box>
-        </Dialog>
-      </Box>
-    </Fade>
+        ))}
+      </List>
+    </Box>
   );
 };
 
