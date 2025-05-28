@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/kubestellar/kubestellar/api/control/v1alpha1"
 	"github.com/kubestellar/kubestellar/pkg/generated/clientset/versioned/scheme"
@@ -14,6 +15,7 @@ import (
 	"github.com/kubestellar/ui/log"
 	"github.com/kubestellar/ui/redis"
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -302,17 +304,6 @@ func extractTargetClusters(bp *v1alpha1.BindingPolicy) []string {
 	return clusters
 }
 
-// filterBPsByNamespace filters the binding policies by namespace
-func filterBPsByNamespace(bps []BindingPolicyWithStatus, namespace string) []BindingPolicyWithStatus {
-	var filtered []BindingPolicyWithStatus
-	for _, bp := range bps {
-		if bp.Namespace == namespace {
-			filtered = append(filtered, bp)
-		}
-	}
-	return filtered
-}
-
 // check if content type is valid
 func contentTypeValid(t string) bool {
 	// Extract the base content type (ignore parameters like boundary=...)
@@ -350,20 +341,87 @@ func watchOnBps() {
 			switch event.Type {
 			case "MODIFIED":
 				bp, _ := event.Object.(*v1alpha1.BindingPolicy)
+
+				// Determine the correct status
+				status := "inactive"
 				if bp.ObjectMeta.Generation == bp.Status.ObservedGeneration {
-					log.LogInfo("reconciled successfully", zap.String("name", bp.Name))
+					status = "active"
+					log.LogInfo("BP reconciled successfully - updating cache to active", zap.String("name", bp.Name))
 				} else {
-					log.LogInfo("reconciling...", zap.String("name", bp.Name))
+					log.LogInfo("BP reconciling - keeping as inactive", zap.String("name", bp.Name))
 				}
-				log.LogInfo("BP modified: ", zap.String("name", bp.Name))
+
+				log.LogInfo("BP modified", zap.String("name", bp.Name), zap.String("newStatus", status))
+
+				// preserve existing YAML content from cache
+				existingYAML := ""
+				if existingPolicy, err := redis.GetBindingPolicy(bp.Name); err == nil && existingPolicy != nil {
+					existingYAML = existingPolicy.RawYAML
+					log.LogDebug("Preserving existing YAML content from cache", zap.String("policyName", bp.Name), zap.Int("yamlLength", len(existingYAML)))
+				}
+
+				// If don't have existing YAML, try to generate it from the current BP
+				if existingYAML == "" {
+					if yamlBytes, err := yaml.Marshal(bp); err == nil {
+						existingYAML = string(yamlBytes)
+						log.LogDebug("Generated YAML for modified policy", zap.String("policyName", bp.Name), zap.Int("yamlLength", len(existingYAML)))
+					}
+				}
+
+				cachedPolicy := &redis.BindingPolicyCache{
+					Name:              bp.Name,
+					Namespace:         bp.Namespace,
+					Status:            status,
+					BindingMode:       "Downsync",
+					Clusters:          extractTargetClusters(bp),
+					Workloads:         extractWorkloads(bp),
+					CreationTimestamp: bp.CreationTimestamp.Format("2006-01-02T15:04:05Z"),
+					RawYAML:           existingYAML, // Preserve existing YAML content
+				}
+
+				log.LogInfo("Updating binding policy cache", zap.String("policyName", bp.Name), zap.String("status", status))
+				if err := redis.StoreBindingPolicy(cachedPolicy); err != nil {
+					log.LogWarn("failed to update binding policy in cache", zap.Error(err))
+				} else {
+					log.LogInfo("Successfully updated binding policy cache", zap.String("policyName", bp.Name), zap.String("status", status))
+				}
 
 			case "ADDED":
 				bp, _ := event.Object.(*v1alpha1.BindingPolicy)
 				log.LogInfo("BP added: ", zap.String("name", bp.Name))
 
+				//  YAML content from stored policies or generate it
+				yamlContent := ""
+				if storedBP, exists := UICreatedPolicies[bp.Name]; exists && storedBP.RawYAML != "" {
+					yamlContent = storedBP.RawYAML
+					log.LogDebug("Using stored YAML for new policy", zap.String("policyName", bp.Name), zap.Int("yamlLength", len(yamlContent)))
+				} else {
+					// Generate YAML from the binding policy object
+					if yamlBytes, err := yaml.Marshal(bp); err == nil {
+						yamlContent = string(yamlBytes)
+						log.LogDebug("Generated YAML for new policy", zap.String("policyName", bp.Name), zap.Int("yamlLength", len(yamlContent)))
+					}
+				}
+
+				// Add the new binding policy to cache
+				cachedPolicy := &redis.BindingPolicyCache{
+					Name:              bp.Name,
+					Namespace:         bp.Namespace,
+					Status:            "inactive", // New policies start as inactive
+					BindingMode:       "Downsync",
+					Clusters:          extractTargetClusters(bp),
+					Workloads:         extractWorkloads(bp),
+					CreationTimestamp: bp.CreationTimestamp.Format("2006-01-02T15:04:05Z"),
+					RawYAML:           yamlContent, // Use the YAML content we found or generated
+				}
+
+				if err := redis.StoreBindingPolicy(cachedPolicy); err != nil {
+					log.LogWarn("failed to cache new binding policy from watch", zap.Error(err))
+				}
+
 			case "DELETED":
 				bp, _ := event.Object.(*v1alpha1.BindingPolicy)
-				err := redis.DeleteBpcmd(bp.Name)
+				err := redis.DeleteBindingPolicy(bp.Name)
 				if err != nil {
 					log.LogError("Error deleting bp from redis", zap.String("error", err.Error()))
 				}
@@ -375,7 +433,89 @@ func watchOnBps() {
 
 	}
 }
-func init() {
 
+// forces a refresh of all binding policies in the cache
+func RefreshBindingPolicyCache() error {
+	log.LogInfo("Refreshing binding policy cache from Kubernetes")
+
+	c, err := getClientForBp()
+	if err != nil {
+		log.LogError("failed to create client for cache refresh", zap.Error(err))
+		return err
+	}
+
+	// Get all binding policies from Kubernetes
+	bpList, err := c.BindingPolicies().List(context.TODO(), v1.ListOptions{})
+	if err != nil {
+		log.LogError("failed to list binding policies for cache refresh", zap.Error(err))
+		return err
+	}
+
+	log.LogInfo("Refreshing cache with policies from Kubernetes", zap.Int("policyCount", len(bpList.Items)))
+
+	// Update cache for each policy
+	for _, bp := range bpList.Items {
+		status := "inactive"
+		if bp.ObjectMeta.Generation == bp.Status.ObservedGeneration {
+			status = "active"
+		}
+
+		//  preserve existing YAML content from cache
+		existingYAML := ""
+		if existingPolicy, err := redis.GetBindingPolicy(bp.Name); err == nil && existingPolicy != nil {
+			existingYAML = existingPolicy.RawYAML
+		}
+
+		// don't have existing YAML, generate it from the current BP
+		if existingYAML == "" {
+			if yamlBytes, err := yaml.Marshal(bp); err == nil {
+				existingYAML = string(yamlBytes)
+			}
+		}
+
+		cachedPolicy := &redis.BindingPolicyCache{
+			Name:              bp.Name,
+			Namespace:         bp.Namespace,
+			Status:            status,
+			BindingMode:       "Downsync",
+			Clusters:          extractTargetClusters(&bp),
+			Workloads:         extractWorkloads(&bp),
+			CreationTimestamp: bp.CreationTimestamp.Format("2006-01-02T15:04:05Z"),
+			RawYAML:           existingYAML,
+		}
+
+		log.LogDebug("Refreshing cache for policy",
+			zap.String("policyName", bp.Name),
+			zap.String("status", status),
+			zap.Int64("generation", bp.ObjectMeta.Generation),
+			zap.Int64("observedGeneration", bp.Status.ObservedGeneration))
+
+		if err := redis.StoreBindingPolicy(cachedPolicy); err != nil {
+			log.LogWarn("failed to refresh binding policy in cache", zap.String("policyName", bp.Name), zap.Error(err))
+		}
+	}
+
+	log.LogInfo("Completed binding policy cache refresh")
+	return nil
+}
+
+func init() {
 	go watchOnBps()
+
+	// Refresh the cache on startup after a short delay to allow Redis to be ready
+	go func() {
+		time.Sleep(5 * time.Second)
+		if err := RefreshBindingPolicyCache(); err != nil {
+			log.LogWarn("failed to refresh binding policy cache on startup", zap.Error(err))
+		}
+
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			if err := RefreshBindingPolicyCache(); err != nil {
+				log.LogWarn("failed to refresh binding policy cache periodically", zap.Error(err))
+			}
+		}
+	}()
 }

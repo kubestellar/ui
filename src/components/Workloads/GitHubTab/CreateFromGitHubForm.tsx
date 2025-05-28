@@ -270,7 +270,7 @@ export const CreateFromGitHubForm = ({
             },
             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
               borderColor: '#1976d2',
-              borderWidth: '1x',
+              borderWidth: '1px',
             },
             '& .MuiSelect-select': {
               padding: '12px 14px',

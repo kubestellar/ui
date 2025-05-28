@@ -25,6 +25,7 @@ import LabelIcon from '@mui/icons-material/Label';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import MemoryIcon from '@mui/icons-material/Memory';
 import StorageIcon from '@mui/icons-material/Storage';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { Layers, Server, Tag } from 'lucide-react';
 import { useClusterQueries } from '../hooks/queries/useClusterQueries';
 import { Zoom } from '@mui/material';
@@ -115,15 +116,34 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
           justifyContent: 'space-between',
           padding: '20px 24px',
           borderBottom: `1px solid ${colors.border}`,
+          background: isDark
+            ? `linear-gradient(90deg, rgba(47, 134, 255, 0.15) 0%, rgba(47, 134, 255, 0.05) 100%)`
+            : `linear-gradient(90deg, rgba(47, 134, 255, 0.08) 0%, rgba(47, 134, 255, 0.02) 100%)`,
         }}
       >
         <div className="flex items-center gap-2">
-          <Server size={24} style={{ color: colors.primary }} />
-          <Typography variant="h6" component="span">
+          <div
+            className="flex items-center justify-center rounded-full p-1.5"
+            style={{
+              backgroundColor: isDark ? 'rgba(47, 134, 255, 0.2)' : 'rgba(47, 134, 255, 0.1)',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+            }}
+          >
+            <Server size={22} style={{ color: colors.primary }} />
+          </div>
+          <Typography variant="h6" component="span" sx={{ fontWeight: 600 }}>
             Cluster Details
           </Typography>
         </div>
-        <IconButton onClick={onClose} size="small" style={{ color: colors.textSecondary }}>
+        <IconButton
+          onClick={onClose}
+          size="small"
+          className="transition-transform duration-300 hover:rotate-90"
+          style={{
+            color: colors.textSecondary,
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+          }}
+        >
           <CloseIcon fontSize="small" />
         </IconButton>
       </DialogTitle>
@@ -138,31 +158,61 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
           <Box
             sx={{
               display: 'flex',
+              flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
               minHeight: '300px',
+              gap: 2,
+              backgroundColor: isDark ? 'rgba(0, 0, 0, 0.1)' : 'transparent',
+              borderRadius: 2,
+              p: 4,
             }}
           >
-            <CircularProgress style={{ color: colors.primary }} />
+            <CircularProgress style={{ color: colors.primary }} size={40} thickness={4} />
+            <Typography variant="body2" color={colors.textSecondary}>
+              Loading cluster information...
+            </Typography>
           </Box>
         ) : isError ? (
           <Alert
             severity="error"
             sx={{
-              backgroundColor: isDark ? 'rgba(255, 107, 107, 0.1)' : 'rgba(255, 107, 107, 0.05)',
+              backgroundColor: isDark ? 'rgba(255, 107, 107, 0.15)' : 'rgba(255, 107, 107, 0.05)',
               color: colors.error,
-              border: `1px solid ${colors.error}20`,
+              border: `1px solid ${isDark ? 'rgba(255, 107, 107, 0.3)' : colors.error + '20'}`,
+              borderRadius: '10px',
+              padding: '16px',
             }}
+            icon={<ErrorOutlineIcon />}
           >
-            Failed to load cluster details. Please try again.
-            <Button
-              size="small"
-              onClick={() => refetch()}
-              sx={{ ml: 2, color: colors.primary }}
-              variant="outlined"
-            >
-              Retry
-            </Button>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Typography variant="body1" fontWeight={500}>
+                Failed to load cluster details
+              </Typography>
+              <Typography variant="body2">
+                There was an error retrieving information for this cluster.
+              </Typography>
+              <Button
+                size="small"
+                onClick={() => refetch()}
+                sx={{
+                  mt: 1,
+                  alignSelf: 'flex-start',
+                  color: isDark ? colors.white : colors.primary,
+                  borderColor: colors.primary,
+                  backgroundColor: isDark ? 'rgba(47, 134, 255, 0.2)' : 'transparent',
+                  '&:hover': {
+                    backgroundColor: isDark
+                      ? 'rgba(47, 134, 255, 0.25)'
+                      : 'rgba(47, 134, 255, 0.05)',
+                  },
+                }}
+                variant="outlined"
+                startIcon={<RefreshIcon />}
+              >
+                Retry
+              </Button>
+            </Box>
           </Alert>
         ) : clusterDetails ? (
           <div>
@@ -172,13 +222,48 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                 p: 3,
                 mb: 3,
                 borderRadius: 2,
-                backgroundColor: isDark ? 'rgba(47, 134, 255, 0.08)' : 'rgba(47, 134, 255, 0.04)',
+                backgroundImage: isDark
+                  ? 'linear-gradient(135deg, rgba(47, 134, 255, 0.12) 0%, rgba(47, 134, 255, 0.04) 100%)'
+                  : 'linear-gradient(135deg, rgba(47, 134, 255, 0.08) 0%, rgba(47, 134, 255, 0.02) 100%)',
                 border: `1px solid ${isDark ? 'rgba(47, 134, 255, 0.2)' : 'rgba(47, 134, 255, 0.1)'}`,
+                boxShadow: isDark
+                  ? '0 4px 8px rgba(0, 0, 0, 0.1)'
+                  : '0 4px 12px rgba(47, 134, 255, 0.1)',
+                transition: 'all 0.3s ease',
+                position: 'relative',
+                overflow: 'hidden',
               }}
             >
-              <Grid container spacing={2}>
+              {/* Decorative elements */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: -20,
+                  right: -20,
+                  width: 100,
+                  height: 100,
+                  borderRadius: '50%',
+                  background: isDark
+                    ? 'radial-gradient(circle, rgba(47, 134, 255, 0.2) 0%, rgba(47, 134, 255, 0) 70%)'
+                    : 'radial-gradient(circle, rgba(47, 134, 255, 0.15) 0%, rgba(47, 134, 255, 0) 70%)',
+                  opacity: 0.6,
+                  zIndex: 0,
+                }}
+              />
+
+              <Grid container spacing={2} position="relative" zIndex={1}>
                 <Grid item xs={12} md={8}>
-                  <Typography variant="h4" fontWeight="700" color={colors.text} gutterBottom>
+                  <Typography
+                    variant="h4"
+                    fontWeight="700"
+                    color={colors.text}
+                    gutterBottom
+                    sx={{
+                      textShadow: isDark ? '0 1px 2px rgba(0, 0, 0, 0.3)' : 'none',
+                      fontSize: { xs: '1.5rem', md: '2rem' },
+                      mb: 1,
+                    }}
+                  >
                     {clusterDetails.name}
                   </Typography>
                   <Typography
@@ -188,7 +273,19 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                   >
                     <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <DnsIcon fontSize="small" />
-                      UID: {clusterDetails.uid}
+                      <Box
+                        component="span"
+                        sx={{
+                          fontFamily: 'monospace',
+                          backgroundColor: isDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(0, 0, 0, 0.05)',
+                          px: 1,
+                          py: 0.5,
+                          borderRadius: 1,
+                          fontSize: '0.85rem',
+                        }}
+                      >
+                        {clusterDetails.uid}
+                      </Box>
                     </Box>
                   </Typography>
                 </Grid>
@@ -198,6 +295,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: { xs: 'flex-start', md: 'flex-end' },
+                      gap: 1,
                     }}
                   >
                     <Chip
@@ -220,8 +318,32 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                         color: clusterDetails.available ? colors.success : colors.error,
                         borderRadius: '16px',
                         px: 2,
+                        py: 1,
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                        border: `1px solid ${
+                          clusterDetails.available
+                            ? isDark
+                              ? 'rgba(103, 192, 115, 0.3)'
+                              : 'rgba(103, 192, 115, 0.2)'
+                            : isDark
+                              ? 'rgba(255, 107, 107, 0.3)'
+                              : 'rgba(255, 107, 107, 0.2)'
+                        }`,
                         '& .MuiChip-icon': {
                           color: clusterDetails.available ? colors.success : colors.error,
+                        },
+                        transition: 'all 0.2s ease',
+                        animation: clusterDetails.available ? 'pulse 2s infinite' : 'none',
+                        '@keyframes pulse': {
+                          '0%': {
+                            boxShadow: `0 0 0 0 ${clusterDetails.available ? 'rgba(103, 192, 115, 0.4)' : 'rgba(255, 107, 107, 0.4)'}`,
+                          },
+                          '70%': {
+                            boxShadow: `0 0 0 5px ${clusterDetails.available ? 'rgba(103, 192, 115, 0)' : 'rgba(255, 107, 107, 0)'}`,
+                          },
+                          '100%': {
+                            boxShadow: `0 0 0 0 ${clusterDetails.available ? 'rgba(103, 192, 115, 0)' : 'rgba(255, 107, 107, 0)'}`,
+                          },
                         },
                       }}
                     />
@@ -230,13 +352,14 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                         icon={<VerifiedUserIcon fontSize="small" />}
                         label={`Kubernetes ${clusterDetails.status.version.kubernetes}`}
                         sx={{
-                          mt: 1,
                           backgroundColor: isDark
                             ? 'rgba(47, 134, 255, 0.15)'
                             : 'rgba(47, 134, 255, 0.08)',
                           color: colors.primary,
                           borderRadius: '16px',
                           px: 2,
+                          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                          border: `1px solid ${isDark ? 'rgba(47, 134, 255, 0.3)' : 'rgba(47, 134, 255, 0.2)'}`,
                           '& .MuiChip-icon': {
                             color: isDark ? colors.primaryLight : colors.primary,
                           },
@@ -247,9 +370,21 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                 </Grid>
               </Grid>
 
-              <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <AccessTimeIcon fontSize="small" style={{ color: colors.textSecondary }} />
-                <Typography variant="body2" style={{ color: colors.textSecondary }}>
+              <Box
+                sx={{
+                  mt: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  color: colors.textSecondary,
+                  backgroundColor: isDark ? 'rgba(0, 0, 0, 0.1)' : 'rgba(0, 0, 0, 0.03)',
+                  borderRadius: 1,
+                  padding: '6px 12px',
+                  width: 'fit-content',
+                }}
+              >
+                <AccessTimeIcon fontSize="small" />
+                <Typography variant="body2">
                   Created on {formatDate(clusterDetails.creationTimestamp)}
                 </Typography>
               </Box>
@@ -262,46 +397,168 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                 p: 3,
                 mb: 3,
                 borderRadius: 2,
-                backgroundColor: colors.paper,
-                border: `1px solid ${colors.border}`,
+                backgroundColor: isDark ? 'rgba(30, 41, 59, 0.95)' : colors.paper,
+                border: `1px solid ${isDark ? 'rgba(47, 134, 255, 0.25)' : colors.border}`,
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  boxShadow: isDark
+                    ? '0 4px 12px rgba(0, 0, 0, 0.25)'
+                    : '0 4px 12px rgba(0, 0, 0, 0.08)',
+                  borderColor: isDark ? 'rgba(47, 134, 255, 0.4)' : 'rgba(47, 134, 255, 0.2)',
+                },
+                background: isDark
+                  ? `linear-gradient(135deg, rgba(47, 134, 255, 0.15) 0%, rgba(30, 41, 59, 0.95) 50%, rgba(47, 134, 255, 0.1) 100%)`
+                  : `linear-gradient(135deg, rgba(47, 134, 255, 0.03) 0%, rgba(255, 255, 255, 0) 50%, rgba(47, 134, 255, 0.01) 100%)`,
+                backdropFilter: isDark ? 'blur(8px)' : 'none',
+                boxShadow: isDark ? '0 8px 16px rgba(0, 0, 0, 0.25)' : 'none',
               }}
             >
               <Box
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 1,
+                  gap: 1.5,
                   mb: 2,
                 }}
               >
-                <LabelIcon style={{ color: colors.primary }} />
-                <Typography variant="h6">Labels</Typography>
+                <div
+                  className="rounded-md p-1.5"
+                  style={{
+                    backgroundColor: isDark
+                      ? 'rgba(47, 134, 255, 0.3)' // Increased opacity for better visibility
+                      : 'rgba(47, 134, 255, 0.08)',
+                    boxShadow: isDark ? '0 2px 6px rgba(0, 0, 0, 0.3)' : 'none', // Enhanced shadow
+                  }}
+                >
+                  <LabelIcon style={{ color: isDark ? '#9ad6f9' : colors.primary }} />
+                </div>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 600,
+                    color: isDark ? '#ffffff' : colors.text, // Ensure white text in dark mode
+                    textShadow: isDark ? '0 1px 2px rgba(0, 0, 0, 0.5)' : 'none',
+                  }}
+                >
+                  Labels
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    ml: 'auto',
+                    color: isDark ? 'rgba(255, 255, 255, 0.9)' : colors.textSecondary,
+                    backgroundColor: isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.04)',
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 1,
+                    fontWeight: 500,
+                    visibility:
+                      Object.keys(clusterDetails.labels || {}).length > 0 ? 'visible' : 'hidden',
+                    border: isDark ? '1px solid rgba(255, 255, 255, 0.2)' : 'none',
+                  }}
+                >
+                  {Object.keys(clusterDetails.labels || {}).length} labels
+                </Typography>
               </Box>
-              <Divider sx={{ mb: 2, backgroundColor: colors.border }} />
+
+              <Divider
+                sx={{ mb: 3, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.2)' : colors.border }}
+              />
+
               <Box className="flex flex-wrap gap-2">
                 {Object.entries(clusterDetails.labels || {}).length > 0 ? (
-                  Object.entries(clusterDetails.labels).map(([key, value]) => (
+                  Object.entries(clusterDetails.labels).map(([key, value], index) => (
                     <Chip
                       key={key}
-                      icon={<Tag size={14} />}
-                      label={`${key}=${value}`}
+                      icon={
+                        <Tag size={14} style={{ color: isDark ? '#9ad6f9' : colors.primary }} />
+                      }
+                      label={
+                        <Box component="span" sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Box
+                            component="span"
+                            sx={{
+                              fontWeight: 600,
+                              mr: 0.5,
+                              color: isDark ? '#ffffff' : 'inherit',
+                            }}
+                          >
+                            {key}
+                          </Box>
+                          <Box component="span" sx={{ opacity: isDark ? 0.9 : 0.7 }}>
+                            =
+                          </Box>
+                          <Box
+                            component="span"
+                            sx={{ ml: 0.5, color: isDark ? '#ffffff' : 'inherit' }}
+                          >
+                            {value}
+                          </Box>
+                        </Box>
+                      }
                       sx={{
                         backgroundColor: isDark
-                          ? 'rgba(47, 134, 255, 0.08)'
+                          ? 'rgba(30, 41, 59, 0.7)'
                           : 'rgba(47, 134, 255, 0.04)',
-                        color: colors.text,
+                        color: isDark ? 'rgba(255, 255, 255, 0.9)' : colors.text,
                         borderRadius: '8px',
                         border: `1px solid ${isDark ? 'rgba(47, 134, 255, 0.2)' : 'rgba(47, 134, 255, 0.1)'}`,
+                        py: 1.2,
+                        px: 1,
                         '& .MuiChip-icon': {
-                          color: colors.primary,
+                          color: isDark ? colors.primaryLight : colors.primary,
+                        },
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          backgroundColor: isDark
+                            ? 'rgba(30, 41, 59, 0.9)'
+                            : 'rgba(47, 134, 255, 0.08)',
+                          transform: 'translateY(-2px)',
+                          boxShadow: isDark
+                            ? '0 4px 8px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(47, 134, 255, 0.3)'
+                            : '0 4px 8px rgba(0, 0, 0, 0.1)',
+                        },
+                        animation: `fadeIn 0.3s ease forwards ${index * 0.05}s`,
+                        opacity: 0,
+                        '@keyframes fadeIn': {
+                          from: { opacity: 0, transform: 'translateY(8px)' },
+                          to: { opacity: 1, transform: 'translateY(0)' },
                         },
                       }}
                     />
                   ))
                 ) : (
-                  <Typography variant="body2" style={{ color: colors.textSecondary }}>
-                    No labels found for this cluster
-                  </Typography>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      py: 4,
+                      px: 2,
+                      width: '100%',
+                      backgroundColor: isDark ? 'rgba(15, 23, 42, 0.5)' : 'rgba(0, 0, 0, 0.02)',
+                      borderRadius: 2,
+                      border: `1px dashed ${isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)'}`,
+                    }}
+                  >
+                    <Tag
+                      size={24}
+                      style={{
+                        color: isDark ? 'rgba(255, 255, 255, 0.4)' : colors.textSecondary,
+                        marginBottom: '12px',
+                      }}
+                    />
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: isDark ? 'rgba(255, 255, 255, 0.7)' : colors.textSecondary,
+                        textAlign: 'center',
+                      }}
+                    >
+                      No labels have been assigned to this cluster
+                    </Typography>
+                  </Box>
                 )}
               </Box>
             </Paper>
@@ -315,20 +572,57 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                   borderRadius: 2,
                   backgroundColor: colors.paper,
                   border: `1px solid ${colors.border}`,
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    boxShadow: isDark
+                      ? '0 4px 12px rgba(0, 0, 0, 0.15)'
+                      : '0 4px 12px rgba(0, 0, 0, 0.08)',
+                    borderColor: isDark ? 'rgba(47, 134, 255, 0.3)' : 'rgba(47, 134, 255, 0.2)',
+                  },
+                  background: isDark
+                    ? `linear-gradient(135deg, rgba(47, 134, 255, 0.06) 0%, rgba(0, 0, 0, 0) 50%, rgba(47, 134, 255, 0.02) 100%)`
+                    : `linear-gradient(135deg, rgba(47, 134, 255, 0.03) 0%, rgba(255, 255, 255, 0) 50%, rgba(47, 134, 255, 0.01) 100%)`,
                 }}
               >
                 <Box
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 1,
+                    gap: 1.5,
                     mb: 2,
                   }}
                 >
-                  <Layers size={20} style={{ color: colors.primary }} />
-                  <Typography variant="h6">Capacity</Typography>
+                  <div
+                    className="rounded-md p-1.5"
+                    style={{
+                      backgroundColor: isDark
+                        ? 'rgba(47, 134, 255, 0.3)' // Increased opacity for better visibility
+                        : 'rgba(47, 134, 255, 0.08)',
+                      boxShadow: isDark ? '0 2px 6px rgba(0, 0, 0, 0.3)' : 'none', // Enhanced shadow
+                    }}
+                  >
+                    <Layers
+                      size={20}
+                      style={{ color: isDark ? '#9ad6f9' : colors.primary }} // Brighter color in dark mode
+                    />
+                  </div>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 600,
+                      color: isDark ? '#ffffff' : colors.text, // Ensure white text in dark mode
+                      textShadow: isDark ? '0 1px 2px rgba(0, 0, 0, 0.5)' : 'none',
+                    }}
+                  >
+                    Capacity & Resources
+                  </Typography>
                 </Box>
-                <Divider sx={{ mb: 2, backgroundColor: colors.border }} />
+                <Divider
+                  sx={{
+                    mb: 3,
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : colors.border,
+                  }}
+                />
                 <Grid container spacing={3}>
                   <Grid item xs={12} md={4}>
                     <Box
@@ -336,18 +630,93 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
-                        p: 2,
-                        borderRadius: 1,
-                        backgroundColor: isDark
-                          ? 'rgba(255, 255, 255, 0.03)'
-                          : 'rgba(0, 0, 0, 0.02)',
+                        p: 3,
+                        borderRadius: 2,
+                        backgroundColor: isDark ? 'rgba(30, 41, 59, 0.7)' : 'rgba(0, 0, 0, 0.02)',
+                        border: `1px solid ${isDark ? 'rgba(47, 134, 255, 0.15)' : 'rgba(0, 0, 0, 0.05)'}`,
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          transform: 'translateY(-5px)',
+                          boxShadow: isDark
+                            ? '0 8px 16px -2px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(47, 134, 255, 0.2)'
+                            : '0 8px 16px -2px rgba(0, 0, 0, 0.1)',
+                          backgroundColor: isDark
+                            ? 'rgba(30, 41, 59, 0.9)'
+                            : 'rgba(47, 134, 255, 0.04)',
+                          borderColor: colors.primary,
+                        },
+                        animation: 'fadeIn 0.5s ease forwards',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        boxShadow: isDark
+                          ? '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.05)'
+                          : 'none',
                       }}
                     >
-                      <MemoryIcon sx={{ fontSize: 28, mb: 1, color: colors.primary }} />
-                      <Typography variant="h6">{clusterDetails.status.capacity.cpu}</Typography>
-                      <Typography variant="body2" style={{ color: colors.textSecondary }}>
+                      <div
+                        className="absolute left-0 top-0 h-1 w-full"
+                        style={{
+                          background: `linear-gradient(to right, ${colors.primary}, transparent)`,
+                          opacity: isDark ? 0.8 : 0.7,
+                        }}
+                      />
+                      <div
+                        className="mb-2 rounded-full p-2.5"
+                        style={{
+                          background: isDark
+                            ? 'rgba(47, 134, 255, 0.2)'
+                            : 'rgba(47, 134, 255, 0.05)',
+                          border: `1px solid ${isDark ? 'rgba(47, 134, 255, 0.3)' : 'rgba(47, 134, 255, 0.1)'}`,
+                          boxShadow: isDark
+                            ? '0 4px 8px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.05)'
+                            : '0 4px 8px rgba(0, 0, 0, 0.1)',
+                        }}
+                      >
+                        <MemoryIcon
+                          sx={{
+                            fontSize: 28,
+                            color: isDark ? colors.primaryLight : colors.primary,
+                          }}
+                        />
+                      </div>
+                      <Typography
+                        variant="h5"
+                        sx={{
+                          fontWeight: 700,
+                          mb: 1,
+                          background: isDark
+                            ? 'linear-gradient(45deg, #9ad6f9, #2f86ff)'
+                            : 'linear-gradient(45deg, #1a65cc, #2f86ff)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          textShadow: isDark ? '0 1px 3px rgba(0, 0, 0, 0.5)' : 'none',
+                          filter: isDark ? 'brightness(1.2) contrast(1.2)' : 'none',
+                        }}
+                      >
+                        {clusterDetails.status.capacity.cpu}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: isDark ? 'rgba(255, 255, 255, 0.95)' : colors.textSecondary,
+                          textAlign: 'center',
+                          fontWeight: isDark ? 600 : 400,
+                          textShadow: isDark ? '0 1px 2px rgba(0, 0, 0, 0.3)' : 'none',
+                        }}
+                      >
                         CPU Cores
                       </Typography>
+                      {isDark && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            inset: 0,
+                            zIndex: -1,
+                            backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                            borderRadius: 1,
+                          }}
+                        />
+                      )}
                     </Box>
                   </Grid>
                   <Grid item xs={12} md={4}>
@@ -356,22 +725,96 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
-                        p: 2,
-                        borderRadius: 1,
-                        backgroundColor: isDark
-                          ? 'rgba(255, 255, 255, 0.03)'
-                          : 'rgba(0, 0, 0, 0.02)',
+                        p: 3,
+                        borderRadius: 2,
+                        backgroundColor: isDark ? 'rgba(30, 41, 59, 0.7)' : 'rgba(0, 0, 0, 0.02)',
+                        border: `1px solid ${isDark ? 'rgba(47, 134, 255, 0.15)' : 'rgba(0, 0, 0, 0.05)'}`,
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          transform: 'translateY(-5px)',
+                          boxShadow: isDark
+                            ? '0 8px 16px -2px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(47, 134, 255, 0.2)'
+                            : '0 8px 16px -2px rgba(0, 0, 0, 0.1)',
+                          backgroundColor: isDark
+                            ? 'rgba(30, 41, 59, 0.9)'
+                            : 'rgba(47, 134, 255, 0.04)',
+                          borderColor: colors.primary,
+                        },
+                        animation: 'fadeIn 0.5s ease forwards 0.1s',
+                        opacity: 0,
+                        position: 'relative',
+                        overflow: 'hidden',
+                        boxShadow: isDark
+                          ? '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.05)'
+                          : 'none',
                       }}
                     >
-                      <StorageIcon sx={{ fontSize: 28, mb: 1, color: colors.primary }} />
-                      <Typography variant="h6">
+                      <div
+                        className="absolute left-0 top-0 h-1 w-full"
+                        style={{
+                          background: `linear-gradient(to right, ${colors.primary}, transparent)`,
+                          opacity: isDark ? 0.8 : 0.7,
+                        }}
+                      />
+                      <div
+                        className="mb-2 rounded-full p-2.5"
+                        style={{
+                          background: isDark
+                            ? 'rgba(47, 134, 255, 0.2)'
+                            : 'rgba(47, 134, 255, 0.05)',
+                          border: `1px solid ${isDark ? 'rgba(47, 134, 255, 0.3)' : 'rgba(47, 134, 255, 0.1)'}`,
+                          boxShadow: isDark
+                            ? '0 4px 8px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.05)'
+                            : '0 4px 8px rgba(0, 0, 0, 0.1)',
+                        }}
+                      >
+                        <StorageIcon
+                          sx={{
+                            fontSize: 28,
+                            color: isDark ? colors.primaryLight : colors.primary,
+                          }}
+                        />
+                      </div>
+                      <Typography
+                        variant="h5"
+                        sx={{
+                          fontWeight: 700,
+                          mb: 1,
+                          background: isDark
+                            ? 'linear-gradient(45deg, #9ad6f9, #2f86ff)'
+                            : 'linear-gradient(45deg, #1a65cc, #2f86ff)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          textShadow: isDark ? '0 1px 3px rgba(0, 0, 0, 0.5)' : 'none',
+                          filter: isDark ? 'brightness(1.2) contrast(1.2)' : 'none',
+                        }}
+                      >
                         {parseInt(clusterDetails.status.capacity.memory) / 1024 / 1024 > 1
                           ? `${Math.round(parseInt(clusterDetails.status.capacity.memory) / 1024 / 1024)} GB`
                           : clusterDetails.status.capacity.memory}
                       </Typography>
-                      <Typography variant="body2" style={{ color: colors.textSecondary }}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: isDark ? 'rgba(255, 255, 255, 0.95)' : colors.textSecondary,
+                          textAlign: 'center',
+                          fontWeight: isDark ? 600 : 400,
+                          textShadow: isDark ? '0 1px 2px rgba(0, 0, 0, 0.3)' : 'none',
+                        }}
+                      >
                         Memory
                       </Typography>
+                      {isDark && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            inset: 0,
+                            zIndex: -1,
+                            backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                            borderRadius: 1,
+                          }}
+                        />
+                      )}
                     </Box>
                   </Grid>
                   <Grid item xs={12} md={4}>
@@ -380,17 +823,81 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
-                        p: 2,
-                        borderRadius: 1,
-                        backgroundColor: isDark
-                          ? 'rgba(255, 255, 255, 0.03)'
-                          : 'rgba(0, 0, 0, 0.02)',
+                        p: 3,
+                        borderRadius: 2,
+                        backgroundColor: isDark ? 'rgba(30, 41, 59, 0.7)' : 'rgba(0, 0, 0, 0.02)',
+                        border: `1px solid ${isDark ? 'rgba(47, 134, 255, 0.15)' : 'rgba(0, 0, 0, 0.05)'}`,
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          transform: 'translateY(-5px)',
+                          boxShadow: isDark
+                            ? '0 8px 16px -2px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(47, 134, 255, 0.2)'
+                            : '0 8px 16px -2px rgba(0, 0, 0, 0.1)',
+                          backgroundColor: isDark
+                            ? 'rgba(30, 41, 59, 0.9)'
+                            : 'rgba(47, 134, 255, 0.04)',
+                          borderColor: colors.primary,
+                        },
+                        animation: 'fadeIn 0.5s ease forwards 0.2s',
+                        opacity: 0,
+                        position: 'relative',
+                        overflow: 'hidden',
+                        boxShadow: isDark
+                          ? '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.05)'
+                          : 'none',
                       }}
                     >
-                      <InfoOutlinedIcon sx={{ fontSize: 28, mb: 1, color: colors.primary }} />
-                      <Typography variant="h6">{clusterDetails.status.capacity.pods}</Typography>
-                      <Typography variant="body2" style={{ color: colors.textSecondary }}>
-                        Pods Capacity
+                      <div
+                        className="absolute left-0 top-0 h-1 w-full"
+                        style={{
+                          background: `linear-gradient(to right, ${colors.primary}, transparent)`,
+                          opacity: isDark ? 0.8 : 0.7,
+                        }}
+                      />
+                      <div
+                        className="mb-2 rounded-full p-2.5"
+                        style={{
+                          background: isDark
+                            ? 'rgba(47, 134, 255, 0.2)'
+                            : 'rgba(47, 134, 255, 0.05)',
+                          border: `1px solid ${isDark ? 'rgba(47, 134, 255, 0.3)' : 'rgba(47, 134, 255, 0.1)'}`,
+                          boxShadow: isDark
+                            ? '0 4px 8px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.05)'
+                            : '0 4px 8px rgba(0, 0, 0, 0.1)',
+                        }}
+                      >
+                        <InfoOutlinedIcon
+                          sx={{
+                            fontSize: 28,
+                            color: isDark ? colors.primaryLight : colors.primary,
+                          }}
+                        />
+                      </div>
+                      <Typography
+                        variant="h5"
+                        sx={{
+                          fontWeight: 700,
+                          mb: 1,
+                          background: isDark
+                            ? 'linear-gradient(45deg, #9ad6f9, #2f86ff)'
+                            : 'linear-gradient(45deg, #1a65cc, #2f86ff)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          textShadow: isDark ? '0 1px 3px rgba(0, 0, 0, 0.5)' : 'none',
+                          filter: isDark ? 'brightness(1.2) contrast(1.2)' : 'none',
+                        }}
+                      >
+                        {clusterDetails.status.capacity.pods}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: isDark ? 'rgba(255, 255, 255, 0.95)' : colors.textSecondary,
+                          textAlign: 'center',
+                          fontWeight: isDark ? 500 : 400,
+                        }}
+                      >
+                        Pod Capacity
                       </Typography>
                     </Box>
                   </Grid>
@@ -406,17 +913,65 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
       <DialogActions
         style={{
           padding: '16px 24px',
-          borderTop: `1px solid ${colors.border}`,
-          justifyContent: 'flex-end',
+          borderTop: `1px solid ${isDark ? 'rgba(47, 134, 255, 0.15)' : colors.border}`,
+          justifyContent: 'space-between',
+          background: isDark
+            ? `linear-gradient(90deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.9) 100%)`
+            : `linear-gradient(90deg, rgba(47, 134, 255, 0.03) 0%, rgba(47, 134, 255, 0.01) 100%)`,
         }}
       >
+        {/* Additional options could go here in the future */}
+        <Box
+          sx={{
+            opacity: 0.7,
+            backgroundColor: isDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(0, 0, 0, 0.03)',
+            px: 1.5,
+            py: 0.75,
+            borderRadius: 1.5,
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.05)' : 'none',
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{
+              color: isDark ? 'rgba(255, 255, 255, 0.7)' : colors.textSecondary,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+              fontFamily: 'monospace',
+              fontWeight: 500,
+            }}
+          >
+            <AccessTimeIcon fontSize="inherit" />
+            Last refreshed: {new Date().toLocaleTimeString()}
+          </Typography>
+        </Box>
+
         <Button
           onClick={onClose}
           style={{
-            color: colors.textSecondary,
-            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+            color: colors.white,
+            backgroundColor: colors.primary,
+          }}
+          sx={{
+            borderRadius: '8px',
+            padding: '8px 20px',
+            fontWeight: 600,
+            textTransform: 'none',
+            transition: 'all 0.2s ease',
+            boxShadow: isDark
+              ? '0 4px 8px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(47, 134, 255, 0.4)'
+              : '0 4px 8px rgba(47, 134, 255, 0.2)',
+            '&:hover': {
+              backgroundColor: colors.primaryDark,
+              transform: 'translateY(-2px)',
+              boxShadow: isDark
+                ? '0 6px 12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(47, 134, 255, 0.5)'
+                : '0 6px 12px rgba(47, 134, 255, 0.3)',
+            },
           }}
           variant="contained"
+          endIcon={<CloseIcon fontSize="small" />}
         >
           Close
         </Button>

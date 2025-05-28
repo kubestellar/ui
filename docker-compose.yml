@@ -2,12 +2,17 @@ services:
   frontend:
     build:
       dockerfile: Dockerfile
+      args:
+        - VITE_BASE_URL=http://localhost:4000
+        - VITE_SKIP_PREREQUISITES_CHECK=true
+        - VITE_APP_VERSION=0.1.0
     ports:
       - '5173:80'
     depends_on:
       - backend
     environment:
       - VITE_SKIP_PREREQUISITES_CHECK=true
+      - VITE_BASE_URL=http://localhost:4000
 
   backend:
     build:
@@ -20,6 +25,7 @@ services:
     environment:
       - REDIS_HOST=localhost
       - REDIS_PORT=6379
+      - CORS_ALLOWED_ORIGIN=http://localhost:5173
     depends_on:
       - redis
     network_mode: 'host'

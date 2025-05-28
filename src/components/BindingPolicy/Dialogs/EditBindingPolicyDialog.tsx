@@ -95,7 +95,14 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
         }}
       >
         <DialogTitle>
-          <Box className={isDarkTheme ? 'text-white' : ''}>Edit Binding Policy</Box>
+          <Box
+            className={isDarkTheme ? 'text-white' : ''}
+            sx={{
+              color: isDarkTheme ? '#fff' : '#000',
+            }}
+          >
+            Edit Binding Policy
+          </Box>
         </DialogTitle>
         <DialogContent
           sx={{
@@ -211,7 +218,13 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
           },
         }}
       >
-        <DialogTitle className={isDarkTheme ? 'text-white' : ''}>Unsaved Changes</DialogTitle>
+        <DialogTitle
+          sx={{
+            color: isDarkTheme ? '#fff' : '#000',
+          }}
+        >
+          Unsaved Changes
+        </DialogTitle>
         <DialogContent>
           <Alert
             severity="warning"

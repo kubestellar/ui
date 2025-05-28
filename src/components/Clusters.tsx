@@ -1557,9 +1557,9 @@ const K8sInfo = () => {
                               <HardDrive size={12} className="mr-1 text-purple-500" />
                               {cluster.memCapacity || 'N/A'}
                             </div>
-                            <div className="flex items-center" title="Pods Capacity">
+                            <div className="flex items-center" title="Pod Capacity">
                               <Layers size={12} className="mr-1 text-green-500" />
-                              {cluster.podsCapacity || 'N/A'} Pods Capacity
+                              {cluster.podsCapacity || 'N/A'} Pod Capacity
                             </div>
                           </div>
                         </div>
