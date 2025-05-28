@@ -1,5 +1,4 @@
 import WarningIcon from '@mui/icons-material/Warning';
-import React, { useState, ChangeEvent, useRef, useEffect, useCallback } from 'react';
 import {
   Alert,
   AlertTitle,
@@ -15,14 +14,13 @@ import {
   Tabs,
   Theme,
 } from '@mui/material';
+import React, { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useClusterQueries } from '../hooks/queries/useClusterQueries';
 import { api } from '../lib/api';
 import useTheme from '../stores/themeStore';
 import ApiUrlImportTab from './ApiUrlImportTab';
 import KubeconfigImportTab from './KubeconfigImportTab';
-import ManualImportTab from './ManualImportTab';
 import QuickConnectTab from './QuickConnectTab';
-
 
 // Define the Colors interface for consistent typing across components
 export interface Colors {
