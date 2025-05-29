@@ -1,0 +1,24 @@
+id: kubestellar-cluster-plugin
+name: KubeStellar Cluster Management
+version: 1.0.0
+description: Plugin for cluster onboarding and detachment operations
+author: CNCF LFX Mentee
+compatibility:
+  kubestellar: '>=0.21.0'
+  go: '>=1.21'
+endpoints:
+  - path: /status
+    method: GET
+    handler: GetStatusHandler
+  - path: /onboard
+    method: POST
+    handler: OnboardHandler
+  - path: /detach
+    method: POST
+    handler: DetachHandler
+dependencies:
+  - kubectl
+  - clusteradm
+permissions:
+  - cluster.read
+  - configmap.write

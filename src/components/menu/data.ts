@@ -1,6 +1,6 @@
 import { HiOutlineHome, HiOutlineCube, HiOutlineCommandLine } from 'react-icons/hi2';
-
 import { MdPolicy, MdAssuredWorkload } from 'react-icons/md';
+import { FiPackage } from 'react-icons/fi';
 
 export const menu = [
   {
@@ -44,6 +44,19 @@ export const menu = [
         url: '/wecs/treeview',
         icon: MdAssuredWorkload,
         label: `Deployed Workloads`,
+      },
+    ],
+  },
+  {
+    catalog: 'System',
+    centered: true,
+    marginTop: '1rem',
+    listItems: [
+      {
+        isLink: true,
+        url: '/plugins',
+        icon: FiPackage,
+        label: 'Plugin Management',
       },
     ],
   },

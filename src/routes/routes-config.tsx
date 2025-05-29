@@ -4,6 +4,7 @@ import WDS from '../pages/WDS';
 import BP from '../pages/BP';
 import NotFoundPage from '../pages/NotFoundPage';
 import TreeView from '../components/TreeViewComponent';
+import PluginManagement from '../pages/PluginManagement';
 import { lazy, Suspense } from 'react';
 import LoadingFallback from '../components/LoadingFallback';
 import WecsTreeview from '../components/WecsTopology';
@@ -78,6 +79,14 @@ export const routesConfig: RouteObject[] = [
         element: (
           <ProtectedRoute>
             <BP />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'plugins',
+        element: (
+          <ProtectedRoute>
+            <PluginManagement />
           </ProtectedRoute>
         ),
       },
