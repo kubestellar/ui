@@ -842,7 +842,9 @@ const WecsDetailsPanel = ({
           updatedResource = JSON.parse(editedManifest);
         }
       } catch (parseError) {
-        setSnackbarMessage(`Failed to parse ${editFormat.toUpperCase()}: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+        setSnackbarMessage(
+          `Failed to parse ${editFormat.toUpperCase()}: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`
+        );
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
         return;
@@ -852,24 +854,28 @@ const WecsDetailsPanel = ({
       if (resourceKind === 'Cluster') {
         // Extract cluster labels from the updated resource
         const newLabels = updatedResource?.metadata?.labels || {};
-        
+
         // Get context from clusterDetails instead of using the current cluster prop
         let contextName = 'wds1'; // Default fallback
         let currentLabels = {};
-        
-        if (clusterDetails && clusterDetails.itsManagedClusters && clusterDetails.itsManagedClusters.length > 0) {
+
+        if (
+          clusterDetails &&
+          clusterDetails.itsManagedClusters &&
+          clusterDetails.itsManagedClusters.length > 0
+        ) {
           contextName = clusterDetails.itsManagedClusters[0].context;
           console.log(`Using context ${contextName} for cluster ${resourceName}`);
-          
+
           // Debug: Log the current labels before updating
           currentLabels = clusterDetails.itsManagedClusters[0].labels || {};
           console.log('Current labels:', currentLabels);
           console.log('New labels from editor:', newLabels);
-          
+
           // Check if there's actually a difference in labels
           const hasChanges = JSON.stringify(currentLabels) !== JSON.stringify(newLabels);
           console.log('Has label changes:', hasChanges);
-          
+
           if (!hasChanges) {
             console.log('No actual label changes detected, showing success message anyway');
             setSnackbarMessage(`No changes to update for ${resourceKind} "${resourceName}"`);
@@ -878,9 +884,11 @@ const WecsDetailsPanel = ({
             return;
           }
         } else {
-          console.warn(`Could not find context for cluster ${resourceName}, using default: ${contextName}`);
+          console.warn(
+            `Could not find context for cluster ${resourceName}, using default: ${contextName}`
+          );
         }
-        
+
         // IMPORTANT: When working with clusters, we need to be careful with system labels
         // Extract only user-defined labels that don't have protected prefixes
         const systemPrefixes = [
@@ -897,7 +905,7 @@ const WecsDetailsPanel = ({
         // Filter out system labels from the update
         const userDefinedLabels: Record<string, string> = {};
         const protectedLabels: Record<string, string> = {};
-        
+
         // First identify labels that were removed - compare currentLabels with newLabels
         const removedLabels: Record<string, string> = {};
         Object.keys(currentLabels).forEach(key => {
@@ -911,11 +919,11 @@ const WecsDetailsPanel = ({
             }
           }
         });
-        
+
         // Then process new and changed labels
         Object.entries(newLabels).forEach(([key, value]) => {
           const isSystemLabel = systemPrefixes.some(prefix => key.startsWith(prefix));
-          
+
           if (isSystemLabel) {
             // Skip system labels
             protectedLabels[key] = value as string;
@@ -925,58 +933,62 @@ const WecsDetailsPanel = ({
             userDefinedLabels[key] = value as string;
           }
         });
-        
+
         // Combine user-defined labels with removed labels
         const finalLabels = { ...userDefinedLabels, ...removedLabels };
-        
+
         console.log('User-defined labels to update:', finalLabels);
         console.log('Protected labels (skipped):', protectedLabels);
-        
+
         if (Object.keys(finalLabels).length === 0) {
           console.log('No user-defined label changes to apply');
-          setSnackbarMessage(`No user-defined label changes to apply for ${resourceKind} "${resourceName}"`);
+          setSnackbarMessage(
+            `No user-defined label changes to apply for ${resourceKind} "${resourceName}"`
+          );
           setSnackbarSeverity('success');
           setSnackbarOpen(true);
           return;
         }
-        
+
         // Use the cluster-specific API endpoint
         const payload = {
-          contextName: contextName,  // Use the context from the cluster itself
+          contextName: contextName, // Use the context from the cluster itself
           clusterName: resourceName,
-          labels: finalLabels
+          labels: finalLabels,
         };
-        
+
         console.log(`Updating cluster ${resourceName} labels with payload:`, payload);
-        
+
         const response = await api.patch('/api/managedclusters/labels', payload, {
           headers: {
             'Content-Type': 'application/json',
           },
         });
-        
+
         console.log('Update response:', response.data);
-        
+
         // Force refresh of cluster data after update
         if (onSync) {
           console.log('Triggering refresh after cluster label update');
           onSync();
         }
-        
+
         // For clusters, we'll also manually refresh the cluster details to ensure UI updates
         try {
           console.log('Manually refreshing cluster details');
-          const response = await api.get(`/api/cluster/details/${encodeURIComponent(resourceName)}`);
-          
+          const response = await api.get(
+            `/api/cluster/details/${encodeURIComponent(resourceName)}`
+          );
+
           if (response.data) {
             console.log('Updated cluster data received:', response.data);
             setClusterDetails(response.data);
-            
+
             // Update the resource with refreshed data
             if (response.data.itsManagedClusters && response.data.itsManagedClusters.length > 0) {
               const refreshedClusterInfo = response.data.itsManagedClusters[0];
               console.log('Updated labels:', refreshedClusterInfo.labels);
-              
+
               const updatedManifest = {
                 apiVersion: 'v1',
                 kind: 'Cluster',
@@ -989,7 +1001,7 @@ const WecsDetailsPanel = ({
                   context: refreshedClusterInfo.context || '',
                 },
               };
-              
+
               const manifestStr = JSON.stringify(updatedManifest, null, 2);
               setEditedManifest(manifestStr);
             }
@@ -1017,7 +1029,7 @@ const WecsDetailsPanel = ({
         const updateUrl = `/api/${pluralForm}/${resourceNamespace}/${resourceName}`;
         console.log(`Updating ${resourceKind} at: ${updateUrl}`);
         await api.put(updateUrl, updatedResource);
-        
+
         // Refresh the resource data for regular resources
         if (onSync) {
           console.log(`Triggering refresh after ${resourceKind} update`);
