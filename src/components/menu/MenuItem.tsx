@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { IconType } from 'react-icons';
 import { motion } from 'framer-motion';
 import useTheme from '../../stores/themeStore';
@@ -33,6 +33,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const themeStyles = getThemeStyles(isDark);
+  const location = useLocation();
 
   // Animation variants
   const itemVariants = {
@@ -124,84 +125,108 @@ const MenuItem: React.FC<MenuItemProps> = ({
         {listItems.map((listItem, index) => {
           if (listItem.isLink) {
             return (
-              <NavLink key={index} onClick={onClick} to={listItem.url || ''} className="relative">
-                {({ isActive }) => (
-                  <div
-                    className={`relative flex items-center ${collapsed ? 'h-12 min-h-0 w-12 justify-center p-0' : 'w-full justify-start px-4 py-3'} 
-                      rounded-xl transition-all duration-300 ease-out
-                      ${collapsed ? '' : 'hover:translate-x-2'} 
-                      group/item group relative hover:shadow-md focus:outline-none`}
-                    style={
-                      isActive
-                        ? {
-                            background: themeStyles.menu.itemActive,
-                            boxShadow: collapsed ? 'none' : themeStyles.colors.shadow.sm,
-                          }
-                        : {}
-                    }
-                  >
-                    <div className="relative flex items-center justify-center">
-                      <motion.div
-                        animate={{
-                          scale: collapsed ? 1.2 : 1,
-                          x: collapsed ? 0 : 0,
-                        }}
-                        whileHover={{ scale: 1.15 }}
-                        whileTap={{ scale: 0.95 }}
-                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                        className={`relative ${isAnimating ? 'transition-none' : 'transition-transform duration-300'}`}
-                      >
-                        <listItem.icon
-                          className="shrink-0 text-2xl"
-                          style={{
-                            color: isActive
-                              ? themeStyles.colors.brand.primary
-                              : themeStyles.menu.icon.color,
-                            filter: themeStyles.menu.icon.shadow,
-                          }}
-                          aria-hidden="true"
-                        />
+              <NavLink
+                key={index}
+                onClick={onClick}
+                to={listItem.url || ''}
+                className="relative"
+                end={listItem.url === '/plugins'} // Only exact match for plugin management
+              >
+                {({ isActive }) => {
+                  // For plugin routes, we need custom active logic
+                  const isPluginManagementRoute = listItem.url === '/plugins';
+                  const isClusterManagementRoute = listItem.url === '/plugins/clusters';
+                  const currentPath = location.pathname;
 
-                        {/* Ripple effect for active item in collapsed state */}
-                        {collapsed && isActive && (
-                          <motion.div
-                            className="absolute inset-0 rounded-full"
-                            style={{ backgroundColor: themeStyles.menu.itemActive }}
-                            animate={{
-                              scale: [0.8, 1.2, 1],
-                              opacity: [0.5, 0.3, 0],
-                            }}
-                            transition={{
-                              repeat: Infinity,
-                              duration: 2,
-                              repeatType: 'loop',
-                            }}
-                          />
-                        )}
-                      </motion.div>
+                  // Custom active state logic
+                  let customIsActive = isActive;
 
-                      {/* Text label */}
-                      {!collapsed && (
-                        <motion.span
-                          className="ml-3 text-sm font-medium tracking-wide"
-                          style={{
-                            color: isActive
-                              ? themeStyles.colors.brand.primary
-                              : themeStyles.colors.text.primary,
+                  if (isPluginManagementRoute) {
+                    // Plugin Management is active only when exactly on /plugins
+                    customIsActive = currentPath === '/plugins';
+                  } else if (isClusterManagementRoute) {
+                    // Cluster Management is active when on /plugins/clusters
+                    customIsActive = currentPath === '/plugins/clusters';
+                  }
+
+                  return (
+                    <div
+                      className={`relative flex items-center ${collapsed ? 'h-12 min-h-0 w-12 justify-center p-0' : 'w-full justify-start px-4 py-3'} 
+                        rounded-xl transition-all duration-300 ease-out
+                        ${collapsed ? '' : 'hover:translate-x-2'} 
+                        group/item group relative hover:shadow-md focus:outline-none`}
+                      style={
+                        customIsActive
+                          ? {
+                              background: themeStyles.menu.itemActive,
+                              boxShadow: collapsed ? 'none' : themeStyles.colors.shadow.sm,
+                            }
+                          : {}
+                      }
+                    >
+                      <div className="relative flex items-center justify-center">
+                        <motion.div
+                          animate={{
+                            scale: collapsed ? 1.2 : 1,
+                            x: collapsed ? 0 : 0,
                           }}
-                          variants={textVariants}
-                          initial="expanded"
-                          animate={collapsed ? 'collapsed' : 'expanded'}
+                          whileHover={{ scale: 1.15 }}
+                          whileTap={{ scale: 0.95 }}
+                          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                          className={`relative ${isAnimating ? 'transition-none' : 'transition-transform duration-300'}`}
                         >
-                          {listItem.label}
-                        </motion.span>
-                      )}
+                          <listItem.icon
+                            className="shrink-0 text-2xl"
+                            style={{
+                              color: customIsActive
+                                ? themeStyles.colors.brand.primary
+                                : themeStyles.menu.icon.color,
+                              filter: themeStyles.menu.icon.shadow,
+                            }}
+                            aria-hidden="true"
+                          />
 
-                      {/* Enhanced custom tooltip */}
-                      <CustomTooltip label={listItem.label} />
+                          {/* Ripple effect for active item in collapsed state */}
+                          {collapsed && customIsActive && (
+                            <motion.div
+                              className="absolute inset-0 rounded-full"
+                              style={{ backgroundColor: themeStyles.menu.itemActive }}
+                              animate={{
+                                scale: [0.8, 1.2, 1],
+                                opacity: [0.5, 0.3, 0],
+                              }}
+                              transition={{
+                                repeat: Infinity,
+                                duration: 2,
+                                repeatType: 'loop',
+                              }}
+                            />
+                          )}
+                        </motion.div>
+
+                        {/* Text label */}
+                        {!collapsed && (
+                          <motion.span
+                            className="ml-3 text-sm font-medium tracking-wide"
+                            style={{
+                              color: customIsActive
+                                ? themeStyles.colors.brand.primary
+                                : themeStyles.colors.text.primary,
+                            }}
+                            variants={textVariants}
+                            initial="expanded"
+                            animate={collapsed ? 'collapsed' : 'expanded'}
+                          >
+                            {listItem.label}
+                          </motion.span>
+                        )}
+
+                        {/* Enhanced custom tooltip */}
+                        <CustomTooltip label={listItem.label} />
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                }}
               </NavLink>
             );
           } else {

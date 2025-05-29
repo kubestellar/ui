@@ -1,6 +1,7 @@
 import { HiOutlineHome, HiOutlineCube, HiOutlineCommandLine } from 'react-icons/hi2';
 import { MdPolicy, MdAssuredWorkload } from 'react-icons/md';
 import { FiPackage } from 'react-icons/fi';
+import { LuServer } from 'react-icons/lu';
 
 export const menu = [
   {
@@ -48,7 +49,7 @@ export const menu = [
     ],
   },
   {
-    catalog: 'System',
+    catalog: 'Plugins',
     centered: true,
     marginTop: '1rem',
     listItems: [
@@ -57,6 +58,12 @@ export const menu = [
         url: '/plugins',
         icon: FiPackage,
         label: 'Plugin Management',
+      },
+      {
+        isLink: true,
+        url: '/plugins/clusters',
+        icon: LuServer,
+        label: 'Cluster Management',
       },
     ],
   },

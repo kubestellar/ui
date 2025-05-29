@@ -38,21 +38,19 @@ import {
   CheckCircle,
   Error as ErrorIcon,
   Download as DownloadIcon,
-  CloudDownload,
   Extension as ExtensionIcon,
-  Computer as ComputerIcon,
   ExpandMore as ExpandMoreIcon,
   MoreVert as MoreVertIcon,
   Info as InfoIcon,
   Api as ApiIcon,
   HealthAndSafety as HealthIcon,
   Warning as WarningIcon,
+  Store as StoreIcon,
 } from '@mui/icons-material';
 import { usePlugins } from '../hooks/usePlugins';
 import useTheme from '../stores/themeStore';
 import { toast } from 'react-hot-toast';
 import { PluginService, PluginHealthResponse, EndpointConfig } from '../services/pluginService';
-import ClusterManagement from '../components/clusters/ClusterManagement';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -100,25 +98,14 @@ const PluginManagement: React.FC = () => {
   const [showInstallDialog, setShowInstallDialog] = useState(false);
   const [showFileDialog, setShowFileDialog] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-  const [clusterPluginLoaded, setClusterPluginLoaded] = useState(false);
   const [pluginStatuses, setPluginStatuses] = useState<Record<string, PluginHealthResponse>>({});
   const [pluginEndpoints, setPluginEndpoints] = useState<Record<string, EndpointConfig[]>>({});
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
   const [isUninstalling, setIsUninstalling] = useState<string | null>(null);
 
-  // Check if cluster plugin is loaded and fetch plugin statuses
+  // Fetch plugin statuses and endpoints
   useEffect(() => {
-    const checkClusterPlugin = async () => {
-      try {
-        const isLoaded = await PluginService.isClusterPluginLoaded();
-        setClusterPluginLoaded(isLoaded);
-      } catch (error) {
-        console.error('Error checking cluster plugin status:', error);
-        setClusterPluginLoaded(false);
-      }
-    };
-
     const fetchPluginStatuses = async () => {
       try {
         const statuses = await PluginService.getAllPluginStatuses();
@@ -137,7 +124,6 @@ const PluginManagement: React.FC = () => {
       }
     };
 
-    checkClusterPlugin();
     if (loadedPlugins.length > 0) {
       fetchPluginStatuses();
     }
@@ -157,7 +143,7 @@ const PluginManagement: React.FC = () => {
       await installPluginFromGitHub({ repoUrl: repoUrl.trim() });
       setRepoUrl('');
       setShowInstallDialog(false);
-      setSuccessMessage('Plugin installed successfully from GitHub!');
+      setSuccessMessage('Plugin installed successfully from repository!');
     } catch (error) {
       console.error('Failed to install plugin:', error);
     }
@@ -174,16 +160,12 @@ const PluginManagement: React.FC = () => {
         pluginPath: pluginPath.trim(),
         manifestPath: manifestPath.trim(),
       });
-      setPluginPath(
-        '/Users/ishaan743/Kubestellar/ui/backend/example_plugins/cluster-plugin/kubestellar-cluster-plugin.so'
-      );
-      setManifestPath(
-        '/Users/ishaan743/Kubestellar/ui/backend/example_plugins/cluster-plugin/plugin.yaml'
-      );
+      setPluginPath('');
+      setManifestPath('');
       setShowFileDialog(false);
-      setSuccessMessage('Plugin installed successfully from local file!');
+      setSuccessMessage('Plugin loaded successfully for testing!');
     } catch (error) {
-      console.error('Failed to install plugin from file:', error);
+      console.error('Failed to load plugin from file:', error);
     }
   };
 
@@ -331,7 +313,7 @@ const PluginManagement: React.FC = () => {
             variant="body1"
             sx={{ color: theme === 'dark' ? '#AEBEDF' : 'text.secondary' }}
           >
-            Manage dynamic plugins and cluster operations for KubeStellar
+            Install, manage, and configure dynamic plugins for KubeStellar
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 2 }}>
@@ -351,34 +333,17 @@ const PluginManagement: React.FC = () => {
             startIcon={<GitHubIcon />}
             onClick={() => setShowInstallDialog(true)}
           >
-            Install from GitHub
+            Install from Repository
           </Button>
           <Button
             variant="outlined"
             startIcon={<ExtensionIcon />}
             onClick={() => setShowFileDialog(true)}
           >
-            Install from File
+            Load Local Plugin
           </Button>
         </Box>
       </Box>
-
-      {/* Cluster Plugin Status Alert */}
-      {!clusterPluginLoaded && (
-        <Alert
-          severity="info"
-          sx={{ mb: 3 }}
-          action={
-            <Button color="inherit" size="small" onClick={() => setShowFileDialog(true)}>
-              Load Plugin
-            </Button>
-          }
-        >
-          <Typography variant="body2">
-            KubeStellar Cluster Plugin is not loaded. Load the plugin to manage clusters.
-          </Typography>
-        </Alert>
-      )}
 
       {/* Installation Progress */}
       {isInstalling && (
@@ -397,7 +362,7 @@ const PluginManagement: React.FC = () => {
         </Alert>
       )}
 
-      {/* Tabs */}
+      {/* Tabs - Only Plugin Management Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tabs
           value={activeTab}
@@ -412,21 +377,13 @@ const PluginManagement: React.FC = () => {
             },
           }}
         >
-          {clusterPluginLoaded && <Tab label="Cluster Management" icon={<ComputerIcon />} />}
           <Tab label={`Installed Plugins (${loadedPlugins.length})`} icon={<ExtensionIcon />} />
-          <Tab label={`Available Plugins (${availablePlugins.length})`} icon={<CloudDownload />} />
+          <Tab label={`Plugin Store (${availablePlugins.length})`} icon={<StoreIcon />} />
         </Tabs>
       </Box>
 
-      {/* Cluster Management Tab */}
-      {clusterPluginLoaded && (
-        <TabPanel value={activeTab} index={0}>
-          <ClusterManagement />
-        </TabPanel>
-      )}
-
       {/* Installed Plugins Tab */}
-      <TabPanel value={activeTab} index={clusterPluginLoaded ? 1 : 0}>
+      <TabPanel value={activeTab} index={0}>
         {loadedPlugins.length === 0 ? (
           <Box
             sx={{
@@ -443,22 +400,22 @@ const PluginManagement: React.FC = () => {
               No plugins installed yet
             </Typography>
             <Typography variant="body1" color="textSecondary" sx={{ mb: 3 }}>
-              Install plugins from GitHub or local files to get started.
+              Install plugins from repositories or load local plugins for testing.
             </Typography>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Button
                 variant="contained"
-                startIcon={<ExtensionIcon />}
-                onClick={() => setShowFileDialog(true)}
-              >
-                Load Cluster Plugin
-              </Button>
-              <Button
-                variant="outlined"
                 startIcon={<GitHubIcon />}
                 onClick={() => setShowInstallDialog(true)}
               >
-                Install from GitHub
+                Install from Repository
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<ExtensionIcon />}
+                onClick={() => setShowFileDialog(true)}
+              >
+                Load Local Plugin
               </Button>
             </Box>
           </Box>
@@ -601,8 +558,8 @@ const PluginManagement: React.FC = () => {
         )}
       </TabPanel>
 
-      {/* Available Plugins Tab */}
-      <TabPanel value={activeTab} index={clusterPluginLoaded ? 2 : 1}>
+      {/* Plugin Store Tab */}
+      <TabPanel value={activeTab} index={1}>
         {availablePlugins.length === 0 ? (
           <Box
             sx={{
@@ -614,13 +571,20 @@ const PluginManagement: React.FC = () => {
               textAlign: 'center',
             }}
           >
-            <CloudDownload sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+            <StoreIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
             <Typography variant="h6" gutterBottom>
-              No plugins available in the registry
+              No plugins available in the store
             </Typography>
-            <Typography variant="body1" color="textSecondary">
-              Install plugins manually or check back later.
+            <Typography variant="body1" color="textSecondary" sx={{ mb: 3 }}>
+              Check back later for new plugins or install from custom repositories.
             </Typography>
+            <Button
+              variant="contained"
+              startIcon={<GitHubIcon />}
+              onClick={() => setShowInstallDialog(true)}
+            >
+              Install Custom Plugin
+            </Button>
           </Box>
         ) : (
           <Grid container spacing={3}>
@@ -754,7 +718,7 @@ const PluginManagement: React.FC = () => {
         </MenuItem>
       </Menu>
 
-      {/* Install from GitHub Dialog */}
+      {/* Install from Repository Dialog */}
       <Dialog
         open={showInstallDialog}
         onClose={() => setShowInstallDialog(false)}
@@ -767,10 +731,10 @@ const PluginManagement: React.FC = () => {
           },
         }}
       >
-        <DialogTitle>Install Plugin from GitHub</DialogTitle>
+        <DialogTitle>Install Plugin from Repository</DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 2 }}>
-            Enter the GitHub repository URL to install a plugin
+            Enter the GitHub repository URL to install and build a plugin automatically
           </Typography>
           <TextField
             autoFocus
@@ -804,7 +768,7 @@ const PluginManagement: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Install from File Dialog */}
+      {/* Load Local Plugin Dialog */}
       <Dialog
         open={showFileDialog}
         onClose={() => setShowFileDialog(false)}
@@ -817,10 +781,10 @@ const PluginManagement: React.FC = () => {
           },
         }}
       >
-        <DialogTitle>Install Plugin from Local File</DialogTitle>
+        <DialogTitle>Load Local Plugin for Testing</DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 2 }}>
-            Enter the local file paths to install a plugin
+            Load a pre-built plugin from local files for development and testing
           </Typography>
           <TextField
             margin="dense"
@@ -867,7 +831,7 @@ const PluginManagement: React.FC = () => {
             variant="contained"
             disabled={isInstalling || !pluginPath.trim() || !manifestPath.trim()}
           >
-            {isInstalling ? <CircularProgress size={20} /> : 'Install'}
+            {isInstalling ? <CircularProgress size={20} /> : 'Load Plugin'}
           </Button>
         </DialogActions>
       </Dialog>

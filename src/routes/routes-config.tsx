@@ -16,6 +16,7 @@ import KubeStellarStatusChecker from '../components/KubeStellarStatusChecker';
 
 const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ '../components/Clusters'));
 const ITSLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/ITS'));
+const ClusterManagementLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/ClusterManagement'));
 
 export const routesConfig: RouteObject[] = [
   {
@@ -87,6 +88,16 @@ export const routesConfig: RouteObject[] = [
         element: (
           <ProtectedRoute>
             <PluginManagement />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'plugins/clusters',  // Add this route
+        element: (
+          <ProtectedRoute>
+            <Suspense fallback={<LoadingFallback message="Loading cluster management..." size="medium" />}>
+              <ClusterManagementLazy />
+            </Suspense>
           </ProtectedRoute>
         ),
       },
