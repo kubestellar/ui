@@ -606,7 +606,9 @@ export const useBPQueries = () => {
         console.log('useDeletePolicies - Mutation succeeded with data:', data);
         queryClient.invalidateQueries({ queryKey: ['binding-policies'] });
         const count = variables.length;
-        toast.success(`${count} binding ${count === 1 ? 'policy' : 'policies'} deleted successfully`);
+        toast.success(
+          `${count} binding ${count === 1 ? 'policy' : 'policies'} deleted successfully`
+        );
       },
       onError: (error: Error) => {
         toast.error('Failed to delete binding policies');
