@@ -18,7 +18,7 @@ import {
   useMediaQuery,
   useTheme as useMuiTheme,
 } from '@mui/material';
-import { 
+import {
   Refresh as RefreshIcon,
   Extension as ExtensionIcon,
   Download as DownloadIcon,
@@ -51,7 +51,8 @@ const ClusterManagementPage: React.FC = () => {
     },
     {
       label: 'Choose Installation Method',
-      description: 'Select "Install from Repository" for official plugins or "Load Local Plugin" for testing',
+      description:
+        'Select "Install from Repository" for official plugins or "Load Local Plugin" for testing',
       icon: <DownloadIcon />,
     },
     {
@@ -82,7 +83,7 @@ const ClusterManagementPage: React.FC = () => {
     };
 
     checkClusterPlugin();
-    
+
     // Check every 30 seconds
     const interval = setInterval(checkClusterPlugin, 30000);
     return () => clearInterval(interval);
@@ -127,32 +128,38 @@ const ClusterManagementPage: React.FC = () => {
         }}
       >
         {/* Header Section */}
-        <Box sx={{ 
-          p: 4, 
-          textAlign: 'center',
-          background: theme === 'dark' 
-            ? 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)' 
-            : 'linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%)',
-          borderBottom: `1px solid ${theme === 'dark' ? '#374151' : '#E5E7EB'}`,
-        }}>
-          <Box sx={{ 
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 100,
-            height: 100,
-            borderRadius: '50%',
-            backgroundColor: theme === 'dark' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(245, 158, 11, 0.1)',
-            border: `2px solid ${theme === 'dark' ? 'rgba(245, 158, 11, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`,
-            mb: 3,
-          }}>
+        <Box
+          sx={{
+            p: 4,
+            textAlign: 'center',
+            background:
+              theme === 'dark'
+                ? 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)'
+                : 'linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%)',
+            borderBottom: `1px solid ${theme === 'dark' ? '#374151' : '#E5E7EB'}`,
+          }}
+        >
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 100,
+              height: 100,
+              borderRadius: '50%',
+              backgroundColor:
+                theme === 'dark' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+              border: `2px solid ${theme === 'dark' ? 'rgba(245, 158, 11, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`,
+              mb: 3,
+            }}
+          >
             <ExtensionIcon sx={{ fontSize: 48, color: '#F59E0B' }} />
           </Box>
-          
-          <Typography 
-            variant="h3" 
-            gutterBottom 
-            sx={{ 
+
+          <Typography
+            variant="h3"
+            gutterBottom
+            sx={{
               color: theme === 'dark' ? '#E5E7EB' : 'text.primary',
               fontWeight: 700,
               mb: 2,
@@ -161,10 +168,10 @@ const ClusterManagementPage: React.FC = () => {
           >
             Cluster Plugin Required
           </Typography>
-          
-          <Typography 
-            variant="h6" 
-            sx={{ 
+
+          <Typography
+            variant="h6"
+            sx={{
               color: theme === 'dark' ? '#AEBEDF' : 'text.secondary',
               mb: 3,
               maxWidth: 600,
@@ -173,7 +180,8 @@ const ClusterManagementPage: React.FC = () => {
               lineHeight: 1.6,
             }}
           >
-            Enable powerful cluster management capabilities by installing the KubeStellar Cluster Management plugin
+            Enable powerful cluster management capabilities by installing the KubeStellar Cluster
+            Management plugin
           </Typography>
 
           <Chip
@@ -194,17 +202,19 @@ const ClusterManagementPage: React.FC = () => {
         {/* Main Content */}
         <Box sx={{ p: 4 }}>
           {/* Installation Steps */}
-          <Box sx={{ 
-            display: 'grid', 
-            gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-            gap: 4,
-            alignItems: 'start',
-          }}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+              gap: 4,
+              alignItems: 'start',
+            }}
+          >
             {/* Steps */}
             <Box>
-              <Typography 
-                variant="h5" 
-                sx={{ 
+              <Typography
+                variant="h5"
+                sx={{
                   color: theme === 'dark' ? '#E5E7EB' : 'text.primary',
                   mb: 3,
                   fontWeight: 600,
@@ -212,9 +222,9 @@ const ClusterManagementPage: React.FC = () => {
               >
                 Installation Steps
               </Typography>
-              
-              <Stepper 
-                activeStep={activeStep} 
+
+              <Stepper
+                activeStep={activeStep}
                 orientation="vertical"
                 sx={{
                   '& .MuiStepLabel-label': {
@@ -237,8 +247,18 @@ const ClusterManagementPage: React.FC = () => {
                             width: 40,
                             height: 40,
                             borderRadius: '50%',
-                            backgroundColor: index <= activeStep ? '#4F46E5' : theme === 'dark' ? '#374151' : '#E5E7EB',
-                            color: index <= activeStep ? '#fff' : theme === 'dark' ? '#9CA3AF' : '#6B7280',
+                            backgroundColor:
+                              index <= activeStep
+                                ? '#4F46E5'
+                                : theme === 'dark'
+                                  ? '#374151'
+                                  : '#E5E7EB',
+                            color:
+                              index <= activeStep
+                                ? '#fff'
+                                : theme === 'dark'
+                                  ? '#9CA3AF'
+                                  : '#6B7280',
                           }}
                         >
                           {React.cloneElement(step.icon, { sx: { fontSize: 20 } })}
@@ -273,9 +293,9 @@ const ClusterManagementPage: React.FC = () => {
 
             {/* Quick Actions */}
             <Box>
-              <Typography 
-                variant="h5" 
-                sx={{ 
+              <Typography
+                variant="h5"
+                sx={{
                   color: theme === 'dark' ? '#E5E7EB' : 'text.primary',
                   mb: 3,
                   fontWeight: 600,
@@ -283,7 +303,7 @@ const ClusterManagementPage: React.FC = () => {
               >
                 Quick Actions
               </Typography>
-              
+
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 4 }}>
                 <Button
                   variant="contained"
@@ -300,14 +320,15 @@ const ClusterManagementPage: React.FC = () => {
                     fontWeight: 600,
                     borderRadius: 2,
                     py: 1.5,
-                    boxShadow: theme === 'dark' 
-                      ? '0 4px 6px -1px rgba(0, 0, 0, 0.3)' 
-                      : '0 4px 6px -1px rgba(79, 70, 229, 0.2)',
+                    boxShadow:
+                      theme === 'dark'
+                        ? '0 4px 6px -1px rgba(0, 0, 0, 0.3)'
+                        : '0 4px 6px -1px rgba(79, 70, 229, 0.2)',
                   }}
                 >
                   Go to Plugin Management
                 </Button>
-                
+
                 <Button
                   variant="outlined"
                   size="large"
@@ -331,10 +352,11 @@ const ClusterManagementPage: React.FC = () => {
               </Box>
 
               {/* Info Card */}
-              <Alert 
-                severity="info" 
-                sx={{ 
-                  backgroundColor: theme === 'dark' ? 'rgba(41, 98, 255, 0.1)' : 'rgba(41, 98, 255, 0.05)',
+              <Alert
+                severity="info"
+                sx={{
+                  backgroundColor:
+                    theme === 'dark' ? 'rgba(41, 98, 255, 0.1)' : 'rgba(41, 98, 255, 0.05)',
                   color: theme === 'dark' ? '#E5E7EB' : undefined,
                   border: `1px solid ${theme === 'dark' ? 'rgba(41, 98, 255, 0.3)' : 'rgba(41, 98, 255, 0.2)'}`,
                   borderRadius: 2,
@@ -347,8 +369,9 @@ const ClusterManagementPage: React.FC = () => {
                   Need Help?
                 </Typography>
                 <Typography variant="body2">
-                  The cluster plugin enables cluster onboarding, detachment, and monitoring capabilities. 
-                  Once installed, you'll be able to manage multiple Kubernetes clusters from this interface.
+                  The cluster plugin enables cluster onboarding, detachment, and monitoring
+                  capabilities. Once installed, you'll be able to manage multiple Kubernetes
+                  clusters from this interface.
                 </Typography>
               </Alert>
             </Box>
