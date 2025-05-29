@@ -505,11 +505,14 @@ const BP = () => {
           current.filter(policy => policy.name !== selectedPolicy.name)
         );
 
-        // Update UI state after successful deletion
-        setSuccessMessage(`Binding Policy "${selectedPolicy.name}" deleted successfully`);
+        if (selectedPolicies.includes(selectedPolicy.name)) {
+          setSelectedPolicies(current => current.filter(name => name !== selectedPolicy.name));
+        }
+
+        // Notification handled by toast in the query hook
       } catch (error) {
         console.error('Error deleting binding policy:', error);
-        setSuccessMessage(`Error deleting binding policy "${selectedPolicy.name}"`);
+        // Error notification handled by toast in the query hook
       } finally {
         setDeleteDialogOpen(false);
         setSelectedPolicy(null);
@@ -517,11 +520,13 @@ const BP = () => {
     }
   }, [
     selectedPolicy,
+    selectedPolicies,
     deleteBindingPolicyMutation,
     setSuccessMessage,
     setDeleteDialogOpen,
     setSelectedPolicy,
     setBindingPolicies,
+    setSelectedPolicies,
   ]);
 
   const handleCreatePolicySubmit = useCallback(
@@ -1046,11 +1051,12 @@ const BP = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Snackbar removed in favor of toast notifications */}
       <Snackbar
-        open={!!successMessage}
+        open={!!successMessage && !successMessage.includes('deleted successfully')}
         autoHideDuration={6000}
         onClose={() => setSuccessMessage('')}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
         <Alert
           onClose={() => setSuccessMessage('')}

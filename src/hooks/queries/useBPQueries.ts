@@ -562,9 +562,9 @@ export const useBPQueries = () => {
         const response = await api.delete(`/api/bp/delete/${name}`);
         return response.data;
       },
-      onSuccess: () => {
+      onSuccess: (_data, variables) => {
         queryClient.invalidateQueries({ queryKey: ['binding-policies'] });
-        toast.success('Binding policy deleted successfully');
+        toast.success(`Binding policy "${variables}" deleted successfully`);
       },
       onError: (error: Error) => {
         toast.error('Failed to delete binding policy');
@@ -602,10 +602,11 @@ export const useBPQueries = () => {
           throw error;
         }
       },
-      onSuccess: data => {
+      onSuccess: (data, variables) => {
         console.log('useDeletePolicies - Mutation succeeded with data:', data);
         queryClient.invalidateQueries({ queryKey: ['binding-policies'] });
-        toast.success('Selected binding policies deleted successfully');
+        const count = variables.length;
+        toast.success(`${count} binding ${count === 1 ? 'policy' : 'policies'} deleted successfully`);
       },
       onError: (error: Error) => {
         toast.error('Failed to delete binding policies');
