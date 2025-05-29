@@ -560,7 +560,15 @@ const BPTable: React.FC<BPTableProps> = ({
                           transition: 'opacity 0.2s ease',
                           WebkitAppearance: 'none',
                         }}
-                        onClick={() => onDeletePolicy(policy)}
+                        onClick={() => {
+                          // If the policy was selected, also remove it from selectedPolicies
+                          if (selectedPolicies.includes(policy.name)) {
+                            const updatedSelection = selectedPolicies.filter(name => name !== policy.name);
+                            onSelectionChange(updatedSelection);
+                          }
+                          // Then delete the policy
+                          onDeletePolicy(policy);
+                        }}
                       >
                         <Trash2 size={18} />
                       </IconButton>
