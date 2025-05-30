@@ -32,6 +32,7 @@ import { ResourceItem } from './TreeViewComponent';
 import useTheme from '../stores/themeStore';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { api, getWebSocketUrl } from '../lib/api';
+import { Theme } from '@mui/material/styles';
 
 interface WecsDetailsProps {
   namespace: string;
@@ -73,7 +74,21 @@ interface ContainerInfo {
   Image: string;
 }
 
-const StyledTab = styled(Tab)(({ theme }) => {
+interface KubernetesResource {
+  apiVersion?: string;
+  kind?: string;
+  metadata?: {
+    name?: string;
+    namespace?: string;
+    labels?: Record<string, string>;
+    [key: string]: unknown;
+  };
+  spec?: Record<string, unknown>;
+  status?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+const StyledTab = styled(Tab)(({ theme }: { theme: Theme }) => {
   const appTheme = useTheme(state => state.theme);
   return {
     textTransform: 'none',
@@ -781,7 +796,7 @@ const WecsDetailsPanel = ({
     }
   };
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     // Don't close if container selection is active
     if (isContainerSelectActive) {
       // console.log("Container select is active, preventing panel close");
@@ -791,9 +806,12 @@ const WecsDetailsPanel = ({
     setIsClosing(true);
     setTimeout(() => {
       setIsClosing(false);
-      onClose();
+      if (onClose) {
+        onClose();
+      }
     }, 400);
-  };
+  }, [isContainerSelectActive, onClose]);
+
   // Add a global esc key  listener to close the panel
   useEffect(() => {
     if (!isOpen) return;
@@ -834,10 +852,10 @@ const WecsDetailsPanel = ({
 
     try {
       // Parse the edited manifest
-      let updatedResource: any;
+      let updatedResource: KubernetesResource;
       try {
         if (editFormat === 'yaml') {
-          updatedResource = jsyaml.load(editedManifest);
+          updatedResource = jsyaml.load(editedManifest) as KubernetesResource;
         } else {
           updatedResource = JSON.parse(editedManifest);
         }
@@ -910,7 +928,7 @@ const WecsDetailsPanel = ({
         const removedLabels: Record<string, string> = {};
         Object.keys(currentLabels).forEach(key => {
           // If key exists in current but not in new, it was removed
-          if (!newLabels.hasOwnProperty(key)) {
+          if (!Object.prototype.hasOwnProperty.call(newLabels, key)) {
             // Check if it's a system label
             const isSystemLabel = systemPrefixes.some(prefix => key.startsWith(prefix));
             if (!isSystemLabel) {
@@ -1612,7 +1630,7 @@ const WecsDetailsPanel = ({
                               horizontal: 'left',
                             },
                           }}
-                          renderValue={value => (
+                          renderValue={(value: string | undefined) => (
                             <Box
                               sx={{ display: 'flex', alignItems: 'center' }}
                               onClick={(e: React.MouseEvent<HTMLDivElement>) => {

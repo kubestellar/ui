@@ -1,20 +1,20 @@
-import { useEffect, useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   Paper,
   Box,
-  Snackbar,
-  Alert,
+  Tabs,
   Typography,
   Button,
-  Tabs,
+  ListItemIcon,
+  ListItemText,
+  Snackbar,
+  Alert,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   List,
   ListItem,
-  ListItemIcon,
-  ListItemText,
 } from '@mui/material';
 import BPHeader from '../components/BindingPolicy/Dialogs/BPHeader';
 import BPTable from '../components/BindingPolicy/BPTable';
@@ -44,11 +44,41 @@ import {
 import { api } from '../lib/api';
 import BPSkeleton from '../components/ui/BPSkeleton';
 
-// Define EmptyState component outside of the BP component
-const EmptyState: React.FC<{
+interface LocationState {
+  activateView?: 'dragdrop';
+}
+
+interface FilterState {
+  status?: 'Active' | 'Inactive' | 'Pending';
+}
+
+interface BindingPolicyConfig {
+  name?: string;
+  namespace?: string;
+  propagationMode?: string;
+  updateStrategy?: string;
+}
+
+interface YamlPolicy {
+  metadata?: {
+    name?: string;
+    namespace?: string;
+  };
+  spec?: {
+    downsync?: Array<{
+      apiGroup?: string;
+      namespaces?: string[];
+    }>;
+  };
+}
+
+// Define EmptyState component props
+interface EmptyStateProps {
   onCreateClick: () => void;
   type?: 'policies' | 'clusters' | 'workloads' | 'both';
-}> = ({ onCreateClick, type = 'policies' }) => {
+}
+
+const EmptyState: React.FC<EmptyStateProps> = ({ onCreateClick, type = 'policies' }) => {
   const theme = useTheme(state => state.theme);
   let title = '';
   let description = '';
@@ -114,12 +144,15 @@ const EmptyState: React.FC<{
   );
 };
 
-const BP = () => {
+const BP: React.FC = () => {
   console.log('BP component rendering');
 
   const location = useLocation();
   const navigate = useNavigate();
   const theme = useTheme(state => state.theme);
+
+  // Constants
+  const ITEMS_PER_PAGE = 10;
 
   // Initialize the React Query hooks
   const { useClusters } = useClusterQueries();
@@ -141,39 +174,34 @@ const BP = () => {
   const deleteBindingPolicyMutation = useDeleteBindingPolicy();
   const deleteMultiplePoliciesMutation = useDeletePolicies();
 
-  // Add all state variables first, before any conditional logic
+  // State definitions with proper types
   const [bindingPolicies, setBindingPolicies] = useState<BindingPolicyInfo[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedLabels] = useState<Record<string, string>>({});
   const [availableClusters, setAvailableClusters] = useState<ManagedCluster[]>([]);
   const [availableWorkloads, setAvailableWorkloads] = useState<Workload[]>([]);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState<boolean>(false);
+  const [previewDialogOpen, setPreviewDialogOpen] = useState<boolean>(false);
   const [selectedPolicy, setSelectedPolicy] = useState<BindingPolicyInfo | null>(null);
   const [selectedPolicies, setSelectedPolicies] = useState<string[]>([]);
-  const [activeFilters, setActiveFilters] = useState<{
-    status?: 'Active' | 'Inactive' | 'Pending';
-  }>({});
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [activeFilters, setActiveFilters] = useState<FilterState>({});
+  const [editDialogOpen, setEditDialogOpen] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const [successMessage, setSuccessMessage] = useState<string>('');
-
-  // Check if we need to activate dragdrop view based on location state
-  const initialViewMode = location.state?.activateView === 'dragdrop' ? 'dragdrop' : 'table';
-  const [viewMode, setViewMode] = useState<'table' | 'dragdrop' | 'visualize'>(initialViewMode);
-  const [showDragDropHelp, setShowDragDropHelp] = useState(
-    location.state?.activateView === 'dragdrop'
+  const [viewMode, setViewMode] = useState<'table' | 'dragdrop' | 'visualize'>(
+    (location.state as LocationState)?.activateView === 'dragdrop' ? 'dragdrop' : 'table'
   );
-
+  const [showDragDropHelp, setShowDragDropHelp] = useState<boolean>(
+    (location.state as LocationState)?.activateView === 'dragdrop'
+  );
   const [clusters, setClusters] = useState<ManagedCluster[]>([]);
   const [workloads, setWorkloads] = useState<Workload[]>([]);
   const [simulatedPolicies, setSimulatedPolicies] = useState<BindingPolicyInfo[]>([]);
 
   // More forceful effect to ensure viewMode is set properly from location state
-  useEffect(() => {
+  React.useEffect(() => {
     console.log('Location state:', location.state);
 
     if (location.state?.activateView === 'dragdrop') {
@@ -184,7 +212,7 @@ const BP = () => {
   }, [location.state]);
 
   // Clear location state after using it
-  useEffect(() => {
+  React.useEffect(() => {
     if (location.state?.activateView) {
       // Replace the current state to clear the activateView parameter
       window.history.replaceState({}, document.title);
@@ -192,14 +220,14 @@ const BP = () => {
   }, [location.state]);
 
   // Show drag & drop help when the view is activated
-  useEffect(() => {
+  React.useEffect(() => {
     if (viewMode === 'dragdrop') {
       setShowDragDropHelp(true);
     }
   }, [viewMode]);
 
   // Calculate filtered policies at the top level, not in a nested function
-  const getFilteredPolicies = useCallback(() => {
+  const getFilteredPolicies = React.useCallback(() => {
     // Ensure bindingPolicies is an array before calling filter
     if (!Array.isArray(bindingPolicies)) {
       console.warn('bindingPolicies is not an array:', bindingPolicies);
@@ -239,12 +267,12 @@ const BP = () => {
 
   const filteredPolicies = getFilteredPolicies();
   const paginatedPolicies = filteredPolicies.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
   );
 
   // Calculate matches at the top level
-  const getMatches = useCallback(() => {
+  const getMatches = React.useCallback(() => {
     const matchedClusters = availableClusters.filter(cluster => {
       return Object.entries(selectedLabels).every(
         ([key, value]) => cluster.labels && cluster.labels[key] === value
@@ -262,16 +290,8 @@ const BP = () => {
 
   const { matchedClusters, matchedWorkloads } = getMatches();
 
-  // Define a type for the config parameter
-  interface BindingPolicyConfig {
-    name?: string;
-    namespace?: string;
-    propagationMode?: string;
-    updateStrategy?: string;
-  }
-
   // Add function to handle simulated binding policy creation
-  const handleCreateSimulatedBindingPolicy = useCallback(
+  const handleCreateSimulatedBindingPolicy = React.useCallback(
     (clusterIds: string[], workloadIds: string[], config?: BindingPolicyConfig) => {
       return new Promise<void>(resolve => {
         setTimeout(() => {
@@ -350,7 +370,7 @@ const BP = () => {
   );
 
   // Memoize the tab change handler to prevent rerenders
-  const handleViewModeChange = useCallback(
+  const handleViewModeChange = React.useCallback(
     (_: React.SyntheticEvent, newValue: 'table' | 'dragdrop' | 'visualize') => {
       console.log('Tab change to:', newValue, 'from:', viewMode);
       if (newValue && newValue !== viewMode) {
@@ -366,7 +386,7 @@ const BP = () => {
   // Update methods to use React Query hooks instead of direct API calls
 
   // Update useEffect to set state based on React Query results
-  useEffect(() => {
+  React.useEffect(() => {
     // Set overall loading state based on all queries
     setLoading(bindingPoliciesLoading || workloadsLoading || clustersLoading);
 
@@ -489,12 +509,12 @@ const BP = () => {
   ]);
 
   // Memoize the delete handlers for consistent hook usage
-  const handleDeletePolicy = useCallback(async (policy: BindingPolicyInfo) => {
+  const handleDeletePolicy = React.useCallback(async (policy: BindingPolicyInfo) => {
     setSelectedPolicy(policy);
     setDeleteDialogOpen(true);
   }, []);
 
-  const confirmDelete = useCallback(async () => {
+  const confirmDelete = React.useCallback(async () => {
     if (selectedPolicy) {
       try {
         // Use the mutation instead of direct API call
@@ -524,7 +544,7 @@ const BP = () => {
     setBindingPolicies,
   ]);
 
-  const handleCreatePolicySubmit = useCallback(
+  const handleCreatePolicySubmit = React.useCallback(
     async (policyData: PolicyData) => {
       try {
         // Log the incoming policy data
@@ -537,19 +557,6 @@ const BP = () => {
         try {
           const yamlContent = policyData.yaml;
           // Use type assertion to handle the parsed YAML structure
-          interface YamlPolicy {
-            metadata?: {
-              name?: string;
-              namespace?: string;
-            };
-            spec?: {
-              downsync?: Array<{
-                apiGroup?: string;
-                namespaces?: string[];
-              }>;
-            };
-          }
-
           const parsedYaml = yaml.load(yamlContent) as YamlPolicy;
 
           // Try to extract more specific workload info if available
@@ -595,15 +602,15 @@ const BP = () => {
         console.error('Error creating binding policy:', error);
       }
     },
-    [createBindingPolicyMutation, setSuccessMessage, setCreateDialogOpen]
+    [createBindingPolicyMutation, setCreateDialogOpen]
   );
 
-  const handleEditPolicy = useCallback((policy: BindingPolicyInfo) => {
+  const handleEditPolicy = React.useCallback((policy: BindingPolicyInfo) => {
     setSelectedPolicy(policy);
     setEditDialogOpen(true);
   }, []);
 
-  const handleSaveEdit = useCallback(
+  const handleSaveEdit = React.useCallback(
     async (updatedPolicy: Partial<BindingPolicyInfo>) => {
       try {
         // This would need a proper update mutation in useBPQueries
@@ -623,7 +630,7 @@ const BP = () => {
   );
 
   // Create a memoized function for the policy assignment simulation used in the JSX
-  const handleSimulatedPolicyAssign = useCallback(
+  const handleSimulatedPolicyAssign = React.useCallback(
     (policyName: string, targetType: string, targetName: string) => {
       // Simulate policy assignment with a hardcoded response
       setTimeout(() => {
@@ -634,23 +641,26 @@ const BP = () => {
   );
 
   // Create a memoized function for the dialog close handlers
-  const handlePreviewDialogClose = useCallback(
+  const handlePreviewDialogClose = React.useCallback(
     () => setPreviewDialogOpen(false),
     [setPreviewDialogOpen]
   );
-  const handleEditDialogClose = useCallback(() => setEditDialogOpen(false), [setEditDialogOpen]);
-  const handleDeleteDialogClose = useCallback(
+  const handleEditDialogClose = React.useCallback(
+    () => setEditDialogOpen(false),
+    [setEditDialogOpen]
+  );
+  const handleDeleteDialogClose = React.useCallback(
     () => setDeleteDialogOpen(false),
     [setDeleteDialogOpen]
   );
 
   // Add a memoized function for handling the create dialog open
-  const handleCreateDialogOpen = useCallback(
+  const handleCreateDialogOpen = React.useCallback(
     () => setCreateDialogOpen(true),
     [setCreateDialogOpen]
   );
 
-  const handleBulkDelete = useCallback(async () => {
+  const handleBulkDelete = React.useCallback(async () => {
     try {
       // Verify we have policies selected
       if (selectedPolicies.length === 0) {
@@ -821,7 +831,7 @@ const BP = () => {
                 <BPPagination
                   filteredCount={filteredPolicies.length}
                   totalCount={bindingPolicies.length}
-                  itemsPerPage={itemsPerPage}
+                  itemsPerPage={ITEMS_PER_PAGE}
                   currentPage={currentPage}
                   onPageChange={setCurrentPage}
                 />

@@ -78,7 +78,12 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
     if (availableClusters.length === 0 && !availableClustersError && !availableClustersLoading) {
       fetchAvailableClusters();
     }
-  }, []); // Empty dependency array - only run once on mount
+  }, [
+    availableClusters.length,
+    availableClustersError,
+    availableClustersLoading,
+    fetchAvailableClusters,
+  ]); // Added required dependencies
 
   // This function will be called when the onboarding is completed via logs
   const handleOnboardingComplete = () => {
