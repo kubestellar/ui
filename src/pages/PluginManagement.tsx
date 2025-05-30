@@ -51,7 +51,12 @@ import {
 import { usePluginQueries } from '../hooks/queries/usePluginQueries';
 import useTheme from '../stores/themeStore';
 import { toast } from 'react-hot-toast';
-import { PluginService, PluginHealthResponse, EndpointConfig, PluginMetadata } from '../services/pluginService';
+import {
+  PluginService,
+  PluginHealthResponse,
+  EndpointConfig,
+  PluginMetadata,
+} from '../services/pluginService';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -100,15 +105,13 @@ const PluginManagement: React.FC = () => {
   const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
   const [isUninstalling, setIsUninstalling] = useState<string | null>(null);
 
-
   // Queries
   const { data: loadedPluginsData, isLoading, refetch: refetchPlugins } = usePlugins();
   const { data: availablePlugins } = useAvailablePlugins();
 
-
- const loadedPlugins = useMemo(() => {
-  return loadedPluginsData?.plugins || [];
-}, [loadedPluginsData?.plugins]);
+  const loadedPlugins = useMemo(() => {
+    return loadedPluginsData?.plugins || [];
+  }, [loadedPluginsData?.plugins]);
 
   // Mutations
   const installGitHubRepo = useInstallGitHubRepository();
@@ -212,8 +215,8 @@ const PluginManagement: React.FC = () => {
       setIsUninstalling(null);
     }
   };
- 
- const handleTestEndpoint = async (pluginId: string, endpoint: EndpointConfig) => {
+
+  const handleTestEndpoint = async (pluginId: string, endpoint: EndpointConfig) => {
     try {
       const result = await PluginService.testPluginEndpoint(pluginId, endpoint);
       if (result.success) {
@@ -289,10 +292,7 @@ const PluginManagement: React.FC = () => {
         }}
       >
         <CircularProgress size={40} />
-        <Typography 
-          variant="h6" 
-          sx={{ color: theme === 'dark' ? '#AEBEDF' : 'text.secondary' }}
-        >
+        <Typography variant="h6" sx={{ color: theme === 'dark' ? '#AEBEDF' : 'text.secondary' }}>
           Loading plugins...
         </Typography>
       </Box>
@@ -361,7 +361,9 @@ const PluginManagement: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <CircularProgress size={16} />
             <Typography>
-              {installGitHubRepo.isPending ? 'Installing from repository...' : 'Loading local plugin...'}
+              {installGitHubRepo.isPending
+                ? 'Installing from repository...'
+                : 'Loading local plugin...'}
             </Typography>
           </Box>
         </Alert>
@@ -369,8 +371,8 @@ const PluginManagement: React.FC = () => {
 
       {/* Updated Tabs with proper dark mode styling */}
       <Box sx={{ borderBottom: 1, borderColor: theme === 'dark' ? '#374151' : 'divider', mb: 3 }}>
-        <Tabs 
-          value={activeTab} 
+        <Tabs
+          value={activeTab}
           onChange={handleTabChange}
           sx={{
             '& .MuiTab-root': {
@@ -394,9 +396,9 @@ const PluginManagement: React.FC = () => {
             },
           }}
         >
-          <Tab 
-            label={`Installed Plugins (${loadedPlugins?.length || 0})`} 
-            icon={<ExtensionIcon />} 
+          <Tab
+            label={`Installed Plugins (${loadedPlugins?.length || 0})`}
+            icon={<ExtensionIcon />}
             iconPosition="start"
             sx={{
               minHeight: 64,
@@ -406,9 +408,9 @@ const PluginManagement: React.FC = () => {
               },
             }}
           />
-          <Tab 
-            label={`Plugin Store (${availablePlugins?.length || 0})`} 
-            icon={<StoreIcon />} 
+          <Tab
+            label={`Plugin Store (${availablePlugins?.length || 0})`}
+            icon={<StoreIcon />}
             iconPosition="start"
             sx={{
               minHeight: 64,
@@ -418,7 +420,6 @@ const PluginManagement: React.FC = () => {
               },
             }}
           />
-         
         </Tabs>
       </Box>
 
@@ -435,19 +436,21 @@ const PluginManagement: React.FC = () => {
               textAlign: 'center',
             }}
           >
-            <ExtensionIcon sx={{ fontSize: 64, color: theme === 'dark' ? '#6B7280' : 'text.secondary', mb: 2 }} />
-            <Typography 
-              variant="h6" 
+            <ExtensionIcon
+              sx={{ fontSize: 64, color: theme === 'dark' ? '#6B7280' : 'text.secondary', mb: 2 }}
+            />
+            <Typography
+              variant="h6"
               gutterBottom
               sx={{ color: theme === 'dark' ? '#E5E7EB' : 'text.primary' }}
             >
               No plugins installed yet
             </Typography>
-            <Typography 
-              variant="body1" 
-              sx={{ 
+            <Typography
+              variant="body1"
+              sx={{
                 color: theme === 'dark' ? '#AEBEDF' : 'text.secondary',
-                mb: 3 
+                mb: 3,
               }}
             >
               Install plugins from repositories or load local plugins for testing.
@@ -492,13 +495,13 @@ const PluginManagement: React.FC = () => {
                         mb: 2,
                       }}
                     >
-                      <Typography 
-                        variant="h6" 
-                        component="h3" 
-                        sx={{ 
-                          flexGrow: 1, 
+                      <Typography
+                        variant="h6"
+                        component="h3"
+                        sx={{
+                          flexGrow: 1,
                           mr: 1,
-                          color: theme === 'dark' ? '#E5E7EB' : 'text.primary'
+                          color: theme === 'dark' ? '#E5E7EB' : 'text.primary',
                         }}
                       >
                         {plugin.Name}
@@ -526,30 +529,30 @@ const PluginManagement: React.FC = () => {
                     </Typography>
 
                     <Box sx={{ mb: 1 }}>
-                      <Typography 
-                        variant="caption" 
-                        sx={{ 
-                          color: theme === 'dark' ? '#9CA3AF' : 'text.secondary' 
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: theme === 'dark' ? '#9CA3AF' : 'text.secondary',
                         }}
                       >
                         <strong>Version:</strong> {plugin.Version}
                       </Typography>
                     </Box>
                     <Box sx={{ mb: 1 }}>
-                      <Typography 
-                        variant="caption" 
-                        sx={{ 
-                          color: theme === 'dark' ? '#9CA3AF' : 'text.secondary' 
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: theme === 'dark' ? '#9CA3AF' : 'text.secondary',
                         }}
                       >
                         <strong>Author:</strong> {plugin.Author}
                       </Typography>
                     </Box>
                     <Box sx={{ mb: 2 }}>
-                      <Typography 
-                        variant="caption" 
-                        sx={{ 
-                          color: theme === 'dark' ? '#9CA3AF' : 'text.secondary' 
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: theme === 'dark' ? '#9CA3AF' : 'text.secondary',
                         }}
                       >
                         <strong>Endpoints:</strong> {plugin.Endpoints.length} routes
@@ -558,13 +561,21 @@ const PluginManagement: React.FC = () => {
 
                     {/* Plugin Endpoints Accordion */}
                     {plugin.Endpoints.length > 0 && (
-                      <Accordion sx={{ 
-                        backgroundColor: 'transparent', 
-                        boxShadow: 'none',
-                        color: theme === 'dark' ? '#E5E7EB' : 'inherit'
-                      }}>
-                        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: theme === 'dark' ? '#E5E7EB' : 'inherit' }} />}>
-                          <Typography 
+                      <Accordion
+                        sx={{
+                          backgroundColor: 'transparent',
+                          boxShadow: 'none',
+                          color: theme === 'dark' ? '#E5E7EB' : 'inherit',
+                        }}
+                      >
+                        <AccordionSummary
+                          expandIcon={
+                            <ExpandMoreIcon
+                              sx={{ color: theme === 'dark' ? '#E5E7EB' : 'inherit' }}
+                            />
+                          }
+                        >
+                          <Typography
                             variant="body2"
                             sx={{ color: theme === 'dark' ? '#E5E7EB' : 'text.primary' }}
                           >
@@ -599,11 +610,11 @@ const PluginManagement: React.FC = () => {
                                   secondary={endpoint.Handler}
                                   sx={{
                                     '& .MuiListItemText-primary': {
-                                      color: theme === 'dark' ? '#E5E7EB' : 'text.primary'
+                                      color: theme === 'dark' ? '#E5E7EB' : 'text.primary',
                                     },
                                     '& .MuiListItemText-secondary': {
-                                      color: theme === 'dark' ? '#9CA3AF' : 'text.secondary'
-                                    }
+                                      color: theme === 'dark' ? '#9CA3AF' : 'text.secondary',
+                                    },
                                   }}
                                 />
                               </ListItem>
@@ -660,23 +671,25 @@ const PluginManagement: React.FC = () => {
               textAlign: 'center',
             }}
           >
-            <StoreIcon sx={{ 
-              fontSize: 64, 
-              color: theme === 'dark' ? '#6B7280' : 'text.secondary', 
-              mb: 2 
-            }} />
-            <Typography 
-              variant="h6" 
+            <StoreIcon
+              sx={{
+                fontSize: 64,
+                color: theme === 'dark' ? '#6B7280' : 'text.secondary',
+                mb: 2,
+              }}
+            />
+            <Typography
+              variant="h6"
               gutterBottom
               sx={{ color: theme === 'dark' ? '#E5E7EB' : 'text.primary' }}
             >
               No plugins available in the store
             </Typography>
-            <Typography 
-              variant="body1" 
-              sx={{ 
+            <Typography
+              variant="body1"
+              sx={{
                 color: theme === 'dark' ? '#AEBEDF' : 'text.secondary',
-                mb: 3 
+                mb: 3,
               }}
             >
               Check back later for new plugins or install from custom repositories.
@@ -709,8 +722,8 @@ const PluginManagement: React.FC = () => {
                         mb: 2,
                       }}
                     >
-                      <Typography 
-                        variant="h6" 
+                      <Typography
+                        variant="h6"
                         component="h3"
                         sx={{ color: theme === 'dark' ? '#E5E7EB' : 'text.primary' }}
                       >
@@ -731,8 +744,8 @@ const PluginManagement: React.FC = () => {
                       {plugin.description}
                     </Typography>
                     <Box sx={{ mb: 1 }}>
-                      <Typography 
-                        variant="caption" 
+                      <Typography
+                        variant="caption"
                         sx={{ color: theme === 'dark' ? '#9CA3AF' : 'text.secondary' }}
                       >
                         Version: {plugin.version}
@@ -780,9 +793,9 @@ const PluginManagement: React.FC = () => {
       </TabPanel>
 
       {/* Plugin Actions Menu */}
-      <Menu 
-        anchorEl={anchorEl} 
-        open={Boolean(anchorEl)} 
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
         onClose={handleMenuClose}
         PaperProps={{
           sx: {
@@ -805,8 +818,8 @@ const PluginManagement: React.FC = () => {
           }}
         >
           <ListItemIcon>
-            <HealthIcon 
-              fontSize="small" 
+            <HealthIcon
+              fontSize="small"
               sx={{ color: theme === 'dark' ? '#E5E7EB' : 'text.primary' }}
             />
           </ListItemIcon>
@@ -831,8 +844,8 @@ const PluginManagement: React.FC = () => {
           }}
         >
           <ListItemIcon>
-            <ApiIcon 
-              fontSize="small" 
+            <ApiIcon
+              fontSize="small"
               sx={{ color: theme === 'dark' ? '#E5E7EB' : 'text.primary' }}
             />
           </ListItemIcon>
@@ -857,8 +870,8 @@ const PluginManagement: React.FC = () => {
           }}
         >
           <ListItemIcon>
-            <InfoIcon 
-              fontSize="small" 
+            <InfoIcon
+              fontSize="small"
               sx={{ color: theme === 'dark' ? '#E5E7EB' : 'text.primary' }}
             />
           </ListItemIcon>
@@ -883,11 +896,11 @@ const PluginManagement: React.FC = () => {
           Install Plugin from Repository
         </DialogTitle>
         <DialogContent>
-          <Typography 
-            variant="body2" 
-            sx={{ 
+          <Typography
+            variant="body2"
+            sx={{
               mb: 2,
-              color: theme === 'dark' ? '#AEBEDF' : 'text.secondary'
+              color: theme === 'dark' ? '#AEBEDF' : 'text.secondary',
             }}
           >
             Enter the GitHub repository URL to install and build a plugin automatically

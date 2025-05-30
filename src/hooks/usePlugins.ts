@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
 import { usePluginQueries } from './queries/usePluginQueries';
 import { useClusterPluginQueries } from './queries/useClusterPluginQueries';
-import { 
-  LoadPluginFromGitHubRequest, 
+import {
+  LoadPluginFromGitHubRequest,
   LoadPluginFromFileRequest,
   GitHubInstallRequest,
 } from '../services/pluginService';
@@ -59,7 +59,7 @@ export const usePlugins = () => {
   const availablePlugins = useAvailablePlugins();
   const clusterPluginStatus = useClusterPluginStatus();
   const clusterStatuses = useClusterPluginStatuses();
-  
+
   // Local queries only (GitHub removed)
   const localPlugins = useListLocalPlugins();
   const buildInfo = useBuildInfo();

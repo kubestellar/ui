@@ -132,7 +132,7 @@ export interface BuildInfo {
 
 export class PluginService {
   // CORE PLUGIN MANAGEMENT
-  
+
   static async listPlugins(): Promise<PluginListResponse> {
     const response = await api.get('/api/plugins');
     return response.data;

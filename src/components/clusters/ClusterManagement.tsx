@@ -690,16 +690,16 @@ const ClusterManagement: React.FC = () => {
           }}
         >
           <DialogTitle
-           sx={{
-    borderBottom: isDark ? '1px solid rgba(255,255,255,0.1)' : undefined,
-    backgroundColor: isDark ? '#1F2937' : undefined,
-    color: isDark ? '#E5E7EB' : undefined, 
-    fontSize: '1.25rem',                    
-    fontWeight: 500,                       
-              }}
-        >
-  Onboard New Cluster
-</DialogTitle>
+            sx={{
+              borderBottom: isDark ? '1px solid rgba(255,255,255,0.1)' : undefined,
+              backgroundColor: isDark ? '#1F2937' : undefined,
+              color: isDark ? '#E5E7EB' : undefined,
+              fontSize: '1.25rem',
+              fontWeight: 500,
+            }}
+          >
+            Onboard New Cluster
+          </DialogTitle>
           <DialogContent sx={{ pt: 3 }}>
             <Box sx={{ mb: 3 }}>
               <Tabs
