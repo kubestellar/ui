@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import {
   Paper,
@@ -7,14 +6,11 @@ import {
   Button,
   Alert,
   CircularProgress,
-  Card,
-  CardContent,
   Stepper,
   Step,
   StepLabel,
   StepContent,
   Chip,
-  Divider,
   useMediaQuery,
   useTheme as useMuiTheme,
 } from '@mui/material';
@@ -23,10 +19,8 @@ import {
   Extension as ExtensionIcon,
   Download as DownloadIcon,
   FileUpload as FileUploadIcon,
-  ArrowForward as ArrowForwardIcon,
   CheckCircle as CheckCircleIcon,
   Info as InfoIcon,
-  Store as StoreIcon,
 } from '@mui/icons-material';
 import { toast } from 'react-hot-toast';
 import useTheme from '../stores/themeStore';
@@ -40,7 +34,7 @@ const ClusterManagementPage: React.FC = () => {
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
   const [clusterPluginLoaded, setClusterPluginLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeStep, setActiveStep] = useState(0);
+  const [activeStep] = useState(0);
   const navigate = useNavigate();
 
   const installationSteps = [
