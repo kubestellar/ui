@@ -211,7 +211,8 @@ const BP = () => {
       return [];
     }
 
-    return bindingPolicies.filter(policy => {
+    // Filter the policies first
+    const filtered = bindingPolicies.filter(policy => {
       try {
         if (!policy) return false;
 
@@ -234,6 +235,13 @@ const BP = () => {
         console.error('Error filtering policy:', error, policy);
         return false; // Skip this policy if there's an error
       }
+    });
+
+    // Apply stable sorting by name to prevent reordering on re-renders
+    return [...filtered].sort((a, b) => {
+      const nameA = a?.name?.toLowerCase() || '';
+      const nameB = b?.name?.toLowerCase() || '';
+      return nameA.localeCompare(nameB);
     });
   }, [bindingPolicies, searchQuery, activeFilters.status]);
 
