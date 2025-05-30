@@ -59,6 +59,7 @@ Before you begin, ensure that your system meets the following requirements:
 - Ensure you have access to a Kubernetes clusters setup with Kubestellar Getting Started Guide & Kubestellar prerequisites installed
 
 - **Kubestellar guide**: [Guide](https://docs.kubestellar.io/release-0.25.1/direct/get-started/)
+  > [!NOTE] If you're running on macOS, you may need to manually add a host entry to resolve its1.localtest.me to localhost using `echo "127.0.0.1 its1.localtest.me" | sudo tee -a /etc/hosts`
 
 ### 5. Make and Air
 
