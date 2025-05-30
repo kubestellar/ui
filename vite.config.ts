@@ -24,7 +24,7 @@ export default defineConfig({
     // Environment variable management
     // Enables access to base URL and git commit hash across the application
     EnvironmentPlugin({
-      VITE_BASE_URL: process.env.VITE_BASE_URL,
+      VITE_BASE_URL: process.env.VITE_BASE_URL || 'http://localhost:4000',
       VITE_GIT_COMMIT_HASH: getGitCommitHash(),
     }),
   ],

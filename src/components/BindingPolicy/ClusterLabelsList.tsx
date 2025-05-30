@@ -112,34 +112,6 @@ const ClusterLabelsList: React.FC<ClusterLabelsListProps> = ({
       >
         {/* Position cluster count chip and edit button  */}
         <Box sx={{ position: 'absolute', top: 4, right: 4, display: 'flex', gap: 0.5 }}>
-          <Tooltip title="Edit clusters with this label">
-            <IconButton
-              size="small"
-              onClick={e => {
-                e.stopPropagation();
-
-                if (clusterObjects.length === 1) {
-                  // If only one cluster, edit it directly
-                  onEditCluster(clusterObjects[0]);
-                }
-              }}
-              sx={{
-                p: 0.5,
-                bgcolor: isDarkTheme
-                  ? alpha(muiTheme.palette.primary.main, 0.2)
-                  : alpha(muiTheme.palette.primary.main, 0.1),
-                color: isDarkTheme ? muiTheme.palette.primary.light : muiTheme.palette.primary.main,
-                '&:hover': {
-                  bgcolor: isDarkTheme
-                    ? alpha(muiTheme.palette.primary.main, 0.3)
-                    : alpha(muiTheme.palette.primary.main, 0.2),
-                },
-              }}
-            >
-              <EditIcon sx={{ fontSize: '0.9rem' }} />
-            </IconButton>
-          </Tooltip>
-
           <Tooltip title={`${labelGroup.clusters.length} cluster(s)`}>
             <Chip
               size="small"

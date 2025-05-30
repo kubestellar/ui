@@ -562,9 +562,9 @@ export const useBPQueries = () => {
         const response = await api.delete(`/api/bp/delete/${name}`);
         return response.data;
       },
-      onSuccess: () => {
+      onSuccess: (_data, variables) => {
         queryClient.invalidateQueries({ queryKey: ['binding-policies'] });
-        toast.success('Binding policy deleted successfully');
+        toast.success(`Binding policy "${variables}" deleted successfully`);
       },
       onError: (error: Error) => {
         toast.error('Failed to delete binding policy');
@@ -602,10 +602,13 @@ export const useBPQueries = () => {
           throw error;
         }
       },
-      onSuccess: data => {
+      onSuccess: (data, variables) => {
         console.log('useDeletePolicies - Mutation succeeded with data:', data);
         queryClient.invalidateQueries({ queryKey: ['binding-policies'] });
-        toast.success('Selected binding policies deleted successfully');
+        const count = variables.length;
+        toast.success(
+          `${count} binding ${count === 1 ? 'policy' : 'policies'} deleted successfully`
+        );
       },
       onError: (error: Error) => {
         toast.error('Failed to delete binding policies');
@@ -640,46 +643,17 @@ export const useBPQueries = () => {
         // Only copy the request, don't modify unless absolutely necessary
         const formattedRequest = { ...request };
 
-        // Validate and enhance resources if needed
+        // Validate resources - only require that resources are provided
         if (!formattedRequest.resources || formattedRequest.resources.length === 0) {
-          console.warn('No resources provided, adding default resources');
-          formattedRequest.resources = [
-            { type: 'customresourcedefinitions', createOnly: false },
-            { type: 'namespaces', createOnly: true },
-            { type: 'statefulsets', createOnly: false },
-            { type: 'serviceaccounts', createOnly: false },
-            { type: 'roles', createOnly: false },
-            { type: 'rolebindings', createOnly: false },
-            { type: 'clusterroles', createOnly: false },
-            { type: 'clusterrolebindings', createOnly: false },
-            { type: 'persistentvolumeclaims', createOnly: false },
-            { type: 'deployments', createOnly: false },
-            { type: 'services', createOnly: false },
-            { type: 'replicasets', createOnly: false },
-            { type: 'configmaps', createOnly: false },
-            { type: 'secrets', createOnly: false },
-          ];
-        } else if (
-          formattedRequest.resources.length === 1 &&
-          formattedRequest.resources[0].type === 'namespaces'
-        ) {
-          console.warn('Only namespaces resource provided, adding default workload resources');
-          formattedRequest.resources.push(
-            { type: 'customresourcedefinitions', createOnly: false },
-            { type: 'statefulsets', createOnly: false },
-            { type: 'serviceaccounts', createOnly: false },
-            { type: 'roles', createOnly: false },
-            { type: 'rolebindings', createOnly: false },
-            { type: 'clusterroles', createOnly: false },
-            { type: 'clusterrolebindings', createOnly: false },
-            { type: 'persistentvolumeclaims', createOnly: false },
-            { type: 'deployments', createOnly: false },
-            { type: 'services', createOnly: false },
-            { type: 'replicasets', createOnly: false },
-            { type: 'configmaps', createOnly: false },
-            { type: 'secrets', createOnly: false }
-          );
+          console.error('No resources provided - this is required');
+          throw new Error('At least one resource type must be specified');
         }
+
+        // Log the resources that were actually selected by the user
+        console.log(
+          'User selected resources:',
+          formattedRequest.resources.map(r => r.type)
+        );
 
         // Check for custom resources and ensure they have apiGroup if possible
         formattedRequest.resources = formattedRequest.resources.map(resource => {
@@ -766,17 +740,7 @@ export const useBPQueries = () => {
         if (userExplicitlyIncludedCRDs) {
           console.log('User explicitly included customresourcedefinitions in resources');
         }
-        // Check if statefulsets are explicitly included
-        const hasStatefulSets = formattedRequest.resources.some(res => res.type === 'statefulsets');
-
-        // If statefulsets are not included, add them with high priority
-        if (!hasStatefulSets) {
-          console.log(
-            'StatefulSets not explicitly included - adding them to support database workloads'
-          );
-          // Add to beginning of array to ensure they get processed first
-          formattedRequest.resources.unshift({ type: 'statefulsets', createOnly: false });
-        }
+        console.log('Using only user-selected resources, no automatic additions');
 
         // Make sure the request has workloadLabels
         if (
@@ -806,18 +770,7 @@ export const useBPQueries = () => {
           formattedRequest.namespacesToSync = [formattedRequest.namespace || 'default'];
         }
 
-        const hasHigherLevelControllers = formattedRequest.resources.some(res =>
-          ['deployments', 'replicasets', 'statefulsets', 'daemonsets', 'jobs', 'cronjobs'].includes(
-            res.type
-          )
-        );
-
-        if (hasHigherLevelControllers) {
-          console.log('Removing pods from resources as higher-level controllers will manage them');
-          formattedRequest.resources = formattedRequest.resources.filter(
-            res => res.type !== 'pods'
-          );
-        }
+        console.log('Including all user-selected resources including both controllers and pods');
 
         // Add detailed console logging with pretty printing
         console.log('📤 SENDING REQUEST TO QUICK-CONNECT API:');
@@ -891,46 +844,16 @@ export const useBPQueries = () => {
           };
         }
 
-        // Validate and enhance resources if needed
+        // Validate resources - only require that resources are provided
         if (!formattedRequest.resources || formattedRequest.resources.length === 0) {
-          console.warn('No resources provided, adding default resources');
-          formattedRequest.resources = [
-            { type: 'customresourcedefinitions', createOnly: false },
-            { type: 'namespaces', createOnly: true },
-            { type: 'statefulsets', createOnly: false },
-            { type: 'serviceaccounts', createOnly: false },
-            { type: 'roles', createOnly: false },
-            { type: 'rolebindings', createOnly: false },
-            { type: 'clusterroles', createOnly: false },
-            { type: 'clusterrolebindings', createOnly: false },
-            { type: 'persistentvolumeclaims', createOnly: false },
-            { type: 'deployments', createOnly: false },
-            { type: 'services', createOnly: false },
-            { type: 'replicasets', createOnly: false },
-            { type: 'configmaps', createOnly: false },
-            { type: 'secrets', createOnly: false },
-          ];
-        } else if (
-          formattedRequest.resources.length === 1 &&
-          formattedRequest.resources[0].type === 'namespaces'
-        ) {
-          console.warn('Only namespaces resource provided, adding default workload resources');
-          formattedRequest.resources.push(
-            { type: 'customresourcedefinitions', createOnly: false },
-            { type: 'statefulsets', createOnly: false },
-            { type: 'serviceaccounts', createOnly: false },
-            { type: 'roles', createOnly: false },
-            { type: 'rolebindings', createOnly: false },
-            { type: 'clusterroles', createOnly: false },
-            { type: 'clusterrolebindings', createOnly: false },
-            { type: 'persistentvolumeclaims', createOnly: false },
-            { type: 'deployments', createOnly: false },
-            { type: 'services', createOnly: false },
-            { type: 'replicasets', createOnly: false },
-            { type: 'configmaps', createOnly: false },
-            { type: 'secrets', createOnly: false }
-          );
+          console.error('No resources provided for YAML generation - this is required');
+          throw new Error('At least one resource type must be specified for YAML generation');
         }
+
+        console.log(
+          'User selected resources for YAML:',
+          formattedRequest.resources.map(r => r.type)
+        );
 
         // Check for custom resources and ensure they have apiGroup if possible
         formattedRequest.resources = formattedRequest.resources.map(resource => {
@@ -1021,16 +944,9 @@ export const useBPQueries = () => {
         if (userExplicitlyIncludedCRDs) {
           console.log('User explicitly included customresourcedefinitions in resources');
         }
-        // Check if statefulsets are explicitly included
-        const hasStatefulSets = formattedRequest.resources.some(res => res.type === 'statefulsets');
-
-        // If statefulsets are not included, add them with high priority
-        if (!hasStatefulSets) {
-          console.log(
-            'StatefulSets not explicitly included - adding them to support database workloads'
-          );
-          formattedRequest.resources.unshift({ type: 'statefulsets', createOnly: false });
-        }
+        console.log(
+          'Using only user-selected resources for YAML generation, no automatic additions'
+        );
 
         // Ensure namespacesToSync is set if not provided
         if (!formattedRequest.namespacesToSync || formattedRequest.namespacesToSync.length === 0) {
@@ -1300,6 +1216,9 @@ export const useBPQueries = () => {
       state,
       startSSEConnection,
       extractWorkloads,
+      isLoading: state.status === 'loading' || state.status === 'idle',
+      isReady: state.status === 'success',
+      hasError: state.status === 'error',
     };
   };
 

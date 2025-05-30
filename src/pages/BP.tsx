@@ -39,7 +39,7 @@ import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   getTabsStyles,
-  StyledTab,
+  // StyledTab,
 } from '../components/BindingPolicy/styles/CreateBindingPolicyStyles';
 import { api } from '../lib/api';
 import BPSkeleton from '../components/ui/BPSkeleton';
@@ -212,7 +212,8 @@ const BP = () => {
       return [];
     }
 
-    return bindingPolicies.filter(policy => {
+    // Filter the policies first
+    const filtered = bindingPolicies.filter(policy => {
       try {
         if (!policy) return false;
 
@@ -235,6 +236,13 @@ const BP = () => {
         console.error('Error filtering policy:', error, policy);
         return false; // Skip this policy if there's an error
       }
+    });
+
+    // Apply stable sorting by name to prevent reordering on re-renders
+    return [...filtered].sort((a, b) => {
+      const nameA = a?.name?.toLowerCase() || '';
+      const nameB = b?.name?.toLowerCase() || '';
+      return nameA.localeCompare(nameB);
     });
   }, [bindingPolicies, searchQuery, activeFilters.status]);
 
@@ -506,11 +514,14 @@ const BP = () => {
           current.filter(policy => policy.name !== selectedPolicy.name)
         );
 
-        // Update UI state after successful deletion
-        setSuccessMessage(`Binding Policy "${selectedPolicy.name}" deleted successfully`);
+        if (selectedPolicies.includes(selectedPolicy.name)) {
+          setSelectedPolicies(current => current.filter(name => name !== selectedPolicy.name));
+        }
+
+        // Notification handled by toast in the query hook
       } catch (error) {
         console.error('Error deleting binding policy:', error);
-        toast.error(`Error deleting binding policy "${selectedPolicy.name}"`);
+        // Error notification handled by toast in the query hook
       } finally {
         setDeleteDialogOpen(false);
         setSelectedPolicy(null);
@@ -518,11 +529,13 @@ const BP = () => {
     }
   }, [
     selectedPolicy,
+    selectedPolicies,
     deleteBindingPolicyMutation,
     setSuccessMessage,
     setDeleteDialogOpen,
     setSelectedPolicy,
     setBindingPolicies,
+    setSelectedPolicies,
   ]);
 
   const handleCreatePolicySubmit = useCallback(
@@ -778,6 +791,9 @@ const BP = () => {
             aria-label="binding policy view mode"
             sx={getTabsStyles(theme)}
           >
+            {/* 
+            This is commented out because the Visualize tab is not working yet. So we're only showing the Table View by default no need to show it as a tab for now.
+            
             <StyledTab
               iconPosition="start"
               label="Table View"
@@ -786,7 +802,7 @@ const BP = () => {
                 color: theme === 'dark' ? '#E5E7EB' : undefined,
               }}
             />
-            {/* <StyledTab
+            <StyledTab
               iconPosition="start"
               label="Visualize"
               value="visualize"
@@ -813,6 +829,7 @@ const BP = () => {
               <>
                 <BPTable
                   policies={paginatedPolicies}
+                  clusters={clusters}
                   onDeletePolicy={handleDeletePolicy}
                   onEditPolicy={handleEditPolicy}
                   activeFilters={activeFilters}
@@ -1048,11 +1065,12 @@ const BP = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Snackbar removed in favor of toast notifications */}
       <Snackbar
-        open={!!successMessage}
+        open={!!successMessage && !successMessage.includes('deleted successfully')}
         autoHideDuration={6000}
         onClose={() => setSuccessMessage('')}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
         <Alert
           onClose={() => setSuccessMessage('')}

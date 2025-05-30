@@ -8,7 +8,6 @@ import {
   alpha,
   useTheme as useMuiTheme,
   CircularProgress,
-  Divider,
   Chip,
   IconButton,
 } from '@mui/material';
@@ -918,20 +917,27 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
         sx={{
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'space-between',
           p: 1.5,
           mb: 1,
-          minHeight: '90px',
+          minHeight: '110px',
           height: '100%',
-          borderLeft: '4px solid',
-          borderColor: muiTheme.palette.info.main,
-          backgroundColor: alpha(muiTheme.palette.info.main, 0.1),
-          transition: 'all 0.2s',
+          borderRadius: '12px',
+          border: '2px solid',
+          borderColor: isDarkTheme
+            ? alpha(muiTheme.palette.warning.main, 0.6)
+            : alpha(muiTheme.palette.warning.main, 0.8),
+          backgroundColor: isDarkTheme
+            ? alpha(muiTheme.palette.warning.dark, 0.2)
+            : alpha(muiTheme.palette.warning.main, 0.08),
+          transition: 'all 0.2s ease',
           cursor: 'pointer',
           position: 'relative',
           '&:hover': {
-            transform: 'translateY(-2px)',
-            boxShadow: 3,
+            transform: 'translateY(-3px)',
+            boxShadow: isDarkTheme
+              ? '0 8px 25px rgba(255, 152, 0, 0.3)'
+              : '0 8px 25px rgba(255, 152, 0, 0.2)',
+            borderColor: muiTheme.palette.warning.main,
           },
           '&:hover .delete-button': {
             opacity: 1,
@@ -944,49 +950,94 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
           handleCanvasItemClick('workload', itemId);
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <KubernetesIcon type="namespace" size={16} sx={{ mr: 1 }} />
-          <Typography
-            variant="body2"
-            component="div"
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+          <Box
             sx={{
-              fontWeight: 'medium',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 24,
+              height: 24,
+              borderRadius: '6px',
+              backgroundColor: alpha(muiTheme.palette.warning.main, 0.2),
+              mr: 1,
             }}
           >
-            Namespace: {labelInfo.value}
+            <KubernetesIcon
+              type="namespace"
+              size={14}
+              sx={{
+                color: muiTheme.palette.warning.main,
+              }}
+            />
+          </Box>
+          <Typography
+            variant="caption"
+            sx={{
+              fontWeight: 600,
+              fontSize: '0.7rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              color: isDarkTheme
+                ? alpha(muiTheme.palette.warning.light, 0.9)
+                : alpha(muiTheme.palette.warning.main, 0.8),
+            }}
+          >
+            Namespace
           </Typography>
         </Box>
 
-        <Box sx={{ mb: 1 }}>
-          <Chip
-            label={`${labelInfo.key}: ${labelInfo.value}`}
-            size="small"
-            variant="outlined"
-            color="info"
-            sx={{
-              fontSize: '0.75rem',
-              maxWidth: '100%',
-              '& .MuiChip-label': {
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              },
-            }}
-          />
-        </Box>
-
-        <Typography
-          variant="caption"
-          color="text.secondary"
+        {/* Label display */}
+        <Box
           sx={{
-            color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary',
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            mb: 1,
           }}
         >
-          Namespace selector
-        </Typography>
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              color: isDarkTheme ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.87)',
+              mb: 0.5,
+              wordBreak: 'break-word',
+            }}
+          >
+            {labelInfo.value}
+          </Typography>
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              backgroundColor: isDarkTheme
+                ? alpha(muiTheme.palette.warning.main, 0.15)
+                : alpha(muiTheme.palette.warning.main, 0.12),
+              borderRadius: '6px',
+              px: 1,
+              py: 0.5,
+              border: `1px solid ${alpha(muiTheme.palette.warning.main, 0.3)}`,
+              maxWidth: '100%',
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{
+                fontFamily: 'monospace',
+                fontSize: '0.75rem',
+                fontWeight: 500,
+                color: isDarkTheme ? muiTheme.palette.warning.light : muiTheme.palette.warning.dark,
+                wordBreak: 'break-all',
+                lineHeight: 1.2,
+              }}
+            >
+              {labelInfo.key}
+            </Typography>
+          </Box>
+        </Box>
 
         <IconButton
           size="small"
@@ -997,19 +1048,20 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
           }}
           sx={{
             position: 'absolute',
-            top: 4,
-            right: 4,
+            top: 6,
+            right: 6,
             opacity: 0,
             transition: 'opacity 0.2s',
             bgcolor: alpha(muiTheme.palette.error.main, 0.1),
             color: muiTheme.palette.error.main,
-            p: '2px',
+            width: 24,
+            height: 24,
             '&:hover': {
               bgcolor: alpha(muiTheme.palette.error.main, 0.2),
             },
           }}
         >
-          <DeleteIcon fontSize="small" />
+          <DeleteIcon sx={{ fontSize: 16 }} />
         </IconButton>
       </Paper>
     );
@@ -1356,20 +1408,27 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                     sx={{
                                       display: 'flex',
                                       flexDirection: 'column',
-                                      justifyContent: 'space-between',
                                       p: 1.5,
                                       mb: 1,
-                                      minHeight: '90px',
+                                      minHeight: '110px',
                                       height: '100%',
-                                      borderLeft: '4px solid',
-                                      borderColor: muiTheme.palette.info.main,
-                                      backgroundColor: alpha(muiTheme.palette.info.main, 0.1),
-                                      transition: 'all 0.2s',
+                                      borderRadius: '12px',
+                                      border: '2px solid',
+                                      borderColor: isDarkTheme
+                                        ? alpha(muiTheme.palette.info.main, 0.6)
+                                        : alpha(muiTheme.palette.info.main, 0.8),
+                                      backgroundColor: isDarkTheme
+                                        ? alpha(muiTheme.palette.info.dark, 0.2)
+                                        : alpha(muiTheme.palette.info.main, 0.08),
+                                      transition: 'all 0.2s ease',
                                       cursor: 'pointer',
                                       position: 'relative',
                                       '&:hover': {
-                                        transform: 'translateY(-2px)',
-                                        boxShadow: 3,
+                                        transform: 'translateY(-3px)',
+                                        boxShadow: isDarkTheme
+                                          ? '0 8px 25px rgba(33, 150, 243, 0.3)'
+                                          : '0 8px 25px rgba(33, 150, 243, 0.2)',
+                                        borderColor: muiTheme.palette.info.main,
                                       },
                                       '&:hover .delete-button': {
                                         opacity: 1,
@@ -1382,53 +1441,99 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                       handleCanvasItemClick('cluster', clusterId);
                                     }}
                                   >
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                      <KubernetesIcon type="cluster" size={16} sx={{ mr: 1 }} />
+                                    {/* Header with icon and type */}
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                                      <Box
+                                        sx={{
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          width: 24,
+                                          height: 24,
+                                          borderRadius: '6px',
+                                          backgroundColor: alpha(muiTheme.palette.info.main, 0.2),
+                                          mr: 1,
+                                        }}
+                                      >
+                                        <KubernetesIcon
+                                          type="cluster"
+                                          size={14}
+                                          sx={{
+                                            color: muiTheme.palette.info.main,
+                                          }}
+                                        />
+                                      </Box>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{
+                                          fontWeight: 600,
+                                          fontSize: '0.7rem',
+                                          textTransform: 'uppercase',
+                                          letterSpacing: '0.5px',
+                                          color: isDarkTheme
+                                            ? alpha(muiTheme.palette.info.light, 0.9)
+                                            : alpha(muiTheme.palette.info.main, 0.8),
+                                        }}
+                                      >
+                                        Cluster Label
+                                      </Typography>
+                                    </Box>
+
+                                    {/* Label display */}
+                                    <Box
+                                      sx={{
+                                        flex: 1,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        justifyContent: 'center',
+                                        mb: 1,
+                                      }}
+                                    >
                                       <Typography
                                         variant="body2"
-                                        component="div"
                                         sx={{
-                                          fontWeight: 'medium',
-                                          overflow: 'hidden',
-                                          textOverflow: 'ellipsis',
-                                          whiteSpace: 'nowrap',
+                                          fontWeight: 600,
+                                          fontSize: '0.85rem',
                                           color: isDarkTheme
-                                            ? 'rgba(255, 255, 255, 0.9)'
-                                            : undefined,
+                                            ? 'rgba(255, 255, 255, 0.95)'
+                                            : 'rgba(0, 0, 0, 0.87)',
+                                          mb: 0.5,
+                                          wordBreak: 'break-word',
                                         }}
                                       >
                                         {labelInfo.key}
                                       </Typography>
-                                    </Box>
-
-                                    <Box sx={{ mb: 1 }}>
-                                      <Chip
-                                        label={labelInfo.value}
-                                        size="small"
-                                        variant="outlined"
+                                      <Box
                                         sx={{
-                                          fontSize: '0.75rem',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          backgroundColor: isDarkTheme
+                                            ? alpha(muiTheme.palette.info.main, 0.15)
+                                            : alpha(muiTheme.palette.info.main, 0.12),
+                                          borderRadius: '6px',
+                                          px: 1,
+                                          py: 0.5,
+                                          border: `1px solid ${alpha(muiTheme.palette.info.main, 0.3)}`,
                                           maxWidth: '100%',
-
-                                          '& .MuiChip-label': {
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                          },
                                         }}
-                                      />
+                                      >
+                                        <Typography
+                                          variant="caption"
+                                          sx={{
+                                            fontFamily: 'monospace',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 500,
+                                            color: isDarkTheme
+                                              ? muiTheme.palette.info.light
+                                              : muiTheme.palette.info.dark,
+                                            wordBreak: 'break-all',
+                                            lineHeight: 1.2,
+                                          }}
+                                        >
+                                          {labelInfo.value}
+                                        </Typography>
+                                      </Box>
                                     </Box>
-
-                                    <Typography
-                                      variant="caption"
-                                      color="text.secondary"
-                                      sx={{
-                                        color: isDarkTheme
-                                          ? 'rgba(255, 255, 255, 0.7)'
-                                          : 'text.secondary',
-                                      }}
-                                    >
-                                      Label selector
-                                    </Typography>
 
                                     <IconButton
                                       size="small"
@@ -1439,19 +1544,20 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                       }}
                                       sx={{
                                         position: 'absolute',
-                                        top: 4,
-                                        right: 4,
+                                        top: 6,
+                                        right: 6,
                                         opacity: 0,
                                         transition: 'opacity 0.2s',
                                         bgcolor: alpha(muiTheme.palette.error.main, 0.1),
                                         color: muiTheme.palette.error.main,
-                                        p: '2px',
+                                        width: 24,
+                                        height: 24,
                                         '&:hover': {
                                           bgcolor: alpha(muiTheme.palette.error.main, 0.2),
                                         },
                                       }}
                                     >
-                                      <DeleteIcon fontSize="small" />
+                                      <DeleteIcon sx={{ fontSize: 16 }} />
                                     </IconButton>
                                   </Paper>
                                 );
@@ -1469,20 +1575,27 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                 sx={{
                                   display: 'flex',
                                   flexDirection: 'column',
-                                  justifyContent: 'space-between',
                                   p: 1.5,
                                   mb: 1,
-                                  minHeight: '90px',
+                                  minHeight: '110px',
                                   height: '100%',
-                                  borderLeft: '4px solid',
-                                  borderColor: muiTheme.palette.info.main,
-                                  backgroundColor: alpha(muiTheme.palette.info.main, 0.1),
-                                  transition: 'all 0.2s',
+                                  borderRadius: '12px',
+                                  border: '2px solid',
+                                  borderColor: isDarkTheme
+                                    ? alpha(muiTheme.palette.info.main, 0.6)
+                                    : alpha(muiTheme.palette.info.main, 0.8),
+                                  backgroundColor: isDarkTheme
+                                    ? alpha(muiTheme.palette.info.dark, 0.2)
+                                    : alpha(muiTheme.palette.info.main, 0.08),
+                                  transition: 'all 0.2s ease',
                                   cursor: 'pointer',
                                   position: 'relative',
                                   '&:hover': {
-                                    transform: 'translateY(-2px)',
-                                    boxShadow: 3,
+                                    transform: 'translateY(-3px)',
+                                    boxShadow: isDarkTheme
+                                      ? '0 8px 25px rgba(33, 150, 243, 0.3)'
+                                      : '0 8px 25px rgba(33, 150, 243, 0.2)',
+                                    borderColor: muiTheme.palette.info.main,
                                   },
                                   '&:hover .delete-button': {
                                     opacity: 1,
@@ -1495,93 +1608,182 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                   handleCanvasItemClick('cluster', clusterId);
                                 }}
                               >
-                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                  <KubernetesIcon type="cluster" size={16} sx={{ mr: 1 }} />
-                                  <Typography
-                                    variant="body2"
-                                    component="div"
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                                  <Box
                                     sx={{
-                                      fontWeight: 'medium',
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                      whiteSpace: 'nowrap',
-                                      color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      width: 24,
+                                      height: 24,
+                                      borderRadius: '6px',
+                                      backgroundColor: alpha(muiTheme.palette.info.main, 0.2),
+                                      mr: 1,
                                     }}
                                   >
-                                    {labelInfo ? `${labelInfo.key}` : clusterId}
-                                  </Typography>
-                                </Box>
-
-                                {/* For label-based items, show the value */}
-                                {labelInfo && (
-                                  <Box sx={{ mb: 1 }}>
-                                    <Chip
-                                      label={labelInfo.value}
-                                      size="small"
-                                      variant="outlined"
+                                    <KubernetesIcon
+                                      type="cluster"
+                                      size={14}
                                       sx={{
-                                        fontSize: '0.75rem',
-                                        maxWidth: '100%',
-                                        color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
-                                        '& .MuiChip-label': {
-                                          overflow: 'hidden',
-                                          textOverflow: 'ellipsis',
-                                        },
+                                        color: muiTheme.palette.info.main,
                                       }}
                                     />
                                   </Box>
-                                )}
-
-                                {/* Show count of matching clusters */}
-                                {labelInfo && (
                                   <Typography
                                     variant="caption"
-                                    color="text.secondary"
                                     sx={{
+                                      fontWeight: 600,
+                                      fontSize: '0.7rem',
+                                      textTransform: 'uppercase',
+                                      letterSpacing: '0.5px',
                                       color: isDarkTheme
-                                        ? 'rgba(255, 255, 255, 0.7)'
-                                        : 'text.secondary',
+                                        ? alpha(muiTheme.palette.info.light, 0.9)
+                                        : alpha(muiTheme.palette.info.main, 0.8),
                                     }}
                                   >
-                                    Matches: {matchingClusters.length} cluster(s)
+                                    {labelInfo ? 'Cluster Label' : 'Cluster'}
                                   </Typography>
-                                )}
+                                </Box>
 
-                                {/* For individual clusters, show labels */}
-                                {!labelInfo && matchingClusters[0]?.labels && (
-                                  <Box sx={{ mt: 'auto' }}>
-                                    <Divider sx={{ my: 0.5 }} />
-                                    <Box
-                                      sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}
-                                    >
-                                      {Object.entries(matchingClusters[0].labels)
-                                        .slice(0, 2)
-                                        .map(([key, value]) => (
-                                          <Chip
-                                            key={key}
-                                            label={`${key.split('/').pop()}: ${value}`}
-                                            size="small"
-                                            sx={{
-                                              fontSize: '0.6rem',
-                                              height: 16,
-                                              '& .MuiChip-label': { px: 0.5, py: 0 },
-                                            }}
-                                          />
-                                        ))}
-                                      {Object.keys(matchingClusters[0].labels).length > 2 && (
-                                        <Chip
-                                          label={`+${Object.keys(matchingClusters[0].labels).length - 2}`}
-                                          size="small"
+                                {/* Content */}
+                                <Box
+                                  sx={{
+                                    flex: 1,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'center',
+                                    mb: 1,
+                                  }}
+                                >
+                                  {labelInfo ? (
+                                    <>
+                                      <Typography
+                                        variant="body2"
+                                        sx={{
+                                          fontWeight: 600,
+                                          fontSize: '0.85rem',
+                                          color: isDarkTheme
+                                            ? 'rgba(255, 255, 255, 0.95)'
+                                            : 'rgba(0, 0, 0, 0.87)',
+                                          mb: 0.5,
+                                          wordBreak: 'break-word',
+                                        }}
+                                      >
+                                        {labelInfo.key}
+                                      </Typography>
+                                      <Box
+                                        sx={{
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          backgroundColor: isDarkTheme
+                                            ? alpha(muiTheme.palette.info.main, 0.15)
+                                            : alpha(muiTheme.palette.info.main, 0.12),
+                                          borderRadius: '6px',
+                                          px: 1,
+                                          py: 0.5,
+                                          border: `1px solid ${alpha(muiTheme.palette.info.main, 0.3)}`,
+                                          maxWidth: '100%',
+                                        }}
+                                      >
+                                        <Typography
+                                          variant="caption"
                                           sx={{
-                                            fontSize: '0.6rem',
-                                            height: 16,
-                                            '& .MuiChip-label': { px: 0.5, py: 0 },
+                                            fontFamily: 'monospace',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 500,
+                                            color: isDarkTheme
+                                              ? muiTheme.palette.info.light
+                                              : muiTheme.palette.info.dark,
+                                            wordBreak: 'break-all',
+                                            lineHeight: 1.2,
                                           }}
-                                        />
+                                        >
+                                          {labelInfo.value}
+                                        </Typography>
+                                      </Box>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{
+                                          mt: 1,
+                                          fontSize: '0.65rem',
+                                          color: isDarkTheme
+                                            ? 'rgba(255, 255, 255, 0.6)'
+                                            : 'rgba(0, 0, 0, 0.6)',
+                                        }}
+                                      >
+                                        Matches: {matchingClusters.length} cluster(s)
+                                      </Typography>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Typography
+                                        variant="body2"
+                                        sx={{
+                                          fontWeight: 600,
+                                          fontSize: '0.85rem',
+                                          color: isDarkTheme
+                                            ? 'rgba(255, 255, 255, 0.95)'
+                                            : 'rgba(0, 0, 0, 0.87)',
+                                          mb: 0.5,
+                                          wordBreak: 'break-word',
+                                        }}
+                                      >
+                                        {clusterId}
+                                      </Typography>
+                                      {matchingClusters[0]?.labels && (
+                                        <Box
+                                          sx={{
+                                            display: 'flex',
+                                            flexWrap: 'wrap',
+                                            gap: 0.5,
+                                            mt: 0.5,
+                                          }}
+                                        >
+                                          {Object.entries(matchingClusters[0].labels)
+                                            .slice(0, 2)
+                                            .map(([key, value]) => (
+                                              <Chip
+                                                key={key}
+                                                label={`${key.split('/').pop()}: ${value}`}
+                                                size="small"
+                                                sx={{
+                                                  fontSize: '0.6rem',
+                                                  height: 18,
+                                                  backgroundColor: alpha(
+                                                    muiTheme.palette.info.main,
+                                                    0.1
+                                                  ),
+                                                  color: isDarkTheme
+                                                    ? muiTheme.palette.info.light
+                                                    : muiTheme.palette.info.dark,
+                                                  '& .MuiChip-label': { px: 0.5, py: 0 },
+                                                }}
+                                              />
+                                            ))}
+                                          {Object.keys(matchingClusters[0].labels).length > 2 && (
+                                            <Chip
+                                              label={`+${Object.keys(matchingClusters[0].labels).length - 2}`}
+                                              size="small"
+                                              sx={{
+                                                fontSize: '0.6rem',
+                                                height: 18,
+                                                backgroundColor: alpha(
+                                                  muiTheme.palette.info.main,
+                                                  0.1
+                                                ),
+                                                color: isDarkTheme
+                                                  ? muiTheme.palette.info.light
+                                                  : muiTheme.palette.info.dark,
+                                                '& .MuiChip-label': { px: 0.5, py: 0 },
+                                              }}
+                                            />
+                                          )}
+                                        </Box>
                                       )}
-                                    </Box>
-                                  </Box>
-                                )}
+                                    </>
+                                  )}
+                                </Box>
+
                                 <IconButton
                                   size="small"
                                   className="delete-button"
@@ -1591,19 +1793,20 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                   }}
                                   sx={{
                                     position: 'absolute',
-                                    top: 4,
-                                    right: 4,
+                                    top: 6,
+                                    right: 6,
                                     opacity: 0,
                                     transition: 'opacity 0.2s',
                                     bgcolor: alpha(muiTheme.palette.error.main, 0.1),
                                     color: muiTheme.palette.error.main,
-                                    p: '2px',
+                                    width: 24,
+                                    height: 24,
                                     '&:hover': {
                                       bgcolor: alpha(muiTheme.palette.error.main, 0.2),
                                     },
                                   }}
                                 >
-                                  <DeleteIcon fontSize="small" />
+                                  <DeleteIcon sx={{ fontSize: 16 }} />
                                 </IconButton>
                               </Paper>
                             );
@@ -1704,24 +1907,27 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                     sx={{
                                       display: 'flex',
                                       flexDirection: 'column',
-                                      justifyContent: 'space-between',
                                       p: 1.5,
                                       mb: 1,
-                                      minHeight: '90px',
+                                      minHeight: '110px',
                                       height: '100%',
-                                      borderLeft: '4px solid',
+                                      borderRadius: '12px',
+                                      border: '2px solid',
                                       borderColor: isDarkTheme
-                                        ? alpha(muiTheme.palette.success.main, 0.3)
-                                        : alpha(muiTheme.palette.success.main, 0.4),
+                                        ? alpha(muiTheme.palette.success.main, 0.6)
+                                        : alpha(muiTheme.palette.success.main, 0.8),
                                       backgroundColor: isDarkTheme
-                                        ? alpha(muiTheme.palette.success.dark, 0.15)
-                                        : alpha(muiTheme.palette.success.main, 0.05),
-                                      transition: 'all 0.2s',
+                                        ? alpha(muiTheme.palette.success.dark, 0.2)
+                                        : alpha(muiTheme.palette.success.main, 0.08),
+                                      transition: 'all 0.2s ease',
                                       cursor: 'pointer',
                                       position: 'relative',
                                       '&:hover': {
-                                        transform: 'translateY(-2px)',
-                                        boxShadow: 3,
+                                        transform: 'translateY(-3px)',
+                                        boxShadow: isDarkTheme
+                                          ? '0 8px 25px rgba(76, 175, 80, 0.3)'
+                                          : '0 8px 25px rgba(76, 175, 80, 0.2)',
+                                        borderColor: muiTheme.palette.success.main,
                                       },
                                       '&:hover .delete-button': {
                                         opacity: 1,
@@ -1734,64 +1940,102 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                       handleCanvasItemClick('workload', workloadId);
                                     }}
                                   >
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                      <KubernetesIcon
-                                        type="workload"
-                                        size={16}
+                                    {/* Header with icon and type */}
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                                      <Box
                                         sx={{
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          width: 24,
+                                          height: 24,
+                                          borderRadius: '6px',
+                                          backgroundColor: alpha(
+                                            muiTheme.palette.success.main,
+                                            0.2
+                                          ),
                                           mr: 1,
-                                          color: isDarkTheme
-                                            ? 'rgba(255, 255, 255, 0.9)'
-                                            : undefined,
                                         }}
-                                      />
+                                      >
+                                        <KubernetesIcon
+                                          type="workload"
+                                          size={14}
+                                          sx={{
+                                            color: muiTheme.palette.success.main,
+                                          }}
+                                        />
+                                      </Box>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{
+                                          fontWeight: 600,
+                                          fontSize: '0.7rem',
+                                          textTransform: 'uppercase',
+                                          letterSpacing: '0.5px',
+                                          color: isDarkTheme
+                                            ? alpha(muiTheme.palette.success.light, 0.9)
+                                            : alpha(muiTheme.palette.success.main, 0.8),
+                                        }}
+                                      >
+                                        Workload Label
+                                      </Typography>
+                                    </Box>
+
+                                    {/* Label display */}
+                                    <Box
+                                      sx={{
+                                        flex: 1,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        justifyContent: 'center',
+                                        mb: 1,
+                                      }}
+                                    >
                                       <Typography
                                         variant="body2"
-                                        component="div"
                                         sx={{
-                                          fontWeight: 'medium',
-                                          overflow: 'hidden',
-                                          textOverflow: 'ellipsis',
-                                          whiteSpace: 'nowrap',
+                                          fontWeight: 600,
+                                          fontSize: '0.85rem',
                                           color: isDarkTheme
-                                            ? 'rgba(255, 255, 255, 0.9)'
-                                            : undefined,
+                                            ? 'rgba(255, 255, 255, 0.95)'
+                                            : 'rgba(0, 0, 0, 0.87)',
+                                          mb: 0.5,
+                                          wordBreak: 'break-word',
                                         }}
                                       >
                                         {labelInfo.key}
                                       </Typography>
-                                    </Box>
-
-                                    <Box sx={{ mb: 1 }}>
-                                      <Chip
-                                        label={labelInfo.value}
-                                        size="small"
-                                        variant="outlined"
+                                      <Box
                                         sx={{
-                                          color: isDarkTheme
-                                            ? 'rgba(255, 255, 255, 0.9)'
-                                            : undefined,
-                                          fontSize: '0.75rem',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          backgroundColor: isDarkTheme
+                                            ? alpha(muiTheme.palette.success.main, 0.15)
+                                            : alpha(muiTheme.palette.success.main, 0.12),
+                                          borderRadius: '6px',
+                                          px: 1,
+                                          py: 0.5,
+                                          border: `1px solid ${alpha(muiTheme.palette.success.main, 0.3)}`,
                                           maxWidth: '100%',
-                                          '& .MuiChip-label': {
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                          },
                                         }}
-                                      />
+                                      >
+                                        <Typography
+                                          variant="caption"
+                                          sx={{
+                                            fontFamily: 'monospace',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 500,
+                                            color: isDarkTheme
+                                              ? muiTheme.palette.success.light
+                                              : muiTheme.palette.success.dark,
+                                            wordBreak: 'break-all',
+                                            lineHeight: 1.2,
+                                          }}
+                                        >
+                                          {labelInfo.value}
+                                        </Typography>
+                                      </Box>
                                     </Box>
-
-                                    <Typography
-                                      variant="caption"
-                                      color="text.secondary"
-                                      sx={{
-                                        color: isDarkTheme
-                                          ? 'rgba(255, 255, 255, 0.7)'
-                                          : 'text.secondary',
-                                      }}
-                                    >
-                                      Label selector
-                                    </Typography>
 
                                     <IconButton
                                       size="small"
@@ -1802,19 +2046,20 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                       }}
                                       sx={{
                                         position: 'absolute',
-                                        top: 4,
-                                        right: 4,
+                                        top: 6,
+                                        right: 6,
                                         opacity: 0,
                                         transition: 'opacity 0.2s',
                                         bgcolor: alpha(muiTheme.palette.error.main, 0.1),
                                         color: muiTheme.palette.error.main,
-                                        p: '2px',
+                                        width: 24,
+                                        height: 24,
                                         '&:hover': {
                                           bgcolor: alpha(muiTheme.palette.error.main, 0.2),
                                         },
                                       }}
                                     >
-                                      <DeleteIcon fontSize="small" />
+                                      <DeleteIcon sx={{ fontSize: 16 }} />
                                     </IconButton>
                                   </Paper>
                                 );
@@ -1832,20 +2077,27 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                 sx={{
                                   display: 'flex',
                                   flexDirection: 'column',
-                                  justifyContent: 'space-between',
                                   p: 1.5,
                                   mb: 1,
-                                  minHeight: '90px',
+                                  minHeight: '110px',
                                   height: '100%',
-                                  borderLeft: '4px solid',
-                                  borderColor: muiTheme.palette.success.main,
-                                  backgroundColor: alpha(muiTheme.palette.success.main, 0.1),
-                                  transition: 'all 0.2s',
+                                  borderRadius: '12px',
+                                  border: '2px solid',
+                                  borderColor: isDarkTheme
+                                    ? alpha(muiTheme.palette.success.main, 0.6)
+                                    : alpha(muiTheme.palette.success.main, 0.8),
+                                  backgroundColor: isDarkTheme
+                                    ? alpha(muiTheme.palette.success.dark, 0.2)
+                                    : alpha(muiTheme.palette.success.main, 0.08),
+                                  transition: 'all 0.2s ease',
                                   cursor: 'pointer',
                                   position: 'relative',
                                   '&:hover': {
-                                    transform: 'translateY(-2px)',
-                                    boxShadow: 3,
+                                    transform: 'translateY(-3px)',
+                                    boxShadow: isDarkTheme
+                                      ? '0 8px 25px rgba(76, 175, 80, 0.3)'
+                                      : '0 8px 25px rgba(76, 175, 80, 0.2)',
+                                    borderColor: muiTheme.palette.success.main,
                                   },
                                   '&:hover .delete-button': {
                                     opacity: 1,
@@ -1858,137 +2110,201 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                   handleCanvasItemClick('workload', workloadId);
                                 }}
                               >
-                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                  <KubernetesIcon
-                                    type="workload"
-                                    size={16}
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                                  <Box
                                     sx={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      width: 24,
+                                      height: 24,
+                                      borderRadius: '6px',
+                                      backgroundColor: alpha(muiTheme.palette.success.main, 0.2),
                                       mr: 1,
-                                      color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
-                                    }}
-                                  />
-                                  <Typography
-                                    variant="body2"
-                                    component="div"
-                                    sx={{
-                                      fontWeight: 'medium',
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                      whiteSpace: 'nowrap',
-                                      color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
                                     }}
                                   >
-                                    {labelInfo ? `${labelInfo.key}` : workloadId}
-                                  </Typography>
-                                </Box>
-
-                                {/* For label-based items, show the value */}
-                                {labelInfo && (
-                                  <Box sx={{ mb: 1 }}>
-                                    <Chip
-                                      label={labelInfo.value}
-                                      size="small"
-                                      variant="outlined"
+                                    <KubernetesIcon
+                                      type="workload"
+                                      size={14}
                                       sx={{
-                                        color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
-                                        fontSize: '0.75rem',
-                                        maxWidth: '100%',
-                                        '& .MuiChip-label': {
-                                          overflow: 'hidden',
-                                          textOverflow: 'ellipsis',
-                                        },
+                                        color: muiTheme.palette.success.main,
                                       }}
                                     />
                                   </Box>
-                                )}
-
-                                {/* Show count of matching workloads */}
-                                {labelInfo && (
                                   <Typography
                                     variant="caption"
                                     sx={{
+                                      fontWeight: 600,
+                                      fontSize: '0.7rem',
+                                      textTransform: 'uppercase',
+                                      letterSpacing: '0.5px',
                                       color: isDarkTheme
-                                        ? 'rgba(255, 255, 255, 0.7)'
-                                        : 'text.secondary',
+                                        ? alpha(muiTheme.palette.success.light, 0.9)
+                                        : alpha(muiTheme.palette.success.main, 0.8),
                                     }}
                                   >
-                                    Matches: {matchingWorkloads.length} workload(s)
+                                    {labelInfo ? 'Workload Label' : 'Workload'}
                                   </Typography>
-                                )}
+                                </Box>
 
-                                {/* For individual workloads, show details */}
-                                {!labelInfo && matchingWorkloads[0] && (
-                                  <>
-                                    <Typography
-                                      variant="caption"
-                                      color="text.secondary"
-                                      sx={{
-                                        display: 'block',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
-                                        color: isDarkTheme
-                                          ? 'rgba(255, 255, 255, 0.7)'
-                                          : 'text.secondary',
-                                      }}
-                                    >
-                                      Type: {matchingWorkloads[0]?.kind || 'Unknown'}
-                                    </Typography>
-                                    <Typography
-                                      variant="caption"
-                                      color="text.secondary"
-                                      sx={{
-                                        display: 'block',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
-                                      }}
-                                    >
-                                      Namespace: {matchingWorkloads[0]?.namespace || 'default'}
-                                    </Typography>
-                                    {matchingWorkloads[0]?.labels &&
-                                      Object.keys(matchingWorkloads[0].labels).length > 0 && (
-                                        <Box sx={{ mt: 'auto' }}>
-                                          <Divider sx={{ my: 0.5 }} />
-                                          <Box
+                                {/* Content */}
+                                <Box
+                                  sx={{
+                                    flex: 1,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'center',
+                                    mb: 1,
+                                  }}
+                                >
+                                  {labelInfo ? (
+                                    <>
+                                      <Typography
+                                        variant="body2"
+                                        sx={{
+                                          fontWeight: 600,
+                                          fontSize: '0.85rem',
+                                          color: isDarkTheme
+                                            ? 'rgba(255, 255, 255, 0.95)'
+                                            : 'rgba(0, 0, 0, 0.87)',
+                                          mb: 0.5,
+                                          wordBreak: 'break-word',
+                                        }}
+                                      >
+                                        {labelInfo.key}
+                                      </Typography>
+                                      <Box
+                                        sx={{
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          backgroundColor: isDarkTheme
+                                            ? alpha(muiTheme.palette.success.main, 0.15)
+                                            : alpha(muiTheme.palette.success.main, 0.12),
+                                          borderRadius: '6px',
+                                          px: 1,
+                                          py: 0.5,
+                                          border: `1px solid ${alpha(muiTheme.palette.success.main, 0.3)}`,
+                                          maxWidth: '100%',
+                                        }}
+                                      >
+                                        <Typography
+                                          variant="caption"
+                                          sx={{
+                                            fontFamily: 'monospace',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 500,
+                                            color: isDarkTheme
+                                              ? muiTheme.palette.success.light
+                                              : muiTheme.palette.success.dark,
+                                            wordBreak: 'break-all',
+                                            lineHeight: 1.2,
+                                          }}
+                                        >
+                                          {labelInfo.value}
+                                        </Typography>
+                                      </Box>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{
+                                          mt: 1,
+                                          fontSize: '0.65rem',
+                                          color: isDarkTheme
+                                            ? 'rgba(255, 255, 255, 0.6)'
+                                            : 'rgba(0, 0, 0, 0.6)',
+                                        }}
+                                      >
+                                        Matches: {matchingWorkloads.length} workload(s)
+                                      </Typography>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Typography
+                                        variant="body2"
+                                        sx={{
+                                          fontWeight: 600,
+                                          fontSize: '0.85rem',
+                                          color: isDarkTheme
+                                            ? 'rgba(255, 255, 255, 0.95)'
+                                            : 'rgba(0, 0, 0, 0.87)',
+                                          mb: 0.5,
+                                          wordBreak: 'break-word',
+                                        }}
+                                      >
+                                        {workloadId}
+                                      </Typography>
+                                      {matchingWorkloads[0] && (
+                                        <>
+                                          <Typography
+                                            variant="caption"
                                             sx={{
-                                              display: 'flex',
-                                              flexWrap: 'wrap',
-                                              gap: 0.5,
-                                              mt: 0.5,
+                                              fontSize: '0.7rem',
+                                              color: isDarkTheme
+                                                ? 'rgba(255, 255, 255, 0.7)'
+                                                : 'rgba(0, 0, 0, 0.6)',
+                                              mb: 0.5,
                                             }}
                                           >
-                                            {Object.entries(matchingWorkloads[0].labels)
-                                              .slice(0, 2)
-                                              .map(([key, value]) => (
-                                                <Chip
-                                                  key={key}
-                                                  label={`${key}: ${value}`}
-                                                  size="small"
-                                                  sx={{
-                                                    fontSize: '0.6rem',
-                                                    height: 16,
-                                                    '& .MuiChip-label': { px: 0.5, py: 0 },
-                                                  }}
-                                                />
-                                              ))}
-                                            {Object.keys(matchingWorkloads[0].labels).length >
-                                              2 && (
-                                              <Chip
-                                                label={`+${Object.keys(matchingWorkloads[0].labels).length - 2}`}
-                                                size="small"
+                                            {matchingWorkloads[0]?.kind || 'Unknown'} •{' '}
+                                            {matchingWorkloads[0]?.namespace || 'default'}
+                                          </Typography>
+                                          {matchingWorkloads[0]?.labels &&
+                                            Object.keys(matchingWorkloads[0].labels).length > 0 && (
+                                              <Box
                                                 sx={{
-                                                  fontSize: '0.6rem',
-                                                  height: 16,
-                                                  '& .MuiChip-label': { px: 0.5, py: 0 },
+                                                  display: 'flex',
+                                                  flexWrap: 'wrap',
+                                                  gap: 0.5,
+                                                  mt: 0.5,
                                                 }}
-                                              />
+                                              >
+                                                {Object.entries(matchingWorkloads[0].labels)
+                                                  .slice(0, 2)
+                                                  .map(([key, value]) => (
+                                                    <Chip
+                                                      key={key}
+                                                      label={`${key}: ${value}`}
+                                                      size="small"
+                                                      sx={{
+                                                        fontSize: '0.6rem',
+                                                        height: 18,
+                                                        backgroundColor: alpha(
+                                                          muiTheme.palette.success.main,
+                                                          0.1
+                                                        ),
+                                                        color: isDarkTheme
+                                                          ? muiTheme.palette.success.light
+                                                          : muiTheme.palette.success.dark,
+                                                        '& .MuiChip-label': { px: 0.5, py: 0 },
+                                                      }}
+                                                    />
+                                                  ))}
+                                                {Object.keys(matchingWorkloads[0].labels).length >
+                                                  2 && (
+                                                  <Chip
+                                                    label={`+${Object.keys(matchingWorkloads[0].labels).length - 2}`}
+                                                    size="small"
+                                                    sx={{
+                                                      fontSize: '0.6rem',
+                                                      height: 18,
+                                                      backgroundColor: alpha(
+                                                        muiTheme.palette.success.main,
+                                                        0.1
+                                                      ),
+                                                      color: isDarkTheme
+                                                        ? muiTheme.palette.success.light
+                                                        : muiTheme.palette.success.dark,
+                                                      '& .MuiChip-label': { px: 0.5, py: 0 },
+                                                    }}
+                                                  />
+                                                )}
+                                              </Box>
                                             )}
-                                          </Box>
-                                        </Box>
+                                        </>
                                       )}
-                                  </>
-                                )}
+                                    </>
+                                  )}
+                                </Box>
+
                                 <IconButton
                                   size="small"
                                   className="delete-button"
@@ -1998,19 +2314,20 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                   }}
                                   sx={{
                                     position: 'absolute',
-                                    top: 4,
-                                    right: 4,
-                                    opacity: 0, // Hidden by default
+                                    top: 6,
+                                    right: 6,
+                                    opacity: 0,
                                     transition: 'opacity 0.2s',
                                     bgcolor: alpha(muiTheme.palette.error.main, 0.1),
                                     color: muiTheme.palette.error.main,
-                                    p: '2px',
+                                    width: 24,
+                                    height: 24,
                                     '&:hover': {
                                       bgcolor: alpha(muiTheme.palette.error.main, 0.2),
                                     },
                                   }}
                                 >
-                                  <DeleteIcon fontSize="small" />
+                                  <DeleteIcon sx={{ fontSize: 16 }} />
                                 </IconButton>
                               </Paper>
                             );

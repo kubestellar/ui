@@ -1,3 +1,4 @@
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import {
   Box,
   Button,
@@ -7,9 +8,8 @@ import {
   DialogTitle,
   Typography,
 } from '@mui/material';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import { getConfirmationDialogPaperProps } from '../../utils/dialogUtils';
 import useTheme from '../../stores/themeStore'; // Import useTheme for dark mode support
+import { getConfirmationDialogPaperProps } from '../../utils/dialogUtils';
 
 interface Props {
   cancelConfirmationOpen: boolean;
@@ -24,13 +24,12 @@ export const CancelConfirmationDialog = ({
 }: Props) => {
   const theme = useTheme(state => state.theme); // Get the current theme
   return (
-    // --- Cancel Confirmation Dialog Section ---
     <Dialog
       open={cancelConfirmationOpen}
       onClose={handleCloseCancelConfirmation}
       PaperProps={getConfirmationDialogPaperProps(theme)}
     >
-      <DialogTitle sx={{ padding: '16px 24px', borderBottom: '1px solid #e0e0e0' }}>
+      <DialogTitle sx={{ padding: '16px 24px' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <WarningAmberIcon sx={{ color: '#f5c518', fontSize: '1.5rem' }} />
           <Typography
@@ -41,6 +40,7 @@ export const CancelConfirmationDialog = ({
           </Typography>
         </Box>
       </DialogTitle>
+
       <DialogContent sx={{ padding: '24px', py: 0 }}>
         <DialogContent sx={{ border: '1px solid #ff9800', py: 1.5, mt: 2, borderRadius: '8px' }}>
           <Box sx={{ display: 'flex', marginLeft: '-9px', gap: 2, alignItems: 'center' }}>
@@ -58,13 +58,14 @@ export const CancelConfirmationDialog = ({
                 variant="body1"
                 sx={{ color: theme === 'dark' ? '#fff' : 'rgb(102, 60, 0)', fontSize: '14px' }}
               >
-                Are you sure you want to cancel? Any changes will lost.
+                Are you sure you want to cancel? Any changes will be lost.
               </Typography>
             </Box>
           </Box>
         </DialogContent>
       </DialogContent>
-      <DialogActions sx={{ padding: '16px 16px', borderTop: '1px solid #e0e0e0' }}>
+
+      <DialogActions sx={{ padding: '16px 16px' }}>
         <Button
           onClick={handleCloseCancelConfirmation}
           sx={{

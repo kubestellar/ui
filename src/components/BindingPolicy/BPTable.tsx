@@ -16,7 +16,7 @@ import {
   Paper,
 } from '@mui/material';
 import { Trash2, CloudOff } from 'lucide-react';
-import { BindingPolicyInfo } from '../../types/bindingPolicy';
+import { BindingPolicyInfo, ManagedCluster } from '../../types/bindingPolicy';
 import PolicyDetailDialog from './Dialogs/PolicyDetailDialog';
 import useTheme from '../../stores/themeStore';
 import { useBPQueries } from '../../hooks/queries/useBPQueries';
@@ -25,6 +25,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 interface BPTableProps {
   policies: BindingPolicyInfo[];
+  clusters?: ManagedCluster[];
   onDeletePolicy: (policy: BindingPolicyInfo) => void;
   onEditPolicy: (policy: BindingPolicyInfo) => void;
   activeFilters: { status?: 'Active' | 'Inactive' | 'Pending' };
@@ -34,6 +35,7 @@ interface BPTableProps {
 
 const BPTable: React.FC<BPTableProps> = ({
   policies,
+  clusters = [],
   onDeletePolicy,
   onEditPolicy,
   activeFilters,
@@ -206,7 +208,44 @@ const BPTable: React.FC<BPTableProps> = ({
   console.log(
     `BPTable received ${policies.length} policies with status filter: ${activeFilters.status || 'none'}`
   );
-  const filteredPolicies = policies;
+  // Apply stable sorting by name to prevent reordering on re-renders
+  const filteredPolicies = [...policies].sort((a, b) => {
+    const nameA = a?.name?.toLowerCase() || '';
+    const nameB = b?.name?.toLowerCase() || '';
+    return nameA.localeCompare(nameB);
+  });
+
+  // Function to map cluster labels to actual cluster names
+  const mapClusterLabelsToNames = useCallback(
+    (clusterLabels: string[]): string[] => {
+      if (!clusters || clusters.length === 0) {
+        return clusterLabels; // Return original labels if no cluster data available
+      }
+
+      return clusterLabels.map(clusterLabel => {
+        // If it's already a cluster name (not a label), return as is
+        if (clusters.some(cluster => cluster.name === clusterLabel)) {
+          return clusterLabel;
+        }
+
+        if (clusterLabel.includes(':')) {
+          const [key, value] = clusterLabel.split(':');
+          const matchingClusters = clusters.filter(
+            cluster => cluster.labels && cluster.labels[key] === value
+          );
+
+          if (matchingClusters.length > 0) {
+            // Return the names of matching clusters
+            return matchingClusters.map(cluster => cluster.name).join(', ');
+          }
+        }
+
+        // If no matches found, return the original label
+        return clusterLabel;
+      });
+    },
+    [clusters]
+  );
 
   const renderClusterChip = (policy: BindingPolicyInfo) => {
     const clusterCount =
@@ -232,13 +271,15 @@ const BPTable: React.FC<BPTableProps> = ({
     }
 
     // If we have clusters, display the count
+    const mappedClusterNames = mapClusterLabelsToNames(policy.clusterList);
+
     return (
       <Tooltip
         title={
           <React.Fragment>
             <Typography variant="subtitle2">Target Clusters:</Typography>
-            {policy.clusterList.length > 0 ? (
-              policy.clusterList.map((cluster, index) => (
+            {mappedClusterNames.length > 0 ? (
+              mappedClusterNames.map((cluster, index) => (
                 <Typography key={index} variant="body2" component="div">
                   {index + 1}. {cluster}
                 </Typography>
@@ -296,7 +337,7 @@ const BPTable: React.FC<BPTableProps> = ({
       displayText = formatWorkloadName(policy.workloadList[0]);
     } else {
       // If there are multiple workloads, show the first one plus a count
-      displayText = `${formatWorkloadName(policy.workloadList[0])} +${policy.workloadList.length - 1}`;
+      displayText = `(${formatWorkloadName(policy.workloadList[0])}) +${policy.workloadList.length - 1}`;
     }
 
     return (
@@ -574,6 +615,7 @@ const BPTable: React.FC<BPTableProps> = ({
               creationDate: '',
             } as BindingPolicyInfo)
           }
+          clusters={clusters}
           onEdit={handleEdit}
           isLoading={isLoadingDetails}
           error={detailsError?.message}

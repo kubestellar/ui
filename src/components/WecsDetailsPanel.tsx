@@ -794,6 +794,19 @@ const WecsDetailsPanel = ({
       onClose();
     }, 400);
   };
+  // Add a global esc key  listener to close the panel
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function handleEsc(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        handleClose();
+      }
+    }
+
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isOpen, handleClose]);
 
   const handleFormatChange = (format: 'yaml' | 'json') => {
     if (editFormat === 'yaml' && format === 'json') {

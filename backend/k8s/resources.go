@@ -477,34 +477,41 @@ func LogWorkloads(c *gin.Context) {
 	if err != nil {
 		cookieContext = "wds1"
 	}
+
+	// CRITICAL: Get all parameters and validate BEFORE WebSocket upgrade
+	resourceKind := c.Param("resourceKind")
+	namespace := c.Param("namespace")
+	name := c.Query("name")
+
+	// Validate namespace BEFORE WebSocket upgrade
+	if namespace == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("no namespace exists with name %s", namespace)})
+		return
+	}
+
+	// Get clients and validate BEFORE WebSocket upgrade
 	clientset, dynamicClient, err := GetClientSetWithContext(cookieContext)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	// websocket connection
-	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
-	if err != nil {
-		log.Println("WebSocket Upgrade Error:", err)
-		return
-	}
-	defer conn.Close()
 
-	resourceKind := c.Param("resourceKind")
-	namespace := c.Param("namespace")
-	name := c.Query("name")
-
-	if namespace == "" {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("no namespace exists with name %s", namespace)})
-		return
-	}
-
+	// Validate resource kind BEFORE WebSocket upgrade
 	discoveryClient := clientset.Discovery()
 	gvr, _, err := getGVR(discoveryClient, resourceKind)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
 		return
 	}
+
+	// ALL VALIDATION DONE - Now safe to upgrade to WebSocket
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		log.Println("WebSocket Upgrade Error:", err)
+		// DO NOT call c.JSON here - just return
+		return
+	}
+	defer conn.Close()
 
 	// Create informer factory filtering by name if provided
 	tweakListOptions := func(options *v1.ListOptions) {
@@ -1054,8 +1061,11 @@ func LogWorkloads(c *gin.Context) {
 				newTLS, newTLSExists, _ := unstructured.NestedSlice(new.Object, "spec", "tls")
 
 				if (!oldTLSExists && newTLSExists) || (oldTLSExists && !newTLSExists) {
-					sendMessage("TLS CONFIG", "%s: TLS configuration %s", objectName, "added")
-					sendMessage("TLS CONFIG", "%s: TLS configuration %s", objectName, "removed")
+					if newTLSExists {
+						sendMessage("TLS CONFIG", "%s: TLS configuration added", objectName)
+					} else {
+						sendMessage("TLS CONFIG", "%s: TLS configuration removed", objectName)
+					}
 				} else if oldTLSExists && newTLSExists && !reflect.DeepEqual(oldTLS, newTLS) {
 					sendMessage("TLS CONFIG", "%s: TLS configuration modified", objectName)
 				}
