@@ -192,6 +192,18 @@ To stop the application
 docker compose down
 ```
 
+---
+
+> **Note for WSL Users 🐧**
+>
+> If you've successfully installed the KubeStellar but they are not detected by frontend, it might be due to a communication issue between Docker and WSL.
+>
+> Here are a few steps to resolve it:
+>
+> 1. Open Docker Desktop settings and ensure WSL integration is enabled for your distribution (e.g., Ubuntu).
+> 2. If the issue persists, consider uninstalling Docker Desktop from Windows and instead install Docker **directly inside your WSL environment** (e.g., Ubuntu).
+> 3. After installing Docker inside WSL, reinstall the KubeStellar. This setup typically resolves the detection issues. ✅
+
 ### Accessing the Application
 
 1. **Backend API**: [http://localhost:4000](http://localhost:4000)
