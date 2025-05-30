@@ -3,7 +3,7 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/plugin/plugins"
-	"github.com/kubestellar/ui/services" 
+	"github.com/kubestellar/ui/services"
 )
 
 func SetupRoutes(router *gin.Engine, pluginService *services.PluginService) {

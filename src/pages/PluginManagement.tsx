@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Paper,
   Box,
@@ -47,10 +48,10 @@ import {
   Warning as WarningIcon,
   Store as StoreIcon,
 } from '@mui/icons-material';
-import { usePlugins } from '../hooks/usePlugins';
+import { usePluginQueries } from '../hooks/queries/usePluginQueries';
 import useTheme from '../stores/themeStore';
 import { toast } from 'react-hot-toast';
-import { PluginService, PluginHealthResponse, EndpointConfig } from '../services/pluginService';
+import { PluginService, PluginHealthResponse, EndpointConfig, PluginMetadata } from '../services/pluginService';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -75,17 +76,12 @@ const TabPanel = ({ children, value, index, ...other }: TabPanelProps) => {
 const PluginManagement: React.FC = () => {
   const theme = useTheme(state => state.theme);
   const {
-    loadedPlugins,
-    availablePlugins,
-    isLoading,
-    isInstalling,
-    installationProgress,
-    installPluginFromGitHub,
-    installPluginFromFile,
-    removePlugin,
-    isPluginLoaded,
-    refetchPlugins,
-  } = usePlugins();
+    usePlugins,
+    useAvailablePlugins,
+    useInstallGitHubRepository,
+    useLoadLocalPlugin,
+    useUnloadPlugin,
+  } = usePluginQueries();
 
   const [activeTab, setActiveTab] = useState(0);
   const [repoUrl, setRepoUrl] = useState('');
@@ -104,6 +100,26 @@ const PluginManagement: React.FC = () => {
   const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
   const [isUninstalling, setIsUninstalling] = useState<string | null>(null);
 
+
+  // Queries
+  const { data: loadedPluginsData, isLoading, refetch: refetchPlugins } = usePlugins();
+  const { data: availablePlugins } = useAvailablePlugins();
+
+
+ const loadedPlugins = useMemo(() => {
+  return loadedPluginsData?.plugins || [];
+}, [loadedPluginsData?.plugins]);
+
+  // Mutations
+  const installGitHubRepo = useInstallGitHubRepository();
+  const loadLocalPlugin = useLoadLocalPlugin();
+  const unloadPlugin = useUnloadPlugin();
+
+  // Helper function to check if plugin is loaded
+  const isPluginLoaded = (pluginId: string): boolean => {
+    return loadedPluginsData?.pluginsMap[pluginId] != null;
+  };
+
   // Fetch plugin statuses and endpoints
   useEffect(() => {
     const fetchPluginStatuses = async () => {
@@ -114,7 +130,7 @@ const PluginManagement: React.FC = () => {
         // Fetch endpoints for each plugin
         const endpoints: Record<string, EndpointConfig[]> = {};
         await Promise.all(
-          loadedPlugins.map(async plugin => {
+          loadedPlugins.map(async (plugin: PluginMetadata) => {
             endpoints[plugin.ID] = await PluginService.getPluginEndpoints(plugin.ID);
           })
         );
@@ -133,6 +149,7 @@ const PluginManagement: React.FC = () => {
     setActiveTab(newValue);
   };
 
+  // Update installation handlers
   const handleInstallFromGitHub = async () => {
     if (!repoUrl.trim()) {
       toast.error('Please enter a repository URL');
@@ -140,7 +157,11 @@ const PluginManagement: React.FC = () => {
     }
 
     try {
-      await installPluginFromGitHub({ repoUrl: repoUrl.trim() });
+      await installGitHubRepo.mutateAsync({
+        repoUrl: repoUrl.trim(),
+        autoUpdate: true,
+        updateInterval: 30,
+      });
       setRepoUrl('');
       setShowInstallDialog(false);
       setSuccessMessage('Plugin installed successfully from repository!');
@@ -156,7 +177,7 @@ const PluginManagement: React.FC = () => {
     }
 
     try {
-      await installPluginFromFile({
+      await loadLocalPlugin.mutateAsync({
         pluginPath: pluginPath.trim(),
         manifestPath: manifestPath.trim(),
       });
@@ -180,19 +201,9 @@ const PluginManagement: React.FC = () => {
 
     setIsUninstalling(pluginId);
     try {
-      await removePlugin(pluginId);
+      await unloadPlugin.mutateAsync(pluginId);
       setSuccessMessage(`Plugin "${pluginId}" uninstalled successfully!`);
       toast.success(`Plugin "${pluginId}" uninstalled successfully!`);
-
-      // Update statuses
-      const newStatuses = { ...pluginStatuses };
-      delete newStatuses[pluginId];
-      setPluginStatuses(newStatuses);
-
-      // Update endpoints
-      const newEndpoints = { ...pluginEndpoints };
-      delete newEndpoints[pluginId];
-      setPluginEndpoints(newEndpoints);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       console.error('Failed to uninstall plugin:', error);
@@ -201,8 +212,8 @@ const PluginManagement: React.FC = () => {
       setIsUninstalling(null);
     }
   };
-
-  const handleTestEndpoint = async (pluginId: string, endpoint: EndpointConfig) => {
+ 
+ const handleTestEndpoint = async (pluginId: string, endpoint: EndpointConfig) => {
     try {
       const result = await PluginService.testPluginEndpoint(pluginId, endpoint);
       if (result.success) {
@@ -278,12 +289,18 @@ const PluginManagement: React.FC = () => {
         }}
       >
         <CircularProgress size={40} />
-        <Typography variant="h6" color="textSecondary">
+        <Typography 
+          variant="h6" 
+          sx={{ color: theme === 'dark' ? '#AEBEDF' : 'text.secondary' }}
+        >
           Loading plugins...
         </Typography>
       </Box>
     );
   }
+
+  // Add a new tab for GitHub repository management
+  const isInstalling = installGitHubRepo.isPending || loadLocalPlugin.isPending;
 
   return (
     <Paper
@@ -294,13 +311,6 @@ const PluginManagement: React.FC = () => {
         backgroundColor: theme === 'dark' ? '#0F172A' : '#fff',
         boxShadow: theme === 'dark' ? '0px 4px 10px rgba(0, 0, 0, 0.6)' : undefined,
         color: theme === 'dark' ? '#E5E7EB' : 'inherit',
-        '& .MuiTypography-root': {
-          color: theme === 'dark' ? '#E5E7EB' : undefined,
-        },
-        '& .MuiChip-root': {
-          backgroundColor: theme === 'dark' ? '#374151' : undefined,
-          color: theme === 'dark' ? '#E5E7EB' : undefined,
-        },
       }}
     >
       {/* Header */}
@@ -347,38 +357,68 @@ const PluginManagement: React.FC = () => {
 
       {/* Installation Progress */}
       {isInstalling && (
-        <Alert
-          severity="info"
-          sx={{
-            mb: 3,
-            backgroundColor: theme === 'dark' ? 'rgba(41, 98, 255, 0.15)' : undefined,
-            color: theme === 'dark' ? '#E5E7EB' : undefined,
-          }}
-        >
+        <Alert severity="info" sx={{ mb: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <CircularProgress size={16} />
-            <Typography>Installing plugin... {installationProgress}%</Typography>
+            <Typography>
+              {installGitHubRepo.isPending ? 'Installing from repository...' : 'Loading local plugin...'}
+            </Typography>
           </Box>
         </Alert>
       )}
 
-      {/* Tabs - Only Plugin Management Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs
-          value={activeTab}
+      {/* Updated Tabs with proper dark mode styling */}
+      <Box sx={{ borderBottom: 1, borderColor: theme === 'dark' ? '#374151' : 'divider', mb: 3 }}>
+        <Tabs 
+          value={activeTab} 
           onChange={handleTabChange}
-          aria-label="plugin management tabs"
           sx={{
             '& .MuiTab-root': {
-              color: theme === 'dark' ? '#AEBEDF' : undefined,
+              color: theme === 'dark' ? '#9CA3AF' : 'text.secondary',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              textTransform: 'none',
+              '&.Mui-selected': {
+                color: theme === 'dark' ? '#3B82F6' : 'primary.main',
+              },
+              '&:hover': {
+                color: theme === 'dark' ? '#E5E7EB' : 'text.primary',
+              },
             },
-            '& .Mui-selected': {
-              color: theme === 'dark' ? '#E5E7EB' : undefined,
+            '& .MuiTabs-indicator': {
+              backgroundColor: theme === 'dark' ? '#3B82F6' : 'primary.main',
+              height: 3,
+            },
+            '& .MuiSvgIcon-root': {
+              color: 'inherit',
             },
           }}
         >
-          <Tab label={`Installed Plugins (${loadedPlugins.length})`} icon={<ExtensionIcon />} />
-          <Tab label={`Plugin Store (${availablePlugins.length})`} icon={<StoreIcon />} />
+          <Tab 
+            label={`Installed Plugins (${loadedPlugins?.length || 0})`} 
+            icon={<ExtensionIcon />} 
+            iconPosition="start"
+            sx={{
+              minHeight: 64,
+              '& .MuiTab-iconWrapper': {
+                marginBottom: '0 !important',
+                marginRight: 1,
+              },
+            }}
+          />
+          <Tab 
+            label={`Plugin Store (${availablePlugins?.length || 0})`} 
+            icon={<StoreIcon />} 
+            iconPosition="start"
+            sx={{
+              minHeight: 64,
+              '& .MuiTab-iconWrapper': {
+                marginBottom: '0 !important',
+                marginRight: 1,
+              },
+            }}
+          />
+         
         </Tabs>
       </Box>
 
@@ -395,11 +435,21 @@ const PluginManagement: React.FC = () => {
               textAlign: 'center',
             }}
           >
-            <ExtensionIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-            <Typography variant="h6" gutterBottom>
+            <ExtensionIcon sx={{ fontSize: 64, color: theme === 'dark' ? '#6B7280' : 'text.secondary', mb: 2 }} />
+            <Typography 
+              variant="h6" 
+              gutterBottom
+              sx={{ color: theme === 'dark' ? '#E5E7EB' : 'text.primary' }}
+            >
               No plugins installed yet
             </Typography>
-            <Typography variant="body1" color="textSecondary" sx={{ mb: 3 }}>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: theme === 'dark' ? '#AEBEDF' : 'text.secondary',
+                mb: 3 
+              }}
+            >
               Install plugins from repositories or load local plugins for testing.
             </Typography>
             <Box sx={{ display: 'flex', gap: 2 }}>
@@ -421,12 +471,13 @@ const PluginManagement: React.FC = () => {
           </Box>
         ) : (
           <Grid container spacing={3}>
-            {loadedPlugins.map(plugin => (
+            {loadedPlugins.map((plugin: PluginMetadata) => (
               <Grid item xs={12} md={6} lg={4} key={plugin.ID}>
                 <Card
                   sx={{
-                    backgroundColor: theme === 'dark' ? '#1E293B' : undefined,
+                    backgroundColor: theme === 'dark' ? '#1E293B' : '#fff',
                     border: theme === 'dark' ? '1px solid #374151' : undefined,
+                    color: theme === 'dark' ? '#E5E7EB' : 'inherit',
                     height: '100%',
                     display: 'flex',
                     flexDirection: 'column',
@@ -441,7 +492,15 @@ const PluginManagement: React.FC = () => {
                         mb: 2,
                       }}
                     >
-                      <Typography variant="h6" component="h3" sx={{ flexGrow: 1, mr: 1 }}>
+                      <Typography 
+                        variant="h6" 
+                        component="h3" 
+                        sx={{ 
+                          flexGrow: 1, 
+                          mr: 1,
+                          color: theme === 'dark' ? '#E5E7EB' : 'text.primary'
+                        }}
+                      >
                         {plugin.Name}
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -458,36 +517,57 @@ const PluginManagement: React.FC = () => {
 
                     <Typography
                       variant="body2"
-                      color="textSecondary"
                       sx={{
                         mb: 2,
-                        color: theme === 'dark' ? '#AEBEDF' : undefined,
+                        color: theme === 'dark' ? '#AEBEDF' : 'text.secondary',
                       }}
                     >
                       {plugin.Description}
                     </Typography>
 
                     <Box sx={{ mb: 1 }}>
-                      <Typography variant="caption" color="textSecondary">
+                      <Typography 
+                        variant="caption" 
+                        sx={{ 
+                          color: theme === 'dark' ? '#9CA3AF' : 'text.secondary' 
+                        }}
+                      >
                         <strong>Version:</strong> {plugin.Version}
                       </Typography>
                     </Box>
                     <Box sx={{ mb: 1 }}>
-                      <Typography variant="caption" color="textSecondary">
+                      <Typography 
+                        variant="caption" 
+                        sx={{ 
+                          color: theme === 'dark' ? '#9CA3AF' : 'text.secondary' 
+                        }}
+                      >
                         <strong>Author:</strong> {plugin.Author}
                       </Typography>
                     </Box>
                     <Box sx={{ mb: 2 }}>
-                      <Typography variant="caption" color="textSecondary">
+                      <Typography 
+                        variant="caption" 
+                        sx={{ 
+                          color: theme === 'dark' ? '#9CA3AF' : 'text.secondary' 
+                        }}
+                      >
                         <strong>Endpoints:</strong> {plugin.Endpoints.length} routes
                       </Typography>
                     </Box>
 
-                    {/* Plugin Endpoints */}
+                    {/* Plugin Endpoints Accordion */}
                     {plugin.Endpoints.length > 0 && (
-                      <Accordion sx={{ backgroundColor: 'transparent', boxShadow: 'none' }}>
-                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                          <Typography variant="body2">
+                      <Accordion sx={{ 
+                        backgroundColor: 'transparent', 
+                        boxShadow: 'none',
+                        color: theme === 'dark' ? '#E5E7EB' : 'inherit'
+                      }}>
+                        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: theme === 'dark' ? '#E5E7EB' : 'inherit' }} />}>
+                          <Typography 
+                            variant="body2"
+                            sx={{ color: theme === 'dark' ? '#E5E7EB' : 'text.primary' }}
+                          >
                             <ApiIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'middle' }} />
                             View Endpoints ({plugin.Endpoints.length})
                           </Typography>
@@ -497,6 +577,7 @@ const PluginManagement: React.FC = () => {
                             {plugin.Endpoints.map((endpoint, index) => (
                               <ListItem
                                 key={index}
+                                sx={{ color: theme === 'dark' ? '#E5E7EB' : 'inherit' }}
                                 secondaryAction={
                                   <Button
                                     size="small"
@@ -516,6 +597,14 @@ const PluginManagement: React.FC = () => {
                                 <ListItemText
                                   primary={endpoint.Path}
                                   secondary={endpoint.Handler}
+                                  sx={{
+                                    '& .MuiListItemText-primary': {
+                                      color: theme === 'dark' ? '#E5E7EB' : 'text.primary'
+                                    },
+                                    '& .MuiListItemText-secondary': {
+                                      color: theme === 'dark' ? '#9CA3AF' : 'text.secondary'
+                                    }
+                                  }}
                                 />
                               </ListItem>
                             ))}
@@ -560,7 +649,7 @@ const PluginManagement: React.FC = () => {
 
       {/* Plugin Store Tab */}
       <TabPanel value={activeTab} index={1}>
-        {availablePlugins.length === 0 ? (
+        {(availablePlugins?.length || 0) === 0 ? (
           <Box
             sx={{
               display: 'flex',
@@ -571,11 +660,25 @@ const PluginManagement: React.FC = () => {
               textAlign: 'center',
             }}
           >
-            <StoreIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-            <Typography variant="h6" gutterBottom>
+            <StoreIcon sx={{ 
+              fontSize: 64, 
+              color: theme === 'dark' ? '#6B7280' : 'text.secondary', 
+              mb: 2 
+            }} />
+            <Typography 
+              variant="h6" 
+              gutterBottom
+              sx={{ color: theme === 'dark' ? '#E5E7EB' : 'text.primary' }}
+            >
               No plugins available in the store
             </Typography>
-            <Typography variant="body1" color="textSecondary" sx={{ mb: 3 }}>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: theme === 'dark' ? '#AEBEDF' : 'text.secondary',
+                mb: 3 
+              }}
+            >
               Check back later for new plugins or install from custom repositories.
             </Typography>
             <Button
@@ -588,12 +691,13 @@ const PluginManagement: React.FC = () => {
           </Box>
         ) : (
           <Grid container spacing={3}>
-            {availablePlugins.map(plugin => (
+            {(availablePlugins || []).map((plugin: any) => (
               <Grid item xs={12} md={6} lg={4} key={plugin.id}>
                 <Card
                   sx={{
-                    backgroundColor: theme === 'dark' ? '#1E293B' : undefined,
+                    backgroundColor: theme === 'dark' ? '#1E293B' : '#fff',
                     border: theme === 'dark' ? '1px solid #374151' : undefined,
+                    color: theme === 'dark' ? '#E5E7EB' : 'inherit',
                   }}
                 >
                   <CardContent>
@@ -605,7 +709,11 @@ const PluginManagement: React.FC = () => {
                         mb: 2,
                       }}
                     >
-                      <Typography variant="h6" component="h3">
+                      <Typography 
+                        variant="h6" 
+                        component="h3"
+                        sx={{ color: theme === 'dark' ? '#E5E7EB' : 'text.primary' }}
+                      >
                         {plugin.name}
                       </Typography>
                       <Box sx={{ display: 'flex', gap: 1 }}>
@@ -615,16 +723,18 @@ const PluginManagement: React.FC = () => {
                     </Box>
                     <Typography
                       variant="body2"
-                      color="textSecondary"
                       sx={{
                         mb: 2,
-                        color: theme === 'dark' ? '#AEBEDF' : undefined,
+                        color: theme === 'dark' ? '#AEBEDF' : 'text.secondary',
                       }}
                     >
                       {plugin.description}
                     </Typography>
                     <Box sx={{ mb: 1 }}>
-                      <Typography variant="caption" color="textSecondary">
+                      <Typography 
+                        variant="caption" 
+                        sx={{ color: theme === 'dark' ? '#9CA3AF' : 'text.secondary' }}
+                      >
                         Version: {plugin.version}
                       </Typography>
                     </Box>
@@ -670,15 +780,35 @@ const PluginManagement: React.FC = () => {
       </TabPanel>
 
       {/* Plugin Actions Menu */}
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+      <Menu 
+        anchorEl={anchorEl} 
+        open={Boolean(anchorEl)} 
+        onClose={handleMenuClose}
+        PaperProps={{
+          sx: {
+            backgroundColor: theme === 'dark' ? '#1E293B' : '#fff',
+            border: theme === 'dark' ? '1px solid #374151' : undefined,
+            color: theme === 'dark' ? '#E5E7EB' : 'inherit',
+          },
+        }}
+      >
         <MenuItem
           onClick={() => {
             if (selectedPlugin) handleCheckHealth(selectedPlugin);
             handleMenuClose();
           }}
+          sx={{
+            color: theme === 'dark' ? '#E5E7EB' : 'text.primary',
+            '&:hover': {
+              backgroundColor: theme === 'dark' ? '#374151' : 'action.hover',
+            },
+          }}
         >
           <ListItemIcon>
-            <HealthIcon fontSize="small" />
+            <HealthIcon 
+              fontSize="small" 
+              sx={{ color: theme === 'dark' ? '#E5E7EB' : 'text.primary' }}
+            />
           </ListItemIcon>
           <ListItemText>Check Health</ListItemText>
         </MenuItem>
@@ -693,16 +823,25 @@ const PluginManagement: React.FC = () => {
             }
             handleMenuClose();
           }}
+          sx={{
+            color: theme === 'dark' ? '#E5E7EB' : 'text.primary',
+            '&:hover': {
+              backgroundColor: theme === 'dark' ? '#374151' : 'action.hover',
+            },
+          }}
         >
           <ListItemIcon>
-            <ApiIcon fontSize="small" />
+            <ApiIcon 
+              fontSize="small" 
+              sx={{ color: theme === 'dark' ? '#E5E7EB' : 'text.primary' }}
+            />
           </ListItemIcon>
           <ListItemText>View Endpoints</ListItemText>
         </MenuItem>
         <MenuItem
           onClick={() => {
             if (selectedPlugin) {
-              const plugin = loadedPlugins.find(p => p.ID === selectedPlugin);
+              const plugin = loadedPlugins.find((p: PluginMetadata) => p.ID === selectedPlugin);
               if (plugin) {
                 const info = `Plugin: ${plugin.Name}\nID: ${plugin.ID}\nVersion: ${plugin.Version}\nAuthor: ${plugin.Author}\nDescription: ${plugin.Description}\nEndpoints: ${plugin.Endpoints.length}`;
                 alert(info);
@@ -710,9 +849,18 @@ const PluginManagement: React.FC = () => {
             }
             handleMenuClose();
           }}
+          sx={{
+            color: theme === 'dark' ? '#E5E7EB' : 'text.primary',
+            '&:hover': {
+              backgroundColor: theme === 'dark' ? '#374151' : 'action.hover',
+            },
+          }}
         >
           <ListItemIcon>
-            <InfoIcon fontSize="small" />
+            <InfoIcon 
+              fontSize="small" 
+              sx={{ color: theme === 'dark' ? '#E5E7EB' : 'text.primary' }}
+            />
           </ListItemIcon>
           <ListItemText>Plugin Info</ListItemText>
         </MenuItem>
@@ -726,14 +874,22 @@ const PluginManagement: React.FC = () => {
         fullWidth
         PaperProps={{
           sx: {
-            backgroundColor: theme === 'dark' ? '#1E293B' : undefined,
-            color: theme === 'dark' ? '#E5E7EB' : undefined,
+            backgroundColor: theme === 'dark' ? '#1E293B' : '#fff',
+            color: theme === 'dark' ? '#E5E7EB' : 'inherit',
           },
         }}
       >
-        <DialogTitle>Install Plugin from Repository</DialogTitle>
+        <DialogTitle sx={{ color: theme === 'dark' ? '#E5E7EB' : 'text.primary' }}>
+          Install Plugin from Repository
+        </DialogTitle>
         <DialogContent>
-          <Typography variant="body2" sx={{ mb: 2 }}>
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              mb: 2,
+              color: theme === 'dark' ? '#AEBEDF' : 'text.secondary'
+            }}
+          >
             Enter the GitHub repository URL to install and build a plugin automatically
           </Typography>
           <TextField
@@ -776,8 +932,8 @@ const PluginManagement: React.FC = () => {
         fullWidth
         PaperProps={{
           sx: {
-            backgroundColor: theme === 'dark' ? '#1E293B' : undefined,
-            color: theme === 'dark' ? '#E5E7EB' : undefined,
+            backgroundColor: theme === 'dark' ? '#1E293B' : '#fff',
+            color: theme === 'dark' ? '#E5E7EB' : 'inherit',
           },
         }}
       >

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -212,51 +212,54 @@ const ClusterManagement: React.FC = () => {
     }
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Memoize summary cards to prevent re-renders:
+  const summaryCards = useMemo(
+    () => [
+      {
+        title: 'Total Clusters',
+        value: summary.total,
+        icon: <ComputerIcon />,
+        color: 'primary',
+        bgColor: isDark ? '#1e293b' : '#f8fafc',
+      },
+      {
+        title: 'Ready',
+        value: summary.ready,
+        icon: <CheckCircle />,
+        color: 'success',
+        bgColor: isDark ? '#0f3a1e' : '#f0fdf4',
+      },
+      {
+        title: 'Pending',
+        value: summary.pending,
+        icon: <ScheduleIcon />,
+        color: 'warning',
+        bgColor: isDark ? '#3a2e0f' : '#fffbeb',
+      },
+      {
+        title: 'Failed',
+        value: summary.failed,
+        icon: <ErrorIcon />,
+        color: 'error',
+        bgColor: isDark ? '#3a0f0f' : '#fef2f2',
+      },
+      {
+        title: 'Detaching',
+        value: summary.detaching,
+        icon: <TimelineIcon />,
+        color: 'info',
+        bgColor: isDark ? '#0f1a3a' : '#f0f9ff',
+      },
+    ],
+    [summary, isDark]
+  );
+
+  const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setKubeconfigFile(file);
     }
-  };
-
-  // Enhanced status summary cards
-  const summaryCards = [
-    {
-      title: 'Total Clusters',
-      value: summary.total,
-      icon: <ComputerIcon />,
-      color: 'primary',
-      bgColor: isDark ? '#1e293b' : '#f8fafc',
-    },
-    {
-      title: 'Ready',
-      value: summary.ready,
-      icon: <CheckCircle />,
-      color: 'success',
-      bgColor: isDark ? '#0f3a1e' : '#f0fdf4',
-    },
-    {
-      title: 'Pending',
-      value: summary.pending,
-      icon: <ScheduleIcon />,
-      color: 'warning',
-      bgColor: isDark ? '#3a2e0f' : '#fffbeb',
-    },
-    {
-      title: 'Failed',
-      value: summary.failed,
-      icon: <ErrorIcon />,
-      color: 'error',
-      bgColor: isDark ? '#3a0f0f' : '#fef2f2',
-    },
-    {
-      title: 'Detaching',
-      value: summary.detaching,
-      icon: <TimelineIcon />,
-      color: 'info',
-      bgColor: isDark ? '#0f1a3a' : '#f0f9ff',
-    },
-  ];
+  }, []);
 
   // Show error state if there's an error and no data
   if (error && clusters.length === 0 && !loading) {
@@ -687,15 +690,16 @@ const ClusterManagement: React.FC = () => {
           }}
         >
           <DialogTitle
-            sx={{
-              borderBottom: isDark ? '1px solid rgba(255,255,255,0.1)' : undefined,
-              backgroundColor: isDark ? '#1F2937' : undefined,
-            }}
-          >
-            <Typography variant="h6" sx={{ color: isDark ? '#E5E7EB' : undefined }}>
-              Onboard New Cluster
-            </Typography>
-          </DialogTitle>
+           sx={{
+    borderBottom: isDark ? '1px solid rgba(255,255,255,0.1)' : undefined,
+    backgroundColor: isDark ? '#1F2937' : undefined,
+    color: isDark ? '#E5E7EB' : undefined, 
+    fontSize: '1.25rem',                    
+    fontWeight: 500,                       
+              }}
+        >
+  Onboard New Cluster
+</DialogTitle>
           <DialogContent sx={{ pt: 3 }}>
             <Box sx={{ mb: 3 }}>
               <Tabs

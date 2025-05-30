@@ -94,7 +94,7 @@ export const routesConfig: RouteObject[] = [
         ),
       },
       {
-        path: 'plugins/clusters', // Add this route
+        path: 'plugins/clusters',
         element: (
           <ProtectedRoute>
             <Suspense
