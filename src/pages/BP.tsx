@@ -43,6 +43,7 @@ import {
 } from '../components/BindingPolicy/styles/CreateBindingPolicyStyles';
 import { api } from '../lib/api';
 import BPSkeleton from '../components/ui/BPSkeleton';
+import toast from 'react-hot-toast';
 
 // Define EmptyState component outside of the BP component
 const EmptyState: React.FC<{
@@ -289,7 +290,7 @@ const BP = () => {
 
           if (!workload || !cluster) {
             console.error('Could not find workload or cluster');
-            setSuccessMessage('Error: Could not find workload or cluster');
+            toast.error('Error: Could not find workload or cluster');
             resolve();
             return;
           }
@@ -606,6 +607,11 @@ const BP = () => {
         setCreateDialogOpen(false);
       } catch (error) {
         console.error('Error creating binding policy:', error);
+        // Still close the dialog but show error message
+        setCreateDialogOpen(false);
+        toast.error(
+          `Error creating Binding Policy "${policyData.name}": ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
     },
     [createBindingPolicyMutation, setSuccessMessage, setCreateDialogOpen]
@@ -629,7 +635,7 @@ const BP = () => {
         setSuccessMessage(`Binding Policy "${updatedPolicy.name}" updated successfully`);
       } catch (error) {
         console.error('Error updating binding policy:', error);
-        setSuccessMessage(`Error updating binding policy "${updatedPolicy.name}"`);
+        toast.error(`Error updating binding policy "${updatedPolicy.name}"`);
       }
     },
     [setBindingPolicies, setEditDialogOpen, setSelectedPolicy, setSuccessMessage]
@@ -667,7 +673,7 @@ const BP = () => {
     try {
       // Verify we have policies selected
       if (selectedPolicies.length === 0) {
-        setSuccessMessage('No policies selected for deletion');
+        toast.error('No policies selected for deletion');
         return;
       }
 
@@ -682,7 +688,7 @@ const BP = () => {
           'Some selected policy names are invalid:',
           selectedPolicies.filter(name => !validPolicyNames.includes(name))
         );
-        setSuccessMessage('Error: Some selected policy names are invalid');
+        toast.error('Error: Some selected policy names are invalid');
         return;
       }
 
@@ -715,7 +721,7 @@ const BP = () => {
           current.filter(policy => !results.success.includes(policy.name))
         );
       } else {
-        setSuccessMessage(
+        toast.error(
           `Deleted ${results.success.length} policies, but failed to delete ${results.failures.length} policies`
         );
       }
@@ -727,7 +733,7 @@ const BP = () => {
       await deleteMultiplePoliciesMutation.mutateAsync([]);
     } catch (error) {
       console.error('Error deleting binding policies:', error);
-      setSuccessMessage(
+      toast.error(
         `Error deleting binding policies: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
