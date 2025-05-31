@@ -9,7 +9,6 @@ import {
   Typography,
 } from '@mui/material';
 import useTheme from '../../stores/themeStore'; // Import useTheme for dark mode support
-import CancelButton from '../common/CancelButton';
 import { getConfirmationDialogPaperProps } from '../../utils/dialogUtils';
 
 interface Props {
