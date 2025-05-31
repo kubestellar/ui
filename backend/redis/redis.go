@@ -302,6 +302,16 @@ func StoreBindingPolicy(policy *BindingPolicyCache) error {
 		return nil // Don't fail the operation if Redis is down
 	}
 
+	// Log YAML content before storing
+	if policy.RawYAML != "" {
+		log.LogDebug("Storing binding policy with YAML content",
+			zap.String("policyName", policy.Name),
+			zap.Int("yamlLength", len(policy.RawYAML)))
+	} else {
+		log.LogWarn("Storing binding policy without YAML content",
+			zap.String("policyName", policy.Name))
+	}
+
 	// Marshal the policy to JSON
 	jsonData, err := json.Marshal(policy)
 	if err != nil {
@@ -320,6 +330,7 @@ func StoreBindingPolicy(policy *BindingPolicyCache) error {
 		log.LogWarn("failed to set expiration for binding policy", zap.Error(err))
 	}
 
+	log.LogDebug("Successfully stored binding policy in Redis", zap.String("policyName", policy.Name))
 	return nil
 }
 
@@ -342,6 +353,16 @@ func GetBindingPolicy(name string) (*BindingPolicyCache, error) {
 		return nil, fmt.Errorf("failed to unmarshal binding policy: %v", err)
 	}
 
+	// Log YAML content after retrieving
+	if policy.RawYAML != "" {
+		log.LogDebug("Retrieved binding policy with YAML content",
+			zap.String("policyName", policy.Name),
+			zap.Int("yamlLength", len(policy.RawYAML)))
+	} else {
+		log.LogWarn("Retrieved binding policy without YAML content",
+			zap.String("policyName", policy.Name))
+	}
+
 	return &policy, nil
 }
 
@@ -362,14 +383,25 @@ func GetAllBindingPolicies() ([]*BindingPolicyCache, error) {
 	}
 
 	policies := make([]*BindingPolicyCache, 0, len(values))
+	yamlPolicyCount := 0
 	for _, val := range values {
 		var policy BindingPolicyCache
 		if err := json.Unmarshal([]byte(val), &policy); err != nil {
 			log.LogWarn("failed to unmarshal binding policy", zap.Error(err))
 			continue
 		}
+
+		// Count policies with YAML content
+		if policy.RawYAML != "" {
+			yamlPolicyCount++
+		}
+
 		policies = append(policies, &policy)
 	}
+
+	log.LogDebug("Retrieved all binding policies from Redis",
+		zap.Int("totalPolicies", len(policies)),
+		zap.Int("policiesWithYAML", yamlPolicyCount))
 
 	return policies, nil
 }
@@ -401,5 +433,12 @@ func DeleteAllBindingPolicies() error {
 	if err != nil {
 		return fmt.Errorf("failed to delete all binding policies from Redis: %v", err)
 	}
+
+	log.LogInfo("Cleared all binding policies from Redis cache")
 	return nil
+}
+
+// ClearBindingPolicyCache clears the entire binding policy cache
+func ClearBindingPolicyCache() error {
+	return DeleteAllBindingPolicies()
 }

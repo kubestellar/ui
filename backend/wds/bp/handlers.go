@@ -38,7 +38,7 @@ type WorkloadInfo struct {
 }
 
 // Global store for binding policies created via the UI
-var uiCreatedPolicies = make(map[string]*StoredBindingPolicy)
+var UICreatedPolicies = make(map[string]*StoredBindingPolicy)
 
 // BindingPolicyWithStatus adds status information to the BindingPolicy
 type BindingPolicyWithStatus struct {
@@ -60,9 +60,18 @@ func GetBindingPolicies(namespace string) ([]map[string]interface{}, error) {
 	if err != nil {
 		log.LogWarn("failed to get binding policies from Redis cache", zap.Error(err))
 	} else if cachedPolicies != nil && len(cachedPolicies) > 0 {
+		log.LogInfo("Using cached binding policies from Redis", zap.Int("count", len(cachedPolicies)))
 		// Convert cached policies to response format
 		responseArray := make([]map[string]interface{}, len(cachedPolicies))
 		for i, bpolicy := range cachedPolicies {
+			// Ensure YAML content is properly mapped
+			yamlContent := bpolicy.RawYAML
+			if yamlContent == "" {
+				log.LogWarn("Empty YAML content in cached policy", zap.String("policyName", bpolicy.Name))
+			} else {
+				log.LogDebug("Found YAML content in cached policy", zap.String("policyName", bpolicy.Name), zap.Int("yamlLength", len(yamlContent)))
+			}
+
 			responseArray[i] = map[string]interface{}{
 				"name":              bpolicy.Name,
 				"namespace":         bpolicy.Namespace,
@@ -75,7 +84,7 @@ func GetBindingPolicies(namespace string) ([]map[string]interface{}, error) {
 				"clustersCount":     len(bpolicy.Clusters),
 				"workloadsCount":    len(bpolicy.Workloads),
 				"creationTimestamp": bpolicy.CreationTimestamp,
-				"yaml":              bpolicy.RawYAML,
+				"yaml":              yamlContent, // Use the yamlContent variable to ensure proper mapping
 			}
 		}
 
@@ -128,6 +137,12 @@ func GetBindingPolicies(namespace string) ([]map[string]interface{}, error) {
 			status = "active"
 		}
 
+		log.LogDebug("Determined BP status from Kubernetes",
+			zap.String("policyName", bpList.Items[i].Name),
+			zap.String("status", status),
+			zap.Int64("generation", bpList.Items[i].ObjectMeta.Generation),
+			zap.Int64("observedGeneration", bpList.Items[i].Status.ObservedGeneration))
+
 		// Extract binding mode
 		bindingMode := "Downsync" // Default to Downsync since KubeStellar currently only supports Downsync
 
@@ -136,7 +151,7 @@ func GetBindingPolicies(namespace string) ([]map[string]interface{}, error) {
 
 		// Check if we have stored data for this policy that might have more details
 		policyName := bpList.Items[i].Name
-		storedBP, exists := uiCreatedPolicies[policyName]
+		storedBP, exists := UICreatedPolicies[policyName]
 
 		if exists {
 			log.LogDebug("GetAllBp - Found stored BP in memory with key", zap.String("key", policyName))
@@ -335,7 +350,7 @@ func GetBindingPolicies(namespace string) ([]map[string]interface{}, error) {
 		}
 		if _, exists := bpWithStatus.Annotations["yaml"]; !exists {
 			// Check if this is a quick connect policy by looking for the annotation
-			if storedBP, exists := uiCreatedPolicies[bpWithStatus.Name]; exists && storedBP.RawYAML != "" {
+			if storedBP, exists := UICreatedPolicies[bpWithStatus.Name]; exists && storedBP.RawYAML != "" {
 				// Use the original YAML for quick connect policies
 				bpWithStatus.Annotations["yaml"] = storedBP.RawYAML
 			} else {
@@ -492,7 +507,7 @@ func GetBindingPolicies(namespace string) ([]map[string]interface{}, error) {
 		}
 
 		// Check if this is a quick connect policy and use its original YAML
-		if storedBP, exists := uiCreatedPolicies[bp.Name]; exists && storedBP.RawYAML != "" {
+		if storedBP, exists := UICreatedPolicies[bp.Name]; exists && storedBP.RawYAML != "" {
 			policyMap["yaml"] = storedBP.RawYAML
 		} else {
 			policyMap["yaml"] = bp.Annotations["yaml"]
@@ -503,6 +518,18 @@ func GetBindingPolicies(namespace string) ([]map[string]interface{}, error) {
 
 	// After getting policies from Kubernetes, store them in Redis
 	for _, bp := range bpsWithStatus {
+		// Get the YAML content from annotations or stored policies
+		yamlContent := ""
+		if storedBP, exists := UICreatedPolicies[bp.Name]; exists && storedBP.RawYAML != "" {
+			yamlContent = storedBP.RawYAML
+			log.LogDebug("Using stored YAML for caching", zap.String("policyName", bp.Name), zap.Int("yamlLength", len(yamlContent)))
+		} else if bp.Annotations != nil && bp.Annotations["yaml"] != "" {
+			yamlContent = bp.Annotations["yaml"]
+			log.LogDebug("Using annotations YAML for caching", zap.String("policyName", bp.Name), zap.Int("yamlLength", len(yamlContent)))
+		} else {
+			log.LogWarn("No YAML content found for caching", zap.String("policyName", bp.Name))
+		}
+
 		cachedPolicy := &redis.BindingPolicyCache{
 			Name:              bp.Name,
 			Namespace:         bp.Namespace,
@@ -511,11 +538,14 @@ func GetBindingPolicies(namespace string) ([]map[string]interface{}, error) {
 			Clusters:          bp.Clusters,
 			Workloads:         bp.Workloads,
 			CreationTimestamp: bp.CreationTimestamp.Format(time.RFC3339),
-			RawYAML:           bp.Annotations["yaml"],
+			RawYAML:           yamlContent,
 		}
 
+		log.LogDebug("Caching binding policy", zap.String("policyName", bp.Name), zap.Int("yamlLength", len(yamlContent)))
 		if err := redis.StoreBindingPolicy(cachedPolicy); err != nil {
 			log.LogWarn("failed to cache binding policy", zap.Error(err))
+		} else {
+			log.LogDebug("Successfully cached binding policy", zap.String("policyName", bp.Name))
 		}
 	}
 
@@ -616,8 +646,11 @@ func CreateBp(ctx *gin.Context) {
 		RawYAML:           string(bpRawYamlBytes),
 	}
 
+	log.LogInfo("Storing binding policy in Redis cache", zap.String("policyName", bp.Name), zap.Int("yamlLength", len(string(bpRawYamlBytes))))
 	if err := redis.StoreBindingPolicy(cachedBPolicy); err != nil {
 		log.LogWarn("failed to cache new binding policy", zap.Error(err))
+	} else {
+		log.LogInfo("Successfully cached new binding policy", zap.String("policyName", bp.Name))
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("Created binding policy '%s' successfully", bp.Name)})
@@ -705,6 +738,16 @@ func GetBpStatus(ctx *gin.Context) {
 	if err != nil {
 		log.LogWarn("failed to get binding policy from Redis cache", zap.Error(err))
 	} else if cachedPolicy != nil {
+		log.LogInfo("Using cached binding policy from Redis", zap.String("policyName", name))
+
+		// Ensure YAML content is properly mapped
+		yamlContent := cachedPolicy.RawYAML
+		if yamlContent == "" {
+			log.LogWarn("Empty YAML content in cached policy", zap.String("policyName", name))
+		} else {
+			log.LogDebug("Found YAML content in cached policy", zap.String("policyName", name), zap.Int("yamlLength", len(yamlContent)))
+		}
+
 		ctx.JSON(http.StatusOK, gin.H{
 			"name":              cachedPolicy.Name,
 			"namespace":         cachedPolicy.Namespace,
@@ -716,7 +759,7 @@ func GetBpStatus(ctx *gin.Context) {
 			"clustersCount":     len(cachedPolicy.Clusters),
 			"workloadsCount":    len(cachedPolicy.Workloads),
 			"creationTimestamp": cachedPolicy.CreationTimestamp,
-			"yaml":              cachedPolicy.RawYAML,
+			"yaml":              yamlContent, // Use the yamlContent variable to ensure proper mapping
 		})
 		return
 	}
@@ -774,8 +817,8 @@ func GetBpStatus(ctx *gin.Context) {
 		log.LogDebug("GetBpStatus - Found BP with matching name in namespace", zap.String("namespace", bp.Namespace))
 	}
 
-	// Look for this binding policy in the uiCreatedPolicies map
-	storedBP, exists := uiCreatedPolicies[name]
+	// Look for this binding policy in the UICreatedPolicies map
+	storedBP, exists := UICreatedPolicies[name]
 	if exists {
 		log.LogDebug("GetBpStatus - Found stored BP in memory with key", zap.String("name", name))
 		// Debug the stored policy
@@ -1394,7 +1437,7 @@ func CreateBpFromJson(ctx *gin.Context) {
 	}
 
 	// Store policy before API call
-	uiCreatedPolicies[newBP.Name] = storedBP
+	UICreatedPolicies[newBP.Name] = storedBP
 	log.LogInfo("Stored policy in memory cache", zap.String("key", newBP.Name))
 
 	// Get client
@@ -1774,7 +1817,7 @@ func CreateQuickBindingPolicy(ctx *gin.Context) {
 		Namespace: namespace,
 		RawYAML:   rawYAML,
 	}
-	uiCreatedPolicies[policyName] = storedBP
+	UICreatedPolicies[policyName] = storedBP
 
 	// Get client and create the binding policy
 	c, err := getClientForBp()

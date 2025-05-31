@@ -666,6 +666,20 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
     }
   }, [selectedNode, groupPanel]);
 
+  // close panel with escape key
+  useEffect(() => {
+    function handleEsc(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        // Only close if a panel is open
+        if ((selectedNode && selectedNode.isOpen) || (groupPanel && groupPanel.isOpen)) {
+          handleClosePanel();
+        }
+      }
+    }
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [selectedNode, groupPanel, handleClosePanel]);
+
   const createNode = useCallback(
     (
       id: string,

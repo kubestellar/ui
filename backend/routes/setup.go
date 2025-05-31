@@ -23,4 +23,5 @@ func SetupRoutes(router *gin.Engine) {
 
 	setupAuthRoutes(router)
 	setupArtifactHubRoutes(router)
+	setupMetricsRoutes(router)
 }
