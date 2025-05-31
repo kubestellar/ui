@@ -4,7 +4,7 @@ import { Eye, EyeOff, Lock, User, Globe } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useLogin } from '../../hooks/queries/useLogin';
-import { decryptData, isEncrypted, migratePassword } from '../../utils/secureStorage';
+import { decryptData, isEncrypted, migratePassword, secureGet } from '../../utils/secureStorage';
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -28,8 +28,8 @@ const LoginForm = () => {
     // First attempt to migrate any old base64 passwords to the new encrypted format
     migratePassword().then(() => {
       const loadSavedCredentials = async () => {
-        const savedUsername = localStorage.getItem('rememberedUsername');
-        const savedPassword = localStorage.getItem('rememberedPassword');
+        const savedUsername = secureGet('rememberedUsername');
+        const savedPassword = secureGet('rememberedPassword');
 
         if (savedUsername && savedPassword) {
           try {
@@ -39,10 +39,11 @@ const LoginForm = () => {
               // This is an encrypted password using our new method
               passwordToUse = await decryptData(savedPassword);
             } else {
-              // Fallback for any passwords that weren't migrated
-              passwordToUse = atob(savedPassword);
-              // Store securely for next time
+              // This should never happen with the new secure storage
+              // But kept as a fallback just in case
+              console.warn('Unexpected unencrypted password found in secure storage');
               migratePassword();
+              return;
             }
 
             setUsername(savedUsername);
@@ -52,13 +53,20 @@ const LoginForm = () => {
               `[LoginForm] Loaded remembered credentials at ${performance.now() - renderStartTime.current}ms`
             );
           } catch (error) {
-            console.error(
-              `[LoginForm] Error decoding stored credentials at ${performance.now() - renderStartTime.current}ms:`,
-              error
-            );
-            // Remove invalid credentials
-            localStorage.removeItem('rememberedUsername');
-            localStorage.removeItem('rememberedPassword');
+            if (error instanceof Error && error.message === 'Credentials have expired') {
+              toast.error('Saved credentials have expired. Please log in again.');
+            } else if (
+              error instanceof Error &&
+              error.message === 'Too many decryption attempts. Please try again later.'
+            ) {
+              toast.error(error.message);
+            } else {
+              console.error(
+                `[LoginForm] Error with stored credentials at ${performance.now() - renderStartTime.current}ms`
+              );
+            }
+            // We don't need to manually remove credentials as the decryptData function
+            // will handle this for expired credentials
           }
         }
       };
