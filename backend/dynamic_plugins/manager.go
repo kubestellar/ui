@@ -24,7 +24,7 @@ type EnhancedPluginManager struct {
 	pluginDir       string
 	cacheDir        string
 	githubClient    *github.Client
-	validator       *PluginValidator
+	validator       PluginValidator
 	securityConfig  SecurityConfig
 	mutex           sync.RWMutex
 	healthChecker   *HealthChecker
