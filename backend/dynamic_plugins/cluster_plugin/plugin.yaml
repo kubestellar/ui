@@ -1,0 +1,108 @@
+id: kubestellar-cluster-manager
+name: KubeStellar Cluster Manager
+version: 1.0.0
+description: Comprehensive cluster onboarding and detachment operations for KubeStellar
+author: Priyanshu
+homepage: https://github.com/kubestellar/ui
+repository: https://github.com/kubestellar/ui
+license: Apache-2.0
+
+endpoints:
+  - path: /onboard
+    method: POST
+    handler: OnboardClusterHandler
+    description: Onboard a new cluster to KubeStellar
+    validation:
+      required: ['clusterName']
+      content_type: ['application/json', 'multipart/form-data']
+
+  - path: /detach
+    method: POST
+    handler: DetachClusterHandler
+    description: Detach a cluster from KubeStellar
+    validation:
+      required: ['clusterName']
+      content_type: ['application/json']
+
+  - path: /status
+    method: GET
+    handler: GetClusterStatusHandler
+    description: Get status of all managed clusters
+
+  - path: /status/:cluster
+    method: GET
+    handler: GetSingleClusterStatusHandler
+    description: Get status of a specific cluster
+
+  - path: /labels/:cluster
+    method: PATCH
+    handler: UpdateClusterLabelsHandler
+    description: Update labels for a managed cluster
+    validation:
+      required: ['contextName', 'clusterName', 'labels']
+      content_type: ['application/json']
+
+  - path: /validate
+    method: POST
+    handler: ValidateClusterHandler
+    description: Validate cluster connectivity
+    validation:
+      required: ['kubeconfig']
+      content_type: ['application/json']
+
+ui_components:
+  - name: cluster-onboarding
+    route: /clusters/onboard
+    component: ClusterOnboardingForm
+    title: Onboard Cluster
+    icon: plus-circle
+    description: Form for onboarding new clusters
+
+  - name: cluster-management
+    route: /clusters/manage
+    component: ClusterManagementPanel
+    title: Manage Clusters
+    icon: server
+    description: Panel for managing existing clusters
+
+  - name: cluster-status
+    route: /clusters/status
+    component: ClusterStatusDashboard
+    title: Cluster Status
+    icon: activity
+    description: Dashboard showing cluster status and health
+
+dependencies:
+  - k8s.io/client-go
+  - github.com/kubestellar/ui/k8s
+
+permissions:
+  - cluster.read
+  - cluster.write
+  - cluster.delete
+  - managedcluster.read
+  - managedcluster.write
+  - managedcluster.delete
+
+compatibility:
+  kubestellar: '>=0.21.0'
+  go: '>=1.19'
+  kubernetes: '>=1.24'
+
+configuration:
+  default_timeout: '10m'
+  auto_approve: true
+  its_context: 'its1'
+  enable_logging: true
+  max_concurrent_operations: 5
+
+security:
+  network_access: true
+  filesystem_access: false
+  sandboxed: false
+
+health:
+  enabled: true
+  endpoint: /health
+  interval_seconds: 30
+  timeout_seconds: 5
