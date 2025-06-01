@@ -22,6 +22,13 @@ func main() {
 	router.Use(ZapMiddleware())
 	log.Println("Debug: KubestellarUI application started")
 
+	// Initialize Enhanced Plugin System
+	if err := api.InitializePluginSystem(router); err != nil {
+		log.Printf("Warning: Failed to initialize plugin system: %v", err)
+	} else {
+		log.Printf("✅ Enhanced Plugin System initialized successfully")
+	}
+
 	// CORS Middleware
 	router.Use(func(c *gin.Context) {
 		origin := c.Request.Header.Get("Origin")

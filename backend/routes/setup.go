@@ -19,7 +19,12 @@ func SetupRoutes(router *gin.Engine) {
 	setupHelmRoutes(router)
 	setupGitHubRoutes(router)
 	setupDeploymentHistoryRoutes(router)
+
+	// Legacy plugin system
 	plugins.Pm.SetupPluginsRoutes(router)
+
+	// Enhanced dynamic plugin system
+	setupPluginRoutes(router)
 
 	setupAuthRoutes(router)
 	setupArtifactHubRoutes(router)
