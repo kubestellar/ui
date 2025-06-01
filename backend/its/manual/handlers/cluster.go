@@ -268,7 +268,7 @@ func GetKubeInfo() ([]ContextInfo, []string, string, error, []ManagedClusterInfo
 				log.Printf("Error creating REST config for context %s: %v", contextName, err)
 				continue
 			}
-			
+
 			// Use the utility function to configure TLS settings
 			restConfig = utils.ConfigureTLSInsecure(restConfig)
 

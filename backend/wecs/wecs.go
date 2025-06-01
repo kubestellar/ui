@@ -126,10 +126,10 @@ func getITSData() ([]handlers.ManagedClusterInfo, error) {
 				log.Printf("Error creating REST config for context %s: %v", contextName, err)
 				continue
 			}
-			
+
 			// Use the utility function to configure TLS settings
 			restConfig = utils.ConfigureTLSInsecure(restConfig)
-			
+
 			clientset, err := kubernetes.NewForConfig(restConfig)
 			if err != nil {
 				log.Printf("Error creating clientset for context %s: %v", contextName, err)

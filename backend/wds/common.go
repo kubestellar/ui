@@ -67,7 +67,7 @@ func GetClientSetKubeConfig() (*kubernetes.Clientset, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create restconfig")
 	}
-	
+
 	// Use the utility function to configure TLS settings
 	restConfig = utils.ConfigureTLSInsecure(restConfig)
 

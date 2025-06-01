@@ -12,4 +12,4 @@ func ConfigureTLSInsecure(config *rest.Config) *rest.Config {
 	config.TLSClientConfig.CAData = nil
 	config.TLSClientConfig.CAFile = ""
 	return config
-} 
+}

@@ -53,7 +53,7 @@ func GetClientSet() (*kubernetes.Clientset, dynamic.Interface, error) {
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create restconfig: %v", err)
 	}
-	
+
 	// Use the utility function to configure TLS settings
 	restConfig = utils.ConfigureTLSInsecure(restConfig)
 
@@ -102,7 +102,7 @@ func GetClientSetWithContext(contextName string) (*kubernetes.Clientset, dynamic
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create restconfig: %v", err)
 	}
-	
+
 	// Use the utility function to configure TLS settings
 	restConfig = utils.ConfigureTLSInsecure(restConfig)
 
@@ -150,7 +150,7 @@ func GetClientSetWithConfigContext(contextName string) (*kubernetes.Clientset, *
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create restconfig: %v", err)
 	}
-	
+
 	// Use the utility function to configure TLS settings
 	restConfig = utils.ConfigureTLSInsecure(restConfig)
 
