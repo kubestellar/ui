@@ -1,9 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Suspense, lazy, useEffect, useState } from 'react';
-import { Outlet, ScrollRestoration, useLocation } from 'react-router-dom';
+import { Outlet, ScrollRestoration, useLocation, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import useTheme from '../stores/themeStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import getThemeStyles from '../lib/theme-utils';
+import { toast } from 'react-hot-toast';
+import {PluginService} from '../services/pluginService';
 
 // Lazy load less critical components
 const Menu = lazy(() => import('./menu/Menu'));
@@ -62,6 +65,7 @@ export function Layout() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const themeStyles = getThemeStyles(isDark);
@@ -123,6 +127,52 @@ export function Layout() {
     expanded: { rotate: 0 },
     collapsed: { rotate: 180 },
   };
+
+  // Auto-install plugin handler
+  useEffect(() => {
+    const handleAutoInstall = async () => {
+      const urlParams = new URLSearchParams(location.search);
+      const installPluginUrl = urlParams.get('install-plugin');
+      
+      if (installPluginUrl) {
+        console.log('🔍 Auto-install detected:', installPluginUrl);
+        
+        try {
+          // Clear the URL parameter first
+          urlParams.delete('install-plugin');
+          const newUrl = `${location.pathname}${urlParams.toString() ? '?' + urlParams.toString() : ''}`;
+          navigate(newUrl, { replace: true });
+          
+          // Check authentication
+          const isAuthenticated = await PluginService.checkAuthentication();
+          if (!isAuthenticated) {
+            toast.error('Please log in to install plugins');
+            navigate('/login');
+            return;
+          }
+          
+          // Navigate to plugin management page
+          navigate('/plugins');
+          
+          // Show loading toast
+          const loadingToast = toast.loading(`Installing plugin from ${installPluginUrl}...`);
+          
+          // Auto-install the plugin
+          const result = await PluginService.autoInstallFromUrl(installPluginUrl);
+          
+          // Show success
+          toast.dismiss(loadingToast);
+          toast.success(`Plugin installed successfully: ${result.message || 'Installation completed'}`);
+          
+        } catch (error: any) {
+          console.error('❌ Auto-install error:', error);
+          toast.error(error.message || 'Plugin installation failed');
+        }
+      }
+    };
+
+    handleAutoInstall();
+  }, [location.search, location.pathname, navigate]); //  FIX: Added location.pathname
 
   return (
     <div

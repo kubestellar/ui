@@ -178,6 +178,57 @@ export class PluginService {
     return response.data;
   }
 
+  // Auto-install plugin from URL for one-click installation
+  static async autoInstallFromUrl(repoUrl: string): Promise<any> {
+    console.log('🚀 PluginService.autoInstallFromUrl:', {
+      repoUrl,
+      tokenExists: !!localStorage.getItem('jwtToken'),
+    });
+
+    try {
+      const response = await api.get(`/api/plugins/auto-install?repo=${encodeURIComponent(repoUrl)}`);
+      console.log('✅ Auto-install success:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Auto-install failed:', {
+        error: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+
+      // Handle specific authentication errors
+      if (error.response?.status === 401) {
+        throw new Error('Authentication required. Please log in to install plugins.');
+      } else if (error.response?.status === 403) {
+        throw new Error('You don\'t have permission to install plugins. Write access required.');
+      } else if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      } else {
+        throw new Error(`Plugin installation failed: ${error.message}`);
+      }
+    }
+  }
+
+  //  ADD: Check if user is authenticated
+  static async checkAuthentication(): Promise<boolean> {
+    try {
+      const token = localStorage.getItem('jwtToken');
+      if (!token) {
+        return false;
+      }
+
+      // Try to make an authenticated request
+      await api.get('/api/plugins');
+      return true;
+    } catch (error: any) {
+      console.log('❌ Authentication check failed:', error.response?.status);
+      if (error.response?.status === 401) {
+        localStorage.removeItem('jwtToken');
+      }
+      return false;
+    }
+  }
+
   // PLUGIN API INTERACTION
 
   static async callPluginEndpoint(

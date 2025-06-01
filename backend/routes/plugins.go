@@ -5,12 +5,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/api"
+	"github.com/kubestellar/ui/middleware"
 )
 
 // SetupPluginRoutes sets up the plugin management API endpoints
 func SetupPluginRoutes(router *gin.Engine) {
 	// Core plugin management routes
 	pluginGroup := router.Group("/api/plugins")
+	pluginGroup.Use(middleware.AuthenticateMiddleware())
 	{
 		pluginGroup.POST("/load", api.LoadPluginFromGitHubHandler)
 		pluginGroup.GET("", api.ListPluginsHandler)
@@ -18,10 +20,14 @@ func SetupPluginRoutes(router *gin.Engine) {
 		pluginGroup.GET("/:id", api.GetPluginHandler)
 		pluginGroup.DELETE("/:id", api.UnloadPluginHandler)
 		pluginGroup.GET("/:id/health", api.GetPluginHealthHandler)
+
+		//  ADD: Auto-install endpoint for one-click installation
+		pluginGroup.GET("/auto-install", api.AutoInstallPluginHandler)
 	}
 
 	// Local Plugin Testing Routes
 	localGroup := router.Group("/api/plugins/local")
+	localGroup.Use(middleware.AuthenticateMiddleware())
 	{
 		localGroup.POST("/load", api.LoadLocalPluginHandler)
 		localGroup.POST("/unload", api.UnloadLocalPluginHandler)
@@ -31,6 +37,7 @@ func SetupPluginRoutes(router *gin.Engine) {
 
 	// GitHub Repository Plugin Routes
 	githubGroup := router.Group("/api/plugins/github")
+	githubGroup.Use(middleware.AuthenticateMiddleware())
 	{
 		githubGroup.POST("/install", api.InstallGitHubRepositoryHandler)
 		githubGroup.POST("/update", api.UpdateGitHubRepositoryHandler)
@@ -38,6 +45,7 @@ func SetupPluginRoutes(router *gin.Engine) {
 
 	// Plugin endpoint proxy
 	pluginEndpointGroup := router.Group("/api/plugin-endpoints")
+	pluginEndpointGroup.Use(middleware.AuthenticateMiddleware())
 	{
 		pluginEndpointGroup.Any("/:pluginId/*endpoint", api.CallPluginEndpointHandler)
 	}
@@ -49,6 +57,7 @@ func SetupPluginRoutes(router *gin.Engine) {
 	log.Println("  DELETE /api/plugins/:id                     - Unload plugin")
 	log.Println("  GET    /api/plugins/:id/health              - Check plugin health")
 	log.Println("  GET    /api/plugins/discover                - Discover available plugins")
+	log.Println("  GET    /api/plugins/auto-install            - Auto-install from URL param")
 	log.Println("  ANY    /api/plugin-endpoints/:pluginId/*   - Call plugin endpoints")
 
 	log.Println("\nLocal Plugin Testing routes:")

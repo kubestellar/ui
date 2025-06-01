@@ -16,7 +16,7 @@ export const useCSRStatus = (clusterName: string) => {
         setLoading(false);
       },
       errorMessage => {
-        // ✅ Fix: Pass error callback
+        //  Fix: Pass error callback
         setError(errorMessage);
         setLoading(false);
       }

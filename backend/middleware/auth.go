@@ -94,3 +94,38 @@ func RequirePermission(permission string) gin.HandlerFunc {
 func RequireAdmin() gin.HandlerFunc {
 	return RequirePermission("admin")
 }
+
+// RequireWrite middleware checks if the user has write permissions
+func RequireWrite() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		permissionsInterface, exists := c.Get("permissions")
+		if !exists {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Authorization required"})
+			c.Abort()
+			return
+		}
+
+		permissions, ok := permissionsInterface.([]string)
+		if !ok {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid permission format"})
+			c.Abort()
+			return
+		}
+
+		hasWritePermission := false
+		for _, p := range permissions {
+			if p == "write" || p == "admin" {
+				hasWritePermission = true
+				break
+			}
+		}
+
+		if !hasWritePermission {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Write permission required"})
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}

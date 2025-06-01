@@ -1,8 +1,12 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
+	"runtime"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/dynamic_plugins"
@@ -10,8 +14,9 @@ import (
 )
 
 var (
-	pluginManager *dynamic_plugins.PluginManager
-	logger        *zap.Logger
+	pluginOperationMutex sync.Mutex
+	pluginManager       *dynamic_plugins.PluginManager
+	logger              *zap.Logger
 )
 
 // InitializePluginHandlers sets up the plugin manager and logger
@@ -39,7 +44,8 @@ func LoadPluginFromGitHubHandler(c *gin.Context) {
 		zap.String("repoUrl", req.RepoURL),
 		zap.String("version", req.Version))
 
-	if err := pluginManager.LoadPluginFromGitHub(req.RepoURL); err != nil {
+	//  CHANGE: Use safe loading instead of direct call
+	if err := safeLoadPluginFromGitHub(req.RepoURL); err != nil {
 		logger.Error("Failed to load plugin",
 			zap.String("repoUrl", req.RepoURL),
 			zap.Error(err))
@@ -432,4 +438,152 @@ func UpdateGitHubRepositoryHandler(c *gin.Context) {
 		"unloadedPlugins": unloadedPlugins,
 		"action":          "unload_and_reload",
 	})
+}
+
+func AutoInstallPluginHandler(c *gin.Context) {
+	repoUrl := c.Query("repo")
+	if repoUrl == "" {
+		logger.Error("Auto-install request missing repo parameter")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Missing 'repo' parameter",
+		})
+		return
+	}
+
+	logger.Info("Auto-install request received", zap.String("repoUrl", repoUrl))
+
+	permissions, exists := c.Get("permissions")
+	if !exists {
+		logger.Error("Auto-install request missing permissions")
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "Authorization required",
+		})
+		return
+	}
+
+	userPermissions, ok := permissions.([]string)
+	if !ok {
+		logger.Error("Auto-install request invalid permission format")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Invalid permission format",
+		})
+		return
+	}
+
+	hasWritePermission := false
+	for _, p := range userPermissions {
+		if p == "write" || p == "admin" {
+			hasWritePermission = true
+			break
+		}
+	}
+
+	if !hasWritePermission {
+		logger.Error("Auto-install request insufficient permissions",
+			zap.Strings("userPermissions", userPermissions))
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "Write permission required to install plugins",
+		})
+		return
+	}
+
+	logger.Info("Auto-installing plugin from GitHub", zap.String("repoUrl", repoUrl))
+
+	if err := safeLoadPluginFromGitHub(repoUrl); err != nil {
+		
+		if strings.Contains(err.Error(), "already loaded") {
+			logger.Info("Plugin was already loaded, returning success", zap.String("repoUrl", repoUrl))
+			c.JSON(http.StatusOK, gin.H{
+				"message": "Plugin is already installed and running",
+				"type":    "already-loaded",
+				"repoUrl": repoUrl,
+			})
+			return
+		}
+
+		logger.Error("Failed to auto-install plugin",
+			zap.String("repoUrl", repoUrl),
+			zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to auto-install plugin",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	logger.Info("Plugin auto-installation completed successfully", zap.String("repoUrl", repoUrl))
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Plugin auto-installation completed successfully",
+		"type":    "newly-installed",
+		"repoUrl": repoUrl,
+	})
+}
+
+//  ADD: Safe plugin loading function with mutex and recovery
+func safeLoadPluginFromGitHub(repoUrl string) (err error) {
+	// Use mutex to prevent concurrent plugin operations
+	pluginOperationMutex.Lock()
+	defer pluginOperationMutex.Unlock()
+
+	// Add panic recovery to prevent server crash
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("plugin loading panic: %v", r)
+			logger.Error("Plugin loading panic recovered",
+				zap.String("repoUrl", repoUrl),
+				zap.Any("panic", r))
+
+			// Force garbage collection to clean up any leaked memory
+			runtime.GC()
+		}
+	}()
+
+	logger.Info("Starting safe plugin loading",
+		zap.String("repoUrl", repoUrl))
+
+	// Check memory before loading
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	logger.Info("Memory before plugin loading",
+		zap.Uint64("allocMB", m.Alloc/1024/1024),
+		zap.Uint64("sysMB", m.Sys/1024/1024))
+
+	// Set a timeout for plugin loading
+	done := make(chan error, 1)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				done <- fmt.Errorf("plugin loading goroutine panic: %v", r)
+			}
+		}()
+
+		// Call the actual plugin loading
+		done <- pluginManager.LoadPluginFromGitHub(repoUrl)
+	}()
+
+	// Wait for completion or timeout
+	select {
+	case err := <-done:
+		// Check memory after loading
+		runtime.ReadMemStats(&m)
+		logger.Info("Memory after plugin loading",
+			zap.Uint64("allocMB", m.Alloc/1024/1024),
+			zap.Uint64("sysMB", m.Sys/1024/1024))
+
+		if err != nil {
+			logger.Error("Plugin loading failed",
+				zap.String("repoUrl", repoUrl),
+				zap.Error(err))
+			return err
+		}
+
+		logger.Info("Plugin loaded successfully",
+			zap.String("repoUrl", repoUrl))
+		return nil
+
+	case <-time.After(2 * time.Minute):
+		logger.Error("Plugin loading timeout",
+			zap.String("repoUrl", repoUrl))
+		return fmt.Errorf("plugin loading timeout after 2 minutes")
+	}
 }

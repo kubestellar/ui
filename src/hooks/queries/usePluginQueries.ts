@@ -136,7 +136,7 @@ export const usePluginQueries = () => {
     return useMutation({
       mutationFn: (request: GitHubInstallRequest) => PluginService.installGitHubRepository(request),
       onSuccess: (data: any) => {
-        // ✅ FIXED: Added type assertion
+        //  FIXED: Added type assertion
         queryClient.invalidateQueries({ queryKey: ['plugins'] });
         toast.success(`Repository installed successfully: ${data.repoUrl || 'repository'}`);
       },
@@ -151,7 +151,7 @@ export const usePluginQueries = () => {
     return useMutation({
       mutationFn: (request: GitHubUpdateRequest) => PluginService.updateGitHubRepository(request),
       onSuccess: (data: any) => {
-        // ✅ FIXED: Added type assertion
+        //  FIXED: Added type assertion
         queryClient.invalidateQueries({ queryKey: ['plugins'] });
         toast.success(`Repository updated successfully: ${data.repoUrl || 'repository'}`);
       },
@@ -184,7 +184,7 @@ export const usePluginQueries = () => {
       mutationFn: (request: { pluginId: string }) =>
         PluginService.unloadLocalPlugin(request.pluginId),
       onSuccess: (data: any) => {
-        // ✅ FIXED: Added type assertion
+        //  FIXED: Added type assertion
         queryClient.invalidateQueries({ queryKey: ['plugins'] });
         queryClient.invalidateQueries({ queryKey: ['local-plugins'] });
         queryClient.removeQueries({ queryKey: ['plugin-details', data.pluginId] });

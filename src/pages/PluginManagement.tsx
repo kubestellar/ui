@@ -148,6 +148,28 @@ const PluginManagement: React.FC = () => {
     }
   }, [loadedPlugins]);
 
+ 
+  useEffect(() => {
+    // Handle auto-install success - detect if user came from auto-install
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromAutoInstall = urlParams.get('from-auto-install');
+    
+    if (fromAutoInstall === 'true') {
+      
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+      
+      
+      toast.success('🎉 Plugin installed successfully via one-click install!');
+      setSuccessMessage('Plugin installed successfully via one-click install!');
+      
+   
+      refetchPlugins();
+      
+      console.log('🎉 Auto-install completed, refreshing plugins list');
+    }
+  }, [refetchPlugins]);
+
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };

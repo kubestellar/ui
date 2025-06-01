@@ -233,8 +233,7 @@ const PluginDetails: React.FC<PluginDetailsProps> = ({
                       {endpoint.Handler}
                     </TableCell>
                     <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-                      /api/plugins/{plugin.ID}
-                      {endpoint.Path}
+                     /api/plugin-endpoints/{plugin.ID}{endpoint.Path}
                     </TableCell>
                   </TableRow>
                 ))}
