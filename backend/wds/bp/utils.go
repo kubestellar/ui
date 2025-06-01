@@ -14,6 +14,7 @@ import (
 	bpv1alpha1 "github.com/kubestellar/kubestellar/pkg/generated/clientset/versioned/typed/control/v1alpha1"
 	"github.com/kubestellar/ui/log"
 	"github.com/kubestellar/ui/redis"
+	"github.com/kubestellar/ui/utils"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -98,6 +99,9 @@ func getClientForBp() (*bpv1alpha1.ControlV1alpha1Client, error) {
 		log.LogError("Failed to get rest config", zap.String("error", err.Error()))
 		return nil, err
 	}
+	
+	// Use the utility function to configure TLS settings
+	restcnfg = utils.ConfigureTLSInsecure(restcnfg)
 
 	// Create client
 	c, err := bpv1alpha1.NewForConfig(restcnfg)
@@ -170,6 +174,9 @@ func extractWorkloads(bp *v1alpha1.BindingPolicy) []string {
 		log.LogError("failed to load kubeconfig for context 'wds1'", zap.Error(err))
 		return workloads // Return an empty list of workloads on failure
 	}
+	
+	// Use the utility function to configure TLS settings
+	config = utils.ConfigureTLSInsecure(config)
 
 	// Create dynamic client
 	dynClient, err := dynamic.NewForConfig(config)

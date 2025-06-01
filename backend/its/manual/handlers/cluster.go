@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kubestellar/ui/utils"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -90,6 +91,9 @@ func GetITSInfo() ([]ManagedClusterInfo, error) {
 			log.Printf("Skipping context %s: %v", contextName, err)
 			continue
 		}
+
+		// Use the utility function to configure TLS settings
+		restConfig = utils.ConfigureTLSInsecure(restConfig)
 
 		clientset, err := kubernetes.NewForConfig(restConfig)
 		if err != nil {
@@ -264,6 +268,10 @@ func GetKubeInfo() ([]ContextInfo, []string, string, error, []ManagedClusterInfo
 				log.Printf("Error creating REST config for context %s: %v", contextName, err)
 				continue
 			}
+			
+			// Use the utility function to configure TLS settings
+			restConfig = utils.ConfigureTLSInsecure(restConfig)
+
 			clientset, err := kubernetes.NewForConfig(restConfig)
 			if err != nil {
 				log.Printf("Error creating clientset for context %s: %v", contextName, err)

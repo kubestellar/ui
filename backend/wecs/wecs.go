@@ -19,6 +19,7 @@ import (
 	"github.com/kubestellar/ui/its/manual/handlers"
 	"github.com/kubestellar/ui/k8s"
 	"github.com/kubestellar/ui/redis"
+	"github.com/kubestellar/ui/utils"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
@@ -125,6 +126,10 @@ func getITSData() ([]handlers.ManagedClusterInfo, error) {
 				log.Printf("Error creating REST config for context %s: %v", contextName, err)
 				continue
 			}
+			
+			// Use the utility function to configure TLS settings
+			restConfig = utils.ConfigureTLSInsecure(restConfig)
+			
 			clientset, err := kubernetes.NewForConfig(restConfig)
 			if err != nil {
 				log.Printf("Error creating clientset for context %s: %v", contextName, err)

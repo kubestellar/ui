@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/kubestellar/ui/utils"
 	"k8s.io/client-go/rest"
 
 	"k8s.io/client-go/dynamic"
@@ -34,7 +35,7 @@ func GetClientSet() (*kubernetes.Clientset, dynamic.Interface, error) {
 		return nil, nil, fmt.Errorf("failed to load kubeconfig: %v", err)
 	}
 
-	// Use WDS1 context specifically
+	// Check if context "wds1" exists
 	ctxContext := config.Contexts["wds1"]
 	if ctxContext == nil {
 		return nil, nil, fmt.Errorf("failed to find context 'wds1'")
@@ -52,6 +53,9 @@ func GetClientSet() (*kubernetes.Clientset, dynamic.Interface, error) {
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create restconfig: %v", err)
 	}
+	
+	// Use the utility function to configure TLS settings
+	restConfig = utils.ConfigureTLSInsecure(restConfig)
 
 	clientset, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
@@ -98,6 +102,9 @@ func GetClientSetWithContext(contextName string) (*kubernetes.Clientset, dynamic
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create restconfig: %v", err)
 	}
+	
+	// Use the utility function to configure TLS settings
+	restConfig = utils.ConfigureTLSInsecure(restConfig)
 
 	clientset, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
@@ -143,6 +150,9 @@ func GetClientSetWithConfigContext(contextName string) (*kubernetes.Clientset, *
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create restconfig: %v", err)
 	}
+	
+	// Use the utility function to configure TLS settings
+	restConfig = utils.ConfigureTLSInsecure(restConfig)
 
 	clientset, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {

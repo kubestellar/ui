@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/kubestellar/ui/utils"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -66,6 +67,9 @@ func GetClientSetKubeConfig() (*kubernetes.Clientset, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create restconfig")
 	}
+	
+	// Use the utility function to configure TLS settings
+	restConfig = utils.ConfigureTLSInsecure(restConfig)
 
 	clientset, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
