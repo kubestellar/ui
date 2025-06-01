@@ -186,7 +186,9 @@ export class PluginService {
     });
 
     try {
-      const response = await api.get(`/api/plugins/auto-install?repo=${encodeURIComponent(repoUrl)}`);
+      const response = await api.get(
+        `/api/plugins/auto-install?repo=${encodeURIComponent(repoUrl)}`
+      );
       console.log('✅ Auto-install success:', response.data);
       return response.data;
     } catch (error: any) {
@@ -200,7 +202,7 @@ export class PluginService {
       if (error.response?.status === 401) {
         throw new Error('Authentication required. Please log in to install plugins.');
       } else if (error.response?.status === 403) {
-        throw new Error('You don\'t have permission to install plugins. Write access required.');
+        throw new Error("You don't have permission to install plugins. Write access required.");
       } else if (error.response?.data?.error) {
         throw new Error(error.response.data.error);
       } else {

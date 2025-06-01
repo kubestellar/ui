@@ -15,8 +15,8 @@ import (
 
 var (
 	pluginOperationMutex sync.Mutex
-	pluginManager       *dynamic_plugins.PluginManager
-	logger              *zap.Logger
+	pluginManager        *dynamic_plugins.PluginManager
+	logger               *zap.Logger
 )
 
 // InitializePluginHandlers sets up the plugin manager and logger
@@ -490,7 +490,7 @@ func AutoInstallPluginHandler(c *gin.Context) {
 	logger.Info("Auto-installing plugin from GitHub", zap.String("repoUrl", repoUrl))
 
 	if err := safeLoadPluginFromGitHub(repoUrl); err != nil {
-		
+
 		if strings.Contains(err.Error(), "already loaded") {
 			logger.Info("Plugin was already loaded, returning success", zap.String("repoUrl", repoUrl))
 			c.JSON(http.StatusOK, gin.H{
@@ -519,7 +519,7 @@ func AutoInstallPluginHandler(c *gin.Context) {
 	})
 }
 
-//  ADD: Safe plugin loading function with mutex and recovery
+// ADD: Safe plugin loading function with mutex and recovery
 func safeLoadPluginFromGitHub(repoUrl string) (err error) {
 	// Use mutex to prevent concurrent plugin operations
 	pluginOperationMutex.Lock()
