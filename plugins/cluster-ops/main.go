@@ -13,7 +13,7 @@ func (p *ClusterOpsPlugin) GetMetadata() dynamic_plugins.PluginMetadata {
 	return p.metadata
 }
 
-func (p *ClusterOpsPlugin) Initialize() error {
+func (p *ClusterOpsPlugin) Initialize(config map[string]interface{}) error {
 	return nil
 }
 
@@ -33,20 +33,29 @@ func (p *ClusterOpsPlugin) Validate() error {
 	return nil
 }
 
+func (p *ClusterOpsPlugin) Health() error {
+	return nil
+}
+
 func (p *ClusterOpsPlugin) GetStatus() dynamic_plugins.PluginStatus {
 	return dynamic_plugins.PluginStatus{
-		Health:      "healthy",
-		LastUpdated: "2024-06-02T15:33:00Z",
-		Message:     "Plugin is running",
+		State:        dynamic_plugins.StateLoaded,
+		Health:       dynamic_plugins.HealthHealthy,
+		LastCheck:    "2024-06-02T15:33:00Z",
+		RequestCount: 0,
 	}
 }
 
-func (p *ClusterOpsPlugin) HandleError(error) {
-	// Handle errors
+func (p *ClusterOpsPlugin) HandleError(err error) dynamic_plugins.PluginError {
+	return dynamic_plugins.PluginError{
+		Code:      "RUNTIME_ERROR",
+		Message:   err.Error(),
+		Timestamp: "2024-06-02T15:33:00Z",
+	}
 }
 
-func (p *ClusterOpsPlugin) OnConfigChange(map[string]interface{}) {
-	// Handle config changes
+func (p *ClusterOpsPlugin) OnConfigChange(config map[string]interface{}) error {
+	return nil
 }
 
 func (p *ClusterOpsPlugin) GetMetrics() map[string]interface{} {
@@ -60,7 +69,7 @@ func (p *ClusterOpsPlugin) GetPermissions() []string {
 	return []string{"cluster.read", "cluster.write"}
 }
 
-func (p *ClusterOpsPlugin) ValidateRequest(*gin.Context) error {
+func (p *ClusterOpsPlugin) ValidateRequest(c *gin.Context) error {
 	return nil
 }
 

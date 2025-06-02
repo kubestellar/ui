@@ -58,6 +58,7 @@ func main() {
 	routes.SetupRoutes(router)
 	router.POST("api/webhook", api.GitHubWebhookHandler)
 
+	log.Println("Server starting on :4000 with dynamic plugin support enabled")
 	if err := router.Run(":4000"); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}

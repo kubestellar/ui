@@ -172,11 +172,10 @@ const PluginStore: React.FC = () => {
   const handleFolderUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      // Check if it's a zip file
       const file = files[0];
       if (file.name.endsWith('.zip')) {
         setSelectedFiles(files);
-        toast.success(`Selected folder: ${file.name}`);
+        toast.success(`Selected ZIP file: ${file.name}`);
       } else {
         toast.error('Please select a ZIP file containing the plugin folder');
       }
@@ -185,51 +184,33 @@ const PluginStore: React.FC = () => {
 
   const handleInstallFromFile = async () => {
     if (!selectedFiles || selectedFiles.length === 0) {
-      toast.error('Please select plugin files to upload');
+      toast.error('Please select a ZIP file to upload');
       return;
     }
 
     try {
       const file = selectedFiles[0];
 
-      // If it's a ZIP file, treat it as a folder upload
-      if (file.name.endsWith('.zip')) {
-        const uploadResult = await PluginService.uploadPluginZip(file);
+      if (!file.name.endsWith('.zip')) {
+        toast.error('Please select a ZIP file containing the plugin folder');
+        return;
+      }
 
-        if (uploadResult.validation?.valid) {
-          await PluginService.installUploadedPlugin(uploadResult.upload_id);
-          toast.success('Plugin installed successfully from ZIP!');
-        } else {
-          toast.error(`Upload validation failed: ${uploadResult.validation?.errors?.join(', ')}`);
-        }
+      const uploadResult = await PluginService.uploadPluginZip(file);
+
+      if (uploadResult.validation?.valid) {
+        await PluginService.installUploadedPlugin(uploadResult.upload_id);
+        toast.success('Plugin installed successfully from ZIP!');
       } else {
-        // Handle individual files (existing logic)
-        const fileNames = Array.from(selectedFiles).map(file => file.name);
-        const hasManifest = fileNames.some(
-          name => name.includes('plugin.yaml') || name.includes('plugin.yml')
-        );
-        const hasBinary = fileNames.some(name => name.includes('.so') || name.includes('.dll'));
-
-        if (!hasManifest) {
-          toast.error('Plugin manifest file (plugin.yaml) is required');
-          return;
-        }
-
-        if (!hasBinary) {
-          toast.error('Plugin binary file (.so) is required');
-          return;
-        }
-
-        // For individual files, this would need a different endpoint
-        toast.error('Individual file upload not yet implemented. Please use ZIP files.');
+        toast.error(`Upload validation failed: ${uploadResult.validation?.errors?.join(', ')}`);
       }
 
       setSelectedFiles(null);
       setShowFileUpload(false);
       setShowCustomForm(false);
     } catch (error) {
-      console.error('Failed to install plugin from files:', error);
-      toast.error('Failed to install plugin from files');
+      console.error('Failed to install plugin from ZIP:', error);
+      toast.error('Failed to install plugin from ZIP');
     }
   };
 

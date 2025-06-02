@@ -2,12 +2,17 @@ package services
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/dynamic_plugins"
+	"gopkg.in/yaml.v3"
 )
 
 // EnhancedPluginService provides high-level plugin management operations
@@ -170,9 +175,213 @@ func (eps *EnhancedPluginService) LoadPlugin(source, version string) error {
 		// Local plugin file
 		manifestPath := strings.Replace(source, ".so", ".yaml", 1)
 		return eps.Manager.LoadPluginFromFile(source, manifestPath)
+	} else if strings.HasPrefix(source, "local:") {
+		// Local directory path
+		dirPath := strings.TrimPrefix(source, "local:")
+		return eps.LoadPluginFromDirectory(dirPath)
 	} else {
 		return fmt.Errorf("unsupported plugin source: %s", source)
 	}
+}
+
+// LoadPluginFromDirectory loads a plugin from a local directory
+func (eps *EnhancedPluginService) LoadPluginFromDirectory(dirPath string) error {
+	if !eps.initialized {
+		return fmt.Errorf("service not initialized")
+	}
+
+	log.Printf("📁 Loading plugin from directory: %s", dirPath)
+
+	// Check if directory exists
+	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
+		return fmt.Errorf("plugin directory does not exist: %s", dirPath)
+	}
+
+	// Check for required files
+	manifestPath := fmt.Sprintf("%s/plugin.yaml", dirPath)
+	mainGoPath := fmt.Sprintf("%s/main.go", dirPath)
+
+	if _, err := os.Stat(manifestPath); os.IsNotExist(err) {
+		return fmt.Errorf("plugin.yaml not found in directory: %s", dirPath)
+	}
+
+	if _, err := os.Stat(mainGoPath); os.IsNotExist(err) {
+		return fmt.Errorf("main.go not found in directory: %s", dirPath)
+	}
+
+	// Read and validate manifest
+	manifestData, err := os.ReadFile(manifestPath)
+	if err != nil {
+		return fmt.Errorf("failed to read manifest: %w", err)
+	}
+
+	var manifest dynamic_plugins.PluginMetadata
+	if err := yaml.Unmarshal(manifestData, &manifest); err != nil {
+		return fmt.Errorf("failed to parse manifest: %w", err)
+	}
+
+	// Basic manifest validation (skip file validation since we're building locally)
+	if manifest.ID == "" {
+		return fmt.Errorf("plugin ID is required in manifest")
+	}
+	if manifest.Name == "" {
+		return fmt.Errorf("plugin name is required in manifest")
+	}
+	if manifest.Version == "" {
+		return fmt.Errorf("plugin version is required in manifest")
+	}
+
+	// Check if plugin already exists
+	if _, exists := eps.Manager.GetPlugin(manifest.ID); exists {
+		return fmt.Errorf("plugin %s is already loaded", manifest.ID)
+	}
+
+	// Build plugin directly from directory
+	outputPath := fmt.Sprintf("%s/%s.so", eps.Config.CacheDir, manifest.ID)
+	absOutputPath, err := filepath.Abs(outputPath)
+	if err != nil {
+		return fmt.Errorf("failed to get absolute path: %w", err)
+	}
+
+	// Setup build environment in the plugin directory
+	if err := eps.setupLocalBuildEnvironment(dirPath); err != nil {
+		return fmt.Errorf("failed to setup build environment: %w", err)
+	}
+
+	// Build plugin
+	buildCmd := exec.Command("go", "build", "-buildmode=plugin", "-ldflags=-w -s", "-o", absOutputPath, "main.go")
+	buildCmd.Dir = dirPath
+	buildCmd.Env = append([]string{
+		"CGO_ENABLED=1",
+		"GOOS=" + runtime.GOOS,
+		"GOARCH=" + runtime.GOARCH,
+		"GO111MODULE=on",
+	}, os.Environ()...)
+
+	if output, err := buildCmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("build failed: %w\nOutput: %s", err, string(output))
+	}
+
+	log.Printf("✅ Plugin built successfully: %s", absOutputPath)
+
+	// Load the built plugin
+	return eps.Manager.LoadPluginFromFile(absOutputPath, manifestPath)
+}
+
+// setupLocalBuildEnvironment sets up the build environment for local plugin building
+func (eps *EnhancedPluginService) setupLocalBuildEnvironment(pluginDir string) error {
+	// Get current working directory (should be backend)
+	backendDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get current directory: %w", err)
+	}
+
+	// Copy backend's go.mod and go.sum to plugin directory
+	backendGoMod := filepath.Join(backendDir, "go.mod")
+	pluginGoMod := filepath.Join(pluginDir, "go.mod")
+
+	// Read backend go.mod
+	content, err := os.ReadFile(backendGoMod)
+	if err != nil {
+		return fmt.Errorf("failed to read backend go.mod: %w", err)
+	}
+
+	// Modify module name for plugin
+	modifiedContent := strings.Replace(string(content), "module github.com/kubestellar/ui", "module kubestellar-plugin", 1)
+
+	// Write modified go.mod to plugin directory
+	if err := os.WriteFile(pluginGoMod, []byte(modifiedContent), 0644); err != nil {
+		return fmt.Errorf("failed to write plugin go.mod: %w", err)
+	}
+
+	// Copy go.sum
+	backendGoSum := filepath.Join(backendDir, "go.sum")
+	pluginGoSum := filepath.Join(pluginDir, "go.sum")
+
+	sumContent, err := os.ReadFile(backendGoSum)
+	if err != nil {
+		return fmt.Errorf("failed to read backend go.sum: %w", err)
+	}
+
+	if err := os.WriteFile(pluginGoSum, sumContent, 0644); err != nil {
+		return fmt.Errorf("failed to write plugin go.sum: %w", err)
+	}
+
+	// Copy the dynamic_plugins package to the plugin directory
+	dynamicPluginsDir := filepath.Join(backendDir, "dynamic_plugins")
+	pluginDynamicPluginsDir := filepath.Join(pluginDir, "dynamic_plugins")
+
+	if err := eps.copyDirectory(dynamicPluginsDir, pluginDynamicPluginsDir); err != nil {
+		return fmt.Errorf("failed to copy dynamic_plugins package: %w", err)
+	}
+
+	// Modify the plugin's main.go to use local dynamic_plugins package
+	mainGoPath := filepath.Join(pluginDir, "main.go")
+	mainGoContent, err := os.ReadFile(mainGoPath)
+	if err != nil {
+		return fmt.Errorf("failed to read main.go: %w", err)
+	}
+
+	// Replace the import path - handle both original and previously modified imports
+	modifiedMainGo := strings.Replace(string(mainGoContent),
+		`"github.com/kubestellar/ui/dynamic_plugins"`,
+		`"kubestellar-plugin/dynamic_plugins"`, -1)
+	modifiedMainGo = strings.Replace(modifiedMainGo,
+		`"plugin/dynamic_plugins"`,
+		`"kubestellar-plugin/dynamic_plugins"`, -1)
+
+	if err := os.WriteFile(mainGoPath, []byte(modifiedMainGo), 0644); err != nil {
+		return fmt.Errorf("failed to write modified main.go: %w", err)
+	}
+
+	return nil
+}
+
+// copyDirectory recursively copies a directory
+func (eps *EnhancedPluginService) copyDirectory(src, dst string) error {
+	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Skip certain files/directories
+		if strings.Contains(path, ".git") || strings.Contains(path, "build_cache") {
+			return nil
+		}
+
+		// Get relative path
+		relPath, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+
+		dstPath := filepath.Join(dst, relPath)
+
+		if info.IsDir() {
+			return os.MkdirAll(dstPath, info.Mode())
+		}
+
+		// Copy the file
+		return eps.copyFile(path, dstPath)
+	})
+}
+
+// copyFile copies a single file
+func (eps *EnhancedPluginService) copyFile(src, dst string) error {
+	sourceFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer sourceFile.Close()
+
+	destFile, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer destFile.Close()
+
+	_, err = io.Copy(destFile, sourceFile)
+	return err
 }
 
 // UnloadPlugin unloads a plugin by ID
@@ -222,29 +431,6 @@ func (eps *EnhancedPluginService) GetPluginStatus(pluginID string) (dynamic_plug
 	return eps.Manager.GetPluginStatus(pluginID)
 }
 
-// GetSystemMetrics returns comprehensive system metrics
-func (eps *EnhancedPluginService) GetSystemMetrics() map[string]interface{} {
-	if !eps.initialized {
-		return map[string]interface{}{
-			"status": "not_initialized",
-		}
-	}
-
-	metrics := eps.Manager.GetMetrics()
-	metrics["service_initialized"] = eps.initialized
-	metrics["config"] = map[string]interface{}{
-		"plugin_dir":            eps.Config.PluginDir,
-		"cache_dir":             eps.Config.CacheDir,
-		"max_plugin_size":       eps.Config.MaxPluginSize,
-		"security_mode":         eps.Config.SecurityMode,
-		"health_checks_enabled": eps.Config.EnableHealthChecks,
-		"auto_updates_enabled":  eps.Config.EnableAutoUpdates,
-		"allowed_repos_count":   len(eps.Config.AllowedRepos),
-	}
-
-	return metrics
-}
-
 // ValidatePlugin validates a plugin without loading it
 func (eps *EnhancedPluginService) ValidatePlugin(pluginPath, manifestPath string) error {
 	if !eps.initialized {
@@ -257,31 +443,8 @@ func (eps *EnhancedPluginService) ValidatePlugin(pluginPath, manifestPath string
 // GetAvailablePlugins returns a list of available plugins from known repositories
 func (eps *EnhancedPluginService) GetAvailablePlugins() []map[string]interface{} {
 	// In a real implementation, this would query plugin registries/marketplaces
-	// For now, return some example plugins
-	return []map[string]interface{}{
-		{
-			"id":          "kubestellar-cluster-plugin",
-			"name":        "KubeStellar Cluster Management",
-			"description": "Plugin for cluster onboarding and detachment operations",
-			"version":     "1.0.0",
-			"author":      "CNCF LFX Mentee",
-			"repository":  "https://github.com/kubestellar/cluster-plugin",
-			"official":    true,
-			"category":    "cluster-management",
-			"tags":        []string{"cluster", "onboarding", "management"},
-		},
-		{
-			"id":          "monitoring-plugin",
-			"name":        "KubeStellar Monitoring",
-			"description": "Enhanced monitoring and metrics collection plugin",
-			"version":     "0.9.0",
-			"author":      "Community",
-			"repository":  "https://github.com/kubestellar/monitoring-plugin",
-			"official":    false,
-			"category":    "monitoring",
-			"tags":        []string{"monitoring", "metrics", "observability"},
-		},
-	}
+	// Return empty list for now - no dummy data
+	return []map[string]interface{}{}
 }
 
 // GetPluginCategories returns available plugin categories

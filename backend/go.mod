@@ -8,6 +8,7 @@ require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/golang-jwt/jwt/v5 v5.2.2
+	github.com/google/go-github/v57 v57.0.0
 	github.com/joho/godotenv v1.5.1
 	github.com/kubestellar/kubestellar v0.26.0
 	github.com/lib/pq v1.10.9
@@ -57,6 +58,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/google/btree v1.1.3 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gosuri/uitable v0.0.4 // indirect

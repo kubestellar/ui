@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -186,8 +187,40 @@ func (epm *EnhancedPluginManager) copyAndModifyGoMod(src, dst string) error {
 		return fmt.Errorf("failed to read go.mod: %w", err)
 	}
 
-	// Modify the module name for the plugin
-	modifiedContent := strings.Replace(string(content), "module github.com/kubestellar/ui", "module plugin", 1)
+	// Modify the module name for the plugin to avoid conflicts
+	modifiedContent := strings.Replace(string(content), "module github.com/kubestellar/ui", "module kubestellar-plugin", 1)
+
+	// Get the current backend directory for the replace directive
+	backendDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get current directory: %w", err)
+	}
+
+	// Add required dependency and replace directives
+	modifiedContent += "\n// Plugin build requirements and replacements\n"
+	modifiedContent += "require github.com/kubestellar/ui v0.0.0\n"
+
+	// Point github.com/kubestellar/ui to the actual backend directory
+	modifiedContent += fmt.Sprintf("replace github.com/kubestellar/ui => %s\n", backendDir)
+
+	// Add replace directives for copied backend packages only (not dynamic_plugins since we want original)
+	modifiedContent += "replace kubestellar-plugin/backend_api => ./backend_api\n"
+	modifiedContent += "replace kubestellar-plugin/backend_installer => ./backend_installer\n"
+	modifiedContent += "replace kubestellar-plugin/backend_k8s => ./backend_k8s\n"
+	modifiedContent += "replace kubestellar-plugin/backend_models => ./backend_models\n"
+	modifiedContent += "replace kubestellar-plugin/backend_redis => ./backend_redis\n"
+	modifiedContent += "replace kubestellar-plugin/backend_services => ./backend_services\n"
+	modifiedContent += "replace kubestellar-plugin/backend_utils => ./backend_utils\n"
+	modifiedContent += "replace kubestellar-plugin/backend_wds => ./backend_wds\n"
+	modifiedContent += "replace kubestellar-plugin/backend_jwt => ./backend_jwt\n"
+	modifiedContent += "replace kubestellar-plugin/backend_middleware => ./backend_middleware\n"
+	modifiedContent += "replace kubestellar-plugin/backend_namespace => ./backend_namespace\n"
+	modifiedContent += "replace kubestellar-plugin/backend_postgresql => ./backend_postgresql\n"
+	modifiedContent += "replace kubestellar-plugin/backend_its => ./backend_its\n"
+	modifiedContent += "replace kubestellar-plugin/backend_log => ./backend_log\n"
+	modifiedContent += "replace kubestellar-plugin/backend_plugin => ./backend_plugin\n"
+	modifiedContent += "replace kubestellar-plugin/backend_routes => ./backend_routes\n"
+	modifiedContent += "replace kubestellar-plugin/backend_wecs => ./backend_wecs\n"
 
 	destFile, err := os.Create(dst)
 	if err != nil {
@@ -200,6 +233,251 @@ func (epm *EnhancedPluginManager) copyAndModifyGoMod(src, dst string) error {
 	}
 
 	return nil
+}
+
+// setupLocalPackages copies required local packages to plugin build directory
+func (epm *EnhancedPluginManager) setupLocalPackages(tempDir string) error {
+	backendDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get current directory: %w", err)
+	}
+
+	// List of packages that plugins might need - with backend_ prefix to avoid conflicts
+	// Note: dynamic_plugins is excluded since plugins should use the original package
+	requiredPackages := map[string]string{
+		"api":        "backend_api",
+		"installer":  "backend_installer",
+		"k8s":        "backend_k8s",
+		"models":     "backend_models",
+		"redis":      "backend_redis",
+		"services":   "backend_services",
+		"utils":      "backend_utils",
+		"wds":        "backend_wds",
+		"jwt":        "backend_jwt",
+		"middleware": "backend_middleware",
+		"namespace":  "backend_namespace",
+		"postgresql": "backend_postgresql",
+		"its":        "backend_its",
+		"log":        "backend_log",
+		"plugin":     "backend_plugin",
+		"routes":     "backend_routes",
+		"wecs":       "backend_wecs",
+	}
+
+	// Create and copy each required package directory
+	for srcName, dstName := range requiredPackages {
+		packageDir := filepath.Join(tempDir, dstName)
+		if err := os.MkdirAll(packageDir, 0755); err != nil {
+			return fmt.Errorf("failed to create %s directory: %w", dstName, err)
+		}
+
+		// Copy package files
+		packageSrcDir := filepath.Join(backendDir, srcName)
+		if _, err := os.Stat(packageSrcDir); os.IsNotExist(err) {
+			// Skip if package doesn't exist
+			continue
+		}
+
+		if err := epm.copyDirectory(packageSrcDir, packageDir); err != nil {
+			return fmt.Errorf("failed to copy %s package: %w", srcName, err)
+		}
+	}
+
+	return nil
+}
+
+// copyDirectory recursively copies a directory
+func (epm *EnhancedPluginManager) copyDirectory(src, dst string) error {
+	// List of packages to replace (excluding dynamic_plugins which should use original)
+	packageReplacements := map[string]string{
+		`"github.com/kubestellar/ui/api"`:        `"kubestellar-plugin/backend_api"`,
+		`"github.com/kubestellar/ui/installer"`:  `"kubestellar-plugin/backend_installer"`,
+		`"github.com/kubestellar/ui/k8s"`:        `"kubestellar-plugin/backend_k8s"`,
+		`"github.com/kubestellar/ui/models"`:     `"kubestellar-plugin/backend_models"`,
+		`"github.com/kubestellar/ui/redis"`:      `redis "kubestellar-plugin/backend_redis"`,
+		`"github.com/kubestellar/ui/services"`:   `"kubestellar-plugin/backend_services"`,
+		`"github.com/kubestellar/ui/utils"`:      `"kubestellar-plugin/backend_utils"`,
+		`"github.com/kubestellar/ui/wds/bp"`:     `"kubestellar-plugin/backend_wds/bp"`,
+		`"github.com/kubestellar/ui/wds"`:        `"kubestellar-plugin/backend_wds"`,
+		`"github.com/kubestellar/ui/jwt"`:        `"kubestellar-plugin/backend_jwt"`,
+		`"github.com/kubestellar/ui/middleware"`: `"kubestellar-plugin/backend_middleware"`,
+		`"github.com/kubestellar/ui/namespace"`:  `"kubestellar-plugin/backend_namespace"`,
+		`"github.com/kubestellar/ui/postgresql"`: `"kubestellar-plugin/backend_postgresql"`,
+		`"github.com/kubestellar/ui/its"`:        `"kubestellar-plugin/backend_its"`,
+		`"github.com/kubestellar/ui/log"`:        `log "kubestellar-plugin/backend_log"`,
+		`"github.com/kubestellar/ui/plugin"`:     `"kubestellar-plugin/backend_plugin"`,
+		`"github.com/kubestellar/ui/routes"`:     `"kubestellar-plugin/backend_routes"`,
+		`"github.com/kubestellar/ui/wecs"`:       `"kubestellar-plugin/backend_wecs"`,
+	}
+
+	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Skip certain files/directories
+		if strings.Contains(path, ".git") || strings.Contains(path, "build_cache") {
+			return nil
+		}
+
+		// Get relative path
+		relPath, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+
+		dstPath := filepath.Join(dst, relPath)
+
+		if info.IsDir() {
+			return os.MkdirAll(dstPath, info.Mode())
+		}
+
+		// Copy only .go files and certain other files
+		if !strings.HasSuffix(path, ".go") && !strings.HasSuffix(path, ".yaml") {
+			return nil
+		}
+
+		// For .go files, copy and modify imports
+		if strings.HasSuffix(path, ".go") {
+			content, err := os.ReadFile(path)
+			if err != nil {
+				return fmt.Errorf("failed to read %s: %w", path, err)
+			}
+
+			modifiedContent := string(content)
+
+			// Apply all import replacements
+			for oldImport, newImport := range packageReplacements {
+				modifiedContent = strings.Replace(modifiedContent, oldImport, newImport, -1)
+			}
+
+			// Also replace package prefixes in code (excluding dynamic_plugins which should use original)
+			packagePrefixReplacements := map[string]string{
+				`\bapi\.`:        `backend_api.`,
+				`\binstaller\.`:  `backend_installer.`,
+				`\bmodels\.`:     `backend_models.`,
+				`\bservices\.`:   `backend_services.`,
+				`\butils\.`:      `backend_utils.`,
+				`\bwds\.`:        `backend_wds.`,
+				`\bjwt\.`:        `backend_jwt.`,
+				`\bmiddleware\.`: `backend_middleware.`,
+				`\bnamespace\.`:  `backend_namespace.`,
+				`\bpostgresql\.`: `backend_postgresql.`,
+				`\bits\.`:        `backend_its.`,
+				`\broutes\.`:     `backend_routes.`,
+				`\bwecs\.`:       `backend_wecs.`,
+			}
+
+			for oldPattern, newPrefix := range packagePrefixReplacements {
+				re := regexp.MustCompile(oldPattern)
+				modifiedContent = re.ReplaceAllString(modifiedContent, newPrefix)
+			}
+
+			if err := os.WriteFile(dstPath, []byte(modifiedContent), info.Mode()); err != nil {
+				return fmt.Errorf("failed to write modified %s: %w", dstPath, err)
+			}
+		} else {
+			// For non-.go files, just copy
+			return epm.copyFile(path, dstPath)
+		}
+
+		return nil
+	})
+}
+
+// modifyPluginImports modifies all Go files in the plugin to use relative imports
+func (epm *EnhancedPluginManager) modifyPluginImports(tempDir string) error {
+	// List of packages to replace (excluding dynamic_plugins which should use original)
+	packageReplacements := map[string]string{
+		`"github.com/kubestellar/ui/api"`:        `"kubestellar-plugin/backend_api"`,
+		`"github.com/kubestellar/ui/installer"`:  `"kubestellar-plugin/backend_installer"`,
+		`"github.com/kubestellar/ui/k8s"`:        `"kubestellar-plugin/backend_k8s"`,
+		`"github.com/kubestellar/ui/models"`:     `"kubestellar-plugin/backend_models"`,
+		`"github.com/kubestellar/ui/redis"`:      `redis "kubestellar-plugin/backend_redis"`,
+		`"github.com/kubestellar/ui/services"`:   `"kubestellar-plugin/backend_services"`,
+		`"github.com/kubestellar/ui/utils"`:      `"kubestellar-plugin/backend_utils"`,
+		`"github.com/kubestellar/ui/wds/bp"`:     `"kubestellar-plugin/backend_wds/bp"`,
+		`"github.com/kubestellar/ui/wds"`:        `"kubestellar-plugin/backend_wds"`,
+		`"github.com/kubestellar/ui/jwt"`:        `"kubestellar-plugin/backend_jwt"`,
+		`"github.com/kubestellar/ui/middleware"`: `"kubestellar-plugin/backend_middleware"`,
+		`"github.com/kubestellar/ui/namespace"`:  `"kubestellar-plugin/backend_namespace"`,
+		`"github.com/kubestellar/ui/postgresql"`: `"kubestellar-plugin/backend_postgresql"`,
+		`"github.com/kubestellar/ui/its"`:        `"kubestellar-plugin/backend_its"`,
+		`"github.com/kubestellar/ui/log"`:        `log "kubestellar-plugin/backend_log"`,
+		`"github.com/kubestellar/ui/plugin"`:     `"kubestellar-plugin/backend_plugin"`,
+		`"github.com/kubestellar/ui/routes"`:     `"kubestellar-plugin/backend_routes"`,
+		`"github.com/kubestellar/ui/wecs"`:       `"kubestellar-plugin/backend_wecs"`,
+	}
+
+	// Function to modify imports in a single Go file
+	modifyGoFile := func(filePath string) error {
+		content, err := os.ReadFile(filePath)
+		if err != nil {
+			return fmt.Errorf("failed to read %s: %w", filePath, err)
+		}
+
+		modifiedContent := string(content)
+
+		// Apply all import replacements
+		for oldImport, newImport := range packageReplacements {
+			modifiedContent = strings.Replace(modifiedContent, oldImport, newImport, -1)
+		}
+
+		// Also replace package prefixes in code (excluding dynamic_plugins which should use original)
+		packagePrefixReplacements := map[string]string{
+			`\bapi\.`:        `backend_api.`,
+			`\binstaller\.`:  `backend_installer.`,
+			`\bmodels\.`:     `backend_models.`,
+			`\bservices\.`:   `backend_services.`,
+			`\butils\.`:      `backend_utils.`,
+			`\bwds\.`:        `backend_wds.`,
+			`\bjwt\.`:        `backend_jwt.`,
+			`\bmiddleware\.`: `backend_middleware.`,
+			`\bnamespace\.`:  `backend_namespace.`,
+			`\bpostgresql\.`: `backend_postgresql.`,
+			`\bits\.`:        `backend_its.`,
+			`\broutes\.`:     `backend_routes.`,
+			`\bwecs\.`:       `backend_wecs.`,
+		}
+
+		for oldPattern, newPrefix := range packagePrefixReplacements {
+			re := regexp.MustCompile(oldPattern)
+			modifiedContent = re.ReplaceAllString(modifiedContent, newPrefix)
+		}
+
+		if err := os.WriteFile(filePath, []byte(modifiedContent), 0644); err != nil {
+			return fmt.Errorf("failed to write modified %s: %w", filePath, err)
+		}
+
+		return nil
+	}
+
+	// Walk through all Go files and modify imports
+	return filepath.Walk(tempDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Only process .go files
+		if !strings.HasSuffix(path, ".go") {
+			return nil
+		}
+
+		// Skip directories we copied from backend (they should already have correct imports)
+		for _, pkg := range []string{"backend_api", "backend_installer", "backend_k8s", "backend_models", "backend_redis", "backend_services", "backend_utils", "backend_wds", "backend_jwt", "backend_middleware", "backend_namespace", "backend_postgresql", "backend_its", "backend_log", "backend_plugin", "backend_routes", "backend_wecs"} {
+			if strings.Contains(path, "/"+pkg+"/") {
+				return nil
+			}
+		}
+
+		// Skip main plugin files (main.go, plugin.go, etc.) that should keep original imports
+		fileName := filepath.Base(path)
+		if fileName == "main.go" || fileName == "plugin.go" || strings.HasPrefix(fileName, "plugin_") {
+			return nil
+		}
+
+		return modifyGoFile(path)
+	})
 }
 
 // checkPluginHealth performs a health check for a specific plugin

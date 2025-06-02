@@ -178,51 +178,6 @@ export class PluginService {
     }
   }
 
-  // Directory-based plugin operations
-  static async getAvailableDirectories(): Promise<
-    {
-      path: string;
-      name: string;
-      hasMainGo: boolean;
-      hasManifest: boolean;
-      isValid: boolean;
-      metadata: {
-        name: string;
-        version: string;
-        description: string;
-      };
-    }[]
-  > {
-    try {
-      const response = await api.get('/api/plugins/local/directories');
-      return response.data.directories || [];
-    } catch {
-      console.warn('API not available, using demo data');
-      return [
-        {
-          path: './plugins/cluster-ops',
-          name: 'cluster-ops',
-          hasMainGo: true,
-          hasManifest: true,
-          isValid: true,
-          metadata: {
-            name: 'Cluster Operations Plugin',
-            version: '1.0.0',
-            description: 'Plugin for managing cluster operations',
-          },
-        },
-      ];
-    }
-  }
-
-  static async loadPluginFromDirectory(directoryPath: string): Promise<void> {
-    try {
-      await api.post('/api/plugins/local/load-directory', { directoryPath });
-    } catch {
-      console.warn('API not available, simulating success');
-    }
-  }
-
   // ZIP upload plugin operations
   static async uploadPluginZip(
     file: File

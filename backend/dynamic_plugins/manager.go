@@ -73,11 +73,24 @@ func NewEnhancedPluginManager(router *gin.Engine, config ManagerConfig) *Enhance
 		config.DownloadTimeout = 10 * time.Minute // 10 minutes default
 	}
 
+	// Convert to absolute paths to avoid working directory issues
+	absPluginDir, err := filepath.Abs(config.PluginDir)
+	if err != nil {
+		log.Printf("Warning: Failed to get absolute path for plugin dir, using relative: %v", err)
+		absPluginDir = config.PluginDir
+	}
+
+	absCacheDir, err := filepath.Abs(config.CacheDir)
+	if err != nil {
+		log.Printf("Warning: Failed to get absolute path for cache dir, using relative: %v", err)
+		absCacheDir = config.CacheDir
+	}
+
 	manager := &EnhancedPluginManager{
 		registry:        NewEnhancedPluginRegistry(),
 		router:          router,
-		pluginDir:       config.PluginDir,
-		cacheDir:        config.CacheDir,
+		pluginDir:       absPluginDir,
+		cacheDir:        absCacheDir,
 		githubClient:    github.NewClient(nil),
 		validator:       NewPluginValidator(),
 		securityConfig:  config.SecurityConfig,
@@ -90,11 +103,13 @@ func NewEnhancedPluginManager(router *gin.Engine, config ManagerConfig) *Enhance
 	}
 
 	// Create necessary directories
-	os.MkdirAll(config.PluginDir, 0755)
-	os.MkdirAll(config.CacheDir, 0755)
+	os.MkdirAll(absPluginDir, 0755)
+	os.MkdirAll(absCacheDir, 0755)
 
 	// Start health checker
 	go manager.startHealthChecker()
+
+	log.Printf("🔌 Plugin manager initialized with directories: plugin=%s, cache=%s", absPluginDir, absCacheDir)
 
 	return manager
 }
@@ -122,7 +137,7 @@ func (epm *EnhancedPluginManager) LoadPluginFromGitHub(repoURL string, version s
 	if err != nil {
 		return fmt.Errorf("failed to create temp directory: %w", err)
 	}
-	defer os.RemoveAll(tempDir)
+	// defer os.RemoveAll(tempDir) // Temporarily disabled for debugging
 
 	log.Printf("📁 Using temp directory: %s", tempDir)
 
@@ -157,6 +172,7 @@ func (epm *EnhancedPluginManager) LoadPluginFromGitHub(repoURL string, version s
 	// Build plugin with enhanced error handling
 	pluginPath, err := epm.buildPluginEnhanced(tempDir, manifest)
 	if err != nil {
+		log.Printf("🐛 Build failed, temp directory preserved for debugging: %s", tempDir)
 		epm.emitEvent(EventPluginError, manifest.ID, map[string]interface{}{
 			"error": err.Error(),
 			"stage": "build",
@@ -406,9 +422,15 @@ func (epm *EnhancedPluginManager) buildPluginEnhanced(tempDir string, manifest P
 		return "", fmt.Errorf("failed to setup build environment: %w", err)
 	}
 
-	// Build plugin
+	// Build plugin with absolute path
 	outputPath := filepath.Join(epm.cacheDir, manifest.ID+".so")
-	buildCmd := exec.Command("go", "build", "-buildmode=plugin", "-ldflags=-w -s", "-o", outputPath, "main.go")
+	// Convert to absolute path to avoid working directory issues
+	absOutputPath, err := filepath.Abs(outputPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to get absolute path: %w", err)
+	}
+
+	buildCmd := exec.Command("go", "build", "-buildmode=plugin", "-ldflags=-w -s", "-o", absOutputPath, "main.go")
 	buildCmd.Dir = tempDir
 	buildCmd.Env = append([]string{
 		"CGO_ENABLED=1",
@@ -422,9 +444,9 @@ func (epm *EnhancedPluginManager) buildPluginEnhanced(tempDir string, manifest P
 	}
 
 	// Validate built plugin size
-	if stat, err := os.Stat(outputPath); err == nil {
+	if stat, err := os.Stat(absOutputPath); err == nil {
 		if stat.Size() > epm.maxPluginSize {
-			os.Remove(outputPath)
+			os.Remove(absOutputPath)
 			return "", fmt.Errorf("plugin size %d exceeds maximum allowed size %d", stat.Size(), epm.maxPluginSize)
 		}
 	}
@@ -432,8 +454,8 @@ func (epm *EnhancedPluginManager) buildPluginEnhanced(tempDir string, manifest P
 	// Update build cache
 	epm.buildCache[cacheKey] = time.Now()
 
-	log.Printf("✅ Plugin built successfully: %s", outputPath)
-	return outputPath, nil
+	log.Printf("✅ Plugin built successfully: %s", absOutputPath)
+	return absOutputPath, nil
 }
 
 func (epm *EnhancedPluginManager) setupBuildEnvironment(tempDir string) error {
@@ -459,6 +481,16 @@ func (epm *EnhancedPluginManager) setupBuildEnvironment(tempDir string) error {
 		return fmt.Errorf("failed to copy go.sum: %w", err)
 	}
 
+	// Setup local packages (api and dynamic_plugins)
+	if err := epm.setupLocalPackages(tempDir); err != nil {
+		return fmt.Errorf("failed to setup local packages: %w", err)
+	}
+
+	// Modify plugin imports to use local packages
+	if err := epm.modifyPluginImports(tempDir); err != nil {
+		return fmt.Errorf("failed to modify plugin imports: %w", err)
+	}
+
 	return nil
 }
 
@@ -481,12 +513,23 @@ func (epm *EnhancedPluginManager) loadPluginFromPath(pluginPath string, manifest
 	}
 
 	// Create plugin instance
-	newPluginFunc, ok := symbol.(NewPluginFunc)
-	if !ok {
+	var pluginInstance KubestellarPlugin
+
+	// Try the expected type first
+	if newPluginFunc, ok := symbol.(NewPluginFunc); ok {
+		pluginInstance = newPluginFunc()
+	} else if newPluginFuncInterface, ok := symbol.(func() interface{}); ok {
+		// Handle plugins that return interface{}
+		instance := newPluginFuncInterface()
+		if plugin, ok := instance.(KubestellarPlugin); ok {
+			pluginInstance = plugin
+		} else {
+			return fmt.Errorf("plugin instance does not implement KubestellarPlugin interface")
+		}
+	} else {
 		return fmt.Errorf("invalid plugin symbol type")
 	}
 
-	pluginInstance := newPluginFunc()
 	if pluginInstance == nil {
 		return fmt.Errorf("plugin returned nil instance")
 	}

@@ -147,3 +147,19 @@ db.json
 
 #Personal text file
 ExtraCode.md
+
+.cursorrules
+# docs
+
+# Plugin system exclusions
+backend/uploads/
+backend/dynamic_plugins/cache/
+backend/dynamic_plugins/build_cache/
+*.so
+*.zip
+*debug*.log
+temp-*
+test-plugin*
+
+# Documentation and reference files (keep local, exclude from commits)
+docs/
