@@ -1,13 +1,16 @@
 package routes
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"sync"
-	"fmt"
 	"os/exec"
+	"path/filepath"
+	"strings"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"k8s.io/klog/v2"
@@ -132,7 +135,7 @@ func (r *PluginRegistry) EnablePlugin(name string, enabled bool) error {
 
 func (r *PluginRegistry) StartPlugin(plugin *Plugin) error {
 	log.Printf("***************** Starting plugin: %s *****************", plugin.Name)
-	
+
 	// Start backend if configured
 	if plugin.Backend.Image != "" {
 		cmd := exec.Command("docker-compose", "-f", "-d")
@@ -142,13 +145,13 @@ func (r *PluginRegistry) StartPlugin(plugin *Plugin) error {
 	}
 
 	// TODO: Start frontend container if needed
-	
+
 	return nil
 }
 
 func (r *PluginRegistry) StopPlugin(plugin *Plugin) error {
 	log.Printf("***************** Stopping plugin: %s *****************", plugin.Name)
-	
+
 	// Stop backend if configured
 	if plugin.Backend.Image != "" {
 		cmd := exec.Command("docker", "compose", "-f", fmt.Sprintf("/tmp/docker-compose-%s.yml", plugin.Name), "down")
@@ -158,7 +161,7 @@ func (r *PluginRegistry) StopPlugin(plugin *Plugin) error {
 	}
 
 	// TODO: Stop frontend container if needed
-	
+
 	return nil
 }
 
@@ -189,284 +192,99 @@ func RegisterPluginAPI(router *gin.Engine) {
 	log.Println("***************** Registering plugin API *****************")
 
 	registry := NewPluginRegistry()
-	installedPath := "routes/plugins.json"
-	availablePath := "routes/demo-plugins.json"
+	// installedPath := "routes/plugins.json"
+	// availablePath := "routes/demo-plugins.json"
 
-	if err := loadInstalledPlugins(registry, installedPath); err != nil {
-		log.Printf("***************** Error loading installed plugins: %v *****************", err)
-	}
+	// if err := loadInstalledPlugins(registry, installedPath); err != nil {
+	// 	log.Printf("***************** Error loading installed plugins: %v *****************", err)
+	// }
 
-	if err := loadAvailablePlugins(registry, availablePath); err != nil {
-		log.Printf("***************** Error loading demo plugins: %v *****************", err)
-	}
+	// if err := loadAvailablePlugins(registry, availablePath); err != nil {
+	// 	log.Printf("***************** Error loading demo plugins: %v *****************", err)
+	// }
 
 	klog.V(1).Info("***************** Loaded plugins *****************")
-	router.POST("/api/plugins/install", installHandler(registry, installedPath))
-	router.DELETE("/api/plugins/:name", removeHandler(registry, installedPath))
-	router.GET("/api/plugins", listHandler(registry))
-	router.PUT("/api/plugins/:name/enable", enableHandler(registry, installedPath))
-	router.GET("/api/plugins/available", availableHandler(registry))
-}
-
-func loadInstalledPlugins(r *PluginRegistry, path string) error {
-	log.Printf("***************** Loading installed plugins from: %s *****************", path)
-    
-    // Read the plugins file
-    data, err := os.ReadFile(path)
-    if err != nil {
-        log.Printf("***************** Error reading installed plugins file: %v *****************", err)
-        return err
-    }
-
-    // Parse the JSON
-    var plugins []*Plugin
-    if err := json.Unmarshal(data, &plugins); err != nil {
-        log.Printf("***************** Error parsing installed plugins: %v *****************", err)
-        return err
-    }
-
-    // Add all plugins to the registry
-    for _, plugin := range plugins {
-        r.AddPlugin(plugin)
-    }
-    return nil
-}
-
-func loadAvailablePlugins(r *PluginRegistry, path string) error {
-	log.Printf("***************** Loading available plugins from: %s *****************", path)
-    
-    // Read the available plugins file
-    data, err := os.ReadFile(path)
-    if err != nil {
-        log.Printf("***************** Error reading available plugins file: %v *****************", err)
-        return err
-    }
-
-    // Parse the JSON
-    var plugins []*Plugin
-    if err := json.Unmarshal(data, &plugins); err != nil {
-        log.Printf("***************** Error parsing available plugins: %v *****************", err)
-        return err
-    }
-
-    // Add all plugins to the registry
-    for _, plugin := range plugins {
-        r.AddPlugin(plugin)
-    }
-    return nil
-}
-
-func installHandler(r *PluginRegistry, installedPath string) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		log.Println("***************** Handling plugin installation *****************")
+	// router.POST("/api/plugins/install", installHandler(registry, installedPath))
+	// router.DELETE("/api/plugins/:name", removeHandler(registry, installedPath))
+	// router.GET("/api/plugins", listHandler(registry))
+	// router.PUT("/api/plugins/:name/enable", enableHandler(registry, installedPath))
+	// router.GET("/api/plugins/available", availableHandler(registry))
+	router.POST("/api/plugins/clone", func(c *gin.Context) {
 		var req struct {
-			Name string `json:"name"`
+			RepoURL string `json:"repoURL"`
 		}
-
 		if err := c.ShouldBindJSON(&req); err != nil {
-			log.Printf("***************** Error binding JSON: %v *****************", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 			return
 		}
 
-		plugin, exists := r.GetPlugin(req.Name)
-		if !exists {
-			log.Printf("***************** Plugin not found: %s *****************", req.Name)
-			c.JSON(http.StatusNotFound, gin.H{"error": "Plugin not found"})
+		if err := registry.CloneTheRepo(req.RepoURL); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to clone repository: %v", err)})
 			return
 		}
 
-		plugin.Downloads++
-		if err := savePlugins(r, installedPath); err != nil {
-			log.Printf("***************** Error saving plugins: %v *****************", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save plugin data"})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{"message": "Plugin installed successfully", "plugin": plugin})
-	}
+		c.JSON(http.StatusOK, gin.H{"message": "Repository cloned successfully"})
+	},
+	)
 }
 
-func removeHandler(r *PluginRegistry, installedPath string) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		log.Println("***************** Handling plugin removal *****************")
-		name := c.Param("name")
-		if !r.RemovePlugin(name) {
-			log.Printf("***************** Plugin not found: %s *****************", name)
-			c.JSON(http.StatusNotFound, gin.H{"error": "Plugin not found"})
-			return
-		}
+func (r *PluginRegistry) CloneTheRepo(repoURL string) error {
+	log.Printf("Cloning repository: %s", repoURL)
 
-		if err := savePlugins(r, installedPath); err != nil {
-			log.Printf("***************** Error saving plugins: %v *****************", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save plugin data"})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{"message": "Plugin removed successfully"})
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get current directory: %w", err)
 	}
+
+	pluginsDir := filepath.Join(currentDir, "plugins")
+	if err := os.MkdirAll(pluginsDir, 0755); err != nil {
+		return fmt.Errorf("failed to create plugins directory: %w", err)
+	}
+
+	repoName := filepath.Base(strings.TrimSuffix(repoURL, ".git"))
+	clonePath := filepath.Join(pluginsDir, repoName)
+
+	cmd := exec.Command("git", "clone", repoURL, clonePath)
+
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err = cmd.Run()
+
+	log.Printf("Git stdout:\n%s", stdout.String())
+	log.Printf("Git stderr:\n%s", stderr.String())
+
+	if err != nil {
+		return fmt.Errorf("git clone failed: %v", err)
+	}
+
+	log.Printf("Repository cloned successfully into: %s", clonePath)
+
+	os.Chdir("/root/plugins/Plugins/backend")
+
+	buildCmd := exec.Command("go", "build", "-buildmode=plugin", "-o", "kubestellar-cluster-plugin.so", "main.go")
+	if err := buildCmd.Run(); err != nil {
+		log.Printf("buildsharedobject: Error building shared object: %v\n", err)
+	}
+
+	log.Println("buildsharedobject: Building shared object...")
+	return nil
 }
 
-func listHandler(r *PluginRegistry) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		log.Println("***************** Handling plugin listing *****************")
-		plugins := r.ListPlugins()
-		c.JSON(http.StatusOK, plugins)
-	}
-}
+// func buildsharedobject() error {
+// 	// Placeholder for building shared object logic
+// 	// This function should contain the logic to build the shared object from the plugin manifest
+// 	// change directory to /root/plugins/Plugins/backend
+// 	// then run this 	buildCmd := exec.Command("go", "build", "-buildmode=plugin", "-o", "kubestellar-cluster-plugin.so", "main.go")
+// 	os.Chdir("/root/plugins/Plugins/backend")
 
-func enableHandler(r *PluginRegistry, installedPath string) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		log.Println("***************** Handling plugin enable/disable request *****************")
-		name := c.Param("name")
-		log.Printf("***************** Plugin name: %s *****************", name)
+// 	buildCmd := exec.Command("go", "build", "-buildmode=plugin", "-o", "kubestellar-cluster-plugin.so", "main.go")
+// 	if err := buildCmd.Run(); err != nil {
+// 		log.Printf("buildsharedobject: Error building shared object: %v\n", err)
+// 	}
 
-		var req struct {
-			Enabled bool `json:"enabled"`
-		}
-
-		if err := c.ShouldBindJSON(&req); err != nil {
-			log.Printf("***************** Error binding JSON: %v *****************", err)
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error":   "Invalid request body",
-				"details": err.Error(),
-			})
-			return
-		}
-		log.Printf("***************** Requested state: %v *****************", req.Enabled)
-
-		plugin, exists := r.GetPlugin(name)
-		if !exists {
-			log.Printf("***************** Plugin not found: %s *****************", name)
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Plugin not found",
-				"name":  name,
-			})
-			return
-		}
-
-		if plugin.Enabled == req.Enabled {
-			log.Printf("***************** Plugin %s is already in desired state: %v *****************", name, req.Enabled)
-			c.JSON(http.StatusOK, gin.H{
-				"message": "Plugin is already in desired state",
-				"plugin":  plugin,
-			})
-			return
-		}
-
-		log.Println("***************** Generating Docker Compose file *****************")
-		composeContent := fmt.Sprintf(`version: '3.8'
-services:
-  %s-backend:
-	image: %s
-	ports:
-	  - '%d:%d'
-	environment:
-`, name, plugin.Backend.Image, plugin.Backend.Port, plugin.Backend.Port)
-
-		for key, value := range plugin.Backend.Env {
-			composeContent += fmt.Sprintf("      - %s=%s\n", key, value)
-		}
-
-		if plugin.Frontend.EntryPoint != "" {
-			composeContent += fmt.Sprintf(`
-  %s-frontend:
-	image: %s
-	ports:
-	  - '5174:5174'
-	environment:
-	  - VITE_API_URL=http://%s-backend:%d
-`, name, plugin.Frontend.Image, name, plugin.Backend.Port)
-		}
-
-		composePath := fmt.Sprintf("/tmp/docker-compose-%s.yml", name)
-		if err := os.WriteFile(composePath, []byte(composeContent), 0644); err != nil {
-			log.Printf("***************** Error writing Docker Compose file: %v *****************", err)
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error":   "Failed to generate Docker Compose file",
-				"details": err.Error(),
-			})
-			return
-		}
-		log.Printf("***************** Docker Compose file written to: %s *****************", composePath)
-
-		var action string
-		if req.Enabled {
-			action = "up -d"
-		} else {
-			action = "down"
-		}
-		log.Printf("***************** Executing docker compose action: %s *****************", action)
-		if err := os.Chdir("/tmp"); err != nil {
-			log.Printf("***************** Error switching to /tmp directory: %v *****************", err)
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error":   "Failed to switch to /tmp directory",
-				"details": err.Error(),
-			})
-			return
-		}
-		
-		cmd := exec.Command("docker", "compose", "-f", composePath, "up", "-d")
-		log.Printf("***************** Command: %s *****************", cmd)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-
-		if err := cmd.Run(); err != nil {
-			log.Printf("***************** Error executing docker compose %s: %v *****************", action, err)
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error":   fmt.Sprintf("Failed to %s plugin services", action),
-				"details": err.Error(),
-			})
-			return
-		}
-		log.Printf("***************** Docker compose action %s completed successfully *****************", action)
-
-		if err := r.EnablePlugin(name, req.Enabled); err != nil {
-			log.Printf("***************** Error updating plugin state: %v *****************", err)
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error":   "Failed to update plugin state",
-				"details": err.Error(),
-			})
-			return
-		}
-		log.Printf("***************** Plugin state updated: %s, Enabled: %v *****************", name, req.Enabled)
-
-		if err := savePlugins(r, installedPath); err != nil {
-			log.Printf("***************** Error saving plugin state: %v *****************", err)
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error":   "Failed to save plugin state",
-				"details": err.Error(),
-			})
-			return
-		}
-		log.Println("***************** Plugin state saved successfully *****************")
-
-		if err := os.Remove(composePath); err != nil {
-			log.Printf("***************** Error removing Docker Compose file: %v *****************", err)
-		} else {
-			log.Printf("***************** Docker Compose file removed: %s *****************", composePath)
-		}
-
-		c.JSON(http.StatusOK, gin.H{
-			"message": fmt.Sprintf("Plugin %s %s successfully", name, action),
-			"plugin":  plugin,
-			"status":  req.Enabled,
-		})
-		log.Printf("***************** Plugin %s enable/disable request completed *****************", name)
-	}
-}
-
-func availableHandler(r *PluginRegistry) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		log.Println("***************** Handling available plugins listing *****************")
-		allPlugins := r.ListPlugins()
-		availablePlugins := make([]*Plugin, 0)
-		for _, p := range allPlugins {
-			if !p.Enabled {
-				availablePlugins = append(availablePlugins, p)
-			}
-		}
-
-		c.JSON(http.StatusOK, availablePlugins)
-	}
-}
+// 	log.Println("buildsharedobject: Building shared object...")
+// 	// Simulate some processing
+// 	return nil
+// }

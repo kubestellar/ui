@@ -173,3 +173,5 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.6.0 // indirect
 	sigs.k8s.io/yaml v1.4.0
 )
+
+replace github.com/Per0x1de-1337/pluginapi => /root/pluginapi

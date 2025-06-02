@@ -1,143 +1,106 @@
-import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Typography,
-  Chip,
-  Tooltip,
-  IconButton,
-  // Switch,
-  List,
-  ListItem,
-  CircularProgress,
-  // Fade,
-  Zoom,
-  // Dialog,
-  // DialogActions,
-  // Button,
-  // useTheme,
-} from '@mui/material';
-import {
+  Code as CodeIcon,
   Delete as DeleteIcon,
-  Power as PowerIcon,
-  // PowerOff as PowerOffIcon,
-  // ContentCopy as ContentCopyIcon,
-  Link as LinkIcon,
+  Info as InfoIcon,
+  Person as PersonIcon,
+  Refresh as RefreshIcon,
 } from '@mui/icons-material';
+import {
+  Alert,
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Divider,
+  Grid,
+  IconButton,
+  Paper,
+  Tooltip,
+  Typography,
+  Zoom,
+} from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { api } from '../lib/api';
 
 interface Plugin {
+  id: string;
   name: string;
-  description: string;
-  icon: JSX.Element;
-  enabled: boolean;
-  route: string;
-  visible: boolean;
   version: string;
-  tags: string[];
+  description: string;
+  author: string;
+  compatibility: {
+    kubestellar: string;
+    go: string;
+  };
+  endpoints: any[];
+  ui_components: any[];
+  dependencies: any[];
+  permissions: any[];
+  enabled?: boolean;
 }
 
 const InstalledApps: React.FC = () => {
   const [plugins, setPlugins] = useState<Plugin[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [uninstallingPlugin, setUninstallingPlugin] = useState<string | null>(null);
 
-  // const theme = useTheme();
+  const fetchPlugins = async () => {
+    setLoading(true);
+    setError(null);
+    console.log('Fetching plugins...');
 
-  // Initialize default plugins in localStorage if not present
-  useEffect(() => {
-    const savedPlugins = localStorage.getItem('installedPlugins');
-    if (!savedPlugins) {
-      const defaultPlugins = ['log-summarizer']; // Add more default plugins as needed
-      localStorage.setItem('installedPlugins', JSON.stringify(defaultPlugins));
-    }
-  }, []);
-
-  // Load plugins from localStorage
-  useEffect(() => {
-    const savedPlugins = localStorage.getItem('installedPlugins');
-    if (savedPlugins) {
-      const pluginNames = JSON.parse(savedPlugins);
-      const pluginsData = pluginNames.map((name: string) => {
-        switch (name) {
-          case 'secrets-manager':
-            return {
-              name: 'Secrets Manager',
-              description: 'Manage Kubernetes secrets and configurations',
-              icon: <PowerIcon />,
-              enabled: true,
-              route: '/plugins/secrets-ui-manager',
-              visible: true,
-              version: '1.0.0',
-              tags: ['security', 'configuration']
-            };
-          case 'log-summarizer':
-            return {
-              name: 'Log Summarizer',
-              description: 'View summarized logs for your pods',
-              icon: <LinkIcon />,
-              enabled: true,
-              route: '/plugin/log-summarizer',
-              visible: true,
-              version: '1.1.0',
-              tags: ['logging', 'monitoring']
-            };
-          case 'quota-visualiser':
-            return {
-              name: 'Quota visualiser',
-              description: 'Resource quota visualization plugin',
-              icon: <PowerIcon />,
-              enabled: true,
-              route: '/plugin/quota-visualiser',
-              visible: true,
-              version: '0.9.4',
-              tags: ['resource', 'visualization']
-            };
-          default:
-            return null;
-        }
-      }).filter(Boolean);
-      setPlugins(pluginsData);
-    }
-  }, []);
-
-  // Handle URL activation parameter
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const activatePlugin = urlParams.get('activate');
-    
-    if (activatePlugin === 'quota-visualiser') {
-      // Add quota-visualiser to installed plugins
-      const installedPlugins = JSON.parse(localStorage.getItem('installedPlugins') || '[]');
-      if (!installedPlugins.includes('quota-visualiser')) {
-        localStorage.setItem('installedPlugins', JSON.stringify([...installedPlugins, 'quota-visualiser']));
-        // Refresh plugins list
-        setPlugins(prev => [...prev, {
-          name: 'Quota visualiser',
-          description: 'Resource quota visualization plugin',
-          icon: <PowerIcon />,
-          enabled: true,
-          route: '/plugin/quota-visualiser',
-          visible: true,
-          version: '0.9.4',
-          tags: ['resource', 'visualization']
-        }]);
-      }
-    }
-  }, []);
-
-  const handleUninstall = async (plugin: Plugin) => {
-    if (!window.confirm(`Are you sure you want to uninstall ${plugin.name}?`)) return;
-
-    setUninstallingPlugin(plugin.name);
     try {
-      // Simulate API call
+      const response = await api.get('api/plugin-management/listAllPlugins');
+      console.log('API response:', response.data);
+
+      const data = response.data;
+      
+      console.log('Parsed plugin data:', data);
+
+      const pluginsWithState = data
+        .filter((plugin: Plugin) => plugin.name && plugin.version)
+        .map((plugin: Plugin, index: number) => {
+          const id = plugin.id?.trim() || `plugin-${index}`;
+          return {
+            ...plugin,
+            id,
+            enabled: true,
+            endpoints: plugin.endpoints ?? [],
+            ui_components: plugin.ui_components ?? [],
+            dependencies: plugin.dependencies ?? [],
+            permissions: plugin.permissions ?? [],
+          };
+        });
+
+      console.log('Transformed plugins with state:', pluginsWithState);
+      setPlugins(pluginsWithState);
+    } catch (err) {
+      console.error('Failed to fetch plugins:', err);
+      setError('Failed to load plugins. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    console.log('Component mounted, fetching plugins...');
+    fetchPlugins();
+  }, []);
+
+  const handleUninstall = async (pluginId: string) => {
+    console.log(`Attempting to uninstall plugin with ID: ${pluginId}`);
+    if (!window.confirm('Are you sure you want to uninstall this plugin?')) return;
+
+    setUninstallingPlugin(pluginId);
+    try {
+      console.log('Simulating uninstall delay...');
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Update installed plugins
-      const installedPlugins = JSON.parse(localStorage.getItem('installedPlugins') || '[]');
-      const newInstalledPlugins = installedPlugins.filter((p: string) => p !== plugin.name);
-      localStorage.setItem('installedPlugins', JSON.stringify(newInstalledPlugins));
-      
-      // Remove from plugins list
-      setPlugins(prev => prev.filter(p => p.name !== plugin.name));
+      setPlugins(prev => {
+        const updated = prev.filter(p => p.id !== pluginId);
+        console.log('Updated plugins after uninstall:', updated);
+        return updated;
+      });
     } catch (error) {
       console.error('Failed to uninstall plugin:', error);
     } finally {
@@ -145,99 +108,153 @@ const InstalledApps: React.FC = () => {
     }
   };
 
-  const handlePluginClick = (route: string) => {
-    if (route) {
-      window.location.href = route;
-    }
+  const handleRefresh = () => {
+    console.log('Refresh button clicked');
+    fetchPlugins();
   };
+
+  const getPluginIcon = () => {
+    return <CodeIcon />;
+  };
+
+  if (loading && plugins.length === 0) {
+    console.log('Loading plugins...');
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    console.warn('Error loading plugins:', error);
+    return (
+      <Alert
+        severity="error"
+        action={
+          <Button color="inherit" size="small" onClick={handleRefresh}>
+            Retry
+          </Button>
+        }
+      >
+        {error}
+      </Alert>
+    );
+  }
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h5" sx={{ mb: 3 }}>
-        Installed Plugins
-      </Typography>
-      
-      <List sx={{ width: '100%', p: 0, mb: 2 }}>
-        {plugins.map((plugin) => (
-          <Zoom in={true} timeout={600} key={plugin.name}>
-            <ListItem
-              sx={{
-                mb: 2,
-                p: 2,
-                bgcolor: 'rgba(30, 41, 59, 0.6)',
-                borderRadius: 1,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  bgcolor: 'rgba(30, 41, 59, 0.8)',
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
-                },
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
-                  {plugin.icon}
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ color: '#e2e8f0', fontWeight: 600 }}>
-                      {plugin.name}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h5">Installed Plugins</Typography>
+        <Button
+          variant="outlined"
+          startIcon={<RefreshIcon />}
+          onClick={handleRefresh}
+          disabled={loading}
+        >
+          {loading ? 'Refreshing...' : 'Refresh'}
+        </Button>
+      </Box>
+
+      {plugins.length === 0 ? (
+        <Paper sx={{ p: 3, textAlign: 'center', bgcolor: 'background.paper' }}>
+          <Typography variant="body1" color="text.secondary">
+            No plugins installed. Install a plugin to get started.
+          </Typography>
+        </Paper>
+      ) : (
+        <Grid container spacing={3}>
+          {plugins.map((plugin) => (
+            <Grid item xs={12} sm={6} md={4} key={plugin.id}>
+              <Zoom in={true}>
+                <Paper
+                  elevation={2}
+                  sx={{
+                    p: 2,
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: 3,
+                    },
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <Box
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: '8px',
+                        bgcolor: 'primary.main',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'primary.contrastText',
+                        mr: 2,
+                      }}
+                    >
+                      {getPluginIcon()}
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="h6" noWrap>
+                        {plugin.name}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        v{plugin.version}
+                      </Typography>
+                    </Box>
+                    <Chip
+                      label={plugin.enabled ? 'Enabled' : 'Disabled'}
+                      size="small"
+                      color={plugin.enabled ? 'success' : 'default'}
+                      variant="outlined"
+                    />
+                  </Box>
+
+                  <Typography variant="body2" sx={{ mb: 2, flexGrow: 1 }}>
+                    {plugin.description}
+                  </Typography>
+
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <PersonIcon fontSize="small" color="action" sx={{ mr: 0.5 }} />
+                    <Typography variant="caption" color="text.secondary">
+                      {plugin.author}
                     </Typography>
-                    <Typography variant="body2" sx={{ color: '#94a3b8', fontSize: '0.875rem' }}>
-                      {plugin.description}
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                      {plugin.tags?.map((tag) => (
-                        <Chip
-                          key={tag}
-                          label={tag}
+                  </Box>
+
+                  <Divider sx={{ my: 1 }} />
+
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 'auto' }}>
+                    <Box>
+                      <Tooltip title="Uninstall">
+                        <IconButton
                           size="small"
-                          sx={{
-                            bgcolor: 'rgba(59, 130, 246, 0.1)',
-                            color: '#7dd3fc',
-                            fontSize: '0.75rem',
-                          }}
-                        />
-                      ))}
+                          onClick={() => handleUninstall(plugin.id)}
+                          disabled={uninstallingPlugin === plugin.id}
+                          color="error"
+                        >
+                          {uninstallingPlugin === plugin.id ? (
+                            <CircularProgress size={20} />
+                          ) : (
+                            <DeleteIcon fontSize="small" />
+                          )}
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="View Details">
+                        <IconButton size="small" color="primary">
+                          <InfoIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                     </Box>
                   </Box>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Tooltip title="Uninstall">
-                    <IconButton
-                      onClick={() => handleUninstall(plugin)}
-                      disabled={uninstallingPlugin === plugin.name}
-                      sx={{
-                        color: '#ef4444',
-                        '&:hover': {
-                          bgcolor: 'rgba(239, 68, 68, 0.1)',
-                        },
-                      }}
-                    >
-                      {uninstallingPlugin === plugin.name ? (
-                        <CircularProgress size={20} sx={{ color: 'inherit' }} />
-                      ) : (
-                        <DeleteIcon />
-                      )}
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Open Plugin">
-                    <IconButton
-                      onClick={() => handlePluginClick(plugin.route)}
-                      sx={{
-                        color: '#3b82f6',
-                        '&:hover': {
-                          bgcolor: 'rgba(59, 130, 246, 0.1)',
-                        },
-                      }}
-                    >
-                      <LinkIcon />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </Box>
-            </ListItem>
-          </Zoom>
-        ))}
-      </List>
+                </Paper>
+              </Zoom>
+            </Grid>
+          ))}
+        </Grid>
+      )}
     </Box>
   );
 };

@@ -1,64 +1,77 @@
 import React, { useState } from 'react';
+import { api } from '../lib/api';
+// import { useNavigate } from 'react-router-dom';
 import {
+  Alert,
   Box,
-  Typography,
   Button,
-  Paper,
-  useTheme,
-  styled,
+  CircularProgress,
   Fade,
-  Grow
+  Snackbar,
+  TextField,
+  Typography
 } from '@mui/material';
-import UploadIcon from '@mui/icons-material/Upload';
-import { useNavigate } from 'react-router-dom';
 
-const StyledPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(4),
-  backgroundColor: '#1c1c1f',
-  borderRadius: '12px',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: theme.spacing(3),
-  boxShadow: '0 0 10px rgba(0,0,0,0.5)',
-  transition: 'transform 0.3s ease',
-  '&:hover': {
-    transform: 'scale(1.01)',
-    boxShadow: '0 0 16px rgba(0,0,0,0.7)'
-  }
-}));
+const UploadPlugin = () => {
+  const [repoUrl, setRepoUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success' as 'success' | 'error'
+  });
+  // const navigate = useNavigate();
 
-const UploadPlugin: React.FC = () => {
-  const [file, setFile] = useState<File | null>(null);
-  const theme = useTheme();
-  const navigate = useNavigate();
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0];
-    if (selectedFile && selectedFile.name.endsWith('.json')) {
-      setFile(selectedFile);
-    }
-  };
-
-  const handleActivate = async () => {
-    if (!file) {
-      alert('Please select a JSON file first');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!repoUrl) {
+      setSnackbar({
+        open: true,
+        message: 'Please enter a GitHub repository URL',
+        severity: 'error'
+      });
       return;
     }
 
+    setLoading(true);
     try {
-      const fileContent = await file.text();
-      const manifest = JSON.parse(fileContent);
+      // First clone the repository
+      const cloneResponse = await api.post('api/plugins/clone', {
+        repoURL: repoUrl
+      });
 
-      const pluginName = manifest.name || manifest.metadata?.name;
-      if (!pluginName) throw new Error('Invalid manifest: plugin name not found');
+      if (!cloneResponse.data.success) {
+        throw new Error(cloneResponse.data.message);
+      }
 
-      navigate(`/plugins?activate=quota-visualiser`);
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'An unknown error occurred';
-      alert('Failed to activate plugin: ' + message);
+      // After successful clone, fetch the manifest
+      const manifestResponse = await api.get('api/plugin-management/getPluginDetails');
+      const addtoPluginList = await api.get('api/plugin-management/AdditionOfPluginToList');
+      console.log('Plugin added to list:', addtoPluginList.data);
+      setSnackbar({
+        open: true,
+        message: 'Repository cloned and manifest loaded successfully!',
+        severity: 'success'
+      });
+      
+      // Log the manifest data (you can handle it as needed)
+      console.log('Plugin manifest:', manifestResponse.data);
+      
+      // Reset form after successful submission
+      setRepoUrl('');
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: error instanceof Error ? error.message : 'An error occurred',
+        severity: 'error'
+      });
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
   };
 
   return (
@@ -73,67 +86,63 @@ const UploadPlugin: React.FC = () => {
       }}
     >
       <Fade in timeout={700}>
-        <Typography
-          variant="h4"
-          sx={{ mb: 3, color: '#2196f3', fontWeight: 'bold', textAlign: 'center' }}
-        >
-          Upload Plugin
-        </Typography>
-      </Fade>
-
-      <Grow in timeout={1000}>
-        <StyledPaper>
-          <UploadIcon sx={{ fontSize: 40, color: '#42a5f5' }} />
-          <Typography variant="h6" align="center" sx={{ color: '#ccc' }}>
-            Upload Manifest JSON
+        <Box component="form" onSubmit={handleSubmit}>
+          <Typography variant="h4" gutterBottom>
+            Add Plugin from GitHub
           </Typography>
-
-          <input
-            accept=".json"
-            id="upload-plugin"
-            type="file"
-            onChange={handleFileChange}
-            style={{ display: 'none' }}
-          />
-          <label htmlFor="upload-plugin">
-            <Button
-              variant="contained"
-              component="span"
+          <Typography variant="body1" paragraph>
+            Enter the GitHub repository URL of the plugin you want to add
+          </Typography>
+          
+          <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              placeholder="https://github.com/username/repository"
+              value={repoUrl}
+              onChange={(e) => setRepoUrl(e.target.value)}
+              disabled={loading}
               sx={{
-                backgroundColor: '#2196f3',
-                color: '#fff',
-                '&:hover': {
-                  backgroundColor: '#1976d2'
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: 'rgba(255, 255, 255, 0.23)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                  },
+                },
+                '& .MuiInputBase-input': {
+                  color: '#f0f0f0',
                 }
               }}
-            >
-              Choose JSON File
-            </Button>
-          </label>
-
-          {file && (
-            <Typography variant="body2" align="center" sx={{ color: '#aaa' }}>
-              Selected: <i>{file.name}</i>
-            </Typography>
-          )}
-
-          {file && (
+            />
             <Button
+              type="submit"
               variant="contained"
-              onClick={handleActivate}
-              sx={{
-                backgroundColor: theme.palette.success.main,
-                color: '#fff',
-                '&:hover': {
-                  backgroundColor: theme.palette.success.dark
-                }
-              }}
+              color="primary"
+              disabled={loading || !repoUrl}
+              sx={{ minWidth: 120 }}
             >
-              Activate Plugin
+              {loading ? <CircularProgress size={24} /> : 'Clone & Install'}
             </Button>
-          )}
-        </StyledPaper>
-      </Grow>
+          </Box>
+        </Box>
+      </Fade>
+              
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
