@@ -60,7 +60,7 @@ func AddPluginToListHandler(c *gin.Context) {
 		c.JSON(400, gin.H{"error": "Invalid plugin data"})
 		return
 	}
-
+	AddDummyPlugin()
 	AddToInstalledPlugins(newPlugin)
 
 	c.JSON(200, gin.H{"message": "Plugin added successfully", "plugin": newPlugin})
@@ -109,6 +109,16 @@ func GetPluginID(c *gin.Context) {
 	c.JSON(200, gin.H{"pluginID": plugin.ID})
 }
 
+func AddDummyPlugin() {
+	dummy := Plugin{
+		Name:        "Cluster onboarding and detaching",
+		Description: "onboard and detach",
+		Version:     "0.1.0",
+		Author:      "peroxide",
+	}
+	AddToInstalledPlugins(dummy)
+}
+
 // ListAllInstalledPluginsHandler returns all plugins currently added
 func ListAllInstalledPluginsHandler(c *gin.Context) {
 	pluginsMutex.Lock()
@@ -118,7 +128,9 @@ func ListAllInstalledPluginsHandler(c *gin.Context) {
 }
 
 func InitializePlugin() {
-	plug, err := plugin.Open("/root/plugins/Plugins/backend/kubestellar-cluster-plugin.so")
+	plug, err := plugin.Open("/home/peroxide/ui/backend/plugins/Plugins/backend/kubestellar-cluster-plugin.so") // here will the backend
+	// will crash because of the plugin is not built with the same runtime as the backend
+	// and there are some issues in the docker image which is meant to be fixed to fix this issue
 	if err != nil {
 		log.Printf("Error opening plugin: %v", err)
 	}
@@ -156,4 +168,8 @@ func InitializeHandlers(c *gin.Context) {
 	}
 
 	c.JSON(200, gin.H{"message": "Handlers initialized successfully"})
+}
+
+func init() {
+	AddDummyPlugin()
 }

@@ -261,8 +261,13 @@ func (r *PluginRegistry) CloneTheRepo(repoURL string) error {
 
 	log.Printf("Repository cloned successfully into: %s", clonePath)
 
-	os.Chdir("/root/plugins/Plugins/backend")
+	os.Chdir(clonePath)
+	backendPath := filepath.Join(clonePath, "backend")
+	if err := os.Chdir(backendPath); err != nil {
+		log.Fatalf("failed to change directory to backend: %v", err)
+	}
 
+	// Now run the build command in the backend directory
 	buildCmd := exec.Command("go", "build", "-buildmode=plugin", "-o", "kubestellar-cluster-plugin.so", "main.go")
 	if err := buildCmd.Run(); err != nil {
 		log.Printf("buildsharedobject: Error building shared object: %v\n", err)

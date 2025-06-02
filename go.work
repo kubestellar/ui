@@ -1,0 +1,8 @@
+go 1.24.2
+
+use (
+	./backend
+	./backend/plugins/Plugins/backend
+)
+
+replace github.com/Per0x1de-1337/pluginapi => /home/peroxide/ui/backend/pluginapi

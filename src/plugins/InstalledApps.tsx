@@ -20,6 +20,7 @@ import {
   Zoom,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 
 interface Plugin {
@@ -40,6 +41,7 @@ interface Plugin {
 }
 
 const InstalledApps: React.FC = () => {
+  const navigate = useNavigate();
   const [plugins, setPlugins] = useState<Plugin[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,30 +51,34 @@ const InstalledApps: React.FC = () => {
     setLoading(true);
     setError(null);
     console.log('Fetching plugins...');
-
+  
     try {
       const response = await api.get('api/plugin-management/listAllPlugins');
       console.log('API response:', response.data);
-
+  
       const data = response.data;
+      // Extract the installed_plugins array from the response
+      const rawPlugins = data.installed_plugins || [];
       
-      console.log('Parsed plugin data:', data);
-
-      const pluginsWithState = data
-        .filter((plugin: Plugin) => plugin.name && plugin.version)
-        .map((plugin: Plugin, index: number) => {
-          const id = plugin.id?.trim() || `plugin-${index}`;
+      console.log('Parsed plugin data:', rawPlugins);
+  
+      const pluginsWithState = rawPlugins
+        .filter((plugin: any) => plugin.name && plugin.version) // Ensure name and version exist
+        .map((plugin: any, index: number) => {
+          const id = plugin.id?.trim() || `plugin-${index}`; // Fallback ID if not provided
           return {
             ...plugin,
             id,
             enabled: true,
-            endpoints: plugin.endpoints ?? [],
-            ui_components: plugin.ui_components ?? [],
-            dependencies: plugin.dependencies ?? [],
-            permissions: plugin.permissions ?? [],
+            description: plugin.description || 'No description available', // Fallback for description
+            author: plugin.author || 'Unknown', // Fallback for author
+            endpoints: plugin.endpoints || [], // Default to empty array if not present
+            ui_components: plugin.ui_components || [], // Default to empty array if not present
+            dependencies: plugin.dependencies || [], // Default to empty array if not present
+            permissions: plugin.permissions || [], // Default to empty array if not present
           };
         });
-
+  
       console.log('Transformed plugins with state:', pluginsWithState);
       setPlugins(pluginsWithState);
     } catch (err) {
@@ -82,6 +88,7 @@ const InstalledApps: React.FC = () => {
       setLoading(false);
     }
   };
+  
 
   useEffect(() => {
     console.log('Component mounted, fetching plugins...');
@@ -111,6 +118,11 @@ const InstalledApps: React.FC = () => {
   const handleRefresh = () => {
     console.log('Refresh button clicked');
     fetchPlugins();
+  };
+
+  const handlePluginClick = (pluginId: string) => {
+    console.log(`Plugin ${pluginId} clicked, navigating to test plugin page`);
+    navigate('/plugins/test-plugin');
   };
 
   const getPluginIcon = () => {
@@ -169,6 +181,7 @@ const InstalledApps: React.FC = () => {
               <Zoom in={true}>
                 <Paper
                   elevation={2}
+                  onClick={() => handlePluginClick(plugin.id)}
                   sx={{
                     p: 2,
                     height: '100%',
@@ -178,6 +191,7 @@ const InstalledApps: React.FC = () => {
                     '&:hover': {
                       transform: 'translateY(-4px)',
                       boxShadow: 3,
+                      cursor: 'pointer',
                     },
                   }}
                 >
