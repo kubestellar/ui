@@ -5,23 +5,17 @@ import {
   Save,
   RotateCcw,
   Shield,
-  Clock,
   HardDrive,
-  Zap,
   AlertCircle,
   CheckCircle,
   Trash2,
 } from 'lucide-react';
-import {
-  usePluginConfiguration,
-  useUpdateConfiguration,
-  useClearCache,
-} from '../../hooks/usePlugins';
+import { useConfiguration, useUpdateConfiguration, useClearCache } from '../../hooks/usePlugins';
 import LoadingFallback from '../LoadingFallback';
 import type { PluginConfiguration } from '../../types/plugin';
 
 const PluginConfigurationComponent: React.FC = () => {
-  const { data: config, isLoading } = usePluginConfiguration();
+  const { data: config, isLoading } = useConfiguration();
   const updateConfiguration = useUpdateConfiguration();
   const clearCache = useClearCache();
 
@@ -34,7 +28,10 @@ const PluginConfigurationComponent: React.FC = () => {
     }
   }, [config]);
 
-  const handleInputChange = (field: keyof PluginConfiguration, value: string | number | boolean) => {
+  const handleInputChange = (
+    field: keyof PluginConfiguration,
+    value: string | number | boolean
+  ) => {
     setFormData(prev => ({
       ...prev,
       [field]: value,
@@ -186,105 +183,11 @@ const PluginConfigurationComponent: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* Performance Settings */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="card border border-base-300 bg-base-100 shadow-lg"
-        >
-          <div className="card-body">
-            <h3 className="card-title flex items-center gap-2">
-              <Zap className="h-5 w-5" />
-              Performance Settings
-            </h3>
-
-            <div className="space-y-4">
-              {/* Max Concurrent Loads */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Max Concurrent Plugin Loads</span>
-                </label>
-                <input
-                  type="number"
-                  className="input input-bordered"
-                  min="1"
-                  max="10"
-                  value={formData.max_concurrent_loads || 3}
-                  onChange={e =>
-                    handleInputChange('max_concurrent_loads', parseInt(e.target.value))
-                  }
-                />
-                <label className="label">
-                  <span className="label-text-alt text-base-content/60">
-                    Maximum number of plugins that can be loaded simultaneously
-                  </span>
-                </label>
-              </div>
-
-              {/* Plugin Timeout */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Plugin Load Timeout</span>
-                </label>
-                <input
-                  type="text"
-                  className="input input-bordered"
-                  placeholder="30s"
-                  value={formData.plugin_timeout || ''}
-                  onChange={e => handleInputChange('plugin_timeout', e.target.value)}
-                />
-                <label className="label">
-                  <span className="label-text-alt text-base-content/60">
-                    Maximum time to wait for plugin loading (e.g., 30s, 2m)
-                  </span>
-                </label>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Health Monitoring */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="card border border-base-300 bg-base-100 shadow-lg"
-        >
-          <div className="card-body">
-            <h3 className="card-title flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Health Monitoring
-            </h3>
-
-            <div className="space-y-4">
-              {/* Health Check Interval */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Health Check Interval</span>
-                </label>
-                <input
-                  type="text"
-                  className="input input-bordered"
-                  placeholder="30s"
-                  value={formData.health_check_interval || ''}
-                  onChange={e => handleInputChange('health_check_interval', e.target.value)}
-                />
-                <label className="label">
-                  <span className="label-text-alt text-base-content/60">
-                    How often to check plugin health (e.g., 30s, 1m, 5m)
-                  </span>
-                </label>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
         {/* Security Settings */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.2 }}
           className="card border border-base-300 bg-base-100 shadow-lg"
         >
           <div className="card-body">
@@ -342,13 +245,13 @@ const PluginConfigurationComponent: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
+        transition={{ delay: 0.3 }}
         className="card border border-base-300 bg-base-100 shadow-lg"
       >
         <div className="card-body">
           <h3 className="card-title">Current Configuration Summary</h3>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="stat rounded-lg bg-base-200 p-4">
               <div className="stat-title text-xs">Cache</div>
               <div className="stat-value flex items-center gap-2 text-sm">
@@ -371,16 +274,6 @@ const PluginConfigurationComponent: React.FC = () => {
                 )}
                 {formData.security_enabled ? 'Enabled' : 'Disabled'}
               </div>
-            </div>
-
-            <div className="stat rounded-lg bg-base-200 p-4">
-              <div className="stat-title text-xs">Max Concurrent</div>
-              <div className="stat-value text-lg">{formData.max_concurrent_loads || 3}</div>
-            </div>
-
-            <div className="stat rounded-lg bg-base-200 p-4">
-              <div className="stat-title text-xs">Health Interval</div>
-              <div className="stat-value text-sm">{formData.health_check_interval || '30s'}</div>
             </div>
           </div>
         </div>

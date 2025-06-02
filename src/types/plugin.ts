@@ -39,13 +39,13 @@ export interface UIComponent {
 
 export interface PluginStatus {
   id: string;
-  status: 'loading' | 'loaded' | 'failed' | 'unloaded' | 'enabled' | 'disabled';
+  status: 'enabled' | 'disabled' | 'failed' | 'loading';
   health: 'healthy' | 'unhealthy' | 'unknown';
-  last_updated: string;
-  error_message?: string;
   uptime: number;
+  last_updated: string;
   request_count: number;
   error_count: number;
+  error_message?: string;
 }
 
 export interface Plugin {
@@ -61,16 +61,6 @@ export interface LoadPluginRequest {
   source: string;
   version?: string;
   config?: Record<string, unknown>;
-}
-
-export interface SystemMetrics {
-  total_plugins: number;
-  active_plugins: number;
-  failed_plugins: number;
-  total_requests: number;
-  avg_response_time: number;
-  memory_usage: string;
-  uptime: string;
 }
 
 export interface PluginError {
@@ -89,13 +79,11 @@ export interface CacheInfo {
 export interface PluginConfiguration {
   cache_enabled: boolean;
   cache_max_size: string;
-  health_check_interval: string;
-  max_concurrent_loads: number;
-  plugin_timeout: string;
   security_enabled: boolean;
 }
 
 export interface AvailablePlugin {
+  id?: string;
   repository: string;
   name: string;
   description: string;
@@ -104,4 +92,9 @@ export interface AvailablePlugin {
   stars: number;
   last_updated: string;
   download_url: string;
+  tags?: string[];
+  icon?: string;
+  verified?: boolean;
+  official?: boolean;
+  version?: string;
 }

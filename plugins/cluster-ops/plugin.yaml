@@ -1,0 +1,21 @@
+id: cluster-ops
+name: Cluster Operations Plugin
+version: 1.0.0
+description: Plugin for managing cluster operations and onboarding
+author: Test Developer
+compatibility:
+  ui_version: '>=1.0.0'
+dependencies:
+  - kubectl
+  - go
+endpoints:
+  - path: /test
+    method: GET
+    handler: test
+    description: Test endpoint
+permissions:
+  - cluster.read
+  - cluster.write
+config:
+  enable_logging: true
+  max_clusters: 10

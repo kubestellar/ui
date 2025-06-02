@@ -1,107 +1,106 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { PluginService } from '../services/pluginService';
-import type { LoadPluginRequest, PluginConfiguration } from '../types/plugin';
 
 // Query keys
-export const pluginKeys = {
+const pluginKeys = {
   all: ['plugins'] as const,
   lists: () => [...pluginKeys.all, 'list'] as const,
   list: (filters: string) => [...pluginKeys.lists(), { filters }] as const,
   details: () => [...pluginKeys.all, 'detail'] as const,
   detail: (id: string) => [...pluginKeys.details(), id] as const,
-  status: (id: string) => [...pluginKeys.all, 'status', id] as const,
-  healthSummary: () => [...pluginKeys.all, 'health-summary'] as const,
-  systemMetrics: () => [...pluginKeys.all, 'system-metrics'] as const,
-  configuration: () => [...pluginKeys.all, 'configuration'] as const,
+  health: () => [...pluginKeys.all, 'health'] as const,
   cache: () => [...pluginKeys.all, 'cache'] as const,
   available: () => [...pluginKeys.all, 'available'] as const,
+  configuration: () => [...pluginKeys.all, 'configuration'] as const,
 };
 
-// Custom hooks
+// Main plugin list query
 export function usePlugins() {
   return useQuery({
     queryKey: pluginKeys.lists(),
     queryFn: PluginService.listPlugins,
-    staleTime: 30000, // Consider data fresh for 30 seconds
-    refetchInterval: 30000, // Refetch every 30 seconds
   });
 }
 
-export function usePlugin(id: string) {
+// Plugin details query
+export function usePluginDetails(pluginId: string) {
   return useQuery({
-    queryKey: pluginKeys.detail(id),
-    queryFn: () => PluginService.getPlugin(id),
-    enabled: !!id,
-    staleTime: 10000,
+    queryKey: pluginKeys.detail(pluginId),
+    queryFn: () => PluginService.getPlugin(pluginId),
+    enabled: !!pluginId,
   });
 }
 
-export function usePluginStatus(id: string) {
-  return useQuery({
-    queryKey: pluginKeys.status(id),
-    queryFn: () => PluginService.getPluginStatus(id),
-    enabled: !!id,
-    refetchInterval: 5000, // Frequent updates for status
-    staleTime: 1000,
-  });
-}
-
+// Health summary query
 export function useHealthSummary() {
   return useQuery({
-    queryKey: pluginKeys.healthSummary(),
+    queryKey: pluginKeys.health(),
     queryFn: PluginService.getHealthSummary,
-    refetchInterval: 10000,
-    staleTime: 5000,
   });
 }
 
-export function useSystemMetrics() {
-  return useQuery({
-    queryKey: pluginKeys.systemMetrics(),
-    queryFn: PluginService.getSystemMetrics,
-    refetchInterval: 30000,
-    staleTime: 15000,
-  });
-}
-
-export function usePluginConfiguration() {
-  return useQuery({
-    queryKey: pluginKeys.configuration(),
-    queryFn: PluginService.getConfiguration,
-    staleTime: 60000, // Configuration changes less frequently
-  });
-}
-
+// Cache info query
 export function useCacheInfo() {
   return useQuery({
     queryKey: pluginKeys.cache(),
     queryFn: PluginService.getCacheInfo,
-    staleTime: 30000,
   });
 }
 
+// Available plugins query
 export function useAvailablePlugins() {
   return useQuery({
     queryKey: pluginKeys.available(),
     queryFn: PluginService.getAvailablePlugins,
-    staleTime: 300000, // Cache for 5 minutes
   });
 }
 
-// Mutation hooks
+// Configuration query
+export function useConfiguration() {
+  return useQuery({
+    queryKey: pluginKeys.configuration(),
+    queryFn: PluginService.getConfiguration,
+  });
+}
+
+// Plugin mutations
+export function useInstallPlugin() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: PluginService.loadPlugin,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: pluginKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: pluginKeys.health() });
+    },
+  });
+}
+
 export function useLoadPlugin() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (request: LoadPluginRequest) => PluginService.loadPlugin(request),
-    onSuccess: plugin => {
-      toast.success(`Plugin "${plugin.metadata.name}" loaded successfully`);
+    mutationFn: PluginService.loadPlugin,
+    onSuccess: () => {
+      toast.success('Plugin loaded successfully');
       queryClient.invalidateQueries({ queryKey: pluginKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: pluginKeys.systemMetrics() });
+      queryClient.invalidateQueries({ queryKey: pluginKeys.health() });
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to load plugin: ${error.message}`);
+    onError: () => {
+      toast.error('Failed to load plugin');
+    },
+  });
+}
+
+export function useUninstallPlugin() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: PluginService.unloadPlugin,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: pluginKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: pluginKeys.health() });
     },
   });
 }
@@ -110,50 +109,14 @@ export function useUnloadPlugin() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => PluginService.unloadPlugin(id),
-    onSuccess: (_, id) => {
+    mutationFn: PluginService.unloadPlugin,
+    onSuccess: () => {
       toast.success('Plugin unloaded successfully');
       queryClient.invalidateQueries({ queryKey: pluginKeys.lists() });
-      queryClient.removeQueries({ queryKey: pluginKeys.detail(id) });
-      queryClient.removeQueries({ queryKey: pluginKeys.status(id) });
-      queryClient.invalidateQueries({ queryKey: pluginKeys.systemMetrics() });
+      queryClient.invalidateQueries({ queryKey: pluginKeys.health() });
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to unload plugin: ${error.message}`);
-    },
-  });
-}
-
-export function useReloadPlugin() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => PluginService.reloadPlugin(id),
-    onSuccess: plugin => {
-      toast.success(`Plugin "${plugin.metadata.name}" reloaded successfully`);
-      queryClient.invalidateQueries({ queryKey: pluginKeys.detail(plugin.metadata.id) });
-      queryClient.invalidateQueries({ queryKey: pluginKeys.status(plugin.metadata.id) });
-      queryClient.invalidateQueries({ queryKey: pluginKeys.lists() });
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to reload plugin: ${error.message}`);
-    },
-  });
-}
-
-export function useUpdatePlugin() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, config }: { id: string; config?: Record<string, unknown> }) =>
-      PluginService.updatePlugin(id, config),
-    onSuccess: plugin => {
-      toast.success(`Plugin "${plugin.metadata.name}" updated successfully`);
-      queryClient.invalidateQueries({ queryKey: pluginKeys.detail(plugin.metadata.id) });
-      queryClient.invalidateQueries({ queryKey: pluginKeys.lists() });
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to update plugin: ${error.message}`);
+    onError: () => {
+      toast.error('Failed to unload plugin');
     },
   });
 }
@@ -162,15 +125,14 @@ export function useEnablePlugin() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => PluginService.enablePlugin(id),
-    onSuccess: (_, id) => {
+    mutationFn: PluginService.enablePlugin,
+    onSuccess: () => {
       toast.success('Plugin enabled successfully');
-      queryClient.invalidateQueries({ queryKey: pluginKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: pluginKeys.status(id) });
       queryClient.invalidateQueries({ queryKey: pluginKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: pluginKeys.health() });
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to enable plugin: ${error.message}`);
+    onError: () => {
+      toast.error('Failed to enable plugin');
     },
   });
 }
@@ -179,61 +141,60 @@ export function useDisablePlugin() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => PluginService.disablePlugin(id),
-    onSuccess: (_, id) => {
+    mutationFn: PluginService.disablePlugin,
+    onSuccess: () => {
       toast.success('Plugin disabled successfully');
-      queryClient.invalidateQueries({ queryKey: pluginKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: pluginKeys.status(id) });
       queryClient.invalidateQueries({ queryKey: pluginKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: pluginKeys.health() });
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to disable plugin: ${error.message}`);
+    onError: () => {
+      toast.error('Failed to disable plugin');
+    },
+  });
+}
+
+export function useReloadPlugin() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: PluginService.reloadPlugin,
+    onSuccess: () => {
+      toast.success('Plugin reloaded successfully');
+      queryClient.invalidateQueries({ queryKey: pluginKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: pluginKeys.health() });
+    },
+    onError: () => {
+      toast.error('Failed to reload plugin');
     },
   });
 }
 
 export function useValidatePlugin() {
   return useMutation({
-    mutationFn: (source: string) => PluginService.validatePlugin(source),
-    onSuccess: result => {
-      if (result.valid) {
-        toast.success('Plugin validation successful');
-      } else {
-        toast.error(`Plugin validation failed: ${result.errors?.join(', ')}`);
-      }
-    },
-    onError: (error: Error) => {
-      toast.error(`Validation error: ${error.message}`);
-    },
+    mutationFn: PluginService.validatePlugin,
   });
 }
 
+// Update configuration mutation
 export function useUpdateConfiguration() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (config: Partial<PluginConfiguration>) => PluginService.updateConfiguration(config),
+    mutationFn: PluginService.updateConfiguration,
     onSuccess: () => {
-      toast.success('Configuration updated successfully');
       queryClient.invalidateQueries({ queryKey: pluginKeys.configuration() });
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to update configuration: ${error.message}`);
     },
   });
 }
 
+// Clear cache mutation
 export function useClearCache() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => PluginService.clearCache(),
+    mutationFn: PluginService.clearCache,
     onSuccess: () => {
-      toast.success('Cache cleared successfully');
       queryClient.invalidateQueries({ queryKey: pluginKeys.cache() });
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to clear cache: ${error.message}`);
     },
   });
 }

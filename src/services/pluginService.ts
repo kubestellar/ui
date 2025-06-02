@@ -2,7 +2,6 @@ import { api } from '../lib/api';
 import type {
   Plugin,
   LoadPluginRequest,
-  SystemMetrics,
   PluginConfiguration,
   CacheInfo,
   AvailablePlugin,
@@ -10,7 +9,6 @@ import type {
 } from '../types/plugin';
 import {
   demoPlugins,
-  demoSystemMetrics,
   demoAvailablePlugins,
   demoHealthSummary,
   demoCacheInfo,
@@ -30,13 +28,17 @@ export class PluginService {
     }
   }
 
-  static async listPlugins(): Promise<Plugin[]> {
+  static async listPlugins(): Promise<{ plugins: Record<string, Plugin>; count: number }> {
     try {
       const response = await api.get('/api/plugins');
       return response.data;
     } catch {
       console.warn('API not available, using demo data');
-      return demoPlugins;
+      const pluginsMap: Record<string, Plugin> = {};
+      demoPlugins.forEach(plugin => {
+        pluginsMap[plugin.metadata.id] = plugin;
+      });
+      return { plugins: pluginsMap, count: demoPlugins.length };
     }
   }
 
@@ -139,16 +141,6 @@ export class PluginService {
   }
 
   // System operations
-  static async getSystemMetrics(): Promise<SystemMetrics> {
-    try {
-      const response = await api.get('/api/plugins/system/metrics');
-      return response.data;
-    } catch {
-      console.warn('API not available, using demo data');
-      return demoSystemMetrics;
-    }
-  }
-
   static async getConfiguration(): Promise<PluginConfiguration> {
     try {
       const response = await api.get('/api/plugins/system/configuration');
@@ -183,6 +175,83 @@ export class PluginService {
       await api.delete('/api/plugins/cache');
     } catch {
       console.warn('API not available, simulating success');
+    }
+  }
+
+  // Directory-based plugin operations
+  static async getAvailableDirectories(): Promise<
+    {
+      path: string;
+      name: string;
+      hasMainGo: boolean;
+      hasManifest: boolean;
+      isValid: boolean;
+      metadata: {
+        name: string;
+        version: string;
+        description: string;
+      };
+    }[]
+  > {
+    try {
+      const response = await api.get('/api/plugins/local/directories');
+      return response.data.directories || [];
+    } catch {
+      console.warn('API not available, using demo data');
+      return [
+        {
+          path: './plugins/cluster-ops',
+          name: 'cluster-ops',
+          hasMainGo: true,
+          hasManifest: true,
+          isValid: true,
+          metadata: {
+            name: 'Cluster Operations Plugin',
+            version: '1.0.0',
+            description: 'Plugin for managing cluster operations',
+          },
+        },
+      ];
+    }
+  }
+
+  static async loadPluginFromDirectory(directoryPath: string): Promise<void> {
+    try {
+      await api.post('/api/plugins/local/load-directory', { directoryPath });
+    } catch {
+      console.warn('API not available, simulating success');
+    }
+  }
+
+  // ZIP upload plugin operations
+  static async uploadPluginZip(
+    file: File
+  ): Promise<{ upload_id: string; validation: { valid: boolean; errors?: string[] } }> {
+    try {
+      const formData = new FormData();
+      formData.append('plugin', file);
+
+      const response = await api.post('/api/plugins/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      return response.data;
+    } catch {
+      console.warn('API not available, simulating upload');
+      return {
+        upload_id: 'demo-upload-123',
+        validation: { valid: true },
+      };
+    }
+  }
+
+  static async installUploadedPlugin(uploadId: string): Promise<void> {
+    try {
+      await api.post(`/api/plugins/install/${uploadId}`);
+    } catch {
+      console.warn('API not available, simulating installation');
     }
   }
 }

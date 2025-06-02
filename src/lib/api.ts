@@ -33,11 +33,14 @@ api.interceptors.response.use(
 
     console.error('API Error:', errorMessage);
 
-    // Don't show toast for 401 errors on verification endpoint to prevent
-    // unnecessary error messages during auth checks
+    // Don't show toast for certain endpoints to prevent unnecessary error messages
     const isAuthCheck = error.config?.url?.includes('/api/me');
+    const isPluginAPI = error.config?.url?.includes('/api/plugins');
+
     if (error.response?.status === 401 && isAuthCheck) {
       console.log('Auth verification failed, ignoring toast');
+    } else if (isPluginAPI) {
+      console.log('Plugin API not available, falling back to demo mode');
     } else {
       toast.error(errorMessage);
     }

@@ -1,6 +1,7 @@
 import { HiOutlineHome, HiOutlineCube, HiOutlineCommandLine } from 'react-icons/hi2';
 
 import { MdPolicy, MdAssuredWorkload } from 'react-icons/md';
+import { HiOutlinePuzzlePiece } from 'react-icons/hi2';
 
 export const menu = [
   {
@@ -44,6 +45,12 @@ export const menu = [
         url: '/wecs/treeview',
         icon: MdAssuredWorkload,
         label: `Deployed Workloads`,
+      },
+      {
+        isLink: true,
+        url: '/plugins',
+        icon: HiOutlinePuzzlePiece,
+        label: 'Plugins',
       },
     ],
   },

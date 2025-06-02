@@ -1,104 +1,74 @@
-import type {
-  Plugin,
-  SystemMetrics,
-  CacheInfo,
-  AvailablePlugin,
-  PluginConfiguration,
-} from '../types/plugin';
+import type { Plugin, CacheInfo, AvailablePlugin, PluginConfiguration } from '../types/plugin';
 
 export const demoPlugins: Plugin[] = [
   {
     metadata: {
-      id: 'cluster-plugin',
-      name: 'Cluster Management Plugin',
+      id: 'cluster-ops-plugin',
+      name: 'KubeStellar Cluster Operations',
       version: '1.0.0',
-      description: 'Provides cluster onboarding and detachment functionality for KubeStellar',
-      author: 'KubeStellar Team',
+      description: 'Real cluster onboarding and detachment operations using handlers.go',
+      author: 'Priyanshu',
       endpoints: [
-        { path: '/api/clusters/onboard', method: 'POST', handler: 'OnboardCluster' },
-        { path: '/api/clusters/detach', method: 'POST', handler: 'DetachCluster' },
-        { path: '/api/clusters/status', method: 'GET', handler: 'GetClusterStatus' },
+        {
+          path: '/api/plugins/cluster-ops-plugin/onboard',
+          method: 'POST',
+          handler: 'OnboardClusterHandler',
+        },
+        {
+          path: '/api/plugins/cluster-ops-plugin/detach',
+          method: 'POST',
+          handler: 'DetachClusterHandler',
+        },
+        {
+          path: '/api/plugins/cluster-ops-plugin/status/:cluster',
+          method: 'GET',
+          handler: 'GetClusterStatusHandler',
+        },
+        {
+          path: '/api/plugins/cluster-ops-plugin/clusters',
+          method: 'GET',
+          handler: 'ListClustersHandler',
+        },
+        {
+          path: '/api/plugins/cluster-ops-plugin/health',
+          method: 'GET',
+          handler: 'HealthCheckHandler',
+        },
+        {
+          path: '/api/plugins/cluster-ops-plugin/events/:cluster',
+          method: 'GET',
+          handler: 'GetClusterEventsHandler',
+        },
       ],
-      permissions: ['cluster:read', 'cluster:write', 'cluster:delete'],
-      dependencies: ['kubernetes-client', 'yaml-parser'],
+      permissions: ['cluster.read', 'cluster.write', 'cluster.delete'],
+      dependencies: ['kubectl', 'clusteradm'],
       configuration: {
-        timeout: '30s',
-        retries: 3,
-        validate_ssl: true,
+        timeout: '60s',
+        cluster_namespace: 'kubestellar-system',
+        its_context: 'its1',
       },
       security: {
         network_access: true,
-        filesystem_access: false,
+        filesystem_access: true,
         sandboxed: true,
       },
       health: {
         enabled: true,
         interval_seconds: 30,
       },
-      ui_components: [
-        { name: 'ClusterOnboardForm', route: '/clusters/onboard', component: 'ClusterOnboardForm' },
-        {
-          name: 'ClusterStatusDashboard',
-          route: '/clusters/status',
-          component: 'ClusterStatusDashboard',
-        },
-      ],
     },
     status: {
-      id: 'cluster-plugin',
+      id: 'cluster-ops-plugin',
       status: 'enabled',
       health: 'healthy',
       uptime: 3600,
       last_updated: new Date().toISOString(),
-      request_count: 1250,
-      error_count: 3,
+      request_count: 45,
+      error_count: 0,
     },
-    source: 'https://github.com/kubestellar/cluster-plugin',
+    source: '/plugins/cluster-ops-plugin.so',
     loaded_at: new Date(Date.now() - 3600000).toISOString(),
-    file_path: '/opt/plugins/cluster-plugin.so',
-    enabled: true,
-  },
-  {
-    metadata: {
-      id: 'monitoring-plugin',
-      name: 'Monitoring & Metrics Plugin',
-      version: '2.1.0',
-      description: 'Advanced monitoring and metrics collection for distributed workloads',
-      author: 'Community',
-      endpoints: [
-        { path: '/api/metrics/collect', method: 'POST', handler: 'CollectMetrics' },
-        { path: '/api/metrics/query', method: 'GET', handler: 'QueryMetrics' },
-        { path: '/api/alerts/create', method: 'POST', handler: 'CreateAlert' },
-      ],
-      permissions: ['metrics:read', 'metrics:write', 'alerts:manage'],
-      dependencies: ['prometheus-client', 'grafana-sdk'],
-      configuration: {
-        scrape_interval: '15s',
-        retention: '7d',
-        alert_threshold: 0.8,
-      },
-      security: {
-        network_access: true,
-        filesystem_access: true,
-        sandboxed: false,
-      },
-      health: {
-        enabled: true,
-        interval_seconds: 60,
-      },
-    },
-    status: {
-      id: 'monitoring-plugin',
-      status: 'enabled',
-      health: 'healthy',
-      uptime: 7200,
-      last_updated: new Date(Date.now() - 300000).toISOString(),
-      request_count: 5420,
-      error_count: 12,
-    },
-    source: 'https://github.com/community/monitoring-plugin',
-    loaded_at: new Date(Date.now() - 7200000).toISOString(),
-    file_path: '/opt/plugins/monitoring-plugin.so',
+    file_path: '/plugins/cluster-ops-plugin.so',
     enabled: true,
   },
   {
@@ -147,91 +117,25 @@ export const demoPlugins: Plugin[] = [
   },
 ];
 
-export const demoSystemMetrics: SystemMetrics = {
-  total_plugins: 3,
-  active_plugins: 2,
-  failed_plugins: 1,
-  total_requests: 6759,
-  avg_response_time: 145,
-  uptime: '2h 15m',
-  memory_usage: '256MB',
-};
-
 export const demoCacheInfo: CacheInfo = {
-  total_size: '1.2GB',
-  num_entries: 15,
-  hit_rate: 0.87,
-  last_cleanup: new Date(Date.now() - 86400000).toISOString(),
+  total_size: '0MB',
+  num_entries: 0,
+  hit_rate: 0,
+  last_cleanup: new Date().toISOString(),
 };
 
-export const demoAvailablePlugins: AvailablePlugin[] = [
-  {
-    name: 'Security Scanner Plugin',
-    description:
-      'Comprehensive security scanning and vulnerability assessment for Kubernetes clusters',
-    author: 'Security Team',
-    repository: 'https://github.com/kubestellar/security-scanner',
-    latest_version: '3.2.1',
-    stars: 245,
-    last_updated: new Date(Date.now() - 172800000).toISOString(),
-    download_url:
-      'https://github.com/kubestellar/security-scanner/releases/download/v3.2.1/security-scanner.so',
-  },
-  {
-    name: 'Cost Optimization Plugin',
-    description: 'Intelligent cost analysis and optimization recommendations for cloud resources',
-    author: 'FinOps Community',
-    repository: 'https://github.com/finops/cost-optimizer',
-    latest_version: '2.0.5',
-    stars: 189,
-    last_updated: new Date(Date.now() - 259200000).toISOString(),
-    download_url:
-      'https://github.com/finops/cost-optimizer/releases/download/v2.0.5/cost-optimizer.so',
-  },
-  {
-    name: 'Network Policy Manager',
-    description:
-      'Advanced network policy management and visualization for multi-cluster environments',
-    author: 'Network Team',
-    repository: 'https://github.com/network/policy-manager',
-    latest_version: '1.8.3',
-    stars: 156,
-    last_updated: new Date(Date.now() - 432000000).toISOString(),
-    download_url:
-      'https://github.com/network/policy-manager/releases/download/v1.8.3/policy-manager.so',
-  },
-  {
-    name: 'GitOps Integration Plugin',
-    description: 'Seamless GitOps workflow integration with ArgoCD and Flux support',
-    author: 'DevOps Community',
-    repository: 'https://github.com/gitops/integration-plugin',
-    latest_version: '4.1.0',
-    stars: 312,
-    last_updated: new Date(Date.now() - 86400000).toISOString(),
-    download_url:
-      'https://github.com/gitops/integration-plugin/releases/download/v4.1.0/gitops-integration.so',
-  },
-];
+export const demoAvailablePlugins: AvailablePlugin[] = [];
 
 export const demoHealthSummary = {
   plugins: [
     {
-      id: 'cluster-plugin',
+      id: 'cluster-ops-plugin',
       status: 'enabled' as const,
       health: 'healthy' as const,
       uptime: 3600,
       last_updated: new Date().toISOString(),
-      request_count: 1250,
-      error_count: 3,
-    },
-    {
-      id: 'monitoring-plugin',
-      status: 'enabled' as const,
-      health: 'healthy' as const,
-      uptime: 7200,
-      last_updated: new Date(Date.now() - 300000).toISOString(),
-      request_count: 5420,
-      error_count: 12,
+      request_count: 45,
+      error_count: 0,
     },
     {
       id: 'backup-plugin',
@@ -241,6 +145,7 @@ export const demoHealthSummary = {
       last_updated: new Date(Date.now() - 600000).toISOString(),
       request_count: 89,
       error_count: 15,
+      error_message: 'Storage backend connection failed',
     },
   ],
 };
@@ -248,8 +153,5 @@ export const demoHealthSummary = {
 export const demoConfiguration: PluginConfiguration = {
   cache_enabled: true,
   cache_max_size: '1GB',
-  health_check_interval: '30s',
-  max_concurrent_loads: 3,
-  plugin_timeout: '30s',
   security_enabled: true,
 };
