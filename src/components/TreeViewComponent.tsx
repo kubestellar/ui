@@ -61,6 +61,7 @@ import { useWebSocket } from '../context/webSocketExports';
 import useTheme from '../stores/themeStore';
 import axios from 'axios';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import CancelButton from './common/CancelButton';
 import ListViewComponent from '../components/ListViewComponent';
 import ContextDropdown from '../components/ContextDropdown';
 import { ResourceItem as ListResourceItem } from './ListViewComponent'; // Import ResourceItem from ListViewComponent
@@ -2666,17 +2667,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
             </Typography>
           </DialogContent>
           <DialogActions sx={{ justifyContent: 'space-between', padding: '0 16px 16px 16px' }}>
-            <Button
-              onClick={handleDeleteCancel}
-              sx={{
-                textTransform: 'none',
-                color: '#2F86FF',
-                fontWeight: 600,
-                '&:hover': { backgroundColor: 'rgba(47, 134, 255, 0.1)' },
-              }}
-            >
-              Cancel
-            </Button>
+            <CancelButton onClick={handleDeleteCancel}>Cancel</CancelButton>
             <Button
               onClick={handleDeleteConfirm}
               sx={{
