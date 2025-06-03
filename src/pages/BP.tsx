@@ -155,8 +155,8 @@ const BP = () => {
   const [selectedPolicy, setSelectedPolicy] = useState<BindingPolicyInfo | null>(null);
   const [selectedPolicies, setSelectedPolicies] = useState<string[]>([]);
   const [activeFilters, setActiveFilters] = useState<{
-    status?: 'Active' | 'Inactive' | 'Pending';
-  }>({});
+    status?: 'Active' | 'Inactive' | 'Pending' | '';
+  }>({ status: '' });
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -769,6 +769,7 @@ const BP = () => {
           policyCount={filteredPolicies.length}
           clusters={clusters}
           workloads={workloads}
+          filteredCount={filteredPolicies.length}
         />
 
         <Box

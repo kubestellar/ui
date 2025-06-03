@@ -28,7 +28,7 @@ interface BPTableProps {
   clusters?: ManagedCluster[];
   onDeletePolicy: (policy: BindingPolicyInfo) => void;
   onEditPolicy: (policy: BindingPolicyInfo) => void;
-  activeFilters: { status?: 'Active' | 'Inactive' | 'Pending' };
+  activeFilters: { status?: 'Active' | 'Inactive' | 'Pending' | '' };
   selectedPolicies: string[];
   onSelectionChange: (selected: string[]) => void;
 }
