@@ -9,6 +9,7 @@ import {
   AlertTitle,
 } from '@mui/material';
 import WarningIcon from '@mui/icons-material/Warning';
+import CancelButton from '../common/CancelButton';
 import useTheme from '../../stores/themeStore';
 
 interface CancelConfirmationDialogProps {
@@ -82,15 +83,7 @@ const CancelConfirmationDialog: React.FC<CancelConfirmationDialogProps> = ({
           outline: 'none',
         }}
       >
-        <Button
-          onClick={onClose}
-          sx={{
-            textTransform: 'none',
-            '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' },
-          }}
-        >
-          Continue Editing
-        </Button>
+        <CancelButton onClick={onClose}>Continue Editing</CancelButton>
         <Button
           onClick={onConfirm}
           color="error"

@@ -714,9 +714,9 @@ func OnboardCluster(kubeconfigData []byte, clusterName string) error {
 	LogOnboardingEvent(clusterName, "Processing", "Waiting for acceptance to propagate")
 	time.Sleep(5 * time.Second)
 
-	// 9. Label the managed cluster
+	// 9. Label the managed cluster - USE ONBOARDING-SPECIFIC FUNCTION
 	LogOnboardingEvent(clusterName, "Labeling", "Applying labels to the managed cluster")
-	if err := UpdateManagedClusterLabels(hubClientset, hubConfig, clusterName, map[string]string{
+	if err := UpdateManagedClusterLabelsForOnboarding(hubClientset, hubConfig, clusterName, map[string]string{
 		"location-group": "edge",
 		"name":           clusterName,
 	}); err != nil {
@@ -899,130 +899,6 @@ func joinClusterToHub(kubeconfigPath, clusterName, joinToken string) error {
 
 	log.Printf("Join command output: %s", string(output))
 	return nil
-}
-
-// UpdateManagedClusterLabels - Optimized version
-func UpdateManagedClusterLabels(clientset *kubernetes.Clientset, config *rest.Config, clusterName string, newLabels map[string]string) error {
-	// Get binding policy protected labels once
-	protectedLabels, err := getProtectedLabels()
-	if err != nil {
-		log.Printf("[WARNING] Could not fetch protected labels: %v", err)
-		protectedLabels = make(map[string]bool)
-	}
-
-	dynamicClient, err := dynamic.NewForConfig(config)
-	if err != nil {
-		return fmt.Errorf("failed to create dynamic client: %v", err)
-	}
-
-	gvr := schema.GroupVersionResource{
-		Group:    "cluster.open-cluster-management.io",
-		Version:  "v1",
-		Resource: "managedclusters",
-	}
-
-	// Get current cluster
-	currentCluster, err := dynamicClient.Resource(gvr).Get(context.TODO(), clusterName, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("failed to get managed cluster %s: %v", clusterName, err)
-	}
-
-	// Get current labels
-	currentLabels := make(map[string]string)
-	if labels, found, err := unstructured.NestedStringMap(currentCluster.Object, "metadata", "labels"); err == nil && found {
-		currentLabels = labels
-	}
-
-	// Process label changes - FIX: Use two variables to capture both return values
-	finalLabels, protectedOps := processLabelChanges(currentLabels, newLabels, protectedLabels)
-
-	// Apply changes - FIX: Use finalLabels directly
-	err = applyLabelChanges(dynamicClient, gvr, clusterName, finalLabels)
-	if err != nil {
-		return fmt.Errorf("failed to apply label changes: %v", err)
-	}
-
-	// Return error if there were protected operations - FIX: Use protectedOps
-	if len(protectedOps) > 0 {
-		return fmt.Errorf("PARTIAL_SUCCESS: Cannot modify protected labels: %s", strings.Join(protectedOps, ", "))
-	}
-
-	return nil
-}
-
-// processLabelChanges handles the logic of determining what can be changed
-func processLabelChanges(currentLabels, newLabels map[string]string, protectedLabels map[string]bool) (map[string]string, []string) {
-	log.Printf("[DEBUG] === processLabelChanges START ===")
-	log.Printf("[DEBUG] Current labels: %+v", currentLabels)
-	log.Printf("[DEBUG] New labels: %+v", newLabels)
-	log.Printf("[DEBUG] Protected labels from BP: %+v", protectedLabels)
-
-	finalLabels := make(map[string]string)
-	protectedOps := []string{}
-
-	// Start with current labels
-	for k, v := range currentLabels {
-		finalLabels[k] = v
-	}
-
-	// Process each new label operation
-	for key, value := range newLabels {
-		currentValue, exists := currentLabels[key]
-		isProtected := isLabelProtected(key, protectedLabels)
-
-		log.Printf("[DEBUG] Processing label %s: value='%s', exists=%v, protected=%v", key, value, exists, isProtected)
-
-		if value == "" {
-			// Deletion request
-			if !exists {
-				log.Printf("[DEBUG] Label %s doesn't exist, skipping deletion", key)
-				continue // Nothing to delete
-			}
-
-			if isProtected {
-				log.Printf("[DEBUG] BLOCKING deletion of protected label: %s", key)
-				protectedOps = append(protectedOps, key)
-				// Keep the original value
-				finalLabels[key] = currentValue
-			} else {
-				log.Printf("[DEBUG] ALLOWING deletion of label: %s", key)
-				delete(finalLabels, key)
-			}
-		} else {
-			// Addition or modification
-			if !exists {
-				// New label
-				if isProtected {
-					log.Printf("[DEBUG] BLOCKING addition of protected label: %s", key)
-					protectedOps = append(protectedOps, key)
-					// Don't add protected labels
-				} else {
-					log.Printf("[DEBUG] ALLOWING addition of label: %s = %s", key, value)
-					finalLabels[key] = value
-				}
-			} else if currentValue != value {
-				// Modification
-				if isProtected {
-					log.Printf("[DEBUG] BLOCKING modification of protected label: %s (keeping %s)", key, currentValue)
-					protectedOps = append(protectedOps, key)
-					// Keep original value
-					finalLabels[key] = currentValue
-				} else {
-					log.Printf("[DEBUG] ALLOWING modification of label: %s = %s (was %s)", key, value, currentValue)
-					finalLabels[key] = value
-				}
-			} else {
-				log.Printf("[DEBUG] Label %s unchanged: %s", key, value)
-			}
-			// If value is same as current, no change needed
-		}
-	}
-
-	log.Printf("[DEBUG] Final labels: %+v", finalLabels)
-	log.Printf("[DEBUG] Protected operations: %+v", protectedOps)
-	log.Printf("[DEBUG] === processLabelChanges END ===")
-
-	return finalLabels, protectedOps
 }
 
 // isLabelProtected checks if a label is protected (with debug logging)
@@ -1292,6 +1168,229 @@ func getLabelsUsedInBindingPolicies() (map[string]bool, error) {
 	}
 
 	return usedLabels, nil
+}
+
+// UpdateManagedClusterLabels - Fixed version for onboarding
+func UpdateManagedClusterLabels(clientset *kubernetes.Clientset, config *rest.Config, clusterName string, newLabels map[string]string) error {
+	// Get binding policy protected labels once
+	protectedLabels, err := getProtectedLabels()
+	if err != nil {
+		log.Printf("[WARNING] Could not fetch protected labels: %v", err)
+		protectedLabels = make(map[string]bool)
+	}
+
+	dynamicClient, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return fmt.Errorf("failed to create dynamic client: %v", err)
+	}
+
+	gvr := schema.GroupVersionResource{
+		Group:    "cluster.open-cluster-management.io",
+		Version:  "v1",
+		Resource: "managedclusters",
+	}
+
+	// Get current cluster
+	currentCluster, err := dynamicClient.Resource(gvr).Get(context.TODO(), clusterName, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to get managed cluster %s: %v", clusterName, err)
+	}
+
+	// Get current labels
+	currentLabels := make(map[string]string)
+	if labels, found, err := unstructured.NestedStringMap(currentCluster.Object, "metadata", "labels"); err == nil && found {
+		currentLabels = labels
+	}
+
+	// Process label changes - Fixed version that allows onboarding labels
+	finalLabels, protectedOps := processLabelChangesForOnboarding(currentLabels, newLabels, protectedLabels)
+
+	// Apply changes
+	err = applyLabelChanges(dynamicClient, gvr, clusterName, finalLabels)
+	if err != nil {
+		return fmt.Errorf("failed to apply label changes: %v", err)
+	}
+
+	// Return error if there were protected operations
+	if len(protectedOps) > 0 {
+		return fmt.Errorf("PARTIAL_SUCCESS: Cannot modify protected labels: %s", strings.Join(protectedOps, ", "))
+	}
+
+	return nil
+}
+
+// processLabelChangesForOnboarding - Fixed version that allows essential onboarding labels
+func processLabelChangesForOnboarding(currentLabels, newLabels map[string]string, protectedLabels map[string]bool) (map[string]string, []string) {
+	log.Printf("[DEBUG] === processLabelChangesForOnboarding START ===")
+	log.Printf("[DEBUG] Current labels: %+v", currentLabels)
+	log.Printf("[DEBUG] New labels: %+v", newLabels)
+	log.Printf("[DEBUG] Protected labels from BP: %+v", protectedLabels)
+
+	finalLabels := make(map[string]string)
+	protectedOps := []string{}
+
+	// Start with current labels
+	for k, v := range currentLabels {
+		finalLabels[k] = v
+	}
+
+	// Define essential onboarding labels that should always be allowed
+	essentialOnboardingLabels := map[string]bool{
+		"name":           true,
+		"location-group": true,
+		"environment":    true,
+		"cluster-type":   true,
+	}
+
+	// Process each new label operation
+	for key, value := range newLabels {
+		currentValue, exists := currentLabels[key]
+		isProtected := isLabelProtectedForOnboarding(key, protectedLabels, essentialOnboardingLabels)
+
+		log.Printf("[DEBUG] Processing label %s: value='%s', exists=%v, protected=%v", key, value, exists, isProtected)
+
+		if value == "" {
+			// Deletion request
+			if !exists {
+				log.Printf("[DEBUG] Label %s doesn't exist, skipping deletion", key)
+				continue // Nothing to delete
+			}
+
+			if isProtected {
+				log.Printf("[DEBUG] BLOCKING deletion of protected label: %s", key)
+				protectedOps = append(protectedOps, key)
+				// Keep the original value
+				finalLabels[key] = currentValue
+			} else {
+				log.Printf("[DEBUG] ALLOWING deletion of label: %s", key)
+				delete(finalLabels, key)
+			}
+		} else {
+			// Addition or modification
+			if !exists {
+				// New label
+				if isProtected {
+					log.Printf("[DEBUG] BLOCKING addition of protected label: %s", key)
+					protectedOps = append(protectedOps, key)
+					// Don't add protected labels
+				} else {
+					log.Printf("[DEBUG] ALLOWING addition of label: %s = %s", key, value)
+					finalLabels[key] = value
+				}
+			} else if currentValue != value {
+				// Modification
+				if isProtected {
+					log.Printf("[DEBUG] BLOCKING modification of protected label: %s (keeping %s)", key, currentValue)
+					protectedOps = append(protectedOps, key)
+					// Keep original value
+					finalLabels[key] = currentValue
+				} else {
+					log.Printf("[DEBUG] ALLOWING modification of label: %s = %s (was %s)", key, value, currentValue)
+					finalLabels[key] = value
+				}
+			} else {
+				log.Printf("[DEBUG] Label %s unchanged: %s", key, value)
+			}
+			// If value is same as current, no change needed
+		}
+	}
+
+	log.Printf("[DEBUG] Final labels: %+v", finalLabels)
+	log.Printf("[DEBUG] Protected operations: %+v", protectedOps)
+	log.Printf("[DEBUG] === processLabelChangesForOnboarding END ===")
+
+	return finalLabels, protectedOps
+}
+
+// isLabelProtectedForOnboarding - Fixed version that allows essential onboarding labels
+func isLabelProtectedForOnboarding(key string, protectedLabels map[string]bool, essentialOnboardingLabels map[string]bool) bool {
+	log.Printf("[DEBUG] Checking protection for label: %s", key)
+
+	// Allow essential onboarding labels regardless of other protection rules
+	if essentialOnboardingLabels[key] {
+		log.Printf("[DEBUG] Label %s is an essential onboarding label, allowing", key)
+		return false
+	}
+
+	// Check binding policy protection
+	if protectedLabels[key] {
+		log.Printf("[DEBUG] Label %s is protected by binding policy", key)
+		return true
+	}
+
+	// Check system label prefixes
+	systemPrefixes := []string{
+		"cluster.open-cluster-management.io/",
+		"feature.open-cluster-management.io/",
+		"kubernetes.io/",
+		"k8s.io/",
+		"node.openshift.io/",
+		"beta.kubernetes.io/",
+		"topology.kubernetes.io/",
+		"node-role.kubernetes.io/",
+	}
+
+	for _, prefix := range systemPrefixes {
+		if strings.HasPrefix(key, prefix) {
+			log.Printf("[DEBUG] Label %s is protected by system prefix: %s", key, prefix)
+			return true
+		}
+	}
+
+	log.Printf("[DEBUG] Label %s is NOT protected", key)
+	return false
+}
+
+// Alternative approach: Create a separate function for onboarding that bypasses protection
+func UpdateManagedClusterLabelsForOnboarding(clientset *kubernetes.Clientset, config *rest.Config, clusterName string, newLabels map[string]string) error {
+	log.Printf("[DEBUG] Updating labels for onboarding cluster %s with labels: %+v", clusterName, newLabels)
+
+	dynamicClient, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return fmt.Errorf("failed to create dynamic client: %v", err)
+	}
+
+	gvr := schema.GroupVersionResource{
+		Group:    "cluster.open-cluster-management.io",
+		Version:  "v1",
+		Resource: "managedclusters",
+	}
+
+	// Get current cluster
+	currentCluster, err := dynamicClient.Resource(gvr).Get(context.TODO(), clusterName, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to get managed cluster %s: %v", clusterName, err)
+	}
+
+	// Get current labels
+	currentLabels := make(map[string]string)
+	if labels, found, err := unstructured.NestedStringMap(currentCluster.Object, "metadata", "labels"); err == nil && found {
+		currentLabels = labels
+	}
+
+	// For onboarding, we want to add the new labels without protection checks
+	// but preserve existing system labels
+	finalLabels := make(map[string]string)
+
+	// Start with current labels
+	for k, v := range currentLabels {
+		finalLabels[k] = v
+	}
+
+	// Add/update with new labels (onboarding labels are always allowed)
+	for k, v := range newLabels {
+		finalLabels[k] = v
+		log.Printf("[DEBUG] Setting onboarding label: %s = %s", k, v)
+	}
+
+	// Apply changes
+	err = applyLabelChanges(dynamicClient, gvr, clusterName, finalLabels)
+	if err != nil {
+		return fmt.Errorf("failed to apply label changes during onboarding: %v", err)
+	}
+
+	log.Printf("[DEBUG] Successfully updated labels for onboarding cluster %s", clusterName)
+	return nil
 }
 
 // kubeconfigPath returns the path to the kubeconfig file
