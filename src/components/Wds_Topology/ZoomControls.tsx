@@ -33,7 +33,16 @@ export const ZoomControls = memo<ZoomControlsProps>(
       const interval = setInterval(updateZoomLevel, 100);
 
       return () => clearInterval(interval);
-    }, [getZoom, snapToStep]);
+    }, [getZoom, snapToStep, setViewport]);
+
+    useEffect(() => {
+      const reset = () => {
+        setViewport({ ...getViewport(), zoom: 1 }, { duration: 0 });
+        setZoomLevel(100);
+      };
+      const timer = setTimeout(reset, 100);
+      return () => clearTimeout(timer);
+    }, [setViewport, getViewport]);
 
     const animateZoom = useCallback(
       (targetZoom: number, duration: number = 200) => {
