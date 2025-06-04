@@ -531,7 +531,6 @@ const BP = () => {
     selectedPolicy,
     selectedPolicies,
     deleteBindingPolicyMutation,
-    setSuccessMessage,
     setDeleteDialogOpen,
     setSelectedPolicy,
     setBindingPolicies,
@@ -614,7 +613,7 @@ const BP = () => {
         );
       }
     },
-    [createBindingPolicyMutation, setSuccessMessage, setCreateDialogOpen]
+    [createBindingPolicyMutation, setCreateDialogOpen]
   );
 
   const handleEditPolicy = useCallback((policy: BindingPolicyInfo) => {
@@ -737,13 +736,7 @@ const BP = () => {
         `Error deleting binding policies: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
-  }, [
-    selectedPolicies,
-    setSuccessMessage,
-    setSelectedPolicies,
-    setBindingPolicies,
-    deleteMultiplePoliciesMutation,
-  ]);
+  }, [selectedPolicies, setSelectedPolicies, setBindingPolicies, deleteMultiplePoliciesMutation]);
 
   return (
     <>
