@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -14,9 +17,6 @@ import (
 	"os/exec"
 	"strings"
 	"time"
-	batchv1 "k8s.io/api/batch/v1"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 /*
@@ -575,8 +575,8 @@ func ListBackupFiles() ([]string, error) {
 			RestartPolicy: corev1.RestartPolicyNever,
 			Containers: []corev1.Container{
 				{
-					Name:  "list-backups",
-					Image: "busybox:latest",
+					Name:    "list-backups",
+					Image:   "busybox:latest",
 					Command: []string{"/bin/sh"},
 					Args: []string{
 						"-c",

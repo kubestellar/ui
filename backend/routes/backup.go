@@ -17,7 +17,7 @@ func SetupBackupRoutes(router *gin.Engine) {
 			files, err := wds.ListBackupFiles()
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{
-					"error": "Failed to list backup files",
+					"error":   "Failed to list backup files",
 					"details": err.Error(),
 				})
 				return
@@ -25,8 +25,8 @@ func SetupBackupRoutes(router *gin.Engine) {
 
 			c.JSON(http.StatusOK, gin.H{
 				"backup_files": files,
-				"count": len(files),
-				"timestamp": time.Now().Format(time.RFC3339),
+				"count":        len(files),
+				"timestamp":    time.Now().Format(time.RFC3339),
 			})
 		})
 
@@ -38,7 +38,7 @@ func SetupBackupRoutes(router *gin.Engine) {
 
 			if err := c.ShouldBindJSON(&restoreRequest); err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{
-					"error": "Invalid request format",
+					"error":   "Invalid request format",
 					"details": err.Error(),
 				})
 				return
@@ -56,25 +56,25 @@ func SetupBackupRoutes(router *gin.Engine) {
 			jobName, err := wds.RestoreDatabase(restoreRequest.BackupFileName)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{
-					"error": "Failed to start restore job",
+					"error":   "Failed to start restore job",
 					"details": err.Error(),
 				})
 				return
 			}
-			
+
 			c.JSON(http.StatusOK, gin.H{
-				"message": "Database restore job started successfully",
-				"job_name": jobName,
+				"message":     "Database restore job started successfully",
+				"job_name":    jobName,
 				"backup_file": restoreRequest.BackupFileName,
-				"status": "started",
-				"timestamp": time.Now().Format(time.RFC3339),
+				"status":      "started",
+				"timestamp":   time.Now().Format(time.RFC3339),
 			})
 		})
 
 		// Get restore job status
 		backupGroup.GET("/restore/status/:jobName", func(c *gin.Context) {
 			jobName := c.Param("jobName")
-			
+
 			if jobName == "" {
 				c.JSON(http.StatusBadRequest, gin.H{
 					"error": "job name is required",
@@ -85,15 +85,15 @@ func SetupBackupRoutes(router *gin.Engine) {
 			status, err := wds.GetRestoreJobStatus(jobName)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{
-					"error": "Failed to get restore job status",
+					"error":   "Failed to get restore job status",
 					"details": err.Error(),
 				})
 				return
 			}
 
 			c.JSON(http.StatusOK, gin.H{
-				"job_name": jobName,
-				"status": status,
+				"job_name":  jobName,
+				"status":    status,
 				"timestamp": time.Now().Format(time.RFC3339),
 			})
 		})
@@ -108,7 +108,7 @@ func SetupBackupRoutes(router *gin.Engine) {
 
 			if err := c.ShouldBindJSON(&emergencyRequest); err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{
-					"error": "Invalid request format",
+					"error":   "Invalid request format",
 					"details": err.Error(),
 				})
 				return
@@ -134,27 +134,27 @@ func SetupBackupRoutes(router *gin.Engine) {
 			jobName, err := wds.RestoreDatabase(emergencyRequest.BackupFileName)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{
-					"error": "Failed to start emergency restore job",
+					"error":   "Failed to start emergency restore job",
 					"details": err.Error(),
 				})
 				return
 			}
-			
+
 			c.JSON(http.StatusOK, gin.H{
-				"message": "Emergency database restore job started successfully",
-				"job_name": jobName,
+				"message":     "Emergency database restore job started successfully",
+				"job_name":    jobName,
 				"backup_file": emergencyRequest.BackupFileName,
-				"status": "started",
-				"warning": "This will overwrite all existing data",
-				"timestamp": time.Now().Format(time.RFC3339),
+				"status":      "started",
+				"warning":     "This will overwrite all existing data",
+				"timestamp":   time.Now().Format(time.RFC3339),
 			})
 		})
 
 		// Health check for backup system
 		backupGroup.GET("/health", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{
-				"status": "healthy",
-				"service": "backup-plugin",
+				"status":    "healthy",
+				"service":   "backup-plugin",
 				"timestamp": time.Now().Format(time.RFC3339),
 			})
 		})

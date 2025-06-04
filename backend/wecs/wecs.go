@@ -41,16 +41,16 @@ var upgrader = websocket.Upgrader{
 // Cache expiration durations
 const (
 	ClusterDataCacheDuration = 5 * time.Minute
-	NamespaceCacheDuration = 3 * time.Minute
-	PodLogsCacheDuration = 1 * time.Minute
+	NamespaceCacheDuration   = 3 * time.Minute
+	PodLogsCacheDuration     = 1 * time.Minute
 )
 
 // Database backup/restore constants
 const (
 	BackupRestoreNamespace = "backup-system"
 	PostgresServiceName    = "postgres-service"
-	BackupPVCName         = "backup-pvc"
-	RestoreJobPrefix      = "postgres-restore"
+	BackupPVCName          = "backup-pvc"
+	RestoreJobPrefix       = "postgres-restore"
 )
 
 // ResourceData contains data for a Kubernetes resource.
