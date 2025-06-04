@@ -531,7 +531,6 @@ const BP = () => {
     selectedPolicy,
     selectedPolicies,
     deleteBindingPolicyMutation,
-    setSuccessMessage,
     setDeleteDialogOpen,
     setSelectedPolicy,
     setBindingPolicies,
@@ -614,7 +613,7 @@ const BP = () => {
         );
       }
     },
-    [createBindingPolicyMutation, setSuccessMessage, setCreateDialogOpen]
+    [createBindingPolicyMutation, setCreateDialogOpen]
   );
 
   const handleEditPolicy = useCallback((policy: BindingPolicyInfo) => {
@@ -739,7 +738,6 @@ const BP = () => {
     }
   }, [
     selectedPolicies,
-    setSuccessMessage,
     setSelectedPolicies,
     setBindingPolicies,
     deleteMultiplePoliciesMutation,
