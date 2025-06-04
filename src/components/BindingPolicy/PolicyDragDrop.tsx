@@ -22,7 +22,7 @@ import {
   Checkbox,
 } from '@mui/material';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import PublishIcon from '@mui/icons-material/Publish';
 import useTheme from '../../stores/themeStore';
 
@@ -66,7 +66,7 @@ const HelpDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, on
     >
       <DialogTitle>
         <Box display="flex" alignItems="center">
-          <DragIndicatorIcon
+          <CheckBoxIcon
             sx={{
               mr: 1,
               color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
@@ -78,7 +78,7 @@ const HelpDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, on
               color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
             }}
           >
-            How to Use Click-to-Add
+            How to Create Binding Policies
           </Typography>
         </Box>
       </DialogTitle>
@@ -89,17 +89,17 @@ const HelpDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, on
             color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
           }}
         >
-          Follow these steps to create binding policies using the label-based interface:
+          Follow these steps to create binding policies:
         </Typography>
         <List>
           <ListItem>
             <ListItemIcon>
-              <DragIndicatorIcon color={isDarkTheme ? 'info' : 'primary'} />
+              <CheckBoxIcon color={isDarkTheme ? 'info' : 'primary'} />
             </ListItemIcon>
             <ListItemText
               primary={
                 <Typography sx={{ color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined }}>
-                  1. Add labels to the canvas
+                  1. Select labels to add to the canvas
                 </Typography>
               }
               secondary={
@@ -107,8 +107,8 @@ const HelpDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, on
                   variant="body2"
                   sx={{ color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : undefined }}
                 >
-                  Click on cluster from the left panel and workload from the right panel to add them
-                  to the binding policy canvas
+                  Click on clusters from the left panel and workloads from the right panel to add
+                  them to the binding policy canvas
                 </Typography>
               }
             />
@@ -229,7 +229,7 @@ const PolicyDragDrop: React.FC<PolicyDragDropProps> = props => {
           zIndex: 10,
         }}
       >
-        <Tooltip title="View drag & drop instructions">
+        <Tooltip title="View selection instructions">
           <IconButton
             onClick={() => setHelpDialogOpen(true)}
             size="small"
