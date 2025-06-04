@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Button, SxProps, Theme } from '@mui/material';
 import { Colors } from './ImportClusters';
+import CancelButton from './common/CancelButton';
 
 interface KubeconfigImportTabProps {
   theme: string;
@@ -20,7 +21,7 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
   colors,
   enhancedTabContentStyles,
   primaryButtonStyles,
-  secondaryButtonStyles,
+  // secondaryButtonStyles,
   selectedFile,
   setSelectedFile,
   handleFileUpload,
@@ -183,9 +184,7 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
             zIndex: 2,
           }}
         >
-          <Button onClick={handleCancel} variant="outlined" sx={secondaryButtonStyles}>
-            Cancel
-          </Button>
+          <CancelButton onClick={handleCancel} />
           <Button
             variant="contained"
             onClick={handleFileUpload}

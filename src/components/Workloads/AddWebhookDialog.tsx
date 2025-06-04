@@ -1,15 +1,8 @@
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Typography,
-} from '@mui/material';
+import { Box, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material';
 import { getWebhookDialogPaperProps } from '../../utils/dialogUtils';
 import useTheme from '../../stores/themeStore'; // Import useTheme for dark mode support
 import { toast } from 'react-hot-toast';
+import CancelButton from '../common/CancelButton';
 
 interface Props {
   webhookDialogOpen: boolean;
@@ -667,23 +660,7 @@ export const AddWebhookDialog = ({
           borderTop: `1px solid ${theme === 'dark' ? '#444444' : '#e0e0e0'}`,
         }}
       >
-        <Button
-          onClick={handleCloseWebhookDialog}
-          sx={{
-            textTransform: 'none',
-            fontWeight: 600,
-            color: theme === 'dark' ? '#E0E0E0' : 'black',
-            padding: '8px 16px',
-            border: `1px solid ${theme === 'dark' ? '#444444' : '#D3D3D3'}`,
-            borderRadius: '8px',
-            backgroundColor: theme === 'dark' ? '#2A2A2A' : '#fff',
-            '&:hover': {
-              backgroundColor: theme === 'dark' ? '#383838' : '#f5f5f5',
-            },
-          }}
-        >
-          Cancel
-        </Button>
+        <CancelButton onClick={handleCloseWebhookDialog}>Cancel</CancelButton>
       </DialogActions>
     </Dialog>
   );

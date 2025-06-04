@@ -10,6 +10,7 @@ import { DirectDeployForm } from './DirectDeployForm';
 import { api } from '../../../lib/api';
 import { CircularProgress } from '@mui/material';
 import WorkloadLabelInput from '../WorkloadLabelInput';
+import CancelButton from '../../common/CancelButton';
 
 export interface Repository {
   name: string;
@@ -373,21 +374,7 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
           }}
         >
           {selectedOption !== 'repositories' && (
-            <Button
-              variant="text"
-              onClick={onCancel}
-              sx={{
-                textTransform: 'none',
-                fontWeight: 600,
-                color: theme === 'dark' ? '#d4d4d4' : '#666',
-                padding: '8px 16px',
-                '&:hover': {
-                  backgroundColor: theme === 'dark' ? '#333' : '#f5f5f5',
-                },
-              }}
-            >
-              Cancel
-            </Button>
+            <CancelButton onClick={onCancel}>Cancel</CancelButton>
           )}
           <Button
             variant="contained"

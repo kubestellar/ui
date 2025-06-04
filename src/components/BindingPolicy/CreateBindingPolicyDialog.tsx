@@ -16,7 +16,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import useTheme from '../../stores/themeStore';
 import CancelConfirmationDialog from './CancelConfirmationDialog';
@@ -30,12 +30,13 @@ import {
   getDialogPaperProps,
 } from './styles/CreateBindingPolicyStyles';
 import { DEFAULT_BINDING_POLICY_TEMPLATE } from './constants/index';
-import PolicyDragDrop from './PolicyDragDrop';
+import PolicyDragDrop from './PolicyDragDrop'; // TODO: Rename component to PolicySelection
 import { ManagedCluster, Workload } from '../../types/bindingPolicy';
 import { PolicyConfiguration } from './ConfigurationSidebar';
 import { usePolicyDragDropStore } from '../../stores/policyDragDropStore';
 import { useBPQueries } from '../../hooks/queries/useBPQueries';
 import { toast } from 'react-hot-toast';
+import CancelButton from '../common/CancelButton';
 
 export interface PolicyData {
   name: string;
@@ -79,7 +80,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   const { textColor, helperTextColor } = getBaseStyles(theme);
   const enhancedTabContentStyles = getEnhancedTabContentStyles(theme);
 
-  const [activeTab, setActiveTab] = useState<string>('dragdrop');
+  const [activeTab, setActiveTab] = useState<string>('selection');
   const [editorContent, setEditorContent] = useState<string>(DEFAULT_BINDING_POLICY_TEMPLATE);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileContent, setFileContent] = useState<string>('');
@@ -87,8 +88,8 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   const [error, setError] = useState<string>('');
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragDropYaml, setDragDropYaml] = useState<string>('');
+  const [isFileHovering, setIsFileHovering] = useState(false);
+  const [selectionYaml, setSelectionYaml] = useState<string>('');
   const [previewYaml, setPreviewYaml] = useState<string>('');
   const [, setSuccessMessage] = useState<string>('');
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
@@ -177,17 +178,17 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setIsDragging(true);
+    setIsFileHovering(true);
   };
 
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setIsDragging(false);
+    setIsFileHovering(false);
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setIsDragging(false);
+    setIsFileHovering(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
@@ -851,7 +852,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
         setPolicyName('');
         setSelectedFile(null);
         setFileContent('');
-        setDragDropYaml('');
+        setSelectionYaml('');
       }, 500);
 
       setIsLoading(false);
@@ -872,7 +873,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
       setFileContent('');
       setError('');
       setIsLoading(false);
-      setDragDropYaml('');
+      setSelectionYaml('');
     }
 
     return () => {
@@ -918,7 +919,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
         ? editorContent !== DEFAULT_BINDING_POLICY_TEMPLATE
         : activeTab === 'file'
           ? fileContent || policyName
-          : dragDropYaml
+          : selectionYaml
     ) {
       setShowCancelConfirmation(true);
     } else {
@@ -999,10 +1000,10 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
             sx={getTabsStyles(theme)}
           >
             <StyledTab
-              icon={<DragIndicatorIcon sx={{ color: isDarkTheme ? '#FFFFFF' : 'inherit' }} />}
+              icon={<CheckBoxIcon sx={{ color: isDarkTheme ? '#FFFFFF' : 'inherit' }} />}
               iconPosition="start"
-              label="Click & Drop"
-              value="dragdrop"
+              label="Select Items"
+              value="selection"
               sx={{
                 color: isDarkTheme ? '#FFFFFF' : 'primary.main',
                 '&:hover': {
@@ -1073,7 +1074,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
             }}
           >
             <Box sx={{ px: 2 }}>
-              {activeTab !== 'dragdrop' && (
+              {activeTab !== 'selection' && (
                 <TextField
                   fullWidth
                   label="Binding Policy Name"
@@ -1232,7 +1233,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                       sx={{
                         height: '100%',
                         border: '2px dashed',
-                        borderColor: isDragging
+                        borderColor: isFileHovering
                           ? 'primary.main'
                           : theme === 'dark'
                             ? 'rgba(255, 255, 255, 0.2)'
@@ -1243,7 +1244,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                         justifyContent: 'center',
                         transition: 'all 0.2s ease',
                         flexGrow: 1,
-                        backgroundColor: isDragging
+                        backgroundColor: isFileHovering
                           ? isDarkTheme
                             ? 'rgba(25, 118, 210, 0.12)'
                             : 'rgba(25, 118, 210, 0.04)'
@@ -1279,7 +1280,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                             mb: 2,
                           }}
                         >
-                          {isDragging ? 'Drop YAML File Here' : 'Choose or Drag & Drop a YAML File'}
+                          {isFileHovering ? 'Drop YAML File Here' : 'Choose or Upload a YAML File'}
                         </Typography>
                         <Box
                           sx={{
@@ -1423,7 +1424,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                 </Box>
               )}
 
-              {activeTab === 'dragdrop' && (
+              {activeTab === 'selection' && (
                 <Box
                   sx={{
                     ...enhancedTabContentStyles,
@@ -1453,33 +1454,17 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                 borderTop: `1px solid ${isDarkTheme ? 'rgba(255, 255, 255, 0.12)' : 'transparent'}`,
               }}
             >
-              <Button
-                onClick={handleCancelClick}
-                disabled={isLoading}
-                sx={{
-                  px: 3,
-                  py: 1,
-                  textTransform: 'none',
-                  fontWeight: 500,
-                  borderRadius: '8px',
-                  color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
-                  '&:hover': {
-                    backgroundColor: isDarkTheme
-                      ? 'rgba(255, 255, 255, 0.1)'
-                      : 'rgba(0, 0, 0, 0.04)',
-                  },
-                }}
-              >
+              <CancelButton onClick={handleCancelClick} disabled={isLoading}>
                 Cancel
-              </Button>
+              </CancelButton>
               <Button
                 variant="contained"
-                onClick={activeTab === 'dragdrop' ? prepareForDeployment : handleCreateFromFile}
+                onClick={activeTab === 'selection' ? prepareForDeployment : handleCreateFromFile}
                 color="primary"
                 disabled={
                   isLoading ||
                   sseLoading ||
-                  (activeTab === 'dragdrop' &&
+                  (activeTab === 'selection' &&
                     (!policyCanvasEntities?.clusters?.length ||
                       !policyCanvasEntities?.workloads?.length)) ||
                   (activeTab === 'file' && !fileContent) ||
@@ -1528,7 +1513,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                     />
                     {sseLoading ? 'Loading Resources...' : 'Creating...'}
                   </Box>
-                ) : activeTab === 'dragdrop' ? (
+                ) : activeTab === 'selection' ? (
                   'Deploy Binding Policies'
                 ) : (
                   'Create Binding Policy'

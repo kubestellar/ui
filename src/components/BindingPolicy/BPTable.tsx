@@ -208,7 +208,12 @@ const BPTable: React.FC<BPTableProps> = ({
   console.log(
     `BPTable received ${policies.length} policies with status filter: ${activeFilters.status || 'none'}`
   );
-  const filteredPolicies = policies;
+  // Apply stable sorting by name to prevent reordering on re-renders
+  const filteredPolicies = [...policies].sort((a, b) => {
+    const nameA = a?.name?.toLowerCase() || '';
+    const nameB = b?.name?.toLowerCase() || '';
+    return nameA.localeCompare(nameB);
+  });
 
   // Function to map cluster labels to actual cluster names
   const mapClusterLabelsToNames = useCallback(

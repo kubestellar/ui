@@ -61,6 +61,7 @@ import { useWebSocket } from '../context/webSocketExports';
 import useTheme from '../stores/themeStore';
 import axios from 'axios';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import CancelButton from './common/CancelButton';
 import ListViewComponent from '../components/ListViewComponent';
 import ContextDropdown from '../components/ContextDropdown';
 import { ResourceItem as ListResourceItem } from './ListViewComponent'; // Import ResourceItem from ListViewComponent
@@ -665,6 +666,20 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
     }
   }, [selectedNode, groupPanel]);
 
+  // close panel with escape key
+  useEffect(() => {
+    function handleEsc(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        // Only close if a panel is open
+        if ((selectedNode && selectedNode.isOpen) || (groupPanel && groupPanel.isOpen)) {
+          handleClosePanel();
+        }
+      }
+    }
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [selectedNode, groupPanel, handleClosePanel]);
+
   const createNode = useCallback(
     (
       id: string,
@@ -984,7 +999,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `volume-${item.metadata.name}`,
                           'volume',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           {
                             ...item,
@@ -1016,7 +1031,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `envvar-${item.metadata.name}`,
                           'envvar',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           {
                             ...item,
@@ -1040,7 +1055,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `clusterrole-${item.metadata.name}`,
                           'clusterrole',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           {
                             apiVersion: 'rbac.authorization.k8s.io/v1',
@@ -1068,7 +1083,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `user-${item.metadata.name}`,
                           'user',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           {
                             apiVersion: 'rbac.authorization.k8s.io/v1',
@@ -1102,7 +1117,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `serviceaccount-${item.metadata.name}`,
                           'serviceaccount',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           {
                             apiVersion: 'v1',
@@ -1136,7 +1151,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `group-${item.metadata.name}`,
                           'group',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           {
                             apiVersion: 'rbac.authorization.k8s.io/v1',
@@ -1173,7 +1188,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `cr-${item.metadata.name}`,
                           'customresource',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           item,
                           resourceId,
@@ -1185,7 +1200,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `controller-${item.metadata.name}`,
                           'controller',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           item,
                           crdCrId,
@@ -1202,7 +1217,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `clusterrolebinding-${item.metadata.name}`,
                           'clusterrolebinding',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           item,
                           resourceId,
@@ -1214,7 +1229,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `user-${item.metadata.name}`,
                           'user',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           item,
                           crClusterRoleBindingId,
@@ -1226,7 +1241,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `group-${item.metadata.name}`,
                           'group',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           item,
                           crClusterRoleBindingId,
@@ -1238,7 +1253,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `serviceaccount-${item.metadata.name}`,
                           'serviceaccount',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           item,
                           crClusterRoleBindingId,
@@ -1254,7 +1269,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `job-${item.metadata.name}`,
                           'job',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           item,
                           resourceId,
@@ -1275,7 +1290,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `endpoints-${item.metadata.name}`,
                           'endpoints',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           {
                             apiVersion: 'v1',
@@ -1309,7 +1324,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `user-${item.metadata.name}`,
                           'user',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           item,
                           resourceId,
@@ -1324,7 +1339,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `deployment-${item.metadata.name}`,
                           'deployment',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           item,
                           resourceId,
@@ -1336,7 +1351,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `replicaset-${item.metadata.name}`,
                           'replicaset',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           item,
                           resourceId,
@@ -1348,7 +1363,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `statefulset-${item.metadata.name}`,
                           'statefulset',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           item,
                           resourceId,
@@ -1364,7 +1379,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `ingresscontroller-${item.metadata.name}`,
                           'ingresscontroller',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           item,
                           resourceId,
@@ -1376,7 +1391,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `service-${item.metadata.name}`,
                           'service',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           item,
                           ingControllerId,
@@ -1395,7 +1410,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `namespace-${item.metadata.name}`,
                           'namespace',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           item,
                           resourceId,
@@ -1416,7 +1431,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `pvc-${item.metadata.name}`,
                           'persistentvolumeclaim',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           item,
                           resourceId,
@@ -1431,7 +1446,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `pv-${item.metadata.name}`,
                           'persistentvolume',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           item,
                           resourceId,
@@ -1446,7 +1461,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `namespace-${item.metadata.name}`,
                           'namespace',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           item,
                           resourceId,
@@ -1462,7 +1477,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `role-${item.metadata.name}`,
                           'role',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           {
                             apiVersion: 'rbac.authorization.k8s.io/v1',
@@ -1490,7 +1505,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `user-${item.metadata.name}`,
                           'user',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           {
                             apiVersion: 'rbac.authorization.k8s.io/v1',
@@ -1524,7 +1539,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `serviceaccount-${item.metadata.name}`,
                           'serviceaccount',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           {
                             apiVersion: 'v1',
@@ -1558,7 +1573,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `group-${item.metadata.name}`,
                           'group',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           {
                             apiVersion: 'rbac.authorization.k8s.io/v1',
@@ -1594,7 +1609,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `namespace-${item.metadata.name}`,
                           'namespace',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           item,
                           resourceId,
@@ -1615,7 +1630,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `pv-${item.metadata.name}`,
                           'persistentvolume',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           item,
                           resourceId,
@@ -1630,7 +1645,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `volume-${item.metadata.name}`,
                           'volume',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           {
                             ...item,
@@ -1662,7 +1677,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `envvar-${item.metadata.name}`,
                           'envvar',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           {
                             ...item,
@@ -1688,7 +1703,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `role-${item.metadata.name}`,
                           'role',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           item,
                           resourceId,
@@ -1700,7 +1715,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                           `clusterrole-${item.metadata.name}`,
                           'clusterrole',
                           status,
-                          undefined,
+                          item.metadata.creationTimestamp,
                           namespace.name,
                           item,
                           resourceId,
@@ -2652,17 +2667,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
             </Typography>
           </DialogContent>
           <DialogActions sx={{ justifyContent: 'space-between', padding: '0 16px 16px 16px' }}>
-            <Button
-              onClick={handleDeleteCancel}
-              sx={{
-                textTransform: 'none',
-                color: '#2F86FF',
-                fontWeight: 600,
-                '&:hover': { backgroundColor: 'rgba(47, 134, 255, 0.1)' },
-              }}
-            >
-              Cancel
-            </Button>
+            <CancelButton onClick={handleDeleteCancel}>Cancel</CancelButton>
             <Button
               onClick={handleDeleteConfirm}
               sx={{

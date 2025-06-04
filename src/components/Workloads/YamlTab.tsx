@@ -5,6 +5,7 @@ import yaml from 'js-yaml';
 import { useState, useEffect } from 'react';
 import useTheme from '../../stores/themeStore';
 import WorkloadLabelInput from './WorkloadLabelInput';
+import CancelButton from '../common/CancelButton';
 
 interface Props {
   editorContent: string;
@@ -214,21 +215,9 @@ export const YamlTab = ({
           zIndex: 1,
         }}
       >
-        <Button
-          onClick={handleCancelClick}
-          disabled={loading}
-          sx={{
-            textTransform: 'none',
-            fontWeight: 600,
-            color: theme === 'dark' ? '#d4d4d4' : '#666',
-            padding: '8px 16px',
-            '&:hover': {
-              backgroundColor: theme === 'dark' ? '#333' : '#f5f5f5',
-            },
-          }}
-        >
+        <CancelButton onClick={handleCancelClick} disabled={loading}>
           Cancel
-        </Button>
+        </CancelButton>
         <Button
           variant="contained"
           onClick={() => handleRawUpload(autoNs)} // Pass autoNs to handleRawUpload
