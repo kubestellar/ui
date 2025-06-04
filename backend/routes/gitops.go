@@ -10,8 +10,8 @@ import (
 	"github.com/kubestellar/ui/redis"
 )
 
-// SetupAllRoutes initializes all API routes
-func SetupAllRoutes(router *gin.Engine) {
+// SetupGitOpsAllRoutes initializes all GitOps-related API routes
+func SetupGitOpsAllRoutes(router *gin.Engine) {
 	// Setup all route groups
 	setupHealthRoutes(router)
 	setupGitopsRoutes(router)
