@@ -18,6 +18,7 @@ import {
 import { Trash2, CloudOff } from 'lucide-react';
 import { BindingPolicyInfo, ManagedCluster } from '../../types/bindingPolicy';
 import PolicyDetailDialog from './Dialogs/PolicyDetailDialog';
+import CloseIcon from '@mui/icons-material/Close';
 import useTheme from '../../stores/themeStore';
 import { useBPQueries } from '../../hooks/queries/useBPQueries';
 import { api } from '../../lib/api';
@@ -29,6 +30,7 @@ interface BPTableProps {
   onDeletePolicy: (policy: BindingPolicyInfo) => void;
   onEditPolicy: (policy: BindingPolicyInfo) => void;
   activeFilters: { status?: 'Active' | 'Inactive' | 'Pending' | '' };
+  setActiveFilters: (filters: { status?: 'Active' | 'Inactive' | 'Pending' }) => void;
   selectedPolicies: string[];
   onSelectionChange: (selected: string[]) => void;
 }
@@ -39,6 +41,7 @@ const BPTable: React.FC<BPTableProps> = ({
   onDeletePolicy,
   onEditPolicy,
   activeFilters,
+  setActiveFilters,
   selectedPolicies,
   onSelectionChange,
 }): JSX.Element => {
@@ -575,20 +578,67 @@ const BPTable: React.FC<BPTableProps> = ({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={8} className="py-12">
-                  <div className="flex flex-col items-center justify-center p-6 text-center">
-                    <CloudOff
-                      size={48}
-                      style={{ color: colors.textSecondary, marginBottom: '16px' }}
-                    />
-                    <h3 style={{ color: colors.text }} className="mb-2 text-lg font-semibold">
+                <TableCell colSpan={8} className="py-16">
+                  <div className="animate-fadeIn flex flex-col items-center justify-center p-8 text-center">
+                    <div className="relative mb-6">
+                      <CloudOff
+                        size={64}
+                        style={{
+                          color: colors.textSecondary,
+                          opacity: 0.6,
+                        }}
+                        className="animate-float"
+                      />
+                      <style>{`
+          @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+          }
+          .animate-float {
+            animation: float 3s ease-in-out infinite;
+          }
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          .animate-fadeIn {
+            animation: fadeIn 0.5s ease-out forwards;
+          }
+        `}</style>
+                    </div>
+                    <h3 style={{ color: colors.text }} className="mb-3 text-xl font-semibold">
                       No Binding Policies Found
                     </h3>
-                    <p style={{ color: colors.textSecondary }} className="mb-4 max-w-md">
+                    <p style={{ color: colors.textSecondary }} className="mb-6 max-w-md text-base">
                       {activeFilters.status !== undefined
                         ? `No binding policies match your ${activeFilters.status} filter criteria`
                         : 'No binding policies available'}
                     </p>
+                    {activeFilters.status !== undefined && (
+                      <Button
+                        onClick={() => setActiveFilters({})}
+                        size="medium"
+                        startIcon={<CloseIcon fontSize="small" />}
+                        sx={{
+                          color: colors.white,
+                          borderColor: colors.primary,
+                          backgroundColor: colors.primary,
+                          '&:hover': {
+                            backgroundColor: colors.primaryDark,
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 4px 8px -2px rgba(47, 134, 255, 0.3)',
+                          },
+                          textTransform: 'none',
+                          fontWeight: '600',
+                          borderRadius: '8px',
+                          transition: 'all 0.2s ease',
+                        }}
+                        variant="contained"
+                      >
+                        Clear Filter
+                      </Button>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>

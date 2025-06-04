@@ -772,20 +772,21 @@ const BP = () => {
           filteredCount={filteredPolicies.length}
         />
 
-        <Box
-          sx={{
-            borderBottom: 1,
-            borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'divider',
-            mb: 2,
-          }}
-        >
-          <Tabs
-            value={viewMode}
-            onChange={handleViewModeChange}
-            aria-label="binding policy view mode"
-            sx={getTabsStyles(theme)}
+        {viewMode !== 'table' && (
+          <Box
+            sx={{
+              borderBottom: 1,
+              borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'divider',
+              mb: 2,
+            }}
           >
-            {/* 
+            <Tabs
+              value={viewMode}
+              onChange={handleViewModeChange}
+              aria-label="binding policy view mode"
+              sx={getTabsStyles(theme)}
+            >
+              {/* 
             This is commented out because the Visualize tab is not working yet. So we're only showing the Table View by default no need to show it as a tab for now.
             
             <StyledTab
@@ -804,8 +805,9 @@ const BP = () => {
                 color: theme === "dark" ? "#E5E7EB" : undefined,
               }}
             /> */}
-          </Tabs>
-        </Box>
+            </Tabs>
+          </Box>
+        )}
 
         {viewMode === 'table' ? (
           <>
@@ -827,6 +829,7 @@ const BP = () => {
                   onDeletePolicy={handleDeletePolicy}
                   onEditPolicy={handleEditPolicy}
                   activeFilters={activeFilters}
+                  setActiveFilters={setActiveFilters}
                   selectedPolicies={selectedPolicies}
                   onSelectionChange={setSelectedPolicies}
                 />
