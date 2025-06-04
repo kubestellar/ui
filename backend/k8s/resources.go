@@ -402,10 +402,9 @@ func UpdateResource(c *gin.Context) {
 		// Apply the new data to the current resource
 		newVersion := resourceObj.GetResourceVersion()
 		if newVersion != "" {
-		    current.SetResourceVersion(newVersion)
+			current.SetResourceVersion(newVersion)
 		} else {
-		    // Optionally log this or preserve the existing version
-		    log.Printf("Warning: Skipped setting resource version due to empty value")
+			log.Printf("Warning: Skipped setting resource version due to empty value")
 		}
 
 		// Attempt to update the resource
@@ -422,7 +421,7 @@ func UpdateResource(c *gin.Context) {
 		result = updated
 		return true, nil // Update succeeded
 	})
-	
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
