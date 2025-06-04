@@ -634,7 +634,7 @@ export const useBPQueries = () => {
     });
   };
 
-  // Quick connect API for drag and drop
+  // Quick connect API for selection-based binding policy creation
   const useQuickConnect = () => {
     return useMutation<QuickConnectResponse, Error, QuickConnectRequest>({
       mutationFn: async request => {

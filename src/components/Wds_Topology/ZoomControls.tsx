@@ -13,8 +13,8 @@ interface ZoomControlsProps {
 
 export const ZoomControls = memo<ZoomControlsProps>(
   ({ theme, onToggleCollapse, isCollapsed, onExpandAll, onCollapseAll }) => {
-    const { getZoom, setViewport } = useReactFlow();
-    const [zoomLevel, setZoomLevel] = useState<number>(100);
+    const { getZoom, setViewport, getViewport } = useReactFlow();
+    const [zoomLevel, setZoomLevel] = useState<number>(120);
 
     const snapToStep = useCallback((zoom: number) => {
       const step = 10;
@@ -22,21 +22,44 @@ export const ZoomControls = memo<ZoomControlsProps>(
     }, []);
 
     useEffect(() => {
-      const currentZoom = getZoom() * 100;
-      const snappedZoom = snapToStep(currentZoom);
-      setZoomLevel(Math.min(Math.max(snappedZoom, 10), 200));
-    }, [getZoom, snapToStep]);
+      const updateZoomLevel = () => {
+        const currentZoom = getZoom() * 100;
+        const snappedZoom = snapToStep(currentZoom);
+        setZoomLevel(Math.min(Math.max(snappedZoom, 10), 200));
+      };
+
+      updateZoomLevel();
+
+      const interval = setInterval(updateZoomLevel, 100);
+
+      return () => clearInterval(interval);
+    }, [getZoom, snapToStep, setViewport]);
+
+    useEffect(() => {
+      const reset = () => {
+        setViewport({ ...getViewport(), zoom: 1 }, { duration: 0 });
+        setZoomLevel(100);
+      };
+      const timer = setTimeout(reset, 100);
+      return () => clearTimeout(timer);
+    }, [setViewport, getViewport]);
 
     const animateZoom = useCallback(
       (targetZoom: number, duration: number = 200) => {
         const startZoom = getZoom();
+        const currentViewport = getViewport();
         const startTime = performance.now();
 
         const step = (currentTime: number) => {
           const elapsed = currentTime - startTime;
           const progress = Math.min(elapsed / duration, 1);
           const newZoom = startZoom + (targetZoom - startZoom) * progress;
-          setViewport({ zoom: newZoom, x: 0, y: 10 });
+
+          setViewport({
+            zoom: newZoom,
+            x: currentViewport.x,
+            y: currentViewport.y,
+          });
 
           if (progress < 1) {
             requestAnimationFrame(step);
@@ -47,21 +70,29 @@ export const ZoomControls = memo<ZoomControlsProps>(
 
         requestAnimationFrame(step);
       },
-      [getZoom, setViewport, snapToStep]
+      [getZoom, getViewport, setViewport, snapToStep]
     );
 
     const handleZoomIn = useCallback(() => {
-      const currentZoom = getZoom() * 100;
-      const newZoomPercentage = snapToStep(currentZoom + 10);
-      const newZoom = Math.min(newZoomPercentage / 100, 2);
-      animateZoom(newZoom);
+      const currentZoom = getZoom();
+      const currentZoomPercentage = currentZoom * 100;
+      const newZoomPercentage = Math.min(snapToStep(currentZoomPercentage + 10), 200);
+      const newZoom = newZoomPercentage / 100;
+
+      if (Math.abs(newZoom - currentZoom) > 0.01) {
+        animateZoom(newZoom);
+      }
     }, [animateZoom, getZoom, snapToStep]);
 
     const handleZoomOut = useCallback(() => {
-      const currentZoom = getZoom() * 100;
-      const newZoomPercentage = snapToStep(currentZoom - 10);
-      const newZoom = Math.max(newZoomPercentage / 100, 0.1);
-      animateZoom(newZoom);
+      const currentZoom = getZoom();
+      const currentZoomPercentage = currentZoom * 100;
+      const newZoomPercentage = Math.max(snapToStep(currentZoomPercentage - 10), 10);
+      const newZoom = newZoomPercentage / 100;
+
+      if (Math.abs(newZoom - currentZoom) > 0.01) {
+        animateZoom(newZoom);
+      }
     }, [animateZoom, getZoom, snapToStep]);
 
     return (

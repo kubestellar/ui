@@ -38,7 +38,7 @@ declare module 'lucide-react' {
   export const Home: Icon;
   export const RefreshCw: Icon;
   export const Rocket: Icon;
-    // Additional icons missing from the original list
+  // Additional icons missing from the original list
   export const Activity: Icon;
   export const RefreshCcw: Icon;
   export const ArrowRightCircle: Icon;

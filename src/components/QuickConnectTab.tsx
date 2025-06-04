@@ -78,7 +78,8 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
     // Only fetch once on mount if we have no clusters and no error
     if (availableClusters.length === 0 && !availableClustersError && !availableClustersLoading) {
       fetchAvailableClusters();
-    }  }, [
+    }
+  }, [
     availableClusters.length,
     availableClustersError,
     availableClustersLoading,

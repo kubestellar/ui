@@ -32,7 +32,7 @@ import { ResourceItem } from './TreeViewComponent';
 import useTheme from '../stores/themeStore';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { api, getWebSocketUrl } from '../lib/api';
-import { Theme } from '@mui/material/styles';
+import DownloadLogsButton from './DownloadLogsButton';
 
 interface WecsDetailsProps {
   namespace: string;
@@ -74,21 +74,7 @@ interface ContainerInfo {
   Image: string;
 }
 
-interface KubernetesResource {
-  apiVersion?: string;
-  kind?: string;
-  metadata?: {
-    name?: string;
-    namespace?: string;
-    labels?: Record<string, string>;
-    [key: string]: unknown;
-  };
-  spec?: Record<string, unknown>;
-  status?: Record<string, unknown>;
-  [key: string]: unknown;
-}
-
-const StyledTab = styled(Tab)(({ theme }: { theme: Theme }) => {
+const StyledTab = styled(Tab)(({ theme }) => {
   const appTheme = useTheme(state => state.theme);
   return {
     textTransform: 'none',
@@ -724,6 +710,16 @@ const WecsDetailsPanel = ({
       // Update current pod reference
       currentPodRef.current = name;
 
+      // Add Ctrl+L keybinding to clear the terminal
+      term.attachCustomKeyEventHandler(event => {
+        if (event.ctrlKey && event.key.toLowerCase() === 'l') {
+          term.clear();
+          event.preventDefault();
+          return false; // Prevent default and xterm.js handling
+        }
+        return true;
+      });
+
       return () => {
         // console.log(`Cleaning up exec terminal resources for pod: ${name}`);
         clearInterval(pingInterval);
@@ -806,25 +802,9 @@ const WecsDetailsPanel = ({
     setIsClosing(true);
     setTimeout(() => {
       setIsClosing(false);
-      if (onClose) {
-        onClose();
-      }
+      onClose();
     }, 400);
   }, [isContainerSelectActive, onClose]);
-
-  // Add a global esc key  listener to close the panel
-  useEffect(() => {
-    if (!isOpen) return;
-
-    function handleEsc(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        handleClose();
-      }
-    }
-
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
-  }, [isOpen, handleClose]);
 
   const handleFormatChange = (format: 'yaml' | 'json') => {
     if (editFormat === 'yaml' && format === 'json') {
@@ -847,225 +827,10 @@ const WecsDetailsPanel = ({
     if (!resource) return;
 
     const resourceName = resource.name;
-    const resourceNamespace = resource.namespace || 'default';
-    const resourceKind = resource.kind || 'Pod';
 
-    try {
-      // Parse the edited manifest
-      let updatedResource: KubernetesResource;
-      try {
-        if (editFormat === 'yaml') {
-          updatedResource = jsyaml.load(editedManifest) as KubernetesResource;
-        } else {
-          updatedResource = JSON.parse(editedManifest);
-        }
-      } catch (parseError) {
-        setSnackbarMessage(
-          `Failed to parse ${editFormat.toUpperCase()}: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`
-        );
-        setSnackbarSeverity('error');
-        setSnackbarOpen(true);
-        return;
-      }
-
-      // Special handling for Cluster resources
-      if (resourceKind === 'Cluster') {
-        // Extract cluster labels from the updated resource
-        const newLabels = updatedResource?.metadata?.labels || {};
-
-        // Get context from clusterDetails instead of using the current cluster prop
-        let contextName = 'wds1'; // Default fallback
-        let currentLabels = {};
-
-        if (
-          clusterDetails &&
-          clusterDetails.itsManagedClusters &&
-          clusterDetails.itsManagedClusters.length > 0
-        ) {
-          contextName = clusterDetails.itsManagedClusters[0].context;
-          console.log(`Using context ${contextName} for cluster ${resourceName}`);
-
-          // Debug: Log the current labels before updating
-          currentLabels = clusterDetails.itsManagedClusters[0].labels || {};
-          console.log('Current labels:', currentLabels);
-          console.log('New labels from editor:', newLabels);
-
-          // Check if there's actually a difference in labels
-          const hasChanges = JSON.stringify(currentLabels) !== JSON.stringify(newLabels);
-          console.log('Has label changes:', hasChanges);
-
-          if (!hasChanges) {
-            console.log('No actual label changes detected, showing success message anyway');
-            setSnackbarMessage(`No changes to update for ${resourceKind} "${resourceName}"`);
-            setSnackbarSeverity('success');
-            setSnackbarOpen(true);
-            return;
-          }
-        } else {
-          console.warn(
-            `Could not find context for cluster ${resourceName}, using default: ${contextName}`
-          );
-        }
-
-        // IMPORTANT: When working with clusters, we need to be careful with system labels
-        // Extract only user-defined labels that don't have protected prefixes
-        const systemPrefixes = [
-          'cluster.open-cluster-management.io/',
-          'feature.open-cluster-management.io/',
-          'kubernetes.io/',
-          'k8s.io/',
-          'node.openshift.io/',
-          'beta.kubernetes.io/',
-          'topology.kubernetes.io/',
-          'node-role.kubernetes.io/',
-        ];
-
-        // Filter out system labels from the update
-        const userDefinedLabels: Record<string, string> = {};
-        const protectedLabels: Record<string, string> = {};
-
-        // First identify labels that were removed - compare currentLabels with newLabels
-        const removedLabels: Record<string, string> = {};
-        Object.keys(currentLabels).forEach(key => {
-          // If key exists in current but not in new, it was removed
-          if (!Object.prototype.hasOwnProperty.call(newLabels, key)) {
-            // Check if it's a system label
-            const isSystemLabel = systemPrefixes.some(prefix => key.startsWith(prefix));
-            if (!isSystemLabel) {
-              // Mark for deletion by setting to empty string
-              removedLabels[key] = '';
-            }
-          }
-        });
-
-        // Then process new and changed labels
-        Object.entries(newLabels).forEach(([key, value]) => {
-          const isSystemLabel = systemPrefixes.some(prefix => key.startsWith(prefix));
-
-          if (isSystemLabel) {
-            // Skip system labels
-            protectedLabels[key] = value as string;
-            console.log(`Skipping system label: ${key}`);
-          } else {
-            // Add or update user-defined labels
-            userDefinedLabels[key] = value as string;
-          }
-        });
-
-        // Combine user-defined labels with removed labels
-        const finalLabels = { ...userDefinedLabels, ...removedLabels };
-
-        console.log('User-defined labels to update:', finalLabels);
-        console.log('Protected labels (skipped):', protectedLabels);
-
-        if (Object.keys(finalLabels).length === 0) {
-          console.log('No user-defined label changes to apply');
-          setSnackbarMessage(
-            `No user-defined label changes to apply for ${resourceKind} "${resourceName}"`
-          );
-          setSnackbarSeverity('success');
-          setSnackbarOpen(true);
-          return;
-        }
-
-        // Use the cluster-specific API endpoint
-        const payload = {
-          contextName: contextName, // Use the context from the cluster itself
-          clusterName: resourceName,
-          labels: finalLabels,
-        };
-
-        console.log(`Updating cluster ${resourceName} labels with payload:`, payload);
-
-        const response = await api.patch('/api/managedclusters/labels', payload, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        console.log('Update response:', response.data);
-
-        // Force refresh of cluster data after update
-        if (onSync) {
-          console.log('Triggering refresh after cluster label update');
-          onSync();
-        }
-
-        // For clusters, we'll also manually refresh the cluster details to ensure UI updates
-        try {
-          console.log('Manually refreshing cluster details');
-          const response = await api.get(
-            `/api/cluster/details/${encodeURIComponent(resourceName)}`
-          );
-
-          if (response.data) {
-            console.log('Updated cluster data received:', response.data);
-            setClusterDetails(response.data);
-
-            // Update the resource with refreshed data
-            if (response.data.itsManagedClusters && response.data.itsManagedClusters.length > 0) {
-              const refreshedClusterInfo = response.data.itsManagedClusters[0];
-              console.log('Updated labels:', refreshedClusterInfo.labels);
-
-              const updatedManifest = {
-                apiVersion: 'v1',
-                kind: 'Cluster',
-                metadata: {
-                  name: response.data.clusterName,
-                  creationTimestamp: refreshedClusterInfo.creationTime,
-                  labels: refreshedClusterInfo.labels || {},
-                },
-                spec: {
-                  context: refreshedClusterInfo.context || '',
-                },
-              };
-
-              const manifestStr = JSON.stringify(updatedManifest, null, 2);
-              setEditedManifest(manifestStr);
-            }
-          }
-        } catch (refreshError) {
-          console.error('Error refreshing cluster details:', refreshError);
-        }
-      } else {
-        // Handle regular Kubernetes resources
-        const kindToPluralMap: Record<string, string> = {
-          Deployment: 'deployments',
-          StatefulSet: 'statefulsets',
-          DaemonSet: 'daemonsets',
-          Pod: 'pods',
-          Service: 'services',
-          ConfigMap: 'configmaps',
-          Secret: 'secrets',
-          // Add more mappings as needed
-        };
-
-        // Get the plural form of the resource kind
-        const pluralForm = kindToPluralMap[resourceKind] || `${resourceKind.toLowerCase()}s`;
-
-        // Construct the update endpoint and send request
-        const updateUrl = `/api/${pluralForm}/${resourceNamespace}/${resourceName}`;
-        console.log(`Updating ${resourceKind} at: ${updateUrl}`);
-        await api.put(updateUrl, updatedResource);
-
-        // Refresh the resource data for regular resources
-        if (onSync) {
-          console.log(`Triggering refresh after ${resourceKind} update`);
-          onSync();
-        }
-      }
-
-      // Show success message
-      setSnackbarMessage(`Successfully updated ${resourceKind} "${resourceName}"`);
-      setSnackbarSeverity('success');
-      setSnackbarOpen(true);
-    } catch (error) {
-      console.error('Error updating resource:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      setSnackbarMessage(`Failed to update ${resourceKind} "${resourceName}": ${errorMessage}`);
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-    }
+    setSnackbarMessage(`API not implemented for updating pod "${resourceName}"`);
+    setSnackbarSeverity('error');
+    setSnackbarOpen(true);
   };
 
   const handleSnackbarClose = () => {
@@ -1492,18 +1257,34 @@ const WecsDetailsPanel = ({
                   </Box>
                 </Box>
               )}
-              {tabValue === 2 && type.toLowerCase() === 'pod' && isDeploymentOrJobPod && (
-                <Box
-                  sx={{
-                    height: '500px',
-                    bgcolor: theme === 'dark' ? '#1E1E1E' : '#FFFFFF',
-                    borderRadius: 1,
-                    p: 1,
-                    overflow: 'auto',
-                  }}
-                >
-                  <div ref={terminalRef} style={{ height: '100%', width: '100%' }} />
-                </Box>
+              {tabValue === 2 && (
+                <>
+                  {/* Add download logs button if the resource is a pod */}
+                  {type.toLowerCase() === 'pod' && (
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                      <DownloadLogsButton
+                        cluster={cluster}
+                        namespace={namespace}
+                        podName={name}
+                        logContent={logs.join('\n')}
+                      />
+                    </Box>
+                  )}
+                  <Box
+                    sx={{
+                      maxHeight: '500px',
+                      bgcolor: theme === 'dark' ? '#1E1E1E' : '#FFFFFF',
+                      borderRadius: 1,
+                      p: 1,
+                      overflow: 'auto',
+                    }}
+                  >
+                    <div
+                      ref={terminalRef}
+                      style={{ height: '100%', width: '100%', overflow: 'auto' }}
+                    />
+                  </Box>
+                </>
               )}
               {tabValue === 3 && type.toLowerCase() === 'pod' && (
                 <Box
@@ -1630,7 +1411,7 @@ const WecsDetailsPanel = ({
                               horizontal: 'left',
                             },
                           }}
-                          renderValue={(value: string | undefined) => (
+                          renderValue={value => (
                             <Box
                               sx={{ display: 'flex', alignItems: 'center' }}
                               onClick={(e: React.MouseEvent<HTMLDivElement>) => {

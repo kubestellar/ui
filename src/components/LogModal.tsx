@@ -4,18 +4,21 @@ import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
 import useTheme from '../stores/themeStore';
+import DownloadLogsButton from './DownloadLogsButton';
 
 interface LogModalProps {
   namespace: string;
   deploymentName: string;
   onClose: () => void;
+  cluster?: string; // Added cluster prop
 }
 
-const LogModal = ({ namespace, deploymentName, onClose }: LogModalProps) => {
+const LogModal = ({ namespace, deploymentName, onClose, cluster = 'default' }: LogModalProps) => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminalInstance = useRef<Terminal | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [logContent, setLogContent] = useState<string>('');
   const theme = useTheme(state => state.theme);
 
   useEffect(() => {
@@ -56,7 +59,10 @@ const LogModal = ({ namespace, deploymentName, onClose }: LogModalProps) => {
     };
 
     socket.onmessage = event => {
+      // Add the log line to the terminal
       term.writeln(event.data);
+      // Also append to our captured log content
+      setLogContent(prev => prev + event.data + '\n');
       setError(null);
     };
 
@@ -93,16 +99,25 @@ const LogModal = ({ namespace, deploymentName, onClose }: LogModalProps) => {
           <h2 className="text-2xl font-bold">
             Logs: <span className="text-2xl text-blue-400">{deploymentName}</span>
           </h2>
-          <button
-            onClick={onClose}
-            className={`transition duration-200 ${
-              theme === 'dark'
-                ? 'bg-gray-900 hover:text-red-600'
-                : 'border-none bg-white hover:text-red-600'
-            }`}
-          >
-            <X size={22} />
-          </button>
+          <div className="flex items-center space-x-2">
+            <DownloadLogsButton
+              cluster={cluster}
+              namespace={namespace}
+              podName={deploymentName}
+              className="mr-2"
+              logContent={logContent}
+            />
+            <button
+              onClick={onClose}
+              className={`transition duration-200 ${
+                theme === 'dark'
+                  ? 'bg-gray-900 hover:text-red-600'
+                  : 'border-none bg-white hover:text-red-600'
+              }`}
+            >
+              <X size={22} />
+            </button>
+          </div>
         </div>
 
         {/* Terminal Section */}
