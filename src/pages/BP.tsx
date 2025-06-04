@@ -928,7 +928,7 @@ const BP = () => {
               }}
             >
               <Typography variant="body2">
-                This interface is using simulated responses to create binding policies. Select 
+                This interface is using simulated responses to create binding policies. Select
                 clusters and workloads from the lists to add them to the canvas, then click on a
                 workload and then a cluster to create a binding policy connection.
               </Typography>
