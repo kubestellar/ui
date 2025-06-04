@@ -5,22 +5,22 @@ import (
 	"github.com/kubestellar/ui/plugin/plugins"
 )
 
-func SetupRoutes(router *gin.Engine) {
-	// Initialize all route groups
+// SetupAllRoutes initializes all application routes
+func SetupAllRoutes(router *gin.Engine) {
+	// Setup authentication routes
+	setupAuthRoutes(router)
+
+	// Setup API routes
+	setupInstallerRoutes(router)
 	setupClusterRoutes(router)
 	setupDeploymentRoutes(router)
-	setupNamespaceRoutes(router)
 	setupBindingPolicyRoutes(router)
-	setupResourceRoutes(router)
-	getWecsResources(router)
-	setupInstallerRoutes(router)
-	setupWdsCookiesRoute(router)
-	setupGitopsRoutes(router)
-	setupHelmRoutes(router)
-	setupGitHubRoutes(router)
-	setupDeploymentHistoryRoutes(router)
-	plugins.Pm.SetupPluginsRoutes(router)
-
-	setupAuthRoutes(router)
+	setupNamespaceRoutes(router)
 	setupArtifactHubRoutes(router)
+
+	// Setup WebSocket and streaming routes
+	getWecsResources(router)
+
+	// Setup plugin routes
+	plugins.Pm.SetupPluginsRoutes(router)
 }
