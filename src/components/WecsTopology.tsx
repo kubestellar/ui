@@ -667,7 +667,6 @@ const WecsTreeview = () => {
       );
 
       const timestampMap = new Map(clusterNames.map((name, index) => [name, timestamps[index]]));
-
       return timestampMap;
     } catch (error) {
       console.error('Error fetching cluster timestamps:', error);
@@ -1266,7 +1265,7 @@ const WecsTreeview = () => {
 
       processData();
     }
-  }, [transformDataToTree, wecsData]); // Added wecsData to dependency array
+  }, [transformDataToTree]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
