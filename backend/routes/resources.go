@@ -28,13 +28,3 @@ func setupResourceRoutes(router *gin.Engine) {
 		api.DELETE("/:resourceKind/:namespace/:name", k8s.DeleteResource) // Delete a resource
 	}
 }
-
-// Setup function for backup routes
-func SetupBackupRoutes(router *gin.Engine) {
-	// Backup routes setup code would go here
-}
-
-// setupWdsCookiesRoute sets up the cookies-related routes
-func setupWdsCookiesRoute(router *gin.Engine) {
-	// WDS cookies routes setup code would go here
-}
