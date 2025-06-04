@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { useWebSocket } from '../../context/WebSocketProvider';
+import { useWebSocket } from '../../context/useWebSocket';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import { LoginUser } from '../../api/auth';

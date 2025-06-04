@@ -781,7 +781,7 @@ const WecsDetailsPanel = ({
     }
   };
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     // Don't close if container selection is active
     if (isContainerSelectActive) {
       // console.log("Container select is active, preventing panel close");
@@ -793,20 +793,7 @@ const WecsDetailsPanel = ({
       setIsClosing(false);
       onClose();
     }, 400);
-  };
-  // Add a global esc key  listener to close the panel
-  useEffect(() => {
-    if (!isOpen) return;
-
-    function handleEsc(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        handleClose();
-      }
-    }
-
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
-  }, [isOpen, handleClose]);
+  }, [isContainerSelectActive, onClose]);
 
   const handleFormatChange = (format: 'yaml' | 'json') => {
     if (editFormat === 'yaml' && format === 'json') {

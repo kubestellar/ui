@@ -658,7 +658,8 @@ const WecsTreeview = () => {
     }
   };
 
-  const fetchAllClusterTimestamps = async (clusterData: WecsCluster[]) => {
+  // Wrap fetchAllClusterTimestamps in useCallback
+  const fetchAllClusterTimestamps = useCallback(async (clusterData: WecsCluster[]) => {
     try {
       const clusterNames = clusterData.map(cluster => cluster.cluster);
       const timestamps = await Promise.all(
@@ -672,7 +673,7 @@ const WecsTreeview = () => {
       console.error('Error fetching cluster timestamps:', error);
       return new Map();
     }
-  };
+  }, []);
 
   const handleClosePanel = useCallback(() => {
     if (selectedNode) {
@@ -1246,7 +1247,7 @@ const WecsTreeview = () => {
       prevNodes.current = layoutedNodes;
       setIsTransforming(false);
     },
-    [createNode, nodes, edges]
+    [createNode, nodes, edges, fetchAllClusterTimestamps]
   );
 
   useEffect(() => {
@@ -1265,7 +1266,7 @@ const WecsTreeview = () => {
 
       processData();
     }
-  }, [transformDataToTree]);
+  }, [transformDataToTree, wecsData]); // Added wecsData to dependency array
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
