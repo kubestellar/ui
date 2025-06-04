@@ -31,6 +31,7 @@ interface AvailableItemsPanelProps {
     workloads?: string;
     policies?: string;
   };
+  onItemClick?: (itemType: string, itemId: string) => void;
 }
 
 const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
@@ -39,6 +40,7 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
   workloads,
   loading = { clusters: false, workloads: false, policies: false },
   error = {},
+  onItemClick,
 }) => {
   const theme = useTheme();
 
@@ -151,9 +153,23 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
                   <CircularProgress size={24} />
                 </Box>
               ) : items.length > 0 ? (
-                <List dense disablePadding>
-                  {items.map((item, index) => renderItem(item, index))}
-                </List>
+                <>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      display: 'block',
+                      textAlign: 'center',
+                      my: 1,
+                      color: 'text.secondary',
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    Click on an item to add it to the canvas
+                  </Typography>
+                  <List dense disablePadding>
+                    {items.map((item, index) => renderItem(item, index))}
+                  </List>
+                </>
               ) : (
                 <Box sx={{ py: 2, textAlign: 'center' }}>
                   <Typography variant="body2" color="text.secondary">
@@ -174,7 +190,7 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
     return `${type}-${id}`;
   };
 
-  // Render draggable policy item - extracted for clarity
+  // Render item that looks draggable but is actually clickable
   const renderPolicyItem = (policy: BindingPolicyInfo, index: number) => (
     <Draggable
       key={logDraggableRender('policy', policy.name, index)}
@@ -191,6 +207,7 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
             ref={provided.innerRef}
             {...provided.draggableProps}
             {...provided.dragHandleProps}
+            onClick={() => onItemClick?.('policy', policy.name)}
             sx={{
               borderBottom: '1px solid',
               borderColor: 'divider',
@@ -202,6 +219,7 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
               transition: 'all 0.2s',
               '&:hover': {
                 bgcolor: alpha(theme.palette.primary.main, 0.05),
+                cursor: 'pointer',
               },
             }}
             data-rbd-draggable-id={`policy-${policy.name}`}
@@ -244,7 +262,7 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
     </Draggable>
   );
 
-  // Render draggable cluster item - extracted for clarity
+  // Update the cluster item to be clickable instead of draggable
   const renderClusterItem = (cluster: ManagedCluster, index: number) => (
     <Draggable
       key={logDraggableRender('cluster', cluster.name, index)}
@@ -261,6 +279,7 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
             ref={provided.innerRef}
             {...provided.draggableProps}
             {...provided.dragHandleProps}
+            onClick={() => onItemClick?.('cluster', cluster.name)}
             sx={{
               borderBottom: '1px solid',
               borderColor: 'divider',
@@ -272,6 +291,7 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
               transition: 'all 0.2s',
               '&:hover': {
                 bgcolor: alpha(theme.palette.primary.main, 0.05),
+                cursor: 'pointer',
               },
             }}
             data-rbd-draggable-id={`cluster-${cluster.name}`}
@@ -309,7 +329,7 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
     </Draggable>
   );
 
-  // Render draggable workload item - extracted for clarity
+  // Update the workload item to be clickable instead of draggable
   const renderWorkloadItem = (workload: Workload, index: number) => (
     <Draggable
       key={logDraggableRender('workload', workload.name, index)}
@@ -326,6 +346,7 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
             ref={provided.innerRef}
             {...provided.draggableProps}
             {...provided.dragHandleProps}
+            onClick={() => onItemClick?.('workload', workload.name)}
             sx={{
               borderBottom: '1px solid',
               borderColor: 'divider',
@@ -336,6 +357,7 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
               transition: 'all 0.2s',
               '&:hover': {
                 bgcolor: alpha(theme.palette.secondary.main, 0.05),
+                cursor: 'pointer',
               },
             }}
             data-rbd-draggable-id={`workload-${workload.name}`}
@@ -376,6 +398,10 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
     <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Typography variant="h6" gutterBottom align="center" fontWeight="medium">
         Available Items
+      </Typography>
+
+      <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 2 }}>
+        Select items to add them to your binding policy canvas
       </Typography>
 
       {/* Policies Section */}

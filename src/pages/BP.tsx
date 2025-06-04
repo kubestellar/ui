@@ -929,8 +929,8 @@ const BP = () => {
             >
               <Typography variant="body2">
                 This interface is using simulated responses to create binding policies. Select
-                clusters and workloads to add them to the canvas, then click on a workload and then
-                a cluster to create a binding policy connection.
+                clusters and workloads from the lists to add them to the canvas, then click on a
+                workload and then a cluster to create a binding policy connection.
               </Typography>
             </Alert>
           </Box>
@@ -1013,13 +1013,13 @@ const BP = () => {
               <ListItemIcon>
                 <KubernetesIcon type="cluster" size={24} />
               </ListItemIcon>
-              <ListItemText primary="1. Select clusters to add them to the canvas" />
+              <ListItemText primary="1. Select clusters from the left panel to include in the canvas" />
             </ListItem>
             <ListItem>
               <ListItemIcon>
                 <KubernetesIcon type="workload" size={24} />
               </ListItemIcon>
-              <ListItemText primary="2. Select workloads to add them to the canvas" />
+              <ListItemText primary="2. Select workloads from the right panel to include in the canvas" />
             </ListItem>
             <ListItem>
               <ListItemIcon>

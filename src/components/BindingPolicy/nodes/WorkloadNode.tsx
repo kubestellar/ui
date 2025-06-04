@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Tooltip } from '@mui/material';
 import KubernetesIcon from '../KubernetesIcon';
 
 interface WorkloadNodeData {
@@ -21,67 +21,75 @@ const WorkloadNode: React.FC<NodeProps<WorkloadNodeData>> = ({ data }) => {
     <>
       <Handle type="source" position={Position.Bottom} style={{ background: '#3B82F6' }} />
 
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          background: theme === 'dark' ? '#111827' : '#EFF6FF',
-          border: '1px solid #3B82F6',
-          borderRadius: '4px',
-          padding: '8px',
-          width: 140,
-          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-        }}
-      >
+      <Tooltip title="Click to select or connect this workload" placement="top">
         <Box
           sx={{
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
-            mb: 1,
+            background: theme === 'dark' ? '#111827' : '#EFF6FF',
+            border: '1px solid #3B82F6',
+            borderRadius: '4px',
+            padding: '8px',
+            width: 140,
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+            transition: 'transform 0.2s, box-shadow 0.2s',
+            '&:hover': {
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+              transform: 'translateY(-2px)',
+            },
+            cursor: 'pointer',
           }}
         >
-          <KubernetesIcon type="workload" size={26} />
-        </Box>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mb: 1,
+            }}
+          >
+            <KubernetesIcon type="workload" size={26} />
+          </Box>
 
-        <Typography
-          variant="caption"
-          sx={{
-            color: theme === 'dark' ? '#9CA3AF' : '#4B5563',
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            fontSize: '0.65rem',
-          }}
-        >
-          {workloadType}
-        </Typography>
-
-        <Typography
-          variant="body2"
-          sx={{
-            fontWeight: 500,
-            color: theme === 'dark' ? '#fff' : '#000',
-            textAlign: 'center',
-            wordBreak: 'break-word',
-          }}
-        >
-          {workloadName}
-        </Typography>
-
-        <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-          <KubernetesIcon type="policy" size={14} sx={{ mr: 0.5 }} />
           <Typography
             variant="caption"
             sx={{
-              color: theme === 'dark' ? '#9CA3AF' : '#6B7280',
+              color: theme === 'dark' ? '#9CA3AF' : '#4B5563',
+              fontWeight: 600,
+              textTransform: 'uppercase',
               fontSize: '0.65rem',
             }}
           >
-            {policy}
+            {workloadType}
           </Typography>
+
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: 500,
+              color: theme === 'dark' ? '#fff' : '#000',
+              textAlign: 'center',
+              wordBreak: 'break-word',
+            }}
+          >
+            {workloadName}
+          </Typography>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+            <KubernetesIcon type="policy" size={14} sx={{ mr: 0.5 }} />
+            <Typography
+              variant="caption"
+              sx={{
+                color: theme === 'dark' ? '#9CA3AF' : '#6B7280',
+                fontSize: '0.65rem',
+              }}
+            >
+              {policy}
+            </Typography>
+          </Box>
         </Box>
-      </Box>
+      </Tooltip>
 
       <Handle type="target" position={Position.Top} style={{ background: '#3B82F6' }} />
     </>
