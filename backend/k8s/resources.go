@@ -400,8 +400,13 @@ func UpdateResource(c *gin.Context) {
 		}
 
 		// Apply the new data to the current resource
-		current.Object = resourceObj.Object
-		current.SetResourceVersion(resourceObj.GetResourceVersion())
+		newVersion := resourceObj.GetResourceVersion()
+		if newVersion != "" {
+		    current.SetResourceVersion(newVersion)
+		} else {
+		    // Optionally log this or preserve the existing version
+		    log.Printf("Warning: Skipped setting resource version due to empty value")
+		}
 
 		// Attempt to update the resource
 		updated, updateErr := resource.Update(c, current, v1.UpdateOptions{})
