@@ -29,6 +29,7 @@ import useTheme from '../stores/themeStore'; // Import the useTheme hook
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { api } from '../lib/api';
 import { useResourceLogsWebSocket } from '../hooks/useWebSocket';
+import DownloadLogsButton from './DownloadLogsButton';
 
 interface DynamicDetailsProps {
   namespace: string;
@@ -819,20 +820,33 @@ const DynamicDetailsPanel = ({
                 </Box>
               )}
               {tabValue === 2 && (
-                <Box
-                  sx={{
-                    maxHeight: '500px',
-                    bgcolor: theme === 'dark' ? '#1E1E1E' : '#FFFFFF',
-                    borderRadius: 1,
-                    p: 1,
-                    overflow: 'auto',
-                  }}
-                >
-                  <div
-                    ref={terminalRef}
-                    style={{ height: '100%', width: '100%', overflow: 'auto' }}
-                  />
-                </Box>
+                <>
+                  {/* Add download logs button if the resource is a pod */}
+                  {type.toLowerCase() === 'pod' && (
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                      <DownloadLogsButton
+                        cluster={(resourceData?.cluster as string) || 'default'}
+                        namespace={namespace}
+                        podName={name}
+                        logContent={logs.join('\n')}
+                      />
+                    </Box>
+                  )}
+                  <Box
+                    sx={{
+                      maxHeight: '500px',
+                      bgcolor: theme === 'dark' ? '#1E1E1E' : '#FFFFFF',
+                      borderRadius: 1,
+                      p: 1,
+                      overflow: 'auto',
+                    }}
+                  >
+                    <div
+                      ref={terminalRef}
+                      style={{ height: '100%', width: '100%', overflow: 'auto' }}
+                    />
+                  </Box>
+                </>
               )}
             </Box>
           </Box>

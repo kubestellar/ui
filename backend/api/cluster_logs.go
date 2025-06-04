@@ -2,11 +2,12 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-// OnboardingLogsHandler returns all logs for a specific cluster's onboarding process
+// FIXED: OnboardingLogsHandler with proper variable references
 func OnboardingLogsHandler(c *gin.Context) {
 	clusterName := c.Param("cluster")
 	if clusterName == "" {
@@ -17,14 +18,37 @@ func OnboardingLogsHandler(c *gin.Context) {
 	// Get all events for this cluster
 	events := GetOnboardingEvents(clusterName)
 
-	// Get current status
+	// Get current status - FIX: Use the correct mutex variable name
 	mutex.RLock()
 	status, exists := clusterStatuses[clusterName]
 	mutex.RUnlock()
 
-	if !exists {
+	// If no status exists but we have events, derive status from events
+	if !exists && len(events) > 0 {
+		lastEvent := events[len(events)-1]
+		status = lastEvent.Status
+		exists = true
+	}
+
+	// Check if onboarding is in progress
+	onboardingMutex.RLock()
+	inProgress := onboardingInProgress[clusterName]
+	onboardingMutex.RUnlock()
+
+	if inProgress {
+		status = "InProgress"
+		exists = true
+	}
+
+	// Return data even if no formal status exists but we have events
+	if !exists && len(events) == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": "No onboarding data found for cluster"})
 		return
+	}
+
+	// If no formal status but we have events, set a default status
+	if !exists {
+		status = "Unknown"
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -32,5 +56,7 @@ func OnboardingLogsHandler(c *gin.Context) {
 		"status":      status,
 		"logs":        events,
 		"count":       len(events),
+		"inProgress":  inProgress,
+		"lastUpdated": time.Now(),
 	})
 }

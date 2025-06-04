@@ -59,6 +59,7 @@ Before you begin, ensure that your system meets the following requirements:
 - Ensure you have access to a Kubernetes clusters setup with Kubestellar Getting Started Guide & Kubestellar prerequisites installed
 
 - **Kubestellar guide**: [Guide](https://docs.kubestellar.io/release-0.25.1/direct/get-started/)
+  > [!NOTE] If you're running on macOS, you may need to manually add a host entry to resolve its1.localtest.me to localhost using `echo "127.0.0.1 its1.localtest.me" | sudo tee -a /etc/hosts`
 
 ### 5. Make and Air
 
@@ -190,6 +191,18 @@ To stop the application
 ```bash
 docker compose down
 ```
+
+---
+
+> **Note for WSL Users 🐧**
+>
+> If you've successfully installed the KubeStellar but they are not detected by frontend, it might be due to a communication issue between Docker and WSL.
+>
+> Here are a few steps to resolve it:
+>
+> 1. Open Docker Desktop settings and ensure WSL integration is enabled for your distribution (e.g., Ubuntu).
+> 2. If the issue persists, consider uninstalling Docker Desktop from Windows and instead install Docker **directly inside your WSL environment** (e.g., Ubuntu).
+> 3. After installing Docker inside WSL, reinstall the KubeStellar. This setup typically resolves the detection issues. ✅
 
 ### Accessing the Application
 

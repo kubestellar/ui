@@ -303,7 +303,20 @@ const ClusterLabelsList: React.FC<ClusterLabelsListProps> = ({
                 : 'No labels found in available clusters.'}
             </Typography>
           ) : (
-            filteredLabels.map(labelGroup => renderLabelItem(labelGroup))
+            <>
+              <Typography
+                sx={{
+                  mb: 2,
+                  fontStyle: 'italic',
+                  color: isDarkTheme ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
+                  fontSize: '0.85rem',
+                  px: 1,
+                }}
+              >
+                Click on a label to add it to the canvas
+              </Typography>
+              {filteredLabels.map(labelGroup => renderLabelItem(labelGroup))}
+            </>
           )}
         </Box>
       )}

@@ -48,6 +48,7 @@ import WecsDetailsPanel from './WecsDetailsPanel';
 import { FlowCanvas } from './Wds_Topology/FlowCanvas';
 import ListViewComponent from '../components/ListViewComponent';
 import FullScreenToggle from './ui/FullScreenToggle';
+import { api } from '../lib/api';
 
 // Updated Interfaces
 export interface NodeData {
@@ -640,6 +641,40 @@ const WecsTreeview = () => {
     setContextMenu({ nodeId, x: event.clientX, y: event.clientY, nodeType });
   }, []);
 
+  const getClusterCreationTimestamp = async (name: string) => {
+    try {
+      const response = await api.get(`/api/cluster/details/${encodeURIComponent(name)}`);
+      const data = response.data;
+
+      const creationTime =
+        data.itsManagedClusters && data.itsManagedClusters.length > 0
+          ? data.itsManagedClusters[0].creationTime
+          : new Date().toISOString();
+
+      return creationTime;
+    } catch (error) {
+      console.error(error);
+      return '';
+    }
+  };
+
+  // Wrap fetchAllClusterTimestamps in useCallback
+  const fetchAllClusterTimestamps = useCallback(async (clusterData: WecsCluster[]) => {
+    try {
+      const clusterNames = clusterData.map(cluster => cluster.cluster);
+      const timestamps = await Promise.all(
+        clusterNames.map(name => getClusterCreationTimestamp(name))
+      );
+
+      const timestampMap = new Map(clusterNames.map((name, index) => [name, timestamps[index]]));
+
+      return timestampMap;
+    } catch (error) {
+      console.error('Error fetching cluster timestamps:', error);
+      return new Map();
+    }
+  }, []);
+
   const handleClosePanel = useCallback(() => {
     if (selectedNode) {
       setSelectedNode({ ...selectedNode, isOpen: false });
@@ -791,7 +826,7 @@ const WecsTreeview = () => {
   );
 
   const transformDataToTree = useCallback(
-    (data: WecsCluster[]) => {
+    async (data: WecsCluster[]) => {
       if (!data || !Array.isArray(data) || data.length === 0) {
         ReactDOM.unstable_batchedUpdates(() => {
           setNodes([]);
@@ -800,6 +835,7 @@ const WecsTreeview = () => {
         });
         return;
       }
+      const clusterTimestampMap = await fetchAllClusterTimestamps(data);
 
       // Clear caches when theme changes to ensure proper styling
       nodeCache.current.clear();
@@ -812,17 +848,19 @@ const WecsTreeview = () => {
       if (!stateRef.current.isExpanded) {
         data.forEach(cluster => {
           const clusterId = `cluster:${cluster.cluster}`;
+          const timestamp = clusterTimestampMap.get(cluster.cluster) || '';
+
           createNode(
             clusterId,
             cluster.cluster,
             'cluster',
             'Active',
-            '',
+            timestamp,
             undefined,
             {
               apiVersion: 'v1',
               kind: 'Cluster',
-              metadata: { name: cluster.cluster, namespace: '', creationTimestamp: '' },
+              metadata: { name: cluster.cluster, namespace: '', creationTimestamp: timestamp },
               status: { phase: 'Active' },
             },
             null,
@@ -833,17 +871,19 @@ const WecsTreeview = () => {
       } else {
         data.forEach(cluster => {
           const clusterId = `cluster:${cluster.cluster}`;
+          const timestamp = clusterTimestampMap.get(cluster.cluster) || '';
+
           createNode(
             clusterId,
             cluster.cluster,
             'cluster',
             'Active',
-            '',
+            timestamp,
             undefined,
             {
               apiVersion: 'v1',
               kind: 'Cluster',
-              metadata: { name: cluster.cluster, namespace: '', creationTimestamp: '' },
+              metadata: { name: cluster.cluster, namespace: '', creationTimestamp: timestamp },
               status: { phase: 'Active' },
             },
             null,
@@ -1205,17 +1245,28 @@ const WecsTreeview = () => {
         setIsTransforming(false);
       });
       prevNodes.current = layoutedNodes;
+      setIsTransforming(false);
     },
-    [createNode, nodes, edges]
+    [createNode, nodes, edges, fetchAllClusterTimestamps]
   );
 
   useEffect(() => {
     if (wecsData !== null && !isEqual(wecsData, prevWecsData.current)) {
       setIsTransforming(true);
-      transformDataToTree(wecsData as WecsCluster[]);
-      prevWecsData.current = wecsData as WecsCluster[];
+
+      const processData = async () => {
+        try {
+          await transformDataToTree(wecsData as WecsCluster[]);
+          prevWecsData.current = wecsData as WecsCluster[];
+        } catch (error) {
+          console.error('Error transforming data:', error);
+          setIsTransforming(false);
+        }
+      };
+
+      processData();
     }
-  }, [wecsData, transformDataToTree]);
+  }, [transformDataToTree, wecsData]); // Added wecsData to dependency array
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

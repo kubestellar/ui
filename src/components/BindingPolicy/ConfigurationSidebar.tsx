@@ -33,6 +33,7 @@ import CodeIcon from '@mui/icons-material/Code';
 import TuneIcon from '@mui/icons-material/Tune';
 import FileCopyIcon from '@mui/icons-material/FileCopy';
 import { SelectChangeEvent } from '@mui/material';
+import CancelButton from '../common/CancelButton';
 
 // Scheduling rule types
 type OperatorType =
@@ -501,6 +502,10 @@ const ConfigurationSidebar: React.FC<ConfigurationSidebarProps> = ({
               <MenuItem value="RollingUpdate">Rolling Update</MenuItem>
               <MenuItem value="BlueGreenDeployment">Blue-Green Deployment</MenuItem>
             </Select>
+            <Typography variant="caption" sx={{ mt: 1, color: 'text.secondary' }}>
+              Select how changes to resources should be applied to clusters. Add clusters and
+              workloads by selecting them from the panels.
+            </Typography>
           </FormControl>
 
           <Box sx={{ mt: 3, mb: 2 }}>
@@ -790,9 +795,7 @@ const ConfigurationSidebar: React.FC<ConfigurationSidebarProps> = ({
           borderColor: 'divider',
         }}
       >
-        <Button variant="outlined" onClick={onClose} sx={{ mr: 1 }}>
-          Cancel
-        </Button>
+        <CancelButton onClick={onClose}>Cancel</CancelButton>
         <Button
           variant="contained"
           color="primary"

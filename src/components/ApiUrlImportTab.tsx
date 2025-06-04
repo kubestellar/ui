@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Button, TextField, SxProps, Theme } from '@mui/material';
 import { Colors } from './ImportClusters';
+import CancelButton from './common/CancelButton';
 
 interface ApiUrlImportTabProps {
   theme: string;
@@ -20,7 +21,7 @@ const ApiUrlImportTab: React.FC<ApiUrlImportTabProps> = ({
   commonInputSx,
   enhancedTabContentStyles,
   primaryButtonStyles,
-  secondaryButtonStyles,
+  // secondaryButtonStyles,
   formData,
   setFormData,
   handleCancel,
@@ -164,9 +165,7 @@ const ApiUrlImportTab: React.FC<ApiUrlImportTabProps> = ({
         </Box>
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 'auto' }}>
-          <Button onClick={handleCancel} variant="outlined" sx={secondaryButtonStyles}>
-            Cancel
-          </Button>
+          <CancelButton onClick={handleCancel} />
           <Button
             variant="contained"
             disabled={!formData.clusterName.trim()}

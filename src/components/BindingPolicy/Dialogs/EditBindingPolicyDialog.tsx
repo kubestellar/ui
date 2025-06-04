@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import { BindingPolicyInfo } from '../../../types/bindingPolicy';
 import useTheme from '../../../stores/themeStore';
+import CancelButton from '../../common/CancelButton';
 
 interface EditBindingPolicyDialogProps {
   open: boolean;
@@ -95,7 +96,14 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
         }}
       >
         <DialogTitle>
-          <Box className={isDarkTheme ? 'text-white' : ''}>Edit Binding Policy</Box>
+          <Box
+            className={isDarkTheme ? 'text-white' : ''}
+            sx={{
+              color: isDarkTheme ? '#fff' : '#000',
+            }}
+          >
+            Edit Binding Policy
+          </Box>
         </DialogTitle>
         <DialogContent
           sx={{
@@ -172,19 +180,7 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
             borderColor: 'divider',
           }}
         >
-          <Button
-            onClick={handleClose}
-            variant="outlined"
-            sx={{
-              color: isDarkTheme ? '#fff' : undefined,
-              borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.23)' : undefined,
-              '&:hover': {
-                borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.4)' : undefined,
-              },
-            }}
-          >
-            Cancel
-          </Button>
+          <CancelButton onClick={handleClose}>Cancel</CancelButton>
           <Button
             variant="contained"
             onClick={handleSave}
@@ -211,7 +207,13 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
           },
         }}
       >
-        <DialogTitle className={isDarkTheme ? 'text-white' : ''}>Unsaved Changes</DialogTitle>
+        <DialogTitle
+          sx={{
+            color: isDarkTheme ? '#fff' : '#000',
+          }}
+        >
+          Unsaved Changes
+        </DialogTitle>
         <DialogContent>
           <Alert
             severity="warning"
@@ -228,16 +230,7 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
           </Alert>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button
-            onClick={() => setShowUnsavedChanges(false)}
-            variant="outlined"
-            sx={{
-              color: isDarkTheme ? '#fff' : undefined,
-              borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.23)' : undefined,
-            }}
-          >
-            Continue Editing
-          </Button>
+          <CancelButton onClick={() => setShowUnsavedChanges(false)}>Continue Editing</CancelButton>
           <Button
             variant="contained"
             color="error"

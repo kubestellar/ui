@@ -18,6 +18,7 @@ import ContentCopy from '@mui/icons-material/ContentCopy';
 import useTheme from '../../../stores/themeStore';
 import { PolicyDetailDialogProps } from '../../../types/bindingPolicy';
 import { useBPQueries } from '../../../hooks/queries/useBPQueries';
+import CancelButton from '../../common/CancelButton';
 
 interface PolicyCondition {
   type: string;
@@ -574,9 +575,7 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
           borderColor: 'divider',
         }}
       >
-        <Button onClick={onClose} sx={{ color: isDarkTheme ? '#fff' : 'text.primary' }}>
-          Close
-        </Button>
+        <CancelButton onClick={onClose}>Close</CancelButton>
       </DialogActions>
     </Dialog>
   );

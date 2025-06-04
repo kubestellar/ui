@@ -21,6 +21,9 @@ func SetupAllRoutes(router *gin.Engine) {
 	// Setup WebSocket and streaming routes
 	getWecsResources(router)
 
-	// Setup plugin routes
-	plugins.Pm.SetupPluginsRoutes(router)
+  setupAuthRoutes(router)
+  setupArtifactHubRoutes(router)
+  setupMetricsRoutes(router)
+  // Setup plugin routes
+  plugins.Pm.SetupPluginsRoutes(router)
 }

@@ -867,7 +867,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
               color="text.secondary"
               sx={{ opacity: 0.7, color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : undefined }}
             >
-              Click on clusters and workloads to add them here
+              Select clusters and workloads from the panels to add them here
             </Typography>
           </>
         )}
@@ -1107,7 +1107,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                 Binding Policy Canvas
               </Typography>
               <Typography variant="body2">
-                Drag, cluster labels, and workload labels here to visualize binding relationships
+                Select cluster and workload labels to visualize binding relationships
               </Typography>
             </Box>
           }
@@ -1821,7 +1821,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                             color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary',
                           }}
                         >
-                          Drag clusters here
+                          Select clusters here
                         </Typography>
                       )}
                     </Box>
@@ -2342,7 +2342,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                             color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary',
                           }}
                         >
-                          Drag workloads here
+                          Select workloads here
                         </Typography>
                       )}
                     </Box>
