@@ -1,6 +1,6 @@
 import { Box, Typography, TextField } from '@mui/material';
 import type { HelmFormData } from './HelmTab';
-// import WorkloadLabelInput from "../WorkloadLabelInput";
+import { useTranslation } from 'react-i18next'; // Add this import
 
 interface Props {
   formData: HelmFormData;
@@ -8,7 +8,10 @@ interface Props {
   error: string;
   theme: string;
 }
+
 export const CreateOwnHelmForm = ({ formData, setFormData, error, theme }: Props) => {
+  const { t } = useTranslation(); // Add translation hook
+  
   return (
     <Box
       sx={{
@@ -35,14 +38,14 @@ export const CreateOwnHelmForm = ({ formData, setFormData, error, theme }: Props
             mb: 1,
           }}
         >
-          Repository Name *
+          {t('workloads.helm.form.repositoryName')}
         </Typography>
         <TextField
           fullWidth
           value={formData.repoName}
           onChange={e => setFormData({ ...formData, repoName: e.target.value })}
           error={!!error && !formData.repoName}
-          placeholder="e.g., my-helm-repo"
+          placeholder={t('workloads.helm.form.repositoryNamePlaceholder')}
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: '8px',
@@ -77,7 +80,7 @@ export const CreateOwnHelmForm = ({ formData, setFormData, error, theme }: Props
             💡
           </span>
           <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
-            Specify the name of the Helm repository
+            {t('workloads.helm.form.repositoryNameTip')}
           </Typography>
         </Box>
       </Box>
@@ -92,14 +95,14 @@ export const CreateOwnHelmForm = ({ formData, setFormData, error, theme }: Props
             mb: 1,
           }}
         >
-          Repository URL *
+          {t('workloads.helm.form.repositoryUrl')}
         </Typography>
         <TextField
           fullWidth
           value={formData.repoUrl}
           onChange={e => setFormData({ ...formData, repoUrl: e.target.value })}
           error={!!error && !formData.repoUrl}
-          placeholder="e.g., https://charts.helm.sh/stable"
+          placeholder={t('workloads.helm.form.repositoryUrlPlaceholder')}
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: '8px',
@@ -134,7 +137,7 @@ export const CreateOwnHelmForm = ({ formData, setFormData, error, theme }: Props
             💡
           </span>
           <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
-            Use a valid Helm repository URL
+            {t('workloads.helm.form.repositoryUrlTip')}
           </Typography>
         </Box>
       </Box>
@@ -149,14 +152,14 @@ export const CreateOwnHelmForm = ({ formData, setFormData, error, theme }: Props
             mb: 1,
           }}
         >
-          Chart Name *
+          {t('workloads.helm.form.chartName')}
         </Typography>
         <TextField
           fullWidth
           value={formData.chartName}
           onChange={e => setFormData({ ...formData, chartName: e.target.value })}
           error={!!error && !formData.chartName}
-          placeholder="e.g., nginx"
+          placeholder={t('workloads.helm.form.chartNamePlaceholder')}
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: '8px',
@@ -191,7 +194,7 @@ export const CreateOwnHelmForm = ({ formData, setFormData, error, theme }: Props
             💡
           </span>
           <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
-            Specify the name of the Helm chart to deploy
+            {t('workloads.helm.form.chartNameTip')}
           </Typography>
         </Box>
       </Box>
@@ -206,14 +209,14 @@ export const CreateOwnHelmForm = ({ formData, setFormData, error, theme }: Props
             mb: 1,
           }}
         >
-          Release Name *
+          {t('workloads.helm.form.releaseName')}
         </Typography>
         <TextField
           fullWidth
           value={formData.releaseName}
           onChange={e => setFormData({ ...formData, releaseName: e.target.value })}
           error={!!error && !formData.releaseName}
-          placeholder="e.g., my-release"
+          placeholder={t('workloads.helm.form.releaseNamePlaceholder')}
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: '8px',
@@ -248,7 +251,7 @@ export const CreateOwnHelmForm = ({ formData, setFormData, error, theme }: Props
             💡
           </span>
           <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
-            Specify the release name for this Helm deployment
+            {t('workloads.helm.form.releaseNameTip')}
           </Typography>
         </Box>
       </Box>
@@ -263,13 +266,13 @@ export const CreateOwnHelmForm = ({ formData, setFormData, error, theme }: Props
             mb: 1,
           }}
         >
-          Version (default: latest)
+          {t('workloads.helm.form.version')}
         </Typography>
         <TextField
           fullWidth
           value={formData.version}
           onChange={e => setFormData({ ...formData, version: e.target.value })}
-          placeholder="e.g., 1.2.3"
+          placeholder={t('workloads.helm.form.versionPlaceholder')}
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: '8px',
@@ -301,7 +304,7 @@ export const CreateOwnHelmForm = ({ formData, setFormData, error, theme }: Props
             💡
           </span>
           <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
-            Specify the chart version to deploy
+            {t('workloads.helm.form.versionTip')}
           </Typography>
         </Box>
       </Box>
@@ -316,14 +319,14 @@ export const CreateOwnHelmForm = ({ formData, setFormData, error, theme }: Props
             mb: 1,
           }}
         >
-          Namespace *
+          {t('workloads.helm.form.namespace')}
         </Typography>
         <TextField
           fullWidth
           value={formData.namespace}
           onChange={e => setFormData({ ...formData, namespace: e.target.value })}
           error={!!error && !formData.namespace}
-          placeholder="e.g., default, my-namespace"
+          placeholder={t('workloads.helm.form.namespacePlaceholder')}
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: '8px',
@@ -358,7 +361,7 @@ export const CreateOwnHelmForm = ({ formData, setFormData, error, theme }: Props
             💡
           </span>
           <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
-            Specify the namespace for the Helm chart
+            {t('workloads.helm.form.namespaceTip')}
           </Typography>
         </Box>
       </Box>

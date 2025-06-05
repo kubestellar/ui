@@ -4,6 +4,7 @@ import GitHubIcon from '@mui/icons-material/GitHub';
 import WorkIcon from '@mui/icons-material/Work';
 import PublicIcon from '@mui/icons-material/Public';
 import StarIcon from '@mui/icons-material/Star';
+import { useTranslation } from 'react-i18next'; // Add this import
 
 interface OptionButtonProps {
   icon: React.ReactNode;
@@ -95,36 +96,38 @@ interface Props {
 }
 
 export const GitHubOptionButtons = ({ selectedOption, handleOptionSelect, theme }: Props) => {
+  const { t } = useTranslation(); // Add translation hook
+  
   return (
     <Stack spacing={2} width="100%">
       <OptionButton
         icon={<GitHubIcon fontSize="medium" />}
-        title="Your GitHub Repository"
-        description="Import from your own GitHub repository"
+        title={t('workloads.github.options.yourGitHub.title')}
+        description={t('workloads.github.options.yourGitHub.description')}
         onClick={() => handleOptionSelect('yourGitHub')}
         theme={theme}
         selected={selectedOption === 'yourGitHub'}
       />
       <OptionButton
         icon={<WorkIcon fontSize="medium" />}
-        title="Enterprise Repository"
-        description="Import from a GitHub Enterprise repository"
+        title={t('workloads.github.options.enterprise.title')}
+        description={t('workloads.github.options.enterprise.description')}
         onClick={() => handleOptionSelect('enterprise')}
         theme={theme}
         selected={selectedOption === 'enterprise'}
       />
       <OptionButton
         icon={<PublicIcon fontSize="medium" />}
-        title="Public Repository"
-        description="Import from any public GitHub repository"
+        title={t('workloads.github.options.public.title')}
+        description={t('workloads.github.options.public.description')}
         onClick={() => handleOptionSelect('public')}
         theme={theme}
         selected={selectedOption === 'public'}
       />
       <OptionButton
         icon={<StarIcon fontSize="medium" />}
-        title="Popular Repositories"
-        description="Choose from our curated list of examples"
+        title={t('workloads.github.options.popular.title')}
+        description={t('workloads.github.options.popular.description')}
         onClick={() => handleOptionSelect('popular')}
         theme={theme}
         selected={selectedOption === 'popular'}

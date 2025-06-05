@@ -532,12 +532,124 @@
       "branchPlaceholder": "e.g., master, dev-branch",
       "branchTip": "Specify the branch to deploy from",
       "credentials": "Credentials",
-      "credentialsPlaceholder": "e.g., username-pat"
+      "credentialsPlaceholder": "e.g., username-pat",
+      "tab": {
+        "importFromGitHub": "Import from GitHub",
+        "selectRepositorySource": "Select a repository source to import your application",
+        "repositorySource": "Repository Source",
+        "selectRepository": "Select a Repository",
+        "repositoryDetails": "Repository Details",
+        "selectedRepository": "Selected Repository:"
+      },
+      "options": {
+        "yourGitHub": {
+          "title": "Your GitHub Repository",
+          "description": "Import from your own GitHub repository"
+        },
+        "enterprise": {
+          "title": "Enterprise Repository",
+          "description": "Import from a GitHub Enterprise repository"
+        },
+        "public": {
+          "title": "Public Repository",
+          "description": "Import from any public GitHub repository"
+        },
+        "popular": {
+          "title": "Popular Repositories",
+          "description": "Choose from our curated list of examples"
+        },
+        "placeholder": {
+          "yourGitHub": "Your GitHub Repository form would go here",
+          "enterprise": "Enterprise Repository form would go here",
+          "public": "Public Repository form would go here"
+        }
+      },
+      "form": {
+        "title": "Create from your GitHub Repository and deploy!",
+        "repositoryUrl": "Repository URL *",
+        "repositoryUrlPlaceholder": "e.g., https://github.com/username/repo",
+        "repositoryUrlTip": "Use a valid GitHub repository URL",
+        "path": "Path *",
+        "pathPlaceholder": "e.g., /path/to/yaml",
+        "pathTip": "Specify the path to your YAML files in the repository",
+        "branch": "Branch (default: main) *",
+        "branchPlaceholder": "e.g., master, dev-branch",
+        "branchTip": "Specify the branch to deploy from",
+        "credentials": "Credentials",
+        "credentialsPlaceholder": "e.g., username-pat",
+        "credentialsTip": "Select or add credentials for private repositories",
+        "addCredentials": "Add Cred",
+        "webhooks": "Webhooks",
+        "webhooksTip": "Select or add a webhook for automated deployments",
+        "addWebhook": "Add Webhook"
+      }
     },
     "artifactHub": {
       "searchPackages": "Search Packages",
       "directDeploy": "Deploy Helm Chart from Artifact Hub",
-      "listRepositories": "List Repositories"
+      "listRepositories": "List Repositories",
+      "form": {
+        "packageId": "Package ID *",
+        "packageIdTooltip": "Format: helm/repository-name/chart-name (e.g., helm/bitnami/nginx)",
+        "packageIdPlaceholder": "helm/bitnami/nginx",
+        "packageIdTip": "Specify the Helm chart package ID (e.g., helm/bitnami/nginx)",
+        "version": "Version (default: latest)",
+        "versionTooltip": "Chart version to deploy (e.g., 13.2.10). If not specified, latest will be used.",
+        "versionPlaceholder": "13.2.10 (leave empty for latest)",
+        "versionTip": "Specify the version to deploy (leave empty for latest)",
+        "releaseName": "Release Name *",
+        "releaseNameTooltip": "Name to identify your Helm release",
+        "releaseNamePlaceholder": "my-nginx",
+        "releaseNameTip": "Specify the name of the Helm release",
+        "namespace": "Namespace",
+        "namespaceTooltip": "Kubernetes namespace to deploy to",
+        "namespacePlaceholder": "default",
+        "namespaceTip": "Specify the namespace to deploy to (defaults to 'default')",
+        "customValues": "Custom Values",
+        "customValuesTooltip": "Format: key=value,key2=value2 (e.g., service.type=LoadBalancer,service.port=80)",
+        "customValuesPlaceholder": "service.type=LoadBalancer,service.port=80",
+        "customValuesTip": "Custom configuration values for your Helm chart (key=value format)"
+      },
+      "validation": {
+        "selectPackage": "Please select a package first",
+        "enterWorkloadLabel": "Please enter a workload label",
+        "enterPackageId": "Please enter a package ID.",
+        "enterReleaseName": "Please enter a release name."
+      },
+      "buttons": {
+        "close": "Close",
+        "apply": "Apply"
+      },
+      "searchPackagesForm": {
+        "searchHint": "Start typing to search for Helm packages on Artifact Hub",
+        "errorMessage": {
+          "enterSearchTerm": "Please enter a search term",
+          "noPackagesFound": "No packages found for '{{query}}'",
+          "searchFailed": "Search failed: {{message}}"
+        },
+        "serviceConfig": {
+          "title": "Service Configuration",
+          "serviceType": "Service Type",
+          "servicePort": "Service Port"
+        },
+        "packageDetails": {
+          "stars": "Stars",
+          "repository": "Repository:",
+          "verified": "Verified",
+          "namespace": "Namespace"
+        }
+      },
+      "repositoriesList": {
+        "tip": "Repositories are sources for Helm charts, click on a card to see more details",
+        "loading": "Loading repositories...",
+        "noRepositories": "No repositories available",
+        "official": "Official",
+        "helm": "Helm",
+        "other": "Other",
+        "organization": "Organization:",
+        "user": "User:",
+        "url": "URL:"
+      }
     },
     "yaml": {
       "createNamespaceAutomatically": "Create Namespace Automatically",
@@ -546,7 +658,47 @@
     "helm": {
       "createOwn": "Create your own Helm chart",
       "popularCharts": "Deploy from popular Helm charts",
-      "userCharts": "List of user created Charts"
+      "form": {
+        "repositoryName": "Repository Name *",
+        "repositoryNameTip": "Specify the name of the Helm repository",
+        "repositoryNamePlaceholder": "e.g., my-helm-repo",
+        "repositoryUrl": "Repository URL *",
+        "repositoryUrlTip": "Use a valid Helm repository URL",
+        "repositoryUrlPlaceholder": "e.g., https://charts.helm.sh/stable",
+        "chartName": "Chart Name *",
+        "chartNameTip": "Specify the name of the Helm chart to deploy",
+        "chartNamePlaceholder": "e.g., nginx",
+        "releaseName": "Release Name *",
+        "releaseNameTip": "Specify the release name for this Helm deployment",
+        "releaseNamePlaceholder": "e.g., my-release",
+        "version": "Version (default: latest)",
+        "versionTip": "Specify the chart version to deploy",
+        "versionPlaceholder": "e.g., 1.2.3",
+        "namespace": "Namespace *",
+        "namespaceTip": "Specify the namespace for the Helm chart",
+        "namespacePlaceholder": "e.g., default, my-namespace",
+        "searchChartLabel": "Search Helm Chart"
+      },
+      "userCharts": {
+        "loading": "Loading user charts...",
+        "noCharts": "No user-created charts available.",
+        "delete": "Delete",
+        "confirmDeletion": "Confirm Resource Deletion",
+        "deleteConfirmation": "Are you sure you want to delete \"{{chartId}}\"? This action cannot be undone.",
+        "deleteSuccess": "Chart {{chartId}} deleted successfully!",
+        "deleteError": "Chart {{chartId}} not deleted!"
+      },
+      "buttons": {
+        "cancel": "Cancel",
+        "deploying": "Deploying...",
+        "apply": "Apply"
+      },
+      "messages": {
+        "selectChart": "Please select a Helm chart to deploy.",
+        "deploySuccess": "Selected {{chartName}} Helm chart deployed successfully!",
+        "deployFailureReuse": "Deployment failed: failed to install chart: cannot re-use a name that is still in use!",
+        "deployFailure": "Failed to deploy popular Helm chart!"
+      }
     },
     "list": {
       "title": "Workloads",
@@ -560,6 +712,119 @@
       "helm": "Helm",
       "github": "GitHub",
       "artifactHub": "Artifact Hub"
+    },
+    "createOptions": {
+      "title": "Create Workload",
+      "subtitle": "Create Workloads",
+      "yaml": {
+        "createNamespaceAutomatically": "Create Namespace Automatically",
+        "deploy": "Deploy",
+        "cancel": "Cancel"
+      },
+      "file": {
+        "title": "From File",
+        "dragDrop": "Drag & Drop your YAML or JSON file here",
+        "browse": "Browse",
+        "selectFile": "Select YAML or JSON file",
+        "fileSelected": "File selected",
+        "fileSize": "File size",
+        "deploy": "Deploy",
+        "cancel": "Cancel",
+        "noFileSelected": "No file selected.",
+        "invalidFile": "Please upload a valid YAML or JSON file."
+      },
+      "github": {
+        "title": "GitHub",
+        "workloadLabel": "Workload Label",
+        "workloadLabelPlaceholder": "Enter value for label 'kubestellar.io/workload'",
+        "repositoryUrl": "Repository URL",
+        "repositoryUrlPlaceholder": "e.g., https://github.com/username/repo",
+        "path": "Path",
+        "pathPlaceholder": "e.g., /path/to/yaml",
+        "branch": "Branch (default: main)",
+        "branchPlaceholder": "e.g., master, dev-branch",
+        "credentials": "Credentials",
+        "webhook": "Webhook",
+        "addCredentials": "Add Credentials",
+        "addWebhook": "Add Webhook",
+        "deploy": "Deploy",
+        "cancel": "Cancel"
+      },
+      "helm": {
+        "title": "Helm",
+        "repoName": "Repository Name",
+        "repoNamePlaceholder": "e.g., bitnami",
+        "repoUrl": "Repository URL",
+        "repoUrlPlaceholder": "e.g., https://charts.bitnami.com/bitnami",
+        "chartName": "Chart Name",
+        "chartNamePlaceholder": "e.g., nginx",
+        "releaseName": "Release Name",
+        "releaseNamePlaceholder": "e.g., my-release",
+        "version": "Version (leave empty for latest)",
+        "versionPlaceholder": "e.g., 1.0.0",
+        "namespace": "Namespace",
+        "namespacePlaceholder": "e.g., default",
+        "workloadLabel": "Workload Label",
+        "workloadLabelPlaceholder": "Enter value for label 'kubestellar.io/workload'",
+        "deploy": "Deploy",
+        "cancel": "Cancel"
+      },
+      "artifactHub": {
+        "title": "Artifact Hub",
+        "searchPlaceholder": "Search for Helm charts...",
+        "selectPackage": "Please select a package.",
+        "enterReleaseName": "Please enter a release name."
+      },
+      "credentials": {
+        "title": "Add Credentials",
+        "username": "GitHub Username",
+        "usernamePlaceholder": "Enter your GitHub username",
+        "token": "Personal Access Token",
+        "tokenPlaceholder": "Enter your GitHub personal access token",
+        "add": "Add",
+        "cancel": "Cancel",
+        "fillBoth": "Please fill in both GitHub Username and Personal Access Token."
+      },
+      "webhook": {
+        "title": "Add Webhook",
+        "url": "Webhook URL",
+        "urlPlaceholder": "Enter webhook URL",
+        "token": "Personal Access Token",
+        "tokenPlaceholder": "Enter personal access token for webhook",
+        "add": "Add",
+        "cancel": "Cancel",
+        "fillBoth": "Please fill in both Webhook URL and Personal Access Token."
+      },
+      "cancelConfirmation": {
+        "title": "Discard Changes?",
+        "message": "You have unsaved changes. Are you sure you want to cancel?",
+        "confirm": "Yes, Discard",
+        "cancel": "No, Keep Editing"
+      },
+      "notifications": {
+        "workloadDeploySuccess": "Workload Deploy successful!",
+        "deploymentSuccess": "Deployment successful!",
+        "helmDeploySuccess": "Helm chart deployed successfully!",
+        "artifactHubDeploySuccess": "Artifact Hub deployment successful!",
+        "credentialAddedSuccess": "Credential added successfully!",
+        "webhookAddedSuccess": "Webhook added successfully!",
+        "deploymentConflict": "Conflict error: Deployment already in progress!",
+        "workloadAlreadyExists": "Failed to create {{kind}} {{name}} in namespace {{namespace}}, workload is already exists or Namespace {{namespace}} not Found",
+        "unknownWorkloadExists": "Failed to create Unknown {{name}} workload is already exists",
+        "helmDeployFailed": "Deployment failed: failed to install chart: cannot re-use a name that is still in use!",
+        "gitRepoError": "Failed to clone repository, fill correct url and path !",
+        "enterWorkloadLabel": "Please enter Workload Label.",
+        "invalidWorkloadLabel": "You can only enter value, key is constant and defauled to 'kubestellar.io/workload'.",
+        "enterGitRepo": "Please enter Git repository.",
+        "enterPath": "Please enter Path.",
+        "enterRepoName": "Please enter a repository name.",
+        "enterRepoUrl": "Please enter a repository URL.",
+        "enterChartName": "Please enter a chart name.",
+        "enterReleaseName": "Please enter a release name.",
+        "enterNamespace": "Please enter a namespace.",
+        "enterYamlJson": "Please enter YAML or JSON content.",
+        "needMetadataName": "At least one document must have 'metadata.name'"
+      }
     }
   },
   "visualization": {
@@ -568,7 +833,14 @@
       "aiInference": "AI Inferencing Cluster",
       "aiTraining": "AI Training Cluster",
       "service": "Service Cluster",
-      "compute": "Compute Cluster"
+      "compute": "Compute Cluster",
+      "descriptions": {
+        "edge": "Edge computing resources for low-latency processing",
+        "aiInference": "Real-time AI model inference and prediction services",
+        "aiTraining": "High-performance compute for AI model training",
+        "service": "Core microservices and API endpoints",
+        "compute": "General-purpose compute resources"
+      }
     },
     "title": "Visualization",
     "controls": "View Controls",
@@ -791,6 +1063,18 @@
     "status": {
       "active": "Active",
       "inactive": "Inactive"
+    },
+    "zoomControls": {
+      "groupByResource": "Group By Resource/Kind",
+      "expandAll": "Expand all the child nodes of all parent nodes",
+      "collapseAll": "Collapse all the child nodes of all parent nodes",
+      "zoomIn": "Zoom In",
+      "zoomOut": "Zoom Out",
+      "zoomPercentage": "%"
+    },
+    "nodeLabel": {
+      "labels": "Labels:",
+      "noLabels": "No labels"
     }
   },
   "wecsDetailsPanel": {
@@ -1153,5 +1437,35 @@
     "connecting": "Connecting to detachment service...",
     "completedSuccessfully": "Cluster detachment completed successfully.",
     "done": "Done"
+  },
+  "login": {
+    "layout": {
+      "logoAlt": "KubeStellar",
+      "tagline": "Seamless Multi-Cluster Management",
+      "taglineEmphasis": "Built for the Future.",
+      "fullscreen": "Toggle full screen",
+      "welcomeBack": "Welcome Back",
+      "accessDashboard": "Access Your Dashboard",
+      "enterCredentials": "Enter your credentials below",
+      "needHelp": "Need help?",
+      "contactSupport": "Contact Support"
+    },
+    "loading": {
+      "logoAlt": "KubeStellar",
+      "initializing": "Initializing KubeStellar Environment..."
+    },
+    "form": {
+      "username": "Username",
+      "password": "Password",
+      "rememberMe": "Remember me",
+      "signIn": "Sign In to KubeStellar",
+      "signingIn": "Signing in...",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "errors": {
+        "usernameRequired": "Username is required",
+        "passwordRequired": "Password is required"
+      }
+    }
   }
 }

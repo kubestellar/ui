@@ -2,6 +2,7 @@ import { Box, Typography, TextField, Tooltip } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import { ArtifactHubFormData } from './ArtifactHubTab';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next'; // Add this import
 
 interface Props {
   theme: string;
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export const DirectDeployForm = ({ theme, formData, setFormData, error }: Props) => {
+  const { t } = useTranslation(); // Add translation hook
   const [valueString, setValueString] = useState<string>('');
 
   const handleValuesChange = (newValueString: string) => {
@@ -64,9 +66,9 @@ export const DirectDeployForm = ({ theme, formData, setFormData, error }: Props)
             alignItems: 'center',
           }}
         >
-          Package ID *
+          {t('workloads.artifactHub.form.packageId')}
           <Tooltip
-            title="Format: helm/repository-name/chart-name (e.g., helm/bitnami/nginx)"
+            title={t('workloads.artifactHub.form.packageIdTooltip')}
             placement="top"
           >
             <InfoIcon
@@ -84,7 +86,7 @@ export const DirectDeployForm = ({ theme, formData, setFormData, error }: Props)
           value={formData.packageId}
           onChange={e => setFormData({ ...formData, packageId: e.target.value })}
           error={!!error && !formData.packageId}
-          placeholder="helm/bitnami/nginx"
+          placeholder={t('workloads.artifactHub.form.packageIdPlaceholder')}
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: '8px',
@@ -119,7 +121,7 @@ export const DirectDeployForm = ({ theme, formData, setFormData, error }: Props)
             💡
           </span>
           <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
-            Specify the Helm chart package ID (e.g., helm/bitnami/nginx)
+            {t('workloads.artifactHub.form.packageIdTip')}
           </Typography>
         </Box>
       </Box>
@@ -136,9 +138,9 @@ export const DirectDeployForm = ({ theme, formData, setFormData, error }: Props)
             alignItems: 'center',
           }}
         >
-          Version (default: latest)
+          {t('workloads.artifactHub.form.version')}
           <Tooltip
-            title="Chart version to deploy (e.g., 13.2.10). If not specified, latest will be used."
+            title={t('workloads.artifactHub.form.versionTooltip')}
             placement="top"
           >
             <InfoIcon
@@ -154,7 +156,7 @@ export const DirectDeployForm = ({ theme, formData, setFormData, error }: Props)
           fullWidth
           value={formData.version}
           onChange={e => setFormData({ ...formData, version: e.target.value })}
-          placeholder="13.2.10 (leave empty for latest)"
+          placeholder={t('workloads.artifactHub.form.versionPlaceholder')}
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: '8px',
@@ -186,7 +188,7 @@ export const DirectDeployForm = ({ theme, formData, setFormData, error }: Props)
             💡
           </span>
           <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
-            Specify the version to deploy (leave empty for latest)
+            {t('workloads.artifactHub.form.versionTip')}
           </Typography>
         </Box>
       </Box>
@@ -203,8 +205,8 @@ export const DirectDeployForm = ({ theme, formData, setFormData, error }: Props)
             alignItems: 'center',
           }}
         >
-          Release Name *
-          <Tooltip title="Name to identify your Helm release" placement="top">
+          {t('workloads.artifactHub.form.releaseName')}
+          <Tooltip title={t('workloads.artifactHub.form.releaseNameTooltip')} placement="top">
             <InfoIcon
               sx={{
                 fontSize: '16px',
@@ -220,7 +222,7 @@ export const DirectDeployForm = ({ theme, formData, setFormData, error }: Props)
           value={formData.releaseName}
           onChange={e => setFormData({ ...formData, releaseName: e.target.value })}
           error={!!error && !formData.releaseName}
-          placeholder="my-nginx"
+          placeholder={t('workloads.artifactHub.form.releaseNamePlaceholder')}
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: '8px',
@@ -255,7 +257,7 @@ export const DirectDeployForm = ({ theme, formData, setFormData, error }: Props)
             💡
           </span>
           <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
-            Specify the name of the Helm release
+            {t('workloads.artifactHub.form.releaseNameTip')}
           </Typography>
         </Box>
       </Box>
@@ -272,8 +274,8 @@ export const DirectDeployForm = ({ theme, formData, setFormData, error }: Props)
             alignItems: 'center',
           }}
         >
-          Namespace
-          <Tooltip title="Kubernetes namespace to deploy to" placement="top">
+          {t('workloads.artifactHub.form.namespace')}
+          <Tooltip title={t('workloads.artifactHub.form.namespaceTooltip')} placement="top">
             <InfoIcon
               sx={{
                 fontSize: '16px',
@@ -287,7 +289,7 @@ export const DirectDeployForm = ({ theme, formData, setFormData, error }: Props)
           fullWidth
           value={formData.namespace}
           onChange={e => setFormData({ ...formData, namespace: e.target.value })}
-          placeholder="default"
+          placeholder={t('workloads.artifactHub.form.namespacePlaceholder')}
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: '8px',
@@ -319,7 +321,7 @@ export const DirectDeployForm = ({ theme, formData, setFormData, error }: Props)
             💡
           </span>
           <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
-            Specify the namespace to deploy to (defaults to 'default')
+            {t('workloads.artifactHub.form.namespaceTip')}
           </Typography>
         </Box>
       </Box>
@@ -336,9 +338,9 @@ export const DirectDeployForm = ({ theme, formData, setFormData, error }: Props)
             alignItems: 'center',
           }}
         >
-          Custom Values
+          {t('workloads.artifactHub.form.customValues')}
           <Tooltip
-            title="Format: key=value,key2=value2 (e.g., service.type=LoadBalancer,service.port=80)"
+            title={t('workloads.artifactHub.form.customValuesTooltip')}
             placement="top"
           >
             <InfoIcon
@@ -356,7 +358,7 @@ export const DirectDeployForm = ({ theme, formData, setFormData, error }: Props)
           rows={3}
           value={valueString}
           onChange={e => handleValuesChange(e.target.value)}
-          placeholder="service.type=LoadBalancer,service.port=80"
+          placeholder={t('workloads.artifactHub.form.customValuesPlaceholder')}
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: '8px',
@@ -388,7 +390,7 @@ export const DirectDeployForm = ({ theme, formData, setFormData, error }: Props)
             💡
           </span>
           <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
-            Custom configuration values for your Helm chart (key=value format)
+            {t('workloads.artifactHub.form.customValuesTip')}
           </Typography>
         </Box>
       </Box>

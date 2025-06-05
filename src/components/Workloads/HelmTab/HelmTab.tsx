@@ -107,7 +107,7 @@ export const HelmTab = ({
 
   const handlePopularHelmDeploy = async () => {
     if (!selectedChart) {
-      toast.error('Please select a Helm chart to deploy.');
+      toast.error(t('workloads.helm.messages.selectChart'));
       return;
     }
 
@@ -126,7 +126,7 @@ export const HelmTab = ({
       const response = await api.post('/deploy/helm?store=true', requestBody);
 
       if (response.status === 200 || response.status === 201) {
-        toast.success(`Selected ${selectedChart} Helm chart deployed successfully!`);
+        toast.success(t('workloads.helm.messages.deploySuccess', { chartName: selectedChart }));
         setSelectedChart(null);
         setTimeout(() => window.location.reload(), 4000);
       } else {
@@ -138,11 +138,9 @@ export const HelmTab = ({
 
       if (err.response) {
         if (err.response.status === 500) {
-          toast.error(
-            'Deployment failed: failed to install chart: cannot re-use a name that is still in use!'
-          );
+          toast.error(t('workloads.helm.messages.deployFailureReuse'));
         } else if (err.response.status === 400) {
-          toast.error('Failed to deploy popular Helm chart!');
+          toast.error(t('workloads.helm.messages.deployFailure'));
         }
       }
     } finally {
@@ -249,7 +247,7 @@ export const HelmTab = ({
             onClick={handleCancelClick}
             disabled={loading || popularLoading || userLoading}
           >
-            Cancel
+            {t('workloads.helm.buttons.cancel')}
           </CancelButton>
           <Button
             variant="contained"
@@ -284,8 +282,8 @@ export const HelmTab = ({
             {(selectedOption === 'createOwn' && loading) ||
             (selectedOption === 'popularCharts' && popularLoading) ||
             (selectedOption === 'userCharts' && userLoading)
-              ? 'Deploying...'
-              : 'Apply'}
+              ? t('workloads.helm.buttons.deploying')
+              : t('workloads.helm.buttons.apply')}
           </Button>
         </Box>
       </Box>

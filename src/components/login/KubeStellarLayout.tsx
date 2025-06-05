@@ -2,6 +2,7 @@ import { ReactNode, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import LoginForm from './LoginForm';
 import Footer from '../Footer';
+import { useTranslation } from 'react-i18next'; // Add this import
 
 interface KubeStellarLayoutProps {
   isLoaded: boolean;
@@ -10,6 +11,7 @@ interface KubeStellarLayoutProps {
 }
 
 const KubeStellarLayout = ({ isLoaded, showLogin, leftSide }: KubeStellarLayoutProps) => {
+  const { t } = useTranslation(); // Add this hook
   const commitHash = import.meta.env.VITE_GIT_COMMIT_HASH || 'development';
   const [isFullScreen, setIsFullScreen] = useState(false);
 
@@ -68,7 +70,7 @@ const KubeStellarLayout = ({ isLoaded, showLogin, leftSide }: KubeStellarLayoutP
             transition={{ duration: 0.6, delay: isLoaded ? 0.2 : 1.2 }}
             className="flex items-center gap-4"
           >
-            <img src="/KubeStellar.png" alt="KubeStellar" className="h-14 md:h-16" />
+            <img src="/KubeStellar.png" alt={t('login.layout.logoAlt')} className="h-14 md:h-16" />
           </motion.div>
 
           <motion.div
@@ -89,7 +91,7 @@ const KubeStellarLayout = ({ isLoaded, showLogin, leftSide }: KubeStellarLayoutP
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: isLoaded ? 1.2 : 2.2, duration: 0.6 }}
               >
-                Seamless Multi-Cluster Management
+                {t('login.layout.tagline')}
               </motion.span>
               <br />
               <motion.span
@@ -98,7 +100,7 @@ const KubeStellarLayout = ({ isLoaded, showLogin, leftSide }: KubeStellarLayoutP
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: isLoaded ? 1.6 : 2.6, duration: 0.6 }}
               >
-                Built for the Future.
+                {t('login.layout.taglineEmphasis')}
               </motion.span>
             </motion.p>
           </motion.div>
@@ -111,8 +113,8 @@ const KubeStellarLayout = ({ isLoaded, showLogin, leftSide }: KubeStellarLayoutP
           transition={{ delay: isLoaded ? 0.4 : 1.4 }}
           onClick={() => toggleFullScreen()}
           className="absolute right-6 top-6 z-10 flex items-center justify-center rounded-full bg-blue-900/30 p-2 text-blue-300 transition-colors duration-200 hover:bg-blue-800/40"
-          aria-label="Toggle full screen"
-          title="Toggle full screen"
+          aria-label={t('login.layout.fullscreen')}
+          title={t('login.layout.fullscreen')}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -162,7 +164,7 @@ const KubeStellarLayout = ({ isLoaded, showLogin, leftSide }: KubeStellarLayoutP
         <div className="relative z-10 mx-auto w-full max-w-md">
           {/* Company branding for mobile view (only visible on mobile) */}
           <div className="mb-10 flex justify-center md:hidden">
-            <img src="/KubeStellar.png" alt="KubeStellar" className="h-12" />
+            <img src="/KubeStellar.png" alt={t('login.layout.logoAlt')} className="h-12" />
           </div>
 
           {/* Improved Welcome Back Message */}
@@ -174,7 +176,7 @@ const KubeStellarLayout = ({ isLoaded, showLogin, leftSide }: KubeStellarLayoutP
           >
             <h1 className="text-3xl font-bold text-white">
               <span className="bg-gradient-to-r from-blue-300 to-blue-100 bg-clip-text text-transparent">
-                Welcome Back
+                {t('login.layout.welcomeBack')}
               </span>
             </h1>
             <motion.div
@@ -206,7 +208,7 @@ const KubeStellarLayout = ({ isLoaded, showLogin, leftSide }: KubeStellarLayoutP
                     transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.2 }}
                     className="mb-2 inline-block rounded-2xl bg-gradient-to-b from-blue-400 to-blue-600 p-3 shadow-lg"
                   >
-                    <img src="/favicon.ico" alt="KubeStellar Icon" className="h-8 w-8" />
+                    <img src="/favicon.ico" alt={t('login.layout.logoAlt')} className="h-8 w-8" />
                   </motion.div>
 
                   {/* Improved account text */}
@@ -218,7 +220,7 @@ const KubeStellarLayout = ({ isLoaded, showLogin, leftSide }: KubeStellarLayoutP
                       className="text-xl font-medium"
                     >
                       <span className="bg-gradient-to-r from-blue-200 to-purple-300 bg-clip-text text-transparent">
-                        Access Your Dashboard
+                        {t('login.layout.accessDashboard')}
                       </span>
                     </motion.h2>
                     <motion.p
@@ -227,7 +229,7 @@ const KubeStellarLayout = ({ isLoaded, showLogin, leftSide }: KubeStellarLayoutP
                       transition={{ delay: 0.4 }}
                       className="mt-1 text-sm text-blue-300/60"
                     >
-                      Enter your credentials below
+                      {t('login.layout.enterCredentials')}
                     </motion.p>
                   </div>
                 </div>
@@ -248,14 +250,14 @@ const KubeStellarLayout = ({ isLoaded, showLogin, leftSide }: KubeStellarLayoutP
             className="mt-6 text-center text-sm text-blue-200/60"
           >
             <p>
-              Need help?{' '}
+              {t('login.layout.needHelp')}{' '}
               <a
                 href="https://kubernetes.slack.com/archives/C058SUSL5AA"
                 target="_blank"
                 rel="noreferrer"
                 className="text-blue-400 transition-colors hover:text-blue-300"
               >
-                Contact Support
+                {t('login.layout.contactSupport')}
               </a>
             </p>
           </motion.div>
