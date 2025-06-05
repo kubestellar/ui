@@ -1,6 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import useTheme from '../stores/themeStore';
+import { useTranslation } from 'react-i18next';
 
 interface DownloadLogsModalProps {
   size: number;
@@ -9,6 +10,7 @@ interface DownloadLogsModalProps {
 }
 
 const DownloadLogsModal: React.FC<DownloadLogsModalProps> = ({ size, onClose, onSave }) => {
+  const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
 
   // Format file size
@@ -29,17 +31,20 @@ const DownloadLogsModal: React.FC<DownloadLogsModalProps> = ({ size, onClose, on
         }`}
       >
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-medium">Download Logs</h2>
+          <h2 className="text-lg font-medium">{t('downloadLogsModal.title')}</h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            aria-label={t('common.close')}
           >
             <X size={18} />
           </button>
         </div>
 
         <div className="mb-4">
-          <p className="mb-2 text-sm">File size: {formatSize(size)}</p>
+          <p className="mb-2 text-sm">
+            {t('downloadLogsModal.fileSize')}: {formatSize(size)}
+          </p>
           <div className="h-1 w-full rounded-full bg-gray-200 dark:bg-gray-700">
             <div className="h-1 rounded-full bg-blue-500" style={{ width: '100%' }}></div>
           </div>
@@ -54,13 +59,13 @@ const DownloadLogsModal: React.FC<DownloadLogsModalProps> = ({ size, onClose, on
                 : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
             }`}
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             onClick={onSave}
             className="rounded bg-blue-500 px-3 py-1.5 text-sm text-white hover:bg-blue-600"
           >
-            Download
+            {t('downloadLogsModal.download')}
           </button>
         </div>
       </div>

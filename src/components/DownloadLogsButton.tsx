@@ -3,6 +3,7 @@ import { Download } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import DownloadLogsModal from './DownloadLogsModal';
 import useTheme from '../stores/themeStore';
+import { useTranslation } from 'react-i18next';
 
 interface DownloadLogsButtonProps {
   cluster: string;
@@ -20,6 +21,7 @@ const DownloadLogsButton: React.FC<DownloadLogsButtonProps> = ({
   className = '',
   logContent = '', // Default to empty string if not provided
 }) => {
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const theme = useTheme(state => state.theme);
@@ -39,9 +41,11 @@ const DownloadLogsButton: React.FC<DownloadLogsButtonProps> = ({
       // If no content was provided, create a placeholder message
       if (!content || content.trim() === '') {
         content =
-          `Logs for pod ${podName} in namespace ${namespace} on cluster ${cluster}\n` +
-          `Generated at: ${new Date().toLocaleString()}\n\n` +
-          `Log content not available directly. Please use the streaming logs feature.`;
+          t('downloadLogsButton.placeholder.header', { podName, namespace, cluster }) +
+          '\n' +
+          t('downloadLogsButton.placeholder.generated', { date: new Date().toLocaleString() }) +
+          '\n\n' +
+          t('downloadLogsButton.placeholder.noContent');
       }
 
       // Create a blob with the content
@@ -67,12 +71,12 @@ const DownloadLogsButton: React.FC<DownloadLogsButtonProps> = ({
       }, 100);
 
       // Show success notification
-      toast.success(`Downloaded logs for ${podName}`, {
+      toast.success(t('downloadLogsButton.toast.success', { podName }), {
         duration: 3000,
       });
     } catch (error) {
       console.error('Error downloading logs:', error);
-      toast.error('Failed to download logs', {
+      toast.error(t('downloadLogsButton.toast.error'), {
         duration: 3000,
       });
     } finally {
@@ -97,7 +101,7 @@ const DownloadLogsButton: React.FC<DownloadLogsButtonProps> = ({
             ? 'bg-gray-700 text-white hover:bg-gray-600'
             : 'bg-gray-300 text-gray-800 hover:bg-gray-200'
         } rounded px-2 py-1 transition-colors ${className}`}
-        title="Download logs"
+        title={t('downloadLogsButton.title')}
       >
         {isLoading ? <span className="inline-block animate-spin">⟳</span> : <Download size={16} />}
       </button>

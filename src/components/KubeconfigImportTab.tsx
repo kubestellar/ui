@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Button, SxProps, Theme } from '@mui/material';
 import { Colors } from './ImportClusters';
 import CancelButton from './common/CancelButton';
+import { useTranslation } from 'react-i18next';
 
 interface KubeconfigImportTabProps {
   theme: string;
@@ -27,6 +28,7 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
   handleFileUpload,
   handleCancel,
 }) => {
+  const { t } = useTranslation();
   const textColor = theme === 'dark' ? colors.white : colors.text;
 
   return (
@@ -75,10 +77,10 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
           </Box>
           <Box>
             <Box sx={{ fontWeight: 600, fontSize: '1rem', color: textColor }}>
-              Upload Kubeconfig File
+              {t('kubeconfigImport.title')}
             </Box>
             <Box sx={{ color: colors.textSecondary, fontSize: '0.875rem', mt: 0.5 }}>
-              Import your cluster by uploading a kubeconfig file
+              {t('kubeconfigImport.description')}
             </Box>
           </Box>
         </Box>
@@ -125,11 +127,13 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
             </span>
           </Box>
           <Box sx={{ mb: 2, fontWeight: 500, fontSize: '1rem' }}>
-            Drag and drop your kubeconfig file here
+            {t('kubeconfigImport.dragAndDrop')}
           </Box>
-          <Box sx={{ color: colors.textSecondary, mb: 2, fontSize: '0.85rem' }}>- or -</Box>
+          <Box sx={{ color: colors.textSecondary, mb: 2, fontSize: '0.85rem' }}>
+            {t('kubeconfigImport.or')}
+          </Box>
           <Button component="label" variant="contained" sx={primaryButtonStyles}>
-            Browse Files
+            {t('kubeconfigImport.browseFiles')}
             <input
               type="file"
               hidden
@@ -191,7 +195,7 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
             disabled={!selectedFile}
             sx={primaryButtonStyles}
           >
-            Import Cluster
+            {t('kubeconfigImport.importCluster')}
           </Button>
         </Box>
       </Box>

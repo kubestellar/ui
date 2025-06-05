@@ -20,6 +20,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { Zoom } from '@mui/material';
 import { Link2Off, Terminal } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface ColorTheme {
   primary: string;
@@ -61,6 +62,7 @@ const DetachmentLogsDialog: React.FC<DetachmentLogsDialogProps> = ({
   isDark,
   colors,
 }) => {
+  const { t } = useTranslation();
   const [logs, setLogs] = useState<DetachmentLog[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -216,7 +218,7 @@ const DetachmentLogsDialog: React.FC<DetachmentLogsDialogProps> = ({
         <div className="flex items-center gap-2">
           <Link2Off size={24} style={{ color: colors.error }} />
           <Typography variant="h6" component="span">
-            Detaching Cluster: {clusterName}
+            {t('detachmentLogsDialog.title', { clusterName })}
           </Typography>
         </div>
         <IconButton onClick={handleClose} size="small" style={{ color: colors.textSecondary }}>
@@ -241,11 +243,15 @@ const DetachmentLogsDialog: React.FC<DetachmentLogsDialogProps> = ({
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Terminal size={20} style={{ color: colors.primary }} />
-              <Typography variant="h6">Detachment Logs</Typography>
+              <Typography variant="h6">{t('detachmentLogsDialog.logs')}</Typography>
             </Box>
 
             <Chip
-              label={isConnected ? 'Connected' : 'Disconnected'}
+              label={
+                isConnected
+                  ? t('detachmentLogsDialog.connected')
+                  : t('detachmentLogsDialog.disconnected')
+              }
               size="small"
               sx={{
                 backgroundColor: isConnected
@@ -298,7 +304,7 @@ const DetachmentLogsDialog: React.FC<DetachmentLogsDialogProps> = ({
               >
                 <CircularProgress size={30} style={{ color: colors.primary }} />
                 <Typography variant="body2" style={{ color: colors.textSecondary }}>
-                  Connecting to detachment service...
+                  {t('detachmentLogsDialog.connecting')}
                 </Typography>
               </Box>
             ) : (
@@ -379,7 +385,7 @@ const DetachmentLogsDialog: React.FC<DetachmentLogsDialogProps> = ({
               border: `1px solid ${isDark ? 'rgba(103, 192, 115, 0.3)' : 'rgba(103, 192, 115, 0.2)'}`,
             }}
           >
-            Cluster detachment completed successfully.
+            {t('detachmentLogsDialog.completedSuccessfully')}
           </Alert>
         )}
       </DialogContent>
@@ -399,7 +405,7 @@ const DetachmentLogsDialog: React.FC<DetachmentLogsDialogProps> = ({
           }}
           variant="contained"
         >
-          {isCompleted ? 'Done' : 'Close'}
+          {isCompleted ? t('detachmentLogsDialog.done') : t('common.close')}
         </Button>
       </DialogActions>
     </Dialog>

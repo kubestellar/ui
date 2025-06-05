@@ -17,6 +17,7 @@ import {
 import { CommandResponse, Colors } from './ImportClusters';
 import OnboardingLogsDisplay from './OnboardingLogsDisplay';
 import CancelButton from './common/CancelButton';
+import { TOptions } from 'i18next';
 
 interface QuickConnectProps {
   theme: string;
@@ -385,7 +386,7 @@ const SuccessView: React.FC<{
   primaryButtonStyles: SxProps<Theme>;
   secondaryButtonStyles: SxProps<Theme>;
   isMobile: boolean;
-  t: (key: string, options?: any) => string;
+  t: (key: string, options?: TOptions) => string;
 }> = ({
   theme,
   colors,
@@ -791,7 +792,7 @@ const ClusterSelectionView: React.FC<{
   primaryButtonStyles: SxProps<Theme>;
   secondaryButtonStyles: SxProps<Theme>;
   isMobile: boolean;
-  t: (key: string, options?: any) => string;
+  t: (key: string, options?: TOptions) => string;
 }> = ({
   theme,
   colors,

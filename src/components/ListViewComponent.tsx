@@ -4,6 +4,7 @@ import useTheme from '../stores/themeStore';
 import ListViewSkeleton from './ui/ListViewSkeleton';
 import { api } from '../lib/api';
 import DownloadLogsButton from './DownloadLogsButton';
+import { useTranslation } from 'react-i18next';
 
 // Define the response interfaces
 export interface ResourceItem {
@@ -60,12 +61,13 @@ const ListViewComponent = ({
   filteredContext = 'all',
   onResourceDataChange,
 }: ListViewComponentProps) => {
+  const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
   const [resources, setResources] = useState<ResourceItem[]>([]);
   const [filteredResources, setFilteredResources] = useState<ResourceItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [initialLoading, setInitialLoading] = useState<boolean>(true); // Track initial connection
-  const [loadingMessage, setLoadingMessage] = useState<string>('Connecting to server...');
+  const [loadingMessage, setLoadingMessage] = useState<string>(t('listView.connecting'));
   const [error, setError] = useState<string | null>(null);
   const resourcesRef = useRef<ResourceItem[]>([]);
   const [totalRawResources, setTotalRawResources] = useState<number>(0); // Track raw resources count
@@ -231,7 +233,7 @@ const ListViewComponent = ({
     const fetchDataWithSSE = () => {
       setIsLoading(true);
       setInitialLoading(true);
-      setLoadingMessage('Connecting to server...');
+      setLoadingMessage(t('listView.connecting'));
       setError(null);
       resourcesRef.current = [];
 
@@ -246,7 +248,7 @@ const ListViewComponent = ({
         // Handle connection open
         eventSource.onopen = () => {
           if (isMounted) {
-            setLoadingMessage('Receiving workloads...');
+            setLoadingMessage(t('listView.receivingWorkloads'));
             // Keep isLoading true, but set initialLoading to false so we can show the items as they arrive
             setInitialLoading(false);
           }
@@ -293,7 +295,9 @@ const ListViewComponent = ({
                 // Total items will be set by useEffect for filtering
 
                 // Update loading message to show progress
-                setLoadingMessage(`Received ${currentResources.length} workloads so far...`);
+                setLoadingMessage(
+                  t('listView.receivedWorkloadsSoFar', { count: currentResources.length })
+                );
               }
             }
           } catch (parseError) {
@@ -325,7 +329,9 @@ const ListViewComponent = ({
             }
 
             // Show a completion message briefly before hiding the loading indicator
-            setLoadingMessage(`All ${resourcesRef.current.length} workloads received`);
+            setLoadingMessage(
+              t('listView.allWorkloadsReceived', { count: resourcesRef.current.length })
+            );
 
             // After a brief delay, hide the loading indicator
             setTimeout(() => {
@@ -385,7 +391,7 @@ const ListViewComponent = ({
               setResources([...resourcesRef.current]);
               // Total items will be set by useEffect for filtering
               setLoadingMessage(
-                `Connection lost. Showing ${resourcesRef.current.length} received workloads.`
+                t('listView.connectionLost', { count: resourcesRef.current.length })
               );
 
               // After a brief delay, hide the loading indicator
@@ -396,7 +402,7 @@ const ListViewComponent = ({
               }, 2000);
             } else {
               // Otherwise show an error and try the fallback
-              setError('Connection to server lost or failed. Trying fallback method...');
+              setError(t('listView.connectionError'));
               fetchFallbackData();
             }
 
@@ -417,7 +423,7 @@ const ListViewComponent = ({
     const fetchFallbackData = async () => {
       // Regular API fallback in case SSE doesn't work
       setInitialLoading(true);
-      setLoadingMessage('Fetching resources (fallback method)...');
+      setLoadingMessage(t('listView.fetchingFallback'));
 
       try {
         const response = await api.get('/wds/list', { timeout: 15000 });
@@ -441,14 +447,14 @@ const ListViewComponent = ({
           setInitialLoading(false);
           setIsLoading(false);
         } else {
-          setError('Invalid response format from server');
+          setError(t('listView.invalidResponseFormat'));
           setInitialLoading(false);
           setIsLoading(false);
         }
       } catch (error: unknown) {
         console.error('Error fetching list data', error);
 
-        const errorMessage = 'An unknown error occurred while fetching resources.';
+        const errorMessage = t('listView.unknownError');
 
         if (isMounted) {
           setError(errorMessage);
@@ -550,7 +556,7 @@ const ListViewComponent = ({
           }}
         >
           <Typography variant="h6" sx={{ color: theme === 'dark' ? '#fff' : '#333' }}>
-            Error Loading Resources
+            {t('listView.errorLoading')}
           </Typography>
           <Typography
             variant="body1"
@@ -580,19 +586,19 @@ const ListViewComponent = ({
                 fontSize: '0.8rem',
               }}
             >
-              Try these troubleshooting steps:
+              {t('listView.troubleshooting.title')}
               <br />
-              1. Check that the backend server is running at http://localhost:4000
+              {t('listView.troubleshooting.step1')}
               <br />
-              2. Verify the server's CORS configuration allows requests from http://localhost:5173
+              {t('listView.troubleshooting.step2')}
               <br />
-              3. If the server uses wildcard (*) CORS, it can't accept requests with credentials
+              {t('listView.troubleshooting.step3')}
               <br />
-              4. Check the browser console for detailed error messages
+              {t('listView.troubleshooting.step4')}
             </Typography>
           </Box>
           <Button variant="contained" color="primary" onClick={handleRetry} sx={{ mt: 3 }}>
-            Retry
+            {t('common.retry')}
           </Button>
         </Box>
       ) : filteredResources.length > 0 ? (
@@ -653,7 +659,7 @@ const ListViewComponent = ({
                   fontWeight: 500,
                 }}
               >
-                Filtered by context: {filteredContext}
+                {t('listView.filteredByContext', { context: filteredContext })}
               </Typography>
               <Typography
                 variant="body2"
@@ -661,7 +667,10 @@ const ListViewComponent = ({
                   color: theme === 'dark' ? '#A5ADBA' : '#6B7280',
                 }}
               >
-                Showing {filteredResources.length} of {resources.length} total resources
+                {t('listView.showingResourceCount', {
+                  showing: filteredResources.length,
+                  total: resources.length,
+                })}
               </Typography>
             </Box>
           )}
@@ -737,7 +746,7 @@ const ListViewComponent = ({
 
                       {/* Add download logs button for pod resources */}
                       {resource.kind.toLowerCase() === 'pod' && (
-                        <Tooltip title="Download logs">
+                        <Tooltip title={t('listView.downloadLogs')}>
                           <span className="ml-2">
                             <DownloadLogsButton
                               cluster={resource.context || 'default'}
@@ -756,7 +765,7 @@ const ListViewComponent = ({
                           fontSize: '0.875rem',
                         }}
                       >
-                        Namespace: {resource.namespace}
+                        {t('listView.namespace')}: {resource.namespace}
                       </Typography>
                     )}
                   </Box>
@@ -806,7 +815,7 @@ const ListViewComponent = ({
                         whiteSpace: 'nowrap',
                       }}
                     >
-                      Created: {formatCreatedAt(resource.createdAt)}
+                      {t('listView.created')}: {formatCreatedAt(resource.createdAt)}
                     </Typography>
                   </Box>
                 </Box>
@@ -846,9 +855,13 @@ const ListViewComponent = ({
                   mb: { xs: 1, sm: 0 },
                 }}
               >
-                Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, totalItems)} of{' '}
-                {totalItems} entries
-                {filteredContext !== 'all' && ` (filtered by ${filteredContext} context)`}
+                {t('listView.pagination.showing', {
+                  from: indexOfFirstItem + 1,
+                  to: Math.min(indexOfLastItem, totalItems),
+                  total: totalItems,
+                })}
+                {filteredContext !== 'all' &&
+                  t('listView.pagination.filtered', { context: filteredContext })}
               </Typography>
 
               {totalRawResources > 0 && totalRawResources !== resources.length && (
@@ -861,7 +874,10 @@ const ListViewComponent = ({
                     fontSize: '0.7rem',
                   }}
                 >
-                  {totalRawResources} raw resources detected, {resources.length} processed
+                  {t('listView.resourceStats', {
+                    raw: totalRawResources,
+                    processed: resources.length,
+                  })}
                 </Typography>
               )}
             </Box>
@@ -906,7 +922,7 @@ const ListViewComponent = ({
                   },
                 }}
               >
-                Prev
+                {t('listView.pagination.prev')}
               </Button>
 
               <Box
@@ -996,7 +1012,7 @@ const ListViewComponent = ({
                   },
                 }}
               >
-                Next
+                {t('listView.pagination.next')}
               </Button>
             </Box>
           </Box>
@@ -1016,7 +1032,7 @@ const ListViewComponent = ({
             <Typography
               sx={{ color: theme === 'dark' ? '#fff' : '#333', fontWeight: 500, fontSize: '22px' }}
             >
-              No Workloads Found
+              {t('listView.noWorkloads.title')}
             </Typography>
             <Typography
               variant="body2"
@@ -1027,10 +1043,10 @@ const ListViewComponent = ({
               }}
             >
               {filteredContext !== 'all'
-                ? `No resources found for the ${filteredContext} context`
+                ? t('listView.noWorkloads.noResourcesForContext', { context: filteredContext })
                 : resources.length > 0
-                  ? 'Resources are available but filtered out'
-                  : 'Get started by creating your first workload'}
+                  ? t('listView.noWorkloads.resourcesFilteredOut')
+                  : t('listView.noWorkloads.getStarted')}
             </Typography>
             {resources.length > 0 && filteredResources.length === 0 && (
               <Typography
@@ -1040,7 +1056,7 @@ const ListViewComponent = ({
                   fontSize: '0.85rem',
                 }}
               >
-                {resources.length} total resources available, but none match the current filter
+                {t('listView.noWorkloads.resourcesAvailable', { count: resources.length })}
               </Typography>
             )}
           </Box>

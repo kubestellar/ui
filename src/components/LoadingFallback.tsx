@@ -1,14 +1,15 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface LoadingFallbackProps {
   message?: string;
   size?: 'small' | 'medium' | 'large';
 }
 
-const LoadingFallback: React.FC<LoadingFallbackProps> = ({
-  message = 'Loading...',
-  size = 'medium',
-}) => {
+const LoadingFallback: React.FC<LoadingFallbackProps> = ({ message, size = 'medium' }) => {
+  const { t } = useTranslation();
+  const defaultMessage = t('common.loading');
+
   const spinnerSizes = {
     small: 'h-8 w-8',
     medium: 'h-12 w-12',
@@ -25,8 +26,10 @@ const LoadingFallback: React.FC<LoadingFallbackProps> = ({
         className={`animate-spin rounded-full border-b-2 border-t-2 border-primary ${spinnerSizes[size]}`}
         aria-hidden="true"
       />
-      {message && <p className="text-sm text-gray-600 dark:text-gray-300">{message}</p>}
-      <span className="sr-only">Loading content...</span>
+      {(message || defaultMessage) && (
+        <p className="text-sm text-gray-600 dark:text-gray-300">{message || defaultMessage}</p>
+      )}
+      <span className="sr-only">{t('loadingFallback.loadingContent')}</span>
     </div>
   );
 };
