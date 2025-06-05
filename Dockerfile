@@ -1,5 +1,5 @@
 # Stage 1: Build frontend
-FROM node:18 AS frontend-builder
+FROM ghcr.io/kubestellar/ui/node:18 AS frontend-builder
 
 # Set working directory
 WORKDIR /app
@@ -37,7 +37,7 @@ RUN npm run build
 RUN mv commit_hash.txt dist/
 
 # Stage 2: Serve with Nginx
-FROM nginx:alpine AS frontend
+FROM ghcr.io/kubestellar/nginx:alpine AS frontend
 COPY --from=frontend-builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 

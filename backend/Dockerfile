@@ -1,5 +1,5 @@
 # Stage 1: Build the backend
-FROM golang:1.24 AS backend-builder
+FROM ghcr.io/kubestellar/ui/golang:1.24 AS backend-builder
 
 # Set the working directory
 WORKDIR /app
