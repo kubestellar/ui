@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Box, Typography, TextField, Button, IconButton, CircularProgress } from '@mui/material';
 import { FiX } from 'react-icons/fi';
 import CancelButton from './common/CancelButton';
+import { useTranslation } from 'react-i18next';
 
 interface NewAppDialogProps {
   open: boolean;
@@ -11,6 +12,7 @@ interface NewAppDialogProps {
 }
 
 const NewAppDialog = ({ open, onClose, onDeploy, loading }: NewAppDialogProps) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<{ githuburl: string; path: string }>({
     githuburl: '',
     path: '',
@@ -55,7 +57,7 @@ const NewAppDialog = ({ open, onClose, onDeploy, loading }: NewAppDialogProps) =
         <Box sx={{ p: 6, height: '100%' }}>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={5}>
             <Typography variant="h4" fontWeight="bold" sx={{ color: '#000000', fontSize: '20px' }}>
-              Create New App
+              {t('newAppDialog.title')}
             </Typography>
             <IconButton onClick={handleClose} sx={{ color: '#6d7f8b', fontSize: '20px' }}>
               <FiX />
@@ -73,7 +75,7 @@ const NewAppDialog = ({ open, onClose, onDeploy, loading }: NewAppDialogProps) =
           >
             <TextField
               fullWidth
-              label="GitHub URL"
+              label={t('newAppDialog.githubUrl')}
               variant="outlined"
               value={formData.githuburl}
               onChange={e => setFormData(prev => ({ ...prev, githuburl: e.target.value }))}
@@ -113,7 +115,7 @@ const NewAppDialog = ({ open, onClose, onDeploy, loading }: NewAppDialogProps) =
 
             <TextField
               fullWidth
-              label="Path"
+              label={t('newAppDialog.path')}
               variant="outlined"
               value={formData.path}
               onChange={e => setFormData(prev => ({ ...prev, path: e.target.value }))}
@@ -152,7 +154,7 @@ const NewAppDialog = ({ open, onClose, onDeploy, loading }: NewAppDialogProps) =
             />
 
             <Box display="flex" justifyContent="flex-end" gap={2}>
-              <CancelButton onClick={handleClose}>Cancel</CancelButton>
+              <CancelButton onClick={handleClose}>{t('common.cancel')}</CancelButton>
               <Button
                 variant="contained"
                 onClick={handleDeployClick}
@@ -167,7 +169,11 @@ const NewAppDialog = ({ open, onClose, onDeploy, loading }: NewAppDialogProps) =
                   },
                 }}
               >
-                {loading ? <CircularProgress size={24} color="inherit" /> : 'Deploy'}
+                {loading ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  t('newAppDialog.deploy')
+                )}
               </Button>
             </Box>
           </Box>

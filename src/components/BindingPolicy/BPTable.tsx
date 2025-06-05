@@ -23,6 +23,7 @@ import useTheme from '../../stores/themeStore';
 import { useBPQueries } from '../../hooks/queries/useBPQueries';
 import { api } from '../../lib/api';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 interface BPTableProps {
   policies: BindingPolicyInfo[];
@@ -53,6 +54,7 @@ const BPTable: React.FC<BPTableProps> = ({
   const theme = useTheme(state => state.theme);
   const isDark = theme === 'dark';
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   // Map to store policy statuses from API
   const [policyStatuses, setPolicyStatuses] = useState<Record<string, string>>({});
@@ -257,7 +259,7 @@ const BPTable: React.FC<BPTableProps> = ({
     // Return a greyed-out chip with "0" for policies with no clusters
     if (clusterCount === 0 || !policy.clusterList || policy.clusterList.length === 0) {
       return (
-        <Tooltip title="No target clusters defined">
+        <Tooltip title={t('bindingPolicy.table.noClusters')}>
           <Chip
             label="0"
             size="small"
@@ -280,7 +282,7 @@ const BPTable: React.FC<BPTableProps> = ({
       <Tooltip
         title={
           <React.Fragment>
-            <Typography variant="subtitle2">Target Clusters:</Typography>
+            <Typography variant="subtitle2">{t('bindingPolicy.table.clusters')}</Typography>
             {mappedClusterNames.length > 0 ? (
               mappedClusterNames.map((cluster, index) => (
                 <Typography key={index} variant="body2" component="div">
@@ -289,7 +291,11 @@ const BPTable: React.FC<BPTableProps> = ({
               ))
             ) : (
               <Typography variant="body2">
-                {clusterCount} cluster{clusterCount !== 1 ? 's' : ''} (details not available)
+                {clusterCount} {t('bindingPolicy.table.clusters').toLowerCase()} (
+                {t('common.noResource', {
+                  resource: t('bindingPolicy.table.clusters').toLowerCase(),
+                })}
+                )
               </Typography>
             )}
           </React.Fragment>
@@ -318,9 +324,9 @@ const BPTable: React.FC<BPTableProps> = ({
     // Return a different styled chip for policies with no workloads
     if (workloadCount === 0 || !policy.workloadList || policy.workloadList.length === 0) {
       return (
-        <Tooltip title="No workloads defined">
+        <Tooltip title={t('bindingPolicy.table.noWorkloads')}>
           <Chip
-            label="None"
+            label={t('bindingPolicy.table.noWorkloads')}
             size="small"
             color="secondary"
             sx={{
@@ -347,7 +353,7 @@ const BPTable: React.FC<BPTableProps> = ({
       <Tooltip
         title={
           <React.Fragment>
-            <Typography variant="subtitle2">Workloads:</Typography>
+            <Typography variant="subtitle2">{t('bindingPolicy.table.workload')}</Typography>
             {policy.workloadList.map((workload, index) => (
               <Typography key={index} variant="body2" component="div">
                 {index + 1}. {workload}
@@ -447,12 +453,12 @@ const BPTable: React.FC<BPTableProps> = ({
                   }}
                 />
               </TableCell>
-              <TableCell>Binding Policy Name</TableCell>
-              <TableCell>Clusters</TableCell>
-              <TableCell>Workload</TableCell>
-              <TableCell>Creation Date</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="right">Actions</TableCell>
+              <TableCell>{t('bindingPolicy.table.name')}</TableCell>
+              <TableCell>{t('bindingPolicy.table.clusters')}</TableCell>
+              <TableCell>{t('bindingPolicy.table.workload')}</TableCell>
+              <TableCell>{t('bindingPolicy.table.creationDate')}</TableCell>
+              <TableCell>{t('bindingPolicy.table.status')}</TableCell>
+              <TableCell align="right">{t('bindingPolicy.table.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -655,13 +661,13 @@ const BPTable: React.FC<BPTableProps> = ({
             selectedPolicyDetails ||
             ({
               name: selectedPolicyName,
-              status: 'Loading...',
+              status: t('common.status.checking'),
               clusters: 0,
               clusterList: [],
               workloadList: [],
-              workload: 'Loading...',
+              workload: t('common.loading'),
               namespace: 'default',
-              bindingMode: 'Unknown',
+              bindingMode: t('bindingPolicy.unknown'),
               creationDate: '',
             } as BindingPolicyInfo)
           }

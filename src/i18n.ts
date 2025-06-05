@@ -1,7 +1,7 @@
 import i18next from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import languageDetector from 'i18next-browser-languagedetector';
-import en from './locales/strings.en.json'
+import en from './locales/strings.en.json';
 import ja from './locales/strings.ja.json';
 import es from './locales/strings.es.json';
 import de from './locales/strings.de.json';
@@ -12,22 +12,29 @@ import zh_TW from './locales/strings.zh_TW.json';
 
 i18next
   .use(languageDetector)
-  .use(initReactI18next) 
+  .use(initReactI18next)
   .init({
     resources: {
-    en: { translation: en },
-    ja: { translation: ja },
-    es: { translation: es },
-    de: { translation: de },
-    fr: { translation: fr },
-    it: { translation: it },
-    'zh-CN': { translation: zh_CN },
-    'zh-TW': { translation: zh_TW },
+      en: { translation: en },
+      ja: { translation: ja },
+      es: { translation: es },
+      de: { translation: de },
+      fr: { translation: fr },
+      it: { translation: it },
+      'zh-CN': { translation: zh_CN },
+      'zh-TW': { translation: zh_TW },
     },
-    lng: 'en', 
-    fallbackLng: 'en', 
+    lng: localStorage.getItem('i18nextLng') || 'en',
+    fallbackLng: 'en',
     interpolation: {
-      escapeValue: false, 
+      escapeValue: false,
     },
-    debug: true, 
+    detection: {
+      order: ['localStorage', 'navigator'],
+      caches: ['localStorage'],
+    },
+    // Only enable debug in development mode
+    debug: process.env.NODE_ENV === 'development',
   });
+
+export default i18next;

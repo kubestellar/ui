@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useQuery, useQueryClient, UseQueryResult } from '@tanstack/react-query';
 import { getWebSocketUrl } from '../../lib/api';
+import { useTranslation } from 'react-i18next';
 
 interface UseWebSocketOptions<TData, TRawData = unknown> {
   url: string;
@@ -35,6 +36,7 @@ export type WebSocketQueryResult<TData> = UseQueryResult<TData, Error> & WebSock
 export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
   options: UseWebSocketOptions<TData, TRawData>
 ): WebSocketQueryResult<TData> => {
+  const { t } = useTranslation();
   const {
     url,
     queryKey,
@@ -82,7 +84,7 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
         if (parseData && typeof event.data === 'string') {
           data = JSON.parse(event.data) as TRawData;
         } else if (parseData) {
-          throw new Error('Expected string data for JSON parsing');
+          throw new Error(t('webSocket.errors.expectedStringData'));
         }
 
         const transformedData = transform(data);
@@ -90,14 +92,15 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
         onMessage?.(transformedData);
       } catch (error) {
         const wsError =
-          error instanceof Error ? error : new Error('Failed to process WebSocket message');
+          error instanceof Error ? error : new Error(t('webSocket.errors.processingFailed'));
         setWsState(prev => ({ ...prev, error: wsError }));
         onError?.(wsError);
       }
     };
 
     ws.onerror = error => {
-      const wsError = error instanceof Error ? error : new Error('WebSocket error');
+      const wsError =
+        error instanceof Error ? error : new Error(t('webSocket.errors.connectionError'));
       setWsState({ isConnected: false, error: wsError });
       queryClient.setQueryData(queryKey, null);
       onError?.(wsError);
@@ -129,11 +132,12 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
     onDisconnect,
     autoReconnect,
     reconnectInterval,
+    t,
   ]);
 
   const sendMessage = (data: string | object) => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      console.warn('WebSocket is not connected');
+      console.warn(t('webSocket.errors.notConnected'));
       return;
     }
 
@@ -149,7 +153,7 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
       try {
         wsRef.current.close();
       } catch (e) {
-        console.warn('Error closing WebSocket:', e);
+        console.warn(t('webSocket.errors.closingError'), e);
       }
     }
 
@@ -157,7 +161,7 @@ export const useWebSocketQuery = <TData = unknown, TRawData = TData>(
       window.clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (enabled) {

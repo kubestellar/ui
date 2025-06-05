@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { Text, Billboard } from '@react-three/drei';
 import * as THREE from 'three';
 import { COLORS } from './colors';
+import { useTranslation } from 'react-i18next';
 
 // Logo element with optimized rendering
 interface LogoElementProps {
@@ -10,6 +11,7 @@ interface LogoElementProps {
 }
 
 const LogoElement = ({ animate = true }: LogoElementProps) => {
+  const { t } = useTranslation();
   const coreRef = useRef<THREE.Mesh>(null);
   const outerRingRef = useRef<THREE.Mesh>(null);
   const frameCount = useRef(0);
@@ -102,7 +104,7 @@ const LogoElement = ({ animate = true }: LogoElementProps) => {
           fillOpacity={animate ? 1 : 0}
           characters="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "
         >
-          Control Plane
+          {t('login.controlPlane')}
         </Text>
       </Billboard>
     </group>

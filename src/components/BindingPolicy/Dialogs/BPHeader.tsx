@@ -17,6 +17,7 @@ import CreateBindingPolicyDialog, { PolicyData } from '../CreateBindingPolicyDia
 import useTheme from '../../../stores/themeStore';
 import { ManagedCluster, Workload } from '../../../types/bindingPolicy';
 import Fade from '@mui/material/Fade';
+import { useTranslation } from 'react-i18next';
 
 interface BPHeaderProps {
   searchQuery: string;
@@ -53,6 +54,7 @@ const BPHeader: React.FC<BPHeaderProps> = ({
   const [searchFocused, setSearchFocused] = useState(false);
   const theme = useTheme(state => state.theme);
   const isDark = theme === 'dark';
+  const { t } = useTranslation();
 
   useEffect(() => {
     console.log(
@@ -142,7 +144,7 @@ const BPHeader: React.FC<BPHeaderProps> = ({
           className="mb-2 flex items-center gap-2 text-3xl font-bold"
           style={{ color: colors.primary }}
         >
-          <div>Manage Binding Policies</div>
+          <div>{t('bindingPolicy.title')}</div>
           <span
             className="rounded-full px-3 py-1 text-sm"
             style={{
@@ -154,7 +156,7 @@ const BPHeader: React.FC<BPHeaderProps> = ({
           </span>
         </h1>
         <p className="text-lg" style={{ color: colors.textSecondary }}>
-          Create and manage binding policies for workload distribution
+          {t('bindingPolicy.description')}
         </p>
       </div>
 

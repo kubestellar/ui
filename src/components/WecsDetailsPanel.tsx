@@ -33,6 +33,7 @@ import useTheme from '../stores/themeStore';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { api, getWebSocketUrl } from '../lib/api';
 import DownloadLogsButton from './DownloadLogsButton';
+import { useTranslation } from 'react-i18next';
 
 interface WecsDetailsProps {
   namespace: string;
@@ -121,6 +122,7 @@ const WecsDetailsPanel = ({
   cluster,
   isDeploymentOrJobPod,
 }: WecsDetailsProps) => {
+  const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
   const [resource, setResource] = useState<ResourceInfo | null>(null);
   const [clusterDetails, setClusterDetails] = useState<ClusterDetails | null>(null);
@@ -237,7 +239,7 @@ const WecsDetailsPanel = ({
             kind: 'Cluster',
             createdAt: creationTime,
             age: calculateAge(creationTime),
-            status: 'Active',
+            status: t('wecsDetailsPanel.cluster.active'),
             manifest: JSON.stringify(clusterManifest, null, 2),
           };
 
@@ -246,7 +248,7 @@ const WecsDetailsPanel = ({
           setError(null);
         } catch (err) {
           console.error(`Error fetching cluster details:`, err);
-          setError(`Failed to load cluster details.`);
+          setError(t('wecsDetailsPanel.errors.failedLoadClusterDetails'));
         } finally {
           setLoading(false);
         }
@@ -263,17 +265,17 @@ const WecsDetailsPanel = ({
           const kind = resourceData?.kind ?? type;
           const manifestData = resourceData
             ? JSON.stringify(resourceData, null, 2)
-            : 'No manifest available';
+            : t('wecsDetailsPanel.noManifest');
           const resourceInfo: ResourceInfo = {
             name: resourceData?.metadata?.name ?? name,
             namespace: resourceData?.metadata?.namespace ?? namespace,
             kind: kind,
-            createdAt: resourceData?.metadata?.creationTimestamp ?? 'N/A',
+            createdAt: resourceData?.metadata?.creationTimestamp ?? t('wecsDetailsPanel.common.na'),
             age: calculateAge(resourceData?.metadata?.creationTimestamp),
             status:
               resourceData?.status?.conditions?.[0]?.status ??
               resourceData?.status?.phase ??
-              'Unknown',
+              t('wecsDetailsPanel.common.unknown'),
             manifest: manifestData,
           };
 
@@ -288,7 +290,7 @@ const WecsDetailsPanel = ({
           };
         } catch (err) {
           console.error(`Error processing ${type} details:`, err);
-          setError(`Failed to load ${type} details.`);
+          setError(t('wecsDetailsPanel.errors.failedLoadDetails', { type }));
         } finally {
           setLoading(false);
         }
@@ -303,15 +305,17 @@ const WecsDetailsPanel = ({
       const kind = resourceData?.kind ?? type;
       const manifestData = resourceData
         ? JSON.stringify(resourceData, null, 2)
-        : 'No manifest available';
+        : t('wecsDetailsPanel.noManifest');
       const resourceInfo: ResourceInfo = {
         name: resourceData?.metadata?.name ?? name,
         namespace: resourceData?.metadata?.namespace ?? namespace,
         kind: kind,
-        createdAt: resourceData?.metadata?.creationTimestamp ?? 'N/A',
+        createdAt: resourceData?.metadata?.creationTimestamp ?? t('wecsDetailsPanel.common.na'),
         age: calculateAge(resourceData?.metadata?.creationTimestamp),
         status:
-          resourceData?.status?.conditions?.[0]?.status ?? resourceData?.status?.phase ?? 'Unknown',
+          resourceData?.status?.conditions?.[0]?.status ??
+          resourceData?.status?.phase ??
+          t('wecsDetailsPanel.common.unknown'),
         manifest: manifestData,
       };
 
@@ -320,11 +324,11 @@ const WecsDetailsPanel = ({
       setError(null);
     } catch (err) {
       console.error(`Error processing ${type} details:`, err);
-      setError(`Failed to load ${type} details.`);
+      setError(t('wecsDetailsPanel.errors.failedLoadDetails', { type }));
     } finally {
       setLoading(false);
     }
-  }, [namespace, name, type, resourceData, cluster, isOpen]);
+  }, [namespace, name, type, resourceData, cluster, isOpen, t]); // Added t to dependencies
 
   // Convert to useCallback to memoize it
   const connectWebSocket = useCallback(() => {
@@ -649,7 +653,7 @@ const WecsDetailsPanel = ({
         // Completely clear the terminal once connected
         term.reset();
         term.clear();
-        term.writeln(`\x1b[32mConnected to pod shell in container ${containerName}\x1b[0m`);
+        term.writeln(t('wecsDetailsPanel.terminal.connected', { containerName }));
         term.writeln('');
       };
 
@@ -676,7 +680,7 @@ const WecsDetailsPanel = ({
       socket.onclose = event => {
         // console.log(`WebSocket closed for pod ${name}:`, event);
         if (event.code !== 1000 && event.code !== 1001) {
-          term.writeln(`\x1b[31mConnection closed\x1b[0m`);
+          term.writeln(t('wecsDetailsPanel.terminal.connectionClosed'));
         }
         execSocketRef.current = null;
       };
@@ -760,12 +764,14 @@ const WecsDetailsPanel = ({
   }, [name, type]);
 
   const calculateAge = (creationTimestamp: string | undefined): string => {
-    if (!creationTimestamp) return 'N/A';
+    if (!creationTimestamp) return t('wecsDetailsPanel.common.na');
     const createdDate = new Date(creationTimestamp);
     const currentDate = new Date();
     const diffMs = currentDate.getTime() - createdDate.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    return diffDays > 0 ? `${diffDays} days ago` : 'Today';
+    return diffDays > 0
+      ? t('wecsDetailsPanel.common.daysAgo', { count: diffDays })
+      : t('wecsDetailsPanel.common.today');
   };
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
@@ -828,7 +834,7 @@ const WecsDetailsPanel = ({
 
     const resourceName = resource.name;
 
-    setSnackbarMessage(`API not implemented for updating pod "${resourceName}"`);
+    setSnackbarMessage(t('wecsDetailsPanel.errors.apiNotImplemented', { resourceName }));
     setSnackbarSeverity('error');
     setSnackbarOpen(true);
   };
@@ -850,14 +856,17 @@ const WecsDetailsPanel = ({
           <Table sx={{ borderRadius: 1, mb: 2 }}>
             <TableBody>
               {[
-                { label: 'KIND', value: 'Cluster' },
-                { label: 'NAME', value: clusterDetails.clusterName },
-                { label: 'CONTEXT', value: clusterInfo?.context || 'Unknown' },
+                { label: t('wecsDetailsPanel.table.kind'), value: 'Cluster' },
+                { label: t('wecsDetailsPanel.table.name'), value: clusterDetails.clusterName },
                 {
-                  label: 'CREATED AT',
+                  label: t('wecsDetailsPanel.table.context'),
+                  value: clusterInfo?.context || t('wecsDetailsPanel.common.unknown'),
+                },
+                {
+                  label: t('wecsDetailsPanel.table.createdAt'),
                   value: clusterInfo
                     ? `${new Date(clusterInfo.creationTime).toLocaleString()} (${calculateAge(clusterInfo.creationTime)})`
-                    : 'Unknown',
+                    : t('wecsDetailsPanel.common.unknown'),
                 },
               ].map((row, index) => (
                 <TableRow key={index}>
@@ -904,7 +913,7 @@ const WecsDetailsPanel = ({
                       verticalAlign: 'top',
                     }}
                   >
-                    LABELS
+                    {t('wecsDetailsPanel.table.labels')}
                   </TableCell>
                   <TableCell
                     sx={{
@@ -947,10 +956,13 @@ const WecsDetailsPanel = ({
       <Table sx={{ borderRadius: 1 }}>
         <TableBody>
           {[
-            { label: 'KIND', value: resource.kind },
-            { label: 'NAME', value: resource.name },
-            { label: 'NAMESPACE', value: resource.namespace },
-            { label: 'CREATED AT', value: `${resource.createdAt} (${resource.age})` },
+            { label: t('wecsDetailsPanel.table.kind'), value: resource.kind },
+            { label: t('wecsDetailsPanel.table.name'), value: resource.name },
+            { label: t('wecsDetailsPanel.table.namespace'), value: resource.namespace },
+            {
+              label: t('wecsDetailsPanel.table.createdAt'),
+              value: `${resource.createdAt} (${resource.age})`,
+            },
           ].map((row, index) => (
             <TableRow key={index}>
               <TableCell
@@ -991,7 +1003,7 @@ const WecsDetailsPanel = ({
                     verticalAlign: 'top',
                   }}
                 >
-                  LABELS
+                  {t('wecsDetailsPanel.table.labels')}
                 </TableCell>
                 <TableCell
                   sx={{
@@ -1074,7 +1086,7 @@ const WecsDetailsPanel = ({
             </Typography>
             <Stack direction="row" spacing={1}>
               {onSync && (
-                <Tooltip title="Sync Resource">
+                <Tooltip title={t('wecsDetailsPanel.common.sync')}>
                   <Button
                     variant="contained"
                     startIcon={<FiGitPullRequest />}
@@ -1084,12 +1096,12 @@ const WecsDetailsPanel = ({
                       '&:hover': { bgcolor: '#009bbd' },
                     }}
                   >
-                    Sync
+                    {t('wecsDetailsPanel.common.sync')}
                   </Button>
                 </Tooltip>
               )}
               {onDelete && (
-                <Tooltip title="Delete Resource">
+                <Tooltip title={t('wecsDetailsPanel.common.delete')}>
                   <Button
                     variant="outlined"
                     color="error"
@@ -1097,11 +1109,11 @@ const WecsDetailsPanel = ({
                     onClick={onDelete}
                     sx={{ ml: 1 }}
                   >
-                    Delete
+                    {t('wecsDetailsPanel.common.delete')}
                   </Button>
                 </Tooltip>
               )}
-              <Tooltip title="Close">
+              <Tooltip title={t('wecsDetailsPanel.common.close')}>
                 <IconButton
                   onClick={handleClose}
                   sx={{ color: theme === 'dark' ? '#B0B0B0' : '#6d7f8b' }}
@@ -1128,14 +1140,16 @@ const WecsDetailsPanel = ({
             <StyledTab
               label={
                 <span>
-                  <i className="fa fa-file-alt" style={{ marginRight: '8px' }}></i>SUMMARY
+                  <i className="fa fa-file-alt" style={{ marginRight: '8px' }}></i>
+                  {t('wecsDetailsPanel.tabs.summary')}
                 </span>
               }
             />
             <StyledTab
               label={
                 <span>
-                  <i className="fa fa-edit" style={{ marginRight: '8px' }}></i>EDIT
+                  <i className="fa fa-edit" style={{ marginRight: '8px' }}></i>
+                  {t('wecsDetailsPanel.tabs.edit')}
                 </span>
               }
             />
@@ -1146,7 +1160,8 @@ const WecsDetailsPanel = ({
                 <StyledTab
                   label={
                     <span>
-                      <i className="fa fa-align-left" style={{ marginRight: '8px' }}></i>LOGS
+                      <i className="fa fa-align-left" style={{ marginRight: '8px' }}></i>
+                      {t('wecsDetailsPanel.tabs.logs')}
                     </span>
                   }
                 />
@@ -1156,7 +1171,8 @@ const WecsDetailsPanel = ({
               <StyledTab
                 label={
                   <span>
-                    <i className="fa fa-terminal" style={{ marginRight: '8px' }}></i>EXEC PODS
+                    <i className="fa fa-terminal" style={{ marginRight: '8px' }}></i>
+                    {t('wecsDetailsPanel.tabs.execPods')}
                   </span>
                 }
               />
@@ -1196,7 +1212,7 @@ const WecsDetailsPanel = ({
                         },
                       }}
                     >
-                      YAML
+                      {t('wecsDetailsPanel.format.yaml')}
                     </Button>
                     <Button
                       variant={editFormat === 'json' ? 'contained' : 'outlined'}
@@ -1213,7 +1229,7 @@ const WecsDetailsPanel = ({
                         },
                       }}
                     >
-                      JSON
+                      {t('wecsDetailsPanel.format.json')}
                     </Button>
                   </Stack>
                   <Box sx={{ overflow: 'auto', maxHeight: '500px' }}>
@@ -1223,7 +1239,7 @@ const WecsDetailsPanel = ({
                       value={
                         editFormat === 'yaml'
                           ? jsonToYaml(editedManifest)
-                          : editedManifest || 'No manifest available'
+                          : editedManifest || t('wecsDetailsPanel.noManifest')
                       }
                       onChange={handleEditorChange}
                       theme={theme === 'dark' ? 'vs-dark' : 'light'}
@@ -1252,7 +1268,7 @@ const WecsDetailsPanel = ({
                         },
                       }}
                     >
-                      Update
+                      {t('wecsDetailsPanel.common.update')}
                     </Button>
                   </Box>
                 </Box>
@@ -1426,7 +1442,7 @@ const WecsDetailsPanel = ({
                                   style={{ marginRight: '8px', fontSize: '12px' }}
                                 />
                               )}
-                              {value || 'Select container'}
+                              {value || t('wecsDetailsPanel.containers.selectContainer')}
                             </Box>
                           )}
                         >
@@ -1460,14 +1476,16 @@ const WecsDetailsPanel = ({
                           ))}
                           {containers.length === 0 && !loadingContainers && (
                             <MenuItem disabled>
-                              <Typography variant="body2">No containers found</Typography>
+                              <Typography variant="body2">
+                                {t('wecsDetailsPanel.containers.noContainersFound')}
+                              </Typography>
                             </MenuItem>
                           )}
                         </Select>
                       </FormControl>
 
                       {/* Existing buttons */}
-                      <Tooltip title="Clear Terminal">
+                      <Tooltip title={t('wecsDetailsPanel.buttons.clearTerminal')}>
                         <IconButton
                           size="small"
                           onClick={() => {
@@ -1488,7 +1506,13 @@ const WecsDetailsPanel = ({
                         </IconButton>
                       </Tooltip>
 
-                      <Tooltip title={isTerminalMaximized ? 'Minimize' : 'Maximize'}>
+                      <Tooltip
+                        title={
+                          isTerminalMaximized
+                            ? t('wecsDetailsPanel.buttons.minimize')
+                            : t('wecsDetailsPanel.buttons.maximize')
+                        }
+                      >
                         <IconButton
                           size="small"
                           onClick={() => setIsTerminalMaximized(!isTerminalMaximized)}

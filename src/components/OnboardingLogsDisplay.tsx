@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Box, Typography, LinearProgress, Paper } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 interface LogMessage {
   clusterName: string;
@@ -30,6 +31,7 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
   theme,
   colors,
 }) => {
+  const { t } = useTranslation();
   const [logs, setLogs] = useState<LogMessage[]>([]);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,14 +82,14 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
 
         ws.onerror = error => {
           console.error('WebSocket error:', error);
-          setError('WebSocket connection failed. Please try again.');
+          setError(t('onboardingLogs.errors.websocketFailed'));
           setConnected(false);
         };
 
         return ws;
       } catch (error) {
         console.error('Error creating WebSocket:', error);
-        setError('Failed to connect to log stream. Please try again.');
+        setError(t('onboardingLogs.errors.connectionFailed'));
         return null;
       }
     };
@@ -99,7 +101,7 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
         ws.close();
       }
     };
-  }, [clusterName, onComplete]);
+  }, [clusterName, onComplete, t]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -214,7 +216,7 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
               color={theme === 'dark' ? colors.white : colors.text}
               sx={{ fontWeight: 600 }}
             >
-              Onboarding: {clusterName}
+              {t('onboardingLogs.onboarding')}: {clusterName}
             </Typography>
           </Box>
           <Box
@@ -239,7 +241,7 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
               }
               sx={{ fontWeight: 600 }}
             >
-              {getProgress()}% Complete
+              {getProgress()}% {t('onboardingLogs.complete')}
             </Typography>
           </Box>
         </Box>
@@ -347,7 +349,7 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
             <span role="img" aria-label="connecting">
               ⏳
             </span>{' '}
-            Connecting to log stream...
+            {t('onboardingLogs.connecting')}
           </Box>
         )}
 

@@ -7,6 +7,7 @@ import CosmicDust from './globe/CosmicDust';
 import DataPacket from './globe/DataPacket';
 import LogoElement from './globe/LogoElement';
 import Cluster from './globe/Cluster';
+import { useTranslation } from 'react-i18next';
 
 // Add this interface for the component props
 interface NetworkGlobeProps {
@@ -31,6 +32,7 @@ interface CentralNodeChild extends THREE.Object3D {
 
 // Update the main component to accept props
 const NetworkGlobe = ({ isLoaded = true }: NetworkGlobeProps) => {
+  const { t } = useTranslation();
   const globeRef = useRef<THREE.Mesh>(null);
   const centralNodeRef = useRef<THREE.Group>(null);
   const dataFlowsRef = useRef<THREE.Group>(null);
@@ -62,7 +64,7 @@ const NetworkGlobe = ({ isLoaded = true }: NetworkGlobeProps) => {
   const clusters = useMemo(
     () => [
       {
-        name: 'Edge Cluster',
+        name: t('visualization.clusters.edge'), // Instead of 'Edge Cluster'
         position: [0, 3, 0] as [number, number, number],
         nodeCount: 6,
         radius: 0.8,
@@ -70,7 +72,7 @@ const NetworkGlobe = ({ isLoaded = true }: NetworkGlobeProps) => {
         description: 'Edge computing resources for low-latency processing',
       },
       {
-        name: 'AI Inferencing Cluster',
+        name: t('visualization.clusters.aiInference'), // Instead of 'AI Inferencing Cluster'
         position: [3, 0, 0] as [number, number, number],
         nodeCount: 8,
         radius: 1,
@@ -102,7 +104,7 @@ const NetworkGlobe = ({ isLoaded = true }: NetworkGlobeProps) => {
         description: 'General-purpose compute resources',
       },
     ],
-    []
+    [t]
   );
 
   // Generate data flow paths - optimized to create fewer paths

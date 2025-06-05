@@ -5,6 +5,7 @@ import { FiLogOut, FiHelpCircle } from 'react-icons/fi';
 import { useAuth, useAuthActions } from '../hooks/useAuth';
 import { api } from '../lib/api';
 import useTheme from '../stores/themeStore';
+import { useTranslation } from 'react-i18next';
 
 // Array of profile icon components to randomly select from
 const profileIcons = [
@@ -13,6 +14,7 @@ const profileIcons = [
 ];
 
 const ProfileSection = () => {
+  const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -95,7 +97,7 @@ const ProfileSection = () => {
 
     navigate('/login', {
       state: {
-        infoMessage: 'You have been successfully logged out.',
+        infoMessage: t('profileSection.logoutMessage'),
       },
     });
   };
@@ -252,7 +254,7 @@ const ProfileSection = () => {
                       size={16}
                     />
                   </div>
-                  <span>Help & Support</span>
+                  <span>{t('profileSection.helpSupport')}</span>
                 </div>
               </button>
             </div>
@@ -299,7 +301,7 @@ const ProfileSection = () => {
                   />
                 </div>
                 <span className="transition-transform duration-300 group-hover:translate-x-0.5">
-                  Sign Out
+                  {t('profileSection.signOut')}
                 </span>
               </div>
             </button>

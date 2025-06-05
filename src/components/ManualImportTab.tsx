@@ -3,6 +3,7 @@ import { Box, Button, CircularProgress, Alert, SxProps, Theme } from '@mui/mater
 import { CommandResponse, Colors } from './ImportClusters';
 import OnboardingLogsDisplay from './OnboardingLogsDisplay';
 import CancelButton from './common/CancelButton';
+import { useTranslation } from 'react-i18next';
 
 interface ManualImportTabProps {
   theme: string;
@@ -57,6 +58,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
   successAlertRef,
   setManualCommand,
 }) => {
+  const { t } = useTranslation();
   const textColor = theme === 'dark' ? colors.white : colors.text;
   const [showLogs, setShowLogs] = useState(false);
 
@@ -78,7 +80,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
           setManualCommand(successCommand);
           setSnackbar({
             open: true,
-            message: 'Cluster onboarded successfully!',
+            message: t('quickConnect.success.message', { clusterName: formData.clusterName }),
             severity: 'success',
           });
         }, 100);
@@ -171,7 +173,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                 alignItems: 'center',
               }}
             >
-              Manual Cluster Setup
+              {t('manualImportTab.title')}
               <Box
                 component="span"
                 sx={{
@@ -187,7 +189,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                   border: `1px solid ${theme === 'dark' ? 'rgba(103, 192, 115, 0.2)' : 'rgba(103, 192, 115, 0.15)'}`,
                 }}
               >
-                Recommended
+                {t('manualImportTab.recommended')}
               </Box>
             </Box>
             <Box
@@ -198,9 +200,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                 maxWidth: '90%',
               }}
             >
-              This is the simplest way to connect your Kubernetes cluster. Select a cluster and
-              click the Onboard Cluster button to directly connect it to your platform without any
-              manual commands.
+              {t('manualImportTab.description')}
             </Box>
           </Box>
         </Box>
@@ -240,7 +240,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                 <span role="img" aria-label="select" style={{ fontSize: '0.9rem' }}>
                   🔍
                 </span>
-                Select a cluster to connect
+                {t('manualImportTab.selectCluster')}
               </Box>
 
               {availableClustersLoading ? (
@@ -258,7 +258,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                 >
                   <CircularProgress size={24} sx={{ color: colors.primary }} />
                   <Box sx={{ ml: 2, fontSize: '0.85rem', color: colors.textSecondary }}>
-                    Loading available clusters...
+                    {t('manualImportTab.loadingClusters')}
                   </Box>
                 </Box>
               ) : availableClustersError ? (
@@ -276,7 +276,9 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                     mb: 1,
                   }}
                 >
-                  <Box sx={{ fontWeight: 600, mb: 0.5 }}>Error loading clusters</Box>
+                  <Box sx={{ fontWeight: 600, mb: 0.5 }}>
+                    {t('manualImportTab.errorLoadingClusters')}
+                  </Box>
                   <Box sx={{ fontSize: '0.8rem' }}>{availableClustersError}</Box>
                   <Button
                     size="small"
@@ -295,7 +297,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                       </span>
                     }
                   >
-                    Retry
+                    {t('common.retry')}
                   </Button>
                 </Alert>
               ) : (
@@ -351,11 +353,11 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                       }}
                     >
                       <option value="" disabled>
-                        Choose a cluster...
+                        {t('manualImportTab.chooseCluster')}
                       </option>
                       {availableClusters.length === 0 ? (
                         <option value="" disabled>
-                          No clusters available
+                          {t('manualImportTab.noClusters')}
                         </option>
                       ) : (
                         availableClusters.map((clusterObj, index) => {
@@ -446,7 +448,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                         flex: 1,
                       }}
                     >
-                      These are clusters discovered in your environment. Select one to continue.
+                      {t('manualImportTab.discoveredClusters')}
                     </Box>
                     <Button
                       size="small"
@@ -465,8 +467,8 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                               : 'rgba(47, 134, 255, 0.05)',
                         },
                       }}
-                      aria-label="Refresh clusters list"
-                      title="Refresh clusters list"
+                      aria-label={t('manualImportTab.refreshClustersList')}
+                      title={t('manualImportTab.refreshClustersList')}
                     >
                       <svg
                         width="16"
@@ -528,7 +530,9 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                   border: `1px solid ${theme === 'dark' ? 'rgba(255, 107, 107, 0.2)' : 'rgba(255, 107, 107, 0.15)'}`,
                 }}
               >
-                <Box sx={{ fontWeight: 600, fontSize: '0.9rem', mb: 0.5 }}>Connection Error</Box>
+                <Box sx={{ fontWeight: 600, fontSize: '0.9rem', mb: 0.5 }}>
+                  {t('manualImportTab.connectionError')}
+                </Box>
                 <Box sx={{ whiteSpace: 'pre-line' }}>{manualError}</Box>
                 {manualError.includes('clusteradm') && (
                   <Box
@@ -540,8 +544,10 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                       fontStyle: 'italic',
                     }}
                   >
-                    <Box sx={{ fontWeight: 600, mb: 0.5 }}>💻 Installation Guide:</Box>
-                    To install clusteradm, run:
+                    <Box sx={{ fontWeight: 600, mb: 0.5 }}>
+                      💻 {t('manualImportTab.installationGuide')}
+                    </Box>
+                    {t('manualImportTab.installCommand')}
                     <Box
                       component="pre"
                       sx={{
@@ -569,7 +575,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                           );
                           setSnackbar({
                             open: true,
-                            message: 'Installation command copied!',
+                            message: t('manualImportTab.commandCopied'),
                             severity: 'success',
                           });
                         }}
@@ -644,7 +650,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                   </span>
                 </Box>
                 <Box sx={{ fontWeight: 600, fontSize: '0.9rem', color: textColor }}>
-                  How to connect your cluster
+                  {t('manualImportTab.howToConnect')}
                 </Box>
               </Box>
 
@@ -675,7 +681,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                   1
                 </Box>
                 <Box sx={{ fontSize: '0.825rem', color: colors.textSecondary }}>
-                  Select a cluster from the dropdown above
+                  {t('manualImportTab.steps.selectCluster')}
                 </Box>
               </Box>
 
@@ -706,7 +712,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                   2
                 </Box>
                 <Box sx={{ fontSize: '0.825rem', color: colors.textSecondary }}>
-                  Click "Onboard Cluster" button to directly connect your cluster
+                  {t('manualImportTab.steps.clickOnboard')}
                 </Box>
               </Box>
 
@@ -737,7 +743,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                   3
                 </Box>
                 <Box sx={{ fontSize: '0.825rem', color: colors.textSecondary }}>
-                  Your cluster will be automatically onboarded without manual commands
+                  {t('manualImportTab.steps.autoOnboard')}
                 </Box>
               </Box>
             </Box>
@@ -763,7 +769,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                   },
                 }}
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button
                 variant="contained"
@@ -785,9 +791,15 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                     </span>
                   )
                 }
-                aria-label={manualLoading ? 'Onboarding cluster...' : 'Onboard Cluster'}
+                aria-label={
+                  manualLoading
+                    ? t('manualImportTab.onboarding')
+                    : t('manualImportTab.onboardCluster')
+                }
               >
-                {manualLoading ? 'Onboarding...' : 'Onboard Cluster'}
+                {manualLoading
+                  ? t('manualImportTab.onboarding')
+                  : t('manualImportTab.onboardCluster')}
               </Button>
             </Box>
           </Box>
@@ -824,11 +836,10 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                 }}
               >
                 <Box sx={{ fontWeight: 600, fontSize: '1.1rem' }}>
-                  Cluster Onboarded Successfully
+                  {t('quickConnect.success.title')}
                 </Box>
                 <Box sx={{ mt: 1 }}>
-                  Cluster <strong>{manualCommand.clusterName}</strong> has been successfully
-                  onboarded to the platform.
+                  {t('quickConnect.success.message', { clusterName: manualCommand.clusterName })}
                 </Box>
               </Alert>
             </Box>
@@ -880,14 +891,15 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                     color: theme === 'dark' ? colors.success : '#3d9950',
                   }}
                 >
-                  Cluster has been added to the platform
+                  {t('manualImportTab.clusterAddedSuccess')}
                 </Box>
               </Box>
 
               <Box sx={{ pl: 7 }}>
                 <Box sx={{ fontSize: '0.9rem', color: textColor, mb: 2 }}>
-                  Your cluster <strong>{manualCommand.clusterName}</strong> has been successfully
-                  onboarded. You can now:
+                  {t('manualImportTab.clusterOnboardedSuccess', {
+                    clusterName: manualCommand.clusterName,
+                  })}
                 </Box>
 
                 <Box
@@ -923,7 +935,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                       1
                     </Box>
                     <Box sx={{ fontSize: '0.875rem', color: colors.textSecondary }}>
-                      View and manage the cluster in the dashboard
+                      {t('manualImportTab.nextSteps.viewManage')}
                     </Box>
                   </Box>
 
@@ -953,7 +965,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                       2
                     </Box>
                     <Box sx={{ fontSize: '0.875rem', color: colors.textSecondary }}>
-                      Deploy applications and services to the cluster
+                      {t('manualImportTab.nextSteps.deployApps')}
                     </Box>
                   </Box>
 
@@ -983,7 +995,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                       3
                     </Box>
                     <Box sx={{ fontSize: '0.875rem', color: colors.textSecondary }}>
-                      Configure and manage the cluster settings
+                      {t('manualImportTab.nextSteps.configureSettings')}
                     </Box>
                   </Box>
                 </Box>
@@ -1025,7 +1037,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                       },
                     }}
                   >
-                    View Cluster in Dashboard
+                    {t('manualImportTab.viewDashboard')}
                   </Button>
                 </Box>
               </Box>
@@ -1065,7 +1077,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                     </span>
                   }
                 >
-                  Back
+                  {t('common.back')}
                 </Button>
                 <CancelButton onClick={onCancel} />
               </Box>
@@ -1082,7 +1094,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
                   </span>
                 }
               >
-                Go to Dashboard
+                {t('manualImportTab.goToDashboard')}
               </Button>
             </Box>
           </Box>

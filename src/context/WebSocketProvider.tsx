@@ -4,12 +4,14 @@ import ReactDOM from 'react-dom';
 import { isEqual } from 'lodash';
 import { WebSocketContext, NamespaceData, WecsCluster } from './WebSocketContext';
 import { getWebSocketUrl } from '../lib/api';
+import { useTranslation } from 'react-i18next';
 
 interface WebSocketProviderProps {
   children: React.ReactNode;
 }
 
 export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }) => {
+  const { t } = useTranslation();
   const wsRef = useRef<WebSocket | null>(null);
   const wecsWsRef = useRef<WebSocket | null>(null);
   const queryClient = useQueryClient();
@@ -24,6 +26,12 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   const [hasValidData, setHasValidData] = useState(false);
   const [hasValidWecsData, setHasValidWecsData] = useState(false);
   const [wecsData, setWecsData] = useState<WecsCluster[] | null>(null); // Updated from WecsClusterData[] to WecsCluster[]
+
+  // Get excluded namespaces from translations
+  const excludedNamespaces = useMemo(
+    () => t('clusters.excluded', { returnObjects: true }) as string[],
+    [t]
+  );
 
   // Wrap sortNamespaceData in useCallback
   const sortNamespaceData = useCallback((data: NamespaceData[]): NamespaceData[] => {
@@ -105,17 +113,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
             const filteredWecsData = (data as WecsCluster[]).map(cluster => ({
               ...cluster,
               namespaces: cluster.namespaces?.filter(
-                ns =>
-                  ![
-                    'kubestellar-report',
-                    'kube-node-lease',
-                    'kube-public',
-                    'default',
-                    'kube-system',
-                    'open-cluster-management-hub',
-                    'open-cluster-management',
-                    'local-path-storage',
-                  ].includes(ns.namespace)
+                ns => !excludedNamespaces.includes(ns.namespace)
               ),
             }));
             // console.log(
@@ -127,14 +125,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
             setHasValidWecsData(true);
           } else {
             const filteredData = (data as NamespaceData[]).filter(
-              namespace =>
-                ![
-                  'kubestellar-report',
-                  'kube-node-lease',
-                  'kube-public',
-                  'default',
-                  'kube-system',
-                ].includes(namespace.name)
+              namespace => !excludedNamespaces.includes(namespace.name)
             );
             // console.log(
             //   `[WebSocket] Filtered ${filteredData.length} namespaces from ${
@@ -185,7 +176,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
 
       return ws;
     },
-    [queryClient, sortNamespaceData, NAMESPACE_QUERY_KEY]
+    [queryClient, sortNamespaceData, NAMESPACE_QUERY_KEY, excludedNamespaces]
   );
 
   const reconnectWebSocket = useCallback(

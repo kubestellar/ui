@@ -6,6 +6,7 @@ import ClientThemeWrapper from './context/ClientThemeWrapper.tsx';
 import { QueryProvider } from './lib/react-query/QueryProvider';
 import ToastProvider from './components/providers/ToastProvider.tsx';
 import { WebSocketProvider } from './context/WebSocketProvider.tsx';
+import './i18n.ts';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

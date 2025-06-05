@@ -6,7 +6,7 @@ export interface CSRStatus {
 class CSRStatusManager {
   private clusterName: string;
   private onUpdate: (status: CSRStatus) => void;
-  private onError: (message: string) => void; // ✅ Add error callback
+  private onError: (message: string) => void;
   private intervalId: NodeJS.Timeout | null = null;
 
   constructor(

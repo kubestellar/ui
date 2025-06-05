@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Button, TextField, SxProps, Theme } from '@mui/material';
 import { Colors } from './ImportClusters';
 import CancelButton from './common/CancelButton';
+import { useTranslation } from 'react-i18next';
 
 interface ApiUrlImportTabProps {
   theme: string;
@@ -26,6 +27,7 @@ const ApiUrlImportTab: React.FC<ApiUrlImportTabProps> = ({
   setFormData,
   handleCancel,
 }) => {
+  const { t } = useTranslation();
   const textColor = theme === 'dark' ? colors.white : colors.text;
 
   return (
@@ -73,10 +75,10 @@ const ApiUrlImportTab: React.FC<ApiUrlImportTabProps> = ({
           </Box>
           <Box>
             <Box sx={{ fontWeight: 600, fontSize: '1rem', color: textColor }}>
-              Connect via API/URL
+              {t('clusters.apiUrl.title')}
             </Box>
             <Box sx={{ color: colors.textSecondary, fontSize: '0.875rem', mt: 0.5 }}>
-              Import your cluster by providing the API endpoint and authentication details
+              {t('clusters.apiUrl.description')}
             </Box>
           </Box>
         </Box>

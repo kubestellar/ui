@@ -10,6 +10,7 @@ import ProfileSection from './ProfileSection';
 import { motion, AnimatePresence } from 'framer-motion';
 import getThemeStyles from '../lib/theme-utils';
 import CommandPalette from './CommandPalette';
+import { useTranslation } from 'react-i18next';
 
 interface HeaderProps {
   isLoading: boolean;
@@ -23,6 +24,7 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
   const [lastScrollTop, setLastScrollTop] = useState(0);
 
   const { data: authData } = useAuth();
+  const { t } = useTranslation();
 
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === 'dark';
@@ -116,7 +118,7 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
             onClick={toggleMobileMenu}
             className="btn btn-circle transition-all duration-300 hover:scale-105 active:scale-95"
             style={getButtonStyle()}
-            aria-label={isMobileMenuOpen ? 'Close main menu' : 'Open main menu'}
+            aria-label={t('header.menu')}
             animate={isMobileMenuOpen ? 'open' : 'closed'}
             variants={menuButtonVariants}
             transition={{ duration: 0.3, type: 'spring', stiffness: 300, damping: 20 }}
@@ -175,7 +177,7 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
                 onClick={toggleTheme}
                 className="btn btn-circle transition-all duration-300 hover:scale-105 active:scale-95"
                 style={getButtonStyle()}
-                aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+                aria-label={t('header.themeToggle')}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               >

@@ -1,30 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { Home, RefreshCw, Rocket } from 'lucide-react';
-
-const quotes = [
-  {
-    text: 'In space, no one can hear you 404.',
-    author: 'Space Explorer',
-  },
-  {
-    text: 'Lost among the stars, but not forgotten.',
-    author: 'Cosmic Wanderer',
-  },
-  {
-    text: 'Every wrong turn is just another adventure in the cosmos.',
-    author: 'Stellar Navigator',
-  },
-];
+import { useTranslation } from 'react-i18next';
 
 const NotFoundPage: React.FC = () => {
+  const { t } = useTranslation();
   const [currentQuote, setCurrentQuote] = useState(0);
+
+  const quotes = t('notFoundPage.quotes', { returnObjects: true }) as Array<{
+    text: string;
+    author: string;
+  }>;
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentQuote(prev => (prev + 1) % quotes.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [quotes.length]);
 
   return (
     <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-base-200">
@@ -259,7 +251,7 @@ const NotFoundPage: React.FC = () => {
         <div className="flex justify-center">
           <img
             src="/KubeStellar.png"
-            alt="KubeStellar Logo"
+            alt={t('notFoundPage.logoAlt')}
             className="mr-11 h-16 transition-transform duration-300 hover:scale-105 md:h-24"
           />
         </div>
@@ -267,11 +259,9 @@ const NotFoundPage: React.FC = () => {
         {/* 404 Text */}
         <div className="space-y-4">
           <h2 className="text-2xl font-semibold text-base-content md:text-3xl">
-            Houston, We Have a Problem
+            {t('notFoundPage.mainTitle')}
           </h2>
-          <p className="mx-auto max-w-md text-base-content/70">
-            The page you're looking for has drifted into deep space.
-          </p>
+          <p className="mx-auto max-w-md text-base-content/70">{t('notFoundPage.description')}</p>
         </div>
 
         {/* Quote Section */}
@@ -295,14 +285,14 @@ const NotFoundPage: React.FC = () => {
         <div className="flex flex-col justify-center gap-4 sm:flex-row">
           <button onClick={() => (window.location.href = '/')} className="btn btn-primary">
             <Home size={20} />
-            Return Home
+            {t('notFoundPage.returnHomeButton')}
           </button>
           <button
             onClick={() => window.location.reload()}
             className="group btn btn-ghost gap-2 transition-all duration-300 hover:scale-105"
           >
             <RefreshCw className="transition-transform group-hover:rotate-180" size={20} />
-            Try Again
+            {t('notFoundPage.tryAgainButton')}
           </button>
         </div>
       </div>

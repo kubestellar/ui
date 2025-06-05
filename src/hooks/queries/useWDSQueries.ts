@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient, UseQueryResult } from '@tanstack
 import { api } from '../../lib/api';
 import { toast } from 'react-hot-toast';
 import { AxiosError } from 'axios';
+import { useTranslation } from 'react-i18next';
 
 interface Workload {
   name: string;
@@ -107,6 +108,7 @@ interface WorkloadData {
 
 export const useWDSQueries = () => {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   // GET /api/wds/workloads
   const useWorkloads = (): UseQueryResult<Workload[], Error> => {
@@ -121,8 +123,8 @@ export const useWDSQueries = () => {
     });
 
     if (query.error) {
-      toast.error('Failed to fetch workloads');
-      console.error('Error fetching workloads:', query.error);
+      toast.error(t('wdsQueries.errors.fetchWorkloads'));
+      console.error(t('wdsQueries.errors.errorFetchingWorkloads'), query.error);
     }
 
     return query;
@@ -143,8 +145,8 @@ export const useWDSQueries = () => {
     });
 
     if (query.error) {
-      toast.error('Failed to fetch workload details');
-      console.error('Error fetching workload details:', query.error);
+      toast.error(t('wdsQueries.errors.fetchWorkloadDetails'));
+      console.error(t('wdsQueries.errors.errorFetchingWorkloadDetails'), query.error);
     }
 
     return query;
@@ -165,7 +167,7 @@ export const useWDSQueries = () => {
     });
 
     if (query.error) {
-      console.warn('Status fetch failed:', query.error);
+      console.warn(t('wdsQueries.errors.statusFetchFailed'), query.error);
     }
 
     return query;
@@ -176,8 +178,8 @@ export const useWDSQueries = () => {
     useMutation({
       mutationFn: async ({ data }: { data: WorkloadData }) => {
         // Extract 'kind' and 'namespace' from the raw data
-        const kind = data.kind?.toLowerCase() || 'deployment'; // Default to 'deployment' if not present
-        const namespace = data.metadata?.namespace || 'default'; // Default to 'default' if not present
+        const kind = data.kind?.toLowerCase() || t('wdsQueries.defaults.deploymentKind');
+        const namespace = data.metadata?.namespace || t('wdsQueries.defaults.defaultNamespace');
 
         // Construct the dynamic endpoint (e.g., /api/deployments/default)
         const endpoint = `/api/${kind}s/${namespace}`; // Pluralize 'kind' (e.g., 'deployment' -> 'deployments')
@@ -188,11 +190,11 @@ export const useWDSQueries = () => {
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['workloads'] });
-        toast.success('Workload created successfully');
+        toast.success(t('wdsQueries.success.workloadCreated'));
       },
       onError: (error: Error) => {
-        toast.error('Failed to create workload');
-        console.error('Error creating workload:', error);
+        toast.error(t('wdsQueries.errors.createWorkloadFailed'));
+        console.error(t('wdsQueries.errors.errorCreatingWorkload'), error);
       },
     });
 
@@ -212,16 +214,16 @@ export const useWDSQueries = () => {
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['workloads'] });
-        toast.success('File uploaded successfully');
+        toast.success(t('wdsQueries.success.fileUploaded'));
       },
       onError: (error: AxiosError) => {
-        toast.error('Failed to upload file');
-        console.error('Error uploading file:', {
+        toast.error(t('wdsQueries.errors.uploadFileFailed'));
+        console.error(t('wdsQueries.errors.errorUploadingFile'), {
           message: error.message,
           status: error.response?.status,
           data: error.response?.data,
           headers: error.response?.headers,
-          config: error.config, // Log the full config for debugging
+          config: error.config,
         });
       },
     });
@@ -235,11 +237,11 @@ export const useWDSQueries = () => {
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['workloads'] });
-        toast.success('Workload updated successfully');
+        toast.success(t('wdsQueries.success.workloadUpdated'));
       },
       onError: (error: Error) => {
-        toast.error('Failed to update workload');
-        console.error('Error updating workload:', error);
+        toast.error(t('wdsQueries.errors.updateWorkloadFailed'));
+        console.error(t('wdsQueries.errors.errorUpdatingWorkload'), error);
       },
     });
 
@@ -266,11 +268,11 @@ export const useWDSQueries = () => {
         queryClient.invalidateQueries({
           queryKey: ['workload', variables.namespace, variables.name],
         });
-        toast.success(`Scaled workload to ${variables.replicas} replicas`);
+        toast.success(t('wdsQueries.success.workloadScaled', { replicas: variables.replicas }));
       },
       onError: (error: Error) => {
-        toast.error('Failed to scale workload');
-        console.error('Error scaling workload:', error);
+        toast.error(t('wdsQueries.errors.scaleWorkloadFailed'));
+        console.error(t('wdsQueries.errors.errorScalingWorkload'), error);
       },
     });
 
@@ -288,11 +290,11 @@ export const useWDSQueries = () => {
         queryClient.invalidateQueries({
           queryKey: ['workload', variables.namespace, variables.name],
         });
-        toast.success('Workload deleted successfully');
+        toast.success(t('wdsQueries.success.workloadDeleted'));
       },
       onError: (error: Error) => {
-        toast.error('Failed to delete workload');
-        console.error('Error deleting workload:', error);
+        toast.error(t('wdsQueries.errors.deleteWorkloadFailed'));
+        console.error(t('wdsQueries.errors.errorDeletingWorkload'), error);
       },
     });
 
@@ -309,8 +311,8 @@ export const useWDSQueries = () => {
     });
 
     if (query.error) {
-      toast.error('Failed to fetch workload logs');
-      console.error('Error fetching workload logs:', query.error);
+      toast.error(t('wdsQueries.errors.fetchWorkloadLogsFailed'));
+      console.error(t('wdsQueries.errors.errorFetchingWorkloadLogs'), query.error);
     }
 
     return query;
