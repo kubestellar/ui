@@ -38,8 +38,22 @@ RUN mv commit_hash.txt dist/
 
 # Stage 2: Serve with Nginx
 FROM ghcr.io/kubestellar/nginx:alpine AS frontend
+
+# Install gettext for envsubst
+RUN apk add --no-cache gettext
+
+# Copy build output
 COPY --from=frontend-builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copy nginx template (make sure this file exists in your project root)
+COPY nginx.conf /etc/nginx/templates/default.conf.template
+
+# Create startup script
+RUN echo '#!/bin/sh' > /docker-entrypoint.sh && \
+    echo 'envsubst "\$NGINX_HOST \$BACKEND_URL" < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf' >> /docker-entrypoint.sh && \
+    echo 'exec "$@"' >> /docker-entrypoint.sh && \
+    chmod +x /docker-entrypoint.sh
 
 EXPOSE 80
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
