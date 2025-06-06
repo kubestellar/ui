@@ -272,7 +272,8 @@ const BP: React.FC = () => {
     });
   }, [bindingPolicies, searchQuery, activeFilters.status]);
 
-  const filteredPolicies = getFilteredPolicies();  const paginatedPolicies = filteredPolicies.slice(
+  const filteredPolicies = getFilteredPolicies();
+  const paginatedPolicies = filteredPolicies.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -839,7 +840,8 @@ const BP: React.FC = () => {
                   setActiveFilters={setActiveFilters}
                   selectedPolicies={selectedPolicies}
                   onSelectionChange={setSelectedPolicies}
-                />                <BPPagination
+                />{' '}
+                <BPPagination
                   filteredCount={filteredPolicies.length}
                   totalCount={bindingPolicies.length}
                   itemsPerPage={itemsPerPage}
