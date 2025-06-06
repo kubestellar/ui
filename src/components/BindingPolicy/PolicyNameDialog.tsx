@@ -16,6 +16,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import useTheme from '../../stores/themeStore';
+import { useTranslation } from 'react-i18next';
 
 interface PolicyNameDialogProps {
   open: boolean;
@@ -38,6 +39,7 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
 }) => {
   const theme = useTheme(state => state.theme);
   const isDarkTheme = theme === 'dark';
+  const { t } = useTranslation();
 
   const [policyName, setPolicyName] = useState(defaultName);
   const [isEditing, setIsEditing] = useState(false);
@@ -139,7 +141,7 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
               fontWeight: 600,
             }}
           >
-            Name Your Binding Policy
+            {t('bindingPolicy.policyNameDialog.title')}
           </Typography>
         </Box>
 
@@ -202,7 +204,7 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
                 fontWeight: 500,
               }}
             >
-              Policy Name
+              {t('bindingPolicy.policyNameDialog.policyName')}
             </Typography>
             <IconButton
               size="small"
@@ -213,7 +215,7 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
                   bgcolor: isDarkTheme ? 'rgba(251, 191, 36, 0.1)' : 'rgba(217, 119, 6, 0.1)',
                 },
               }}
-              title="Generate new name"
+              title={t('bindingPolicy.policyNameDialog.generateNew')}
             >
               <AutoAwesomeIcon fontSize="small" />
             </IconButton>
@@ -226,12 +228,12 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
               setPolicyName(e.target.value);
               setIsEditing(true);
             }}
-            placeholder="Enter binding policy name..."
+            placeholder={t('bindingPolicy.policyNameDialog.placeholder')}
             error={isEditing && !isNameValid}
             helperText={
               isEditing && !isNameValid
-                ? 'Name must be lowercase alphanumeric with hyphens, max 253 characters'
-                : 'Use lowercase letters, numbers, and hyphens only'
+                ? t('bindingPolicy.policyNameDialog.invalid')
+                : t('bindingPolicy.policyNameDialog.helper')
             }
             sx={{
               '& .MuiInputBase-root': {
@@ -301,7 +303,7 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
                 fontWeight: 500,
               }}
             >
-              💡 Naming Tips:
+              {t('bindingPolicy.policyNameDialog.namingTipsTitle')}
             </Typography>
             <Typography
               variant="caption"
@@ -310,8 +312,7 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
                 lineHeight: 1.4,
               }}
             >
-              Use descriptive names like "frontend-to-production" or "database-sync-policy" for
-              better organization.
+              {t('bindingPolicy.policyNameDialog.namingTips')}
             </Typography>
           </Box>
         </Box>
@@ -340,7 +341,7 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
             },
           }}
         >
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           variant="contained"
@@ -390,10 +391,10 @@ const PolicyNameDialog: React.FC<PolicyNameDialogProps> = ({
                   },
                 }}
               />
-              Creating...
+              {t('bindingPolicy.policyNameDialog.creating')}
             </Box>
           ) : (
-            'Create Policy'
+            t('bindingPolicy.policyNameDialog.createPolicy')
           )}
         </Button>
       </DialogActions>

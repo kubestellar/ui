@@ -37,6 +37,7 @@ import { usePolicyDragDropStore } from '../../stores/policyDragDropStore';
 import { useBPQueries } from '../../hooks/queries/useBPQueries';
 import { toast } from 'react-hot-toast';
 import CancelButton from '../common/CancelButton';
+import { useTranslation } from 'react-i18next';
 
 export interface PolicyData {
   name: string;
@@ -79,6 +80,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   const theme = useTheme(state => state.theme);
   const { textColor, helperTextColor } = getBaseStyles(theme);
   const enhancedTabContentStyles = getEnhancedTabContentStyles(theme);
+  const { t } = useTranslation();
 
   const [activeTab, setActiveTab] = useState<string>('selection');
   const [editorContent, setEditorContent] = useState<string>(DEFAULT_BINDING_POLICY_TEMPLATE);
@@ -197,7 +199,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
       if (fileType === 'yaml' || fileType === 'yml') {
         handleFileSelection(file);
       } else {
-        setError('Only YAML files are allowed. Please drop a .yaml or .yml file.');
+        setError(t('bindingPolicy.upload.onlyYamlFiles'));
       }
     }
   };
@@ -491,7 +493,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
     console.log('Creating binding policy with:', { clusterIds, workloadIds, config });
 
     if (clusterIds.length === 0 || workloadIds.length === 0) {
-      toast.error('Both cluster and workload are required');
+      toast.error(t('bindingPolicy.errors.clusterAndWorkloadRequired'));
       return;
     }
 
@@ -762,7 +764,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
 
   const prepareForDeployment = async () => {
     if (policyCanvasEntities.clusters.length === 0 || policyCanvasEntities.workloads.length === 0) {
-      setError('Both clusters and workloads are required to create binding policies');
+      setError(t('bindingPolicy.errors.clusterAndWorkloadRequired'));
       return;
     }
 
@@ -780,26 +782,22 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   const handleCreateFromFile = async () => {
     if (activeTab === 'file') {
       if (!fileContent) {
-        setError('Please select a YAML file first');
+        setError(t('bindingPolicy.errors.selectYamlFile'));
         return;
       }
 
       if (!policyName) {
-        setError(
-          'Could not extract policy name from YAML. Please ensure your YAML has metadata.name'
-        );
+        setError(t('bindingPolicy.errors.policyNameFromYaml'));
         return;
       }
     } else if (activeTab === 'yaml') {
       if (!editorContent) {
-        setError('YAML content is required');
+        setError(t('bindingPolicy.errors.yamlContentRequired'));
         return;
       }
 
       if (!policyName) {
-        setError(
-          'Could not extract policy name from YAML. Please ensure your YAML has metadata.name'
-        );
+        setError(t('bindingPolicy.errors.policyNameFromYaml'));
         return;
       }
     }
@@ -989,7 +987,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
           }}
         >
           <Typography variant="h6" component="span" fontWeight={600}>
-            Create Binding Policy
+            {t('bindingPolicy.createBindingPolicy')}
           </Typography>
 
           <Tabs
@@ -1002,7 +1000,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
             <StyledTab
               icon={<CheckBoxIcon sx={{ color: isDarkTheme ? '#FFFFFF' : 'inherit' }} />}
               iconPosition="start"
-              label="Select Items"
+              label={t('bindingPolicy.tabs.selectItems')}
               value="selection"
               sx={{
                 color: isDarkTheme ? '#FFFFFF' : 'primary.main',
@@ -1026,7 +1024,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                 </span>
               }
               iconPosition="start"
-              label="YAML"
+              label={t('bindingPolicy.tabs.yaml')}
               value="yaml"
             />
             <StyledTab
@@ -1043,7 +1041,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                 </span>
               }
               iconPosition="start"
-              label="Upload File"
+              label={t('bindingPolicy.tabs.uploadFile')}
               value="file"
             />
           </Tabs>
@@ -1077,7 +1075,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
               {activeTab !== 'selection' && (
                 <TextField
                   fullWidth
-                  label="Binding Policy Name"
+                  label={t('bindingPolicy.policyNameDialog.policyName')}
                   value={policyName}
                   onChange={e => setPolicyName(e.target.value)}
                   required
@@ -1280,7 +1278,9 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                             mb: 2,
                           }}
                         >
-                          {isFileHovering ? 'Drop YAML File Here' : 'Choose or Upload a YAML File'}
+                          {isFileHovering
+                            ? t('bindingPolicy.upload.dropHere')
+                            : t('bindingPolicy.upload.chooseOrUpload')}
                         </Typography>
                         <Box
                           sx={{
@@ -1290,7 +1290,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                             opacity: 0.7,
                           }}
                         >
-                          - or -
+                          {t('bindingPolicy.upload.or')}
                         </Box>
                         <Button
                           variant="contained"
@@ -1312,7 +1312,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                             },
                           }}
                         >
-                          Select YAML File
+                          {t('bindingPolicy.upload.selectFile')}
                           <input
                             type="file"
                             hidden
@@ -1328,7 +1328,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                             fontSize: '0.8rem',
                           }}
                         >
-                          Accepted formats: .yaml, .yml
+                          {t('bindingPolicy.upload.acceptedFormats')}
                         </Typography>
                       </Box>
                     </StyledPaper>
@@ -1383,11 +1383,11 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                             borderRadius: '8px',
                           }}
                         >
-                          Choose Different File
+                          {t('bindingPolicy.upload.chooseDifferentFile')}
                         </Button>
                       </Box>
                       <Typography variant="subtitle1" fontWeight={500} sx={{ mb: 1 }}>
-                        File Preview:
+                        {t('bindingPolicy.upload.filePreview')}
                       </Typography>
                       <StyledPaper
                         elevation={0}
@@ -1455,7 +1455,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
               }}
             >
               <CancelButton onClick={handleCancelClick} disabled={isLoading}>
-                Cancel
+                {t('common.cancel')}
               </CancelButton>
               <Button
                 variant="contained"
@@ -1511,12 +1511,12 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                         },
                       }}
                     />
-                    {sseLoading ? 'Loading Resources...' : 'Creating...'}
+                    {sseLoading ? t('bindingPolicy.loadingResources') : t('bindingPolicy.creating')}
                   </Box>
                 ) : activeTab === 'selection' ? (
-                  'Deploy Binding Policies'
+                  t('bindingPolicy.deployBindingPolicies')
                 ) : (
-                  'Create Binding Policy'
+                  t('bindingPolicy.createBindingPolicy')
                 )}
               </Button>
             </DialogActions>
@@ -1567,7 +1567,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
       >
         <DialogTitle>
           <Typography variant="h6" sx={{ color: isDarkTheme ? '#FFFFFF' : undefined }}>
-            Preview Generated YAML
+            {t('bindingPolicy.previewGeneratedYaml')}
           </Typography>
         </DialogTitle>
         <DialogContent sx={{ p: 2 }}>
@@ -1614,7 +1614,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
               },
             }}
           >
-            Close
+            {t('common.close')}
           </Button>
           <Button
             variant="contained"
@@ -1634,10 +1634,10 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
             {isLoading ? (
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <CircularProgress size={20} sx={{ mr: 1 }} />
-                Deploying...
+                {t('bindingPolicy.deploying')}
               </Box>
             ) : (
-              'Deploy Binding Policy'
+              t('bindingPolicy.deployBindingPolicy')
             )}
           </Button>
         </DialogActions>

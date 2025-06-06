@@ -23,6 +23,7 @@ import StrictModeDroppable from './StrictModeDroppable';
 import CanvasItems from './CanvasItems';
 import ItemTooltip from './ItemTooltip';
 import useTheme from '../../stores/themeStore';
+import { useTranslation } from 'react-i18next';
 
 interface PolicyCanvasProps {
   policies: BindingPolicyInfo[];
@@ -64,6 +65,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
   const muiTheme = useMuiTheme();
   const theme = useTheme(state => state.theme);
   const isDarkTheme = theme === 'dark';
+  const { t } = useTranslation();
 
   const [canvasMode] = useState<'view' | 'connect'>('view');
   const [, setIsHovered] = useState<string | null>(null);
@@ -840,16 +842,16 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
               sx={{ mb: 1, color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary' }}
             >
               {clusters.length === 0 && workloads.length === 0
-                ? 'No clusters and workloads available'
+                ? t('bindingPolicy.emptyState.noResources.title')
                 : clusters.length === 0
-                  ? 'No clusters available'
-                  : 'No workloads available'}
+                  ? t('bindingPolicy.emptyState.noClusters.title')
+                  : t('bindingPolicy.emptyState.noWorkloads.title')}
             </Typography>
             <Typography
               variant="body2"
               sx={{ color: isDarkTheme ? 'rgba(255, 255, 255, 0.5)' : 'text.secondary' }}
             >
-              Please ensure you have access to clusters and workloads.
+              {t('bindingPolicy.emptyState.noWorkloads.description')}
             </Typography>
           </>
         ) : (
@@ -867,7 +869,9 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
               color="text.secondary"
               sx={{ opacity: 0.7, color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : undefined }}
             >
-              Select clusters and workloads from the panels to add them here
+              {t('bindingPolicy.availableItems.clickToAdd', {
+                title: t('bindingPolicy.availableItems.title'),
+              })}
             </Typography>
           </>
         )}
@@ -983,7 +987,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                 : alpha(muiTheme.palette.warning.main, 0.8),
             }}
           >
-            Namespace
+            {t('bindingPolicy.namespace')}
           </Typography>
         </Box>
 
@@ -1104,11 +1108,9 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
           title={
             <Box>
               <Typography variant="body2" fontWeight="bold">
-                Binding Policy Canvas
+                {t('bindingPolicy.canvas.policiesOnCanvas')}
               </Typography>
-              <Typography variant="body2">
-                Select cluster and workload labels to visualize binding relationships
-              </Typography>
+              <Typography variant="body2">{t('bindingPolicy.dragDrop.infoAlert')}</Typography>
             </Box>
           }
           arrow
@@ -1152,7 +1154,9 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
           {policyCanvasEntities?.clusters && policyCanvasEntities.clusters.length > 0 && (
             <Chip
               icon={<KubernetesIcon type="cluster" size={16} />}
-              label={`${policyCanvasEntities.clusters.length} Clusters`}
+              label={t('bindingPolicy.canvas.clusters', {
+                count: policyCanvasEntities.clusters.length,
+              })}
               size="small"
               color="primary"
               variant="outlined"
@@ -1174,7 +1178,9 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                   sx={{ color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined }}
                 />
               }
-              label={`${policyCanvasEntities.workloads.length} Workloads`}
+              label={t('bindingPolicy.canvas.workloads', {
+                count: policyCanvasEntities.workloads.length,
+              })}
               size="small"
               color="secondary"
               variant="outlined"
@@ -1190,7 +1196,9 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
           {connectionLines.length > 0 && (
             <Chip
               icon={<AddLinkIcon sx={{ fontSize: 16 }} />}
-              label={`${connectionLines.length} Connections`}
+              label={t('bindingPolicy.visualization.policyDistribution', {
+                count: connectionLines.length,
+              })}
               size="small"
               color="default"
               variant="outlined"
@@ -1310,7 +1318,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                       alignItems: 'center',
                     }}
                   >
-                    Clusters on Canvas:
+                    {t('bindingPolicy.canvas.clustersOnCanvas')}:
                   </Typography>
                   <Typography
                     variant="subtitle2"
@@ -1321,7 +1329,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                       alignItems: 'center',
                     }}
                   >
-                    Workloads on Canvas:
+                    {t('bindingPolicy.canvas.workloadsOnCanvas')}:
                   </Typography>
                 </Box>
 
@@ -1475,7 +1483,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                             : alpha(muiTheme.palette.info.main, 0.8),
                                         }}
                                       >
-                                        Cluster Label
+                                        {t('common.clusterLabel')}
                                       </Typography>
                                     </Box>
 
@@ -1821,7 +1829,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                             color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary',
                           }}
                         >
-                          Select clusters here
+                          {t('bindingPolicy.canvas.selectClusters')}
                         </Typography>
                       )}
                     </Box>
@@ -1977,7 +1985,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                             : alpha(muiTheme.palette.success.main, 0.8),
                                         }}
                                       >
-                                        Workload Label
+                                        {t('common.workloadLabel')}
                                       </Typography>
                                     </Box>
 
@@ -2213,7 +2221,10 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                                             : 'rgba(0, 0, 0, 0.6)',
                                         }}
                                       >
-                                        Matches: {matchingWorkloads.length} workload(s)
+                                        {t('bindingPolicy.canvas.matches', {
+                                          count: matchingWorkloads.length,
+                                          resourceType: t('common.workloads'),
+                                        })}
                                       </Typography>
                                     </>
                                   ) : (
@@ -2342,7 +2353,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                             color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary',
                           }}
                         >
-                          Select workloads here
+                          {t('bindingPolicy.canvas.selectWorkloads')}
                         </Typography>
                       )}
                     </Box>
@@ -2449,7 +2460,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
             },
           }}
         >
-          Clear Canvas
+          {t('common.clearFilter')}
         </Button>
       </Box>
 
@@ -2484,7 +2495,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
               color: isDarkTheme ? 'rgba(255, 255, 255, 0.8)' : undefined,
             }}
           >
-            Loading canvas data...
+            {t('bindingPolicy.loadingCanvas')}
           </Typography>
         </Box>
       )}

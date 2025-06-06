@@ -17,6 +17,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import { ManagedCluster } from '../../types/bindingPolicy';
 import { usePolicyDragDropStore } from '../../stores/policyDragDropStore';
 import useTheme from '../../stores/themeStore';
+import { useTranslation } from 'react-i18next';
 
 // Group representing a unique label key+value with clusters that share it
 interface LabelGroup {
@@ -51,6 +52,7 @@ const ClusterLabelsList: React.FC<ClusterLabelsListProps> = ({
   const muiTheme = useMuiTheme();
   const theme = useTheme(state => state.theme);
   const isDarkTheme = theme === 'dark';
+  const { t } = useTranslation();
 
   const renderLabelItem = (labelGroup: LabelGroup) => {
     const firstCluster = labelGroup.clusters[0];
@@ -112,7 +114,9 @@ const ClusterLabelsList: React.FC<ClusterLabelsListProps> = ({
       >
         {/* Position cluster count chip and edit button  */}
         <Box sx={{ position: 'absolute', top: 4, right: 4, display: 'flex', gap: 0.5 }}>
-          <Tooltip title={`${labelGroup.clusters.length} cluster(s)`}>
+          <Tooltip
+            title={`${labelGroup.clusters.length} ${t('clusters.list.cluster', { count: labelGroup.clusters.length })}`}
+          >
             <Chip
               size="small"
               label={`${labelGroup.clusters.length}`}
@@ -155,7 +159,7 @@ const ClusterLabelsList: React.FC<ClusterLabelsListProps> = ({
             title={
               <React.Fragment>
                 <Typography variant="caption" sx={{ fontWeight: 'bold' }} component="div">
-                  Clusters:
+                  {t('clusters.labels.tooltipTitle')}
                 </Typography>
                 <List
                   dense
@@ -227,7 +231,7 @@ const ClusterLabelsList: React.FC<ClusterLabelsListProps> = ({
                   : `${labelGroup.clusters
                       .slice(0, 2)
                       .map(c => c.name)
-                      .join(', ')} +${labelGroup.clusters.length - 2} more`}
+                      .join(', ')} +${labelGroup.clusters.length - 2} ${t('clusters.list.more')}`}
             </Typography>
           </Tooltip>
         </Box>
@@ -286,7 +290,7 @@ const ClusterLabelsList: React.FC<ClusterLabelsListProps> = ({
             textAlign: 'center',
           }}
         >
-          No cluster labels available. Please add clusters with labels to use in binding policies.
+          {t('clusters.labels.noLabelsAvailable')}
         </Typography>
       ) : (
         <Box sx={{ minHeight: '100%' }}>
@@ -299,8 +303,8 @@ const ClusterLabelsList: React.FC<ClusterLabelsListProps> = ({
               }}
             >
               {searchTerm
-                ? 'No labels match your search.'
-                : 'No labels found in available clusters.'}
+                ? t('clusters.labels.noLabelsMatchSearch')
+                : t('clusters.labels.noLabelsFound')}
             </Typography>
           ) : (
             <>
@@ -313,7 +317,7 @@ const ClusterLabelsList: React.FC<ClusterLabelsListProps> = ({
                   px: 1,
                 }}
               >
-                Click on a label to add it to the canvas
+                {t('clusters.labels.clickToAdd')}
               </Typography>
               {filteredLabels.map(labelGroup => renderLabelItem(labelGroup))}
             </>

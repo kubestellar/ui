@@ -208,7 +208,7 @@ const QuickPolicyDialog: React.FC<QuickPolicyDialogProps> = ({
       {connection && (
         <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
           <Typography variant="body2" color="text.secondary">
-            Creating connection:
+            {t('bindingPolicy.creatingConnection')}
           </Typography>
           <Chip size="small" label={connection.workloadName} color="success" />
           <ArrowForwardIcon fontSize="small" color="action" />
@@ -287,20 +287,20 @@ const QuickPolicyDialog: React.FC<QuickPolicyDialogProps> = ({
           <Box sx={{ display: 'flex', mb: 1 }}>
             <TextField
               size="small"
-              label="Key"
+              label={t('bindingPolicy.labels.key')}
               value={labelKey}
               onChange={e => setLabelKey(e.target.value)}
               sx={{ mr: 1, flexGrow: 1 }}
             />
             <TextField
               size="small"
-              label="Value"
+              label={t('bindingPolicy.labels.value')}
               value={labelValue}
               onChange={e => setLabelValue(e.target.value)}
               sx={{ mr: 1, flexGrow: 1 }}
             />
             <Button onClick={handleAddLabel} disabled={!labelKey || !labelValue}>
-              Add
+              {t('bindingPolicy.labels.add')}
             </Button>
           </Box>
 

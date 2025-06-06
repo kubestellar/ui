@@ -1,5 +1,6 @@
 {
   "common": {
+    "clearFilter": "Clear Canvas",
     "cancel": "Cancel",
     "save": "Save",
     "edit": "Edit",
@@ -47,8 +48,7 @@
     "page": "Page",
     "of": "of",
     "items": "item{{count, plural, one {} other {s}}}",
-    "filteredFrom": "filtered from {{total}}",
-    "clearFilter": "Clear Filter"
+    "filteredFrom": "filtered from {{total}}"
   },
   "installationPage": {
     "statusBadge": {
@@ -192,6 +192,8 @@
     "switchTheme": "Switch to {{mode}} mode"
   },
   "bindingPolicy": {
+    "editPolicy": "Edit Policy",
+    "saveAndCreatePolicy": "Save & Create Policy",
     "title": "Manage Binding Policies",
     "description": "Create and manage binding policies for workload distribution",
     "createBindingPolicy": "Create Binding Policy",
@@ -211,6 +213,26 @@
       "yamlGenerateError": "Failed to generate binding policy YAML",
       "quickConnectError": "Failed to create binding policy"
     },
+    "tabs": {
+      "selectItems": "Select Items",
+      "yaml": "YAML",
+      "uploadFile": "Upload File"
+    },
+    "upload": {
+      "dropHere": "Drop YAML File Here",
+      "chooseOrUpload": "Choose or Upload a YAML File",
+      "or": "- or -",
+      "selectFile": "Select YAML File",
+      "acceptedFormats": "Accepted formats: .yaml, .yml",
+      "chooseDifferentFile": "Choose Different File",
+      "filePreview": "File Preview:"
+    },
+    "previewGeneratedYaml": "Preview Generated YAML",
+    "deployBindingPolicies": "Deploy Binding Policies",
+    "deployBindingPolicy": "Deploy Binding Policy",
+    "creating": "Creating...",
+    "loadingResources": "Loading Resources...",
+    "deploying": "Deploying...",
     "table": {
       "name": "Binding Policy Name",
       "clusters": "Clusters",
@@ -243,6 +265,20 @@
       "fitView": "Fit View",
       "search": "Search nodes... (⌘+K)",
       "legend": "Legend",
+      "policyPreview": "Policy Preview",
+      "policyDistribution": "Policy Distribution",
+      "previewMode": "Preview Mode",
+      "workloadSource": "Workload Source",
+      "matchingWorkloads": "{{count}} matching workload{{count, plural, one {} other {s}}}",
+      "matchRateShort": "{{matchRate}}% Match",
+      "targetClusters": "Target Clusters ({{count}})",
+      "moreClusters": "+{{count}} more",
+      "policyInsights": "Policy Insights",
+      "status": "Status",
+      "lastModified": "Last Modified",
+      "notModified": "Not modified",
+      "matchRate": "Match Rate",
+      "matchRateLong": "{{matchRate}}% of available clusters",
       "legendItems": {
         "activePolicy": "Active Policy",
         "cluster": "Cluster",
@@ -321,6 +357,7 @@
         "button": "Create Binding Policy"
       }
     },
+    "loadingCanvas": "Loading canvas data...",
     "dragDrop": {
       "infoAlert": "This interface is using simulated responses to create binding policies. Select clusters and workloads from the lists to add them to the canvas, then click on a workload and then a cluster to create a binding policy connection.",
       "helpDialog": {
@@ -333,7 +370,21 @@
           "fillDetails": "4. Fill in the policy details in the dialog that appears",
           "deploy": "5. Use the 'Deploy Binding Policies' button to simulate deployment"
         },
-        "gotIt": "Got it"
+        "gotIt": "Got it",
+        "helpDialog": {
+          "title": "How to Create Binding Policies",
+          "intro": "Follow these steps to create binding policies:",
+          "steps": {
+            "selectLabels": "1. Select labels to add to the canvas",
+            "selectLabelsDesc": "Click on clusters from the left panel and workloads from the right panel to add them to the binding policy canvas",
+            "deploy": "2. Deploy your policies",
+            "deployDesc": "Click 'Deploy Binding Policies' to create and deploy binding policies that connect workloads to clusters based on the selected labels"
+          },
+          "tip": "Tip: The label-based approach allows you to create powerful binding policies that automatically apply to all resources matching the selected labels, both now and in the future.",
+          "dontShowAgain": "Don't Show Again",
+          "gotIt": "Got it",
+          "tooltip": "View selection instructions"
+        }
       }
     },
     "messages": {
@@ -390,9 +441,72 @@
     },
     "canvas": {
       "policiesOnCanvas": "Policies on Canvas:",
+      "clusters": "{{count}} Clusters",
+      "workloads": "{{count}} Workloads",
       "status": "Status:",
       "namespace": "Namespace:",
       "namespaces": "Namespaces:"
+    },
+    "labels": {
+      "title": "Labels:",
+      "key": "Key",
+      "value": "Value",
+      "add": "Add"
+    },
+    "creatingConnection": "Creating connection:",
+    "previewDialog": {
+      "title": "Policy Preview & Insights",
+      "visualizationTab": "Visualization",
+      "detailsTab": "Details",
+      "matchingDetails": "Matching Details",
+      "matchedClusters": "Matched Clusters ({{count}})",
+      "clusterStatus": "{{name}} - {{status}}",
+      "labels": "Labels: {{labels}}",
+      "matchedWorkloads": "Matched Workloads ({{count}})",
+      "workloadNamespace": "{{name}} ({{namespace}})"
+    },
+    "policyNameDialog": {
+      "title": "Name Your Binding Policy",
+      "policyName": "Policy Name",
+      "generateNew": "Generate new name",
+      "placeholder": "Enter binding policy name...",
+      "invalid": "Name must be lowercase alphanumeric with hyphens, max 253 characters",
+      "helper": "Use lowercase letters, numbers, and hyphens only",
+      "namingTipsTitle": "💡 Naming Tips:",
+      "namingTips": "Use descriptive names like \"frontend-to-production\" or \"database-sync-policy\" for better organization.",
+      "creating": "Creating...",
+      "createPolicy": "Create Policy"
+    },
+    "configureDialog": {
+      "title": "Configure Binding Policy",
+      "creatingFor": "Creating Binding Policy for:",
+      "creatingForDesc": "This will create a binding policy that links the {{sourceType}} to the {{targetType}}.",
+      "tabs": {
+        "basic": "Basic",
+        "advanced": "Advanced",
+        "scheduling": "Scheduling",
+        "yaml": "YAML"
+      },
+      "nameHelper": "Name of the binding policy",
+      "namespaceHelper": "Namespace for the binding policy",
+      "updateStrategyHelper": "Select how changes to resources should be applied to clusters. Add clusters and workloads by selecting them from the panels.",
+      "addCustomLabels": "Add custom labels",
+      "labelsTooltip": "Labels help identify and select resources",
+      "tolerationsTitle": "Tolerations (Advanced)",
+      "tolerationExpression": "Toleration Expression",
+      "tolerationRequired": "Toleration is required",
+      "schedulingRules": "Scheduling Rules",
+      "schedulingTooltip": "Define conditions that must be met for a cluster to receive this workload",
+      "resource": "Resource",
+      "resource.cpu": "CPU Cores",
+      "resource.memory": "Memory",
+      "resource.storage": "Storage",
+      "resource.pods": "Available Pods",
+      "operator": "Operator",
+      "activeRules": "Active Rules:",
+      "noSchedulingRules": "No scheduling rules added. The policy will apply to all matching clusters regardless of their resources.",
+      "yamlPreview": "YAML Preview",
+      "yamlPreviewInfo": "This is a preview of the YAML that will be applied. You can make changes in the other tabs to update this preview."
     }
   },
   "clusters": {
@@ -452,6 +566,22 @@
       "local-path-storage"
     ],
     "labels": {
+      "clearFilter": "Clear Filter",
+      "searchLabelsPlaceholder": "Search labels...",
+      "bulkEditTitle": "Edit Labels for {{count}} Clusters",
+      "editTitle": "Edit Labels for {{name}}",
+      "bulkEditDescription": "You are editing labels for {{count}} clusters. The changes will be applied to all selected clusters.",
+      "keyPlaceholder": "e.g. environment",
+      "valuePlaceholder": "e.g. production",
+      "protectedLabelsCannotBeModified": "🔒 Protected labels cannot be modified.",
+      "exitSearch": "Exit search",
+      "saveChanges": "Save changes",
+      "saveChangesButton": "Save Changes",
+      "tooltipTitle": "Clusters:",
+      "noLabelsAvailable": "No cluster labels available. Please add clusters with labels to use in binding policies.",
+      "noLabelsMatchSearch": "No labels match your search.",
+      "noLabelsFound": "No labels found in available clusters.",
+      "clickToAdd": "Click on a label to add it to the canvas",
       "edit": "Edit Labels",
       "add": "Add Labels",
       "bulkEdit": "Bulk Edit Mode",
@@ -478,9 +608,22 @@
       "updateSuccess": "Label updated successfully",
       "duplicate": "Label with key \"{{key}}\" already exists",
       "protected": "Cannot modify protected label: {{key}}",
-      "finishEditing": "Finish Editing"
+      "finishEditing": "Finish Editing",
+      "noClustersToEdit": "No clusters available to edit",
+      "noClustersSelected": "No clusters selected",
+      "cannotDeleteUsed": "Labels are used in Binding Policy and cannot be deleted. Please remove the policy first.",
+      "bulkUpdateSuccess": "Labels updated for all {{count}} clusters",
+      "bulkUpdatePartial": "Labels updated for {{success}} clusters, failed for {{failures}} clusters",
+      "bulkUpdateFail": "Failed to update labels for all {{count}} clusters"
+    },
+    "dialog": {
+      "selectMultipleClusters": "Select Multiple Clusters",
+      "selectClusterToEdit": "Select Cluster to Edit",
+      "selectedCount": "{{count}} selected",
+      "editClustersButton": "Edit {{count}} Clusters"
     },
     "list": {
+      "more": "more",
       "title": "Manage Clusters",
       "subtitle": "Manage and monitor your Kubernetes clusters",
       "searchPlaceholder": "Search clusters by name, label, status or context...",
@@ -501,6 +644,7 @@
       "clearSearch": "Press Esc to clear search",
       "importCluster": "Import Cluster",
       "importYourFirst": "Import Your First Cluster",
+      "searchLabelsPlaceholder": "Search labels...",
       "search": "Search",
       "label": "Label",
       "filteredByLabel": "Filtered by label:",
@@ -942,6 +1086,7 @@
     }
   },
   "visualization": {
+    "policyDistribution": "{{count}} Connections",
     "clusters": {
       "edge": "Edge Cluster",
       "aiInference": "AI Inferencing Cluster",

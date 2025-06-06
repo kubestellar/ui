@@ -316,7 +316,7 @@ const DeploymentConfirmationDialog: React.FC<DeploymentConfirmationDialogProps> 
             borderTop: darkMode ? '1px solid rgba(255, 255, 255, 0.15)' : undefined,
           }}
         >
-          <CancelButton onClick={() => setSelectedPolicy(null)}>Close</CancelButton>
+          <CancelButton onClick={() => setSelectedPolicy(null)}>{t('common.close')}</CancelButton>
         </DialogActions>
       </Dialog>
     </Dialog>

@@ -40,6 +40,7 @@ import LockIcon from '@mui/icons-material/Lock';
 import { Tag, Tags } from 'lucide-react';
 import { ManagedCluster } from '../../types/bindingPolicy';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 interface ColorTheme {
   primary: string;
@@ -123,6 +124,7 @@ export const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
   isDark,
   colors,
 }) => {
+  const { t } = useTranslation();
   const [labels, setLabels] = useState<Array<{ key: string; value: string }>>([]);
   const [deletedLabels, setDeletedLabels] = useState<string[]>([]);
   const [newKey, setNewKey] = useState('');
@@ -569,8 +571,8 @@ export const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
           <LabelIcon style={{ color: colors.primary }} />
           <Typography variant="h6" component="span">
             {isBulkEdit
-              ? `Edit Labels for ${clusters.length} Clusters`
-              : `Edit Labels for ${cluster?.name}`}
+              ? t('clusters.labels.bulkEditTitle', { count: clusters.length })
+              : t('clusters.labels.editTitle', { name: cluster?.name })}
           </Typography>
         </div>
         <IconButton onClick={onClose} size="small" style={{ color: colors.textSecondary }}>
@@ -585,16 +587,14 @@ export const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
               variant="subtitle2"
               style={{ marginBottom: '8px', color: colors.textSecondary }}
             >
-              Bulk Edit Mode
+              {t('clusters.labels.bulkEdit')}
             </Typography>
             <Typography
               variant="body2"
               style={{ marginBottom: '12px', color: colors.textSecondary }}
             >
-              You are editing labels for {clusters.length} clusters. The changes will be applied to
-              all selected clusters.
+              {t('clusters.labels.bulkEditDescription', { count: clusters.length })}
             </Typography>
-
             <FormControlLabel
               control={
                 <Checkbox
@@ -609,9 +609,7 @@ export const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                 />
               }
               label={
-                <Typography variant="body2">
-                  Append to existing labels (unchecking will replace all existing labels)
-                </Typography>
+                <Typography variant="body2">{t('clusters.labels.appendToExisting')}</Typography>
               }
             />
           </Box>
@@ -620,14 +618,17 @@ export const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
         <div className="mb-6">
           <div className="mb-4 flex items-center justify-between">
             <Typography variant="body2" style={{ color: colors.textSecondary }}>
-              Add, edit, or remove labels to organize and categorize your cluster.
+              {t('clusters.labels.description')}
               <span style={{ color: colors.warning, marginLeft: '4px' }}>
-                🔒 Protected labels cannot be modified.
+                {t('clusters.labels.protectedLabelsCannotBeModified')}
               </span>
             </Typography>
-
             <div className="flex gap-2">
-              <Tooltip title={isSearching ? 'Exit search' : 'Search labels'}>
+              <Tooltip
+                title={
+                  isSearching ? t('clusters.labels.exitSearch') : t('clusters.list.labels.search')
+                }
+              >
                 <IconButton
                   size="small"
                   onClick={toggleSearchMode}
@@ -646,7 +647,7 @@ export const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
               {labels.length > 0 && (
                 <Chip
                   size="small"
-                  label={`${labels.length} label${labels.length !== 1 ? 's' : ''}`}
+                  label={t('clusters.labels.count', { count: labels.length })}
                   style={{
                     backgroundColor: isDark
                       ? 'rgba(47, 134, 255, 0.15)'
@@ -663,7 +664,7 @@ export const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
             <div className="mb-4">
               <TextField
                 id="label-search-input"
-                placeholder="Search labels..."
+                placeholder={t('clusters.list.labels.searchLabelsPlaceholder')}
                 value={labelSearch}
                 onChange={e => setLabelSearch(e.target.value)}
                 fullWidth
@@ -705,8 +706,8 @@ export const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
             <div className="mb-5">
               <div className="mb-2 flex flex-col gap-2 sm:flex-row">
                 <TextField
-                  label="Label Key"
-                  placeholder="e.g. environment"
+                  label={t('clusters.labels.key')}
+                  placeholder={t('clusters.labels.keyPlaceholder')}
                   value={newKey}
                   onChange={e => setNewKey(e.target.value)}
                   inputRef={keyInputRef}
@@ -731,8 +732,8 @@ export const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                   }}
                 />
                 <TextField
-                  label="Label Value"
-                  placeholder="e.g. production"
+                  label={t('clusters.labels.value')}
+                  placeholder={t('clusters.labels.valuePlaceholder')}
                   value={newValue}
                   onChange={e => setNewValue(e.target.value)}
                   inputRef={valueInputRef}
@@ -769,22 +770,11 @@ export const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  Add
+                  {t('common.add')}
                 </Button>
               </div>
               <Typography variant="caption" style={{ color: colors.textSecondary }}>
-                Tip: Press{' '}
-                <span
-                  style={{
-                    fontFamily: 'monospace',
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-                    padding: '1px 4px',
-                    borderRadius: '2px',
-                  }}
-                >
-                  Enter
-                </span>{' '}
-                to move between fields, or double-click labels to edit them
+                {t('clusters.labels.tip')}
               </Typography>
             </div>
           </Zoom>
@@ -857,8 +847,8 @@ export const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                                 label.key.startsWith('kubernetes.io/') ||
                                 label.key.startsWith('k8s.io/') ||
                                 label.key === 'name'
-                                  ? 'Default label - Cannot be modified'
-                                  : 'Used in binding policy - Cannot be modified'
+                                  ? t('clusters.labels.defaultProtected')
+                                  : t('clusters.labels.bindingProtected')
                               }
                               placement="top"
                             >
@@ -884,7 +874,7 @@ export const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                                 inputRef={editKeyInputRef}
                                 size="small"
                                 variant="outlined"
-                                placeholder="Label key"
+                                placeholder={t('clusters.labels.key')}
                                 style={{ minWidth: '120px' }}
                                 InputProps={{
                                   style: {
@@ -908,7 +898,7 @@ export const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                                 inputRef={editValueInputRef}
                                 size="small"
                                 variant="outlined"
-                                placeholder="Label value"
+                                placeholder={t('clusters.labels.value')}
                                 style={{ minWidth: '120px' }}
                                 InputProps={{
                                   style: {
@@ -937,7 +927,7 @@ export const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                         <div className="flex items-center gap-1">
                           {isEditing ? (
                             <>
-                              <Tooltip title="Save changes">
+                              <Tooltip title={t('clusters.labels.saveChanges')}>
                                 <IconButton
                                   size="small"
                                   onClick={e => {
@@ -949,7 +939,7 @@ export const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                                   <SaveIcon fontSize="small" />
                                 </IconButton>
                               </Tooltip>
-                              <Tooltip title="Cancel editing">
+                              <Tooltip title={t('clusters.labels.cancelEdit')}>
                                 <IconButton
                                   size="small"
                                   onClick={e => {
@@ -965,7 +955,7 @@ export const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                           ) : (
                             <>
                               {!isProtected && (
-                                <Tooltip title="Edit label">
+                                <Tooltip title={t('clusters.labels.editValue')}>
                                   <IconButton
                                     size="small"
                                     onClick={e => {
@@ -996,7 +986,7 @@ export const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                                 </Tooltip>
                               )}
                               {!isProtected && (
-                                <Tooltip title="Delete label">
+                                <Tooltip title={t('clusters.labels.removeLabel')}>
                                   <IconButton
                                     size="small"
                                     onClick={e => {
@@ -1029,17 +1019,18 @@ export const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                   variant="body2"
                   style={{ color: colors.text, fontWeight: 500, marginBottom: '4px' }}
                 >
-                  {labelSearch ? 'No matching labels found' : 'No labels added yet'}
+                  {labelSearch
+                    ? t('clusters.labels.noMatchingLabels')
+                    : t('clusters.labels.noLabels')}
                 </Typography>
                 <Typography
                   variant="caption"
                   style={{ color: colors.textSecondary, maxWidth: '300px', margin: '0 auto' }}
                 >
                   {labelSearch
-                    ? 'Try a different search term or clear the search'
-                    : 'Add your first label using the fields above to help organize this cluster.'}
+                    ? t('clusters.labels.tryDifferentSearch')
+                    : t('clusters.labels.addYourFirst')}
                 </Typography>
-
                 {labelSearch && (
                   <Button
                     size="small"
@@ -1047,7 +1038,7 @@ export const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                     style={{ color: colors.primary, marginTop: '12px' }}
                     onClick={() => setLabelSearch('')}
                   >
-                    Clear Search
+                    {t('clusters.list.clearSearch')}
                   </Button>
                 )}
               </div>
@@ -1082,7 +1073,11 @@ export const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
             minWidth: '120px',
           }}
         >
-          {saving ? 'Saving...' : editingIndex !== null ? 'Finish Editing' : 'Save Changes'}
+          {saving
+            ? t('common.loading')
+            : editingIndex !== null
+              ? t('clusters.labels.finishEditing')
+              : t('clusters.labels.saveChangesButton')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -1099,6 +1094,7 @@ export const SelectClusterDialog: React.FC<SelectClusterDialogProps> = ({
   isDark,
   colors,
 }) => {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<Record<string, boolean>>({});
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
@@ -1176,7 +1172,9 @@ export const SelectClusterDialog: React.FC<SelectClusterDialogProps> = ({
       >
         <div className="flex items-center gap-2">
           <Typography variant="h6" component="span">
-            {bulkSelectMode ? 'Select Multiple Clusters' : 'Select Cluster to Edit'}
+            {bulkSelectMode
+              ? t('clusters.dialog.selectMultipleClusters')
+              : t('clusters.dialog.selectClusterToEdit')}
           </Typography>
         </div>
         <IconButton onClick={onClose} size="small" style={{ color: colors.textSecondary }}>
@@ -1199,16 +1197,20 @@ export const SelectClusterDialog: React.FC<SelectClusterDialogProps> = ({
                 }}
               />
             }
-            label="Bulk Edit Mode"
+            label={t('clusters.labels.bulkEdit')}
           />
 
           {bulkSelectMode && selectedCount > 0 && (
-            <Chip label={`${selectedCount} selected`} color="primary" size="small" />
+            <Chip
+              label={t('clusters.dialog.selectedCount', { count: selectedCount })}
+              color="primary"
+              size="small"
+            />
           )}
         </Box>
 
         <TextField
-          placeholder="Search clusters..."
+          placeholder={t('clusters.list.searchPlaceholder')}
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           fullWidth
@@ -1374,10 +1376,12 @@ export const SelectClusterDialog: React.FC<SelectClusterDialogProps> = ({
           ) : (
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4 }}>
               <Typography variant="body1" sx={{ color: colors.text, fontWeight: 500, mb: 1 }}>
-                No clusters found
+                {t('clusters.list.noResults')}
               </Typography>
               <Typography variant="body2" sx={{ color: colors.textSecondary }}>
-                {searchTerm ? 'Try a different search term' : 'No clusters available to edit'}
+                {searchTerm
+                  ? t('clusters.labels.tryDifferentSearch')
+                  : t('clusters.labels.noClustersToEdit')}
               </Typography>
             </Box>
           )}
@@ -1407,7 +1411,7 @@ export const SelectClusterDialog: React.FC<SelectClusterDialogProps> = ({
               color: colors.white,
             }}
           >
-            Edit {selectedCount} Clusters
+            {t('clusters.dialog.editClustersButton', { count: selectedCount })}
           </Button>
         )}
       </DialogActions>

@@ -975,7 +975,9 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                           : `${matchingWorkloads
                               .slice(0, 2)
                               .map(w => w.name)
-                              .join(', ')} +${matchingWorkloads.length - 2} more`}
+                              .join(
+                                ', '
+                              )} +${matchingWorkloads.length - 2} ${t('clusters.list.more')}`}
                       </Typography>
                     </>
                   )}
