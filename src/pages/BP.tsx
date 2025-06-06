@@ -50,7 +50,7 @@ interface LocationState {
 }
 
 interface FilterState {
-  status?: 'Active' | 'Inactive' | 'Pending';
+  status?: 'Active' | 'Inactive' | 'Pending' | '';
 }
 
 interface BindingPolicyConfig {
@@ -187,9 +187,12 @@ const BP: React.FC = () => {
   const [previewDialogOpen, setPreviewDialogOpen] = useState<boolean>(false);
   const [selectedPolicy, setSelectedPolicy] = useState<BindingPolicyInfo | null>(null);
   const [selectedPolicies, setSelectedPolicies] = useState<string[]>([]);
-  const [activeFilters, setActiveFilters] = useState<FilterState>({});
-  const [editDialogOpen, setEditDialogOpen] = useState<boolean>(false);
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [activeFilters, setActiveFilters] = useState<{
+    status?: 'Active' | 'Inactive' | 'Pending' | '';
+  }>({ status: '' });
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [successMessage, setSuccessMessage] = useState<string>('');
   const [viewMode, setViewMode] = useState<'table' | 'dragdrop' | 'visualize'>(
     (location.state as LocationState)?.activateView === 'dragdrop' ? 'dragdrop' : 'table'
@@ -779,22 +782,24 @@ const BP: React.FC = () => {
           policyCount={filteredPolicies.length}
           clusters={clusters}
           workloads={workloads}
+          filteredCount={filteredPolicies.length}
         />
 
-        <Box
-          sx={{
-            borderBottom: 1,
-            borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'divider',
-            mb: 2,
-          }}
-        >
-          <Tabs
-            value={viewMode}
-            onChange={handleViewModeChange}
-            aria-label="binding policy view mode"
-            sx={getTabsStyles(theme)}
+        {viewMode !== 'table' && (
+          <Box
+            sx={{
+              borderBottom: 1,
+              borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'divider',
+              mb: 2,
+            }}
           >
-            {/* 
+            <Tabs
+              value={viewMode}
+              onChange={handleViewModeChange}
+              aria-label="binding policy view mode"
+              sx={getTabsStyles(theme)}
+            >
+              {/* 
             This is commented out because the Visualize tab is not working yet. So we're only showing the Table View by default no need to show it as a tab for now.
             
             <StyledTab
@@ -813,8 +818,9 @@ const BP: React.FC = () => {
                 color: theme === "dark" ? "#E5E7EB" : undefined,
               }}
             /> */}
-          </Tabs>
-        </Box>
+            </Tabs>
+          </Box>
+        )}
 
         {viewMode === 'table' ? (
           <>
@@ -836,6 +842,7 @@ const BP: React.FC = () => {
                   onDeletePolicy={handleDeletePolicy}
                   onEditPolicy={handleEditPolicy}
                   activeFilters={activeFilters}
+                  setActiveFilters={setActiveFilters}
                   selectedPolicies={selectedPolicies}
                   onSelectionChange={setSelectedPolicies}
                 />
@@ -939,8 +946,8 @@ const BP: React.FC = () => {
             >
               <Typography variant="body2">
                 This interface is using simulated responses to create binding policies. Select
-                clusters and workloads to add them to the canvas, then click on a workload and then
-                a cluster to create a binding policy connection.
+                clusters and workloads from the lists to add them to the canvas, then click on a
+                workload and then a cluster to create a binding policy connection.
               </Typography>
             </Alert>
           </Box>
@@ -1023,13 +1030,13 @@ const BP: React.FC = () => {
               <ListItemIcon>
                 <KubernetesIcon type="cluster" size={24} />
               </ListItemIcon>
-              <ListItemText primary="1. Select clusters to add them to the canvas" />
+              <ListItemText primary="1. Select clusters from the left panel to include in the canvas" />
             </ListItem>
             <ListItem>
               <ListItemIcon>
                 <KubernetesIcon type="workload" size={24} />
               </ListItemIcon>
-              <ListItemText primary="2. Select workloads to add them to the canvas" />
+              <ListItemText primary="2. Select workloads from the right panel to include in the canvas" />
             </ListItem>
             <ListItem>
               <ListItemIcon>

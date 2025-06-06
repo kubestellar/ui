@@ -1821,7 +1821,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                             color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary',
                           }}
                         >
-                          Select clusters to add them to the canvas
+                          Select clusters here
                         </Typography>
                       )}
                     </Box>
@@ -2342,7 +2342,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
                             color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary',
                           }}
                         >
-                          Select workloads to add them to the canvas
+                          Select workloads here
                         </Typography>
                       )}
                     </Box>

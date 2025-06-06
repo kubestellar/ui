@@ -33,11 +33,18 @@ export const ClusterPanelContainer: React.FC<ClusterPanelContainerProps> = ({
   clusters,
   loading,
   error,
+  compact,
   onItemClick,
 }) => {
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <ClusterPanel clusters={clusters} loading={loading} error={error} onItemClick={onItemClick} />
+      <ClusterPanel
+        clusters={clusters}
+        loading={loading}
+        error={error}
+        compact={compact}
+        onItemClick={onItemClick}
+      />
     </Box>
   );
 };
@@ -46,7 +53,8 @@ export const WorkloadPanelContainer: React.FC<WorkloadPanelContainerProps> = ({
   workloads,
   loading,
   error,
-  onItemClick, // Missing
+  compact,
+  onItemClick,
 }) => {
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -54,7 +62,8 @@ export const WorkloadPanelContainer: React.FC<WorkloadPanelContainerProps> = ({
         workloads={workloads}
         loading={loading}
         error={error}
-        onItemClick={onItemClick} // Add this
+        compact={compact}
+        onItemClick={onItemClick}
       />
     </Box>
   );
