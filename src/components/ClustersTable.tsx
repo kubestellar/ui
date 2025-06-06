@@ -521,7 +521,8 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
         <div className="flex items-center gap-2">
           <LabelIcon style={{ color: colors.primary }} />
           <Typography variant="h6" component="span">
-            {t('clusters.labels.edit')} {t('clusters.labels.for')} <span style={{ fontWeight: 'bold' }}>{cluster?.name}</span>
+            {t('clusters.labels.edit')} {t('clusters.labels.for')}{' '}
+            <span style={{ fontWeight: 'bold' }}>{cluster?.name}</span>
           </Typography>
         </div>
         <IconButton onClick={onClose} size="small" style={{ color: colors.textSecondary }}>
@@ -933,7 +934,9 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                   variant="body2"
                   style={{ color: colors.text, fontWeight: 500, marginBottom: '4px' }}
                 >
-                  {labelSearch ? t('clusters.labels.noMatchingLabels') : t('clusters.labels.noLabels')}
+                  {labelSearch
+                    ? t('clusters.labels.noMatchingLabels')
+                    : t('clusters.labels.noLabels')}
                 </Typography>
                 <Typography
                   variant="caption"
@@ -1858,9 +1861,9 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                   boxShadow: isDark
                     ? '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2)'
                     : '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
-                    marginTop: '8px',
-                    padding: '8px',
-                    overflow: 'hidden',
+                  marginTop: '8px',
+                  padding: '8px',
+                  overflow: 'hidden',
                 },
               }}
               TransitionComponent={Fade}
@@ -2104,7 +2107,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
             {filter && (
               <Chip
                 label={`${t('clusters.status')}: ${statusFilterItems.find(item => item.value === filter)?.label}`}
-                               size="medium"
+                size="medium"
                 onDelete={() => setFilter('')}
                 sx={{
                   backgroundColor: isDark ? 'rgba(47, 134, 255, 0.15)' : 'rgba(47, 134, 255, 0.1)',

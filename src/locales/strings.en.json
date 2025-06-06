@@ -41,7 +41,14 @@
     "all": "All",
     "none": "None",
     "ok": "OK",
-    "finish": "Finish"
+    "finish": "Finish",
+    "next": "Next",
+    "previous": "Previous",
+    "page": "Page",
+    "of": "of",
+    "items": "item{{count, plural, one {} other {s}}}",
+    "filteredFrom": "filtered from {{total}}",
+    "clearFilter": "Clear Filter"
   },
   "installationPage": {
     "statusBadge": {
@@ -188,7 +195,6 @@
     "title": "Manage Binding Policies",
     "description": "Create and manage binding policies for workload distribution",
     "createBindingPolicy": "Create Binding Policy",
-    "statusFilter": "Status Filter",
     "noBindingPolicies": "No Binding Policies Found",
     "noBindingPoliciesDescription": "No binding policies available",
     "noBindingPoliciesWithFilter": "No binding policies match your {{status}} filter criteria",
@@ -228,6 +234,7 @@
     "visualization": {
       "title": "Binding Policy Network",
       "policies": "{{count}} Policies",
+      "targetCluster": "Target Cluster",
       "clusters": "{{count}} Clusters",
       "workloads": "{{count}} Workloads",
       "showWorkloads": "Show Workloads",
@@ -257,7 +264,9 @@
         "title": "Visualization Error",
         "description": "An error occurred while rendering the visualization."
       },
-      "loading": "Loading visualization..."
+      "loading": "Loading visualization...",
+      "searchResources": "Search Resources",
+      "noNodesFound": "No nodes found matching \"{{searchTerm}}\""
     },
     "policyName": "Policy Name",
     "namespace": "Namespace",
@@ -336,6 +345,54 @@
       "updateError": "Error updating binding policy \"{{name}}\"",
       "simulatedAssignment": "Successfully assigned {{policy}} to {{targetType}} {{target}}",
       "policyCreatedSuccess": "Successfully created binding policy: {{name}}"
+    },
+    "editDialog": {
+      "title": "Edit Binding Policy",
+      "infoTitle": "Info",
+      "info": "Edit your binding policy configuration. Changes will be applied after saving.",
+      "name": "Binding Policy Name",
+      "save": "Save Changes",
+      "unsavedTitle": "Unsaved Changes",
+      "unsavedWarning": "Warning",
+      "unsavedInfo": "You have unsaved changes. Are you sure you want to close without saving?",
+      "continueEditing": "Continue Editing",
+      "discard": "Discard Changes"
+    },
+    "deleteDialog": {
+      "title": "Delete Binding Policy",
+      "confirm": "Are you sure you want to delete the binding policy \"{{name}}\"? This action cannot be undone."
+    },
+    "header": {
+      "searchPlaceholder": "Search policies by name, label or status",
+      "clearSearch": "Press Esc to clear search",
+      "deleteSelected": "Delete Selected",
+      "create": "Create Binding Policy",
+      "activeFilters": "Active Filters:",
+      "search": "Search",
+      "status": "Status",
+      "clearAll": "Clear All"
+    },
+    "statusFilter": {
+      "all": "All Status",
+      "active": "Active",
+      "pending": "Pending",
+      "inactive": "Inactive",
+      "label": "Status Filter"
+    },
+    "availableItems": {
+      "title": "Available Items",
+      "subtitle": "Select and add policies, clusters, or workloads to the canvas by clicking on them.",
+      "policy-list": "Policies",
+      "cluster-list": "Clusters",
+      "workload-list": "Workloads",
+      "clickToAdd": "Click an item to add it to the canvas",
+      "none": "No {{title}} available"
+    },
+    "canvas": {
+      "policiesOnCanvas": "Policies on Canvas:",
+      "status": "Status:",
+      "namespace": "Namespace:",
+      "namespaces": "Namespaces:"
     }
   },
   "clusters": {
@@ -427,10 +484,23 @@
       "title": "Manage Clusters",
       "subtitle": "Manage and monitor your Kubernetes clusters",
       "searchPlaceholder": "Search clusters by name, label, status or context...",
+      "import": "Import Cluster",
+      "noResults": "No clusters found",
+      "name": "Name",
+      "creationTime": "Creation Time",
+      "context": "Context",
+      "description": "Manage and monitor your Kubernetes clusters",
+      "searchTip": "Press Esc to clear search",
+      "filter": "Status Filter",
+      "activeFilters": "Active Filters:",
+      "searchFilter": "Search: \"{{query}}\"",
+      "statusFilter": "Status: {{value}}",
+      "labelFilter": "Label: {{key}}={{value}}",
+      "clearAll": "Clear All",
+      "showingResults": "{{count}} result{{count, plural, one {} other {s}}}",
       "clearSearch": "Press Esc to clear search",
       "importCluster": "Import Cluster",
       "importYourFirst": "Import Your First Cluster",
-      "activeFilters": "Active Filters:",
       "search": "Search",
       "label": "Label",
       "filteredByLabel": "Filtered by label:",
@@ -1537,8 +1607,9 @@
   },
   "cancelConfirmationDialog": {
     "title": "Cancel Workload Creation",
+    "titlePolicy": "Cancel Policy Creation",
     "warning": "Warning",
-    "message": "Are you sure you want to cancel? Any changes will be lost.",
+    "message": "Are you sure you want to cancel? All changes will be lost.",
     "continueEditing": "Continue Editing",
     "yesCancel": "Yes, Cancel"
   },

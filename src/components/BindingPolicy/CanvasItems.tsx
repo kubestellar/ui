@@ -5,6 +5,7 @@ import { BindingPolicyInfo, ManagedCluster, Workload } from '../../types/binding
 import KubernetesIcon from './KubernetesIcon';
 import ConnectionIcon from './ConnectionIcon.tsx';
 import useTheme from '../../stores/themeStore';
+import { useTranslation } from 'react-i18next';
 
 interface ConnectionLine {
   source: string;
@@ -117,6 +118,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
 }) => {
   const theme = useTheme(state => state.theme);
   const isDarkTheme = theme === 'dark';
+  const { t } = useTranslation();
 
   const [itemPositions, setItemPositions] = useState<Record<string, { x: number; y: number }>>({});
 
@@ -402,7 +404,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
               color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
             }}
           >
-            Policies on Canvas:
+            {t('bindingPolicy.canvas.policiesOnCanvas')}
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
             {canvasEntities.policies.map(policyId => {
@@ -534,7 +536,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                       color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary',
                     }}
                   >
-                    Status:{' '}
+                    {t('bindingPolicy.canvas.status')}{' '}
                     <Chip
                       label={policy.status}
                       size="small"
@@ -557,7 +559,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                     }}
                     noWrap
                   >
-                    Namespace: {policy.namespace}
+                    {t('bindingPolicy.canvas.namespace')}: {policy.namespace}
                   </Typography>
                 </Paper>
               );
@@ -949,8 +951,8 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                       }}
                     >
                       {namespaces.length === 1
-                        ? `Namespace: ${namespaces[0]}`
-                        : `Namespaces: ${namespaces.length}`}
+                        ? `${t('bindingPolicy.canvas.namespace')}: ${namespaces[0]}`
+                        : `${t('bindingPolicy.canvas.namespaces')}: ${namespaces.length}`}
                     </Typography>
                   )}
 

@@ -16,6 +16,7 @@ import { Draggable } from '@hello-pangea/dnd';
 import { BindingPolicyInfo, ManagedCluster, Workload } from '../../types/bindingPolicy';
 import StrictModeDroppable from './StrictModeDroppable';
 import KubernetesIcon from './KubernetesIcon';
+import { useTranslation } from 'react-i18next';
 
 interface AvailableItemsPanelProps {
   policies: BindingPolicyInfo[];
@@ -43,6 +44,7 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
   onItemClick,
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   // Debug mount/unmount cycle
   useEffect(() => {
@@ -117,7 +119,7 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
           {title === 'Policies' && <KubernetesIcon type="policy" size={20} sx={{ mr: 1 }} />}
           {title === 'Clusters' && <KubernetesIcon type="cluster" size={20} sx={{ mr: 1 }} />}
           {title === 'Workloads' && <KubernetesIcon type="workload" size={20} sx={{ mr: 1 }} />}
-          {title}
+          {t(`bindingPolicy.availableItems.${droppableId}`)}
           {isLoading && <CircularProgress size={16} sx={{ ml: 1 }} />}
         </Typography>
 
@@ -164,7 +166,7 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
                       fontStyle: 'italic',
                     }}
                   >
-                    Click on an item to add it to the canvas
+                    {t('bindingPolicy.availableItems.clickToAdd')}
                   </Typography>
                   <List dense disablePadding>
                     {items.map((item, index) => renderItem(item, index))}
@@ -173,7 +175,9 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
               ) : (
                 <Box sx={{ py: 2, textAlign: 'center' }}>
                   <Typography variant="body2" color="text.secondary">
-                    No {title.toLowerCase()} available
+                    {t('bindingPolicy.availableItems.none', {
+                      title: t(`bindingPolicy.availableItems.${droppableId}`),
+                    })}
                   </Typography>
                 </Box>
               )}
@@ -397,11 +401,11 @@ const AvailableItemsPanel: React.FC<AvailableItemsPanelProps> = ({
   return (
     <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Typography variant="h6" gutterBottom align="center" fontWeight="medium">
-        Available Items
+        {t('bindingPolicy.availableItems.title')}
       </Typography>
 
       <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 2 }}>
-        Select items to add them to your binding policy canvas
+        {t('bindingPolicy.availableItems.subtitle')}
       </Typography>
 
       {/* Policies Section */}

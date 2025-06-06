@@ -7,6 +7,7 @@ import {
   Button,
   Typography,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import useTheme from '../../../stores/themeStore';
 import CancelButton from '../../common/CancelButton';
 
@@ -20,6 +21,7 @@ interface DeleteDialogProps {
 const DeleteDialog: React.FC<DeleteDialogProps> = ({ open, onClose, onConfirm, policyName }) => {
   const theme = useTheme(state => state.theme);
   const isDarkTheme = theme === 'dark';
+  const { t } = useTranslation();
   return (
     <Dialog
       open={open}
@@ -34,17 +36,14 @@ const DeleteDialog: React.FC<DeleteDialogProps> = ({ open, onClose, onConfirm, p
         },
       }}
     >
-      <DialogTitle>Delete Binding Policy</DialogTitle>
+      <DialogTitle>{t('bindingPolicy.deleteDialog.title')}</DialogTitle>
       <DialogContent>
-        <Typography>
-          Are you sure you want to delete the binding policy "{policyName}"? This action cannot be
-          undone.
-        </Typography>
+        <Typography>{t('bindingPolicy.deleteDialog.confirm', { name: policyName })}</Typography>
       </DialogContent>
       <DialogActions>
-        <CancelButton onClick={onClose}>Cancel</CancelButton>
+        <CancelButton onClick={onClose}>{t('common.cancel')}</CancelButton>
         <Button variant="contained" color="error" onClick={onConfirm}>
-          Delete
+          {t('common.delete')}
         </Button>
       </DialogActions>
     </Dialog>

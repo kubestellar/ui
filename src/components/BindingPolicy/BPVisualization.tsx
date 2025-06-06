@@ -43,6 +43,7 @@ import useTheme from '../../stores/themeStore';
 import PolicyNode from './nodes/PolicyNode';
 import WorkloadNode from './nodes/WorkloadNode';
 import ClusterNode from './nodes/ClusterNode';
+import { useTranslation } from 'react-i18next';
 
 // Custom components for ReactFlow
 const CustomMiniMap: React.FC<{ theme: string }> = ({ theme }) => {
@@ -274,6 +275,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ nodes, theme, onNodeSelect })
   const [searchResults, setSearchResults] = useState<Node[]>([]);
   const [showResults, setShowResults] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { t } = useTranslation();
 
   // Add keyboard shortcut (CMD+K or CTRL+K) to focus search
   useEffect(() => {
@@ -358,7 +360,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ nodes, theme, onNodeSelect })
           variant="subtitle2"
           sx={{ color: theme === 'dark' ? '#E5E7EB' : '#374151', fontWeight: 600, mb: 1 }}
         >
-          Search Resources
+          {t('bindingPolicy.visualization.searchResources')}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
           <Box
@@ -388,7 +390,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ nodes, theme, onNodeSelect })
               ref={inputRef}
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              placeholder="Search nodes... (⌘+K)"
+              placeholder={t('bindingPolicy.visualization.search')}
               style={{
                 padding: '8px 12px',
                 border: 'none',
@@ -420,7 +422,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ nodes, theme, onNodeSelect })
 
         <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
           <Chip
-            label="All"
+            label={t('common.all')}
             size="small"
             variant={!searchTerm ? 'filled' : 'outlined'}
             color={!searchTerm ? 'primary' : 'default'}
@@ -428,7 +430,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ nodes, theme, onNodeSelect })
             sx={{ fontSize: '0.75rem' }}
           />
           <Chip
-            label="Policies"
+            label={t('bindingPolicy.availableItems.policy-list')}
             size="small"
             variant={searchTerm === 'policy' ? 'filled' : 'outlined'}
             color={searchTerm === 'policy' ? 'primary' : 'default'}
@@ -436,7 +438,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ nodes, theme, onNodeSelect })
             sx={{ fontSize: '0.75rem' }}
           />
           <Chip
-            label="Clusters"
+            label={t('bindingPolicy.availableItems.cluster-list')}
             size="small"
             variant={searchTerm === 'cluster' ? 'filled' : 'outlined'}
             color={searchTerm === 'cluster' ? 'primary' : 'default'}
@@ -495,10 +497,10 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ nodes, theme, onNodeSelect })
                   sx={{ color: theme === 'dark' ? '#9CA3AF' : '#6B7280', ml: 'auto' }}
                 >
                   {node.type === 'policyNode'
-                    ? 'Policy'
+                    ? t('bindingPolicy.availableItems.policy-list')
                     : node.type === 'workloadNode'
-                      ? 'Workload'
-                      : 'Cluster'}
+                      ? t('bindingPolicy.availableItems.workload-list')
+                      : t('bindingPolicy.availableItems.cluster-list')}
                 </Typography>
               </Box>
             ))}
@@ -518,7 +520,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ nodes, theme, onNodeSelect })
               variant="body2"
               sx={{ color: theme === 'dark' ? '#D1D5DB' : '#6B7280', fontSize: '0.875rem' }}
             >
-              No nodes found matching "{searchTerm}"
+              {t('bindingPolicy.visualization.noNodesFound', { searchTerm })}
             </Typography>
           </Box>
         )}
@@ -1478,6 +1480,8 @@ const VisualizationControls: React.FC<VisualizationControlsProps> = ({
   setLoading,
   reactFlowInstance,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <Paper
       elevation={0}
@@ -1497,12 +1501,12 @@ const VisualizationControls: React.FC<VisualizationControlsProps> = ({
     >
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
         <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600, mr: 2 }}>
-          Binding Policy Network
+          {t('bindingPolicy.visualization.title')}
         </Typography>
 
         <Chip
           size="small"
-          label={`${policies.length} Policies`}
+          label={`${policies.length} ${t('bindingPolicy.visualization.policies')}`}
           sx={{
             mr: 1,
             bgcolor: theme === 'dark' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.1)',
@@ -1511,7 +1515,7 @@ const VisualizationControls: React.FC<VisualizationControlsProps> = ({
         />
         <Chip
           size="small"
-          label={`${uniqueClusters.length} Clusters`}
+          label={`${uniqueClusters.length} ${t('bindingPolicy.visualization.clusters')}`}
           sx={{
             mr: 1,
             bgcolor: theme === 'dark' ? 'rgba(107, 114, 128, 0.15)' : 'rgba(107, 114, 128, 0.1)',
@@ -1521,7 +1525,7 @@ const VisualizationControls: React.FC<VisualizationControlsProps> = ({
         {uniqueWorkloads && uniqueWorkloads.length > 0 && (
           <Chip
             size="small"
-            label={`${uniqueWorkloads.length} Workloads`}
+            label={`${uniqueWorkloads.length} ${t('bindingPolicy.visualization.workloads')}`}
             sx={{
               bgcolor: theme === 'dark' ? 'rgba(96, 165, 250, 0.15)' : 'rgba(96, 165, 250, 0.1)',
               color: '#60A5FA',
@@ -1540,7 +1544,11 @@ const VisualizationControls: React.FC<VisualizationControlsProps> = ({
               color="primary"
             />
           }
-          label={<Typography variant="body2">Show Workloads</Typography>}
+          label={
+            <Typography variant="body2">
+              {t('bindingPolicy.visualization.showWorkloads')}
+            </Typography>
+          }
           sx={{ mr: 2 }}
         />
 
@@ -1553,10 +1561,14 @@ const VisualizationControls: React.FC<VisualizationControlsProps> = ({
               color="primary"
             />
           }
-          label={<Typography variant="body2">Highlight Active</Typography>}
+          label={
+            <Typography variant="body2">
+              {t('bindingPolicy.visualization.highlightActive')}
+            </Typography>
+          }
         />
 
-        <Tooltip title="Refresh visualization">
+        <Tooltip title={t('common.refresh')}>
           <Button
             size="small"
             variant="outlined"
@@ -1567,7 +1579,7 @@ const VisualizationControls: React.FC<VisualizationControlsProps> = ({
             }}
             sx={{ ml: 2, mr: 1 }}
           >
-            Refresh
+            {t('common.refresh')}
           </Button>
         </Tooltip>
 
@@ -1577,7 +1589,7 @@ const VisualizationControls: React.FC<VisualizationControlsProps> = ({
           startIcon={<FitViewIcon />}
           onClick={() => reactFlowInstance?.fitView({ padding: 0.2, duration: 800 })}
         >
-          Fit View
+          {t('common.fitView')}
         </Button>
       </Box>
     </Paper>
@@ -1610,6 +1622,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   handleLayoutChange,
   onNodeSelect,
 }) => {
+  const { t } = useTranslation();
   return (
     <Box sx={{ flex: 1, position: 'relative', borderRadius: 1, overflow: 'hidden' }}>
       <ReactFlow
@@ -1668,7 +1681,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
               variant="subtitle2"
               sx={{ color: theme === 'dark' ? '#E5E7EB' : '#374151', fontWeight: 600, mb: 0.5 }}
             >
-              Legend
+              {t('bindingPolicy.visualization.legend')}
             </Typography>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -1682,7 +1695,9 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
                   borderColor: theme === 'dark' ? '#2563EB' : '#1D4ED8',
                 }}
               />
-              <Typography variant="body2">Active Policy</Typography>
+              <Typography variant="body2">
+                {t('bindingPolicy.visualization.legendItems.activePolicy')}
+              </Typography>
             </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -1696,7 +1711,9 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
                   borderColor: theme === 'dark' ? '#6B7280' : '#4B5563',
                 }}
               />
-              <Typography variant="body2">Cluster</Typography>
+              <Typography variant="body2">
+                {t('bindingPolicy.visualization.legendItems.cluster')}
+              </Typography>
             </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -1710,7 +1727,9 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
                   borderColor: theme === 'dark' ? '#3B82F6' : '#2563EB',
                 }}
               />
-              <Typography variant="body2">Workload</Typography>
+              <Typography variant="body2">
+                {t('bindingPolicy.visualization.legendItems.workload')}
+              </Typography>
             </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -1722,7 +1741,9 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
                   borderRadius: 1,
                 }}
               />
-              <Typography variant="body2">Active Connection</Typography>
+              <Typography variant="body2">
+                {t('bindingPolicy.visualization.legendItems.activeConnection')}
+              </Typography>
             </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -1734,7 +1755,9 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
                   borderRadius: 1,
                 }}
               />
-              <Typography variant="body2">Inactive Connection</Typography>
+              <Typography variant="body2">
+                {t('bindingPolicy.visualization.legendItems.inactiveConnection')}
+              </Typography>
             </Box>
           </Box>
         </Panel>

@@ -614,12 +614,14 @@ const BPTable: React.FC<BPTableProps> = ({
         `}</style>
                     </div>
                     <h3 style={{ color: colors.text }} className="mb-3 text-xl font-semibold">
-                      No Binding Policies Found
+                      {t('bindingPolicy.noBindingPolicies')}
                     </h3>
                     <p style={{ color: colors.textSecondary }} className="mb-6 max-w-md text-base">
                       {activeFilters.status !== undefined
-                        ? `No binding policies match your ${activeFilters.status} filter criteria`
-                        : 'No binding policies available'}
+                        ? t('bindingPolicy.noBindingPoliciesWithFilter', {
+                            status: activeFilters.status,
+                          })
+                        : t('bindingPolicy.noBindingPoliciesDescription')}
                     </p>
                     {activeFilters.status !== undefined && (
                       <Button
@@ -642,7 +644,7 @@ const BPTable: React.FC<BPTableProps> = ({
                         }}
                         variant="contained"
                       >
-                        Clear Filter
+                        {t('common.clearFilter')}
                       </Button>
                     )}
                   </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import useTheme from '../../stores/themeStore';
+import { useTranslation } from 'react-i18next';
 
 interface PaginationProps {
   filteredCount: number;
@@ -19,6 +20,7 @@ const BPPagination: React.FC<PaginationProps> = ({
 }) => {
   const theme = useTheme(state => state.theme);
   const isDark = theme === 'dark';
+  const { t } = useTranslation();
   const totalPages = Math.ceil(filteredCount / itemsPerPage);
 
   const colors = {
@@ -85,7 +87,7 @@ const BPPagination: React.FC<PaginationProps> = ({
           </svg>
         }
       >
-        Previous
+        {t('common.previous')}
       </Button>
 
       <div className="flex items-center gap-3">
@@ -108,7 +110,7 @@ const BPPagination: React.FC<PaginationProps> = ({
               marginRight: '6px',
             }}
           >
-            Page
+            {t('common.page')}
           </Typography>
           <Typography
             style={{
@@ -126,7 +128,7 @@ const BPPagination: React.FC<PaginationProps> = ({
               fontSize: '0.9rem',
             }}
           >
-            of {totalPages}
+            {t('common.of')} {totalPages}
           </Typography>
         </Box>
 
@@ -138,9 +140,9 @@ const BPPagination: React.FC<PaginationProps> = ({
             alignItems: 'center',
           }}
         >
-          {filteredCount} item{filteredCount !== 1 ? 's' : ''}
+          {filteredCount} {t('common.items', { count: filteredCount })}
           {filteredCount !== totalCount && (
-            <span className="ml-2">(filtered from {totalCount})</span>
+            <span className="ml-2">({t('common.filteredFrom', { total: totalCount })})</span>
           )}
         </Box>
       </div>
@@ -191,7 +193,7 @@ const BPPagination: React.FC<PaginationProps> = ({
           </svg>
         }
       >
-        Next
+        {t('common.next')}
       </Button>
     </div>
   );

@@ -16,6 +16,7 @@ import {
 import { BindingPolicyInfo } from '../../../types/bindingPolicy';
 import useTheme from '../../../stores/themeStore';
 import CancelButton from '../../common/CancelButton';
+import { useTranslation } from 'react-i18next';
 
 interface EditBindingPolicyDialogProps {
   open: boolean;
@@ -36,6 +37,7 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
   const [showUnsavedChanges, setShowUnsavedChanges] = useState(false);
   const theme = useTheme(state => state.theme);
   const isDarkTheme = theme === 'dark';
+  const { t } = useTranslation();
 
   useEffect(() => {
     setEditorContent(policy.yaml || '');
@@ -102,7 +104,7 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
               color: isDarkTheme ? '#fff' : '#000',
             }}
           >
-            Edit Binding Policy
+            {t('bindingPolicy.editDialog.title')}
           </Box>
         </DialogTitle>
         <DialogContent
@@ -126,13 +128,15 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
               },
             }}
           >
-            <AlertTitle className={isDarkTheme ? 'text-blue-400' : ''}>Info</AlertTitle>
-            Edit your binding policy configuration. Changes will be applied after saving.
+            <AlertTitle className={isDarkTheme ? 'text-blue-400' : ''}>
+              {t('bindingPolicy.editDialog.infoTitle')}
+            </AlertTitle>
+            {t('bindingPolicy.editDialog.info')}
           </Alert>
 
           <TextField
             fullWidth
-            label="Binding Policy Name"
+            label={t('bindingPolicy.editDialog.name')}
             value={policyName}
             onChange={e => setPolicyName(e.target.value)}
             margin="normal"
@@ -180,7 +184,7 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
             borderColor: 'divider',
           }}
         >
-          <CancelButton onClick={handleClose}>Cancel</CancelButton>
+          <CancelButton onClick={handleClose}>{t('common.cancel')}</CancelButton>
           <Button
             variant="contained"
             onClick={handleSave}
@@ -192,7 +196,7 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
               },
             }}
           >
-            Save Changes
+            {t('bindingPolicy.editDialog.save')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -212,7 +216,7 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
             color: isDarkTheme ? '#fff' : '#000',
           }}
         >
-          Unsaved Changes
+          {t('bindingPolicy.editDialog.unsavedTitle')}
         </DialogTitle>
         <DialogContent>
           <Alert
@@ -225,12 +229,16 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
               },
             }}
           >
-            <AlertTitle className={isDarkTheme ? 'text-yellow-400' : ''}>Warning</AlertTitle>
-            You have unsaved changes. Are you sure you want to close without saving?
+            <AlertTitle className={isDarkTheme ? 'text-yellow-400' : ''}>
+              {t('bindingPolicy.editDialog.unsavedWarning')}
+            </AlertTitle>
+            {t('bindingPolicy.editDialog.unsavedInfo')}
           </Alert>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <CancelButton onClick={() => setShowUnsavedChanges(false)}>Continue Editing</CancelButton>
+          <CancelButton onClick={() => setShowUnsavedChanges(false)}>
+            {t('bindingPolicy.editDialog.continueEditing')}
+          </CancelButton>
           <Button
             variant="contained"
             color="error"
@@ -245,7 +253,7 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
               },
             }}
           >
-            Discard Changes
+            {t('bindingPolicy.editDialog.discard')}
           </Button>
         </DialogActions>
       </Dialog>
