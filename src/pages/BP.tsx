@@ -49,10 +49,6 @@ interface LocationState {
   activateView?: 'dragdrop';
 }
 
-interface FilterState {
-  status?: 'Active' | 'Inactive' | 'Pending' | '';
-}
-
 interface BindingPolicyConfig {
   name?: string;
   namespace?: string;
@@ -152,8 +148,7 @@ const BP: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme(state => state.theme);
 
-  // Constants
-  const ITEMS_PER_PAGE = 10;
+  // Constants are defined in the state
 
   // Initialize the React Query hooks
   const { useClusters } = useClusterQueries();
@@ -277,10 +272,9 @@ const BP: React.FC = () => {
     });
   }, [bindingPolicies, searchQuery, activeFilters.status]);
 
-  const filteredPolicies = getFilteredPolicies();
-  const paginatedPolicies = filteredPolicies.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
+  const filteredPolicies = getFilteredPolicies();  const paginatedPolicies = filteredPolicies.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   // Calculate matches at the top level
@@ -845,12 +839,10 @@ const BP: React.FC = () => {
                   setActiveFilters={setActiveFilters}
                   selectedPolicies={selectedPolicies}
                   onSelectionChange={setSelectedPolicies}
-                />
-
-                <BPPagination
+                />                <BPPagination
                   filteredCount={filteredPolicies.length}
                   totalCount={bindingPolicies.length}
-                  itemsPerPage={ITEMS_PER_PAGE}
+                  itemsPerPage={itemsPerPage}
                   currentPage={currentPage}
                   onPageChange={setCurrentPage}
                 />
