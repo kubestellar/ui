@@ -183,7 +183,11 @@ export const SearchPackagesForm = ({
         if (data.results && data.results.length > 0) {
           setSearchResults(data.results);
         } else {
-          setError(t('workloads.artifactHub.searchPackagesForm.errorMessage.noPackagesFound', { query: searchQuery }));
+          setError(
+            t('workloads.artifactHub.searchPackagesForm.errorMessage.noPackagesFound', {
+              query: searchQuery,
+            })
+          );
         }
       } else {
         throw new Error('Failed to search packages');
@@ -191,7 +195,11 @@ export const SearchPackagesForm = ({
     } catch (error: unknown) {
       const err = error as AxiosError;
       console.error('Package search error:', err);
-      setError(t('workloads.artifactHub.searchPackagesForm.errorMessage.searchFailed', { message: err.message }));
+      setError(
+        t('workloads.artifactHub.searchPackagesForm.errorMessage.searchFailed', {
+          message: err.message,
+        })
+      );
     } finally {
       setLoading(false);
     }
@@ -546,7 +554,8 @@ export const SearchPackagesForm = ({
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                     <StarIcon sx={{ color: '#FFC107', fontSize: '0.875rem', mr: 0.5 }} />
                     <Typography variant="body2" sx={{ color: theme === 'dark' ? '#ddd' : '#666' }}>
-                      {selectedPackageDetails.stars} {t('workloads.artifactHub.searchPackagesForm.packageDetails.stars')}
+                      {selectedPackageDetails.stars}{' '}
+                      {t('workloads.artifactHub.searchPackagesForm.packageDetails.stars')}
                     </Typography>
                   </Box>
                 )}

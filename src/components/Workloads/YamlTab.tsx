@@ -218,7 +218,7 @@ export const YamlTab = ({
         }}
       >
         <CancelButton onClick={handleCancelClick} disabled={loading}>
-          Cancel
+          {t('common.cancel')}
         </CancelButton>
         <Button
           variant="contained"
@@ -240,7 +240,7 @@ export const YamlTab = ({
             },
           }}
         >
-          Deploy
+          {t('workloads.yaml.deploy')}
         </Button>
       </Box>
     </StyledContainer>

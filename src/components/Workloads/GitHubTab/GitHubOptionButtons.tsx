@@ -97,7 +97,7 @@ interface Props {
 
 export const GitHubOptionButtons = ({ selectedOption, handleOptionSelect, theme }: Props) => {
   const { t } = useTranslation(); // Add translation hook
-  
+
   return (
     <Stack spacing={2} width="100%">
       <OptionButton

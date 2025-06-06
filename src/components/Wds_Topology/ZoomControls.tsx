@@ -200,7 +200,8 @@ export const ZoomControls = memo<ZoomControlsProps>(
             width: '50px',
           }}
         >
-          {zoomLevel}{t('wdsTopology.zoomControls.zoomPercentage')}
+          {zoomLevel}
+          {t('wdsTopology.zoomControls.zoomPercentage')}
         </Typography>
       </Box>
     );

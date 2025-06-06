@@ -11,7 +11,7 @@ interface Props {
 
 export const CreateOwnHelmForm = ({ formData, setFormData, error, theme }: Props) => {
   const { t } = useTranslation(); // Add translation hook
-  
+
   return (
     <Box
       sx={{

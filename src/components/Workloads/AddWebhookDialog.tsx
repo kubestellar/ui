@@ -1,8 +1,9 @@
 import { Box, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material';
 import { getWebhookDialogPaperProps } from '../../utils/dialogUtils';
-import useTheme from '../../stores/themeStore'; // Import useTheme for dark mode support
+import useTheme from '../../stores/themeStore';
 import { toast } from 'react-hot-toast';
 import CancelButton from '../common/CancelButton';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   webhookDialogOpen: boolean;
@@ -12,19 +13,14 @@ interface Props {
   handleCloseWebhookDialog: () => void;
 }
 
-export const AddWebhookDialog = ({
-  webhookDialogOpen,
-  // newWebhook,
-  // setNewWebhook,
-  // handleAddWebhook,
-  handleCloseWebhookDialog,
-}: Props) => {
-  const theme = useTheme(state => state.theme); // Get the current theme
+export const AddWebhookDialog = ({ webhookDialogOpen, handleCloseWebhookDialog }: Props) => {
+  const theme = useTheme(state => state.theme);
+  const { t } = useTranslation();
 
   // Function to handle copying the command to clipboard
   const handleCopy = (command: string) => {
     navigator.clipboard.writeText(command);
-    toast.success('copied to clipboard!');
+    toast.success(t('addWebhookDialog.copiedToClipboard'));
   };
 
   return (
@@ -37,7 +33,7 @@ export const AddWebhookDialog = ({
       PaperProps={getWebhookDialogPaperProps()}
       sx={{
         '& .MuiDialog-paper': {
-          backgroundColor: theme === 'dark' ? '#1F2937' : '#fff', // Dark mode background
+          backgroundColor: theme === 'dark' ? '#1F2937' : '#fff',
           borderRadius: '8px',
           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
         },
@@ -53,7 +49,7 @@ export const AddWebhookDialog = ({
           variant="subtitle1"
           sx={{ fontWeight: 600, color: theme === 'dark' ? '#E0E0E0' : '#333', fontSize: '20px' }}
         >
-          Setup Webhook
+          {t('addWebhookDialog.setupWebhook')}
         </Typography>
       </DialogTitle>
       <DialogContent
@@ -78,13 +74,13 @@ export const AddWebhookDialog = ({
                 mb: 2,
               }}
             >
-              Local Development Using Smee.io
+              {t('addWebhookDialog.localDevSmee')}
             </Typography>
             <Box>
               {/* Step 1 */}
               <Box
                 sx={{
-                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003', // Dark mode background
+                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003',
                   border: `1px solid ${theme === 'dark' ? '#444444' : '#D3D3D3'}`,
                   borderRadius: '4px',
                   padding: '12px',
@@ -112,14 +108,14 @@ export const AddWebhookDialog = ({
                     variant="body2"
                     sx={{ color: '#64748B', fontSize: '12px', marginTop: '4px' }}
                   >
-                    Install Smee Client (<code>npm install -g smee-client</code>).
+                    {t('addWebhookDialog.installSmee')}
                   </Typography>
                 </Box>
               </Box>
               {/* Step 2 */}
               <Box
                 sx={{
-                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003', // Dark mode background
+                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003',
                   border: `1px solid ${theme === 'dark' ? '#444444' : '#D3D3D3'}`,
                   borderRadius: '4px',
                   padding: '12px',
@@ -147,14 +143,14 @@ export const AddWebhookDialog = ({
                     variant="body2"
                     sx={{ color: '#64748B', fontSize: '12px', marginTop: '4px' }}
                   >
-                    Go to Smee.io and create a new channel.
+                    {t('addWebhookDialog.goToSmee')}
                   </Typography>
                 </Box>
               </Box>
               {/* Step 3 */}
               <Box
                 sx={{
-                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003', // Dark mode background
+                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003',
                   border: `1px solid ${theme === 'dark' ? '#444444' : '#D3D3D3'}`,
                   borderRadius: '4px',
                   padding: '12px',
@@ -182,14 +178,14 @@ export const AddWebhookDialog = ({
                     variant="body2"
                     sx={{ color: '#64748B', fontSize: '12px', marginTop: '4px' }}
                   >
-                    Copy the generated Smee.io URL.
+                    {t('addWebhookDialog.copySmeeUrl')}
                   </Typography>
                 </Box>
               </Box>
               {/* Step 4 */}
               <Box
                 sx={{
-                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003', // Dark mode background
+                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003',
                   border: `1px solid ${theme === 'dark' ? '#444444' : '#D3D3D3'}`,
                   borderRadius: '4px',
                   padding: '12px',
@@ -218,11 +214,11 @@ export const AddWebhookDialog = ({
                       variant="body2"
                       sx={{ color: '#64748B', fontSize: '12px', mb: 1, marginTop: '4px' }}
                     >
-                      Run Smee client to forward webhooks to your local Go backend:
+                      {t('addWebhookDialog.runSmeeClient')}
                     </Typography>
                     <Box
                       sx={{
-                        backgroundColor: theme === 'dark' ? '#00000033' : '#00000003', // Dark mode background
+                        backgroundColor: theme === 'dark' ? '#00000033' : '#00000003',
                         border: `1px solid ${theme === 'dark' ? '#444444' : '#D3D3D3'}`,
                         borderRadius: '4px',
                         padding: '13px',
@@ -235,13 +231,13 @@ export const AddWebhookDialog = ({
                       <Typography
                         sx={{
                           fontFamily: 'monospace',
-                          color: theme === 'dark' ? '#D0D0D0' : '#333333', // Dark mode text color
+                          color: theme === 'dark' ? '#D0D0D0' : '#333333',
                           wordBreak: 'break-all',
                           flex: 1,
                           fontSize: '12px',
                         }}
                       >
-                        {`smee --url smee-url --target ${process.env.VITE_BASE_URL}/api/webhook`}
+                        {t('addWebhookDialog.smeeCommand', { baseUrl: process.env.VITE_BASE_URL })}
                       </Typography>
                       <Box
                         sx={{
@@ -256,7 +252,9 @@ export const AddWebhookDialog = ({
                         }}
                         onClick={() =>
                           handleCopy(
-                            `smee --url <smee-url> --target ${process.env.VITE_BASE_URL}/api/webhook`
+                            t('addWebhookDialog.smeeCommandCopy', {
+                              baseUrl: process.env.VITE_BASE_URL,
+                            })
                           )
                         }
                       >
@@ -271,7 +269,7 @@ export const AddWebhookDialog = ({
               {/* Step 5 */}
               <Box
                 sx={{
-                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003', // Dark mode background
+                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003',
                   border: `1px solid ${theme === 'dark' ? '#444444' : '#D3D3D3'}`,
                   borderRadius: '4px',
                   padding: '12px',
@@ -299,14 +297,14 @@ export const AddWebhookDialog = ({
                     variant="body2"
                     sx={{ color: '#64748B', fontSize: '12px', marginTop: '4px' }}
                   >
-                    Configure the webhook in your external service using the Smee.io URL.
+                    {t('addWebhookDialog.configureWebhookSmee')}
                   </Typography>
                 </Box>
               </Box>
               {/* Step 6 */}
               <Box
                 sx={{
-                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003', // Dark mode background
+                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003',
                   border: `1px solid ${theme === 'dark' ? '#444444' : '#D3D3D3'}`,
                   borderRadius: '4px',
                   padding: '12px',
@@ -334,14 +332,14 @@ export const AddWebhookDialog = ({
                     variant="body2"
                     sx={{ color: '#64748B', fontSize: '12px', marginTop: '4px' }}
                   >
-                    Start your Go backend and ensure it listens at /api/webhook.
+                    {t('addWebhookDialog.startGoBackend')}
                   </Typography>
                 </Box>
               </Box>
               {/* Step 7 */}
               <Box
                 sx={{
-                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003', // Dark mode background
+                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003',
                   border: `1px solid ${theme === 'dark' ? '#444444' : '#D3D3D3'}`,
                   borderRadius: '4px',
                   padding: '12px',
@@ -369,7 +367,7 @@ export const AddWebhookDialog = ({
                     variant="body2"
                     sx={{ color: '#64748B', fontSize: '12px', marginTop: '4px' }}
                   >
-                    Test the webhook.
+                    {t('addWebhookDialog.testWebhook')}
                   </Typography>
                 </Box>
               </Box>
@@ -393,13 +391,13 @@ export const AddWebhookDialog = ({
                 mb: 2,
               }}
             >
-              Webhook on a Virtual Machine (VM) Using IP:4000
+              {t('addWebhookDialog.vmIp4000')}
             </Typography>
             <Box>
               {/* Step 1 */}
               <Box
                 sx={{
-                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003', // Dark mode background
+                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003',
                   border: `1px solid ${theme === 'dark' ? '#444444' : '#D3D3D3'}`,
                   borderRadius: '4px',
                   padding: '12px',
@@ -427,14 +425,14 @@ export const AddWebhookDialog = ({
                     variant="body2"
                     sx={{ color: '#64748B', fontSize: '12px', marginTop: '4px' }}
                   >
-                    Ensure your Go backend is running on port 4000 and handling /api/webhook.
+                    {t('addWebhookDialog.ensureGoBackend4000')}
                   </Typography>
                 </Box>
               </Box>
               {/* Step 2 */}
               <Box
                 sx={{
-                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003', // Dark mode background
+                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003',
                   border: `1px solid ${theme === 'dark' ? '#444444' : '#D3D3D3'}`,
                   borderRadius: '4px',
                   padding: '12px',
@@ -462,14 +460,14 @@ export const AddWebhookDialog = ({
                     variant="body2"
                     sx={{ color: '#64748B', fontSize: '12px', marginTop: '4px' }}
                   >
-                    Open port 4000 in your firewall/security group (UFW, AWS, GCP, or Azure).
+                    {t('addWebhookDialog.openPort4000')}
                   </Typography>
                 </Box>
               </Box>
               {/* Step 3 */}
               <Box
                 sx={{
-                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003', // Dark mode background
+                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003',
                   border: `1px solid ${theme === 'dark' ? '#444444' : '#D3D3D3'}`,
                   borderRadius: '4px',
                   padding: '12px',
@@ -497,14 +495,14 @@ export const AddWebhookDialog = ({
                     variant="body2"
                     sx={{ color: '#64748B', fontSize: '12px', marginTop: '4px' }}
                   >
-                    Find your public IP (<code>curl ifconfig.me</code>) and add.
+                    {t('addWebhookDialog.findPublicIp')}
                   </Typography>
                 </Box>
               </Box>
               {/* Step 4 */}
               <Box
                 sx={{
-                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003', // Dark mode background
+                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003',
                   border: `1px solid ${theme === 'dark' ? '#444444' : '#D3D3D3'}`,
                   borderRadius: '4px',
                   padding: '12px',
@@ -533,11 +531,11 @@ export const AddWebhookDialog = ({
                       variant="body2"
                       sx={{ color: '#64748B', fontSize: '12px', mb: 1, marginTop: '4px' }}
                     >
-                      Configure the webhook in your external service using:
+                      {t('addWebhookDialog.configureWebhookVm')}
                     </Typography>
                     <Box
                       sx={{
-                        backgroundColor: theme === 'dark' ? '#0000004D' : '#00000003', // Dark mode background
+                        backgroundColor: theme === 'dark' ? '#0000004D' : '#00000003',
                         border: `1px solid ${theme === 'dark' ? '#444444' : '#D3D3D3'}`,
                         borderRadius: '4px',
                         padding: '13px',
@@ -556,7 +554,7 @@ export const AddWebhookDialog = ({
                           fontSize: '12px',
                         }}
                       >
-                        http://your-public-ip:4000/api/webhook
+                        {t('addWebhookDialog.vmWebhookUrl')}
                       </Typography>
                       <Box
                         sx={{
@@ -569,7 +567,7 @@ export const AddWebhookDialog = ({
                           justifyContent: 'center',
                           cursor: 'pointer',
                         }}
-                        onClick={() => handleCopy('http://<your-public-ip>:4000/api/webhook')}
+                        onClick={() => handleCopy(t('addWebhookDialog.vmWebhookUrlCopy'))}
                       >
                         <span role="img" aria-label="copy" style={{ fontSize: '0.8rem' }}>
                           📋
@@ -582,7 +580,7 @@ export const AddWebhookDialog = ({
               {/* Step 5 */}
               <Box
                 sx={{
-                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003', // Dark mode background
+                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003',
                   border: `1px solid ${theme === 'dark' ? '#444444' : '#D3D3D3'}`,
                   borderRadius: '4px',
                   padding: '12px',
@@ -610,14 +608,14 @@ export const AddWebhookDialog = ({
                     variant="body2"
                     sx={{ color: '#64748B', fontSize: '12px', marginTop: '4px' }}
                   >
-                    Test the webhook from another machine.
+                    {t('addWebhookDialog.testWebhookOtherMachine')}
                   </Typography>
                 </Box>
               </Box>
               {/* Step 6 */}
               <Box
                 sx={{
-                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003', // Dark mode background
+                  backgroundColor: theme === 'dark' ? '#00000033' : '#00000003',
                   border: `1px solid ${theme === 'dark' ? '#444444' : '#D3D3D3'}`,
                   borderRadius: '4px',
                   padding: '12px',
@@ -645,8 +643,7 @@ export const AddWebhookDialog = ({
                     variant="body2"
                     sx={{ color: '#64748B', fontSize: '12px', marginTop: '4px' }}
                   >
-                    Keep your Go server running in the background (<code>nohup</code> or{' '}
-                    <code>systemd</code>).
+                    {t('addWebhookDialog.keepGoServerRunning')}
                   </Typography>
                 </Box>
               </Box>
@@ -660,7 +657,7 @@ export const AddWebhookDialog = ({
           borderTop: `1px solid ${theme === 'dark' ? '#444444' : '#e0e0e0'}`,
         }}
       >
-        <CancelButton onClick={handleCloseWebhookDialog}>Cancel</CancelButton>
+        <CancelButton onClick={handleCloseWebhookDialog}>{t('common.cancel')}</CancelButton>
       </DialogActions>
     </Dialog>
   );

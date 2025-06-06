@@ -15,7 +15,7 @@ interface Props {
 
 export const RepositoriesListForm = ({ repositories, loading, theme }: Props) => {
   const { t } = useTranslation(); // Add translation hook
-  
+
   // Helper function to get repository icon based on name
   const getRepositoryIcon = (repoName: string) => {
     const name = repoName.toLowerCase();
@@ -161,7 +161,11 @@ export const RepositoriesListForm = ({ repositories, loading, theme }: Props) =>
                           />
                         )}
                         <Chip
-                          label={repo.kind === 0 ? t('workloads.artifactHub.repositoriesList.helm') : t('workloads.artifactHub.repositoriesList.other')}
+                          label={
+                            repo.kind === 0
+                              ? t('workloads.artifactHub.repositoriesList.helm')
+                              : t('workloads.artifactHub.repositoriesList.other')
+                          }
                           size="small"
                           variant="outlined"
                           sx={{
@@ -201,7 +205,9 @@ export const RepositoriesListForm = ({ repositories, loading, theme }: Props) =>
                                     : 'rgba(0, 0, 0, 0.6)',
                               }}
                             >
-                              <strong>{t('workloads.artifactHub.repositoriesList.organization')}</strong>{' '}
+                              <strong>
+                                {t('workloads.artifactHub.repositoriesList.organization')}
+                              </strong>{' '}
                               {repo.organization_display_name || repo.organization_name}
                             </Typography>
                           </Box>
@@ -231,7 +237,8 @@ export const RepositoriesListForm = ({ repositories, loading, theme }: Props) =>
                                     : 'rgba(0, 0, 0, 0.6)',
                               }}
                             >
-                              <strong>{t('workloads.artifactHub.repositoriesList.user')}</strong> {repo.user_alias}
+                              <strong>{t('workloads.artifactHub.repositoriesList.user')}</strong>{' '}
+                              {repo.user_alias}
                             </Typography>
                           </Box>
                         </Grid>
@@ -262,7 +269,8 @@ export const RepositoriesListForm = ({ repositories, loading, theme }: Props) =>
                               textOverflow: 'ellipsis',
                             }}
                           >
-                            <strong>{t('workloads.artifactHub.repositoriesList.url')}</strong> {repo.url}
+                            <strong>{t('workloads.artifactHub.repositoriesList.url')}</strong>{' '}
+                            {repo.url}
                           </Typography>
                         </Box>
                       </Grid>

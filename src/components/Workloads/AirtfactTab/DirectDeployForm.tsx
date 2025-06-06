@@ -67,10 +67,7 @@ export const DirectDeployForm = ({ theme, formData, setFormData, error }: Props)
           }}
         >
           {t('workloads.artifactHub.form.packageId')}
-          <Tooltip
-            title={t('workloads.artifactHub.form.packageIdTooltip')}
-            placement="top"
-          >
+          <Tooltip title={t('workloads.artifactHub.form.packageIdTooltip')} placement="top">
             <InfoIcon
               sx={{
                 fontSize: '16px',
@@ -139,10 +136,7 @@ export const DirectDeployForm = ({ theme, formData, setFormData, error }: Props)
           }}
         >
           {t('workloads.artifactHub.form.version')}
-          <Tooltip
-            title={t('workloads.artifactHub.form.versionTooltip')}
-            placement="top"
-          >
+          <Tooltip title={t('workloads.artifactHub.form.versionTooltip')} placement="top">
             <InfoIcon
               sx={{
                 fontSize: '16px',
@@ -339,10 +333,7 @@ export const DirectDeployForm = ({ theme, formData, setFormData, error }: Props)
           }}
         >
           {t('workloads.artifactHub.form.customValues')}
-          <Tooltip
-            title={t('workloads.artifactHub.form.customValuesTooltip')}
-            placement="top"
-          >
+          <Tooltip title={t('workloads.artifactHub.form.customValuesTooltip')} placement="top">
             <InfoIcon
               sx={{
                 fontSize: '16px',

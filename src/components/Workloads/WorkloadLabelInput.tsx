@@ -11,7 +11,7 @@ interface Props {
 
 const WorkloadLabelInput = ({ value, handleChange, isError, theme }: Props) => {
   const { t } = useTranslation();
-  const prefix = 'kubestellar.io/workload:';
+  const prefix = t('workloads.label.prefix', { defaultValue: 'kubestellar.io/workload:' });
 
   return (
     <TextField

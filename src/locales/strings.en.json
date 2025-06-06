@@ -518,6 +518,7 @@
   "workloads": {
     "label": {
       "title": "Workload Label *",
+      "prefix": "kubestellar.io/workload:",
       "helpTextError": "Label not found",
       "helpText": "Workload label is key:value pair. Key is constant and defaulted to 'kubestellar.io/workload', you can only change the value."
     },
@@ -581,7 +582,15 @@
         "addCredentials": "Add Cred",
         "webhooks": "Webhooks",
         "webhooksTip": "Select or add a webhook for automated deployments",
-        "addWebhook": "Add Webhook"
+        "addWebhook": "Add Webhook",
+        "previousDeploymentsTitle": "List of Previous Deployments",
+        "loadingPreviousDeployments": "Loading previous deployments...",
+        "noPreviousDeployments": "No previous deployments available.",
+        "confirmResourceDeletion": "Confirm Resource Deletion",
+        "deleteConfirmation": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+        "yesDelete": "Yes, Delete",
+        "apply": "Apply",
+        "deploying": "Deploying..."
       }
     },
     "artifactHub": {
@@ -1467,5 +1476,70 @@
         "passwordRequired": "Password is required"
       }
     }
+  },
+  "addWebhookDialog": {
+    "copiedToClipboard": "Copied to clipboard!",
+    "setupWebhook": "Setup Webhook",
+    "localDevSmee": "Local Development Using Smee.io",
+    "installSmee": "Install Smee Client (npm install -g smee-client).",
+    "goToSmee": "Go to Smee.io and create a new channel.",
+    "copySmeeUrl": "Copy the generated Smee.io URL.",
+    "runSmeeClient": "Run Smee client to forward webhooks to your local Go backend:",
+    "smeeCommand": "smee --url smee-url --target {{baseUrl}}/api/webhook",
+    "smeeCommandCopy": "smee --url <smee-url> --target {{baseUrl}}/api/webhook",
+    "configureWebhookSmee": "Configure the webhook in your external service using the Smee.io URL.",
+    "startGoBackend": "Start your Go backend and ensure it listens at /api/webhook.",
+    "testWebhook": "Test the webhook.",
+    "vmIp4000": "Webhook on a Virtual Machine (VM) Using IP:4000",
+    "ensureGoBackend4000": "Ensure your Go backend is running on port 4000 and handling /api/webhook.",
+    "openPort4000": "Open port 4000 in your firewall/security group (UFW, AWS, GCP, or Azure).",
+    "findPublicIp": "Find your public IP (curl ifconfig.me) and add.",
+    "configureWebhookVm": "Configure the webhook in your external service using:",
+    "vmWebhookUrl": "http://your-public-ip:4000/api/webhook",
+    "vmWebhookUrlCopy": "http://<your-public-ip>:4000/api/webhook",
+    "testWebhookOtherMachine": "Test the webhook from another machine.",
+    "keepGoServerRunning": "Keep your Go server running in the background (nohup or systemd)."
+  },
+  "cancelConfirmationDialog": {
+    "title": "Cancel Workload Creation",
+    "warning": "Warning",
+    "message": "Are you sure you want to cancel? Any changes will be lost.",
+    "continueEditing": "Continue Editing",
+    "yesCancel": "Yes, Cancel"
+  },
+  "addCredentialsDialog": {
+    "title": "Add Credentials",
+    "usernameLabel": "Github Username *",
+    "usernamePlaceholder": "e.g., onkar717",
+    "usernameTip": "Enter your GitHub username",
+    "tokenLabel": "Personal Access Token (PAT) *",
+    "tokenPlaceholder": "e.g., ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "tokenTip": "Enter your GitHub Personal Access Token"
+  },
+  "githubTab": {
+    "repositoryUrlLabel": "Repository URL *",
+    "repositoryUrlPlaceholder": "e.g., https://github.com/username/repo",
+    "repositoryUrlTip": "Use a valid GitHub repository URL",
+    "pathLabel": "Path *",
+    "pathPlaceholder": "e.g., /path/to/yaml",
+    "pathTip": "Specify the path to your YAML files in the repository",
+    "branchLabel": "Branch (default: main) *",
+    "branchPlaceholder": "e.g., master, dev-branch",
+    "branchTip": "Specify the branch to deploy from",
+    "credentialsLabel": "Credentials",
+    "credentialsPlaceholder": "e.g., username-pat",
+    "credentialsTip": "Select or add credentials for private repositories",
+    "addCredentials": "Add Cred",
+    "webhooksLabel": "Webhooks",
+    "webhooksTip": "Select or add a webhook for automated deployments",
+    "addWebhook": "Add Webhook",
+    "previousDeploymentsTitle": "List of Previous Deployments",
+    "loadingPreviousDeployments": "Loading previous deployments...",
+    "noPreviousDeployments": "No previous deployments available.",
+    "confirmResourceDeletion": "Confirm Resource Deletion",
+    "deleteConfirmation": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+    "yesDelete": "Yes, Delete",
+    "apply": "Apply",
+    "deploying": "Deploying..."
   }
 }

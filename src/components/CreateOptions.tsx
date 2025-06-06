@@ -359,7 +359,7 @@ spec:
                 t('workloads.createOptions.notifications.workloadAlreadyExists', {
                   kind,
                   name: workloadName,
-                  namespace
+                  namespace,
                 })
               );
             } catch (parseError) {
@@ -434,7 +434,7 @@ spec:
             t('workloads.createOptions.notifications.workloadAlreadyExists', {
               kind,
               name: workloadName,
-              namespace
+              namespace,
             })
           );
         } else if (err.response.status === 409) {

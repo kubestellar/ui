@@ -7,7 +7,7 @@ interface LoadingScreenProps {
 
 const LoadingScreen = ({ isLoaded }: LoadingScreenProps) => {
   const { t } = useTranslation();
-  
+
   return (
     <AnimatePresence>
       {!isLoaded && (
