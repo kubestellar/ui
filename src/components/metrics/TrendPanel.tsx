@@ -15,10 +15,10 @@ interface TrendPanelProps {
   height?: string;
 }
 
-const TrendPanel: React.FC<TrendPanelProps> = ({ 
+const TrendPanel: React.FC<TrendPanelProps> = ({
   trends = [],
   className = '',
-  height = 'h-96'
+  height = 'h-96',
 }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -30,7 +30,7 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
     { metric: 'CPU Usage', value: 67.5, change: -3.2, period: '24h' },
     { metric: 'Memory Usage', value: 78.9, change: 5.1, period: '24h' },
     { metric: 'Network I/O', value: 234.7, change: 12.3, period: '24h' },
-    { metric: 'Disk Usage', value: 45.2, change: -1.8, period: '24h' }
+    { metric: 'Disk Usage', value: 45.2, change: -1.8, period: '24h' },
   ];
 
   const trendData = trends.length > 0 ? trends : defaultTrends;
@@ -41,7 +41,7 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
     for (let i = 0; i < 24; i++) {
       points.push({
         time: `${i}:00`,
-        value: Math.random() * 100 + 20
+        value: Math.random() * 100 + 20,
       });
     }
     return points;
@@ -50,66 +50,74 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
   const chartData = generateMockDataPoints();
 
   return (
-    <div className={`
+    <div
+      className={`
       rounded-xl border shadow-sm transition-all duration-300
-      ${isDark 
-        ? 'bg-gray-800 border-gray-700 hover:shadow-lg hover:shadow-gray-900/20' 
-        : 'bg-white border-gray-200 hover:shadow-lg hover:shadow-gray-200/50'
+      ${
+        isDark
+          ? 'border-gray-700 bg-gray-800 hover:shadow-lg hover:shadow-gray-900/20'
+          : 'border-gray-200 bg-white hover:shadow-lg hover:shadow-gray-200/50'
       }
       ${className}
       ${height}
-    `}>
+    `}
+    >
       {/* Header */}
-      <div className={`
-        flex items-center justify-between p-4 border-b
+      <div
+        className={`
+        flex items-center justify-between border-b p-4
         ${isDark ? 'border-gray-700' : 'border-gray-200'}
-      `}>
+      `}
+      >
         <div className="flex items-center space-x-3">
-          <div className={`
-            p-2 rounded-lg
-            ${isDark 
-              ? 'bg-indigo-900/20 text-indigo-400' 
-              : 'bg-indigo-100 text-indigo-600'
-            }
-          `}>
+          <div
+            className={`
+            rounded-lg p-2
+            ${isDark ? 'bg-indigo-900/20 text-indigo-400' : 'bg-indigo-100 text-indigo-600'}
+          `}
+          >
             <TrendingUp size={18} />
           </div>
-          <h3 className={`
-            font-semibold text-lg
+          <h3
+            className={`
+            text-lg font-semibold
             ${isDark ? 'text-gray-100' : 'text-gray-900'}
-          `}>
+          `}
+          >
             Historical Trends
           </h3>
         </div>
         <div className="flex items-center space-x-2">
           {/* Metric Selector */}
-          <select 
+          <select
             value={selectedMetric}
-            onChange={(e) => setSelectedMetric(e.target.value)}
+            onChange={e => setSelectedMetric(e.target.value)}
             className={`
-              px-3 py-1 text-sm rounded border
-              ${isDark 
-                ? 'bg-gray-700 border-gray-600 text-gray-200' 
-                : 'bg-white border-gray-300 text-gray-700'
+              rounded border px-3 py-1 text-sm
+              ${
+                isDark
+                  ? 'border-gray-600 bg-gray-700 text-gray-200'
+                  : 'border-gray-300 bg-white text-gray-700'
               }
             `}
           >
-            {trendData.map((trend) => (
+            {trendData.map(trend => (
               <option key={trend.metric} value={trend.metric}>
                 {trend.metric}
               </option>
             ))}
           </select>
-          
+
           {/* Time Range Selector */}
-          <select 
+          <select
             value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value)}
+            onChange={e => setTimeRange(e.target.value)}
             className={`
-              px-3 py-1 text-sm rounded border
-              ${isDark 
-                ? 'bg-gray-700 border-gray-600 text-gray-200' 
-                : 'bg-white border-gray-300 text-gray-700'
+              rounded border px-3 py-1 text-sm
+              ${
+                isDark
+                  ? 'border-gray-600 bg-gray-700 text-gray-200'
+                  : 'border-gray-300 bg-white text-gray-700'
               }
             `}
           >
@@ -119,55 +127,71 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
             <option value="30d">Last 30 Days</option>
           </select>
 
-          <button className={`
-            p-2 rounded-lg transition-colors
-            ${isDark 
-              ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-700' 
-              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+          <button
+            className={`
+            rounded-lg p-2 transition-colors
+            ${
+              isDark
+                ? 'text-gray-400 hover:bg-gray-700 hover:text-gray-300'
+                : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
             }
-          `}>
+          `}
+          >
             <Settings size={16} />
           </button>
         </div>
       </div>
 
       {/* Content */}
-      <div className="p-4 h-full flex flex-col">
+      <div className="flex h-full flex-col p-4">
         {/* Metrics Summary */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
           {trendData.map((trend, index) => (
             <div
               key={index}
               className={`
-                p-3 rounded-lg border cursor-pointer transition-all duration-200 hover:scale-105
-                ${selectedMetric === trend.metric
-                  ? isDark 
-                    ? 'bg-indigo-900/20 border-indigo-600' 
-                    : 'bg-indigo-50 border-indigo-300'
-                  : isDark 
-                    ? 'bg-gray-750 border-gray-600 hover:border-gray-500' 
-                    : 'bg-gray-50 border-gray-200 hover:border-gray-300'
+                cursor-pointer rounded-lg border p-3 transition-all duration-200 hover:scale-105
+                ${
+                  selectedMetric === trend.metric
+                    ? isDark
+                      ? 'border-indigo-600 bg-indigo-900/20'
+                      : 'border-indigo-300 bg-indigo-50'
+                    : isDark
+                      ? 'bg-gray-750 border-gray-600 hover:border-gray-500'
+                      : 'border-gray-200 bg-gray-50 hover:border-gray-300'
                 }
               `}
               onClick={() => setSelectedMetric(trend.metric)}
             >
-              <div className="flex items-center justify-between mb-2">
-                <span className={`text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              <div className="mb-2 flex items-center justify-between">
+                <span
+                  className={`text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}
+                >
                   {trend.metric}
                 </span>
-                <span className={`
+                <span
+                  className={`
                   text-xs font-medium
-                  ${trend.change >= 0 
-                    ? isDark ? 'text-green-400' : 'text-green-600'
-                    : isDark ? 'text-red-400' : 'text-red-600'
+                  ${
+                    trend.change >= 0
+                      ? isDark
+                        ? 'text-green-400'
+                        : 'text-green-600'
+                      : isDark
+                        ? 'text-red-400'
+                        : 'text-red-600'
                   }
-                `}>
-                  {trend.change >= 0 ? '+' : ''}{trend.change}%
+                `}
+                >
+                  {trend.change >= 0 ? '+' : ''}
+                  {trend.change}%
                 </span>
               </div>
               <div className={`text-lg font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                 {trend.value}
-                <span className={`text-sm font-normal ml-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                <span
+                  className={`ml-1 text-sm font-normal ${isDark ? 'text-gray-400' : 'text-gray-600'}`}
+                >
                   {trend.metric.includes('Usage') ? '%' : 'MB/s'}
                 </span>
               </div>
@@ -176,34 +200,41 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
         </div>
 
         {/* Chart Placeholder */}
-        <div className="flex-1 relative">
-          <div className={`
-            h-full flex items-center justify-center
+        <div className="relative flex-1">
+          <div
+            className={`
+            flex h-full items-center justify-center
             ${isDark ? 'bg-gray-750' : 'bg-gray-50'}
             rounded-lg border-2 border-dashed
             ${isDark ? 'border-gray-600' : 'border-gray-300'}
             min-h-[250px]
-          `}>
+          `}
+          >
             <div className="text-center">
-              <div className="flex items-center justify-center space-x-4 mb-4">
+              <div className="mb-4 flex items-center justify-center space-x-4">
                 <LineChart size={32} className={`${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                 <BarChart3 size={32} className={`${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
               </div>
-              <p className={`
-                text-lg font-medium mb-2
+              <p
+                className={`
+                mb-2 text-lg font-medium
                 ${isDark ? 'text-gray-300' : 'text-gray-700'}
-              `}>
+              `}
+              >
                 {selectedMetric} Trend Chart
               </p>
-              <p className={`
+              <p
+                className={`
                 text-sm
                 ${isDark ? 'text-gray-500' : 'text-gray-500'}
-              `}>
-                Interactive time-series visualization for {selectedMetric.toLowerCase()} over {timeRange}
+              `}
+              >
+                Interactive time-series visualization for {selectedMetric.toLowerCase()} over{' '}
+                {timeRange}
               </p>
-              
+
               {/* Mock trend line */}
-              <div className="mt-6 mx-auto" style={{ width: '300px', height: '100px' }}>
+              <div className="mx-auto mt-6" style={{ width: '300px', height: '100px' }}>
                 <svg width="300" height="100" className="overflow-visible">
                   <defs>
                     <linearGradient id="trendGradient" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -211,22 +242,28 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
                       <stop offset="100%" style={{ stopColor: '#3B82F6', stopOpacity: 0 }} />
                     </linearGradient>
                   </defs>
-                  
+
                   {/* Generate path from mock data */}
                   <path
                     d={`M 0,${100 - chartData[0].value} ${chartData
-                      .map((point, index) => `L ${(index * 300) / (chartData.length - 1)},${100 - point.value}`)
+                      .map(
+                        (point, index) =>
+                          `L ${(index * 300) / (chartData.length - 1)},${100 - point.value}`
+                      )
                       .join(' ')}`}
                     stroke="#3B82F6"
                     strokeWidth="2"
                     fill="none"
                     className="animate-pulse"
                   />
-                  
+
                   {/* Fill area under curve */}
                   <path
                     d={`M 0,${100 - chartData[0].value} ${chartData
-                      .map((point, index) => `L ${(index * 300) / (chartData.length - 1)},${100 - point.value}`)
+                      .map(
+                        (point, index) =>
+                          `L ${(index * 300) / (chartData.length - 1)},${100 - point.value}`
+                      )
                       .join(' ')} L 300,100 L 0,100 Z`}
                     fill="url(#trendGradient)"
                     className="animate-pulse"
@@ -237,43 +274,49 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
           </div>
 
           {/* Chart Controls Overlay */}
-          <div className="absolute top-4 right-4 flex items-center space-x-2">
-            <button className={`
-              p-2 rounded-lg transition-colors
-              ${isDark 
-                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                : 'bg-white text-gray-600 hover:bg-gray-50'
+          <div className="absolute right-4 top-4 flex items-center space-x-2">
+            <button
+              className={`
+              rounded-lg p-2 transition-colors
+              ${
+                isDark
+                  ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  : 'bg-white text-gray-600 hover:bg-gray-50'
               }
               border ${isDark ? 'border-gray-600' : 'border-gray-200'}
-            `}>
+            `}
+            >
               <Calendar size={14} />
             </button>
-            <button className={`
-              p-2 rounded-lg transition-colors
-              ${isDark 
-                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                : 'bg-white text-gray-600 hover:bg-gray-50'
+            <button
+              className={`
+              rounded-lg p-2 transition-colors
+              ${
+                isDark
+                  ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  : 'bg-white text-gray-600 hover:bg-gray-50'
               }
               border ${isDark ? 'border-gray-600' : 'border-gray-200'}
-            `}>
+            `}
+            >
               <BarChart3 size={14} />
             </button>
           </div>
         </div>
 
         {/* Footer Info */}
-        <div className={`
-          mt-4 pt-3 border-t flex items-center justify-between
+        <div
+          className={`
+          mt-4 flex items-center justify-between border-t pt-3
           ${isDark ? 'border-gray-700' : 'border-gray-200'}
-        `}>
+        `}
+        >
           <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
             Real-time data • Auto-refresh every 30s
           </span>
           <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-              Live
-            </span>
+            <div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
+            <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Live</span>
           </div>
         </div>
       </div>

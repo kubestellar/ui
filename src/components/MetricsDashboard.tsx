@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Activity, 
-  Cpu, 
+import {
+  Activity,
+  Cpu,
   Server,
   Shield,
   RefreshCcw,
@@ -11,7 +11,7 @@ import {
   Bell,
   HardDrive,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
 } from 'lucide-react';
 import useTheme from '../stores/themeStore';
 
@@ -152,17 +152,12 @@ const OverviewCard = ({
             {title}
           </h2>
         </div>
-        {actions && (
-          <div className="flex items-center space-x-2">
-            {actions}
-          </div>
-        )}
+        {actions && <div className="flex items-center space-x-2">{actions}</div>}
       </div>
       <div className="p-5">{children}</div>
     </motion.div>
   );
 };
-
 
 const MetricsDashboard: React.FC = () => {
   const { theme } = useTheme();
@@ -184,53 +179,53 @@ const MetricsDashboard: React.FC = () => {
       status: 'healthy',
       uptime: '99.98%',
       responseTime: '2ms',
-      lastChecked: '2 minutes ago'
+      lastChecked: '2 minutes ago',
     },
     {
       name: 'Kubernetes API',
       status: 'healthy',
       uptime: '99.95%',
       responseTime: '15ms',
-      lastChecked: '1 minute ago'
+      lastChecked: '1 minute ago',
     },
     {
       name: 'GitHub API',
       status: 'warning',
       uptime: '98.2%',
       responseTime: '125ms',
-      lastChecked: '3 minutes ago'
+      lastChecked: '3 minutes ago',
     },
     {
       name: 'Database',
       status: 'healthy',
       uptime: '99.99%',
       responseTime: '8ms',
-      lastChecked: '1 minute ago'
-    }
+      lastChecked: '1 minute ago',
+    },
   ];
 
   const performanceMetrics: PerformanceMetrics = {
     memory: {
       used: '342 MB',
       total: '512 MB',
-      percentage: 67
+      percentage: 67,
     },
     cpu: {
       usage: 23.5,
-      cores: 4
+      cores: 4,
     },
     goroutines: {
       active: 156,
-      peak: 203
+      peak: 203,
     },
     gc: {
       collections: 1247,
-      pauseTime: '1.2ms'
+      pauseTime: '1.2ms',
     },
     heap: {
       size: '289 MB',
-      objects: 425893
-    }
+      objects: 425893,
+    },
   };
 
   const deploymentStats: DeploymentStats = {
@@ -240,7 +235,7 @@ const MetricsDashboard: React.FC = () => {
     webhook: 89,
     manual: 58,
     avgDuration: '3m 42s',
-    lastDeployment: '12 minutes ago'
+    lastDeployment: '12 minutes ago',
   };
 
   const systemAlerts: Alert[] = [
@@ -251,7 +246,7 @@ const MetricsDashboard: React.FC = () => {
       message: 'Memory usage has exceeded 90% on cluster-prod-2. Immediate attention required.',
       timestamp: '2 minutes ago',
       source: 'cluster-prod-2',
-      acknowledged: false
+      acknowledged: false,
     },
     {
       id: '2',
@@ -260,7 +255,7 @@ const MetricsDashboard: React.FC = () => {
       message: 'GitHub API rate limit approaching 80% of hourly quota.',
       timestamp: '15 minutes ago',
       source: 'github-api',
-      acknowledged: false
+      acknowledged: false,
     },
     {
       id: '3',
@@ -269,15 +264,15 @@ const MetricsDashboard: React.FC = () => {
       message: 'Successfully deployed version 2.1.0 to production cluster.',
       timestamp: '1 hour ago',
       source: 'deployment-system',
-      acknowledged: true
-    }
+      acknowledged: true,
+    },
   ];
 
   const trendData: TrendData[] = [
     { metric: 'CPU Usage', value: 67.5, change: -3.2, period: '24h' },
     { metric: 'Memory Usage', value: 78.9, change: 5.1, period: '24h' },
     { metric: 'Network I/O', value: 234.7, change: 12.3, period: '24h' },
-    { metric: 'Disk Usage', value: 45.2, change: -1.8, period: '24h' }
+    { metric: 'Disk Usage', value: 45.2, change: -1.8, period: '24h' },
   ];
 
   // Animation variants
@@ -312,14 +307,15 @@ const MetricsDashboard: React.FC = () => {
             </p>
           </div>
           <div className="mt-4 flex items-center space-x-3 md:mt-0">
-            <select 
+            <select
               value={selectedTimeRange}
-              onChange={(e) => setSelectedTimeRange(e.target.value)}
+              onChange={e => setSelectedTimeRange(e.target.value)}
               className={`
-                px-3 py-2 rounded-lg border text-sm transition-colors
-                ${isDark 
-                  ? 'bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600' 
-                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                rounded-lg border px-3 py-2 text-sm transition-colors
+                ${
+                  isDark
+                    ? 'border-gray-600 bg-gray-700 text-gray-200 hover:bg-gray-600'
+                    : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                 }
               `}
             >
@@ -329,21 +325,25 @@ const MetricsDashboard: React.FC = () => {
               <option value="30d">Last 30 Days</option>
             </select>
 
-            <button className={`
+            <button
+              className={`
               flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700
-            `}>
+            `}
+            >
               <Filter size={16} />
               <span>Filter</span>
             </button>
 
-            <button className={`
+            <button
+              className={`
               flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700
-            `}>
+            `}
+            >
               <Download size={16} />
               <span>Export</span>
             </button>
 
-            <button 
+            <button
               onClick={handleRefresh}
               disabled={isRefreshing}
               className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
@@ -357,8 +357,8 @@ const MetricsDashboard: React.FC = () => {
 
       <div className="px-6">
         {/* Stats grid following Clusters.tsx pattern */}
-        <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8" 
+        <motion.div
+          className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4"
           variants={itemAnimationVariant}
         >
           <StatCard
@@ -392,47 +392,39 @@ const MetricsDashboard: React.FC = () => {
         </motion.div>
 
         {/* Main monitoring grid - Real-time health and performance */}
-        <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6" variants={itemAnimationVariant}>
+        <motion.div
+          className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2"
+          variants={itemAnimationVariant}
+        >
           {/* Health Status Panel */}
-          <HealthPanel 
-            services={healthServices}
-            className="h-fit"
-          />
+          <HealthPanel services={healthServices} className="h-fit" />
 
           {/* Performance Metrics Panel */}
-          <PerformancePanel 
-            metrics={performanceMetrics}
-            className="h-fit"
-          />
+          <PerformancePanel metrics={performanceMetrics} className="h-fit" />
         </motion.div>
 
         {/* Deployment and Alerts Row */}
-        <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6" variants={itemAnimationVariant}>
+        <motion.div
+          className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2"
+          variants={itemAnimationVariant}
+        >
           {/* Deployment Analytics Panel */}
-          <DeploymentPanel 
-            stats={deploymentStats}
-            className="h-fit"
-          />
+          <DeploymentPanel stats={deploymentStats} className="h-fit" />
 
           {/* Alerts Panel */}
-          <AlertPanel 
-            alerts={systemAlerts}
-            className="h-fit"
-            maxHeight="max-h-[500px]"
-          />
+          <AlertPanel alerts={systemAlerts} className="h-fit" maxHeight="max-h-[500px]" />
         </motion.div>
 
         {/* Historical Trends - Full Width */}
         <motion.div variants={itemAnimationVariant}>
-          <TrendPanel 
-            trends={trendData}
-            className="mb-6"
-            height="h-[600px]"
-          />
+          <TrendPanel trends={trendData} className="mb-6" height="h-[600px]" />
         </motion.div>
 
         {/* Additional System Metrics Grid */}
-        <motion.div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6" variants={itemAnimationVariant}>
+        <motion.div
+          className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3"
+          variants={itemAnimationVariant}
+        >
           {/* GitHub API Metrics */}
           <OverviewCard
             title="GitHub Integration"
@@ -440,17 +432,21 @@ const MetricsDashboard: React.FC = () => {
             iconColor="bg-gray-100 text-gray-600 dark:bg-gray-900/30 dark:text-gray-400"
           >
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600 dark:text-gray-400">Rate Limit</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-200">3,247 / 5,000</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-200">
+                  3,247 / 5,000
+                </span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
-                <div className="bg-yellow-500 h-2 rounded-full" style={{ width: '65%' }}></div>
+              <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+                <div className="h-2 rounded-full bg-yellow-500" style={{ width: '65%' }}></div>
               </div>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <span className="text-gray-600 dark:text-gray-400">Webhooks:</span>
-                  <span className="block font-medium text-gray-900 dark:text-gray-200">142 today</span>
+                  <span className="block font-medium text-gray-900 dark:text-gray-200">
+                    142 today
+                  </span>
                 </div>
                 <div>
                   <span className="text-gray-600 dark:text-gray-400">Last Event:</span>
@@ -480,11 +476,11 @@ const MetricsDashboard: React.FC = () => {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600 dark:text-gray-400">Cluster Health</span>
-                  <span className="text-green-600 dark:text-green-400 font-medium">Healthy</span>
+                  <span className="font-medium text-green-600 dark:text-green-400">Healthy</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600 dark:text-gray-400">API Response</span>
-                  <span className="text-gray-900 dark:text-gray-200 font-medium">15ms</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-200">15ms</span>
                 </div>
               </div>
             </div>
@@ -510,11 +506,11 @@ const MetricsDashboard: React.FC = () => {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600 dark:text-gray-400">Connections</span>
-                  <span className="text-gray-900 dark:text-gray-200 font-medium">12</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-200">12</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600 dark:text-gray-400">Hit Rate</span>
-                  <span className="text-green-600 dark:text-green-400 font-medium">98.2%</span>
+                  <span className="font-medium text-green-600 dark:text-green-400">98.2%</span>
                 </div>
               </div>
             </div>

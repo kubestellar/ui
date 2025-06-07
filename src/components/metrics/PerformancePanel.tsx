@@ -31,10 +31,7 @@ interface PerformancePanelProps {
   className?: string;
 }
 
-const PerformancePanel: React.FC<PerformancePanelProps> = ({ 
-  metrics,
-  className = ''
-}) => {
+const PerformancePanel: React.FC<PerformancePanelProps> = ({ metrics, className = '' }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
@@ -43,24 +40,24 @@ const PerformancePanel: React.FC<PerformancePanelProps> = ({
     memory: {
       used: '342 MB',
       total: '512 MB',
-      percentage: 67
+      percentage: 67,
     },
     cpu: {
       usage: 23.5,
-      cores: 4
+      cores: 4,
     },
     goroutines: {
       active: 156,
-      peak: 203
+      peak: 203,
     },
     gc: {
       collections: 1247,
-      pauseTime: '1.2ms'
+      pauseTime: '1.2ms',
     },
     heap: {
       size: '289 MB',
-      objects: 425893
-    }
+      objects: 425893,
+    },
   };
 
   const performanceData = metrics || defaultMetrics;
@@ -78,43 +75,48 @@ const PerformancePanel: React.FC<PerformancePanelProps> = ({
   };
 
   return (
-    <div className={`
+    <div
+      className={`
       rounded-xl border shadow-sm transition-all duration-300
-      ${isDark 
-        ? 'bg-gray-800 border-gray-700 hover:shadow-lg hover:shadow-gray-900/20' 
-        : 'bg-white border-gray-200 hover:shadow-lg hover:shadow-gray-200/50'
+      ${
+        isDark
+          ? 'border-gray-700 bg-gray-800 hover:shadow-lg hover:shadow-gray-900/20'
+          : 'border-gray-200 bg-white hover:shadow-lg hover:shadow-gray-200/50'
       }
       ${className}
-    `}>
+    `}
+    >
       {/* Header */}
-      <div className={`
-        flex items-center justify-between p-4 border-b
+      <div
+        className={`
+        flex items-center justify-between border-b p-4
         ${isDark ? 'border-gray-700' : 'border-gray-200'}
-      `}>
+      `}
+      >
         <div className="flex items-center space-x-3">
-          <div className={`
-            p-2 rounded-lg
-            ${isDark 
-              ? 'bg-purple-900/20 text-purple-400' 
-              : 'bg-purple-100 text-purple-600'
-            }
-          `}>
+          <div
+            className={`
+            rounded-lg p-2
+            ${isDark ? 'bg-purple-900/20 text-purple-400' : 'bg-purple-100 text-purple-600'}
+          `}
+          >
             <Activity size={18} />
           </div>
-          <h3 className={`
-            font-semibold text-lg
+          <h3
+            className={`
+            text-lg font-semibold
             ${isDark ? 'text-gray-100' : 'text-gray-900'}
-          `}>
+          `}
+          >
             Go Runtime Performance
           </h3>
         </div>
-        <div className={`
-          px-3 py-1 rounded-full text-sm font-medium
-          ${isDark 
-            ? 'bg-green-900/20 text-green-400' 
-            : 'bg-green-100 text-green-700'
-          }
-        `}>
+        <div
+          className={`
+          rounded-full px-3 py-1 text-sm font-medium
+          ${isDark ? 'bg-green-900/20 text-green-400' : 'bg-green-100 text-green-700'}
+        `}
+        >
           Healthy
         </div>
       </div>
@@ -122,27 +124,31 @@ const PerformancePanel: React.FC<PerformancePanelProps> = ({
       {/* Content */}
       <div className="p-4">
         {/* Main Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {/* Memory Usage */}
-          <div className={`
-            p-4 rounded-lg border
-            ${isDark ? 'bg-gray-750 border-gray-600' : 'bg-gray-50 border-gray-200'}
-          `}>
-            <div className="flex items-center justify-between mb-3">
+          <div
+            className={`
+            rounded-lg border p-4
+            ${isDark ? 'bg-gray-750 border-gray-600' : 'border-gray-200 bg-gray-50'}
+          `}
+          >
+            <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <MemoryStick className={`w-5 h-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+                <MemoryStick className={`h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
                 <span className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
                   Memory
                 </span>
               </div>
-              <span className={`text-sm font-medium ${getUsageColor(performanceData.memory.percentage)}`}>
+              <span
+                className={`text-sm font-medium ${getUsageColor(performanceData.memory.percentage)}`}
+              >
                 {performanceData.memory.percentage}%
               </span>
             </div>
-            
+
             <div className="space-y-2">
               <div className={`h-2 rounded-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                <div 
+                <div
                   className={`h-full bg-gradient-to-r ${getUsageBgColor(performanceData.memory.percentage)} rounded-full transition-all duration-500`}
                   style={{ width: `${performanceData.memory.percentage}%` }}
                 />
@@ -159,13 +165,15 @@ const PerformancePanel: React.FC<PerformancePanelProps> = ({
           </div>
 
           {/* CPU Usage */}
-          <div className={`
-            p-4 rounded-lg border
-            ${isDark ? 'bg-gray-750 border-gray-600' : 'bg-gray-50 border-gray-200'}
-          `}>
-            <div className="flex items-center justify-between mb-3">
+          <div
+            className={`
+            rounded-lg border p-4
+            ${isDark ? 'bg-gray-750 border-gray-600' : 'border-gray-200 bg-gray-50'}
+          `}
+          >
+            <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Cpu className={`w-5 h-5 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
+                <Cpu className={`h-5 w-5 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
                 <span className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
                   CPU Usage
                 </span>
@@ -174,10 +182,10 @@ const PerformancePanel: React.FC<PerformancePanelProps> = ({
                 {performanceData.cpu.usage}%
               </span>
             </div>
-            
+
             <div className="space-y-2">
               <div className={`h-2 rounded-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                <div 
+                <div
                   className={`h-full bg-gradient-to-r ${getUsageBgColor(performanceData.cpu.usage)} rounded-full transition-all duration-500`}
                   style={{ width: `${performanceData.cpu.usage}%` }}
                 />
@@ -191,19 +199,21 @@ const PerformancePanel: React.FC<PerformancePanelProps> = ({
           </div>
 
           {/* Goroutines */}
-          <div className={`
-            p-4 rounded-lg border
-            ${isDark ? 'bg-gray-750 border-gray-600' : 'bg-gray-50 border-gray-200'}
-          `}>
-            <div className="flex items-center justify-between mb-3">
+          <div
+            className={`
+            rounded-lg border p-4
+            ${isDark ? 'bg-gray-750 border-gray-600' : 'border-gray-200 bg-gray-50'}
+          `}
+          >
+            <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Zap className={`w-5 h-5 ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`} />
+                <Zap className={`h-5 w-5 ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`} />
                 <span className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
                   Goroutines
                 </span>
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <div className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                 {performanceData.goroutines.active.toLocaleString()}
@@ -218,31 +228,39 @@ const PerformancePanel: React.FC<PerformancePanelProps> = ({
         </div>
 
         {/* Additional Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {/* Garbage Collector */}
-          <div className={`
-            p-4 rounded-lg border
-            ${isDark ? 'bg-gray-750 border-gray-600' : 'bg-gray-50 border-gray-200'}
-          `}>
-            <h4 className={`font-medium mb-3 flex items-center space-x-2 ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
-              <Activity className={`w-4 h-4 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
+          <div
+            className={`
+            rounded-lg border p-4
+            ${isDark ? 'bg-gray-750 border-gray-600' : 'border-gray-200 bg-gray-50'}
+          `}
+          >
+            <h4
+              className={`mb-3 flex items-center space-x-2 font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}
+            >
+              <Activity className={`h-4 w-4 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
               <span>Garbage Collector</span>
             </h4>
-            
+
             <div className="space-y-3">
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                   Collections
                 </span>
-                <span className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+                <span
+                  className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}
+                >
                   {performanceData.gc.collections.toLocaleString()}
                 </span>
               </div>
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                   Avg Pause Time
                 </span>
-                <span className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+                <span
+                  className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}
+                >
                   {performanceData.gc.pauseTime}
                 </span>
               </div>
@@ -250,29 +268,37 @@ const PerformancePanel: React.FC<PerformancePanelProps> = ({
           </div>
 
           {/* Heap Statistics */}
-          <div className={`
-            p-4 rounded-lg border
-            ${isDark ? 'bg-gray-750 border-gray-600' : 'bg-gray-50 border-gray-200'}
-          `}>
-            <h4 className={`font-medium mb-3 flex items-center space-x-2 ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
-              <HardDrive className={`w-4 h-4 ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`} />
+          <div
+            className={`
+            rounded-lg border p-4
+            ${isDark ? 'bg-gray-750 border-gray-600' : 'border-gray-200 bg-gray-50'}
+          `}
+          >
+            <h4
+              className={`mb-3 flex items-center space-x-2 font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}
+            >
+              <HardDrive className={`h-4 w-4 ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`} />
               <span>Heap Statistics</span>
             </h4>
-            
+
             <div className="space-y-3">
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                   Heap Size
                 </span>
-                <span className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+                <span
+                  className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}
+                >
                   {performanceData.heap.size}
                 </span>
               </div>
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                   Objects
                 </span>
-                <span className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+                <span
+                  className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}
+                >
                   {performanceData.heap.objects.toLocaleString()}
                 </span>
               </div>
@@ -281,19 +307,21 @@ const PerformancePanel: React.FC<PerformancePanelProps> = ({
         </div>
 
         {/* Performance Indicators */}
-        <div className={`
-          mt-6 pt-4 border-t flex items-center justify-between
+        <div
+          className={`
+          mt-6 flex items-center justify-between border-t pt-4
           ${isDark ? 'border-gray-700' : 'border-gray-200'}
-        `}>
+        `}
+        >
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              <div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
               <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 Runtime healthy
               </span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full" />
+              <div className="h-2 w-2 rounded-full bg-blue-500" />
               <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 GC optimized
               </span>

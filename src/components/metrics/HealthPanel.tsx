@@ -15,10 +15,7 @@ interface HealthPanelProps {
   className?: string;
 }
 
-const HealthPanel: React.FC<HealthPanelProps> = ({ 
-  services = [],
-  className = ''
-}) => {
+const HealthPanel: React.FC<HealthPanelProps> = ({ services = [], className = '' }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
@@ -29,29 +26,29 @@ const HealthPanel: React.FC<HealthPanelProps> = ({
       status: 'healthy',
       uptime: '99.98%',
       responseTime: '2ms',
-      lastChecked: '2 minutes ago'
+      lastChecked: '2 minutes ago',
     },
     {
       name: 'Kubernetes API',
       status: 'healthy',
       uptime: '99.95%',
       responseTime: '15ms',
-      lastChecked: '1 minute ago'
+      lastChecked: '1 minute ago',
     },
     {
       name: 'GitHub API',
       status: 'warning',
       uptime: '98.2%',
       responseTime: '125ms',
-      lastChecked: '3 minutes ago'
+      lastChecked: '3 minutes ago',
     },
     {
       name: 'Database',
       status: 'healthy',
       uptime: '99.99%',
       responseTime: '8ms',
-      lastChecked: '1 minute ago'
-    }
+      lastChecked: '1 minute ago',
+    },
   ];
 
   const serviceData = services.length > 0 ? services : defaultServices;
@@ -59,13 +56,13 @@ const HealthPanel: React.FC<HealthPanelProps> = ({
   const getStatusIcon = (status: ServiceStatus['status']) => {
     switch (status) {
       case 'healthy':
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
+        return <CheckCircle className="h-5 w-5 text-green-500" />;
       case 'unhealthy':
-        return <XCircle className="w-5 h-5 text-red-500" />;
+        return <XCircle className="h-5 w-5 text-red-500" />;
       case 'warning':
-        return <AlertCircle className="w-5 h-5 text-yellow-500" />;
+        return <AlertCircle className="h-5 w-5 text-yellow-500" />;
       default:
-        return <Activity className="w-5 h-5 text-gray-500" />;
+        return <Activity className="h-5 w-5 text-gray-500" />;
     }
   };
 
@@ -83,117 +80,143 @@ const HealthPanel: React.FC<HealthPanelProps> = ({
   };
 
   return (
-    <div className={`
+    <div
+      className={`
       rounded-xl border shadow-sm transition-all duration-300
-      ${isDark 
-        ? 'bg-gray-800 border-gray-700 hover:shadow-lg hover:shadow-gray-900/20' 
-        : 'bg-white border-gray-200 hover:shadow-lg hover:shadow-gray-200/50'
+      ${
+        isDark
+          ? 'border-gray-700 bg-gray-800 hover:shadow-lg hover:shadow-gray-900/20'
+          : 'border-gray-200 bg-white hover:shadow-lg hover:shadow-gray-200/50'
       }
       ${className}
-    `}>
+    `}
+    >
       {/* Header */}
-      <div className={`
-        flex items-center justify-between p-4 border-b
+      <div
+        className={`
+        flex items-center justify-between border-b p-4
         ${isDark ? 'border-gray-700' : 'border-gray-200'}
-      `}>
+      `}
+      >
         <div className="flex items-center space-x-3">
-          <div className={`
-            p-2 rounded-lg
-            ${isDark 
-              ? 'bg-green-900/20 text-green-400' 
-              : 'bg-green-100 text-green-600'
-            }
-          `}>
+          <div
+            className={`
+            rounded-lg p-2
+            ${isDark ? 'bg-green-900/20 text-green-400' : 'bg-green-100 text-green-600'}
+          `}
+          >
             <Activity size={18} />
           </div>
-          <h3 className={`
-            font-semibold text-lg
+          <h3
+            className={`
+            text-lg font-semibold
             ${isDark ? 'text-gray-100' : 'text-gray-900'}
-          `}>
+          `}
+          >
             Service Health
           </h3>
         </div>
-        <div className={`
-          px-3 py-1 rounded-full text-sm font-medium
-          ${isDark 
-            ? 'bg-green-900/20 text-green-400' 
-            : 'bg-green-100 text-green-700'
-          }
-        `}>
+        <div
+          className={`
+          rounded-full px-3 py-1 text-sm font-medium
+          ${isDark ? 'bg-green-900/20 text-green-400' : 'bg-green-100 text-green-700'}
+        `}
+        >
           All Systems Operational
         </div>
       </div>
 
       {/* Content */}
       <div className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {serviceData.map((service, index) => (
             <div
               key={index}
               className={`
-                p-4 rounded-lg border transition-all duration-200 hover:scale-105
+                rounded-lg border p-4 transition-all duration-200 hover:scale-105
                 ${getStatusColor(service.status)}
               `}
             >
-              <div className="flex items-center justify-between mb-3">
+              <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   {getStatusIcon(service.status)}
-                  <h4 className={`
+                  <h4
+                    className={`
                     font-medium
                     ${isDark ? 'text-gray-100' : 'text-gray-900'}
-                  `}>
+                  `}
+                  >
                     {service.name}
                   </h4>
                 </div>
-                <span className={`
-                  px-2 py-1 rounded text-xs font-medium capitalize
-                  ${service.status === 'healthy' 
-                    ? isDark ? 'bg-green-800/50 text-green-300' : 'bg-green-200 text-green-800'
-                    : service.status === 'warning'
-                      ? isDark ? 'bg-yellow-800/50 text-yellow-300' : 'bg-yellow-200 text-yellow-800'
-                      : isDark ? 'bg-red-800/50 text-red-300' : 'bg-red-200 text-red-800'
+                <span
+                  className={`
+                  rounded px-2 py-1 text-xs font-medium capitalize
+                  ${
+                    service.status === 'healthy'
+                      ? isDark
+                        ? 'bg-green-800/50 text-green-300'
+                        : 'bg-green-200 text-green-800'
+                      : service.status === 'warning'
+                        ? isDark
+                          ? 'bg-yellow-800/50 text-yellow-300'
+                          : 'bg-yellow-200 text-yellow-800'
+                        : isDark
+                          ? 'bg-red-800/50 text-red-300'
+                          : 'bg-red-200 text-red-800'
                   }
-                `}>
+                `}
+                >
                   {service.status}
                 </span>
               </div>
-              
+
               <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className={`
+                <div className="flex items-center justify-between">
+                  <span
+                    className={`
                     text-sm
                     ${isDark ? 'text-gray-400' : 'text-gray-600'}
-                  `}>
+                  `}
+                  >
                     Uptime
                   </span>
-                  <span className={`
+                  <span
+                    className={`
                     text-sm font-medium
                     ${isDark ? 'text-gray-200' : 'text-gray-800'}
-                  `}>
+                  `}
+                  >
                     {service.uptime}
                   </span>
                 </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className={`
+
+                <div className="flex items-center justify-between">
+                  <span
+                    className={`
                     text-sm
                     ${isDark ? 'text-gray-400' : 'text-gray-600'}
-                  `}>
+                  `}
+                  >
                     Response Time
                   </span>
-                  <span className={`
+                  <span
+                    className={`
                     text-sm font-medium
                     ${isDark ? 'text-gray-200' : 'text-gray-800'}
-                  `}>
+                  `}
+                  >
                     {service.responseTime}
                   </span>
                 </div>
-                
-                <div className="pt-2 border-t border-opacity-20">
-                  <span className={`
+
+                <div className="border-t border-opacity-20 pt-2">
+                  <span
+                    className={`
                     text-xs
                     ${isDark ? 'text-gray-500' : 'text-gray-500'}
-                  `}>
+                  `}
+                  >
                     Last checked: {service.lastChecked}
                   </span>
                 </div>
