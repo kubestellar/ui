@@ -1,6 +1,6 @@
 import { HiOutlineHome, HiOutlineCube, HiOutlineCommandLine } from 'react-icons/hi2';
-
 import { MdPolicy, MdAssuredWorkload } from 'react-icons/md';
+import { TbChartBar } from 'react-icons/tb';
 
 export const menu = [
   {
@@ -44,6 +44,12 @@ export const menu = [
         url: '/wecs/treeview',
         icon: MdAssuredWorkload,
         label: `Deployed Workloads`,
+      },
+      {
+        isLink: true,
+        url: '/metrics',
+        icon: TbChartBar,
+        label: 'Metrics Dashboard',
       },
     ],
   },
