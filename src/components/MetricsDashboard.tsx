@@ -296,7 +296,7 @@ const MetricsDashboard: React.FC = () => {
       animate="animate"
     >
       {/* Enhanced header following Clusters.tsx pattern */}
-      <motion.div className="mb-8 px-6 pt-6" variants={itemAnimationVariant}>
+      <motion.div className="mb-8 px-6 pt-8" variants={itemAnimationVariant}>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="mb-2 text-3xl font-bold text-blue-600 dark:text-blue-400">
@@ -355,10 +355,11 @@ const MetricsDashboard: React.FC = () => {
         </div>
       </motion.div>
 
-      <div className="px-6">
+      {/* Main content container with consistent padding */}
+      <div className="px-6 pb-8">
         {/* Stats grid following Clusters.tsx pattern */}
         <motion.div
-          className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4"
+          className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4"
           variants={itemAnimationVariant}
         >
           <StatCard
@@ -393,36 +394,36 @@ const MetricsDashboard: React.FC = () => {
 
         {/* Main monitoring grid - Real-time health and performance */}
         <motion.div
-          className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2"
+          className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2"
           variants={itemAnimationVariant}
         >
           {/* Health Status Panel */}
-          <HealthPanel services={healthServices} className="h-fit" />
+          <HealthPanel services={healthServices} />
 
           {/* Performance Metrics Panel */}
-          <PerformancePanel metrics={performanceMetrics} className="h-fit" />
+          <PerformancePanel metrics={performanceMetrics} />
         </motion.div>
 
         {/* Deployment and Alerts Row */}
         <motion.div
-          className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2"
+          className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2"
           variants={itemAnimationVariant}
         >
           {/* Deployment Analytics Panel */}
-          <DeploymentPanel stats={deploymentStats} className="h-fit" />
+          <DeploymentPanel stats={deploymentStats} />
 
           {/* Alerts Panel */}
-          <AlertPanel alerts={systemAlerts} className="h-fit" maxHeight="max-h-[500px]" />
+          <AlertPanel alerts={systemAlerts} maxHeight="max-h-[500px]" />
         </motion.div>
 
         {/* Historical Trends - Full Width */}
-        <motion.div variants={itemAnimationVariant}>
-          <TrendPanel trends={trendData} className="mb-6" height="h-[600px]" />
+        <motion.div className="mb-8" variants={itemAnimationVariant}>
+          <TrendPanel trends={trendData} height="h-[600px]" />
         </motion.div>
 
         {/* Additional System Metrics Grid */}
         <motion.div
-          className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3"
+          className="grid grid-cols-1 gap-6 md:grid-cols-3"
           variants={itemAnimationVariant}
         >
           {/* GitHub API Metrics */}
