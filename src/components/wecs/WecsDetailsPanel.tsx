@@ -28,10 +28,10 @@ import jsyaml from 'js-yaml';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
-import { ResourceItem } from './TreeViewComponent';
-import useTheme from '../stores/themeStore';
+import { ResourceItem } from '../TreeViewComponent';
+import useTheme from '../../stores/themeStore';
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import { api, getWebSocketUrl } from '../lib/api';
+import { api, getWebSocketUrl } from '../../lib/api';
 import DownloadLogsButton from './DownloadLogsButton';
 
 interface WecsDetailsProps {
