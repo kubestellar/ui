@@ -13,8 +13,8 @@ import {
   Divider,
   useMediaQuery,
 } from '@mui/material';
-import { CommandResponse, Colors } from './ImportClusters';
-import OnboardingLogsDisplay from './OnboardingLogsDisplay';
+import { CommandResponse, Colors } from './its/ImportClusters';
+import OnboardingLogsDisplay from './log/OnboardingLogsDisplay';
 import CancelButton from './common/CancelButton';
 
 interface QuickConnectProps {

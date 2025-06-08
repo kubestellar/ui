@@ -13,7 +13,7 @@ import KubeStellarVisualization from '../components/login/index';
 import InstallationPage from '../pages/InstallationPage';
 import KubeStellarStatusChecker from '../components/KubeStellarStatusChecker';
 
-const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ '../components/Dashboard'));
+const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/Dashboard'));
 const ITSLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/ITS'));
 
 export const routesConfig: RouteObject[] = [

@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import useTheme from '../stores/themeStore';
 import ListViewSkeleton from './ui/ListViewSkeleton';
 import { api } from '../lib/api';
-import DownloadLogsButton from './DownloadLogsButton';
+import DownloadLogsButton from './log/DownloadLogsButton';
 
 // Define the response interfaces
 export interface ResourceItem {

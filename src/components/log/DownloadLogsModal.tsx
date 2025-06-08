@@ -1,6 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
-import useTheme from '../stores/themeStore';
+import useTheme from '../../stores/themeStore';
 
 interface DownloadLogsModalProps {
   size: number;

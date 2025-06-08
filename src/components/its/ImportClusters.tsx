@@ -15,12 +15,12 @@ import {
   Theme,
 } from '@mui/material';
 import React, { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
-import { useClusterQueries } from '../hooks/queries/useClusterQueries';
-import { api } from '../lib/api';
-import useTheme from '../stores/themeStore';
+import { useClusterQueries } from '../../hooks/queries/useClusterQueries';
+import { api } from '../../lib/api';
+import useTheme from '../../stores/themeStore';
 import ApiUrlImportTab from './ApiUrlImportTab';
 import KubeconfigImportTab from './KubeconfigImportTab';
-import QuickConnectTab from './QuickConnectTab';
+import QuickConnectTab from '../QuickConnectTab';
 
 // Define the Colors interface for consistent typing across components
 export interface Colors {

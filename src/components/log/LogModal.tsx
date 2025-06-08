@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
-import useTheme from '../stores/themeStore';
+import useTheme from '../../stores/themeStore';
 import DownloadLogsButton from './DownloadLogsButton';
 
 interface LogModalProps {

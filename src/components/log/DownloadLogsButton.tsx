@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Download } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import DownloadLogsModal from './DownloadLogsModal';
-import useTheme from '../stores/themeStore';
+import useTheme from '../../stores/themeStore';
 
 interface DownloadLogsButtonProps {
   cluster: string;

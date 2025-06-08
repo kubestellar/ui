@@ -32,7 +32,7 @@ import { ResourceItem } from '../TreeViewComponent';
 import useTheme from '../../stores/themeStore';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { api, getWebSocketUrl } from '../../lib/api';
-import DownloadLogsButton from './DownloadLogsButton';
+import DownloadLogsButton from '../log/DownloadLogsButton';
 
 interface WecsDetailsProps {
   namespace: string;
