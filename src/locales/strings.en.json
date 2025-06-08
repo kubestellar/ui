@@ -1328,8 +1328,7 @@
       "expandAll": "Expand all the child nodes of all parent nodes",
       "collapseAll": "Collapse all the child nodes of all parent nodes",
       "zoomIn": "Zoom In",
-      "zoomOut": "Zoom Out",
-      "zoomPercentage": "%"
+      "zoomOut": "Zoom Out"
     },
     "nodeLabel": {
       "labels": "Labels:",
