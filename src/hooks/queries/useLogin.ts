@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import axios from 'axios';
 import { LoginUser } from '../../api/auth';
 import { AUTH_QUERY_KEY } from '../../api/auth/constant';
+import { encryptData, secureSet, secureRemove } from '../../utils/secureStorage';
 
 interface LoginCredentials {
   username: string;
@@ -29,11 +30,14 @@ export const useLogin = () => {
         localStorage.setItem('jwtToken', response.token);
 
         if (rememberMe) {
-          localStorage.setItem('rememberedUsername', username);
-          localStorage.setItem('rememberedPassword', btoa(password));
+          // Use secure storage with XSS protection
+          secureSet('rememberedUsername', username);
+          // Securely encrypt password with expiration
+          const encryptedPassword = await encryptData(password);
+          secureSet('rememberedPassword', encryptedPassword);
         } else {
-          localStorage.removeItem('rememberedUsername');
-          localStorage.removeItem('rememberedPassword');
+          secureRemove('rememberedUsername');
+          secureRemove('rememberedPassword');
         }
 
         return response;
