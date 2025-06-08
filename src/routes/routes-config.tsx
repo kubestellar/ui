@@ -6,7 +6,7 @@ import NotFoundPage from '../pages/NotFoundPage';
 import TreeView from '../components/TreeViewComponent';
 import { lazy, Suspense } from 'react';
 import LoadingFallback from '../components/LoadingFallback';
-import WecsTreeview from '../components/WecsTopology';
+import WecsTreeview from '../components/wecs/WecsTopology';
 import ProtectedRoute from '../components/ProtectedRoute';
 import PublicRoute from '../components/PublicRoute';
 import KubeStellarVisualization from '../components/login/index';

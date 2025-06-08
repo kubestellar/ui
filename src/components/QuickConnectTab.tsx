@@ -13,7 +13,7 @@ import {
   Divider,
   useMediaQuery,
 } from '@mui/material';
-import { CommandResponse, Colors } from './ImportClusters';
+import { CommandResponse, Colors } from './its/ImportClusters';
 import OnboardingLogsDisplay from './OnboardingLogsDisplay';
 import CancelButton from './common/CancelButton';
 

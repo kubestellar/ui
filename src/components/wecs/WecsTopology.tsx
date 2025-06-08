@@ -35,20 +35,20 @@ import pod from '../assets/k8s_resources_logo/pod.png';
 import user from '../assets/k8s_resources_logo/user.svg';
 import vol from '../assets/k8s_resources_logo/vol.svg';
 import { Plus } from 'lucide-react';
-import CreateOptions from '../components/CreateOptions';
-import { NodeLabel } from '../components/Wds_Topology/NodeLabel';
-import { ZoomControls } from '../components/Wds_Topology/ZoomControls';
-import WecsTreeviewSkeleton from './ui/WecsTreeviewSkeleton';
-import ListViewSkeleton from './ui/ListViewSkeleton';
+import CreateOptions from '../CreateOptions';
+import { NodeLabel } from '../Wds_Topology/NodeLabel';
+import { ZoomControls } from '../Wds_Topology/ZoomControls';
+import WecsTreeviewSkeleton from '../ui/WecsTreeviewSkeleton';
+import ListViewSkeleton from '../ui/ListViewSkeleton';
 import ReactDOM from 'react-dom';
 import { isEqual } from 'lodash';
-import { useWebSocket } from '../context/webSocketExports';
-import useTheme from '../stores/themeStore';
+import { useWebSocket } from '../../context/webSocketExports';
+import useTheme from '../../stores/themeStore';
 import WecsDetailsPanel from './WecsDetailsPanel';
-import { FlowCanvas } from './Wds_Topology/FlowCanvas';
-import ListViewComponent from '../components/ListViewComponent';
-import FullScreenToggle from './ui/FullScreenToggle';
-import { api } from '../lib/api';
+import { FlowCanvas } from '../Wds_Topology/FlowCanvas';
+import ListViewComponent from '../ListViewComponent';
+import FullScreenToggle from '../ui/FullScreenToggle';
+import { api } from '../../lib/api';
 
 // Updated Interfaces
 export interface NodeData {

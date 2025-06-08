@@ -41,7 +41,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import LinkOffIcon from '@mui/icons-material/LinkOff';
 import { Plus, CloudOff, Filter, Tag, Tags } from 'lucide-react';
-import CreateOptions from './ImportClusters'; // Dialog for cluster import (if needed)
+import CreateOptions from './its/ImportClusters'; // Dialog for cluster import (if needed)
 import useTheme from '../stores/themeStore';
 import { useClusterQueries } from '../hooks/queries/useClusterQueries';
 import { toast } from 'react-hot-toast';
