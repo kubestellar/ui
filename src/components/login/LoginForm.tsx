@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useLogin } from '../../hooks/queries/useLogin';
 import { useTranslation } from 'react-i18next'; // Add this import
+import { decryptData, isEncrypted, migratePassword, secureGet } from '../../utils/secureStorage';
 
 const LoginForm = () => {
   const { t } = useTranslation(); // Add translation hook
@@ -25,27 +26,55 @@ const LoginForm = () => {
     console.log(
       `[LoginForm] Component mounted at ${performance.now() - renderStartTime.current}ms`
     );
-    const savedUsername = localStorage.getItem('rememberedUsername');
-    const savedPassword = localStorage.getItem('rememberedPassword');
 
-    if (savedUsername && savedPassword) {
-      try {
-        const decodedPassword = atob(savedPassword);
-        setUsername(savedUsername);
-        setPassword(decodedPassword);
-        setRememberMe(true);
-        console.log(
-          `[LoginForm] Loaded remembered credentials at ${performance.now() - renderStartTime.current}ms`
-        );
-      } catch (error) {
-        console.error(
-          `[LoginForm] Error decoding stored credentials at ${performance.now() - renderStartTime.current}ms:`,
-          error
-        );
-        localStorage.removeItem('rememberedUsername');
-        localStorage.removeItem('rememberedPassword');
-      }
-    }
+    // First attempt to migrate any old base64 passwords to the new encrypted format
+    migratePassword().then(() => {
+      const loadSavedCredentials = async () => {
+        const savedUsername = secureGet('rememberedUsername');
+        const savedPassword = secureGet('rememberedPassword');
+
+        if (savedUsername && savedPassword) {
+          try {
+            let passwordToUse;
+
+            if (isEncrypted(savedPassword)) {
+              // This is an encrypted password using our new method
+              passwordToUse = await decryptData(savedPassword);
+            } else {
+              // This should never happen with the new secure storage
+              // But kept as a fallback just in case
+              console.warn('Unexpected unencrypted password found in secure storage');
+              migratePassword();
+              return;
+            }
+
+            setUsername(savedUsername);
+            setPassword(passwordToUse);
+            setRememberMe(true);
+            console.log(
+              `[LoginForm] Loaded remembered credentials at ${performance.now() - renderStartTime.current}ms`
+            );
+          } catch (error) {
+            if (error instanceof Error && error.message === 'Credentials have expired') {
+              toast.error('Saved credentials have expired. Please log in again.');
+            } else if (
+              error instanceof Error &&
+              error.message === 'Too many decryption attempts. Please try again later.'
+            ) {
+              toast.error(error.message);
+            } else {
+              console.error(
+                `[LoginForm] Error with stored credentials at ${performance.now() - renderStartTime.current}ms`
+              );
+            }
+            // We don't need to manually remove credentials as the decryptData function
+            // will handle this for expired credentials
+          }
+        }
+      };
+
+      loadSavedCredentials();
+    });
   }, []);
 
   useEffect(() => {
