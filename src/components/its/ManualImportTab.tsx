@@ -1,7 +1,7 @@
 import React, { ChangeEvent, RefObject, useState } from 'react';
 import { Box, Button, CircularProgress, Alert, SxProps, Theme } from '@mui/material';
 import { CommandResponse, Colors } from './ImportClusters';
-import OnboardingLogsDisplay from '../OnboardingLogsDisplay';
+import OnboardingLogsDisplay from '../logs/OnboardingLogsDisplay';
 import CancelButton from '../common/CancelButton';
 
 interface ManualImportTabProps {

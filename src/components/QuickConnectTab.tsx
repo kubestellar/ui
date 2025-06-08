@@ -14,7 +14,7 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { CommandResponse, Colors } from './its/ImportClusters';
-import OnboardingLogsDisplay from './OnboardingLogsDisplay';
+import OnboardingLogsDisplay from './logs/OnboardingLogsDisplay';
 import CancelButton from './common/CancelButton';
 
 interface QuickConnectProps {

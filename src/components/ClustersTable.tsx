@@ -50,7 +50,7 @@ import PostAddIcon from '@mui/icons-material/PostAdd';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import TableSkeleton from './ui/TableSkeleton';
 import ClusterDetailDialog from './ClusterDetailDialog'; // Import the new component
-import DetachmentLogsDialog from './DetachmentLogsDialog'; // Import the new component
+import DetachmentLogsDialog from './logs/DetachmentLogsDialog'; // Import the new component
 import CancelButton from './common/CancelButton';
 import LockIcon from '@mui/icons-material/Lock';
 

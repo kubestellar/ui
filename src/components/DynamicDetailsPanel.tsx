@@ -29,7 +29,7 @@ import useTheme from '../stores/themeStore'; // Import the useTheme hook
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { api } from '../lib/api';
 import { useResourceLogsWebSocket } from '../hooks/useWebSocket';
-import DownloadLogsButton from './DownloadLogsButton';
+import DownloadLogsButton from './logs/DownloadLogsButton';
 
 interface DynamicDetailsProps {
   namespace: string;
