@@ -661,10 +661,7 @@ const BP: React.FC = () => {
     () => setPreviewDialogOpen(false),
     [setPreviewDialogOpen]
   );
-  const handleEditDialogClose = useCallback(
-    () => setEditDialogOpen(false),
-    [setEditDialogOpen]
-  );
+  const handleEditDialogClose = useCallback(() => setEditDialogOpen(false), [setEditDialogOpen]);
   const handleDeleteDialogClose = useCallback(
     () => setDeleteDialogOpen(false),
     [setDeleteDialogOpen]
