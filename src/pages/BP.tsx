@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Paper,
   Box,
@@ -200,7 +200,7 @@ const BP: React.FC = () => {
   const [simulatedPolicies, setSimulatedPolicies] = useState<BindingPolicyInfo[]>([]);
 
   // More forceful effect to ensure viewMode is set properly from location state
-  React.useEffect(() => {
+  useEffect(() => {
     console.log('Location state:', location.state);
 
     if (location.state?.activateView === 'dragdrop') {
@@ -211,7 +211,7 @@ const BP: React.FC = () => {
   }, [location.state]);
 
   // Clear location state after using it
-  React.useEffect(() => {
+  useEffect(() => {
     if (location.state?.activateView) {
       // Replace the current state to clear the activateView parameter
       window.history.replaceState({}, document.title);
@@ -219,7 +219,7 @@ const BP: React.FC = () => {
   }, [location.state]);
 
   // Show drag & drop help when the view is activated
-  React.useEffect(() => {
+  useEffect(() => {
     if (viewMode === 'dragdrop') {
       setShowDragDropHelp(true);
     }
@@ -393,7 +393,7 @@ const BP: React.FC = () => {
   // Update methods to use React Query hooks instead of direct API calls
 
   // Update useEffect to set state based on React Query results
-  React.useEffect(() => {
+  useEffect(() => {
     // Set overall loading state based on all queries
     setLoading(bindingPoliciesLoading || workloadsLoading || clustersLoading);
 
