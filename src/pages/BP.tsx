@@ -226,7 +226,7 @@ const BP: React.FC = () => {
   }, [viewMode]);
 
   // Calculate filtered policies at the top level, not in a nested function
-  const getFilteredPolicies = React.useCallback(() => {
+  const getFilteredPolicies = useCallback(() => {
     // Ensure bindingPolicies is an array before calling filter
     if (!Array.isArray(bindingPolicies)) {
       console.warn('bindingPolicies is not an array:', bindingPolicies);
@@ -279,7 +279,7 @@ const BP: React.FC = () => {
   );
 
   // Calculate matches at the top level
-  const getMatches = React.useCallback(() => {
+  const getMatches = useCallback(() => {
     const matchedClusters = availableClusters.filter(cluster => {
       return Object.entries(selectedLabels).every(
         ([key, value]) => cluster.labels && cluster.labels[key] === value
@@ -298,7 +298,7 @@ const BP: React.FC = () => {
   const { matchedClusters, matchedWorkloads } = getMatches();
 
   // Add function to handle simulated binding policy creation
-  const handleCreateSimulatedBindingPolicy = React.useCallback(
+  const handleCreateSimulatedBindingPolicy = useCallback(
     (clusterIds: string[], workloadIds: string[], config?: BindingPolicyConfig) => {
       return new Promise<void>(resolve => {
         setTimeout(() => {
@@ -377,7 +377,7 @@ const BP: React.FC = () => {
   );
 
   // Memoize the tab change handler to prevent rerenders
-  const handleViewModeChange = React.useCallback(
+  const handleViewModeChange = useCallback(
     (_: React.SyntheticEvent, newValue: 'table' | 'dragdrop' | 'visualize') => {
       console.log('Tab change to:', newValue, 'from:', viewMode);
       if (newValue && newValue !== viewMode) {
@@ -516,12 +516,12 @@ const BP: React.FC = () => {
   ]);
 
   // Memoize the delete handlers for consistent hook usage
-  const handleDeletePolicy = React.useCallback(async (policy: BindingPolicyInfo) => {
+  const handleDeletePolicy = useCallback(async (policy: BindingPolicyInfo) => {
     setSelectedPolicy(policy);
     setDeleteDialogOpen(true);
   }, []);
 
-  const confirmDelete = React.useCallback(async () => {
+  const confirmDelete = useCallback(async () => {
     if (selectedPolicy) {
       try {
         // Use the mutation instead of direct API call
@@ -555,7 +555,7 @@ const BP: React.FC = () => {
     setSelectedPolicies,
   ]);
 
-  const handleCreatePolicySubmit = React.useCallback(
+  const handleCreatePolicySubmit = useCallback(
     async (policyData: PolicyData) => {
       try {
         // Log the incoming policy data
@@ -621,12 +621,12 @@ const BP: React.FC = () => {
     [createBindingPolicyMutation, setCreateDialogOpen]
   );
 
-  const handleEditPolicy = React.useCallback((policy: BindingPolicyInfo) => {
+  const handleEditPolicy = useCallback((policy: BindingPolicyInfo) => {
     setSelectedPolicy(policy);
     setEditDialogOpen(true);
   }, []);
 
-  const handleSaveEdit = React.useCallback(
+  const handleSaveEdit = useCallback(
     async (updatedPolicy: Partial<BindingPolicyInfo>) => {
       try {
         // This would need a proper update mutation in useBPQueries
@@ -646,7 +646,7 @@ const BP: React.FC = () => {
   );
 
   // Create a memoized function for the policy assignment simulation used in the JSX
-  const handleSimulatedPolicyAssign = React.useCallback(
+  const handleSimulatedPolicyAssign = useCallback(
     (policyName: string, targetType: string, targetName: string) => {
       // Simulate policy assignment with a hardcoded response
       setTimeout(() => {
@@ -657,26 +657,26 @@ const BP: React.FC = () => {
   );
 
   // Create a memoized function for the dialog close handlers
-  const handlePreviewDialogClose = React.useCallback(
+  const handlePreviewDialogClose = useCallback(
     () => setPreviewDialogOpen(false),
     [setPreviewDialogOpen]
   );
-  const handleEditDialogClose = React.useCallback(
+  const handleEditDialogClose = useCallback(
     () => setEditDialogOpen(false),
     [setEditDialogOpen]
   );
-  const handleDeleteDialogClose = React.useCallback(
+  const handleDeleteDialogClose = useCallback(
     () => setDeleteDialogOpen(false),
     [setDeleteDialogOpen]
   );
 
   // Add a memoized function for handling the create dialog open
-  const handleCreateDialogOpen = React.useCallback(
+  const handleCreateDialogOpen = useCallback(
     () => setCreateDialogOpen(true),
     [setCreateDialogOpen]
   );
 
-  const handleBulkDelete = React.useCallback(async () => {
+  const handleBulkDelete = useCallback(async () => {
     try {
       // Verify we have policies selected
       if (selectedPolicies.length === 0) {
