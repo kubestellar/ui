@@ -1,0 +1,1795 @@
+{
+  "common": {
+    "clearFilter": "Clear Canvas",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "create": "Create",
+    "add": "Add",
+    "refresh": "Refresh",
+    "search": "Search",
+    "connect": "Connect",
+    "import": "Import",
+    "loading": "Loading...",
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "actions": "Actions",
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "pending": "Pending",
+      "checking": "Checking",
+      "success": "Success",
+      "warning": "Version mismatch",
+      "error": "Missing",
+      "installed": "Installed"
+    },
+    "noResource": "No {{resource}} specified",
+    "copy": "Copy",
+    "close": "Close",
+    "confirm": "Confirm",
+    "continue": "Continue",
+    "back": "Back",
+    "submit": "Submit",
+    "settings": "Settings",
+    "help": "Help",
+    "details": "Details",
+    "view": "View",
+    "yes": "Yes",
+    "no": "No",
+    "all": "All",
+    "none": "None",
+    "ok": "OK",
+    "finish": "Finish",
+    "next": "Next",
+    "previous": "Previous",
+    "page": "Page",
+    "of": "of",
+    "items": "item{{count, plural, one {} other {s}}}",
+    "filteredFrom": "filtered from {{total}}"
+  },
+  "installationPage": {
+    "statusBadge": {
+      "installed": "Installed",
+      "versionMismatch": "Version mismatch",
+      "missing": "Missing",
+      "checking": "Checking"
+    },
+    "codeBlock": {
+      "bash": "bash"
+    },
+    "title": "Installation",
+    "verification": "Verification",
+    "installCommand": "Run the following command to install",
+    "verifyCommand": "Verify installation with",
+    "welcome": "Welcome to KubeStellar",
+    "gettingStarted": "Get started with KubeStellar by setting up your development environment. Follow our guided installation process to deploy your demo system.",
+    "tabs": {
+      "prerequisites": "Prerequisites",
+      "installation": "Installation"
+    },
+    "sidebarSteps": {
+      "title": "Installation Steps",
+      "description": "Follow these steps to set up KubeStellar",
+      "checkPrerequisites": "Check Prerequisites",
+      "checkPrerequisitesDescription": "Ensure you have all the required tools installed",
+      "installKubestellar": "Install KubeStellar",
+      "installKubestellarDescription": "Deploy KubeStellar using the CLI commands",
+      "startUsingKubestellar": "Start Using KubeStellar",
+      "startUsingKubestellarDescription": "Log in and begin managing your clusters"
+    },
+    "documentationLink": "View full installation guide",
+    "prerequisites": {
+      "title": "System Prerequisites",
+      "description": "Ensure these tools are installed before proceeding",
+      "status": {
+        "success": "Success",
+        "warnings": "Warnings",
+        "missing": "Missing",
+        "checking": "Checking"
+      },
+      "coreRequirements": "Core Requirements",
+      "demoEnvironmentRequirements": "Demo Environment Requirements",
+      "buttons": {
+        "refresh": "Refresh",
+        "nextInstallation": "Next: Installation"
+      }
+    },
+    "installation": {
+      "title": "Install KubeStellar",
+      "description": "Choose your platform and run the installation script",
+      "installPrerequisitesFirst": {
+        "title": "Install Prerequisites First",
+        "description": "Before running the installation script, ensure you have all the required prerequisites installed on your system.",
+        "button": "View Install Prerequisites"
+      },
+      "platform": "Platform",
+      "platforms": {
+        "kind": "kind",
+        "k3d": "k3d"
+      },
+      "installationScript": "Installation Script",
+      "scriptInstructions": "Run this command in your terminal to install KubeStellar with",
+      "installationProcess": {
+        "title": "Installation Process:",
+        "steps": [
+          "Creates and configures local clusters",
+          "Installs KubeStellar components and dependencies",
+          "Sets up proper networking and permissions",
+          "Configures a demo environment"
+        ]
+      },
+      "importantNotes": {
+        "title": "Important Notes:",
+        "notes": [
+          "Installation may take several minutes to complete",
+          "Ensure you have sufficient system resources available",
+          "Keep the terminal window open until installation finishes",
+          "Check the terminal output for any error messages"
+        ]
+      },
+      "afterInstallation": {
+        "title": "After Installation:",
+        "steps": [
+          "Verify the installation by checking cluster status",
+          "Review the getting started documentation",
+          "Begin managing your KubeStellar environment"
+        ]
+      },
+      "buttons": {
+        "backPrerequisites": "Back: Prerequisites",
+        "startInstallation": "Start Installation",
+        "installing": "Installing..."
+      }
+    },
+    "checkingStatus": {
+      "title": "Checking KubeStellar installation status...",
+      "description": "This should only take a moment. We're checking if KubeStellar is already installed on your system."
+    },
+    "checkError": {
+      "title": "Status Check Failed",
+      "description": "Unable to check if KubeStellar is installed. This could be due to a connection issue with the backend service or the server may be temporarily unavailable.",
+      "retryButton": "Retry Connection",
+      "persistenceNote": "If the problem persists, please check your network connection or contact your system administrator."
+    },
+    "footer": {
+      "copyright": "KubeStellar",
+      "documentation": "Documentation",
+      "github": "GitHub",
+      "description": "KubeStellar is an open-source project. For support, feature requests, or bug reports, please visit our GitHub repository."
+    },
+    "skipPrerequisitesNotice": {
+      "title": "Prerequisites Check Skipped",
+      "description": "Prerequisites check has been disabled in this environment. You can proceed directly to installation.",
+      "note": "Note: Ensure you have installed all required tools manually before running the installation commands."
+    },
+    "toasts": {
+      "alreadyInstalled": "KubeStellar is already installed! Redirecting to login...",
+      "notInstalled": "Kubeflex cluster not found. Follow steps to set up KubeStellar environment.",
+      "checkFailed": "Failed to check KubeStellar status",
+      "preparingInstructions": "Preparing installation instructions...",
+      "followInstructions": "Follow the CLI installation instructions below to install KubeStellar",
+      "loadInstructionsFailed": "Failed to load installation instructions. Please refresh the page and try again.",
+      "installationDetected": "KubeStellar installation detected! Redirecting to login page..."
+    }
+  },
+  "header": {
+    "themeToggle": "Toggle theme",
+    "dashboard": "Dashboard",
+    "clusters": "Clusters",
+    "workloads": "Workloads",
+    "policies": "Policies",
+    "settings": "Settings",
+    "logout": "Logout",
+    "language": "Language",
+    "importCluster": "Import Cluster",
+    "menu": "Menu",
+    "goToHome": "Go to home page",
+    "logoAlt": "KubeStellar Logo",
+    "themeToggleTip": "Alt+Q to toggle theme",
+    "switchTheme": "Switch to {{mode}} mode"
+  },
+  "login": {
+    "layout": {
+      "logoAlt": "KubeStellar",
+      "tagline": "Seamless Multi-Cluster Management",
+      "taglineEmphasis": "Built for the Future.",
+      "fullscreen": "Toggle full screen",
+      "welcomeBack": "Welcome Back",
+      "accessDashboard": "Access Your Dashboard",
+      "enterCredentials": "Enter your credentials below",
+      "needHelp": "Need help?",
+      "contactSupport": "Contact Support"
+    },
+    "loading": {
+      "logoAlt": "KubeStellar",
+      "initializing": "Initializing KubeStellar Environment..."
+    },
+    "form": {
+      "username": "Username",
+      "password": "Password",
+      "rememberMe": "Remember me",
+      "signIn": "Sign In to KubeStellar",
+      "signingIn": "Signing in...",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "errors": {
+        "usernameRequired": "Username is required",
+        "passwordRequired": "Password is required"
+      }
+    }
+  },
+  "clusters": {
+    "quickConnect": {
+      "title": "Connect via Quick Connect",
+      "description": "Import your cluster using the quick connect feature",
+      "clusterName": "Cluster Name",
+      "clusterNamePlaceholder": "Enter a name for your cluster",
+      "token": "Token",
+      "tokenPlaceholder": "Enter your token",
+      "hubApiServer": "Hub API Server",
+      "hubApiServerPlaceholder": "Enter hub API server URL",
+      "steps": {
+        "step1": {
+          "title": "Choose Your Cluster",
+          "description": "Select a cluster from the dropdown above"
+        },
+        "step2": {
+          "title": "One-Click Onboarding",
+          "description": "Click \"Onboard Cluster\" button to start the automated process"
+        },
+        "step3": {
+          "title": "Instant Connection",
+          "description": "Your cluster will be automatically onboarded without manual commands"
+        }
+      }
+    },
+    "manualImport": {
+      "title": "Manual Cluster Setup",
+      "subtitle": "Recommended",
+      "description": "Follow the steps below to manually import your cluster using kubectl commands",
+      "generateCommand": "Generate Command",
+      "copyCommand": "Copy Command",
+      "runInTerminal": "Run in Terminal",
+      "commandGenerated": "Command Generated Successfully",
+      "selectCluster": "Select Cluster",
+      "generateImportCommand": "Generate Import Command",
+      "importCommand": "Import Command"
+    },
+    "apiUrl": {
+      "title": "Connect via API/URL",
+      "description": "Import your cluster by providing the API endpoint and authentication details",
+      "endpoint": "API/URL Endpoint",
+      "endpointPlaceholder": "https://kubernetes.example.com:6443",
+      "token": "Authentication Token (Optional)",
+      "tokenPlaceholder": "Enter authentication token if required",
+      "connectImport": "Connect & Import"
+    },
+    "excluded": [
+      "kubestellar-report",
+      "kube-node-lease",
+      "kube-public",
+      "default",
+      "kube-system",
+      "open-cluster-management-hub",
+      "open-cluster-management",
+      "local-path-storage"
+    ],
+    "labels": {
+      "clearFilter": "Clear Filter",
+      "searchLabelsPlaceholder": "Search labels...",
+      "bulkEditTitle": "Edit Labels for {{count}} Clusters",
+      "editTitle": "Edit Labels for {{name}}",
+      "bulkEditDescription": "You are editing labels for {{count}} clusters. The changes will be applied to all selected clusters.",
+      "keyPlaceholder": "e.g. environment",
+      "valuePlaceholder": "e.g. production",
+      "protectedLabelsCannotBeModified": "🔒 Protected labels cannot be modified.",
+      "exitSearch": "Exit search",
+      "saveChanges": "Save changes",
+      "saveChangesButton": "Save Changes",
+      "tooltipTitle": "Clusters:",
+      "noLabelsAvailable": "No cluster labels available. Please add clusters with labels to use in binding policies.",
+      "noLabelsMatchSearch": "No labels match your search.",
+      "noLabelsFound": "No labels found in available clusters.",
+      "clickToAdd": "Click on a label to add it to the canvas",
+      "edit": "Edit Labels",
+      "add": "Add Labels",
+      "bulkEdit": "Bulk Edit Mode",
+      "appendToExisting": "Append to existing labels",
+      "key": "Label Key",
+      "value": "Label Value",
+      "noLabels": "No labels added yet",
+      "noMatchingLabels": "No matching labels found",
+      "addYourFirst": "Add your first label using the fields above to help organize this cluster.",
+      "tip": "Tip: Press Enter to move between fields, or double-click labels to edit them",
+      "tryDifferentSearch": "Try a different search term or clear the search",
+      "count": "{{count}} label{{count, plural, one {} other {s}}}",
+      "description": "Add, edit, or remove labels to organize and categorize your cluster.",
+      "defaultProtected": "Default label - Cannot be modified",
+      "bindingProtected": "Used in binding policy - Cannot be modified",
+      "manageLabels": "Manage Labels",
+      "bulkLabels": "Bulk Labels",
+      "editValue": "Edit label",
+      "removeLabel": "Delete label",
+      "cancelEdit": "Cancel editing",
+      "added": "Added new label: {{key}}",
+      "updated": "Updated existing label: {{key}}",
+      "removed": "Removed label: {{key}}",
+      "updateSuccess": "Label updated successfully",
+      "duplicate": "Label with key \"{{key}}\" already exists",
+      "protected": "Cannot modify protected label: {{key}}",
+      "finishEditing": "Finish Editing",
+      "noClustersToEdit": "No clusters available to edit",
+      "noClustersSelected": "No clusters selected",
+      "cannotDeleteUsed": "Labels are used in Binding Policy and cannot be deleted. Please remove the policy first.",
+      "bulkUpdateSuccess": "Labels updated for all {{count}} clusters",
+      "bulkUpdatePartial": "Labels updated for {{success}} clusters, failed for {{failures}} clusters",
+      "bulkUpdateFail": "Failed to update labels for all {{count}} clusters"
+    },
+    "dialog": {
+      "selectMultipleClusters": "Select Multiple Clusters",
+      "selectClusterToEdit": "Select Cluster to Edit",
+      "selectedCount": "{{count}} selected",
+      "editClustersButton": "Edit {{count}} Clusters"
+    },
+    "list": {
+      "more": "more",
+      "title": "Manage Clusters",
+      "subtitle": "Manage and monitor your Kubernetes clusters",
+      "searchPlaceholder": "Search clusters by name, label, status or context...",
+      "import": "Import Cluster",
+      "noResults": "No clusters found",
+      "name": "Name",
+      "creationTime": "Creation Time",
+      "context": "Context",
+      "description": "Manage and monitor your Kubernetes clusters",
+      "searchTip": "Press Esc to clear search",
+      "filter": "Status Filter",
+      "activeFilters": "Active Filters:",
+      "searchFilter": "Search: \"{{query}}\"",
+      "statusFilter": "Status: {{value}}",
+      "labelFilter": "Label: {{key}}={{value}}",
+      "clearAll": "Clear All",
+      "showingResults": "{{count}} result{{count, plural, one {} other {s}}}",
+      "clearSearch": "Press Esc to clear search",
+      "importCluster": "Import Cluster",
+      "importYourFirst": "Import Your First Cluster",
+      "searchLabelsPlaceholder": "Search labels...",
+      "search": "Search",
+      "label": "Label",
+      "filteredByLabel": "Filtered by label:",
+      "filterByLabel": "Click to filter by this label",
+      "noClustersFound": "No Clusters Found",
+      "noClustersMatchBoth": "No clusters match both your search and filter criteria",
+      "noClustersMatchSearch": "No clusters match your search term",
+      "noClustersMatchFilter": "No clusters match your filter selection",
+      "noClustersAvailable": "No clusters available yet. Import your first cluster to get started.",
+      "table": {
+        "name": "Name",
+        "labels": "Labels",
+        "creationTime": "Creation Time",
+        "context": "Context",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "pending": "Pending"
+      },
+      "actions": {
+        "viewDetails": "View Details",
+        "editLabels": "Edit Labels",
+        "copyName": "Copy Name",
+        "detachCluster": "Detach Cluster"
+      },
+      "labels": {
+        "edit": "Edit Labels",
+        "add": "Add Labels",
+        "bulkEdit": "Bulk Edit Mode",
+        "appendToExisting": "Append to existing labels",
+        "key": "Label Key",
+        "value": "Label Value",
+        "noLabels": "No labels added yet",
+        "noMatchingLabels": "No matching labels found",
+        "addYourFirst": "Add your first label using the fields above to help organize this cluster.",
+        "tip": "Tip: Press Enter to move between fields, or double-click labels to edit them",
+        "tryDifferentSearch": "Try a different search term or clear the search",
+        "count": "{{count}} label{{count, plural, one {} other {s}}}",
+        "description": "Add, edit, or remove labels to organize and categorize your cluster.",
+        "defaultProtected": "Default label - Cannot be modified",
+        "bindingProtected": "Used in binding policy - Cannot be modified",
+        "manage": "Manage Labels"
+      }
+    },
+    "details": {
+      "title": "Cluster Details",
+      "overview": "Overview",
+      "labels": "Labels",
+      "resources": "Resources",
+      "status": "Status",
+      "events": "Events",
+      "logs": "Logs"
+    },
+    "clusterDetailDialog": {
+      "title": "Cluster Details",
+      "loading": "Loading cluster information...",
+      "error": {
+        "title": "Failed to load cluster details",
+        "description": "There was an error retrieving information for this cluster."
+      },
+      "status": {
+        "available": "Available",
+        "unavailable": "Unavailable"
+      },
+      "kubernetes": "Kubernetes {{version}}",
+      "createdOn": "Created on {{date}}",
+      "labels": "Labels",
+      "labelCount": "{{count}} labels",
+      "noLabels": "No labels have been assigned to this cluster",
+      "capacityResources": "Capacity & Resources",
+      "cpuCores": "CPU Cores",
+      "memory": "Memory",
+      "podCapacity": "Pod Capacity",
+      "lastRefreshed": "Last refreshed",
+      "noClusterSelected": "No cluster selected"
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "welcome": "Welcome to the KubeStellar management dashboard",
+      "errorLoading": "Error loading cluster information",
+      "addCluster": "Add Cluster",
+      "stats": {
+        "totalClusters": "Total Clusters",
+        "activeClusters": "Active Clusters",
+        "bindingPolicies": "Binding Policies",
+        "currentContext": "Current Context",
+        "none": "None"
+      },
+      "health": {
+        "excellent": "Excellent",
+        "good": "Good",
+        "fair": "Fair",
+        "needsAttention": "Needs Attention",
+        "critical": "Critical"
+      },
+      "guide": {
+        "title": "Dashboard Guide",
+        "clusterStats": "Cluster Stats",
+        "clusterStatsDesc": "Shows total and active clusters. Hover over metrics to see detailed information about how they're calculated.",
+        "healthMetrics": "Health Metrics",
+        "healthMetricsDesc": "Displays CPU, memory usage, and pod health. Green indicators show good health, amber requires attention.",
+        "recentActivity": "Recent Activity",
+        "recentActivityDesc": "Shows recent changes to clusters and policies. Click on a cluster to view detailed information.",
+        "proTip": "Pro Tip",
+        "proTipDesc": "Hover over any metric or chart to see detailed information about how it's calculated and what actions you can take."
+      }
+    },
+    "detach": {
+      "title": "Detach Cluster",
+      "confirmation": "Are you sure you want to detach the following cluster?",
+      "context": "Context",
+      "warning": "Warning: This action will remove the cluster from management. It will no longer be visible or controlled from this interface.",
+      "detaching": "Detaching...",
+      "detach": "Detach Cluster"
+    }
+  },
+  "webSocket": {
+    "errors": {
+      "notConnected": "WebSocket is not connected",
+      "closingError": "Error closing WebSocket:",
+      "expectedStringData": "Expected string data for JSON parsing",
+      "processingFailed": "Failed to process WebSocket message",
+      "connectionError": "WebSocket error"
+    }
+  },
+  "wdsQueries": {
+    "errors": {
+      "fetchWorkloads": "Failed to fetch workloads",
+      "errorFetchingWorkloads": "Error fetching workloads:",
+      "fetchWorkloadDetails": "Failed to fetch workload details",
+      "errorFetchingWorkloadDetails": "Error fetching workload details:",
+      "statusFetchFailed": "Status fetch failed:",
+      "createWorkloadFailed": "Failed to create workload",
+      "errorCreatingWorkload": "Error creating workload:",
+      "uploadFileFailed": "Failed to upload file",
+      "errorUploadingFile": "Error uploading file:",
+      "updateWorkloadFailed": "Failed to update workload",
+      "errorUpdatingWorkload": "Error updating workload:",
+      "scaleWorkloadFailed": "Failed to scale workload",
+      "errorScalingWorkload": "Error scaling workload:",
+      "deleteWorkloadFailed": "Failed to delete workload",
+      "errorDeletingWorkload": "Error deleting workload:",
+      "fetchWorkloadLogsFailed": "Failed to fetch workload logs",
+      "errorFetchingWorkloadLogs": "Error fetching workload logs:"
+    },
+    "success": {
+      "workloadCreated": "Workload created successfully",
+      "fileUploaded": "File uploaded successfully",
+      "workloadUpdated": "Workload updated successfully",
+      "workloadScaled": "Scaled workload to {{replicas}} replicas",
+      "workloadDeleted": "Workload deleted successfully"
+    },
+    "defaults": {
+      "deploymentKind": "deployment",
+      "defaultNamespace": "default"
+    }
+  },
+  "clusterQueries": {
+    "status": {
+      "available": "Available",
+      "unavailable": "Unavailable"
+    },
+    "logging": {
+      "clusterOnboardRequestPayload": "[DEBUG] Cluster onboard request payload:",
+      "clusterOnboardResponse": "[DEBUG] Cluster onboard response:",
+      "onboardSuccessful": "[DEBUG] Cluster onboard mutation successful, invalidating clusters query cache",
+      "onboardError": "[DEBUG] Cluster onboard mutation error:",
+      "mutationStart": "[DEBUG] ========== MUTATION START ==========",
+      "context": "[DEBUG] Context:",
+      "cluster": "[DEBUG] Cluster:",
+      "originalLabels": "[DEBUG] Original Labels:",
+      "deletedLabels": "[DEBUG] Deleted Labels:",
+      "processingBulkUpdate": "[DEBUG] Processing bulk label update for {{count}} clusters",
+      "addingDeletedLabels": "[DEBUG] Adding deleted labels as empty values:",
+      "finalLabels": "[DEBUG] Final labels being sent to backend:",
+      "apiPayload": "[DEBUG] API payload:",
+      "apiResponse": "[DEBUG] API response:",
+      "apiError": "[DEBUG] API error:",
+      "labelsUpdated": "[DEBUG] Labels updated successfully, invalidating clusters query cache",
+      "errorUpdatingLabels": "[DEBUG] Error updating cluster labels:",
+      "detachingCluster": "[DEBUG] Detaching cluster:",
+      "detachSuccessful": "[DEBUG] Cluster detach successful, invalidating clusters query cache",
+      "detachError": "[DEBUG] Cluster detach mutation error:",
+      "skippingDetailsFetch": "[DEBUG] Skipping details fetch for virtual bulk cluster"
+    },
+    "messages": {
+      "applyLabelsToMultipleClusters": "Will apply labels to {{count}} clusters"
+    },
+    "defaults": {
+      "virtualBulkOperationId": "virtual-bulk-operation"
+    }
+  },
+  "bpQueries": {
+    "logging": {
+      "fetchingPolicyDetails": "Fetching complete details for binding policy: {{policyName}}",
+      "receivedResponses": "Received responses from both API endpoints",
+      "foundPolicyDetails": "Found policy details in main BP response:",
+      "receivedStatusData": "Received status data:",
+      "yamlFromResponse": "Using YAML directly from response root",
+      "yamlFromMetadata": "Using YAML from metadata.annotations.yaml",
+      "yamlAvailable": "Extracted YAML content for policy {{policyName}} is available ({{length}} chars)",
+      "noYamlFound": "No YAML content found for policy {{policyName}}",
+      "parsedYaml": "Parsed YAML:",
+      "errorParsingYaml": "Error parsing YAML:",
+      "usingStatus": "Using status \"{{status}}\" from status API endpoint",
+      "finalPolicyObject": "Final policy object:",
+      "extractedUniqueWorkloads": "Extracted {{count}} unique workloads total",
+      "rawBindingPolicies": "Raw binding policies:"
+    },
+    "errors": {
+      "policyNotFound": "Policy {{policyName}} not found in the main response",
+      "errorParsingJson": "Error parsing JSON from raw fieldsv1:",
+      "resourcesNull": "Resources is null for namespace {{namespace}}, resourceType {{resourceType}}",
+      "resourcesNullClusterScoped": "Resources is null for cluster-scoped resourceType {{resourceType}}"
+    }
+  },
+  "wecsTopology": {
+    "title": "Remote-Cluster Treeview",
+    "createWorkload": "Create Workload",
+    "viewModes": {
+      "tiles": "Tiles",
+      "list": "List"
+    },
+    "note": "Note: Default, Kubernetes system, and OpenShift namespaces are filtered out from this view.",
+    "emptyState": {
+      "title": "No Workloads Found",
+      "description": "Get started by creating your first workload"
+    },
+    "contextMenu": {
+      "details": "Details",
+      "edit": "Edit",
+      "logs": "Logs",
+      "execPods": "Exec Pods"
+    },
+    "fullscreen": {
+      "toggle": "Toggle fullscreen view"
+    },
+    "timeAgo": {
+      "today": "Today",
+      "days": "{{count}} day",
+      "days_plural": "{{count}} days"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "zoomControls": {
+      "groupByResource": "Group By Resource/Kind",
+      "expandAll": "Expand all the child nodes of all parent nodes",
+      "collapseAll": "Collapse all the child nodes of all parent nodes",
+      "zoomIn": "Zoom In",
+      "zoomOut": "Zoom Out"
+    },
+    "nodeLabel": {
+      "labels": "Labels:",
+      "noLabels": "No labels"
+    }
+  },
+  "wecsDetailsPanel": {
+    "common": {
+      "update": "Update",
+      "sync": "Sync",
+      "delete": "Delete",
+      "close": "Close",
+      "unknown": "Unknown",
+      "na": "N/A",
+      "today": "Today",
+      "daysAgo": "{{count}} days ago"
+    },
+    "buttons": {
+      "clearTerminal": "Clear Terminal",
+      "minimize": "Minimize",
+      "maximize": "Maximize"
+    },
+    "tabs": {
+      "summary": "SUMMARY",
+      "edit": "EDIT",
+      "logs": "LOGS",
+      "execPods": "EXEC PODS"
+    },
+    "terminal": {
+      "connecting": "Connecting to pod shell in container {{containerName}}...",
+      "connected": "Connected to pod shell in container {{containerName}}",
+      "connectionClosed": "Connection closed",
+      "connectionNotActive": "Connection not active. Cannot send command.",
+      "errorConnecting": "Error connecting to pod. Please try again."
+    },
+    "format": {
+      "yaml": "YAML",
+      "json": "JSON"
+    },
+    "table": {
+      "kind": "KIND",
+      "name": "NAME",
+      "namespace": "NAMESPACE",
+      "createdAt": "CREATED AT",
+      "context": "CONTEXT",
+      "labels": "LABELS"
+    },
+    "containers": {
+      "selectContainer": "Select container",
+      "noContainersFound": "No containers found"
+    },
+    "errors": {
+      "failedLoadClusterDetails": "Failed to load cluster details.",
+      "failedLoadDetails": "Failed to load {{type}} details.",
+      "apiNotImplemented": "API not implemented for updating pod \"{{resourceName}}\"",
+      "failedFetchContainers": "Failed to fetch container list"
+    },
+    "cluster": {
+      "active": "Active"
+    },
+    "noManifest": "No manifest available"
+  },
+  "treeView": {
+    "title": "Manage Workloads",
+    "createWorkload": "Create Workload",
+    "note": "Note: Default, Kubernetes system, and OpenShift namespaces are filtered out from this view.",
+    "filteringContext": "Filtering: Showing only resources from the {{context}} context.",
+    "unknown": "Unknown",
+    "viewModes": {
+      "tiles": "Tiles",
+      "list": "List"
+    },
+    "timeAgo": {
+      "today": "Today",
+      "days": "{{count}} day",
+      "days_plural": "{{count}} days"
+    },
+    "emptyState": {
+      "title": "No Workloads Found",
+      "description": "Get started by creating your first workload"
+    },
+    "fullscreen": {
+      "toggle": "Toggle fullscreen view"
+    },
+    "contextMenu": {
+      "details": "Details",
+      "delete": "Delete",
+      "edit": "Edit",
+      "logs": "Logs"
+    },
+    "deleteDialog": {
+      "title": "Confirm Resource Deletion",
+      "message": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+      "confirm": "Yes, Delete"
+    }
+  },
+  "quickConnect": {
+    "title": "One-Click Cluster Setup",
+    "description": "Simplified, automated cluster onboarding with zero commands. Select your cluster and let the system handle the rest.",
+    "selectCluster": "Select a Kubernetes Cluster",
+    "searchingClusters": "Searching for available clusters...",
+    "errorLoadingClusters": "Error Loading Clusters",
+    "retry": "Retry",
+    "chooseCluster": "Choose a cluster...",
+    "noClusters": "No clusters available",
+    "discoveredClusters": {
+      "title": "Discovered Clusters",
+      "description": "These are clusters discovered in your environment. Select one to continue."
+    },
+    "refreshClustersList": "Refresh clusters list",
+    "howToConnect": "How to Connect Your Cluster",
+    "steps": {
+      "step1": {
+        "title": "Choose Your Cluster",
+        "description": "Select a cluster from the dropdown above"
+      },
+      "step2": {
+        "title": "One-Click Onboarding",
+        "description": "Click \"Onboard Cluster\" button to start the automated process"
+      },
+      "step3": {
+        "title": "Instant Connection",
+        "description": "Your cluster will be automatically onboarded without manual commands"
+      }
+    },
+    "whyUseAutomated": "Why Use Automated Onboarding?",
+    "approaches": {
+      "automated": {
+        "title": "Automated Approach (New)",
+        "features": [
+          "One-click setup process",
+          "No manual command execution",
+          "Streamlined experience",
+          "Reduced chance of errors"
+        ]
+      },
+      "manual": {
+        "title": "Manual Approach (Legacy)",
+        "features": [
+          "Copy and run commands manually",
+          "Multiple CLI steps required",
+          "More complex process",
+          "Requires command line knowledge"
+        ]
+      }
+    },
+    "buttons": {
+      "onboarding": "Onboarding...",
+      "onboard": "Onboard Cluster",
+      "back": "Back",
+      "close": "Close",
+      "openDashboard": "Open Cluster Dashboard",
+      "goToDashboard": "Go to Dashboard"
+    },
+    "success": {
+      "title": "Cluster Onboarded Successfully",
+      "message": "Cluster {{clusterName}} has been successfully onboarded to the platform.",
+      "detailMessage": "Your cluster {{clusterName}} has been successfully onboarded. Here's what you can do next:",
+      "nextSteps": {
+        "viewManage": {
+          "title": "View & Manage",
+          "description": "Access your cluster through the dashboard to view resources and status"
+        },
+        "deployApps": {
+          "title": "Deploy Applications",
+          "description": "Deploy containerized applications and services to your cluster"
+        },
+        "configureSettings": {
+          "title": "Configure Settings",
+          "description": "Customize and configure your cluster settings and policies"
+        }
+      }
+    }
+  },
+  "bindingPolicy": {
+    "editPolicy": "Edit Policy",
+    "saveAndCreatePolicy": "Save & Create Policy",
+    "title": "Manage Binding Policies",
+    "description": "Create and manage binding policies for workload distribution",
+    "createBindingPolicy": "Create Binding Policy",
+    "noBindingPolicies": "No Binding Policies Found",
+    "noBindingPoliciesDescription": "No binding policies available",
+    "noBindingPoliciesWithFilter": "No binding policies match your {{status}} filter criteria",
+    "notifications": {
+      "fetchError": "Failed to fetch binding policies",
+      "createSuccess": "Binding policy created successfully",
+      "createError": "Failed to create binding policy",
+      "deleteSuccess": "Binding policy \"{{name}}\" deleted successfully",
+      "deleteError": "Failed to delete binding policy",
+      "deleteManySuccess": "{{count}} binding {{count, plural, one {policy} other {policies}}} deleted successfully",
+      "deleteManyError": "Failed to delete binding policies",
+      "deploySuccess": "Deployment completed successfully",
+      "deployError": "Deployment failed",
+      "yamlGenerateError": "Failed to generate binding policy YAML",
+      "quickConnectError": "Failed to create binding policy"
+    },
+    "tabs": {
+      "selectItems": "Select Items",
+      "yaml": "YAML",
+      "uploadFile": "Upload File"
+    },
+    "upload": {
+      "dropHere": "Drop YAML File Here",
+      "chooseOrUpload": "Choose or Upload a YAML File",
+      "or": "- or -",
+      "selectFile": "Select YAML File",
+      "acceptedFormats": "Accepted formats: .yaml, .yml",
+      "chooseDifferentFile": "Choose Different File",
+      "filePreview": "File Preview:"
+    },
+    "previewGeneratedYaml": "Preview Generated YAML",
+    "deployBindingPolicies": "Deploy Binding Policies",
+    "deployBindingPolicy": "Deploy Binding Policy",
+    "creating": "Creating...",
+    "loadingResources": "Loading Resources...",
+    "deploying": "Deploying...",
+    "table": {
+      "name": "Binding Policy Name",
+      "clusters": "Clusters",
+      "workload": "Workload",
+      "creationDate": "Creation Date",
+      "status": "Status",
+      "actions": "Actions",
+      "noClusters": "No target clusters defined",
+      "noWorkloads": "No workloads defined"
+    },
+    "yamlGeneration": {
+      "resourceRequired": "At least one resource type must be specified",
+      "resourceRequiredYaml": "At least one resource type must be specified for YAML generation"
+    },
+    "quickConnect": {
+      "unknownWorkload": "unknown",
+      "unknownLocationGroup": "unknown"
+    },
+    "loading": "Loading...",
+    "unknown": "Unknown",
+    "visualization": {
+      "title": "Binding Policy Network",
+      "policies": "{{count}} Policies",
+      "targetCluster": "Target Cluster",
+      "clusters": "{{count}} Clusters",
+      "workloads": "{{count}} Workloads",
+      "showWorkloads": "Show Workloads",
+      "highlightActive": "Highlight Active",
+      "refresh": "Refresh visualization",
+      "fitView": "Fit View",
+      "search": "Search nodes... (⌘+K)",
+      "legend": "Legend",
+      "policyPreview": "Policy Preview",
+      "policyDistribution": "Policy Distribution",
+      "previewMode": "Preview Mode",
+      "workloadSource": "Workload Source",
+      "matchingWorkloads": "{{count}} matching workload{{count, plural, one {} other {s}}}",
+      "matchRateShort": "{{matchRate}}% Match",
+      "targetClusters": "Target Clusters ({{count}})",
+      "moreClusters": "+{{count}} more",
+      "policyInsights": "Policy Insights",
+      "status": "Status",
+      "lastModified": "Last Modified",
+      "notModified": "Not modified",
+      "matchRate": "Match Rate",
+      "matchRateLong": "{{matchRate}}% of available clusters",
+      "legendItems": {
+        "activePolicy": "Active Policy",
+        "cluster": "Cluster",
+        "workload": "Workload",
+        "activeConnection": "Active Connection",
+        "inactiveConnection": "Inactive Connection"
+      },
+      "layout": {
+        "title": "Layout",
+        "horizontal": "Horizontal",
+        "vertical": "Vertical",
+        "radial": "Radial"
+      },
+      "empty": {
+        "title": "No Visualization Data",
+        "description": "There are no binding policies, clusters, or workloads to visualize. Create some resources to see them in this view."
+      },
+      "error": {
+        "title": "Visualization Error",
+        "description": "An error occurred while rendering the visualization."
+      },
+      "loading": "Loading visualization...",
+      "searchResources": "Search Resources",
+      "noNodesFound": "No nodes found matching \"{{searchTerm}}\""
+    },
+    "policyName": "Policy Name",
+    "namespace": "Namespace",
+    "propagationMode": "Propagation Mode",
+    "updateStrategy": "Update Strategy",
+    "resources": "Resources",
+    "advanced": "Advanced Settings",
+    "basic": "Basic Settings",
+    "scheduling": "Scheduling Rules",
+    "yaml": "YAML",
+    "modes": {
+      "downsyncOnly": "Downsync Only",
+      "upsyncOnly": "Upsync Only",
+      "bidirectionalSync": "Bidirectional Sync"
+    },
+    "strategies": {
+      "serverSideApply": "Server Side Apply",
+      "forceApply": "Force Apply",
+      "rollingUpdate": "Rolling Update",
+      "blueGreenDeployment": "Blue-Green Deployment"
+    },
+    "deploymentType": {
+      "allClusters": "All Available Clusters",
+      "selectedClusters": "Selected Clusters"
+    },
+    "confirm": {
+      "title": "Confirm Binding Policy Deployment",
+      "description": "You are about to deploy {{count}} binding policies. Please review them before proceeding.",
+      "deploy": "Deploy Policies",
+      "deploying": "Deploying...",
+      "viewYaml": "View YAML"
+    },
+    "emptyState": {
+      "noClusters": {
+        "title": "No Ready Clusters",
+        "description": "No clusters are currently available for binding. You need to have at least one cluster in \"Ready\" state before creating binding policies.",
+        "button": "Manage Clusters"
+      },
+      "noWorkloads": {
+        "title": "No Workloads Found",
+        "description": "No workloads are available. Please ensure you have access to workloads.",
+        "button": "Go to Workloads"
+      },
+      "noResources": {
+        "title": "No Clusters or Workloads Found",
+        "description": "You need both clusters and workloads to create binding policies.",
+        "button": "View Resources"
+      },
+      "noPolicies": {
+        "title": "No Binding Policies Found",
+        "description": "Get started by creating your first binding policy",
+        "button": "Create Binding Policy"
+      }
+    },
+    "loadingCanvas": "Loading canvas data...",
+    "dragDrop": {
+      "infoAlert": "This interface is using simulated responses to create binding policies. Select clusters and workloads from the lists to add them to the canvas, then click on a workload and then a cluster to create a binding policy connection.",
+      "helpDialog": {
+        "title": "Create Binding Policies with Direct Connections",
+        "intro": "Follow these steps to create binding policies:",
+        "steps": {
+          "selectClusters": "1. Select clusters from the left panel to include in the canvas",
+          "selectWorkloads": "2. Select workloads from the right panel to include in the canvas",
+          "createConnection": "3. Click on a workload first, then a cluster to create a direct connection",
+          "fillDetails": "4. Fill in the policy details in the dialog that appears",
+          "deploy": "5. Use the 'Deploy Binding Policies' button to simulate deployment"
+        },
+        "gotIt": "Got it",
+        "helpDialog": {
+          "title": "How to Create Binding Policies",
+          "intro": "Follow these steps to create binding policies:",
+          "steps": {
+            "selectLabels": "1. Select labels to add to the canvas",
+            "selectLabelsDesc": "Click on clusters from the left panel and workloads from the right panel to add them to the binding policy canvas",
+            "deploy": "2. Deploy your policies",
+            "deployDesc": "Click 'Deploy Binding Policies' to create and deploy binding policies that connect workloads to clusters based on the selected labels"
+          },
+          "tip": "Tip: The label-based approach allows you to create powerful binding policies that automatically apply to all resources matching the selected labels, both now and in the future.",
+          "dontShowAgain": "Don't Show Again",
+          "gotIt": "Got it",
+          "tooltip": "View selection instructions"
+        }
+      }
+    },
+    "messages": {
+      "noSelectedPolicies": "No policies selected for deletion",
+      "invalidPolicyNames": "Error: Some selected policy names are invalid",
+      "partialDeleteSuccess": "Deleted {{success}} policies, but failed to delete {{failures}} policies",
+      "deleteError": "Error deleting binding policies: {{errorMessage}}",
+      "updateSuccess": "Binding Policy \"{{name}}\" updated successfully",
+      "updateError": "Error updating binding policy \"{{name}}\"",
+      "simulatedAssignment": "Successfully assigned {{policy}} to {{targetType}} {{target}}",
+      "policyCreatedSuccess": "Successfully created binding policy: {{name}}"
+    },
+    "editDialog": {
+      "title": "Edit Binding Policy",
+      "infoTitle": "Info",
+      "info": "Edit your binding policy configuration. Changes will be applied after saving.",
+      "name": "Binding Policy Name",
+      "save": "Save Changes",
+      "unsavedTitle": "Unsaved Changes",
+      "unsavedWarning": "Warning",
+      "unsavedInfo": "You have unsaved changes. Are you sure you want to close without saving?",
+      "continueEditing": "Continue Editing",
+      "discard": "Discard Changes"
+    },
+    "deleteDialog": {
+      "title": "Delete Binding Policy",
+      "confirm": "Are you sure you want to delete the binding policy \"{{name}}\"? This action cannot be undone."
+    },
+    "header": {
+      "searchPlaceholder": "Search policies by name, label or status",
+      "clearSearch": "Press Esc to clear search",
+      "deleteSelected": "Delete Selected",
+      "create": "Create Binding Policy",
+      "activeFilters": "Active Filters:",
+      "search": "Search",
+      "status": "Status",
+      "clearAll": "Clear All"
+    },
+    "statusFilter": {
+      "all": "All Status",
+      "active": "Active",
+      "pending": "Pending",
+      "inactive": "Inactive",
+      "label": "Status Filter"
+    },
+    "availableItems": {
+      "title": "Available Items",
+      "subtitle": "Select and add policies, clusters, or workloads to the canvas by clicking on them.",
+      "policy-list": "Policies",
+      "cluster-list": "Clusters",
+      "workload-list": "Workloads",
+      "clickToAdd": "Click an item to add it to the canvas",
+      "none": "No {{title}} available"
+    },
+    "canvas": {
+      "policiesOnCanvas": "Policies on Canvas:",
+      "clusters": "{{count}} Clusters",
+      "workloads": "{{count}} Workloads",
+      "status": "Status:",
+      "namespace": "Namespace:",
+      "namespaces": "Namespaces:"
+    },
+    "labels": {
+      "title": "Labels:",
+      "key": "Key",
+      "value": "Value",
+      "add": "Add"
+    },
+    "creatingConnection": "Creating connection:",
+    "previewDialog": {
+      "title": "Policy Preview & Insights",
+      "visualizationTab": "Visualization",
+      "detailsTab": "Details",
+      "matchingDetails": "Matching Details",
+      "matchedClusters": "Matched Clusters ({{count}})",
+      "clusterStatus": "{{name}} - {{status}}",
+      "labels": "Labels: {{labels}}",
+      "matchedWorkloads": "Matched Workloads ({{count}})",
+      "workloadNamespace": "{{name}} ({{namespace}})"
+    },
+    "policyNameDialog": {
+      "title": "Name Your Binding Policy",
+      "policyName": "Policy Name",
+      "generateNew": "Generate new name",
+      "placeholder": "Enter binding policy name...",
+      "invalid": "Name must be lowercase alphanumeric with hyphens, max 253 characters",
+      "helper": "Use lowercase letters, numbers, and hyphens only",
+      "namingTipsTitle": "💡 Naming Tips:",
+      "namingTips": "Use descriptive names like \"frontend-to-production\" or \"database-sync-policy\" for better organization.",
+      "creating": "Creating...",
+      "createPolicy": "Create Policy"
+    },
+    "configureDialog": {
+      "title": "Configure Binding Policy",
+      "creatingFor": "Creating Binding Policy for:",
+      "creatingForDesc": "This will create a binding policy that links the {{sourceType}} to the {{targetType}}.",
+      "tabs": {
+        "basic": "Basic",
+        "advanced": "Advanced",
+        "scheduling": "Scheduling",
+        "yaml": "YAML"
+      },
+      "nameHelper": "Name of the binding policy",
+      "namespaceHelper": "Namespace for the binding policy",
+      "updateStrategyHelper": "Select how changes to resources should be applied to clusters. Add clusters and workloads by selecting them from the panels.",
+      "addCustomLabels": "Add custom labels",
+      "labelsTooltip": "Labels help identify and select resources",
+      "tolerationsTitle": "Tolerations (Advanced)",
+      "tolerationExpression": "Toleration Expression",
+      "tolerationRequired": "Toleration is required",
+      "schedulingRules": "Scheduling Rules",
+      "schedulingTooltip": "Define conditions that must be met for a cluster to receive this workload",
+      "resource": "Resource",
+      "resource.cpu": "CPU Cores",
+      "resource.memory": "Memory",
+      "resource.storage": "Storage",
+      "resource.pods": "Available Pods",
+      "operator": "Operator",
+      "activeRules": "Active Rules:",
+      "noSchedulingRules": "No scheduling rules added. The policy will apply to all matching clusters regardless of their resources.",
+      "yamlPreview": "YAML Preview",
+      "yamlPreviewInfo": "This is a preview of the YAML that will be applied. You can make changes in the other tabs to update this preview."
+    }
+  },
+  "workloads": {
+    "label": {
+      "title": "Workload Label *",
+      "prefix": "kubestellar.io/workload:",
+      "helpTextError": "Label not found",
+      "helpText": "Workload label is key:value pair. Key is constant and defaulted to 'kubestellar.io/workload', you can only change the value."
+    },
+    "github": {
+      "repositoryUrl": "Repository URL *",
+      "repositoryUrlPlaceholder": "e.g., https://github.com/username/repo",
+      "repositoryUrlTip": "Use a valid GitHub repository URL",
+      "path": "Path *",
+      "pathPlaceholder": "e.g., /path/to/yaml",
+      "pathTip": "Specify the path to your YAML files in the repository",
+      "branch": "Branch (default: main) *",
+      "branchPlaceholder": "e.g., master, dev-branch",
+      "branchTip": "Specify the branch to deploy from",
+      "credentials": "Credentials",
+      "credentialsPlaceholder": "e.g., username-pat",
+      "tab": {
+        "importFromGitHub": "Import from GitHub",
+        "selectRepositorySource": "Select a repository source to import your application",
+        "repositorySource": "Repository Source",
+        "selectRepository": "Select a Repository",
+        "repositoryDetails": "Repository Details",
+        "selectedRepository": "Selected Repository:"
+      },
+      "options": {
+        "yourGitHub": {
+          "title": "Your GitHub Repository",
+          "description": "Import from your own GitHub repository"
+        },
+        "enterprise": {
+          "title": "Enterprise Repository",
+          "description": "Import from a GitHub Enterprise repository"
+        },
+        "public": {
+          "title": "Public Repository",
+          "description": "Import from any public GitHub repository"
+        },
+        "popular": {
+          "title": "Popular Repositories",
+          "description": "Choose from our curated list of examples"
+        },
+        "placeholder": {
+          "yourGitHub": "Your GitHub Repository form would go here",
+          "enterprise": "Enterprise Repository form would go here",
+          "public": "Public Repository form would go here"
+        }
+      },
+      "form": {
+        "title": "Create from your GitHub Repository and deploy!",
+        "repositoryUrl": "Repository URL *",
+        "repositoryUrlPlaceholder": "e.g., https://github.com/username/repo",
+        "repositoryUrlTip": "Use a valid GitHub repository URL",
+        "path": "Path *",
+        "pathPlaceholder": "e.g., /path/to/yaml",
+        "pathTip": "Specify the path to your YAML files in the repository",
+        "branch": "Branch (default: main) *",
+        "branchPlaceholder": "e.g., master, dev-branch",
+        "branchTip": "Specify the branch to deploy from",
+        "credentials": "Credentials",
+        "credentialsPlaceholder": "e.g., username-pat",
+        "credentialsTip": "Select or add credentials for private repositories",
+        "addCredentials": "Add Cred",
+        "webhooks": "Webhooks",
+        "webhooksTip": "Select or add a webhook for automated deployments",
+        "addWebhook": "Add Webhook",
+        "previousDeploymentsTitle": "List of Previous Deployments",
+        "loadingPreviousDeployments": "Loading previous deployments...",
+        "noPreviousDeployments": "No previous deployments available.",
+        "confirmResourceDeletion": "Confirm Resource Deletion",
+        "deleteConfirmation": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+        "yesDelete": "Yes, Delete",
+        "apply": "Apply",
+        "deploying": "Deploying..."
+      }
+    },
+    "artifactHub": {
+      "searchPackages": "Search Packages",
+      "directDeploy": "Deploy Helm Chart from Artifact Hub",
+      "listRepositories": "List Repositories",
+      "form": {
+        "packageId": "Package ID *",
+        "packageIdTooltip": "Format: helm/repository-name/chart-name (e.g., helm/bitnami/nginx)",
+        "packageIdPlaceholder": "helm/bitnami/nginx",
+        "packageIdTip": "Specify the Helm chart package ID (e.g., helm/bitnami/nginx)",
+        "version": "Version (default: latest)",
+        "versionTooltip": "Chart version to deploy (e.g., 13.2.10). If not specified, latest will be used.",
+        "versionPlaceholder": "13.2.10 (leave empty for latest)",
+        "versionTip": "Specify the version to deploy (leave empty for latest)",
+        "releaseName": "Release Name *",
+        "releaseNameTooltip": "Name to identify your Helm release",
+        "releaseNamePlaceholder": "my-nginx",
+        "releaseNameTip": "Specify the name of the Helm release",
+        "namespace": "Namespace",
+        "namespaceTooltip": "Kubernetes namespace to deploy to",
+        "namespacePlaceholder": "default",
+        "namespaceTip": "Specify the namespace to deploy to (defaults to 'default')",
+        "customValues": "Custom Values",
+        "customValuesTooltip": "Format: key=value,key2=value2 (e.g., service.type=LoadBalancer,service.port=80)",
+        "customValuesPlaceholder": "service.type=LoadBalancer,service.port=80",
+        "customValuesTip": "Custom configuration values for your Helm chart (key=value format)"
+      },
+      "validation": {
+        "selectPackage": "Please select a package first",
+        "enterWorkloadLabel": "Please enter a workload label",
+        "enterPackageId": "Please enter a package ID.",
+        "enterReleaseName": "Please enter a release name."
+      },
+      "buttons": {
+        "close": "Close",
+        "apply": "Apply"
+      },
+      "searchPackagesForm": {
+        "searchHint": "Start typing to search for Helm packages on Artifact Hub",
+        "errorMessage": {
+          "enterSearchTerm": "Please enter a search term",
+          "noPackagesFound": "No packages found for '{{query}}'",
+          "searchFailed": "Search failed: {{message}}"
+        },
+        "serviceConfig": {
+          "title": "Service Configuration",
+          "serviceType": "Service Type",
+          "servicePort": "Service Port"
+        },
+        "packageDetails": {
+          "stars": "Stars",
+          "repository": "Repository:",
+          "verified": "Verified",
+          "namespace": "Namespace"
+        }
+      },
+      "repositoriesList": {
+        "tip": "Repositories are sources for Helm charts, click on a card to see more details",
+        "loading": "Loading repositories...",
+        "noRepositories": "No repositories available",
+        "official": "Official",
+        "helm": "Helm",
+        "other": "Other",
+        "organization": "Organization:",
+        "user": "User:",
+        "url": "URL:"
+      }
+    },
+    "yaml": {
+      "createNamespaceAutomatically": "Create Namespace Automatically",
+      "editor": "YAML Editor"
+    },
+    "helm": {
+      "createOwn": "Create your own Helm chart",
+      "popularCharts": "Deploy from popular Helm charts",
+      "form": {
+        "repositoryName": "Repository Name *",
+        "repositoryNameTip": "Specify the name of the Helm repository",
+        "repositoryNamePlaceholder": "e.g., my-helm-repo",
+        "repositoryUrl": "Repository URL *",
+        "repositoryUrlTip": "Use a valid Helm repository URL",
+        "repositoryUrlPlaceholder": "e.g., https://charts.helm.sh/stable",
+        "chartName": "Chart Name *",
+        "chartNameTip": "Specify the name of the Helm chart to deploy",
+        "chartNamePlaceholder": "e.g., nginx",
+        "releaseName": "Release Name *",
+        "releaseNameTip": "Specify the release name for this Helm deployment",
+        "releaseNamePlaceholder": "e.g., my-release",
+        "version": "Version (default: latest)",
+        "versionTip": "Specify the chart version to deploy",
+        "versionPlaceholder": "e.g., 1.2.3",
+        "namespace": "Namespace *",
+        "namespaceTip": "Specify the namespace for the Helm chart",
+        "namespacePlaceholder": "e.g., default, my-namespace",
+        "searchChartLabel": "Search Helm Chart"
+      },
+      "userCharts": {
+        "loading": "Loading user charts...",
+        "noCharts": "No user-created charts available.",
+        "delete": "Delete",
+        "confirmDeletion": "Confirm Resource Deletion",
+        "deleteConfirmation": "Are you sure you want to delete \"{{chartId}}\"? This action cannot be undone.",
+        "deleteSuccess": "Chart {{chartId}} deleted successfully!",
+        "deleteError": "Chart {{chartId}} not deleted!"
+      },
+      "buttons": {
+        "cancel": "Cancel",
+        "deploying": "Deploying...",
+        "apply": "Apply"
+      },
+      "messages": {
+        "selectChart": "Please select a Helm chart to deploy.",
+        "deploySuccess": "Selected {{chartName}} Helm chart deployed successfully!",
+        "deployFailureReuse": "Deployment failed: failed to install chart: cannot re-use a name that is still in use!",
+        "deployFailure": "Failed to deploy popular Helm chart!"
+      }
+    },
+    "list": {
+      "title": "Workloads",
+      "create": "Create Workload",
+      "filter": "Filter Workloads",
+      "noWorkloads": "No workloads found",
+      "createFirst": "Create your first workload to get started"
+    },
+    "tabs": {
+      "yaml": "YAML",
+      "helm": "Helm",
+      "github": "GitHub",
+      "artifactHub": "Artifact Hub"
+    },
+    "createOptions": {
+      "title": "Create Workload",
+      "subtitle": "Create Workloads",
+      "yaml": {
+        "createNamespaceAutomatically": "Create Namespace Automatically",
+        "deploy": "Deploy",
+        "cancel": "Cancel"
+      },
+      "file": {
+        "title": "From File",
+        "dragDrop": "Drag & Drop your YAML or JSON file here",
+        "browse": "Browse",
+        "selectFile": "Select YAML or JSON file",
+        "fileSelected": "File selected",
+        "fileSize": "File size",
+        "deploy": "Deploy",
+        "cancel": "Cancel",
+        "noFileSelected": "No file selected.",
+        "invalidFile": "Please upload a valid YAML or JSON file."
+      },
+      "github": {
+        "title": "GitHub",
+        "workloadLabel": "Workload Label",
+        "workloadLabelPlaceholder": "Enter value for label 'kubestellar.io/workload'",
+        "repositoryUrl": "Repository URL",
+        "repositoryUrlPlaceholder": "e.g., https://github.com/username/repo",
+        "path": "Path",
+        "pathPlaceholder": "e.g., /path/to/yaml",
+        "branch": "Branch (default: main)",
+        "branchPlaceholder": "e.g., master, dev-branch",
+        "credentials": "Credentials",
+        "webhook": "Webhook",
+        "addCredentials": "Add Credentials",
+        "addWebhook": "Add Webhook",
+        "deploy": "Deploy",
+        "cancel": "Cancel"
+      },
+      "helm": {
+        "title": "Helm",
+        "repoName": "Repository Name",
+        "repoNamePlaceholder": "e.g., bitnami",
+        "repoUrl": "Repository URL",
+        "repoUrlPlaceholder": "e.g., https://charts.bitnami.com/bitnami",
+        "chartName": "Chart Name",
+        "chartNamePlaceholder": "e.g., nginx",
+        "releaseName": "Release Name",
+        "releaseNamePlaceholder": "e.g., my-release",
+        "version": "Version (leave empty for latest)",
+        "versionPlaceholder": "e.g., 1.0.0",
+        "namespace": "Namespace",
+        "namespacePlaceholder": "e.g., default",
+        "workloadLabel": "Workload Label",
+        "workloadLabelPlaceholder": "Enter value for label 'kubestellar.io/workload'",
+        "deploy": "Deploy",
+        "cancel": "Cancel"
+      },
+      "artifactHub": {
+        "title": "Artifact Hub",
+        "searchPlaceholder": "Search for Helm charts...",
+        "selectPackage": "Please select a package.",
+        "enterReleaseName": "Please enter a release name."
+      },
+      "credentials": {
+        "title": "Add Credentials",
+        "username": "GitHub Username",
+        "usernamePlaceholder": "Enter your GitHub username",
+        "token": "Personal Access Token",
+        "tokenPlaceholder": "Enter your GitHub personal access token",
+        "add": "Add",
+        "cancel": "Cancel",
+        "fillBoth": "Please fill in both GitHub Username and Personal Access Token."
+      },
+      "webhook": {
+        "title": "Add Webhook",
+        "url": "Webhook URL",
+        "urlPlaceholder": "Enter webhook URL",
+        "token": "Personal Access Token",
+        "tokenPlaceholder": "Enter personal access token for webhook",
+        "add": "Add",
+        "cancel": "Cancel",
+        "fillBoth": "Please fill in both Webhook URL and Personal Access Token."
+      },
+      "cancelConfirmation": {
+        "title": "Discard Changes?",
+        "message": "You have unsaved changes. Are you sure you want to cancel?",
+        "confirm": "Yes, Discard",
+        "cancel": "No, Keep Editing"
+      },
+      "notifications": {
+        "workloadDeploySuccess": "Workload Deploy successful!",
+        "deploymentSuccess": "Deployment successful!",
+        "helmDeploySuccess": "Helm chart deployed successfully!",
+        "artifactHubDeploySuccess": "Artifact Hub deployment successful!",
+        "credentialAddedSuccess": "Credential added successfully!",
+        "webhookAddedSuccess": "Webhook added successfully!",
+        "deploymentConflict": "Conflict error: Deployment already in progress!",
+        "workloadAlreadyExists": "Failed to create {{kind}} {{name}} in namespace {{namespace}}, workload is already exists or Namespace {{namespace}} not Found",
+        "unknownWorkloadExists": "Failed to create Unknown {{name}} workload is already exists",
+        "helmDeployFailed": "Deployment failed: failed to install chart: cannot re-use a name that is still in use!",
+        "gitRepoError": "Failed to clone repository, fill correct url and path !",
+        "enterWorkloadLabel": "Please enter Workload Label.",
+        "invalidWorkloadLabel": "You can only enter value, key is constant and defauled to 'kubestellar.io/workload'.",
+        "enterGitRepo": "Please enter Git repository.",
+        "enterPath": "Please enter Path.",
+        "enterRepoName": "Please enter a repository name.",
+        "enterRepoUrl": "Please enter a repository URL.",
+        "enterChartName": "Please enter a chart name.",
+        "enterReleaseName": "Please enter a release name.",
+        "enterNamespace": "Please enter a namespace.",
+        "enterYamlJson": "Please enter YAML or JSON content.",
+        "needMetadataName": "At least one document must have 'metadata.name'"
+      }
+    }
+  },
+  "visualization": {
+    "policyDistribution": "{{count}} Connections",
+    "clusters": {
+      "edge": "Edge Cluster",
+      "aiInference": "AI Inferencing Cluster",
+      "aiTraining": "AI Training Cluster",
+      "service": "Service Cluster",
+      "compute": "Compute Cluster",
+      "descriptions": {
+        "edge": "Edge computing resources for low-latency processing",
+        "aiInference": "Real-time AI model inference and prediction services",
+        "aiTraining": "High-performance compute for AI model training",
+        "service": "Core microservices and API endpoints",
+        "compute": "General-purpose compute resources"
+      }
+    },
+    "title": "Visualization",
+    "controls": "View Controls",
+    "zoom": "Zoom",
+    "searchResources": "Search Resources"
+  },
+  "namespaces": {
+    "default": "default",
+    "create": "Create Namespace",
+    "select": "Select Namespace"
+  },
+  "errors": {
+    "policyNameRequired": "Policy name is required",
+    "policyNotFound": "Policy {{name}} not found",
+    "parseError": "Unable to parse binding policies response",
+    "unexpectedFormat": "Unexpected API response format",
+    "error": "Error",
+    "required": "This field is required",
+    "invalidFormat": "Invalid format",
+    "connectionFailed": "Connection failed",
+    "forbidden": "You don't have permission to access this resource",
+    "serverError": "Server error occurred",
+    "notFound": "Resource not found",
+    "timeout": "Request timed out",
+    "unknown": "An unknown error occurred",
+    "contextNameRequired": "Context name is required",
+    "versionRequired": "KubeStellar version is required",
+    "operationTimeout": "Operation timed out. The process might still be running in the background.",
+    "failedToCreateContext": "Failed to create context",
+    "creatingContext": "Error creating context:",
+    "websocketConnectionFailed": "Could not connect to the server. Please check your network connection and try again.",
+    "websocketClosedUnexpectedly": "WebSocket connection closed unexpectedly",
+    "fetchingContexts": "Error fetching contexts:"
+  },
+  "contexts": {
+    "filterByContext": "Filter by context",
+    "allContexts": "All Contexts",
+    "showingAllContexts": "Showing resources from all contexts",
+    "filteringByContext": "Filtering to show only {{context}} context",
+    "createdSuccessfully": "Context created successfully!",
+    "websocketClosed": "WebSocket connection closed:",
+    "contextCreatedSuccess": "Context \"{{contextName}}\" created successfully!",
+    "createNewContext": "Create New Context",
+    "contextName": "Context Name",
+    "kubestellarVersion": "KubeStellar Version",
+    "creating": "Creating...",
+    "createContext": "Create Context"
+  },
+  "policyDragDropStore": {
+    "labelsAssigned": "Labels automatically assigned to {{itemType}} {{itemId}}",
+    "policyAssigned": "Successfully assigned {{policyName}} to {{targetType}} {{targetName}}",
+    "clusterAlreadyAssigned": "Cluster {{targetName}} is already assigned to policy {{policyName}}",
+    "workloadAlreadyAssigned": "Workload {{targetName}} is already assigned to policy {{policyName}}"
+  },
+  "auth": {
+    "login": {
+      "success": "Login successful",
+      "error": "Login error:",
+      "successWithUser": "Login successful for user: {{username}}. Redirecting to {{path}}",
+      "invalidCredentials": "Invalid credentials",
+      "authFailed": "Authentication failed. Please check your credentials.",
+      "noToken": "No token received from server"
+    }
+  },
+  "kubestellarData": {
+    "logging": {
+      "clustersApiResponse": "Clusters API Response:",
+      "processedClusters": "Processed clusters:",
+      "errorFetchingClusters": "Error fetching clusters:",
+      "processedWorkloads": "Processed workloads:",
+      "errorFetchingWorkloads": "Error fetching workloads:",
+      "errorFetchingPolicies": "Error fetching policies:",
+      "assigningPolicy": "Assigning policy {{policyName}} to {{targetType}} {{targetName}}"
+    },
+    "errors": {
+      "failedFetchClusters": "Failed to fetch clusters",
+      "failedFetchWorkloads": "Failed to fetch workloads",
+      "failedFetchPolicies": "Failed to fetch policies",
+      "errorAssigningPolicy": "Error assigning policy:",
+      "failedToAssign": "Failed to assign {{policyName}} to {{targetType}} {{targetName}}"
+    },
+    "success": {
+      "successfullyAssigned": "Successfully assigned {{policyName}} to {{targetType}} {{targetName}}"
+    },
+    "defaults": {
+      "unknown": "Unknown",
+      "ready": "Ready",
+      "deployment": "Deployment",
+      "defaultNamespace": "default",
+      "active": "Active",
+      "alwaysMatch": "AlwaysMatch"
+    }
+  },
+  "profileSection": {
+    "logoutMessage": "You have been successfully logged out.",
+    "account": "Account",
+    "admin": "Admin",
+    "helpSupport": "Help & Support",
+    "signOut": "Sign Out"
+  },
+  "onboardingLogs": {
+    "onboarding": "Onboarding",
+    "complete": "Complete",
+    "connecting": "Connecting to log stream...",
+    "errors": {
+      "websocketFailed": "WebSocket connection failed. Please try again.",
+      "connectionFailed": "Failed to connect to log stream. Please try again."
+    },
+    "status": {
+      "processing": "Processing",
+      "verifying": "Verifying",
+      "available": "Available",
+      "completed": "Completed",
+      "error": "Error"
+    }
+  },
+  "newAppDialog": {
+    "title": "Create New App",
+    "githubUrl": "GitHub URL",
+    "path": "Path",
+    "deploy": "Deploy"
+  },
+  "navbar": {
+    "generateLog": "Generate Log",
+    "toggleTheme": "Toggle theme",
+    "brandName": "KubestellarUI",
+    "its": "ITS",
+    "wds": "WDS",
+    "logFilename": "kubestellarui.log",
+    "generateLogError": "Failed to generate log. Please try again."
+  },
+  "manualImportTab": {
+    "loadingClusters": "Loading available clusters...",
+    "errorLoadingClusters": "Error loading clusters",
+    "title": "Manual Cluster Setup",
+    "recommended": "Recommended",
+    "description": "This is the simplest way to connect your Kubernetes cluster. Select a cluster and click the Onboard Cluster button to directly connect it to your platform without any manual commands.",
+    "selectCluster": "Select a cluster to connect",
+    "chooseCluster": "Choose a cluster...",
+    "noClusters": "No clusters available",
+    "discoveredClusters": "These are clusters discovered in your environment. Select one to continue.",
+    "refreshClustersList": "Refresh clusters list",
+    "howToConnect": "How to connect your cluster",
+    "steps": {
+      "selectCluster": "Select a cluster from the dropdown above",
+      "clickOnboard": "Click \"Onboard Cluster\" button to directly connect your cluster",
+      "autoOnboard": "Your cluster will be automatically onboarded without manual commands"
+    },
+    "connectionError": "Connection Error",
+    "installationGuide": "Installation Guide:",
+    "installCommand": "To install clusteradm, run:",
+    "commandCopied": "Installation command copied!",
+    "onboarding": "Onboarding...",
+    "onboardCluster": "Onboard Cluster",
+    "clusterAddedSuccess": "Cluster has been added to the platform",
+    "clusterOnboardedSuccess": "Your cluster {{clusterName}} has been successfully onboarded. You can now:",
+    "nextSteps": {
+      "viewManage": "View and manage the cluster in the dashboard",
+      "deployApps": "Deploy applications and services to the cluster",
+      "configureSettings": "Configure and manage the cluster settings"
+    },
+    "viewDashboard": "View Cluster in Dashboard",
+    "goToDashboard": "Go to Dashboard"
+  },
+  "logModal": {
+    "connectedToStream": "Connected to log stream...",
+    "connectionClosed": "Complete Logs. Connection closed.",
+    "retryConnection": "Connection closed. Please retry.",
+    "logs": "Logs",
+    "loadingLogs": "Loading logs..."
+  },
+  "loadingFallback": {
+    "loadingContent": "Loading content..."
+  },
+  "listView": {
+    "connecting": "Connecting to server...",
+    "receivingWorkloads": "Receiving workloads...",
+    "receivedWorkloadsSoFar": "Received {{count}} workloads so far...",
+    "allWorkloadsReceived": "All {{count}} workloads received",
+    "connectionLost": "Connection lost. Showing {{count}} received workloads.",
+    "connectionError": "Connection to server lost or failed. Trying fallback method...",
+    "fetchingFallback": "Fetching resources (fallback method)...",
+    "invalidResponseFormat": "Invalid response format from server",
+    "unknownError": "An unknown error occurred while fetching resources.",
+    "errorLoading": "Error Loading Resources",
+    "downloadLogs": "Download logs",
+    "namespace": "Namespace",
+    "created": "Created",
+    "filteredByContext": "Filtered by context: {{context}}",
+    "showingResourceCount": "Showing {{showing}} of {{total}} total resources",
+    "resourceStats": "{{raw}} raw resources detected, {{processed}} processed",
+    "pagination": {
+      "prev": "Prev",
+      "next": "Next",
+      "showing": "Showing {{from}} to {{to}} of {{total}} entries",
+      "filtered": " (filtered by {{context}} context)"
+    },
+    "troubleshooting": {
+      "title": "Try these troubleshooting steps:",
+      "step1": "1. Check that the backend server is running at http://localhost:4000",
+      "step2": "2. Verify the server's CORS configuration allows requests from http://localhost:5173",
+      "step3": "3. If the server uses wildcard (*) CORS, it can't accept requests with credentials",
+      "step4": "4. Check the browser console for detailed error messages"
+    },
+    "noWorkloads": {
+      "title": "No Workloads Found",
+      "noResourcesForContext": "No resources found for the {{context}} context",
+      "resourcesFilteredOut": "Resources are available but filtered out",
+      "getStarted": "Get started by creating your first workload",
+      "resourcesAvailable": "{{count}} total resources available, but none match the current filter"
+    }
+  },
+  "kubeconfigImport": {
+    "title": "Upload Kubeconfig File",
+    "description": "Import your cluster by uploading a kubeconfig file",
+    "dragAndDrop": "Drag and drop your kubeconfig file here",
+    "or": "- or -",
+    "browseFiles": "Browse Files",
+    "importCluster": "Import Cluster"
+  },
+  "importClusters": {
+    "title": "Import Cluster",
+    "description": "Connect your Kubernetes cluster to the platform",
+    "tabs": {
+      "quickConnect": "Quick Connect",
+      "kubeconfig": "Kubeconfig",
+      "apiUrl": "API/URL"
+    },
+    "abortDialog": {
+      "title": "Abort Onboarding Process",
+      "warning": "Are you sure you want to abort onboarding? All progress will be lost.",
+      "continue": "Continue Onboarding",
+      "confirm": "Yes, Abort"
+    },
+    "fileUpload": {
+      "selected": "File \"{{filename}}\" selected. Upload functionality to be implemented."
+    },
+    "icons": {
+      "quickConnect": "quick connect",
+      "kubeconfig": "kubeconfig",
+      "apiUrl": "api url",
+      "ariaLabel": "import"
+    }
+  },
+  "groupPanel": {
+    "close": "Close panel",
+    "tableAriaLabel": "Group items table",
+    "table": {
+      "name": "Name",
+      "groupKind": "Group/Kind",
+      "syncOrder": "Sync Order",
+      "namespace": "Namespace",
+      "createdAt": "Created At"
+    },
+    "notAvailable": "N/A"
+  },
+  "downloadLogsModal": {
+    "title": "Download Logs",
+    "fileSize": "File size",
+    "download": "Download"
+  },
+  "footer": {
+    "commit": "Commit",
+    "viewCommit": "View commit details on GitHub"
+  },
+  "downloadLogsButton": {
+    "title": "Download logs",
+    "placeholder": {
+      "header": "Logs for pod {{podName}} in namespace {{namespace}} on cluster {{cluster}}",
+      "generated": "Generated at: {{date}}",
+      "noContent": "Log content not available directly. Please use the streaming logs feature."
+    },
+    "toast": {
+      "success": "Downloaded logs for {{podName}}",
+      "error": "Failed to download logs"
+    }
+  },
+  "detachmentLogsDialog": {
+    "title": "Detaching Cluster: {{clusterName}}",
+    "logs": "Detachment Logs",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "connecting": "Connecting to detachment service...",
+    "completedSuccessfully": "Cluster detachment completed successfully.",
+    "done": "Done"
+  },
+  "addWebhookDialog": {
+    "copiedToClipboard": "Copied to clipboard!",
+    "setupWebhook": "Setup Webhook",
+    "localDevSmee": "Local Development Using Smee.io",
+    "installSmee": "Install Smee Client (npm install -g smee-client).",
+    "goToSmee": "Go to Smee.io and create a new channel.",
+    "copySmeeUrl": "Copy the generated Smee.io URL.",
+    "runSmeeClient": "Run Smee client to forward webhooks to your local Go backend:",
+    "smeeCommand": "smee --url smee-url --target {{baseUrl}}/api/webhook",
+    "smeeCommandCopy": "smee --url <smee-url> --target {{baseUrl}}/api/webhook",
+    "configureWebhookSmee": "Configure the webhook in your external service using the Smee.io URL.",
+    "startGoBackend": "Start your Go backend and ensure it listens at /api/webhook.",
+    "testWebhook": "Test the webhook.",
+    "vmIp4000": "Webhook on a Virtual Machine (VM) Using IP:4000",
+    "ensureGoBackend4000": "Ensure your Go backend is running on port 4000 and handling /api/webhook.",
+    "openPort4000": "Open port 4000 in your firewall/security group (UFW, AWS, GCP, or Azure).",
+    "findPublicIp": "Find your public IP (curl ifconfig.me) and add.",
+    "configureWebhookVm": "Configure the webhook in your external service using:",
+    "vmWebhookUrl": "http://your-public-ip:4000/api/webhook",
+    "vmWebhookUrlCopy": "http://<your-public-ip>:4000/api/webhook",
+    "testWebhookOtherMachine": "Test the webhook from another machine.",
+    "keepGoServerRunning": "Keep your Go server running in the background (nohup or systemd)."
+  },
+  "cancelConfirmationDialog": {
+    "title": "Cancel Workload Creation",
+    "titlePolicy": "Cancel Policy Creation",
+    "warning": "Warning",
+    "message": "Are you sure you want to cancel? All changes will be lost.",
+    "continueEditing": "Continue Editing",
+    "yesCancel": "Yes, Cancel"
+  },
+  "addCredentialsDialog": {
+    "title": "Add Credentials",
+    "usernameLabel": "Github Username *",
+    "usernamePlaceholder": "e.g., onkar717",
+    "usernameTip": "Enter your GitHub username",
+    "tokenLabel": "Personal Access Token (PAT) *",
+    "tokenPlaceholder": "e.g., ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "tokenTip": "Enter your GitHub Personal Access Token"
+  },
+  "githubTab": {
+    "repositoryUrlLabel": "Repository URL *",
+    "repositoryUrlPlaceholder": "e.g., https://github.com/username/repo",
+    "repositoryUrlTip": "Use a valid GitHub repository URL",
+    "pathLabel": "Path *",
+    "pathPlaceholder": "e.g., /path/to/yaml",
+    "pathTip": "Specify the path to your YAML files in the repository",
+    "branchLabel": "Branch (default: main) *",
+    "branchPlaceholder": "e.g., master, dev-branch",
+    "branchTip": "Specify the branch to deploy from",
+    "credentialsLabel": "Credentials",
+    "credentialsPlaceholder": "e.g., username-pat",
+    "credentialsTip": "Select or add credentials for private repositories",
+    "addCredentials": "Add Cred",
+    "webhooksLabel": "Webhooks",
+    "webhooksTip": "Select or add a webhook for automated deployments",
+    "addWebhook": "Add Webhook",
+    "previousDeploymentsTitle": "List of Previous Deployments",
+    "loadingPreviousDeployments": "Loading previous deployments...",
+    "noPreviousDeployments": "No previous deployments available.",
+    "confirmResourceDeletion": "Confirm Resource Deletion",
+    "deleteConfirmation": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+    "yesDelete": "Yes, Delete",
+    "apply": "Apply",
+    "deploying": "Deploying..."
+  }
+}

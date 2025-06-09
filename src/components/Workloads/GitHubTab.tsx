@@ -28,6 +28,7 @@ import { MoreVerticalIcon } from 'lucide-react';
 import { api } from '../../lib/api';
 import WorkloadLabelInput from './WorkloadLabelInput';
 import CancelButton from '../common/CancelButton';
+import { useTranslation } from 'react-i18next';
 
 interface FormData {
   repositoryUrl: string;
@@ -78,314 +79,317 @@ const CreateFromYourGitHub = ({
   handleOpenCredentialDialog: () => void;
   handleOpenWebhookDialog: () => void;
   theme: string;
-}) => (
-  <Box
-    sx={{
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 3,
-      flex: 1,
-      overflowY: 'auto',
-      '&::-webkit-scrollbar': {
-        display: 'none',
-      },
-      scrollbarWidth: 'none',
-      '-ms-overflow-style': 'none',
-      height: '55vh',
-    }}
-  >
-    <Box>
-      <Typography
-        variant="subtitle1"
-        sx={{
-          fontWeight: 600,
-          fontSize: '13px',
-          color: theme === 'dark' ? '#d4d4d4' : '#333',
-          mb: 1,
-        }}
-      >
-        Repository URL *
-      </Typography>
-      <TextField
-        fullWidth
-        value={formData.repositoryUrl}
-        onChange={e => setFormData({ ...formData, repositoryUrl: e.target.value })}
-        error={!!error && !formData.repositoryUrl}
-        placeholder="e.g., https://github.com/username/repo"
-        sx={{
-          '& .MuiOutlinedInput-root': {
-            borderRadius: '8px',
-            '& fieldset': {
-              borderColor: theme === 'dark' ? '#444' : '#e0e0e0',
-              borderWidth: '1px',
-            },
-            '&:hover fieldset': {
-              borderColor: '#1976d2',
-            },
-            '&.Mui-focused fieldset': {
-              borderColor: '#1976d2',
-              borderWidth: '1px',
-            },
-            '&.Mui-error fieldset': {
-              borderColor: 'red',
-            },
-          },
-          '& .MuiInputBase-input': {
-            padding: '12px 14px',
-            fontSize: '0.875rem',
-            color: theme === 'dark' ? '#d4d4d4' : '#666',
-          },
-          '& .MuiInputBase-input::placeholder': {
-            color: theme === 'dark' ? '#858585' : '#666',
-            opacity: 1,
-          },
-        }}
-      />
-      <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-        <span role="img" aria-label="tip" style={{ fontSize: '0.8rem', marginRight: '8px' }}>
-          💡
-        </span>
-        <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
-          Use a valid GitHub repository URL
-        </Typography>
-      </Box>
-    </Box>
-
-    <Box>
-      <Typography
-        variant="subtitle1"
-        sx={{
-          fontWeight: 600,
-          fontSize: '13px',
-          color: theme === 'dark' ? '#d4d4d4' : '#333',
-          mb: 1,
-        }}
-      >
-        Path *
-      </Typography>
-      <TextField
-        fullWidth
-        value={formData.path}
-        onChange={e => setFormData({ ...formData, path: e.target.value })}
-        error={!!error && !formData.path}
-        placeholder="e.g., /path/to/yaml"
-        sx={{
-          '& .MuiOutlinedInput-root': {
-            borderRadius: '8px',
-            '& fieldset': {
-              borderColor: theme === 'dark' ? '#444' : '#e0e0e0',
-              borderWidth: '1px',
-            },
-            '&:hover fieldset': {
-              borderColor: '#1976d2',
-            },
-            '&.Mui-focused fieldset': {
-              borderColor: '#1976d2',
-              borderWidth: '1px',
-            },
-            '&.Mui-error fieldset': {
-              borderColor: 'red',
-            },
-          },
-          '& .MuiInputBase-input': {
-            padding: '12px 14px',
-            fontSize: '0.875rem',
-            color: theme === 'dark' ? '#d4d4d4' : '#666',
-          },
-          '& .MuiInputBase-input::placeholder': {
-            color: theme === 'dark' ? '#858585' : '#666',
-            opacity: 1,
-          },
-        }}
-      />
-      <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-        <span role="img" aria-label="tip" style={{ fontSize: '0.8rem', marginRight: '8px' }}>
-          💡
-        </span>
-        <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
-          Specify the path to your YAML files in the repository
-        </Typography>
-      </Box>
-    </Box>
-
-    <Box>
-      <Typography
-        variant="subtitle1"
-        sx={{
-          fontWeight: 600,
-          fontSize: '13px',
-          color: theme === 'dark' ? '#d4d4d4' : '#333',
-          mb: 1,
-        }}
-      >
-        Branch (default: main) *
-      </Typography>
-      <TextField
-        fullWidth
-        value={formData.branchSpecifier}
-        onChange={e => setFormData({ ...formData, branchSpecifier: e.target.value })}
-        placeholder="e.g., master, dev-branch"
-        sx={{
-          '& .MuiOutlinedInput-root': {
-            borderRadius: '8px',
-            '& fieldset': {
-              borderColor: theme === 'dark' ? '#444' : '#e0e0e0',
-              borderWidth: '1px',
-            },
-            '&:hover fieldset': {
-              borderColor: '#1976d2',
-            },
-            '&.Mui-focused fieldset': {
-              borderColor: '#1976d2',
-              borderWidth: '1px',
-            },
-          },
-          '& .MuiInputBase-input': {
-            padding: '12px 14px',
-            fontSize: '0.875rem',
-            color: theme === 'dark' ? '#d4d4d4' : '#666',
-          },
-          '& .MuiInputBase-input::placeholder': {
-            color: theme === 'dark' ? '#858585' : '#666',
-            opacity: 1,
-          },
-        }}
-      />
-      <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-        <span role="img" aria-label="tip" style={{ fontSize: '0.8rem', marginRight: '8px' }}>
-          💡
-        </span>
-        <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
-          Specify the branch to deploy from
-        </Typography>
-      </Box>
-    </Box>
-
-    <Box>
-      <Typography
-        variant="subtitle1"
-        sx={{
-          fontWeight: 600,
-          fontSize: '13px',
-          color: theme === 'dark' ? '#d4d4d4' : '#333',
-          mb: 1,
-        }}
-      >
-        Credentials
-      </Typography>
-      <FormControl fullWidth>
-        <Select
-          value={formData.credentials}
-          onChange={handleCredentialChange}
-          displayEmpty
-          renderValue={selected =>
-            selected ? (
-              selected
-            ) : (
-              <Typography
-                sx={{ fontSize: '0.875rem', color: theme === 'dark' ? '#858585' : '#666' }}
-              >
-                e.g., username-pat
-              </Typography>
-            )
-          }
+}) => {
+  const { t } = useTranslation();
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 3,
+        flex: 1,
+        overflowY: 'auto',
+        '&::-webkit-scrollbar': {
+          display: 'none',
+        },
+        scrollbarWidth: 'none',
+        '-ms-overflow-style': 'none',
+        height: '55vh',
+      }}
+    >
+      <Box>
+        <Typography
+          variant="subtitle1"
           sx={{
-            borderRadius: '8px',
-            '& .MuiOutlinedInput-notchedOutline': {
-              borderColor: theme === 'dark' ? '#444' : '#e0e0e0',
-              borderWidth: '1px',
+            fontWeight: 600,
+            fontSize: '13px',
+            color: theme === 'dark' ? '#d4d4d4' : '#333',
+            mb: 1,
+          }}
+        >
+          {t('githubTab.repositoryUrlLabel')}
+        </Typography>
+        <TextField
+          fullWidth
+          value={formData.repositoryUrl}
+          onChange={e => setFormData({ ...formData, repositoryUrl: e.target.value })}
+          error={!!error && !formData.repositoryUrl}
+          placeholder={t('githubTab.repositoryUrlPlaceholder')}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '8px',
+              '& fieldset': {
+                borderColor: theme === 'dark' ? '#444' : '#e0e0e0',
+                borderWidth: '1px',
+              },
+              '&:hover fieldset': {
+                borderColor: '#1976d2',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: '#1976d2',
+                borderWidth: '1px',
+              },
+              '&.Mui-error fieldset': {
+                borderColor: 'red',
+              },
             },
-            '&:hover .MuiOutlinedInput-notchedOutline': {
-              borderColor: '#1976d2',
-            },
-            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-              borderColor: '#1976d2',
-              borderWidth: '1x',
-            },
-            '& .MuiSelect-select': {
+            '& .MuiInputBase-input': {
               padding: '12px 14px',
               fontSize: '0.875rem',
               color: theme === 'dark' ? '#d4d4d4' : '#666',
             },
-          }}
-          MenuProps={{
-            PaperProps: {
-              sx: {
-                bgcolor: theme === 'dark' ? '#252526' : '#fff',
-                color: theme === 'dark' ? '#d4d4d4' : '#333',
-              },
+            '& .MuiInputBase-input::placeholder': {
+              color: theme === 'dark' ? '#858585' : '#666',
+              opacity: 1,
             },
           }}
-        >
-          {credentialsList.map(credential => (
-            <MenuItem key={credential} value={credential}>
-              {credential}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-      <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-        <span role="img" aria-label="tip" style={{ fontSize: '0.8rem', marginRight: '8px' }}>
-          💡
-        </span>
-        <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
-          Select or add credentials for private repositories
-        </Typography>
+        />
+        <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+          <span role="img" aria-label="tip" style={{ fontSize: '0.8rem', marginRight: '8px' }}>
+            💡
+          </span>
+          <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
+            {t('githubTab.repositoryUrlTip')}
+          </Typography>
+        </Box>
       </Box>
-    </Box>
-    <Button
-      variant="contained"
-      onClick={handleOpenCredentialDialog}
-      sx={{
-        alignSelf: 'flex-start',
-        padding: '1px 8px',
-        backgroundColor: '#1976d2',
-        color: '#fff',
-        '&:hover': {
-          backgroundColor: '#1565c0',
-        },
-      }}
-    >
-      Add Cred
-    </Button>
 
-    <Box>
-      <Typography
-        variant="subtitle1"
+      <Box>
+        <Typography
+          variant="subtitle1"
+          sx={{
+            fontWeight: 600,
+            fontSize: '13px',
+            color: theme === 'dark' ? '#d4d4d4' : '#333',
+            mb: 1,
+          }}
+        >
+          {t('githubTab.pathLabel')}
+        </Typography>
+        <TextField
+          fullWidth
+          value={formData.path}
+          onChange={e => setFormData({ ...formData, path: e.target.value })}
+          error={!!error && !formData.path}
+          placeholder={t('githubTab.pathPlaceholder')}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '8px',
+              '& fieldset': {
+                borderColor: theme === 'dark' ? '#444' : '#e0e0e0',
+                borderWidth: '1px',
+              },
+              '&:hover fieldset': {
+                borderColor: '#1976d2',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: '#1976d2',
+                borderWidth: '1px',
+              },
+              '&.Mui-error fieldset': {
+                borderColor: 'red',
+              },
+            },
+            '& .MuiInputBase-input': {
+              padding: '12px 14px',
+              fontSize: '0.875rem',
+              color: theme === 'dark' ? '#d4d4d4' : '#666',
+            },
+            '& .MuiInputBase-input::placeholder': {
+              color: theme === 'dark' ? '#858585' : '#666',
+              opacity: 1,
+            },
+          }}
+        />
+        <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+          <span role="img" aria-label="tip" style={{ fontSize: '0.8rem', marginRight: '8px' }}>
+            💡
+          </span>
+          <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
+            {t('githubTab.pathTip')}
+          </Typography>
+        </Box>
+      </Box>
+
+      <Box>
+        <Typography
+          variant="subtitle1"
+          sx={{
+            fontWeight: 600,
+            fontSize: '13px',
+            color: theme === 'dark' ? '#d4d4d4' : '#333',
+            mb: 1,
+          }}
+        >
+          {t('githubTab.branchLabel')}
+        </Typography>
+        <TextField
+          fullWidth
+          value={formData.branchSpecifier}
+          onChange={e => setFormData({ ...formData, branchSpecifier: e.target.value })}
+          placeholder={t('githubTab.branchPlaceholder')}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '8px',
+              '& fieldset': {
+                borderColor: theme === 'dark' ? '#444' : '#e0e0e0',
+                borderWidth: '1px',
+              },
+              '&:hover fieldset': {
+                borderColor: '#1976d2',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: '#1976d2',
+                borderWidth: '1px',
+              },
+            },
+            '& .MuiInputBase-input': {
+              padding: '12px 14px',
+              fontSize: '0.875rem',
+              color: theme === 'dark' ? '#d4d4d4' : '#666',
+            },
+            '& .MuiInputBase-input::placeholder': {
+              color: theme === 'dark' ? '#858585' : '#666',
+              opacity: 1,
+            },
+          }}
+        />
+        <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+          <span role="img" aria-label="tip" style={{ fontSize: '0.8rem', marginRight: '8px' }}>
+            💡
+          </span>
+          <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
+            {t('githubTab.branchTip')}
+          </Typography>
+        </Box>
+      </Box>
+
+      <Box>
+        <Typography
+          variant="subtitle1"
+          sx={{
+            fontWeight: 600,
+            fontSize: '13px',
+            color: theme === 'dark' ? '#d4d4d4' : '#333',
+            mb: 1,
+          }}
+        >
+          {t('githubTab.credentialsLabel')}
+        </Typography>
+        <FormControl fullWidth>
+          <Select
+            value={formData.credentials}
+            onChange={handleCredentialChange}
+            displayEmpty
+            renderValue={selected =>
+              selected ? (
+                selected
+              ) : (
+                <Typography
+                  sx={{ fontSize: '0.875rem', color: theme === 'dark' ? '#858585' : '#666' }}
+                >
+                  {t('githubTab.credentialsPlaceholder')}
+                </Typography>
+              )
+            }
+            sx={{
+              borderRadius: '8px',
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: theme === 'dark' ? '#444' : '#e0e0e0',
+                borderWidth: '1px',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#1976d2',
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#1976d2',
+                borderWidth: '1x',
+              },
+              '& .MuiSelect-select': {
+                padding: '12px 14px',
+                fontSize: '0.875rem',
+                color: theme === 'dark' ? '#d4d4d4' : '#666',
+              },
+            }}
+            MenuProps={{
+              PaperProps: {
+                sx: {
+                  bgcolor: theme === 'dark' ? '#252526' : '#fff',
+                  color: theme === 'dark' ? '#d4d4d4' : '#333',
+                },
+              },
+            }}
+          >
+            {credentialsList.map(credential => (
+              <MenuItem key={credential} value={credential}>
+                {credential}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+          <span role="img" aria-label="tip" style={{ fontSize: '0.8rem', marginRight: '8px' }}>
+            💡
+          </span>
+          <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
+            {t('githubTab.credentialsTip')}
+          </Typography>
+        </Box>
+      </Box>
+      <Button
+        variant="contained"
+        onClick={handleOpenCredentialDialog}
         sx={{
-          fontWeight: 600,
-          fontSize: '13px',
-          color: theme === 'dark' ? '#d4d4d4' : '#333',
+          alignSelf: 'flex-start',
+          padding: '1px 8px',
+          backgroundColor: '#1976d2',
+          color: '#fff',
+          '&:hover': {
+            backgroundColor: '#1565c0',
+          },
         }}
       >
-        Webhooks
-      </Typography>
-      <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-        <span role="img" aria-label="tip" style={{ fontSize: '0.8rem', marginRight: '8px' }}>
-          💡
-        </span>
-        <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
-          Select or add a webhook for automated deployments
+        {t('githubTab.addCredentials')}
+      </Button>
+
+      <Box>
+        <Typography
+          variant="subtitle1"
+          sx={{
+            fontWeight: 600,
+            fontSize: '13px',
+            color: theme === 'dark' ? '#d4d4d4' : '#333',
+          }}
+        >
+          {t('githubTab.webhooksLabel')}
         </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+          <span role="img" aria-label="tip" style={{ fontSize: '0.8rem', marginRight: '8px' }}>
+            💡
+          </span>
+          <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
+            {t('githubTab.webhooksTip')}
+          </Typography>
+        </Box>
       </Box>
+      <Button
+        variant="contained"
+        onClick={handleOpenWebhookDialog}
+        sx={{
+          alignSelf: 'flex-start',
+          padding: '1px 6px',
+          backgroundColor: '#1976d2',
+          color: '#fff',
+          '&:hover': {
+            backgroundColor: '#1565c0',
+          },
+        }}
+      >
+        {t('githubTab.addWebhook')}
+      </Button>
     </Box>
-    <Button
-      variant="contained"
-      onClick={handleOpenWebhookDialog}
-      sx={{
-        alignSelf: 'flex-start',
-        padding: '1px 6px',
-        backgroundColor: '#1976d2',
-        color: '#fff',
-        '&:hover': {
-          backgroundColor: '#1565c0',
-        },
-      }}
-    >
-      Add Webhook
-    </Button>
-  </Box>
-);
+  );
+};
 
 export const GitHubTab = ({
   formData,
@@ -402,6 +406,7 @@ export const GitHubTab = ({
   handleCancelClick,
 }: Props) => {
   const theme = useTheme(state => state.theme);
+  const { t } = useTranslation();
   const [selectedOption, setSelectedOption] = useState('createOwn');
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [popularLoading, setPopularLoading] = useState(false);
@@ -762,7 +767,7 @@ export const GitHubTab = ({
             mt: 1,
           }}
         >
-          List of Previous Deployments
+          {t('githubTab.previousDeploymentsTitle')}
         </Typography>
         {selectedRepo && (
           <Box
@@ -804,7 +809,7 @@ export const GitHubTab = ({
       >
         {previousLoading ? (
           <Typography sx={{ color: theme === 'dark' ? '#d4d4d4' : '#333', textAlign: 'center' }}>
-            Loading previous deployments...
+            {t('githubTab.loadingPreviousDeployments')}
           </Typography>
         ) : previousDeployments.length > 0 ? (
           previousDeployments.map(deployment => (
@@ -861,7 +866,7 @@ export const GitHubTab = ({
           ))
         ) : (
           <Typography sx={{ color: theme === 'dark' ? '#d4d4d4' : '#333', textAlign: 'center' }}>
-            No previous deployments available.
+            {t('githubTab.noPreviousDeployments')}
           </Typography>
         )}
       </Box>
@@ -919,11 +924,11 @@ export const GitHubTab = ({
           onClick={e => e.stopPropagation()}
         >
           <WarningAmberIcon sx={{ color: '#FFA500', fontSize: '34px' }} />
-          Confirm Resource Deletion
+          {t('githubTab.confirmResourceDeletion')}
         </DialogTitle>
         <DialogContent onClick={e => e.stopPropagation()}>
           <Typography sx={{ fontSize: '16px', color: theme === 'dark' ? '#fff' : '333', mt: 2 }}>
-            Are you sure you want to delete "{deleteDeploymentId}"? This action cannot be undone.
+            {t('githubTab.deleteConfirmation', { name: deleteDeploymentId })}
           </Typography>
         </DialogContent>
         <DialogActions
@@ -952,7 +957,7 @@ export const GitHubTab = ({
             }}
             sx={createStableButtonStyle(false)}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             variant="contained"
@@ -967,7 +972,7 @@ export const GitHubTab = ({
             }}
             sx={createStableButtonStyle(true)}
           >
-            Yes, Delete
+            {t('githubTab.yesDelete')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -996,7 +1001,7 @@ export const GitHubTab = ({
             <FormControlLabel
               value="createOwn"
               control={<Radio />}
-              label="Create from your GitHub"
+              label={t('githubTab.createFromYourGitHub')}
               sx={{
                 '& .MuiTypography-root': {
                   color: theme === 'dark' ? '#d4d4d4' : '#333',
@@ -1007,7 +1012,7 @@ export const GitHubTab = ({
             <FormControlLabel
               value="popularRepos"
               control={<Radio />}
-              label="Deploy from popular Repositories"
+              label={t('githubTab.deployFromPopularRepositories')}
               sx={{
                 '& .MuiTypography-root': {
                   color: theme === 'dark' ? '#d4d4d4' : '#333',
@@ -1018,7 +1023,7 @@ export const GitHubTab = ({
             <FormControlLabel
               value="previousDeployments"
               control={<Radio />}
-              label="List of Previous Deployments"
+              label={t('githubTab.listOfPreviousDeployments')}
               sx={{
                 '& .MuiTypography-root': {
                   color: theme === 'dark' ? '#d4d4d4' : '#333',
@@ -1072,7 +1077,7 @@ export const GitHubTab = ({
           onClick={handleCancelClick}
           disabled={loading || popularLoading || previousLoading}
         >
-          Cancel
+          {t('common.cancel')}
         </CancelButton>
         <Button
           variant="contained"
@@ -1109,8 +1114,8 @@ export const GitHubTab = ({
           {(selectedOption === 'createOwn' && loading) ||
           (selectedOption === 'popularRepos' && popularLoading) ||
           (selectedOption === 'previousDeployments' && previousLoading)
-            ? 'Deploying...'
-            : 'Apply'}
+            ? t('githubTab.deploying')
+            : t('githubTab.apply')}
         </Button>
       </Box>
     </StyledContainer>

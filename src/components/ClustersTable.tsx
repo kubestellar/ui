@@ -53,6 +53,7 @@ import ClusterDetailDialog from './ClusterDetailDialog'; // Import the new compo
 import DetachmentLogsDialog from './DetachmentLogsDialog'; // Import the new component
 import CancelButton from './common/CancelButton';
 import LockIcon from '@mui/icons-material/Lock';
+import { useTranslation } from 'react-i18next';
 
 interface ManagedClusterInfo {
   name: string;
@@ -116,6 +117,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
   isDark,
   colors,
 }) => {
+  const { t } = useTranslation();
   const [labels, setLabels] = useState<Array<{ key: string; value: string }>>([]);
   const [deletedLabels, setDeletedLabels] = useState<string[]>([]);
   const [newKey, setNewKey] = useState('');
@@ -282,33 +284,25 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
 
   const handleAddLabel = () => {
     if (newKey.trim() && newValue.trim()) {
-      // Check if it's a protected label being added
       if (isLabelProtected(newKey.trim())) {
-        toast.error(`Cannot modify protected label: ${newKey}`, {
+        toast.error(t('clusters.labels.protected', { key: newKey }), {
           icon: '🔒',
           duration: 3000,
         });
         return;
       }
-
-      // Check for duplicates
       const isDuplicate = labels.some(label => label.key === newKey.trim());
-
       if (isDuplicate) {
-        // Update existing label with same key
         setLabels(
           labels.map(label =>
             label.key === newKey.trim() ? { ...label, value: newValue.trim() } : label
           )
         );
-        toast.success(`Updated existing label: ${newKey}`);
+        toast.success(t('clusters.labels.updated', { key: newKey }));
       } else {
-        // Add new label
         setLabels(prev => [...prev, { key: newKey.trim(), value: newValue.trim() }]);
-        toast.success(`Added new label: ${newKey}`);
+        toast.success(t('clusters.labels.added', { key: newKey }));
       }
-
-      // Clear inputs and refocus key input
       setNewKey('');
       setNewValue('');
       if (keyInputRef.current) {
@@ -340,10 +334,8 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
 
   const handleRemoveLabel = (index: number) => {
     const labelToRemove = labels[index];
-
-    // Check if this is a protected label
     if (isLabelProtected(labelToRemove.key)) {
-      toast.error(`Cannot delete protected label: ${labelToRemove.key}`, {
+      toast.error(t('clusters.labels.protected', { key: labelToRemove.key }), {
         icon: '🔒',
         duration: 3000,
         style: {
@@ -352,8 +344,6 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
       });
       return;
     }
-
-    // If this was an original label, mark it for deletion
     if (cluster?.labels && cluster.labels[labelToRemove.key]) {
       console.log('[DEBUG] Adding to deleted labels:', labelToRemove.key);
       setDeletedLabels(prev => {
@@ -362,18 +352,15 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
         return newDeleted;
       });
     }
-
     setLabels(labels.filter((_, i) => i !== index));
-    toast.success(`Removed label: ${labelToRemove.key}`);
+    toast.success(t('clusters.labels.removed', { key: labelToRemove.key }));
   };
 
   // ADD THESE NEW FUNCTIONS FOR EDITING
   const handleStartEdit = (index: number) => {
     const label = labels[index];
-
-    // Check if this is a protected label
     if (isLabelProtected(label.key)) {
-      toast.error(`Cannot edit protected label: ${label.key}`, {
+      toast.error(t('clusters.labels.protected', { key: label.key }), {
         icon: '🔒',
         duration: 3000,
         style: {
@@ -382,7 +369,6 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
       });
       return;
     }
-
     setEditingIndex(index);
     setEditingKey(label.key);
     setEditingValue(label.value);
@@ -399,55 +385,41 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
 
   const handleSaveEdit = () => {
     if (!editingKey.trim() || !editingValue.trim()) {
-      toast.error('Both key and value are required', { duration: 2000 });
+      toast.error(t('clusters.labels.editValue'), { duration: 2000 });
       return;
     }
-
     if (editingIndex === null) return;
-
     const originalKey = labels[editingIndex].key;
-
-    // Check if the new key is protected (but allow editing the value of existing protected labels)
     if (editingKey.trim() !== originalKey && isLabelProtected(editingKey.trim())) {
-      toast.error(`Cannot create protected label: ${editingKey}`, {
+      toast.error(t('clusters.labels.protected', { key: editingKey }), {
         icon: '🔒',
         duration: 3000,
       });
       return;
     }
-
-    // Check for duplicates only if the key has changed
     if (editingKey.trim() !== originalKey) {
       const isDuplicate = labels.some(
         (label, index) => index !== editingIndex && label.key === editingKey.trim()
       );
-
       if (isDuplicate) {
-        toast.error(`Label with key "${editingKey}" already exists`, { duration: 3000 });
+        toast.error(t('clusters.labels.duplicate', { key: editingKey }), { duration: 3000 });
         return;
       }
     }
-
-    // If the key changed, mark the old key for deletion (if it was an original label)
     if (editingKey.trim() !== originalKey) {
       if (cluster?.labels && cluster.labels[originalKey]) {
         setDeletedLabels(prev => [...prev, originalKey]);
       }
     }
-
-    // Update the label
     setLabels(prev =>
       prev.map((label, index) =>
         index === editingIndex ? { key: editingKey.trim(), value: editingValue.trim() } : label
       )
     );
-
-    // Exit edit mode
     setEditingIndex(null);
     setEditingKey('');
     setEditingValue('');
-
-    toast.success(`Label updated successfully`, { duration: 2000 });
+    toast.success(t('clusters.labels.updateSuccess'), { duration: 2000 });
   };
 
   const handleCancelEdit = () => {
@@ -549,7 +521,8 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
         <div className="flex items-center gap-2">
           <LabelIcon style={{ color: colors.primary }} />
           <Typography variant="h6" component="span">
-            Edit Labels for <span style={{ fontWeight: 'bold' }}>{cluster?.name}</span>
+            {t('clusters.labels.edit')} {t('clusters.labels.for')}{' '}
+            <span style={{ fontWeight: 'bold' }}>{cluster?.name}</span>
           </Typography>
         </div>
         <IconButton onClick={onClose} size="small" style={{ color: colors.textSecondary }}>
@@ -561,14 +534,14 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
         <div className="mb-6">
           <div className="mb-4 flex items-center justify-between">
             <Typography variant="body2" style={{ color: colors.textSecondary }}>
-              Add, edit, or remove labels to organize and categorize your cluster.
+              {t('clusters.labels.description')}
               <span style={{ color: colors.warning, marginLeft: '4px' }}>
-                🔒 Protected labels cannot be modified.
+                🔒 {t('clusters.labels.defaultProtected')}
               </span>
             </Typography>
 
             <div className="flex gap-2">
-              <Tooltip title={isSearching ? 'Exit search' : 'Search labels'}>
+              <Tooltip title={isSearching ? t('common.close') : t('common.search')}>
                 <IconButton
                   size="small"
                   onClick={toggleSearchMode}
@@ -587,7 +560,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
               {labels.length > 0 && (
                 <Chip
                   size="small"
-                  label={`${labels.length} label${labels.length !== 1 ? 's' : ''}`}
+                  label={t('clusters.labels.count', { count: labels.length })}
                   style={{
                     backgroundColor: isDark
                       ? 'rgba(47, 134, 255, 0.15)'
@@ -604,7 +577,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
             <div className="mb-4">
               <TextField
                 id="label-search-input"
-                placeholder="Search labels..."
+                placeholder={t('common.search') + '...'}
                 value={labelSearch}
                 onChange={e => setLabelSearch(e.target.value)}
                 fullWidth
@@ -646,7 +619,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
             <div className="mb-5">
               <div className="mb-2 flex flex-col gap-2 sm:flex-row">
                 <TextField
-                  label="Label Key"
+                  label={t('clusters.labels.key')}
                   placeholder="e.g. environment"
                   value={newKey}
                   onChange={e => setNewKey(e.target.value)}
@@ -672,7 +645,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                   }}
                 />
                 <TextField
-                  label="Label Value"
+                  label={t('clusters.labels.value')}
                   placeholder="e.g. production"
                   value={newValue}
                   onChange={e => setNewValue(e.target.value)}
@@ -710,22 +683,11 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  Add
+                  {t('common.add')}
                 </Button>
               </div>
               <Typography variant="caption" style={{ color: colors.textSecondary }}>
-                Tip: Press{' '}
-                <span
-                  style={{
-                    fontFamily: 'monospace',
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-                    padding: '1px 4px',
-                    borderRadius: '2px',
-                  }}
-                >
-                  Enter
-                </span>{' '}
-                to move between fields, or double-click labels to edit them
+                {t('clusters.labels.tip')}
               </Typography>
             </div>
           </Fade>
@@ -799,8 +761,8 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                                 label.key.startsWith('kubernetes.io/') ||
                                 label.key.startsWith('k8s.io/') ||
                                 label.key === 'name'
-                                  ? 'Default label - Cannot be modified'
-                                  : 'Used in binding policy - Cannot be modified'
+                                  ? t('clusters.labels.defaultProtected')
+                                  : t('clusters.labels.bindingProtected')
                               }
                               placement="top"
                             >
@@ -826,7 +788,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                                 inputRef={editKeyInputRef}
                                 size="small"
                                 variant="outlined"
-                                placeholder="Label key"
+                                placeholder={t('clusters.labels.key')}
                                 style={{ minWidth: '120px' }}
                                 InputProps={{
                                   style: {
@@ -850,7 +812,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                                 inputRef={editValueInputRef}
                                 size="small"
                                 variant="outlined"
-                                placeholder="Label value"
+                                placeholder={t('clusters.labels.value')}
                                 style={{ minWidth: '120px' }}
                                 InputProps={{
                                   style: {
@@ -880,7 +842,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                         <div className="flex items-center gap-1">
                           {isEditing ? (
                             <>
-                              <Tooltip title="Save changes">
+                              <Tooltip title={t('common.save')}>
                                 <IconButton
                                   size="small"
                                   onClick={e => {
@@ -892,7 +854,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                                   <SaveIcon fontSize="small" />
                                 </IconButton>
                               </Tooltip>
-                              <Tooltip title="Cancel editing">
+                              <Tooltip title={t('clusters.labels.cancelEdit')}>
                                 <IconButton
                                   size="small"
                                   onClick={e => {
@@ -908,7 +870,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                           ) : (
                             <>
                               {!isProtected && (
-                                <Tooltip title="Edit label">
+                                <Tooltip title={t('clusters.labels.editValue')}>
                                   <IconButton
                                     size="small"
                                     onClick={e => {
@@ -939,7 +901,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                                 </Tooltip>
                               )}
                               {!isProtected && (
-                                <Tooltip title="Delete label">
+                                <Tooltip title={t('clusters.labels.removeLabel')}>
                                   <IconButton
                                     size="small"
                                     onClick={e => {
@@ -972,15 +934,17 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                   variant="body2"
                   style={{ color: colors.text, fontWeight: 500, marginBottom: '4px' }}
                 >
-                  {labelSearch ? 'No matching labels found' : 'No labels added yet'}
+                  {labelSearch
+                    ? t('clusters.labels.noMatchingLabels')
+                    : t('clusters.labels.noLabels')}
                 </Typography>
                 <Typography
                   variant="caption"
                   style={{ color: colors.textSecondary, maxWidth: '300px', margin: '0 auto' }}
                 >
                   {labelSearch
-                    ? 'Try a different search term or clear the search'
-                    : 'Add your first label using the fields above to help organize this cluster.'}
+                    ? t('clusters.labels.tryDifferentSearch')
+                    : t('clusters.labels.addYourFirst')}
                 </Typography>
 
                 {labelSearch && (
@@ -990,7 +954,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                     style={{ color: colors.primary, marginTop: '12px' }}
                     onClick={() => setLabelSearch('')}
                   >
-                    Clear Search
+                    {t('common.close')}
                   </Button>
                 )}
               </div>
@@ -998,8 +962,6 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
           </div>
         </div>
       </DialogContent>
-
-      {/* UPDATE THE DIALOG ACTIONS */}
       <DialogActions
         style={{
           padding: '16px 24px',
@@ -1008,7 +970,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
         }}
       >
         <CancelButton onClick={onClose} disabled={saving} startIcon={<CloseIcon />}>
-          Cancel
+          {t('common.cancel')}
         </CancelButton>
 
         <Button
@@ -1022,7 +984,11 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
             minWidth: '120px',
           }}
         >
-          {saving ? 'Saving...' : editingIndex !== null ? 'Finish Editing' : 'Save Changes'}
+          {saving
+            ? t('common.save') + '...'
+            : editingIndex !== null
+              ? t('clusters.labels.finishEditing')
+              : t('common.save') + ' ' + t('common.changes')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -1048,6 +1014,7 @@ const DetachClusterDialog: React.FC<DetachClusterDialogProps> = ({
   isDark,
   colors,
 }) => {
+  const { t } = useTranslation();
   const handleDetach = () => {
     if (cluster) {
       onDetach(cluster.name);
@@ -1088,20 +1055,18 @@ const DetachClusterDialog: React.FC<DetachClusterDialogProps> = ({
         <div className="flex items-center gap-2">
           <LinkOffIcon style={{ color: colors.error }} />
           <Typography variant="h6" component="span">
-            Detach Cluster
+            {t('clusters.detach.title')}
           </Typography>
         </div>
         <IconButton onClick={onClose} size="small" style={{ color: colors.textSecondary }}>
           <CloseIcon fontSize="small" />
         </IconButton>
       </DialogTitle>
-
       <DialogContent style={{ padding: '24px' }}>
         <Box sx={{ mb: 3 }}>
           <Typography variant="body1" style={{ fontWeight: 500, marginBottom: '8px' }}>
-            Are you sure you want to detach the following cluster?
+            {t('clusters.detach.confirmation')}
           </Typography>
-
           <Box
             sx={{
               p: 2,
@@ -1115,12 +1080,12 @@ const DetachClusterDialog: React.FC<DetachClusterDialogProps> = ({
               {cluster?.name}
             </Typography>
             <Typography variant="body2" style={{ color: colors.textSecondary, marginTop: '8px' }}>
-              Context: {cluster?.name}
+              {t('clusters.detach.context')}: {cluster?.name}
             </Typography>
             {cluster?.labels && Object.keys(cluster.labels).length > 0 && (
               <Box sx={{ mt: 2 }}>
                 <Typography variant="caption" style={{ color: colors.textSecondary }}>
-                  Labels:
+                  {t('clusters.labels.labels')}
                 </Typography>
                 <div className="mt-1 flex flex-wrap gap-1">
                   {Object.entries(cluster.labels).map(([key, value]) => (
@@ -1142,7 +1107,6 @@ const DetachClusterDialog: React.FC<DetachClusterDialogProps> = ({
             )}
           </Box>
         </Box>
-
         <Box
           sx={{
             mt: 3,
@@ -1152,12 +1116,10 @@ const DetachClusterDialog: React.FC<DetachClusterDialogProps> = ({
           }}
         >
           <Typography variant="body2" style={{ color: colors.error }}>
-            Warning: This action will remove the cluster from management. It will no longer be
-            visible or controlled from this interface.
+            {t('clusters.detach.warning')}
           </Typography>
         </Box>
       </DialogContent>
-
       <DialogActions
         style={{
           padding: '16px 24px',
@@ -1174,9 +1136,8 @@ const DetachClusterDialog: React.FC<DetachClusterDialogProps> = ({
           startIcon={<CloseIcon />}
           disabled={isLoading}
         >
-          Cancel
+          {t('common.cancel')}
         </Button>
-
         <Button
           onClick={handleDetach}
           variant="contained"
@@ -1188,7 +1149,7 @@ const DetachClusterDialog: React.FC<DetachClusterDialogProps> = ({
             minWidth: '120px',
           }}
         >
-          {isLoading ? 'Detaching...' : 'Detach Cluster'}
+          {isLoading ? t('clusters.detach.detaching') : t('clusters.detach.detach')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -1212,6 +1173,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
   initialShowCreateOptions = false,
   initialActiveOption = 'quickconnect',
 }) => {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [filteredClusters, setFilteredClusters] = useState<ManagedClusterInfo[]>(clusters);
   const [filter, setFilter] = useState<string>('');
@@ -1703,7 +1665,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
           className="mb-2 flex items-center gap-2 text-3xl font-bold"
           style={{ color: colors.primary }}
         >
-          <div>Manage Clusters</div>
+          <div>{t('clusters.title')}</div>
           <span
             className="rounded-full px-3 py-1 text-sm"
             style={{
@@ -1715,7 +1677,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
           </span>
         </h1>
         <p className="text-lg" style={{ color: colors.textSecondary }}>
-          Manage and monitor your Kubernetes clusters
+          {t('clusters.subtitle')}
         </p>
       </div>
 
@@ -1734,7 +1696,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
             className={`relative flex-grow transition-all ${searchFocused ? 'max-w-lg' : 'max-w-sm'}`}
           >
             <TextField
-              placeholder="Search clusters by name, label, status or context..."
+              placeholder={t('clusters.searchPlaceholder')}
               value={query}
               onChange={handleSearchChange}
               onFocus={() => setSearchFocused(true)}
@@ -1804,19 +1766,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                   left: '8px',
                 }}
               >
-                Press{' '}
-                <kbd
-                  style={{
-                    fontFamily: 'monospace',
-                    padding: '0px 4px',
-                    borderRadius: '3px',
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-                    fontSize: '10px',
-                  }}
-                >
-                  Esc
-                </kbd>{' '}
-                to clear search
+                {t('clusters.clearSearch')}
               </Typography>
             )}
           </div>
@@ -1923,7 +1873,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                 <ListItemIcon>
                   <PostAddIcon fontSize="small" style={{ color: colors.primary }} />
                 </ListItemIcon>
-                <ListItemText>Bulk Labels</ListItemText>
+                <ListItemText>{t('clusters.labels.bulkLabels')}</ListItemText>
               </MenuItem>
 
               {statusFilterItems.map(item => (
@@ -2005,7 +1955,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  Manage Labels
+                  {t('clusters.labels.manage')}
                   <Box
                     component="span"
                     sx={{
@@ -2049,7 +1999,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                     <ListItemIcon>
                       <PostAddIcon fontSize="small" style={{ color: colors.primary }} />
                     </ListItemIcon>
-                    <ListItemText>Bulk Labels</ListItemText>
+                    <ListItemText>{t('clusters.labels.bulkLabels')}</ListItemText>
                   </MenuItem>
                 </Menu>
               </div>
@@ -2076,7 +2026,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                     : '0 4px 6px -1px rgba(47, 134, 255, 0.2), 0 2px 4px -2px rgba(47, 134, 255, 0.1)',
                 }}
               >
-                Import Cluster
+                {t('clusters.importCluster')}
               </Button>
               {showCreateOptions && (
                 <CreateOptions
@@ -2124,12 +2074,12 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
               }}
             >
               <Filter size={16} style={{ color: colors.primary }} />
-              Active Filters:
+              {t('clusters.activeFilters')}
             </Typography>
 
             {query && (
               <Chip
-                label={`Search: "${query}"`}
+                label={`${t('clusters.search')}: "${query}"`}
                 size="medium"
                 onDelete={() => setQuery('')}
                 sx={{
@@ -2156,7 +2106,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
 
             {filter && (
               <Chip
-                label={`Status: ${statusFilterItems.find(item => item.value === filter)?.label}`}
+                label={`${t('clusters.status')}: ${statusFilterItems.find(item => item.value === filter)?.label}`}
                 size="medium"
                 onDelete={() => setFilter('')}
                 sx={{
@@ -2183,7 +2133,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
 
             {filterByLabel && (
               <Chip
-                label={`Label: ${filterByLabel.key}=${filterByLabel.value}`}
+                label={`${t('clusters.label')}: ${filterByLabel.key}=${filterByLabel.value}`}
                 size="medium"
                 onDelete={() => setFilterByLabel(null)}
                 sx={{
@@ -2244,7 +2194,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                 transition: 'all 0.2s ease',
               }}
             >
-              Clear All
+              {t('common.clearAll')}
             </Button>
           </div>
         )}
@@ -2288,12 +2238,12 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                     }}
                   />
                 </TableCell>
-                <TableCell>Name</TableCell>
-                <TableCell>Labels</TableCell>
-                <TableCell>Creation Time</TableCell>
-                <TableCell>Context</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Actions</TableCell>
+                <TableCell>{t('clusters.table.name')}</TableCell>
+                <TableCell>{t('clusters.table.labels')}</TableCell>
+                <TableCell>{t('clusters.table.creationTime')}</TableCell>
+                <TableCell>{t('clusters.table.context')}</TableCell>
+                <TableCell>{t('clusters.table.status')}</TableCell>
+                <TableCell>{t('clusters.table.actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -2366,7 +2316,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                                 {Object.entries(cluster.labels).map(([key, value]) => (
                                   <Tooltip
                                     key={`${key}-${value}`}
-                                    title="Click to filter by this label"
+                                    title={t('clusters.filterByLabel')}
                                     arrow
                                     placement="top"
                                     TransitionComponent={Zoom}
@@ -2404,7 +2354,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                               </div>
                             ) : (
                               <span style={{ color: colors.textSecondary, fontStyle: 'italic' }}>
-                                No labels
+                                {t('clusters.labels.noLabels')}
                               </span>
                             )}
                           </div>
@@ -2487,10 +2437,10 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                             }}
                           ></span>
                           {cluster.status?.toLowerCase() === 'unavailable' || !cluster.available
-                            ? 'Inactive'
+                            ? t('clusters.status.inactive')
                             : cluster.status?.toLowerCase() === 'pending'
-                              ? 'Pending'
-                              : 'Active'}
+                              ? t('clusters.status.pending')
+                              : t('clusters.status.active')}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -2553,7 +2503,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                                   style={{ color: colors.primary }}
                                 />
                               </ListItemIcon>
-                              <ListItemText>View Details</ListItemText>
+                              <ListItemText>{t('clusters.actions.viewDetails')}</ListItemText>
                             </MenuItem>
 
                             <MenuItem
@@ -2563,7 +2513,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                               <ListItemIcon>
                                 <LabelIcon fontSize="small" style={{ color: colors.primary }} />
                               </ListItemIcon>
-                              <ListItemText>Edit Labels</ListItemText>
+                              <ListItemText>{t('clusters.actions.editLabels')}</ListItemText>
                             </MenuItem>
 
                             <MenuItem
@@ -2576,7 +2526,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                                   style={{ color: colors.primary }}
                                 />
                               </ListItemIcon>
-                              <ListItemText>Copy Name</ListItemText>
+                              <ListItemText>{t('clusters.actions.copyName')}</ListItemText>
                             </MenuItem>
 
                             <Divider />
@@ -2588,7 +2538,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                               <ListItemIcon>
                                 <LinkOffIcon fontSize="small" style={{ color: colors.error }} />
                               </ListItemIcon>
-                              <ListItemText>Detach Cluster</ListItemText>
+                              <ListItemText>{t('clusters.actions.detachCluster')}</ListItemText>
                             </MenuItem>
                           </Menu>
                         </div>
@@ -2628,19 +2578,19 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                         `}</style>
                       </div>
                       <h3 style={{ color: colors.text }} className="mb-3 text-xl font-semibold">
-                        No Clusters Found
+                        {t('clusters.noClustersFound')}
                       </h3>
                       <p
                         style={{ color: colors.textSecondary }}
                         className="mb-6 max-w-md text-base"
                       >
                         {query && filter
-                          ? 'No clusters match both your search and filter criteria'
+                          ? t('clusters.noClustersMatchBoth')
                           : query
-                            ? 'No clusters match your search term'
+                            ? t('clusters.noClustersMatchSearch')
                             : filter
-                              ? 'No clusters match your filter selection'
-                              : 'No clusters available yet. Import your first cluster to get started.'}
+                              ? t('clusters.noClustersMatchFilter')
+                              : t('clusters.noClustersAvailable')}
                       </p>
                       {query || filter ? (
                         <div className="flex flex-wrap justify-center gap-3">
@@ -2665,7 +2615,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                               }}
                               variant="contained"
                             >
-                              Clear Search
+                              {t('common.clearSearch')}
                             </Button>
                           )}
                           {filter && (
@@ -2689,7 +2639,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                               }}
                               variant="contained"
                             >
-                              Clear Filter
+                              {t('common.clearFilter')}
                             </Button>
                           )}
                         </div>
@@ -2719,7 +2669,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                               : '0 4px 6px -1px rgba(47, 134, 255, 0.2), 0 2px 4px -2px rgba(47, 134, 255, 0.1)',
                           }}
                         >
-                          Import Your First Cluster
+                          {t('clusters.importYourFirst')}
                         </Button>
                       )}
                     </div>
@@ -2741,7 +2691,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
         >
           <InboxIcon style={{ color: colors.primary, marginRight: '8px' }} fontSize="small" />
           <span style={{ color: colors.textSecondary }}>
-            Filtered by label:
+            {t('clusters.filteredByLabel')}
             <span style={{ fontWeight: 500, color: colors.primary, margin: '0 4px' }}>
               {filterByLabel.key}={filterByLabel.value}
             </span>
@@ -2758,7 +2708,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
               },
             }}
           >
-            Clear
+            {t('common.clear')}
           </Button>
         </div>
       )}
@@ -2810,7 +2760,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
               </svg>
             }
           >
-            Previous
+            {t('common.previous')}
           </Button>
           <div className="flex items-center gap-3">
             <Box
@@ -2834,7 +2784,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                   marginRight: '6px',
                 }}
               >
-                Page
+                {t('common.page')}
               </Typography>
               <Typography
                 style={{
@@ -2852,7 +2802,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                   fontSize: '0.9rem',
                 }}
               >
-                of {totalPages}
+                {t('common.of')} {totalPages}
               </Typography>
             </Box>
 
@@ -2913,7 +2863,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
               </svg>
             }
           >
-            Next
+            {t('common.next')}
           </Button>
         </div>
       )}

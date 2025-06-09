@@ -19,6 +19,7 @@ import useTheme from '../../../stores/themeStore';
 import { PolicyDetailDialogProps } from '../../../types/bindingPolicy';
 import { useBPQueries } from '../../../hooks/queries/useBPQueries';
 import CancelButton from '../../common/CancelButton';
+import { useTranslation } from 'react-i18next';
 
 interface PolicyCondition {
   type: string;
@@ -38,6 +39,7 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
 }) => {
   const theme = useTheme(state => state.theme);
   const isDarkTheme = theme === 'dark';
+  const { t } = useTranslation();
   const [yamlContent, setYamlContent] = useState<string>('');
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [fetchLoading, setFetchLoading] = useState<boolean>(false);
@@ -164,14 +166,14 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
           },
         }}
       >
-        <DialogTitle>Loading Policy Details</DialogTitle>
+        <DialogTitle>{t('bindingPolicy.loading')}</DialogTitle>
         <DialogContent>
           <Box display="flex" justifyContent="center" alignItems="center" py={4}>
             <CircularProgress />
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{t('common.cancel')}</Button>
         </DialogActions>
       </Dialog>
     );
@@ -190,14 +192,14 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
           },
         }}
       >
-        <DialogTitle>Error Loading Policy Details</DialogTitle>
+        <DialogTitle>{t('errors.error')}</DialogTitle>
         <DialogContent>
           <Alert severity="error" sx={{ mt: 2 }}>
             {errorData}
           </Alert>
         </DialogContent>
         <DialogActions>
-          <Button onClick={onClose}>Close</Button>
+          <Button onClick={onClose}>{t('common.cancel')}</Button>
         </DialogActions>
       </Dialog>
     );
@@ -228,7 +230,7 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
               {policyData.name}
             </Typography>
             <Chip
-              label={policyData.status}
+              label={t(`common.status.${policyData.status.toLowerCase()}`)}
               size="small"
               color={
                 policyData.status.toLowerCase() === 'active'
@@ -249,7 +251,9 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                   opacity: 0.8,
                 },
               }}
-            ></Button>
+            >
+              {t('common.edit')}
+            </Button>
           )}
         </Box>
       </DialogTitle>
@@ -279,7 +283,7 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                 gutterBottom
                 sx={{ color: isDarkTheme ? '#fff' : 'text.primary' }}
               >
-                Policy Information
+                {t('bindingPolicy.table.name')}
               </Typography>
               <Box display="flex" flexDirection="column" gap={2}>
                 <Box>
@@ -287,29 +291,22 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                     variant="body2"
                     sx={{ color: isDarkTheme ? 'rgba(255,255,255,0.7)' : 'text.secondary' }}
                   >
-                    Created
+                    {t('bindingPolicy.table.creationDate')}
                   </Typography>
                   <Typography sx={{ color: isDarkTheme ? '#fff' : 'text.primary' }}>
-                    {formattedCreationDate || policyData.creationDate || 'Not available'}
+                    {formattedCreationDate ||
+                      policyData.creationDate ||
+                      t('common.noResource', {
+                        resource: t('bindingPolicy.table.creationDate').toLowerCase(),
+                      })}
                   </Typography>
                 </Box>
-                {/* <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: isDarkTheme ? 'rgba(255,255,255,0.7)' : 'text.secondary' }}
-                  >
-                    Binding Mode
-                  </Typography>
-                  <Typography sx={{ color: isDarkTheme ? '#fff' : 'text.primary' }}>
-                    {bindingMode}
-                  </Typography>
-                </Box> */}
                 <Box>
                   <Typography
                     variant="body2"
                     sx={{ color: isDarkTheme ? 'rgba(255,255,255,0.7)' : 'text.secondary' }}
                   >
-                    Clusters ({clusterNames.length})
+                    {t('bindingPolicy.table.clusters')} ({clusterNames.length})
                   </Typography>
                   <Box sx={{ mt: 1 }}>
                     {clusterNames.length > 0 ? (
@@ -335,7 +332,7 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                           color: isDarkTheme ? 'rgba(255, 255, 255, 0.99)' : 'text.secondary',
                         }}
                       >
-                        No specific clusters defined
+                        {t('bindingPolicy.table.noClusters')}
                       </Typography>
                     )}
                   </Box>
@@ -345,7 +342,7 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                     variant="body2"
                     sx={{ color: isDarkTheme ? 'rgba(255,255,255,0.7)' : 'text.secondary' }}
                   >
-                    Workloads ({workloads.length})
+                    {t('bindingPolicy.table.workload')} ({workloads.length})
                   </Typography>
                   <Box sx={{ mt: 1 }}>
                     {workloads && workloads.length > 0 ? (
@@ -371,7 +368,7 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                           color: isDarkTheme ? 'rgba(255,255,255,0.7)' : 'text.secondary',
                         }}
                       >
-                        No workloads defined
+                        {t('bindingPolicy.table.noWorkloads')}
                       </Typography>
                     )}
                   </Box>
@@ -381,11 +378,11 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                     variant="body2"
                     sx={{ color: isDarkTheme ? 'rgba(255,255,255,0.7)' : 'text.secondary' }}
                   >
-                    Status
+                    {t('bindingPolicy.table.status')}
                   </Typography>
                   <Box sx={{ mt: 1 }}>
                     <Chip
-                      label={policyData.status}
+                      label={t(`common.status.${policyData.status.toLowerCase()}`)}
                       size="small"
                       color={
                         policyData.status.toLowerCase() === 'active'
@@ -462,7 +459,7 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                   fontWeight="bold"
                   className={isDarkTheme ? 'text-white' : ''}
                 >
-                  YAML Configuration
+                  {t('bindingPolicy.visualization.title')}
                 </Typography>
                 <Button
                   size="small"
@@ -476,7 +473,7 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                     },
                   }}
                 >
-                  Copy
+                  {t('common.copy')}
                 </Button>
               </Box>
               <Box
@@ -486,10 +483,10 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                   borderColor: isDarkTheme ? 'gray.700' : 'divider',
                 }}
               >
-                {policyData.status === 'Loading...' ? (
+                {policyData.status === t('common.loading') ? (
                   <Box display="flex" justifyContent="center" alignItems="center" height="400px">
                     <CircularProgress />
-                    <Typography sx={{ ml: 2 }}>Loading policy details...</Typography>
+                    <Typography sx={{ ml: 2 }}>{t('bindingPolicy.loading')}</Typography>
                   </Box>
                 ) : fetchLoading ? (
                   <Box display="flex" justifyContent="center" alignItems="center" height="400px">
@@ -506,11 +503,15 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                     <Alert severity="warning" sx={{ width: '100%' }}>
                       {fetchError}
                       <Box mt={2}>
-                        <Typography variant="body2">Policy Name: {policyData.name}</Typography>
                         <Typography variant="body2">
-                          Status: {policyData.status} (from status API)
+                          {t('bindingPolicy.table.name')}: {policyData.name}
                         </Typography>
-                        <Typography variant="body2">Created: {policyData.creationDate}</Typography>
+                        <Typography variant="body2">
+                          {t('bindingPolicy.table.status')}: {policyData.status} (from status API)
+                        </Typography>
+                        <Typography variant="body2">
+                          {t('bindingPolicy.table.creationDate')}: {policyData.creationDate}
+                        </Typography>
                         <Button
                           variant="outlined"
                           size="small"
@@ -525,15 +526,13 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                                 setYamlContent(policyData.yaml);
                                 setFetchLoading(false);
                               } else {
-                                setFetchError(
-                                  'YAML content still not available after retry. The YAML data is retrieved from the main API, while status comes from the status API.'
-                                );
+                                setFetchError(t('bindingPolicy.notifications.yamlGenerateError'));
                                 setFetchLoading(false);
                               }
                             }, 1000);
                           }}
                         >
-                          Retry
+                          {t('common.refresh')}
                         </Button>
                       </Box>
                     </Alert>
@@ -541,7 +540,7 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                 ) : !yamlContent ? (
                   <Box display="flex" justifyContent="center" alignItems="center" height="400px">
                     <Alert severity="warning" sx={{ width: '100%' }}>
-                      No YAML content available
+                      {t('bindingPolicy.notifications.yamlGenerateError')}
                     </Alert>
                   </Box>
                 ) : (
@@ -575,7 +574,7 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
           borderColor: 'divider',
         }}
       >
-        <CancelButton onClick={onClose}>Close</CancelButton>
+        <CancelButton onClick={onClose}>{t('common.cancel')}</CancelButton>
       </DialogActions>
     </Dialog>
   );

@@ -24,6 +24,7 @@ import { ManagedCluster, Workload } from '../../types/bindingPolicy';
 import KubernetesIcon from './KubernetesIcon';
 import { Editor } from '@monaco-editor/react';
 import CancelButton from '../common/CancelButton';
+import { useTranslation } from 'react-i18next';
 
 export interface DeploymentPolicy {
   id: string;
@@ -59,6 +60,7 @@ const DeploymentConfirmationDialog: React.FC<DeploymentConfirmationDialogProps> 
   workloads = [],
   darkMode = false,
 }) => {
+  const { t } = useTranslation();
   // State for YAML preview
   const [selectedPolicy, setSelectedPolicy] = useState<DeploymentPolicy | null>(null);
 
@@ -89,7 +91,7 @@ const DeploymentConfirmationDialog: React.FC<DeploymentConfirmationDialogProps> 
           color: darkMode ? 'rgba(255, 255, 255, 0.9)' : undefined,
         }}
       >
-        <Typography variant="h6">Confirm Binding Policy Deployment</Typography>
+        <Typography variant="h6">{t('bindingPolicy.confirm.title')}</Typography>
       </DialogTitle>
       <DialogContent
         sx={{
@@ -104,8 +106,7 @@ const DeploymentConfirmationDialog: React.FC<DeploymentConfirmationDialogProps> 
             color: darkMode ? 'rgba(255, 255, 255, 0.9)' : undefined,
           }}
         >
-          You are about to deploy {policies.length} binding policies. Please review them before
-          proceeding.
+          {t('bindingPolicy.confirm.description', { count: policies.length })}
         </Typography>
 
         {error && (
@@ -143,10 +144,10 @@ const DeploymentConfirmationDialog: React.FC<DeploymentConfirmationDialogProps> 
                     },
                   }}
                 >
-                  <TableCell>Policy Name</TableCell>
-                  <TableCell>Workload</TableCell>
-                  <TableCell>Cluster</TableCell>
-                  <TableCell align="center">Action</TableCell>
+                  <TableCell>{t('bindingPolicy.policyName')}</TableCell>
+                  <TableCell>{t('bindingPolicy.table.workload')}</TableCell>
+                  <TableCell>{t('bindingPolicy.table.clusters')}</TableCell>
+                  <TableCell align="center">{t('common.actions')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -226,7 +227,7 @@ const DeploymentConfirmationDialog: React.FC<DeploymentConfirmationDialogProps> 
         }}
       >
         <CancelButton onClick={onClose} disabled={loading}>
-          Cancel
+          {t('common.cancel')}
         </CancelButton>
         <Button
           variant="contained"
@@ -246,7 +247,7 @@ const DeploymentConfirmationDialog: React.FC<DeploymentConfirmationDialogProps> 
           }}
           startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
         >
-          {loading ? 'Deploying...' : 'Deploy Policies'}
+          {loading ? t('bindingPolicy.confirm.deploying') : t('bindingPolicy.confirm.deploy')}
         </Button>
       </DialogActions>
 
@@ -273,7 +274,7 @@ const DeploymentConfirmationDialog: React.FC<DeploymentConfirmationDialogProps> 
             color: darkMode ? 'rgba(255, 255, 255, 0.9)' : undefined,
           }}
         >
-          <Typography variant="h6">Policy YAML: {selectedPolicy?.name}</Typography>
+          <Typography variant="h6">{t('bindingPolicy.yaml')}: </Typography>
         </DialogTitle>
         <DialogContent
           sx={{
@@ -315,7 +316,7 @@ const DeploymentConfirmationDialog: React.FC<DeploymentConfirmationDialogProps> 
             borderTop: darkMode ? '1px solid rgba(255, 255, 255, 0.15)' : undefined,
           }}
         >
-          <CancelButton onClick={() => setSelectedPolicy(null)}>Close</CancelButton>
+          <CancelButton onClick={() => setSelectedPolicy(null)}>{t('common.close')}</CancelButton>
         </DialogActions>
       </Dialog>
     </Dialog>

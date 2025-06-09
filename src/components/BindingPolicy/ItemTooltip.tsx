@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography, Chip, useTheme, alpha } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import KubernetesIcon from './KubernetesIcon';
 
 interface ItemTooltipProps {
@@ -18,6 +19,7 @@ const ItemTooltip: React.FC<ItemTooltipProps> = ({
   type,
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   // Determine color based on item type
   const getColor = () => {
@@ -72,7 +74,7 @@ const ItemTooltip: React.FC<ItemTooltipProps> = ({
       {Object.keys(labels).length > 0 && (
         <Box>
           <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 'medium' }}>
-            Labels:
+            {t('bindingPolicy.labels.title')}
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
             {Object.entries(labels).map(([key, value]) => (

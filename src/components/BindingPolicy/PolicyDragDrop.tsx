@@ -25,6 +25,7 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import PublishIcon from '@mui/icons-material/Publish';
 import useTheme from '../../stores/themeStore';
+import { useTranslation } from 'react-i18next';
 
 interface PolicyDragDropProps {
   policies?: BindingPolicyInfo[];
@@ -48,6 +49,7 @@ const HelpDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, on
   const theme = useTheme(state => state.theme);
   const isDarkTheme = theme === 'dark'; // Use your custom theme implementation
   const [isChecked, setIsChekcked] = useState(!!localStorage.getItem('donot_show_again'));
+  const { t } = useTranslation();
 
   return (
     <Dialog
@@ -78,7 +80,7 @@ const HelpDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, on
               color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
             }}
           >
-            How to Create Binding Policies
+            {t('bindingPolicy.dragDrop.helpDialog.title')}
           </Typography>
         </Box>
       </DialogTitle>
@@ -89,7 +91,7 @@ const HelpDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, on
             color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
           }}
         >
-          Follow these steps to create binding policies:
+          {t('bindingPolicy.dragDrop.helpDialog.intro')}
         </Typography>
         <List>
           <ListItem>
@@ -99,7 +101,7 @@ const HelpDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, on
             <ListItemText
               primary={
                 <Typography sx={{ color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined }}>
-                  1. Select labels to add to the canvas
+                  {t('bindingPolicy.dragDrop.helpDialog.steps.selectLabels')}
                 </Typography>
               }
               secondary={
@@ -107,8 +109,7 @@ const HelpDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, on
                   variant="body2"
                   sx={{ color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : undefined }}
                 >
-                  Click on clusters from the left panel and workloads from the right panel to add
-                  them to the binding policy canvas
+                  {t('bindingPolicy.dragDrop.helpDialog.steps.selectLabelsDesc')}
                 </Typography>
               }
             />
@@ -120,7 +121,7 @@ const HelpDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, on
             <ListItemText
               primary={
                 <Typography sx={{ color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined }}>
-                  2. Deploy your policies
+                  {t('bindingPolicy.dragDrop.helpDialog.steps.deploy')}
                 </Typography>
               }
               secondary={
@@ -128,8 +129,7 @@ const HelpDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, on
                   variant="body2"
                   sx={{ color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : undefined }}
                 >
-                  Click 'Deploy Binding Policies' to create and deploy binding policies that connect
-                  workloads to clusters based on the selected labels
+                  {t('bindingPolicy.dragDrop.helpDialog.steps.deployDesc')}
                 </Typography>
               }
             />
@@ -143,9 +143,7 @@ const HelpDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, on
             color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary',
           }}
         >
-          Tip: The label-based approach allows you to create powerful binding policies that
-          automatically apply to all resources matching the selected labels, both now and in the
-          future.
+          {t('bindingPolicy.dragDrop.helpDialog.tip')}
         </Typography>
       </DialogContent>
       <DialogActions
@@ -172,7 +170,7 @@ const HelpDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, on
                 }
                 label={
                   <Typography sx={{ color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined }}>
-                    Don't Show Again
+                    {t('bindingPolicy.dragDrop.helpDialog.dontShowAgain')}
                   </Typography>
                 }
               />
@@ -196,7 +194,7 @@ const HelpDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, on
               },
             }}
           >
-            Got it
+            {t('bindingPolicy.dragDrop.helpDialog.gotIt')}
           </Button>
         </Box>
       </DialogActions>
@@ -218,7 +216,7 @@ const PolicyDragDrop: React.FC<PolicyDragDropProps> = props => {
       setHelpDialogOpen(true);
     }
   }, []);
-
+  const { t } = useTranslation();
   return (
     <Box sx={{ position: 'relative', height: '100%' }}>
       <Box
@@ -229,7 +227,7 @@ const PolicyDragDrop: React.FC<PolicyDragDropProps> = props => {
           zIndex: 10,
         }}
       >
-        <Tooltip title="View selection instructions">
+        <Tooltip title={t('bindingPolicy.dragDrop.helpDialog.tooltip')}>
           <IconButton
             onClick={() => setHelpDialogOpen(true)}
             size="small"

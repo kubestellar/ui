@@ -5,6 +5,7 @@ import { ResourceItem } from '../TreeViewComponent';
 import useTheme from '../../stores/themeStore'; // Import useTheme for dark mode support
 import useLabelHighlightStore from '../../stores/labelHighlightStore'; // Import the label highlight store
 import { Tooltip, Chip, Box } from '@mui/material';
+import { useTranslation } from 'react-i18next'; // Add this import
 
 interface NodeLabelProps {
   label: string;
@@ -19,6 +20,7 @@ interface NodeLabelProps {
 
 export const NodeLabel = memo<NodeLabelProps>(
   ({ label, icon, dynamicText, timeAgo, onClick, onMenuClick, resourceData }) => {
+    const { t } = useTranslation(); // Add translation hook
     const theme = useTheme(state => state.theme); // Get the current theme
 
     // Get highlighted labels state from the store
@@ -52,7 +54,7 @@ export const NodeLabel = memo<NodeLabelProps>(
             color: theme === 'dark' ? '#ffffff' : '#000000',
           }}
         >
-          Labels:
+          {t('wecsTopology.nodeLabel.labels')}
         </div>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' }}>
           {Object.entries(labels).map(([key, value]) => (
@@ -112,7 +114,7 @@ export const NodeLabel = memo<NodeLabelProps>(
         </Box>
       </Box>
     ) : (
-      <span>No labels</span>
+      <span>{t('wecsTopology.nodeLabel.noLabels')}</span>
     );
 
     return (

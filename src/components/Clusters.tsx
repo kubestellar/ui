@@ -30,6 +30,7 @@ import { Link } from 'react-router-dom';
 import { useWDSQueries } from '../hooks/queries/useWDSQueries';
 import { useBPQueries } from '../hooks/queries/useBPQueries';
 import ClusterDetailDialog from './ClusterDetailDialog';
+import { useTranslation } from 'react-i18next';
 
 // Health indicator component
 const HealthIndicator = ({ value }: { value: number }) => {
@@ -698,6 +699,7 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
 
 // Main function for rendering the dashboard
 const K8sInfo = () => {
+  const { t } = useTranslation();
   const { useK8sInfo } = useK8sQueries();
   const { useClusters } = useClusterQueries();
   const { useWorkloads } = useWDSQueries();
@@ -899,7 +901,7 @@ const K8sInfo = () => {
         <div className="rounded-xl border border-red-200 bg-white p-6 text-red-600 shadow-sm dark:border-red-900/30 dark:bg-gray-800 dark:text-red-400">
           <div className="mb-4 flex items-center">
             <AlertTriangle size={24} className="mr-3 text-red-500" />
-            <h3 className="text-lg font-semibold">Error loading cluster information</h3>
+            <h3 className="text-lg font-semibold">{t('clusters.dashboard.errorLoading')}</h3>
           </div>
           <p className="mb-6 text-gray-600 dark:text-gray-300">{k8sError.message}</p>
           <button
@@ -907,7 +909,7 @@ const K8sInfo = () => {
             onClick={() => refetchK8s()}
           >
             <RefreshCcw size={16} className="mr-2" />
-            Try Again
+            {t('common.tryAgain')}
           </button>
         </div>
       </div>
@@ -934,12 +936,29 @@ const K8sInfo = () => {
     );
 
     if (healthScore >= 90)
-      return { status: 'Excellent', color: 'text-emerald-500 dark:text-emerald-400' };
-    if (healthScore >= 75) return { status: 'Good', color: 'text-green-500 dark:text-green-400' };
-    if (healthScore >= 60) return { status: 'Fair', color: 'text-blue-500 dark:text-blue-400' };
+      return {
+        status: t('clusters.dashboard.health.excellent'),
+        color: 'text-emerald-500 dark:text-emerald-400',
+      };
+    if (healthScore >= 75)
+      return {
+        status: t('clusters.dashboard.health.good'),
+        color: 'text-green-500 dark:text-green-400',
+      };
+    if (healthScore >= 60)
+      return {
+        status: t('clusters.dashboard.health.fair'),
+        color: 'text-blue-500 dark:text-blue-400',
+      };
     if (healthScore >= 40)
-      return { status: 'Needs Attention', color: 'text-amber-500 dark:text-amber-400' };
-    return { status: 'Critical', color: 'text-red-500 dark:text-red-400' };
+      return {
+        status: t('clusters.dashboard.health.needsAttention'),
+        color: 'text-amber-500 dark:text-amber-400',
+      };
+    return {
+      status: t('clusters.dashboard.health.critical'),
+      color: 'text-red-500 dark:text-red-400',
+    };
   })();
 
   const renderHelpPanel = () => {
@@ -955,7 +974,7 @@ const K8sInfo = () => {
       >
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            Dashboard Guide
+            {t('clusters.dashboard.guide.title')}
           </h3>
           <button
             onClick={() => setShowHelpPanel(false)}
@@ -969,41 +988,44 @@ const K8sInfo = () => {
           <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-700/50">
             <div className="mb-2 flex items-center">
               <Server size={16} className="mr-2 text-blue-500" />
-              <span className="font-medium text-gray-800 dark:text-gray-200">Cluster Stats</span>
+              <span className="font-medium text-gray-800 dark:text-gray-200">
+                {t('clusters.dashboard.guide.clusterStats')}
+              </span>
             </div>
             <p className="text-xs text-gray-600 dark:text-gray-300">
-              Shows total and active clusters. Hover over metrics to see detailed information about
-              how they're calculated.
+              {t('clusters.dashboard.guide.clusterStatsDesc')}
             </p>
           </div>
 
           <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-700/50">
             <div className="mb-2 flex items-center">
               <Shield size={16} className="mr-2 text-blue-500" />
-              <span className="font-medium text-gray-800 dark:text-gray-200">Health Metrics</span>
+              <span className="font-medium text-gray-800 dark:text-gray-200">
+                {t('clusters.dashboard.guide.healthMetrics')}
+              </span>
             </div>
             <p className="text-xs text-gray-600 dark:text-gray-300">
-              Displays CPU, memory usage, and pod health. Green indicators show good health, amber
-              requires attention.
+              {t('clusters.dashboard.guide.healthMetricsDesc')}
             </p>
           </div>
 
           <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-700/50">
             <div className="mb-2 flex items-center">
               <Clock size={16} className="mr-2 text-amber-500" />
-              <span className="font-medium text-gray-800 dark:text-gray-200">Recent Activity</span>
+              <span className="font-medium text-gray-800 dark:text-gray-200">
+                {t('clusters.dashboard.guide.recentActivity')}
+              </span>
             </div>
             <p className="text-xs text-gray-600 dark:text-gray-300">
-              Shows recent changes to clusters and policies. Click on a cluster to view detailed
-              information.
+              {t('clusters.dashboard.guide.recentActivityDesc')}
             </p>
           </div>
         </div>
 
         <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50 p-3 dark:border-blue-900/30 dark:bg-blue-900/20">
           <p className="text-sm text-blue-800 dark:text-blue-200">
-            <span className="font-medium">Pro Tip:</span> Hover over any metric or chart to see
-            detailed information about how it's calculated and what actions you can take.
+            <span className="font-medium">{t('clusters.dashboard.guide.proTip')}:</span>{' '}
+            {t('clusters.dashboard.guide.proTipDesc')}
           </p>
         </div>
       </motion.div>
@@ -1014,9 +1036,11 @@ const K8sInfo = () => {
     <motion.div className="mb-8" variants={itemAnimationVariant}>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="mb-2 text-3xl font-bold text-blue-600 dark:text-blue-400">Dashboard</h1>
+          <h1 className="mb-2 text-3xl font-bold text-blue-600 dark:text-blue-400">
+            {t('clusters.dashboard.title')}
+          </h1>
           <p className="text-base text-gray-600 dark:text-gray-400">
-            Welcome to the KubeStellar management dashboard
+            {t('clusters.dashboard.welcome')}
           </p>
         </div>
         <div className="mt-4 flex items-center space-x-3 md:mt-0">
@@ -1026,14 +1050,14 @@ const K8sInfo = () => {
             disabled={isRefreshing}
           >
             <RefreshCcw size={16} className={`${isRefreshing ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
+            <span>{t('common.refresh')}</span>
           </button>
           <Link
             to="/its"
             className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
           >
             <Plus size={16} />
-            <span>Add Cluster</span>
+            <span>{t('clusters.dashboard.addCluster')}</span>
           </Link>
         </div>
       </div>
@@ -1049,27 +1073,27 @@ const K8sInfo = () => {
     return (
       <motion.div className={dashboardGridCols} variants={itemAnimationVariant}>
         <StatCard
-          title="Total Clusters"
+          title={t('clusters.dashboard.stats.totalClusters')}
           value={stats.totalClusters}
           icon={Server}
           iconColor="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
         />
         <StatCard
-          title="Active Clusters"
+          title={t('clusters.dashboard.stats.activeClusters')}
           value={stats.activeClusters}
           icon={CircleCheck}
           change={50} // Fixed 50% increase as requested
           iconColor="bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
         />
         <StatCard
-          title="Binding Policies"
+          title={t('clusters.dashboard.stats.bindingPolicies')}
           value={stats.totalBindingPolicies}
           icon={FileText}
           iconColor="bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
         />
         <StatCard
-          title="Current Context"
-          value={currentContext || 'None'}
+          title={t('clusters.dashboard.stats.currentContext')}
+          value={currentContext || t('clusters.dashboard.stats.none')}
           icon={Activity}
           iconColor="bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
           isContext={true}

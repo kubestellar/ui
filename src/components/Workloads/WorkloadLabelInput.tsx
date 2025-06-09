@@ -1,5 +1,6 @@
 import { InputAdornment, TextField } from '@mui/material';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   value: string;
@@ -9,12 +10,13 @@ interface Props {
 }
 
 const WorkloadLabelInput = ({ value, handleChange, isError, theme }: Props) => {
-  const prefix = 'kubestellar.io/workload:';
+  const { t } = useTranslation();
+  const prefix = t('workloads.label.prefix', { defaultValue: 'kubestellar.io/workload:' });
 
   return (
     <TextField
       fullWidth
-      label="Workload Label *"
+      label={t('workloads.label.title')}
       value={value}
       onChange={handleChange}
       sx={{
@@ -46,11 +48,7 @@ const WorkloadLabelInput = ({ value, handleChange, isError, theme }: Props) => {
           color: theme === 'dark' ? '#858585' : '#666',
         },
       }}
-      helperText={
-        isError
-          ? 'Label not found'
-          : "Workload label is key:value pair. Key is constant and defaulted to 'kubestellar.io/workload', you can only change the value."
-      }
+      helperText={isError ? t('workloads.label.helpTextError') : t('workloads.label.helpText')}
       error={isError}
       slotProps={{
         input: {

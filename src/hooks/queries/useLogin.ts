@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import axios from 'axios';
 import { LoginUser } from '../../api/auth';
 import { AUTH_QUERY_KEY } from '../../api/auth/constant';
+import { useTranslation } from 'react-i18next';
 import { encryptData, secureSet, secureRemove } from '../../utils/secureStorage';
 
 interface LoginCredentials {
@@ -17,6 +18,7 @@ export const useLogin = () => {
   const navigate = useNavigate();
   const { connect, connectWecs } = useWebSocket();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async ({ username, password, rememberMe = false }: LoginCredentials) => {
@@ -24,7 +26,7 @@ export const useLogin = () => {
         const response = await LoginUser({ username, password });
 
         if (!response.token) {
-          throw new Error('No token received from server');
+          throw new Error(t('auth.login.noToken'));
         }
 
         localStorage.setItem('jwtToken', response.token);
@@ -42,14 +44,14 @@ export const useLogin = () => {
 
         return response;
       } catch (error) {
-        console.error('Login error:', error);
+        console.error(t('auth.login.error'), error);
         throw error;
       }
     },
     onSuccess: data => {
       toast.dismiss('auth-loading');
 
-      toast.success('Login successful');
+      toast.success(t('auth.login.success'));
 
       // Connect to websockets with new token
       connect(true);
@@ -62,7 +64,10 @@ export const useLogin = () => {
       localStorage.removeItem('redirectAfterLogin');
 
       console.log(
-        `Login successful for user: ${data.user.username}. Redirecting to ${redirectPath}`
+        t('auth.login.successWithUser', {
+          username: data.user.username,
+          path: redirectPath,
+        })
       );
 
       setTimeout(() => {
@@ -71,15 +76,15 @@ export const useLogin = () => {
     },
     onError: error => {
       toast.dismiss('auth-loading');
-      console.error('Login error:', error);
+      console.error(t('auth.login.error'), error);
 
-      let errorMessage = 'Invalid credentials';
+      let errorMessage = t('auth.login.invalidCredentials');
 
       if (axios.isAxiosError(error)) {
         errorMessage =
           error.response?.data?.error ||
           error.response?.data?.message ||
-          'Authentication failed. Please check your credentials.';
+          t('auth.login.authFailed');
       } else if (error instanceof Error) {
         errorMessage = error.message;
       }

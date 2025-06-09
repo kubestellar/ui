@@ -29,6 +29,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import { Layers, Server, Tag } from 'lucide-react';
 import { useClusterQueries } from '../hooks/queries/useClusterQueries';
 import { Zoom } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 interface ColorTheme {
   primary: string;
@@ -62,6 +63,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
   isDark,
   colors,
 }) => {
+  const { t } = useTranslation();
   const { useClusterDetails } = useClusterQueries();
   const {
     data: clusterDetails,
@@ -132,7 +134,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
             <Server size={22} style={{ color: colors.primary }} />
           </div>
           <Typography variant="h6" component="span" sx={{ fontWeight: 600 }}>
-            Cluster Details
+            {t('clusterDetailDialog.title')}
           </Typography>
         </div>
         <IconButton
@@ -170,7 +172,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
           >
             <CircularProgress style={{ color: colors.primary }} size={40} thickness={4} />
             <Typography variant="body2" color={colors.textSecondary}>
-              Loading cluster information...
+              {t('clusterDetailDialog.loading')}
             </Typography>
           </Box>
         ) : isError ? (
@@ -187,11 +189,9 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
           >
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Typography variant="body1" fontWeight={500}>
-                Failed to load cluster details
+                {t('clusterDetailDialog.error.title')}
               </Typography>
-              <Typography variant="body2">
-                There was an error retrieving information for this cluster.
-              </Typography>
+              <Typography variant="body2">{t('clusterDetailDialog.error.description')}</Typography>
               <Button
                 size="small"
                 onClick={() => refetch()}
@@ -210,7 +210,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                 variant="outlined"
                 startIcon={<RefreshIcon />}
               >
-                Retry
+                {t('common.retry')}
               </Button>
             </Box>
           </Alert>
@@ -306,7 +306,11 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                           <ErrorOutlineIcon fontSize="small" />
                         )
                       }
-                      label={clusterDetails.available ? 'Available' : 'Unavailable'}
+                      label={
+                        clusterDetails.available
+                          ? t('clusterDetailDialog.status.available')
+                          : t('clusterDetailDialog.status.unavailable')
+                      }
                       sx={{
                         backgroundColor: clusterDetails.available
                           ? isDark
@@ -350,7 +354,9 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                     {clusterDetails.status?.version?.kubernetes && (
                       <Chip
                         icon={<VerifiedUserIcon fontSize="small" />}
-                        label={`Kubernetes ${clusterDetails.status.version.kubernetes}`}
+                        label={t('clusterDetailDialog.kubernetes', {
+                          version: clusterDetails.status.version.kubernetes,
+                        })}
                         sx={{
                           backgroundColor: isDark
                             ? 'rgba(47, 134, 255, 0.15)'
@@ -385,7 +391,9 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
               >
                 <AccessTimeIcon fontSize="small" />
                 <Typography variant="body2">
-                  Created on {formatDate(clusterDetails.creationTimestamp)}
+                  {t('clusterDetailDialog.createdOn', {
+                    date: formatDate(clusterDetails.creationTimestamp),
+                  })}
                 </Typography>
               </Box>
             </Box>
@@ -440,7 +448,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                     textShadow: isDark ? '0 1px 2px rgba(0, 0, 0, 0.5)' : 'none',
                   }}
                 >
-                  Labels
+                  {t('clusterDetailDialog.labels')}
                 </Typography>
                 <Typography
                   variant="caption"
@@ -457,7 +465,9 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                     border: isDark ? '1px solid rgba(255, 255, 255, 0.2)' : 'none',
                   }}
                 >
-                  {Object.keys(clusterDetails.labels || {}).length} labels
+                  {t('clusterDetailDialog.labelCount', {
+                    count: Object.keys(clusterDetails.labels || {}).length,
+                  })}
                 </Typography>
               </Box>
 
@@ -556,7 +566,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                         textAlign: 'center',
                       }}
                     >
-                      No labels have been assigned to this cluster
+                      {t('clusterDetailDialog.noLabels')}
                     </Typography>
                   </Box>
                 )}
@@ -614,7 +624,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                       textShadow: isDark ? '0 1px 2px rgba(0, 0, 0, 0.5)' : 'none',
                     }}
                   >
-                    Capacity & Resources
+                    {t('clusterDetailDialog.capacityResources')}
                   </Typography>
                 </Box>
                 <Divider
@@ -704,7 +714,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                           textShadow: isDark ? '0 1px 2px rgba(0, 0, 0, 0.3)' : 'none',
                         }}
                       >
-                        CPU Cores
+                        {t('clusterDetailDialog.cpuCores')}
                       </Typography>
                       {isDark && (
                         <Box
@@ -802,7 +812,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                           textShadow: isDark ? '0 1px 2px rgba(0, 0, 0, 0.3)' : 'none',
                         }}
                       >
-                        Memory
+                        {t('clusterDetailDialog.memory')}
                       </Typography>
                       {isDark && (
                         <Box
@@ -897,7 +907,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                           fontWeight: isDark ? 500 : 400,
                         }}
                       >
-                        Pod Capacity
+                        {t('clusterDetailDialog.podCapacity')}
                       </Typography>
                     </Box>
                   </Grid>
@@ -906,7 +916,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
             )}
           </div>
         ) : (
-          <Typography>No cluster selected</Typography>
+          <Typography>{t('clusterDetailDialog.noClusterSelected')}</Typography>
         )}
       </DialogContent>
 
@@ -943,7 +953,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
             }}
           >
             <AccessTimeIcon fontSize="inherit" />
-            Last refreshed: {new Date().toLocaleTimeString()}
+            {t('clusterDetailDialog.lastRefreshed')}: {new Date().toLocaleTimeString()}
           </Typography>
         </Box>
 
@@ -973,7 +983,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
           variant="contained"
           endIcon={<CloseIcon fontSize="small" />}
         >
-          Close
+          {t('common.close')}
         </Button>
       </DialogActions>
     </Dialog>

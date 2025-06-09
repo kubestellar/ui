@@ -51,6 +51,7 @@ import useTheme from '../../stores/themeStore';
 import { api } from '../../lib/api';
 import { BsTagFill } from 'react-icons/bs';
 import { AxiosError } from 'axios';
+import { useTranslation } from 'react-i18next';
 
 interface WorkloadPanelProps {
   workloads: Workload[];
@@ -125,6 +126,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
   const muiTheme = useMuiTheme();
   const theme = useTheme(state => state.theme); // Get custom theme state (dark/light)
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -182,7 +184,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
       setIsBulkEdit(false);
       setSelectedWorkloads([]);
     } else {
-      toast.error('No workload objects available to edit');
+      toast.error(t('clusters.labels.noLabelsAvailable'));
     }
   };
 
@@ -930,7 +932,9 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
               }}
             >
               <InputBase
-                placeholder="Search labels"
+                placeholder={
+                  t('common.search') + ' ' + t('bindingPolicy.labels.title').toLowerCase()
+                }
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
                 sx={{
@@ -962,7 +966,9 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
               </IconButton>
             </Box>
           ) : (
-            <Typography variant={compact ? 'subtitle1' : 'h6'}>Labels</Typography>
+            <Typography variant={compact ? 'subtitle1' : 'h6'}>
+              {t('bindingPolicy.labels.title')}
+            </Typography>
           )}
           {!showSearch && !compact && (
             <IconButton
@@ -1004,7 +1010,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
                 },
               }}
             >
-              Labels
+              {t('clusters.labels.add')}
             </Button>
             <Button
               variant="contained"
@@ -1022,7 +1028,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
                 },
               }}
             >
-              Create
+              {t('common.create')}
             </Button>
           </Box>
         )}
@@ -1083,8 +1089,8 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
             }}
           >
             {state.status === 'loading'
-              ? 'Loading workload objects and their labels...'
-              : 'No workload objects available. Please add workload objects with labels to use in binding policies.'}
+              ? t('bindingPolicy.loadingResources')
+              : t('clusters.labels.noLabelsAvailable')}
           </Typography>
         ) : (
           <Box sx={{ minHeight: '100%' }}>
@@ -1097,8 +1103,8 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
                 }}
               >
                 {searchTerm
-                  ? 'No labels match your search.'
-                  : 'No suitable labels found in available workload objects. Note: ConfigMaps, Secrets, and system resources are excluded.'}
+                  ? t('clusters.labels.noLabelsMatchSearch')
+                  : t('clusters.labels.noLabelsFound')}
               </Typography>
             ) : (
               <>
@@ -1111,11 +1117,13 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
                       color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary',
                     }}
                   >
-                    {filteredLabels.length} unique labels across {panelWorkloads.length} workload
-                    objects
+                    {t('bindingPolicy.labels.count', {
+                      count: filteredLabels.length,
+                      total: panelWorkloads.length,
+                    })}
                     {state.status === 'loading'
-                      ? ' (loading...)'
-                      : ' (includes cluster-scoped resources like CRDs and Namespaces)'}
+                      ? ` (${t('common.loading')})`
+                      : t('bindingPolicy.visualization.legendItems.activePolicy')}
                   </Typography>
                 )}
                 {filteredLabels.map(labelGroup => renderLabelItem(labelGroup))}
@@ -1179,6 +1187,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
   const [appendLabels, setAppendLabels] = useState(true);
   const keyInputRef = useRef<HTMLInputElement>(null);
   const valueInputRef = useRef<HTMLInputElement>(null);
+  const { t } = useTranslation();
 
   // Filter labels based on search
   const filteredLabels =
@@ -1368,8 +1377,8 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
           <LabelIcon style={{ color: colors.primary }} />
           <Typography variant="h6" component="span">
             {isBulkEdit
-              ? `Edit Labels for ${workloads.length} Resources`
-              : `Edit Labels for ${workload?.name}`}
+              ? t('clusters.labels.bulkEditTitle', { count: workloads.length })
+              : t('clusters.labels.editTitle', { name: workload?.name })}
 
             {!isBulkEdit && workload && (
               <Typography
@@ -1393,14 +1402,13 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
               variant="subtitle2"
               style={{ marginBottom: '8px', color: colors.textSecondary }}
             >
-              Bulk Edit Mode
+              {t('clusters.labels.bulkEdit')}
             </Typography>
             <Typography
               variant="body2"
               style={{ marginBottom: '12px', color: colors.textSecondary }}
             >
-              You are editing labels for {workloads.length} resources. The changes will be applied
-              to all selected resources.
+              {t('clusters.labels.bulkEditDescription', { count: workloads.length })}
             </Typography>
 
             <FormControlLabel
@@ -1417,9 +1425,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                 />
               }
               label={
-                <Typography variant="body2">
-                  Append to existing labels (unchecking will replace all existing labels)
-                </Typography>
+                <Typography variant="body2">{t('clusters.labels.appendToExisting')}</Typography>
               }
             />
           </Box>
@@ -1428,11 +1434,11 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
         <div className="mb-6">
           <div className="mb-4 flex items-center justify-between">
             <Typography variant="body2" style={{ color: colors.textSecondary }}>
-              Add or remove labels to organize and categorize your workload.
+              {t('clusters.labels.description')}
             </Typography>
 
             <div className="flex gap-2">
-              <Tooltip title={isSearching ? 'Exit search' : 'Search labels'}>
+              <Tooltip title={isSearching ? t('clusters.labels.exitSearch') : t('common.search')}>
                 <IconButton
                   size="small"
                   onClick={toggleSearchMode}
@@ -1451,7 +1457,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
               {labels.length > 0 && (
                 <Chip
                   size="small"
-                  label={`${labels.length} label${labels.length !== 1 ? 's' : ''}`}
+                  label={t('clusters.labels.count', { count: labels.length })}
                   style={{
                     backgroundColor: isDark
                       ? 'rgba(47, 134, 255, 0.15)'
@@ -1468,7 +1474,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
             <div className="mb-4">
               <TextField
                 id="label-search-input"
-                placeholder="Search labels..."
+                placeholder={t('clusters.labels.searchLabelsPlaceholder')}
                 value={labelSearch}
                 onChange={e => setLabelSearch(e.target.value)}
                 fullWidth
@@ -1510,8 +1516,8 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
             <div className="mb-5">
               <div className="mb-2 flex flex-col gap-2 sm:flex-row">
                 <TextField
-                  label="Label Key"
-                  placeholder="e.g. app"
+                  label={t('clusters.labels.key')}
+                  placeholder={t('clusters.labels.keyPlaceholder')}
                   value={newKey}
                   onChange={e => setNewKey(e.target.value)}
                   inputRef={keyInputRef}
@@ -1536,8 +1542,8 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                   }}
                 />
                 <TextField
-                  label="Label Value"
-                  placeholder="e.g. frontend"
+                  label={t('clusters.labels.value')}
+                  placeholder={t('clusters.labels.valuePlaceholder')}
                   value={newValue}
                   onChange={e => setNewValue(e.target.value)}
                   inputRef={valueInputRef}
@@ -1574,22 +1580,11 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  Add
+                  {t('clusters.labels.add')}
                 </Button>
               </div>
               <Typography variant="caption" style={{ color: colors.textSecondary }}>
-                Tip: Press{' '}
-                <span
-                  style={{
-                    fontFamily: 'monospace',
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-                    padding: '1px 4px',
-                    borderRadius: '2px',
-                  }}
-                >
-                  Enter
-                </span>{' '}
-                to move between fields or add a label
+                {t('clusters.labels.tip')}
               </Typography>
             </div>
           </Zoom>
@@ -1637,7 +1632,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                           <span>{label.value}</span>
                         </span>
                       </div>
-                      <Tooltip title="Remove Label">
+                      <Tooltip title={t('clusters.labels.removeLabel')}>
                         <IconButton
                           size="small"
                           onClick={e => {
@@ -1668,15 +1663,17 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                   variant="body2"
                   style={{ color: colors.text, fontWeight: 500, marginBottom: '4px' }}
                 >
-                  {labelSearch ? 'No matching labels found' : 'No labels added yet'}
+                  {labelSearch
+                    ? t('clusters.labels.noMatchingLabels')
+                    : t('clusters.labels.noLabels')}
                 </Typography>
                 <Typography
                   variant="caption"
                   style={{ color: colors.textSecondary, maxWidth: '300px', margin: '0 auto' }}
                 >
                   {labelSearch
-                    ? 'Try a different search term or clear the search'
-                    : 'Add your first label using the fields above to help organize this workload.'}
+                    ? t('clusters.labels.tryDifferentSearch')
+                    : t('clusters.labels.addYourFirst')}
                 </Typography>
 
                 {labelSearch && (
@@ -1686,7 +1683,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
                     style={{ color: colors.primary, marginTop: '12px' }}
                     onClick={() => setLabelSearch('')}
                   >
-                    Clear Search
+                    {t('clusters.labels.clearFilter')}
                   </Button>
                 )}
               </div>
@@ -1730,7 +1727,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
             minWidth: '120px',
           }}
         >
-          {saving ? 'Saving...' : 'Save Changes'}
+          {saving ? t('common.save') + '...' : t('clusters.labels.saveChangesButton')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -1750,6 +1747,7 @@ const SelectWorkloadDialog: React.FC<SelectWorkloadDialogProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<Record<string, boolean>>({});
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
+  const { t } = useTranslation();
 
   // Reset selections when dialog opens
   useEffect(() => {
@@ -1831,7 +1829,9 @@ const SelectWorkloadDialog: React.FC<SelectWorkloadDialogProps> = ({
       >
         <div className="flex items-center gap-2">
           <Typography variant="h6" component="span">
-            {bulkSelectMode ? 'Select Multiple Workloads' : 'Select Workload to Edit'}
+            {bulkSelectMode
+              ? t('clusters.dialog.selectMultipleClusters')
+              : t('clusters.dialog.selectClusterToEdit')}
           </Typography>
         </div>
         <IconButton onClick={onClose} size="small" style={{ color: colors.textSecondary }}>
@@ -1854,16 +1854,20 @@ const SelectWorkloadDialog: React.FC<SelectWorkloadDialogProps> = ({
                 }}
               />
             }
-            label="Bulk Edit Mode"
+            label={t('clusters.labels.bulkEdit')}
           />
 
           {bulkSelectMode && selectedCount > 0 && (
-            <Chip label={`${selectedCount} selected`} color="primary" size="small" />
+            <Chip
+              label={t('clusters.dialog.selectedCount', { count: selectedCount })}
+              color="primary"
+              size="small"
+            />
           )}
         </Box>
 
         <TextField
-          placeholder="Search workloads..."
+          placeholder={t('clusters.list.searchPlaceholder')}
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           fullWidth
@@ -1997,7 +2001,7 @@ const SelectWorkloadDialog: React.FC<SelectWorkloadDialogProps> = ({
                     secondary={
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5 }}>
                         <Typography variant="caption" sx={{ color: colors.textSecondary }}>
-                          {workload.namespace || 'default'}
+                          {workload.namespace || t('namespaces.default')}
                         </Typography>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                           {Object.entries(workload.labels || {})
@@ -2018,7 +2022,9 @@ const SelectWorkloadDialog: React.FC<SelectWorkloadDialogProps> = ({
                           {Object.keys(workload.labels || {}).length > 3 && (
                             <Chip
                               size="small"
-                              label={`+${Object.keys(workload.labels || {}).length - 3} more`}
+                              label={t('clusters.list.table.labels', {
+                                count: Object.keys(workload.labels || {}).length - 3,
+                              })}
                               sx={{
                                 height: 20,
                                 fontSize: '0.7rem',
@@ -2054,12 +2060,12 @@ const SelectWorkloadDialog: React.FC<SelectWorkloadDialogProps> = ({
           ) : (
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4 }}>
               <Typography variant="body1" sx={{ color: colors.text, fontWeight: 500, mb: 1 }}>
-                No workloads found
+                {t('clusters.list.noResults')}
               </Typography>
               <Typography variant="body2" sx={{ color: colors.textSecondary }}>
                 {searchTerm
-                  ? 'Try a different search term'
-                  : 'No workload objects available to edit'}
+                  ? t('clusters.list.noClustersMatchSearch')
+                  : t('clusters.labels.noClustersToEdit')}
               </Typography>
             </Box>
           )}
@@ -2089,7 +2095,7 @@ const SelectWorkloadDialog: React.FC<SelectWorkloadDialogProps> = ({
               color: colors.white,
             }}
           >
-            Edit {selectedCount} Resources
+            {t('clusters.dialog.editClustersButton', { count: selectedCount })}
           </Button>
         )}
       </DialogActions>

@@ -24,6 +24,7 @@ import Editor from '@monaco-editor/react';
 import yaml from 'js-yaml';
 import useTheme from '../../stores/themeStore';
 import CancelButton from '../common/CancelButton';
+import { useTranslation } from 'react-i18next';
 
 export interface QuickPolicyDialogProps {
   open: boolean;
@@ -42,6 +43,7 @@ const QuickPolicyDialog: React.FC<QuickPolicyDialogProps> = ({
   onSave,
   connection,
 }) => {
+  const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
   const isDarkTheme = theme === 'dark';
 
@@ -206,7 +208,7 @@ const QuickPolicyDialog: React.FC<QuickPolicyDialogProps> = ({
       {connection && (
         <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
           <Typography variant="body2" color="text.secondary">
-            Creating connection:
+            {t('bindingPolicy.creatingConnection')}
           </Typography>
           <Chip size="small" label={connection.workloadName} color="success" />
           <ArrowForwardIcon fontSize="small" color="action" />
@@ -217,7 +219,7 @@ const QuickPolicyDialog: React.FC<QuickPolicyDialogProps> = ({
       <TextField
         autoFocus
         margin="dense"
-        label="Policy Name"
+        label={t('bindingPolicy.policyName')}
         fullWidth
         value={name}
         onChange={e => setName(e.target.value)}
@@ -226,7 +228,7 @@ const QuickPolicyDialog: React.FC<QuickPolicyDialogProps> = ({
 
       <TextField
         margin="dense"
-        label="Namespace"
+        label={t('bindingPolicy.namespace')}
         fullWidth
         value={namespace}
         onChange={e => setNamespace(e.target.value)}
@@ -236,7 +238,7 @@ const QuickPolicyDialog: React.FC<QuickPolicyDialogProps> = ({
       <TextField
         select
         margin="dense"
-        label="Propagation Mode"
+        label={t('bindingPolicy.propagationMode')}
         fullWidth
         value={propagationMode}
         onChange={e =>
@@ -244,15 +246,15 @@ const QuickPolicyDialog: React.FC<QuickPolicyDialogProps> = ({
         }
         sx={{ mb: 2 }}
       >
-        <MenuItem value="DownsyncOnly">Downsync Only</MenuItem>
-        <MenuItem value="UpsyncOnly">Upsync Only</MenuItem>
-        <MenuItem value="BidirectionalSync">Bidirectional Sync</MenuItem>
+        <MenuItem value="DownsyncOnly">{t('bindingPolicy.modes.downsyncOnly')}</MenuItem>
+        <MenuItem value="UpsyncOnly">{t('bindingPolicy.modes.upsyncOnly')}</MenuItem>
+        <MenuItem value="BidirectionalSync">{t('bindingPolicy.modes.bidirectionalSync')}</MenuItem>
       </TextField>
 
       <TextField
         select
         margin="dense"
-        label="Update Strategy"
+        label={t('bindingPolicy.updateStrategy')}
         fullWidth
         value={updateStrategy}
         onChange={e =>
@@ -266,15 +268,17 @@ const QuickPolicyDialog: React.FC<QuickPolicyDialogProps> = ({
         }
         sx={{ mb: 2 }}
       >
-        <MenuItem value="ServerSideApply">Server Side Apply</MenuItem>
-        <MenuItem value="ForceApply">Force Apply</MenuItem>
-        <MenuItem value="RollingUpdate">Rolling Update</MenuItem>
-        <MenuItem value="BlueGreenDeployment">Blue-Green Deployment</MenuItem>
+        <MenuItem value="ServerSideApply">{t('bindingPolicy.strategies.serverSideApply')}</MenuItem>
+        <MenuItem value="ForceApply">{t('bindingPolicy.strategies.forceApply')}</MenuItem>
+        <MenuItem value="RollingUpdate">{t('bindingPolicy.strategies.rollingUpdate')}</MenuItem>
+        <MenuItem value="BlueGreenDeployment">
+          {t('bindingPolicy.strategies.blueGreenDeployment')}
+        </MenuItem>
       </TextField>
 
       <FormControlLabel
         control={<Switch checked={addLabels} onChange={e => setAddLabels(e.target.checked)} />}
-        label="Add custom labels"
+        label={t('clusters.labels.add')}
         sx={{ mb: 1 }}
       />
 
@@ -283,20 +287,20 @@ const QuickPolicyDialog: React.FC<QuickPolicyDialogProps> = ({
           <Box sx={{ display: 'flex', mb: 1 }}>
             <TextField
               size="small"
-              label="Key"
+              label={t('bindingPolicy.labels.key')}
               value={labelKey}
               onChange={e => setLabelKey(e.target.value)}
               sx={{ mr: 1, flexGrow: 1 }}
             />
             <TextField
               size="small"
-              label="Value"
+              label={t('bindingPolicy.labels.value')}
               value={labelValue}
               onChange={e => setLabelValue(e.target.value)}
               sx={{ mr: 1, flexGrow: 1 }}
             />
             <Button onClick={handleAddLabel} disabled={!labelKey || !labelValue}>
-              Add
+              {t('bindingPolicy.labels.add')}
             </Button>
           </Box>
 
@@ -356,7 +360,7 @@ const QuickPolicyDialog: React.FC<QuickPolicyDialogProps> = ({
         },
       }}
     >
-      <DialogTitle>Create Binding Policy</DialogTitle>
+      <DialogTitle>{t('bindingPolicy.createBindingPolicy')}</DialogTitle>
       <DialogContent sx={{ pb: 1, minHeight: '500px' }}>
         <Tabs
           value={activeTab}
@@ -366,13 +370,13 @@ const QuickPolicyDialog: React.FC<QuickPolicyDialogProps> = ({
           <Tab
             icon={<FormatListBulletedIcon fontSize="small" />}
             iconPosition="start"
-            label="Form"
+            label={t('bindingPolicy.form')}
             value="form"
           />
           <Tab
             icon={<CodeIcon fontSize="small" />}
             iconPosition="start"
-            label="Preview YAML"
+            label={t('bindingPolicy.previewYaml')}
             value="preview"
           />
         </Tabs>
@@ -380,14 +384,14 @@ const QuickPolicyDialog: React.FC<QuickPolicyDialogProps> = ({
         {activeTab === 'form' ? renderFormContent() : renderYamlPreview()}
       </DialogContent>
       <DialogActions>
-        <CancelButton onClick={onClose}>Cancel</CancelButton>
+        <CancelButton onClick={onClose}>{t('common.cancel')}</CancelButton>
         <Button
           onClick={handleSave}
           variant="contained"
           color="primary"
           disabled={!name || !namespace}
         >
-          Create Policy
+          {t('bindingPolicy.createPolicy')}
         </Button>
       </DialogActions>
     </Dialog>

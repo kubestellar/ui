@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../lib/api';
 import { BindingPolicyInfo, ManagedCluster, Workload } from '../types/bindingPolicy';
+import { useTranslation } from 'react-i18next';
 
 interface UseKubestellarDataProps {
   // Optional callback to run after data refresh
@@ -48,6 +49,7 @@ export function useKubestellarData({
   onDataLoaded,
   skipFetch = false,
 }: UseKubestellarDataProps = {}) {
+  const { t } = useTranslation();
   const [clusters, setClusters] = useState<ManagedCluster[]>([]);
   const [workloads, setWorkloads] = useState<Workload[]>([]);
   const [policies, setPolicies] = useState<BindingPolicyInfo[]>([]);
@@ -68,7 +70,7 @@ export function useKubestellarData({
     try {
       setLoading(prev => ({ ...prev, clusters: true }));
       const response = await api.get('/api/clusters');
-      console.log('Clusters API Response:', response.data);
+      console.log(t('kubestellarData.logging.clustersApiResponse'), response.data);
 
       let clusterData: ManagedCluster[] = [];
 
@@ -77,13 +79,13 @@ export function useKubestellarData({
         clusterData = response.data.itsData.map((cluster: ClusterApiData) => ({
           name: cluster.name,
           labels: cluster.labels || {},
-          status: cluster.status || 'Ready',
+          status: cluster.status || t('kubestellarData.defaults.ready'),
           context: cluster.context,
           creationTime: cluster.creationTime,
           // Add any additional fields that might be useful
-          location: cluster.location || 'Unknown', // Geographical location if available
-          provider: cluster.provider || 'Unknown', // Cloud provider if available
-          version: cluster.version || 'Unknown', // Kubernetes version if available
+          location: cluster.location || t('kubestellarData.defaults.unknown'), // Geographical location if available
+          provider: cluster.provider || t('kubestellarData.defaults.unknown'), // Cloud provider if available
+          version: cluster.version || t('kubestellarData.defaults.unknown'), // Kubernetes version if available
           capacity: cluster.capacity || {}, // Resource capacity if available
         }));
       }
@@ -98,22 +100,22 @@ export function useKubestellarData({
         clusterData = response.data.clusters.map((clusterName: string) => ({
           name: clusterName,
           labels: {},
-          status: 'Unknown',
+          status: t('kubestellarData.defaults.unknown'),
           creationTime: new Date().toISOString(), // Default to current time
         }));
       }
 
-      console.log('Processed clusters:', clusterData);
+      console.log(t('kubestellarData.logging.processedClusters'), clusterData);
       setClusters(clusterData);
       setError(prev => ({ ...prev, clusters: undefined }));
     } catch (err) {
-      console.error('Error fetching clusters:', err);
-      setError(prev => ({ ...prev, clusters: 'Failed to fetch clusters' }));
+      console.error(t('kubestellarData.logging.errorFetchingClusters'), err);
+      setError(prev => ({ ...prev, clusters: t('kubestellarData.errors.failedFetchClusters') }));
       setClusters([]);
     } finally {
       setLoading(prev => ({ ...prev, clusters: false }));
     }
-  }, [skipFetch]);
+  }, [skipFetch, t]);
 
   // Fetch workloads from Workload Description Space
   const fetchWorkloads = useCallback(async () => {
@@ -125,28 +127,28 @@ export function useKubestellarData({
       // Map the response data to our Workload type
       const workloadData = response.data.map((workload: WorkloadApiData) => ({
         name: workload.name,
-        type: workload.kind || 'Deployment', // Default to Deployment if kind is not specified
-        namespace: workload.namespace || 'default',
+        type: workload.kind || t('kubestellarData.defaults.deployment'), // Default to Deployment if kind is not specified
+        namespace: workload.namespace || t('kubestellarData.defaults.defaultNamespace'),
         creationTime: workload.creationTime,
         labels: workload.labels || {}, // Using empty object as default
         // Additional details that might be useful
-        status: workload.status || 'Active',
+        status: workload.status || t('kubestellarData.defaults.active'),
         replicas: workload.replicas || 1,
         selector: workload.selector || {},
         apiVersion: workload.apiVersion || 'apps/v1',
       }));
 
-      console.log('Processed workloads:', workloadData);
+      console.log(t('kubestellarData.logging.processedWorkloads'), workloadData);
       setWorkloads(workloadData);
       setError(prev => ({ ...prev, workloads: undefined }));
     } catch (err) {
-      console.error('Error fetching workloads:', err);
-      setError(prev => ({ ...prev, workloads: 'Failed to fetch workloads' }));
+      console.error(t('kubestellarData.logging.errorFetchingWorkloads'), err);
+      setError(prev => ({ ...prev, workloads: t('kubestellarData.errors.failedFetchWorkloads') }));
       setWorkloads([]);
     } finally {
       setLoading(prev => ({ ...prev, workloads: false }));
     }
-  }, [skipFetch]);
+  }, [skipFetch, t]);
 
   // Fetch binding policies
   const fetchPolicies = useCallback(async () => {
@@ -167,26 +169,26 @@ export function useKubestellarData({
 
       const policyData = response.data.bindingPolicies.map((policy: BindingPolicyApiData) => ({
         name: policy.name,
-        status: policy.status || 'Active',
+        status: policy.status || t('kubestellarData.defaults.active'),
         workload: policy.workload,
         clusters: policy.clusterList?.length || 0,
         clusterList: policy.clusterList || [],
         workloadList: policy.workloadList || [],
         creationDate: policy.creationTime || new Date().toLocaleString(),
-        bindingMode: policy.bindingMode || 'AlwaysMatch',
-        namespace: policy.namespace || 'default',
+        bindingMode: policy.bindingMode || t('kubestellarData.defaults.alwaysMatch'),
+        namespace: policy.namespace || t('kubestellarData.defaults.defaultNamespace'),
       }));
 
       setPolicies(policyData);
       setError(prev => ({ ...prev, policies: undefined }));
     } catch (err) {
-      console.error('Error fetching policies:', err);
-      setError(prev => ({ ...prev, policies: 'Failed to fetch policies' }));
+      console.error(t('kubestellarData.logging.errorFetchingPolicies'), err);
+      setError(prev => ({ ...prev, policies: t('kubestellarData.errors.failedFetchPolicies') }));
       setPolicies([]);
     } finally {
       setLoading(prev => ({ ...prev, policies: false }));
     }
-  }, [skipFetch]);
+  }, [skipFetch, t]);
 
   // Function to refresh all data
   const refreshAllData = useCallback(() => {
@@ -210,22 +212,36 @@ export function useKubestellarData({
   const assignPolicyToTarget = useCallback(
     async (policyName: string, targetType: 'cluster' | 'workload', targetName: string) => {
       try {
-        console.log(`Assigning policy ${policyName} to ${targetType} ${targetName}`);
+        console.log(
+          t('kubestellarData.logging.assigningPolicy', {
+            policyName,
+            targetType,
+            targetName,
+          })
+        );
         // This would normally call your API
         // For now, just log and return success
         return {
           success: true,
-          message: `Successfully assigned ${policyName} to ${targetType} ${targetName}`,
+          message: t('kubestellarData.success.successfullyAssigned', {
+            policyName,
+            targetType,
+            targetName,
+          }),
         };
       } catch (err) {
-        console.error('Error assigning policy:', err);
+        console.error(t('kubestellarData.errors.errorAssigningPolicy'), err);
         return {
           success: false,
-          message: `Failed to assign ${policyName} to ${targetType} ${targetName}`,
+          message: t('kubestellarData.errors.failedToAssign', {
+            policyName,
+            targetType,
+            targetName,
+          }),
         };
       }
     },
-    []
+    [t]
   );
 
   return {

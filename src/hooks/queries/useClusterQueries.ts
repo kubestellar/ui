@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
+import { useTranslation } from 'react-i18next';
 
 interface ManagedClusterInfo {
   name: string;
@@ -125,6 +126,7 @@ export interface ClusterDetails {
 
 export const useClusterQueries = () => {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   // Fetch clusters with pagination
   const useClusters = (page: number = 1) => {
@@ -138,7 +140,9 @@ export const useClusterQueries = () => {
           uid: cluster.uid,
           creationTime: cluster.creationTimestamp,
           creationTimestamp: cluster.creationTimestamp,
-          status: cluster.available ? 'Available' : 'Unavailable',
+          status: cluster.available
+            ? t('clusterQueries.status.available')
+            : t('clusterQueries.status.unavailable'),
           context: 'its1',
           available: cluster.available,
           joined: cluster.joined,
@@ -187,7 +191,7 @@ export const useClusterQueries = () => {
         const clusterName = clusterData.clusterName;
 
         // Log the request payload for debugging
-        console.log('[DEBUG] Cluster onboard request payload:', {
+        console.log(t('clusterQueries.logging.clusterOnboardRequestPayload'), {
           url: `/clusters/onboard?name=${encodeURIComponent(clusterName)}`,
           method: 'POST',
           data: { clusterName: clusterName },
@@ -204,18 +208,16 @@ export const useClusterQueries = () => {
         );
 
         // Log the response for debugging
-        console.log('[DEBUG] Cluster onboard response:', response.data);
+        console.log(t('clusterQueries.logging.clusterOnboardResponse'), response.data);
 
         return response.data;
       },
       onSuccess: () => {
-        console.log(
-          '[DEBUG] Cluster onboard mutation successful, invalidating clusters query cache'
-        );
+        console.log(t('clusterQueries.logging.onboardSuccessful'));
         queryClient.invalidateQueries({ queryKey: ['clusters'] });
       },
       onError: error => {
-        console.error('[DEBUG] Cluster onboard mutation error:', error);
+        console.error(t('clusterQueries.logging.onboardError'), error);
       },
     });
   };
@@ -247,11 +249,11 @@ export const useClusterQueries = () => {
         deletedLabels?: string[];
         selectedClusters?: string[];
       }) => {
-        console.log('[DEBUG] ========== MUTATION START ==========');
-        console.log('[DEBUG] Context:', contextName);
-        console.log('[DEBUG] Cluster:', clusterName);
-        console.log('[DEBUG] Original Labels:', labels);
-        console.log('[DEBUG] Deleted Labels:', deletedLabels);
+        console.log(t('clusterQueries.logging.mutationStart'));
+        console.log(t('clusterQueries.logging.context'), contextName);
+        console.log(t('clusterQueries.logging.cluster'), clusterName);
+        console.log(t('clusterQueries.logging.originalLabels'), labels);
+        console.log(t('clusterQueries.logging.deletedLabels'), deletedLabels);
 
         // Handle bulk operation for virtual "X selected clusters" entity
         if (
@@ -260,14 +262,14 @@ export const useClusterQueries = () => {
           clusterName.includes('selected clusters')
         ) {
           console.log(
-            '[DEBUG] Processing bulk label update for',
-            selectedClusters.length,
-            'clusters'
+            t('clusterQueries.logging.processingBulkUpdate', { count: selectedClusters.length })
           );
 
           return {
             success: true,
-            message: `Will apply labels to ${selectedClusters.length} clusters`,
+            message: t('clusterQueries.messages.applyLabelsToMultipleClusters', {
+              count: selectedClusters.length,
+            }),
             bulkOperation: true,
             selectedClusters,
           };
@@ -277,13 +279,13 @@ export const useClusterQueries = () => {
         const finalLabels = { ...labels };
 
         if (deletedLabels && deletedLabels.length > 0) {
-          console.log('[DEBUG] Adding deleted labels as empty values:', deletedLabels);
+          console.log(t('clusterQueries.logging.addingDeletedLabels'), deletedLabels);
           deletedLabels.forEach(key => {
             finalLabels[key] = ''; // Empty = delete
           });
         }
 
-        console.log('[DEBUG] Final labels being sent to backend:', finalLabels);
+        console.log(t('clusterQueries.logging.finalLabels'), finalLabels);
 
         const payload = {
           contextName,
@@ -291,7 +293,7 @@ export const useClusterQueries = () => {
           labels: finalLabels,
         };
 
-        console.log('[DEBUG] API payload:', JSON.stringify(payload, null, 2));
+        console.log(t('clusterQueries.logging.apiPayload'), JSON.stringify(payload, null, 2));
 
         try {
           // Single cluster operation
@@ -301,11 +303,11 @@ export const useClusterQueries = () => {
             },
           });
 
-          console.log('[DEBUG] API response:', response.data);
+          console.log(t('clusterQueries.logging.apiResponse'), response.data);
           return response;
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
-          console.error('[DEBUG] API error:', error);
+          console.error(t('clusterQueries.logging.apiError'), error);
 
           // Handle 400 status with PARTIAL_SUCCESS specifically
           if (
@@ -322,11 +324,11 @@ export const useClusterQueries = () => {
         }
       },
       onSuccess: () => {
-        console.log('[DEBUG] Labels updated successfully, invalidating clusters query cache');
+        console.log(t('clusterQueries.logging.labelsUpdated'));
         queryClient.invalidateQueries({ queryKey: ['clusters'] });
       },
       onError: error => {
-        console.error('[DEBUG] Error updating cluster labels:', error);
+        console.error(t('clusterQueries.logging.errorUpdatingLabels'), error);
       },
     });
   };
@@ -335,18 +337,18 @@ export const useClusterQueries = () => {
   const useDetachCluster = () => {
     return useMutation({
       mutationFn: async (clusterName: string) => {
-        console.log('[DEBUG] Detaching cluster:', clusterName);
+        console.log(t('clusterQueries.logging.detachingCluster'), clusterName);
         const response = await api.post('/clusters/detach', {
           clusterName,
         });
         return response.data;
       },
       onSuccess: () => {
-        console.log('[DEBUG] Cluster detach successful, invalidating clusters query cache');
+        console.log(t('clusterQueries.logging.detachSuccessful'));
         queryClient.invalidateQueries({ queryKey: ['clusters'] });
       },
       onError: error => {
-        console.error('[DEBUG] Cluster detach mutation error:', error);
+        console.error(t('clusterQueries.logging.detachError'), error);
       },
     });
   };
@@ -357,11 +359,11 @@ export const useClusterQueries = () => {
       queryKey: ['cluster-details', clusterName],
       queryFn: async (): Promise<ClusterDetails> => {
         if (clusterName && clusterName.includes('selected clusters')) {
-          console.log('[DEBUG] Skipping details fetch for virtual bulk cluster');
+          console.log(t('clusterQueries.logging.skippingDetailsFetch'));
 
           return {
             name: clusterName,
-            uid: 'virtual-bulk-operation',
+            uid: t('clusterQueries.defaults.virtualBulkOperationId'),
             creationTimestamp: new Date().toISOString(),
             labels: {},
             status: {

@@ -8,6 +8,7 @@ import useTheme from '../../stores/themeStore';
 import Editor from '@monaco-editor/react';
 import WorkloadLabelInput from './WorkloadLabelInput';
 import CancelButton from '../common/CancelButton';
+import { useTranslation } from 'react-i18next';
 
 // Define the type for the YAML document
 interface YamlDocument {
@@ -45,6 +46,7 @@ export const UploadFileTab = ({
   handleCancelClick,
 }: Props) => {
   const theme = useTheme(state => state.theme);
+  const { t } = useTranslation();
   const [localWorkloadLabel, setLocalWorkloadLabel] = useState('');
   const [fileContent, setFileContent] = useState<string | null>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -167,7 +169,7 @@ export const UploadFileTab = ({
               }}
             />
           }
-          label="Create Namespace Automatically"
+          label={t('uploadFileTab.createNamespaceAutomatically')}
           sx={{
             mb: 2,
             ml: -1.2,
@@ -217,7 +219,7 @@ export const UploadFileTab = ({
                   borderColor: theme === 'dark' ? '#444' : '#e0e0e0',
                 }}
               >
-                Choose Different YAML File
+                {t('uploadFileTab.chooseDifferentYaml')}
               </Button>
             </Box>
             <Typography
@@ -226,7 +228,7 @@ export const UploadFileTab = ({
               fontWeight={500}
               sx={{ color: theme === 'dark' ? '#fff' : '#333' }}
             >
-              File Preview:
+              {t('uploadFileTab.filePreview')}
             </Typography>
             <StyledPaper
               elevation={0}
@@ -271,10 +273,10 @@ export const UploadFileTab = ({
               📤
             </span>
             <Typography variant="h6" sx={{ color: theme === 'dark' ? '#d4d4d4' : '#333' }}>
-              Choose or Drag & Drop a YAML File
+              {t('uploadFileTab.chooseOrDrag')}
             </Typography>
             <Typography variant="body2" sx={{ color: theme === 'dark' ? '#858585' : 'gray' }}>
-              - or -
+              {t('uploadFileTab.or')}
             </Typography>
             <Button
               variant="contained"
@@ -291,7 +293,7 @@ export const UploadFileTab = ({
                 },
               }}
             >
-              Choose YAML File
+              {t('uploadFileTab.chooseYaml')}
               <input
                 type="file"
                 hidden
@@ -318,7 +320,7 @@ export const UploadFileTab = ({
         }}
       >
         <CancelButton onClick={handleCancelClick} disabled={loading}>
-          Cancel
+          {t('common.cancel')}
         </CancelButton>
         <Button
           variant="contained"
@@ -340,7 +342,7 @@ export const UploadFileTab = ({
             },
           }}
         >
-          Upload & Deploy
+          {t('uploadFileTab.uploadAndDeploy')}
         </Button>
       </Box>
 

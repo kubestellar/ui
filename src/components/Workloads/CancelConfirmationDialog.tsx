@@ -10,6 +10,8 @@ import {
 } from '@mui/material';
 import useTheme from '../../stores/themeStore'; // Import useTheme for dark mode support
 import { getConfirmationDialogPaperProps } from '../../utils/dialogUtils';
+// Add i18n import
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   cancelConfirmationOpen: boolean;
@@ -23,6 +25,8 @@ export const CancelConfirmationDialog = ({
   handleConfirmCancel,
 }: Props) => {
   const theme = useTheme(state => state.theme); // Get the current theme
+  const { t } = useTranslation();
+
   return (
     <Dialog
       open={cancelConfirmationOpen}
@@ -36,7 +40,7 @@ export const CancelConfirmationDialog = ({
             variant="h6"
             sx={{ fontWeight: 500, color: theme === 'dark' ? '#fff' : '#333' }}
           >
-            Cancel Workload Creation
+            {t('cancelConfirmationDialog.title')}
           </Typography>
         </Box>
       </DialogTitle>
@@ -52,13 +56,13 @@ export const CancelConfirmationDialog = ({
                 variant="subtitle1"
                 sx={{ fontWeight: 500, color: theme === 'dark' ? '#fff' : 'rgb(102, 60, 0)' }}
               >
-                Warning
+                {t('cancelConfirmationDialog.warning')}
               </Typography>
               <Typography
                 variant="body1"
                 sx={{ color: theme === 'dark' ? '#fff' : 'rgb(102, 60, 0)', fontSize: '14px' }}
               >
-                Are you sure you want to cancel? Any changes will be lost.
+                {t('cancelConfirmationDialog.message')}
               </Typography>
             </Box>
           </Box>
@@ -78,7 +82,7 @@ export const CancelConfirmationDialog = ({
             },
           }}
         >
-          Continue Editing
+          {t('cancelConfirmationDialog.continueEditing')}
         </Button>
         <Button
           variant="contained"
@@ -95,7 +99,7 @@ export const CancelConfirmationDialog = ({
             },
           }}
         >
-          Yes, Cancel
+          {t('cancelConfirmationDialog.yesCancel')}
         </Button>
       </DialogActions>
     </Dialog>

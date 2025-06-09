@@ -14,6 +14,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { SelectChangeEvent } from '@mui/material/Select';
+import { useTranslation } from 'react-i18next'; // Add translation hook import
 import { toast } from 'react-hot-toast';
 import useTheme from '../stores/themeStore';
 import { api } from '../lib/api';
@@ -33,6 +34,7 @@ const ContextDropdown = ({
   resourceCounts = {},
   totalResourceCount = 0,
 }: ContextDropdownProps) => {
+  const { t } = useTranslation(); // Initialize translation hook
   const [contexts, setContexts] = useState<string[]>([]);
   const [selectedContext, setSelectedContext] = useState<string>('all'); // Default to show all contexts
   const { theme } = useTheme();
@@ -53,8 +55,8 @@ const ContextDropdown = ({
         uniqueContexts.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
         setContexts(uniqueContexts);
       })
-      .catch(error => console.error('Error fetching contexts:', error));
-  }, []);
+      .catch(error => console.error(t('errors.fetchingContexts'), error));
+  }, [t]);
 
   const handleContextChange = (event: SelectChangeEvent<string>) => {
     const newContext = event.target.value as string;
@@ -65,11 +67,11 @@ const ContextDropdown = ({
 
     // Show success toast with appropriate message
     if (newContext === 'all') {
-      toast.success('Showing resources from all contexts', {
+      toast.success(t('contexts.showingAllContexts'), {
         position: 'top-center',
       });
     } else {
-      toast.success(`Filtering to show only ${newContext} context`, {
+      toast.success(t('contexts.filteringByContext', { context: newContext }), {
         position: 'top-center',
       });
     }
@@ -104,19 +106,19 @@ const ContextDropdown = ({
     if (cleanData.includes('Context') && cleanData.includes('set successfully:')) {
       contextCreationWs.disconnect();
       handleCloseCreateDialog();
-      setCreationSuccess('Context created successfully!');
+      setCreationSuccess(t('contexts.createdSuccessfully'));
       window.location.reload();
     }
   };
 
   const handleSocketClose = (event: CloseEvent) => {
-    console.log('WebSocket connection closed:', event.code, event.reason);
+    console.log(t('contexts.websocketClosed'), event.code, event.reason);
     if (messages.join('').includes('Error') || messages.join('').includes('Failed')) {
       setCreationError(messages.join('\n'));
     } else if (messages.length > 0) {
-      setCreationSuccess('Context created successfully!');
+      setCreationSuccess(t('contexts.createdSuccessfully'));
     } else {
-      setCreationError('WebSocket connection closed unexpectedly');
+      setCreationError(t('errors.websocketClosedUnexpectedly'));
     }
   };
 
@@ -130,12 +132,12 @@ const ContextDropdown = ({
 
   const handleCreateContext = async () => {
     if (!contextName) {
-      setCreationError('Context name is required');
+      setCreationError(t('errors.contextNameRequired'));
       return;
     }
 
     if (!contextVersion) {
-      setCreationError('KubeStellar version is required');
+      setCreationError(t('errors.versionRequired'));
       return;
     }
 
@@ -169,11 +171,7 @@ const ContextDropdown = ({
               } else {
                 // Otherwise, this is taking too long or something went wrong
                 contextCreationWs.disconnect();
-                reject(
-                  new Error(
-                    'Operation timed out. The process might still be running in the background.'
-                  )
-                );
+                reject(new Error(t('errors.operationTimeout')));
               }
             }
           }, 15000); // 15 second timeout
@@ -183,29 +181,24 @@ const ContextDropdown = ({
       const result = await connectWebSocket();
 
       if (result.success) {
-        setCreationSuccess(`Context "${contextName}" created successfully!`);
+        setCreationSuccess(t('contexts.contextCreatedSuccess', { contextName }));
         setTimeout(() => {
           handleCloseCreateDialog();
           // Refresh contexts or update UI as needed
           window.location.reload(); // Simple refresh for now
         }, 2000);
       } else {
-        setCreationError('Failed to create context');
+        setCreationError(t('errors.failedToCreateContext'));
       }
     } catch (error) {
-      console.error('Error creating context:', error);
+      console.error(t('errors.creatingContext'), error);
       // Extract more helpful error message if possible
-      const errorMessage =
-        error instanceof Error ? error.message : 'An error occurred while creating the context';
+      const errorMessage = error instanceof Error ? error.message : t('errors.unknownError');
 
       if (errorMessage.includes('timed out')) {
-        setCreationError(
-          'Connection timed out. The context might still be created successfully in the background.'
-        );
+        setCreationError(t('errors.connectionTimeout'));
       } else if (errorMessage.includes('WebSocket connection failed')) {
-        setCreationError(
-          'Could not connect to the server. Please check your network connection and try again.'
-        );
+        setCreationError(t('errors.websocketConnectionFailed'));
       } else {
         setCreationError(errorMessage);
       }
@@ -218,7 +211,7 @@ const ContextDropdown = ({
     <>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Typography variant="body2" sx={{ color: theme === 'dark' ? '#FFFFFF' : '#121212' }}>
-          Filter by context:
+          {t('contexts.filterByContext')}:
         </Typography>
 
         <Box sx={{ position: 'relative', minWidth: 200 }}>
@@ -259,7 +252,9 @@ const ContextDropdown = ({
                   }}
                 />
                 {selected === 'all' ? (
-                  <Typography sx={{ fontWeight: 400, fontSize: '0.9rem' }}>All Contexts</Typography>
+                  <Typography sx={{ fontWeight: 400, fontSize: '0.9rem' }}>
+                    {t('contexts.allContexts')}
+                  </Typography>
                 ) : (
                   <Chip
                     label={selected}
@@ -307,7 +302,7 @@ const ContextDropdown = ({
                 alignItems: 'center',
               }}
             >
-              <span>All Contexts</span>
+              <span>{t('contexts.allContexts')}</span>
               <Chip
                 label={totalResourceCount.toString()}
                 size="small"
@@ -375,7 +370,7 @@ const ContextDropdown = ({
                 }}
               >
                 <AddIcon fontSize="small" />
-                <span>Create Context</span>
+                <span>{t('contexts.createContext')}</span>
               </MenuItem>
             </Box>
           </Select>
@@ -397,17 +392,17 @@ const ContextDropdown = ({
         }}
       >
         <DialogTitle sx={{ borderBottom: `1px solid ${theme === 'dark' ? '#333' : '#e0e0e0'}` }}>
-          Create New Context
+          {t('contexts.createNewContext')}
         </DialogTitle>
         <DialogContent sx={{ mt: 1, pb: 1 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, mb: 2, mt: 2 }}>
             <TextField
-              label="Context Name"
+              label={t('contexts.contextName')}
               fullWidth
               value={contextName}
               onChange={e => setContextName(e.target.value)}
               error={!!creationError && !contextName}
-              helperText={!contextName && creationError ? 'Context name is required' : ''}
+              helperText={!contextName && creationError ? t('errors.contextNameRequired') : ''}
               size="small"
               sx={{
                 '& .MuiOutlinedInput-root': {
@@ -433,12 +428,12 @@ const ContextDropdown = ({
               }}
             />
             <TextField
-              label="KubeStellar Version"
+              label={t('contexts.kubestellarVersion')}
               fullWidth
               value={contextVersion}
               onChange={e => setContextVersion(e.target.value)}
               error={!!creationError && !contextVersion}
-              helperText={!contextVersion && creationError ? 'Version is required' : ''}
+              helperText={!contextVersion && creationError ? t('errors.versionRequired') : ''}
               size="small"
               sx={{
                 '& .MuiOutlinedInput-root': {
@@ -496,7 +491,7 @@ const ContextDropdown = ({
           )}
         </DialogContent>
         <DialogActions sx={{ p: 2, pt: 1, display: 'flex', justifyContent: 'space-between' }}>
-          <CancelButton onClick={handleCloseCreateDialog}>Cancel</CancelButton>
+          <CancelButton onClick={handleCloseCreateDialog}>{t('common.cancel')}</CancelButton>
           <Button
             onClick={handleCreateContext}
             disabled={isCreating}
@@ -510,7 +505,7 @@ const ContextDropdown = ({
               },
             }}
           >
-            {isCreating ? 'Creating...' : 'Create Context'}
+            {isCreating ? t('contexts.creating') : t('contexts.createContext')}
           </Button>
         </DialogActions>
       </Dialog>

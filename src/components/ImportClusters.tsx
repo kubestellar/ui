@@ -21,6 +21,7 @@ import useTheme from '../stores/themeStore';
 import ApiUrlImportTab from './ApiUrlImportTab';
 import KubeconfigImportTab from './KubeconfigImportTab';
 import QuickConnectTab from './QuickConnectTab';
+import { useTranslation } from 'react-i18next';
 
 // Define the Colors interface for consistent typing across components
 export interface Colors {
@@ -93,6 +94,7 @@ const AbortOnboardingDialog: React.FC<AbortOnboardingDialogProps> = ({
   onClose,
   onConfirm,
 }) => {
+  const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
   const backgroundColor = theme === 'dark' ? '#0F172A' : '#FFFFFF';
   const titleColor = theme === 'dark' ? '#FFFFFF' : '#000000';
@@ -129,7 +131,7 @@ const AbortOnboardingDialog: React.FC<AbortOnboardingDialogProps> = ({
         }}
       >
         <WarningIcon color="warning" sx={{ mr: 1 }} />
-        Abort Onboarding Process
+        {t('importClusters.abortDialog.title')}
       </DialogTitle>
       <DialogContent
         sx={{
@@ -151,8 +153,8 @@ const AbortOnboardingDialog: React.FC<AbortOnboardingDialogProps> = ({
             color: titleColor,
           }}
         >
-          <AlertTitle>Warning</AlertTitle>
-          Are you sure you want to abort onboarding? All progress will be lost.
+          <AlertTitle>{t('common.warning')}</AlertTitle>
+          {t('importClusters.abortDialog.warning')}
         </Alert>
       </DialogContent>
       <DialogActions
@@ -171,7 +173,7 @@ const AbortOnboardingDialog: React.FC<AbortOnboardingDialogProps> = ({
             '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' },
           }}
         >
-          Continue Onboarding
+          {t('importClusters.abortDialog.continue')}
         </Button>
         <Button
           onClick={onConfirm}
@@ -183,7 +185,7 @@ const AbortOnboardingDialog: React.FC<AbortOnboardingDialogProps> = ({
             '&:hover': { backgroundColor: '#d32f2f' },
           }}
         >
-          Yes, Abort
+          {t('importClusters.abortDialog.confirm')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -191,6 +193,7 @@ const AbortOnboardingDialog: React.FC<AbortOnboardingDialogProps> = ({
 };
 
 const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCancel }) => {
+  const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
   const textColor = theme === 'dark' ? 'white' : 'black';
   const bgColor = theme === 'dark' ? '#1F2937' : 'background.paper';
@@ -473,7 +476,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
     if (selectedFile) {
       setSnackbar({
         open: true,
-        message: `File "${selectedFile.name}" selected. Upload functionality to be implemented.`,
+        message: t('importClusters.fileUpload.selected', { filename: selectedFile.name }),
         severity: 'info',
       });
     }
@@ -686,7 +689,11 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                   boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                 }}
               >
-                <span role="img" aria-label="import" style={{ fontSize: '1.25rem' }}>
+                <span
+                  role="img"
+                  aria-label={t('importClusters.icon.ariaLabel')}
+                  style={{ fontSize: '1.25rem' }}
+                >
                   ⚓
                 </span>
               </Box>
@@ -694,7 +701,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                 <Box
                   sx={{ fontSize: { xs: '1rem', sm: '1.1rem' }, fontWeight: 700, color: textColor }}
                 >
-                  Import Cluster
+                  {t('importClusters.title')}
                 </Box>
                 <Box
                   sx={{
@@ -704,7 +711,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                     display: { xs: 'none', sm: 'block' },
                   }}
                 >
-                  Connect your Kubernetes cluster to the platform
+                  {t('importClusters.description')}
                 </Box>
               </Box>
             </Box>
@@ -842,11 +849,15 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                       transition: 'all 0.25s ease',
                     }}
                   >
-                    <span role="img" aria-label="quickconnect" style={{ fontSize: '0.9rem' }}>
+                    <span
+                      role="img"
+                      aria-label={t('importClusters.icons.quickConnect')}
+                      style={{ fontSize: '0.9rem' }}
+                    >
                       ⚡
                     </span>
                   </Box>
-                  Quick Connect
+                  {t('importClusters.tabs.quickConnect')}
                 </Box>
               }
               value="quickconnect"
@@ -868,11 +879,15 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                       transition: 'all 0.25s ease',
                     }}
                   >
-                    <span role="img" aria-label="kubeconfig" style={{ fontSize: '0.9rem' }}>
+                    <span
+                      role="img"
+                      aria-label={t('importClusters.icons.kubeconfig')}
+                      style={{ fontSize: '0.9rem' }}
+                    >
                       📁
                     </span>
                   </Box>
-                  Kubeconfig
+                  {t('importClusters.tabs.kubeconfig')}
                 </Box>
               }
               value="kubeconfig"
@@ -894,11 +909,15 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                       transition: 'all 0.25s ease',
                     }}
                   >
-                    <span role="img" aria-label="api" style={{ fontSize: '0.9rem' }}>
+                    <span
+                      role="img"
+                      aria-label={t('importClusters.icons.apiUrl')}
+                      style={{ fontSize: '0.9rem' }}
+                    >
                       🔗
                     </span>
                   </Box>
-                  API/URL
+                  {t('importClusters.tabs.apiUrl')}
                 </Box>
               }
               value="apiurl"

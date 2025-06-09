@@ -44,12 +44,14 @@ import {
 import { api } from '../lib/api';
 import BPSkeleton from '../components/ui/BPSkeleton';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 // Define EmptyState component outside of the BP component
 const EmptyState: React.FC<{
   onCreateClick: () => void;
   type?: 'policies' | 'clusters' | 'workloads' | 'both';
 }> = ({ onCreateClick, type = 'policies' }) => {
+  const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
   let title = '';
   let description = '';
@@ -57,26 +59,25 @@ const EmptyState: React.FC<{
 
   switch (type) {
     case 'clusters':
-      title = 'No Ready Clusters';
-      description =
-        'No clusters are currently available for binding. You need to have at least one cluster in "Ready" state before creating binding policies.';
-      buttonText = 'Manage Clusters';
+      title = t('bindingPolicy.emptyState.noClusters.title');
+      description = t('bindingPolicy.emptyState.noClusters.description');
+      buttonText = t('bindingPolicy.emptyState.noClusters.button');
       break;
     case 'workloads':
-      title = 'No Workloads Found';
-      description = 'No workloads are available. Please ensure you have access to workloads.';
-      buttonText = 'Go to Workloads';
+      title = t('bindingPolicy.emptyState.noWorkloads.title');
+      description = t('bindingPolicy.emptyState.noWorkloads.description');
+      buttonText = t('bindingPolicy.emptyState.noWorkloads.button');
       break;
     case 'both':
-      title = 'No Clusters or Workloads Found';
-      description = 'You need both clusters and workloads to create binding policies.';
-      buttonText = 'View Resources';
+      title = t('bindingPolicy.emptyState.noResources.title');
+      description = t('bindingPolicy.emptyState.noResources.description');
+      buttonText = t('bindingPolicy.emptyState.noResources.button');
       break;
     case 'policies':
     default:
-      title = 'No Binding Policies Found';
-      description = 'Get started by creating your first binding policy';
-      buttonText = 'Create Binding Policy';
+      title = t('bindingPolicy.emptyState.noPolicies.title');
+      description = t('bindingPolicy.emptyState.noPolicies.description');
+      buttonText = t('bindingPolicy.emptyState.noPolicies.button');
   }
 
   return (
@@ -117,6 +118,7 @@ const EmptyState: React.FC<{
 
 const BP = () => {
   console.log('BP component rendering');
+  const { t } = useTranslation();
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -631,13 +633,13 @@ const BP = () => {
         );
         setEditDialogOpen(false);
         setSelectedPolicy(null);
-        setSuccessMessage(`Binding Policy "${updatedPolicy.name}" updated successfully`);
+        setSuccessMessage(t('bindingPolicy.messages.updateSuccess', { name: updatedPolicy.name }));
       } catch (error) {
         console.error('Error updating binding policy:', error);
-        toast.error(`Error updating binding policy "${updatedPolicy.name}"`);
+        toast.error(t('bindingPolicy.messages.updateError', { name: updatedPolicy.name }));
       }
     },
-    [setBindingPolicies, setEditDialogOpen, setSelectedPolicy, setSuccessMessage]
+    [setBindingPolicies, setEditDialogOpen, setSelectedPolicy, setSuccessMessage, t]
   );
 
   // Create a memoized function for the policy assignment simulation used in the JSX
@@ -645,10 +647,16 @@ const BP = () => {
     (policyName: string, targetType: string, targetName: string) => {
       // Simulate policy assignment with a hardcoded response
       setTimeout(() => {
-        setSuccessMessage(`Successfully assigned ${policyName} to ${targetType} ${targetName}`);
+        setSuccessMessage(
+          t('bindingPolicy.messages.simulatedAssignment', {
+            policy: policyName,
+            targetType: targetType,
+            target: targetName,
+          })
+        );
       }, 500);
     },
-    [setSuccessMessage]
+    [setSuccessMessage, t]
   );
 
   // Create a memoized function for the dialog close handlers
@@ -672,7 +680,7 @@ const BP = () => {
     try {
       // Verify we have policies selected
       if (selectedPolicies.length === 0) {
-        toast.error('No policies selected for deletion');
+        toast.error(t('bindingPolicy.messages.noSelectedPolicies'));
         return;
       }
 
@@ -687,7 +695,7 @@ const BP = () => {
           'Some selected policy names are invalid:',
           selectedPolicies.filter(name => !validPolicyNames.includes(name))
         );
-        toast.error('Error: Some selected policy names are invalid');
+        toast.error(t('bindingPolicy.messages.invalidPolicyNames'));
         return;
       }
 
@@ -721,7 +729,10 @@ const BP = () => {
         );
       } else {
         toast.error(
-          `Deleted ${results.success.length} policies, but failed to delete ${results.failures.length} policies`
+          t('bindingPolicy.messages.partialDeleteSuccess', {
+            success: results.success.length,
+            failures: results.failures.length,
+          })
         );
       }
 
@@ -733,10 +744,18 @@ const BP = () => {
     } catch (error) {
       console.error('Error deleting binding policies:', error);
       toast.error(
-        `Error deleting binding policies: ${error instanceof Error ? error.message : 'Unknown error'}`
+        t('bindingPolicy.messages.deleteError', {
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        })
       );
     }
-  }, [selectedPolicies, setSelectedPolicies, setBindingPolicies, deleteMultiplePoliciesMutation]);
+  }, [
+    selectedPolicies,
+    setSelectedPolicies,
+    setBindingPolicies,
+    deleteMultiplePoliciesMutation,
+    t,
+  ]);
 
   return (
     <>
@@ -931,11 +950,7 @@ const BP = () => {
                 },
               }}
             >
-              <Typography variant="body2">
-                This interface is using simulated responses to create binding policies. Select
-                clusters and workloads from the lists to add them to the canvas, then click on a
-                workload and then a cluster to create a binding policy connection.
-              </Typography>
+              <Typography variant="body2">{t('bindingPolicy.dragDrop.infoAlert')}</Typography>
             </Alert>
           </Box>
         )}
@@ -990,7 +1005,7 @@ const BP = () => {
               sx={{ mr: 1, color: theme === 'dark' ? '#90CAF9' : undefined }}
             />
             <Typography variant="h6" sx={{ color: theme === 'dark' ? '#E5E7EB' : undefined }}>
-              Create Binding Policies with Direct Connections
+              {t('bindingPolicy.dragDrop.helpDialog.title')}
             </Typography>
           </Box>
         </DialogTitle>
@@ -1001,7 +1016,7 @@ const BP = () => {
           }}
         >
           <Typography paragraph sx={{ color: theme === 'dark' ? '#E5E7EB' : undefined }}>
-            Follow these steps to create binding policies:
+            {t('bindingPolicy.dragDrop.helpDialog.intro')}
           </Typography>
           <List
             sx={{
@@ -1017,13 +1032,15 @@ const BP = () => {
               <ListItemIcon>
                 <KubernetesIcon type="cluster" size={24} />
               </ListItemIcon>
-              <ListItemText primary="1. Select clusters from the left panel to include in the canvas" />
+              <ListItemText primary={t('bindingPolicy.dragDrop.helpDialog.steps.selectClusters')} />
             </ListItem>
             <ListItem>
               <ListItemIcon>
                 <KubernetesIcon type="workload" size={24} />
               </ListItemIcon>
-              <ListItemText primary="2. Select workloads from the right panel to include in the canvas" />
+              <ListItemText
+                primary={t('bindingPolicy.dragDrop.helpDialog.steps.selectWorkloads')}
+              />
             </ListItem>
             <ListItem>
               <ListItemIcon>
@@ -1033,19 +1050,21 @@ const BP = () => {
                   <KubernetesIcon type="cluster" size={20} />
                 </Box>
               </ListItemIcon>
-              <ListItemText primary="3. Click on a workload first, then a cluster to create a direct connection" />
+              <ListItemText
+                primary={t('bindingPolicy.dragDrop.helpDialog.steps.createConnection')}
+              />
             </ListItem>
             <ListItem>
               <ListItemIcon>
                 <EditIcon />
               </ListItemIcon>
-              <ListItemText primary="4. Fill in the policy details in the dialog that appears" />
+              <ListItemText primary={t('bindingPolicy.dragDrop.helpDialog.steps.fillDetails')} />
             </ListItem>
             <ListItem>
               <ListItemIcon>
                 <PublishIcon color="primary" />
               </ListItemIcon>
-              <ListItemText primary="5. Use the 'Deploy Binding Policies' button to simulate deployment" />
+              <ListItemText primary={t('bindingPolicy.dragDrop.helpDialog.steps.deploy')} />
             </ListItem>
           </List>
         </DialogContent>
@@ -1057,7 +1076,7 @@ const BP = () => {
           }}
         >
           <Button onClick={() => setShowDragDropHelp(false)} variant="contained" color="primary">
-            Got it
+            {t('bindingPolicy.dragDrop.helpDialog.gotIt')}
           </Button>
         </DialogActions>
       </Dialog>

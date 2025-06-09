@@ -10,6 +10,7 @@ import ProfileSection from './ProfileSection';
 import { motion, AnimatePresence } from 'framer-motion';
 import getThemeStyles from '../lib/theme-utils';
 import CommandPalette from './CommandPalette';
+import { useTranslation } from 'react-i18next';
 
 interface HeaderProps {
   isLoading: boolean;
@@ -23,6 +24,7 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
   const [lastScrollTop, setLastScrollTop] = useState(0);
 
   const { data: authData } = useAuth();
+  const { t } = useTranslation();
 
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === 'dark';
@@ -116,7 +118,7 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
             onClick={toggleMobileMenu}
             className="btn btn-circle transition-all duration-300 hover:scale-105 active:scale-95"
             style={getButtonStyle()}
-            aria-label={isMobileMenuOpen ? 'Close main menu' : 'Open main menu'}
+            aria-label={t('header.menu')}
             animate={isMobileMenuOpen ? 'open' : 'closed'}
             variants={menuButtonVariants}
             transition={{ duration: 0.3, type: 'spring', stiffness: 300, damping: 20 }}
@@ -153,12 +155,12 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
         <Link
           to={'/'}
           className="group flex items-center gap-2 xl:gap-3"
-          aria-label="Go to home page"
+          aria-label={t('header.goToHome')}
         >
           <div className="overflow-hidden rounded-lg">
             <motion.img
               src="/KubeStellar.png"
-              alt="KubeStellar"
+              alt={t('header.logoAlt')}
               className="h-auto w-44 object-contain xl:w-48"
               whileHover={{ scale: 1.02 }}
               transition={{ duration: 0.3 }}
@@ -170,12 +172,12 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
       <div className="3xl:gap-5 flex items-center gap-2 xl:gap-4">
         {authData?.isAuthenticated ? (
           <>
-            <div className="group/controls flex-none" data-tip="Alt+Q to toggle theme">
+            <div className="group/controls flex-none" data-tip={t('header.themeToggleTip')}>
               <motion.button
                 onClick={toggleTheme}
                 className="btn btn-circle transition-all duration-300 hover:scale-105 active:scale-95"
                 style={getButtonStyle()}
-                aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+                aria-label={t('header.themeToggle')}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               >
@@ -223,7 +225,7 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
               onClick={toggleTheme}
               className="btn btn-circle transition-all duration-300 hover:scale-105 active:scale-95"
               style={getButtonStyle()}
-              aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+              aria-label={t('header.switchTheme', { mode: isDark ? 'light' : 'dark' })}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
             >

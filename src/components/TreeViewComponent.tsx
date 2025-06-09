@@ -59,6 +59,7 @@ import { useQuery } from '@tanstack/react-query';
 import { isEqual } from 'lodash';
 import { useWebSocket } from '../context/webSocketExports';
 import useTheme from '../stores/themeStore';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import CancelButton from './common/CancelButton';
@@ -546,6 +547,7 @@ interface ContextMenuState {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const TreeViewComponent = (_props: TreeViewComponentProps) => {
+  const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
   const highlightedLabels = useLabelHighlightStore(state => state.highlightedLabels);
   const [nodes, setNodes] = useState<CustomNode[]>([]);
@@ -635,14 +637,19 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
     }
   }, [location.search]);
 
-  const getTimeAgo = useCallback((timestamp: string | undefined): string => {
-    if (!timestamp) return 'Unknown';
-    const now = new Date();
-    const then = new Date(timestamp);
-    const diffMs = now.getTime() - then.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    return diffDays === 0 ? 'Today' : `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
-  }, []);
+  const getTimeAgo = useCallback(
+    (timestamp: string | undefined): string => {
+      if (!timestamp) return t('treeView.unknown');
+      const now = new Date();
+      const then = new Date(timestamp);
+      const diffMs = now.getTime() - then.getTime();
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      return diffDays === 0
+        ? t('treeView.timeAgo.today')
+        : t('treeView.timeAgo.days', { count: diffDays });
+    },
+    [t]
+  );
 
   const handleMenuOpen = useCallback((event: React.MouseEvent, nodeId: string) => {
     event.preventDefault();
@@ -2307,7 +2314,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
             variant="h4"
             sx={{ color: '#4498FF', fontWeight: 700, fontSize: '30px', letterSpacing: '0.5px' }}
           >
-            Manage Workloads
+            {t('treeView.title')}
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <ContextDropdown
@@ -2336,7 +2343,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
               <span>
                 <i
                   className="fa fa-th menu_icon"
-                  title="Tiles"
+                  title={t('treeView.viewModes.tiles')}
                   style={{
                     color:
                       theme === 'dark' ? (viewMode === 'tiles' ? '#90CAF9' : '#FFFFFF') : undefined,
@@ -2365,7 +2372,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
               <span>
                 <i
                   className="fa fa-th-list selected menu_icon"
-                  title="List"
+                  title={t('treeView.viewModes.list')}
                   style={{
                     color:
                       theme === 'dark' ? (viewMode === 'list' ? '#90CAF9' : '#FFFFFF') : undefined,
@@ -2386,7 +2393,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                 textTransform: 'none',
               }}
             >
-              Create Workload
+              {t('treeView.createWorkload')}
             </Button>
           </Box>
         </Box>
@@ -2414,8 +2421,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
             variant="body2"
             sx={{ color: theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)' }}
           >
-            Note: Default, Kubernetes system, and OpenShift namespaces are filtered out from this
-            view.
+            {t('treeView.note')}
           </Typography>
         </Box>
 
@@ -2433,7 +2439,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
             }}
           >
             <Typography variant="body2" sx={{ color: theme === 'dark' ? '#90CAF9' : '#1976d2' }}>
-              Filtering: Showing only resources from the <strong>{filteredContext}</strong> context.
+              {t('treeView.filteringContext', { context: <strong>{filteredContext}</strong> })}
             </Typography>
           </Box>
         )}
@@ -2465,7 +2471,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                   containerRef={containerRef}
                   position="top-right"
                   tooltipPosition="left"
-                  tooltipText="Toggle fullscreen view"
+                  tooltipText={t('treeView.fullscreen.toggle')}
                 />
               </ReactFlowProvider>
             </Box>
@@ -2510,7 +2516,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                         fontSize: '22px',
                       }}
                     >
-                      No Workloads Found
+                      {t('treeView.emptyState.title')}
                     </Typography>
                     <Typography
                       variant="body2"
@@ -2520,7 +2526,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                         mb: 2,
                       }}
                     >
-                      Get started by creating your first workload
+                      {t('treeView.emptyState.description')}
                     </Typography>
                     <Button
                       variant="contained"
@@ -2532,7 +2538,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                         '&:hover': { backgroundColor: '#1f76e5' },
                       }}
                     >
-                      Create Workload
+                      {t('treeView.createWorkload')}
                     </Button>
                   </Box>
                 </Box>
@@ -2540,7 +2546,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                   containerRef={containerRef}
                   position="top-right"
                   tooltipPosition="left"
-                  tooltipText="Toggle fullscreen view"
+                  tooltipText={t('treeView.fullscreen.toggle')}
                 />
               </ReactFlowProvider>
             </Box>
@@ -2573,7 +2579,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                   },
                 }}
               >
-                Details
+                {t('treeView.contextMenu.details')}
               </MenuItem>
               {contextMenu.nodeType !== 'context' && (
                 <React.Fragment>
@@ -2587,7 +2593,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                       },
                     }}
                   >
-                    Delete
+                    {t('treeView.contextMenu.delete')}
                   </MenuItem>
                   <MenuItem
                     onClick={() => handleMenuAction('Edit')}
@@ -2599,7 +2605,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                       },
                     }}
                   >
-                    Edit
+                    {t('treeView.contextMenu.edit')}
                   </MenuItem>
                   <MenuItem
                     onClick={() => handleMenuAction('Logs')}
@@ -2611,7 +2617,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                       },
                     }}
                   >
-                    Logs
+                    {t('treeView.contextMenu.logs')}
                   </MenuItem>
                 </React.Fragment>
               )}
@@ -2658,16 +2664,15 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
             }}
           >
             <WarningAmberIcon sx={{ color: '#FFA500', fontSize: '34px' }} />
-            Confirm Resource Deletion
+            {t('treeView.deleteDialog.title')}
           </DialogTitle>
           <DialogContent>
             <Typography sx={{ fontSize: '16px', color: theme === 'dark' ? '#fff' : '333', mt: 2 }}>
-              Are you sure you want to delete "{deleteNodeDetails?.nodeName}"? This action cannot be
-              undone.
+              {t('treeView.deleteDialog.message', { name: deleteNodeDetails?.nodeName })}
             </Typography>
           </DialogContent>
           <DialogActions sx={{ justifyContent: 'space-between', padding: '0 16px 16px 16px' }}>
-            <CancelButton onClick={handleDeleteCancel}>Cancel</CancelButton>
+            <CancelButton onClick={handleDeleteCancel}>{t('common.cancel')}</CancelButton>
             <Button
               onClick={handleDeleteConfirm}
               sx={{
@@ -2682,7 +2687,7 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                 },
               }}
             >
-              Yes, Delete
+              {t('treeView.deleteDialog.confirm')}
             </Button>
           </DialogActions>
         </Dialog>

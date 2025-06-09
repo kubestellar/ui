@@ -42,6 +42,7 @@ import WecsTreeviewSkeleton from './ui/WecsTreeviewSkeleton';
 import ListViewSkeleton from './ui/ListViewSkeleton';
 import ReactDOM from 'react-dom';
 import { isEqual } from 'lodash';
+import { useTranslation } from 'react-i18next';
 import { useWebSocket } from '../context/webSocketExports';
 import useTheme from '../stores/themeStore';
 import WecsDetailsPanel from './WecsDetailsPanel';
@@ -525,6 +526,7 @@ const getLayoutedElements = (
 };
 
 const WecsTreeview = () => {
+  const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
   const [nodes, setNodes] = useState<CustomNode[]>([]);
   const [edges, setEdges] = useState<CustomEdge[]>([]);
@@ -621,14 +623,19 @@ const WecsTreeview = () => {
     stateRef.current = { isCollapsed, isExpanded };
   }, [isCollapsed, isExpanded]);
 
-  const getTimeAgo = useCallback((timestamp: string | undefined): string => {
-    if (!timestamp) return 'Unknown';
-    const now = new Date();
-    const then = new Date(timestamp);
-    const diffMs = now.getTime() - then.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    return diffDays === 0 ? 'Today' : `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
-  }, []);
+  const getTimeAgo = useCallback(
+    (timestamp: string | undefined): string => {
+      if (!timestamp) return 'Unknown';
+      const now = new Date();
+      const then = new Date(timestamp);
+      const diffMs = now.getTime() - then.getTime();
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      return diffDays === 0
+        ? t('wecsTopology.timeAgo.today')
+        : t('wecsTopology.timeAgo.days', { count: diffDays });
+    },
+    [t]
+  );
 
   const handleMenuOpen = useCallback((event: React.MouseEvent, nodeId: string) => {
     event.preventDefault();
@@ -822,7 +829,7 @@ const WecsTreeview = () => {
         }
       }
     },
-    [getTimeAgo, handleClosePanel, handleMenuOpen, theme]
+    [getTimeAgo, handleClosePanel, handleMenuOpen, theme, t]
   );
 
   const transformDataToTree = useCallback(
@@ -1453,7 +1460,7 @@ const WecsTreeview = () => {
             variant="h4"
             sx={{ color: '#4498FF', fontWeight: 700, fontSize: '30px', letterSpacing: '0.5px' }}
           >
-            Remote-Cluster Treeview
+            {t('wecsTopology.title')}
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <IconButton
@@ -1476,7 +1483,7 @@ const WecsTreeview = () => {
               <span>
                 <i
                   className="fa fa-th menu_icon"
-                  title="Tiles"
+                  title={t('wecsTopology.viewModes.tiles')}
                   style={{
                     color:
                       theme === 'dark' ? (viewMode === 'tiles' ? '#90CAF9' : '#FFFFFF') : undefined,
@@ -1505,7 +1512,7 @@ const WecsTreeview = () => {
               <span>
                 <i
                   className="fa fa-th-list menu_icon"
-                  title="List"
+                  title={t('wecsTopology.viewModes.list')}
                   style={{
                     color:
                       theme === 'dark' ? (viewMode === 'list' ? '#90CAF9' : '#FFFFFF') : undefined,
@@ -1526,7 +1533,7 @@ const WecsTreeview = () => {
                 textTransform: 'none',
               }}
             >
-              Create Workload
+              {t('wecsTopology.createWorkload')}
             </Button>
           </Box>
         </Box>
@@ -1554,8 +1561,7 @@ const WecsTreeview = () => {
             variant="body2"
             sx={{ color: theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)' }}
           >
-            Note: Default, Kubernetes system, and OpenShift namespaces are filtered out from this
-            view.
+            {t('wecsTopology.note')}
           </Typography>
         </Box>
 
@@ -1588,7 +1594,7 @@ const WecsTreeview = () => {
                   containerRef={containerRef}
                   position="top-right"
                   tooltipPosition="left"
-                  tooltipText="Toggle fullscreen view"
+                  tooltipText={t('wecsTopology.fullscreen.toggle')}
                 />
               </ReactFlowProvider>
             </Box>
@@ -1614,10 +1620,10 @@ const WecsTreeview = () => {
                     fontSize: '22px',
                   }}
                 >
-                  No Workloads Found
+                  {t('wecsTopology.emptyState.title')}
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#00000099', fontSize: '17px', mb: 2 }}>
-                  Get started by creating your first workload
+                  {t('wecsTopology.emptyState.description')}
                 </Typography>
                 <Button
                   variant="contained"
@@ -1629,7 +1635,7 @@ const WecsTreeview = () => {
                     '&:hover': { backgroundColor: '#1f76e5' },
                   }}
                 >
-                  Create Workload
+                  {t('wecsTopology.createWorkload')}
                 </Button>
               </Box>
             </Box>
@@ -1661,7 +1667,7 @@ const WecsTreeview = () => {
                   },
                 }}
               >
-                Details
+                {t('wecsTopology.contextMenu.details')}
               </MenuItem>
 
               <MenuItem
@@ -1674,7 +1680,7 @@ const WecsTreeview = () => {
                   },
                 }}
               >
-                Edit
+                {t('wecsTopology.contextMenu.edit')}
               </MenuItem>
               {contextMenu.nodeType === 'pod' &&
                 contextMenu.nodeId &&
@@ -1690,7 +1696,7 @@ const WecsTreeview = () => {
                       },
                     }}
                   >
-                    Logs
+                    {t('wecsTopology.contextMenu.logs')}
                   </MenuItem>
                 )}
               {contextMenu.nodeType === 'pod' &&
@@ -1707,7 +1713,7 @@ const WecsTreeview = () => {
                       },
                     }}
                   >
-                    Exec Pods
+                    {t('wecsTopology.contextMenu.execPods')}
                   </MenuItem>
                 )}
             </Menu>

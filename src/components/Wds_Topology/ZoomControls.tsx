@@ -2,6 +2,7 @@ import { memo, useState, useEffect, useCallback } from 'react';
 import { Box, Button, Typography } from '@mui/material';
 import { ZoomIn, ZoomOut } from '@mui/icons-material';
 import { useReactFlow } from 'reactflow';
+import { useTranslation } from 'react-i18next'; // Add this import
 
 interface ZoomControlsProps {
   theme: string;
@@ -13,6 +14,7 @@ interface ZoomControlsProps {
 
 export const ZoomControls = memo<ZoomControlsProps>(
   ({ theme, onToggleCollapse, isCollapsed, onExpandAll, onCollapseAll }) => {
+    const { t } = useTranslation(); // Add translation hook
     const { getZoom, setViewport, getViewport } = useReactFlow();
     const [zoomLevel, setZoomLevel] = useState<number>(120);
 
@@ -111,7 +113,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
         <Button
           variant="text"
           onClick={onToggleCollapse}
-          title="Group By Resource/Kind"
+          title={t('wdsTopology.zoomControls.groupByResource')}
           sx={{
             color: theme === 'dark' ? '#fff' : '#6d7f8b',
             backgroundColor: isCollapsed ? (theme === 'dark' ? '#555' : '#e3f2fd') : 'transparent',
@@ -127,7 +129,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
         <Button
           variant="text"
           onClick={onExpandAll}
-          title="Expand all the child nodes of all parent nodes"
+          title={t('wdsTopology.zoomControls.expandAll')}
           sx={{
             color: theme === 'dark' ? '#fff' : '#6d7f8b',
             '&:hover': {
@@ -142,7 +144,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
         <Button
           variant="text"
           onClick={onCollapseAll}
-          title="Collapse all the child nodes of all parent nodes"
+          title={t('wdsTopology.zoomControls.collapseAll')}
           sx={{
             color: theme === 'dark' ? '#fff' : '#6d7f8b',
             '&:hover': {
@@ -157,7 +159,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
         <Button
           variant="text"
           onClick={handleZoomIn}
-          title="Zoom In"
+          title={t('wdsTopology.zoomControls.zoomIn')}
           sx={{
             color: theme === 'dark' ? '#fff' : '#6d7f8b',
             '&:hover': {
@@ -172,7 +174,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
         <Button
           variant="text"
           onClick={handleZoomOut}
-          title="Zoom Out"
+          title={t('wdsTopology.zoomControls.zoomOut')}
           sx={{
             color: theme === 'dark' ? '#fff' : '#6d7f8b',
             '&:hover': {

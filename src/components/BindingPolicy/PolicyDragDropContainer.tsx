@@ -26,6 +26,7 @@ import useTheme from '../../stores/themeStore';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import toast from 'react-hot-toast';
 import PolicyNameDialog from './PolicyNameDialog';
+import { useTranslation } from 'react-i18next';
 
 // Type definitions for components from other files
 interface TreeItem {
@@ -147,6 +148,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
   });
 
   const theme = useTheme(state => state.theme);
+  const { t } = useTranslation();
   const [successMessage, setSuccessMessage] = useState<string>('');
   const [configSidebarOpen, setConfigSidebarOpen] = useState(false);
   const [selectedConnection] = useState<
@@ -678,7 +680,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
             (itemType === 'cluster' && canvasEntities.clusters.includes(itemId))
           ) {
             console.log(`Item ${itemId} is already in the canvas`);
-            toast(`This label is already on the canvas`);
+            toast(t('bindingPolicy.labelAlreadyOnCanvas'));
             return;
           }
 
@@ -698,10 +700,10 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
         addToCanvas(itemType, itemId);
       } catch (error) {
         console.error('Error adding item to canvas:', error);
-        toast.error('Failed to add item to canvas');
+        toast.error(t('bindingPolicy.failedToAddItem'));
       }
     },
-    [canvasEntities, extractLabelInfo, isClusterScopedResource, addToCanvas]
+    [canvasEntities, extractLabelInfo, isClusterScopedResource, addToCanvas, t]
   );
 
   // Update the handleWorkloadItemClick function to handle cluster-scoped resources
@@ -788,7 +790,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     console.log('🔍 DEBUG - prepareForDeployment called');
     if (canvasEntities.clusters.length === 0 || canvasEntities.workloads.length === 0) {
       console.log('🔍 DEBUG - No clusters or workloads available');
-      setDeploymentError('Both clusters and workloads are required to create binding policies');
+      setDeploymentError(t('bindingPolicy.clustersAndWorkloadsRequired'));
       return;
     }
 
@@ -798,7 +800,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
 
     setPendingDeploymentData({ workloadLabelId, clusterLabelId });
     setShowPolicyNameDialog(true);
-  }, [canvasEntities]);
+  }, [canvasEntities, t]);
 
   // Helper function to generate default policy name
   const generateDefaultPolicyName = useCallback(
@@ -1563,7 +1565,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
                         },
                       }}
                     >
-                      Edit Policy
+                      {t('bindingPolicy.editPolicy')}
                     </Button>
                   </Box>
                 )}
@@ -1636,10 +1638,10 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
                             }}
                           />
                         </Box>
-                        Deploying...
+                        {t('bindingPolicy.deploying')}
                       </>
                     ) : (
-                      'Deploy Binding Policies'
+                      t('bindingPolicy.deployBindingPolicies')
                     )}
                   </Button>
                 </Box>
@@ -1708,7 +1710,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
                 color: theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : undefined,
               }}
             >
-              Preview Binding Policy YAML
+              {t('bindingPolicy.previewGeneratedYaml')}
             </Typography>
             {currentWorkloadId && currentClusterId && (
               <Box
@@ -1723,7 +1725,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
                   variant="body2"
                   color={theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary'}
                 >
-                  Creating connection:
+                  {t('bindingPolicy.creatingConnection')}
                 </Typography>
                 <Chip
                   size="small"
@@ -1818,7 +1820,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
               color: theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : undefined,
             }}
           >
-            Close
+            {t('common.close')}
           </Button>
           <Button
             variant="contained"
@@ -1832,7 +1834,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
               },
             }}
           >
-            Save & Create Policy
+            {t('bindingPolicy.saveAndCreatePolicy')}
           </Button>
         </DialogActions>
       </Dialog>

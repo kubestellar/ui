@@ -1,4 +1,5 @@
 import React, { ChangeEvent, RefObject, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Button,
@@ -16,6 +17,7 @@ import {
 import { CommandResponse, Colors } from './ImportClusters';
 import OnboardingLogsDisplay from './OnboardingLogsDisplay';
 import CancelButton from './common/CancelButton';
+import { TOptions } from 'i18next';
 
 interface QuickConnectProps {
   theme: string;
@@ -69,6 +71,7 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
   successAlertRef,
   setManualCommand,
 }) => {
+  const { t } = useTranslation();
   const textColor = theme === 'dark' ? colors.white : colors.text;
   const [showLogs, setShowLogs] = useState(false);
   const isMobile = useMediaQuery('(max-width:600px)');
@@ -288,7 +291,7 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
                   letterSpacing: '-0.01em',
                 }}
               >
-                One-Click Cluster Setup
+                {t('quickConnect.title')}
                 <Box
                   component="span"
                   sx={{
@@ -311,8 +314,7 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
                   mb: 2,
                 }}
               >
-                Simplified, automated cluster onboarding with zero commands. Select your cluster and
-                let the system handle the rest.
+                {t('quickConnect.description')}
               </Typography>
             </Box>
           </Fade>
@@ -342,6 +344,7 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
               primaryButtonStyles={primaryButtonStyles}
               secondaryButtonStyles={secondaryButtonStyles}
               isMobile={isMobile}
+              t={t}
             />
           ) : (
             <ClusterSelectionView
@@ -361,6 +364,7 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
               primaryButtonStyles={primaryButtonStyles}
               secondaryButtonStyles={secondaryButtonStyles}
               isMobile={isMobile}
+              t={t}
             />
           )}
         </Box>
@@ -382,6 +386,7 @@ const SuccessView: React.FC<{
   primaryButtonStyles: SxProps<Theme>;
   secondaryButtonStyles: SxProps<Theme>;
   isMobile: boolean;
+  t: (key: string, options?: TOptions) => string;
 }> = ({
   theme,
   colors,
@@ -394,6 +399,7 @@ const SuccessView: React.FC<{
   primaryButtonStyles,
   secondaryButtonStyles,
   isMobile,
+  t,
 }) => {
   return (
     <Fade in={true} timeout={500} easing="cubic-bezier(0.4, 0, 0.2, 1)">
@@ -444,11 +450,10 @@ const SuccessView: React.FC<{
             >
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <Typography variant="h6" sx={{ fontWeight: 700, letterSpacing: '-0.01em' }}>
-                  Cluster Onboarded Successfully
+                  {t('quickConnect.success.title')}
                 </Typography>
                 <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                  Cluster <strong>{manualCommand.clusterName}</strong> has been successfully
-                  onboarded to the platform.
+                  {t('quickConnect.success.message', { clusterName: manualCommand.clusterName })}
                 </Typography>
               </Box>
             </Alert>
@@ -518,7 +523,7 @@ const SuccessView: React.FC<{
                   mb: 0.5,
                 }}
               >
-                Cluster Added Successfully
+                {t('quickConnect.success.clusterAdded')}
               </Typography>
               <Typography
                 variant="body2"
@@ -527,7 +532,7 @@ const SuccessView: React.FC<{
                   fontWeight: 500,
                 }}
               >
-                Your cluster is now available in the platform
+                {t('quickConnect.success.clusterAvailable')}
               </Typography>
             </Box>
           </Box>
@@ -549,8 +554,7 @@ const SuccessView: React.FC<{
                 fontWeight: 500,
               }}
             >
-              Your cluster <strong>{manualCommand.clusterName}</strong> has been successfully
-              onboarded. Here's what you can do next:
+              {t('quickConnect.success.detailMessage', { clusterName: manualCommand.clusterName })}
             </Typography>
 
             <Box
@@ -564,21 +568,20 @@ const SuccessView: React.FC<{
             >
               {[
                 {
-                  title: 'View & Manage',
-                  description:
-                    'Access your cluster through the dashboard to view resources and status',
+                  title: t('quickConnect.success.nextSteps.viewManage.title'),
+                  description: t('quickConnect.success.nextSteps.viewManage.description'),
                   icon: '📊',
                   color: theme === 'dark' ? 'rgba(47, 134, 255, 0.9)' : 'rgba(47, 134, 255, 0.8)',
                 },
                 {
-                  title: 'Deploy Applications',
-                  description: 'Deploy containerized applications and services to your cluster',
+                  title: t('quickConnect.success.nextSteps.deployApps.title'),
+                  description: t('quickConnect.success.nextSteps.deployApps.description'),
                   icon: '🚀',
                   color: theme === 'dark' ? 'rgba(255, 159, 67, 0.9)' : 'rgba(255, 159, 67, 0.8)',
                 },
                 {
-                  title: 'Configure Settings',
-                  description: 'Customize and configure your cluster settings and policies',
+                  title: t('quickConnect.success.nextSteps.configureSettings.title'),
+                  description: t('quickConnect.success.nextSteps.configureSettings.description'),
                   icon: '⚙️',
                   color: theme === 'dark' ? 'rgba(156, 39, 176, 0.7)' : 'rgba(156, 39, 176, 0.6)',
                 },
@@ -693,7 +696,7 @@ const SuccessView: React.FC<{
                   </span>
                 }
               >
-                Open Cluster Dashboard
+                {t('quickConnect.buttons.openDashboard')}
               </Button>
             </Box>
           </Box>
@@ -734,7 +737,7 @@ const SuccessView: React.FC<{
                 </span>
               }
             >
-              Back
+              {t('quickConnect.buttons.back')}
             </Button>
             <CancelButton
               onClick={onCancel}
@@ -742,7 +745,7 @@ const SuccessView: React.FC<{
                 flex: isMobile ? 1 : 'unset',
               }}
             >
-              Close
+              {t('quickConnect.buttons.close')}
             </CancelButton>
           </Box>
           <Button
@@ -763,7 +766,7 @@ const SuccessView: React.FC<{
               </span>
             }
           >
-            Go to Dashboard
+            {t('quickConnect.buttons.goToDashboard')}
           </Button>
         </Box>
       </Box>
@@ -789,6 +792,7 @@ const ClusterSelectionView: React.FC<{
   primaryButtonStyles: SxProps<Theme>;
   secondaryButtonStyles: SxProps<Theme>;
   isMobile: boolean;
+  t: (key: string, options?: TOptions) => string;
 }> = ({
   theme,
   colors,
@@ -806,6 +810,7 @@ const ClusterSelectionView: React.FC<{
   primaryButtonStyles,
   // secondaryButtonStyles,
   isMobile,
+  t,
 }) => {
   return (
     <Fade in={true} timeout={500} easing="cubic-bezier(0.4, 0, 0.2, 1)">
@@ -889,7 +894,7 @@ const ClusterSelectionView: React.FC<{
                   mb: 0.5,
                 }}
               >
-                Automated Cluster Onboarding
+                {t('quickConnect.automatedOnboarding')}
                 <Box
                   component="span"
                   sx={{
@@ -906,7 +911,7 @@ const ClusterSelectionView: React.FC<{
                     display: { xs: 'none', sm: 'inline-block' },
                   }}
                 >
-                  New
+                  {t('quickConnect.new')}
                 </Box>
               </Typography>
               <Typography
@@ -918,8 +923,7 @@ const ClusterSelectionView: React.FC<{
                   maxWidth: { xs: '100%', md: '90%' },
                 }}
               >
-                This is the simplest way to connect your Kubernetes cluster. Select a cluster and
-                click the Onboard button to directly connect it without any manual commands.
+                {t('quickConnect.automatedDescription')}
               </Typography>
             </Box>
           </Box>
@@ -954,7 +958,7 @@ const ClusterSelectionView: React.FC<{
             >
               🔍
             </Box>
-            Select a Kubernetes Cluster
+            {t('quickConnect.selectCluster')}
           </Typography>
 
           {availableClustersLoading ? (
@@ -984,7 +988,7 @@ const ClusterSelectionView: React.FC<{
                   fontSize: '0.9rem',
                 }}
               >
-                Searching for available clusters...
+                {t('quickConnect.searchingClusters')}
               </Typography>
             </Box>
           ) : availableClustersError ? (
@@ -1022,7 +1026,7 @@ const ClusterSelectionView: React.FC<{
             >
               <Box sx={{ mb: 1 }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                  Error Loading Clusters
+                  {t('quickConnect.errorLoadingClusters')}
                 </Typography>
                 <Typography variant="body2" sx={{ fontSize: '0.85rem', opacity: 0.9 }}>
                   {availableClustersError}
@@ -1053,7 +1057,7 @@ const ClusterSelectionView: React.FC<{
                   </span>
                 }
               >
-                Retry
+                {t('quickConnect.retry')}
               </Button>
             </Alert>
           ) : (
@@ -1109,11 +1113,11 @@ const ClusterSelectionView: React.FC<{
                   }}
                 >
                   <option value="" disabled>
-                    Choose a cluster...
+                    {t('quickConnect.chooseCluster')}
                   </option>
                   {availableClusters.length === 0 ? (
                     <option value="" disabled>
-                      No clusters available
+                      {t('quickConnect.noClusters')}
                     </option>
                   ) : (
                     availableClusters.map((clusterObj, index) => {
@@ -1238,7 +1242,7 @@ const ClusterSelectionView: React.FC<{
                       fontWeight: 500,
                     }}
                   >
-                    Discovered Clusters
+                    {t('quickConnect.discoveredClusters.title')}
                   </Typography>
                   <Typography
                     variant="body2"
@@ -1247,7 +1251,7 @@ const ClusterSelectionView: React.FC<{
                       color: theme === 'dark' ? 'rgba(255, 215, 0, 0.7)' : 'rgba(125, 102, 8, 0.9)',
                     }}
                   >
-                    These are clusters discovered in your environment. Select one to continue.
+                    {t('quickConnect.discoveredClusters.description')}
                   </Typography>
                 </Box>
                 <Button
@@ -1266,8 +1270,8 @@ const ClusterSelectionView: React.FC<{
                         theme === 'dark' ? 'rgba(47, 134, 255, 0.08)' : 'rgba(47, 134, 255, 0.05)',
                     },
                   }}
-                  aria-label="Refresh clusters list"
-                  title="Refresh clusters list"
+                  aria-label={t('quickConnect.refreshClustersList')}
+                  title={t('quickConnect.refreshClustersList')}
                 >
                   <svg
                     width="18"
@@ -1351,7 +1355,7 @@ const ClusterSelectionView: React.FC<{
                 pt: 0.5,
               }}
             >
-              How to Connect Your Cluster
+              {t('quickConnect.howToConnect')}
             </Typography>
           </Box>
 
@@ -1366,23 +1370,22 @@ const ClusterSelectionView: React.FC<{
               {[
                 {
                   step: 1,
-                  title: 'Choose Your Cluster',
-                  description: 'Select a cluster from the dropdown above',
+                  title: t('quickConnect.steps.step1.title'),
+                  description: t('quickConnect.steps.step1.description'),
                   icon: '🔍',
                   color: theme === 'dark' ? 'rgba(47, 134, 255, 0.8)' : 'rgba(47, 134, 255, 0.7)',
                 },
                 {
                   step: 2,
-                  title: 'One-Click Onboarding',
-                  description: 'Click "Onboard Cluster" button to start the automated process',
+                  title: t('quickConnect.steps.step2.title'),
+                  description: t('quickConnect.steps.step2.description'),
                   icon: '⚡',
                   color: theme === 'dark' ? 'rgba(255, 159, 67, 0.8)' : 'rgba(255, 159, 67, 0.7)',
                 },
                 {
                   step: 3,
-                  title: 'Instant Connection',
-                  description:
-                    'Your cluster will be automatically onboarded without manual commands',
+                  title: t('quickConnect.steps.step3.title'),
+                  description: t('quickConnect.steps.step3.description'),
                   icon: '✅',
                   color: theme === 'dark' ? 'rgba(103, 192, 115, 0.8)' : 'rgba(103, 192, 115, 0.7)',
                 },
@@ -1503,7 +1506,7 @@ const ClusterSelectionView: React.FC<{
             <span role="img" aria-label="compare" style={{ fontSize: '0.9rem' }}>
               ⚡
             </span>
-            Why Use Automated Onboarding?
+            {t('quickConnect.whyUseAutomated')}
           </Typography>
 
           <Box
@@ -1538,7 +1541,7 @@ const ClusterSelectionView: React.FC<{
                 <span role="img" aria-label="new">
                   ✨
                 </span>{' '}
-                Automated Approach (New)
+                {t('quickConnect.approaches.automated.title')}
               </Typography>
 
               <Box
@@ -1548,12 +1551,11 @@ const ClusterSelectionView: React.FC<{
                   gap: 1.5,
                 }}
               >
-                {[
-                  'One-click setup process',
-                  'No manual command execution',
-                  'Streamlined experience',
-                  'Reduced chance of errors',
-                ].map((feature, index) => (
+                {(
+                  t('quickConnect.approaches.automated.features', {
+                    returnObjects: true,
+                  }) as unknown as string[]
+                ).map((feature, index) => (
                   <Box
                     key={index}
                     sx={{
@@ -1621,7 +1623,7 @@ const ClusterSelectionView: React.FC<{
                 <span role="img" aria-label="old">
                   🔧
                 </span>{' '}
-                Manual Approach (Legacy)
+                {t('quickConnect.approaches.manual.title')}
               </Typography>
 
               <Box
@@ -1631,12 +1633,11 @@ const ClusterSelectionView: React.FC<{
                   gap: 1.5,
                 }}
               >
-                {[
-                  'Copy and run commands manually',
-                  'Multiple CLI steps required',
-                  'More complex process',
-                  'Requires command line knowledge',
-                ].map((feature, index) => (
+                {(
+                  t('quickConnect.approaches.manual.features', {
+                    returnObjects: true,
+                  }) as unknown as string[]
+                ).map((feature, index) => (
                   <Box
                     key={index}
                     sx={{
@@ -1747,9 +1748,15 @@ const ClusterSelectionView: React.FC<{
                 </span>
               )
             }
-            aria-label={manualLoading ? 'Onboarding cluster...' : 'Onboard Cluster'}
+            aria-label={
+              manualLoading
+                ? t('quickConnect.buttons.onboarding')
+                : t('quickConnect.buttons.onboard')
+            }
           >
-            {manualLoading ? 'Onboarding...' : 'Onboard Cluster'}
+            {manualLoading
+              ? t('quickConnect.buttons.onboarding')
+              : t('quickConnect.buttons.onboard')}
           </Button>
         </Box>
       </Box>

@@ -34,6 +34,7 @@ import TuneIcon from '@mui/icons-material/Tune';
 import FileCopyIcon from '@mui/icons-material/FileCopy';
 import { SelectChangeEvent } from '@mui/material';
 import CancelButton from '../common/CancelButton';
+import { useTranslation } from 'react-i18next';
 
 // Scheduling rule types
 type OperatorType =
@@ -113,6 +114,8 @@ const ConfigurationSidebar: React.FC<ConfigurationSidebarProps> = ({
     operator: '>=',
     value: '',
   });
+
+  const { t } = useTranslation();
 
   // Initialize form when selected connection changes
   useEffect(() => {
@@ -360,7 +363,7 @@ const ConfigurationSidebar: React.FC<ConfigurationSidebarProps> = ({
     return (
       <Paper sx={{ p: 2, mb: 3, bgcolor: 'background.default' }}>
         <Typography variant="subtitle2" gutterBottom>
-          Creating Binding Policy for:
+          {t('bindingPolicy.configureDialog.creatingFor')}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <Chip
@@ -376,7 +379,10 @@ const ConfigurationSidebar: React.FC<ConfigurationSidebarProps> = ({
           />
         </Box>
         <Typography variant="caption" color="text.secondary">
-          This will create a binding policy that links the {source.type} to the {target.type}.
+          {t('bindingPolicy.configureDialog.creatingForDesc', {
+            sourceType: source.type,
+            targetType: target.type,
+          })}
         </Typography>
       </Paper>
     );
@@ -396,7 +402,7 @@ const ConfigurationSidebar: React.FC<ConfigurationSidebarProps> = ({
       }}
     >
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6">Configure Binding Policy</Typography>
+        <Typography variant="h6">{t('bindingPolicy.configureDialog.title')}</Typography>
         <IconButton onClick={onClose} size="small">
           <CloseIcon />
         </IconButton>
@@ -414,10 +420,10 @@ const ConfigurationSidebar: React.FC<ConfigurationSidebarProps> = ({
           onChange={(_, newValue) => setCurrentTab(newValue)}
           aria-label="policy configuration tabs"
         >
-          <Tab icon={<InfoIcon />} label="Basic" />
-          <Tab icon={<TuneIcon />} label="Advanced" />
-          <Tab icon={<ScheduleIcon />} label="Scheduling" />
-          <Tab icon={<CodeIcon />} label="YAML" />
+          <Tab icon={<InfoIcon />} label={t('bindingPolicy.configureDialog.tabs.basic')} />
+          <Tab icon={<TuneIcon />} label={t('bindingPolicy.configureDialog.tabs.advanced')} />
+          <Tab icon={<ScheduleIcon />} label={t('bindingPolicy.configureDialog.tabs.scheduling')} />
+          <Tab icon={<CodeIcon />} label={t('bindingPolicy.configureDialog.tabs.yaml')} />
         </Tabs>
       </Box>
 
@@ -426,28 +432,28 @@ const ConfigurationSidebar: React.FC<ConfigurationSidebarProps> = ({
         <Box component="form" noValidate autoComplete="off">
           <TextField
             fullWidth
-            label="Policy Name"
+            label={t('bindingPolicy.policyName')}
             value={name}
             onChange={e => setName(e.target.value)}
             error={!!errors.name}
-            helperText={errors.name || 'Name of the binding policy'}
+            helperText={errors.name || t('bindingPolicy.configureDialog.nameHelper')}
             margin="normal"
             required
           />
 
           <TextField
             fullWidth
-            label="Namespace"
+            label={t('bindingPolicy.namespace')}
             value={namespace}
             onChange={e => setNamespace(e.target.value)}
             error={!!errors.namespace}
-            helperText={errors.namespace || 'Namespace for the binding policy'}
+            helperText={errors.namespace || t('bindingPolicy.configureDialog.namespaceHelper')}
             margin="normal"
             required
           />
 
           <FormControl fullWidth margin="normal">
-            <InputLabel>Propagation Mode</InputLabel>
+            <InputLabel>{t('bindingPolicy.propagationMode')}</InputLabel>
             <Select
               value={propagationMode}
               onChange={(e: SelectChangeEvent) =>
@@ -455,25 +461,31 @@ const ConfigurationSidebar: React.FC<ConfigurationSidebarProps> = ({
                   e.target.value as 'DownsyncOnly' | 'UpsyncOnly' | 'BidirectionalSync'
                 )
               }
-              label="Propagation Mode"
+              label={t('bindingPolicy.propagationMode')}
             >
-              <MenuItem value="DownsyncOnly">Downsync Only</MenuItem>
-              <MenuItem value="UpsyncOnly">Upsync Only</MenuItem>
-              <MenuItem value="BidirectionalSync">Bidirectional Sync</MenuItem>
+              <MenuItem value="DownsyncOnly">{t('bindingPolicy.modes.downsyncOnly')}</MenuItem>
+              <MenuItem value="UpsyncOnly">{t('bindingPolicy.modes.upsyncOnly')}</MenuItem>
+              <MenuItem value="BidirectionalSync">
+                {t('bindingPolicy.modes.bidirectionalSync')}
+              </MenuItem>
             </Select>
           </FormControl>
 
           <FormControl fullWidth margin="normal">
-            <InputLabel>Deployment Type</InputLabel>
+            <InputLabel>{t('bindingPolicy.deploymentType')}</InputLabel>
             <Select
               value={deploymentType}
               onChange={(e: SelectChangeEvent) =>
                 setDeploymentType(e.target.value as 'AllClusters' | 'SelectedClusters')
               }
-              label="Deployment Type"
+              label={t('bindingPolicy.deploymentType')}
             >
-              <MenuItem value="SelectedClusters">Selected Clusters</MenuItem>
-              <MenuItem value="AllClusters">All Available Clusters</MenuItem>
+              <MenuItem value="SelectedClusters">
+                {t('bindingPolicy.deploymentType.selectedClusters')}
+              </MenuItem>
+              <MenuItem value="AllClusters">
+                {t('bindingPolicy.deploymentType.allClusters')}
+              </MenuItem>
             </Select>
           </FormControl>
         </Box>
@@ -483,7 +495,7 @@ const ConfigurationSidebar: React.FC<ConfigurationSidebarProps> = ({
       {currentTab === 1 && (
         <Box component="form" noValidate autoComplete="off">
           <FormControl fullWidth margin="normal">
-            <InputLabel>Update Strategy</InputLabel>
+            <InputLabel>{t('bindingPolicy.updateStrategy')}</InputLabel>
             <Select
               value={updateStrategy}
               onChange={(e: SelectChangeEvent) =>
@@ -495,16 +507,21 @@ const ConfigurationSidebar: React.FC<ConfigurationSidebarProps> = ({
                     | 'BlueGreenDeployment'
                 )
               }
-              label="Update Strategy"
+              label={t('bindingPolicy.updateStrategy')}
             >
-              <MenuItem value="ServerSideApply">Server Side Apply</MenuItem>
-              <MenuItem value="ForceApply">Force Apply</MenuItem>
-              <MenuItem value="RollingUpdate">Rolling Update</MenuItem>
-              <MenuItem value="BlueGreenDeployment">Blue-Green Deployment</MenuItem>
+              <MenuItem value="ServerSideApply">
+                {t('bindingPolicy.strategies.serverSideApply')}
+              </MenuItem>
+              <MenuItem value="ForceApply">{t('bindingPolicy.strategies.forceApply')}</MenuItem>
+              <MenuItem value="RollingUpdate">
+                {t('bindingPolicy.strategies.rollingUpdate')}
+              </MenuItem>
+              <MenuItem value="BlueGreenDeployment">
+                {t('bindingPolicy.strategies.blueGreenDeployment')}
+              </MenuItem>
             </Select>
             <Typography variant="caption" sx={{ mt: 1, color: 'text.secondary' }}>
-              Select how changes to resources should be applied to clusters. Add clusters and
-              workloads by selecting them from the panels.
+              {t('bindingPolicy.configureDialog.updateStrategyHelper')}
             </Typography>
           </FormControl>
 
@@ -516,9 +533,9 @@ const ConfigurationSidebar: React.FC<ConfigurationSidebarProps> = ({
               label={
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <Typography variant="body2" sx={{ mr: 1 }}>
-                    Add custom labels
+                    {t('bindingPolicy.configureDialog.addCustomLabels')}
                   </Typography>
-                  <Tooltip title="Labels help identify and select resources">
+                  <Tooltip title={t('bindingPolicy.configureDialog.labelsTooltip')}>
                     <InfoIcon fontSize="small" color="action" />
                   </Tooltip>
                 </Box>
@@ -531,7 +548,7 @@ const ConfigurationSidebar: React.FC<ConfigurationSidebarProps> = ({
               <Box sx={{ display: 'flex', mb: 1 }}>
                 <TextField
                   size="small"
-                  label="Key"
+                  label={t('bindingPolicy.labels.key')}
                   value={labelKey}
                   onChange={e => setLabelKey(e.target.value)}
                   sx={{ mr: 1, flexGrow: 1 }}
@@ -539,14 +556,14 @@ const ConfigurationSidebar: React.FC<ConfigurationSidebarProps> = ({
                 />
                 <TextField
                   size="small"
-                  label="Value"
+                  label={t('bindingPolicy.labels.value')}
                   value={labelValue}
                   onChange={e => setLabelValue(e.target.value)}
                   sx={{ mr: 1, flexGrow: 1 }}
                   error={!!errors.label}
                 />
                 <Button variant="outlined" onClick={handleAddLabel} startIcon={<AddIcon />}>
-                  Add
+                  {t('bindingPolicy.labels.add')}
                 </Button>
               </Box>
 
@@ -573,23 +590,25 @@ const ConfigurationSidebar: React.FC<ConfigurationSidebarProps> = ({
           <Divider sx={{ my: 2 }} />
 
           <Typography variant="subtitle2" gutterBottom>
-            Tolerations (Advanced)
+            {t('bindingPolicy.configureDialog.tolerationsTitle')}
           </Typography>
 
           <Box sx={{ mb: 3 }}>
             <Box sx={{ display: 'flex', mb: 1 }}>
               <TextField
                 size="small"
-                label="Toleration Expression"
+                label={t('bindingPolicy.configureDialog.tolerationExpression')}
                 placeholder="key=value:effect"
                 value={tolerationInput}
                 onChange={e => setTolerationInput(e.target.value)}
                 sx={{ mr: 1, flexGrow: 1 }}
                 error={!!errors.toleration}
-                helperText={errors.toleration}
+                helperText={
+                  errors.toleration && t('bindingPolicy.configureDialog.tolerationRequired')
+                }
               />
               <Button variant="outlined" onClick={handleAddToleration} startIcon={<AddIcon />}>
-                Add
+                {t('bindingPolicy.labels.add')}
               </Button>
             </Box>
 
@@ -611,35 +630,39 @@ const ConfigurationSidebar: React.FC<ConfigurationSidebarProps> = ({
       {currentTab === 2 && (
         <Box component="form" noValidate autoComplete="off">
           <Typography variant="subtitle2" gutterBottom>
-            Scheduling Rules
-            <Tooltip title="Define conditions that must be met for a cluster to receive this workload">
+            {t('bindingPolicy.configureDialog.schedulingRules')}
+            <Tooltip title={t('bindingPolicy.configureDialog.schedulingTooltip')}>
               <InfoIcon fontSize="small" sx={{ ml: 1, verticalAlign: 'middle' }} color="action" />
             </Tooltip>
           </Typography>
-
           <Box sx={{ mb: 3 }}>
             <Box sx={{ display: 'flex', mb: 1, gap: 1 }}>
               <FormControl size="small" sx={{ flexGrow: 1 }}>
-                <InputLabel>Resource</InputLabel>
+                <InputLabel>{t('bindingPolicy.configureDialog.resource')}</InputLabel>
                 <Select
                   value={newRule.resource}
-                  label="Resource"
+                  label={t('bindingPolicy.configureDialog.resource')}
                   onChange={(e: SelectChangeEvent) =>
                     setNewRule({ ...newRule, resource: e.target.value as ResourceType })
                   }
                 >
-                  <MenuItem value="cpu">CPU Cores</MenuItem>
-                  <MenuItem value="memory">Memory</MenuItem>
-                  <MenuItem value="storage">Storage</MenuItem>
-                  <MenuItem value="pods">Available Pods</MenuItem>
+                  <MenuItem value="cpu">{t('bindingPolicy.configureDialog.resource.cpu')}</MenuItem>
+                  <MenuItem value="memory">
+                    {t('bindingPolicy.configureDialog.resource.memory')}
+                  </MenuItem>
+                  <MenuItem value="storage">
+                    {t('bindingPolicy.configureDialog.resource.storage')}
+                  </MenuItem>
+                  <MenuItem value="pods">
+                    {t('bindingPolicy.configureDialog.resource.pods')}
+                  </MenuItem>
                 </Select>
               </FormControl>
-
               <FormControl size="small" sx={{ flexGrow: 1 }}>
-                <InputLabel>Operator</InputLabel>
+                <InputLabel>{t('bindingPolicy.configureDialog.operator')}</InputLabel>
                 <Select
                   value={newRule.operator}
-                  label="Operator"
+                  label={t('bindingPolicy.configureDialog.operator')}
                   onChange={(e: SelectChangeEvent) =>
                     setNewRule({ ...newRule, operator: e.target.value as OperatorType })
                   }
@@ -690,13 +713,12 @@ const ConfigurationSidebar: React.FC<ConfigurationSidebarProps> = ({
 
             {schedulingRules.length === 0 ? (
               <Alert severity="info" sx={{ mt: 2 }}>
-                No scheduling rules added. The policy will apply to all matching clusters regardless
-                of their resources.
+                {t('bindingPolicy.configureDialog.noSchedulingRules')}
               </Alert>
             ) : (
               <Box sx={{ mt: 2 }}>
                 <Typography variant="subtitle2" gutterBottom>
-                  Active Rules:
+                  {t('bindingPolicy.configureDialog.activeRules')}
                 </Typography>
                 <Stack spacing={1}>
                   {schedulingRules.map((rule, index) => (
@@ -756,9 +778,11 @@ const ConfigurationSidebar: React.FC<ConfigurationSidebarProps> = ({
       {currentTab === 3 && (
         <Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-            <Typography variant="subtitle2">YAML Preview</Typography>
+            <Typography variant="subtitle2">
+              {t('bindingPolicy.configureDialog.yamlPreview')}
+            </Typography>
             <Button startIcon={<FileCopyIcon />} onClick={handleCopyYaml} size="small">
-              Copy
+              {t('common.copy')}
             </Button>
           </Box>
 
@@ -778,8 +802,7 @@ const ConfigurationSidebar: React.FC<ConfigurationSidebarProps> = ({
           </Paper>
 
           <Alert severity="info" sx={{ mb: 2 }}>
-            This is a preview of the YAML that will be applied. You can make changes in the other
-            tabs to update this preview.
+            {t('bindingPolicy.configureDialog.yamlPreviewInfo')}
           </Alert>
         </Box>
       )}
@@ -795,7 +818,7 @@ const ConfigurationSidebar: React.FC<ConfigurationSidebarProps> = ({
           borderColor: 'divider',
         }}
       >
-        <CancelButton onClick={onClose}>Cancel</CancelButton>
+        <CancelButton onClick={onClose}>{t('common.cancel')}</CancelButton>
         <Button
           variant="contained"
           color="primary"
@@ -803,7 +826,7 @@ const ConfigurationSidebar: React.FC<ConfigurationSidebarProps> = ({
           startIcon={<SaveIcon />}
           disabled={!name || !namespace}
         >
-          Create Binding Policy
+          {t('bindingPolicy.createBindingPolicy')}
         </Button>
       </Box>
     </Drawer>

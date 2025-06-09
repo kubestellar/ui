@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import useTheme from '../../stores/themeStore';
 import WorkloadLabelInput from './WorkloadLabelInput';
 import CancelButton from '../common/CancelButton';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   editorContent: string;
@@ -36,6 +37,7 @@ export const YamlTab = ({
   handleCancelClick,
 }: Props) => {
   const theme = useTheme(state => state.theme);
+  const { t } = useTranslation();
   const [localWorkloadLabel, setLocalWorkloadLabel] = useState('');
   const [nameDocumentIndex, setNameDocumentIndex] = useState<number | null>(null);
   const [autoNs, setAutoNs] = useState(true); // Added state for checkbox
@@ -167,7 +169,7 @@ export const YamlTab = ({
               }}
             />
           }
-          label="Create Namespace Automatically"
+          label={t('workloads.yaml.createNamespaceAutomatically')}
           sx={{
             mb: 2,
             ml: -1.2,
@@ -216,7 +218,7 @@ export const YamlTab = ({
         }}
       >
         <CancelButton onClick={handleCancelClick} disabled={loading}>
-          Cancel
+          {t('common.cancel')}
         </CancelButton>
         <Button
           variant="contained"
@@ -238,7 +240,7 @@ export const YamlTab = ({
             },
           }}
         >
-          Deploy
+          {t('workloads.yaml.deploy')}
         </Button>
       </Box>
     </StyledContainer>

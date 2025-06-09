@@ -13,6 +13,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
 import { BsTagFill } from 'react-icons/bs';
 import useTheme from '../../stores/themeStore';
+import { useTranslation } from 'react-i18next';
 
 interface ClusterPanelHeaderProps {
   compact?: boolean;
@@ -32,6 +33,7 @@ const ClusterPanelHeader: React.FC<ClusterPanelHeaderProps> = ({
   const isDarkTheme = theme === 'dark';
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const { t } = useTranslation();
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
@@ -64,7 +66,7 @@ const ClusterPanelHeader: React.FC<ClusterPanelHeaderProps> = ({
             }}
           >
             <InputBase
-              placeholder="Search labels..."
+              placeholder={t('clusters.list.searchLabelsPlaceholder')}
               value={searchTerm}
               onChange={e => handleSearchChange(e.target.value)}
               sx={{
@@ -96,7 +98,7 @@ const ClusterPanelHeader: React.FC<ClusterPanelHeaderProps> = ({
             </IconButton>
           </Box>
         ) : (
-          <Typography variant={compact ? 'subtitle1' : 'h6'}>Clusters</Typography>
+          <Typography variant={compact ? 'subtitle1' : 'h6'}>{t('header.clusters')}</Typography>
         )}
         {!showSearch && !compact && (
           <IconButton
@@ -134,7 +136,7 @@ const ClusterPanelHeader: React.FC<ClusterPanelHeaderProps> = ({
               },
             }}
           >
-            labels
+            {t('clusters.labels.add')}
           </Button>
           <Button
             variant="contained"
@@ -152,7 +154,7 @@ const ClusterPanelHeader: React.FC<ClusterPanelHeaderProps> = ({
               },
             }}
           >
-            Import
+            {t('common.import')}
           </Button>
         </Box>
       )}

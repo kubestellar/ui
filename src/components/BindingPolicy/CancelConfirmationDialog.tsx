@@ -11,6 +11,7 @@ import {
 import WarningIcon from '@mui/icons-material/Warning';
 import CancelButton from '../common/CancelButton';
 import useTheme from '../../stores/themeStore';
+import { useTranslation } from 'react-i18next';
 
 interface CancelConfirmationDialogProps {
   open: boolean;
@@ -24,6 +25,7 @@ const CancelConfirmationDialog: React.FC<CancelConfirmationDialogProps> = ({
   onConfirm,
 }) => {
   const theme = useTheme(state => state.theme);
+  const { t } = useTranslation();
 
   return (
     <Dialog
@@ -50,7 +52,7 @@ const CancelConfirmationDialog: React.FC<CancelConfirmationDialogProps> = ({
         }}
       >
         <WarningIcon color="warning" sx={{ mr: 1 }} />
-        Cancel Policy Creation
+        {t('cancelConfirmationDialog.titlePolicy')}
       </DialogTitle>
       <DialogContent
         sx={{
@@ -71,8 +73,8 @@ const CancelConfirmationDialog: React.FC<CancelConfirmationDialogProps> = ({
             outline: 'none',
           }}
         >
-          <AlertTitle>Warning</AlertTitle>
-          Are you sure you want to cancel? All changes will be lost.
+          <AlertTitle>{t('cancelConfirmationDialog.warning')}</AlertTitle>
+          {t('cancelConfirmationDialog.message')}
         </Alert>
       </DialogContent>
       <DialogActions
@@ -83,7 +85,9 @@ const CancelConfirmationDialog: React.FC<CancelConfirmationDialogProps> = ({
           outline: 'none',
         }}
       >
-        <CancelButton onClick={onClose}>Continue Editing</CancelButton>
+        <CancelButton onClick={onClose}>
+          {t('cancelConfirmationDialog.continueEditing')}
+        </CancelButton>
         <Button
           onClick={onConfirm}
           color="error"
@@ -94,7 +98,7 @@ const CancelConfirmationDialog: React.FC<CancelConfirmationDialogProps> = ({
             '&:hover': { backgroundColor: '#d32f2f' },
           }}
         >
-          Yes, Cancel
+          {t('cancelConfirmationDialog.yesCancel')}
         </Button>
       </DialogActions>
     </Dialog>

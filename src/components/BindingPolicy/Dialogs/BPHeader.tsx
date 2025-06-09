@@ -17,6 +17,7 @@ import CreateBindingPolicyDialog, { PolicyData } from '../CreateBindingPolicyDia
 import useTheme from '../../../stores/themeStore';
 import { ManagedCluster, Workload } from '../../../types/bindingPolicy';
 import Fade from '@mui/material/Fade';
+import { useTranslation } from 'react-i18next';
 
 interface BPHeaderProps {
   searchQuery: string;
@@ -53,6 +54,7 @@ const BPHeader: React.FC<BPHeaderProps> = ({
   const [searchFocused, setSearchFocused] = useState(false);
   const theme = useTheme(state => state.theme);
   const isDark = theme === 'dark';
+  const { t } = useTranslation();
 
   useEffect(() => {
     console.log(
@@ -79,10 +81,10 @@ const BPHeader: React.FC<BPHeaderProps> = ({
   };
 
   const statusFilterItems = [
-    { value: '', label: 'All Status', color: '', icon: null },
-    { value: 'Active', label: 'Active', color: colors.success },
-    { value: 'Pending', label: 'Pending', color: colors.warning },
-    { value: 'Inactive', label: 'Inactive', color: colors.error },
+    { value: '', label: t('bindingPolicy.statusFilter.all'), color: '', icon: null },
+    { value: 'Active', label: t('bindingPolicy.statusFilter.active'), color: colors.success },
+    { value: 'Pending', label: t('bindingPolicy.statusFilter.pending'), color: colors.warning },
+    { value: 'Inactive', label: t('bindingPolicy.statusFilter.inactive'), color: colors.error },
   ];
 
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -142,7 +144,7 @@ const BPHeader: React.FC<BPHeaderProps> = ({
           className="mb-2 flex items-center gap-2 text-3xl font-bold"
           style={{ color: colors.primary }}
         >
-          <div>Manage Binding Policies</div>
+          <div>{t('bindingPolicy.title')}</div>
           <span
             className="rounded-full px-3 py-1 text-sm"
             style={{
@@ -154,7 +156,7 @@ const BPHeader: React.FC<BPHeaderProps> = ({
           </span>
         </h1>
         <p className="text-lg" style={{ color: colors.textSecondary }}>
-          Create and manage binding policies for workload distribution
+          {t('bindingPolicy.description')}
         </p>
       </div>
 
@@ -171,7 +173,7 @@ const BPHeader: React.FC<BPHeaderProps> = ({
             className={`relative flex-grow transition-all ${searchFocused ? 'max-w-lg' : 'max-w-sm'}`}
           >
             <TextField
-              placeholder="Search policies by name, label or status"
+              placeholder={t('bindingPolicy.header.searchPlaceholder')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               onFocus={() => setSearchFocused(true)}
@@ -241,19 +243,7 @@ const BPHeader: React.FC<BPHeaderProps> = ({
                   left: '8px',
                 }}
               >
-                Press{' '}
-                <kbd
-                  style={{
-                    fontFamily: 'monospace',
-                    padding: '0px 4px',
-                    borderRadius: '3px',
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-                    fontSize: '10px',
-                  }}
-                >
-                  Esc
-                </kbd>{' '}
-                to clear search
+                {t('bindingPolicy.header.clearSearch')}
               </Typography>
             )}
           </div>
@@ -282,7 +272,7 @@ const BPHeader: React.FC<BPHeaderProps> = ({
                   },
                 }}
               >
-                Delete Selected
+                {t('bindingPolicy.header.deleteSelected')}
                 <Box
                   component="span"
                   sx={{
@@ -342,8 +332,8 @@ const BPHeader: React.FC<BPHeaderProps> = ({
             >
               {activeFilters.status
                 ? statusFilterItems.find(item => item.value === activeFilters.status)?.label ||
-                  'Status Filter'
-                : 'Status Filter'}
+                  t('bindingPolicy.statusFilter.label')
+                : t('bindingPolicy.statusFilter.label')}
               {activeFilters.status && (
                 <Box
                   component="span"
@@ -471,7 +461,7 @@ const BPHeader: React.FC<BPHeaderProps> = ({
                   : '0 4px 6px -1px rgba(47, 134, 255, 0.2), 0 2px 4px -2px rgba(47, 134, 255, 0.1)',
               }}
             >
-              Create Binding Policy
+              {t('bindingPolicy.header.create')}
             </Button>
           </div>
         </div>
@@ -509,12 +499,12 @@ const BPHeader: React.FC<BPHeaderProps> = ({
               }}
             >
               <Filter size={16} style={{ color: colors.primary }} />
-              Active Filters:
+              {t('bindingPolicy.header.activeFilters')}
             </Typography>
 
             {searchQuery && (
               <Chip
-                label={`Search: "${searchQuery}"`}
+                label={`${t('bindingPolicy.header.search')}: "${searchQuery}"`}
                 size="medium"
                 onDelete={() => setSearchQuery('')}
                 sx={{
@@ -541,7 +531,7 @@ const BPHeader: React.FC<BPHeaderProps> = ({
 
             {activeFilters.status && (
               <Chip
-                label={`Status: ${statusFilterItems.find(item => item.value === activeFilters.status)?.label}`}
+                label={`${t('bindingPolicy.header.status')}: ${statusFilterItems.find(item => item.value === activeFilters.status)?.label}`}
                 size="medium"
                 onDelete={() => handleStatusFilter(undefined)}
                 sx={{
@@ -602,7 +592,7 @@ const BPHeader: React.FC<BPHeaderProps> = ({
                 transition: 'all 0.2s ease',
               }}
             >
-              Clear All
+              {t('bindingPolicy.header.clearAll')}
             </Button>
           </div>
         )}

@@ -10,6 +10,7 @@ import { CreateOwnHelmForm } from './CreateOwnHelmForm';
 import { api } from '../../../lib/api';
 import WorkloadLabelInput from '../WorkloadLabelInput';
 import CancelButton from '../../common/CancelButton';
+import { useTranslation } from 'react-i18next';
 
 export interface HelmFormData {
   repoName: string;
@@ -57,6 +58,7 @@ export const HelmTab = ({
   handleCancelClick,
 }: Props) => {
   const theme = useTheme(state => state.theme);
+  const { t } = useTranslation();
   const [selectedOption, setSelectedOption] = useState('createOwn');
   const [selectedChart, setSelectedChart] = useState<string | null>(null);
   const [popularLoading, setPopularLoading] = useState(false);
@@ -105,7 +107,7 @@ export const HelmTab = ({
 
   const handlePopularHelmDeploy = async () => {
     if (!selectedChart) {
-      toast.error('Please select a Helm chart to deploy.');
+      toast.error(t('workloads.helm.messages.selectChart'));
       return;
     }
 
@@ -124,7 +126,7 @@ export const HelmTab = ({
       const response = await api.post('/deploy/helm?store=true', requestBody);
 
       if (response.status === 200 || response.status === 201) {
-        toast.success(`Selected ${selectedChart} Helm chart deployed successfully!`);
+        toast.success(t('workloads.helm.messages.deploySuccess', { chartName: selectedChart }));
         setSelectedChart(null);
         setTimeout(() => window.location.reload(), 4000);
       } else {
@@ -136,11 +138,9 @@ export const HelmTab = ({
 
       if (err.response) {
         if (err.response.status === 500) {
-          toast.error(
-            'Deployment failed: failed to install chart: cannot re-use a name that is still in use!'
-          );
+          toast.error(t('workloads.helm.messages.deployFailureReuse'));
         } else if (err.response.status === 400) {
-          toast.error('Failed to deploy popular Helm chart!');
+          toast.error(t('workloads.helm.messages.deployFailure'));
         }
       }
     } finally {
@@ -170,7 +170,7 @@ export const HelmTab = ({
             <FormControlLabel
               value="createOwn"
               control={<Radio />}
-              label="Create your own Helm chart"
+              label={t('workloads.helm.createOwn')} // Instead of "Create your own Helm chart"
               sx={{
                 '& .MuiTypography-root': {
                   color: theme === 'dark' ? '#d4d4d4' : '#333',
@@ -181,7 +181,7 @@ export const HelmTab = ({
             <FormControlLabel
               value="popularCharts"
               control={<Radio />}
-              label="Deploy from popular Helm charts"
+              label={t('workloads.helm.popularCharts')} // Instead of "Deploy from popular Helm charts"
               sx={{
                 '& .MuiTypography-root': {
                   color: theme === 'dark' ? '#d4d4d4' : '#333',
@@ -192,7 +192,7 @@ export const HelmTab = ({
             <FormControlLabel
               value="userCharts"
               control={<Radio />}
-              label="List of user created Charts"
+              label={t('workloads.helm.userCharts')} // Instead of "List of user created Charts"
               sx={{
                 '& .MuiTypography-root': {
                   color: theme === 'dark' ? '#d4d4d4' : '#333',
@@ -247,7 +247,7 @@ export const HelmTab = ({
             onClick={handleCancelClick}
             disabled={loading || popularLoading || userLoading}
           >
-            Cancel
+            {t('workloads.helm.buttons.cancel')}
           </CancelButton>
           <Button
             variant="contained"
@@ -282,8 +282,8 @@ export const HelmTab = ({
             {(selectedOption === 'createOwn' && loading) ||
             (selectedOption === 'popularCharts' && popularLoading) ||
             (selectedOption === 'userCharts' && userLoading)
-              ? 'Deploying...'
-              : 'Apply'}
+              ? t('workloads.helm.buttons.deploying')
+              : t('workloads.helm.buttons.apply')}
           </Button>
         </Box>
       </Box>

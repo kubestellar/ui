@@ -5,6 +5,7 @@ import StorageIcon from '@mui/icons-material/Storage';
 import LanguageIcon from '@mui/icons-material/Language';
 import PersonIcon from '@mui/icons-material/Person';
 import BusinessIcon from '@mui/icons-material/Business';
+import { useTranslation } from 'react-i18next'; // Add this import
 
 interface Props {
   repositories: Repository[];
@@ -13,6 +14,8 @@ interface Props {
 }
 
 export const RepositoriesListForm = ({ repositories, loading, theme }: Props) => {
+  const { t } = useTranslation(); // Add translation hook
+
   // Helper function to get repository icon based on name
   const getRepositoryIcon = (repoName: string) => {
     const name = repoName.toLowerCase();
@@ -32,7 +35,7 @@ export const RepositoriesListForm = ({ repositories, loading, theme }: Props) =>
           💡
         </span>
         <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
-          Repositories are sources for Helm charts, click on a card to see more details
+          {t('workloads.artifactHub.repositoriesList.tip')}
         </Typography>
       </Box>
 
@@ -65,7 +68,7 @@ export const RepositoriesListForm = ({ repositories, loading, theme }: Props) =>
               sx={{ color: theme === 'dark' ? '#90caf9' : '#1976d2', mb: 2 }}
             />
             <Typography variant="body2" sx={{ color: theme === 'dark' ? '#aaa' : '#666' }}>
-              Loading repositories...
+              {t('workloads.artifactHub.repositoriesList.loading')}
             </Typography>
           </Box>
         ) : repositories.length > 0 ? (
@@ -145,7 +148,7 @@ export const RepositoriesListForm = ({ repositories, loading, theme }: Props) =>
                       <Box sx={{ display: 'flex', gap: 1 }}>
                         {repo.official && (
                           <Chip
-                            label="Official"
+                            label={t('workloads.artifactHub.repositoriesList.official')}
                             size="small"
                             color="primary"
                             sx={{
@@ -158,7 +161,11 @@ export const RepositoriesListForm = ({ repositories, loading, theme }: Props) =>
                           />
                         )}
                         <Chip
-                          label={repo.kind === 0 ? 'Helm' : 'Other'}
+                          label={
+                            repo.kind === 0
+                              ? t('workloads.artifactHub.repositoriesList.helm')
+                              : t('workloads.artifactHub.repositoriesList.other')
+                          }
                           size="small"
                           variant="outlined"
                           sx={{
@@ -198,7 +205,9 @@ export const RepositoriesListForm = ({ repositories, loading, theme }: Props) =>
                                     : 'rgba(0, 0, 0, 0.6)',
                               }}
                             >
-                              <strong>Organization:</strong>{' '}
+                              <strong>
+                                {t('workloads.artifactHub.repositoriesList.organization')}
+                              </strong>{' '}
                               {repo.organization_display_name || repo.organization_name}
                             </Typography>
                           </Box>
@@ -228,7 +237,8 @@ export const RepositoriesListForm = ({ repositories, loading, theme }: Props) =>
                                     : 'rgba(0, 0, 0, 0.6)',
                               }}
                             >
-                              <strong>User:</strong> {repo.user_alias}
+                              <strong>{t('workloads.artifactHub.repositoriesList.user')}</strong>{' '}
+                              {repo.user_alias}
                             </Typography>
                           </Box>
                         </Grid>
@@ -259,7 +269,8 @@ export const RepositoriesListForm = ({ repositories, loading, theme }: Props) =>
                               textOverflow: 'ellipsis',
                             }}
                           >
-                            <strong>URL:</strong> {repo.url}
+                            <strong>{t('workloads.artifactHub.repositoriesList.url')}</strong>{' '}
+                            {repo.url}
                           </Typography>
                         </Box>
                       </Grid>
@@ -290,7 +301,7 @@ export const RepositoriesListForm = ({ repositories, loading, theme }: Props) =>
                 fontWeight: 500,
               }}
             >
-              No repositories available
+              {t('workloads.artifactHub.repositoriesList.noRepositories')}
             </Typography>
           </Box>
         )}

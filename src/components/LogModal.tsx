@@ -5,6 +5,7 @@ import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
 import useTheme from '../stores/themeStore';
 import DownloadLogsButton from './DownloadLogsButton';
+import { useTranslation } from 'react-i18next';
 
 interface LogModalProps {
   namespace: string;
@@ -14,6 +15,7 @@ interface LogModalProps {
 }
 
 const LogModal = ({ namespace, deploymentName, onClose, cluster = 'default' }: LogModalProps) => {
+  const { t } = useTranslation();
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminalInstance = useRef<Terminal | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,7 +55,7 @@ const LogModal = ({ namespace, deploymentName, onClose, cluster = 'default' }: L
     );
 
     socket.onopen = () => {
-      term.writeln('\x1b[32m✔ Connected to log stream...\x1b[0m');
+      term.writeln(`\x1b[32m✔ ${t('logModal.connectedToStream')}\x1b[0m`);
       setLoading(false);
       setError(null);
     };
@@ -71,9 +73,9 @@ const LogModal = ({ namespace, deploymentName, onClose, cluster = 'default' }: L
     };
 
     socket.onclose = () => {
-      term.writeln('\x1b[31m⚠ Complete Logs. Connection closed.\x1b[0m');
+      term.writeln(`\x1b[31m⚠ ${t('logModal.connectionClosed')}\x1b[0m`);
       if (socket.readyState !== WebSocket.OPEN) {
-        setError(' Connection closed. Please retry.');
+        setError(t('logModal.retryConnection'));
       }
     };
 
@@ -81,7 +83,7 @@ const LogModal = ({ namespace, deploymentName, onClose, cluster = 'default' }: L
       socket.close();
       term.dispose();
     };
-  }, [namespace, deploymentName, theme]); // Re-run effect when theme changes
+  }, [namespace, deploymentName, theme, t]); // Add t to dependencies
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
@@ -97,7 +99,7 @@ const LogModal = ({ namespace, deploymentName, onClose, cluster = 'default' }: L
           }`}
         >
           <h2 className="text-2xl font-bold">
-            Logs: <span className="text-2xl text-blue-400">{deploymentName}</span>
+            {t('logModal.logs')}: <span className="text-2xl text-blue-400">{deploymentName}</span>
           </h2>
           <div className="flex items-center space-x-2">
             <DownloadLogsButton
@@ -128,7 +130,7 @@ const LogModal = ({ namespace, deploymentName, onClose, cluster = 'default' }: L
               : 'border-gray-300 bg-gray-100 text-black'
           }`}
         >
-          {loading && <p className="text-green-400">🔄 Loading logs...</p>}
+          {loading && <p className="text-green-400">🔄 {t('logModal.loadingLogs')}</p>}
           {error && <p className="text-red-400">{error}</p>}
           <div ref={terminalRef} className="h-full w-full overflow-auto"></div>
         </div>
