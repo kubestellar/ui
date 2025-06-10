@@ -312,7 +312,6 @@
       "local-path-storage"
     ],
     "labels": {
-      "": "",
       "label": "Label",
       "editvalue":"Both key and value are required",
       "manage": "Manage Labels",
