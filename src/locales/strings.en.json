@@ -234,7 +234,6 @@
     "noClustersMatchFilter": "No clusters match your filter selection",
     "noClustersAvailable": "No clusters available yet. Import your first cluster to get started.",
     "importYourFirst": "Import Your First Cluster",
-
     "filterbyLabel": "Filter by Label",
     "actions": {
       "viewDetails": "View Details",
