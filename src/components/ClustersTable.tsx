@@ -385,7 +385,7 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
 
   const handleSaveEdit = () => {
     if (!editingKey.trim() || !editingValue.trim()) {
-      toast.error(t('clusters.labels.editValue'), { duration: 2000 });
+      toast.error(t('clusters.labels.editvalue'), { duration: 2000 });
       return;
     }
     if (editingIndex === null) return;
