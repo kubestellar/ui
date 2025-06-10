@@ -1,5 +1,6 @@
 {
   "common": {
+    "changes": "Changes",
     "clearFilter": "Clear Canvas",
     "cancel": "Cancel",
     "save": "Save",
@@ -234,7 +235,7 @@
     "noClustersMatchFilter": "No clusters match your filter selection",
     "noClustersAvailable": "No clusters available yet. Import your first cluster to get started.",
     "importYourFirst": "Import Your First Cluster",
-    "filterbyLabel": "Filter by Label",
+    "filterByLabel": "Filter by Label",
     "actions": {
       "viewDetails": "View Details",
       "editLabels": "Edit Labels",
@@ -312,6 +313,7 @@
     ],
     "labels": {
       "label": "Label",
+      "editvalue": "Both key and value are required",
       "manage": "Manage Labels",
       "clearFilter": "Clear Filter",
       "searchLabelsPlaceholder": "Search labels...",
@@ -331,6 +333,7 @@
       "clickToAdd": "Click on a label to add it to the canvas",
       "edit": "Edit Labels",
       "add": "Add Labels",
+      "for": "for",
       "bulkEdit": "Bulk Edit Mode",
       "appendToExisting": "Append to existing labels",
       "key": "Label Key",
