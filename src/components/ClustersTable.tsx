@@ -1657,7 +1657,6 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
   const getFilteredCount = () => {
     return filteredClusters.length;
   };
-  const title = t('clusters.title');
   return (
     <div className="p-4" style={{ backgroundColor: colors.background, color: colors.text }}>
       <div className="mb-8">
@@ -1665,7 +1664,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
           className="mb-2 flex items-center gap-2 text-3xl font-bold"
           style={{ color: colors.primary }}
         >
-          <div>{title}</div>
+          <div>{t('clusters.title')}</div>
           <span
             className="rounded-full px-3 py-1 text-sm"
             style={{

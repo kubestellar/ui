@@ -222,33 +222,33 @@
     }
   },
   "clusters": {
-    "title":"Manage Clusters",
+    "title": "Manage Clusters",
     "subtitle": "Manage and monitor your Kubernetes clusters",
-    "searchPlaceholder":"Search clusters by name, label, status or context...",
+    "searchPlaceholder": "Search clusters by name, label, status or context...",
     "importCluster": "Import Cluster",
     "activeFilters": "Active Filters:",
-    "search":"Search",
+    "search": "Search",
     "noClustersFound": "No Clusters Found",
     "noClustersMatchBoth": "No clusters match both your search and filter criteria",
     "noClustersMatchSearch": "No clusters match your search term",
     "noClustersMatchFilter": "No clusters match your filter selection",
     "noClustersAvailable": "No clusters available yet. Import your first cluster to get started.",
     "importYourFirst": "Import Your First Cluster",
-    
+
     "filterbyLabel": "Filter by Label",
-    "actions":{
+    "actions": {
       "viewDetails": "View Details",
       "editLabels": "Edit Labels",
       "copyName": "Copy Name",
       "detachCluster": "Detach Cluster"
     },
-    "status":{
-      "title":"Status",
+    "status": {
+      "title": "Status",
       "active": "Active",
       "inactive": "Inactive",
       "pending": "Pending"
     },
-    "table":{
+    "table": {
       "name": "Name",
       "labels": "Labels",
       "creationTime": "Creation Time",
