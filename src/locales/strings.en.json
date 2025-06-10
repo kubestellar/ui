@@ -313,7 +313,7 @@
     ],
     "labels": {
       "label": "Label",
-      "editvalue":"Both key and value are required",
+      "editvalue": "Both key and value are required",
       "manage": "Manage Labels",
       "clearFilter": "Clear Filter",
       "searchLabelsPlaceholder": "Search labels...",
