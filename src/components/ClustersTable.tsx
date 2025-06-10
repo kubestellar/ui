@@ -1657,7 +1657,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
   const getFilteredCount = () => {
     return filteredClusters.length;
   };
-
+  const title = t('clusters.title');
   return (
     <div className="p-4" style={{ backgroundColor: colors.background, color: colors.text }}>
       <div className="mb-8">
@@ -1665,7 +1665,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
           className="mb-2 flex items-center gap-2 text-3xl font-bold"
           style={{ color: colors.primary }}
         >
-          <div>{t('clusters.title')}</div>
+          <div>{title}</div>
           <span
             className="rounded-full px-3 py-1 text-sm"
             style={{
@@ -2106,7 +2106,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
 
             {filter && (
               <Chip
-                label={`${t('clusters.status')}: ${statusFilterItems.find(item => item.value === filter)?.label}`}
+                label={`${t('clusters.status.title')}: ${statusFilterItems.find(item => item.value === filter)?.label}`}
                 size="medium"
                 onDelete={() => setFilter('')}
                 sx={{
@@ -2133,7 +2133,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
 
             {filterByLabel && (
               <Chip
-                label={`${t('clusters.label')}: ${filterByLabel.key}=${filterByLabel.value}`}
+                label={`${t('clusters.labels.label')}: ${filterByLabel.key}=${filterByLabel.value}`}
                 size="medium"
                 onDelete={() => setFilterByLabel(null)}
                 sx={{

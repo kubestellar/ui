@@ -222,6 +222,40 @@
     }
   },
   "clusters": {
+    "title":"Manage Clusters",
+    "subtitle": "Manage and monitor your Kubernetes clusters",
+    "searchPlaceholder":"Search clusters by name, label, status or context...",
+    "importCluster": "Import Cluster",
+    "activeFilters": "Active Filters:",
+    "search":"Search",
+    "noClustersFound": "No Clusters Found",
+    "noClustersMatchBoth": "No clusters match both your search and filter criteria",
+    "noClustersMatchSearch": "No clusters match your search term",
+    "noClustersMatchFilter": "No clusters match your filter selection",
+    "noClustersAvailable": "No clusters available yet. Import your first cluster to get started.",
+    "importYourFirst": "Import Your First Cluster",
+    
+    "filterbyLabel": "Filter by Label",
+    "actions":{
+      "viewDetails": "View Details",
+      "editLabels": "Edit Labels",
+      "copyName": "Copy Name",
+      "detachCluster": "Detach Cluster"
+    },
+    "status":{
+      "title":"Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "pending": "Pending"
+    },
+    "table":{
+      "name": "Name",
+      "labels": "Labels",
+      "creationTime": "Creation Time",
+      "context": "Context",
+      "status": "Status",
+      "actions": "Actions"
+    },
     "quickConnect": {
       "title": "Connect via Quick Connect",
       "description": "Import your cluster using the quick connect feature",
@@ -278,6 +312,8 @@
       "local-path-storage"
     ],
     "labels": {
+      "label": "Label",
+      "manage": "Manage Labels",
       "clearFilter": "Clear Filter",
       "searchLabelsPlaceholder": "Search labels...",
       "bulkEditTitle": "Edit Labels for {{count}} Clusters",
