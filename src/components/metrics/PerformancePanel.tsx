@@ -35,32 +35,27 @@ const PerformancePanel: React.FC<PerformancePanelProps> = ({ metrics, className 
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
-  // Default dummy data
-  const defaultMetrics: PerformanceMetrics = {
-    memory: {
-      used: '342 MB',
-      total: '512 MB',
-      percentage: 67,
-    },
-    cpu: {
-      usage: 23.5,
-      cores: 4,
-    },
-    goroutines: {
-      active: 156,
-      peak: 203,
-    },
-    gc: {
-      collections: 1247,
-      pauseTime: '1.2ms',
-    },
-    heap: {
-      size: '289 MB',
-      objects: 425893,
-    },
-  };
+  const performanceData = metrics;
 
-  const performanceData = metrics || defaultMetrics;
+  if (!performanceData) {
+    return (
+      <div
+        className={`
+        rounded-xl border shadow-sm transition-all duration-300
+        ${
+          isDark
+            ? 'border-gray-700 bg-gray-800 hover:shadow-lg hover:shadow-gray-900/20'
+            : 'border-gray-200 bg-white hover:shadow-lg hover:shadow-gray-200/50'
+        }
+        ${className}
+      `}
+      >
+        <div className="flex h-64 items-center justify-center">
+          <p className="text-gray-500 dark:text-gray-400">No performance metrics available</p>
+        </div>
+      </div>
+    );
+  }
 
   const getUsageColor = (percentage: number) => {
     if (percentage < 50) return isDark ? 'text-green-400' : 'text-green-600';

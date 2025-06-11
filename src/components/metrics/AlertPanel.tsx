@@ -7,6 +7,9 @@ import {
   Clock,
   Filter,
   Search,
+  Bell,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import useTheme from '../../stores/themeStore';
 
@@ -35,66 +38,9 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
   const isDark = theme === 'dark';
   const [filter, setFilter] = useState<'all' | 'critical' | 'warning' | 'info'>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showAcknowledged, setShowAcknowledged] = useState(true);
 
-  // Default dummy data
-  const defaultAlerts: Alert[] = [
-    {
-      id: '1',
-      type: 'critical',
-      title: 'High Memory Usage',
-      message: 'Memory usage has exceeded 90% on cluster-prod-2. Immediate attention required.',
-      timestamp: '2 minutes ago',
-      source: 'cluster-prod-2',
-      acknowledged: false,
-    },
-    {
-      id: '2',
-      type: 'warning',
-      title: 'SSL Certificate Expiring',
-      message: 'SSL certificate for api.example.com will expire in 7 days.',
-      timestamp: '15 minutes ago',
-      source: 'api.example.com',
-      acknowledged: false,
-    },
-    {
-      id: '3',
-      type: 'info',
-      title: 'Deployment Completed',
-      message: 'Successfully deployed version 2.1.0 to production cluster.',
-      timestamp: '1 hour ago',
-      source: 'deployment-system',
-      acknowledged: true,
-    },
-    {
-      id: '4',
-      type: 'warning',
-      title: 'High CPU Usage',
-      message: 'CPU usage on worker-node-3 has been above 85% for the last 10 minutes.',
-      timestamp: '2 hours ago',
-      source: 'worker-node-3',
-      acknowledged: false,
-    },
-    {
-      id: '5',
-      type: 'critical',
-      title: 'Database Connection Timeout',
-      message: 'Multiple connection timeouts detected on primary database server.',
-      timestamp: '3 hours ago',
-      source: 'database-primary',
-      acknowledged: false,
-    },
-    {
-      id: '6',
-      type: 'success',
-      title: 'Backup Completed',
-      message: 'Daily database backup completed successfully.',
-      timestamp: '6 hours ago',
-      source: 'backup-system',
-      acknowledged: true,
-    },
-  ];
-
-  const alertData = alerts.length > 0 ? alerts : defaultAlerts;
+  const alertData = alerts;
 
   // Filter alerts based on type and search term
   const filteredAlerts = alertData.filter(alert => {
@@ -104,9 +50,18 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
       alert.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       alert.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
       alert.source.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesAcknowledged = showAcknowledged || !alert.acknowledged;
 
-    return matchesFilter && matchesSearch;
+    return matchesFilter && matchesSearch && matchesAcknowledged;
   });
+
+  const acknowledgeAlert = (alertId: string) => {
+    console.log('Acknowledge alert:', alertId);
+  };
+
+  const dismissAlert = (alertId: string) => {
+    console.log('Dismiss alert:', alertId);
+  };
 
   const getAlertIcon = (type: Alert['type']) => {
     switch (type) {
@@ -161,6 +116,7 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
       critical: alertData.filter(a => a.type === 'critical' && !a.acknowledged).length,
       warning: alertData.filter(a => a.type === 'warning' && !a.acknowledged).length,
       unacknowledged: alertData.filter(a => !a.acknowledged).length,
+      new: 0,
     };
     return counts;
   };
@@ -179,7 +135,7 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
       ${className}
     `}
     >
-      {/* Header */}
+      {/* Enhanced Header */}
       <div
         className={`
         flex items-center justify-between border-b p-4
@@ -193,7 +149,7 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
             ${isDark ? 'bg-red-900/20 text-red-400' : 'bg-red-100 text-red-600'}
           `}
           >
-            <AlertTriangle size={18} />
+            <Bell size={18} />
           </div>
           <div>
             <h3
@@ -210,7 +166,7 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
           </div>
         </div>
 
-        {/* Alert Summary */}
+        {/* Enhanced Alert Summary */}
         <div className="flex items-center space-x-2">
           {counts.critical > 0 && (
             <div
@@ -235,7 +191,7 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
         </div>
       </div>
 
-      {/* Controls */}
+      {/* Enhanced Controls */}
       <div
         className={`
         space-y-3 border-b p-4
@@ -267,36 +223,58 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
           />
         </div>
 
-        {/* Filters */}
-        <div className="flex items-center space-x-2">
-          <Filter className={`h-4 w-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
-          <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-            Filter:
-          </span>
-          {(['all', 'critical', 'warning', 'info'] as const).map(filterType => (
-            <button
-              key={filterType}
-              onClick={() => setFilter(filterType)}
-              className={`
-                rounded-full px-3 py-1 text-xs font-medium capitalize transition-colors
-                ${
-                  filter === filterType
-                    ? isDark
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-blue-600 text-white'
-                    : isDark
-                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }
-              `}
-            >
-              {filterType}
-            </button>
-          ))}
+        {/* Enhanced Filters */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Filter className={`h-4 w-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
+            <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+              Filter:
+            </span>
+            {(['all', 'critical', 'warning', 'info'] as const).map(filterType => (
+              <button
+                key={filterType}
+                onClick={() => setFilter(filterType)}
+                className={`
+                  rounded-full px-3 py-1 text-xs font-medium capitalize transition-colors
+                  ${
+                    filter === filterType
+                      ? isDark
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-blue-600 text-white'
+                      : isDark
+                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }
+                `}
+              >
+                {filterType}
+              </button>
+            ))}
+          </div>
+
+          {/* Show/Hide Acknowledged Toggle */}
+          <button
+            onClick={() => setShowAcknowledged(!showAcknowledged)}
+            className={`
+              flex items-center space-x-1 rounded-lg px-3 py-1 text-xs transition-colors
+              ${
+                showAcknowledged
+                  ? isDark
+                    ? 'bg-gray-700 text-gray-300'
+                    : 'bg-gray-100 text-gray-600'
+                  : isDark
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-blue-600 text-white'
+              }
+            `}
+          >
+            {showAcknowledged ? <Eye size={12} /> : <EyeOff size={12} />}
+            <span>{showAcknowledged ? 'Show All' : 'Hide Acked'}</span>
+          </button>
         </div>
       </div>
 
-      {/* Alerts List */}
+      {/* Enhanced Alerts List */}
       <div className={`${maxHeight} overflow-y-auto`}>
         {filteredAlerts.length === 0 ? (
           <div className="p-8 text-center">
@@ -310,7 +288,11 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
               No alerts found
             </p>
             <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-              {searchTerm ? 'Try adjusting your search terms' : 'All systems are running smoothly'}
+              {searchTerm
+                ? 'Try adjusting your search terms'
+                : alertData.length === 0
+                  ? 'No alerts available'
+                  : 'All systems are running smoothly'}
             </p>
           </div>
         ) : (
@@ -319,7 +301,7 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
               <div
                 key={alert.id}
                 className={`
-                  p-4 transition-all duration-200 hover:bg-opacity-80
+                  group relative p-4 transition-all duration-200 hover:bg-opacity-80
                   ${getAlertStyle(alert.type, alert.acknowledged)}
                   ${alert.acknowledged ? 'opacity-60' : ''}
                 `}
@@ -338,15 +320,17 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
                       >
                         {alert.title}
                       </h4>
-                      <span
-                        className={`
-                        rounded-full px-2 py-1 text-xs font-medium capitalize
-                        ${getPriorityColor(alert.type)}
-                        ${isDark ? 'bg-gray-700' : 'bg-gray-100'}
-                      `}
-                      >
-                        {alert.type}
-                      </span>
+                      <div className="flex items-center space-x-1">
+                        <span
+                          className={`
+                          rounded-full px-2 py-1 text-xs font-medium capitalize
+                          ${getPriorityColor(alert.type)}
+                          ${isDark ? 'bg-gray-700' : 'bg-gray-100'}
+                        `}
+                        >
+                          {alert.type}
+                        </span>
+                      </div>
                     </div>
 
                     <p
@@ -359,16 +343,14 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
                       {alert.message}
                     </p>
 
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center space-x-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2 text-xs">
                         <Clock
                           className={`h-3 w-3 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
                         />
                         <span className={isDark ? 'text-gray-500' : 'text-gray-500'}>
                           {alert.timestamp}
                         </span>
-                      </div>
-                      <div className="flex items-center space-x-2">
                         <span
                           className={`
                           rounded px-2 py-1 text-xs
@@ -377,18 +359,53 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
                         >
                           {alert.source}
                         </span>
-                        {alert.acknowledged && (
-                          <span
+                      </div>
+
+                      {/* Alert Actions */}
+                      <div className="flex items-center space-x-1 opacity-0 transition-opacity group-hover:opacity-100">
+                        {!alert.acknowledged && (
+                          <button
+                            onClick={() => acknowledgeAlert(alert.id)}
                             className={`
-                            rounded px-2 py-1 text-xs
-                            ${isDark ? 'bg-green-800/50 text-green-300' : 'bg-green-100 text-green-600'}
-                          `}
+                              rounded px-2 py-1 text-xs transition-colors
+                              ${
+                                isDark
+                                  ? 'bg-green-800/50 text-green-300 hover:bg-green-700/50'
+                                  : 'bg-green-100 text-green-600 hover:bg-green-200'
+                              }
+                            `}
                           >
-                            Acknowledged
-                          </span>
+                            Acknowledge
+                          </button>
                         )}
+                        <button
+                          onClick={() => dismissAlert(alert.id)}
+                          className={`
+                            rounded px-2 py-1 text-xs transition-colors
+                            ${
+                              isDark
+                                ? 'bg-red-800/50 text-red-300 hover:bg-red-700/50'
+                                : 'bg-red-100 text-red-600 hover:bg-red-200'
+                            }
+                          `}
+                        >
+                          Dismiss
+                        </button>
                       </div>
                     </div>
+
+                    {alert.acknowledged && (
+                      <div className="mt-2">
+                        <span
+                          className={`
+                          rounded px-2 py-1 text-xs
+                          ${isDark ? 'bg-green-800/50 text-green-300' : 'bg-green-100 text-green-600'}
+                        `}
+                        >
+                          ✓ Acknowledged
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -397,7 +414,7 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
         )}
       </div>
 
-      {/* Footer */}
+      {/* Enhanced Footer */}
       <div
         className={`
         border-t p-4
@@ -405,9 +422,19 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
       `}
       >
         <div className="flex items-center justify-between text-sm">
-          <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>
-            Last updated: 2 minutes ago
-          </span>
+          <div className="flex items-center space-x-4">
+            <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>
+              Last updated: {alertData.length > 0 ? '2 minutes ago' : 'No data'}
+            </span>
+            {alertData.length > 0 && (
+              <div className="flex items-center space-x-1">
+                <div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
+                <span className={isDark ? 'text-gray-500' : 'text-gray-500'}>
+                  Monitoring active
+                </span>
+              </div>
+            )}
+          </div>
           <button
             className={`
             rounded-lg px-3 py-1 transition-colors

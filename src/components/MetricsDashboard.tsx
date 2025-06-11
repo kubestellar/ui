@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Activity,
@@ -12,6 +12,9 @@ import {
   HardDrive,
   ChevronUp,
   ChevronDown,
+  Wifi,
+  WifiOff,
+  AlertTriangle,
 } from 'lucide-react';
 import useTheme from '../stores/themeStore';
 
@@ -21,6 +24,44 @@ import PerformancePanel, { type PerformanceMetrics } from './metrics/Performance
 import DeploymentPanel, { type DeploymentStats } from './metrics/DeploymentPanel';
 import AlertPanel, { type Alert } from './metrics/AlertPanel';
 import TrendPanel, { type TrendData } from './metrics/TrendPanel';
+
+// Import metrics service
+import {
+  fetchHealthData,
+  fetchSystemData,
+  fetchDeploymentsData,
+  fetchGitHubData,
+  isMetricsError,
+  transformHealthData,
+  transformSystemData,
+  transformDeploymentsData,
+  fetchKubernetesData,
+  fetchRedisData,
+} from '../services/metricsService';
+
+interface GitHubData {
+  commits: number;
+  pullRequests: number;
+  issues: number;
+  contributors: number;
+  lastUpdated: string;
+}
+
+interface RedisData {
+  connectedClients: number;
+  usedMemory: number;
+  totalKeys: number;
+  operationsPerSecond: number;
+  lastUpdated: string;
+}
+
+interface KubernetesData {
+  pods: number;
+  deployments: number;
+  services: number;
+  nodes: number;
+  lastUpdated: string;
+}
 
 const StatCard = ({
   title,
@@ -39,28 +80,32 @@ const StatCard = ({
   const isNegative = typeof change === 'number' && change < 0;
 
   const getGradient = () => {
-    if (iconColor.includes('blue')) {
-      return 'bg-gradient-to-br from-blue-500/10 to-indigo-600/5 dark:from-blue-900/20 dark:to-indigo-900/10';
-    } else if (iconColor.includes('green')) {
+    if (iconColor.includes('green')) {
       return 'bg-gradient-to-br from-emerald-500/10 to-green-600/5 dark:from-emerald-900/20 dark:to-green-900/10';
+    } else if (iconColor.includes('blue')) {
+      return 'bg-gradient-to-br from-blue-500/10 to-indigo-600/5 dark:from-blue-900/20 dark:to-indigo-900/10';
     } else if (iconColor.includes('purple')) {
       return 'bg-gradient-to-br from-violet-500/10 to-purple-600/5 dark:from-violet-900/20 dark:to-purple-900/10';
-    } else if (iconColor.includes('amber')) {
+    } else if (iconColor.includes('amber') || iconColor.includes('yellow')) {
       return 'bg-gradient-to-br from-amber-500/10 to-orange-600/5 dark:from-amber-900/20 dark:to-orange-900/10';
+    } else if (iconColor.includes('red')) {
+      return 'bg-gradient-to-br from-red-500/10 to-red-600/5 dark:from-red-900/20 dark:to-red-900/10';
     } else {
       return 'bg-gradient-to-br from-gray-500/5 to-gray-600/5 dark:from-gray-800/20 dark:to-gray-900/10';
     }
   };
 
   const getIconGradient = () => {
-    if (iconColor.includes('blue')) {
-      return 'bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-400 dark:to-indigo-500';
-    } else if (iconColor.includes('green')) {
+    if (iconColor.includes('green')) {
       return 'bg-gradient-to-br from-emerald-500 to-green-600 dark:from-emerald-400 dark:to-green-500';
+    } else if (iconColor.includes('blue')) {
+      return 'bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-400 dark:to-indigo-500';
     } else if (iconColor.includes('purple')) {
       return 'bg-gradient-to-br from-violet-500 to-purple-600 dark:from-violet-400 dark:to-purple-500';
-    } else if (iconColor.includes('amber')) {
+    } else if (iconColor.includes('amber') || iconColor.includes('yellow')) {
       return 'bg-gradient-to-br from-amber-500 to-orange-600 dark:from-amber-400 dark:to-orange-500';
+    } else if (iconColor.includes('red')) {
+      return 'bg-gradient-to-br from-red-500 to-red-600 dark:from-red-400 dark:to-red-500';
     } else {
       return 'bg-gradient-to-br from-gray-500 to-gray-600 dark:from-gray-400 dark:to-gray-500';
     }
@@ -159,121 +204,260 @@ const OverviewCard = ({
   );
 };
 
+// Enhanced live status indicator
+const LiveStatusIndicator = ({
+  isConnected,
+  lastUpdate,
+}: {
+  isConnected: boolean;
+  lastUpdate: string;
+}) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
+  return (
+    <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-1">
+        {isConnected ? (
+          <Wifi className="h-4 w-4 text-green-500" />
+        ) : (
+          <WifiOff className="h-4 w-4 text-red-500" />
+        )}
+        <div
+          className={`h-2 w-2 rounded-full ${isConnected ? 'animate-pulse bg-green-500' : 'bg-red-500'}`}
+        />
+      </div>
+      <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+        {isConnected ? 'Live' : 'Disconnected'} • {lastUpdate}
+      </span>
+    </div>
+  );
+};
+
+// Add loading state component
+const LoadingState = () => (
+  <div className="flex h-64 w-full items-center justify-center">
+    <div className="flex flex-col items-center space-y-4">
+      <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
+      <p className="text-sm text-gray-500 dark:text-gray-400">Loading metrics data...</p>
+    </div>
+  </div>
+);
+
+// Enhance the ErrorState component to include more details
+const ErrorState = ({ message, onRetry }: { message: string; onRetry: () => void }) => (
+  <div className="flex h-64 w-full items-center justify-center">
+    <div className="flex flex-col items-center space-y-4">
+      <div className="rounded-full bg-red-100 p-3 dark:bg-red-900/30">
+        <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
+      </div>
+      <div className="text-center">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+          Failed to load metrics
+        </h3>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{message}</p>
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          This may be due to API service being down or returning invalid data.
+        </p>
+      </div>
+      <button
+        onClick={onRetry}
+        className="rounded-md bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600"
+      >
+        Retry
+      </button>
+    </div>
+  </div>
+);
+
 const MetricsDashboard: React.FC = () => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedTimeRange, setSelectedTimeRange] = useState('24h');
+  const [isLiveMode, setIsLiveMode] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState(new Date().toLocaleTimeString());
+  const [systemHealth, setSystemHealth] = useState(0);
+
+  // Add data states
+  const [healthServices, setHealthServices] = useState<ServiceStatus[]>([]);
+  const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetrics | null>(null);
+  const [deploymentStats, setDeploymentStats] = useState<DeploymentStats | null>(null);
+  const [systemAlerts, setSystemAlerts] = useState<Alert[]>([]);
+  const [trendData, setTrendData] = useState<TrendData[]>([]);
+  const [githubData, setGithubData] = useState<GitHubData | null>(null);
+  const [redisData, setRedisData] = useState<RedisData | null>(null);
+  const [kubernetesData, setKubernetesData] = useState<KubernetesData | null>(null);
+
+  // Add loading states
+  const [loading, setLoading] = useState({
+    health: true,
+    system: true,
+    deployments: true,
+    github: true,
+    helm: true,
+  });
+
+  // Add error states
+  const [errors, setErrors] = useState({
+    health: '',
+    system: '',
+    deployments: '',
+    github: '',
+    helm: '',
+  });
+
+  // Combined function to fetch all metrics
+  const fetchAllMetrics = async () => {
+    setIsRefreshing(true);
+
+    try {
+      console.log('Fetching metrics data from API...');
+
+      // Fetch health data
+      const healthResponse = await fetchHealthData();
+      if (!isMetricsError(healthResponse)) {
+        console.log('Health data received:', healthResponse);
+        setHealthServices(transformHealthData(healthResponse));
+        setSystemHealth(healthResponse.summary.health_percentage);
+        setErrors(prev => ({ ...prev, health: '' }));
+      } else {
+        console.error('Health data error:', healthResponse.message);
+        setErrors(prev => ({ ...prev, health: healthResponse.message }));
+        setHealthServices([]);
+        setSystemHealth(0);
+      }
+
+      // Fetch system data
+      const systemResponse = await fetchSystemData();
+      if (!isMetricsError(systemResponse)) {
+        setPerformanceMetrics(transformSystemData(systemResponse));
+        setErrors(prev => ({ ...prev, system: '' }));
+      } else {
+        setErrors(prev => ({ ...prev, system: systemResponse.message }));
+        setPerformanceMetrics(null);
+      }
+
+      // Fetch deployments data
+      const deploymentsResponse = await fetchDeploymentsData();
+      if (!isMetricsError(deploymentsResponse)) {
+        setDeploymentStats(transformDeploymentsData(deploymentsResponse));
+        setErrors(prev => ({ ...prev, deployments: '' }));
+      } else {
+        setErrors(prev => ({ ...prev, deployments: deploymentsResponse.message }));
+        setDeploymentStats(null);
+      }
+
+      // Fetch GitHub data
+      const githubResponse = await fetchGitHubData();
+      if (!isMetricsError(githubResponse)) {
+        setGithubData(githubResponse);
+        setErrors(prev => ({ ...prev, github: '' }));
+      } else {
+        setErrors(prev => ({ ...prev, github: githubResponse.message }));
+        setGithubData(null);
+      }
+
+      // Fetch Kubernetes/Helm data
+      const kubernetesResponse = await fetchKubernetesData();
+      if (!isMetricsError(kubernetesResponse)) {
+        setKubernetesData(kubernetesResponse);
+        setErrors(prev => ({ ...prev, helm: '' }));
+      } else {
+        setErrors(prev => ({ ...prev, helm: kubernetesResponse.message }));
+        setKubernetesData(null);
+      }
+
+      // Fetch Redis data
+      const redisResponse = await fetchRedisData();
+      if (!isMetricsError(redisResponse)) {
+        setRedisData(redisResponse);
+      } else {
+        setRedisData(null);
+      }
+
+      setLastUpdate(new Date().toLocaleTimeString());
+    } catch (error) {
+      console.error('Error fetching metrics:', error);
+      // Set generic error for all services if something catastrophic happens
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setErrors({
+        health: errorMessage,
+        system: errorMessage,
+        deployments: errorMessage,
+        github: errorMessage,
+        helm: errorMessage,
+      });
+    } finally {
+      setLoading({
+        health: false,
+        system: false,
+        deployments: false,
+        github: false,
+        helm: false,
+      });
+      setIsRefreshing(false);
+    }
+  };
+
+  // Initial data load
+  useEffect(() => {
+    fetchAllMetrics();
+  }, []);
+
+  // Real-time data refresh
+  useEffect(() => {
+    if (!isLiveMode) return;
+
+    const interval = setInterval(() => {
+      fetchAllMetrics();
+    }, 30000); // Update every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [isLiveMode]);
 
   const handleRefresh = async () => {
-    setIsRefreshing(true);
-    // Simulate data refresh
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsRefreshing(false);
+    await fetchAllMetrics();
   };
 
-  // Mock data for the specialized panels
-  const healthServices: ServiceStatus[] = [
-    {
-      name: 'Redis Cache',
-      status: 'healthy',
-      uptime: '99.98%',
-      responseTime: '2ms',
-      lastChecked: '2 minutes ago',
-    },
-    {
-      name: 'Kubernetes API',
-      status: 'healthy',
-      uptime: '99.95%',
-      responseTime: '15ms',
-      lastChecked: '1 minute ago',
-    },
-    {
-      name: 'GitHub API',
-      status: 'warning',
-      uptime: '98.2%',
-      responseTime: '125ms',
-      lastChecked: '3 minutes ago',
-    },
-    {
-      name: 'Database',
-      status: 'healthy',
-      uptime: '99.99%',
-      responseTime: '8ms',
-      lastChecked: '1 minute ago',
-    },
-  ];
+  // Generate trend data from performance metrics only
+  useEffect(() => {
+    if (performanceMetrics) {
+      const newTrendData: TrendData[] = [
+        {
+          metric: 'CPU Usage',
+          value: performanceMetrics.cpu.usage,
+          change: 0,
+          period: selectedTimeRange,
+        },
+        {
+          metric: 'Memory Usage',
+          value: performanceMetrics.memory.percentage,
+          change: 0,
+          period: selectedTimeRange,
+        },
+        {
+          metric: 'Goroutines',
+          value: performanceMetrics.goroutines.active,
+          change: 0,
+          period: selectedTimeRange,
+        },
+        {
+          metric: 'GC Collections',
+          value: performanceMetrics.gc.collections,
+          change: 0,
+          period: selectedTimeRange,
+        },
+      ];
+      setTrendData(newTrendData);
+    } else {
+      setTrendData([]);
+    }
+  }, [performanceMetrics, selectedTimeRange]);
 
-  const performanceMetrics: PerformanceMetrics = {
-    memory: {
-      used: '342 MB',
-      total: '512 MB',
-      percentage: 67,
-    },
-    cpu: {
-      usage: 23.5,
-      cores: 4,
-    },
-    goroutines: {
-      active: 156,
-      peak: 203,
-    },
-    gc: {
-      collections: 1247,
-      pauseTime: '1.2ms',
-    },
-    heap: {
-      size: '289 MB',
-      objects: 425893,
-    },
-  };
-
-  const deploymentStats: DeploymentStats = {
-    total: 147,
-    successful: 142,
-    failed: 5,
-    webhook: 89,
-    manual: 58,
-    avgDuration: '3m 42s',
-    lastDeployment: '12 minutes ago',
-  };
-
-  const systemAlerts: Alert[] = [
-    {
-      id: '1',
-      type: 'critical',
-      title: 'High Memory Usage',
-      message: 'Memory usage has exceeded 90% on cluster-prod-2. Immediate attention required.',
-      timestamp: '2 minutes ago',
-      source: 'cluster-prod-2',
-      acknowledged: false,
-    },
-    {
-      id: '2',
-      type: 'warning',
-      title: 'GitHub API Rate Limit',
-      message: 'GitHub API rate limit approaching 80% of hourly quota.',
-      timestamp: '15 minutes ago',
-      source: 'github-api',
-      acknowledged: false,
-    },
-    {
-      id: '3',
-      type: 'info',
-      title: 'Deployment Completed',
-      message: 'Successfully deployed version 2.1.0 to production cluster.',
-      timestamp: '1 hour ago',
-      source: 'deployment-system',
-      acknowledged: true,
-    },
-  ];
-
-  const trendData: TrendData[] = [
-    { metric: 'CPU Usage', value: 67.5, change: -3.2, period: '24h' },
-    { metric: 'Memory Usage', value: 78.9, change: 5.1, period: '24h' },
-    { metric: 'Network I/O', value: 234.7, change: 12.3, period: '24h' },
-    { metric: 'Disk Usage', value: 45.2, change: -1.8, period: '24h' },
-  ];
+  useEffect(() => {
+    setSystemAlerts([]);
+  }, []);
 
   // Animation variants
   const pageAnimationVariant = {
@@ -295,18 +479,39 @@ const MetricsDashboard: React.FC = () => {
       initial="initial"
       animate="animate"
     >
-      {/* Enhanced header following Clusters.tsx pattern */}
+      {/* Enhanced header with live status */}
       <motion.div className="mb-8 px-6 pt-8" variants={itemAnimationVariant}>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="mb-2 text-3xl font-bold text-blue-600 dark:text-blue-400">
-              Metrics & Health Monitoring
-            </h1>
+            <div className="mb-2 flex items-center space-x-3">
+              <h1 className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                Metrics & Health Monitoring
+              </h1>
+              <LiveStatusIndicator isConnected={isLiveMode} lastUpdate={lastUpdate} />
+            </div>
             <p className="text-base text-gray-600 dark:text-gray-400">
               Real-time system performance, health monitoring, and deployment analytics
             </p>
           </div>
           <div className="mt-4 flex items-center space-x-3 md:mt-0">
+            {/* Live mode toggle */}
+            <button
+              onClick={() => setIsLiveMode(!isLiveMode)}
+              className={`
+                flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors
+                ${
+                  isLiveMode
+                    ? 'border-green-300 bg-green-50 text-green-700 dark:border-green-600 dark:bg-green-900/20 dark:text-green-400'
+                    : 'border-gray-300 bg-white text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'
+                }
+              `}
+            >
+              <div
+                className={`h-2 w-2 rounded-full ${isLiveMode ? 'animate-pulse bg-green-500' : 'bg-gray-400'}`}
+              />
+              <span>{isLiveMode ? 'Live' : 'Paused'}</span>
+            </button>
+
             <select
               value={selectedTimeRange}
               onChange={e => setSelectedTimeRange(e.target.value)}
@@ -357,38 +562,46 @@ const MetricsDashboard: React.FC = () => {
 
       {/* Main content container with consistent padding */}
       <div className="px-6 pb-8">
-        {/* Stats grid following Clusters.tsx pattern */}
+        {/* Stats grid with API data only */}
         <motion.div
           className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4"
           variants={itemAnimationVariant}
         >
           <StatCard
             title="System Health"
-            value="98.5%"
+            value={systemHealth > 0 ? `${systemHealth.toFixed(1)}%` : 'N/A'}
             icon={Shield}
-            change={2.1}
-            iconColor="bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
+            change={undefined}
+            iconColor={
+              systemHealth > 98
+                ? 'green'
+                : systemHealth > 95
+                  ? 'yellow'
+                  : systemHealth > 0
+                    ? 'red'
+                    : 'gray'
+            }
           />
           <StatCard
             title="Active Deployments"
-            value="24"
+            value={deploymentStats?.total.toString() || 'N/A'}
             icon={Server}
-            change={8.3}
-            iconColor="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+            change={undefined}
+            iconColor="blue"
           />
           <StatCard
             title="CPU Usage"
-            value="67%"
+            value={performanceMetrics ? `${performanceMetrics.cpu.usage}%` : 'N/A'}
             icon={Cpu}
-            change={-3.2}
-            iconColor="bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
+            change={undefined}
+            iconColor="purple"
           />
           <StatCard
             title="Active Alerts"
-            value="3"
+            value={systemAlerts.length.toString()}
             icon={Bell}
-            change={-15.0}
-            iconColor="bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
+            change={undefined}
+            iconColor="amber"
           />
         </motion.div>
 
@@ -398,10 +611,40 @@ const MetricsDashboard: React.FC = () => {
           variants={itemAnimationVariant}
         >
           {/* Health Status Panel */}
-          <HealthPanel services={healthServices} />
+          {loading.health && errors.health === '' ? (
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <LoadingState />
+            </div>
+          ) : errors.health ? (
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <ErrorState
+                message={
+                  errors.health.includes('<!doctype')
+                    ? 'Invalid response format. The API may be returning HTML instead of JSON.'
+                    : errors.health
+                }
+                onRetry={fetchAllMetrics}
+              />
+            </div>
+          ) : (
+            <HealthPanel services={healthServices} />
+          )}
 
           {/* Performance Metrics Panel */}
-          <PerformancePanel metrics={performanceMetrics} />
+          {loading.system && errors.system === '' ? (
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <LoadingState />
+            </div>
+          ) : errors.system ? (
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <ErrorState
+                message={`${errors.system}. Check API connectivity.`}
+                onRetry={fetchAllMetrics}
+              />
+            </div>
+          ) : (
+            performanceMetrics && <PerformancePanel metrics={performanceMetrics} />
+          )}
         </motion.div>
 
         {/* Deployment and Alerts Row */}
@@ -410,7 +653,24 @@ const MetricsDashboard: React.FC = () => {
           variants={itemAnimationVariant}
         >
           {/* Deployment Analytics Panel */}
-          <DeploymentPanel stats={deploymentStats} />
+          {loading.deployments && errors.deployments === '' ? (
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <LoadingState />
+            </div>
+          ) : errors.deployments ? (
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <ErrorState
+                message={
+                  errors.deployments.includes('500')
+                    ? 'Deployment metrics unavailable - ConfigMap not found or invalid'
+                    : `${errors.deployments}. Check API connectivity.`
+                }
+                onRetry={fetchAllMetrics}
+              />
+            </div>
+          ) : (
+            deploymentStats && <DeploymentPanel stats={deploymentStats} />
+          )}
 
           {/* Alerts Panel */}
           <AlertPanel alerts={systemAlerts} maxHeight="max-h-[500px]" />
@@ -421,7 +681,7 @@ const MetricsDashboard: React.FC = () => {
           <TrendPanel trends={trendData} height="h-[600px]" />
         </motion.div>
 
-        {/* Additional System Metrics Grid */}
+        {/* Additional System Metrics Grid - Updated with API data */}
         <motion.div
           className="grid grid-cols-1 gap-6 md:grid-cols-3"
           variants={itemAnimationVariant}
@@ -433,27 +693,50 @@ const MetricsDashboard: React.FC = () => {
             iconColor="bg-gray-100 text-gray-600 dark:bg-gray-900/30 dark:text-gray-400"
           >
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Rate Limit</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-200">
-                  3,247 / 5,000
-                </span>
-              </div>
-              <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
-                <div className="h-2 rounded-full bg-yellow-500" style={{ width: '65%' }}></div>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <span className="text-gray-600 dark:text-gray-400">Webhooks:</span>
-                  <span className="block font-medium text-gray-900 dark:text-gray-200">
-                    142 today
-                  </span>
+              {errors.github ? (
+                <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+                  {errors.github.includes('500')
+                    ? 'GitHub metrics unavailable - ConfigMap not found or invalid'
+                    : 'GitHub metrics unavailable'}
                 </div>
-                <div>
-                  <span className="text-gray-600 dark:text-gray-400">Last Event:</span>
-                  <span className="block font-medium text-gray-900 dark:text-gray-200">2m ago</span>
+              ) : githubData?.statistics ? (
+                <>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Total Deployments
+                    </span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-200">
+                      {githubData.statistics.count}
+                    </span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+                    <div
+                      className="h-2 rounded-full bg-blue-500"
+                      style={{
+                        width: `${Math.min((githubData.statistics.webhook / githubData.statistics.count) * 100, 100)}%`,
+                      }}
+                    ></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">Webhooks:</span>
+                      <span className="block font-medium text-gray-900 dark:text-gray-200">
+                        {githubData.statistics.webhook}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">Manual:</span>
+                      <span className="block font-medium text-gray-900 dark:text-gray-200">
+                        {githubData.statistics.manual}
+                      </span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+                  No GitHub data available
                 </div>
-              </div>
+              )}
             </div>
           </OverviewCard>
 
@@ -464,26 +747,48 @@ const MetricsDashboard: React.FC = () => {
             iconColor="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
           >
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">8</div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">Nodes</div>
+              {errors.helm ? (
+                <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+                  Kubernetes metrics unavailable
                 </div>
-                <div>
-                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">142</div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">Pods</div>
+              ) : kubernetesData?.cluster_info ? (
+                <>
+                  <div className="grid grid-cols-2 gap-4 text-center">
+                    <div>
+                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                        {kubernetesData.cluster_info.nodes}
+                      </div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400">Nodes</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        {kubernetesData.cluster_info.pods}
+                      </div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400">Pods</div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">Cluster Health</span>
+                      <span
+                        className={`font-medium ${kubernetesData.status === 'healthy' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
+                      >
+                        {kubernetesData.status === 'healthy' ? 'Healthy' : 'Unhealthy'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">Version</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-200">
+                        {kubernetesData.cluster_info.version}
+                      </span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+                  No Kubernetes data available
                 </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Cluster Health</span>
-                  <span className="font-medium text-green-600 dark:text-green-400">Healthy</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">API Response</span>
-                  <span className="font-medium text-gray-900 dark:text-gray-200">15ms</span>
-                </div>
-              </div>
+              )}
             </div>
           </OverviewCard>
 
@@ -494,26 +799,46 @@ const MetricsDashboard: React.FC = () => {
             iconColor="bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
           >
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-red-600 dark:text-red-400">2.1</div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">MB Used</div>
+              {errors.health ? (
+                <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+                  Redis metrics unavailable
                 </div>
-                <div>
-                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">99.9</div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">% Uptime</div>
+              ) : redisData?.performance ? (
+                <>
+                  <div className="grid grid-cols-2 gap-4 text-center">
+                    <div>
+                      <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+                        {redisData.performance.used_memory}
+                      </div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400">Memory Used</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                        {redisData.status === 'healthy' ? '99.9' : '0'}
+                      </div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400">% Uptime</div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">Connections</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-200">
+                        {redisData.performance.connected_clients}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">Ops/sec</span>
+                      <span className="font-medium text-green-600 dark:text-green-400">
+                        {redisData.performance.ops_per_second}
+                      </span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+                  No Redis data available
                 </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Connections</span>
-                  <span className="font-medium text-gray-900 dark:text-gray-200">12</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Hit Rate</span>
-                  <span className="font-medium text-green-600 dark:text-green-400">98.2%</span>
-                </div>
-              </div>
+              )}
             </div>
           </OverviewCard>
         </motion.div>

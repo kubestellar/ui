@@ -21,18 +21,28 @@ const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ stats, className = ''
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
-  // Default dummy data
-  const defaultStats: DeploymentStats = {
-    total: 147,
-    successful: 142,
-    failed: 5,
-    webhook: 89,
-    manual: 58,
-    avgDuration: '3m 42s',
-    lastDeployment: '12 minutes ago',
-  };
+  const deploymentData = stats;
 
-  const deploymentData = stats || defaultStats;
+  if (!deploymentData) {
+    return (
+      <div
+        className={`
+        rounded-xl border shadow-sm transition-all duration-300
+        ${
+          isDark
+            ? 'border-gray-700 bg-gray-800 hover:shadow-lg hover:shadow-gray-900/20'
+            : 'border-gray-200 bg-white hover:shadow-lg hover:shadow-gray-200/50'
+        }
+        ${className}
+      `}
+      >
+        <div className="flex h-64 items-center justify-center">
+          <p className="text-gray-500 dark:text-gray-400">No deployment statistics available</p>
+        </div>
+      </div>
+    );
+  }
+
   const successRate = Math.round((deploymentData.successful / deploymentData.total) * 100);
 
   // Calculate percentages for pie chart

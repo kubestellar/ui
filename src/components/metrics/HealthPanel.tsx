@@ -19,39 +19,7 @@ const HealthPanel: React.FC<HealthPanelProps> = ({ services = [], className = ''
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
-  // Default dummy data
-  const defaultServices: ServiceStatus[] = [
-    {
-      name: 'Redis Cache',
-      status: 'healthy',
-      uptime: '99.98%',
-      responseTime: '2ms',
-      lastChecked: '2 minutes ago',
-    },
-    {
-      name: 'Kubernetes API',
-      status: 'healthy',
-      uptime: '99.95%',
-      responseTime: '15ms',
-      lastChecked: '1 minute ago',
-    },
-    {
-      name: 'GitHub API',
-      status: 'warning',
-      uptime: '98.2%',
-      responseTime: '125ms',
-      lastChecked: '3 minutes ago',
-    },
-    {
-      name: 'Database',
-      status: 'healthy',
-      uptime: '99.99%',
-      responseTime: '8ms',
-      lastChecked: '1 minute ago',
-    },
-  ];
-
-  const serviceData = services.length > 0 ? services : defaultServices;
+  const serviceData = services;
 
   const getStatusIcon = (status: ServiceStatus['status']) => {
     switch (status) {
@@ -119,111 +87,127 @@ const HealthPanel: React.FC<HealthPanelProps> = ({ services = [], className = ''
         <div
           className={`
           rounded-full px-3 py-1 text-sm font-medium
-          ${isDark ? 'bg-green-900/20 text-green-400' : 'bg-green-100 text-green-700'}
+          ${
+            serviceData.some(s => s.status !== 'healthy')
+              ? isDark
+                ? 'bg-yellow-900/20 text-yellow-400'
+                : 'bg-yellow-100 text-yellow-700'
+              : isDark
+                ? 'bg-green-900/20 text-green-400'
+                : 'bg-green-100 text-green-700'
+          }
         `}
         >
-          All Systems Operational
+          {serviceData.some(s => s.status !== 'healthy')
+            ? 'Some Issues Detected'
+            : 'All Systems Operational'}
         </div>
       </div>
 
       {/* Content */}
       <div className="p-4">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {serviceData.map((service, index) => (
-            <div
-              key={index}
-              className={`
-                rounded-lg border p-4 transition-all duration-200 hover:scale-105
-                ${getStatusColor(service.status)}
-              `}
-            >
-              <div className="mb-3 flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  {getStatusIcon(service.status)}
-                  <h4
-                    className={`
-                    font-medium
-                    ${isDark ? 'text-gray-100' : 'text-gray-900'}
-                  `}
-                  >
-                    {service.name}
-                  </h4>
-                </div>
-                <span
-                  className={`
-                  rounded px-2 py-1 text-xs font-medium capitalize
-                  ${
-                    service.status === 'healthy'
-                      ? isDark
-                        ? 'bg-green-800/50 text-green-300'
-                        : 'bg-green-200 text-green-800'
-                      : service.status === 'warning'
-                        ? isDark
-                          ? 'bg-yellow-800/50 text-yellow-300'
-                          : 'bg-yellow-200 text-yellow-800'
-                        : isDark
-                          ? 'bg-red-800/50 text-red-300'
-                          : 'bg-red-200 text-red-800'
-                  }
+        {serviceData.length === 0 ? (
+          <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+            No service health data available
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {serviceData.map((service, index) => (
+              <div
+                key={index}
+                className={`
+                  rounded-lg border p-4 transition-all duration-200 hover:scale-105
+                  ${getStatusColor(service.status)}
                 `}
-                >
-                  {service.status}
-                </span>
+              >
+                <div className="mb-3 flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    {getStatusIcon(service.status)}
+                    <h4
+                      className={`
+                      font-medium
+                      ${isDark ? 'text-gray-100' : 'text-gray-900'}
+                    `}
+                    >
+                      {service.name}
+                    </h4>
+                  </div>
+                  <span
+                    className={`
+                    rounded px-2 py-1 text-xs font-medium capitalize
+                    ${
+                      service.status === 'healthy'
+                        ? isDark
+                          ? 'bg-green-800/50 text-green-300'
+                          : 'bg-green-200 text-green-800'
+                        : service.status === 'warning'
+                          ? isDark
+                            ? 'bg-yellow-800/50 text-yellow-300'
+                            : 'bg-yellow-200 text-yellow-800'
+                          : isDark
+                            ? 'bg-red-800/50 text-red-300'
+                            : 'bg-red-200 text-red-800'
+                    }
+                  `}
+                  >
+                    {service.status}
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={`
+                      text-sm
+                      ${isDark ? 'text-gray-400' : 'text-gray-600'}
+                    `}
+                    >
+                      Uptime
+                    </span>
+                    <span
+                      className={`
+                      text-sm font-medium
+                      ${isDark ? 'text-gray-200' : 'text-gray-800'}
+                    `}
+                    >
+                      {service.uptime}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={`
+                      text-sm
+                      ${isDark ? 'text-gray-400' : 'text-gray-600'}
+                    `}
+                    >
+                      Response Time
+                    </span>
+                    <span
+                      className={`
+                      text-sm font-medium
+                      ${isDark ? 'text-gray-200' : 'text-gray-800'}
+                    `}
+                    >
+                      {service.responseTime}
+                    </span>
+                  </div>
+
+                  <div className="border-t border-opacity-20 pt-2">
+                    <span
+                      className={`
+                      text-xs
+                      ${isDark ? 'text-gray-500' : 'text-gray-500'}
+                    `}
+                    >
+                      Last checked: {service.lastChecked}
+                    </span>
+                  </div>
+                </div>
               </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span
-                    className={`
-                    text-sm
-                    ${isDark ? 'text-gray-400' : 'text-gray-600'}
-                  `}
-                  >
-                    Uptime
-                  </span>
-                  <span
-                    className={`
-                    text-sm font-medium
-                    ${isDark ? 'text-gray-200' : 'text-gray-800'}
-                  `}
-                  >
-                    {service.uptime}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span
-                    className={`
-                    text-sm
-                    ${isDark ? 'text-gray-400' : 'text-gray-600'}
-                  `}
-                  >
-                    Response Time
-                  </span>
-                  <span
-                    className={`
-                    text-sm font-medium
-                    ${isDark ? 'text-gray-200' : 'text-gray-800'}
-                  `}
-                  >
-                    {service.responseTime}
-                  </span>
-                </div>
-
-                <div className="border-t border-opacity-20 pt-2">
-                  <span
-                    className={`
-                    text-xs
-                    ${isDark ? 'text-gray-500' : 'text-gray-500'}
-                  `}
-                  >
-                    Last checked: {service.lastChecked}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
