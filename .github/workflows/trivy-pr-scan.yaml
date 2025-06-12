@@ -17,13 +17,16 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Cache Trivy vulnerability database
-        uses: actions/cache@v3
+      - name: Run Trivy vulnerability scanner (filesystem scan)
+        uses: aquasecurity/trivy-action@0.30.0
         with:
-          path: .trivycache/
-          key: ${{ runner.os }}-trivy-${{ hashFiles('**/Dockerfile', '**/go.mod', '**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-trivy-
+          scan-type: "fs"
+          scan-ref: "."
+          format: "table"
+          ignore-unfixed: true
+          severity: "CRITICAL"
+          vuln-type: "os,library"
+          trivyignores: .trivyignore
       - name: Run Trivy vulnerability scanner in repo mode
         uses: aquasecurity/trivy-action@0.28.0
         with:
