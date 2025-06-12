@@ -478,7 +478,7 @@
       "title": "Dashboard",
       "lastUpdatedJustNow": "Last updated: just now",
       "status": "Status: Optimal",
-      "other":"Other",
+      "other": "Other",
       "distribution": "Distribution",
       "state": "Pending or inactive",
       "otherClusters": "Other Clusters",
@@ -515,15 +515,15 @@
         "calculation": "Calculated based on the ratio of healthy pods to total pods across all namespaces.",
         "status": "Factors in pod status, readiness probes, and liveness checks",
         "value": "Higher values indicate better cluster health",
-        "formulaDesc":"(Running Pods / Total Pods) × 100%",
+        "formulaDesc": "(Running Pods / Total Pods) × 100%",
         "health": "Pod Health"
       },
-      "cpu":{
+      "cpu": {
         "usage": "CPU Usage",
         "formula": "CPU Usage Formula",
         "calculation": "Calculated as the percentage of allocated CPU resources currently in use across all nodes in the cluster.",
         "value": "Lower values indicate better resource availability",
-        "formulaDesc":"(Used CPU Cores / Total CPU Cores) × 100%",
+        "formulaDesc": "(Used CPU Cores / Total CPU Cores) × 100%",
         "health": "Lower values indicate better performance"
       },
       "memory": {
@@ -531,7 +531,7 @@
         "formula": "Memory Usage Formula",
         "calculation": "Calculated as the percentage of allocated memory resources currently in use across all nodes in the cluster.",
         "value": "Lower values indicate better resource availability",
-        "formulaDesc":"(Used Memory / Total Memory) × 100%"
+        "formulaDesc": "(Used Memory / Total Memory) × 100%"
       },
       "stats": {
         "running": "Running and available",

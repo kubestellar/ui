@@ -520,7 +520,7 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
     if (!name || name.length <= maxLength) return name;
     return `${name.substring(0, maxLength)}...`;
   };
-  
+
   const { t } = useTranslation();
 
   // Status icon based on activity status
@@ -1120,14 +1120,19 @@ const K8sInfo = () => {
             <CheckCircle size={20} className={systemHealth.color} />
           </div>
           <div>
-            <h4 className="font-medium text-gray-800 dark:text-gray-200">{t('clusters.dashboard.systemHealth')}</h4>
+            <h4 className="font-medium text-gray-800 dark:text-gray-200">
+              {t('clusters.dashboard.systemHealth')}
+            </h4>
             <p className={`text-sm ${systemHealth.color}`}>{systemHealth.status}</p>
           </div>
         </div>
         <div className="text-right">
-          <div className="text-xs text-gray-500 dark:text-gray-400">{t('clusters.dashboard.clusterMetrics')}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            {t('clusters.dashboard.clusterMetrics')}
+          </div>
           <div className="mt-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-            {stats.activeClusters} {t('common.of')} {stats.totalClusters} {t('clusters.dashboard.clustersActive')}
+            {stats.activeClusters} {t('common.of')} {stats.totalClusters}{' '}
+            {t('clusters.dashboard.clustersActive')}
           </div>
         </div>
       </div>
@@ -1168,9 +1173,7 @@ const K8sInfo = () => {
                       {t('clusters.dashboard.cpu.formula')}
                     </div>
                     <div className="space-y-2 text-gray-600 dark:text-gray-300">
-                      <p>
-                        {t('clusters.dashboard.cpu.calculation')}
-                      </p>
+                      <p>{t('clusters.dashboard.cpu.calculation')}</p>
                       <div className="rounded-md bg-blue-50 p-2 dark:bg-blue-900/20">
                         <code className="text-blue-700 dark:text-blue-300">
                           {t('clusters.dashboard.cpu.formulaDesc')}
@@ -1229,9 +1232,7 @@ const K8sInfo = () => {
                       {t('clusters.dashboard.memory.formula')}
                     </div>
                     <div className="space-y-2 text-gray-600 dark:text-gray-300">
-                      <p>
-                        {t('clusters.dashboard.memory.calculation')}
-                      </p>
+                      <p>{t('clusters.dashboard.memory.calculation')}</p>
                       <div className="rounded-md bg-purple-50 p-2 dark:bg-purple-900/20">
                         <code className="text-purple-700 dark:text-purple-300">
                           {t('clusters.dashboard.memory.formulaDesc')}
@@ -1290,17 +1291,13 @@ const K8sInfo = () => {
                       {t('clusters.dashboard.pods.formula')}
                     </div>
                     <div className="space-y-2 text-gray-600 dark:text-gray-300">
-                      <p>
-                        {t('clusters.dashboard.pods.calculation')}
-                      </p>
+                      <p>{t('clusters.dashboard.pods.calculation')}</p>
                       <div className="rounded-md bg-green-50 p-2 dark:bg-green-900/20">
                         <code className="text-green-700 dark:text-green-300">
                           {t('clusters.dashboard.pods.formulaDesc')}
                         </code>
                       </div>
-                      <p className="text-xs italic">
-                        {t('clusters.dashboard.pods.status')}
-                      </p>
+                      <p className="text-xs italic">{t('clusters.dashboard.pods.status')}</p>
                     </div>
                     <div className="mt-2 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
                       {t('clusters.dashboard.pods.value')}
@@ -1341,10 +1338,14 @@ const K8sInfo = () => {
               <div className="rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 p-4 text-white shadow-sm">
                 <div className="mb-2 flex items-center">
                   <CheckCircle className="mr-2" size={16} />
-                  <span className="font-medium">{t('clusters.dashboard.stats.activeClusters')}</span>
+                  <span className="font-medium">
+                    {t('clusters.dashboard.stats.activeClusters')}
+                  </span>
                 </div>
                 <div className="text-3xl font-bold">{stats.activeClusters}</div>
-                <div className="mt-1 text-xs opacity-80">{t('clusters.dashboard.stats.running')}</div>
+                <div className="mt-1 text-xs opacity-80">
+                  {t('clusters.dashboard.stats.running')}
+                </div>
               </div>
 
               <div className="rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 p-4 text-white shadow-sm">
@@ -1362,7 +1363,9 @@ const K8sInfo = () => {
             <div>
               <div className="mb-1 flex justify-between text-xs text-gray-500 dark:text-gray-400">
                 <span>{t('clusters.dashboard.distribution')}</span>
-                <span>{stats.totalClusters} {t('clusters.dashboard.total')}</span>
+                <span>
+                  {stats.totalClusters} {t('clusters.dashboard.total')}
+                </span>
               </div>
               <div className="flex h-3 w-full overflow-hidden rounded-full bg-gray-100 shadow-inner dark:bg-gray-700">
                 <motion.div
@@ -1483,8 +1486,12 @@ const K8sInfo = () => {
           />
         </div>
         <div className="mt-1 flex justify-between">
-          <div className="text-xs text-gray-500 dark:text-gray-400">{t('clusters.dashboard.status')}</div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">{t('clusters.dashboard.lastUpdatedJustNow')}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            {t('clusters.dashboard.status')}
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            {t('clusters.dashboard.lastUpdatedJustNow')}
+          </div>
         </div>
       </div>
     </OverviewCard>
@@ -1572,17 +1579,27 @@ const K8sInfo = () => {
                           </span>
                           {/* Add capacity metrics */}
                           <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
-                            <div className="flex items-center" title={t('clusters.dashboard.cpuCapacity')}>
+                            <div
+                              className="flex items-center"
+                              title={t('clusters.dashboard.cpuCapacity')}
+                            >
                               <Cpu size={12} className="mr-1 text-blue-500" />
                               {cluster.cpuCapacity || t('clusters.dashboard.notAvailable')}
                             </div>
-                            <div className="flex items-center" title={t('clusters.dashboard.memoryCapacity')}>
+                            <div
+                              className="flex items-center"
+                              title={t('clusters.dashboard.memoryCapacity')}
+                            >
                               <HardDrive size={12} className="mr-1 text-purple-500" />
                               {cluster.memCapacity || t('clusters.dashboard.notAvailable')}
                             </div>
-                            <div className="flex items-center" title={t('clusters.dashboard.podCapacity')}>
+                            <div
+                              className="flex items-center"
+                              title={t('clusters.dashboard.podCapacity')}
+                            >
                               <Layers size={12} className="mr-1 text-green-500" />
-                              {cluster.podsCapacity || t('clusters.dashboard.notAvailable')} {t('clusters.dashboard.podCapacityLabel')}
+                              {cluster.podsCapacity || t('clusters.dashboard.notAvailable')}{' '}
+                              {t('clusters.dashboard.podCapacityLabel')}
                             </div>
                           </div>
                         </div>
@@ -1592,11 +1609,13 @@ const K8sInfo = () => {
                     <div className="flex flex-col items-end">
                       {isActive ? (
                         <span className="mb-1 flex items-center whitespace-nowrap rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-600 transition-colors dark:bg-green-900/30 dark:text-green-400">
-                          <CheckCircle size={10} className="mr-1" /> {t('clusters.dashboard.active')}
+                          <CheckCircle size={10} className="mr-1" />{' '}
+                          {t('clusters.dashboard.active')}
                         </span>
                       ) : (
                         <span className="mb-1 flex items-center whitespace-nowrap rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-600 transition-colors dark:bg-amber-900/30 dark:text-amber-400">
-                          <AlertTriangle size={10} className="mr-1" /> {t('clusters.dashboard.inactive')}
+                          <AlertTriangle size={10} className="mr-1" />{' '}
+                          {t('clusters.dashboard.inactive')}
                         </span>
                       )}
                       <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -1634,7 +1653,8 @@ const K8sInfo = () => {
             to="/its"
             className="flex w-full items-center justify-center rounded-lg bg-blue-50 py-2 text-sm text-blue-600 transition-colors hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
           >
-            {t('clusters.dashboard.showMoreClusters')} <ArrowRightCircle size={14} className="ml-2" />
+            {t('clusters.dashboard.showMoreClusters')}{' '}
+            <ArrowRightCircle size={14} className="ml-2" />
           </Link>
         </div>
       )}
