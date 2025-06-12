@@ -59,7 +59,7 @@ func GetBindingPolicies(namespace string) ([]map[string]interface{}, error) {
 	cachedPolicies, err := redis.GetAllBindingPolicies()
 	if err != nil {
 		log.LogWarn("failed to get binding policies from Redis cache", zap.Error(err))
-	} else if cachedPolicies != nil && len(cachedPolicies) > 0 {
+	} else if cachedPolicies != nil {
 		log.LogInfo("Using cached binding policies from Redis", zap.Int("count", len(cachedPolicies)))
 		// Convert cached policies to response format
 		responseArray := make([]map[string]interface{}, len(cachedPolicies))
