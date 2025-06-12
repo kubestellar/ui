@@ -2315,7 +2315,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                                 {Object.entries(cluster.labels).map(([key, value]) => (
                                   <Tooltip
                                     key={`${key}-${value}`}
-                                    title={t('clusters.filterByLabel')}
+                                    title={t('clusters.filteredByLabel')}
                                     arrow
                                     placement="top"
                                     TransitionComponent={Zoom}

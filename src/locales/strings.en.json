@@ -30,6 +30,10 @@
     "noResource": "No {{resource}} specified",
     "copy": "Copy",
     "close": "Close",
+    "update": "Update",
+    "unknown": "Unknown",
+    "workload": "Workload",
+    "tryAgain": "Try Again",
     "confirm": "Confirm",
     "continue": "Continue",
     "back": "Back",
@@ -45,11 +49,18 @@
     "ok": "OK",
     "finish": "Finish",
     "next": "Next",
+    "retry": "Retry",
     "previous": "Previous",
     "page": "Page",
+    "sync": "Sync",
+    "clearAll": "Clear All",
+    "fitView": "Fit View",
+    "clearSearch": "Clear Search",
+    "clearFilters": "Clear Filters",
+    "clear": "Clear",
     "of": "of",
     "items": "item{{count, plural, one {} other {s}}}",
-    "filteredFrom": "filtered from {{total}}"
+    "filteredFrom": "filtered from"
   },
   "installationPage": {
     "statusBadge": {
@@ -235,7 +246,7 @@
     "noClustersMatchFilter": "No clusters match your filter selection",
     "noClustersAvailable": "No clusters available yet. Import your first cluster to get started.",
     "importYourFirst": "Import Your First Cluster",
-    "filterByLabel": "Filter by Label",
+    "filteredByLabel": "Filter by Label",
     "actions": {
       "viewDetails": "View Details",
       "editLabels": "Edit Labels",
