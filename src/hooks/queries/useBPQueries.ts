@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { BindingPolicyInfo, Workload } from '../../types/bindingPolicy';
 import { useState, useCallback } from 'react';
 import yaml from 'js-yaml';
+import { useTranslation } from 'react-i18next';
 
 interface RawBindingPolicy {
   kind: string;
@@ -169,6 +170,7 @@ interface WorkloadSSEState {
 
 export const useBPQueries = () => {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   // GET /api/bp - Fetch all binding policies
   const useBindingPolicies = () => {
@@ -188,7 +190,7 @@ export const useBPQueries = () => {
           rawPolicies = response.data;
         } else {
           // API returns unexpected format, log and return empty array
-          console.warn('Unexpected API response format:', response.data);
+          console.warn(t('errors.unexpectedFormat'), response.data);
           return [];
         }
 
@@ -198,7 +200,7 @@ export const useBPQueries = () => {
         return rawPolicies.map(policy => {
           // Capitalize the first letter of status
           const capitalizeStatus = (status: string): string => {
-            if (!status) return 'Inactive';
+            if (!status) return t('bindingPolicy.status.inactive');
             return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
           };
 
@@ -224,7 +226,7 @@ export const useBPQueries = () => {
                       raw: parsedFields,
                     };
                   } catch (e) {
-                    console.log('Error parsing JSON from raw fieldsv1:', e);
+                    console.log(t('bpQueries.errors.errorParsingJson'), e);
                     field.fieldsv1 = {
                       ...field.fieldsv1,
                       raw: originalString,
@@ -238,22 +240,26 @@ export const useBPQueries = () => {
             const cleanedYaml = yaml.dump(parsedYaml);
             yamlContent = cleanedYaml; // Update the yamlContent with cleaned YAML
           } catch (err) {
-            console.error('Error parsing YAML:', err);
+            console.error(t('bpQueries.logging.errorParsingYaml'), err);
           }
 
           // Extract clusters information - use already processed data if available
           const clusterList = policy.clusterList || policy.clusters || [];
 
           // Extract workloads information - use already processed data if available
-          const workloadList = policy.workloadList || policy.workloads || ['No workload specified'];
+          const workloadList = policy.workloadList ||
+            policy.workloads || [t('common.noResource', { resource: 'workload' })];
 
           // Determine main workload for display in the table
-          const mainWorkload = workloadList.length > 0 ? workloadList[0] : 'No workload specified';
+          const mainWorkload =
+            workloadList.length > 0
+              ? workloadList[0]
+              : t('common.noResource', { resource: 'workload' });
 
           console.log(`Policy ${policy.name} YAML exists: ${!!yamlContent}`);
           return {
-            name: policy.name || 'Unknown',
-            namespace: policy.namespace || 'default',
+            name: policy.name || t('bindingPolicy.unknown'),
+            namespace: policy.namespace || t('namespaces.default'),
             status: capitalizeStatus(policy.status || 'inactive'),
             clusters: policy.clustersCount || clusterList.length,
             workload: mainWorkload,
@@ -261,8 +267,8 @@ export const useBPQueries = () => {
             workloadList: workloadList,
             creationDate: policy.creationTimestamp
               ? new Date(policy.creationTimestamp).toLocaleString()
-              : 'Not available',
-            bindingMode: policy.bindingMode || 'DownsyncOnly',
+              : t('bindingPolicy.table.notAvailable'),
+            bindingMode: policy.bindingMode || t('modes.downsyncOnly'),
             conditions: policy.conditions || undefined,
             yaml: yamlContent, // Use the raw YAML content directly
             creationTimestamp: policy.creationTimestamp,
@@ -274,7 +280,7 @@ export const useBPQueries = () => {
     });
 
     if (queryResult.error) {
-      toast.error('Failed to fetch binding policies');
+      toast.error(t('bindingPolicy.notifications.fetchError'));
       console.error('Error fetching binding policies:', queryResult.error);
     }
     return queryResult;
@@ -288,9 +294,9 @@ export const useBPQueries = () => {
     return useQuery<BindingPolicyInfo, Error>({
       queryKey: ['binding-policy-details', policyName],
       queryFn: async () => {
-        if (!policyName) throw new Error('Policy name is required');
+        if (!policyName) throw new Error(t('errors.policyNameRequired'));
 
-        console.log(`Fetching complete details for binding policy: ${policyName}`);
+        console.log(t('bpQueries.logging.fetchingPolicyDetails', { policyName }));
 
         // Fetch data from both endpoints in parallel for efficiency
         const [mainResponse, statusResponse] = await Promise.all([
@@ -305,7 +311,7 @@ export const useBPQueries = () => {
           }),
         ]);
 
-        console.log('Received responses from both API endpoints');
+        console.log(t('bpQueries.logging.receivedResponses'));
 
         // Process main response to get the policy details with YAML
         let rawPolicies = [];
@@ -314,50 +320,53 @@ export const useBPQueries = () => {
         } else if (Array.isArray(mainResponse.data)) {
           rawPolicies = mainResponse.data;
         } else {
-          console.warn('Unexpected main API response format:', mainResponse.data);
-          throw new Error('Unable to parse binding policies response');
+          console.warn(t('errors.unexpectedFormat'), mainResponse.data);
+          throw new Error(t('errors.parseError'));
         }
 
         // Find the specific policy by name
         const policyDetails = rawPolicies.find((p: RawBindingPolicy) => p.name === policyName);
 
         if (!policyDetails) {
-          console.error(`Policy ${policyName} not found in the main response`);
-          throw new Error(`Policy ${policyName} not found`);
+          console.error(t('bpQueries.errors.policyNotFound', { policyName }));
+          throw new Error(t('errors.policyNotFound', { name: policyName }));
         }
 
-        console.log('Found policy details in main BP response:', policyDetails);
+        console.log(t('bpQueries.logging.foundPolicyDetails'), policyDetails);
 
         // Get the status from the status endpoint
         const statusData = statusResponse.data;
-        console.log('Received status data:', statusData);
+        console.log(t('bpQueries.logging.receivedStatusData'), statusData);
 
         // Extract the YAML content with proper priority
         let yamlContent = '';
 
         // Check if the response has a non-empty yaml field as a string directly (this should be first priority)
         if (typeof policyDetails.yaml === 'string' && policyDetails.yaml.trim() !== '') {
-          console.log('Using YAML directly from response root');
+          console.log(t('bpQueries.logging.yamlFromResponse'));
           yamlContent = policyDetails.yaml;
         }
         // Check if annotations contain yaml
         else if (policyDetails.metadata?.annotations?.yaml) {
-          console.log('Using YAML from metadata.annotations.yaml');
+          console.log(t('bpQueries.logging.yamlFromMetadata'));
           yamlContent = policyDetails.metadata.annotations.yaml;
         }
 
         // Log the extracted YAML content status
         if (yamlContent) {
           console.log(
-            `Extracted YAML content for policy ${policyName} is available (${yamlContent.length} chars)`
+            t('bpQueries.logging.yamlAvailable', {
+              policyName,
+              length: yamlContent.length,
+            })
           );
         } else {
-          console.log(`No YAML content found for policy ${policyName}`);
+          console.log(t('bpQueries.logging.noYamlFound', { policyName }));
         }
 
         try {
           const parsedYaml: ParsedYaml = (yaml.load(yamlContent) as ParsedYaml) || {};
-          console.log('Parsed YAML:', parsedYaml);
+          console.log(t('bpQueries.logging.parsedYaml'), parsedYaml);
 
           const metadata: Metadata | undefined =
             parsedYaml.objectmeta || parsedYaml.objectMeta || parsedYaml.ObjectMeta;
@@ -375,7 +384,7 @@ export const useBPQueries = () => {
                     raw: parsedFields,
                   };
                 } catch (e) {
-                  console.log('Error parsing JSON from raw fieldsv1:', e);
+                  console.log(t('bpQueries.errors.errorParsingJson'), e);
                   field.fieldsv1 = {
                     ...field.fieldsv1,
                     raw: originalString,
@@ -389,7 +398,7 @@ export const useBPQueries = () => {
           const cleanedYaml = yaml.dump(parsedYaml);
           yamlContent = cleanedYaml; // Update the yamlContent with cleaned YAML
         } catch (err) {
-          console.error('Error parsing YAML:', err);
+          console.error(t('bpQueries.logging.errorParsingYaml'), err);
         }
 
         // Use the status from the status API, not from the main API
@@ -397,30 +406,30 @@ export const useBPQueries = () => {
         const capitalizedStatus =
           statusFromStatusApi.charAt(0).toUpperCase() + statusFromStatusApi.slice(1).toLowerCase();
 
-        console.log(`Using status "${capitalizedStatus}" from status API endpoint`);
+        console.log(t('bpQueries.logging.usingStatus', { status: capitalizedStatus }));
 
         // Format the final policy object using YAML from main API and status from status API
         const formattedPolicy = {
           name: policyDetails.name,
-          namespace: policyDetails.namespace || 'default',
+          namespace: policyDetails.namespace || t('namespaces.default'),
           status: capitalizedStatus,
           clusters: policyDetails.clustersCount,
           workload:
             policyDetails.workloads && policyDetails.workloads.length > 0
               ? policyDetails.workloads[0]
-              : 'No workload specified',
+              : t('common.noResource', { resource: 'workload' }),
           clusterList: policyDetails.clusterList || policyDetails.clusters || [],
           workloadList: policyDetails.workloadList || policyDetails.workloads || [],
           creationDate: policyDetails.creationTimestamp
             ? new Date(policyDetails.creationTimestamp).toLocaleString()
-            : 'Not available',
-          bindingMode: policyDetails.bindingMode || 'DownsyncOnly',
+            : t('bindingPolicy.table.notAvailable'),
+          bindingMode: policyDetails.bindingMode || t('modes.downsyncOnly'),
           conditions: statusData.conditions || policyDetails.conditions || [],
           creationTimestamp: policyDetails.creationTimestamp,
           yaml: yamlContent,
         } as BindingPolicyInfo;
 
-        console.log('Final policy object:', {
+        console.log(t('bpQueries.logging.finalPolicyObject'), {
           name: formattedPolicy.name,
           status: formattedPolicy.status,
           yamlExists: !!formattedPolicy.yaml,
@@ -438,15 +447,15 @@ export const useBPQueries = () => {
 
         // Otherwise, return a loading placeholder that includes the policy name
         return {
-          name: policyName || 'Loading...',
-          namespace: 'default',
-          status: 'Loading...' as const,
+          name: policyName || t('bindingPolicy.loading'),
+          namespace: t('namespaces.default'),
+          status: t('bindingPolicy.loading'),
           clusters: 0,
-          workload: 'Loading...',
+          workload: t('bindingPolicy.loading'),
           clusterList: [],
           workloadList: [],
           creationDate: '',
-          bindingMode: 'Unknown',
+          bindingMode: t('bindingPolicy.unknown'),
           yaml: '', // Initialize with empty string instead of undefined
         } as BindingPolicyInfo;
       },
@@ -505,7 +514,7 @@ export const useBPQueries = () => {
           console.log('Using JSON-based creation method');
           const formattedData = {
             name: policyData.name,
-            namespace: policyData.namespace || 'default',
+            namespace: policyData.namespace || t('namespaces.default'),
             clusterSelectors:
               policyData.clusterList?.map(clusterName => ({
                 'kubernetes.io/cluster-name': clusterName,
@@ -513,10 +522,10 @@ export const useBPQueries = () => {
             workloadSelectors: {
               apiGroups: [policyData.workload || 'apps/v1'],
               resources: ['deployments'],
-              namespaces: [policyData.namespace || 'default'],
+              namespaces: [policyData.namespace || t('namespaces.default')],
               workloads: [],
             },
-            propagationMode: policyData.bindingMode || 'DownsyncOnly',
+            propagationMode: policyData.bindingMode || t('modes.downsyncOnly'),
             updateStrategy: 'ServerSideApply',
           };
 
@@ -533,7 +542,7 @@ export const useBPQueries = () => {
       },
       onSuccess: (_data, variables) => {
         queryClient.invalidateQueries({ queryKey: ['binding-policies'] });
-        toast.success('Binding policy created successfully');
+        toast.success(t('bindingPolicy.notifications.createSuccess'));
 
         setTimeout(() => {
           console.log(
@@ -549,7 +558,7 @@ export const useBPQueries = () => {
         }, 1500); // 1.5 second delay to ensure status change is captured
       },
       onError: (error: Error) => {
-        toast.error('Failed to create binding policy');
+        toast.error(t('bindingPolicy.notifications.createError'));
         console.error('Mutation error:', error);
       },
     });
@@ -562,12 +571,12 @@ export const useBPQueries = () => {
         const response = await api.delete(`/api/bp/delete/${name}`);
         return response.data;
       },
-      onSuccess: () => {
+      onSuccess: (_data, variables) => {
         queryClient.invalidateQueries({ queryKey: ['binding-policies'] });
-        toast.success('Binding policy deleted successfully');
+        toast.success(t('bindingPolicy.notifications.deleteSuccess', { name: variables }));
       },
       onError: (error: Error) => {
-        toast.error('Failed to delete binding policy');
+        toast.error(t('bindingPolicy.notifications.deleteError'));
         console.error('Error deleting binding policy:', error);
       },
     });
@@ -602,13 +611,14 @@ export const useBPQueries = () => {
           throw error;
         }
       },
-      onSuccess: data => {
+      onSuccess: (data, variables) => {
         console.log('useDeletePolicies - Mutation succeeded with data:', data);
         queryClient.invalidateQueries({ queryKey: ['binding-policies'] });
-        toast.success('Selected binding policies deleted successfully');
+        const count = variables.length;
+        toast.success(t('bindingPolicy.notifications.deleteManySuccess', { count }));
       },
       onError: (error: Error) => {
-        toast.error('Failed to delete binding policies');
+        toast.error(t('bindingPolicy.notifications.deleteManyError'));
         console.error('Error deleting binding policies:', error);
       },
     });
@@ -622,16 +632,16 @@ export const useBPQueries = () => {
         return response.data;
       },
       onSuccess: () => {
-        toast.success('Deployment completed successfully');
+        toast.success(t('bindingPolicy.notifications.deploySuccess'));
       },
       onError: (error: Error) => {
-        toast.error('Deployment failed');
+        toast.error(t('bindingPolicy.notifications.deployError'));
         console.error('Error during deployment:', error);
       },
     });
   };
 
-  // Quick connect API for drag and drop
+  // Quick connect API for selection-based binding policy creation
   const useQuickConnect = () => {
     return useMutation<QuickConnectResponse, Error, QuickConnectRequest>({
       mutationFn: async request => {
@@ -640,46 +650,17 @@ export const useBPQueries = () => {
         // Only copy the request, don't modify unless absolutely necessary
         const formattedRequest = { ...request };
 
-        // Validate and enhance resources if needed
+        // Validate resources - only require that resources are provided
         if (!formattedRequest.resources || formattedRequest.resources.length === 0) {
-          console.warn('No resources provided, adding default resources');
-          formattedRequest.resources = [
-            { type: 'customresourcedefinitions', createOnly: false },
-            { type: 'namespaces', createOnly: true },
-            { type: 'statefulsets', createOnly: false },
-            { type: 'serviceaccounts', createOnly: false },
-            { type: 'roles', createOnly: false },
-            { type: 'rolebindings', createOnly: false },
-            { type: 'clusterroles', createOnly: false },
-            { type: 'clusterrolebindings', createOnly: false },
-            { type: 'persistentvolumeclaims', createOnly: false },
-            { type: 'deployments', createOnly: false },
-            { type: 'services', createOnly: false },
-            { type: 'replicasets', createOnly: false },
-            { type: 'configmaps', createOnly: false },
-            { type: 'secrets', createOnly: false },
-          ];
-        } else if (
-          formattedRequest.resources.length === 1 &&
-          formattedRequest.resources[0].type === 'namespaces'
-        ) {
-          console.warn('Only namespaces resource provided, adding default workload resources');
-          formattedRequest.resources.push(
-            { type: 'customresourcedefinitions', createOnly: false },
-            { type: 'statefulsets', createOnly: false },
-            { type: 'serviceaccounts', createOnly: false },
-            { type: 'roles', createOnly: false },
-            { type: 'rolebindings', createOnly: false },
-            { type: 'clusterroles', createOnly: false },
-            { type: 'clusterrolebindings', createOnly: false },
-            { type: 'persistentvolumeclaims', createOnly: false },
-            { type: 'deployments', createOnly: false },
-            { type: 'services', createOnly: false },
-            { type: 'replicasets', createOnly: false },
-            { type: 'configmaps', createOnly: false },
-            { type: 'secrets', createOnly: false }
-          );
+          console.error('No resources provided - this is required');
+          throw new Error(t('bindingPolicy.yamlGeneration.resourceRequired'));
         }
+
+        // Log the resources that were actually selected by the user
+        console.log(
+          'User selected resources:',
+          formattedRequest.resources.map(r => r.type)
+        );
 
         // Check for custom resources and ensure they have apiGroup if possible
         formattedRequest.resources = formattedRequest.resources.map(resource => {
@@ -766,17 +747,7 @@ export const useBPQueries = () => {
         if (userExplicitlyIncludedCRDs) {
           console.log('User explicitly included customresourcedefinitions in resources');
         }
-        // Check if statefulsets are explicitly included
-        const hasStatefulSets = formattedRequest.resources.some(res => res.type === 'statefulsets');
-
-        // If statefulsets are not included, add them with high priority
-        if (!hasStatefulSets) {
-          console.log(
-            'StatefulSets not explicitly included - adding them to support database workloads'
-          );
-          // Add to beginning of array to ensure they get processed first
-          formattedRequest.resources.unshift({ type: 'statefulsets', createOnly: false });
-        }
+        console.log('Using only user-selected resources, no automatic additions');
 
         // Make sure the request has workloadLabels
         if (
@@ -785,7 +756,7 @@ export const useBPQueries = () => {
         ) {
           console.warn('No workload labels provided');
           formattedRequest.workloadLabels = {
-            'kubestellar.io/workload': 'unknown', // Fallback default
+            'kubestellar.io/workload': t('bindingPolicy.quickConnect.unknownWorkload'),
           };
         }
 
@@ -796,28 +767,19 @@ export const useBPQueries = () => {
         ) {
           console.warn('No cluster labels provided');
           formattedRequest.clusterLabels = {
-            'location-group': 'unknown', // Fallback default
+            'location-group': t('bindingPolicy.quickConnect.unknownLocationGroup'),
           };
         }
 
         // Ensure namespacesToSync is set if not provided
         if (!formattedRequest.namespacesToSync || formattedRequest.namespacesToSync.length === 0) {
           // Use the provided namespace or default to 'default'
-          formattedRequest.namespacesToSync = [formattedRequest.namespace || 'default'];
+          formattedRequest.namespacesToSync = [
+            formattedRequest.namespace || t('namespaces.default'),
+          ];
         }
 
-        const hasHigherLevelControllers = formattedRequest.resources.some(res =>
-          ['deployments', 'replicasets', 'statefulsets', 'daemonsets', 'jobs', 'cronjobs'].includes(
-            res.type
-          )
-        );
-
-        if (hasHigherLevelControllers) {
-          console.log('Removing pods from resources as higher-level controllers will manage them');
-          formattedRequest.resources = formattedRequest.resources.filter(
-            res => res.type !== 'pods'
-          );
-        }
+        console.log('Including all user-selected resources including both controllers and pods');
 
         // Add detailed console logging with pretty printing
         console.log('📤 SENDING REQUEST TO QUICK-CONNECT API:');
@@ -836,7 +798,7 @@ export const useBPQueries = () => {
       },
       onSuccess: data => {
         queryClient.invalidateQueries({ queryKey: ['binding-policies'] });
-        toast.success('Binding policy created successfully');
+        toast.success(t('bindingPolicy.notifications.createSuccess'));
 
         const createdPolicyName = data?.bindingPolicy?.name;
 
@@ -855,7 +817,7 @@ export const useBPQueries = () => {
       },
       onError: (error: Error) => {
         console.error('Error creating quick connect binding policy:', error);
-        toast.error('Failed to create binding policy');
+        toast.error(t('bindingPolicy.notifications.quickConnectError'));
       },
     });
   };
@@ -876,7 +838,7 @@ export const useBPQueries = () => {
         ) {
           console.warn('No workload labels provided for YAML generation');
           formattedRequest.workloadLabels = {
-            'kubestellar.io/workload': 'unknown', // Fallback default
+            'kubestellar.io/workload': t('bindingPolicy.quickConnect.unknownWorkload'),
           };
         }
 
@@ -887,50 +849,20 @@ export const useBPQueries = () => {
         ) {
           console.warn('No cluster labels provided for YAML generation');
           formattedRequest.clusterLabels = {
-            'location-group': 'unknown', // Fallback default
+            'location-group': t('bindingPolicy.quickConnect.unknownLocationGroup'),
           };
         }
 
-        // Validate and enhance resources if needed
+        // Validate resources - only require that resources are provided
         if (!formattedRequest.resources || formattedRequest.resources.length === 0) {
-          console.warn('No resources provided, adding default resources');
-          formattedRequest.resources = [
-            { type: 'customresourcedefinitions', createOnly: false },
-            { type: 'namespaces', createOnly: true },
-            { type: 'statefulsets', createOnly: false },
-            { type: 'serviceaccounts', createOnly: false },
-            { type: 'roles', createOnly: false },
-            { type: 'rolebindings', createOnly: false },
-            { type: 'clusterroles', createOnly: false },
-            { type: 'clusterrolebindings', createOnly: false },
-            { type: 'persistentvolumeclaims', createOnly: false },
-            { type: 'deployments', createOnly: false },
-            { type: 'services', createOnly: false },
-            { type: 'replicasets', createOnly: false },
-            { type: 'configmaps', createOnly: false },
-            { type: 'secrets', createOnly: false },
-          ];
-        } else if (
-          formattedRequest.resources.length === 1 &&
-          formattedRequest.resources[0].type === 'namespaces'
-        ) {
-          console.warn('Only namespaces resource provided, adding default workload resources');
-          formattedRequest.resources.push(
-            { type: 'customresourcedefinitions', createOnly: false },
-            { type: 'statefulsets', createOnly: false },
-            { type: 'serviceaccounts', createOnly: false },
-            { type: 'roles', createOnly: false },
-            { type: 'rolebindings', createOnly: false },
-            { type: 'clusterroles', createOnly: false },
-            { type: 'clusterrolebindings', createOnly: false },
-            { type: 'persistentvolumeclaims', createOnly: false },
-            { type: 'deployments', createOnly: false },
-            { type: 'services', createOnly: false },
-            { type: 'replicasets', createOnly: false },
-            { type: 'configmaps', createOnly: false },
-            { type: 'secrets', createOnly: false }
-          );
+          console.error('No resources provided for YAML generation - this is required');
+          throw new Error(t('bindingPolicy.yamlGeneration.resourceRequiredYaml'));
         }
+
+        console.log(
+          'User selected resources for YAML:',
+          formattedRequest.resources.map(r => r.type)
+        );
 
         // Check for custom resources and ensure they have apiGroup if possible
         formattedRequest.resources = formattedRequest.resources.map(resource => {
@@ -1021,21 +953,16 @@ export const useBPQueries = () => {
         if (userExplicitlyIncludedCRDs) {
           console.log('User explicitly included customresourcedefinitions in resources');
         }
-        // Check if statefulsets are explicitly included
-        const hasStatefulSets = formattedRequest.resources.some(res => res.type === 'statefulsets');
-
-        // If statefulsets are not included, add them with high priority
-        if (!hasStatefulSets) {
-          console.log(
-            'StatefulSets not explicitly included - adding them to support database workloads'
-          );
-          formattedRequest.resources.unshift({ type: 'statefulsets', createOnly: false });
-        }
+        console.log(
+          'Using only user-selected resources for YAML generation, no automatic additions'
+        );
 
         // Ensure namespacesToSync is set if not provided
         if (!formattedRequest.namespacesToSync || formattedRequest.namespacesToSync.length === 0) {
           // Use the provided namespace or default to 'default'
-          formattedRequest.namespacesToSync = [formattedRequest.namespace || 'default'];
+          formattedRequest.namespacesToSync = [
+            formattedRequest.namespace || t('namespaces.default'),
+          ];
         }
 
         console.log('Final YAML generation request:', JSON.stringify(formattedRequest, null, 2));
@@ -1045,7 +972,7 @@ export const useBPQueries = () => {
       },
       onError: (error: Error) => {
         console.error('Error generating binding policy YAML:', error);
-        toast.error('Failed to generate binding policy YAML');
+        toast.error(t('bindingPolicy.notifications.yamlGenerateError'));
       },
     });
   };
@@ -1137,11 +1064,10 @@ export const useBPQueries = () => {
           }
         } catch (error) {
           console.error('Error parsing progress event data:', error);
-          // Don't fail the whole connection for a single progress event parsing error
         }
       });
 
-      // Handle completed event (backend calls it 'complete', not 'completed')
+      // Handle completed event
       eventSource.addEventListener('complete', event => {
         try {
           console.log('SSE complete event received, parsing data');
@@ -1155,17 +1081,14 @@ export const useBPQueries = () => {
           });
 
           console.log('SSE data successfully processed');
-          // Close the connection since we have the complete data
           eventSource.close();
         } catch (error) {
           console.error('Error parsing complete event data:', error);
-
           setState(prevState => ({
             ...prevState,
             status: 'error',
             error: new Error('Failed to parse complete event data'),
           }));
-
           eventSource.close();
         }
       });
@@ -1176,24 +1099,14 @@ export const useBPQueries = () => {
 
       eventSource.onerror = error => {
         console.error('SSE connection error:', error);
-
-        if (error instanceof Event && !error.target) {
-          console.error('Possible CORS error with EventSource');
-        }
-
         setState(prevState => ({
           ...prevState,
           status: 'error',
-          error: new Error(
-            'Failed to connect to SSE endpoint. Please ensure you have proper permissions and the server is running.'
-          ),
+          error: new Error('Failed to connect to SSE endpoint'),
         }));
-
-        // Close the connection on error
         eventSource.close();
       };
 
-      // Return cleanup function
       return () => {
         console.log('Closing SSE connection');
         eventSource.close();
@@ -1206,10 +1119,13 @@ export const useBPQueries = () => {
 
       const workloads: Workload[] = [];
 
-      const excludedTypes = new Set(['Endpoints', 'EndpointSlice', 'ControllerRevision']);
+      // Remove excluded types that we actually want to include
+      const excludedTypes = new Set(['EndpointSlice', 'ControllerRevision']);
 
-      const excludedNamespaces = new Set(['default', 'kube-system', 'kube-public']);
+      // Remove excluded namespaces that we want to include
+      const excludedNamespaces = new Set(['kube-system', 'kube-public']);
 
+      // Process namespaced resources
       if (state.data.namespaced) {
         Object.entries(state.data.namespaced).forEach(([namespace, resourceTypes]) => {
           if (excludedNamespaces.has(namespace)) {
@@ -1224,23 +1140,21 @@ export const useBPQueries = () => {
 
             // Check if resources is null or undefined before processing
             if (!resources) {
-              console.warn(
-                `Resources is null for namespace ${namespace}, resourceType ${resourceType}`
-              );
+              console.warn(t('bpQueries.errors.resourcesNull', { namespace, resourceType }));
               return;
             }
 
             // Process workload resources
             resources.forEach(resource => {
-              if (resource.labels) {
-                workloads.push({
-                  name: resource.name,
-                  namespace: namespace,
-                  kind: resource.kind,
-                  labels: resource.labels,
-                  creationTime: resource.createdAt,
-                });
-              }
+              // Include resources even if they don't have labels
+              const labels = resource.labels || {};
+              workloads.push({
+                name: resource.name,
+                namespace: namespace,
+                kind: resource.kind,
+                labels: labels,
+                creationTime: resource.createdAt,
+              });
             });
           });
         });
@@ -1248,78 +1162,74 @@ export const useBPQueries = () => {
 
       // Process cluster-scoped resources
       if (state.data.clusterScoped) {
-        // Define which cluster-scoped resource types to include
-        const includeClusterResourceTypes = new Set(['CustomResourceDefinition', 'Namespace']);
-
         Object.entries(state.data.clusterScoped).forEach(([resourceType, resources]) => {
-          if (excludedTypes.has(resourceType) || !includeClusterResourceTypes.has(resourceType)) {
+          if (excludedTypes.has(resourceType)) {
             return;
           }
 
           // Check if resources is null or undefined before processing
           if (!resources) {
-            console.warn(`Resources is null for cluster-scoped resourceType ${resourceType}`);
+            console.warn(t('bpQueries.errors.resourcesNullClusterScoped', { resourceType }));
             return;
           }
 
           // Process cluster-scoped resources
           resources.forEach(resource => {
-            if (resource.labels) {
-              if (
-                resourceType === 'Namespace' &&
-                (resource.name === 'default' ||
-                  resource.name === 'kube-system' ||
-                  resource.name === 'kube-public' ||
-                  resource.name === 'kubestellar-report' ||
-                  resource.name === 'kube-node-lease')
-              ) {
-                return;
-              }
-
-              workloads.push({
-                name: resource.name,
-                namespace: resource.namespace || 'cluster-scoped',
-                kind: resource.kind,
-                labels: resource.labels,
-                creationTime: resource.createdAt,
-              });
-            }
+            // Include resources even if they don't have labels
+            const labels = resource.labels || {};
+            workloads.push({
+              name: resource.name,
+              namespace: resource.namespace || '',
+              kind: resource.kind,
+              labels: labels,
+              creationTime: resource.createdAt,
+            });
           });
         });
       }
 
-      console.log(
-        `Extracted ${workloads.length} workloads after filtering (default namespace excluded)`
-      );
-      return workloads;
-    }, [state.data]);
-
-    // Provide a way to get unique label keys and values for filtering
-    const extractUniqueLabels = useCallback(() => {
-      const workloads = extractWorkloads();
-      const labelMap: Record<string, Set<string>> = {};
-
-      workloads.forEach(workload => {
-        if (workload.labels) {
-          Object.entries(workload.labels).forEach(([key, value]) => {
-            if (!labelMap[key]) {
-              labelMap[key] = new Set();
+      // Add namespace resources from namespaced data
+      const processedNamespaces = new Set<string>(); // Keep track of processed namespaces
+      Object.entries(state.data.namespaced).forEach(([, resourceTypes]) => {
+        if (resourceTypes.__namespaceMetaData) {
+          const namespaceMetadataArray = resourceTypes.__namespaceMetaData;
+          if (Array.isArray(namespaceMetadataArray) && namespaceMetadataArray.length > 0) {
+            const namespaceMetadata = namespaceMetadataArray[0];
+            if (
+              namespaceMetadata &&
+              namespaceMetadata.name &&
+              !processedNamespaces.has(namespaceMetadata.name)
+            ) {
+              workloads.push({
+                name: namespaceMetadata.name,
+                namespace: '', // Namespaces are cluster-scoped
+                kind: 'Namespace',
+                labels: namespaceMetadata.labels || {},
+                creationTime: namespaceMetadata.createdAt,
+              });
+              processedNamespaces.add(namespaceMetadata.name);
             }
-            labelMap[key].add(value);
-          });
+          }
         }
       });
 
-      return Object.fromEntries(
-        Object.entries(labelMap).map(([key, values]) => [key, Array.from(values)])
+      const uniqueWorkloads = Array.from(
+        new Map(workloads.map(w => [`${w.kind}-${w.namespace}-${w.name}`, w])).values()
       );
-    }, [extractWorkloads]);
+
+      console.log(
+        t('bpQueries.logging.extractedUniqueWorkloads', { count: uniqueWorkloads.length })
+      );
+      return uniqueWorkloads;
+    }, [state.data]);
 
     return {
       state,
       startSSEConnection,
       extractWorkloads,
-      extractUniqueLabels,
+      isLoading: state.status === 'loading' || state.status === 'idle',
+      isReady: state.status === 'success',
+      hasError: state.status === 'error',
     };
   };
 

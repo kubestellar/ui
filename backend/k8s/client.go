@@ -2,8 +2,9 @@ package k8s
 
 import (
 	"fmt"
-	"k8s.io/client-go/rest"
 	"os"
+
+	"k8s.io/client-go/rest"
 
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"

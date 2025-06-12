@@ -1,333 +1,289 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { HiBars3CenterLeft, HiArrowRightOnRectangle, HiUserCircle } from 'react-icons/hi2';
-import { FiLogOut } from 'react-icons/fi';
+import { useEffect, useState, useCallback } from 'react';
+import { Link } from 'react-router-dom';
+import { HiBars3CenterLeft, HiXMark } from 'react-icons/hi2';
 import { FiSun, FiMoon } from 'react-icons/fi';
-import { menu } from './menu/data';
-import MenuItem from './menu/MenuItem';
-import { api } from '../lib/api';
-import useClusterStore from '../stores/clusterStore';
 import useTheme from '../stores/themeStore';
-import { useHeaderQueries } from '../hooks/queries/useHeaderQueries';
 import HeaderSkeleton from './ui/HeaderSkeleton';
-import { useAuth, useAuthActions } from '../hooks/useAuth';
+import { useAuth } from '../hooks/useAuth';
 import FullScreenToggle from './ui/FullScreenToggle';
+import ProfileSection from './ProfileSection';
+import { motion, AnimatePresence } from 'framer-motion';
+import getThemeStyles from '../lib/theme-utils';
+import CommandPalette from './CommandPalette';
+import { useTranslation } from 'react-i18next';
 
-interface Context {
-  name: string;
-  cluster: string;
+interface HeaderProps {
+  isLoading: boolean;
+  toggleMobileMenu?: () => void;
+  isMobileMenuOpen?: boolean;
 }
 
-// Array of profile icon components to randomly select from
-const profileIcons = [
-  HiUserCircle,
-  // Add more icon components if desired
-];
-
-const Header = ({ isLoading }: { isLoading: boolean }) => {
-  const { useContexts } = useHeaderQueries();
-  const { data: contextsData, error } = useContexts();
-  const setSelectedCluster = useClusterStore(state => state.setSelectedCluster);
-  const setHasAvailableClusters = useClusterStore(state => state.setHasAvailableClusters);
-  const navigate = useNavigate();
-
-  const [isDrawerOpen, setDrawerOpen] = React.useState(false);
-  const [username, setUsername] = useState('');
-
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const userMenuRef = useRef<HTMLDivElement>(null);
+const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: HeaderProps) => {
+  const [scrolled, setScrolled] = useState(false);
+  const [scrollDirection, setScrollDirection] = useState<'up' | 'down' | null>(null);
+  const [lastScrollTop, setLastScrollTop] = useState(0);
 
   const { data: authData } = useAuth();
-  const { logout } = useAuthActions();
+  const { t } = useTranslation();
 
-  // Randomly select a profile icon
-  const [ProfileIcon] = useState(() => {
-    const randomIndex = Math.floor(Math.random() * profileIcons.length);
-    return profileIcons[randomIndex];
-  });
-
-  const toggleDrawer = () => setDrawerOpen(!isDrawerOpen);
-
-  useEffect(() => {
-    if (authData?.isAuthenticated) {
-      const token = localStorage.getItem('jwtToken');
-      if (token) {
-        api
-          .get('/api/me', {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          })
-          .then(response => {
-            setUsername(response.data.username);
-          })
-          .catch(error => {
-            console.error('Error fetching user data:', error);
-          });
-      }
-    }
-  }, [authData?.isAuthenticated]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
-        setShowUserMenu(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [userMenuRef]);
-
-  React.useEffect(() => {
-    api
-      .get('/api/clusters')
-      .then(response => {
-        const data = response.data;
-        const kubeflexContexts = data.contexts.filter(
-          (ctx: Context) => ctx.name.endsWith('-kubeflex') || ctx.cluster.endsWith('-kubeflex')
-        );
-
-        console.log('Kubeflex contexts:', kubeflexContexts);
-
-        setHasAvailableClusters(kubeflexContexts.length > 0);
-
-        let currentKubeflexContext = '';
-        if (data.currentContext?.endsWith('-kubeflex')) {
-          currentKubeflexContext = data.currentContext;
-        } else if (kubeflexContexts.length > 0) {
-          currentKubeflexContext = kubeflexContexts[0].name;
-        }
-
-        console.log('Selected context:', currentKubeflexContext);
-        setSelectedCluster(currentKubeflexContext);
-      })
-      .catch(error => {
-        console.error('Error fetching contexts:', error);
-        setHasAvailableClusters(false);
-        setSelectedCluster(null);
-      });
-  }, [setSelectedCluster, setHasAvailableClusters]);
-
-  const handleClusterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newCluster = e.target.value;
-    setSelectedCluster(newCluster || null);
-  };
-
-  const handleLogout = () => {
-    logout();
-    setShowUserMenu(false);
-
-    // Navigate to login page
-    navigate('/login', {
-      state: {
-        infoMessage: 'You have been successfully logged out.',
-      },
-    });
-  };
-
-  // Access the theme store
   const { theme, toggleTheme } = useTheme();
+  const isDark = theme === 'dark';
+  const themeStyles = getThemeStyles(isDark);
+
+  // Handle scroll events for header appearance
+  const handleScroll = useCallback(() => {
+    const currentScrollTop = window.scrollY;
+    const isScrolled = currentScrollTop > 10;
+
+    // Determine scroll direction
+    if (currentScrollTop > lastScrollTop && currentScrollTop > 100) {
+      setScrollDirection('down');
+    } else {
+      setScrollDirection('up');
+    }
+
+    setLastScrollTop(currentScrollTop);
+    setScrolled(isScrolled);
+  }, [lastScrollTop]);
+
+  // Detect scroll position to add shadow/background effect
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
 
   if (isLoading) return <HeaderSkeleton />;
-  if (error) return <div>Error loading contexts: {error.message}</div>;
 
-  const contexts = contextsData?.contexts || [];
-  const currentContext = contextsData?.currentContext || '';
+  // Get header style based on scroll position and theme
+  const getHeaderStyle = () => {
+    const baseStyle = {
+      backgroundColor: scrolled
+        ? isDark
+          ? 'rgba(17, 24, 39, 0.8)'
+          : 'rgba(255, 255, 255, 0.8)'
+        : isDark
+          ? themeStyles.colors.bg.primary
+          : themeStyles.colors.bg.primary,
+      backdropFilter: scrolled ? 'blur(12px)' : 'none',
+      borderBottom: isDark
+        ? '1px solid rgba(55, 65, 81, 0.3)'
+        : scrolled
+          ? '1px solid rgba(226, 232, 240, 0.7)'
+          : 'none',
+      boxShadow: scrolled ? themeStyles.colors.shadow.sm : 'none',
+      transform: `translateY(${scrollDirection === 'down' && scrolled ? '-100%' : '0'})`,
+      transition: 'all 0.3s ease-in-out',
+    };
+
+    return baseStyle;
+  };
+
+  // Button common styling
+  const getButtonStyle = (type: 'primary' | 'secondary' = 'secondary') => {
+    return {
+      background:
+        type === 'primary'
+          ? themeStyles.button.primary.background
+          : themeStyles.button.secondary.background,
+      color:
+        type === 'primary' ? themeStyles.button.primary.color : themeStyles.colors.text.primary,
+      boxShadow: themeStyles.colors.shadow.sm,
+    };
+  };
+
+  // Menu button variants
+  const menuButtonVariants = {
+    open: {
+      rotate: 90,
+      scale: 1.1,
+    },
+    closed: {
+      rotate: 0,
+      scale: 1,
+    },
+  };
 
   return (
-    <div className="fixed left-0 right-0 top-0 z-[3] flex w-full justify-between gap-4 bg-base-100 px-3 py-3 xl:gap-0 xl:px-4 xl:py-5">
-      <div className="flex items-center gap-3">
-        <div className="drawer mr-1 w-auto p-0 xl:hidden">
-          <input
-            id="drawer-navbar-mobile"
-            type="checkbox"
-            className="drawer-toggle"
-            checked={isDrawerOpen}
-            onChange={toggleDrawer}
-          />
-          <div className="drawer-content w-auto p-0">
-            <label htmlFor="drawer-navbar-mobile" className="btn btn-ghost drawer-button p-0">
-              <HiBars3CenterLeft className="text-2xl" />
-            </label>
-          </div>
-          <div className="drawer-side z-[99]">
-            <label
-              htmlFor="drawer-navbar-mobile"
-              aria-label="close sidebar"
-              className="drawer-overlay"
-            ></label>
-            <div className="menu min-h-full w-auto bg-base-200 p-4 text-base-content">
-              <Link to={'/'} className="mb-5 mt-1 flex items-center gap-1 xl:gap-2">
-                <span className="text-[16px] font-semibold leading-[1.2] text-base-content dark:text-neutral-200 sm:text-lg xl:text-xl 2xl:text-2xl">
-                  <img src="/KubeStellar.png" alt="logo" className="h-auto w-52 object-contain" />
-                </span>
-              </Link>
-              {menu.map((item, index) => (
-                <MenuItem
-                  onClick={toggleDrawer}
-                  key={index}
-                  catalog={item.catalog}
-                  listItems={item.listItems}
-                />
-              ))}
-
-              {/* Mobile Logout Button */}
-              {authData?.isAuthenticated && (
-                <div className="mt-6 border-t border-base-300 pt-4">
-                  <button
-                    onClick={() => {
-                      toggleDrawer(); // Close drawer first
-                      handleLogout(); // Then logout
-                    }}
-                    className="btn btn-outline btn-error flex w-full items-center justify-start gap-2"
-                  >
-                    <HiArrowRightOnRectangle size={18} />
-                    <span>Logout</span>
-                  </button>
-                </div>
+    <motion.header
+      className="fixed left-0 right-0 top-0 z-[3] flex w-full justify-between gap-4 px-4 py-3 xl:gap-0 xl:px-6 xl:py-4"
+      style={getHeaderStyle()}
+      animate={{ y: scrollDirection === 'down' && scrolled ? -100 : 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div
+        className={`flex items-center gap-3 transition-all duration-300 ${scrolled ? 'scale-[0.97]' : ''}`}
+      >
+        <div className="mr-1 w-auto p-0 xl:hidden">
+          <motion.button
+            onClick={toggleMobileMenu}
+            className="btn btn-circle transition-all duration-300 hover:scale-105 active:scale-95"
+            style={getButtonStyle()}
+            aria-label={t('header.menu')}
+            animate={isMobileMenuOpen ? 'open' : 'closed'}
+            variants={menuButtonVariants}
+            transition={{ duration: 0.3, type: 'spring', stiffness: 300, damping: 20 }}
+          >
+            <AnimatePresence mode="wait">
+              {isMobileMenuOpen ? (
+                <motion.div
+                  key="close"
+                  initial={{ opacity: 0, rotate: -90 }}
+                  animate={{ opacity: 1, rotate: 0 }}
+                  exit={{ opacity: 0, rotate: 90 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <HiXMark
+                    className="text-2xl"
+                    style={{ color: themeStyles.colors.status.error }}
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="open"
+                  initial={{ opacity: 0, rotate: 90 }}
+                  animate={{ opacity: 1, rotate: 0 }}
+                  exit={{ opacity: 0, rotate: -90 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <HiBars3CenterLeft className="text-2xl" />
+                </motion.div>
               )}
-            </div>
-          </div>
+            </AnimatePresence>
+          </motion.button>
         </div>
 
-        <Link to={'/'} className="flex items-center gap-1 xl:gap-2">
-          <span className="text-[16px] font-semibold leading-[1.2] text-base-content dark:text-neutral-200 sm:text-lg xl:text-xl 2xl:text-2xl">
-            <img src="/KubeStellar.png" alt="logo" className="h-auto w-52 object-contain" />
-          </span>
+        <Link
+          to={'/'}
+          className="group flex items-center gap-2 xl:gap-3"
+          aria-label={t('header.goToHome')}
+        >
+          <div className="overflow-hidden rounded-lg">
+            <motion.img
+              src="/KubeStellar.png"
+              alt={t('header.logoAlt')}
+              className="h-auto w-44 object-contain xl:w-48"
+              whileHover={{ scale: 1.02 }}
+              transition={{ duration: 0.3 }}
+            />
+          </div>
         </Link>
       </div>
 
-      <div className="3xl:gap-6 flex items-center gap-4 xl:gap-5">
+      <div className="3xl:gap-5 flex items-center gap-2 xl:gap-4">
         {authData?.isAuthenticated ? (
           <>
-            <select
-              className="select select-bordered mr-2 w-[200px]"
-              value={currentContext}
-              onChange={handleClusterChange}
-            >
-              <option value="" disabled>
-                Select cluster
-              </option>
-              {contexts.map(ctx => (
-                <option key={ctx.name} value={ctx.name}>
-                  {ctx.name}
-                </option>
-              ))}
-            </select>
-
-            {/* User Profile Icon with Enhanced Dropdown */}
-            <div className="relative" ref={userMenuRef}>
-              <button
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                className="btn btn-circle btn-ghost border-2 border-primary/30 bg-primary/5 transition-all duration-300 hover:scale-105 hover:bg-primary/10"
+            <div className="group/controls flex-none" data-tip={t('header.themeToggleTip')}>
+              <motion.button
+                onClick={toggleTheme}
+                className="btn btn-circle transition-all duration-300 hover:scale-105 active:scale-95"
+                style={getButtonStyle()}
+                aria-label={t('header.themeToggle')}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
               >
-                <ProfileIcon className="text-xl text-primary" />
-              </button>
-
-              {/* Enhanced User Dropdown Menu - CENTERED */}
-              {showUserMenu && (
-                <div
-                  className="animate-fadeIn absolute left-1/2 z-50 mt-2 w-64 -translate-x-1/2 transform overflow-hidden rounded-xl
-                  border border-gray-100 bg-white shadow-xl backdrop-blur-sm dark:border-gray-800
-                  dark:bg-gray-900 dark:backdrop-blur-md"
-                  style={{
-                    boxShadow:
-                      theme === 'dark'
-                        ? '0 10px 25px -5px rgba(0, 0, 0, 0.5)'
-                        : '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
-                  }}
-                >
-                  {/* User Info Section */}
-                  <div className="border-b border-gray-100 bg-gradient-to-r from-primary/5 to-transparent p-5 dark:border-gray-800 dark:from-primary/20">
-                    <div className="flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full border-2 border-primary/20 bg-primary/10 dark:border-primary/30">
-                          <ProfileIcon className="text-3xl text-primary" />
-                        </div>
-                        <div className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                          Account
-                        </div>
-                        <div className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-                          {username || 'Admin'}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Sign Out Button - Red Hover Only */}
-                  <div className="p-3">
-                    <button
-                      onClick={handleLogout}
-                      className="group w-full rounded-lg border-0 bg-white px-4 py-3 
-      text-center
-      text-sm font-medium
-      text-gray-700 outline-none 
-      transition-all duration-200
-      hover:bg-red-50 focus:border-0
-      focus:outline-none focus:ring-0
-      focus:ring-offset-0 active:outline-none dark:bg-transparent
-      dark:text-gray-200 dark:hover:bg-red-900/20
-      dark:focus:border-0"
+                <AnimatePresence mode="wait">
+                  {!isDark ? (
+                    <motion.div
+                      key="moon"
+                      initial={{ opacity: 0, rotate: -30 }}
+                      animate={{ opacity: 1, rotate: 0 }}
+                      exit={{ opacity: 0, rotate: 30 }}
+                      transition={{ duration: 0.3 }}
                     >
-                      <div className="flex w-full items-center justify-start gap-3 pl-9">
-                        <div
-                          className="rounded-full bg-red-50 p-2 transition-colors 
-        duration-200 group-hover:bg-red-100
-        dark:bg-red-500/10 dark:group-hover:bg-red-500/20"
-                        >
-                          <FiLogOut className="text-red-500 dark:text-red-400" size={18} />
-                        </div>
-                        <span className="transition-colors duration-200 group-hover:text-red-500 dark:group-hover:text-red-400">
-                          Sign Out
-                        </span>
-                      </div>
-                    </button>
-                  </div>
-                </div>
-              )}
+                      <FiMoon
+                        style={{ color: themeStyles.colors.brand.secondary }}
+                        className="text-xl"
+                      />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="sun"
+                      initial={{ opacity: 0, rotate: 30 }}
+                      animate={{ opacity: 1, rotate: 0 }}
+                      exit={{ opacity: 0, rotate: -30 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <FiSun
+                        style={{ color: themeStyles.colors.status.warning }}
+                        className="text-xl"
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.button>
             </div>
 
-            {/* Theme Toggle Button - MOVED AFTER profile button */}
-            <button
-              onClick={toggleTheme}
-              className="btn btn-circle btn-ghost transition-colors duration-200 hover:bg-base-200"
-              title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-            >
-              {theme === 'light' ? (
-                <FiMoon className="text-xl text-indigo-500" />
-              ) : (
-                <FiSun className="text-xl text-yellow-500" />
-              )}
-            </button>
+            <CommandPalette />
+
+            <div className="relative flex items-center">
+              <ProfileSection />
+            </div>
           </>
         ) : (
           <>
-            {/* Theme Toggle Button (for logged out state) */}
-            <button
+            <motion.button
               onClick={toggleTheme}
-              className="btn btn-circle btn-ghost mr-2 transition-colors duration-200 hover:bg-base-200"
-              title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+              className="btn btn-circle transition-all duration-300 hover:scale-105 active:scale-95"
+              style={getButtonStyle()}
+              aria-label={t('header.switchTheme', { mode: isDark ? 'light' : 'dark' })}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
             >
-              {theme === 'light' ? (
-                <FiMoon className="text-xl text-indigo-500" />
-              ) : (
-                <FiSun className="text-xl text-yellow-500" />
-              )}
-            </button>
+              <AnimatePresence mode="wait">
+                {!isDark ? (
+                  <motion.div
+                    key="moon"
+                    initial={{ opacity: 0, rotate: -30 }}
+                    animate={{ opacity: 1, rotate: 0 }}
+                    exit={{ opacity: 0, rotate: 30 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <FiMoon
+                      style={{ color: themeStyles.colors.brand.secondary }}
+                      className="text-xl"
+                    />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="sun"
+                    initial={{ opacity: 0, rotate: 30 }}
+                    animate={{ opacity: 1, rotate: 0 }}
+                    exit={{ opacity: 0, rotate: -30 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <FiSun
+                      style={{ color: themeStyles.colors.status.warning }}
+                      className="text-xl"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.button>
+
+            <CommandPalette />
           </>
         )}
 
-        {/* Replace the fullscreen button with our component */}
-        <div className="hidden xl:inline-flex">
-          <FullScreenToggle position="inline" className="btn btn-circle btn-ghost" iconSize={20} />
+        <div className="hidden xl:flex">
+          <FullScreenToggle
+            position="inline"
+            className={`btn btn-circle ${isDark ? 'bg-gray-800/80 hover:bg-gray-700/90' : 'bg-white/90 hover:bg-gray-50/95'}`}
+            iconSize={20}
+          />
         </div>
       </div>
-    </div>
+    </motion.header>
   );
 };
+
+// Add keydown handler for theme toggle shortcut
+if (typeof window !== 'undefined') {
+  window.addEventListener('keydown', e => {
+    if (e.altKey && e.key === 'q') {
+      const { toggleTheme } = useTheme.getState();
+      toggleTheme();
+    }
+  });
+}
 
 export default Header;

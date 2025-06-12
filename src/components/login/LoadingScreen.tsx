@@ -1,10 +1,13 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 interface LoadingScreenProps {
   isLoaded: boolean;
 }
 
 const LoadingScreen = ({ isLoaded }: LoadingScreenProps) => {
+  const { t } = useTranslation();
+
   return (
     <AnimatePresence>
       {!isLoaded && (
@@ -20,7 +23,7 @@ const LoadingScreen = ({ isLoaded }: LoadingScreenProps) => {
             transition={{ delay: 0.2 }}
             className="flex flex-col items-center"
           >
-            <img src="/KubeStellar.png" alt="KubeStellar" className="mb-8 h-24" />
+            <img src="/KubeStellar.png" alt={t('login.loading.logoAlt')} className="mb-8 h-24" />
             <div className="h-1.5 w-64 overflow-hidden rounded-full bg-blue-900/30">
               <motion.div
                 className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-blue-400"
@@ -35,7 +38,7 @@ const LoadingScreen = ({ isLoaded }: LoadingScreenProps) => {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
             >
-              Initializing KubeStellar Environment...
+              {t('login.loading.initializing')}
             </motion.p>
           </motion.div>
         </motion.div>

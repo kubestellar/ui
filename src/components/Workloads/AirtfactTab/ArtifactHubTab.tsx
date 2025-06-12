@@ -10,6 +10,8 @@ import { DirectDeployForm } from './DirectDeployForm';
 import { api } from '../../../lib/api';
 import { CircularProgress } from '@mui/material';
 import WorkloadLabelInput from '../WorkloadLabelInput';
+import CancelButton from '../../common/CancelButton';
+import { useTranslation } from 'react-i18next'; // Add this import
 
 export interface Repository {
   name: string;
@@ -67,6 +69,7 @@ interface Props {
 
 export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) => {
   const { theme } = useTheme();
+  const { t } = useTranslation(); // Add translation hook
   const [selectedOption, setSelectedOption] = useState('searchPackages');
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [reposLoading, setReposLoading] = useState(false);
@@ -175,12 +178,12 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
     // For "searchPackages", proceed with deployment if a package is selected
     if (selectedOption === 'searchPackages') {
       if (!searchFormData.packageId) {
-        toast.error('Please select a package first');
+        toast.error(t('workloads.artifactHub.validation.selectPackage'));
         return;
       }
 
       if (!searchFormData.workloadLabel) {
-        toast.error('Please enter a workload label');
+        toast.error(t('workloads.artifactHub.validation.enterWorkloadLabel'));
         return;
       }
     }
@@ -188,15 +191,15 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
     // For "directDeploy", validate and proceed with deployment
     if (selectedOption === 'directDeploy') {
       if (!dataToUse.packageId) {
-        toast.error('Please enter a package ID.');
+        toast.error(t('workloads.artifactHub.validation.enterPackageId'));
         return;
       }
       if (!dataToUse.releaseName) {
-        toast.error('Please enter a release name.');
+        toast.error(t('workloads.artifactHub.validation.enterReleaseName'));
         return;
       }
       if (!dataToUse.workloadLabel) {
-        toast.error('Please enter a workload label');
+        toast.error(t('workloads.artifactHub.validation.enterWorkloadLabel'));
         return;
       }
     }
@@ -297,7 +300,7 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
             <FormControlLabel
               value="searchPackages"
               control={<Radio />}
-              label="Search Packages"
+              label={t('workloads.artifactHub.searchPackages')}
               sx={{
                 '& .MuiTypography-root': {
                   color: theme === 'dark' ? '#d4d4d4' : '#333',
@@ -308,7 +311,7 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
             <FormControlLabel
               value="directDeploy"
               control={<Radio />}
-              label="Deploy Helm Chart from Artifact Hub"
+              label={t('workloads.artifactHub.directDeploy')}
               sx={{
                 '& .MuiTypography-root': {
                   color: theme === 'dark' ? '#d4d4d4' : '#333',
@@ -319,7 +322,7 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
             <FormControlLabel
               value="repositories"
               control={<Radio />}
-              label="List Repositories"
+              label={t('workloads.artifactHub.listRepositories')}
               sx={{
                 '& .MuiTypography-root': {
                   color: theme === 'dark' ? '#d4d4d4' : '#333',
@@ -373,21 +376,7 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
           }}
         >
           {selectedOption !== 'repositories' && (
-            <Button
-              variant="text"
-              onClick={onCancel}
-              sx={{
-                textTransform: 'none',
-                fontWeight: 600,
-                color: theme === 'dark' ? '#d4d4d4' : '#666',
-                padding: '8px 16px',
-                '&:hover': {
-                  backgroundColor: theme === 'dark' ? '#333' : '#f5f5f5',
-                },
-              }}
-            >
-              Cancel
-            </Button>
+            <CancelButton onClick={onCancel}>{t('common.cancel')}</CancelButton>
           )}
           <Button
             variant="contained"
@@ -412,9 +401,9 @@ export const ArtifactHubTab = ({ onCancel, onDeploy, loading, error }: Props) =>
             {deployLoading ? (
               <CircularProgress size={20} sx={{ color: '#fff' }} />
             ) : selectedOption === 'repositories' ? (
-              'Close'
+              t('workloads.artifactHub.buttons.close')
             ) : (
-              'Apply'
+              t('workloads.artifactHub.buttons.apply')
             )}
           </Button>
         </Box>

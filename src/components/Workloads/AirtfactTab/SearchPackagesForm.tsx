@@ -26,7 +26,7 @@ import ImageIcon from '@mui/icons-material/Image';
 import StarIcon from '@mui/icons-material/Star';
 import CloseIcon from '@mui/icons-material/Close';
 import SettingsIcon from '@mui/icons-material/Settings';
-// import { toast } from "react-hot-toast";
+import { useTranslation } from 'react-i18next'; // Add this import
 
 // Commented out as it's currently unused
 // interface ExtendedPackage extends Package {
@@ -148,6 +148,7 @@ export const SearchPackagesForm = ({
   // onCancel,
   // onDeploy
 }: Props) => {
+  const { t } = useTranslation(); // Add translation hook
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [selectedPackageDetails, setSelectedPackageDetails] = useState<SearchResult | null>(null);
@@ -158,7 +159,7 @@ export const SearchPackagesForm = ({
   // Function to search packages using the advanced-search endpoint
   const searchPackages = useCallback(async () => {
     if (!searchQuery.trim()) {
-      setError('Please enter a search term');
+      setError(t('workloads.artifactHub.searchPackagesForm.errorMessage.enterSearchTerm'));
       return;
     }
 
@@ -182,7 +183,11 @@ export const SearchPackagesForm = ({
         if (data.results && data.results.length > 0) {
           setSearchResults(data.results);
         } else {
-          setError(`No packages found for '${searchQuery}'`);
+          setError(
+            t('workloads.artifactHub.searchPackagesForm.errorMessage.noPackagesFound', {
+              query: searchQuery,
+            })
+          );
         }
       } else {
         throw new Error('Failed to search packages');
@@ -190,11 +195,15 @@ export const SearchPackagesForm = ({
     } catch (error: unknown) {
       const err = error as AxiosError;
       console.error('Package search error:', err);
-      setError(`Search failed: ${err.message}`);
+      setError(
+        t('workloads.artifactHub.searchPackagesForm.errorMessage.searchFailed', {
+          message: err.message,
+        })
+      );
     } finally {
       setLoading(false);
     }
-  }, [searchQuery]);
+  }, [searchQuery, t]);
 
   // Add debounce effect for searching as user types
   useEffect(() => {
@@ -392,7 +401,7 @@ export const SearchPackagesForm = ({
               sx={{ color: theme === 'dark' ? '#90caf9' : '#1976d2', fontSize: '1rem', mr: 1 }}
             />
             <Typography variant="caption" sx={{ color: theme === 'dark' ? '#90caf9' : '#1976d2' }}>
-              Start typing to search for Helm packages on Artifact Hub
+              {t('workloads.artifactHub.searchPackagesForm.searchHint')}
             </Typography>
           </Box>
         </Box>
@@ -540,11 +549,13 @@ export const SearchPackagesForm = ({
                   )}
                 </Box>
 
-                {selectedPackageDetails.stars !== undefined && (
+                {/* For the stars text */}
+                {selectedPackageDetails?.stars !== undefined && (
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                     <StarIcon sx={{ color: '#FFC107', fontSize: '0.875rem', mr: 0.5 }} />
                     <Typography variant="body2" sx={{ color: theme === 'dark' ? '#ddd' : '#666' }}>
-                      {selectedPackageDetails.stars} Stars
+                      {selectedPackageDetails.stars}{' '}
+                      {t('workloads.artifactHub.searchPackagesForm.packageDetails.stars')}
                     </Typography>
                   </Box>
                 )}
@@ -558,7 +569,7 @@ export const SearchPackagesForm = ({
                       mr: 1,
                     }}
                   >
-                    Repository:
+                    {t('workloads.artifactHub.searchPackagesForm.packageDetails.repository')}
                   </Typography>
                   <Chip
                     label={
@@ -576,7 +587,7 @@ export const SearchPackagesForm = ({
                   />
                   {selectedPackageDetails.repository.verified_publisher && (
                     <Chip
-                      label="Verified"
+                      label={t('workloads.artifactHub.searchPackagesForm.packageDetails.verified')}
                       size="small"
                       sx={{
                         height: '20px',
@@ -615,7 +626,7 @@ export const SearchPackagesForm = ({
                     fontSize: '0.8rem',
                   }}
                 >
-                  Namespace
+                  {t('workloads.artifactHub.searchPackagesForm.packageDetails.namespace')}
                 </Typography>
                 <TextField
                   value={formData.namespace || ''}
@@ -677,7 +688,7 @@ export const SearchPackagesForm = ({
                       fontSize: '0.95rem',
                     }}
                   >
-                    Service Configuration
+                    {t('workloads.artifactHub.searchPackagesForm.serviceConfig.title')}
                   </Typography>
                 </Box>
 
@@ -692,7 +703,7 @@ export const SearchPackagesForm = ({
                         fontSize: '0.8rem',
                       }}
                     >
-                      Service Type
+                      {t('workloads.artifactHub.searchPackagesForm.serviceConfig.serviceType')}
                     </Typography>
                     <FormControl
                       fullWidth
@@ -730,7 +741,7 @@ export const SearchPackagesForm = ({
                         fontSize: '0.8rem',
                       }}
                     >
-                      Service Port
+                      {t('workloads.artifactHub.searchPackagesForm.serviceConfig.servicePort')}
                     </Typography>
                     <TextField
                       value={formData.values['service.port'] || ''}

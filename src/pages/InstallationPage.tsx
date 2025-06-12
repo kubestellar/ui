@@ -24,6 +24,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 // Define platform type for installation
 type Platform = 'kind' | 'k3d';
@@ -212,6 +213,7 @@ const SectionHeader = ({
 
 // Code block component with copy button
 const CodeBlock = ({ code, language = 'bash' }: { code: string; language?: string }) => {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   const copyToClipboard = (e: React.MouseEvent) => {
@@ -233,7 +235,9 @@ const CodeBlock = ({ code, language = 'bash' }: { code: string; language?: strin
   return (
     <div className="relative mb-4 overflow-hidden rounded-md" onClick={e => e.stopPropagation()}>
       <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950/80 px-4 py-2">
-        <span className="font-mono text-xs text-slate-400">{language}</span>
+        <span className="font-mono text-xs text-slate-400">
+          {t(`installationPage.codeBlock.${language}`)}
+        </span>
         <button
           onClick={copyToClipboard}
           className="rounded p-1 text-slate-400 transition-colors hover:text-white"
@@ -251,6 +255,8 @@ const CodeBlock = ({ code, language = 'bash' }: { code: string; language?: strin
 
 // Status badge component
 const StatusBadge = ({ status }: { status: PrereqStatus }) => {
+  const { t } = useTranslation();
+
   const getStatusStyles = () => {
     switch (status) {
       case PrereqStatus.Success:
@@ -284,13 +290,13 @@ const StatusBadge = ({ status }: { status: PrereqStatus }) => {
   const getStatusText = () => {
     switch (status) {
       case PrereqStatus.Success:
-        return 'Installed';
+        return t('installationPage.statusBadge.installed');
       case PrereqStatus.Warning:
-        return 'Version mismatch';
+        return t('installationPage.statusBadge.versionMismatch');
       case PrereqStatus.Error:
-        return 'Missing';
+        return t('installationPage.statusBadge.missing');
       case PrereqStatus.Checking:
-        return 'Checking';
+        return t('installationPage.statusBadge.checking');
       default:
         return 'Unknown';
     }
@@ -308,6 +314,7 @@ const StatusBadge = ({ status }: { status: PrereqStatus }) => {
 
 // Prerequisite card component with internal state management
 const PrerequisiteCard = ({ prerequisite }: { prerequisite: Prerequisite }) => {
+  const { t } = useTranslation();
   // Use local state for expansion instead of props
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -345,7 +352,9 @@ const PrerequisiteCard = ({ prerequisite }: { prerequisite: Prerequisite }) => {
         <div className="border-t border-slate-800/60 p-4 pt-0">
           {prerequisite.status === PrereqStatus.Error && (
             <div className="mb-4">
-              <h4 className="mb-2 text-sm font-medium text-white">Installation Instructions</h4>
+              <h4 className="mb-2 text-sm font-medium text-white">
+                {t('installationPage.errorSection.title')}
+              </h4>
               {prerequisite.installCommand && <CodeBlock code={prerequisite.installCommand} />}
               {prerequisite.installUrl && (
                 <a
@@ -355,7 +364,7 @@ const PrerequisiteCard = ({ prerequisite }: { prerequisite: Prerequisite }) => {
                   className="inline-flex items-center text-sm text-blue-400 hover:text-blue-300"
                   onClick={e => e.stopPropagation()} // Prevent toggle when clicking link
                 >
-                  View installation guide
+                  {t('installationPage.errorSection.viewGuide')}
                   <ExternalLink size={14} className="ml-1" />
                 </a>
               )}
@@ -368,10 +377,12 @@ const PrerequisiteCard = ({ prerequisite }: { prerequisite: Prerequisite }) => {
                 <AlertTriangle size={18} className="mr-2 mt-0.5 flex-shrink-0 text-amber-400" />
                 <p className="text-sm text-amber-200">
                   {prerequisite.details ||
-                    `The installed version doesn't meet the requirements. Expected: ${prerequisite.minVersion}${prerequisite.maxVersion ? ` to ${prerequisite.maxVersion}` : ' or higher'}.`}
+                    `${t('installationPage.warningSection.versionMismatch')} ${prerequisite.minVersion}${prerequisite.maxVersion ? ` ${t('installationPage.warningSection.to')} ${prerequisite.maxVersion}` : ` ${t('installationPage.warningSection.orHigher')}.`}`}
                 </p>
               </div>
-              <h4 className="mb-2 text-sm font-medium text-white">Update Instructions</h4>
+              <h4 className="mb-2 text-sm font-medium text-white">
+                {t('installationPage.warningSection.updateInstructions')}
+              </h4>
               {prerequisite.installCommand && <CodeBlock code={prerequisite.installCommand} />}
             </div>
           )}
@@ -380,8 +391,7 @@ const PrerequisiteCard = ({ prerequisite }: { prerequisite: Prerequisite }) => {
             <div className="flex items-start rounded-md border border-emerald-800/30 bg-emerald-950/20 p-3">
               <CheckCircle2 size={18} className="mr-2 mt-0.5 flex-shrink-0 text-emerald-400" />
               <p className="text-sm text-emerald-200">
-                {prerequisite.displayName} is correctly installed and meets the version
-                requirements.
+                {prerequisite.displayName} {t('installationPage.successSection.installed')}
               </p>
             </div>
           )}
@@ -422,12 +432,13 @@ const TabButton = ({
 
 // Script installation section
 const InstallationScript = ({ platform }: { platform: Platform }) => {
+  const { t } = useTranslation();
   const scriptCommand = `bash <(curl -s https://raw.githubusercontent.com/kubestellar/kubestellar/refs/tags/v0.27.2/scripts/create-kubestellar-demo-env.sh) --platform ${platform}`;
 
   return (
     <div>
       <p className="mb-4 text-slate-300">
-        Run this command in your terminal to install KubeStellar with {platform}:
+        {t('installationPage.installation.scriptInstructions')} {platform}:
       </p>
 
       <CodeBlock code={scriptCommand} />
@@ -437,12 +448,17 @@ const InstallationScript = ({ platform }: { platform: Platform }) => {
           <div className="flex items-start">
             <Info size={18} className="mr-3 mt-0.5 flex-shrink-0 text-blue-400" />
             <div>
-              <h4 className="mb-2 text-sm font-medium text-blue-300">Installation Process:</h4>
+              <h4 className="mb-2 text-sm font-medium text-blue-300">
+                {t('installationPage.installation.installationProcess.title')}
+              </h4>
               <ul className="list-disc space-y-2 pl-4 text-sm text-blue-200">
-                <li>Creates and configures local {platform} clusters</li>
-                <li>Installs KubeStellar components and dependencies</li>
-                <li>Sets up proper networking and permissions</li>
-                <li>Configures a demo environment</li>
+                {(
+                  t('installationPage.installation.installationProcess.steps', {
+                    returnObjects: true,
+                  }) as string[]
+                ).map((step: string, index: number) => (
+                  <li key={index}>{step.replace('{platform}', platform)}</li>
+                ))}
               </ul>
             </div>
           </div>
@@ -452,12 +468,17 @@ const InstallationScript = ({ platform }: { platform: Platform }) => {
           <div className="flex items-start">
             <AlertTriangle size={18} className="mr-3 mt-0.5 flex-shrink-0 text-amber-400" />
             <div>
-              <h4 className="mb-2 text-sm font-medium text-amber-300">Important Notes:</h4>
+              <h4 className="mb-2 text-sm font-medium text-amber-300">
+                {t('installationPage.installation.importantNotes.title')}
+              </h4>
               <ul className="list-disc space-y-2 pl-4 text-sm text-amber-200">
-                <li>Installation may take several minutes to complete</li>
-                <li>Ensure you have sufficient system resources available</li>
-                <li>Keep the terminal window open until installation finishes</li>
-                <li>Check the terminal output for any error messages</li>
+                {(
+                  t('installationPage.installation.importantNotes.notes', {
+                    returnObjects: true,
+                  }) as string[]
+                ).map((note: string, index: number) => (
+                  <li key={index}>{note}</li>
+                ))}
               </ul>
             </div>
           </div>
@@ -467,11 +488,17 @@ const InstallationScript = ({ platform }: { platform: Platform }) => {
           <div className="flex items-start">
             <CheckCircle2 size={18} className="mr-3 mt-0.5 flex-shrink-0 text-emerald-400" />
             <div>
-              <h4 className="mb-2 text-sm font-medium text-emerald-300">After Installation:</h4>
+              <h4 className="mb-2 text-sm font-medium text-emerald-300">
+                {t('installationPage.installation.afterInstallation.title')}
+              </h4>
               <ul className="list-disc space-y-2 pl-4 text-sm text-emerald-200">
-                <li>Verify the installation by checking cluster status</li>
-                <li>Review the getting started documentation</li>
-                <li>Begin managing your KubeStellar environment</li>
+                {(
+                  t('installationPage.installation.afterInstallation.steps', {
+                    returnObjects: true,
+                  }) as string[]
+                ).map((step: string, index: number) => (
+                  <li key={index}>{step}</li>
+                ))}
               </ul>
             </div>
           </div>
@@ -483,6 +510,8 @@ const InstallationScript = ({ platform }: { platform: Platform }) => {
 
 // Main installation page component
 const InstallationPage = () => {
+  const { t } = useTranslation();
+
   // State for platform selection
   const [platform, setPlatform] = useState<Platform>('kind');
 
@@ -523,7 +552,7 @@ const InstallationPage = () => {
         if (data.allReady) {
           navigate('/login');
           console.log('KubeStellar is installed');
-          toast.success('KubeStellar is already installed! Redirecting to login...');
+          toast.success(t('installationPage.toasts.alreadyInstalled'));
         } else {
           // Only log the message, don't show toast as it'll be redundant with the page content
           console.log('KubeStellar not installed, showing installation page');
@@ -555,7 +584,7 @@ const InstallationPage = () => {
     };
 
     checkStatus();
-  }, [navigate]);
+  }, [navigate, t]);
 
   // Check prerequisites
   useEffect(() => {
@@ -681,7 +710,7 @@ const InstallationPage = () => {
         const { data } = await api.get('/api/kubestellar/status');
         if (data.allReady) {
           clearInterval(intervalId);
-          toast.success('KubeStellar installation detected! Redirecting to login page...');
+          toast.success(t('installationPage.toasts.installationDetected'));
           // Automatically navigate to login
           navigate('/login');
         }
@@ -706,7 +735,7 @@ const InstallationPage = () => {
     // Only start the interval if we're not already checking
     if (!isChecking && !checkError) {
       // Only show the message once when starting the interval
-      toast('KubeStellar is not installed. Installation progress will be checked automatically.', {
+      toast(t('installationPage.toasts.notInstalled'), {
         icon: 'ℹ️',
         duration: 5000,
       });
@@ -719,7 +748,7 @@ const InstallationPage = () => {
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [navigate, isChecking, checkError]);
+  }, [navigate, isChecking, checkError, t]);
 
   // Retry status check
   const retryStatusCheck = async () => {
@@ -734,7 +763,7 @@ const InstallationPage = () => {
     } catch (error) {
       console.error('Error checking KubeStellar status:', error);
       setCheckError(true);
-      toast.error('Failed to check KubeStellar status');
+      toast.error(t('installationPage.toasts.checkFailed'));
     } finally {
       setIsChecking(false);
     }
@@ -743,20 +772,18 @@ const InstallationPage = () => {
   // Handler for starting automatic installation
   const handleInstall = async () => {
     setIsLoading(true);
-    const loadingToast = toast.loading('Preparing installation instructions...');
+    const loadingToast = toast.loading(t('installationPage.toasts.preparingInstructions'));
 
     try {
       // Simply move to the next step and show CLI instructions
       toast.dismiss(loadingToast);
-      toast.success('Follow the CLI installation instructions below to install KubeStellar');
+      toast.success(t('installationPage.toasts.followInstructions'));
       setCurrentStep('install');
 
       // Don't show additional toast, to reduce message clutter
     } catch (error) {
       toast.dismiss(loadingToast);
-      toast.error(
-        'Failed to load installation instructions. Please refresh the page and try again.'
-      );
+      toast.error(t('installationPage.toasts.loadInstructionsFailed'));
       console.error('Error:', error);
     } finally {
       setIsLoading(false);
@@ -806,10 +833,9 @@ const InstallationPage = () => {
             />
           </div>
           <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-200/30 border-t-blue-500"></div>
-          <p className="text-lg text-white">Checking KubeStellar installation status...</p>
+          <p className="text-lg text-white">{t('installationPage.checkingStatus.title')}</p>
           <p className="max-w-md text-center text-sm text-slate-400">
-            This should only take a moment. We're checking if KubeStellar is already installed on
-            your system.
+            {t('installationPage.checkingStatus.description')}
           </p>
         </div>
       </div>
@@ -829,22 +855,20 @@ const InstallationPage = () => {
             />
           </div>
           <AlertTriangle size={40} className="mx-auto mb-4 text-yellow-400" />
-          <h2 className="mb-2 text-2xl font-semibold text-white">Status Check Failed</h2>
-          <p className="mb-6 text-slate-300">
-            Unable to check if KubeStellar is installed. This could be due to a connection issue
-            with the backend service or the server may be temporarily unavailable.
-          </p>
+          <h2 className="mb-2 text-2xl font-semibold text-white">
+            {t('installationPage.checkError.title')}
+          </h2>
+          <p className="mb-6 text-slate-300">{t('installationPage.checkError.description')}</p>
           <div className="space-y-4">
             <button
               onClick={retryStatusCheck}
               className="flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-3 text-white transition-colors hover:bg-blue-500"
             >
               <RefreshCw size={18} className="mr-2" />
-              Retry Connection
+              {t('installationPage.checkError.retryButton')}
             </button>
             <p className="text-sm text-slate-400">
-              If the problem persists, please check your network connection or contact your system
-              administrator.
+              {t('installationPage.checkError.persistenceNote')}
             </p>
           </div>
         </div>
@@ -877,7 +901,7 @@ const InstallationPage = () => {
                 >
                   <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                 </svg>
-                GitHub
+                {t('installationPage.footer.github')}
               </a>
               <a
                 href="https://docs.kubestellar.io/release-0.27.2/direct/get-started/"
@@ -886,7 +910,7 @@ const InstallationPage = () => {
                 className="group flex items-center text-sm font-medium text-slate-300 transition-colors hover:text-white"
               >
                 <Book size={18} className="mr-1.5 transition-transform group-hover:scale-110" />
-                Documentation
+                {t('installationPage.footer.documentation')}
               </a>
               <a
                 href="https://kubestellar.io"
@@ -895,7 +919,7 @@ const InstallationPage = () => {
                 className="flex transform items-center rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-lg transition-all hover:scale-105 hover:from-blue-500 hover:to-indigo-500 hover:shadow-indigo-500/25"
               >
                 <Globe size={16} className="mr-1.5" />
-                Learn More
+                {t('common.help')}
               </a>
             </div>
           </div>
@@ -912,11 +936,10 @@ const InstallationPage = () => {
             className="mb-12 text-center"
           >
             <h1 className="mb-4 bg-gradient-to-r from-blue-400 via-indigo-400 to-teal-400 bg-clip-text text-5xl font-bold text-transparent text-white">
-              Welcome to KubeStellar
+              {t('installationPage.welcome')}
             </h1>
             <p className="mx-auto max-w-2xl text-lg leading-relaxed text-slate-300">
-              Get started with KubeStellar by setting up your development environment. Follow our
-              guided installation process to deploy your demo system.
+              {t('installationPage.gettingStarted')}
             </p>
           </motion.div>
 
@@ -932,7 +955,7 @@ const InstallationPage = () => {
                 <Server size={24} className="text-blue-400" />
               </div>
               <div>
-                <div className="text-sm text-slate-400">Prerequisites</div>
+                <div className="text-sm text-slate-400">{t('installationPage.prerequisites')}</div>
                 <div className="text-2xl font-semibold text-white">
                   {getPrereqStatusCounts().success} / {getPrereqStatusCounts().total}
                 </div>
@@ -944,7 +967,9 @@ const InstallationPage = () => {
                 <CheckCircle2 size={24} className="text-emerald-400" />
               </div>
               <div>
-                <div className="text-sm text-slate-400">Platform</div>
+                <div className="text-sm text-slate-400">
+                  {t('installationPage.installation.platform')}
+                </div>
                 <div className="text-2xl font-semibold capitalize text-white">{platform}</div>
               </div>
             </div>
@@ -954,13 +979,13 @@ const InstallationPage = () => {
                 <Zap size={24} className="text-indigo-400" />
               </div>
               <div>
-                <div className="text-sm text-slate-400">Status</div>
+                <div className="text-sm text-slate-400">{t('common.status.status')}</div>
                 <div className="text-2xl font-semibold text-white">
                   {currentStep === 'prerequisites'
-                    ? 'Checking'
+                    ? t('common.status.checking')
                     : currentStep === 'install'
-                      ? 'Ready'
-                      : 'Complete'}
+                      ? t('common.status.active')
+                      : t('common.status.success')}
                 </div>
               </div>
             </div>
@@ -973,8 +998,8 @@ const InstallationPage = () => {
               <AnimatedCard delay={0.1} className="p-6">
                 <SectionHeader
                   icon={<List size={22} />}
-                  title="Installation Steps"
-                  description="Follow these steps to set up KubeStellar"
+                  title={t('installationPage.sidebarSteps.title')}
+                  description={t('installationPage.sidebarSteps.description')}
                 />
 
                 <div className="space-y-4">
@@ -990,10 +1015,10 @@ const InstallationPage = () => {
                       <h3
                         className={`font-medium ${currentStep === 'prerequisites' ? 'text-white' : currentStep === 'install' ? 'text-emerald-400' : 'text-slate-300'}`}
                       >
-                        Check Prerequisites
+                        {t('installationPage.sidebarSteps.checkPrerequisites')}
                       </h3>
                       <p className="mt-1 text-sm text-slate-400">
-                        Ensure you have all the required tools installed
+                        {t('installationPage.sidebarSteps.checkPrerequisitesDescription')}
                       </p>
                     </div>
                   </div>
@@ -1008,10 +1033,10 @@ const InstallationPage = () => {
                       <h3
                         className={`font-medium ${currentStep === 'install' ? 'text-white' : 'text-slate-300'}`}
                       >
-                        Install KubeStellar
+                        {t('installationPage.sidebarSteps.installKubestellar')}
                       </h3>
                       <p className="mt-1 text-sm text-slate-400">
-                        Deploy KubeStellar using the CLI commands
+                        {t('installationPage.sidebarSteps.installKubestellarDescription')}
                       </p>
                     </div>
                   </div>
@@ -1026,10 +1051,10 @@ const InstallationPage = () => {
                       <h3
                         className={`font-medium ${currentStep === 'install' ? 'text-white' : 'text-slate-300'}`}
                       >
-                        Start Using KubeStellar
+                        {t('installationPage.sidebarSteps.startUsingKubestellar')}
                       </h3>
                       <p className="mt-1 text-sm text-slate-400">
-                        Log in and begin managing your clusters
+                        {t('installationPage.sidebarSteps.startUsingKubestellarDescription')}
                       </p>
                     </div>
                   </div>
@@ -1046,7 +1071,7 @@ const InstallationPage = () => {
                       size={16}
                       className="mr-2 transition-transform group-hover:scale-110"
                     />
-                    View full installation guide
+                    {t('installationPage.documentationLink')}
                   </a>
                 </div>
               </AnimatedCard>
@@ -1065,7 +1090,7 @@ const InstallationPage = () => {
                     }}
                     disabled={skipPrerequisitesCheck}
                   >
-                    Prerequisites
+                    {t('installationPage.tabs.prerequisites')}
                   </TabButton>
                   <TabButton
                     active={activeTab === 'install'}
@@ -1074,7 +1099,7 @@ const InstallationPage = () => {
                       setCurrentStep('install');
                     }}
                   >
-                    Installation
+                    {t('installationPage.tabs.installation')}
                   </TabButton>
                 </div>
               </div>
@@ -1085,28 +1110,34 @@ const InstallationPage = () => {
                   <div>
                     <SectionHeader
                       icon={<Server size={22} />}
-                      title="System Prerequisites"
-                      description="Ensure these tools are installed before proceeding"
+                      title={t('installationPage.prerequisites.title')}
+                      description={t('installationPage.prerequisites.description')}
                     />
 
                     {/* Status summary */}
                     <div className="mb-6 flex flex-wrap gap-4">
                       <div className="rounded-lg border border-slate-800/80 bg-slate-900/60 px-4 py-3">
-                        <div className="mb-1 text-xs text-slate-400">Success</div>
+                        <div className="mb-1 text-xs text-slate-400">
+                          {t('installationPage.prerequisites.status.success')}
+                        </div>
                         <div className="text-2xl font-semibold text-emerald-400">
                           {getPrereqStatusCounts().success} / {getPrereqStatusCounts().total}
                         </div>
                       </div>
 
                       <div className="rounded-lg border border-slate-800/80 bg-slate-900/60 px-4 py-3">
-                        <div className="mb-1 text-xs text-slate-400">Warnings</div>
+                        <div className="mb-1 text-xs text-slate-400">
+                          {t('installationPage.prerequisites.status.warnings')}
+                        </div>
                         <div className="text-2xl font-semibold text-amber-400">
                           {getPrereqStatusCounts().warning}
                         </div>
                       </div>
 
                       <div className="rounded-lg border border-slate-800/80 bg-slate-900/60 px-4 py-3">
-                        <div className="mb-1 text-xs text-slate-400">Missing</div>
+                        <div className="mb-1 text-xs text-slate-400">
+                          {t('installationPage.prerequisites.status.missing')}
+                        </div>
                         <div className="text-2xl font-semibold text-rose-400">
                           {getPrereqStatusCounts().error}
                         </div>
@@ -1114,7 +1145,9 @@ const InstallationPage = () => {
 
                       {getPrereqStatusCounts().checking > 0 && (
                         <div className="rounded-lg border border-slate-800/80 bg-slate-900/60 px-4 py-3">
-                          <div className="mb-1 text-xs text-slate-400">Checking</div>
+                          <div className="mb-1 text-xs text-slate-400">
+                            {t('installationPage.prerequisites.status.checking')}
+                          </div>
                           <div className="text-2xl font-semibold text-blue-400">
                             {getPrereqStatusCounts().checking}
                           </div>
@@ -1124,7 +1157,9 @@ const InstallationPage = () => {
 
                     {/* Core prerequisites */}
                     <div className="mb-6">
-                      <h3 className="mb-3 text-lg font-medium text-white">Core Requirements</h3>
+                      <h3 className="mb-3 text-lg font-medium text-white">
+                        {t('installationPage.prerequisites.coreRequirements')}
+                      </h3>
 
                       {/* Map all core prerequisites */}
                       {getPrereqsByCategory(PrereqCategory.Core).map(prereq => (
@@ -1135,7 +1170,7 @@ const InstallationPage = () => {
                     {/* Setup prerequisites */}
                     <div className="mb-6">
                       <h3 className="mb-3 text-lg font-medium text-white">
-                        Demo Environment Requirements
+                        {t('installationPage.prerequisites.demoEnvironmentRequirements')}
                       </h3>
 
                       {/* Map all setup prerequisites */}
@@ -1151,7 +1186,7 @@ const InstallationPage = () => {
                         className="flex items-center rounded-lg bg-slate-800 px-4 py-2 text-white transition-colors hover:bg-slate-700"
                       >
                         <RefreshCw size={16} className="mr-2" />
-                        Refresh
+                        {t('installationPage.prerequisites.buttons.refresh')}
                       </button>
 
                       <button
@@ -1163,7 +1198,7 @@ const InstallationPage = () => {
                             : 'cursor-not-allowed bg-slate-700 opacity-50'
                         }`}
                       >
-                        Next: Installation
+                        {t('installationPage.prerequisites.buttons.nextInstallation')}
                         <ArrowRight size={16} className="ml-2" />
                       </button>
                     </div>
@@ -1174,8 +1209,8 @@ const InstallationPage = () => {
                   <div>
                     <SectionHeader
                       icon={<Terminal size={22} />}
-                      title="Install KubeStellar"
-                      description="Choose your platform and run the installation script"
+                      title={t('installationPage.installation.title')}
+                      description={t('installationPage.installation.description')}
                     />
 
                     {/* Prerequisites Documentation Link */}
@@ -1184,11 +1219,12 @@ const InstallationPage = () => {
                         <FileText size={24} className="mr-3 mt-0.5 flex-shrink-0 text-blue-400" />
                         <div>
                           <h3 className="mb-2 text-lg font-medium text-white">
-                            Install Prerequisites First
+                            {t('installationPage.installation.installPrerequisitesFirst.title')}
                           </h3>
                           <p className="mb-3 text-slate-300">
-                            Before running the installation script, ensure you have all the required
-                            prerequisites installed on your system.
+                            {t(
+                              'installationPage.installation.installPrerequisitesFirst.description'
+                            )}
                           </p>
                           <a
                             href="https://docs.kubestellar.io/release-0.27.2/direct/pre-reqs/"
@@ -1197,7 +1233,7 @@ const InstallationPage = () => {
                             className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-500"
                           >
                             <Book size={16} className="mr-2" />
-                            View Install Prerequisites
+                            {t('installationPage.installation.installPrerequisitesFirst.button')}
                           </a>
                         </div>
                       </div>
@@ -1205,7 +1241,9 @@ const InstallationPage = () => {
 
                     {/* Platform selection */}
                     <div className="mb-6">
-                      <h3 className="mb-3 text-lg font-medium text-white">Platform</h3>
+                      <h3 className="mb-3 text-lg font-medium text-white">
+                        {t('installationPage.installation.platform')}
+                      </h3>
 
                       <div className="mb-4 flex flex-wrap gap-3">
                         <button
@@ -1217,7 +1255,7 @@ const InstallationPage = () => {
                           } transition-colors`}
                         >
                           <Server size={16} className="mr-2" />
-                          kind
+                          {t('installationPage.installation.platforms.kind')}
                         </button>
                         <button
                           onClick={() => setPlatform('k3d')}
@@ -1228,14 +1266,16 @@ const InstallationPage = () => {
                           } transition-colors`}
                         >
                           <Server size={16} className="mr-2" />
-                          k3d
+                          {t('installationPage.installation.platforms.k3d')}
                         </button>
                       </div>
                     </div>
 
                     {/* Installation instructions */}
                     <div className="mb-6">
-                      <h3 className="mb-3 text-lg font-medium text-white">Installation Script</h3>
+                      <h3 className="mb-3 text-lg font-medium text-white">
+                        {t('installationPage.installation.installationScript')}
+                      </h3>
 
                       <InstallationScript platform={platform} />
                     </div>
@@ -1247,7 +1287,7 @@ const InstallationPage = () => {
                         className="flex items-center rounded-lg bg-slate-800 px-4 py-2 text-white transition-colors hover:bg-slate-700"
                       >
                         <ArrowRight size={16} className="mr-2 rotate-180" />
-                        Back: Prerequisites
+                        {t('installationPage.installation.buttons.backPrerequisites')}
                       </button>
 
                       <button
@@ -1258,12 +1298,12 @@ const InstallationPage = () => {
                         {isLoading ? (
                           <>
                             <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                            Installing...
+                            {t('installationPage.installation.buttons.installing')}
                           </>
                         ) : (
                           <>
                             <Zap size={18} className="mr-2" />
-                            Start Installation
+                            {t('installationPage.installation.buttons.startInstallation')}
                           </>
                         )}
                       </button>
@@ -1284,14 +1324,14 @@ const InstallationPage = () => {
         >
           <div className="mx-auto max-w-5xl border-t border-slate-800/50 pt-8">
             <p className="mb-4">
-              KubeStellar {new Date().getFullYear()} &bull;{' '}
+              {t('installationPage.footer.copyright')} {new Date().getFullYear()} &bull;{' '}
               <a
                 href="https://docs.kubestellar.io"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-400 hover:text-blue-300"
               >
-                Documentation
+                {t('installationPage.footer.documentation')}
               </a>{' '}
               &bull;{' '}
               <a
@@ -1300,13 +1340,10 @@ const InstallationPage = () => {
                 rel="noopener noreferrer"
                 className="text-blue-400 hover:text-blue-300"
               >
-                GitHub
+                {t('installationPage.footer.github')}
               </a>
             </p>
-            <p className="text-xs text-slate-600">
-              KubeStellar is an open-source project. For support, feature requests, or bug reports,
-              please visit our GitHub repository.
-            </p>
+            <p className="text-xs text-slate-600">{t('installationPage.footer.description')}</p>
           </div>
         </motion.div>
 
@@ -1316,15 +1353,15 @@ const InstallationPage = () => {
             <div className="rounded-xl border border-blue-800/50 bg-blue-950/30 p-4 text-center">
               <div className="mb-2 flex items-center justify-center">
                 <Info size={20} className="mr-2 text-blue-400" />
-                <h3 className="text-lg font-medium text-white">Prerequisites Check Skipped</h3>
+                <h3 className="text-lg font-medium text-white">
+                  {t('installationPage.skipPrerequisitesNotice.title')}
+                </h3>
               </div>
               <p className="mb-2 text-slate-300">
-                Prerequisites check has been disabled in this environment. You can proceed directly
-                to installation.
+                {t('installationPage.skipPrerequisitesNotice.description')}
               </p>
               <p className="text-xs text-slate-400">
-                Note: Ensure you have installed all required tools manually before running the
-                installation commands.
+                {t('installationPage.skipPrerequisitesNotice.note')}
               </p>
             </div>
           </div>

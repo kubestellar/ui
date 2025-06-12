@@ -5,6 +5,8 @@ import yaml from 'js-yaml';
 import { useState, useEffect } from 'react';
 import useTheme from '../../stores/themeStore';
 import WorkloadLabelInput from './WorkloadLabelInput';
+import CancelButton from '../common/CancelButton';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   editorContent: string;
@@ -35,6 +37,7 @@ export const YamlTab = ({
   handleCancelClick,
 }: Props) => {
   const theme = useTheme(state => state.theme);
+  const { t } = useTranslation();
   const [localWorkloadLabel, setLocalWorkloadLabel] = useState('');
   const [nameDocumentIndex, setNameDocumentIndex] = useState<number | null>(null);
   const [autoNs, setAutoNs] = useState(true); // Added state for checkbox
@@ -166,7 +169,7 @@ export const YamlTab = ({
               }}
             />
           }
-          label="Create Namespace Automatically"
+          label={t('workloads.yaml.createNamespaceAutomatically')}
           sx={{
             mb: 2,
             ml: -1.2,
@@ -214,21 +217,9 @@ export const YamlTab = ({
           zIndex: 1,
         }}
       >
-        <Button
-          onClick={handleCancelClick}
-          disabled={loading}
-          sx={{
-            textTransform: 'none',
-            fontWeight: 600,
-            color: theme === 'dark' ? '#d4d4d4' : '#666',
-            padding: '8px 16px',
-            '&:hover': {
-              backgroundColor: theme === 'dark' ? '#333' : '#f5f5f5',
-            },
-          }}
-        >
-          Cancel
-        </Button>
+        <CancelButton onClick={handleCancelClick} disabled={loading}>
+          {t('common.cancel')}
+        </CancelButton>
         <Button
           variant="contained"
           onClick={() => handleRawUpload(autoNs)} // Pass autoNs to handleRawUpload
@@ -249,7 +240,7 @@ export const YamlTab = ({
             },
           }}
         >
-          Deploy
+          {t('workloads.yaml.deploy')}
         </Button>
       </Box>
     </StyledContainer>

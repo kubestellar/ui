@@ -7,6 +7,7 @@ import CosmicDust from './globe/CosmicDust';
 import DataPacket from './globe/DataPacket';
 import LogoElement from './globe/LogoElement';
 import Cluster from './globe/Cluster';
+import { useTranslation } from 'react-i18next';
 
 // Add this interface for the component props
 interface NetworkGlobeProps {
@@ -31,6 +32,7 @@ interface CentralNodeChild extends THREE.Object3D {
 
 // Update the main component to accept props
 const NetworkGlobe = ({ isLoaded = true }: NetworkGlobeProps) => {
+  const { t } = useTranslation();
   const globeRef = useRef<THREE.Mesh>(null);
   const centralNodeRef = useRef<THREE.Group>(null);
   const dataFlowsRef = useRef<THREE.Group>(null);
@@ -62,47 +64,47 @@ const NetworkGlobe = ({ isLoaded = true }: NetworkGlobeProps) => {
   const clusters = useMemo(
     () => [
       {
-        name: 'Edge Cluster',
+        name: t('visualization.clusters.edge'),
         position: [0, 3, 0] as [number, number, number],
         nodeCount: 6,
         radius: 0.8,
         color: COLORS.primary,
-        description: 'Edge computing resources for low-latency processing',
+        description: t('visualization.clusters.descriptions.edge'),
       },
       {
-        name: 'AI Inferencing Cluster',
+        name: t('visualization.clusters.aiInference'),
         position: [3, 0, 0] as [number, number, number],
         nodeCount: 8,
         radius: 1,
         color: COLORS.aiInference,
-        description: 'Real-time AI model inference and prediction services',
+        description: t('visualization.clusters.descriptions.aiInference'),
       },
       {
-        name: 'AI Training Cluster',
+        name: t('visualization.clusters.aiTraining'),
         position: [0, -3, 0] as [number, number, number],
         nodeCount: 5,
         radius: 0.7,
         color: COLORS.aiTraining,
-        description: 'High-performance compute for AI model training',
+        description: t('visualization.clusters.descriptions.aiTraining'),
       },
       {
-        name: 'Service Cluster',
+        name: t('visualization.clusters.service'),
         position: [-3, 0, 0] as [number, number, number],
         nodeCount: 7,
         radius: 0.9,
         color: COLORS.accent2,
-        description: 'Core microservices and API endpoints',
+        description: t('visualization.clusters.descriptions.service'),
       },
       {
-        name: 'Compute Cluster',
+        name: t('visualization.clusters.compute'),
         position: [2, 2, -2] as [number, number, number],
         nodeCount: 4,
         radius: 0.6,
         color: COLORS.success,
-        description: 'General-purpose compute resources',
+        description: t('visualization.clusters.descriptions.compute'),
       },
     ],
-    []
+    [t]
   );
 
   // Generate data flow paths - optimized to create fewer paths

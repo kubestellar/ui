@@ -59,6 +59,7 @@ Before you begin, ensure that your system meets the following requirements:
 - Ensure you have access to a Kubernetes clusters setup with Kubestellar Getting Started Guide & Kubestellar prerequisites installed
 
 - **Kubestellar guide**: [Guide](https://docs.kubestellar.io/release-0.25.1/direct/get-started/)
+  > [!NOTE] If you're running on macOS, you may need to manually add a host entry to resolve its1.localtest.me to localhost using `echo "127.0.0.1 its1.localtest.me" | sudo tee -a /etc/hosts`
 
 ### 5. Make and Air
 
@@ -175,9 +176,98 @@ If you prefer to run the application using Docker Compose, follow these steps:
 > If you are using Compose V1, change the `docker compose` command to `docker-compose` in the following steps.
 > Checkout [Migrating to Compose V2](https://docs.docker.com/compose/releases/migrate/) for more info.
 
-#### Step 2: Run Services
+#### Step 2: Environment Configuration (Optional)
 
-From the project root directory
+Docker Compose is configured to use environment variables with sensible defaults. You can customize the configuration by:
+
+**Option 1: Using a .env file** (Recommended for persistent configuration)
+
+Create a `.env` file in the project root directory:
+
+```bash
+cp .env.example .env
+```
+
+**Example `.env` file for Docker Compose:**
+
+```bash
+# Frontend Configuration
+VITE_BASE_URL=http://localhost:4000
+VITE_SKIP_PREREQUISITES_CHECK=true
+VITE_APP_VERSION=0.1.0
+NGINX_HOST=localhost
+BACKEND_URL=http://localhost:4000
+FRONTEND_PORT=5173
+
+# Backend Configuration
+BACKEND_PORT=4000
+CORS_ALLOWED_ORIGIN=http://localhost:5173
+
+# Redis Configuration
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_IMAGE=ghcr.io/kubestellar/ui/redis:latest
+REDIS_CONTAINER_NAME=kubestellar-redis
+
+# Example configurations for different environments:
+# For production:
+# VITE_BASE_URL=https://api.yourapp.com
+# NGINX_HOST=yourapp.com
+# BACKEND_URL=https://api.yourapp.com
+# FRONTEND_PORT=80
+
+# For staging:
+# VITE_BASE_URL=https://staging-api.yourapp.com
+# NGINX_HOST=staging.yourapp.com
+# BACKEND_URL=https://staging-api.yourapp.com
+```
+
+**Option 2: Using system environment variables**
+
+Set environment variables in your shell:
+
+```bash
+export VITE_BASE_URL=https://api.myapp.com
+export NGINX_HOST=myapp.com
+export BACKEND_URL=https://api.myapp.com
+export FRONTEND_PORT=8080
+```
+
+**Option 3: Inline environment variables**
+
+```bash
+VITE_BASE_URL=https://api.myapp.com NGINX_HOST=myapp.com docker compose up
+```
+
+> [!NOTE]
+> All environment variables have default values, so the application will work without any configuration. The defaults are suitable for local development.
+
+##### Available Environment Variables
+
+**Frontend Variables:**
+
+- `VITE_BASE_URL` - Base URL for API calls (default: `http://localhost:4000`)
+- `VITE_SKIP_PREREQUISITES_CHECK` - Skip prerequisites check (default: `true`)
+- `VITE_APP_VERSION` - Application version (default: `0.1.0`)
+- `NGINX_HOST` - Nginx server name (default: `localhost`)
+- `BACKEND_URL` - Backend URL for proxy (default: `http://localhost:4000`)
+- `FRONTEND_PORT` - Frontend port mapping (default: `5173`)
+
+**Backend Variables:**
+
+- `BACKEND_PORT` - Backend port mapping (default: `4000`)
+- `CORS_ALLOWED_ORIGIN` - CORS allowed origin (default: `http://localhost:5173`)
+- `REDIS_HOST` - Redis host (default: `localhost`)
+- `REDIS_PORT` - Redis port (default: `6379`)
+
+**Redis Variables:**
+
+- `REDIS_IMAGE` - Redis Docker image (default: `ghcr.io/kubestellar/ui/redis:latest`)
+- `REDIS_CONTAINER_NAME` - Redis container name (default: `kubestellar-redis`)
+
+#### Step 3: Run Services
+
+From the project root directory:
 
 ```bash
 docker compose up --build
@@ -185,16 +275,48 @@ docker compose up --build
 
 You should see output indicating the services are running.
 
-To stop the application
+To stop the application:
 
 ```bash
 docker compose down
 ```
 
+#### Step 4: Running with Custom Configuration
+
+**With custom ports:**
+
+```bash
+FRONTEND_PORT=8080 BACKEND_PORT=3000 docker compose up
+```
+
+**With production-like settings:**
+
+```bash
+VITE_BASE_URL=https://api.production.com NGINX_HOST=production.com docker compose up
+```
+
+**Using a specific Redis image:**
+
+```bash
+REDIS_IMAGE=redis:7-alpine docker compose up
+```
+
+---
+
+> **Note for WSL Users 🐧**
+>
+> If you've successfully installed the KubeStellar but they are not detected by frontend, it might be due to a communication issue between Docker and WSL.
+>
+> Here are a few steps to resolve it:
+>
+> 1. Open Docker Desktop settings and ensure WSL integration is enabled for your distribution (e.g., Ubuntu).
+> 2. If the issue persists, consider uninstalling Docker Desktop from Windows and instead install Docker **directly inside your WSL environment** (e.g., Ubuntu).
+> 3. After installing Docker inside WSL, reinstall the KubeStellar. This setup typically resolves the detection issues. ✅
+
 ### Accessing the Application
 
-1. **Backend API**: [http://localhost:4000](http://localhost:4000)
-2. **Frontend UI**: [http://localhost:5173](http://localhost:5173)
+1. **Backend API**: [http://localhost:4000](http://localhost:4000) (or custom port if `BACKEND_PORT` is set)
+2. **Frontend UI**: [http://localhost:5173](http://localhost:5173) (or custom port if `FRONTEND_PORT` is set)
 
 #### Dashboard Default Login Credentials
 

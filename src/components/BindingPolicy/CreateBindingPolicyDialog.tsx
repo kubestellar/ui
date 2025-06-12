@@ -16,10 +16,11 @@ import {
   CircularProgress,
 } from '@mui/material';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import useTheme from '../../stores/themeStore';
 import CancelConfirmationDialog from './CancelConfirmationDialog';
+import PolicyNameDialog from './PolicyNameDialog';
 import {
   StyledTab,
   StyledPaper,
@@ -29,12 +30,14 @@ import {
   getDialogPaperProps,
 } from './styles/CreateBindingPolicyStyles';
 import { DEFAULT_BINDING_POLICY_TEMPLATE } from './constants/index';
-import PolicyDragDrop from './PolicyDragDrop';
+import PolicyDragDrop from './PolicyDragDrop'; // TODO: Rename component to PolicySelection
 import { ManagedCluster, Workload } from '../../types/bindingPolicy';
 import { PolicyConfiguration } from './ConfigurationSidebar';
 import { usePolicyDragDropStore } from '../../stores/policyDragDropStore';
 import { useBPQueries } from '../../hooks/queries/useBPQueries';
 import { toast } from 'react-hot-toast';
+import CancelButton from '../common/CancelButton';
+import { useTranslation } from 'react-i18next';
 
 export interface PolicyData {
   name: string;
@@ -77,8 +80,9 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   const theme = useTheme(state => state.theme);
   const { textColor, helperTextColor } = getBaseStyles(theme);
   const enhancedTabContentStyles = getEnhancedTabContentStyles(theme);
+  const { t } = useTranslation();
 
-  const [activeTab, setActiveTab] = useState<string>('dragdrop');
+  const [activeTab, setActiveTab] = useState<string>('selection');
   const [editorContent, setEditorContent] = useState<string>(DEFAULT_BINDING_POLICY_TEMPLATE);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileContent, setFileContent] = useState<string>('');
@@ -86,19 +90,59 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   const [error, setError] = useState<string>('');
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragDropYaml, setDragDropYaml] = useState<string>('');
+  const [isFileHovering, setIsFileHovering] = useState(false);
+  const [selectionYaml, setSelectionYaml] = useState<string>('');
   const [previewYaml, setPreviewYaml] = useState<string>('');
   const [, setSuccessMessage] = useState<string>('');
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
-  const [, setDeploymentError] = useState<string>('');
-  const [, setShowDeployDialog] = useState(false);
+  const [showPolicyNameDialog, setShowPolicyNameDialog] = useState(false);
+  const [pendingPolicyData, setPendingPolicyData] = useState<{
+    clusterIds: string[];
+    workloadIds: string[];
+    config?: PolicyConfiguration;
+  } | null>(null);
 
   const policyCanvasEntities = usePolicyDragDropStore(state => state.canvasEntities);
 
-  const { useGenerateBindingPolicyYaml, useQuickConnect } = useBPQueries();
+  const { useGenerateBindingPolicyYaml, useWorkloadSSE } = useBPQueries();
   const generateYamlMutation = useGenerateBindingPolicyYaml();
-  const quickConnectMutation = useQuickConnect();
+
+  // Use SSE to get comprehensive workload data
+  const {
+    state: sseState,
+    startSSEConnection,
+    extractWorkloads,
+    isLoading: sseLoading,
+    isReady: sseReady,
+  } = useWorkloadSSE();
+
+  // Use SSE workloads if available, otherwise fall back to prop workloads
+  const allWorkloads = React.useMemo(() => {
+    if (sseReady && sseState.data) {
+      const sseWorkloads = extractWorkloads();
+      console.log(
+        '🔍 CreateBindingPolicyDialog - Using SSE workloads:',
+        sseWorkloads.length,
+        'total workloads'
+      );
+      return sseWorkloads;
+    }
+    console.log(
+      '🔍 CreateBindingPolicyDialog - Using prop workloads:',
+      workloads.length,
+      'total workloads'
+    );
+    return workloads;
+  }, [sseReady, sseState.data, extractWorkloads, workloads]);
+
+  // Start SSE connection when component mounts
+  useEffect(() => {
+    if (open) {
+      console.log('🔵 CreateBindingPolicyDialog - Starting SSE connection for workload data');
+      const cleanup = startSSEConnection();
+      return cleanup;
+    }
+  }, [open, startSSEConnection]);
 
   const handleTabChange = (_event: React.SyntheticEvent, value: string) => {
     setActiveTab(value);
@@ -136,17 +180,17 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setIsDragging(true);
+    setIsFileHovering(true);
   };
 
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setIsDragging(false);
+    setIsFileHovering(false);
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setIsDragging(false);
+    setIsFileHovering(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
@@ -155,96 +199,150 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
       if (fileType === 'yaml' || fileType === 'yml') {
         handleFileSelection(file);
       } else {
-        setError('Only YAML files are allowed. Please drop a .yaml or .yml file.');
+        setError(t('bindingPolicy.upload.onlyYamlFiles'));
       }
     }
   };
 
-  const generateResourcesFromWorkload = (workloadObj: Workload) => {
+  const generateResourcesFromWorkload = (
+    workloadObj: Workload,
+    labelInfo?: { key: string; value: string }
+  ) => {
     console.log('Generating resources from workload:', workloadObj);
+    console.log('Label info:', labelInfo);
 
-    const commonResources = [
-      { type: 'namespaces', createOnly: true },
-      { type: 'serviceaccounts', createOnly: false },
-      { type: 'persistentvolumeclaims', createOnly: false },
-      { type: 'configmaps', createOnly: false },
-      { type: 'secrets', createOnly: false },
-    ];
+    // If we have label info, find ALL workloads that match this label
+    let allMatchingWorkloads: Workload[] = [workloadObj];
 
-    // Special handling for database components - always include them
-    const databaseResources = [
-      { type: 'statefulsets', createOnly: false },
-      { type: 'serviceaccounts', createOnly: false },
-      { type: 'roles', createOnly: false },
-      { type: 'rolebindings', createOnly: false },
-      { type: 'clusterroles', createOnly: false },
-      { type: 'clusterrolebindings', createOnly: false },
-    ];
+    if (labelInfo) {
+      allMatchingWorkloads = allWorkloads.filter(
+        w => w.labels && w.labels[labelInfo.key] === labelInfo.value
+      );
+      console.log(
+        `Found ${allMatchingWorkloads.length} workloads matching label ${labelInfo.key}=${labelInfo.value}`
+      );
+    }
 
-    const resourceMapping: Record<string, Array<{ type: string; createOnly: boolean }>> = {
-      deployment: [
-        { type: 'deployments', createOnly: false },
-        { type: 'replicasets', createOnly: false },
-        { type: 'services', createOnly: false },
-      ],
-      statefulset: [
-        { type: 'statefulsets', createOnly: false },
-        { type: 'services', createOnly: false },
-      ],
-      daemonset: [{ type: 'daemonsets', createOnly: false }],
-      job: [{ type: 'jobs', createOnly: false }],
-      cronjob: [
-        { type: 'cronjobs', createOnly: false },
-        { type: 'jobs', createOnly: false },
-      ],
-      service: [
-        { type: 'services', createOnly: false },
-        { type: 'endpoints', createOnly: false },
-      ],
-      ingress: [{ type: 'ingresses', createOnly: false }],
-      configmap: [{ type: 'configmaps', createOnly: false }],
-      secret: [{ type: 'secrets', createOnly: false }],
-      persistentvolumeclaim: [{ type: 'persistentvolumeclaims', createOnly: false }],
-      namespace: [{ type: 'namespaces', createOnly: true }],
-      customresourcedefinition: [{ type: 'customresourcedefinitions', createOnly: false }],
-      statefulsets: [
-        { type: 'statefulsets', createOnly: false },
-        { type: 'services', createOnly: false },
-        { type: 'pods', createOnly: false },
-      ],
-    };
+    // Extract all unique resource types from matching workloads
+    const resourceTypes = new Set<string>();
+    const namespaces = new Set<string>();
 
-    let workloadSpecificResources: Array<{ type: string; createOnly: boolean }> = [];
+    allMatchingWorkloads.forEach(workload => {
+      if (workload.kind) {
+        // Convert kind to resource type (plural, lowercase)
+        let resourceType = workload.kind.toLowerCase();
 
-    // Determine resources based on workload kind
-    if (workloadObj?.kind) {
-      const kindLower = workloadObj.kind.toLowerCase();
+        // Handle special cases for pluralization
+        const pluralMapping: Record<string, string> = {
+          networkpolicy: 'networkpolicies',
+          horizontalpodautoscaler: 'horizontalpodautoscalers',
+          poddisruptionbudget: 'poddisruptionbudgets',
+          customresourcedefinition: 'customresourcedefinitions',
+          ingress: 'ingresses',
+          endpoints: 'endpoints',
+          replicaset: 'replicasets',
+          statefulset: 'statefulsets',
+          daemonset: 'daemonsets',
+          cronjob: 'cronjobs',
+          persistentvolumeclaim: 'persistentvolumeclaims',
+          serviceaccount: 'serviceaccounts',
+          rolebinding: 'rolebindings',
+          clusterrolebinding: 'clusterrolebindings',
+          clusterrole: 'clusterroles',
+        };
 
-      if (resourceMapping[kindLower]) {
-        workloadSpecificResources = resourceMapping[kindLower];
-      } else {
-        let resourceType = kindLower;
-
-        if (!resourceType.endsWith('s')) {
+        if (pluralMapping[resourceType]) {
+          resourceType = pluralMapping[resourceType];
+        } else if (!resourceType.endsWith('s')) {
           resourceType += 's';
         }
 
-        workloadSpecificResources = [{ type: resourceType, createOnly: false }];
+        resourceTypes.add(resourceType);
+        console.log(
+          `Added resource type: ${resourceType} from workload ${workload.name} (${workload.kind})`
+        );
       }
-    } else {
-      console.warn('Workload kind missing, adding deployment resources as default');
-      workloadSpecificResources = resourceMapping['deployment'];
-    }
 
-    // Combine resources in priority order: database, common, workload-specific
-    const resources = [...databaseResources, ...commonResources, ...workloadSpecificResources];
+      // Collect namespaces
+      if (workload.namespace) {
+        namespaces.add(workload.namespace);
+      }
+    });
 
-    const uniqueResources = resources.filter(
-      (resource, index, self) => index === self.findIndex(r => r.type === resource.type)
+    // For workload controllers, check if related resources actually exist in the same namespace(s)
+    const controllerTypes = [
+      'deployment',
+      'statefulset',
+      'daemonset',
+      'replicaset',
+      'job',
+      'cronjob',
+    ];
+    const hasControllers = allMatchingWorkloads.some(
+      w => w.kind && controllerTypes.includes(w.kind.toLowerCase())
     );
 
-    console.log('Final resources:', uniqueResources);
-    return uniqueResources;
+    if (hasControllers) {
+      // Only add supporting resources if they actually exist in the same namespace(s) with matching labels
+      const namespacesToCheck = Array.from(namespaces);
+
+      if (labelInfo) {
+        const matchingPods = allWorkloads.filter(
+          w =>
+            w.kind?.toLowerCase() === 'pod' &&
+            w.labels &&
+            w.labels[labelInfo.key] === labelInfo.value &&
+            namespacesToCheck.includes(w.namespace || '')
+        );
+        if (matchingPods.length > 0) {
+          resourceTypes.add('pods');
+          console.log(`Added pods - found ${matchingPods.length} matching pods`);
+        }
+      }
+
+      // Check for other supporting resources that actually exist with matching labels
+      const supportingResourceTypes = [
+        { kind: 'ServiceAccount', plural: 'serviceaccounts' },
+        { kind: 'ConfigMap', plural: 'configmaps' },
+        { kind: 'Secret', plural: 'secrets' },
+        { kind: 'PersistentVolumeClaim', plural: 'persistentvolumeclaims' },
+        { kind: 'Service', plural: 'services' },
+      ];
+
+      supportingResourceTypes.forEach(({ kind, plural }) => {
+        if (labelInfo) {
+          const matchingResources = allWorkloads.filter(
+            w =>
+              w.kind === kind &&
+              w.labels &&
+              w.labels[labelInfo.key] === labelInfo.value &&
+              namespacesToCheck.includes(w.namespace || '')
+          );
+          if (matchingResources.length > 0) {
+            resourceTypes.add(plural);
+            console.log(`Added ${plural} - found ${matchingResources.length} matching ${kind}s`);
+          }
+        }
+      });
+    }
+
+    // Always include namespaces if we have any
+    if (namespaces.size > 0) {
+      resourceTypes.add('namespaces');
+    }
+
+    // Convert to the expected format
+    const workloadSpecificResources: Array<{ type: string; createOnly: boolean }> = Array.from(
+      resourceTypes
+    ).map(type => ({
+      type,
+      createOnly: type === 'namespaces', // Only namespaces should be createOnly
+    }));
+
+    console.log('Final resources from all matching workloads:', workloadSpecificResources);
+    console.log('Namespaces found:', Array.from(namespaces));
+
+    return workloadSpecificResources;
   };
 
   const extractLabelInfo = (labelId: string): { key: string; value: string } | null => {
@@ -395,10 +493,63 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
     console.log('Creating binding policy with:', { clusterIds, workloadIds, config });
 
     if (clusterIds.length === 0 || workloadIds.length === 0) {
-      toast.error('Both cluster and workload are required');
+      toast.error(t('bindingPolicy.errors.clusterAndWorkloadRequired'));
       return;
     }
 
+    setPendingPolicyData({ clusterIds, workloadIds, config });
+    setShowPolicyNameDialog(true);
+  };
+
+  // Helper function to generate default policy name
+  const generateDefaultPolicyName = (clusterIds: string[], workloadIds: string[]): string => {
+    const clusterId = clusterIds[0];
+    const workloadId = workloadIds[0];
+
+    let clusterLabelValue = '';
+    let workloadInfo = '';
+
+    // Extract cluster label info
+    if (clusterId.startsWith('label-')) {
+      const labelInfo = extractLabelInfo(clusterId);
+      if (labelInfo) {
+        clusterLabelValue = labelInfo.value;
+      }
+    } else {
+      const clusterObj = clusters.find(c => c.name === clusterId);
+      clusterLabelValue = clusterObj?.name || 'unknown';
+    }
+
+    // Extract workload info
+    if (workloadId.startsWith('label-')) {
+      const labelInfo = extractLabelInfo(workloadId);
+      if (labelInfo) {
+        workloadInfo = labelInfo.value;
+      }
+    } else {
+      const workloadObj = workloads.find(w => w.name === workloadId);
+      workloadInfo = workloadObj?.kind?.toLowerCase() || 'resource';
+    }
+
+    // Generate policy name
+    const uniqueId = Math.floor(Math.random() * 100)
+      .toString()
+      .padStart(2, '0');
+    const randomDigits = Math.floor(Math.random() * 100)
+      .toString()
+      .padStart(2, '0');
+
+    return `${clusterLabelValue}-${workloadInfo}-${uniqueId}${randomDigits}`
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  };
+
+  const executeBindingPolicyCreation = async (policyName: string) => {
+    if (!pendingPolicyData) return;
+
+    const { clusterIds, workloadIds, config } = pendingPolicyData;
     const clusterId = clusterIds[0];
     const workloadId = workloadIds[0];
 
@@ -432,7 +583,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
             labels: { [labelInfo.key]: labelInfo.value },
           };
         } else {
-          const matchingWorkloads = workloads.filter(
+          const matchingWorkloads = allWorkloads.filter(
             workload => workload.labels && workload.labels[labelInfo.key] === labelInfo.value
           );
 
@@ -466,7 +617,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
         return;
       }
     } else {
-      workloadObj = workloads.find(w => w.name === workloadId);
+      workloadObj = allWorkloads.find(w => w.name === workloadId);
     }
 
     if (!workloadObj) {
@@ -479,14 +630,12 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
 
     try {
       let clusterObj;
-      let clusterLabelValue = '';
 
       if (clusterId.startsWith('label-')) {
         const labelInfo = extractLabelInfo(clusterId);
         console.log('Extracted cluster label info:', labelInfo);
 
         if (labelInfo) {
-          clusterLabelValue = labelInfo.value;
           const matchingClusters = clusters.filter(
             cluster => cluster.labels && cluster.labels[labelInfo.key] === labelInfo.value
           );
@@ -507,7 +656,6 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
         }
       } else {
         clusterObj = clusters.find(c => c.name === clusterId);
-        clusterLabelValue = clusterObj?.name || 'unknown';
       }
 
       if (!clusterObj) {
@@ -518,11 +666,12 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
 
       const workloadLabels: Record<string, string> = {};
       const clusterLabels: Record<string, string> = {};
+      let workloadLabelInfo: { key: string; value: string } | undefined;
 
       if (workloadId.startsWith('label-')) {
-        const labelInfo = extractLabelInfo(workloadId);
-        if (labelInfo) {
-          workloadLabels[labelInfo.key] = labelInfo.value;
+        workloadLabelInfo = extractLabelInfo(workloadId) || undefined;
+        if (workloadLabelInfo) {
+          workloadLabels[workloadLabelInfo.key] = workloadLabelInfo.value;
         }
       } else {
         workloadLabels['kubestellar.io/workload'] = workloadObj.name;
@@ -546,24 +695,9 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
           { type: 'customresourcedefinitions', createOnly: false },
         ];
       } else {
-        // For regular workloads
-        resources = generateResourcesFromWorkload(workloadObj);
+        // For regular workloads - pass label info to discover all matching resources
+        resources = generateResourcesFromWorkload(workloadObj, workloadLabelInfo);
       }
-
-      // Generate the new policy name format
-      const resourceType = workloadObj.kind?.toLowerCase() || 'resource';
-      const uniqueId = Math.floor(Math.random() * 100)
-        .toString()
-        .padStart(2, '0');
-      const randomDigits = Math.floor(Math.random() * 100)
-        .toString()
-        .padStart(2, '0');
-
-      const newPolicyName = `${clusterLabelValue}-${resourceType}-${uniqueId}${randomDigits}`
-        .toLowerCase()
-        .replace(/[^a-z0-9-]/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
 
       const requestData = {
         workloadLabels,
@@ -571,7 +705,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
         resources,
         namespacesToSync: [workloadNamespace],
         namespace: workloadNamespace,
-        policyName: config?.name || newPolicyName,
+        policyName: config?.name || policyName,
       };
 
       console.log('📤 SENDING REQUEST TO GENERATE-YAML API (CreateBindingPolicyDialog):');
@@ -606,7 +740,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
       setPreviewYaml(generateYamlResponse.yaml);
 
       const policyData: PolicyData = {
-        name: config?.name || newPolicyName,
+        name: config?.name || policyName,
         workloads: [workloadObj.name],
         clusters: [clusterObj.name],
         namespace: workloadNamespace,
@@ -619,305 +753,51 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
 
       setSuccessMessage('Binding policy created successfully');
       handleClearPolicyCanvas();
-      onClose();
+      setShowPolicyNameDialog(false);
+      setPendingPolicyData(null);
     } catch (error) {
       console.error('Error creating binding policy:', error);
       toast.error('Failed to create binding policy');
+      setIsLoading(false);
     }
   };
 
   const prepareForDeployment = async () => {
     if (policyCanvasEntities.clusters.length === 0 || policyCanvasEntities.workloads.length === 0) {
-      setError('Both clusters and workloads are required to create binding policies');
+      setError(t('bindingPolicy.errors.clusterAndWorkloadRequired'));
       return;
     }
 
     setIsLoading(true);
     setError('');
 
-    if (policyCanvasEntities.clusters.length > 0 && policyCanvasEntities.workloads.length > 0) {
-      const workloadId = policyCanvasEntities.workloads[0];
-      const clusterId = policyCanvasEntities.clusters[0];
+    const clusterIds = policyCanvasEntities.clusters;
+    const workloadIds = policyCanvasEntities.workloads;
 
-      console.log('Working with workloadId:', workloadId, 'clusterId:', clusterId);
-
-      // Find the workload object
-      let workloadObj;
-      let isNamespace = false;
-      let isClusterScoped = false;
-
-      if (workloadId.startsWith('label-')) {
-        const labelInfo = extractLabelInfo(workloadId);
-        console.log('Extracted label info:', labelInfo);
-
-        if (labelInfo) {
-          // Check if this is a namespace label
-          if (isNamespaceLabel(labelInfo)) {
-            console.log(`Using namespace label: ${labelInfo.key}=${labelInfo.value}`);
-            isNamespace = true;
-            workloadObj = {
-              name: labelInfo.value,
-              namespace: labelInfo.value,
-              kind: 'Namespace',
-              labels: { [labelInfo.key]: labelInfo.value },
-            };
-          }
-          // Check if this is a cluster-scoped resource
-          else if (isClusterScopedLabel(labelInfo)) {
-            console.log(`Using cluster-scoped resource label: ${labelInfo.key}=${labelInfo.value}`);
-            isClusterScoped = true;
-
-            workloadObj = {
-              name: labelInfo.value,
-              namespace: 'cluster-scoped',
-              kind: determineResourceKind(labelInfo),
-              labels: { [labelInfo.key]: labelInfo.value },
-            };
-          } else {
-            // Try to find a matching workload
-            const matchingWorkloads = workloads.filter(
-              workload => workload.labels && workload.labels[labelInfo.key] === labelInfo.value
-            );
-
-            console.log('Found matching workloads by label:', matchingWorkloads.length);
-
-            if (matchingWorkloads.length > 0) {
-              workloadObj = matchingWorkloads[0];
-            } else {
-              console.log(
-                `No existing workloads match label ${labelInfo.key}=${labelInfo.value}, using synthetic workload`
-              );
-
-              workloadObj = {
-                name: `${labelInfo.value}-resource`,
-                namespace: 'default',
-                kind: determineResourceKind(labelInfo),
-                labels: { [labelInfo.key]: labelInfo.value },
-              };
-
-              // For CRDs and API group patterns, mark as cluster-scoped
-              if (labelInfo.value.includes('.')) {
-                workloadObj.namespace = 'cluster-scoped';
-                isClusterScoped = true;
-              }
-
-              if (labelInfo.key === 'app.kubernetes.io/part-of') {
-                workloadObj.kind =
-                  labelInfo.value.charAt(0).toUpperCase() + labelInfo.value.slice(1);
-                workloadObj.namespace = 'cluster-scoped';
-                isClusterScoped = true;
-              }
-
-              console.log('Created synthetic workload:', workloadObj);
-            }
-          }
-        } else {
-          setError(`Invalid workload label format: ${workloadId}`);
-          setIsLoading(false);
-          return;
-        }
-      } else {
-        workloadObj = workloads.find(workload => workload.name === workloadId);
-      }
-
-      if (!workloadObj) {
-        setError(`Workload not found: ${workloadId}`);
-        setIsLoading(false);
-        return;
-      }
-
-      let clusterObj;
-      let clusterLabelValue = '';
-
-      if (clusterId.startsWith('label-')) {
-        const labelInfo = extractLabelInfo(clusterId);
-        console.log('Extracted cluster label info:', labelInfo);
-
-        if (labelInfo) {
-          clusterLabelValue = labelInfo.value;
-          const matchingClusters = clusters.filter(
-            cluster => cluster.labels && cluster.labels[labelInfo.key] === labelInfo.value
-          );
-
-          console.log('Found matching clusters by label:', matchingClusters.length);
-
-          if (matchingClusters.length > 0) {
-            clusterObj = matchingClusters[0];
-          } else {
-            console.log(
-              `No clusters match label: ${labelInfo.key}=${labelInfo.value}, creating synthetic cluster`
-            );
-            clusterObj = {
-              name: `${labelInfo.value}-cluster`,
-              status: 'Ready',
-              location: 'Unknown',
-              labels: { [labelInfo.key]: labelInfo.value },
-            };
-          }
-        } else {
-          setError(`Invalid cluster label format: ${clusterId}`);
-          setIsLoading(false);
-          return;
-        }
-      } else {
-        clusterObj = clusters.find(c => c.name === clusterId);
-        clusterLabelValue = clusterObj?.name || 'unknown';
-      }
-
-      if (!clusterObj) {
-        console.error('Cluster not found:', clusterId);
-        setError(`Cluster not found: ${clusterId}`);
-        setIsLoading(false);
-        return;
-      }
-
-      const workloadNamespace = isClusterScoped ? 'default' : workloadObj.namespace || 'default';
-
-      const resourceType = workloadObj.kind?.toLowerCase() || 'resource';
-      const uniqueId = Math.floor(Math.random() * 100)
-        .toString()
-        .padStart(2, '0');
-      const randomDigits = Math.floor(Math.random() * 100)
-        .toString()
-        .padStart(2, '0');
-
-      const policyName = `${clusterLabelValue}-${resourceType}-${uniqueId}${randomDigits}`
-        .toLowerCase()
-        .replace(/[^a-z0-9-]/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
-
-      // Prepare labels for the API request
-      const workloadLabels: Record<string, string> = {};
-      const clusterLabels: Record<string, string> = {};
-
-      if (workloadId.startsWith('label-')) {
-        const labelInfo = extractLabelInfo(workloadId);
-        if (labelInfo) {
-          workloadLabels[labelInfo.key] = labelInfo.value;
-        }
-      } else {
-        workloadLabels['kubestellar.io/workload'] = workloadObj.name;
-      }
-
-      if (clusterId.startsWith('label-')) {
-        const labelInfo = extractLabelInfo(clusterId);
-        if (labelInfo) {
-          clusterLabels[labelInfo.key] = labelInfo.value;
-        }
-      } else {
-        clusterLabels['name'] = clusterObj.name;
-      }
-
-      try {
-        // Adjust resources for different types of workloads
-        let resources;
-        if (isNamespace) {
-          resources = [{ type: 'namespaces', createOnly: true }];
-        } else if (isClusterScoped) {
-          resources = [{ type: 'namespaces', createOnly: true }];
-
-          // For CRDs with domain in the value, add them specifically
-          if (workloadObj.kind === 'CustomResourceDefinition' && workloadObj.name.includes('.')) {
-            // Extract the resource type from the CRD name
-            const parts = workloadObj.name.split('.');
-            if (parts.length > 1) {
-              const resourceType = parts[0].toLowerCase();
-              resources.push({ type: resourceType, createOnly: false });
-              console.log(`Added specific resource type for CRD: ${resourceType}`);
-            }
-
-            // Add CRDs as a resource type
-            resources.push({ type: 'customresourcedefinitions', createOnly: false });
-          } else {
-            resources = generateResourcesFromWorkload(workloadObj);
-          }
-        } else {
-          resources = generateResourcesFromWorkload(workloadObj);
-        }
-
-        const requestData = {
-          workloadLabels,
-          clusterLabels,
-          resources,
-          namespacesToSync: [workloadNamespace],
-          policyName,
-          namespace: workloadNamespace,
-        };
-
-        // Add detailed console logging
-        console.log('📤 SENDING REQUEST TO QUICK-CONNECT API (prepareForDeployment):');
-        console.log(JSON.stringify(requestData, null, 2));
-        console.log(
-          '🔍 workloadObj:',
-          JSON.stringify(
-            {
-              name: workloadObj.name,
-              namespace: workloadObj.namespace,
-              kind: workloadObj.kind,
-              labels: workloadObj.labels,
-            },
-            null,
-            2
-          )
-        );
-        console.log(
-          '🔍 clusterObj:',
-          JSON.stringify(
-            {
-              name: clusterObj.name,
-              labels: clusterObj.labels,
-            },
-            null,
-            2
-          )
-        );
-
-        const result = await quickConnectMutation.mutateAsync(requestData);
-        console.log(result);
-
-        setSuccessMessage(`Successfully created binding policy "${policyName}"`);
-        setShowDeployDialog(false);
-        handleClearPolicyCanvas();
-        setIsLoading(false);
-        onClose();
-      } catch (error) {
-        console.error('Failed to create binding policy:', error);
-        setDeploymentError(
-          error instanceof Error
-            ? error.message
-            : 'Failed to create binding policy. Please try again.'
-        );
-        setIsLoading(false);
-      }
-    } else {
-      setIsLoading(false);
-    }
+    setPendingPolicyData({ clusterIds, workloadIds });
+    setShowPolicyNameDialog(true);
+    setIsLoading(false);
   };
 
   const handleCreateFromFile = async () => {
     if (activeTab === 'file') {
       if (!fileContent) {
-        setError('Please select a YAML file first');
+        setError(t('bindingPolicy.errors.selectYamlFile'));
         return;
       }
 
       if (!policyName) {
-        setError(
-          'Could not extract policy name from YAML. Please ensure your YAML has metadata.name'
-        );
+        setError(t('bindingPolicy.errors.policyNameFromYaml'));
         return;
       }
     } else if (activeTab === 'yaml') {
       if (!editorContent) {
-        setError('YAML content is required');
+        setError(t('bindingPolicy.errors.yamlContentRequired'));
         return;
       }
 
       if (!policyName) {
-        setError(
-          'Could not extract policy name from YAML. Please ensure your YAML has metadata.name'
-        );
+        setError(t('bindingPolicy.errors.policyNameFromYaml'));
         return;
       }
     }
@@ -970,7 +850,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
         setPolicyName('');
         setSelectedFile(null);
         setFileContent('');
-        setDragDropYaml('');
+        setSelectionYaml('');
       }, 500);
 
       setIsLoading(false);
@@ -991,7 +871,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
       setFileContent('');
       setError('');
       setIsLoading(false);
-      setDragDropYaml('');
+      setSelectionYaml('');
     }
 
     return () => {
@@ -1037,7 +917,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
         ? editorContent !== DEFAULT_BINDING_POLICY_TEMPLATE
         : activeTab === 'file'
           ? fileContent || policyName
-          : dragDropYaml
+          : selectionYaml
     ) {
       setShowCancelConfirmation(true);
     } else {
@@ -1055,6 +935,28 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
 
   const handleClearPolicyCanvas = () => {
     usePolicyDragDropStore.getState().clearCanvas();
+  };
+
+  const getWorkloadDisplayName = (workloadId: string): string => {
+    if (workloadId.startsWith('label-')) {
+      const labelInfo = extractLabelInfo(workloadId);
+      if (labelInfo) {
+        return `${labelInfo.key}:${labelInfo.value}`;
+      }
+    }
+    const workloadObj = workloads.find(w => w.name === workloadId);
+    return workloadObj?.name || workloadId;
+  };
+
+  const getClusterDisplayName = (clusterId: string): string => {
+    if (clusterId.startsWith('label-')) {
+      const labelInfo = extractLabelInfo(clusterId);
+      if (labelInfo) {
+        return `${labelInfo.key}:${labelInfo.value}`;
+      }
+    }
+    const clusterObj = clusters.find(c => c.name === clusterId);
+    return clusterObj?.name || clusterId;
   };
 
   return (
@@ -1085,7 +987,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
           }}
         >
           <Typography variant="h6" component="span" fontWeight={600}>
-            Create Binding Policy
+            {t('bindingPolicy.createBindingPolicy')}
           </Typography>
 
           <Tabs
@@ -1096,10 +998,10 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
             sx={getTabsStyles(theme)}
           >
             <StyledTab
-              icon={<DragIndicatorIcon sx={{ color: isDarkTheme ? '#FFFFFF' : 'inherit' }} />}
+              icon={<CheckBoxIcon sx={{ color: isDarkTheme ? '#FFFFFF' : 'inherit' }} />}
               iconPosition="start"
-              label="Click & Drop"
-              value="dragdrop"
+              label={t('bindingPolicy.tabs.selectItems')}
+              value="selection"
               sx={{
                 color: isDarkTheme ? '#FFFFFF' : 'primary.main',
                 '&:hover': {
@@ -1122,7 +1024,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                 </span>
               }
               iconPosition="start"
-              label="YAML"
+              label={t('bindingPolicy.tabs.yaml')}
               value="yaml"
             />
             <StyledTab
@@ -1139,7 +1041,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                 </span>
               }
               iconPosition="start"
-              label="Upload File"
+              label={t('bindingPolicy.tabs.uploadFile')}
               value="file"
             />
           </Tabs>
@@ -1170,10 +1072,10 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
             }}
           >
             <Box sx={{ px: 2 }}>
-              {activeTab !== 'dragdrop' && (
+              {activeTab !== 'selection' && (
                 <TextField
                   fullWidth
-                  label="Binding Policy Name"
+                  label={t('bindingPolicy.policyNameDialog.policyName')}
                   value={policyName}
                   onChange={e => setPolicyName(e.target.value)}
                   required
@@ -1329,7 +1231,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                       sx={{
                         height: '100%',
                         border: '2px dashed',
-                        borderColor: isDragging
+                        borderColor: isFileHovering
                           ? 'primary.main'
                           : theme === 'dark'
                             ? 'rgba(255, 255, 255, 0.2)'
@@ -1340,7 +1242,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                         justifyContent: 'center',
                         transition: 'all 0.2s ease',
                         flexGrow: 1,
-                        backgroundColor: isDragging
+                        backgroundColor: isFileHovering
                           ? isDarkTheme
                             ? 'rgba(25, 118, 210, 0.12)'
                             : 'rgba(25, 118, 210, 0.04)'
@@ -1376,7 +1278,9 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                             mb: 2,
                           }}
                         >
-                          {isDragging ? 'Drop YAML File Here' : 'Choose or Drag & Drop a YAML File'}
+                          {isFileHovering
+                            ? t('bindingPolicy.upload.dropHere')
+                            : t('bindingPolicy.upload.chooseOrUpload')}
                         </Typography>
                         <Box
                           sx={{
@@ -1386,7 +1290,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                             opacity: 0.7,
                           }}
                         >
-                          - or -
+                          {t('bindingPolicy.upload.or')}
                         </Box>
                         <Button
                           variant="contained"
@@ -1408,7 +1312,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                             },
                           }}
                         >
-                          Select YAML File
+                          {t('bindingPolicy.upload.selectFile')}
                           <input
                             type="file"
                             hidden
@@ -1424,7 +1328,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                             fontSize: '0.8rem',
                           }}
                         >
-                          Accepted formats: .yaml, .yml
+                          {t('bindingPolicy.upload.acceptedFormats')}
                         </Typography>
                       </Box>
                     </StyledPaper>
@@ -1479,11 +1383,11 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                             borderRadius: '8px',
                           }}
                         >
-                          Choose Different File
+                          {t('bindingPolicy.upload.chooseDifferentFile')}
                         </Button>
                       </Box>
                       <Typography variant="subtitle1" fontWeight={500} sx={{ mb: 1 }}>
-                        File Preview:
+                        {t('bindingPolicy.upload.filePreview')}
                       </Typography>
                       <StyledPaper
                         elevation={0}
@@ -1520,7 +1424,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                 </Box>
               )}
 
-              {activeTab === 'dragdrop' && (
+              {activeTab === 'selection' && (
                 <Box
                   sx={{
                     ...enhancedTabContentStyles,
@@ -1534,7 +1438,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                 >
                   <PolicyDragDrop
                     clusters={clusters}
-                    workloads={workloads}
+                    workloads={allWorkloads}
                     onCreateBindingPolicy={handleCreateBindingPolicy}
                     dialogMode={true}
                   />
@@ -1550,32 +1454,17 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                 borderTop: `1px solid ${isDarkTheme ? 'rgba(255, 255, 255, 0.12)' : 'transparent'}`,
               }}
             >
-              <Button
-                onClick={handleCancelClick}
-                disabled={isLoading}
-                sx={{
-                  px: 3,
-                  py: 1,
-                  textTransform: 'none',
-                  fontWeight: 500,
-                  borderRadius: '8px',
-                  color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
-                  '&:hover': {
-                    backgroundColor: isDarkTheme
-                      ? 'rgba(255, 255, 255, 0.1)'
-                      : 'rgba(0, 0, 0, 0.04)',
-                  },
-                }}
-              >
-                Cancel
-              </Button>
+              <CancelButton onClick={handleCancelClick} disabled={isLoading}>
+                {t('common.cancel')}
+              </CancelButton>
               <Button
                 variant="contained"
-                onClick={activeTab === 'dragdrop' ? prepareForDeployment : handleCreateFromFile}
+                onClick={activeTab === 'selection' ? prepareForDeployment : handleCreateFromFile}
                 color="primary"
                 disabled={
                   isLoading ||
-                  (activeTab === 'dragdrop' &&
+                  sseLoading ||
+                  (activeTab === 'selection' &&
                     (!policyCanvasEntities?.clusters?.length ||
                       !policyCanvasEntities?.workloads?.length)) ||
                   (activeTab === 'file' && !fileContent) ||
@@ -1603,7 +1492,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                   transition: 'all 0.2s ease',
                 }}
               >
-                {isLoading ? (
+                {isLoading || sseLoading ? (
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Box
                       component="span"
@@ -1622,12 +1511,12 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                         },
                       }}
                     />
-                    Creating...
+                    {sseLoading ? t('bindingPolicy.loadingResources') : t('bindingPolicy.creating')}
                   </Box>
-                ) : activeTab === 'dragdrop' ? (
-                  'Deploy Binding Policies'
+                ) : activeTab === 'selection' ? (
+                  t('bindingPolicy.deployBindingPolicies')
                 ) : (
-                  'Create Binding Policy'
+                  t('bindingPolicy.createBindingPolicy')
                 )}
               </Button>
             </DialogActions>
@@ -1678,7 +1567,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
       >
         <DialogTitle>
           <Typography variant="h6" sx={{ color: isDarkTheme ? '#FFFFFF' : undefined }}>
-            Preview Generated YAML
+            {t('bindingPolicy.previewGeneratedYaml')}
           </Typography>
         </DialogTitle>
         <DialogContent sx={{ p: 2 }}>
@@ -1725,7 +1614,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
               },
             }}
           >
-            Close
+            {t('common.close')}
           </Button>
           <Button
             variant="contained"
@@ -1745,14 +1634,39 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
             {isLoading ? (
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <CircularProgress size={20} sx={{ mr: 1 }} />
-                Deploying...
+                {t('bindingPolicy.deploying')}
               </Box>
             ) : (
-              'Deploy Binding Policy'
+              t('bindingPolicy.deployBindingPolicy')
             )}
           </Button>
         </DialogActions>
       </Dialog>
+
+      <PolicyNameDialog
+        open={showPolicyNameDialog}
+        onClose={() => {
+          setShowPolicyNameDialog(false);
+          setPendingPolicyData(null);
+        }}
+        onConfirm={executeBindingPolicyCreation}
+        defaultName={
+          pendingPolicyData
+            ? generateDefaultPolicyName(pendingPolicyData.clusterIds, pendingPolicyData.workloadIds)
+            : ''
+        }
+        workloadDisplay={
+          pendingPolicyData && pendingPolicyData.workloadIds.length > 0
+            ? getWorkloadDisplayName(pendingPolicyData.workloadIds[0])
+            : ''
+        }
+        clusterDisplay={
+          pendingPolicyData && pendingPolicyData.clusterIds.length > 0
+            ? getClusterDisplayName(pendingPolicyData.clusterIds[0])
+            : ''
+        }
+        loading={isLoading}
+      />
     </>
   );
 };

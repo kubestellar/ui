@@ -4,8 +4,11 @@ import { Eye, EyeOff, Lock, User, Globe } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useLogin } from '../../hooks/queries/useLogin';
+import { useTranslation } from 'react-i18next'; // Add this import
+import { decryptData, isEncrypted, migratePassword, secureGet } from '../../utils/secureStorage';
 
 const LoginForm = () => {
+  const { t } = useTranslation(); // Add translation hook
   const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -23,27 +26,55 @@ const LoginForm = () => {
     console.log(
       `[LoginForm] Component mounted at ${performance.now() - renderStartTime.current}ms`
     );
-    const savedUsername = localStorage.getItem('rememberedUsername');
-    const savedPassword = localStorage.getItem('rememberedPassword');
 
-    if (savedUsername && savedPassword) {
-      try {
-        const decodedPassword = atob(savedPassword);
-        setUsername(savedUsername);
-        setPassword(decodedPassword);
-        setRememberMe(true);
-        console.log(
-          `[LoginForm] Loaded remembered credentials at ${performance.now() - renderStartTime.current}ms`
-        );
-      } catch (error) {
-        console.error(
-          `[LoginForm] Error decoding stored credentials at ${performance.now() - renderStartTime.current}ms:`,
-          error
-        );
-        localStorage.removeItem('rememberedUsername');
-        localStorage.removeItem('rememberedPassword');
-      }
-    }
+    // First attempt to migrate any old base64 passwords to the new encrypted format
+    migratePassword().then(() => {
+      const loadSavedCredentials = async () => {
+        const savedUsername = secureGet('rememberedUsername');
+        const savedPassword = secureGet('rememberedPassword');
+
+        if (savedUsername && savedPassword) {
+          try {
+            let passwordToUse;
+
+            if (isEncrypted(savedPassword)) {
+              // This is an encrypted password using our new method
+              passwordToUse = await decryptData(savedPassword);
+            } else {
+              // This should never happen with the new secure storage
+              // But kept as a fallback just in case
+              console.warn('Unexpected unencrypted password found in secure storage');
+              migratePassword();
+              return;
+            }
+
+            setUsername(savedUsername);
+            setPassword(passwordToUse);
+            setRememberMe(true);
+            console.log(
+              `[LoginForm] Loaded remembered credentials at ${performance.now() - renderStartTime.current}ms`
+            );
+          } catch (error) {
+            if (error instanceof Error && error.message === 'Credentials have expired') {
+              toast.error('Saved credentials have expired. Please log in again.');
+            } else if (
+              error instanceof Error &&
+              error.message === 'Too many decryption attempts. Please try again later.'
+            ) {
+              toast.error(error.message);
+            } else {
+              console.error(
+                `[LoginForm] Error with stored credentials at ${performance.now() - renderStartTime.current}ms`
+              );
+            }
+            // We don't need to manually remove credentials as the decryptData function
+            // will handle this for expired credentials
+          }
+        }
+      };
+
+      loadSavedCredentials();
+    });
   }, []);
 
   useEffect(() => {
@@ -94,11 +125,11 @@ const LoginForm = () => {
     };
 
     if (!username.trim()) {
-      newErrors.username = 'Username is required';
+      newErrors.username = t('login.form.errors.usernameRequired');
     }
 
     if (!password.trim()) {
-      newErrors.password = 'Password is required';
+      newErrors.password = t('login.form.errors.passwordRequired');
     }
 
     setErrors(newErrors);
@@ -119,12 +150,12 @@ const LoginForm = () => {
       `[LoginForm] Form submission started at ${performance.now() - renderStartTime.current}ms`
     );
     toast.dismiss();
-    toast.loading('Signing in...', { id: 'auth-loading' });
+    toast.loading(t('login.form.signingIn'), { id: 'auth-loading' });
 
     login({ username, password, rememberMe });
   };
 
-  // JSX remains unchanged
+  // JSX with updated translations
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <motion.div
@@ -144,7 +175,7 @@ const LoginForm = () => {
               setUsername(e.target.value);
               setErrors(prev => ({ ...prev, username: '' }));
             }}
-            placeholder="Username"
+            placeholder={t('login.form.username')}
             className={`w-full border bg-[#1a1f2e] py-3.5 pl-10 pr-4 ${
               errors.username ? 'border-red-400' : 'border-blue-300/20'
             } [&:-webkit-autofill]:!-webkit-text-fill-color-white rounded-xl text-white placeholder-blue-200/70 shadow-sm transition-all duration-200 
@@ -186,7 +217,7 @@ const LoginForm = () => {
               setPassword(e.target.value);
               setErrors(prev => ({ ...prev, password: '' }));
             }}
-            placeholder="Password"
+            placeholder={t('login.form.password')}
             className={`w-full border bg-[#1a1f2e] py-3.5 pl-10 pr-12 ${
               errors.password ? 'border-red-400' : 'border-blue-300/20'
             } [&:-webkit-autofill]:!-webkit-text-fill-color-white [-ms-reveal]:hidden rounded-xl text-white placeholder-blue-200/70 shadow-sm transition-all 
@@ -205,7 +236,7 @@ const LoginForm = () => {
             type="button"
             onClick={() => setShowPassword(!showPassword)}
             className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent text-blue-300/70 transition-colors duration-200 hover:text-blue-300"
-            aria-label={showPassword ? 'Hide password' : 'Show password'}
+            aria-label={showPassword ? t('login.form.hidePassword') : t('login.form.showPassword')}
           >
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
@@ -237,7 +268,7 @@ const LoginForm = () => {
             className="h-4 w-4 rounded-md border-blue-300/30 bg-white/5 text-blue-500 focus:ring-blue-500/50"
           />
           <label htmlFor="remember" className="ml-2 cursor-pointer text-blue-200/80">
-            Remember me
+            {t('login.form.rememberMe')}
           </label>
         </div>
       </motion.div>
@@ -255,12 +286,12 @@ const LoginForm = () => {
         {isPending ? (
           <>
             <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-            <span>Signing in...</span>
+            <span>{t('login.form.signingIn')}</span>
           </>
         ) : (
           <>
             <Globe size={18} className="text-white/90" />
-            <span>Sign In to KubeStellar</span>
+            <span>{t('login.form.signIn')}</span>
           </>
         )}
         <span className="absolute left-0 top-0 h-full w-full bg-gradient-to-r from-white/10 to-transparent opacity-0 transition-opacity duration-300 hover:opacity-100"></span>

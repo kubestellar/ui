@@ -28,6 +28,7 @@ import useTheme from '../stores/themeStore';
 import helmicon from '../assets/Helm.png';
 import { api } from '../lib/api';
 import { ArtifactHubTab, ArtifactHubFormData } from './Workloads/AirtfactTab/ArtifactHubTab';
+import { useTranslation } from 'react-i18next'; // Add this import
 
 interface Props {
   activeOption: string | null;
@@ -75,6 +76,7 @@ function generateRandomString(length: number) {
 }
 
 const CreateOptions = ({ activeOption, setActiveOption, onCancel }: Props) => {
+  const { t } = useTranslation(); // Add this hook
   const theme = useTheme(state => state.theme);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const randomStrings = generateRandomString(5);
@@ -310,7 +312,7 @@ spec:
 
   const handleFileUpload = async (autoNs: boolean) => {
     if (!selectedFile) {
-      toast.error('No file selected.');
+      toast.error(t('workloads.createOptions.notifications.noFileSelected'));
       return;
     }
 
@@ -321,7 +323,7 @@ spec:
     try {
       const response = await uploadFileMutation.mutateAsync({ data: formData, autoNs });
       console.log('Mutation Response:', response);
-      toast.success('Workload Deploy successful!');
+      toast.success(t('workloads.createOptions.notifications.workloadDeploySuccess'));
       setTimeout(() => window.location.reload(), 1000);
     } catch (error) {
       const axiosError = error as AxiosError;
@@ -354,7 +356,11 @@ spec:
               const kind = docWithKind?.kind || 'Unknown';
               const namespace = docWithKind?.metadata?.namespace || 'default';
               toast.error(
-                `Failed to create ${kind} ${workloadName} in namespace ${namespace}, workload is already exists or Namspace ${namespace} not Found`
+                t('workloads.createOptions.notifications.workloadAlreadyExists', {
+                  kind,
+                  name: workloadName,
+                  namespace,
+                })
               );
             } catch (parseError) {
               console.error('Error parsing file for kind:', parseError);
@@ -366,7 +372,7 @@ spec:
         };
         reader.readAsText(selectedFile);
       } else if (axiosError.response?.status === 409) {
-        toast.error('Conflict error: Deployment already in progress!');
+        toast.error(t('workloads.createOptions.notifications.deploymentConflict'));
       } else {
         toast.error(`Upload failed: ${errorMessage}`);
       }
@@ -377,7 +383,7 @@ spec:
     const fileContent = editorContent.trim();
 
     if (!fileContent) {
-      toast.error('Please enter YAML or JSON content.');
+      toast.error(t('workloads.createOptions.notifications.enterYamlJson'));
       return;
     }
 
@@ -393,7 +399,7 @@ spec:
 
       const hasName = documents.some(doc => doc?.metadata?.name);
       if (!hasName) {
-        toast.error("At least one document must have 'metadata.name'");
+        toast.error(t('workloads.createOptions.notifications.needMetadataName'));
         return;
       }
 
@@ -402,7 +408,7 @@ spec:
       });
 
       if (response.status === 200 || response.status === 201) {
-        toast.success('Deployment successful!');
+        toast.success(t('workloads.createOptions.notifications.deploymentSuccess'));
         setTimeout(() => window.location.reload(), 500);
       } else {
         throw new Error(`Unexpected response status: ${response.status}`);
@@ -425,10 +431,14 @@ spec:
           const kind = docWithKind?.kind || 'Unknown';
           const namespace = docWithKind?.metadata?.namespace || 'default';
           toast.error(
-            `Failed to create ${kind}: ${workloadName} in namespace ${namespace}, workload already exists or Namspace ${namespace} not Found`
+            t('workloads.createOptions.notifications.workloadAlreadyExists', {
+              kind,
+              name: workloadName,
+              namespace,
+            })
           );
         } else if (err.response.status === 409) {
-          toast.error('Conflict error: Deployment already in progress!');
+          toast.error(t('workloads.createOptions.notifications.deploymentConflict'));
         } else {
           toast.error(`Deployment failed! (${err.response.status})`);
         }
@@ -471,7 +481,7 @@ spec:
       console.log('Deploy response:', response);
 
       if (response.status === 200 || response.status === 201) {
-        toast.success('Workload deployed successfully!');
+        toast.success(t('workloads.createOptions.notifications.deploymentSuccess'));
         setFormData({
           repositoryUrl: '',
           path: '',
@@ -490,7 +500,7 @@ spec:
 
       if (err.response) {
         if (err.response.status === 500) {
-          toast.error('Failed to clone repository, fill correct url and path !');
+          toast.error(t('workloads.createOptions.notifications.gitRepoError'));
         } else if (err.response.status === 400) {
           toast.error('Failed to deploy workload!');
         } else {
@@ -540,7 +550,7 @@ spec:
       console.log('Helm Deploy response:', response);
 
       if (response.status === 200 || response.status === 201) {
-        toast.success('Helm chart deployed successfully!');
+        toast.success(t('workloads.createOptions.notifications.helmDeploySuccess'));
         setHelmFormData({
           repoName: '',
           repoUrl: '',
@@ -560,9 +570,7 @@ spec:
 
       if (err.response) {
         if (err.response.status === 500) {
-          toast.error(
-            'Deployment failed: failed to install chart: cannot re-use a name that is still in use!'
-          );
+          toast.error(t('workloads.createOptions.notifications.helmDeployFailed'));
         } else if (err.response.status === 400) {
           toast.error('Failed to deploy Helm chart!');
         } else {
@@ -580,12 +588,12 @@ spec:
     console.log('Starting Artifact Hub deployment with formData:', formData);
 
     if (!formData || !formData.packageId) {
-      toast.error('Please select a package.');
+      toast.error(t('workloads.createOptions.artifactHub.selectPackage'));
       return;
     }
 
     if (!formData.releaseName) {
-      toast.error('Please enter a release name.');
+      toast.error(t('workloads.createOptions.artifactHub.enterReleaseName'));
       return;
     }
 
@@ -614,7 +622,7 @@ spec:
       console.log('Artifact Hub Deploy response:', response);
 
       if (response.status === 200 || response.status === 201) {
-        toast.success('Artifact Hub deployment successful!');
+        toast.success(t('workloads.createOptions.notifications.artifactHubDeploySuccess'));
         setTimeout(() => window.location.reload(), 4000);
       } else {
         throw new Error('Unexpected response status: ' + response.status);
@@ -679,19 +687,18 @@ spec:
     let errorMessage = '';
 
     if (!formData.workload_label) {
-      errorMessage = 'Please enter Workload Label.';
+      errorMessage = t('workloads.createOptions.notifications.enterWorkloadLabel');
       isValid = false;
     } else if (formData.workload_label.includes(':')) {
-      errorMessage =
-        "You can only enter value, key is constant and defauled to 'kubestellar.io/workload'.";
+      errorMessage = t('workloads.createOptions.notifications.invalidWorkloadLabel');
       isValid = false;
     }
 
     if (!formData.repositoryUrl) {
-      errorMessage = 'Please enter Git repository.';
+      errorMessage = t('workloads.createOptions.notifications.enterGitRepo');
       isValid = false;
     } else if (!formData.path) {
-      errorMessage = 'Please enter Path.';
+      errorMessage = t('workloads.createOptions.notifications.enterPath');
       isValid = false;
     }
 
@@ -703,27 +710,27 @@ spec:
     const { repoName, repoUrl, chartName, releaseName, namespace } = helmFormData;
 
     if (!repoName) {
-      toast.error('Please enter a repository name.');
+      toast.error(t('workloads.createOptions.notifications.enterRepoName'));
       return false;
     }
 
     if (!repoUrl) {
-      toast.error('Please enter a repository URL.');
+      toast.error(t('workloads.createOptions.notifications.enterRepoUrl'));
       return false;
     }
 
     if (!chartName) {
-      toast.error('Please enter a chart name.');
+      toast.error(t('workloads.createOptions.notifications.enterChartName'));
       return false;
     }
 
     if (!releaseName) {
-      toast.error('Please enter a release name.');
+      toast.error(t('workloads.createOptions.notifications.enterReleaseName'));
       return false;
     }
 
     if (!namespace) {
-      toast.error('Please enter a namespace.');
+      toast.error(t('workloads.createOptions.notifications.enterNamespace'));
       return false;
     }
 
@@ -754,9 +761,9 @@ spec:
       localStorage.setItem('credentialsListData', JSON.stringify(storedCredentials));
 
       setCredentialDialogOpen(false);
-      toast.success('Credential added successfully!');
+      toast.success(t('workloads.createOptions.notifications.credentialAddedSuccess'));
     } else {
-      toast.error('Please fill in both GitHub Username and Personal Access Token.');
+      toast.error(t('workloads.createOptions.credentials.fillBoth'));
     }
   };
 
@@ -787,9 +794,9 @@ spec:
 
       setNewWebhook({ webhookUrl: '', personalAccessToken: '' });
       setWebhookDialogOpen(false);
-      toast.success('Webhook added successfully!');
+      toast.success(t('workloads.createOptions.notifications.webhookAddedSuccess'));
     } else {
-      toast.error('Please fill in both Webhook URL and Personal Access Token.');
+      toast.error(t('workloads.createOptions.webhook.fillBoth'));
     }
   };
 
@@ -819,7 +826,7 @@ spec:
     ) {
       setSelectedFile(file);
     } else {
-      toast.error('Please upload a valid YAML or JSON file.');
+      toast.error(t('workloads.createOptions.file.invalidFile'));
     }
   };
 
@@ -861,7 +868,7 @@ spec:
               color: theme === 'dark' ? '#d4d4d4' : 'black',
             }}
           >
-            Create Workload
+            {t('workloads.createOptions.title')}
           </Typography>
           <Typography
             sx={{
@@ -869,7 +876,7 @@ spec:
               color: theme === 'dark' ? '#858585' : 'gray',
             }}
           >
-            Create Workloads
+            {t('workloads.createOptions.subtitle')}
           </Typography>
           <Tabs
             value={activeOption}
@@ -885,7 +892,7 @@ spec:
             }}
           >
             <StyledTab
-              label="YAML"
+              label={t('workloads.tabs.yaml')}
               value="option1"
               icon={
                 <span role="img" aria-label="yaml" style={{ fontSize: '0.9rem' }}>
@@ -895,7 +902,7 @@ spec:
               iconPosition="start"
             />
             <StyledTab
-              label="From File"
+              label={t('workloads.createOptions.file.title')}
               value="option2"
               icon={
                 <span role="img" aria-label="file" style={{ fontSize: '0.9rem' }}>
@@ -905,13 +912,13 @@ spec:
               iconPosition="start"
             />
             <StyledTab
-              label="GitHub"
+              label={t('workloads.tabs.github')}
               value="option3"
               icon={<GitHubIcon sx={{ fontSize: '0.9rem' }} />}
               iconPosition="start"
             />
             <StyledTab
-              label="Helm"
+              label={t('workloads.tabs.helm')}
               value="option4"
               icon={
                 <img
@@ -927,7 +934,7 @@ spec:
               iconPosition="start"
             />
             <StyledTab
-              label="Artifact Hub"
+              label={t('workloads.tabs.artifactHub')}
               value="option5"
               icon={
                 <span role="img" aria-label="artifact-hub" style={{ fontSize: '0.9rem' }}>

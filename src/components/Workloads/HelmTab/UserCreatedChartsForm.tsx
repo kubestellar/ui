@@ -14,10 +14,12 @@ import { AxiosError } from 'axios';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { MoreVerticalIcon } from 'lucide-react';
+import CancelButton from '../../common/CancelButton';
 import { useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import type { Deployment } from './HelmTab';
 import { api } from '../../../lib/api';
+import { useTranslation } from 'react-i18next'; // Add this import
 
 interface Props {
   handleChartSelection: (chart: string) => void;
@@ -36,6 +38,7 @@ export const UserCreatedChartsForm = ({
   userLoading,
   userCharts,
 }: Props) => {
+  const { t } = useTranslation(); // Add translation hook
   const [contextMenu, setContextMenu] = useState<{ chartId: string; x: number; y: number } | null>(
     null
   );
@@ -58,20 +61,20 @@ export const UserCreatedChartsForm = ({
         const response = await api.delete(`/api/deployments/helm/${chartId}`);
         if (response.status === 200) {
           setUserCharts(prev => prev.filter(chart => chart.id !== chartId));
-          toast.success(`Chart ${chartId} deleted successfully!`);
+          toast.success(t('workloads.helm.userCharts.deleteSuccess', { chartId }));
         } else {
-          toast.error(`Chart ${chartId} not deleted!`);
+          toast.error(t('workloads.helm.userCharts.deleteError', { chartId }));
         }
       } catch (error: unknown) {
         const err = error as AxiosError;
         console.error('Delete Chart error:', err);
-        toast.error(`Chart ${chartId} not deleted!`);
+        toast.error(t('workloads.helm.userCharts.deleteError', { chartId }));
       } finally {
         setDeleteDialogOpen(false);
         setDeleteChartId(null);
       }
     },
-    [setUserCharts]
+    [setUserCharts, t]
   );
 
   const handleDeleteClick = useCallback(() => {
@@ -153,7 +156,7 @@ export const UserCreatedChartsForm = ({
       >
         {userLoading ? (
           <Typography sx={{ color: theme === 'dark' ? '#d4d4d4' : '#333', textAlign: 'center' }}>
-            Loading user charts...
+            {t('workloads.helm.userCharts.loading')}
           </Typography>
         ) : userCharts.length > 0 ? (
           userCharts.map(chart => (
@@ -201,7 +204,7 @@ export const UserCreatedChartsForm = ({
           ))
         ) : (
           <Typography sx={{ color: theme === 'dark' ? '#d4d4d4' : '#333', textAlign: 'center' }}>
-            No user-created charts available.
+            {t('workloads.helm.userCharts.noCharts')}
           </Typography>
         )}
       </Box>
@@ -213,7 +216,7 @@ export const UserCreatedChartsForm = ({
           anchorReference="anchorPosition"
           anchorPosition={contextMenu ? { top: contextMenu.y, left: contextMenu.x } : undefined}
         >
-          <MenuItem onClick={handleDeleteClick}>Delete</MenuItem>
+          <MenuItem onClick={handleDeleteClick}>{t('workloads.helm.userCharts.delete')}</MenuItem>
         </Menu>
       )}
 
@@ -245,25 +248,15 @@ export const UserCreatedChartsForm = ({
           }}
         >
           <WarningAmberIcon sx={{ color: '#FFA500', fontSize: '34px' }} />
-          Confirm Resource Deletion
+          {t('workloads.helm.userCharts.confirmDeletion')}
         </DialogTitle>
         <DialogContent>
           <Typography sx={{ fontSize: '16px', color: theme === 'dark' ? '#fff' : '333', mt: 2 }}>
-            Are you sure you want to delete "{deleteChartId}"? This action cannot be undone.
+            {t('workloads.helm.userCharts.deleteConfirmation', { chartId: deleteChartId })}
           </Typography>
         </DialogContent>
         <DialogActions sx={{ justifyContent: 'space-between', padding: '0 16px 16px 16px' }}>
-          <Button
-            onClick={handleDeleteCancel}
-            sx={{
-              textTransform: 'none',
-              color: '#2F86FF',
-              fontWeight: 600,
-              '&:hover': { backgroundColor: 'rgba(47, 134, 255, 0.1)' },
-            }}
-          >
-            Cancel
-          </Button>
+          <CancelButton onClick={handleDeleteCancel}>{t('common.cancel')}</CancelButton>
           <Button
             onClick={handleDeleteConfirm}
             sx={{
@@ -278,7 +271,7 @@ export const UserCreatedChartsForm = ({
               },
             }}
           >
-            Yes, Delete
+            {t('common.yes')}
           </Button>
         </DialogActions>
       </Dialog>

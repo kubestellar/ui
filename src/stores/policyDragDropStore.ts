@@ -23,10 +23,18 @@ interface ItemLabels {
   workloads: Record<string, Record<string, string>>;
 }
 
+export interface PolicyDragDropTranslations {
+  labelsAssigned: (itemType: string, itemId: string) => string;
+  policyAssigned: (policyName: string, targetType: string, targetName: string) => string;
+  clusterAlreadyAssigned: (targetName: string, policyName: string) => string;
+  workloadAlreadyAssigned: (targetName: string, policyName: string) => string;
+}
+
 interface PolicyDragDropState {
   // UI state
   activeDragItem: { type: string; id: string } | null;
   successMessage: string | null;
+  translations: PolicyDragDropTranslations | null;
 
   // Data state
   assignmentMap: Record<string, { clusters: string[]; workloads: string[] }>;
@@ -37,6 +45,7 @@ interface PolicyDragDropState {
   setActiveDragItem: (item: { type: string; id: string } | null) => void;
   setSuccessMessage: (message: string | null) => void;
   clearSuccessMessageAfterDelay: () => void;
+  setTranslations: (translations: PolicyDragDropTranslations) => void;
 
   // Canvas management
   addToCanvas: (itemType: EntityType, itemId: string) => void;
@@ -70,6 +79,7 @@ export const usePolicyDragDropStore = create<PolicyDragDropState>((set, get) => 
   // Initial state
   activeDragItem: null,
   successMessage: null,
+  translations: null,
   assignmentMap: {},
   canvasEntities: {
     clusters: [],
@@ -84,6 +94,7 @@ export const usePolicyDragDropStore = create<PolicyDragDropState>((set, get) => 
   // UI state actions
   setActiveDragItem: item => set({ activeDragItem: item }),
   setSuccessMessage: message => set({ successMessage: message }),
+  setTranslations: translations => set({ translations }),
   clearSuccessMessageAfterDelay: () => {
     const { successMessage } = get();
     if (successMessage) {
@@ -147,7 +158,7 @@ export const usePolicyDragDropStore = create<PolicyDragDropState>((set, get) => 
 
   // Label management
   assignLabelsToItem: (itemType, itemId, labels) => {
-    const { itemLabels } = get();
+    const { itemLabels, translations } = get();
     const entityKey = `${itemType}s` as keyof ItemLabels;
 
     set({
@@ -158,7 +169,9 @@ export const usePolicyDragDropStore = create<PolicyDragDropState>((set, get) => 
           [itemId]: labels,
         },
       },
-      successMessage: `Labels automatically assigned to ${itemType} ${itemId}`,
+      successMessage: translations
+        ? translations.labelsAssigned(itemType, itemId)
+        : `Labels automatically assigned to ${itemType} ${itemId}`,
     });
 
     // Auto-hide the success message
@@ -187,7 +200,7 @@ export const usePolicyDragDropStore = create<PolicyDragDropState>((set, get) => 
   },
 
   assignPolicy: (policyName, targetType, targetName, onPolicyAssign) => {
-    const { assignmentMap } = get();
+    const { assignmentMap, translations } = get();
 
     // Create a copy of the current state
     const newMap = { ...assignmentMap };
@@ -201,13 +214,17 @@ export const usePolicyDragDropStore = create<PolicyDragDropState>((set, get) => 
         newMap[policyName].clusters = [...newMap[policyName].clusters, targetName];
         set({
           assignmentMap: newMap,
-          successMessage: `Successfully assigned ${policyName} to ${targetType} ${targetName}`,
+          successMessage: translations
+            ? translations.policyAssigned(policyName, targetType, targetName)
+            : `Successfully assigned ${policyName} to ${targetType} ${targetName}`,
         });
         // Call the API
         onPolicyAssign(policyName, targetType, targetName);
       } else {
         set({
-          successMessage: `Cluster ${targetName} is already assigned to policy ${policyName}`,
+          successMessage: translations
+            ? translations.clusterAlreadyAssigned(targetName, policyName)
+            : `Cluster ${targetName} is already assigned to policy ${policyName}`,
         });
       }
     } else if (targetType === 'workload') {
@@ -217,13 +234,17 @@ export const usePolicyDragDropStore = create<PolicyDragDropState>((set, get) => 
         newMap[policyName].workloads = [...newMap[policyName].workloads, targetName];
         set({
           assignmentMap: newMap,
-          successMessage: `Successfully assigned ${policyName} to ${targetType} ${targetName}`,
+          successMessage: translations
+            ? translations.policyAssigned(policyName, targetType, targetName)
+            : `Successfully assigned ${policyName} to ${targetType} ${targetName}`,
         });
         // Call the API
         onPolicyAssign(policyName, targetType, targetName);
       } else {
         set({
-          successMessage: `Workload ${targetName} is already assigned to policy ${policyName}`,
+          successMessage: translations
+            ? translations.workloadAlreadyAssigned(targetName, policyName)
+            : `Workload ${targetName} is already assigned to policy ${policyName}`,
         });
       }
     }

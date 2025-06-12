@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"sync"
@@ -10,13 +11,14 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// WebSocket upgrader
+// WebSocket upgrader with improved configuration
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
 		return true // Allow all origins for testing
 	},
+	HandshakeTimeout: 10 * time.Second,
 }
 
 // OnboardingEvent represents a single event in the onboarding process
@@ -27,11 +29,19 @@ type OnboardingEvent struct {
 	Timestamp   time.Time `json:"timestamp"`
 }
 
+// Client represents a WebSocket client with context for cancellation
+type Client struct {
+	conn   *websocket.Conn
+	ctx    context.Context
+	cancel context.CancelFunc
+	send   chan OnboardingEvent
+}
+
 // Global event storage and client management
 var (
 	onboardingEvents     = make(map[string][]OnboardingEvent)
 	eventsMutex          sync.RWMutex
-	onboardingClients    = make(map[string][]*websocket.Conn)
+	onboardingClients    = make(map[string][]*Client)
 	clientsMutex         sync.RWMutex
 	onboardingInProgress = make(map[string]bool)
 	onboardingMutex      sync.RWMutex
@@ -52,9 +62,22 @@ func WSOnboardingHandler(c *gin.Context) {
 		return
 	}
 
+	// Create client with context for cancellation
+	ctx, cancel := context.WithCancel(context.Background())
+	client := &Client{
+		conn:   ws,
+		ctx:    ctx,
+		cancel: cancel,
+		send:   make(chan OnboardingEvent, 256), // Buffer for events
+	}
+
 	// Register the WebSocket client for the specific cluster
-	registerClient(clusterName, ws)
-	defer unregisterClient(clusterName, ws)
+	registerClient(clusterName, client)
+	defer unregisterClient(clusterName, client)
+
+	// Start goroutines for handling read/write
+	go client.writePump()
+	go client.readPump()
 
 	// Send existing events for this cluster (if any)
 	eventsMutex.RLock()
@@ -63,9 +86,12 @@ func WSOnboardingHandler(c *gin.Context) {
 
 	if exists {
 		for _, event := range events {
-			if err := ws.WriteJSON(event); err != nil {
-				log.Printf("Failed to send event: %v", err)
-				break
+			select {
+			case client.send <- event:
+			case <-ctx.Done():
+				return
+			default:
+				log.Printf("Client buffer full, dropping event for cluster %s", clusterName)
 			}
 		}
 	}
@@ -91,33 +117,80 @@ func WSOnboardingHandler(c *gin.Context) {
 		Timestamp:   time.Now(),
 	}
 
-	if err := ws.WriteJSON(currentStatusEvent); err != nil {
-		log.Printf("Failed to send current status: %v", err)
+	select {
+	case client.send <- currentStatusEvent:
+	case <-ctx.Done():
+		return
 	}
 
-	// Keep the connection alive with periodic pings
-	go func() {
-		ticker := time.NewTicker(30 * time.Second)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				if err := ws.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(10*time.Second)); err != nil {
-					log.Printf("WebSocket ping failed: %v", err)
-					return
-				}
-			}
-		}
+	// Wait for context cancellation (connection close)
+	<-ctx.Done()
+}
+
+// writePump handles writing messages to the WebSocket connection
+func (c *Client) writePump() {
+	ticker := time.NewTicker(30 * time.Second)
+	defer func() {
+		ticker.Stop()
+		c.conn.Close()
+		c.cancel()
 	}()
 
-	// Read loop to handle client messages (primarily for pings/pongs and detecting disconnects)
 	for {
-		_, _, err := ws.ReadMessage()
-		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("WebSocket read error: %v", err)
+		select {
+		case event, ok := <-c.send:
+			c.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			if !ok {
+				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				return
 			}
-			break
+
+			if err := c.conn.WriteJSON(event); err != nil {
+				log.Printf("Failed to write JSON message: %v", err)
+				return
+			}
+
+		case <-ticker.C:
+			c.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				log.Printf("Failed to send ping: %v", err)
+				return
+			}
+
+		case <-c.ctx.Done():
+			log.Printf("Write pump context cancelled")
+			return
+		}
+	}
+}
+
+// readPump handles reading messages from the WebSocket connection
+func (c *Client) readPump() {
+	defer func() {
+		c.conn.Close()
+		c.cancel()
+	}()
+
+	c.conn.SetReadLimit(512)
+	c.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	c.conn.SetPongHandler(func(string) error {
+		c.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		return nil
+	})
+
+	for {
+		select {
+		case <-c.ctx.Done():
+			log.Printf("Read pump context cancelled")
+			return
+		default:
+			_, _, err := c.conn.ReadMessage()
+			if err != nil {
+				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+					log.Printf("WebSocket read error: %v", err)
+				}
+				return
+			}
 		}
 	}
 }
@@ -169,25 +242,27 @@ func RegisterOnboardingComplete(clusterName string, err error) {
 }
 
 // Helper functions for client management
-func registerClient(clusterName string, ws *websocket.Conn) {
+func registerClient(clusterName string, client *Client) {
 	clientsMutex.Lock()
 	defer clientsMutex.Unlock()
 
 	if _, exists := onboardingClients[clusterName]; !exists {
-		onboardingClients[clusterName] = make([]*websocket.Conn, 0)
+		onboardingClients[clusterName] = make([]*Client, 0)
 	}
-	onboardingClients[clusterName] = append(onboardingClients[clusterName], ws)
+	onboardingClients[clusterName] = append(onboardingClients[clusterName], client)
 
 	log.Printf("New WebSocket client registered for cluster '%s'", clusterName)
 }
 
-func unregisterClient(clusterName string, ws *websocket.Conn) {
+func unregisterClient(clusterName string, client *Client) {
 	clientsMutex.Lock()
 	defer clientsMutex.Unlock()
 
 	if clients, exists := onboardingClients[clusterName]; exists {
-		for i, client := range clients {
-			if client == ws {
+		for i, c := range clients {
+			if c == client {
+				// Close the send channel
+				close(c.send)
 				// Remove this client from the slice
 				onboardingClients[clusterName] = append(clients[:i], clients[i+1:]...)
 				break
@@ -201,7 +276,7 @@ func unregisterClient(clusterName string, ws *websocket.Conn) {
 	}
 
 	log.Printf("WebSocket client unregistered for cluster '%s'", clusterName)
-	ws.Close()
+	client.conn.Close()
 }
 
 func broadcastEvent(clusterName string, event OnboardingEvent) {
@@ -213,11 +288,16 @@ func broadcastEvent(clusterName string, event OnboardingEvent) {
 		return
 	}
 
+	// Send to each client's channel (non-blocking)
 	for _, client := range clients {
-		if err := client.WriteJSON(event); err != nil {
-			log.Printf("Failed to broadcast to client: %v", err)
-			// Don't remove here to avoid concurrent map access
-			// The client will be removed when the ping fails or connection closes
+		select {
+		case client.send <- event:
+			// Event sent successfully
+		case <-client.ctx.Done():
+			// Client is disconnected, skip
+		default:
+			// Channel buffer is full, log and skip
+			log.Printf("Client buffer full for cluster %s, dropping event", clusterName)
 		}
 	}
 }
@@ -243,4 +323,32 @@ func GetOnboardingEvents(clusterName string) []OnboardingEvent {
 	}
 
 	return []OnboardingEvent{}
+}
+
+// Health check endpoint for WebSocket connections
+func WSHealthHandler(c *gin.Context) {
+	clientsMutex.RLock()
+	totalClients := 0
+	clusterCounts := make(map[string]int)
+
+	for cluster, clients := range onboardingClients {
+		activeClients := 0
+		for _, client := range clients {
+			select {
+			case <-client.ctx.Done():
+				// Client is disconnected
+			default:
+				activeClients++
+			}
+		}
+		clusterCounts[cluster] = activeClients
+		totalClients += activeClients
+	}
+	clientsMutex.RUnlock()
+
+	c.JSON(http.StatusOK, gin.H{
+		"totalClients":  totalClients,
+		"clusterCounts": clusterCounts,
+		"timestamp":     time.Now(),
+	})
 }

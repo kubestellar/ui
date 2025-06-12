@@ -13,7 +13,8 @@ import { FiX } from 'react-icons/fi';
 import { ResourceItem } from './TreeViewComponent'; // Adjust the import path
 import useTheme from '../stores/themeStore';
 import DynamicDetailsPanel from './DynamicDetailsPanel'; // Adjust the import path
-import SettingsIcon from '@mui/icons-material/Settings'; // Placeholder for ArgoCD icon; replace with actual ArgoCD icon if available
+import SettingsIcon from '@mui/icons-material/Settings'; // Placeholder for ArgoCD icon
+import { useTranslation } from 'react-i18next';
 
 interface GroupPanelProps {
   namespace: string;
@@ -31,6 +32,7 @@ const GroupPanel: React.FC<GroupPanelProps> = ({
   onClose,
   isOpen = true,
 }) => {
+  const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
   const [selectedItem, setSelectedItem] = useState<ResourceItem | null>(null);
   const [isClosing, setIsClosing] = useState(false);
@@ -106,6 +108,7 @@ const GroupPanel: React.FC<GroupPanelProps> = ({
             <IconButton
               onClick={handleClose}
               sx={{ color: theme === 'dark' ? '#D1D5DB' : '#6C757D' }}
+              aria-label={t('groupPanel.close')}
             >
               <FiX />
             </IconButton>
@@ -113,7 +116,7 @@ const GroupPanel: React.FC<GroupPanelProps> = ({
           <Box sx={{ p: 2 }}>
             <Table
               sx={{ minWidth: 650, borderCollapse: 'separate', borderSpacing: 0 }}
-              aria-label="group items table"
+              aria-label={t('groupPanel.tableAriaLabel')}
             >
               <TableHead>
                 <TableRow>
@@ -131,7 +134,7 @@ const GroupPanel: React.FC<GroupPanelProps> = ({
                       padding: '8px',
                     }}
                   >
-                    Name
+                    {t('groupPanel.table.name')}
                   </TableCell>
                   <TableCell
                     sx={{
@@ -140,7 +143,7 @@ const GroupPanel: React.FC<GroupPanelProps> = ({
                       padding: '8px',
                     }}
                   >
-                    Group/Kind
+                    {t('groupPanel.table.groupKind')}
                   </TableCell>
                   <TableCell
                     sx={{
@@ -149,7 +152,7 @@ const GroupPanel: React.FC<GroupPanelProps> = ({
                       padding: '8px',
                     }}
                   >
-                    Sync Order
+                    {t('groupPanel.table.syncOrder')}
                   </TableCell>
                   <TableCell
                     sx={{
@@ -158,7 +161,7 @@ const GroupPanel: React.FC<GroupPanelProps> = ({
                       padding: '8px',
                     }}
                   >
-                    Namespace
+                    {t('groupPanel.table.namespace')}
                   </TableCell>
                   <TableCell
                     sx={{
@@ -167,7 +170,7 @@ const GroupPanel: React.FC<GroupPanelProps> = ({
                       padding: '8px',
                     }}
                   >
-                    Created At
+                    {t('groupPanel.table.createdAt')}
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -237,7 +240,7 @@ const GroupPanel: React.FC<GroupPanelProps> = ({
                     <TableCell
                       sx={{ color: theme === 'dark' ? '#9CA3AF' : '#6C757D', verticalAlign: 'top' }}
                     >
-                      {item.metadata.creationTimestamp || 'N/A'}
+                      {item.metadata.creationTimestamp || t('groupPanel.notAvailable')}
                     </TableCell>
                   </TableRow>
                 ))}

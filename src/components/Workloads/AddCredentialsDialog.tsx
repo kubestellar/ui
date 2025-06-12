@@ -10,6 +10,9 @@ import {
 } from '@mui/material';
 import { getWebhookAndCredentialDialogPaperProps } from '../../utils/dialogUtils';
 import useTheme from '../../stores/themeStore'; // Import useTheme for dark mode support
+import CancelButton from '../common/CancelButton';
+// Add i18n import
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   credentialDialogOpen: boolean;
@@ -27,6 +30,8 @@ export const AddCredentialsDialog = ({
   handleCloseCredentialDialog,
 }: Props) => {
   const theme = useTheme(state => state.theme); // Get the current theme
+  const { t } = useTranslation();
+
   return (
     // --- Add Credentials Dialog Section ---
     <Dialog
@@ -41,7 +46,7 @@ export const AddCredentialsDialog = ({
           variant="h6"
           sx={{ fontWeight: 600, color: theme === 'dark' ? '#d4d4d4' : '#333' }}
         >
-          Add Credentials
+          {t('addCredentialsDialog.title')}
         </Typography>
       </DialogTitle>
       <DialogContent sx={{ padding: '24px' }}>
@@ -56,13 +61,13 @@ export const AddCredentialsDialog = ({
                 mb: 1,
               }}
             >
-              Github Username *
+              {t('addCredentialsDialog.usernameLabel')}
             </Typography>
             <TextField
               fullWidth
               value={newCredential.githubUsername}
               onChange={e => setNewCredential({ ...newCredential, githubUsername: e.target.value })}
-              placeholder="e.g., onkar717"
+              placeholder={t('addCredentialsDialog.usernamePlaceholder')}
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: '8px',
@@ -95,7 +100,7 @@ export const AddCredentialsDialog = ({
                 💡
               </span>
               <Typography variant="caption" sx={{ color: theme === 'dark' ? '#fff' : '#666' }}>
-                Enter your GitHub username
+                {t('addCredentialsDialog.usernameTip')}
               </Typography>
             </Box>
           </Box>
@@ -110,7 +115,7 @@ export const AddCredentialsDialog = ({
                 mb: 1,
               }}
             >
-              Personal Access Token (PAT) *
+              {t('addCredentialsDialog.tokenLabel')}
             </Typography>
             <TextField
               fullWidth
@@ -119,7 +124,7 @@ export const AddCredentialsDialog = ({
               onChange={e =>
                 setNewCredential({ ...newCredential, personalAccessToken: e.target.value })
               }
-              placeholder="e.g., ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+              placeholder={t('addCredentialsDialog.tokenPlaceholder')}
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: '8px',
@@ -152,27 +157,14 @@ export const AddCredentialsDialog = ({
                 💡
               </span>
               <Typography variant="caption" sx={{ color: theme === 'dark' ? '#fff' : '#666' }}>
-                Enter your GitHub Personal Access Token
+                {t('addCredentialsDialog.tokenTip')}
               </Typography>
             </Box>
           </Box>
         </Box>
       </DialogContent>
       <DialogActions sx={{ padding: '16px 24px', borderTop: '1px solid #e0e0e0' }}>
-        <Button
-          onClick={handleCloseCredentialDialog}
-          sx={{
-            textTransform: 'none',
-            fontWeight: 600,
-            color: '#666',
-            padding: '8px 16px',
-            '&:hover': {
-              backgroundColor: '#f5f5f5',
-            },
-          }}
-        >
-          Cancel
-        </Button>
+        <CancelButton onClick={handleCloseCredentialDialog}>{t('common.cancel')}</CancelButton>
         <Button
           variant="contained"
           onClick={handleAddCredential}
@@ -188,7 +180,7 @@ export const AddCredentialsDialog = ({
             },
           }}
         >
-          Add
+          {t('common.add')}
         </Button>
       </DialogActions>
     </Dialog>

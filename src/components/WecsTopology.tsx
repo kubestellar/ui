@@ -42,12 +42,14 @@ import WecsTreeviewSkeleton from './ui/WecsTreeviewSkeleton';
 import ListViewSkeleton from './ui/ListViewSkeleton';
 import ReactDOM from 'react-dom';
 import { isEqual } from 'lodash';
+import { useTranslation } from 'react-i18next';
 import { useWebSocket } from '../context/webSocketExports';
 import useTheme from '../stores/themeStore';
 import WecsDetailsPanel from './WecsDetailsPanel';
 import { FlowCanvas } from './Wds_Topology/FlowCanvas';
 import ListViewComponent from '../components/ListViewComponent';
 import FullScreenToggle from './ui/FullScreenToggle';
+import { api } from '../lib/api';
 
 // Updated Interfaces
 export interface NodeData {
@@ -524,6 +526,7 @@ const getLayoutedElements = (
 };
 
 const WecsTreeview = () => {
+  const { t } = useTranslation();
   const theme = useTheme(state => state.theme);
   const [nodes, setNodes] = useState<CustomNode[]>([]);
   const [edges, setEdges] = useState<CustomEdge[]>([]);
@@ -620,14 +623,19 @@ const WecsTreeview = () => {
     stateRef.current = { isCollapsed, isExpanded };
   }, [isCollapsed, isExpanded]);
 
-  const getTimeAgo = useCallback((timestamp: string | undefined): string => {
-    if (!timestamp) return 'Unknown';
-    const now = new Date();
-    const then = new Date(timestamp);
-    const diffMs = now.getTime() - then.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    return diffDays === 0 ? 'Today' : `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
-  }, []);
+  const getTimeAgo = useCallback(
+    (timestamp: string | undefined): string => {
+      if (!timestamp) return 'Unknown';
+      const now = new Date();
+      const then = new Date(timestamp);
+      const diffMs = now.getTime() - then.getTime();
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      return diffDays === 0
+        ? t('wecsTopology.timeAgo.today')
+        : t('wecsTopology.timeAgo.days', { count: diffDays });
+    },
+    [t]
+  );
 
   const handleMenuOpen = useCallback((event: React.MouseEvent, nodeId: string) => {
     event.preventDefault();
@@ -638,6 +646,40 @@ const WecsTreeview = () => {
       nodeType = nodeIdParts[0];
     }
     setContextMenu({ nodeId, x: event.clientX, y: event.clientY, nodeType });
+  }, []);
+
+  const getClusterCreationTimestamp = async (name: string) => {
+    try {
+      const response = await api.get(`/api/cluster/details/${encodeURIComponent(name)}`);
+      const data = response.data;
+
+      const creationTime =
+        data.itsManagedClusters && data.itsManagedClusters.length > 0
+          ? data.itsManagedClusters[0].creationTime
+          : new Date().toISOString();
+
+      return creationTime;
+    } catch (error) {
+      console.error(error);
+      return '';
+    }
+  };
+
+  // Wrap fetchAllClusterTimestamps in useCallback
+  const fetchAllClusterTimestamps = useCallback(async (clusterData: WecsCluster[]) => {
+    try {
+      const clusterNames = clusterData.map(cluster => cluster.cluster);
+      const timestamps = await Promise.all(
+        clusterNames.map(name => getClusterCreationTimestamp(name))
+      );
+
+      const timestampMap = new Map(clusterNames.map((name, index) => [name, timestamps[index]]));
+
+      return timestampMap;
+    } catch (error) {
+      console.error('Error fetching cluster timestamps:', error);
+      return new Map();
+    }
   }, []);
 
   const handleClosePanel = useCallback(() => {
@@ -668,7 +710,14 @@ const WecsTreeview = () => {
       let isDeploymentOrJobPod = false;
       if (type.toLowerCase() === 'pod' && parent) {
         const parentType = parent.split(':')[0]?.toLowerCase();
-        isDeploymentOrJobPod = ['deployment', 'replicaset', 'job'].includes(parentType);
+        isDeploymentOrJobPod = [
+          'deployment',
+          'replicaset',
+          'job',
+          'statefulset',
+          'daemonset',
+          'cronjob',
+        ].includes(parentType);
       }
 
       const node =
@@ -780,11 +829,11 @@ const WecsTreeview = () => {
         }
       }
     },
-    [getTimeAgo, handleClosePanel, handleMenuOpen, theme]
+    [getTimeAgo, handleClosePanel, handleMenuOpen, theme, t]
   );
 
   const transformDataToTree = useCallback(
-    (data: WecsCluster[]) => {
+    async (data: WecsCluster[]) => {
       if (!data || !Array.isArray(data) || data.length === 0) {
         ReactDOM.unstable_batchedUpdates(() => {
           setNodes([]);
@@ -793,6 +842,7 @@ const WecsTreeview = () => {
         });
         return;
       }
+      const clusterTimestampMap = await fetchAllClusterTimestamps(data);
 
       // Clear caches when theme changes to ensure proper styling
       nodeCache.current.clear();
@@ -805,17 +855,19 @@ const WecsTreeview = () => {
       if (!stateRef.current.isExpanded) {
         data.forEach(cluster => {
           const clusterId = `cluster:${cluster.cluster}`;
+          const timestamp = clusterTimestampMap.get(cluster.cluster) || '';
+
           createNode(
             clusterId,
             cluster.cluster,
             'cluster',
             'Active',
-            '',
+            timestamp,
             undefined,
             {
               apiVersion: 'v1',
               kind: 'Cluster',
-              metadata: { name: cluster.cluster, namespace: '', creationTimestamp: '' },
+              metadata: { name: cluster.cluster, namespace: '', creationTimestamp: timestamp },
               status: { phase: 'Active' },
             },
             null,
@@ -826,17 +878,19 @@ const WecsTreeview = () => {
       } else {
         data.forEach(cluster => {
           const clusterId = `cluster:${cluster.cluster}`;
+          const timestamp = clusterTimestampMap.get(cluster.cluster) || '';
+
           createNode(
             clusterId,
             cluster.cluster,
             'cluster',
             'Active',
-            '',
+            timestamp,
             undefined,
             {
               apiVersion: 'v1',
               kind: 'Cluster',
-              metadata: { name: cluster.cluster, namespace: '', creationTimestamp: '' },
+              metadata: { name: cluster.cluster, namespace: '', creationTimestamp: timestamp },
               status: { phase: 'Active' },
             },
             null,
@@ -1198,17 +1252,28 @@ const WecsTreeview = () => {
         setIsTransforming(false);
       });
       prevNodes.current = layoutedNodes;
+      setIsTransforming(false);
     },
-    [createNode, nodes, edges]
+    [createNode, nodes, edges, fetchAllClusterTimestamps]
   );
 
   useEffect(() => {
     if (wecsData !== null && !isEqual(wecsData, prevWecsData.current)) {
       setIsTransforming(true);
-      transformDataToTree(wecsData as WecsCluster[]);
-      prevWecsData.current = wecsData as WecsCluster[];
+
+      const processData = async () => {
+        try {
+          await transformDataToTree(wecsData as WecsCluster[]);
+          prevWecsData.current = wecsData as WecsCluster[];
+        } catch (error) {
+          console.error('Error transforming data:', error);
+          setIsTransforming(false);
+        }
+      };
+
+      processData();
     }
-  }, [wecsData, transformDataToTree]);
+  }, [transformDataToTree, wecsData]); // Added wecsData to dependency array
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1298,6 +1363,21 @@ const WecsTreeview = () => {
                 });
               }
               break;
+            case 'ExecPod':
+              if (nodeType === 'pod') {
+                setSelectedNode({
+                  namespace: namespace || 'default',
+                  name: nodeName,
+                  type: nodeType,
+                  onClose: handleClosePanel,
+                  isOpen: true,
+                  resourceData,
+                  initialTab: 3,
+                  cluster,
+                  isDeploymentOrJobPod,
+                });
+              }
+              break;
             default:
               break;
           }
@@ -1380,7 +1460,7 @@ const WecsTreeview = () => {
             variant="h4"
             sx={{ color: '#4498FF', fontWeight: 700, fontSize: '30px', letterSpacing: '0.5px' }}
           >
-            Remote-Cluster Treeview
+            {t('wecsTopology.title')}
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <IconButton
@@ -1403,7 +1483,7 @@ const WecsTreeview = () => {
               <span>
                 <i
                   className="fa fa-th menu_icon"
-                  title="Tiles"
+                  title={t('wecsTopology.viewModes.tiles')}
                   style={{
                     color:
                       theme === 'dark' ? (viewMode === 'tiles' ? '#90CAF9' : '#FFFFFF') : undefined,
@@ -1432,7 +1512,7 @@ const WecsTreeview = () => {
               <span>
                 <i
                   className="fa fa-th-list menu_icon"
-                  title="List"
+                  title={t('wecsTopology.viewModes.list')}
                   style={{
                     color:
                       theme === 'dark' ? (viewMode === 'list' ? '#90CAF9' : '#FFFFFF') : undefined,
@@ -1453,7 +1533,7 @@ const WecsTreeview = () => {
                 textTransform: 'none',
               }}
             >
-              Create Workload
+              {t('wecsTopology.createWorkload')}
             </Button>
           </Box>
         </Box>
@@ -1481,8 +1561,7 @@ const WecsTreeview = () => {
             variant="body2"
             sx={{ color: theme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)' }}
           >
-            Note: Default, Kubernetes system, and OpenShift namespaces are filtered out from this
-            view.
+            {t('wecsTopology.note')}
           </Typography>
         </Box>
 
@@ -1515,7 +1594,7 @@ const WecsTreeview = () => {
                   containerRef={containerRef}
                   position="top-right"
                   tooltipPosition="left"
-                  tooltipText="Toggle fullscreen view"
+                  tooltipText={t('wecsTopology.fullscreen.toggle')}
                 />
               </ReactFlowProvider>
             </Box>
@@ -1541,10 +1620,10 @@ const WecsTreeview = () => {
                     fontSize: '22px',
                   }}
                 >
-                  No Workloads Found
+                  {t('wecsTopology.emptyState.title')}
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#00000099', fontSize: '17px', mb: 2 }}>
-                  Get started by creating your first workload
+                  {t('wecsTopology.emptyState.description')}
                 </Typography>
                 <Button
                   variant="contained"
@@ -1556,7 +1635,7 @@ const WecsTreeview = () => {
                     '&:hover': { backgroundColor: '#1f76e5' },
                   }}
                 >
-                  Create Workload
+                  {t('wecsTopology.createWorkload')}
                 </Button>
               </Box>
             </Box>
@@ -1569,39 +1648,39 @@ const WecsTreeview = () => {
               anchorReference="anchorPosition"
               anchorPosition={contextMenu ? { top: contextMenu.y, left: contextMenu.x } : undefined}
               PaperProps={{
-                style: {
-                  backgroundColor: theme === 'dark' ? '#1F2937' : '#fff',
-                  color: theme === 'dark' ? '#fff' : 'inherit',
-                  boxShadow:
-                    theme === 'dark'
-                      ? '0 4px 20px rgba(0, 0, 0, 0.5)'
-                      : '0 4px 20px rgba(0, 0, 0, 0.15)',
+                sx: {
+                  backgroundColor: theme === 'dark' ? '#0F172A' : '#ffffff',
+                  color: theme === 'dark' ? '#ffffff' : '#000000',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+                  borderRadius: 1,
+                  minWidth: 180,
                 },
               }}
             >
               <MenuItem
                 onClick={() => handleMenuAction('Details')}
                 sx={{
-                  color: theme === 'dark' ? '#fff' : 'inherit',
+                  color: theme === 'dark' ? '#DEE6EB' : '#000000',
                   '&:hover': {
                     backgroundColor:
                       theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
                   },
                 }}
               >
-                Details
+                {t('wecsTopology.contextMenu.details')}
               </MenuItem>
+
               <MenuItem
                 onClick={() => handleMenuAction('Edit')}
                 sx={{
-                  color: theme === 'dark' ? '#fff' : 'inherit',
+                  color: theme === 'dark' ? '#DEE6EB' : '#000000',
                   '&:hover': {
                     backgroundColor:
                       theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
                   },
                 }}
               >
-                Edit
+                {t('wecsTopology.contextMenu.edit')}
               </MenuItem>
               {contextMenu.nodeType === 'pod' &&
                 contextMenu.nodeId &&
@@ -1610,6 +1689,23 @@ const WecsTreeview = () => {
                   <MenuItem
                     onClick={() => handleMenuAction('Logs')}
                     sx={{
+                      color: theme === 'dark' ? '#DEE6EB' : '#000000',
+                      '&:hover': {
+                        backgroundColor:
+                          theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                      },
+                    }}
+                  >
+                    {t('wecsTopology.contextMenu.logs')}
+                  </MenuItem>
+                )}
+              {contextMenu.nodeType === 'pod' &&
+                contextMenu.nodeId &&
+                contextMenu.nodeId.startsWith('pod:') &&
+                nodes.find(n => n.id === contextMenu.nodeId)?.data?.isDeploymentOrJobPod && (
+                  <MenuItem
+                    onClick={() => handleMenuAction('ExecPod')}
+                    sx={{
                       color: theme === 'dark' ? '#fff' : 'inherit',
                       '&:hover': {
                         backgroundColor:
@@ -1617,7 +1713,7 @@ const WecsTreeview = () => {
                       },
                     }}
                   >
-                    Logs
+                    {t('wecsTopology.contextMenu.execPods')}
                   </MenuItem>
                 )}
             </Menu>

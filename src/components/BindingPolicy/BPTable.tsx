@@ -16,27 +16,33 @@ import {
   Paper,
 } from '@mui/material';
 import { Trash2, CloudOff } from 'lucide-react';
-import { BindingPolicyInfo } from '../../types/bindingPolicy';
+import { BindingPolicyInfo, ManagedCluster } from '../../types/bindingPolicy';
 import PolicyDetailDialog from './Dialogs/PolicyDetailDialog';
+import CloseIcon from '@mui/icons-material/Close';
 import useTheme from '../../stores/themeStore';
 import { useBPQueries } from '../../hooks/queries/useBPQueries';
 import { api } from '../../lib/api';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 interface BPTableProps {
   policies: BindingPolicyInfo[];
+  clusters?: ManagedCluster[];
   onDeletePolicy: (policy: BindingPolicyInfo) => void;
   onEditPolicy: (policy: BindingPolicyInfo) => void;
-  activeFilters: { status?: 'Active' | 'Inactive' | 'Pending' };
+  activeFilters: { status?: 'Active' | 'Inactive' | 'Pending' | '' };
+  setActiveFilters: (filters: { status?: 'Active' | 'Inactive' | 'Pending' }) => void;
   selectedPolicies: string[];
   onSelectionChange: (selected: string[]) => void;
 }
 
 const BPTable: React.FC<BPTableProps> = ({
   policies,
+  clusters = [],
   onDeletePolicy,
   onEditPolicy,
   activeFilters,
+  setActiveFilters,
   selectedPolicies,
   onSelectionChange,
 }): JSX.Element => {
@@ -48,6 +54,7 @@ const BPTable: React.FC<BPTableProps> = ({
   const theme = useTheme(state => state.theme);
   const isDark = theme === 'dark';
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   // Map to store policy statuses from API
   const [policyStatuses, setPolicyStatuses] = useState<Record<string, string>>({});
@@ -206,7 +213,44 @@ const BPTable: React.FC<BPTableProps> = ({
   console.log(
     `BPTable received ${policies.length} policies with status filter: ${activeFilters.status || 'none'}`
   );
-  const filteredPolicies = policies;
+  // Apply stable sorting by name to prevent reordering on re-renders
+  const filteredPolicies = [...policies].sort((a, b) => {
+    const nameA = a?.name?.toLowerCase() || '';
+    const nameB = b?.name?.toLowerCase() || '';
+    return nameA.localeCompare(nameB);
+  });
+
+  // Function to map cluster labels to actual cluster names
+  const mapClusterLabelsToNames = useCallback(
+    (clusterLabels: string[]): string[] => {
+      if (!clusters || clusters.length === 0) {
+        return clusterLabels; // Return original labels if no cluster data available
+      }
+
+      return clusterLabels.map(clusterLabel => {
+        // If it's already a cluster name (not a label), return as is
+        if (clusters.some(cluster => cluster.name === clusterLabel)) {
+          return clusterLabel;
+        }
+
+        if (clusterLabel.includes(':')) {
+          const [key, value] = clusterLabel.split(':');
+          const matchingClusters = clusters.filter(
+            cluster => cluster.labels && cluster.labels[key] === value
+          );
+
+          if (matchingClusters.length > 0) {
+            // Return the names of matching clusters
+            return matchingClusters.map(cluster => cluster.name).join(', ');
+          }
+        }
+
+        // If no matches found, return the original label
+        return clusterLabel;
+      });
+    },
+    [clusters]
+  );
 
   const renderClusterChip = (policy: BindingPolicyInfo) => {
     const clusterCount =
@@ -215,7 +259,7 @@ const BPTable: React.FC<BPTableProps> = ({
     // Return a greyed-out chip with "0" for policies with no clusters
     if (clusterCount === 0 || !policy.clusterList || policy.clusterList.length === 0) {
       return (
-        <Tooltip title="No target clusters defined">
+        <Tooltip title={t('bindingPolicy.table.noClusters')}>
           <Chip
             label="0"
             size="small"
@@ -232,20 +276,26 @@ const BPTable: React.FC<BPTableProps> = ({
     }
 
     // If we have clusters, display the count
+    const mappedClusterNames = mapClusterLabelsToNames(policy.clusterList);
+
     return (
       <Tooltip
         title={
           <React.Fragment>
-            <Typography variant="subtitle2">Target Clusters:</Typography>
-            {policy.clusterList.length > 0 ? (
-              policy.clusterList.map((cluster, index) => (
+            <Typography variant="subtitle2">{t('bindingPolicy.table.clusters')}</Typography>
+            {mappedClusterNames.length > 0 ? (
+              mappedClusterNames.map((cluster, index) => (
                 <Typography key={index} variant="body2" component="div">
                   {index + 1}. {cluster}
                 </Typography>
               ))
             ) : (
               <Typography variant="body2">
-                {clusterCount} cluster{clusterCount !== 1 ? 's' : ''} (details not available)
+                {clusterCount} {t('bindingPolicy.table.clusters').toLowerCase()} (
+                {t('common.noResource', {
+                  resource: t('bindingPolicy.table.clusters').toLowerCase(),
+                })}
+                )
               </Typography>
             )}
           </React.Fragment>
@@ -274,9 +324,9 @@ const BPTable: React.FC<BPTableProps> = ({
     // Return a different styled chip for policies with no workloads
     if (workloadCount === 0 || !policy.workloadList || policy.workloadList.length === 0) {
       return (
-        <Tooltip title="No workloads defined">
+        <Tooltip title={t('bindingPolicy.table.noWorkloads')}>
           <Chip
-            label="None"
+            label={t('bindingPolicy.table.noWorkloads')}
             size="small"
             color="secondary"
             sx={{
@@ -296,14 +346,14 @@ const BPTable: React.FC<BPTableProps> = ({
       displayText = formatWorkloadName(policy.workloadList[0]);
     } else {
       // If there are multiple workloads, show the first one plus a count
-      displayText = `${formatWorkloadName(policy.workloadList[0])} +${policy.workloadList.length - 1}`;
+      displayText = `(${formatWorkloadName(policy.workloadList[0])}) +${policy.workloadList.length - 1}`;
     }
 
     return (
       <Tooltip
         title={
           <React.Fragment>
-            <Typography variant="subtitle2">Workloads:</Typography>
+            <Typography variant="subtitle2">{t('bindingPolicy.table.workload')}</Typography>
             {policy.workloadList.map((workload, index) => (
               <Typography key={index} variant="body2" component="div">
                 {index + 1}. {workload}
@@ -403,12 +453,12 @@ const BPTable: React.FC<BPTableProps> = ({
                   }}
                 />
               </TableCell>
-              <TableCell>Binding Policy Name</TableCell>
-              <TableCell>Clusters</TableCell>
-              <TableCell>Workload</TableCell>
-              <TableCell>Creation Date</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="right">Actions</TableCell>
+              <TableCell>{t('bindingPolicy.table.name')}</TableCell>
+              <TableCell>{t('bindingPolicy.table.clusters')}</TableCell>
+              <TableCell>{t('bindingPolicy.table.workload')}</TableCell>
+              <TableCell>{t('bindingPolicy.table.creationDate')}</TableCell>
+              <TableCell>{t('bindingPolicy.table.status')}</TableCell>
+              <TableCell align="right">{t('bindingPolicy.table.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -534,20 +584,69 @@ const BPTable: React.FC<BPTableProps> = ({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={8} className="py-12">
-                  <div className="flex flex-col items-center justify-center p-6 text-center">
-                    <CloudOff
-                      size={48}
-                      style={{ color: colors.textSecondary, marginBottom: '16px' }}
-                    />
-                    <h3 style={{ color: colors.text }} className="mb-2 text-lg font-semibold">
-                      No Binding Policies Found
+                <TableCell colSpan={8} className="py-16">
+                  <div className="animate-fadeIn flex flex-col items-center justify-center p-8 text-center">
+                    <div className="relative mb-6">
+                      <CloudOff
+                        size={64}
+                        style={{
+                          color: colors.textSecondary,
+                          opacity: 0.6,
+                        }}
+                        className="animate-float"
+                      />
+                      <style>{`
+          @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+          }
+          .animate-float {
+            animation: float 3s ease-in-out infinite;
+          }
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          .animate-fadeIn {
+            animation: fadeIn 0.5s ease-out forwards;
+          }
+        `}</style>
+                    </div>
+                    <h3 style={{ color: colors.text }} className="mb-3 text-xl font-semibold">
+                      {t('bindingPolicy.noBindingPolicies')}
                     </h3>
-                    <p style={{ color: colors.textSecondary }} className="mb-4 max-w-md">
+                    <p style={{ color: colors.textSecondary }} className="mb-6 max-w-md text-base">
                       {activeFilters.status !== undefined
-                        ? `No binding policies match your ${activeFilters.status} filter criteria`
-                        : 'No binding policies available'}
+                        ? t('bindingPolicy.noBindingPoliciesWithFilter', {
+                            status: activeFilters.status,
+                          })
+                        : t('bindingPolicy.noBindingPoliciesDescription')}
                     </p>
+                    {activeFilters.status !== undefined && (
+                      <Button
+                        onClick={() => setActiveFilters({})}
+                        size="medium"
+                        startIcon={<CloseIcon fontSize="small" />}
+                        sx={{
+                          color: colors.white,
+                          borderColor: colors.primary,
+                          backgroundColor: colors.primary,
+                          '&:hover': {
+                            backgroundColor: colors.primaryDark,
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 4px 8px -2px rgba(47, 134, 255, 0.3)',
+                          },
+                          textTransform: 'none',
+                          fontWeight: '600',
+                          borderRadius: '8px',
+                          transition: 'all 0.2s ease',
+                        }}
+                        variant="contained"
+                      >
+                        {t('common.clearFilter')}
+                      </Button>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
@@ -564,16 +663,17 @@ const BPTable: React.FC<BPTableProps> = ({
             selectedPolicyDetails ||
             ({
               name: selectedPolicyName,
-              status: 'Loading...',
+              status: t('common.status.checking'),
               clusters: 0,
               clusterList: [],
               workloadList: [],
-              workload: 'Loading...',
+              workload: t('common.loading'),
               namespace: 'default',
-              bindingMode: 'Unknown',
+              bindingMode: t('bindingPolicy.unknown'),
               creationDate: '',
             } as BindingPolicyInfo)
           }
+          clusters={clusters}
           onEdit={handleEdit}
           isLoading={isLoadingDetails}
           error={detailsError?.message}

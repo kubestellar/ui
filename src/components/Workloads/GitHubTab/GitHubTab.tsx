@@ -3,6 +3,7 @@ import { Box, Card, Typography, useTheme, Divider } from '@mui/material';
 import GitHubOptionButtons from './GitHubOptionButtons';
 import PopularRepositoriesForm from './PopularRepositoriesForm';
 import WorkloadLabelInput from '../WorkloadLabelInput';
+import { useTranslation } from 'react-i18next'; // Add this import
 
 interface Props {
   onComplete: (repoData: { url: string; path: string }) => void;
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export const GitHubTab = ({ onComplete, formData, setFormData }: Props) => {
+  const { t } = useTranslation(); // Add translation hook
   const theme = useTheme();
   const isDarkTheme = theme.palette.mode === 'dark';
   const [selectedOption, setSelectedOption] = useState<string>('yourGitHub');
@@ -38,19 +40,25 @@ export const GitHubTab = ({ onComplete, formData, setFormData }: Props) => {
       case 'yourGitHub':
         return (
           <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="body1">Your GitHub Repository form would go here</Typography>
+            <Typography variant="body1">
+              {t('workloads.github.options.placeholder.yourGitHub')}
+            </Typography>
           </Box>
         );
       case 'enterprise':
         return (
           <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="body1">Enterprise Repository form would go here</Typography>
+            <Typography variant="body1">
+              {t('workloads.github.options.placeholder.enterprise')}
+            </Typography>
           </Box>
         );
       case 'public':
         return (
           <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="body1">Public Repository form would go here</Typography>
+            <Typography variant="body1">
+              {t('workloads.github.options.placeholder.public')}
+            </Typography>
           </Box>
         );
       default:
@@ -61,10 +69,10 @@ export const GitHubTab = ({ onComplete, formData, setFormData }: Props) => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', gap: 3 }}>
       <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-        Import from GitHub
+        {t('workloads.github.tab.importFromGitHub')}
       </Typography>
       <Typography variant="body2" sx={{ color: isDarkTheme ? '#aaa' : '#666', mb: 2 }}>
-        Select a repository source to import your application
+        {t('workloads.github.tab.selectRepositorySource')}
       </Typography>
 
       {formData && setFormData && (
@@ -90,7 +98,7 @@ export const GitHubTab = ({ onComplete, formData, setFormData }: Props) => {
           }}
         >
           <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-            Repository Source
+            {t('workloads.github.tab.repositorySource')}
           </Typography>
           <Divider sx={{ mb: 2 }} />
           <GitHubOptionButtons
@@ -112,7 +120,9 @@ export const GitHubTab = ({ onComplete, formData, setFormData }: Props) => {
           }}
         >
           <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-            {selectedOption === 'popular' ? 'Select a Repository' : 'Repository Details'}
+            {selectedOption === 'popular'
+              ? t('workloads.github.tab.selectRepository')
+              : t('workloads.github.tab.repositoryDetails')}
           </Typography>
           <Divider sx={{ mb: 2 }} />
           {renderForm()}
@@ -122,7 +132,7 @@ export const GitHubTab = ({ onComplete, formData, setFormData }: Props) => {
       {selectedRepo && (
         <Box sx={{ mt: 2 }}>
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            Selected Repository: {selectedRepo.url}
+            {t('workloads.github.tab.selectedRepository')} {selectedRepo.url}
           </Typography>
         </Box>
       )}

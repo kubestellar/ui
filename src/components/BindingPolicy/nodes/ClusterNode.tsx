@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { Box, Typography } from '@mui/material';
 import KubernetesIcon from '../KubernetesIcon';
+import { useTranslation } from 'react-i18next';
 
 interface ClusterNodeData {
   label: string;
@@ -10,6 +11,7 @@ interface ClusterNodeData {
 
 const ClusterNode: React.FC<NodeProps<ClusterNodeData>> = ({ data }) => {
   const { label, theme } = data;
+  const { t } = useTranslation();
 
   return (
     <>
@@ -64,7 +66,7 @@ const ClusterNode: React.FC<NodeProps<ClusterNodeData>> = ({ data }) => {
             mt: 0.5,
           }}
         >
-          Target Cluster
+          {t('bindingPolicy.visualization.targetCluster')}
         </Typography>
       </Box>
 

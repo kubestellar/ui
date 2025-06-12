@@ -1,5 +1,6 @@
 import { Box, Typography, Autocomplete, TextField } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { useTranslation } from 'react-i18next'; // Add this import
 
 interface Props {
   handleChartSelection: (chart: string | null) => void;
@@ -8,7 +9,7 @@ interface Props {
 }
 
 export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedChart }: Props) => {
-  // const color=theme === "dark" ? "#d4d4d4" : "#333"
+  const { t } = useTranslation(); // Add translation hook
 
   const popularHelmCharts = [
     'airflow',
@@ -91,7 +92,7 @@ export const PopularHelmChartsForm = ({ handleChartSelection, theme, selectedCha
               renderInput={params => (
                 <TextField
                   {...params}
-                  label="Search Helm Chart"
+                  label={t('workloads.helm.form.searchChartLabel')}
                   variant="outlined"
                   sx={{
                     mb: 3,

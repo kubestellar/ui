@@ -8,6 +8,7 @@ import useTheme from '../../stores/themeStore';
 import ClusterPanelHeader from './ClusterPanelHeader';
 import ClusterLabelsList from './ClusterLabelsList';
 import { LabelEditDialog, SelectClusterDialog } from './ClusterDialogs';
+import { useTranslation } from 'react-i18next';
 
 interface ClusterPanelProps {
   clusters: ManagedCluster[];
@@ -47,6 +48,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
   const muiTheme = useMuiTheme();
   const theme = useTheme(state => state.theme);
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedCluster, setSelectedCluster] = useState<ManagedCluster | null>(null);
@@ -67,12 +69,11 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
 
   const handleAddLabels = () => {
     if (clusters.length > 0) {
-      // Open the select cluster dialog instead of auto-selecting the first cluster
       setSelectClusterDialogOpen(true);
       setIsBulkEdit(false);
       setSelectedClusters([]);
     } else {
-      toast.error('No clusters available to edit');
+      toast.error(t('clusters.labels.noClustersToEdit'));
     }
   };
 
@@ -107,7 +108,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
     );
 
     if (clusters.length === 0) {
-      toast.error('No clusters selected');
+      toast.error(t('clusters.labels.noClustersSelected'));
       return;
     }
 
@@ -134,12 +135,15 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
   const handleSaveLabels = (
     clusterName: string,
     contextName: string,
-    labels: { [key: string]: string }
+    labels: { [key: string]: string },
+    deletedLabels?: string[]
   ) => {
     setLoadingClusterEdit(clusterName);
 
     console.log('ClusterPanel - handleSaveLabels - clusterName:', clusterName);
     console.log('ClusterPanel - handleSaveLabels - contextName:', contextName);
+    console.log('ClusterPanel - handleSaveLabels - labels:', labels);
+    console.log('ClusterPanel - handleSaveLabels - deletedLabels:', deletedLabels);
 
     // Make sure the context is properly set in the mutation request
     // Use the provided context or fall back to the default context if not provided
@@ -148,10 +152,11 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
         contextName: contextName || DEFAULT_CONTEXT,
         clusterName,
         labels,
+        deletedLabels,
       },
       {
         onSuccess: () => {
-          toast.success('Labels updated successfully', {
+          toast.success(t('clusters.labels.updateSuccess'), {
             icon: '🏷️',
             style: {
               borderRadius: '10px',
@@ -163,7 +168,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
           setLoadingClusterEdit(null);
         },
         onError: (error: Error) => {
-          toast.error('Failed to update labels', {
+          toast.error(t('clusters.labels.cannotDeleteUsed'), {
             icon: '❌',
             style: {
               borderRadius: '10px',
@@ -171,6 +176,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
               color: isDarkTheme ? '#f1f5f9' : '#1e293b',
               border: `1px solid ${isDarkTheme ? '#334155' : '#e2e8f0'}`,
             },
+            duration: 5000,
           });
           console.error('Error updating cluster labels:', error);
           setLoadingClusterEdit(null);
@@ -201,6 +207,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
               contextName,
               clusterName: cluster.name,
               labels,
+              deletedLabels: [],
             },
             {
               onSuccess: () => {
@@ -221,7 +228,7 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
     }
 
     if (successCount > 0 && failureCount === 0) {
-      toast.success(`Labels updated for all ${successCount} clusters`, {
+      toast.success(t('clusters.labels.bulkUpdateSuccess', { count: successCount }), {
         icon: '🏷️',
         style: {
           borderRadius: '10px',
@@ -231,17 +238,20 @@ const ClusterPanel: React.FC<ClusterPanelProps> = ({
         },
       });
     } else if (successCount > 0 && failureCount > 0) {
-      toast(`Labels updated for ${successCount} clusters, failed for ${failureCount} clusters`, {
-        icon: '⚠️',
-        style: {
-          borderRadius: '10px',
-          background: isDarkTheme ? '#1e293b' : '#ffffff',
-          color: isDarkTheme ? '#f1f5f9' : '#1e293b',
-          border: `1px solid ${isDarkTheme ? '#334155' : '#e2e8f0'}`,
-        },
-      });
+      toast(
+        t('clusters.labels.bulkUpdatePartial', { success: successCount, failures: failureCount }),
+        {
+          icon: '⚠️',
+          style: {
+            borderRadius: '10px',
+            background: isDarkTheme ? '#1e293b' : '#ffffff',
+            color: isDarkTheme ? '#f1f5f9' : '#1e293b',
+            border: `1px solid ${isDarkTheme ? '#334155' : '#e2e8f0'}`,
+          },
+        }
+      );
     } else {
-      toast.error(`Failed to update labels for all ${failureCount} clusters`, {
+      toast.error(t('clusters.labels.bulkUpdateFail', { count: failureCount }), {
         icon: '❌',
         style: {
           borderRadius: '10px',

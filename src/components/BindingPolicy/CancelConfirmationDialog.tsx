@@ -7,9 +7,11 @@ import {
   Button,
   Alert,
   AlertTitle,
-  useTheme,
 } from '@mui/material';
 import WarningIcon from '@mui/icons-material/Warning';
+import CancelButton from '../common/CancelButton';
+import useTheme from '../../stores/themeStore';
+import { useTranslation } from 'react-i18next';
 
 interface CancelConfirmationDialogProps {
   open: boolean;
@@ -22,48 +24,70 @@ const CancelConfirmationDialog: React.FC<CancelConfirmationDialogProps> = ({
   onClose,
   onConfirm,
 }) => {
-  const theme = useTheme();
+  const theme = useTheme(state => state.theme);
+  const { t } = useTranslation();
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      PaperProps={{
+        sx: {
+          backgroundColor: theme === 'dark' ? '#0F172A' : '#FFFFFF',
+          color: theme === 'dark' ? '#FFFFFF' : '#000000',
+          border: 'none',
+          outline: 'none',
+        },
+      }}
+    >
       <DialogTitle
         sx={{
           display: 'flex',
           alignItems: 'center',
-          borderBottom: `1px solid ${theme.palette.divider}`,
+          color: theme === 'dark' ? '#FFFFFF' : '#000000',
+          backgroundColor: theme === 'dark' ? '#0F172A' : '#FFFFFF',
+          border: 'none',
+          outline: 'none',
         }}
       >
         <WarningIcon color="warning" sx={{ mr: 1 }} />
-        Cancel Policy Creation
+        {t('cancelConfirmationDialog.titlePolicy')}
       </DialogTitle>
-      <DialogContent sx={{ mt: 2 }}>
+      <DialogContent
+        sx={{
+          mt: 2,
+          backgroundColor: theme === 'dark' ? '#0F172A' : '#FFFFFF',
+          border: 'none',
+          outline: 'none',
+        }}
+      >
         <Alert
           severity="warning"
           variant="outlined"
           sx={{
             borderRadius: '8px',
             '& .MuiAlert-icon': { alignItems: 'center' },
+            backgroundColor: theme === 'dark' ? '#0F172A' : '#FFFFFF',
+            border: '1px solid #f57c00',
+            outline: 'none',
           }}
         >
-          <AlertTitle>Warning</AlertTitle>
-          Are you sure you want to cancel? All changes will be lost.
+          <AlertTitle>{t('cancelConfirmationDialog.warning')}</AlertTitle>
+          {t('cancelConfirmationDialog.message')}
         </Alert>
       </DialogContent>
       <DialogActions
         sx={{
           p: 2,
-          borderTop: `1px solid ${theme.palette.divider}`,
+          backgroundColor: theme === 'dark' ? '#0F172A' : '#FFFFFF',
+          border: 'none',
+          outline: 'none',
         }}
       >
-        <Button
-          onClick={onClose}
-          sx={{
-            textTransform: 'none',
-            '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' },
-          }}
-        >
-          Continue Editing
-        </Button>
+        <CancelButton onClick={onClose}>
+          {t('cancelConfirmationDialog.continueEditing')}
+        </CancelButton>
         <Button
           onClick={onConfirm}
           color="error"
@@ -74,7 +98,7 @@ const CancelConfirmationDialog: React.FC<CancelConfirmationDialogProps> = ({
             '&:hover': { backgroundColor: '#d32f2f' },
           }}
         >
-          Yes, Cancel
+          {t('cancelConfirmationDialog.yesCancel')}
         </Button>
       </DialogActions>
     </Dialog>

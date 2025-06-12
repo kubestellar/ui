@@ -65,6 +65,7 @@ export interface PolicyDetailDialogProps {
   open: boolean;
   onClose: () => void;
   policy: BindingPolicyInfo;
+  clusters?: ManagedCluster[];
   onEdit?: (policy: BindingPolicyInfo) => void;
   isLoading?: boolean;
   error?: string;
