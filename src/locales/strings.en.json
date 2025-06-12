@@ -844,7 +844,11 @@
       "deploySuccess": "Deployment completed successfully",
       "deployError": "Deployment failed",
       "yamlGenerateError": "Failed to generate binding policy YAML",
-      "quickConnectError": "Failed to create binding policy"
+      "quickConnectError": "Failed to create binding policy",
+      "labelsAssignedTitle": "Labels Assigned",
+      "policyBindingCreatedTitle": "Policy Binding Created",
+      "labelsAssignedChip": "Labels help target policies to specific resources",
+      "policyBindingCreatedChip": "Binding created for policy propagation"
     },
     "tabs": {
       "selectItems": "Select Items",
@@ -1829,5 +1833,63 @@
     "yesDelete": "Yes, Delete",
     "apply": "Apply",
     "deploying": "Deploying..."
-  }
+  },
+  "commandPalette": {
+  "ariaLabel": "Open command palette",
+  "title": "Command Palette (Ctrl+K)",
+  "badge": "K",
+  "searchPlaceholder": "Search commands...",
+  "noCommandsFound": "No commands found. Try a different search term.",
+  "footer": {
+    "navigate": "navigate",
+    "select": "select",
+    "shortcut": "Ctrl+K"
+    },
+  "kbd": {
+    "esc": "ESC",
+    "arrows": "↑↓",
+    "enter": "↵"
+    },
+  "sections": {
+    "navigation": "Navigation",
+    "visualizations": "Visualizations",
+    "help": "Help",
+    "account": "Account"
+    },
+  "commands": {
+      "home": {
+        "title": "Home",
+        "description": "Go to dashboard"
+      },
+      "clusters": {
+        "title": "Remote Clusters",
+        "description": "Manage Kubernetes clusters"
+      },
+      "workloads": {
+        "title": "Workloads",
+        "description": "Manage workloads across clusters"
+      },
+      "bindingPolicies": {
+        "title": "Binding Policies",
+        "description": "Configure binding policies"
+      },
+      "wdsTreeview": {
+        "title": "WDS Treeview",
+        "description": "Visualize workload distribution"
+      },
+      "wecsTreeview": {
+        "title": "WECS Treeview",
+        "description": "Visualize Deployed Workloads structure"
+      },
+      "documentation": {
+        "title": "Open Documentation",
+        "description": "Launch KubeStellar documentation"
+      },
+      "logout": {
+        "title": "Logout",
+        "description": "Sign out of your account",
+        "infoMessage": "You have been successfully logged out."
+      }
+    }
+ }
 }
