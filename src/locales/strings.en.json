@@ -1085,7 +1085,6 @@
           },
           "tip": "Tip: The label-based approach allows you to create powerful binding policies that automatically apply to all resources matching the selected labels, both now and in the future.",
           "dontShowAgain": "Don't Show Again",
-          "gotIt": "Got it",
           "tooltip": "View selection instructions"
         }
       }
@@ -1479,7 +1478,7 @@
           "title": "List of user created Charts",
           "deleteSuccess": "Chart {{chartId}} deleted successfully!",
           "deleteError": "Chart {{chartId}} not deleted!",
-          "loading":"Loading user charts...",
+          "loading": "Loading user charts...",
           "noCharts": "No user-created charts available.",
           "delete": "Delete",
           "confirmDeletion": "Confirm Resource Deletion",
