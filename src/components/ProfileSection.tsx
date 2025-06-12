@@ -205,7 +205,7 @@ const ProfileSection = () => {
                     color: isDark ? '#9ca3af' : '#6b7280',
                   }}
                 >
-                  Account
+                  {t('profileSection.account')}
                 </div>
                 <div
                   className="mt-1 text-lg font-semibold"
