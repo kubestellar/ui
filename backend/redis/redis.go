@@ -142,7 +142,11 @@ func GetallBpCmd() ([]string, error) {
 // intializes redis client
 func init() {
 	rdb = redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
+		Addr:         "localhost:6379",
+		DialTimeout:  5 * time.Second,
+		ReadTimeout:  3 * time.Second,
+		WriteTimeout: 3 * time.Second,
+		MaxRetries:   3,
 	})
 	log.LogInfo("initialized redis client")
 	if err := rdb.Ping(ctx).Err(); err != nil {
