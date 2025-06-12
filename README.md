@@ -22,6 +22,9 @@ Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI 
 <a href="https://kubernetes.slack.com/archives/C058SUSL5AA"> 
   <img alt="Join Slack" src="https://img.shields.io/badge/KubeStellar-Join%20Slack-blue?logo=slack">
 </a>
+<a href="https://deepwiki.com/kubestellar/ui">
+  <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki">
+</a>
 
 ## Contents
 
