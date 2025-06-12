@@ -1835,28 +1835,28 @@
     "deploying": "Deploying..."
   },
   "commandPalette": {
-  "ariaLabel": "Open command palette",
-  "title": "Command Palette (Ctrl+K)",
-  "badge": "K",
-  "searchPlaceholder": "Search commands...",
-  "noCommandsFound": "No commands found. Try a different search term.",
-  "footer": {
-    "navigate": "navigate",
-    "select": "select",
-    "shortcut": "Ctrl+K"
+    "ariaLabel": "Open command palette",
+    "title": "Command Palette (Ctrl+K)",
+    "badge": "K",
+    "searchPlaceholder": "Search commands...",
+    "noCommandsFound": "No commands found. Try a different search term.",
+    "footer": {
+      "navigate": "navigate",
+      "select": "select",
+      "shortcut": "Ctrl+K"
     },
-  "kbd": {
-    "esc": "ESC",
-    "arrows": "↑↓",
-    "enter": "↵"
+    "kbd": {
+      "esc": "ESC",
+      "arrows": "↑↓",
+      "enter": "↵"
     },
-  "sections": {
-    "navigation": "Navigation",
-    "visualizations": "Visualizations",
-    "help": "Help",
-    "account": "Account"
+    "sections": {
+      "navigation": "Navigation",
+      "visualizations": "Visualizations",
+      "help": "Help",
+      "account": "Account"
     },
-  "commands": {
+    "commands": {
       "home": {
         "title": "Home",
         "description": "Go to dashboard"
@@ -1891,5 +1891,5 @@
         "infoMessage": "You have been successfully logged out."
       }
     }
- }
+  }
 }
