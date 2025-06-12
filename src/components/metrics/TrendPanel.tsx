@@ -41,55 +41,39 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
     }
   }, [trendData, selectedMetric]);
 
-  // Enhanced chart data generation with historical context
-  const generateHistoricalDataPoints = (metricName: string, timeRange: string) => {
-    const points = [];
-    const pointCount =
-      timeRange === '1h' ? 12 : timeRange === '24h' ? 24 : timeRange === '7d' ? 7 : 30;
-    const baseValue = trendData.find(t => t.metric === metricName)?.value || 50;
-
-    for (let i = 0; i < pointCount; i++) {
-      const variation = (Math.random() - 0.5) * 20; //
-      const timeValue = baseValue + variation + Math.sin(i * 0.3) * 10;
-
-      points.push({
-        time:
-          timeRange === '1h'
-            ? `${i * 5}min`
-            : timeRange === '24h'
-              ? `${i}:00`
-              : timeRange === '7d'
-                ? `Day ${i + 1}`
-                : `Week ${i + 1}`,
-        value: Math.max(0, Math.min(100, timeValue)),
-        timestamp: new Date(Date.now() - (pointCount - i) * getTimeInterval(timeRange)),
-      });
-    }
-    return points;
-  };
-
-  const getTimeInterval = (range: string) => {
-    switch (range) {
-      case '1h':
-        return 5 * 60 * 1000;
-      case '24h':
-        return 60 * 60 * 1000;
-      case '7d':
-        return 24 * 60 * 60 * 1000;
-      case '30d':
-        return 7 * 24 * 60 * 60 * 1000;
-      default:
-        return 60 * 60 * 1000;
-    }
-  };
-
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
 
   useEffect(() => {
     if (selectedMetric && trendData.length > 0) {
+      const generateHistoricalDataPoints = (metricName: string, timeRange: string) => {
+        const points = [];
+        const pointCount =
+          timeRange === '1h' ? 12 : timeRange === '24h' ? 24 : timeRange === '7d' ? 7 : 30;
+        const baseValue = trendData.find(t => t.metric === metricName)?.value || 50;
+
+        for (let i = 0; i < pointCount; i++) {
+          const variation = (Math.random() - 0.5) * 20;
+          const timeValue = baseValue + variation + Math.sin(i * 0.3) * 10;
+
+          points.push({
+            time:
+              timeRange === '1h'
+                ? `${i * 5}min`
+                : timeRange === '24h'
+                  ? `${i}:00`
+                  : timeRange === '7d'
+                    ? `Day ${i + 1}`
+                    : `Week ${i + 1}`,
+            value: Math.max(0, Math.min(100, timeValue)),
+            timestamp: new Date(Date.now() - (pointCount - i) * getTimeInterval(timeRange)),
+          });
+        }
+        return points;
+      };
+
       setChartData(generateHistoricalDataPoints(selectedMetric, timeRange));
     }
-  }, [selectedMetric, timeRange, trendData, generateHistoricalDataPoints]);
+  }, [selectedMetric, timeRange, trendData]);
 
   useEffect(() => {
     if (chartData.length === 0) return;
@@ -111,6 +95,21 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
 
     return () => clearInterval(interval);
   }, [chartData.length]);
+
+  const getTimeInterval = (range: string) => {
+    switch (range) {
+      case '1h':
+        return 5 * 60 * 1000;
+      case '24h':
+        return 60 * 60 * 1000;
+      case '7d':
+        return 24 * 60 * 60 * 1000;
+      case '30d':
+        return 7 * 24 * 60 * 60 * 1000;
+      default:
+        return 60 * 60 * 1000;
+    }
+  };
 
   if (trendData.length === 0) {
     return (

@@ -126,11 +126,11 @@ export interface MetricsError {
 
 // Type guards for response validation
 function isValidGitHubResponse(data: unknown): data is GitHubResponse {
-  return data && typeof data === 'object' && 'statistics' in data;
+  return Boolean(data && typeof data === 'object' && 'statistics' in data);
 }
 
 function isValidDeploymentsResponse(data: unknown): data is DeploymentsResponse {
-  return data && typeof data === 'object' && 'stats' in data;
+  return Boolean(data && typeof data === 'object' && 'stats' in data);
 }
 
 // Enhanced fetch function with better error handling
@@ -198,7 +198,7 @@ async function fetchData<T>(endpoint: string): Promise<T | MetricsError> {
 
 // Helper to check if response is an error
 export function isMetricsError(data: unknown): data is MetricsError {
-  return data && typeof data === 'object' && 'status' in data && 'message' in data;
+  return Boolean(data && typeof data === 'object' && 'status' in data && 'message' in data);
 }
 
 // API Functions
@@ -230,6 +230,21 @@ export async function fetchKubernetesData(): Promise<KubernetesResponse | Metric
   return fetchData<KubernetesResponse>('/kubernetes');
 }
 
+// Helper function for relative time formatting
+function formatRelativeTime(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSec = Math.round(diffMs / 1000);
+  const diffMin = Math.round(diffSec / 60);
+  const diffHour = Math.round(diffMin / 60);
+  const diffDay = Math.round(diffHour / 24);
+
+  if (diffSec < 60) return `${diffSec} seconds ago`;
+  if (diffMin < 60) return `${diffMin} minute${diffMin > 1 ? 's' : ''} ago`;
+  if (diffHour < 24) return `${diffHour} hour${diffHour > 1 ? 's' : ''} ago`;
+  return `${diffDay} day${diffDay > 1 ? 's' : ''} ago`;
+}
+
 // Data transformers - convert API responses to component props
 export function transformHealthData(data: HealthResponse): ServiceStatus[] {
   const services: ServiceStatus[] = [];
@@ -241,7 +256,7 @@ export function transformHealthData(data: HealthResponse): ServiceStatus[] {
       status: component.status as 'healthy' | 'unhealthy' | 'warning',
       uptime: component.details?.includes('%') ? component.details : '99.9%', // Extract uptime if available
       responseTime: component.details?.includes('ms') ? component.details.split(' ')[0] : 'N/A',
-      lastChecked: new Date(component.last_checked).toRelative() || component.last_checked,
+      lastChecked: formatRelativeTime(new Date(component.last_checked)) || component.last_checked,
     });
   }
 
@@ -289,7 +304,7 @@ export function transformDeploymentsData(data: DeploymentsResponse): DeploymentS
     webhook: data.stats.github.webhook,
     manual: data.stats.github.manual,
     avgDuration: '3m 42s', // This might not be available in the API
-    lastDeployment: new Date(data.timestamp).toRelative() || '10 minutes ago',
+    lastDeployment: formatRelativeTime(new Date(data.timestamp)) || '10 minutes ago',
   };
 }
 
