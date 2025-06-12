@@ -1,6 +1,10 @@
 {
   "common": {
     "changes": "Changes",
+    "clusterLabel": "Cluster Label",
+    "workloadLabel": "Workload Label",
+    "workloads": "Workloads",
+    "clearCanvas": "Clear Canvas",
     "clearFilter": "Clear Canvas",
     "cancel": "Cancel",
     "save": "Save",
@@ -818,6 +822,9 @@
     "selectCluster": "Select a Kubernetes Cluster",
     "searchingClusters": "Searching for available clusters...",
     "errorLoadingClusters": "Error Loading Clusters",
+    "automatedOnboarding": "Automated Cluster Onboarding",
+    "new": "New",
+    "automatedDescription": "This is the simplest way to connect your Kubernetes cluster. Select a cluster and click the Onboard button to directly connect it without any manual commands.",
     "retry": "Retry",
     "chooseCluster": "Choose a cluster...",
     "noClusters": "No clusters available",
@@ -872,6 +879,8 @@
     },
     "success": {
       "title": "Cluster Onboarded Successfully",
+      "clusterAdded": "Cluster added successfully",
+      "clusterAvailable": "Your cluster is now available in the platform",
       "message": "Cluster {{clusterName}} has been successfully onboarded to the platform.",
       "detailMessage": "Your cluster {{clusterName}} has been successfully onboarded. Here's what you can do next:",
       "nextSteps": {
@@ -1147,13 +1156,18 @@
       "workloads": "{{count}} Workloads",
       "status": "Status:",
       "namespace": "Namespace:",
-      "namespaces": "Namespaces:"
+      "namespaces": "Namespaces:",
+      "clustersOnCanvas": "Clusters on Canvas:",
+      "workloadsOnCanvas": "Workloads on Canvas:",
+      "selectClusters": "Select Clusters here",
+      "matches": "Matches: {{count}} {{resourceType}}"
     },
     "labels": {
       "title": "Labels:",
       "key": "Key",
       "value": "Value",
-      "add": "Add"
+      "add": "Add",
+      "count": "{{count}} unique labels across {{total}}"
     },
     "creatingConnection": "Creating connection:",
     "previewDialog": {

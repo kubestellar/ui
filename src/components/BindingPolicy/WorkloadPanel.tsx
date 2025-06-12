@@ -1120,7 +1120,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
                     {t('bindingPolicy.labels.count', {
                       count: filteredLabels.length,
                       total: panelWorkloads.length,
-                    })}
+                    })} 
                     {state.status === 'loading'
                       ? ` (${t('common.loading')})`
                       : t('bindingPolicy.visualization.legendItems.activePolicy')}
