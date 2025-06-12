@@ -1359,7 +1359,8 @@
     },
     "yaml": {
       "createNamespaceAutomatically": "Create Namespace Automatically",
-      "editor": "YAML Editor"
+      "editor": "YAML Editor",
+      "deploy": "Deploy"
     },
     "helm": {
       "createOwn": "Create your own Helm chart",
@@ -1473,7 +1474,17 @@
         "workloadLabel": "Workload Label",
         "workloadLabelPlaceholder": "Enter value for label 'kubestellar.io/workload'",
         "deploy": "Deploy",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "userCharts": {
+          "title": "List of user created Charts",
+          "deleteSuccess": "Chart {{chartId}} deleted successfully!",
+          "deleteError": "Chart {{chartId}} not deleted!",
+          "loading":"Loading user charts...",
+          "noCharts": "No user-created charts available.",
+          "delete": "Delete",
+          "confirmDeletion": "Confirm Resource Deletion",
+          "deleteConfirmation": "Are you sure you want to delete \"{{chartId}}\"? This action cannot be undone."
+        }
       },
       "artifactHub": {
         "title": "Artifact Hub",
@@ -1898,7 +1909,10 @@
     "deleteConfirmation": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
     "yesDelete": "Yes, Delete",
     "apply": "Apply",
-    "deploying": "Deploying..."
+    "deploying": "Deploying...",
+    "createFromYourGitHub": "Create from your Github",
+    "deployFromPopularRepositories": "Deploy from popular repositories",
+    "listOfPreviousDeployments": "List of Previous Deployments"
   },
   "commandPalette": {
     "ariaLabel": "Open command palette",
@@ -1957,5 +1971,14 @@
         "infoMessage": "You have been successfully logged out."
       }
     }
+  },
+  "uploadFileTab": {
+    "createNamespaceAutomatically": "Create Namespace Automatically",
+    "chooseDifferentYaml": "Choose Different YAML File",
+    "filePreview": "File Preview",
+    "chooseOrDrag": "Choose or Drag & Drop a YAML File",
+    "or": "- or -",
+    "chooseYaml": "Choose YAML File",
+    "uploadAndDeploy": "Upload and Deploy"
   }
 }
