@@ -5,6 +5,7 @@ on:
     types: [opened]
   issues:
     types: [opened]
+  workflow_dispatch:
 
 jobs:
   greeting:
