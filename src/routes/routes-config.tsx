@@ -12,7 +12,7 @@ import PublicRoute from '../components/PublicRoute';
 import KubeStellarVisualization from '../components/login/index';
 import InstallationPage from '../pages/InstallationPage';
 import KubeStellarStatusChecker from '../components/KubeStellarStatusChecker';
-import MetricsDashboard from '../components/MetricsDashboard';
+import SystemMonitoring from '../components/MetricsDashboard';
 
 const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ '../components/Clusters'));
 const ITSLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/ITS'));
@@ -102,7 +102,7 @@ export const routesConfig: RouteObject[] = [
         path: 'metrics',
         element: (
           <ProtectedRoute>
-            <MetricsDashboard />
+            <SystemMonitoring />
           </ProtectedRoute>
         ),
       },

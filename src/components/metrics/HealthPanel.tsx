@@ -5,9 +5,9 @@ import useTheme from '../../stores/themeStore';
 export interface ServiceStatus {
   name: string;
   status: 'healthy' | 'unhealthy' | 'warning';
-  uptime: string;
-  responseTime: string;
-  lastChecked: string;
+  details?: string;
+  error?: string;
+  lastChecked?: string;
 }
 
 interface HealthPanelProps {
@@ -155,43 +155,50 @@ const HealthPanel: React.FC<HealthPanelProps> = ({ services = [], className = ''
                 </div>
 
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`
-                      text-sm
-                      ${isDark ? 'text-gray-400' : 'text-gray-600'}
-                    `}
-                    >
-                      Uptime
-                    </span>
-                    <span
-                      className={`
-                      text-sm font-medium
-                      ${isDark ? 'text-gray-200' : 'text-gray-800'}
-                    `}
-                    >
-                      {service.uptime}
-                    </span>
-                  </div>
+                  {service.details && (
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`
+                        text-sm
+                        ${isDark ? 'text-gray-400' : 'text-gray-600'}
+                      `}
+                      >
+                        Details
+                      </span>
+                      <span
+                        className={`
+                        max-w-32 truncate text-right text-sm font-medium
+                        ${isDark ? 'text-gray-200' : 'text-gray-800'}
+                      `}
+                        title={service.details}
+                      >
+                        {service.details}
+                      </span>
+                    </div>
+                  )}
 
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`
-                      text-sm
-                      ${isDark ? 'text-gray-400' : 'text-gray-600'}
-                    `}
-                    >
-                      Response Time
-                    </span>
-                    <span
-                      className={`
-                      text-sm font-medium
-                      ${isDark ? 'text-gray-200' : 'text-gray-800'}
-                    `}
-                    >
-                      {service.responseTime}
-                    </span>
-                  </div>
+                  {service.error && (
+                    <div className="flex items-start justify-between">
+                      <span
+                        className={`
+                        text-sm
+                        ${isDark ? 'text-gray-400' : 'text-gray-600'}
+                      `}
+                      >
+                        Error
+                      </span>
+                      <span
+                        className={`
+                        max-w-32 text-right text-sm font-medium text-red-600 dark:text-red-400
+                      `}
+                        title={service.error}
+                      >
+                        {service.error.length > 30
+                          ? `${service.error.substring(0, 30)}...`
+                          : service.error}
+                      </span>
+                    </div>
+                  )}
 
                   <div className="border-t border-opacity-20 pt-2">
                     <span
@@ -200,7 +207,7 @@ const HealthPanel: React.FC<HealthPanelProps> = ({ services = [], className = ''
                       ${isDark ? 'text-gray-500' : 'text-gray-500'}
                     `}
                     >
-                      Last checked: {service.lastChecked}
+                      Last checked: {service.lastChecked || 'Unknown'}
                     </span>
                   </div>
                 </div>

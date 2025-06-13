@@ -9,6 +9,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/a
 
 // Types for API responses
 export interface HealthResponse {
+  services: Record<string, ComponentStatus>;
   overall_status: string;
   timestamp: string;
   components: {
@@ -253,10 +254,17 @@ export function transformHealthData(data: HealthResponse): ServiceStatus[] {
   for (const [name, component] of Object.entries(data.components)) {
     services.push({
       name: name.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()), // Format name
-      status: component.status as 'healthy' | 'unhealthy' | 'warning',
-      uptime: component.details?.includes('%') ? component.details : '99.9%', // Extract uptime if available
-      responseTime: component.details?.includes('ms') ? component.details.split(' ')[0] : 'N/A',
-      lastChecked: formatRelativeTime(new Date(component.last_checked)) || component.last_checked,
+      status:
+        component.status === 'healthy'
+          ? 'healthy'
+          : component.status === 'degraded'
+            ? 'warning'
+            : 'unhealthy',
+      details: component.details || undefined,
+      error: component.error || undefined,
+      lastChecked: component.last_checked
+        ? formatRelativeTime(new Date(component.last_checked))
+        : 'Unknown',
     });
   }
 

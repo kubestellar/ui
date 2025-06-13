@@ -6,8 +6,6 @@ import {
   Server,
   Shield,
   RefreshCcw,
-  Filter,
-  Download,
   Bell,
   HardDrive,
   ChevronUp,
@@ -38,6 +36,7 @@ import {
   transformDeploymentsData,
   fetchKubernetesData,
   fetchRedisData,
+  ComponentStatus,
 } from '../services/metricsService';
 
 interface GitHubData {
@@ -61,6 +60,7 @@ interface GitHubData {
   timestamp?: string;
 }
 
+// This is the Redis data structure in your application
 interface RedisData {
   status: string;
   performance: {
@@ -338,8 +338,12 @@ const MetricsDashboard: React.FC = () => {
       const healthResponse = await fetchHealthData();
       if (!isMetricsError(healthResponse)) {
         console.log('Health data received:', healthResponse);
-        setHealthServices(transformHealthData(healthResponse));
-        setSystemHealth(healthResponse.summary.health_percentage);
+
+        // Use the transformHealthData function which now properly extracts real data
+        const transformedServices = transformHealthData(healthResponse);
+
+        setHealthServices(transformedServices);
+        setSystemHealth(healthResponse.summary?.health_percentage || 0);
         setErrors(prev => ({ ...prev, health: '' }));
       } else {
         console.error('Health data error:', healthResponse.message);
@@ -395,18 +399,39 @@ const MetricsDashboard: React.FC = () => {
         setKubernetesData(null);
       }
 
-      // Fetch Redis data
-      const redisResponse = await fetchRedisData();
-      if (!isMetricsError(redisResponse)) {
-        setRedisData({
-          status: redisResponse.status?.status || 'unknown',
-          performance: {
-            used_memory: '128MB',
-            connected_clients: 24,
-            ops_per_second: 1250,
-          },
-        });
-      } else {
+      // Fetch Redis data with proper error handling
+      try {
+        const redisResponse = await fetchRedisData();
+        console.log('Redis response received:', redisResponse);
+
+        if (!isMetricsError(redisResponse)) {
+          // Extract the status from the API response
+          const redisStatus =
+            typeof redisResponse.status === 'string'
+              ? redisResponse.status
+              : (redisResponse.status as ComponentStatus)?.status || 'unknown';
+
+          // Format the data for display - handle case where performance might not exist
+          const performanceData = (redisResponse as { performance?: Record<string, unknown> }).performance || {
+            used_memory: 'N/A',
+            connected_clients: 0,
+            ops_per_second: 0,
+            uptime: 0,
+          };
+
+          setRedisData({
+            status: redisStatus,
+            performance: {
+              used_memory: performanceData.used_memory as string ?? 'N/A',
+              connected_clients: performanceData.connected_clients as number ?? 0,
+              ops_per_second: performanceData.ops_per_second as number ?? 0,
+              uptime: performanceData.uptime as number ?? 0,
+            },
+            timestamp: (redisResponse as { timestamp?: string }).timestamp || new Date().toISOString(),
+          });
+        }
+      } catch (redisError) {
+        console.error('Redis fetch failed:', redisError);
         setRedisData(null);
       }
 
@@ -563,24 +588,6 @@ const MetricsDashboard: React.FC = () => {
               <option value="7d">Last 7 Days</option>
               <option value="30d">Last 30 Days</option>
             </select>
-
-            <button
-              className={`
-              inline-flex h-10 items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700
-            `}
-            >
-              <Filter size={16} />
-              <span>Filter</span>
-            </button>
-
-            <button
-              className={`
-              inline-flex h-10 items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700
-            `}
-            >
-              <Download size={16} />
-              <span>Export</span>
-            </button>
 
             <button
               onClick={handleRefresh}
@@ -934,11 +941,24 @@ const MetricsDashboard: React.FC = () => {
                 <div className="flex h-full items-center justify-center">
                   <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600 dark:border-gray-700 dark:border-t-blue-400"></div>
                 </div>
-              ) : errors.health ? (
-                <div className="flex h-full items-center justify-center text-sm text-gray-500 dark:text-gray-400">
-                  Redis metrics unavailable
+              ) : !redisData ? (
+                <div className="flex h-full flex-col items-center justify-center space-y-3">
+                  <div className="rounded-full bg-red-100 p-3 dark:bg-red-900/30">
+                    <HardDrive className="h-6 w-6 text-red-600 dark:text-red-400" />
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      Redis Unavailable
+                    </h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Cache service is not responding
+                    </p>
+                  </div>
+                  <div className="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-400">
+                    Disconnected
+                  </div>
                 </div>
-              ) : redisData?.performance ? (
+              ) : (
                 <div className="flex h-full flex-col justify-between space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
@@ -950,18 +970,26 @@ const MetricsDashboard: React.FC = () => {
                           Cache Status
                         </div>
                         <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                          Active
+                          {redisData.status === 'healthy' || redisData.status === 'connected'
+                            ? 'Active'
+                            : 'Inactive'}
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                        Uptime
+                        Status
                       </div>
-                      <div className="text-lg font-semibold text-green-600 dark:text-green-400">
-                        {redisData.performance.uptime
-                          ? `${Math.round(redisData.performance.uptime / 3600)}h`
-                          : '0h'}
+                      <div
+                        className={`text-lg font-semibold ${
+                          redisData.status === 'healthy' || redisData.status === 'connected'
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-red-600 dark:text-red-400'
+                        }`}
+                      >
+                        {redisData.status === 'healthy' || redisData.status === 'connected'
+                          ? 'Online'
+                          : 'Offline'}
                       </div>
                     </div>
                   </div>
@@ -971,7 +999,9 @@ const MetricsDashboard: React.FC = () => {
                       <div className="relative z-10">
                         <div className="text-sm font-medium opacity-90">Memory Used</div>
                         <div className="mt-1 text-2xl font-bold">
-                          {redisData.performance.used_memory || '0 MB'}
+                          {redisData.performance.used_memory !== 'N/A'
+                            ? redisData.performance.used_memory
+                            : '0 MB'}
                         </div>
                       </div>
                       <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10 transition-transform duration-300 group-hover:scale-110"></div>
@@ -987,20 +1017,30 @@ const MetricsDashboard: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="rounded-lg bg-gray-50 p-3 transition-colors duration-300 hover:bg-gray-100 dark:bg-gray-800/50 dark:hover:bg-gray-800/70">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        Operations/sec
-                      </span>
-                      <span className="font-medium text-gray-900 dark:text-gray-200">
-                        {redisData.performance.ops_per_second || 0}
-                      </span>
+                  <div className="space-y-2">
+                    <div className="rounded-lg bg-gray-50 p-3 transition-colors duration-300 hover:bg-gray-100 dark:bg-gray-800/50 dark:hover:bg-gray-800/70">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          Operations/sec
+                        </span>
+                        <span className="font-medium text-gray-900 dark:text-gray-200">
+                          {redisData.performance.ops_per_second?.toLocaleString() || 0}
+                        </span>
+                      </div>
                     </div>
+
+                    {redisData.performance.uptime && redisData.performance.uptime > 0 && (
+                      <div className="rounded-lg bg-gray-50 p-3 transition-colors duration-300 hover:bg-gray-100 dark:bg-gray-800/50 dark:hover:bg-gray-800/70">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Uptime</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-200">
+                            {Math.floor(redisData.performance.uptime / 3600)}h{' '}
+                            {Math.floor((redisData.performance.uptime % 3600) / 60)}m
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ) : (
-                <div className="flex h-full items-center justify-center text-sm text-gray-500 dark:text-gray-400">
-                  No Redis data available
                 </div>
               )}
             </div>
