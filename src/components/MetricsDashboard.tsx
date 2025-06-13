@@ -412,7 +412,8 @@ const MetricsDashboard: React.FC = () => {
               : (redisResponse.status as ComponentStatus)?.status || 'unknown';
 
           // Format the data for display - handle case where performance might not exist
-          const performanceData = (redisResponse as { performance?: Record<string, unknown> }).performance || {
+          const performanceData = (redisResponse as { performance?: Record<string, unknown> })
+            .performance || {
             used_memory: 'N/A',
             connected_clients: 0,
             ops_per_second: 0,
@@ -422,12 +423,13 @@ const MetricsDashboard: React.FC = () => {
           setRedisData({
             status: redisStatus,
             performance: {
-              used_memory: performanceData.used_memory as string ?? 'N/A',
-              connected_clients: performanceData.connected_clients as number ?? 0,
-              ops_per_second: performanceData.ops_per_second as number ?? 0,
-              uptime: performanceData.uptime as number ?? 0,
+              used_memory: (performanceData.used_memory as string) ?? 'N/A',
+              connected_clients: (performanceData.connected_clients as number) ?? 0,
+              ops_per_second: (performanceData.ops_per_second as number) ?? 0,
+              uptime: (performanceData.uptime as number) ?? 0,
             },
-            timestamp: (redisResponse as { timestamp?: string }).timestamp || new Date().toISOString(),
+            timestamp:
+              (redisResponse as { timestamp?: string }).timestamp || new Date().toISOString(),
           });
         }
       } catch (redisError) {
