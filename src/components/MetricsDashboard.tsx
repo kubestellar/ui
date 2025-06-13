@@ -15,6 +15,7 @@ import {
   Wifi,
   WifiOff,
   AlertTriangle,
+  Rocket,
 } from 'lucide-react';
 import useTheme from '../stores/themeStore';
 
@@ -684,18 +685,41 @@ const MetricsDashboard: React.FC = () => {
           {/* Deployment Analytics Panel */}
           <div className="h-[500px] rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
             {loading.deployments && errors.deployments === '' ? (
-              <LoadingState />
+              <div className="flex h-full items-center justify-center">
+                <div className="text-center">
+                  <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                    Loading deployment analytics...
+                  </p>
+                </div>
+              </div>
             ) : errors.deployments ? (
               <ErrorState
                 message={
                   errors.deployments.includes('500')
-                    ? 'Deployment metrics unavailable - ConfigMap not found or invalid'
-                    : `${errors.deployments}. Check API connectivity.`
+                    ? 'Deployment metrics unavailable - ConfigMap not found or invalid. Check your Kubernetes configuration.'
+                    : errors.deployments.includes('ConfigMap')
+                      ? 'GitHub deployment configuration missing from Kubernetes ConfigMap'
+                      : `${errors.deployments}. Verify API connectivity and configuration.`
                 }
                 onRetry={fetchAllMetrics}
               />
+            ) : deploymentStats ? (
+              <DeploymentPanel stats={deploymentStats} />
             ) : (
-              deploymentStats && <DeploymentPanel stats={deploymentStats} />
+              <div className="flex h-full items-center justify-center">
+                <div className="text-center">
+                  <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-gray-100 p-3 dark:bg-gray-700">
+                    <Rocket className="h-6 w-6 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                    No deployment data
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Deployment statistics will appear when data is available
+                  </p>
+                </div>
+              </div>
             )}
           </div>
 

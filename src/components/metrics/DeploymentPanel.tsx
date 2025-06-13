@@ -37,17 +37,29 @@ const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ stats, className = ''
       `}
       >
         <div className="flex h-64 items-center justify-center">
-          <p className="text-gray-500 dark:text-gray-400">No deployment statistics available</p>
+          <div className="text-center">
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
+            <p className="mt-2 text-gray-500 dark:text-gray-400">
+              Loading deployment statistics...
+            </p>
+          </div>
         </div>
       </div>
     );
   }
 
-  const successRate = Math.round((deploymentData.successful / deploymentData.total) * 100);
+  // Ensure we have valid data before calculations
+  const safeTotal = deploymentData.total || 0;
+  const safeSuccessful = deploymentData.successful || 0;
+  const safeFailed = deploymentData.failed || 0;
+  const safeWebhook = deploymentData.webhook || 0;
+  const safeManual = deploymentData.manual || 0;
 
-  // Calculate percentages for pie chart
-  const webhookPercentage = Math.round((deploymentData.webhook / deploymentData.total) * 100);
-  const manualPercentage = Math.round((deploymentData.manual / deploymentData.total) * 100);
+  const successRate = safeTotal > 0 ? Math.round((safeSuccessful / safeTotal) * 100) : 0;
+
+  // Calculate percentages for pie chart with safe values
+  const webhookPercentage = safeTotal > 0 ? Math.round((safeWebhook / safeTotal) * 100) : 0;
+  const manualPercentage = safeTotal > 0 ? Math.round((safeManual / safeTotal) * 100) : 0;
 
   return (
     <div
@@ -98,7 +110,7 @@ const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ stats, className = ''
 
       {/* Content */}
       <div className="p-4">
-        {/* Stats Grid */}
+        {/* Stats Grid with real data */}
         <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
           <div
             className={`
@@ -113,7 +125,7 @@ const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ stats, className = ''
               </span>
             </div>
             <div className={`text-2xl font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-              {deploymentData.total}
+              {safeTotal}
             </div>
           </div>
 
@@ -130,7 +142,7 @@ const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ stats, className = ''
               </span>
             </div>
             <div className={`text-2xl font-bold ${isDark ? 'text-green-400' : 'text-green-600'}`}>
-              {deploymentData.successful}
+              {safeSuccessful}
             </div>
           </div>
 
@@ -164,12 +176,12 @@ const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ stats, className = ''
               </span>
             </div>
             <div className={`text-2xl font-bold ${isDark ? 'text-red-400' : 'text-red-600'}`}>
-              {deploymentData.failed}
+              {safeFailed}
             </div>
           </div>
         </div>
 
-        {/* Deployment Type Distribution */}
+        {/* Deployment Type Distribution with real data */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* Bar Chart Representation */}
           <div>
@@ -187,7 +199,7 @@ const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ stats, className = ''
                   <span
                     className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}
                   >
-                    {deploymentData.webhook} ({webhookPercentage}%)
+                    {safeWebhook} ({webhookPercentage}%)
                   </span>
                 </div>
                 <div className={`h-2 rounded-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
@@ -206,7 +218,7 @@ const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ stats, className = ''
                   <span
                     className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}
                   >
-                    {deploymentData.manual} ({manualPercentage}%)
+                    {safeManual} ({manualPercentage}%)
                   </span>
                 </div>
                 <div className={`h-2 rounded-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
@@ -219,7 +231,7 @@ const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ stats, className = ''
             </div>
           </div>
 
-          {/* Pie Chart Representation */}
+          {/* Pie Chart Representation with real data */}
           <div>
             <h4
               className={`mb-3 text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
@@ -266,7 +278,7 @@ const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ stats, className = ''
                   <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>Success</span>
                 </div>
                 <span className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
-                  {deploymentData.successful}
+                  {safeSuccessful}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
@@ -275,14 +287,14 @@ const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ stats, className = ''
                   <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>Failed</span>
                 </div>
                 <span className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
-                  {deploymentData.failed}
+                  {safeFailed}
                 </span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Recent Activity */}
+        {/* Recent Activity with real timestamp */}
         <div
           className={`
           mt-6 border-t pt-4
