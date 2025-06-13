@@ -336,7 +336,7 @@ const BPHeader: React.FC<BPHeaderProps> = ({
             >
               {activeFilters.status
                 ? statusFilterItems.find(item => item.value === activeFilters.status)?.label ||
-                t('bindingPolicy.statusFilter.label')
+                  t('bindingPolicy.statusFilter.label')
                 : t('bindingPolicy.statusFilter.label')}
               {activeFilters.status && (
                 <Box

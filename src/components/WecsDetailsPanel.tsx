@@ -159,16 +159,19 @@ const WecsDetailsPanel = ({
     type: '',
   });
 
-  const calculateAge = useCallback((creationTimestamp: string | undefined): string => {
-    if (!creationTimestamp) return t('wecsDetailsPanel.common.na');
-    const createdDate = new Date(creationTimestamp);
-    const currentDate = new Date();
-    const diffMs = currentDate.getTime() - createdDate.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    return diffDays > 0
-      ? t('wecsDetailsPanel.common.daysAgo', { count: diffDays })
-      : t('wecsDetailsPanel.common.today');
-  }, [t]);
+  const calculateAge = useCallback(
+    (creationTimestamp: string | undefined): string => {
+      if (!creationTimestamp) return t('wecsDetailsPanel.common.na');
+      const createdDate = new Date(creationTimestamp);
+      const currentDate = new Date();
+      const diffMs = currentDate.getTime() - createdDate.getTime();
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      return diffDays > 0
+        ? t('wecsDetailsPanel.common.daysAgo', { count: diffDays })
+        : t('wecsDetailsPanel.common.today');
+    },
+    [t]
+  );
 
   useEffect(() => {
     if (isOpen && initialTab !== undefined) {
@@ -762,7 +765,7 @@ const WecsDetailsPanel = ({
     resourceData,
     execTerminalKey,
     selectedContainer,
-    t
+    t,
   ]); // Added selectedContainer as dependency
 
   // Add a useEffect that resets container selection when the pod changes
