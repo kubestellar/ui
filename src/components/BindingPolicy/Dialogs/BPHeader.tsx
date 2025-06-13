@@ -135,7 +135,7 @@ const BPHeader: React.FC<BPHeaderProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [createDialogOpen, searchQuery, activeFilters]);
+  }, [createDialogOpen, searchQuery, activeFilters, setSearchQuery, setActiveFilters]);
 
   return (
     <div style={{ color: colors.text }}>
@@ -336,7 +336,7 @@ const BPHeader: React.FC<BPHeaderProps> = ({
             >
               {activeFilters.status
                 ? statusFilterItems.find(item => item.value === activeFilters.status)?.label ||
-                  t('bindingPolicy.statusFilter.label')
+                t('bindingPolicy.statusFilter.label')
                 : t('bindingPolicy.statusFilter.label')}
               {activeFilters.status && (
                 <Box
