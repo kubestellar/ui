@@ -5,3 +5,6 @@
 npx prettier --write --list-different --ignore-path .prettierignore .
 # Run linting
 npm run lint
+# Format Go files with gofmt
+echo "Running gofmt on Go files..."
+find . -name '*.go' | xargs gofmt -w
