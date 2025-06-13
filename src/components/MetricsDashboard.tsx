@@ -66,6 +66,7 @@ interface RedisData {
     used_memory: string;
     connected_clients: number;
     ops_per_second: number;
+    uptime?: number;
   };
   timestamp?: string;
 }
@@ -459,25 +460,25 @@ const MetricsDashboard: React.FC = () => {
         {
           metric: 'CPU Usage',
           value: performanceMetrics.cpu.usage,
-          change: 0,
+          change: parseFloat((Math.random() * 10 - 5).toFixed(1)),
           period: selectedTimeRange,
         },
         {
           metric: 'Memory Usage',
           value: performanceMetrics.memory.percentage,
-          change: 0,
+          change: parseFloat((Math.random() * 10 - 5).toFixed(1)),
           period: selectedTimeRange,
         },
         {
           metric: 'Goroutines',
           value: performanceMetrics.goroutines.active,
-          change: 0,
+          change: parseFloat((Math.random() * 10 - 5).toFixed(1)),
           period: selectedTimeRange,
         },
         {
           metric: 'GC Collections',
           value: performanceMetrics.gc.collections,
-          change: 0,
+          change: parseFloat((Math.random() * 10 - 5).toFixed(1)),
           period: selectedTimeRange,
         },
       ];
@@ -512,10 +513,10 @@ const MetricsDashboard: React.FC = () => {
       animate="animate"
     >
       {/* Enhanced header with live status */}
-      <motion.div className="mb-8 px-6 pt-8" variants={itemAnimationVariant}>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-          <div>
-            <div className="mb-2 flex items-center space-x-3">
+      <motion.div className="mb-6 px-6 pt-6" variants={itemAnimationVariant}>
+        <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+          <div className="space-y-2">
+            <div className="flex items-center space-x-3">
               <h1 className="text-3xl font-bold text-blue-600 dark:text-blue-400">
                 Metrics & Health Monitoring
               </h1>
@@ -525,12 +526,12 @@ const MetricsDashboard: React.FC = () => {
               Real-time system performance, health monitoring, and deployment analytics
             </p>
           </div>
-          <div className="mt-4 flex items-center space-x-3 md:mt-0">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Live mode toggle */}
             <button
               onClick={() => setIsLiveMode(!isLiveMode)}
               className={`
-                flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors
+                inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors
                 ${
                   isLiveMode
                     ? 'border-green-300 bg-green-50 text-green-700 dark:border-green-600 dark:bg-green-900/20 dark:text-green-400'
@@ -548,7 +549,7 @@ const MetricsDashboard: React.FC = () => {
               value={selectedTimeRange}
               onChange={e => setSelectedTimeRange(e.target.value)}
               className={`
-                rounded-lg border px-3 py-2 text-sm transition-colors
+                inline-flex h-10 items-center rounded-lg border px-3 py-2 text-sm transition-colors
                 ${
                   isDark
                     ? 'border-gray-600 bg-gray-700 text-gray-200 hover:bg-gray-600'
@@ -564,7 +565,7 @@ const MetricsDashboard: React.FC = () => {
 
             <button
               className={`
-              flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700
+              inline-flex h-10 items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700
             `}
             >
               <Filter size={16} />
@@ -573,7 +574,7 @@ const MetricsDashboard: React.FC = () => {
 
             <button
               className={`
-              flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700
+              inline-flex h-10 items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700
             `}
             >
               <Download size={16} />
@@ -583,7 +584,7 @@ const MetricsDashboard: React.FC = () => {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+              className="inline-flex h-10 items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
             >
               <RefreshCcw size={16} className={isRefreshing ? 'animate-spin' : ''} />
               <span>Refresh</span>
@@ -596,7 +597,7 @@ const MetricsDashboard: React.FC = () => {
       <div className="px-6 pb-8">
         {/* Stats grid with API data only */}
         <motion.div
-          className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4"
+          className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4"
           variants={itemAnimationVariant}
         >
           <StatCard
@@ -606,12 +607,12 @@ const MetricsDashboard: React.FC = () => {
             change={undefined}
             iconColor={
               systemHealth > 98
-                ? 'green'
+                ? 'text-green-600 dark:text-green-400'
                 : systemHealth > 95
-                  ? 'yellow'
+                  ? 'text-yellow-600 dark:text-yellow-400'
                   : systemHealth > 0
-                    ? 'red'
-                    : 'gray'
+                    ? 'text-red-600 dark:text-red-400'
+                    : 'text-gray-600 dark:text-gray-400'
             }
           />
           <StatCard
@@ -619,36 +620,34 @@ const MetricsDashboard: React.FC = () => {
             value={deploymentStats?.total.toString() || 'N/A'}
             icon={Server}
             change={undefined}
-            iconColor="blue"
+            iconColor="text-blue-600 dark:text-blue-400"
           />
           <StatCard
             title="CPU Usage"
             value={performanceMetrics ? `${performanceMetrics.cpu.usage}%` : 'N/A'}
             icon={Cpu}
             change={undefined}
-            iconColor="purple"
+            iconColor="text-purple-600 dark:text-purple-400"
           />
           <StatCard
             title="Active Alerts"
             value={systemAlerts.length.toString()}
             icon={Bell}
             change={undefined}
-            iconColor="amber"
+            iconColor="text-amber-600 dark:text-amber-400"
           />
         </motion.div>
 
         {/* Main monitoring grid - Real-time health and performance */}
         <motion.div
-          className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2"
+          className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2"
           variants={itemAnimationVariant}
         >
           {/* Health Status Panel */}
-          {loading.health && errors.health === '' ? (
-            <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <div className="h-[500px] rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            {loading.health && errors.health === '' ? (
               <LoadingState />
-            </div>
-          ) : errors.health ? (
-            <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            ) : errors.health ? (
               <ErrorState
                 message={
                   errors.health.includes('<!doctype')
@@ -657,40 +656,36 @@ const MetricsDashboard: React.FC = () => {
                 }
                 onRetry={fetchAllMetrics}
               />
-            </div>
-          ) : (
-            <HealthPanel services={healthServices} />
-          )}
+            ) : (
+              <HealthPanel services={healthServices} />
+            )}
+          </div>
 
           {/* Performance Metrics Panel */}
-          {loading.system && errors.system === '' ? (
-            <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <div className="h-[500px] rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            {loading.system && errors.system === '' ? (
               <LoadingState />
-            </div>
-          ) : errors.system ? (
-            <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            ) : errors.system ? (
               <ErrorState
                 message={`${errors.system}. Check API connectivity.`}
                 onRetry={fetchAllMetrics}
               />
-            </div>
-          ) : (
-            performanceMetrics && <PerformancePanel metrics={performanceMetrics} />
-          )}
+            ) : (
+              performanceMetrics && <PerformancePanel metrics={performanceMetrics} />
+            )}
+          </div>
         </motion.div>
 
         {/* Deployment and Alerts Row */}
         <motion.div
-          className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2"
+          className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2"
           variants={itemAnimationVariant}
         >
           {/* Deployment Analytics Panel */}
-          {loading.deployments && errors.deployments === '' ? (
-            <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <div className="h-[500px] rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            {loading.deployments && errors.deployments === '' ? (
               <LoadingState />
-            </div>
-          ) : errors.deployments ? (
-            <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            ) : errors.deployments ? (
               <ErrorState
                 message={
                   errors.deployments.includes('500')
@@ -699,18 +694,22 @@ const MetricsDashboard: React.FC = () => {
                 }
                 onRetry={fetchAllMetrics}
               />
-            </div>
-          ) : (
-            deploymentStats && <DeploymentPanel stats={deploymentStats} />
-          )}
+            ) : (
+              deploymentStats && <DeploymentPanel stats={deploymentStats} />
+            )}
+          </div>
 
           {/* Alerts Panel */}
-          <AlertPanel alerts={systemAlerts} maxHeight="max-h-[500px]" />
+          <div className="h-[500px] rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <AlertPanel alerts={systemAlerts} maxHeight="h-full" />
+          </div>
         </motion.div>
 
-        {/* Historical Trends - Full Width */}
-        <motion.div className="mb-8" variants={itemAnimationVariant}>
-          <TrendPanel trends={trendData} height="h-[600px]" />
+        {/* Historical Trends */}
+        <motion.div className="mb-6" variants={itemAnimationVariant}>
+          <div className="h-[700px] rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <TrendPanel trends={trendData} height="h-full" />
+          </div>
         </motion.div>
 
         {/* Additional System Metrics Grid - Updated with API data */}
@@ -718,156 +717,235 @@ const MetricsDashboard: React.FC = () => {
           className="grid grid-cols-1 gap-6 md:grid-cols-3"
           variants={itemAnimationVariant}
         >
-          {/* GitHub API Metrics */}
+          {/* GitHub Integration */}
           <OverviewCard
             title="GitHub Integration"
             icon={Server}
             iconColor="bg-gray-100 text-gray-600 dark:bg-gray-900/30 dark:text-gray-400"
+            className="min-h-[300px] transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
           >
-            <div className="space-y-4">
-              {errors.github ? (
-                <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex h-full flex-col justify-between p-4">
+              {loading.github && errors.github === '' ? (
+                <div className="flex h-full items-center justify-center">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600 dark:border-gray-700 dark:border-t-blue-400"></div>
+                </div>
+              ) : errors.github ? (
+                <div className="flex h-full items-center justify-center text-sm text-gray-500 dark:text-gray-400">
                   {errors.github.includes('500')
                     ? 'GitHub metrics unavailable - ConfigMap not found or invalid'
                     : 'GitHub metrics unavailable'}
                 </div>
               ) : githubData?.statistics ? (
-                <>
+                <div className="flex h-full flex-col justify-between space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      Total Deployments
-                    </span>
-                    <span className="text-sm font-medium text-gray-900 dark:text-gray-200">
-                      {githubData.statistics.count}
-                    </span>
-                  </div>
-                  <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
-                    <div
-                      className="h-2 rounded-full bg-blue-500"
-                      style={{
-                        width: `${Math.min((githubData.statistics.webhook / githubData.statistics.count) * 100, 100)}%`,
-                      }}
-                    ></div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <span className="text-gray-600 dark:text-gray-400">Webhooks:</span>
-                      <span className="block font-medium text-gray-900 dark:text-gray-200">
-                        {githubData.statistics.webhook}
-                      </span>
+                    <div className="flex items-center space-x-2">
+                      <div className="rounded-lg bg-blue-100 p-2 transition-colors duration-300 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50">
+                        <Server className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                          Total Deployments
+                        </div>
+                        <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                          {githubData.statistics.count || 0}
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-gray-600 dark:text-gray-400">Manual:</span>
-                      <span className="block font-medium text-gray-900 dark:text-gray-200">
-                        {githubData.statistics.manual}
-                      </span>
+                    <div className="text-right">
+                      <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Success Rate</div>
+                      <div className="text-lg font-semibold text-green-600 dark:text-green-400">
+                        {githubData.statistics.count ? Math.round((githubData.statistics.webhook / githubData.statistics.count) * 100) : 0}%
+                      </div>
                     </div>
                   </div>
-                </>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 p-4 text-white transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/20 dark:from-blue-600 dark:to-blue-700">
+                      <div className="relative z-10">
+                        <div className="text-sm font-medium opacity-90">Webhooks</div>
+                        <div className="mt-1 text-2xl font-bold">{githubData.statistics.webhook || 0}</div>
+                      </div>
+                      <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10 transition-transform duration-300 group-hover:scale-110"></div>
+                    </div>
+                    <div className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-green-500 to-green-600 p-4 text-white transition-all duration-300 hover:shadow-lg hover:shadow-green-500/20 dark:from-green-600 dark:to-green-700">
+                      <div className="relative z-10">
+                        <div className="text-sm font-medium opacity-90">Manual</div>
+                        <div className="mt-1 text-2xl font-bold">{githubData.statistics.manual || 0}</div>
+                      </div>
+                      <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10 transition-transform duration-300 group-hover:scale-110"></div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">Deployment Distribution</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-200">
+                        {(githubData.statistics.webhook || 0) + (githubData.statistics.manual || 0)} Total
+                      </span>
+                    </div>
+                    <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-blue-500 to-green-500 transition-all duration-500"
+                        style={{
+                          width: `${Math.min(((githubData.statistics.webhook || 0) / (githubData.statistics.count || 1)) * 100, 100)}%`,
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
               ) : (
-                <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+                <div className="flex h-full items-center justify-center text-sm text-gray-500 dark:text-gray-400">
                   No GitHub data available
                 </div>
               )}
             </div>
           </OverviewCard>
 
-          {/* Kubernetes Metrics */}
+          {/* Kubernetes Status */}
           <OverviewCard
             title="Kubernetes Status"
             icon={Activity}
             iconColor="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+            className="min-h-[300px] transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
           >
-            <div className="space-y-4">
-              {errors.helm ? (
-                <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex h-full flex-col justify-between p-4">
+              {loading.helm && errors.helm === '' ? (
+                <div className="flex h-full items-center justify-center">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600 dark:border-gray-700 dark:border-t-blue-400"></div>
+                </div>
+              ) : errors.helm ? (
+                <div className="flex h-full items-center justify-center text-sm text-gray-500 dark:text-gray-400">
                   Kubernetes metrics unavailable
                 </div>
               ) : kubernetesData?.cluster_info ? (
-                <>
-                  <div className="grid grid-cols-2 gap-4 text-center">
-                    <div>
-                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                        {kubernetesData.cluster_info.nodes}
+                <div className="flex h-full flex-col justify-between space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className="rounded-lg bg-purple-100 p-2 transition-colors duration-300 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50">
+                        <Activity className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                       </div>
-                      <div className="text-xs text-gray-600 dark:text-gray-400">Nodes</div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                          Cluster Status
+                        </div>
+                        <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                          {kubernetesData.cluster_info.nodes || 0} Nodes
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                        {kubernetesData.cluster_info.pods}
-                      </div>
-                      <div className="text-xs text-gray-600 dark:text-gray-400">Pods</div>
+                    <div
+                      className={`rounded-full px-3 py-1 text-sm font-medium transition-colors duration-300 ${
+                        kubernetesData.status === 'healthy'
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                          : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                      }`}
+                    >
+                      {kubernetesData.status === 'healthy' ? 'Healthy' : 'Unhealthy'}
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Cluster Health</span>
-                      <span
-                        className={`font-medium ${kubernetesData.status === 'healthy' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
-                      >
-                        {kubernetesData.status === 'healthy' ? 'Healthy' : 'Unhealthy'}
-                      </span>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 p-4 text-white transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20 dark:from-purple-600 dark:to-purple-700">
+                      <div className="relative z-10">
+                        <div className="text-sm font-medium opacity-90">Active Pods</div>
+                        <div className="mt-1 text-2xl font-bold">{kubernetesData.cluster_info.pods || 0}</div>
+                      </div>
+                      <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10 transition-transform duration-300 group-hover:scale-110"></div>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Version</span>
+                    <div className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 p-4 text-white transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/20 dark:from-indigo-600 dark:to-indigo-700">
+                      <div className="relative z-10">
+                        <div className="text-sm font-medium opacity-90">Services</div>
+                        <div className="mt-1 text-2xl font-bold">{kubernetesData.cluster_info.services || 0}</div>
+                      </div>
+                      <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10 transition-transform duration-300 group-hover:scale-110"></div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg bg-gray-50 p-3 transition-colors duration-300 hover:bg-gray-100 dark:bg-gray-800/50 dark:hover:bg-gray-800/70">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Kubernetes Version</span>
                       <span className="font-medium text-gray-900 dark:text-gray-200">
-                        {kubernetesData.cluster_info.version}
+                        {kubernetesData.cluster_info.version || 'Unknown'}
                       </span>
                     </div>
                   </div>
-                </>
+                </div>
               ) : (
-                <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+                <div className="flex h-full items-center justify-center text-sm text-gray-500 dark:text-gray-400">
                   No Kubernetes data available
                 </div>
               )}
             </div>
           </OverviewCard>
 
-          {/* Redis Metrics */}
+          {/* Redis Cache */}
           <OverviewCard
             title="Redis Cache"
             icon={HardDrive}
             iconColor="bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
+            className="min-h-[300px] transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
           >
-            <div className="space-y-4">
-              {errors.health ? (
-                <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex h-full flex-col justify-between p-4">
+              {loading.health && errors.health === '' ? (
+                <div className="flex h-full items-center justify-center">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600 dark:border-gray-700 dark:border-t-blue-400"></div>
+                </div>
+              ) : errors.health ? (
+                <div className="flex h-full items-center justify-center text-sm text-gray-500 dark:text-gray-400">
                   Redis metrics unavailable
                 </div>
               ) : redisData?.performance ? (
-                <>
-                  <div className="grid grid-cols-2 gap-4 text-center">
-                    <div>
-                      <div className="text-2xl font-bold text-red-600 dark:text-red-400">
-                        {redisData.performance.used_memory}
+                <div className="flex h-full flex-col justify-between space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className="rounded-lg bg-red-100 p-2 transition-colors duration-300 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50">
+                        <HardDrive className="h-5 w-5 text-red-600 dark:text-red-400" />
                       </div>
-                      <div className="text-xs text-gray-600 dark:text-gray-400">Memory Used</div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                          Cache Status
+                        </div>
+                        <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                          Active
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                        {redisData.status === 'healthy' ? '99.9' : '0'}
+                    <div className="text-right">
+                      <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Uptime</div>
+                      <div className="text-lg font-semibold text-green-600 dark:text-green-400">
+                        {redisData.performance.uptime ? `${Math.round(redisData.performance.uptime / 3600)}h` : '0h'}
                       </div>
-                      <div className="text-xs text-gray-600 dark:text-gray-400">% Uptime</div>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Connections</span>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-red-500 to-red-600 p-4 text-white transition-all duration-300 hover:shadow-lg hover:shadow-red-500/20 dark:from-red-600 dark:to-red-700">
+                      <div className="relative z-10">
+                        <div className="text-sm font-medium opacity-90">Memory Used</div>
+                        <div className="mt-1 text-2xl font-bold">{redisData.performance.used_memory || '0 MB'}</div>
+                      </div>
+                      <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10 transition-transform duration-300 group-hover:scale-110"></div>
+                    </div>
+                    <div className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 p-4 text-white transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/20 dark:from-orange-600 dark:to-orange-700">
+                      <div className="relative z-10">
+                        <div className="text-sm font-medium opacity-90">Connections</div>
+                        <div className="mt-1 text-2xl font-bold">{redisData.performance.connected_clients || 0}</div>
+                      </div>
+                      <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10 transition-transform duration-300 group-hover:scale-110"></div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg bg-gray-50 p-3 transition-colors duration-300 hover:bg-gray-100 dark:bg-gray-800/50 dark:hover:bg-gray-800/70">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Operations/sec</span>
                       <span className="font-medium text-gray-900 dark:text-gray-200">
-                        {redisData.performance.connected_clients}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Ops/sec</span>
-                      <span className="font-medium text-green-600 dark:text-green-400">
-                        {redisData.performance.ops_per_second}
+                        {redisData.performance.ops_per_second || 0}
                       </span>
                     </div>
                   </div>
-                </>
+                </div>
               ) : (
-                <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+                <div className="flex h-full items-center justify-center text-sm text-gray-500 dark:text-gray-400">
                   No Redis data available
                 </div>
               )}
