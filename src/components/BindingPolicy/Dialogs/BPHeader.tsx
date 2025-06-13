@@ -207,7 +207,7 @@ const BPHeader: React.FC<BPHeaderProps> = ({
                 ) : null,
                 style: {
                   color: colors.text,
-                  padding: '10px 12px',
+                  padding: '8px 10px',
                   borderRadius: '12px',
                   backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
                 },
@@ -216,6 +216,10 @@ const BPHeader: React.FC<BPHeaderProps> = ({
                 '& .MuiOutlinedInput-root': {
                   borderRadius: '12px',
                   transition: 'all 0.3s ease',
+                  minHeight: '32px',
+                  '& input': {
+                    padding: '8px 0',
+                  },
                   '& fieldset': {
                     borderColor: searchFocused ? colors.primary : colors.border,
                     borderWidth: searchFocused ? '2px' : '1px',
