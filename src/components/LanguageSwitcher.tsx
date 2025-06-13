@@ -10,8 +10,8 @@ const LanguageSwitcher = () => {
   return (
     <select
       value={i18n.language}
-      onChange={(e) => changeLanguage(e.target.value)}
-      className="bg-white text-black dark:bg-gray-900 dark:text-white border dark:border-gray-700 rounded-md px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      onChange={e => changeLanguage(e.target.value)}
+      className="rounded-md border bg-white px-4 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
     >
       <option value="en">English</option>
       <option value="ja">日本語</option>

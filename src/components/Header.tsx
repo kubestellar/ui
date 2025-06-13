@@ -74,8 +74,7 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
       type === 'primary'
         ? themeStyles.button.primary.background
         : themeStyles.button.secondary.background,
-    color:
-      type === 'primary' ? themeStyles.button.primary.color : themeStyles.colors.text.primary,
+    color: type === 'primary' ? themeStyles.button.primary.color : themeStyles.colors.text.primary,
     boxShadow: themeStyles.colors.shadow.sm,
   });
 
@@ -119,7 +118,10 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
                   exit={{ opacity: 0, rotate: 90 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <HiXMark className="text-2xl" style={{ color: themeStyles.colors.status.error }} />
+                  <HiXMark
+                    className="text-2xl"
+                    style={{ color: themeStyles.colors.status.error }}
+                  />
                 </motion.div>
               ) : (
                 <motion.div
@@ -173,7 +175,10 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
                     exit={{ opacity: 0, rotate: 30 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <FiMoon style={{ color: themeStyles.colors.brand.secondary }} className="text-xl" />
+                    <FiMoon
+                      style={{ color: themeStyles.colors.brand.secondary }}
+                      className="text-xl"
+                    />
                   </motion.div>
                 ) : (
                   <motion.div
@@ -183,7 +188,10 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
                     exit={{ opacity: 0, rotate: -30 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <FiSun style={{ color: themeStyles.colors.status.warning }} className="text-xl" />
+                    <FiSun
+                      style={{ color: themeStyles.colors.status.warning }}
+                      className="text-xl"
+                    />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -215,7 +223,10 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
                     exit={{ opacity: 0, rotate: 30 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <FiMoon style={{ color: themeStyles.colors.brand.secondary }} className="text-xl" />
+                    <FiMoon
+                      style={{ color: themeStyles.colors.brand.secondary }}
+                      className="text-xl"
+                    />
                   </motion.div>
                 ) : (
                   <motion.div
@@ -225,7 +236,10 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
                     exit={{ opacity: 0, rotate: -30 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <FiSun style={{ color: themeStyles.colors.status.warning }} className="text-xl" />
+                    <FiSun
+                      style={{ color: themeStyles.colors.status.warning }}
+                      className="text-xl"
+                    />
                   </motion.div>
                 )}
               </AnimatePresence>
