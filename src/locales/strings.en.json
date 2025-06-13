@@ -1,6 +1,10 @@
 {
   "common": {
     "changes": "Changes",
+    "clusterLabel": "Cluster Label",
+    "workloadLabel": "Workload Label",
+    "workloads": "Workloads",
+    "clearCanvas": "Clear Canvas",
     "clearFilter": "Clear Canvas",
     "cancel": "Cancel",
     "save": "Save",
@@ -30,6 +34,10 @@
     "noResource": "No {{resource}} specified",
     "copy": "Copy",
     "close": "Close",
+    "update": "Update",
+    "unknown": "Unknown",
+    "workload": "Workload",
+    "tryAgain": "Try Again",
     "confirm": "Confirm",
     "continue": "Continue",
     "back": "Back",
@@ -45,11 +53,18 @@
     "ok": "OK",
     "finish": "Finish",
     "next": "Next",
+    "retry": "Retry",
     "previous": "Previous",
     "page": "Page",
+    "sync": "Sync",
+    "clearAll": "Clear All",
+    "fitView": "Fit View",
+    "clearSearch": "Clear Search",
+    "clearFilters": "Clear Filters",
+    "clear": "Clear",
     "of": "of",
     "items": "item{{count, plural, one {} other {s}}}",
-    "filteredFrom": "filtered from {{total}}"
+    "filteredFrom": "filtered from"
   },
   "installationPage": {
     "statusBadge": {
@@ -235,7 +250,7 @@
     "noClustersMatchFilter": "No clusters match your filter selection",
     "noClustersAvailable": "No clusters available yet. Import your first cluster to get started.",
     "importYourFirst": "Import Your First Cluster",
-    "filterByLabel": "Filter by Label",
+    "filteredByLabel": "Filter by Label",
     "actions": {
       "viewDetails": "View Details",
       "editLabels": "Edit Labels",
@@ -476,10 +491,65 @@
     },
     "dashboard": {
       "title": "Dashboard",
+      "lastUpdatedJustNow": "Last updated: just now",
+      "status": "Status: Optimal",
+      "other": "Other",
+      "distribution": "Distribution",
+      "state": "Pending or inactive",
+      "otherClusters": "Other Clusters",
+      "hoverFormula": "Hover to see the formula breakdown",
+      "healthScore": "Health Score Formula",
+      "clusterHealth": "Overall Cluster Health",
+      "clusterStatus": "Cluster Status",
       "welcome": "Welcome to the KubeStellar management dashboard",
       "errorLoading": "Error loading cluster information",
       "addCluster": "Add Cluster",
+      "notAvailable": "N/A",
+      "invalidDate": "Invalid Date",
+      "managedClusters": "Managed Clusters",
+      "total": "total",
+      "viewAll": "View all",
+      "cpuCapacity": "CPU Capacity",
+      "memoryCapacity": "Memory Capacity",
+      "podCapacity": "Pod Capacity",
+      "podCapacityLabel": "Pod Capacity",
+      "active": "Active",
+      "inactive": "Inactive",
+      "noManagedClusters": "No managed clusters found",
+      "importCluster": "Import Cluster",
+      "showMoreClusters": "Show more clusters",
+      "clustersActive": "Clusters Active",
+      "systemHealth": "System Health",
+      "refresh": "Refresh",
+      "noRecentActivity": "No recent activity found",
+      "recentActivity": "Recent Activity",
+      "resourceUtilization": "Resource Utilization",
+      "clusterMetrics": "Based on cluster metrics",
+      "pods": {
+        "formula": "Pod Health Formula",
+        "calculation": "Calculated based on the ratio of healthy pods to total pods across all namespaces.",
+        "status": "Factors in pod status, readiness probes, and liveness checks",
+        "value": "Higher values indicate better cluster health",
+        "formulaDesc": "(Running Pods / Total Pods) × 100%",
+        "health": "Pod Health"
+      },
+      "cpu": {
+        "usage": "CPU Usage",
+        "formula": "CPU Usage Formula",
+        "calculation": "Calculated as the percentage of allocated CPU resources currently in use across all nodes in the cluster.",
+        "value": "Lower values indicate better resource availability",
+        "formulaDesc": "(Used CPU Cores / Total CPU Cores) × 100%",
+        "health": "Lower values indicate better performance"
+      },
+      "memory": {
+        "usage": "Memory Usage",
+        "formula": "Memory Usage Formula",
+        "calculation": "Calculated as the percentage of allocated memory resources currently in use across all nodes in the cluster.",
+        "value": "Lower values indicate better resource availability",
+        "formulaDesc": "(Used Memory / Total Memory) × 100%"
+      },
       "stats": {
+        "running": "Running and available",
         "totalClusters": "Total Clusters",
         "activeClusters": "Active Clusters",
         "bindingPolicies": "Binding Policies",
@@ -752,6 +822,9 @@
     "selectCluster": "Select a Kubernetes Cluster",
     "searchingClusters": "Searching for available clusters...",
     "errorLoadingClusters": "Error Loading Clusters",
+    "automatedOnboarding": "Automated Cluster Onboarding",
+    "new": "New",
+    "automatedDescription": "This is the simplest way to connect your Kubernetes cluster. Select a cluster and click the Onboard button to directly connect it without any manual commands.",
     "retry": "Retry",
     "chooseCluster": "Choose a cluster...",
     "noClusters": "No clusters available",
@@ -806,6 +879,8 @@
     },
     "success": {
       "title": "Cluster Onboarded Successfully",
+      "clusterAdded": "Cluster added successfully",
+      "clusterAvailable": "Your cluster is now available in the platform",
       "message": "Cluster {{clusterName}} has been successfully onboarded to the platform.",
       "detailMessage": "Your cluster {{clusterName}} has been successfully onboarded. Here's what you can do next:",
       "nextSteps": {
@@ -1019,7 +1094,6 @@
           },
           "tip": "Tip: The label-based approach allows you to create powerful binding policies that automatically apply to all resources matching the selected labels, both now and in the future.",
           "dontShowAgain": "Don't Show Again",
-          "gotIt": "Got it",
           "tooltip": "View selection instructions"
         }
       }
@@ -1082,13 +1156,18 @@
       "workloads": "{{count}} Workloads",
       "status": "Status:",
       "namespace": "Namespace:",
-      "namespaces": "Namespaces:"
+      "namespaces": "Namespaces:",
+      "clustersOnCanvas": "Clusters on Canvas:",
+      "workloadsOnCanvas": "Workloads on Canvas:",
+      "selectClusters": "Select Clusters here",
+      "matches": "Matches: {{count}} {{resourceType}}"
     },
     "labels": {
       "title": "Labels:",
       "key": "Key",
       "value": "Value",
-      "add": "Add"
+      "add": "Add",
+      "count": "{{count}} unique labels across {{total}}"
     },
     "creatingConnection": "Creating connection:",
     "previewDialog": {
@@ -1293,7 +1372,8 @@
     },
     "yaml": {
       "createNamespaceAutomatically": "Create Namespace Automatically",
-      "editor": "YAML Editor"
+      "editor": "YAML Editor",
+      "deploy": "Deploy"
     },
     "helm": {
       "createOwn": "Create your own Helm chart",
@@ -1407,7 +1487,17 @@
         "workloadLabel": "Workload Label",
         "workloadLabelPlaceholder": "Enter value for label 'kubestellar.io/workload'",
         "deploy": "Deploy",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "userCharts": {
+          "title": "List of user created Charts",
+          "deleteSuccess": "Chart {{chartId}} deleted successfully!",
+          "deleteError": "Chart {{chartId}} not deleted!",
+          "loading": "Loading user charts...",
+          "noCharts": "No user-created charts available.",
+          "delete": "Delete",
+          "confirmDeletion": "Confirm Resource Deletion",
+          "deleteConfirmation": "Are you sure you want to delete \"{{chartId}}\"? This action cannot be undone."
+        }
       },
       "artifactHub": {
         "title": "Artifact Hub",
@@ -1832,7 +1922,10 @@
     "deleteConfirmation": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
     "yesDelete": "Yes, Delete",
     "apply": "Apply",
-    "deploying": "Deploying..."
+    "deploying": "Deploying...",
+    "createFromYourGitHub": "Create from your Github",
+    "deployFromPopularRepositories": "Deploy from popular repositories",
+    "listOfPreviousDeployments": "List of Previous Deployments"
   },
   "commandPalette": {
     "ariaLabel": "Open command palette",
@@ -1891,5 +1984,14 @@
         "infoMessage": "You have been successfully logged out."
       }
     }
+  },
+  "uploadFileTab": {
+    "createNamespaceAutomatically": "Create Namespace Automatically",
+    "chooseDifferentYaml": "Choose Different YAML File",
+    "filePreview": "File Preview",
+    "chooseOrDrag": "Choose or Drag & Drop a YAML File",
+    "or": "- or -",
+    "chooseYaml": "Choose YAML File",
+    "uploadAndDeploy": "Upload and Deploy"
   }
 }

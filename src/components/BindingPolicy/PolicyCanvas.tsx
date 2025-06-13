@@ -2460,7 +2460,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
             },
           }}
         >
-          {t('common.clearFilter')}
+          {t('common.clearCanvas')}
         </Button>
       </Box>
 
