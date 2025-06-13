@@ -1,27 +1,27 @@
-import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Box, Select, MenuItem, SelectChangeEvent } from '@mui/material';
 
-const LanguageSwitcher: React.FC = () => {
+const LanguageSwitcher = () => {
   const { i18n } = useTranslation();
 
-  const changeLanguage = (event: SelectChangeEvent<string>) => {
-    i18n.changeLanguage(event.target.value);
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
   };
 
   return (
-    <Box sx={{ minWidth: 120 }}>
-      <Select value={i18n.language} onChange={changeLanguage} size="small" variant="outlined">
-        <MenuItem value="en">English</MenuItem>
-        <MenuItem value="ja">日本語</MenuItem>
-        <MenuItem value="es">Español</MenuItem>
-        <MenuItem value="de">Deutsch</MenuItem>
-        <MenuItem value="fr">Français</MenuItem>
-        <MenuItem value="it">Italiano</MenuItem>
-        <MenuItem value="zh-CN">简体中文</MenuItem>
-        <MenuItem value="zh-TW">繁體中文</MenuItem>
-      </Select>
-    </Box>
+    <select
+      value={i18n.language}
+      onChange={(e) => changeLanguage(e.target.value)}
+      className="bg-white text-black dark:bg-gray-900 dark:text-white border dark:border-gray-700 rounded-md px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+    >
+      <option value="en">English</option>
+      <option value="ja">日本語</option>
+      <option value="es">Español</option>
+      <option value="de">Deutsch</option>
+      <option value="fr">Français</option>
+      <option value="it">Italiano</option>
+      <option value="zh-Hans">简体中文</option>
+      <option value="zh-Hant">繁體中文</option>
+    </select>
   );
 };
 

@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import getThemeStyles from '../lib/theme-utils';
 import CommandPalette from './CommandPalette';
 import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from './LanguageSwitcher';
 
 interface HeaderProps {
   isLoading: boolean;
@@ -30,12 +31,10 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
   const isDark = theme === 'dark';
   const themeStyles = getThemeStyles(isDark);
 
-  // Handle scroll events for header appearance
   const handleScroll = useCallback(() => {
     const currentScrollTop = window.scrollY;
     const isScrolled = currentScrollTop > 10;
 
-    // Determine scroll direction
     if (currentScrollTop > lastScrollTop && currentScrollTop > 100) {
       setScrollDirection('down');
     } else {
@@ -46,7 +45,6 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
     setScrolled(isScrolled);
   }, [lastScrollTop]);
 
-  // Detect scroll position to add shadow/background effect
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -54,44 +52,33 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
 
   if (isLoading) return <HeaderSkeleton />;
 
-  // Get header style based on scroll position and theme
-  const getHeaderStyle = () => {
-    const baseStyle = {
-      backgroundColor: scrolled
-        ? isDark
-          ? 'rgba(17, 24, 39, 0.8)'
-          : 'rgba(255, 255, 255, 0.8)'
-        : isDark
-          ? themeStyles.colors.bg.primary
-          : themeStyles.colors.bg.primary,
-      backdropFilter: scrolled ? 'blur(12px)' : 'none',
-      borderBottom: isDark
-        ? '1px solid rgba(55, 65, 81, 0.3)'
-        : scrolled
-          ? '1px solid rgba(226, 232, 240, 0.7)'
-          : 'none',
-      boxShadow: scrolled ? themeStyles.colors.shadow.sm : 'none',
-      transform: `translateY(${scrollDirection === 'down' && scrolled ? '-100%' : '0'})`,
-      transition: 'all 0.3s ease-in-out',
-    };
+  const getHeaderStyle = () => ({
+    backgroundColor: scrolled
+      ? isDark
+        ? 'rgba(17, 24, 39, 0.8)'
+        : 'rgba(255, 255, 255, 0.8)'
+      : themeStyles.colors.bg.primary,
+    backdropFilter: scrolled ? 'blur(12px)' : 'none',
+    borderBottom: isDark
+      ? '1px solid rgba(55, 65, 81, 0.3)'
+      : scrolled
+        ? '1px solid rgba(226, 232, 240, 0.7)'
+        : 'none',
+    boxShadow: scrolled ? themeStyles.colors.shadow.sm : 'none',
+    transform: `translateY(${scrollDirection === 'down' && scrolled ? '-100%' : '0'})`,
+    transition: 'all 0.3s ease-in-out',
+  });
 
-    return baseStyle;
-  };
+  const getButtonStyle = (type: 'primary' | 'secondary' = 'secondary') => ({
+    background:
+      type === 'primary'
+        ? themeStyles.button.primary.background
+        : themeStyles.button.secondary.background,
+    color:
+      type === 'primary' ? themeStyles.button.primary.color : themeStyles.colors.text.primary,
+    boxShadow: themeStyles.colors.shadow.sm,
+  });
 
-  // Button common styling
-  const getButtonStyle = (type: 'primary' | 'secondary' = 'secondary') => {
-    return {
-      background:
-        type === 'primary'
-          ? themeStyles.button.primary.background
-          : themeStyles.button.secondary.background,
-      color:
-        type === 'primary' ? themeStyles.button.primary.color : themeStyles.colors.text.primary,
-      boxShadow: themeStyles.colors.shadow.sm,
-    };
-  };
-
-  // Menu button variants
   const menuButtonVariants = {
     open: {
       rotate: 90,
@@ -132,10 +119,7 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
                   exit={{ opacity: 0, rotate: 90 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <HiXMark
-                    className="text-2xl"
-                    style={{ color: themeStyles.colors.status.error }}
-                  />
+                  <HiXMark className="text-2xl" style={{ color: themeStyles.colors.status.error }} />
                 </motion.div>
               ) : (
                 <motion.div
@@ -153,7 +137,7 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
         </div>
 
         <Link
-          to={'/'}
+          to="/"
           className="group flex items-center gap-2 xl:gap-3"
           aria-label={t('header.goToHome')}
         >
@@ -172,48 +156,41 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
       <div className="3xl:gap-5 flex items-center gap-2 xl:gap-4">
         {authData?.isAuthenticated ? (
           <>
-            <div className="group/controls flex-none" data-tip={t('header.themeToggleTip')}>
-              <motion.button
-                onClick={toggleTheme}
-                className="btn btn-circle transition-all duration-300 hover:scale-105 active:scale-95"
-                style={getButtonStyle()}
-                aria-label={t('header.themeToggle')}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                <AnimatePresence mode="wait">
-                  {!isDark ? (
-                    <motion.div
-                      key="moon"
-                      initial={{ opacity: 0, rotate: -30 }}
-                      animate={{ opacity: 1, rotate: 0 }}
-                      exit={{ opacity: 0, rotate: 30 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <FiMoon
-                        style={{ color: themeStyles.colors.brand.secondary }}
-                        className="text-xl"
-                      />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="sun"
-                      initial={{ opacity: 0, rotate: 30 }}
-                      animate={{ opacity: 1, rotate: 0 }}
-                      exit={{ opacity: 0, rotate: -30 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <FiSun
-                        style={{ color: themeStyles.colors.status.warning }}
-                        className="text-xl"
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.button>
-            </div>
+            <motion.button
+              onClick={toggleTheme}
+              className="btn btn-circle transition-all duration-300 hover:scale-105 active:scale-95"
+              style={getButtonStyle()}
+              aria-label={t('header.themeToggle')}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <AnimatePresence mode="wait">
+                {!isDark ? (
+                  <motion.div
+                    key="moon"
+                    initial={{ opacity: 0, rotate: -30 }}
+                    animate={{ opacity: 1, rotate: 0 }}
+                    exit={{ opacity: 0, rotate: 30 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <FiMoon style={{ color: themeStyles.colors.brand.secondary }} className="text-xl" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="sun"
+                    initial={{ opacity: 0, rotate: 30 }}
+                    animate={{ opacity: 1, rotate: 0 }}
+                    exit={{ opacity: 0, rotate: -30 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <FiSun style={{ color: themeStyles.colors.status.warning }} className="text-xl" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.button>
 
             <CommandPalette />
+            <LanguageSwitcher />
 
             <div className="relative flex items-center">
               <ProfileSection />
@@ -238,10 +215,7 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
                     exit={{ opacity: 0, rotate: 30 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <FiMoon
-                      style={{ color: themeStyles.colors.brand.secondary }}
-                      className="text-xl"
-                    />
+                    <FiMoon style={{ color: themeStyles.colors.brand.secondary }} className="text-xl" />
                   </motion.div>
                 ) : (
                   <motion.div
@@ -251,16 +225,14 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
                     exit={{ opacity: 0, rotate: -30 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <FiSun
-                      style={{ color: themeStyles.colors.status.warning }}
-                      className="text-xl"
-                    />
+                    <FiSun style={{ color: themeStyles.colors.status.warning }} className="text-xl" />
                   </motion.div>
                 )}
               </AnimatePresence>
             </motion.button>
 
             <CommandPalette />
+            <LanguageSwitcher />
           </>
         )}
 
@@ -275,15 +247,5 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
     </motion.header>
   );
 };
-
-// Add keydown handler for theme toggle shortcut
-if (typeof window !== 'undefined') {
-  window.addEventListener('keydown', e => {
-    if (e.altKey && e.key === 'q') {
-      const { toggleTheme } = useTheme.getState();
-      toggleTheme();
-    }
-  });
-}
 
 export default Header;
