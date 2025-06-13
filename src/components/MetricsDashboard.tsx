@@ -385,8 +385,8 @@ const MetricsDashboard: React.FC = () => {
           cluster_info: {
             nodes: 3, // Default values or parse from response
             pods: 12,
-            version: 'v1.25.0'
-          }
+            version: 'v1.25.0',
+          },
         });
         setErrors(prev => ({ ...prev, helm: '' }));
       } else {
@@ -402,8 +402,8 @@ const MetricsDashboard: React.FC = () => {
           performance: {
             used_memory: '128MB',
             connected_clients: 24,
-            ops_per_second: 1250
-          }
+            ops_per_second: 1250,
+          },
         });
       } else {
         setRedisData(null);
@@ -722,7 +722,7 @@ const MetricsDashboard: React.FC = () => {
             title="GitHub Integration"
             icon={Server}
             iconColor="bg-gray-100 text-gray-600 dark:bg-gray-900/30 dark:text-gray-400"
-            className="min-h-[300px] transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
+            className="min-h-[300px] transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
           >
             <div className="flex h-full flex-col justify-between p-4">
               {loading.github && errors.github === '' ? (
@@ -752,9 +752,16 @@ const MetricsDashboard: React.FC = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Success Rate</div>
+                      <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                        Success Rate
+                      </div>
                       <div className="text-lg font-semibold text-green-600 dark:text-green-400">
-                        {githubData.statistics.count ? Math.round((githubData.statistics.webhook / githubData.statistics.count) * 100) : 0}%
+                        {githubData.statistics.count
+                          ? Math.round(
+                              (githubData.statistics.webhook / githubData.statistics.count) * 100
+                            )
+                          : 0}
+                        %
                       </div>
                     </div>
                   </div>
@@ -763,14 +770,18 @@ const MetricsDashboard: React.FC = () => {
                     <div className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 p-4 text-white transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/20 dark:from-blue-600 dark:to-blue-700">
                       <div className="relative z-10">
                         <div className="text-sm font-medium opacity-90">Webhooks</div>
-                        <div className="mt-1 text-2xl font-bold">{githubData.statistics.webhook || 0}</div>
+                        <div className="mt-1 text-2xl font-bold">
+                          {githubData.statistics.webhook || 0}
+                        </div>
                       </div>
                       <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10 transition-transform duration-300 group-hover:scale-110"></div>
                     </div>
                     <div className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-green-500 to-green-600 p-4 text-white transition-all duration-300 hover:shadow-lg hover:shadow-green-500/20 dark:from-green-600 dark:to-green-700">
                       <div className="relative z-10">
                         <div className="text-sm font-medium opacity-90">Manual</div>
-                        <div className="mt-1 text-2xl font-bold">{githubData.statistics.manual || 0}</div>
+                        <div className="mt-1 text-2xl font-bold">
+                          {githubData.statistics.manual || 0}
+                        </div>
                       </div>
                       <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10 transition-transform duration-300 group-hover:scale-110"></div>
                     </div>
@@ -778,9 +789,12 @@ const MetricsDashboard: React.FC = () => {
 
                   <div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Deployment Distribution</span>
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Deployment Distribution
+                      </span>
                       <span className="font-medium text-gray-900 dark:text-gray-200">
-                        {(githubData.statistics.webhook || 0) + (githubData.statistics.manual || 0)} Total
+                        {(githubData.statistics.webhook || 0) + (githubData.statistics.manual || 0)}{' '}
+                        Total
                       </span>
                     </div>
                     <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
@@ -806,7 +820,7 @@ const MetricsDashboard: React.FC = () => {
             title="Kubernetes Status"
             icon={Activity}
             iconColor="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-            className="min-h-[300px] transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
+            className="min-h-[300px] transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
           >
             <div className="flex h-full flex-col justify-between p-4">
               {loading.helm && errors.helm === '' ? (
@@ -848,14 +862,18 @@ const MetricsDashboard: React.FC = () => {
                     <div className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 p-4 text-white transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20 dark:from-purple-600 dark:to-purple-700">
                       <div className="relative z-10">
                         <div className="text-sm font-medium opacity-90">Active Pods</div>
-                        <div className="mt-1 text-2xl font-bold">{kubernetesData.cluster_info.pods || 0}</div>
+                        <div className="mt-1 text-2xl font-bold">
+                          {kubernetesData.cluster_info.pods || 0}
+                        </div>
                       </div>
                       <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10 transition-transform duration-300 group-hover:scale-110"></div>
                     </div>
                     <div className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 p-4 text-white transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/20 dark:from-indigo-600 dark:to-indigo-700">
                       <div className="relative z-10">
                         <div className="text-sm font-medium opacity-90">Services</div>
-                        <div className="mt-1 text-2xl font-bold">{kubernetesData.cluster_info.services || 0}</div>
+                        <div className="mt-1 text-2xl font-bold">
+                          {kubernetesData.cluster_info.services || 0}
+                        </div>
                       </div>
                       <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10 transition-transform duration-300 group-hover:scale-110"></div>
                     </div>
@@ -863,7 +881,9 @@ const MetricsDashboard: React.FC = () => {
 
                   <div className="rounded-lg bg-gray-50 p-3 transition-colors duration-300 hover:bg-gray-100 dark:bg-gray-800/50 dark:hover:bg-gray-800/70">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Kubernetes Version</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        Kubernetes Version
+                      </span>
                       <span className="font-medium text-gray-900 dark:text-gray-200">
                         {kubernetesData.cluster_info.version || 'Unknown'}
                       </span>
@@ -883,7 +903,7 @@ const MetricsDashboard: React.FC = () => {
             title="Redis Cache"
             icon={HardDrive}
             iconColor="bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
-            className="min-h-[300px] transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
+            className="min-h-[300px] transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
           >
             <div className="flex h-full flex-col justify-between p-4">
               {loading.health && errors.health === '' ? (
@@ -911,9 +931,13 @@ const MetricsDashboard: React.FC = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Uptime</div>
+                      <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                        Uptime
+                      </div>
                       <div className="text-lg font-semibold text-green-600 dark:text-green-400">
-                        {redisData.performance.uptime ? `${Math.round(redisData.performance.uptime / 3600)}h` : '0h'}
+                        {redisData.performance.uptime
+                          ? `${Math.round(redisData.performance.uptime / 3600)}h`
+                          : '0h'}
                       </div>
                     </div>
                   </div>
@@ -922,14 +946,18 @@ const MetricsDashboard: React.FC = () => {
                     <div className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-red-500 to-red-600 p-4 text-white transition-all duration-300 hover:shadow-lg hover:shadow-red-500/20 dark:from-red-600 dark:to-red-700">
                       <div className="relative z-10">
                         <div className="text-sm font-medium opacity-90">Memory Used</div>
-                        <div className="mt-1 text-2xl font-bold">{redisData.performance.used_memory || '0 MB'}</div>
+                        <div className="mt-1 text-2xl font-bold">
+                          {redisData.performance.used_memory || '0 MB'}
+                        </div>
                       </div>
                       <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10 transition-transform duration-300 group-hover:scale-110"></div>
                     </div>
                     <div className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 p-4 text-white transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/20 dark:from-orange-600 dark:to-orange-700">
                       <div className="relative z-10">
                         <div className="text-sm font-medium opacity-90">Connections</div>
-                        <div className="mt-1 text-2xl font-bold">{redisData.performance.connected_clients || 0}</div>
+                        <div className="mt-1 text-2xl font-bold">
+                          {redisData.performance.connected_clients || 0}
+                        </div>
                       </div>
                       <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10 transition-transform duration-300 group-hover:scale-110"></div>
                     </div>
@@ -937,7 +965,9 @@ const MetricsDashboard: React.FC = () => {
 
                   <div className="rounded-lg bg-gray-50 p-3 transition-colors duration-300 hover:bg-gray-100 dark:bg-gray-800/50 dark:hover:bg-gray-800/70">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Operations/sec</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        Operations/sec
+                      </span>
                       <span className="font-medium text-gray-900 dark:text-gray-200">
                         {redisData.performance.ops_per_second || 0}
                       </span>

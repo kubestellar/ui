@@ -15,15 +15,7 @@ import {
 } from 'chart.js';
 import { Bar, Pie } from 'react-chartjs-2';
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement
-);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
 export interface TrendData {
   metric: string;
@@ -58,7 +50,7 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
 }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
-  
+
   // Initialize selected metric with the first trend if available
   const [selectedMetric, setSelectedMetric] = useState<string>(trends[0]?.metric || '');
   const [timeRange, setTimeRange] = useState<TimeRange>('24h');
@@ -73,48 +65,51 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
   }, [trends, selectedMetric]);
 
   // Generate historical data points
-  const generateHistoricalDataPoints = useCallback((metricName: string, timeRange: TimeRange): ChartDataPoint[] => {
-    const pointCount = {
-      '1h': 12,
-      '24h': 24,
-      '7d': 7,
-      '30d': 30,
-    }[timeRange];
-
-    // Only generate data for the selected metric
-    const selectedTrend = trends.find(t => t.metric === metricName);
-    if (!selectedTrend) return [];
-
-    const baseValue = selectedTrend.value;
-    const points: ChartDataPoint[] = [];
-
-    for (let i = 0; i < pointCount; i++) {
-      const variation = (Math.random() - 0.5) * 20;
-      const timeValue = baseValue + variation + Math.sin(i * 0.3) * 10;
-
-      const timeLabel = {
-        '1h': `${i * 5}min`,
-        '24h': `${i}:00`,
-        '7d': `Day ${i + 1}`,
-        '30d': `Week ${i + 1}`,
+  const generateHistoricalDataPoints = useCallback(
+    (metricName: string, timeRange: TimeRange): ChartDataPoint[] => {
+      const pointCount = {
+        '1h': 12,
+        '24h': 24,
+        '7d': 7,
+        '30d': 30,
       }[timeRange];
 
-      const timeInterval = {
-        '1h': 5 * 60 * 1000,
-        '24h': 60 * 60 * 1000,
-        '7d': 24 * 60 * 60 * 1000,
-        '30d': 7 * 24 * 60 * 60 * 1000,
-      }[timeRange];
+      // Only generate data for the selected metric
+      const selectedTrend = trends.find(t => t.metric === metricName);
+      if (!selectedTrend) return [];
 
-      points.push({
-        time: timeLabel,
-        value: Math.max(0, Math.min(100, timeValue)),
-        timestamp: new Date(Date.now() - (pointCount - i) * timeInterval),
-      });
-    }
+      const baseValue = selectedTrend.value;
+      const points: ChartDataPoint[] = [];
 
-    return points;
-  }, [trends]);
+      for (let i = 0; i < pointCount; i++) {
+        const variation = (Math.random() - 0.5) * 20;
+        const timeValue = baseValue + variation + Math.sin(i * 0.3) * 10;
+
+        const timeLabel = {
+          '1h': `${i * 5}min`,
+          '24h': `${i}:00`,
+          '7d': `Day ${i + 1}`,
+          '30d': `Week ${i + 1}`,
+        }[timeRange];
+
+        const timeInterval = {
+          '1h': 5 * 60 * 1000,
+          '24h': 60 * 60 * 1000,
+          '7d': 24 * 60 * 60 * 1000,
+          '30d': 7 * 24 * 60 * 60 * 1000,
+        }[timeRange];
+
+        points.push({
+          time: timeLabel,
+          value: Math.max(0, Math.min(100, timeValue)),
+          timestamp: new Date(Date.now() - (pointCount - i) * timeInterval),
+        });
+      }
+
+      return points;
+    },
+    [trends]
+  );
 
   // Memoized chart data
   const chartData = useMemo<ChartDataPoint[]>(() => {
@@ -177,51 +172,60 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
   }, [isDark, chartType]);
 
   // Chart data preparation
-  const barChartData = useMemo<ChartData<'bar'>>(() => ({
-    labels: chartData.map(point => point.time),
-    datasets: [
-      {
-        label: selectedMetric,
-        data: chartData.map(point => point.value),
-        backgroundColor: 'rgba(59, 130, 246, 0.5)',
-        borderColor: 'rgb(59, 130, 246)',
-        borderWidth: 1,
-      },
-    ],
-  }), [chartData, selectedMetric]);
+  const barChartData = useMemo<ChartData<'bar'>>(
+    () => ({
+      labels: chartData.map(point => point.time),
+      datasets: [
+        {
+          label: selectedMetric,
+          data: chartData.map(point => point.value),
+          backgroundColor: 'rgba(59, 130, 246, 0.5)',
+          borderColor: 'rgb(59, 130, 246)',
+          borderWidth: 1,
+        },
+      ],
+    }),
+    [chartData, selectedMetric]
+  );
 
-  const pieChartData = useMemo<ChartData<'pie'>>(() => ({
-    labels: chartData.map(point => point.time),
-    datasets: [
-      {
-        data: chartData.map(point => point.value),
-        backgroundColor: [
-          'rgba(59, 130, 246, 0.5)',
-          'rgba(16, 185, 129, 0.5)',
-          'rgba(245, 158, 11, 0.5)',
-          'rgba(239, 68, 68, 0.5)',
-          'rgba(139, 92, 246, 0.5)',
-        ],
-        borderColor: [
-          'rgb(59, 130, 246)',
-          'rgb(16, 185, 129)',
-          'rgb(245, 158, 11)',
-          'rgb(239, 68, 68)',
-          'rgb(139, 92, 246)',
-        ],
-        borderWidth: 1,
-      },
-    ],
-  }), [chartData]);
+  const pieChartData = useMemo<ChartData<'pie'>>(
+    () => ({
+      labels: chartData.map(point => point.time),
+      datasets: [
+        {
+          data: chartData.map(point => point.value),
+          backgroundColor: [
+            'rgba(59, 130, 246, 0.5)',
+            'rgba(16, 185, 129, 0.5)',
+            'rgba(245, 158, 11, 0.5)',
+            'rgba(239, 68, 68, 0.5)',
+            'rgba(139, 92, 246, 0.5)',
+          ],
+          borderColor: [
+            'rgb(59, 130, 246)',
+            'rgb(16, 185, 129)',
+            'rgb(245, 158, 11)',
+            'rgb(239, 68, 68)',
+            'rgb(139, 92, 246)',
+          ],
+          borderWidth: 1,
+        },
+      ],
+    }),
+    [chartData]
+  );
 
   // Event handlers
-  const handleMetricSelect = useCallback((metric: string) => {
-    setSelectedMetric(metric);
-    // Only call onMetricSelect if it's provided
-    if (onMetricSelect) {
-      onMetricSelect(metric);
-    }
-  }, [onMetricSelect]);
+  const handleMetricSelect = useCallback(
+    (metric: string) => {
+      setSelectedMetric(metric);
+      // Only call onMetricSelect if it's provided
+      if (onMetricSelect) {
+        onMetricSelect(metric);
+      }
+    },
+    [onMetricSelect]
+  );
 
   const handleTimeRangeChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
     setTimeRange(event.target.value as TimeRange);
@@ -241,10 +245,7 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
       <div
         className={`
           rounded-xl border shadow-sm transition-all duration-300
-          ${isDark
-            ? 'border-gray-700 bg-gray-800'
-            : 'border-gray-200 bg-white'
-          }
+          ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}
           ${className}
           ${height}
         `}
@@ -267,9 +268,10 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
       <div
         className={`
           rounded-xl border shadow-sm transition-all duration-300
-          ${isDark
-            ? 'border-gray-700 bg-gray-800 hover:shadow-lg hover:shadow-gray-900/20'
-            : 'border-gray-200 bg-white hover:shadow-lg hover:shadow-gray-200/50'
+          ${
+            isDark
+              ? 'border-gray-700 bg-gray-800 hover:shadow-lg hover:shadow-gray-900/20'
+              : 'border-gray-200 bg-white hover:shadow-lg hover:shadow-gray-200/50'
           }
           ${className}
           ${height}
@@ -279,9 +281,9 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
       >
         <div className="flex h-full items-center justify-center">
           <div className="text-center">
-            <TrendingUp 
-              size={48} 
-              className={`mx-auto mb-4 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} 
+            <TrendingUp
+              size={48}
+              className={`mx-auto mb-4 ${isDark ? 'text-gray-600' : 'text-gray-400'}`}
             />
             <h3 className={`text-lg font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
               No trend data available
@@ -299,9 +301,10 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
     <section
       className={`
         rounded-xl border shadow-sm transition-all duration-300
-        ${isDark
-          ? 'border-gray-700 bg-gray-800 hover:shadow-lg hover:shadow-gray-900/20'
-          : 'border-gray-200 bg-white hover:shadow-lg hover:shadow-gray-200/50'
+        ${
+          isDark
+            ? 'border-gray-700 bg-gray-800 hover:shadow-lg hover:shadow-gray-900/20'
+            : 'border-gray-200 bg-white hover:shadow-lg hover:shadow-gray-200/50'
         }
         ${className}
         ${isFullscreen ? 'fixed inset-4 z-50 h-auto' : height}
@@ -340,11 +343,11 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
             </p>
           </div>
         </div>
-        
+
         <div className="flex items-center space-x-3">
           {/* Chart Type Toggle */}
-          <div 
-            className="flex rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden"
+          <div
+            className="flex overflow-hidden rounded-lg border border-gray-200 dark:border-gray-600"
             role="group"
             aria-label="Chart type selection"
           >
@@ -352,11 +355,12 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
               onClick={() => handleChartTypeChange('bar')}
               className={`
                 flex items-center gap-1.5 px-3 py-1.5 text-sm transition-colors
-                ${chartType === 'bar'
-                  ? 'bg-blue-600 text-white'
-                  : isDark
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                    : 'bg-white text-gray-600 hover:bg-gray-50'
+                ${
+                  chartType === 'bar'
+                    ? 'bg-blue-600 text-white'
+                    : isDark
+                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      : 'bg-white text-gray-600 hover:bg-gray-50'
                 }
               `}
               aria-pressed={chartType === 'bar'}
@@ -370,11 +374,12 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
               onClick={() => handleChartTypeChange('pie')}
               className={`
                 flex items-center gap-1.5 px-3 py-1.5 text-sm transition-colors
-                ${chartType === 'pie'
-                  ? 'bg-blue-600 text-white'
-                  : isDark
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                    : 'bg-white text-gray-600 hover:bg-gray-50'
+                ${
+                  chartType === 'pie'
+                    ? 'bg-blue-600 text-white'
+                    : isDark
+                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      : 'bg-white text-gray-600 hover:bg-gray-50'
                 }
               `}
               aria-pressed={chartType === 'pie'}
@@ -389,17 +394,18 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
           {/* Metric Selector */}
           <select
             value={selectedMetric}
-            onChange={(e) => handleMetricSelect(e.target.value)}
+            onChange={e => handleMetricSelect(e.target.value)}
             className={`
               rounded-lg border px-3 py-1.5 text-sm transition-colors
-              ${isDark
-                ? 'border-gray-600 bg-gray-700 text-gray-200 hover:bg-gray-600'
-                : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+              ${
+                isDark
+                  ? 'border-gray-600 bg-gray-700 text-gray-200 hover:bg-gray-600'
+                  : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
               }
             `}
             aria-label="Select metric"
           >
-            {trends.map((trend) => (
+            {trends.map(trend => (
               <option key={trend.metric} value={trend.metric}>
                 {trend.metric}
               </option>
@@ -412,9 +418,10 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
             onChange={handleTimeRangeChange}
             className={`
               rounded-lg border px-3 py-1.5 text-sm transition-colors
-              ${isDark
-                ? 'border-gray-600 bg-gray-700 text-gray-200 hover:bg-gray-600'
-                : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+              ${
+                isDark
+                  ? 'border-gray-600 bg-gray-700 text-gray-200 hover:bg-gray-600'
+                  : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
               }
             `}
             aria-label="Select time range"
@@ -429,9 +436,10 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
             onClick={toggleFullscreen}
             className={`
               flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition-colors
-              ${isDark
-                ? 'border-gray-600 bg-gray-700 text-gray-200 hover:bg-gray-600'
-                : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+              ${
+                isDark
+                  ? 'border-gray-600 bg-gray-700 text-gray-200 hover:bg-gray-600'
+                  : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
               }
             `}
             aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
@@ -448,22 +456,25 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
         {/* Metrics Summary */}
         <div className="flex-shrink-0 p-5 pb-3">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {trends.map((trend) => {
+            {trends.map(trend => {
               const isSelected = selectedMetric === trend.metric;
-              const currentValue = isSelected ? chartData[chartData.length - 1]?.value || trend.value : trend.value;
+              const currentValue = isSelected
+                ? chartData[chartData.length - 1]?.value || trend.value
+                : trend.value;
 
               return (
                 <button
                   key={trend.metric}
                   className={`
                     cursor-pointer rounded-lg border p-3 text-left transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500
-                    ${isSelected
-                      ? isDark
-                        ? 'border-indigo-600 bg-indigo-900/20 shadow-lg'
-                        : 'border-indigo-300 bg-indigo-50 shadow-lg'
-                      : isDark
-                        ? 'border-gray-600 bg-gray-750 hover:border-gray-500'
-                        : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+                    ${
+                      isSelected
+                        ? isDark
+                          ? 'border-indigo-600 bg-indigo-900/20 shadow-lg'
+                          : 'border-indigo-300 bg-indigo-50 shadow-lg'
+                        : isDark
+                          ? 'bg-gray-750 border-gray-600 hover:border-gray-500'
+                          : 'border-gray-200 bg-gray-50 hover:border-gray-300'
                     }
                   `}
                   onClick={() => handleMetricSelect(trend.metric)}
@@ -477,7 +488,9 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
                       {trend.metric}
                     </span>
                   </div>
-                  <div className={`text-lg font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                  <div
+                    className={`text-lg font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}
+                  >
                     {currentValue.toFixed(1)}
                     <span
                       className={`ml-1 text-sm font-normal ${isDark ? 'text-gray-400' : 'text-gray-600'}`}
@@ -502,18 +515,18 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
               w-full overflow-hidden rounded-lg border
               ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}
             `}
-            style={{ 
+            style={{
               height: 'calc(100% - 20px)',
-              minHeight: '180px'
+              minHeight: '180px',
             }}
           >
             <div className="h-full w-full p-2">
-              <div 
-                style={{ 
-                  height: 'calc(100% - 8px)', 
-                  width: '100%', 
-                  position: 'relative', 
-                  overflow: 'hidden' 
+              <div
+                style={{
+                  height: 'calc(100% - 8px)',
+                  width: '100%',
+                  position: 'relative',
+                  overflow: 'hidden',
                 }}
                 role="img"
                 aria-label={`${chartType} chart showing ${selectedMetric} over ${timeRange}`}
@@ -539,11 +552,8 @@ const TrendPanel: React.FC<TrendPanelProps> = ({
             Real-time data • Auto-refresh every 30s
           </span>
           <div className="flex items-center space-x-2">
-            <div 
-              className="h-2 w-2 animate-pulse rounded-full bg-green-500" 
-              aria-hidden="true"
-            />
-            <span 
+            <div className="h-2 w-2 animate-pulse rounded-full bg-green-500" aria-hidden="true" />
+            <span
               className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}
               aria-label="Live data indicator"
             >
