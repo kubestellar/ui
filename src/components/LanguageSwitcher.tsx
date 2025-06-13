@@ -21,6 +21,7 @@ const LanguageSwitcher = () => {
       <option value="it">Italiano</option>
       <option value="zh-Hans">简体中文</option>
       <option value="zh-Hant">繁體中文</option>
+      <option value="pt">portugese</option>
     </select>
   );
 };
