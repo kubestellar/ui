@@ -1,5 +1,5 @@
 # Stage 1: Build frontend
-FROM ghcr.io/kubestellar/ui/node:20 AS frontend-builder
+FROM ghcr.io/kubestellar/ui/node:18 AS frontend-builder
 
 # Set working directory
 WORKDIR /app
