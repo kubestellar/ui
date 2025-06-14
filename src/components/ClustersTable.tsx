@@ -54,7 +54,7 @@ import DetachmentLogsDialog from './DetachmentLogsDialog'; // Import the new com
 import CancelButton from './common/CancelButton';
 import LockIcon from '@mui/icons-material/Lock';
 import { useTranslation } from 'react-i18next';
-import SearchBox from './SearchBox';
+import SearchBox from './common/SearchBox';
 
 interface ManagedClusterInfo {
   name: string;

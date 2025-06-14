@@ -8,7 +8,7 @@ import useTheme from '../../../stores/themeStore';
 import { ManagedCluster, Workload } from '../../../types/bindingPolicy';
 import Fade from '@mui/material/Fade';
 import { useTranslation } from 'react-i18next';
-import SearchBox from '../../SearchBox';
+import SearchBox from '../../common/SearchBox';
 
 interface BPHeaderProps {
   searchQuery: string;
