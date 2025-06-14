@@ -45,6 +45,16 @@ type PluginSystemConfig struct {
 	LogLevel           string `json:"logLevel"`
 }
 
+// PluginFeedback represents user feedback for a plugin
+type PluginFeedback struct {
+	PluginID  string    `json:"pluginId" binding:"required"`
+	Rating    float32   `json:"rating" binding:"required,min=0,max=5"`
+	Comments  string    `json:"comments"`
+	UserID    string    `json:"userId,omitempty"`
+	UserEmail string    `json:"userEmail,omitempty"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
 // ListPluginsHandler returns a list of all available plugins
 func ListPluginsHandler(c *gin.Context) {
 	log.LogInfo("Handling ListPluginsHandler request")
@@ -378,6 +388,46 @@ func UpdatePluginSystemConfigHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Plugin system configuration updated successfully",
 		"config":  config,
+	})
+}
+
+// SubmitPluginFeedbackHandler handles feedback submission for plugins
+func SubmitPluginFeedbackHandler(c *gin.Context) {
+	var feedback PluginFeedback
+
+	if err := c.ShouldBindJSON(&feedback); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid feedback data: " + err.Error(),
+		})
+		return
+	}
+
+	// Check if the plugin exists
+	plugin := findPluginByID(feedback.PluginID)
+	if plugin == nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Plugin not found",
+		})
+		return
+	}
+
+	// Set creation time
+	feedback.CreatedAt = time.Now()
+
+	// In a real implementation, you would:
+	// 1. Store the feedback in a database
+	// 2. Update plugin ratings
+	// 3. Notify plugin maintainers
+
+	log.LogInfo("Plugin feedback submitted",
+		zap.String("pluginId", feedback.PluginID),
+		zap.Float32("rating", feedback.Rating))
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message":  "Feedback submitted successfully",
+		"pluginId": feedback.PluginID,
+		"rating":   feedback.Rating,
+		"received": feedback.CreatedAt,
 	})
 }
 

@@ -25,5 +25,8 @@ func setupPluginRoutes(router *gin.Engine) {
 		plugins.GET("/system/metrics", api.GetPluginSystemMetricsHandler)
 		plugins.GET("/system/configuration", api.GetPluginSystemConfigHandler)
 		plugins.PUT("/system/configuration", api.UpdatePluginSystemConfigHandler)
+
+		// Feedback
+		plugins.POST("/feedback", api.SubmitPluginFeedbackHandler)
 	}
 }
