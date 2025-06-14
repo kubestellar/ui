@@ -1377,10 +1377,6 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
     filterClusters();
   }, [filterClusters, query, filter, clusters]);
 
-  // const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   setQuery(event.target.value);
-  // };
-
   const handleFilterChange = (newFilter: string) => {
     setFilter(newFilter);
     setStatusFilterAnchorEl(null);
