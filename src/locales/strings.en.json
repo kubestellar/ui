@@ -931,13 +931,18 @@
       "uploadFile": "Upload File"
     },
     "upload": {
+      "createNamespaceAutomatically": "Create Namespace Automatically",
+      "chooseDifferentYaml": "Choose Different YAML File",
+      "filePreview": "File Preview",
+      "chooseOrDrag": "Choose or Drag & Drop a YAML File",
+      "or": "- or -",
+      "chooseYaml": "Choose YAML File",
+      "uploadAndDeploy": "Upload and Deploy",
       "dropHere": "Drop YAML File Here",
       "chooseOrUpload": "Choose or Upload a YAML File",
-      "or": "- or -",
       "selectFile": "Select YAML File",
       "acceptedFormats": "Accepted formats: .yaml, .yml",
       "chooseDifferentFile": "Choose Different File",
-      "filePreview": "File Preview:"
     },
     "previewGeneratedYaml": "Preview Generated YAML",
     "deployBindingPolicies": "Deploy Binding Policies",
@@ -1264,6 +1269,7 @@
       "branchTip": "Specify the branch to deploy from",
       "credentials": "Credentials",
       "credentialsPlaceholder": "e.g., username-pat",
+      "title": "Create from your GitHub Repository and deploy!",
       "tab": {
         "importFromGitHub": "Import from GitHub",
         "selectRepositorySource": "Select a repository source to import your application",
@@ -1294,33 +1300,6 @@
           "enterprise": "Enterprise Repository form would go here",
           "public": "Public Repository form would go here"
         }
-      },
-      "form": {
-        "title": "Create from your GitHub Repository and deploy!",
-        "repositoryUrl": "Repository URL *",
-        "repositoryUrlPlaceholder": "e.g., https://github.com/username/repo",
-        "repositoryUrlTip": "Use a valid GitHub repository URL",
-        "path": "Path *",
-        "pathPlaceholder": "e.g., /path/to/yaml",
-        "pathTip": "Specify the path to your YAML files in the repository",
-        "branch": "Branch (default: main) *",
-        "branchPlaceholder": "e.g., master, dev-branch",
-        "branchTip": "Specify the branch to deploy from",
-        "credentials": "Credentials",
-        "credentialsPlaceholder": "e.g., username-pat",
-        "credentialsTip": "Select or add credentials for private repositories",
-        "addCredentials": "Add Cred",
-        "webhooks": "Webhooks",
-        "webhooksTip": "Select or add a webhook for automated deployments",
-        "addWebhook": "Add Webhook",
-        "previousDeploymentsTitle": "List of Previous Deployments",
-        "loadingPreviousDeployments": "Loading previous deployments...",
-        "noPreviousDeployments": "No previous deployments available.",
-        "confirmResourceDeletion": "Confirm Resource Deletion",
-        "deleteConfirmation": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
-        "yesDelete": "Yes, Delete",
-        "apply": "Apply",
-        "deploying": "Deploying..."
       }
     },
     "artifactHub": {
@@ -1975,14 +1954,5 @@
         "infoMessage": "You have been successfully logged out."
       }
     }
-  },
-  "uploadFileTab": {
-    "createNamespaceAutomatically": "Create Namespace Automatically",
-    "chooseDifferentYaml": "Choose Different YAML File",
-    "filePreview": "File Preview",
-    "chooseOrDrag": "Choose or Drag & Drop a YAML File",
-    "or": "- or -",
-    "chooseYaml": "Choose YAML File",
-    "uploadAndDeploy": "Upload and Deploy"
   }
 }
