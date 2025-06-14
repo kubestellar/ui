@@ -398,7 +398,6 @@
       "creationTime": "Creation Time",
       "context": "Context",
       "description": "Manage and monitor your Kubernetes clusters",
-      "searchTip": "Press Esc to clear search",
       "filter": "Status Filter",
       "activeFilters": "Active Filters:",
       "searchFilter": "Search: \"{{query}}\"",
@@ -942,7 +941,7 @@
       "chooseOrUpload": "Choose or Upload a YAML File",
       "selectFile": "Select YAML File",
       "acceptedFormats": "Accepted formats: .yaml, .yml",
-      "chooseDifferentFile": "Choose Different File",
+      "chooseDifferentFile": "Choose Different File"
     },
     "previewGeneratedYaml": "Preview Generated YAML",
     "deployBindingPolicies": "Deploy Binding Policies",
