@@ -101,14 +101,6 @@ const BPHeader: React.FC<BPHeaderProps> = ({
 
   const hasSelectedPolicies = selectedPolicies.length > 0;
 
-  const handleSearchFocus = () => {
-    setSearchFocused(true);
-  };
-
-  const handleSearchBlur = () => {
-    setSearchFocused(false);
-  };
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (createDialogOpen) return;
@@ -160,8 +152,8 @@ const BPHeader: React.FC<BPHeaderProps> = ({
             placeholder={t('bindingPolicy.header.searchPlaceholder')}
             colors={colors}
             isDark={isDark}
-            onFocus={handleSearchFocus}
-            onBlur={handleSearchBlur}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
             showHint={searchFocused}
             hintText={t('bindingPolicy.header.clearSearch')}
           />
