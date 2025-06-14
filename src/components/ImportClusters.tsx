@@ -442,7 +442,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
             errorMessage = 'Authorization failed. Please check your credentials and permissions.';
             console.log('[DEBUG] Auth error:', status);
           } else {
-            errorMessage = `Request failed with status code ${status}. Please try again later.`;
+            errorMessage = 'Request failed. Please try again later.';
             console.log('[DEBUG] Other status error:', status);
           }
         } else if (axiosError.request) {
