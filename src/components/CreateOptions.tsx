@@ -284,7 +284,7 @@ spec:
         artifactHubFormData.namespace !== initialArtifactHubFormData.namespace ||
         artifactHubFormData.releaseName !== initialArtifactHubFormData.releaseName ||
         JSON.stringify(artifactHubFormData.values) !==
-          JSON.stringify(initialArtifactHubFormData.values);
+        JSON.stringify(initialArtifactHubFormData.values);
     }
 
     setHasChanges(changesDetected);
@@ -440,7 +440,7 @@ spec:
         } else if (err.response.status === 409) {
           toast.error(t('workloads.createOptions.notifications.deploymentConflict'));
         } else {
-          toast.error(`Deployment failed! (${err.response.status})`);
+          toast.error('Deployment failed!');
         }
       } else {
         toast.error('Deployment failed due to network error!');
@@ -504,7 +504,7 @@ spec:
         } else if (err.response.status === 400) {
           toast.error('Failed to deploy workload!');
         } else {
-          toast.error(`Deployment failed! (${err.response.status})`);
+          toast.error('Deployment failed!');
         }
       } else {
         toast.error('Deployment failed due to network error!');
@@ -574,7 +574,7 @@ spec:
         } else if (err.response.status === 400) {
           toast.error('Failed to deploy Helm chart!');
         } else {
-          toast.error(`Helm deployment failed! (${err.response.status})`);
+          toast.error('Helm deployment failed!');
         }
       } else {
         toast.error('Helm deployment failed due to network error!');
@@ -636,9 +636,9 @@ spec:
         message: err.message,
         response: err.response
           ? {
-              status: err.response.status,
-              data: err.response.data,
-            }
+            status: err.response.status,
+            data: err.response.data,
+          }
           : 'No response',
         request: err.request ? 'Request exists' : 'No request',
       });
@@ -649,7 +649,7 @@ spec:
         } else if (err.response.status === 400) {
           toast.error('Failed to deploy to Artifact Hub!');
         } else {
-          toast.error(`Artifact Hub deployment failed! (${err.response.status})`);
+          toast.error('Artifact Hub deployment failed!');
         }
       } else {
         toast.error('Artifact Hub deployment failed due to network error!');
