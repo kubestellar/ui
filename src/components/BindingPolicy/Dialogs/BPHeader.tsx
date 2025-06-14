@@ -162,7 +162,7 @@ const BPHeader: React.FC<BPHeaderProps> = ({
             isDark={isDark}
             onFocus={handleSearchFocus}
             onBlur={handleSearchBlur}
-            showHint={true}
+            showHint={searchFocused}
             hintText={t('bindingPolicy.header.clearSearch')}
           />
 
