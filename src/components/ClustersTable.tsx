@@ -1765,7 +1765,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
                   left: '8px',
                 }}
               >
-                {t('clusters.clearSearch')}
+                {t('clusters.list.clearSearch')}
               </Typography>
             )}
           </div>
