@@ -12,6 +12,7 @@ require (
 	github.com/kubestellar/kubestellar v0.26.0
 	github.com/lib/pq v1.10.9
 	github.com/redis/go-redis/v9 v9.7.3
+	github.com/stretchr/testify v1.10.0
 	go.uber.org/zap v1.27.0
 	helm.sh/helm/v3 v3.17.3
 	k8s.io/api v0.33.0
@@ -84,6 +85,7 @@ require (
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_golang v1.22.0 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.62.0 // indirect
