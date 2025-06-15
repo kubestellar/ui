@@ -1697,7 +1697,7 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
             onFocus={() => setSearchFocused(true)}
             onBlur={() => setSearchFocused(false)}
             showHint={searchFocused}
-            hintText={t('clusters.clearSearch')}
+            hintText={t('clusters.list.clearSearch')}
           />
           {/* Status Filter Button */}
           <div className="flex items-center gap-3">
