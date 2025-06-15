@@ -135,7 +135,7 @@ const BPHeader: React.FC<BPHeaderProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [createDialogOpen, searchQuery, activeFilters, setSearchQuery, setActiveFilters]);
+  }, [createDialogOpen, searchQuery, activeFilters]);
 
   return (
     <div style={{ color: colors.text }}>
