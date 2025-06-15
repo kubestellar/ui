@@ -781,123 +781,123 @@
     },
     "noManifest": "No hay manifiesto disponible"
   },
-  "treeView": {
-    "title": "Manage Workloads",
-    "createWorkload": "Create Workload",
-    "note": "Note: Default, Kubernetes system, and OpenShift namespaces are filtered out from this view.",
-    "filteringContext": "Filtering: Showing only resources from the {{context}} context.",
-    "unknown": "Unknown",
-    "viewModes": {
-      "tiles": "Tiles",
-      "list": "List"
+"treeView": {
+  "title": "Gestionar Cargas de Trabajo",
+  "createWorkload": "Crear Carga de Trabajo",
+  "note": "Nota: Los espacios de nombres predeterminados, del sistema de Kubernetes y de OpenShift están filtrados en esta vista.",
+  "filteringContext": "Filtrando: Mostrando solo recursos del contexto {{context}}.",
+  "unknown": "Desconocido",
+  "viewModes": {
+    "tiles": "Cuadrículas",
+    "list": "Lista"
+  },
+  "timeAgo": {
+    "today": "Hoy",
+    "days": "{{count}} día",
+    "days_plural": "{{count}} días"
+  },
+  "emptyState": {
+    "title": "No se encontraron cargas de trabajo",
+    "description": "Empieza creando tu primera carga de trabajo"
+  },
+  "fullscreen": {
+    "toggle": "Alternar vista de pantalla completa"
+  },
+  "contextMenu": {
+    "details": "Detalles",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "logs": "Registros"
+  },
+  "deleteDialog": {
+    "title": "Confirmar Eliminación de Recurso",
+    "message": "¿Estás seguro de que deseas eliminar \"{{name}}\"? Esta acción no se puede deshacer.",
+    "confirm": "Sí, Eliminar"
+  }
+},
+"quickConnect": {
+  "title": "Configuración de Clúster con Un Clic",
+  "description": "Incorporación de clúster automatizada y simplificada sin comandos. Selecciona tu clúster y deja que el sistema haga el resto.",
+  "selectCluster": "Selecciona un Clúster de Kubernetes",
+  "searchingClusters": "Buscando clústeres disponibles...",
+  "errorLoadingClusters": "Error al cargar los clústeres",
+  "automatedOnboarding": "Incorporación Automatizada de Clúster",
+  "new": "Nuevo",
+  "automatedDescription": "Esta es la forma más sencilla de conectar tu clúster de Kubernetes. Selecciona un clúster y haz clic en el botón Incorporar para conectarlo directamente sin comandos manuales.",
+  "retry": "Reintentar",
+  "chooseCluster": "Elige un clúster...",
+  "noClusters": "No hay clústeres disponibles",
+  "discoveredClusters": {
+    "title": "Clústeres Descubiertos",
+    "description": "Estos son los clústeres descubiertos en tu entorno. Selecciona uno para continuar."
+  },
+  "refreshClustersList": "Actualizar lista de clústeres",
+  "howToConnect": "Cómo Conectar tu Clúster",
+  "steps": {
+    "step1": {
+      "title": "Elige tu Clúster",
+      "description": "Selecciona un clúster del menú desplegable arriba"
     },
-    "timeAgo": {
-      "today": "Today",
-      "days": "{{count}} day",
-      "days_plural": "{{count}} days"
+    "step2": {
+      "title": "Incorporación con Un Clic",
+      "description": "Haz clic en el botón \"Incorporar Clúster\" para iniciar el proceso automatizado"
     },
-    "emptyState": {
-      "title": "No Workloads Found",
-      "description": "Get started by creating your first workload"
-    },
-    "fullscreen": {
-      "toggle": "Toggle fullscreen view"
-    },
-    "contextMenu": {
-      "details": "Details",
-      "delete": "Delete",
-      "edit": "Edit",
-      "logs": "Logs"
-    },
-    "deleteDialog": {
-      "title": "Confirm Resource Deletion",
-      "message": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
-      "confirm": "Yes, Delete"
+    "step3": {
+      "title": "Conexión Instantánea",
+      "description": "Tu clúster será incorporado automáticamente sin comandos manuales"
     }
   },
-  "quickConnect": {
-    "title": "One-Click Cluster Setup",
-    "description": "Simplified, automated cluster onboarding with zero commands. Select your cluster and let the system handle the rest.",
-    "selectCluster": "Select a Kubernetes Cluster",
-    "searchingClusters": "Searching for available clusters...",
-    "errorLoadingClusters": "Error Loading Clusters",
-    "automatedOnboarding": "Automated Cluster Onboarding",
-    "new": "New",
-    "automatedDescription": "This is the simplest way to connect your Kubernetes cluster. Select a cluster and click the Onboard button to directly connect it without any manual commands.",
-    "retry": "Retry",
-    "chooseCluster": "Choose a cluster...",
-    "noClusters": "No clusters available",
-    "discoveredClusters": {
-      "title": "Discovered Clusters",
-      "description": "These are clusters discovered in your environment. Select one to continue."
+  "whyUseAutomated": "¿Por qué usar la incorporación automatizada?",
+  "approaches": {
+    "automated": {
+      "title": "Método Automatizado (Nuevo)",
+      "features": [
+        "Proceso de configuración con un clic",
+        "Sin ejecución de comandos manuales",
+        "Experiencia optimizada",
+        "Menor probabilidad de errores"
+      ]
     },
-    "refreshClustersList": "Refresh clusters list",
-    "howToConnect": "How to Connect Your Cluster",
-    "steps": {
-      "step1": {
-        "title": "Choose Your Cluster",
-        "description": "Select a cluster from the dropdown above"
-      },
-      "step2": {
-        "title": "One-Click Onboarding",
-        "description": "Click \"Onboard Cluster\" button to start the automated process"
-      },
-      "step3": {
-        "title": "Instant Connection",
-        "description": "Your cluster will be automatically onboarded without manual commands"
-      }
-    },
-    "whyUseAutomated": "Why Use Automated Onboarding?",
-    "approaches": {
-      "automated": {
-        "title": "Automated Approach (New)",
-        "features": [
-          "One-click setup process",
-          "No manual command execution",
-          "Streamlined experience",
-          "Reduced chance of errors"
-        ]
-      },
-      "manual": {
-        "title": "Manual Approach (Legacy)",
-        "features": [
-          "Copy and run commands manually",
-          "Multiple CLI steps required",
-          "More complex process",
-          "Requires command line knowledge"
-        ]
-      }
-    },
-    "buttons": {
-      "onboarding": "Onboarding...",
-      "onboard": "Onboard Cluster",
-      "back": "Back",
-      "close": "Close",
-      "openDashboard": "Open Cluster Dashboard",
-      "goToDashboard": "Go to Dashboard"
-    },
-    "success": {
-      "title": "Cluster Onboarded Successfully",
-      "clusterAdded": "Cluster added successfully",
-      "clusterAvailable": "Your cluster is now available in the platform",
-      "message": "Cluster {{clusterName}} has been successfully onboarded to the platform.",
-      "detailMessage": "Your cluster {{clusterName}} has been successfully onboarded. Here's what you can do next:",
-      "nextSteps": {
-        "viewManage": {
-          "title": "View & Manage",
-          "description": "Access your cluster through the dashboard to view resources and status"
-        },
-        "deployApps": {
-          "title": "Deploy Applications",
-          "description": "Deploy containerized applications and services to your cluster"
-        },
-        "configureSettings": {
-          "title": "Configure Settings",
-          "description": "Customize and configure your cluster settings and policies"
-        }
-      }
+    "manual": {
+      "title": "Método Manual (Antiguo)",
+      "features": [
+        "Copiar y ejecutar comandos manualmente",
+        "Requiere múltiples pasos en la CLI",
+        "Proceso más complejo",
+        "Requiere conocimientos de línea de comandos"
+      ]
     }
   },
+  "buttons": {
+    "onboarding": "Incorporando...",
+    "onboard": "Incorporar Clúster",
+    "back": "Atrás",
+    "close": "Cerrar",
+    "openDashboard": "Abrir Panel del Clúster",
+    "goToDashboard": "Ir al Panel"
+  },
+  "success": {
+    "title": "Clúster Incorporado Exitosamente",
+    "clusterAdded": "Clúster agregado correctamente",
+    "clusterAvailable": "Tu clúster ahora está disponible en la plataforma",
+    "message": "El clúster {{clusterName}} ha sido incorporado exitosamente a la plataforma.",
+    "detailMessage": "Tu clúster {{clusterName}} ha sido incorporado correctamente. Esto es lo que puedes hacer a continuación:",
+    "nextSteps": {
+      "viewManage": {
+        "title": "Ver y Gestionar",
+        "description": "Accede a tu clúster a través del panel para ver recursos y estado"
+      },
+      "deployApps": {
+        "title": "Desplegar Aplicaciones",
+        "description": "Despliega aplicaciones y servicios en contenedores a tu clúster"
+      },
+      "configureSettings": {
+        "title": "Configurar Ajustes",
+        "description": "Personaliza y configura los ajustes y políticas de tu clúster"
+      }
+    }
+  }
+},
   "bindingPolicy": {
     "editPolicy": "Edit Policy",
     "saveAndCreatePolicy": "Save & Create Policy",
@@ -1555,403 +1555,403 @@
       }
     }
   },
-  "visualization": {
-    "policyDistribution": "{{count}} Connections",
-    "clusters": {
-      "edge": "Edge Cluster",
-      "aiInference": "AI Inferencing Cluster",
-      "aiTraining": "AI Training Cluster",
-      "service": "Service Cluster",
-      "compute": "Compute Cluster",
-      "descriptions": {
-        "edge": "Edge computing resources for low-latency processing",
-        "aiInference": "Real-time AI model inference and prediction services",
-        "aiTraining": "High-performance compute for AI model training",
-        "service": "Core microservices and API endpoints",
-        "compute": "General-purpose compute resources"
-      }
-    },
-    "title": "Visualization",
-    "controls": "View Controls",
-    "zoom": "Zoom",
-    "searchResources": "Search Resources"
+ "visualization": {
+  "policyDistribution": "{{count}} Conexiones",
+  "clusters": {
+    "edge": "Clúster de Borde",
+    "aiInference": "Clúster de Inferencia de IA",
+    "aiTraining": "Clúster de Entrenamiento de IA",
+    "service": "Clúster de Servicios",
+    "compute": "Clúster de Cómputo",
+    "descriptions": {
+      "edge": "Recursos de computación en el borde para procesamiento de baja latencia",
+      "aiInference": "Servicios de inferencia y predicción de modelos de IA en tiempo real",
+      "aiTraining": "Cómputo de alto rendimiento para entrenamiento de modelos de IA",
+      "service": "Microservicios principales y puntos finales de API",
+      "compute": "Recursos de cómputo de propósito general"
+    }
   },
-  "namespaces": {
-    "default": "default",
-    "create": "Create Namespace",
-    "select": "Select Namespace"
+  "title": "Visualización",
+  "controls": "Controles de Vista",
+  "zoom": "Zoom",
+  "searchResources": "Buscar Recursos"
+},
+"namespaces": {
+  "default": "predeterminado",
+  "create": "Crear Espacio de Nombres",
+  "select": "Seleccionar Espacio de Nombres"
+},
+"errors": {
+  "policyNameRequired": "El nombre de la política es obligatorio",
+  "policyNotFound": "Política {{name}} no encontrada",
+  "parseError": "No se puede analizar la respuesta de las políticas de vinculación",
+  "unexpectedFormat": "Formato de respuesta de API inesperado",
+  "error": "Error",
+  "required": "Este campo es obligatorio",
+  "invalidFormat": "Formato inválido",
+  "connectionFailed": "Conexión fallida",
+  "forbidden": "No tienes permiso para acceder a este recurso",
+  "serverError": "Ocurrió un error en el servidor",
+  "notFound": "Recurso no encontrado",
+  "timeout": "La solicitud superó el tiempo de espera",
+  "unknown": "Ocurrió un error desconocido",
+  "contextNameRequired": "El nombre del contexto es obligatorio",
+  "versionRequired": "La versión de KubeStellar es obligatoria",
+  "operationTimeout": "La operación superó el tiempo de espera. El proceso puede seguir ejecutándose en segundo plano.",
+  "failedToCreateContext": "No se pudo crear el contexto",
+  "creatingContext": "Error al crear el contexto:",
+  "websocketConnectionFailed": "No se pudo conectar con el servidor. Verifica tu conexión de red e intenta nuevamente.",
+  "websocketClosedUnexpectedly": "La conexión WebSocket se cerró inesperadamente",
+  "fetchingContexts": "Error al obtener los contextos:"
+},
+"contexts": {
+  "filterByContext": "Filtrar por contexto",
+  "allContexts": "Todos los Contextos",
+  "showingAllContexts": "Mostrando recursos de todos los contextos",
+  "filteringByContext": "Filtrando para mostrar solo el contexto {{context}}",
+  "createdSuccessfully": "¡Contexto creado con éxito!",
+  "websocketClosed": "Conexión WebSocket cerrada:",
+  "contextCreatedSuccess": "¡Contexto \"{{contextName}}\" creado con éxito!",
+  "createNewContext": "Crear Nuevo Contexto",
+  "contextName": "Nombre del Contexto",
+  "kubestellarVersion": "Versión de KubeStellar",
+  "creating": "Creando...",
+  "createContext": "Crear Contexto"
+},
+"policyDragDropStore": {
+  "labelsAssigned": "Etiquetas asignadas automáticamente a {{itemType}} {{itemId}}",
+  "policyAssigned": "Política {{policyName}} asignada exitosamente a {{targetType}} {{targetName}}",
+  "clusterAlreadyAssigned": "El clúster {{targetName}} ya está asignado a la política {{policyName}}",
+  "workloadAlreadyAssigned": "La carga de trabajo {{targetName}} ya está asignada a la política {{policyName}}"
+},
+"auth": {
+  "login": {
+    "success": "Inicio de sesión exitoso",
+    "error": "Error de inicio de sesión:",
+    "successWithUser": "Inicio de sesión exitoso para el usuario: {{username}}. Redirigiendo a {{path}}",
+    "invalidCredentials": "Credenciales inválidas",
+    "authFailed": "Autenticación fallida. Verifica tus credenciales.",
+    "noToken": "No se recibió token del servidor"
+  }
+},
+"kubestellarData": {
+  "logging": {
+    "clustersApiResponse": "Respuesta de la API de Clústeres:",
+    "processedClusters": "Clústeres procesados:",
+    "errorFetchingClusters": "Error al obtener clústeres:",
+    "processedWorkloads": "Cargas de trabajo procesadas:",
+    "errorFetchingWorkloads": "Error al obtener cargas de trabajo:",
+    "errorFetchingPolicies": "Error al obtener políticas:",
+    "assigningPolicy": "Asignando política {{policyName}} a {{targetType}} {{targetName}}"
   },
   "errors": {
-    "policyNameRequired": "Policy name is required",
-    "policyNotFound": "Policy {{name}} not found",
-    "parseError": "Unable to parse binding policies response",
-    "unexpectedFormat": "Unexpected API response format",
-    "error": "Error",
-    "required": "This field is required",
-    "invalidFormat": "Invalid format",
-    "connectionFailed": "Connection failed",
-    "forbidden": "You don't have permission to access this resource",
-    "serverError": "Server error occurred",
-    "notFound": "Resource not found",
-    "timeout": "Request timed out",
-    "unknown": "An unknown error occurred",
-    "contextNameRequired": "Context name is required",
-    "versionRequired": "KubeStellar version is required",
-    "operationTimeout": "Operation timed out. The process might still be running in the background.",
-    "failedToCreateContext": "Failed to create context",
-    "creatingContext": "Error creating context:",
-    "websocketConnectionFailed": "Could not connect to the server. Please check your network connection and try again.",
-    "websocketClosedUnexpectedly": "WebSocket connection closed unexpectedly",
-    "fetchingContexts": "Error fetching contexts:"
+    "failedFetchClusters": "Error al obtener los clústeres",
+    "failedFetchWorkloads": "Error al obtener las cargas de trabajo",
+    "failedFetchPolicies": "Error al obtener las políticas",
+    "errorAssigningPolicy": "Error al asignar la política:",
+    "failedToAssign": "Error al asignar {{policyName}} a {{targetType}} {{targetName}}"
   },
-  "contexts": {
-    "filterByContext": "Filter by context",
-    "allContexts": "All Contexts",
-    "showingAllContexts": "Showing resources from all contexts",
-    "filteringByContext": "Filtering to show only {{context}} context",
-    "createdSuccessfully": "Context created successfully!",
-    "websocketClosed": "WebSocket connection closed:",
-    "contextCreatedSuccess": "Context \"{{contextName}}\" created successfully!",
-    "createNewContext": "Create New Context",
-    "contextName": "Context Name",
-    "kubestellarVersion": "KubeStellar Version",
-    "creating": "Creating...",
-    "createContext": "Create Context"
+  "success": {
+    "successfullyAssigned": "Política {{policyName}} asignada exitosamente a {{targetType}} {{targetName}}"
   },
-  "policyDragDropStore": {
-    "labelsAssigned": "Labels automatically assigned to {{itemType}} {{itemId}}",
-    "policyAssigned": "Successfully assigned {{policyName}} to {{targetType}} {{targetName}}",
-    "clusterAlreadyAssigned": "Cluster {{targetName}} is already assigned to policy {{policyName}}",
-    "workloadAlreadyAssigned": "Workload {{targetName}} is already assigned to policy {{policyName}}"
+  "defaults": {
+    "unknown": "Desconocido",
+    "ready": "Listo",
+    "deployment": "Despliegue",
+    "defaultNamespace": "predeterminado",
+    "active": "Activo",
+    "alwaysMatch": "CoincidirSiempre"
+  }
+},
+ "profileSection": {
+  "logoutMessage": "Has cerrado sesión correctamente.",
+  "account": "Cuenta",
+  "admin": "Administrador",
+  "helpSupport": "Ayuda y Soporte",
+  "signOut": "Cerrar sesión"
+},
+"onboardingLogs": {
+  "onboarding": "Incorporación",
+  "complete": "Completado",
+  "connecting": "Conectando al flujo de registros...",
+  "errors": {
+    "websocketFailed": "Fallo en la conexión WebSocket. Por favor, inténtalo de nuevo.",
+    "connectionFailed": "No se pudo conectar al flujo de registros. Por favor, inténtalo de nuevo."
   },
-  "auth": {
-    "login": {
-      "success": "Login successful",
-      "error": "Login error:",
-      "successWithUser": "Login successful for user: {{username}}. Redirecting to {{path}}",
-      "invalidCredentials": "Invalid credentials",
-      "authFailed": "Authentication failed. Please check your credentials.",
-      "noToken": "No token received from server"
-    }
+  "status": {
+    "processing": "Procesando",
+    "verifying": "Verificando",
+    "available": "Disponible",
+    "completed": "Completado",
+    "error": "Error"
+  }
+},
+"newAppDialog": {
+  "title": "Crear Nueva Aplicación",
+  "githubUrl": "URL de GitHub",
+  "path": "Ruta",
+  "deploy": "Desplegar"
+},
+"navbar": {
+  "generateLog": "Generar Registro",
+  "toggleTheme": "Cambiar Tema",
+  "brandName": "KubestellarUI",
+  "its": "ITS",
+  "wds": "WDS",
+  "logFilename": "kubestellarui.log",
+  "generateLogError": "Error al generar el registro. Por favor, inténtalo de nuevo."
+},
+"manualImportTab": {
+  "loadingClusters": "Cargando clústeres disponibles...",
+  "errorLoadingClusters": "Error al cargar los clústeres",
+  "title": "Configuración Manual del Clúster",
+  "recommended": "Recomendado",
+  "description": "Esta es la forma más sencilla de conectar tu clúster de Kubernetes. Selecciona un clúster y haz clic en el botón 'Incorporar Clúster' para conectarlo directamente a tu plataforma sin comandos manuales.",
+  "selectCluster": "Selecciona un clúster para conectar",
+  "chooseCluster": "Elegir un clúster...",
+  "noClusters": "No hay clústeres disponibles",
+  "discoveredClusters": "Estos son los clústeres detectados en tu entorno. Selecciona uno para continuar.",
+  "refreshClustersList": "Actualizar lista de clústeres",
+  "howToConnect": "Cómo conectar tu clúster",
+  "steps": {
+    "selectCluster": "Selecciona un clúster del menú desplegable de arriba",
+    "clickOnboard": "Haz clic en el botón \"Incorporar Clúster\" para conectarlo directamente",
+    "autoOnboard": "Tu clúster se incorporará automáticamente sin comandos manuales"
   },
-  "kubestellarData": {
-    "logging": {
-      "clustersApiResponse": "Clusters API Response:",
-      "processedClusters": "Processed clusters:",
-      "errorFetchingClusters": "Error fetching clusters:",
-      "processedWorkloads": "Processed workloads:",
-      "errorFetchingWorkloads": "Error fetching workloads:",
-      "errorFetchingPolicies": "Error fetching policies:",
-      "assigningPolicy": "Assigning policy {{policyName}} to {{targetType}} {{targetName}}"
-    },
-    "errors": {
-      "failedFetchClusters": "Failed to fetch clusters",
-      "failedFetchWorkloads": "Failed to fetch workloads",
-      "failedFetchPolicies": "Failed to fetch policies",
-      "errorAssigningPolicy": "Error assigning policy:",
-      "failedToAssign": "Failed to assign {{policyName}} to {{targetType}} {{targetName}}"
-    },
-    "success": {
-      "successfullyAssigned": "Successfully assigned {{policyName}} to {{targetType}} {{targetName}}"
-    },
-    "defaults": {
-      "unknown": "Unknown",
-      "ready": "Ready",
-      "deployment": "Deployment",
-      "defaultNamespace": "default",
-      "active": "Active",
-      "alwaysMatch": "AlwaysMatch"
-    }
+  "connectionError": "Error de Conexión",
+  "installationGuide": "Guía de Instalación:",
+  "installCommand": "Para instalar clusteradm, ejecuta:",
+  "commandCopied": "¡Comando de instalación copiado!",
+  "onboarding": "Incorporando...",
+  "onboardCluster": "Incorporar Clúster",
+  "clusterAddedSuccess": "El clúster ha sido añadido a la plataforma",
+  "clusterOnboardedSuccess": "Tu clúster {{clusterName}} ha sido incorporado con éxito. Ahora puedes:",
+  "nextSteps": {
+    "viewManage": "Ver y gestionar el clúster en el panel",
+    "deployApps": "Desplegar aplicaciones y servicios en el clúster",
+    "configureSettings": "Configurar y gestionar la configuración del clúster"
   },
-  "profileSection": {
-    "logoutMessage": "You have been successfully logged out.",
-    "account": "Account",
-    "admin": "Admin",
-    "helpSupport": "Help & Support",
-    "signOut": "Sign Out"
+  "viewDashboard": "Ver Clúster en el Panel",
+  "goToDashboard": "Ir al Panel"
+},
+"logModal": {
+  "connectedToStream": "Conectado al flujo de registros...",
+  "connectionClosed": "Registros Completos. Conexión cerrada.",
+  "retryConnection": "Conexión cerrada. Por favor, reintenta.",
+  "logs": "Registros",
+  "loadingLogs": "Cargando registros..."
+},
+"loadingFallback": {
+  "loadingContent": "Cargando contenido..."
+},
+"listView": {
+  "connecting": "Conectando al servidor...",
+  "receivingWorkloads": "Recibiendo cargas de trabajo...",
+  "receivedWorkloadsSoFar": "{{count}} cargas de trabajo recibidas hasta ahora...",
+  "allWorkloadsReceived": "Todas las {{count}} cargas de trabajo recibidas",
+  "connectionLost": "Conexión perdida. Mostrando {{count}} cargas de trabajo recibidas.",
+  "connectionError": "Conexión al servidor perdida o fallida. Probando método alternativo...",
+  "fetchingFallback": "Obteniendo recursos (método alternativo)...",
+  "invalidResponseFormat": "Formato de respuesta inválido del servidor",
+  "unknownError": "Ocurrió un error desconocido al obtener recursos.",
+  "errorLoading": "Error al cargar recursos",
+  "downloadLogs": "Descargar registros",
+  "namespace": "Espacio de Nombres",
+  "created": "Creado",
+  "filteredByContext": "Filtrado por contexto: {{context}}",
+  "showingResourceCount": "Mostrando {{showing}} de {{total}} recursos totales",
+  "resourceStats": "{{raw}} recursos sin procesar detectados, {{processed}} procesados",
+  "pagination": {
+    "prev": "Anterior",
+    "next": "Siguiente",
+    "showing": "Mostrando de {{from}} a {{to}} de {{total}} entradas",
+    "filtered": " (filtrado por el contexto {{context}})"
   },
-  "onboardingLogs": {
-    "onboarding": "Onboarding",
-    "complete": "Complete",
-    "connecting": "Connecting to log stream...",
-    "errors": {
-      "websocketFailed": "WebSocket connection failed. Please try again.",
-      "connectionFailed": "Failed to connect to log stream. Please try again."
-    },
-    "status": {
-      "processing": "Processing",
-      "verifying": "Verifying",
-      "available": "Available",
-      "completed": "Completed",
-      "error": "Error"
-    }
+  "troubleshooting": {
+    "title": "Prueba estos pasos de solución de problemas:",
+    "step1": "1. Verifica que el servidor backend esté ejecutándose en http://localhost:4000",
+    "step2": "2. Verifica que la configuración CORS del servidor permita solicitudes desde http://localhost:5173",
+    "step3": "3. Si el servidor usa CORS con comodín (*), no puede aceptar solicitudes con credenciales",
+    "step4": "4. Verifica la consola del navegador para ver mensajes de error detallados"
   },
-  "newAppDialog": {
-    "title": "Create New App",
-    "githubUrl": "GitHub URL",
-    "path": "Path",
-    "deploy": "Deploy"
-  },
-  "navbar": {
-    "generateLog": "Generate Log",
-    "toggleTheme": "Toggle theme",
-    "brandName": "KubestellarUI",
-    "its": "ITS",
-    "wds": "WDS",
-    "logFilename": "kubestellarui.log",
-    "generateLogError": "Failed to generate log. Please try again."
-  },
-  "manualImportTab": {
-    "loadingClusters": "Loading available clusters...",
-    "errorLoadingClusters": "Error loading clusters",
-    "title": "Manual Cluster Setup",
-    "recommended": "Recommended",
-    "description": "This is the simplest way to connect your Kubernetes cluster. Select a cluster and click the Onboard Cluster button to directly connect it to your platform without any manual commands.",
-    "selectCluster": "Select a cluster to connect",
-    "chooseCluster": "Choose a cluster...",
-    "noClusters": "No clusters available",
-    "discoveredClusters": "These are clusters discovered in your environment. Select one to continue.",
-    "refreshClustersList": "Refresh clusters list",
-    "howToConnect": "How to connect your cluster",
-    "steps": {
-      "selectCluster": "Select a cluster from the dropdown above",
-      "clickOnboard": "Click \"Onboard Cluster\" button to directly connect your cluster",
-      "autoOnboard": "Your cluster will be automatically onboarded without manual commands"
-    },
-    "connectionError": "Connection Error",
-    "installationGuide": "Installation Guide:",
-    "installCommand": "To install clusteradm, run:",
-    "commandCopied": "Installation command copied!",
-    "onboarding": "Onboarding...",
-    "onboardCluster": "Onboard Cluster",
-    "clusterAddedSuccess": "Cluster has been added to the platform",
-    "clusterOnboardedSuccess": "Your cluster {{clusterName}} has been successfully onboarded. You can now:",
-    "nextSteps": {
-      "viewManage": "View and manage the cluster in the dashboard",
-      "deployApps": "Deploy applications and services to the cluster",
-      "configureSettings": "Configure and manage the cluster settings"
-    },
-    "viewDashboard": "View Cluster in Dashboard",
-    "goToDashboard": "Go to Dashboard"
-  },
-  "logModal": {
-    "connectedToStream": "Connected to log stream...",
-    "connectionClosed": "Complete Logs. Connection closed.",
-    "retryConnection": "Connection closed. Please retry.",
-    "logs": "Logs",
-    "loadingLogs": "Loading logs..."
-  },
-  "loadingFallback": {
-    "loadingContent": "Loading content..."
-  },
-  "listView": {
-    "connecting": "Connecting to server...",
-    "receivingWorkloads": "Receiving workloads...",
-    "receivedWorkloadsSoFar": "Received {{count}} workloads so far...",
-    "allWorkloadsReceived": "All {{count}} workloads received",
-    "connectionLost": "Connection lost. Showing {{count}} received workloads.",
-    "connectionError": "Connection to server lost or failed. Trying fallback method...",
-    "fetchingFallback": "Fetching resources (fallback method)...",
-    "invalidResponseFormat": "Invalid response format from server",
-    "unknownError": "An unknown error occurred while fetching resources.",
-    "errorLoading": "Error Loading Resources",
-    "downloadLogs": "Download logs",
-    "namespace": "Namespace",
-    "created": "Created",
-    "filteredByContext": "Filtered by context: {{context}}",
-    "showingResourceCount": "Showing {{showing}} of {{total}} total resources",
-    "resourceStats": "{{raw}} raw resources detected, {{processed}} processed",
-    "pagination": {
-      "prev": "Prev",
-      "next": "Next",
-      "showing": "Showing {{from}} to {{to}} of {{total}} entries",
-      "filtered": " (filtered by {{context}} context)"
-    },
-    "troubleshooting": {
-      "title": "Try these troubleshooting steps:",
-      "step1": "1. Check that the backend server is running at http://localhost:4000",
-      "step2": "2. Verify the server's CORS configuration allows requests from http://localhost:5173",
-      "step3": "3. If the server uses wildcard (*) CORS, it can't accept requests with credentials",
-      "step4": "4. Check the browser console for detailed error messages"
-    },
-    "noWorkloads": {
-      "title": "No Workloads Found",
-      "noResourcesForContext": "No resources found for the {{context}} context",
-      "resourcesFilteredOut": "Resources are available but filtered out",
-      "getStarted": "Get started by creating your first workload",
-      "resourcesAvailable": "{{count}} total resources available, but none match the current filter"
-    }
-  },
+  "noWorkloads": {
+    "title": "No se Encontraron Cargas de Trabajo",
+    "noResourcesForContext": "No se encontraron recursos para el contexto {{context}}",
+    "resourcesFilteredOut": "Los recursos están disponibles pero fueron filtrados",
+    "getStarted": "Empieza creando tu primera carga de trabajo",
+    "resourcesAvailable": "{{count}} recursos disponibles en total, pero ninguno coincide con el filtro actual"
+  }
+},
   "kubeconfigImport": {
-    "title": "Upload Kubeconfig File",
-    "description": "Import your cluster by uploading a kubeconfig file",
-    "dragAndDrop": "Drag and drop your kubeconfig file here",
-    "or": "- or -",
-    "browseFiles": "Browse Files",
-    "importCluster": "Import Cluster"
+  "title": "Subir Archivo Kubeconfig",
+  "description": "Importa tu clúster subiendo un archivo kubeconfig",
+  "dragAndDrop": "Arrastra y suelta tu archivo kubeconfig aquí",
+  "or": "- o -",
+  "browseFiles": "Explorar Archivos",
+  "importCluster": "Importar Clúster"
+},
+"importClusters": {
+  "title": "Importar Clúster",
+  "description": "Conecta tu clúster de Kubernetes a la plataforma",
+  "tabs": {
+    "quickConnect": "Conexión Rápida",
+    "kubeconfig": "Kubeconfig",
+    "apiUrl": "API/URL"
   },
-  "importClusters": {
-    "title": "Import Cluster",
-    "description": "Connect your Kubernetes cluster to the platform",
-    "tabs": {
-      "quickConnect": "Quick Connect",
-      "kubeconfig": "Kubeconfig",
-      "apiUrl": "API/URL"
-    },
-    "abortDialog": {
-      "title": "Abort Onboarding Process",
-      "warning": "Are you sure you want to abort onboarding? All progress will be lost.",
-      "continue": "Continue Onboarding",
-      "confirm": "Yes, Abort"
-    },
-    "fileUpload": {
-      "selected": "File \"{{filename}}\" selected. Upload functionality to be implemented."
-    },
-    "icons": {
-      "quickConnect": "quick connect",
-      "kubeconfig": "kubeconfig",
-      "apiUrl": "api url",
-      "ariaLabel": "import"
-    }
+  "abortDialog": {
+    "title": "Abortar Proceso de Incorporación",
+    "warning": "¿Estás seguro de que deseas abortar la incorporación? Se perderá todo el progreso.",
+    "continue": "Continuar Incorporación",
+    "confirm": "Sí, Abortar"
   },
-  "groupPanel": {
-    "close": "Close panel",
-    "tableAriaLabel": "Group items table",
-    "table": {
-      "name": "Name",
-      "groupKind": "Group/Kind",
-      "syncOrder": "Sync Order",
-      "namespace": "Namespace",
-      "createdAt": "Created At"
-    },
-    "notAvailable": "N/A"
+  "fileUpload": {
+    "selected": "Archivo \"{{filename}}\" seleccionado. Funcionalidad de subida por implementar."
   },
-  "downloadLogsModal": {
-    "title": "Download Logs",
-    "fileSize": "File size",
-    "download": "Download"
+  "icons": {
+    "quickConnect": "conexión rápida",
+    "kubeconfig": "kubeconfig",
+    "apiUrl": "api url",
+    "ariaLabel": "importar"
+  }
+},
+"groupPanel": {
+  "close": "Cerrar panel",
+  "tableAriaLabel": "Tabla de elementos del grupo",
+  "table": {
+    "name": "Nombre",
+    "groupKind": "Grupo/Tipo",
+    "syncOrder": "Orden de Sincronización",
+    "namespace": "Espacio de Nombres",
+    "createdAt": "Creado el"
   },
+  "notAvailable": "N/D"
+},
+"downloadLogsModal": {
+  "title": "Descargar Registros",
+  "fileSize": "Tamaño del archivo",
+  "download": "Descargar"
+},
+"footer": {
+  "commit": "Commit",
+  "viewCommit": "Ver detalles del commit en GitHub"
+},
+"downloadLogsButton": {
+  "title": "Descargar registros",
+  "placeholder": {
+    "header": "Registros del pod {{podName}} en el espacio de nombres {{namespace}} del clúster {{cluster}}",
+    "generated": "Generado el: {{date}}",
+    "noContent": "Contenido del registro no disponible directamente. Por favor usa la funcionalidad de registros en streaming."
+  },
+  "toast": {
+    "success": "Registros descargados para {{podName}}",
+    "error": "Error al descargar los registros"
+  }
+},
+"detachmentLogsDialog": {
+  "title": "Desconectando Clúster: {{clusterName}}",
+  "logs": "Registros de Desconexión",
+  "connected": "Conectado",
+  "disconnected": "Desconectado",
+  "connecting": "Conectando al servicio de desconexión...",
+  "completedSuccessfully": "La desconexión del clúster se completó con éxito.",
+  "done": "Hecho"
+},
+"addWebhookDialog": {
+  "copiedToClipboard": "¡Copiado al portapapeles!",
+  "setupWebhook": "Configurar Webhook",
+  "localDevSmee": "Desarrollo Local Usando Smee.io",
+  "installSmee": "Instala el Cliente de Smee (npm install -g smee-client).",
+  "goToSmee": "Ve a Smee.io y crea un nuevo canal.",
+  "copySmeeUrl": "Copia la URL generada por Smee.io.",
+  "runSmeeClient": "Ejecuta el cliente de Smee para reenviar webhooks a tu backend Go local:",
+  "smeeCommand": "smee --url smee-url --target {{baseUrl}}/api/webhook",
+  "smeeCommandCopy": "smee --url <smee-url> --target {{baseUrl}}/api/webhook",
+  "configureWebhookSmee": "Configura el webhook en tu servicio externo usando la URL de Smee.io.",
+  "startGoBackend": "Inicia tu backend Go y asegúrate de que escuche en /api/webhook.",
+  "testWebhook": "Prueba el webhook.",
+  "vmIp4000": "Webhook en una Máquina Virtual (VM) Usando IP:4000",
+  "ensureGoBackend4000": "Asegúrate de que tu backend Go se esté ejecutando en el puerto 4000 y manejando /api/webhook.",
+  "openPort4000": "Abre el puerto 4000 en tu firewall/grupo de seguridad (UFW, AWS, GCP o Azure).",
+  "findPublicIp": "Encuentra tu IP pública (curl ifconfig.me) y añádela.",
+  "configureWebhookVm": "Configura el webhook en tu servicio externo usando:",
+  "vmWebhookUrl": "http://tu-ip-publica:4000/api/webhook",
+  "vmWebhookUrlCopy": "http://<tu-ip-publica>:4000/api/webhook",
+  "testWebhookOtherMachine": "Prueba el webhook desde otra máquina.",
+  "keepGoServerRunning": "Mantén tu servidor Go ejecutándose en segundo plano (nohup o systemd)."
+},
+"cancelConfirmationDialog": {
+  "title": "Cancelar Creación de Carga de Trabajo",
+  "titlePolicy": "Cancelar Creación de Política",
+  "warning": "Advertencia",
+  "message": "¿Estás seguro de que deseas cancelar? Todos los cambios se perderán.",
+  "continueEditing": "Seguir Editando",
+  "yesCancel": "Sí, Cancelar"
+},
+"addCredentialsDialog": {
+  "title": "Agregar credenciales",
+  "usernameLabel": "Nombre de usuario de GitHub *",
+  "usernamePlaceholder": "por ejemplo, onkar717",
+  "usernameTip": "Ingresa tu nombre de usuario de GitHub",
+  "tokenLabel": "Token de acceso personal (PAT) *",
+  "tokenPlaceholder": "por ejemplo, ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "tokenTip": "Ingresa tu token de acceso personal de GitHub"
+},
+"commandPalette": {
+  "ariaLabel": "Abrir paleta de comandos",
+  "title": "Paleta de comandos (Ctrl+K)",
+  "badge": "K",
+  "searchPlaceholder": "Buscar comandos...",
+  "noCommandsFound": "No se encontraron comandos. Intenta con otro término.",
   "footer": {
-    "commit": "Commit",
-    "viewCommit": "View commit details on GitHub"
+    "navigate": "navegar",
+    "select": "seleccionar",
+    "shortcut": "Ctrl+K"
   },
-  "downloadLogsButton": {
-    "title": "Download logs",
-    "placeholder": {
-      "header": "Logs for pod {{podName}} in namespace {{namespace}} on cluster {{cluster}}",
-      "generated": "Generated at: {{date}}",
-      "noContent": "Log content not available directly. Please use the streaming logs feature."
+  "kbd": {
+    "esc": "ESC",
+    "arrows": "↑↓",
+    "enter": "↵"
+  },
+  "sections": {
+    "navigation": "Navegación",
+    "visualizations": "Visualizaciones",
+    "help": "Ayuda",
+    "account": "Cuenta"
+  },
+  "commands": {
+    "home": {
+      "title": "Inicio",
+      "description": "Ir al panel principal"
     },
-    "toast": {
-      "success": "Downloaded logs for {{podName}}",
-      "error": "Failed to download logs"
-    }
-  },
-  "detachmentLogsDialog": {
-    "title": "Detaching Cluster: {{clusterName}}",
-    "logs": "Detachment Logs",
-    "connected": "Connected",
-    "disconnected": "Disconnected",
-    "connecting": "Connecting to detachment service...",
-    "completedSuccessfully": "Cluster detachment completed successfully.",
-    "done": "Done"
-  },
-  "addWebhookDialog": {
-    "copiedToClipboard": "Copied to clipboard!",
-    "setupWebhook": "Setup Webhook",
-    "localDevSmee": "Local Development Using Smee.io",
-    "installSmee": "Install Smee Client (npm install -g smee-client).",
-    "goToSmee": "Go to Smee.io and create a new channel.",
-    "copySmeeUrl": "Copy the generated Smee.io URL.",
-    "runSmeeClient": "Run Smee client to forward webhooks to your local Go backend:",
-    "smeeCommand": "smee --url smee-url --target {{baseUrl}}/api/webhook",
-    "smeeCommandCopy": "smee --url <smee-url> --target {{baseUrl}}/api/webhook",
-    "configureWebhookSmee": "Configure the webhook in your external service using the Smee.io URL.",
-    "startGoBackend": "Start your Go backend and ensure it listens at /api/webhook.",
-    "testWebhook": "Test the webhook.",
-    "vmIp4000": "Webhook on a Virtual Machine (VM) Using IP:4000",
-    "ensureGoBackend4000": "Ensure your Go backend is running on port 4000 and handling /api/webhook.",
-    "openPort4000": "Open port 4000 in your firewall/security group (UFW, AWS, GCP, or Azure).",
-    "findPublicIp": "Find your public IP (curl ifconfig.me) and add.",
-    "configureWebhookVm": "Configure the webhook in your external service using:",
-    "vmWebhookUrl": "http://your-public-ip:4000/api/webhook",
-    "vmWebhookUrlCopy": "http://<your-public-ip>:4000/api/webhook",
-    "testWebhookOtherMachine": "Test the webhook from another machine.",
-    "keepGoServerRunning": "Keep your Go server running in the background (nohup or systemd)."
-  },
-  "cancelConfirmationDialog": {
-    "title": "Cancel Workload Creation",
-    "titlePolicy": "Cancel Policy Creation",
-    "warning": "Warning",
-    "message": "Are you sure you want to cancel? All changes will be lost.",
-    "continueEditing": "Continue Editing",
-    "yesCancel": "Yes, Cancel"
-  },
-  "addCredentialsDialog": {
-    "title": "Add Credentials",
-    "usernameLabel": "Github Username *",
-    "usernamePlaceholder": "e.g., onkar717",
-    "usernameTip": "Enter your GitHub username",
-    "tokenLabel": "Personal Access Token (PAT) *",
-    "tokenPlaceholder": "e.g., ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    "tokenTip": "Enter your GitHub Personal Access Token"
-  },
-  "commandPalette": {
-    "ariaLabel": "Open command palette",
-    "title": "Command Palette (Ctrl+K)",
-    "badge": "K",
-    "searchPlaceholder": "Search commands...",
-    "noCommandsFound": "No commands found. Try a different search term.",
-    "footer": {
-      "navigate": "navigate",
-      "select": "select",
-      "shortcut": "Ctrl+K"
+    "clusters": {
+      "title": "Clusters Remotos",
+      "description": "Administrar clusters de Kubernetes"
     },
-    "kbd": {
-      "esc": "ESC",
-      "arrows": "↑↓",
-      "enter": "↵"
+    "workloads": {
+      "title": "Cargas de trabajo",
+      "description": "Gestionar cargas de trabajo entre clusters"
     },
-    "sections": {
-      "navigation": "Navigation",
-      "visualizations": "Visualizations",
-      "help": "Help",
-      "account": "Account"
+    "bindingPolicies": {
+      "title": "Políticas de vinculación",
+      "description": "Configurar políticas de vinculación"
     },
-    "commands": {
-      "home": {
-        "title": "Home",
-        "description": "Go to dashboard"
-      },
-      "clusters": {
-        "title": "Remote Clusters",
-        "description": "Manage Kubernetes clusters"
-      },
-      "workloads": {
-        "title": "Workloads",
-        "description": "Manage workloads across clusters"
-      },
-      "bindingPolicies": {
-        "title": "Binding Policies",
-        "description": "Configure binding policies"
-      },
-      "wdsTreeview": {
-        "title": "WDS Treeview",
-        "description": "Visualize workload distribution"
-      },
-      "wecsTreeview": {
-        "title": "WECS Treeview",
-        "description": "Visualize Deployed Workloads structure"
-      },
-      "documentation": {
-        "title": "Open Documentation",
-        "description": "Launch KubeStellar documentation"
-      },
-      "logout": {
-        "title": "Logout",
-        "description": "Sign out of your account",
-        "infoMessage": "You have been successfully logged out."
-      }
+    "wdsTreeview": {
+      "title": "Vista de árbol WDS",
+      "description": "Visualizar la distribución de cargas de trabajo"
+    },
+    "wecsTreeview": {
+      "title": "Vista de árbol WECS",
+      "description": "Visualizar la estructura de cargas de trabajo desplegadas"
+    },
+    "documentation": {
+      "title": "Abrir documentación",
+      "description": "Abrir la documentación de KubeStellar"
+    },
+    "logout": {
+      "title": "Cerrar sesión",
+      "description": "Salir de tu cuenta",
+      "infoMessage": "Has cerrado sesión exitosamente."
     }
   }
+}
 }
