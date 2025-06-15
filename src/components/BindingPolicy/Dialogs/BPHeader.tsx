@@ -207,7 +207,7 @@ const BPHeader: React.FC<BPHeaderProps> = ({
                 ) : null,
                 style: {
                   color: colors.text,
-                  padding: '8px 10px',
+                  padding: '10px 12px',
                   borderRadius: '12px',
                   backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
                 },
