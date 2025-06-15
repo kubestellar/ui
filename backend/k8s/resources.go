@@ -17,15 +17,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"gopkg.in/yaml.v3"
-	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/util/retry"
 )
 
 // mapResourceToGVR maps resource types to their GroupVersionResource (GVR)
@@ -380,46 +379,29 @@ func UpdateResource(c *gin.Context) {
 		return
 	}
 
-	// Prepare resource object
+	// Prepare unstructured object from client
 	resourceObj := &unstructured.Unstructured{Object: resourceData}
 	resourceObj.SetName(name)
 
 	var result *unstructured.Unstructured
 
-	// Retry logic with exponential backoff
-	err = wait.ExponentialBackoff(wait.Backoff{
-		Steps:    5,
-		Duration: 100 * time.Millisecond,
-		Factor:   2.0,
-		Jitter:   0.1,
-	}, func() (bool, error) {
-		// Get the latest version of the resource
+	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		current, getErr := resource.Get(c, name, v1.GetOptions{})
 		if getErr != nil {
-			return false, getErr
+			return getErr
 		}
 
-		// Apply the new data to the current resource
-		newVersion := resourceObj.GetResourceVersion()
-		if newVersion != "" {
-			current.SetResourceVersion(newVersion)
-		} else {
-			log.Printf("Warning: Skipped setting resource version due to empty value")
+		for k, v := range resourceObj.Object {
+			current.Object[k] = v
 		}
 
-		// Attempt to update the resource
 		updated, updateErr := resource.Update(c, current, v1.UpdateOptions{})
 		if updateErr != nil {
-			if errors.IsConflict(updateErr) {
-				// Retry if it's a conflict
-				return false, nil
-			}
-			// Stop retrying on other errors
-			return false, updateErr
+			return updateErr
 		}
 
 		result = updated
-		return true, nil // Update succeeded
+		return nil
 	})
 
 	if err != nil {
