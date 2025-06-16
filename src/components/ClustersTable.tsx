@@ -54,6 +54,7 @@ import DetachmentLogsDialog from './DetachmentLogsDialog'; // Import the new com
 import CancelButton from './common/CancelButton';
 import LockIcon from '@mui/icons-material/Lock';
 import { useTranslation } from 'react-i18next';
+import SearchBox from './common/SearchBox';
 
 interface ManagedClusterInfo {
   name: string;
@@ -1376,10 +1377,6 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
     filterClusters();
   }, [filterClusters, query, filter, clusters]);
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(event.target.value);
-  };
-
   const handleFilterChange = (newFilter: string) => {
     setFilter(newFilter);
     setStatusFilterAnchorEl(null);
@@ -1691,85 +1688,17 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
           }}
         >
           {/* Enhanced Search Field - Reduce max width */}
-          <div
-            className={`relative flex-grow transition-all ${searchFocused ? 'max-w-lg' : 'max-w-sm'}`}
-          >
-            <TextField
-              placeholder={t('clusters.searchPlaceholder')}
-              value={query}
-              onChange={handleSearchChange}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-              variant="outlined"
-              fullWidth
-              inputRef={searchInputRef}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon
-                      style={{
-                        color: searchFocused ? colors.primary : colors.textSecondary,
-                        transition: 'color 0.2s ease',
-                      }}
-                    />
-                  </InputAdornment>
-                ),
-                endAdornment: query ? (
-                  <InputAdornment position="end">
-                    <IconButton
-                      size="small"
-                      onClick={() => setQuery('')}
-                      edge="end"
-                      style={{ color: colors.textSecondary }}
-                      className="transition-all duration-200 hover:bg-opacity-80"
-                    >
-                      <CloseIcon fontSize="small" />
-                    </IconButton>
-                  </InputAdornment>
-                ) : null,
-                style: {
-                  color: colors.text,
-                  padding: '10px 12px',
-                  borderRadius: '12px',
-                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
-                },
-              }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '12px',
-                  transition: 'all 0.3s ease',
-                  '& fieldset': {
-                    borderColor: searchFocused ? colors.primary : colors.border,
-                    borderWidth: searchFocused ? '2px' : '1px',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: searchFocused ? colors.primary : colors.primaryLight,
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: colors.primary,
-                    boxShadow: isDark
-                      ? '0 0 0 4px rgba(47, 134, 255, 0.15)'
-                      : '0 0 0 4px rgba(47, 134, 255, 0.1)',
-                  },
-                },
-              }}
-            />
-
-            {searchFocused && (
-              <Typography
-                variant="caption"
-                style={{
-                  color: colors.textSecondary,
-                  position: 'absolute',
-                  bottom: '-20px',
-                  left: '8px',
-                }}
-              >
-                {t('clusters.clearSearch')}
-              </Typography>
-            )}
-          </div>
-
+          <SearchBox
+            value={query}
+            onChange={setQuery}
+            placeholder={t('clusters.searchPlaceholder')}
+            colors={colors}
+            isDark={isDark}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
+            showHint={searchFocused}
+            hintText={t('clusters.list.clearSearch')}
+          />
           {/* Status Filter Button */}
           <div className="flex items-center gap-3">
             <Button

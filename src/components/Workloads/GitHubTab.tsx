@@ -107,14 +107,14 @@ const CreateFromYourGitHub = ({
             mb: 1,
           }}
         >
-          {t('githubTab.repositoryUrlLabel')}
+          {t('workloads.github.repositoryUrlLabel')}
         </Typography>
         <TextField
           fullWidth
           value={formData.repositoryUrl}
           onChange={e => setFormData({ ...formData, repositoryUrl: e.target.value })}
           error={!!error && !formData.repositoryUrl}
-          placeholder={t('githubTab.repositoryUrlPlaceholder')}
+          placeholder={t('workloads.github.repositoryUrlPlaceholder')}
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: '8px',
@@ -149,7 +149,7 @@ const CreateFromYourGitHub = ({
             💡
           </span>
           <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
-            {t('githubTab.repositoryUrlTip')}
+            {t('workloads.github.repositoryUrlTip')}
           </Typography>
         </Box>
       </Box>
@@ -164,14 +164,14 @@ const CreateFromYourGitHub = ({
             mb: 1,
           }}
         >
-          {t('githubTab.pathLabel')}
+          {t('workloads.github.pathLabel')}
         </Typography>
         <TextField
           fullWidth
           value={formData.path}
           onChange={e => setFormData({ ...formData, path: e.target.value })}
           error={!!error && !formData.path}
-          placeholder={t('githubTab.pathPlaceholder')}
+          placeholder={t('workloads.github.pathPlaceholder')}
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: '8px',
@@ -206,7 +206,7 @@ const CreateFromYourGitHub = ({
             💡
           </span>
           <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
-            {t('githubTab.pathTip')}
+            {t('workloads.github.pathTip')}
           </Typography>
         </Box>
       </Box>
@@ -221,13 +221,13 @@ const CreateFromYourGitHub = ({
             mb: 1,
           }}
         >
-          {t('githubTab.branchLabel')}
+          {t('workloads.github.branchLabel')}
         </Typography>
         <TextField
           fullWidth
           value={formData.branchSpecifier}
           onChange={e => setFormData({ ...formData, branchSpecifier: e.target.value })}
-          placeholder={t('githubTab.branchPlaceholder')}
+          placeholder={t('workloads.github.branchPlaceholder')}
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: '8px',
@@ -259,7 +259,7 @@ const CreateFromYourGitHub = ({
             💡
           </span>
           <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
-            {t('githubTab.branchTip')}
+            {t('workloads.github.branchTip')}
           </Typography>
         </Box>
       </Box>
@@ -274,7 +274,7 @@ const CreateFromYourGitHub = ({
             mb: 1,
           }}
         >
-          {t('githubTab.credentialsLabel')}
+          {t('workloads.github.credentialsLabel')}
         </Typography>
         <FormControl fullWidth>
           <Select
@@ -288,7 +288,7 @@ const CreateFromYourGitHub = ({
                 <Typography
                   sx={{ fontSize: '0.875rem', color: theme === 'dark' ? '#858585' : '#666' }}
                 >
-                  {t('githubTab.credentialsPlaceholder')}
+                  {t('workloads.github.credentialsPlaceholder')}
                 </Typography>
               )
             }
@@ -332,7 +332,7 @@ const CreateFromYourGitHub = ({
             💡
           </span>
           <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
-            {t('githubTab.credentialsTip')}
+            {t('workloads.github.credentialsTip')}
           </Typography>
         </Box>
       </Box>
@@ -349,7 +349,7 @@ const CreateFromYourGitHub = ({
           },
         }}
       >
-        {t('githubTab.addCredentials')}
+        {t('workloads.github.addCredentials')}
       </Button>
 
       <Box>
@@ -361,14 +361,14 @@ const CreateFromYourGitHub = ({
             color: theme === 'dark' ? '#d4d4d4' : '#333',
           }}
         >
-          {t('githubTab.webhooksLabel')}
+          {t('workloads.github.webhooksLabel')}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
           <span role="img" aria-label="tip" style={{ fontSize: '0.8rem', marginRight: '8px' }}>
             💡
           </span>
           <Typography variant="caption" sx={{ color: theme === 'dark' ? '#858585' : '#666' }}>
-            {t('githubTab.webhooksTip')}
+            {t('workloads.github.webhooksTip')}
           </Typography>
         </Box>
       </Box>
@@ -385,7 +385,7 @@ const CreateFromYourGitHub = ({
           },
         }}
       >
-        {t('githubTab.addWebhook')}
+        {t('workloads.github.addWebhook')}
       </Button>
     </Box>
   );
@@ -767,7 +767,7 @@ export const GitHubTab = ({
             mt: 1,
           }}
         >
-          {t('githubTab.previousDeploymentsTitle')}
+          {t('workloads.github.previousDeploymentsTitle')}
         </Typography>
         {selectedRepo && (
           <Box
@@ -809,7 +809,7 @@ export const GitHubTab = ({
       >
         {previousLoading ? (
           <Typography sx={{ color: theme === 'dark' ? '#d4d4d4' : '#333', textAlign: 'center' }}>
-            {t('githubTab.loadingPreviousDeployments')}
+            {t('workloads.github.loadingPreviousDeployments')}
           </Typography>
         ) : previousDeployments.length > 0 ? (
           previousDeployments.map(deployment => (
@@ -866,7 +866,7 @@ export const GitHubTab = ({
           ))
         ) : (
           <Typography sx={{ color: theme === 'dark' ? '#d4d4d4' : '#333', textAlign: 'center' }}>
-            {t('githubTab.noPreviousDeployments')}
+            {t('workloads.github.noPreviousDeployments')}
           </Typography>
         )}
       </Box>
@@ -924,11 +924,11 @@ export const GitHubTab = ({
           onClick={e => e.stopPropagation()}
         >
           <WarningAmberIcon sx={{ color: '#FFA500', fontSize: '34px' }} />
-          {t('githubTab.confirmResourceDeletion')}
+          {t('workloads.github.confirmResourceDeletion')}
         </DialogTitle>
         <DialogContent onClick={e => e.stopPropagation()}>
           <Typography sx={{ fontSize: '16px', color: theme === 'dark' ? '#fff' : '333', mt: 2 }}>
-            {t('githubTab.deleteConfirmation', { name: deleteDeploymentId })}
+            {t('workloads.github.deleteConfirmation', { name: deleteDeploymentId })}
           </Typography>
         </DialogContent>
         <DialogActions
@@ -972,7 +972,7 @@ export const GitHubTab = ({
             }}
             sx={createStableButtonStyle(true)}
           >
-            {t('githubTab.yesDelete')}
+            {t('workloads.github.yesDelete')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1001,7 +1001,7 @@ export const GitHubTab = ({
             <FormControlLabel
               value="createOwn"
               control={<Radio />}
-              label={t('githubTab.createFromYourGitHub')}
+              label={t('workloads.github.createFromYourGitHub')}
               sx={{
                 '& .MuiTypography-root': {
                   color: theme === 'dark' ? '#d4d4d4' : '#333',
@@ -1012,7 +1012,7 @@ export const GitHubTab = ({
             <FormControlLabel
               value="popularRepos"
               control={<Radio />}
-              label={t('githubTab.deployFromPopularRepositories')}
+              label={t('workloads.github.deployFromPopularRepositories')}
               sx={{
                 '& .MuiTypography-root': {
                   color: theme === 'dark' ? '#d4d4d4' : '#333',
@@ -1023,7 +1023,7 @@ export const GitHubTab = ({
             <FormControlLabel
               value="previousDeployments"
               control={<Radio />}
-              label={t('githubTab.listOfPreviousDeployments')}
+              label={t('workloads.github.listOfPreviousDeployments')}
               sx={{
                 '& .MuiTypography-root': {
                   color: theme === 'dark' ? '#d4d4d4' : '#333',
@@ -1114,8 +1114,8 @@ export const GitHubTab = ({
           {(selectedOption === 'createOwn' && loading) ||
           (selectedOption === 'popularRepos' && popularLoading) ||
           (selectedOption === 'previousDeployments' && previousLoading)
-            ? t('githubTab.deploying')
-            : t('githubTab.apply')}
+            ? t('workloads.github.deploying')
+            : t('workloads.github.apply')}
         </Button>
       </Box>
     </StyledContainer>
