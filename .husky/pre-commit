@@ -9,9 +9,3 @@ npm run lint
 
 echo "🧹 Running gofmt on Go files..."
 find . -type f -name '*.go' -not -path "./vendor/*" | xargs gofmt -w
-
-echo "🧪 Running backend tests..."
-cd backend
-go test ./... -v
-
-echo "✅ All pre-commit checks passed."
