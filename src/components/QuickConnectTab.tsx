@@ -76,21 +76,13 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
   const [showLogs, setShowLogs] = useState(false);
   const isMobile = useMediaQuery('(max-width:600px)');
 
-  const [hasInitialFetch, setHasInitialFetch] = useState(false);
-
   // Auto-fetch clusters when component mounts
   useEffect(() => {
     // Only fetch once on mount if we have no clusters and no error
-    if (
-      !hasInitialFetch &&
-      availableClusters.length === 0 &&
-      !availableClustersError &&
-      !availableClustersLoading
-    ) {
+    if (availableClusters.length === 0 && !availableClustersError && !availableClustersLoading) {
       fetchAvailableClusters();
-      setHasInitialFetch(true);
     }
-  }, [availableClusters.length, availableClustersError, availableClustersLoading, hasInitialFetch]); // Include all dependencies
+  },); 
 
   // This function will be called when the onboarding is completed via logs
   const handleOnboardingComplete = () => {
