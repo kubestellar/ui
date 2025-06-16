@@ -132,26 +132,23 @@ const BPPagination: React.FC<PaginationProps> = ({
           </Typography>
         </Box>
 
-<Box
-  sx={{
-    color: colors.textSecondary,
-    fontSize: '0.9rem',
-    display: 'flex',
-    alignItems: 'center',
-  }}
->
-  {t(
-    filteredCount === 1 ? 'common.items' : 'common.items_plural',
-    { count: filteredCount }
-  )}
-  {filteredCount !== totalCount && (
-    <span style={{ marginLeft: 8 }}>
-      ({t('common.filteredFrom', { total: totalCount })})
-    </span>
-  )}
-</Box>
-
-
+        <Box
+          sx={{
+            color: colors.textSecondary,
+            fontSize: '0.9rem',
+            display: 'flex',
+            alignItems: 'center',
+          }}
+        >
+          {t(filteredCount === 1 ? 'common.items' : 'common.items_plural', {
+            count: filteredCount,
+          })}
+          {filteredCount !== totalCount && (
+            <span style={{ marginLeft: 8 }}>
+              ({t('common.filteredFrom', { total: totalCount })})
+            </span>
+          )}
+        </Box>
       </div>
 
       <Button
