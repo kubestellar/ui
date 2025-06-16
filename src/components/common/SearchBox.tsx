@@ -92,7 +92,7 @@ const SearchBox: React.FC<SearchComponentProps> = ({
             <InputAdornment position="end">
               <IconButton
                 size="small"
-                onMouseDown={(e) => {
+                onMouseDown={e => {
                   e.preventDefault(); // Prevent losing focus immediately
                   onChange('');
                 }}
