@@ -95,6 +95,13 @@ jobs:
       - name: ✅ Backend Build Successful
         if: success()
         run: echo "Backend build successful ✅"
+      
+      - name: Run Backend Tests
+        working-directory: backend
+        run:  go test ./... -v
+      - name: ✅ Backend Tests Passed
+        if: success()
+        run: echo "Backend Tests Passed ✅"
 
       - name: Run Backend
         working-directory: backend
