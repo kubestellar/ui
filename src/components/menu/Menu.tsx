@@ -67,10 +67,10 @@ const Menu: React.FC<MenuProps> = ({ collapsed = false }) => {
     <motion.div
       className="flex w-full flex-col rounded-xl border p-2 py-4 backdrop-blur-sm"
       style={{
-      background: themeStyles.effects.glassMorphism.background as string,
-      backdropFilter: themeStyles.effects.glassMorphism.backdropFilter as string,
-      borderColor: themeStyles.menu.borderColor as string,
-      boxShadow: themeStyles.colors.shadow.md as string,
+        background: themeStyles.effects.glassMorphism.background as string,
+        backdropFilter: themeStyles.effects.glassMorphism.backdropFilter as string,
+        borderColor: themeStyles.menu.borderColor as string,
+        boxShadow: themeStyles.colors.shadow.md as string,
       }}
       variants={containerVariants}
       initial={false}
@@ -79,15 +79,15 @@ const Menu: React.FC<MenuProps> = ({ collapsed = false }) => {
       onAnimationComplete={() => setIsAnimating(false)}
     >
       {menu.map((item: MenuItemData, index: number) => (
-      <MenuItem
-        key={index}
-        catalog={item.catalog}
-        listItems={item.listItems}
-        centered={collapsed || item.centered}
-        collapsed={collapsed}
-        isAnimating={isAnimating}
-        delay={index * 0.05}
-      />
+        <MenuItem
+          key={index}
+          catalog={item.catalog}
+          listItems={item.listItems}
+          centered={collapsed || item.centered}
+          collapsed={collapsed}
+          isAnimating={isAnimating}
+          delay={index * 0.05}
+        />
       ))}
     </motion.div>
   );

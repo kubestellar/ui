@@ -1955,7 +1955,7 @@
       }
     }
   },
-    "menu": {
+  "menu": {
     "catalogs": {
       "main": "Main",
       "management": "Management"

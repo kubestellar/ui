@@ -5,7 +5,7 @@ import { MenuItemData } from './Menu';
 
 export const useMenuData = (): MenuItemData[] => {
   const { t } = useTranslation();
-  
+
   return [
     {
       catalog: t('menu.catalogs.main'),
