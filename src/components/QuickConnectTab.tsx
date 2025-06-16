@@ -82,7 +82,7 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
     if (availableClusters.length === 0 && !availableClustersError && !availableClustersLoading) {
       fetchAvailableClusters();
     }
-  },); 
+  });
 
   // This function will be called when the onboarding is completed via logs
   const handleOnboardingComplete = () => {
