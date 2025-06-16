@@ -1,7 +1,7 @@
+import { Box, Button, Typography } from '@mui/material';
 import React from 'react';
-import { Box, Typography, Button } from '@mui/material';
-import useTheme from '../../stores/themeStore';
 import { useTranslation } from 'react-i18next';
+import useTheme from '../../stores/themeStore';
 
 interface PaginationProps {
   filteredCount: number;
@@ -140,9 +140,13 @@ const BPPagination: React.FC<PaginationProps> = ({
             alignItems: 'center',
           }}
         >
-          {filteredCount} {t('common.items', { count: filteredCount })}
+          {t(filteredCount === 1 ? 'common.items' : 'common.items_plural', {
+            count: filteredCount,
+          })}
           {filteredCount !== totalCount && (
-            <span className="ml-2">({t('common.filteredFrom', { total: totalCount })})</span>
+            <span style={{ marginLeft: 8 }}>
+              ({t('common.filteredFrom', { total: totalCount })})
+            </span>
           )}
         </Box>
       </div>
