@@ -208,6 +208,7 @@
     "switchTheme": "Cambiar a modo {{mode}}"
   },
   "login": {
+    "controlPlane": "Plano de control",
     "layout": {
       "logoAlt": "KubeStellar",
       "tagline": "Gestión Multiclúster Sin Esfuerzo",
@@ -1952,6 +1953,19 @@
         "description": "Salir de tu cuenta",
         "infoMessage": "Has cerrado sesión exitosamente."
       }
+    }
+  },
+    "menu": {
+    "catalogs": {
+      "main": "Principal",
+      "management": "Administración"
+    },
+    "items": {
+      "home": "Inicio",
+      "remoteClusters": "Clústeres Remotos",
+      "stagedWorkloads": "Cargas de Trabajo Preparadas",
+      "bindingPolicies": "Políticas de Vinculación",
+      "deployedWorkloads": "Cargas de Trabajo Desplegadas"
     }
   }
 }

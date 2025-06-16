@@ -208,6 +208,7 @@
     "switchTheme": "Switch to {{mode}} mode"
   },
   "login": {
+    "controlPlane": "Control Plane",
     "layout": {
       "logoAlt": "KubeStellar",
       "tagline": "Seamless Multi-Cluster Management",
@@ -1952,6 +1953,19 @@
         "description": "Sign out of your account",
         "infoMessage": "You have been successfully logged out."
       }
+    }
+  },
+    "menu": {
+    "catalogs": {
+      "main": "Main",
+      "management": "Management"
+    },
+    "items": {
+      "home": "Home",
+      "remoteClusters": "Remote Clusters",
+      "stagedWorkloads": "Staged Workloads",
+      "bindingPolicies": "Binding Policies",
+      "deployedWorkloads": "Deployed Workloads"
     }
   }
 }
