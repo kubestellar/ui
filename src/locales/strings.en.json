@@ -63,7 +63,8 @@
     "clearFilters": "Clear Filters",
     "clear": "Clear",
     "of": "of",
-    "items": "item{{count, plural, one {} other {s}}}",
+    "items": "{{count}} item",
+    "items_plural": "{{count}} items",
     "filteredFrom": "filtered from"
   },
   "installationPage": {
