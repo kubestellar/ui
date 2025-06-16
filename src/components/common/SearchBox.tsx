@@ -92,7 +92,10 @@ const SearchBox: React.FC<SearchComponentProps> = ({
             <InputAdornment position="end">
               <IconButton
                 size="small"
-                onClick={() => onChange('')}
+                onMouseDown={(e) => {
+                  e.preventDefault(); // Prevent losing focus immediately
+                  onChange('');
+                }}
                 edge="end"
                 style={{ color: colors.textSecondary }}
                 className="transition-all duration-200 hover:bg-opacity-80"
