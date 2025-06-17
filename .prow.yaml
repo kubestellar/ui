@@ -81,7 +81,7 @@ presubmits:
             - |
               apt-get update && apt-get install -y redis-tools netcat-openbsd
               echo "Waiting for Redis to be healthy..."
-              until nc -z 127.0.0.1 6379; do sleep 1; done
+              until nc -z localhost 6379; do sleep 1; done
               echo "Redis is up!"
               cd backend
               go mod download
