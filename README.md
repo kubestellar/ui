@@ -10,6 +10,8 @@
   </strong>
 </p>
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/kubestellar/ui)
+
 > Check out the main [KubeStellar project](https://github.com/kubestellar/kubestellar)
 
 # KubestellarUI Setup Guide
