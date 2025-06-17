@@ -30,7 +30,7 @@ import {
   getDialogPaperProps,
 } from './styles/CreateBindingPolicyStyles';
 import { DEFAULT_BINDING_POLICY_TEMPLATE } from './constants/index';
-import PolicyDragDrop from './PolicyDragDrop'; // TODO: Rename component to PolicySelection
+import PolicySelection from './PolicySelection';
 import { ManagedCluster, Workload } from '../../types/bindingPolicy';
 import { PolicyConfiguration } from './ConfigurationSidebar';
 import { usePolicyDragDropStore } from '../../stores/policyDragDropStore';
@@ -1436,7 +1436,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                     overflow: 'hidden',
                   }}
                 >
-                  <PolicyDragDrop
+                  <PolicySelection
                     clusters={clusters}
                     workloads={allWorkloads}
                     onCreateBindingPolicy={handleCreateBindingPolicy}

@@ -114,7 +114,7 @@ const StrictModeDragDropContext: React.FC<React.ComponentProps<typeof DragDropCo
   return <DragDropContext {...props}>{children}</DragDropContext>;
 };
 
-interface PolicyDragDropContainerProps {
+interface PolicySelectionContainerProps {
   policies?: BindingPolicyInfo[];
   clusters?: ManagedCluster[];
   workloads?: Workload[];
@@ -131,14 +131,14 @@ interface PolicyDragDropContainerProps {
   dialogMode?: boolean;
 }
 
-const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
+const PolicySelectionContainer: React.FC<PolicySelectionContainerProps> = ({
   policies: propPolicies,
   clusters: propClusters,
   workloads: propWorkloads,
   onPolicyAssign,
   onCreateBindingPolicy,
   dialogMode = false,
-}: PolicyDragDropContainerProps) => {
+}: PolicySelectionContainerProps) => {
   console.log('🔄 PolicyDragDropContainer component rendering', {
     hasPropPolicies: !!propPolicies,
     hasPropClusters: !!propClusters,
@@ -1886,4 +1886,4 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
   );
 };
 
-export default React.memo(PolicyDragDropContainer);
+export default React.memo(PolicySelectionContainer);
