@@ -1,10 +1,13 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-# Format files with Prettier, excluding Docker files
+echo "🔧 Running Prettier on frontend files (excluding ignored files)..."
 npx prettier --write --list-different --ignore-path .prettierignore .
-# Run linting
+
+echo "🔍 Running frontend lint checks..."
 npm run lint
-# Format Go files with gofmt
-echo "Running gofmt on Go files..."
-find . -name '*.go' | xargs gofmt -w
+
+echo "🧹 Running gofmt on Go files..."
+find . -type f -name '*.go' -not -path "./vendor/*" | xargs gofmt -w
+
+echo "✅ All pre-commit checks passed."

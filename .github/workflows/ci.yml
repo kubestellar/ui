@@ -1,4 +1,5 @@
 name: Build, Check Formatting, and Run Tests
+
 on:
   push:
     branches: ['*']
@@ -60,6 +61,18 @@ jobs:
   backend:
     name: Backend Checks
     runs-on: ubuntu-latest
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
@@ -95,6 +108,13 @@ jobs:
       - name: ✅ Backend Build Successful
         if: success()
         run: echo "Backend build successful ✅"
+
+      - name: Run Backend Tests
+        working-directory: backend
+        run: go test ./... -v
+      - name: ✅ Backend Tests Passed
+        if: success()
+        run: echo "Backend Tests Passed ✅"
 
       - name: Run Backend
         working-directory: backend
