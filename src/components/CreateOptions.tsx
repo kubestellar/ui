@@ -284,7 +284,7 @@ spec:
         artifactHubFormData.namespace !== initialArtifactHubFormData.namespace ||
         artifactHubFormData.releaseName !== initialArtifactHubFormData.releaseName ||
         JSON.stringify(artifactHubFormData.values) !==
-        JSON.stringify(initialArtifactHubFormData.values);
+          JSON.stringify(initialArtifactHubFormData.values);
     }
 
     setHasChanges(changesDetected);
@@ -636,9 +636,9 @@ spec:
         message: err.message,
         response: err.response
           ? {
-            status: err.response.status,
-            data: err.response.data,
-          }
+              status: err.response.status,
+              data: err.response.data,
+            }
           : 'No response',
         request: err.request ? 'Request exists' : 'No request',
       });
