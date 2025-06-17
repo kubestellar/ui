@@ -81,8 +81,24 @@ presubmits:
             - |
               apt-get update && apt-get install -y redis-tools netcat-openbsd
               echo "Waiting for Redis to be healthy..."
-              until nc -z localhost 6379; do sleep 1; done
-              echo "Redis is up!"
+              
+              # Wait for Redis to be available with better error handling
+              for i in {1..60}; do
+                if nc -z localhost 6379; then
+                  echo "Redis port is open, testing Redis connectivity..."
+                  if redis-cli -h localhost -p 6379 ping | grep -q PONG; then
+                    echo "Redis is up and responding!"
+                    break
+                  fi
+                fi
+                echo "Attempt $i: Redis not ready yet, waiting..."
+                sleep 2
+              done
+              if ! redis-cli -h localhost -p 6379 ping | grep -q PONG; then
+                echo "Redis failed to start properly"
+                exit 1
+              fi
+              
               cd backend
               go mod download
               go test ./...
@@ -96,10 +112,23 @@ presubmits:
           ports:
             - containerPort: 6379
           readinessProbe:
-            tcpSocket:
-              port: 6379
+            exec:
+              command:
+                - redis-cli
+                - ping
             initialDelaySeconds: 5
             periodSeconds: 2
+            timeoutSeconds: 1
+            failureThreshold: 3
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
 
 postsubmits:
   - name: post-kubestellar-ui-build-main
