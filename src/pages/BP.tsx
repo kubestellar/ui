@@ -31,7 +31,7 @@ import { useWDSQueries } from '../hooks/queries/useWDSQueries';
 import { useBPQueries } from '../hooks/queries/useBPQueries';
 import { PolicyData } from '../components/BindingPolicy/CreateBindingPolicyDialog';
 import BPVisualization from '../components/BindingPolicy/BPVisualization';
-import PolicyDragDrop from '../components/BindingPolicy/PolicySelection';
+import PolicySelection from '../components/BindingPolicy/PolicySelection';
 import EditIcon from '@mui/icons-material/Edit';
 import PublishIcon from '@mui/icons-material/Publish';
 import KubernetesIcon from '../components/BindingPolicy/KubernetesIcon';
@@ -926,7 +926,7 @@ const BP = () => {
           </>
         ) : (
           <Box sx={{ position: 'relative' }}>
-            <PolicyDragDrop
+            <PolicySelection
               policies={[...bindingPolicies, ...simulatedPolicies]}
               clusters={clusters}
               workloads={workloads}

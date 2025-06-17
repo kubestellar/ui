@@ -83,7 +83,7 @@ presubmits:
               redis-server --daemonize yes --port 6379 --bind 127.0.0.1 --save "" --appendonly no
               echo "Waiting for Redis to start..."
               sleep 3
-              
+
               if redis-cli ping | grep -q PONG; then
                 echo "✓ Redis is running"
               else
