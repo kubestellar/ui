@@ -79,26 +79,18 @@ presubmits:
             - /bin/bash
             - -c
             - |
-              apt-get update && apt-get install -y redis-tools netcat-openbsd
-              echo "Waiting for Redis to be healthy..."
+              apt-get update && apt-get install -y redis-server redis-tools
+              redis-server --daemonize yes --port 6379 --bind 127.0.0.1 --save "" --appendonly no
+              echo "Waiting for Redis to start..."
+              sleep 3
               
-              # Wait for Redis to be available with better error handling
-              for i in {1..60}; do
-                if nc -z localhost 6379; then
-                  echo "Redis port is open, testing Redis connectivity..."
-                  if redis-cli -h localhost -p 6379 ping | grep -q PONG; then
-                    echo "Redis is up and responding!"
-                    break
-                  fi
-                fi
-                echo "Attempt $i: Redis not ready yet, waiting..."
-                sleep 2
-              done
-              if ! redis-cli -h localhost -p 6379 ping | grep -q PONG; then
-                echo "Redis failed to start properly"
+              if redis-cli ping | grep -q PONG; then
+                echo "✓ Redis is running"
+              else
+                echo "✗ Redis failed to start"
                 exit 1
               fi
-              
+
               cd backend
               go mod download
               go test ./...
@@ -106,29 +98,6 @@ presubmits:
             requests:
               memory: 1Gi
               cpu: 1
-      sidecars:
-        - image: redis:7-alpine
-          name: redis
-          ports:
-            - containerPort: 6379
-          readinessProbe:
-            exec:
-              command:
-                - redis-cli
-                - ping
-            initialDelaySeconds: 5
-            periodSeconds: 2
-            timeoutSeconds: 1
-            failureThreshold: 3
-          livenessProbe:
-            exec:
-              command:
-                - redis-cli
-                - ping
-            initialDelaySeconds: 10
-            periodSeconds: 10
-            timeoutSeconds: 1
-            failureThreshold: 3
 
 postsubmits:
   - name: post-kubestellar-ui-build-main
