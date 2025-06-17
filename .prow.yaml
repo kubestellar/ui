@@ -79,6 +79,10 @@ presubmits:
             - /bin/bash
             - -c
             - |
+              apt-get update && apt-get install -y redis-tools netcat
+              echo "Waiting for Redis to be healthy..."
+              until nc -z redis 6379; do sleep 1; done
+              echo "Redis is up!"
               cd backend
               go mod download
               go test ./...
@@ -86,6 +90,16 @@ presubmits:
             requests:
               memory: 1Gi
               cpu: 1
+      sidecars:
+        - image: redis:7-alpine
+          name: redis
+          ports:
+            - containerPort: 6379
+          readinessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 5
+            periodSeconds: 2
 
 postsubmits:
   - name: post-kubestellar-ui-build-main
