@@ -388,7 +388,7 @@ func UpdateResource(c *gin.Context) {
 	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		current, getErr := resource.Get(c, name, v1.GetOptions{})
 		if getErr != nil {
-			return getErr
+			return fmt.Errorf("failed to get current resource: %w", getErr)
 		}
 
 		for k, v := range resourceObj.Object {
@@ -397,7 +397,7 @@ func UpdateResource(c *gin.Context) {
 
 		updated, updateErr := resource.Update(c, current, v1.UpdateOptions{})
 		if updateErr != nil {
-			return updateErr
+			return fmt.Errorf("update failed: %w", updateErr)
 		}
 
 		result = updated
