@@ -1738,8 +1738,9 @@ const ClustersTable: React.FC<ClustersTableProps> = ({
               }}
             >
               {filter
-                ? statusFilterItems.find(item => item.value === filter)?.label || 'Status Filter'
-                : 'Status Filter'}
+                ? statusFilterItems.find(item => item.value === filter)?.label ||
+                  t('clusters.list.filter')
+                : t('clusters.list.filter')}
               {filter && (
                 <Box
                   component="span"

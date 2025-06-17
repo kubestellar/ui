@@ -169,7 +169,7 @@ export const UploadFileTab = ({
               }}
             />
           }
-          label={t('uploadFileTab.createNamespaceAutomatically')}
+          label={t('bindingPolicy.upload.createNamespaceAutomatically')}
           sx={{
             mb: 2,
             ml: -1.2,
@@ -219,7 +219,7 @@ export const UploadFileTab = ({
                   borderColor: theme === 'dark' ? '#444' : '#e0e0e0',
                 }}
               >
-                {t('uploadFileTab.chooseDifferentYaml')}
+                {t('bindingPolicy.upload.chooseDifferentYaml')}
               </Button>
             </Box>
             <Typography
@@ -228,7 +228,7 @@ export const UploadFileTab = ({
               fontWeight={500}
               sx={{ color: theme === 'dark' ? '#fff' : '#333' }}
             >
-              {t('uploadFileTab.filePreview')}
+              {t('bindingPolicy.upload.filePreview')}
             </Typography>
             <StyledPaper
               elevation={0}
@@ -273,10 +273,10 @@ export const UploadFileTab = ({
               📤
             </span>
             <Typography variant="h6" sx={{ color: theme === 'dark' ? '#d4d4d4' : '#333' }}>
-              {t('uploadFileTab.chooseOrDrag')}
+              {t('bindingPolicy.upload.chooseOrDrag')}
             </Typography>
             <Typography variant="body2" sx={{ color: theme === 'dark' ? '#858585' : 'gray' }}>
-              {t('uploadFileTab.or')}
+              {t('bindingPolicy.upload.or')}
             </Typography>
             <Button
               variant="contained"
@@ -293,7 +293,7 @@ export const UploadFileTab = ({
                 },
               }}
             >
-              {t('uploadFileTab.chooseYaml')}
+              {t('bindingPolicy.upload.chooseYaml')}
               <input
                 type="file"
                 hidden
@@ -342,7 +342,7 @@ export const UploadFileTab = ({
             },
           }}
         >
-          {t('uploadFileTab.uploadAndDeploy')}
+          {t('bindingPolicy.upload.uploadAndDeploy')}
         </Button>
       </Box>
 
