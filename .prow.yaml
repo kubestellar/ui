@@ -79,7 +79,7 @@ presubmits:
             - /bin/bash
             - -c
             - |
-              apt-get update && apt-get install -y redis-tools netcat
+              apt-get update && apt-get install -y redis-tools netcat-openbsd
               echo "Waiting for Redis to be healthy..."
               until nc -z redis 6379; do sleep 1; done
               echo "Redis is up!"
