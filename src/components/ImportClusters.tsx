@@ -393,7 +393,6 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
     } catch (error) {
       console.error('[DEBUG] Cluster onboarding error details:', error);
       let errorMessage = 'An unknown error occurred.';
-
       // Type guard to check if error is an Error object
       if (error instanceof Error) {
         // Log error object structure for debugging
@@ -427,7 +426,6 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                 errorMessage =
                   "Could not find the required context 'its1'. Please ensure your kubeconfig is properly set up with the ITS hub context.";
               } else {
-                // Include the actual server error for specific issues
                 errorMessage = `Server error: ${serverError}`;
               }
             } else {
@@ -440,6 +438,12 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
             console.log('[DEBUG] 404 error - API endpoint not found');
           } else if (status === 401 || status === 403) {
             console.log('[DEBUG] Auth error:', status);
+            setManualLoading(false);
+            setSnackbar({
+              open: true,
+              message: 'Authorization failed. Please log in again.',
+              severity: 'error',
+            });
             return;
           } else {
             errorMessage = 'Request failed. Please try again later.';
