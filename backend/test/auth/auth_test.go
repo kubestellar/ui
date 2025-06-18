@@ -1,10 +1,9 @@
 package auth_test
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
 	auth "github.com/kubestellar/ui/auth"
+	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestUserStorage(t *testing.T) {
@@ -33,6 +32,3 @@ func TestOverwriteUser(t *testing.T) {
 	assert.Equal(t, "newpass", user.Password)
 	assert.Equal(t, []string{"write"}, user.Permissions)
 }
-
-
-
