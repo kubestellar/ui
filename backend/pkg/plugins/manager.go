@@ -20,27 +20,27 @@ import (
 
 // PluginManager handles the lifecycle, runtime, and routing of dynamically loaded plugins.
 type PluginManager struct {
-	runtime wazero.Runtime         // Wazero runtime used to compile and instantiate WASM modules
-	plugins map[string]*Plugin     // Registered plugin instances by name
-	router  *gin.Engine            // Gin router to dynamically add plugin-specific routes
-	ctx     context.Context        // Context shared across plugin execution
-	mu      sync.RWMutex           // Mutex to manage concurrent plugin map access
+	runtime wazero.Runtime     // Wazero runtime used to compile and instantiate WASM modules
+	plugins map[string]*Plugin // Registered plugin instances by name
+	router  *gin.Engine        // Gin router to dynamically add plugin-specific routes
+	ctx     context.Context    // Context shared across plugin execution
+	mu      sync.RWMutex       // Mutex to manage concurrent plugin map access
 }
 
 // Plugin represents a single loaded WASM plugin and its runtime details.
 type Plugin struct {
-	Manifest *PluginManifest       // Plugin metadata and configuration from plugin.yml
-	Module   api.Module            // Compiled WASM module
-	Instance api.Module            // Instantiated WASM module
-	Status   string                // Current status (e.g., Running, Stopped)
-	LoadTime time.Time             // Timestamp when the plugin was loaded
+	Manifest *PluginManifest // Plugin metadata and configuration from plugin.yml
+	Module   api.Module      // Compiled WASM module
+	Instance api.Module      // Instantiated WASM module
+	Status   string          // Current status (e.g., Running, Stopped)
+	LoadTime time.Time       // Timestamp when the plugin was loaded
 }
 
 // PluginManifest defines the plugin.yml schema for plugin configuration.
 type PluginManifest struct {
-	Name    string            `yaml:"name"`    // Unique name of the plugin (used to identify .wasm file)
-	Routes  []PluginRoute     `yaml:"routes"`  // HTTP API routes the plugin exposes
-	Backend bool              `yaml:"backend"` // Whether plugin requires backend API exposure
+	Name    string        `yaml:"name"`    // Unique name of the plugin (used to identify .wasm file)
+	Routes  []PluginRoute `yaml:"routes"`  // HTTP API routes the plugin exposes
+	Backend bool          `yaml:"backend"` // Whether plugin requires backend API exposure
 }
 
 // PluginRoute describes a single HTTP route exposed by a plugin.
@@ -134,7 +134,7 @@ func (pm *PluginManager) registerPluginRoutes(plugin *Plugin) {
 			group.GET(route.Path, handler)
 		case "POST":
 			group.POST(route.Path, handler)
-		// Add support for PUT, DELETE, etc. if needed
+			// Add support for PUT, DELETE, etc. if needed
 		}
 	}
 }
