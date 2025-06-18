@@ -2494,7 +2494,6 @@ const TreeViewComponent = (_props: TreeViewComponentProps) => {
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    zIndex: 10,
                   }}
                 >
                   <Box
