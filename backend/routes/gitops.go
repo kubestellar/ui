@@ -23,7 +23,6 @@ func SetupAllRoutes(router *gin.Engine) {
 	setupResourceRoutes(router)
 	setupClusterRoutes(router)
 	setupBindingPolicyRoutes(router)
-	setupPluginRoutes(router)
 }
 
 // setupHealthRoutes registers health check and monitoring routes
