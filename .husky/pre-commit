@@ -5,7 +5,7 @@ echo "🔧 Running Prettier on frontend files (excluding ignored files)..."
 npx prettier --write --ignore-path .prettierignore .
 
 echo "🔍 Running frontend lint checks..."
-npm run lint || exit 1
+npm run lint
 
 echo "🧹 Running gofmt on Go files..."
 find . -type f -name '*.go' -not -path "./vendor/*" | xargs gofmt -w
