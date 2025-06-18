@@ -628,7 +628,6 @@ func SearchArtifactHubAdvance(c *gin.Context) {
 	})
 }
 
-
 // GetArtifactHubPackageAdvanceDetails retrieves comprehensive details for a specific package with all metadata
 func GetArtifactHubPackageAdvanceDetails(c *gin.Context) {
 	packageID := c.Param("packageId")
@@ -750,8 +749,6 @@ func getPackageVersions(repoType, orgName, chartName string) ([]map[string]inter
 	log.Printf("[INFO] Fetched %d versions for %s", len(versions), chartName)
 	return versions, nil
 }
-
-
 
 // getInstallationInstructions fetches installation instructions for a package.
 func getInstallationInstructions(repoType, orgName, chartName, version string) (string, error) {
