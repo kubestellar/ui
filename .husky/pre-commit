@@ -7,21 +7,21 @@ npx prettier --write --ignore-path .prettierignore .
 echo "🔍 Running frontend lint checks..."
 npm run lint
 
-echo "🧹 Running gofmt on Go files..."
+echo "🧹 Running gofmt on Go files (excluding vendor)..."
 find . -type f -name '*.go' -not -path "./vendor/*" | xargs gofmt -w
 
-echo "🧪 Running golint (optional)..."
+echo "🧪 Running golint on Go files (excluding vendor)..."
 if command -v golint >/dev/null 2>&1; then
-  golint ./... || echo "ℹ️ golint produced warnings (non-blocking)."
+  find . -type f -name '*.go' -not -path "./vendor/*" | xargs golint || echo "ℹ️ golint produced warnings (non-blocking)."
 else
   echo "⚠️ golint not installed. Run: go install golang.org/x/lint/golint@latest"
 fi
 
-echo "🔒 Running gosec for security checks..."
+echo "🔒 Running gosec for security checks (excluding vendor)..."
 if command -v gosec >/dev/null 2>&1; then
-  gosec ./... || echo "⚠️ gosec found issues."
+  gosec $(go list ./... | grep -v /vendor/) || echo "⚠️ gosec found issues."
 else
   echo "ℹ️ gosec not installed. Run: go install github.com/securego/gosec/v2/cmd/gosec@latest"
 fi
 
-echo "✅ All pre-commit checks passed."
+echo "✅ All pre-commit checks
