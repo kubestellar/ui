@@ -36,6 +36,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install OCI CLI
+        run: |
+          curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh | bash -s -- --accept-all-defaults
+          echo "$HOME/bin" >> $GITHUB_PATH
+
       - name: Set up KUBECONFIG from secret
         run: |
           echo "${{ secrets.OCI_KUBECONFIG }}" | base64 --decode > kubeconfig
