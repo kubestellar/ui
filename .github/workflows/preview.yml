@@ -3,7 +3,12 @@ name: Deploy Kubestellar UI Preview
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Pull Request Number (for preview env name)'
+        required: true
+        
 jobs:
   preview:
     runs-on: ubuntu-latest
