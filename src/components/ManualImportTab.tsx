@@ -63,11 +63,11 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
   setSnackbar,
   successAlertRef,
   setManualCommand,
-  showLogs,           // ADD THESE
-  setShowLogs,        // ADD THESE
-  onboardingStatus,   // ADD THESE
-  setOnboardingStatus, // ADD THESE
-  setOnboardingError, // ADD THESE
+  showLogs, 
+  setShowLogs, 
+  onboardingStatus, 
+  setOnboardingStatus, 
+  setOnboardingError, 
 }) => {
   const { t } = useTranslation();
   const textColor = theme === 'dark' ? colors.white : colors.text;
@@ -83,7 +83,8 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
         const successCommand = {
           clusterName: formData.clusterName,
           token: '',
-          command: 'Cluster onboarded successfully! The cluster is now being added to the platform.',
+          command:
+            'Cluster onboarded successfully! The cluster is now being added to the platform.',
         };
         clearManualCommand();
         setTimeout(() => {
@@ -97,14 +98,14 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
       }
     }, 2000);
   };
-  
+
   const handleOnboard = () => {
     if (!formData.clusterName.trim()) return;
     setShowLogs(true);
     handleGenerateCommand();
-    setOnboardingStatus('processing');  // ADD THIS
-    setOnboardingError(null);          // ADD THIS
-    setManualLoading(true); // ADD THIS - Set loading to true when starting
+    setOnboardingStatus('processing'); 
+    setOnboardingError(null); 
+    setManualLoading(true); 
 
     // Reset loading state after WebSocket takes over
     setTimeout(() => {
@@ -225,7 +226,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
             theme={theme}
             colors={colors}
             setOnboardingStatus={setOnboardingStatus}
-            setOnboardingError={ setOnboardingError}
+            setOnboardingError={setOnboardingError}
           />
         )}
 

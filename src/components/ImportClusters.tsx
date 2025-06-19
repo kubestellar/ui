@@ -197,9 +197,10 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
   const theme = useTheme(state => state.theme);
   const textColor = theme === 'dark' ? 'white' : 'black';
   const bgColor = theme === 'dark' ? '#1F2937' : 'background.paper';
-  // const [tabValue, setTabValue] = useState(0);
   const [showLogs, setShowLogs] = useState(false);
-  const [onboardingStatus, setOnboardingStatus] = useState<'idle' | 'processing' | 'success' | 'failed'>('idle');
+  const [onboardingStatus, setOnboardingStatus] = useState<
+    'idle' | 'processing' | 'success' | 'failed'
+  >('idle');
   const [onboardingError, setOnboardingError] = useState<string | null>(null);
   // Define colors first, before any styling objects that use it
   const colors: Colors = {
@@ -228,19 +229,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
     token: '',
     hubApiServer: '',
   });
-  
-  // const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-  //   // If onboarding is in progress, mark it as interrupted
-  //   if (showLogs) {
-  //     setOnboardingStatus('failed');
-  //     setOnboardingError('Onboarding process was interrupted');
-  //     setShowLogs(false);
-  //     setManualLoading(false); // ADD THIS - Reset loading state on tab switch
 
-  //   }
-    
-  //   setTabValue(newValue);
-  // };
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -999,12 +988,12 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                   successAlertRef={successAlertRef}
                   setManualCommand={setManualCommand}
                   setManualLoading={setManualLoading}
-                  showLogs={showLogs}                    // ADD THESE
-                  setShowLogs={setShowLogs}              // ADD THESE
-                  onboardingStatus={onboardingStatus}    // ADD THESE
-                  setOnboardingStatus={setOnboardingStatus} // ADD THESE
-                  onboardingError={onboardingError}      // ADD THESE
-                  setOnboardingError={setOnboardingError} // ADD THESE
+                  showLogs={showLogs} 
+                  setShowLogs={setShowLogs} 
+                  onboardingStatus={onboardingStatus} 
+                  setOnboardingStatus={setOnboardingStatus} 
+                  onboardingError={onboardingError} 
+                  setOnboardingError={setOnboardingError} 
                 />
               )}
             </Box>

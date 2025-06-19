@@ -18,7 +18,6 @@ import { useTranslation } from 'react-i18next';
 import { Colors, CommandResponse } from './ImportClusters';
 import OnboardingLogsDisplay from './OnboardingLogsDisplay';
 import CancelButton from './common/CancelButton';
-
 interface QuickConnectProps {
   theme: string;
   colors: Colors;
@@ -53,7 +52,6 @@ interface QuickConnectProps {
   setOnboardingStatus: (status: 'idle' | 'processing' | 'success' | 'failed') => void;
   onboardingError: string | null;
   setOnboardingError: (error: string | null) => void;
-
 }
 
 const QuickConnectTab: React.FC<QuickConnectProps> = ({
@@ -77,11 +75,11 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
   setSnackbar,
   successAlertRef,
   setManualCommand,
-  showLogs,              // ADD THESE
-  setShowLogs,           // ADD THESE
-  onboardingStatus,      // ADD THESE
-  setOnboardingStatus,   // ADD THESE
-  setOnboardingError,    // ADD THESE
+  showLogs, // 
+  setShowLogs, // 
+  onboardingStatus, // 
+  setOnboardingStatus, // 
+  setOnboardingError, // 
 }) => {
   const { t } = useTranslation();
   const textColor = theme === 'dark' ? colors.white : colors.text;
@@ -120,7 +118,8 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
         const successCommand = {
           clusterName: formData.clusterName,
           token: '',
-          command: 'Cluster onboarded successfully! The cluster is now being added to the platform.',
+          command:
+            'Cluster onboarded successfully! The cluster is now being added to the platform.',
         };
         clearManualCommand();
         setTimeout(() => {
@@ -134,14 +133,13 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
       }
     }, 2000);
   };
-  
 
   const handleOnboard = () => {
     if (!formData.clusterName.trim()) return;
     setShowLogs(true);
     handleGenerateCommand();
-    setOnboardingStatus('processing');  // ADD THIS
-    setOnboardingError(null);          // ADD THIS
+    setOnboardingStatus('processing'); 
+    setOnboardingError(null); 
 
     // Reset loading state after WebSocket takes over
     setTimeout(() => {
@@ -351,8 +349,8 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
                   onComplete={handleOnboardingComplete}
                   theme={theme}
                   colors={colors}
-                  setOnboardingStatus={setOnboardingStatus}  // ADD THIS
-                  setOnboardingError={setOnboardingError}    // ADD THIS
+                  setOnboardingStatus={setOnboardingStatus} // ADD THIS
+                  setOnboardingError={setOnboardingError} // ADD THIS
                 />
               </Box>
             </Fade>
@@ -397,8 +395,6 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
     </Box>
   );
 };
-
-
 
 // Success view component shown after successful onboarding
 const SuccessView: React.FC<{
