@@ -109,6 +109,8 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
       }
     };
   }, [showLogs, onboardingStatus, setOnboardingStatus, setOnboardingError]);
+  });
+
   // This function will be called when the onboarding is completed via logs
   const handleOnboardingComplete = () => {
     setTimeout(() => {

@@ -434,7 +434,6 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                 errorMessage =
                   "Could not find the required context 'its1'. Please ensure your kubeconfig is properly set up with the ITS hub context.";
               } else {
-                // Include the actual server error for specific issues
                 errorMessage = `Server error: ${serverError}`;
               }
             } else {
@@ -446,10 +445,16 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
               'API endpoint not found. Please check if the service is properly deployed.';
             console.log('[DEBUG] 404 error - API endpoint not found');
           } else if (status === 401 || status === 403) {
-            errorMessage = 'Authorization failed. Please check your credentials and permissions.';
             console.log('[DEBUG] Auth error:', status);
+            setManualLoading(false);
+            setSnackbar({
+              open: true,
+              message: 'Authorization failed. Please log in again.',
+              severity: 'error',
+            });
+            return;
           } else {
-            errorMessage = `Request failed with status code ${status}. Please try again later.`;
+            errorMessage = 'Request failed. Please try again later.';
             console.log('[DEBUG] Other status error:', status);
           }
         } else if (axiosError.request) {

@@ -1,16 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  Button,
-  TextField,
-  InputAdornment,
-  Box,
-  Menu,
-  MenuItem,
-  Chip,
-  Typography,
-  IconButton,
-} from '@mui/material';
-import { Search, Filter, Plus, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Button, Box, Menu, MenuItem, Chip, Typography } from '@mui/material';
+import { Filter, Plus, Trash2 } from 'lucide-react';
 import CloseIcon from '@mui/icons-material/Close';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import CreateBindingPolicyDialog, { PolicyData } from '../CreateBindingPolicyDialog';
@@ -18,6 +8,7 @@ import useTheme from '../../../stores/themeStore';
 import { ManagedCluster, Workload } from '../../../types/bindingPolicy';
 import Fade from '@mui/material/Fade';
 import { useTranslation } from 'react-i18next';
+import SearchBox from '../../common/SearchBox';
 
 interface BPHeaderProps {
   searchQuery: string;
@@ -87,8 +78,6 @@ const BPHeader: React.FC<BPHeaderProps> = ({
     { value: 'Inactive', label: t('bindingPolicy.statusFilter.inactive'), color: colors.error },
   ];
 
-  const searchInputRef = useRef<HTMLInputElement>(null);
-
   const handleFilterClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -116,26 +105,14 @@ const BPHeader: React.FC<BPHeaderProps> = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (createDialogOpen) return;
 
-      if ((e.ctrlKey && e.key === 'f') || e.key === '/') {
-        e.preventDefault();
-        if (searchInputRef.current) {
-          searchInputRef.current.focus();
-        }
-      }
-
-      if (e.key === 'Escape') {
-        if (document.activeElement === searchInputRef.current && searchInputRef.current) {
-          setSearchQuery('');
-          searchInputRef.current.blur();
-        } else {
-          if (activeFilters) setActiveFilters({});
-        }
+      if (e.key === 'Escape' && !searchFocused) {
+        if (activeFilters) setActiveFilters({});
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [createDialogOpen, searchQuery, activeFilters]);
+  }, [createDialogOpen, searchFocused, activeFilters]);
 
   return (
     <div style={{ color: colors.text }}>
@@ -169,88 +146,17 @@ const BPHeader: React.FC<BPHeaderProps> = ({
             backdropFilter: 'blur(8px)',
           }}
         >
-          <div
-            className={`relative flex-grow transition-all ${searchFocused ? 'max-w-lg' : 'max-w-sm'}`}
-          >
-            <TextField
-              placeholder={t('bindingPolicy.header.searchPlaceholder')}
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-              variant="outlined"
-              inputRef={searchInputRef}
-              fullWidth
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search
-                      style={{
-                        color: searchFocused ? colors.primary : colors.textSecondary,
-                        transition: 'color 0.2s ease',
-                      }}
-                    />
-                  </InputAdornment>
-                ),
-                endAdornment: searchQuery ? (
-                  <InputAdornment position="end">
-                    <IconButton
-                      size="small"
-                      onClick={() => setSearchQuery('')}
-                      edge="end"
-                      style={{ color: colors.textSecondary }}
-                      className="transition-all duration-200 hover:bg-opacity-80"
-                    >
-                      <CloseIcon fontSize="small" />
-                    </IconButton>
-                  </InputAdornment>
-                ) : null,
-                style: {
-                  color: colors.text,
-                  padding: '8px 10px',
-                  borderRadius: '12px',
-                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
-                },
-              }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '12px',
-                  transition: 'all 0.3s ease',
-                  minHeight: '32px',
-                  '& input': {
-                    padding: '8px 0',
-                  },
-                  '& fieldset': {
-                    borderColor: searchFocused ? colors.primary : colors.border,
-                    borderWidth: searchFocused ? '2px' : '1px',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: searchFocused ? colors.primary : colors.primaryLight,
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: colors.primary,
-                    boxShadow: isDark
-                      ? '0 0 0 4px rgba(47, 134, 255, 0.15)'
-                      : '0 0 0 4px rgba(47, 134, 255, 0.1)',
-                  },
-                },
-              }}
-            />
-
-            {searchFocused && (
-              <Typography
-                variant="caption"
-                style={{
-                  color: colors.textSecondary,
-                  position: 'absolute',
-                  bottom: '-20px',
-                  left: '8px',
-                }}
-              >
-                {t('bindingPolicy.header.clearSearch')}
-              </Typography>
-            )}
-          </div>
+          <SearchBox
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder={t('bindingPolicy.header.searchPlaceholder')}
+            colors={colors}
+            isDark={isDark}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
+            showHint={searchFocused}
+            hintText={t('bindingPolicy.header.clearSearch')}
+          />
 
           <div className="flex items-center gap-3">
             {hasSelectedPolicies && (

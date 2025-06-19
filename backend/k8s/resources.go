@@ -5,17 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
-	"gopkg.in/yaml.v3"
 	"io"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/dynamic/dynamicinformer"
-	"k8s.io/client-go/tools/cache"
 	"log"
 	"net/http"
 	"reflect"
@@ -23,6 +13,18 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
+	"gopkg.in/yaml.v3"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/dynamic/dynamicinformer"
+	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/util/retry"
 )
 
 // mapResourceToGVR maps resource types to their GroupVersionResource (GVR)
@@ -341,7 +343,7 @@ func ListResources(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-// UpdateResource updates an existing Kubernetes resource
+// UpdateResource updates an existing Kubernetes resource with retry logic
 func UpdateResource(c *gin.Context) {
 	cookieContext, err := c.Cookie("ui-wds-context")
 	if err != nil {
@@ -355,7 +357,7 @@ func UpdateResource(c *gin.Context) {
 
 	resourceKind := c.Param("resourceKind")
 	namespace := c.Param("namespace")
-	name := c.Param("name") // Extract resource name
+	name := c.Param("name")
 
 	discoveryClient := clientset.Discovery()
 	gvr, isNamespaced, err := getGVR(discoveryClient, resourceKind)
@@ -363,8 +365,8 @@ func UpdateResource(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
 		return
 	}
-	var resource dynamic.ResourceInterface
 
+	var resource dynamic.ResourceInterface
 	if isNamespaced {
 		resource = dynamicClient.Resource(gvr).Namespace(namespace)
 	} else {
@@ -377,11 +379,31 @@ func UpdateResource(c *gin.Context) {
 		return
 	}
 
-	// Ensure the resource has a name before updating
+	// Prepare unstructured object from client
 	resourceObj := &unstructured.Unstructured{Object: resourceData}
 	resourceObj.SetName(name)
-	// TODO: Retry Logic
-	result, err := resource.Update(c, resourceObj, v1.UpdateOptions{})
+
+	var result *unstructured.Unstructured
+
+	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		current, getErr := resource.Get(c, name, v1.GetOptions{})
+		if getErr != nil {
+			return fmt.Errorf("failed to get current resource: %w", getErr)
+		}
+
+		for k, v := range resourceObj.Object {
+			current.Object[k] = v
+		}
+
+		updated, updateErr := resource.Update(c, current, v1.UpdateOptions{})
+		if updateErr != nil {
+			return fmt.Errorf("update failed: %w", updateErr)
+		}
+
+		result = updated
+		return nil
+	})
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
