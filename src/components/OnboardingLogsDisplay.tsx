@@ -50,7 +50,10 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
     const connectWebSocket = () => {
       try {
         const encodedClusterName = encodeURIComponent(clusterName);
-        const ws = new WebSocket(`ws://localhost:4000/ws/onboarding?cluster=${encodedClusterName}`);
+        const baseUrl = process.env.VITE_BASE_URL || 'http://localhost:4000';
+        const wsProtocol = baseUrl.startsWith('https') ? 'wss' : 'ws';
+        const host = baseUrl.replace(/^https?:\/\//, ''); 
+        const ws = new WebSocket(`${wsProtocol}://${host}/ws/onboarding?cluster=${encodedClusterName}`);
         wsRef.current = ws;
 
         ws.onopen = () => {
