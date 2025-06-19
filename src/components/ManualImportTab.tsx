@@ -76,7 +76,7 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
   const handleOnboardingComplete = () => {
     setTimeout(() => {
       setShowLogs(false);
-      setManualLoading(false); 
+      setManualLoading(false);
 
       // Only set success command if onboarding was successful
       if (onboardingStatus === 'success' && !manualCommand) {

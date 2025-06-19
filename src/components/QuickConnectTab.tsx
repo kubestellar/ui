@@ -75,11 +75,11 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
   setSnackbar,
   successAlertRef,
   setManualCommand,
-  showLogs, 
-  setShowLogs, 
-  onboardingStatus, 
-  setOnboardingStatus, 
-  setOnboardingError, 
+  showLogs,
+  setShowLogs,
+  onboardingStatus,
+  setOnboardingStatus,
+  setOnboardingError,
 }) => {
   const { t } = useTranslation();
   const textColor = theme === 'dark' ? colors.white : colors.text;
@@ -349,8 +349,8 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
                   onComplete={handleOnboardingComplete}
                   theme={theme}
                   colors={colors}
-                  setOnboardingStatus={setOnboardingStatus} 
-                  setOnboardingError={setOnboardingError} 
+                  setOnboardingStatus={setOnboardingStatus}
+                  setOnboardingError={setOnboardingError}
                 />
               </Box>
             </Fade>
