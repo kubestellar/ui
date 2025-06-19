@@ -20,14 +20,16 @@ jobs:
     steps:
       - name: Set PR context
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "PR_NUMBER=${{ inputs.pr_number }}" >> $GITHUB_ENV
-          else
-            echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
-          fi
-          echo "NAMESPACE=ks-ui-pr-$PR_NUMBER" >> $GITHUB_ENV
-          echo "IMAGE_TAG=pr-$PR_NUMBER" >> $GITHUB_ENV
-          echo "PREVIEW_HOST=ks-ui-pr-$PR_NUMBER.${{ env.DOMAIN_SUFFIX }}" >> $GITHUB_ENV
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            PR_NUMBER="${{ inputs.pr_number }}"
+            else
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+            fi
+
+            echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+            echo "NAMESPACE=ks-ui-pr-$PR_NUMBER" >> $GITHUB_ENV
+            echo "IMAGE_TAG=pr-$PR_NUMBER" >> $GITHUB_ENV
+            echo "PREVIEW_HOST=ks-ui-pr-$PR_NUMBER.${{ env.DOMAIN_SUFFIX }}" >> $GITHUB_ENV
 
       - name: Checkout PR code
         uses: actions/checkout@v4
