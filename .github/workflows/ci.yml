@@ -61,7 +61,7 @@ jobs:
   backend:
     name: Backend Checks
     runs-on: ubuntu-latest
-    
+
     services:
       redis:
         image: redis:7-alpine
