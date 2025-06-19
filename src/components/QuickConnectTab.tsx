@@ -108,7 +108,7 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
         setManualLoading(false); // Reset loading state
       }
     };
-  }, [showLogs, onboardingStatus, setOnboardingStatus, setOnboardingError,setManualLoading]);
+  }, [showLogs, onboardingStatus, setOnboardingStatus, setOnboardingError, setManualLoading]);
   const handleOnboardingComplete = () => {
     setTimeout(() => {
       setShowLogs(false);
