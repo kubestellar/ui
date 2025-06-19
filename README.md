@@ -36,7 +36,7 @@ Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI 
 
 ## Prerequisites
 
-Before you begin, ensure that your system meets the following requirements:
+**Before you begin, ensure that your system meets the following requirements:**
 
 ### 1. Golang
 
@@ -62,7 +62,13 @@ Before you begin, ensure that your system meets the following requirements:
 - Ensure you have access to a Kubernetes clusters setup with Kubestellar Getting Started Guide & Kubestellar prerequisites installed
 
 - **Kubestellar guide**: [Guide](https://docs.kubestellar.io/release-0.25.1/direct/get-started/)
-  > [!NOTE] If you're running on macOS, you may need to manually add a host entry to resolve its1.localtest.me to localhost using `echo "127.0.0.1 its1.localtest.me" | sudo tee -a /etc/hosts`
+
+> [!NOTE]  
+> If you're running on macOS, you may need to manually add a host entry to resolve `its1.localtest.me` to `localhost` using:
+>
+> ```bash
+> echo "127.0.0.1 its1.localtest.me" | sudo tee -a /etc/hosts
+> ```
 
 ### 5. Make and Air
 
@@ -325,6 +331,12 @@ REDIS_IMAGE=redis:7-alpine docker compose up
 
 - **Username: admin**
 - **Password: admin**
+
+> [!NOTE]  
+> If you're encountering errors while setting up the Kubestellar UI, even after correctly following the guide, try pruning the Docker images and containers related to the KS core.  
+> Rebuild them and perform a restart.
+>
+> This resolves almost 80% of issues caused by overridden changes during installation on existing systems.
 
 <div>
 <h2><font size="6"><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Red%20Heart.png" alt="Red Heart" width="40" height="40" /> Contributors </font></h2>
