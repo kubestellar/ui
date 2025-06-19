@@ -24,4 +24,4 @@ else
   echo "ℹ️ gosec not installed. Run: go install github.com/securego/gosec/v2/cmd/gosec@latest"
 fi
 
-echo "✅ All pre-commit checks
+echo "✅ All pre-commit checks"
