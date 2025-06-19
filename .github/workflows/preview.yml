@@ -1,0 +1,97 @@
+name: Deploy Kubestellar UI Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      NAMESPACE: ks-ui-pr-${{ github.event.pull_request.number }}
+      IMAGE_NAME: ks-ui
+      IMAGE_TAG: pr-${{ github.event.pull_request.number }}
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up KUBECONFIG from secret
+        run: |
+          echo "${{ secrets.OCI_KUBECONFIG }}" | base64 --decode > kubeconfig
+          export KUBECONFIG=$PWD/kubeconfig
+          echo "KUBECONFIG=$PWD/kubeconfig" >> $GITHUB_ENV
+
+      - name: Create namespace for preview
+        run: |
+          kubectl create namespace $NAMESPACE || echo "Namespace already exists"
+
+      - name: Build UI image using Buildah
+        run: |
+          sudo apt-get update && sudo apt-get install -y buildah
+          buildah bud -t image-registry.openshift-image-registry.svc:5000/$NAMESPACE/$IMAGE_NAME:$IMAGE_TAG .
+          kubectl create imagestream $IMAGE_NAME -n $NAMESPACE || true
+          buildah push image-registry.openshift-image-registry.svc:5000/$NAMESPACE/$IMAGE_NAME:$IMAGE_TAG
+
+      - name: Deploy Kubestellar UI
+        run: |
+          cat <<EOF | kubectl apply -n $NAMESPACE -f -
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: ks-ui
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: ks-ui
+            template:
+              metadata:
+                labels:
+                  app: ks-ui
+              spec:
+                containers:
+                  - name: ks-ui
+                    image: image-registry.openshift-image-registry.svc:5000/$NAMESPACE/$IMAGE_NAME:$IMAGE_TAG
+                    ports:
+                      - containerPort: 4173
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: ks-ui
+          spec:
+            selector:
+              app: ks-ui
+            ports:
+              - port: 80
+                targetPort: 4173
+          ---
+          apiVersion: route.openshift.io/v1
+          kind: Route
+          metadata:
+            name: ks-ui
+          spec:
+            to:
+              kind: Service
+              name: ks-ui
+            port:
+              targetPort: 80
+            tls:
+              termination: edge
+EOF
+
+      - name: Get preview URL
+        id: geturl
+        run: |
+          ROUTE=$(kubectl get route ks-ui -n $NAMESPACE -o jsonpath='{.spec.host}')
+          echo "preview_url=https://$ROUTE" >> $GITHUB_OUTPUT
+
+      - name: Comment on PR with preview link
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            🚀 Kubestellar UI preview deployed: [View Preview](https://${{ steps.geturl.outputs.preview_url }})
