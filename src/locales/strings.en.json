@@ -22,6 +22,7 @@
     "warning": "Warning",
     "actions": "Actions",
     "status": {
+      "status": "Status",
       "active": "Active",
       "inactive": "Inactive",
       "pending": "Pending",
@@ -99,6 +100,7 @@
     },
     "documentationLink": "View full installation guide",
     "prerequisites": {
+      "prerequisites": "Prerequisites",
       "title": "System Prerequisites",
       "description": "Ensure these tools are installed before proceeding",
       "status": {
