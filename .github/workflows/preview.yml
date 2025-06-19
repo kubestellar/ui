@@ -34,13 +34,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up kubeconfig from secret
+      - name: Set up KUBECONFIG from secret
         run: |
           echo "${{ secrets.OCI_KUBECONFIG }}" | base64 --decode > kubeconfig
+          export KUBECONFIG=$PWD/kubeconfig
           echo "KUBECONFIG=$PWD/kubeconfig" >> $GITHUB_ENV
 
-      - name: Create namespace
-        run: kubectl create namespace $NAMESPACE || echo "Namespace already exists"
+      - name: Create namespace for preview
+        run: |
+          kubectl create namespace $NAMESPACE || echo "Namespace already exists"
 
       - name: Install Buildah
         run: |
@@ -51,7 +53,9 @@ jobs:
 
       - name: Build and push image to GHCR
         run: |
-          buildah bud -t $REGISTRY/$IMAGE_NAME:$IMAGE_TAG .
+          buildah bud \
+            --build-arg VITE_BASE_URL=https://$PREVIEW_HOST \
+            -t $REGISTRY/$IMAGE_NAME:$IMAGE_TAG .
           buildah push $REGISTRY/$IMAGE_NAME:$IMAGE_TAG
 
       - name: Deploy Kubestellar UI
