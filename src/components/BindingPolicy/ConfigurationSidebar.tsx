@@ -1,40 +1,40 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import {
-  Drawer,
-  Box,
-  Typography,
-  TextField,
-  Button,
-  IconButton,
-  Divider,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormControlLabel,
-  Switch,
-  Stack,
-  Chip,
-  Paper,
-  Alert,
-  Tooltip,
-  Tab,
-  Tabs,
-} from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
-import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import CloseIcon from '@mui/icons-material/Close';
+import CodeIcon from '@mui/icons-material/Code';
+import DeleteIcon from '@mui/icons-material/Delete';
+import FileCopyIcon from '@mui/icons-material/FileCopy';
 import InfoIcon from '@mui/icons-material/Info';
+import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import SaveIcon from '@mui/icons-material/Save';
 import ScheduleIcon from '@mui/icons-material/Schedule';
-import CodeIcon from '@mui/icons-material/Code';
 import TuneIcon from '@mui/icons-material/Tune';
-import FileCopyIcon from '@mui/icons-material/FileCopy';
-import { SelectChangeEvent } from '@mui/material';
-import CancelButton from '../common/CancelButton';
+import {
+  Alert,
+  Box,
+  Button,
+  Chip,
+  Divider,
+  Drawer,
+  FormControl,
+  FormControlLabel,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Select,
+  SelectChangeEvent,
+  Stack,
+  Switch,
+  Tab,
+  Tabs,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import CancelButton from '../common/CancelButton';
 
 // Scheduling rule types
 type OperatorType =
@@ -287,8 +287,8 @@ const ConfigurationSidebar: React.FC<ConfigurationSidebarProps> = ({
         .replace(/false/g, 'false')
         .replace(/null/g, 'null');
     } catch (error: unknown) {
-      return '# Error generating YAML preview';
       console.error('Error generating YAML preview:', error);
+      return '# Error generating YAML preview';
     }
   }, [
     name,

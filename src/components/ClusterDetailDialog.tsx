@@ -84,8 +84,8 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
         minute: '2-digit',
       });
     } catch (error) {
-      return dateString;
       console.error('Error formatting date:', error);
+      return dateString;
     }
   };
 
