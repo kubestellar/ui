@@ -397,9 +397,9 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
     } catch (error) {
       console.error('[DEBUG] Cluster onboarding error details:', error);
       let errorMessage = 'An unknown error occurred.';
-      setManualLoading(false); // MAKE SURE THIS IS HERE
-      setOnboardingStatus('failed'); // ADD THIS
-      setOnboardingError(errorMessage); // ADD THIS
+      setManualLoading(false); 
+      setOnboardingStatus('failed'); 
+      setOnboardingError(errorMessage); 
       // Type guard to check if error is an Error object
       if (error instanceof Error) {
         // Log error object structure for debugging
@@ -988,12 +988,12 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                   successAlertRef={successAlertRef}
                   setManualCommand={setManualCommand}
                   setManualLoading={setManualLoading}
-                  showLogs={showLogs} 
-                  setShowLogs={setShowLogs} 
-                  onboardingStatus={onboardingStatus} 
-                  setOnboardingStatus={setOnboardingStatus} 
-                  onboardingError={onboardingError} 
-                  setOnboardingError={setOnboardingError} 
+                  showLogs
+                  setShowLogs={setShowLogs}
+                  onboardingStatus={onboardingStatus}
+                  setOnboardingStatus={setOnboardingStatus}
+                  onboardingError={onboardingError}
+                  setOnboardingError={setOnboardingError}
                 />
               )}
             </Box>

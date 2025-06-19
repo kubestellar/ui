@@ -75,11 +75,11 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
   setSnackbar,
   successAlertRef,
   setManualCommand,
-  showLogs, // 
-  setShowLogs, // 
-  onboardingStatus, // 
-  setOnboardingStatus, // 
-  setOnboardingError, // 
+  showLogs, 
+  setShowLogs, 
+  onboardingStatus, 
+  setOnboardingStatus, 
+  setOnboardingError, 
 }) => {
   const { t } = useTranslation();
   const textColor = theme === 'dark' ? colors.white : colors.text;
@@ -138,8 +138,8 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
     if (!formData.clusterName.trim()) return;
     setShowLogs(true);
     handleGenerateCommand();
-    setOnboardingStatus('processing'); 
-    setOnboardingError(null); 
+    setOnboardingStatus('processing');
+    setOnboardingError(null);
 
     // Reset loading state after WebSocket takes over
     setTimeout(() => {
@@ -349,8 +349,8 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
                   onComplete={handleOnboardingComplete}
                   theme={theme}
                   colors={colors}
-                  setOnboardingStatus={setOnboardingStatus} // ADD THIS
-                  setOnboardingError={setOnboardingError} // ADD THIS
+                  setOnboardingStatus={setOnboardingStatus} 
+                  setOnboardingError={setOnboardingError} 
                 />
               </Box>
             </Fade>

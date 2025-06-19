@@ -32,8 +32,8 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
   onComplete,
   theme,
   colors,
-  setOnboardingStatus, 
-  setOnboardingError, 
+  setOnboardingStatus,
+  setOnboardingError,
 }) => {
   const { t } = useTranslation();
   const [logs, setLogs] = useState<LogMessage[]>([]);
