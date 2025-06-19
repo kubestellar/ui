@@ -1,0 +1,37 @@
+name: PR sync with dev branch
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  pr_commented:
+    name: Sync PR with dev
+    if: >
+      github.event.issue.pull_request &&
+      (github.event.comment.body == '/update' || github.event.comment.body == '/u')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.issue.pull_request.head.ref }}
+
+      - name: Setup Git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch all branches
+        run: git fetch origin
+
+      - name: Merge dev branch into PR branch
+        run: git merge origin/dev --no-edit || (echo "Merge conflicts detected" && exit 1)
+
+      # Push changes of PR branch after merging with dev branch from temp VM to our repo PR branch
+      - name: Push changes to repo
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git push origin HEAD:${{ github.event.issue.pull_request.head.ref }}
+          echo "Successfully merged dev into PR branch and pushed the changes to repo PR branch."
