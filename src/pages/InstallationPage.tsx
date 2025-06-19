@@ -955,7 +955,9 @@ const InstallationPage = () => {
                 <Server size={24} className="text-blue-400" />
               </div>
               <div>
-                <div className="text-sm text-slate-400">{t('installationPage.prerequisites.prerequisites')}</div>
+                <div className="text-sm text-slate-400">
+                  {t('installationPage.prerequisites.prerequisites')}
+                </div>
                 <div className="text-2xl font-semibold text-white">
                   {getPrereqStatusCounts().success} / {getPrereqStatusCounts().total}
                 </div>
