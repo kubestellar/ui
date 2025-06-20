@@ -1,3 +1,6 @@
+# This chart was originally developed by @MAVRICK-1
+# Source: https://github.com/MAVRICK-1/kubestellar-ui
+
 apiVersion: v2
 name: kubestellar-ui
 description: A Helm chart for Kubernetes
