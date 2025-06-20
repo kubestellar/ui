@@ -80,3 +80,69 @@ This document tracks the progress of the design system foundation efforts for th
   - Success Criteria
   - Scope Summary
 - Scoped initial focus areas: documentation site, core UI components, and frontend behavior improvements.
+
+### 📈 Structure & Strategy: Information Architecture & Flow Planning
+
+#### ✅ 1. Current Information Architecture (IA) Review
+
+- Mapped and documented the existing structure of KubeStellar’s documentation.
+- Identified scattered content, duplication, and inconsistent labeling across:
+  - Overview
+  - Getting Started
+  - Usage
+  - UI and Contributing sections
+
+#### 📂 2. IA Observations & Recommendations
+
+##### 🔍 Observations:
+- Conceptual, technical, and UI content is mixed without a clear hierarchy.
+- Repeated topics (e.g., Hosting Cluster) found in multiple places.
+- Use of generic folders like `/direct/` adds confusion.
+
+##### 📁 Recommended Hierarchy:
+- Clear top-level sections: Overview, Getting Started, Usage, Support, Community.
+- Max 3 levels deep to avoid overwhelming navigation.
+- Rename unclear labels (e.g., “User Guide” → “Using KubeStellar”).
+- Remove or replace generic paths like `/direct/`.
+
+##### 🧭 3. Navigation Design Assessment
+
+- **Header**: Needs better contrast on buttons, missing version & language switchers.
+- **Sidebar**: Suggest collapsible menus, hierarchy cleanup, and clearer labels.
+- **Footer**: Recommend adding feedback buttons, edit links, and community links.
+- **Breadcrumbs**: Currently missing; suggested for better page context.
+
+#### 🔄 4. Key User Flows Mapped
+
+##### 1. Manual Setup Flow
+- Goal: CLI-based installation via Helm and KubeFlex
+- Issue: Steps spread across multiple paths
+- Fix: Create a unified guide with diagrams
+
+##### 2. OCM-Based Setup Flow
+- Goal: Automate install using Open Cluster Management
+- Issue: Lack of comparison with manual setup, unclear CLI outputs
+- Fix: Add decision guide, validation steps, and architecture diagram
+
+##### 3. Workload Execution Flow
+- Goal: Register clusters, deploy workloads
+- Issue: Fragmented docs, complex concepts not simplified
+- Fix: Provide an end-to-end walkthrough with examples
+
+##### 4. Teardown Flow
+- Goal: Uninstall KubeStellar cleanly
+- Issue: No rollback, no multi-cluster instructions
+- Fix: Add pre-checklist, recovery steps, and cleanup scripts
+
+#### 🚧 5. Content & Functional Gaps Identified
+
+- Missing Quickstart guide
+- Repetition in Hosting Cluster setup
+- Incomplete or scattered UI documentation
+- No in-page search or user feedback mechanism
+- Lacks visuals (architecture/setup diagrams)
+- No glossary for technical terms
+
+
+
+
