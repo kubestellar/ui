@@ -13,9 +13,11 @@ jobs:
   preview:
     runs-on: ubuntu-latest
     env:
-      IMAGE_NAME: ks-ui
+      FRONTEND_IMAGE_NAME: ks-ui
+      BACKEND_IMAGE_NAME: ks-ui-backend
       REGISTRY: ghcr.io/${{ github.repository_owner }}
       DOMAIN_SUFFIX: preview.kubestellar.io
+      IMAGE_NAME: ${{ env.FRONTEND_IMAGE_NAME }}  
 
     steps:
       - name: Set PR context
@@ -67,13 +69,22 @@ jobs:
       - name: Login to GHCR
         run: echo ${{ secrets.GHCR_PAT }} | buildah login --username clubanderson --password-stdin ghcr.io
 
-      - name: Build and push frontend image to GHCR
+      - name: Build and push frontend and backend images
         run: |
+          echo "🔧 Building frontend..."
           buildah bud \
             --build-arg VITE_BASE_URL=http://backend:4000 \
-            -t $REGISTRY/$IMAGE_NAME:$IMAGE_TAG .
-          buildah push $REGISTRY/$IMAGE_NAME:$IMAGE_TAG
-          
+            -t $REGISTRY/$FRONTEND_IMAGE_NAME:$IMAGE_TAG .
+
+          echo "📦 Pushing frontend..."
+          buildah push $REGISTRY/$FRONTEND_IMAGE_NAME:$IMAGE_TAG
+
+          echo "🔧 Building backend..."
+          buildah bud -t $REGISTRY/$BACKEND_IMAGE_NAME:$IMAGE_TAG ./backend
+
+          echo "📦 Pushing backend..."
+          buildah push $REGISTRY/$BACKEND_IMAGE_NAME:$IMAGE_TAG
+                  
       - name: Deploy Kubestellar UI
         run: |
           cat <<EOF | kubectl apply -n $NAMESPACE -f -
@@ -134,7 +145,7 @@ jobs:
               spec:
                 containers:
                   - name: backend
-                    image: ghcr.io/kubestellar/ui/backend:latest
+                    image: g$REGISTRY/$BACKEND_IMAGE_NAME:$IMAGE_TAG
                     ports:
                       - containerPort: 4000
                     env:
