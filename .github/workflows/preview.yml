@@ -59,7 +59,7 @@ jobs:
             --docker-username=clubanderson \
             --docker-password=${{ secrets.GHCR_PAT }} \
             --docker-email=dev@kubestellar.io \
-            -n $NAMESPACE
+            -n $NAMESPACE || echo "✅ Secret already exists"
 
       - name: Install Buildah
         run: |
