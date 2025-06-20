@@ -282,6 +282,11 @@ VITE_BASE_URL=https://api.myapp.com NGINX_HOST=myapp.com docker compose up
 - `CORS_ALLOWED_ORIGIN` - CORS allowed origin (default: `http://localhost:5173`)
 - `REDIS_HOST` - Redis host (default: `localhost`)
 - `REDIS_PORT` - Redis port (default: `6379`)
+- `POSTGRES_HOST` - PostgreSQL host (default: `postgres`)
+- `POSTGRES_PORT` - PostgreSQL port (default: `5432`)
+- `POSTGRES_USER` - PostgreSQL user (default: `postgres`)
+- `POSTGRES_PASSWORD` - PostgreSQL password (default: `postgres`)
+- `POSTGRES_DB` - PostgreSQL database name (default: `kubestellar`)
 
 **Redis Variables:**
 
