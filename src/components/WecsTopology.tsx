@@ -829,7 +829,7 @@ const WecsTreeview = () => {
         }
       }
     },
-    [getTimeAgo, handleClosePanel, handleMenuOpen, theme, t]
+    [getTimeAgo, handleClosePanel, handleMenuOpen, theme]
   );
 
   const transformDataToTree = useCallback(
