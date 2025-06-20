@@ -15,6 +15,7 @@ services:
       - VITE_BASE_URL=${VITE_BASE_URL:-http://localhost:4000}
       - NGINX_HOST=${NGINX_HOST:-localhost}
       - BACKEND_URL=${BACKEND_URL:-http://localhost:4000}
+    network_mode: host
 
   backend:
     build:
@@ -36,12 +37,14 @@ services:
     depends_on:
       - redis
       - postgres
+    network_mode: host
 
   redis:
     image: '${REDIS_IMAGE:-ghcr.io/kubestellar/ui/redis:latest}'
     container_name: '${REDIS_CONTAINER_NAME:-kubestellar-redis}'
     ports:
       - '${REDIS_PORT:-6379}:6379'
+    network_mode: host
 
   postgres:
     image: postgres:16
@@ -54,6 +57,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    network_mode: host
 
 volumes:
   postgres_data:
