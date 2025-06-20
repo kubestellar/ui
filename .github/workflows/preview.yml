@@ -56,7 +56,7 @@ jobs:
           sudo apt-get update && sudo apt-get install -y buildah
 
       - name: Login to GHCR
-        run: echo ${{ secrets.GHCR_PAT }} | buildah login --username ${{ github.actor }} --password-stdin ghcr.io
+        run: echo ${{ secrets.GHCR_PAT }} | buildah login --username clubanderson --password-stdin ghcr.io
 
       - name: Build and push image to GHCR
         run: |
