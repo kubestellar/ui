@@ -144,7 +144,7 @@ jobs:
               spec:
                 containers:
                   - name: backend
-                    image: g$REGISTRY/$BACKEND_IMAGE_NAME:$IMAGE_TAG
+                    image: $REGISTRY/$BACKEND_IMAGE_NAME:$IMAGE_TAG
                     ports:
                       - containerPort: 4000
                     env:
