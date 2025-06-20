@@ -12,10 +12,12 @@ import (
 	"github.com/kubestellar/ui/routes"
 
 	"github.com/kubestellar/ui/api"
+	"github.com/kubestellar/ui/postgresql"
 	"go.uber.org/zap"
 )
 
 func main() {
+	postgresql.ConnectDB()
 	initLogger()
 	router := gin.Default()
 
