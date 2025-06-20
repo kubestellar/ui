@@ -67,16 +67,84 @@ jobs:
       - name: Login to GHCR
         run: echo ${{ secrets.GHCR_PAT }} | buildah login --username clubanderson --password-stdin ghcr.io
 
-      - name: Build and push image to GHCR
+      - name: Build and push frontend image to GHCR
         run: |
           buildah bud \
-            --build-arg VITE_BASE_URL=https://$PREVIEW_HOST \
+            --build-arg VITE_BASE_URL=http://backend:4000 \
             -t $REGISTRY/$IMAGE_NAME:$IMAGE_TAG .
           buildah push $REGISTRY/$IMAGE_NAME:$IMAGE_TAG
-
+          
       - name: Deploy Kubestellar UI
         run: |
           cat <<EOF | kubectl apply -n $NAMESPACE -f -
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: redis
+          spec:
+            ports:
+              - port: 6379
+            selector:
+              app: redis
+          ---
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: redis
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: redis
+            template:
+              metadata:
+                labels:
+                  app: redis
+              spec:
+                containers:
+                  - name: redis
+                    image: ghcr.io/kubestellar/ui/redis:latest
+                    ports:
+                      - containerPort: 6379
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: backend
+          spec:
+            ports:
+              - port: 4000
+            selector:
+              app: backend
+          ---
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: backend
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: backend
+            template:
+              metadata:
+                labels:
+                  app: backend
+              spec:
+                containers:
+                  - name: backend
+                    image: ghcr.io/kubestellar/ui/backend:latest
+                    ports:
+                      - containerPort: 4000
+                    env:
+                      - name: REDIS_HOST
+                        value: redis
+                      - name: REDIS_PORT
+                        value: "6379"
+                      - name: CORS_ALLOWED_ORIGIN
+                        value: http://ks-ui
+          ---              
           apiVersion: apps/v1
           kind: Deployment
           metadata:
@@ -98,6 +166,15 @@ jobs:
                     image: $REGISTRY/$IMAGE_NAME:$IMAGE_TAG
                     ports:
                       - containerPort: 4173
+                    env:
+                      - name: VITE_BASE_URL
+                        value: http://backend:4000
+                      - name: VITE_SKIP_PREREQUISITES_CHECK
+                        value: "true"
+                      - name: NGINX_HOST
+                        value: ks-ui
+                      - name: BACKEND_URL
+                        value: http://backend:4000
           ---
           apiVersion: v1
           kind: Service
