@@ -142,6 +142,8 @@ jobs:
                 labels:
                   app: backend
               spec:
+                imagePullSecrets:
+                  - name: ghcr-secret
                 containers:
                   - name: backend
                     image: $REGISTRY/$BACKEND_IMAGE_NAME:$IMAGE_TAG
