@@ -134,7 +134,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
             <Server size={22} style={{ color: colors.primary }} />
           </div>
           <Typography variant="h6" component="span" sx={{ fontWeight: 600 }}>
-            {t('clusterDetailDialog.title')}
+            {t('clusters.clusterDetailDialog.title')}
           </Typography>
         </div>
         <IconButton
@@ -172,7 +172,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
           >
             <CircularProgress style={{ color: colors.primary }} size={40} thickness={4} />
             <Typography variant="body2" color={colors.textSecondary}>
-              {t('clusterDetailDialog.loading')}
+              {t('clusters.clusterDetailDialog.loading')}
             </Typography>
           </Box>
         ) : isError ? (
@@ -189,9 +189,11 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
           >
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Typography variant="body1" fontWeight={500}>
-                {t('clusterDetailDialog.error.title')}
+                {t('clusters.clusterDetailDialog.error.title')}
               </Typography>
-              <Typography variant="body2">{t('clusterDetailDialog.error.description')}</Typography>
+              <Typography variant="body2">
+                {t('clusters.clusterDetailDialog.error.description')}
+              </Typography>
               <Button
                 size="small"
                 onClick={() => refetch()}
@@ -308,8 +310,8 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                       }
                       label={
                         clusterDetails.available
-                          ? t('clusterDetailDialog.status.available')
-                          : t('clusterDetailDialog.status.unavailable')
+                          ? t('cluster.clusterDetailDialog.status.available')
+                          : t('cluster.clusterDetailDialog.status.unavailable')
                       }
                       sx={{
                         backgroundColor: clusterDetails.available
@@ -354,7 +356,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                     {clusterDetails.status?.version?.kubernetes && (
                       <Chip
                         icon={<VerifiedUserIcon fontSize="small" />}
-                        label={t('clusterDetailDialog.kubernetes', {
+                        label={t('clusters.clusterDetailDialog.kubernetes', {
                           version: clusterDetails.status.version.kubernetes,
                         })}
                         sx={{
@@ -391,7 +393,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
               >
                 <AccessTimeIcon fontSize="small" />
                 <Typography variant="body2">
-                  {t('clusterDetailDialog.createdOn', {
+                  {t('clusters.clusterDetailDialog.createdOn', {
                     date: formatDate(clusterDetails.creationTimestamp),
                   })}
                 </Typography>
@@ -448,7 +450,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                     textShadow: isDark ? '0 1px 2px rgba(0, 0, 0, 0.5)' : 'none',
                   }}
                 >
-                  {t('clusterDetailDialog.labels')}
+                  {t('clusters.clusterDetailDialog.labels')}
                 </Typography>
                 <Typography
                   variant="caption"
@@ -465,7 +467,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                     border: isDark ? '1px solid rgba(255, 255, 255, 0.2)' : 'none',
                   }}
                 >
-                  {t('clusterDetailDialog.labelCount', {
+                  {t('clusters.clusterDetailDialog.labelCount', {
                     count: Object.keys(clusterDetails.labels || {}).length,
                   })}
                 </Typography>
@@ -566,7 +568,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                         textAlign: 'center',
                       }}
                     >
-                      {t('clusterDetailDialog.noLabels')}
+                      {t('clusters.clusterDetailDialog.noLabels')}
                     </Typography>
                   </Box>
                 )}
@@ -624,7 +626,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                       textShadow: isDark ? '0 1px 2px rgba(0, 0, 0, 0.5)' : 'none',
                     }}
                   >
-                    {t('clusterDetailDialog.capacityResources')}
+                    {t('cluseters.clusterDetailDialog.capacityResources')}
                   </Typography>
                 </Box>
                 <Divider
@@ -714,7 +716,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                           textShadow: isDark ? '0 1px 2px rgba(0, 0, 0, 0.3)' : 'none',
                         }}
                       >
-                        {t('clusterDetailDialog.cpuCores')}
+                        {t('clusters.clusterDetailDialog.cpuCores')}
                       </Typography>
                       {isDark && (
                         <Box
@@ -812,7 +814,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                           textShadow: isDark ? '0 1px 2px rgba(0, 0, 0, 0.3)' : 'none',
                         }}
                       >
-                        {t('clusterDetailDialog.memory')}
+                        {t('clusters.clusterDetailDialog.memory')}
                       </Typography>
                       {isDark && (
                         <Box
@@ -907,7 +909,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
                           fontWeight: isDark ? 500 : 400,
                         }}
                       >
-                        {t('clusterDetailDialog.podCapacity')}
+                        {t('clusters.clusterDetailDialog.podCapacity')}
                       </Typography>
                     </Box>
                   </Grid>
@@ -916,7 +918,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
             )}
           </div>
         ) : (
-          <Typography>{t('clusterDetailDialog.noClusterSelected')}</Typography>
+          <Typography>{t('clusters.clusterDetailDialog.noClusterSelected')}</Typography>
         )}
       </DialogContent>
 
@@ -953,7 +955,7 @@ const ClusterDetailDialog: React.FC<ClusterDetailDialogProps> = ({
             }}
           >
             <AccessTimeIcon fontSize="inherit" />
-            {t('clusterDetailDialog.lastRefreshed')}: {new Date().toLocaleTimeString()}
+            {t('clusters.clusterDetailDialog.lastRefreshed')}: {new Date().toLocaleTimeString()}
           </Typography>
         </Box>
 
