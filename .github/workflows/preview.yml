@@ -51,6 +51,15 @@ jobs:
         run: |
           kubectl create namespace $NAMESPACE || echo "Namespace already exists"
 
+      - name: Create image pull secret in namespace
+        run: |
+          kubectl create secret docker-registry ghcr-secret \
+            --docker-server=ghcr.io \
+            --docker-username=clubanderson \
+            --docker-password=${{ secrets.GHCR_PAT }} \
+            --docker-email=dev@kubestellar.io \
+            -n $NAMESPACE
+
       - name: Install Buildah
         run: |
           sudo apt-get update && sudo apt-get install -y buildah
@@ -82,6 +91,8 @@ jobs:
                 labels:
                   app: ks-ui
               spec:
+                imagePullSecrets:
+                  - name: ghcr-secret
                 containers:
                   - name: ks-ui
                     image: $REGISTRY/$IMAGE_NAME:$IMAGE_TAG
