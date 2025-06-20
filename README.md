@@ -156,6 +156,18 @@ make dev
 go run main.go
 ```
 
+**Important:** If you run the backend directly (using `go run main.go` or `make dev`), you must ensure that both Redis and PostgreSQL are running and accessible on your local machine at the default ports (`127.0.0.1:6379` for Redis and `127.0.0.1:5432` for PostgreSQL). If they are not running, the backend will fail to start with connection errors.
+
+- To start Redis locally (if not using Docker Compose):
+  ```bash
+  docker run --name redis -d -p 6379:6379 redis
+  ```
+- To start PostgreSQL locally (if not using Docker Compose):
+  ```bash
+  docker run --name some-postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:16
+  ```
+  Or use your system's service manager (e.g., `sudo service postgresql start`).
+
 You should see output indicating the server is running on port `4000`.
 
 #### Step 4: Install and Run Frontend
@@ -173,6 +185,8 @@ You should see output indicating the server is running on port `5173`.
 ### Local Setup with Docker Compose
 
 If you prefer to run the application using Docker Compose, follow these steps:
+
+> **Recommended:** Using Docker Compose is the easiest way to ensure all services (backend, frontend, Redis, PostgreSQL) are started and networked correctly. This avoids most connection issues.
 
 #### Step 1: Ensure Docker is Installed
 
@@ -349,3 +363,34 @@ REDIS_IMAGE=redis:7-alpine docker compose up
 </a>
 </center>
 <br>
+
+## Troubleshooting
+
+### Backend Fails to Start: "connection refused" Errors
+
+If you see errors like:
+
+```
+Database not responding: dial tcp 127.0.0.1:5432: connect: connection refused
+pls check if redis is runnnig: dial tcp 127.0.0.1:6379: connect: connection refused
+```
+
+This means the backend cannot connect to Redis or PostgreSQL. To resolve:
+
+- **If running locally:**
+  - Make sure Redis and PostgreSQL are running on your host at the expected ports (6379 and 5432).
+  - You can use Docker to start them:
+    ```bash
+    docker run --name redis -d -p 6379:6379 redis
+    docker run --name some-postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:16
+    ```
+- **If using Docker Compose:**
+  - Run `docker compose up --build` from the project root. All services will be started and networked automatically.
+  - Make sure no other services are using ports 6379 or 5432 on your host.
+- **Mixing local and Dockerized services:**
+  - If you run the backend locally but want to connect to Redis/Postgres in Docker, ensure the ports are mapped and accessible (as in the Docker Compose file).
+  - You may need to set `REDIS_HOST` and `DB_HOST` environment variables to `localhost` if ports are mapped, or to the container name if running inside Docker.
+
+**Tip:** Docker Compose is the recommended way to avoid these issues.
+
+If you continue to have issues, check your firewall settings and ensure no other processes are using the required ports.

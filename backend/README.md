@@ -109,3 +109,62 @@ and how to create and interact with different types of control planes, such as
 ## Architecture
 
 ![image info](./docs/images/kubeflex-high-level-arch.png)
+
+# PostgreSQL Integration
+
+## Setup with Docker Compose
+
+The backend now requires a PostgreSQL database. Both backend and PostgreSQL services are configured in `docker-compose.yml`.
+
+### 1. Environment Variables
+
+The following environment variables are used for PostgreSQL connection (with defaults):
+
+- `POSTGRES_HOST` (default: `postgres`)
+- `POSTGRES_PORT` (default: `5432`)
+- `POSTGRES_USER` (default: `postgres`)
+- `POSTGRES_PASSWORD` (default: `postgres`)
+- `POSTGRES_DB` (default: `kubestellar`)
+
+You can override these in your shell or in a `.env` file.
+
+### 2. Running the Stack
+
+To start backend, frontend, Redis, and PostgreSQL together:
+
+```sh
+docker-compose up --build
+```
+
+This will:
+
+- Start a PostgreSQL container with persistent storage
+- Start the backend, which will connect to PostgreSQL using the above environment variables
+- Start frontend and Redis as before
+
+### 3. Database Persistence
+
+PostgreSQL data is stored in a Docker volume (`postgres_data`).
+
+### 4. Customizing Database Credentials
+
+You can set your own credentials by exporting environment variables before running compose:
+
+```sh
+export POSTGRES_USER=myuser
+export POSTGRES_PASSWORD=mypassword
+export POSTGRES_DB=mydb
+docker-compose up --build
+```
+
+### 5. Troubleshooting
+
+- Ensure ports 5432 (PostgreSQL) and 4000 (backend) are free.
+- Check logs with `docker-compose logs backend` or `docker-compose logs postgres`.
+
+### 6. Development Notes
+
+- The backend will log a successful connection to PostgreSQL on startup.
+- If the database is not ready, the backend will fail to start.
+
+---
