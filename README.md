@@ -152,6 +152,8 @@ go mod download
 # Option 1 : Start backend with hot reloading (recommended)
 make dev
 
+make migrate-up
+
 # Option 2 : Start backend without hot reloading
 go run main.go
 ```
@@ -321,6 +323,15 @@ REDIS_IMAGE=redis:7-alpine docker compose up
 > 1. Open Docker Desktop settings and ensure WSL integration is enabled for your distribution (e.g., Ubuntu).
 > 2. If the issue persists, consider uninstalling Docker Desktop from Windows and instead install Docker **directly inside your WSL environment** (e.g., Ubuntu).
 > 3. After installing Docker inside WSL, reinstall the KubeStellar. This setup typically resolves the detection issues. ✅
+
+### Migration Commands
+
+```
+cd backend
+make migrate-up
+make migrate-down
+make create-migration
+```
 
 ### Accessing the Application
 
