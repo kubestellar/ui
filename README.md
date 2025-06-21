@@ -163,6 +163,8 @@ You should see output indicating the server is running on port `4000`.
 Open another terminal and make sure you are in the root directory of the project.
 
 ```bash
+cd frontend
+
 npm install
 
 npm run dev

@@ -10,9 +10,9 @@ start-backend:
 	cd backend && go run ./main.go & echo $$! >> $(PID_FILE)
 
 start-frontend:
-	npm install
-	npm install vite@5.4.11
-	npm run dev & echo $$! >> $(PID_FILE)
+	cd frontend && npm install
+	cd frontend && npm install vite@5.4.11
+	cd frontend && npm run dev & echo $$! >> $(PID_FILE)
 
 # Stop all processes
 stop:

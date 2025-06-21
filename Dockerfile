@@ -8,11 +8,11 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y git
 
 # Copy package files for caching
-COPY package.json package-lock.json ./
+COPY frontend/package.json frontend/package-lock.json ./
 RUN npm install --legacy-peer-deps
 
 # Copy source code
-COPY . .
+COPY frontend/ .
 
 # Explicitly copy .git to access commit hash
 COPY .git .git
