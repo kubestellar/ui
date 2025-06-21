@@ -16,7 +16,6 @@ import AddIcon from '@mui/icons-material/Add';
 import InfoIcon from '@mui/icons-material/Info';
 import AddLinkIcon from '@mui/icons-material/AddLink';
 import KubernetesIcon from './KubernetesIcon';
-import { usePolicyDragDropStore } from '../../stores/policyDragDropStore';
 import { useCanvasStore } from '../../stores/canvasStore';
 import { BindingPolicyInfo, ManagedCluster, Workload } from '../../types/bindingPolicy';
 import StrictModeDroppable from './StrictModeDroppable';
@@ -24,6 +23,7 @@ import CanvasItems from './CanvasItems';
 import ItemTooltip from './ItemTooltip';
 import useTheme from '../../stores/themeStore';
 import { useTranslation } from 'react-i18next';
+import { usePolicySelectionStore } from '../../stores/policySelectionStore';
 
 interface PolicyCanvasProps {
   policies: BindingPolicyInfo[];
@@ -142,7 +142,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
     assignmentMap: policyAssignmentMap,
     removeFromCanvas: removeFromPolicyCanvas,
     clearCanvas,
-  } = usePolicyDragDropStore();
+  } = usePolicySelectionStore();
 
   const { connectionLines, setConnectionLines, drawingActive } = useCanvasStore();
 

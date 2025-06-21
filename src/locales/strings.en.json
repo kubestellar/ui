@@ -1622,7 +1622,7 @@
     "creating": "Creating...",
     "createContext": "Create Context"
   },
-  "policyDragDropStore": {
+  "policySelectionStore": {
     "labelsAssigned": "Labels automatically assigned to {{itemType}} {{itemId}}",
     "policyAssigned": "Successfully assigned {{policyName}} to {{targetType}} {{targetName}}",
     "clusterAlreadyAssigned": "Cluster {{targetName}} is already assigned to policy {{policyName}}",
@@ -1789,7 +1789,8 @@
   "kubeconfigImport": {
     "title": "Upload Kubeconfig File",
     "description": "Import your cluster by uploading a kubeconfig file",
-    "dragAndDrop": "Drag and drop your kubeconfig file here",
+    "selectFile": "Select your kubeconfig file here",
+    "selectFileDescription": "Choose a kubeconfig file to import your cluster",
     "or": "- or -",
     "browseFiles": "Browse Files",
     "importCluster": "Import Cluster"

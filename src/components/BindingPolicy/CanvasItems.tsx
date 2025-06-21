@@ -343,7 +343,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
     return {};
   };
 
-  const handleDragStart = (
+  const handleItemSelect = (
     e: React.DragEvent,
     itemType: 'policy' | 'cluster' | 'workload',
     itemId: string
@@ -354,7 +354,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
     e.dataTransfer.setDragImage(e.target as Element, rect.width / 2, rect.height / 2);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleItemDrop = (e: React.DragEvent) => {
     e.preventDefault();
 
     const data = e.dataTransfer.getData('text/plain');
@@ -371,7 +371,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
     snapItemToGrid(`${itemType}-${itemId}`, x, y);
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleItemDragOver = (e: React.DragEvent) => {
     e.preventDefault();
   };
 
@@ -390,8 +390,8 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
   return (
     <Box
       sx={{ position: 'relative', zIndex: 2, flexGrow: 1 }}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
+      onDragOver={handleItemDragOver}
+      onDrop={handleItemDrop}
     >
       {/* Policies on Canvas */}
       {canvasEntities.policies.length > 0 && (
@@ -422,7 +422,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                   }}
                   elevation={2}
                   draggable
-                  onDragStart={e => handleDragStart(e, 'policy', policyId)}
+                  onDragStart={e => handleItemSelect(e, 'policy', policyId)}
                   onClick={e => captureItemClick(e, 'policy', policyId)}
                   onMouseEnter={e => handleItemHover(e, 'policy', policyId)}
                   onMouseLeave={e => handleItemHover(e, null, null)}
@@ -591,7 +591,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                   }}
                   elevation={2}
                   draggable
-                  onDragStart={e => handleDragStart(e, 'cluster', clusterId)}
+                  onDragStart={e => handleItemSelect(e, 'cluster', clusterId)}
                   onClick={e => captureItemClick(e, 'cluster', clusterId)}
                   onMouseEnter={e => handleItemHover(e, 'cluster', clusterId)}
                   onMouseLeave={e => handleItemHover(e, null, null)}
@@ -793,7 +793,7 @@ const CanvasItems: React.FC<CanvasItemsProps> = ({
                   }}
                   elevation={2}
                   draggable
-                  onDragStart={e => handleDragStart(e, 'workload', workloadId)}
+                  onDragStart={e => handleItemSelect(e, 'workload', workloadId)}
                   onClick={e => captureItemClick(e, 'workload', workloadId)}
                   onMouseEnter={e => handleItemHover(e, 'workload', workloadId)}
                   onMouseLeave={e => handleItemHover(e, null, null)}

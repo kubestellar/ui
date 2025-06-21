@@ -127,10 +127,10 @@ const KubeconfigImportTab: React.FC<KubeconfigImportTabProps> = ({
             </span>
           </Box>
           <Box sx={{ mb: 2, fontWeight: 500, fontSize: '1rem' }}>
-            {t('kubeconfigImport.dragAndDrop')}
+            {t('kubeconfigImport.selectFile')}
           </Box>
           <Box sx={{ color: colors.textSecondary, mb: 2, fontSize: '0.85rem' }}>
-            {t('kubeconfigImport.or')}
+            {t('kubeconfigImport.selectFileDescription')}
           </Box>
           <Button component="label" variant="contained" sx={primaryButtonStyles}>
             {t('kubeconfigImport.browseFiles')}

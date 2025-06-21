@@ -24,9 +24,6 @@ interface Props {
   selectedFile: File | null;
   setSelectedFile: (file: File | null) => void;
   loading: boolean;
-  handleDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
-  handleDragLeave: (e: React.DragEvent<HTMLDivElement>) => void;
-  handleDrop: (e: React.DragEvent<HTMLDivElement>) => void;
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   formatFileSize: (size: number) => string;
   handleFileUpload: (autoNs: boolean) => void;
@@ -37,9 +34,6 @@ export const UploadFileTab = ({
   selectedFile,
   setSelectedFile,
   loading,
-  handleDragOver,
-  handleDragLeave,
-  handleDrop,
   handleFileChange,
   formatFileSize,
   handleFileUpload,
@@ -262,9 +256,6 @@ export const UploadFileTab = ({
           </Box>
         ) : (
           <StyledPaper
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
             sx={{
               border: theme === 'dark' ? '2px dashed #444' : '2px dashed #e0e0e0',
             }}
@@ -273,10 +264,10 @@ export const UploadFileTab = ({
               📤
             </span>
             <Typography variant="h6" sx={{ color: theme === 'dark' ? '#d4d4d4' : '#333' }}>
-              {t('bindingPolicy.upload.chooseOrDrag')}
+              {t('bindingPolicy.upload.selectFile')}
             </Typography>
             <Typography variant="body2" sx={{ color: theme === 'dark' ? '#858585' : 'gray' }}>
-              {t('bindingPolicy.upload.or')}
+              {t('bindingPolicy.upload.selectFileDescription')}
             </Typography>
             <Button
               variant="contained"

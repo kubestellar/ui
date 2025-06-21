@@ -1621,7 +1621,7 @@
     "creating": "Creando...",
     "createContext": "Crear Contexto"
   },
-  "policyDragDropStore": {
+  "policySelectionStore": {
     "labelsAssigned": "Etiquetas asignadas automáticamente a {{itemType}} {{itemId}}",
     "policyAssigned": "Política {{policyName}} asignada exitosamente a {{targetType}} {{targetName}}",
     "clusterAlreadyAssigned": "El clúster {{targetName}} ya está asignado a la política {{policyName}}",
@@ -1788,7 +1788,8 @@
   "kubeconfigImport": {
     "title": "Subir Archivo Kubeconfig",
     "description": "Importa tu clúster subiendo un archivo kubeconfig",
-    "dragAndDrop": "Arrastra y suelta tu archivo kubeconfig aquí",
+    "selectFile": "Selecciona tu archivo kubeconfig aquí",
+    "selectFileDescription": "Elige un archivo kubeconfig para importar tu clúster",
     "or": "- o -",
     "browseFiles": "Explorar Archivos",
     "importCluster": "Importar Clúster"
