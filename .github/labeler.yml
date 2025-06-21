@@ -11,9 +11,9 @@
 
 # Add 'frontend' label for frontend-related files
 'frontend':
-  - src/**
-  - public/**
-
+  - frontend/src/**
+  - frontend/public/**
+  - frontend/package.json
 # Add 'ci' label for GitHub Actions workflows
 'ci':
   - .github/workflows/**
