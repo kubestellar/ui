@@ -28,3 +28,7 @@ Dockerfile
 docker-compose.yml
 docker-compose*.yml
 *.dockerfile
+
+# Ignore yaml files
+*.yaml
+*.yml
