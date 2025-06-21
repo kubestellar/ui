@@ -159,6 +159,20 @@ const WecsDetailsPanel = ({
     type: '',
   });
 
+  const calculateAge = useCallback(
+    (creationTimestamp: string | undefined): string => {
+      if (!creationTimestamp) return t('wecsDetailsPanel.common.na');
+      const createdDate = new Date(creationTimestamp);
+      const currentDate = new Date();
+      const diffMs = currentDate.getTime() - createdDate.getTime();
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      return diffDays > 0
+        ? t('wecsDetailsPanel.common.daysAgo', { count: diffDays })
+        : t('wecsDetailsPanel.common.today');
+    },
+    [t]
+  );
+
   useEffect(() => {
     if (isOpen && initialTab !== undefined) {
       setTabValue(initialTab);
@@ -328,7 +342,7 @@ const WecsDetailsPanel = ({
     } finally {
       setLoading(false);
     }
-  }, [namespace, name, type, resourceData, cluster, isOpen, t]); // Added t to dependencies
+  }, [namespace, name, type, resourceData, cluster, isOpen, t, calculateAge]);
 
   // Convert to useCallback to memoize it
   const connectWebSocket = useCallback(() => {
@@ -751,6 +765,7 @@ const WecsDetailsPanel = ({
     resourceData,
     execTerminalKey,
     selectedContainer,
+    t,
   ]); // Added selectedContainer as dependency
 
   // Add a useEffect that resets container selection when the pod changes
@@ -762,17 +777,6 @@ const WecsDetailsPanel = ({
       setContainers([]);
     }
   }, [name, type]);
-
-  const calculateAge = (creationTimestamp: string | undefined): string => {
-    if (!creationTimestamp) return t('wecsDetailsPanel.common.na');
-    const createdDate = new Date(creationTimestamp);
-    const currentDate = new Date();
-    const diffMs = currentDate.getTime() - createdDate.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    return diffDays > 0
-      ? t('wecsDetailsPanel.common.daysAgo', { count: diffDays })
-      : t('wecsDetailsPanel.common.today');
-  };
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);

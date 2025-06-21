@@ -1,4 +1,4 @@
-import React, { ChangeEvent, RefObject, useState, useEffect } from 'react';
+import React, { ChangeEvent, RefObject, useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Box,
@@ -75,14 +75,26 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
   const textColor = theme === 'dark' ? colors.white : colors.text;
   const [showLogs, setShowLogs] = useState(false);
   const isMobile = useMediaQuery('(max-width:600px)');
+  const initialFetchAttempted = useRef(false);
 
   // Auto-fetch clusters when component mounts
   useEffect(() => {
     // Only fetch once on mount if we have no clusters and no error
-    if (availableClusters.length === 0 && !availableClustersError && !availableClustersLoading) {
+    if (
+      !initialFetchAttempted.current &&
+      availableClusters.length === 0 &&
+      !availableClustersError &&
+      !availableClustersLoading
+    ) {
+      initialFetchAttempted.current = true;
       fetchAvailableClusters();
     }
-  });
+  }, [
+    availableClusters.length,
+    availableClustersError,
+    availableClustersLoading,
+    fetchAvailableClusters,
+  ]);
 
   // This function will be called when the onboarding is completed via logs
   const handleOnboardingComplete = () => {

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import LoginForm from './LoginForm';
 import Footer from '../Footer';
 import { useTranslation } from 'react-i18next'; // Add this import
+import LanguageSwitcher from '../LanguageSwitcher'; // Import LanguageSwitcher
 
 interface KubeStellarLayoutProps {
   isLoaded: boolean;
@@ -106,44 +107,56 @@ const KubeStellarLayout = ({ isLoaded, showLogin, leftSide }: KubeStellarLayoutP
           </motion.div>
         </div>
 
-        {/* Full Screen Toggle Button - Repositioned to top-right corner */}
-        <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: isLoaded ? 0.4 : 1.4 }}
-          onClick={() => toggleFullScreen()}
-          className="absolute right-6 top-6 z-10 flex items-center justify-center rounded-full bg-blue-900/30 p-2 text-blue-300 transition-colors duration-200 hover:bg-blue-800/40"
-          aria-label={t('login.layout.fullscreen')}
-          title={t('login.layout.fullscreen')}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+        {/* Top right controls - Language Switcher and Full Screen Toggle */}
+        <div className="absolute right-6 top-6 z-10 flex items-center gap-3">
+          {/* Language Switcher */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: isLoaded ? 0.2 : 1.2 }}
           >
-            {isFullScreen ? (
-              <>
-                <path d="M8 3v3a2 2 0 0 1-2 2H3"></path>
-                <path d="M21 8h-3a2 2 0 0 1-2-2V3"></path>
-                <path d="M3 16h3a2 2 0 0 1 2 2v3"></path>
-                <path d="M16 21v-3a2 2 0 0 1 2-2h3"></path>
-              </>
-            ) : (
-              <>
-                <path d="M8 3H5a2 2 0 0 0-2 2v3"></path>
-                <path d="M21 8V5a2 2 0 0 0-2-2h-3"></path>
-                <path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
-                <path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
-              </>
-            )}
-          </svg>
-        </motion.button>
+            <LanguageSwitcher />
+          </motion.div>
+
+          {/* Full Screen Toggle Button */}
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: isLoaded ? 0.4 : 1.4 }}
+            onClick={() => toggleFullScreen()}
+            className="flex items-center justify-center rounded-full bg-blue-900/30 p-2 text-blue-300 transition-colors duration-200 hover:bg-blue-800/40"
+            aria-label={t('login.layout.fullscreen')}
+            title={t('login.layout.fullscreen')}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              {isFullScreen ? (
+                <>
+                  <path d="M8 3v3a2 2 0 0 1-2 2H3"></path>
+                  <path d="M21 8h-3a2 2 0 0 1-2-2V3"></path>
+                  <path d="M3 16h3a2 2 0 0 1 2 2v3"></path>
+                  <path d="M16 21v-3a2 2 0 0 1 2-2h3"></path>
+                </>
+              ) : (
+                <>
+                  <path d="M8 3H5a2 2 0 0 0-2 2v3"></path>
+                  <path d="M21 8V5a2 2 0 0 0-2-2h-3"></path>
+                  <path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
+                  <path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
+                </>
+              )}
+            </svg>
+          </motion.button>
+        </div>
       </div>
 
       {/* Right Side - Login Form */}

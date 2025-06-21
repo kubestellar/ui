@@ -2,6 +2,8 @@
 
 This document tracks the progress of the design system foundation efforts for the KubeStellar UI during the LFX Mentorship Term 2, 2025.
 
+---
+
 ## 📅 Timeline Overview
 
 ### 🟠 June 9 – June 20: UI Audit & Research
@@ -54,6 +56,27 @@ This document tracks the progress of the design system foundation efforts for th
 2. **Define Goals & Scope Document**  
    Link: [Google Docs - Project Goals & Scope](https://docs.google.com/document/d/1m0dAD3S4ShM32hw5k2wqGv-CZeFhnKI3t-Eto1MfVis/edit?usp=sharing)
 
-## ✅ Current Phase: UI Audit & Research
+---
 
-Audit in progress. Summary report to be delivered by June 20.
+## 📌 Progress Update –
+
+### ✅ UI Audit Completed
+
+- Conducted a full audit of KubeStellar’s current UI, including:
+  - Documentation site
+  - Dashboard
+  - Navigation patterns
+  - Visual consistency
+  - Accessibility checks
+- Identified major UX and UI issues: inconsistent typography, unclear hierarchy, visual clutter,bug, poor color contrast, and navigation redundancy.
+
+### 🎯 Goals & Scope Defined
+
+- Established clear goals for the design system:
+  - Audit Focus
+  - Areas of Evaluation
+  - Business Objectives
+  - User Goals & Tasks
+  - Success Criteria
+  - Scope Summary
+- Scoped initial focus areas: documentation site, core UI components, and frontend behavior improvements.

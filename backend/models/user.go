@@ -6,13 +6,6 @@ import (
 	"github.com/kubestellar/ui/auth"
 )
 
-// type User struct {
-// 	ID          int      `json:"id"`
-// 	Username    string   `json:"username"`
-// 	Password    string   `json:"password"`
-// 	Permissions []string `json:"permissions"`
-// }
-
 // Config struct to hold data from ConfigMap
 type Config struct {
 	JWTSecret   string `json:"jwt_secret"`

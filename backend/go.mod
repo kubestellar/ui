@@ -13,6 +13,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/redis/go-redis/v9 v9.7.3
 	github.com/stretchr/testify v1.10.0
+	github.com/tetratelabs/wazero v1.9.0
 	go.uber.org/zap v1.27.0
 	helm.sh/helm/v3 v3.17.3
 	k8s.io/api v0.33.0

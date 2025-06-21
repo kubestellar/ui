@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 
 	"net/http"
 	"net/url"
@@ -181,13 +182,17 @@ type EnhancedArtifactHubPackageDetails struct {
 func DeployFromArtifactHub(c *gin.Context) {
 	var req ArtifactHubDeployRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("[ERROR] Invalid request payload: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload", "details": err.Error()})
 		return
 	}
 
+	log.Printf("[INFO] Received deploy request: %+v", req)
+
 	// Parse the packageID to extract repository info
 	parts := strings.Split(req.PackageID, "/")
 	if len(parts) < 3 {
+		log.Printf("[ERROR] Invalid packageId format: %s", req.PackageID)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid packageId format. Expected format: repo/org/chartname"})
 		return
 	}
@@ -196,16 +201,22 @@ func DeployFromArtifactHub(c *gin.Context) {
 	orgName := parts[1]
 	chartName := parts[2]
 
+	log.Printf("[INFO] Parsed packageID - RepoType: %s, OrgName: %s, ChartName: %s", repoType, orgName, chartName)
+
 	// Get package details from Artifact Hub API
 	packageDetails, err := getArtifactHubPackageDetails(repoType, orgName, chartName, req.Version)
 	if err != nil {
+		log.Printf("[ERROR] Failed to get package details from Artifact Hub: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get package details from Artifact Hub", "details": err.Error()})
 		return
 	}
 
+	log.Printf("[INFO] Retrieved package details: %+v", packageDetails)
+
 	// If workload label is not provided, use the chart name
 	if req.WorkloadLabel == "" {
 		req.WorkloadLabel = chartName
+		log.Printf("[INFO] Workload label not provided. Defaulting to chart name: %s", chartName)
 	}
 
 	// Prepare the Helm deployment request
@@ -221,19 +232,24 @@ func DeployFromArtifactHub(c *gin.Context) {
 		WorkloadLabel: req.WorkloadLabel,
 	}
 
+	log.Printf("[INFO] Constructed HelmDeploymentRequest: %+v", helmReq)
+
 	// Parse the "store" parameter from the query string
 	storeQuery := c.Query("store")
-	store := false
-	if storeQuery == "true" {
-		store = true
-	}
+	store := storeQuery == "true"
+
+	log.Printf("[INFO] Store flag parsed: %v", store)
 
 	// Deploy using existing Helm deployment function
 	release, err := k8s.DeployHelmChart(helmReq, store)
 	if err != nil {
+		log.Printf("[ERROR] Deployment failed: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Deployment failed", "details": err.Error()})
 		return
 	}
+
+	log.Printf("[INFO] Helm chart deployed successfully: Release=%s, Namespace=%s, Status=%s",
+		release.Name, release.Namespace, release.Info.Status.String())
 
 	response := gin.H{
 		"message":        "Artifact Hub chart deployed successfully",
@@ -247,18 +263,21 @@ func DeployFromArtifactHub(c *gin.Context) {
 
 	if store {
 		response["stored_in"] = "kubestellar-helm ConfigMap"
+		log.Printf("[INFO] Deployment stored in kubestellar-helm ConfigMap")
 	}
 
 	c.JSON(http.StatusOK, response)
 }
 
-// SearchArtifactHub searches for packages on Artifact Hub
 func SearchArtifactHub(c *gin.Context) {
 	var req ArtifactHubSearchRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("[ERROR] Invalid search request payload: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload", "details": err.Error()})
 		return
 	}
+
+	log.Printf("[INFO] Received search request: %+v", req)
 
 	// Set defaults
 	if req.Limit == 0 {
@@ -268,18 +287,18 @@ func SearchArtifactHub(c *gin.Context) {
 		req.Kind = "0" // Helm charts
 	}
 
-	// Build the query parameters
 	query := url.Values{}
 	query.Set("kind", req.Kind)
 	query.Set("offset", fmt.Sprintf("%d", req.Offset))
 	query.Set("limit", fmt.Sprintf("%d", req.Limit))
 	query.Set("ts_query_web", req.Query)
 
-	// Make request to Artifact Hub API
 	apiURL := fmt.Sprintf("https://artifacthub.io/api/v1/packages/search?%s", query.Encode())
+	log.Printf("[INFO] Calling Artifact Hub search API: %s", apiURL)
 
 	resp, err := http.Get(apiURL)
 	if err != nil {
+		log.Printf("[ERROR] Failed to search Artifact Hub: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to search Artifact Hub", "details": err.Error()})
 		return
 	}
@@ -287,16 +306,19 @@ func SearchArtifactHub(c *gin.Context) {
 
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, _ := io.ReadAll(resp.Body)
+		log.Printf("[ERROR] Artifact Hub API error [%d]: %s", resp.StatusCode, string(bodyBytes))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Artifact Hub API error", "details": string(bodyBytes)})
 		return
 	}
 
-	// Parse the response
 	var searchResults ArtifactHubSearchResponse
 	if err := json.NewDecoder(resp.Body).Decode(&searchResults); err != nil {
+		log.Printf("[ERROR] Failed to decode search response: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse Artifact Hub response", "details": err.Error()})
 		return
 	}
+
+	log.Printf("[INFO] Search returned %d packages", len(searchResults.Packages))
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Search completed successfully",
@@ -305,17 +327,19 @@ func SearchArtifactHub(c *gin.Context) {
 	})
 }
 
-// GetArtifactHubPackageInfo retrieves detailed information about a specific package
 func GetArtifactHubPackageInfo(c *gin.Context) {
 	packageID := c.Param("packageId")
 	if packageID == "" {
+		log.Printf("[ERROR] Package ID is missing in request")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Package ID is required"})
 		return
 	}
 
-	// Parse the packageID to extract repository info
+	log.Printf("[INFO] Retrieving package info for: %s", packageID)
+
 	parts := strings.Split(packageID, "/")
 	if len(parts) < 3 {
+		log.Printf("[ERROR] Invalid packageId format: %s", packageID)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid packageId format. Expected format: repo/org/chartname"})
 		return
 	}
@@ -323,15 +347,19 @@ func GetArtifactHubPackageInfo(c *gin.Context) {
 	repoType := parts[0]
 	orgName := parts[1]
 	chartName := parts[2]
-
 	version := c.Query("version")
 
-	// Get package details from Artifact Hub API
+	log.Printf("[INFO] Parsed packageId - RepoType: %s, OrgName: %s, ChartName: %s, Version: %s",
+		repoType, orgName, chartName, version)
+
 	packageDetails, err := getArtifactHubPackageDetails(repoType, orgName, chartName, version)
 	if err != nil {
+		log.Printf("[ERROR] Failed to fetch package details: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get package details", "details": err.Error()})
 		return
 	}
+
+	log.Printf("[INFO] Successfully retrieved package details")
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Package details retrieved successfully",
@@ -339,13 +367,13 @@ func GetArtifactHubPackageInfo(c *gin.Context) {
 	})
 }
 
-// ListArtifactHubRepositories lists available repositories from Artifact Hub
 func ListArtifactHubRepositories(c *gin.Context) {
-	// Make request to Artifact Hub API to get all repositories
 	apiURL := "https://artifacthub.io/api/v1/repositories/search"
+	log.Printf("[INFO] Fetching repositories from Artifact Hub: %s", apiURL)
 
 	resp, err := http.Get(apiURL)
 	if err != nil {
+		log.Printf("[ERROR] Failed to fetch repositories: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch repositories", "details": err.Error()})
 		return
 	}
@@ -353,16 +381,19 @@ func ListArtifactHubRepositories(c *gin.Context) {
 
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, _ := io.ReadAll(resp.Body)
+		log.Printf("[ERROR] Artifact Hub API returned status %d: %s", resp.StatusCode, string(bodyBytes))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Artifact Hub API error", "details": string(bodyBytes)})
 		return
 	}
 
-	// Parse the response
 	var repositories []interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&repositories); err != nil {
+		log.Printf("[ERROR] Failed to decode repositories response: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse repositories", "details": err.Error()})
 		return
 	}
+
+	log.Printf("[INFO] Retrieved %d repositories from Artifact Hub", len(repositories))
 
 	c.JSON(http.StatusOK, gin.H{
 		"message":      "Repositories retrieved successfully",
@@ -371,9 +402,7 @@ func ListArtifactHubRepositories(c *gin.Context) {
 	})
 }
 
-// Helper function to get package details from Artifact Hub API
 func getArtifactHubPackageDetails(repoType, orgName, chartName, version string) (*ArtifactHubPackageDetails, error) {
-	// Construct the API URL
 	var apiURL string
 	if version != "" {
 		apiURL = fmt.Sprintf("https://artifacthub.io/api/v1/packages/%s/%s/%s/%s", repoType, orgName, chartName, version)
@@ -381,40 +410,46 @@ func getArtifactHubPackageDetails(repoType, orgName, chartName, version string) 
 		apiURL = fmt.Sprintf("https://artifacthub.io/api/v1/packages/%s/%s/%s", repoType, orgName, chartName)
 	}
 
-	// Make request to Artifact Hub API
+	log.Printf("[INFO] Fetching package details from: %s", apiURL)
+
 	resp, err := http.Get(apiURL)
 	if err != nil {
+		log.Printf("[ERROR] Request to Artifact Hub failed: %v", err)
 		return nil, fmt.Errorf("failed to make request to Artifact Hub API: %v", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, _ := io.ReadAll(resp.Body)
+		log.Printf("[ERROR] Artifact Hub returned status %d: %s", resp.StatusCode, string(bodyBytes))
 		return nil, fmt.Errorf("artifact Hub API returned status %d: %s", resp.StatusCode, string(bodyBytes))
 	}
 
-	// Parse the response
 	var packageDetails ArtifactHubPackageDetails
 	if err := json.NewDecoder(resp.Body).Decode(&packageDetails); err != nil {
+		log.Printf("[ERROR] Failed to decode package details: %v", err)
 		return nil, fmt.Errorf("failed to parse package details: %v", err)
 	}
 
+	log.Printf("[INFO] Successfully fetched package details for %s/%s/%s version=%s", repoType, orgName, chartName, version)
 	return &packageDetails, nil
 }
 
-// GetArtifactHubPackageValues retrieves the default values.yaml for a specific package version
 func GetArtifactHubPackageValues(c *gin.Context) {
 	packageID := c.Param("packageId")
 	version := c.Query("version")
 
 	if packageID == "" {
+		log.Printf("[ERROR] Package ID not provided")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Package ID is required"})
 		return
 	}
 
-	// Parse the packageID to extract repository info
+	log.Printf("[INFO] Fetching default values.yaml for packageId: %s, version: %s", packageID, version)
+
 	parts := strings.Split(packageID, "/")
 	if len(parts) < 3 {
+		log.Printf("[ERROR] Invalid package ID format: %s", packageID)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid packageId format. Expected format: repo/org/chartname"})
 		return
 	}
@@ -423,12 +458,14 @@ func GetArtifactHubPackageValues(c *gin.Context) {
 	orgName := parts[1]
 	chartName := parts[2]
 
-	// Get package details from Artifact Hub API
 	packageDetails, err := getArtifactHubPackageDetails(repoType, orgName, chartName, version)
 	if err != nil {
+		log.Printf("[ERROR] Failed to retrieve package details: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get package details", "details": err.Error()})
 		return
 	}
+
+	log.Printf("[INFO] Successfully retrieved default values.yaml for %s/%s/%s version=%s", repoType, orgName, chartName, version)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message":        "Default values retrieved successfully",
@@ -443,12 +480,14 @@ type ArtifactHubSearchResponse struct {
 	Packages []ArtifactHubPackage `json:"packages"`
 }
 
-// Helper function to extract unique repositories from search results
 func extractRepositories(packages []ArtifactHubPackage) []map[string]interface{} {
 	repoMap := make(map[string]map[string]interface{})
 
 	for _, pkg := range packages {
 		if _, exists := repoMap[pkg.Repository.Name]; !exists {
+			log.Printf("[INFO] Adding repository: %s (DisplayName: %s, Verified: %v, Official: %v)",
+				pkg.Repository.Name, pkg.Repository.DisplayName, pkg.Repository.VerifiedPublisher, pkg.Repository.Official)
+
 			repoMap[pkg.Repository.Name] = map[string]interface{}{
 				"name":               pkg.Repository.Name,
 				"display_name":       pkg.Repository.DisplayName,
@@ -463,39 +502,25 @@ func extractRepositories(packages []ArtifactHubPackage) []map[string]interface{}
 		repositories = append(repositories, repo)
 	}
 
+	log.Printf("[INFO] Extracted %d unique repositories", len(repositories))
 	return repositories
 }
 
-// Helper function to extract unique kinds from search results
 func extractKinds(packages []ArtifactHubPackage) []map[string]interface{} {
 	kindMap := make(map[int]string)
 	kindNames := map[int]string{
-		0:  "Helm charts",
-		1:  "Falco rules",
-		2:  "OPA policies",
-		3:  "OLM operators",
-		4:  "Tinkerbell actions",
-		5:  "Krew kubectl plugins",
-		6:  "Tekton tasks",
-		7:  "KEDA scalers",
-		8:  "CoreDNS plugins",
-		9:  "Keptn integrations",
-		10: "Container images",
-		11: "Kubewarden policies",
-		12: "Gatekeeper policies",
-		13: "Kyverno policies",
-		14: "Knative client plugins",
-		15: "Backstage plugins",
-		16: "Argo templates",
-		17: "KubeArmor policies",
-		18: "KCL modules",
-		19: "Headlamp plugins",
-		20: "Inspektor gadgets",
+		0: "Helm charts", 1: "Falco rules", 2: "OPA policies", 3: "OLM operators", 4: "Tinkerbell actions",
+		5: "Krew kubectl plugins", 6: "Tekton tasks", 7: "KEDA scalers", 8: "CoreDNS plugins", 9: "Keptn integrations",
+		10: "Container images", 11: "Kubewarden policies", 12: "Gatekeeper policies", 13: "Kyverno policies",
+		14: "Knative client plugins", 15: "Backstage plugins", 16: "Argo templates", 17: "KubeArmor policies",
+		18: "KCL modules", 19: "Headlamp plugins", 20: "Inspektor gadgets",
 	}
 
 	for _, pkg := range packages {
 		if _, exists := kindMap[pkg.Repository.Kind]; !exists {
-			kindMap[pkg.Repository.Kind] = kindNames[pkg.Repository.Kind]
+			kindName := kindNames[pkg.Repository.Kind]
+			log.Printf("[INFO] Found kind: %d (%s)", pkg.Repository.Kind, kindName)
+			kindMap[pkg.Repository.Kind] = kindName
 		}
 	}
 
@@ -507,6 +532,7 @@ func extractKinds(packages []ArtifactHubPackage) []map[string]interface{} {
 		})
 	}
 
+	log.Printf("[INFO] Extracted %d unique kinds", len(kinds))
 	return kinds
 }
 
@@ -516,6 +542,9 @@ func extractLicenses(packages []ArtifactHubPackage) []string {
 
 	for _, pkg := range packages {
 		if pkg.License != "" {
+			if _, exists := licenseMap[pkg.License]; !exists {
+				log.Printf("[INFO] Found license: %s", pkg.License)
+			}
 			licenseMap[pkg.License] = true
 		}
 	}
@@ -525,6 +554,7 @@ func extractLicenses(packages []ArtifactHubPackage) []string {
 		licenses = append(licenses, license)
 	}
 
+	log.Printf("[INFO] Extracted %d unique licenses", len(licenses))
 	return licenses
 }
 
@@ -532,31 +562,33 @@ func extractLicenses(packages []ArtifactHubPackage) []string {
 func SearchArtifactHubAdvance(c *gin.Context) {
 	var req ArtifactHubSearchRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("[ERROR] Invalid search request payload: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload", "details": err.Error()})
 		return
 	}
 
-	// Set defaults
+	log.Printf("[INFO] Processing ArtifactHub search request: query=%s, kind=%s, offset=%d, limit=%d", req.Query, req.Kind, req.Offset, req.Limit)
+
 	if req.Limit == 0 {
 		req.Limit = 20
 	}
 	if req.Kind == "" {
-		req.Kind = "0" // Helm charts
+		req.Kind = "0"
 	}
 
-	// Build the query parameters
 	query := url.Values{}
 	query.Set("kind", req.Kind)
 	query.Set("offset", fmt.Sprintf("%d", req.Offset))
 	query.Set("limit", fmt.Sprintf("%d", req.Limit))
 	query.Set("ts_query_web", req.Query)
-	query.Set("facets", "true") // Request additional facets
+	query.Set("facets", "true")
 
-	// Make request to Artifact Hub API
 	apiURL := fmt.Sprintf("https://artifacthub.io/api/v1/packages/search?%s", query.Encode())
+	log.Printf("[INFO] Making API request to: %s", apiURL)
 
 	resp, err := http.Get(apiURL)
 	if err != nil {
+		log.Printf("[ERROR] Failed to reach Artifact Hub API: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to search Artifact Hub", "details": err.Error()})
 		return
 	}
@@ -564,27 +596,27 @@ func SearchArtifactHubAdvance(c *gin.Context) {
 
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, _ := io.ReadAll(resp.Body)
+		log.Printf("[ERROR] Artifact Hub API returned status %d: %s", resp.StatusCode, string(bodyBytes))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Artifact Hub API error", "details": string(bodyBytes)})
 		return
 	}
 
-	// Parse the response
 	var searchResults ArtifactHubSearchResponse
 	if err := json.NewDecoder(resp.Body).Decode(&searchResults); err != nil {
+		log.Printf("[ERROR] Failed to decode Artifact Hub response: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse Artifact Hub response", "details": err.Error()})
 		return
 	}
 
-	// Process each package to add logo URL if image ID exists
 	for i := range searchResults.Packages {
 		if searchResults.Packages[i].LogoImageID != "" {
-			// Construct the logo URL from the image ID
 			searchResults.Packages[i].LogoURL = fmt.Sprintf("https://artifacthub.io/image/%s", searchResults.Packages[i].LogoImageID)
 		}
 	}
 
-	// Create enhanced response
-	enhancedResponse := gin.H{
+	log.Printf("[INFO] Successfully fetched %d packages from Artifact Hub", len(searchResults.Packages))
+
+	c.JSON(http.StatusOK, gin.H{
 		"message": "Search completed successfully",
 		"count":   len(searchResults.Packages),
 		"results": searchResults.Packages,
@@ -593,9 +625,7 @@ func SearchArtifactHubAdvance(c *gin.Context) {
 			"kinds":        extractKinds(searchResults.Packages),
 			"licenses":     extractLicenses(searchResults.Packages),
 		},
-	}
-
-	c.JSON(http.StatusOK, enhancedResponse)
+	})
 }
 
 // GetArtifactHubPackageAdvanceDetails retrieves comprehensive details for a specific package with all metadata
@@ -662,7 +692,6 @@ func GetArtifactHubPackageAdvanceDetails(c *gin.Context) {
 
 // Helper function to get enhanced package details from Artifact Hub API
 func getEnhancedArtifactHubPackageDetails(repoType, orgName, chartName, version string) (*EnhancedArtifactHubPackageDetails, error) {
-	// Construct the API URL
 	var apiURL string
 	if version != "" {
 		apiURL = fmt.Sprintf("https://artifacthub.io/api/v1/packages/%s/%s/%s/%s", repoType, orgName, chartName, version)
@@ -670,50 +699,58 @@ func getEnhancedArtifactHubPackageDetails(repoType, orgName, chartName, version 
 		apiURL = fmt.Sprintf("https://artifacthub.io/api/v1/packages/%s/%s/%s", repoType, orgName, chartName)
 	}
 
-	// Make request to Artifact Hub API
-	resp, err := http.Get(apiURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to make request to Artifact Hub API: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		bodyBytes, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("artifact Hub API returned status %d: %s", resp.StatusCode, string(bodyBytes))
-	}
-
-	// Parse the response
-	var packageDetails EnhancedArtifactHubPackageDetails
-	if err := json.NewDecoder(resp.Body).Decode(&packageDetails); err != nil {
-		return nil, fmt.Errorf("failed to parse package details: %v", err)
-	}
-
-	return &packageDetails, nil
-}
-
-// Helper function to get all available versions of a package
-func getPackageVersions(repoType, orgName, chartName string) ([]map[string]interface{}, error) {
-	apiURL := fmt.Sprintf("https://artifacthub.io/api/v1/packages/%s/%s/%s/versions", repoType, orgName, chartName)
+	log.Printf("[INFO] Fetching package details from: %s", apiURL)
 
 	resp, err := http.Get(apiURL)
 	if err != nil {
+		log.Printf("[ERROR] Failed request to ArtifactHub: %v", err)
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get versions: status %d", resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		log.Printf("[ERROR] ArtifactHub returned status %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var pkg EnhancedArtifactHubPackageDetails
+	if err := json.NewDecoder(resp.Body).Decode(&pkg); err != nil {
+		log.Printf("[ERROR] Failed to decode package details: %v", err)
+		return nil, err
+	}
+
+	log.Printf("[INFO] Retrieved package: %s/%s", orgName, chartName)
+	return &pkg, nil
+}
+
+func getPackageVersions(repoType, orgName, chartName string) ([]map[string]interface{}, error) {
+	apiURL := fmt.Sprintf("https://artifacthub.io/api/v1/packages/%s/%s/%s/versions", repoType, orgName, chartName)
+	log.Printf("[INFO] Fetching versions from: %s", apiURL)
+
+	resp, err := http.Get(apiURL)
+	if err != nil {
+		log.Printf("[ERROR] Failed to get versions: %v", err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("[ERROR] Failed to get versions: status %d", resp.StatusCode)
+		return nil, fmt.Errorf("status %d", resp.StatusCode)
 	}
 
 	var versions []map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&versions); err != nil {
-		return nil, fmt.Errorf("failed to parse versions: %v", err)
+		log.Printf("[ERROR] Failed to parse versions: %v", err)
+		return nil, err
 	}
 
+	log.Printf("[INFO] Fetched %d versions for %s", len(versions), chartName)
 	return versions, nil
 }
 
-// Helper function to get installation instructions
+// getInstallationInstructions fetches installation instructions for a package.
 func getInstallationInstructions(repoType, orgName, chartName, version string) (string, error) {
 	var apiURL string
 	if version != "" {
@@ -722,90 +759,93 @@ func getInstallationInstructions(repoType, orgName, chartName, version string) (
 		apiURL = fmt.Sprintf("https://artifacthub.io/api/v1/packages/%s/%s/%s/install", repoType, orgName, chartName)
 	}
 
+	log.Printf("[INFO] Fetching installation instructions from: %s", apiURL)
+
 	resp, err := http.Get(apiURL)
 	if err != nil {
+		log.Printf("[ERROR] Failed to fetch installation instructions: %v", err)
 		return "", err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		log.Printf("[ERROR] ArtifactHub install endpoint returned status %d: %s", resp.StatusCode, string(bodyBytes))
 		return "", fmt.Errorf("failed to get installation instructions: status %d", resp.StatusCode)
 	}
 
-	bodyBytes, _ := io.ReadAll(resp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("[ERROR] Failed to read response body: %v", err)
+		return "", err
+	}
+
+	log.Printf("[INFO] Installation instructions retrieved successfully")
 	return string(bodyBytes), nil
 }
 
-// Helper function to get related packages
+// getRelatedPackages finds packages related to the given packageID using keywords and org name.
 func getRelatedPackages(packageID string) ([]map[string]interface{}, error) {
-	// Parse the packageID to extract repository info
 	parts := strings.Split(packageID, "/")
 	if len(parts) < 3 {
 		return nil, fmt.Errorf("invalid packageId format: %s", packageID)
 	}
 
-	repoType := parts[0]
-	orgName := parts[1]
-	chartName := parts[2]
+	repoType, orgName, chartName := parts[0], parts[1], parts[2]
+	currentPackageID := fmt.Sprintf("%s/%s/%s", repoType, orgName, chartName)
 
-	// Get package details to extract keywords for related search
+	// Fetch base package details
 	packageDetails, err := getEnhancedArtifactHubPackageDetails(repoType, orgName, chartName, "")
 	if err != nil {
+		log.Printf("[ERROR] Failed to get base package details for %s: %v", packageID, err)
 		return nil, fmt.Errorf("failed to get package details: %v", err)
 	}
 
-	// Use a combination of organization and keywords to find related packages
+	// Construct search query using keywords and org
 	query := url.Values{}
 	query.Set("limit", "5")
 	query.Set("offset", "0")
 
-	// If we have keywords, use them to find related packages
 	var searchQuery string
 	if len(packageDetails.Keywords) > 0 {
-		// Use up to 3 keywords
-		keywordCount := 3
-		if len(packageDetails.Keywords) < 3 {
-			keywordCount = len(packageDetails.Keywords)
-		}
+		keywordCount := min(3, len(packageDetails.Keywords))
 		searchQuery = strings.Join(packageDetails.Keywords[:keywordCount], " ")
 	}
-
-	// Add org name to improve relevance but exclude the current package
 	orgFilter := fmt.Sprintf("org:%s", orgName)
 	if searchQuery != "" {
-		searchQuery = searchQuery + " " + orgFilter
+		searchQuery += " " + orgFilter
 	} else {
 		searchQuery = orgFilter
 	}
-
 	query.Set("ts_query_web", searchQuery)
 
-	// Make request to search API
 	apiURL := fmt.Sprintf("https://artifacthub.io/api/v1/packages/search?%s", query.Encode())
+	log.Printf("[INFO] Searching for related packages using: %s", apiURL)
 
 	resp, err := http.Get(apiURL)
 	if err != nil {
+		log.Printf("[ERROR] Related packages search failed: %v", err)
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		log.Printf("[ERROR] Search API returned status %d: %s", resp.StatusCode, string(body))
 		return nil, fmt.Errorf("search API returned status %d", resp.StatusCode)
 	}
 
 	var searchResults ArtifactHubSearchResponse
 	if err := json.NewDecoder(resp.Body).Decode(&searchResults); err != nil {
+		log.Printf("[ERROR] Failed to decode related packages response: %v", err)
 		return nil, err
 	}
 
-	// Filter out the original package and convert to required format
-	currentPackageID := fmt.Sprintf("%s/%s/%s", repoType, orgName, chartName)
-	related := make([]map[string]interface{}, 0)
-
+	// Filter and format related packages (excluding current one)
+	related := make([]map[string]interface{}, 0, 4)
 	for _, pkg := range searchResults.Packages {
 		pkgID := fmt.Sprintf("%d/%s/%s", pkg.Repository.Kind, pkg.Repository.OrganizationName, pkg.Name)
 
-		// Skip the current package
 		if pkgID == currentPackageID {
 			continue
 		}
@@ -819,11 +859,11 @@ func getRelatedPackages(packageID string) ([]map[string]interface{}, error) {
 			"stars":       pkg.Stars,
 		})
 
-		// Limit to 4 related packages
 		if len(related) >= 4 {
 			break
 		}
 	}
 
+	log.Printf("[INFO] Found %d related packages for %s", len(related), packageID)
 	return related, nil
 }

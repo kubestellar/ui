@@ -22,6 +22,7 @@
     "warning": "Advertencia",
     "actions": "Acciones",
     "status": {
+      "status": "Estado",
       "active": "Activo",
       "inactive": "Inactivo",
       "pending": "Pendiente",
@@ -98,6 +99,7 @@
     },
     "documentationLink": "Ver guía completa de instalación",
     "prerequisites": {
+      "prerequisites": "Requisitos previos",
       "title": "Requisitos del Sistema",
       "description": "Asegúrate de tener estas herramientas instaladas antes de continuar",
       "status": {
