@@ -1,16 +1,16 @@
 package postgresql
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"os"
 
 	"github.com/joho/godotenv"
-	_ "github.com/lib/pq"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
-var DB *sql.DB
+var DB *gorm.DB
 
 func LoadConfig() {
 	err := godotenv.Load()
@@ -23,21 +23,27 @@ func ConnectDB() {
 	LoadConfig()
 
 	dsn := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=require",
 		os.Getenv("POSTGRES_HOST"), os.Getenv("POSTGRES_PORT"),
 		os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_PASSWORD"),
 		os.Getenv("POSTGRES_DB"),
 	)
 
 	var err error
-	DB, err = sql.Open("postgres", dsn)
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
 
-	err = DB.Ping()
+	// ping connection
+	sqlDB, err := DB.DB()
+
 	if err != nil {
-		log.Fatal("Database not responding:", err)
+		log.Fatal("Failed to get gneric db object", err)
+	}
+
+	if err := sqlDB.Ping(); err != nil {
+		log.Fatal("DB not responding:", err)
 	}
 
 	fmt.Println("✅ Connected to PostgreSQL")

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kubestellar/ui/postgresql"
 	"github.com/kubestellar/ui/routes"
 
 	"github.com/kubestellar/ui/api"
@@ -17,6 +18,8 @@ import (
 
 func main() {
 	initLogger()
+	postgresql.ConnectDB()
+
 	router := gin.Default()
 
 	router.Use(ZapMiddleware())
