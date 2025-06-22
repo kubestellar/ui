@@ -15,6 +15,7 @@ import KubeStellarStatusChecker from '../components/KubeStellarStatusChecker';
 
 const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ '../components/Clusters'));
 const ITSLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/ITS'));
+const PluginsInterface = lazy(() => import('../components/PluginsInterface'));
 
 export const routesConfig: RouteObject[] = [
   {
@@ -94,6 +95,16 @@ export const routesConfig: RouteObject[] = [
         element: (
           <ProtectedRoute>
             <WecsTreeview />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'plugins',
+        element: (
+          <ProtectedRoute>
+            <Suspense fallback={<div>Loading Plugins...</div>}>
+              <PluginsInterface />
+            </Suspense>
           </ProtectedRoute>
         ),
       },
