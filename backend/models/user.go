@@ -2,15 +2,26 @@ package models
 
 import (
 	"time"
+
+	"github.com/lib/pq"
+)
+
+type Permission string
+
+const (
+	PermissionRead  Permission = "read"
+	PermissionWrite Permission = "write"
+	PermissionAdmin Permission = "admin"
 )
 
 // User represents an authenticated user
 type User struct {
-	ID        uint      `gorm:"primaryKey;autoIncrement"`
-	Username  string    `gorm:"unique;not null"`
-	Password  string    `gorm:"not null"` // Password is never returned in JSON
-	CreatedAt time.Time `gorm:"autoCreateTime"`
-	UpdatedAt time.Time `gorm:"autoUpdateTime"`
+	ID          uint           `gorm:"primaryKey;autoIncrement"`
+	Username    string         `gorm:"unique;not null"`
+	Password    string         `gorm:"not null"`
+	Permissions pq.StringArray `gorm:"type:user_permission_enum[];not null;default:'{read}'"`
+	CreatedAt   time.Time      `gorm:"autoCreateTime"`
+	UpdatedAt   time.Time      `gorm:"autoUpdateTime"`
 }
 
 type UserResponse struct {
