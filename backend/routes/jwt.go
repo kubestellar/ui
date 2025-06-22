@@ -6,60 +6,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/auth"
-	"github.com/kubestellar/ui/middleware"
 	"github.com/kubestellar/ui/models"
 	"github.com/kubestellar/ui/utils"
 )
-
-// SetupRoutes initializes all application routes
-func setupAuthRoutes(router *gin.Engine) {
-	// Authentication routes
-	router.POST("/login", LoginHandler)
-
-	// API group for all endpoints
-	api := router.Group("/api")
-
-	// Protected API endpoints requiring authentication
-	protected := api.Group("/")
-	protected.Use(middleware.AuthenticateMiddleware())
-	{
-		protected.GET("/me", CurrentUserHandler)
-
-		// Read-only endpoints
-		read := protected.Group("/")
-		read.Use(middleware.RequirePermission("read"))
-		{
-			read.GET("/resources", GetResourcesHandler)
-		}
-
-		// Write-requiring endpoints
-		write := protected.Group("/auth")
-		write.Use(middleware.RequirePermission("write"))
-		{
-			write.POST("/auth/resources", CreateResourceHandler)
-			write.PUT("/auth/resources/:id", UpdateResourceHandler)
-			write.DELETE("/auth/resources/:id", DeleteResourceHandler)
-		}
-
-		// Admin-only endpoints
-		admin := protected.Group("/admin")
-		admin.Use(middleware.RequireAdmin())
-		{
-			admin.GET("/users", ListUsersHandler)
-			admin.POST("/users", CreateUserHandler)
-			admin.PUT("/users/:username", UpdateUserHandler)
-			admin.DELETE("/users/:username", DeleteUserHandler)
-		}
-	}
-
-	// Setup other route groups as needed
-	setupAdditionalRoutes(router)
-}
-
-// setupAdditionalRoutes adds any additional route groups
-func setupAdditionalRoutes(router *gin.Engine) {
-	// Add additional routes here as needed
-}
 
 // LoginHandler verifies user credentials and issues JWT
 func LoginHandler(c *gin.Context) {
