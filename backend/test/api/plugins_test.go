@@ -54,14 +54,14 @@ func TestGetPluginDetailsHandler(t *testing.T) {
 		{
 			name:           "Valid plugin name",
 			pluginName:     "test-plugin",
-			expectedStatus: http.StatusNotFound, // Expected in test environment
+			expectedStatus: http.StatusNotFound, // Plugin not found in test environment
 			expectedError:  "Plugin not found",
 		},
 		{
 			name:           "Empty plugin name",
 			pluginName:     "",
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  "Plugin name is required",
+			expectedError:  "Plugin ID is required",
 		},
 	}
 
@@ -72,9 +72,9 @@ func TestGetPluginDetailsHandler(t *testing.T) {
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)
 
-			// Set plugin name in URL params
+			// Set plugin ID in URL params
 			c.Params = []gin.Param{
-				{Key: "name", Value: tt.pluginName},
+				{Key: "id", Value: tt.pluginName},
 			}
 
 			// Create a mock request
@@ -104,38 +104,35 @@ func TestInstallPluginHandler(t *testing.T) {
 		{
 			name: "Valid plugin installation",
 			requestBody: map[string]interface{}{
-				"name":        "test-plugin",
-				"source":      "https://github.com/test/plugin",
-				"version":     "v1.0.0",
-				"description": "Test plugin",
+				"name":    "test-plugin",
+				"version": "v1.0.0",
+				"source":  "https://github.com/test/plugin",
 			},
-			expectedStatus: http.StatusOK, // May succeed or fail depending on plugin availability
+			expectedStatus: http.StatusAccepted, // 202 - Installation is async
 		},
 		{
 			name: "Missing plugin name",
 			requestBody: map[string]interface{}{
-				"source":      "https://github.com/test/plugin",
-				"version":     "v1.0.0",
-				"description": "Test plugin",
+				"version": "v1.0.0",
+				"source":  "https://github.com/test/plugin",
 			},
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  "Plugin name is required",
+			expectedError:  "Invalid request",
 		},
 		{
 			name: "Missing plugin source",
 			requestBody: map[string]interface{}{
-				"name":        "test-plugin",
-				"version":     "v1.0.0",
-				"description": "Test plugin",
+				"name":    "test-plugin",
+				"version": "v1.0.0",
 			},
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  "Plugin source is required",
+			expectedError:  "Invalid request",
 		},
 		{
 			name:           "Invalid request body",
 			requestBody:    nil,
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  "Invalid request body",
+			expectedError:  "Invalid request",
 		},
 	}
 
@@ -151,8 +148,10 @@ func TestInstallPluginHandler(t *testing.T) {
 			if tt.requestBody != nil {
 				jsonBody, _ = json.Marshal(tt.requestBody)
 			}
-			req, _ := http.NewRequest(http.MethodPost, "/plugins/install", bytes.NewBuffer(jsonBody))
-			req.Header.Set("Content-Type", "application/json")
+			req, _ := http.NewRequest(http.MethodPost, "/plugins", bytes.NewBuffer(jsonBody))
+			if tt.requestBody != nil {
+				req.Header.Set("Content-Type", "application/json")
+			}
 			c.Request = req
 
 			// Call the handler
@@ -178,13 +177,14 @@ func TestUninstallPluginHandler(t *testing.T) {
 		{
 			name:           "Valid plugin uninstallation",
 			pluginName:     "test-plugin",
-			expectedStatus: http.StatusOK, // May succeed even if plugin doesn't exist
+			expectedStatus: http.StatusNotFound, // Plugin not found in test environment
+			expectedError:  "Plugin not found",
 		},
 		{
 			name:           "Empty plugin name",
 			pluginName:     "",
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  "Plugin name is required",
+			expectedError:  "Plugin ID is required",
 		},
 	}
 
@@ -195,9 +195,9 @@ func TestUninstallPluginHandler(t *testing.T) {
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)
 
-			// Set plugin name in URL params
+			// Set plugin ID in URL params
 			c.Params = []gin.Param{
-				{Key: "name", Value: tt.pluginName},
+				{Key: "id", Value: tt.pluginName},
 			}
 
 			// Create a mock request
@@ -227,13 +227,14 @@ func TestEnablePluginHandler(t *testing.T) {
 		{
 			name:           "Valid plugin enable",
 			pluginName:     "test-plugin",
-			expectedStatus: http.StatusOK, // May succeed even if plugin doesn't exist
+			expectedStatus: http.StatusNotFound, // Plugin not found in test environment
+			expectedError:  "Plugin not found",
 		},
 		{
 			name:           "Empty plugin name",
 			pluginName:     "",
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  "Plugin name is required",
+			expectedError:  "Plugin ID is required",
 		},
 	}
 
@@ -244,9 +245,9 @@ func TestEnablePluginHandler(t *testing.T) {
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)
 
-			// Set plugin name in URL params
+			// Set plugin ID in URL params
 			c.Params = []gin.Param{
-				{Key: "name", Value: tt.pluginName},
+				{Key: "id", Value: tt.pluginName},
 			}
 
 			// Create a mock request
@@ -276,13 +277,14 @@ func TestDisablePluginHandler(t *testing.T) {
 		{
 			name:           "Valid plugin disable",
 			pluginName:     "test-plugin",
-			expectedStatus: http.StatusOK, // May succeed even if plugin doesn't exist
+			expectedStatus: http.StatusNotFound, // Plugin not found in test environment
+			expectedError:  "Plugin not found",
 		},
 		{
 			name:           "Empty plugin name",
 			pluginName:     "",
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  "Plugin name is required",
+			expectedError:  "Plugin ID is required",
 		},
 	}
 
@@ -293,9 +295,9 @@ func TestDisablePluginHandler(t *testing.T) {
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)
 
-			// Set plugin name in URL params
+			// Set plugin ID in URL params
 			c.Params = []gin.Param{
-				{Key: "name", Value: tt.pluginName},
+				{Key: "id", Value: tt.pluginName},
 			}
 
 			// Create a mock request
@@ -325,13 +327,14 @@ func TestGetPluginStatusHandler(t *testing.T) {
 		{
 			name:           "Valid plugin status check",
 			pluginName:     "test-plugin",
-			expectedStatus: http.StatusOK, // May succeed even if plugin doesn't exist
+			expectedStatus: http.StatusNotFound, // Plugin not found in test environment
+			expectedError:  "Plugin not found",
 		},
 		{
 			name:           "Empty plugin name",
 			pluginName:     "",
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  "Plugin name is required",
+			expectedError:  "Plugin ID is required",
 		},
 	}
 
@@ -342,9 +345,9 @@ func TestGetPluginStatusHandler(t *testing.T) {
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)
 
-			// Set plugin name in URL params
+			// Set plugin ID in URL params
 			c.Params = []gin.Param{
-				{Key: "name", Value: tt.pluginName},
+				{Key: "id", Value: tt.pluginName},
 			}
 
 			// Create a mock request
@@ -374,13 +377,14 @@ func TestReloadPluginHandler(t *testing.T) {
 		{
 			name:           "Valid plugin reload",
 			pluginName:     "test-plugin",
-			expectedStatus: http.StatusOK, // May succeed even if plugin doesn't exist
+			expectedStatus: http.StatusNotFound, // Plugin not found in test environment
+			expectedError:  "Plugin not found",
 		},
 		{
 			name:           "Empty plugin name",
 			pluginName:     "",
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  "Plugin name is required",
+			expectedError:  "Plugin ID is required",
 		},
 	}
 
@@ -391,9 +395,9 @@ func TestReloadPluginHandler(t *testing.T) {
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)
 
-			// Set plugin name in URL params
+			// Set plugin ID in URL params
 			c.Params = []gin.Param{
-				{Key: "name", Value: tt.pluginName},
+				{Key: "id", Value: tt.pluginName},
 			}
 
 			// Create a mock request
@@ -487,8 +491,11 @@ func TestUpdatePluginSystemConfigHandler(t *testing.T) {
 		{
 			name: "Valid config update",
 			requestBody: map[string]interface{}{
-				"setting1": "value1",
-				"setting2": "value2",
+				"pluginsDirectory":   "/custom/plugins",
+				"autoloadPlugins":    true,
+				"pluginTimeout":      60,
+				"maxConcurrentCalls": 20,
+				"logLevel":           "debug",
 			},
 			expectedStatus: http.StatusOK,
 		},
@@ -496,7 +503,7 @@ func TestUpdatePluginSystemConfigHandler(t *testing.T) {
 			name:           "Invalid request body",
 			requestBody:    nil,
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  "Invalid request body",
+			expectedError:  "Invalid configuration",
 		},
 	}
 
@@ -513,7 +520,9 @@ func TestUpdatePluginSystemConfigHandler(t *testing.T) {
 				jsonBody, _ = json.Marshal(tt.requestBody)
 			}
 			req, _ := http.NewRequest(http.MethodPut, "/plugins/system/config", bytes.NewBuffer(jsonBody))
-			req.Header.Set("Content-Type", "application/json")
+			if tt.requestBody != nil {
+				req.Header.Set("Content-Type", "application/json")
+			}
 			c.Request = req
 
 			// Call the handler
@@ -539,17 +548,18 @@ func TestSubmitPluginFeedbackHandler(t *testing.T) {
 		{
 			name: "Valid feedback submission",
 			requestBody: map[string]interface{}{
-				"pluginName": "test-plugin",
-				"rating":     5,
-				"comment":    "Great plugin!",
+				"pluginId": "test-plugin",
+				"rating":   4.5,
+				"comments": "Great plugin!",
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusNotFound, // Plugin not found in test environment
+			expectedError:  "Plugin not found",
 		},
 		{
 			name:           "Invalid request body",
 			requestBody:    nil,
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  "Invalid request body",
+			expectedError:  "Invalid feedback data",
 		},
 	}
 
@@ -566,7 +576,9 @@ func TestSubmitPluginFeedbackHandler(t *testing.T) {
 				jsonBody, _ = json.Marshal(tt.requestBody)
 			}
 			req, _ := http.NewRequest(http.MethodPost, "/plugins/feedback", bytes.NewBuffer(jsonBody))
-			req.Header.Set("Content-Type", "application/json")
+			if tt.requestBody != nil {
+				req.Header.Set("Content-Type", "application/json")
+			}
 			c.Request = req
 
 			// Call the handler

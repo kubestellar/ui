@@ -1,0 +1,70 @@
+{"level":"info","ts":1750593159.4190981,"caller":"log/log.go:8","msg":"initialized redis client"}
+{"level":"warn","ts":1750593159.4975352,"caller":"log/log.go:17","msg":"pls check if redis is runnnig","err":"dial tcp [::1]:6379: connectex: No connection could be made because the target machine actively refused it."}
+{"level":"debug","ts":1750593159.5055747,"caller":"log/log.go:25","msg":"Using wds context","context":"wds1"}
+{"level":"debug","ts":1750593159.5055747,"caller":"log/log.go:25","msg":"Creating client for BP","kubeconfig path":"C:\\Users\\Naman\\.kube\\config"}
+{"level":"info","ts":1750593159.5055747,"caller":"log/log.go:8","msg":"Getting Kubernetes client set with context","context":"kind-kubeflex"}
+{"level":"error","ts":1750593159.5060787,"caller":"log/log.go:13","msg":"Failed to find context","context":"kind-kubeflex"}
+{"level":"info","ts":1750593159.5060787,"caller":"log/log.go:8","msg":"Getting Kubernetes client set with context","context":"k3d-kubeflex"}
+{"level":"error","ts":1750593159.5060787,"caller":"log/log.go:13","msg":"failed to watch on BP","error":"no valid Kubernetes context found for KubeStellar operations"}
+{"level":"error","ts":1750593159.5060787,"caller":"log/log.go:13","msg":"Failed to find context","context":"k3d-kubeflex"}
+{"level":"error","ts":1750593159.5060787,"caller":"log/log.go:13","msg":"failed to initialized backup plugin","error":"failed to find context 'k3d-kubeflex'"}
+=== RUN   TestGetClusterStatusHandler
+=== RUN   TestGetClusterStatusHandler/Get_cluster_status
+--- PASS: TestGetClusterStatusHandler (0.00s)
+    --- PASS: TestGetClusterStatusHandler/Get_cluster_status (0.00s)
+=== RUN   TestOnboardClusterHandler_JSON
+=== RUN   TestOnboardClusterHandler_JSON/Valid_JSON_request_with_cluster_name_only
+=== RUN   TestOnboardClusterHandler_JSON/Missing_cluster_name
+=== RUN   TestOnboardClusterHandler_JSON/Empty_request_body
+=== RUN   TestOnboardClusterHandler_JSON/Valid_JSON_request_with_kubeconfig
+{"level":"info","ts":1750593159.5066066,"caller":"log/log.go:8","msg":"Clearing all events for cluster","cluster":"test-cluster-2"}
+{"level":"info","ts":1750593159.5066066,"caller":"log/log.go:8","msg":"Onboarding event logged","cluster":"test-cluster-2","status":"Initiated","message":"Onboarding process initiated by API request"}
+{"level":"info","ts":1750593159.507139,"caller":"log/log.go:8","msg":"Broadcasting event","cluster":"test-cluster-2","event":{"clusterName":"test-cluster-2","status":"Initiated","message":"Onboarding process initiated by API request","timestamp":"2025-06-22T17:22:39.5066067+05:30"}}
+--- PASS: TestOnboardClusterHandler_JSON (0.00s)
+    --- PASS: TestOnboardClusterHandler_JSON/Valid_JSON_request_with_cluster_name_only (0.00s)
+    --- PASS: TestOnboardClusterHandler_JSON/Missing_cluster_name (0.00s)
+    --- PASS: TestOnboardClusterHandler_JSON/Empty_request_body (0.00s)
+    --- PASS: TestOnboardClusterHandler_JSON/Valid_JSON_request_with_kubeconfig (0.00s)
+=== RUN   TestOnboardClusterHandler_FormData
+=== RUN   TestOnboardClusterHandler_FormData/Valid_form_data_with_cluster_name_only
+{"level":"info","ts":1750593159.507393,"caller":"log/log.go:8","msg":"Onboarding event logged","cluster":"test-cluster-2","status":"Started","message":"Onboarding process initiated"}
+{"level":"info","ts":1750593159.507393,"caller":"log/log.go:8","msg":"Broadcasting event","cluster":"test-cluster-2","event":{"clusterName":"test-cluster-2","status":"Started","message":"Onboarding process initiated","timestamp":"2025-06-22T17:22:39.5073928+05:30"}}
+{"level":"info","ts":1750593159.507393,"caller":"log/log.go:8","msg":"Onboarding event logged","cluster":"test-cluster-2","status":"Validating","message":"Validating cluster connectivity"}
+{"level":"info","ts":1750593159.507393,"caller":"log/log.go:8","msg":"Broadcasting event","cluster":"test-cluster-2","event":{"clusterName":"test-cluster-2","status":"Validating","message":"Validating cluster connectivity","timestamp":"2025-06-22T17:22:39.5073928+05:30"}}
+{"level":"info","ts":1750593159.507393,"caller":"log/log.go:8","msg":"Onboarding event logged","cluster":"test-cluster-2","status":"Error","message":"Connectivity validation failed: failed to parse kubeconfig: invalid configuration: no configuration has been provided, try setting KUBERNETES_MASTER environment variable"}
+{"level":"info","ts":1750593159.507393,"caller":"log/log.go:8","msg":"Broadcasting event","cluster":"test-cluster-2","event":{"clusterName":"test-cluster-2","status":"Error","message":"Connectivity validation failed: failed to parse kubeconfig: invalid configuration: no configuration has been provided, try setting KUBERNETES_MASTER environment variable","timestamp":"2025-06-22T17:22:39.5073928+05:30"}}
+{"level":"info","ts":1750593159.507393,"caller":"log/log.go:8","msg":"Onboarding event logged","cluster":"test-cluster-2","status":"Failed","message":"Onboarding failed: failed to parse kubeconfig: invalid configuration: no configuration has been provided, try setting KUBERNETES_MASTER environment variable"}
+{"level":"info","ts":1750593159.507393,"caller":"log/log.go:8","msg":"Broadcasting event","cluster":"test-cluster-2","event":{"clusterName":"test-cluster-2","status":"Failed","message":"Onboarding failed: failed to parse kubeconfig: invalid configuration: no configuration has been provided, try setting KUBERNETES_MASTER environment variable","timestamp":"2025-06-22T17:22:39.5073928+05:30"}}
+2025/06/22 17:22:39 Cluster 'test-cluster-2' onboarding failed: cluster validation failed: failed to parse kubeconfig: invalid configuration: no configuration has been provided, try setting KUBERNETES_MASTER environment variable
+=== RUN   TestOnboardClusterHandler_FormData/Missing_cluster_name_and_file
+=== RUN   TestOnboardClusterHandler_FormData/Valid_form_with_kubeconfig_file
+{"level":"info","ts":1750593159.507797,"caller":"log/log.go:8","msg":"Clearing all events for cluster","cluster":"test-cluster-form"}
+{"level":"info","ts":1750593159.507797,"caller":"log/log.go:8","msg":"Onboarding event logged","cluster":"test-cluster-form","status":"Initiated","message":"Onboarding process initiated by API request"}
+{"level":"info","ts":1750593159.507797,"caller":"log/log.go:8","msg":"Broadcasting event","cluster":"test-cluster-form","event":{"clusterName":"test-cluster-form","status":"Initiated","message":"Onboarding process initiated by API request","timestamp":"2025-06-22T17:22:39.5077971+05:30"}}
+--- PASS: TestOnboardClusterHandler_FormData (0.00s)
+    --- PASS: TestOnboardClusterHandler_FormData/Valid_form_data_with_cluster_name_only (0.00s)
+    --- PASS: TestOnboardClusterHandler_FormData/Missing_cluster_name_and_file (0.00s)
+    --- PASS: TestOnboardClusterHandler_FormData/Valid_form_with_kubeconfig_file (0.00s)
+=== RUN   TestUpdateManagedClusterLabelsHandler
+=== RUN   TestUpdateManagedClusterLabelsHandler/Valid_request
+{"level":"info","ts":1750593159.507797,"caller":"log/log.go:8","msg":"Getting Kubernetes client set with config context","context":"test-context"}
+{"level":"info","ts":1750593159.507797,"caller":"log/log.go:8","msg":"Onboarding event logged","cluster":"test-cluster-form","status":"Started","message":"Onboarding process initiated"}
+{"level":"info","ts":1750593159.507797,"caller":"log/log.go:8","msg":"Broadcasting event","cluster":"test-cluster-form","event":{"clusterName":"test-cluster-form","status":"Started","message":"Onboarding process initiated","timestamp":"2025-06-22T17:22:39.5077971+05:30"}}
+{"level":"info","ts":1750593159.507797,"caller":"log/log.go:8","msg":"Onboarding event logged","cluster":"test-cluster-form","status":"Validating","message":"Validating cluster connectivity"}
+{"level":"info","ts":1750593159.507797,"caller":"log/log.go:8","msg":"Broadcasting event","cluster":"test-cluster-form","event":{"clusterName":"test-cluster-form","status":"Validating","message":"Validating cluster connectivity","timestamp":"2025-06-22T17:22:39.5077971+05:30"}}
+{"level":"error","ts":1750593159.507797,"caller":"log/log.go:13","msg":"Failed to find context","context":"test-context"}
+=== RUN   TestUpdateManagedClusterLabelsHandler/Missing_context_name
+{"level":"info","ts":1750593159.507797,"caller":"log/log.go:8","msg":"Onboarding event logged","cluster":"test-cluster-form","status":"Error","message":"Connectivity validation failed: failed to parse kubeconfig: invalid configuration: no configuration has been provided, try setting KUBERNETES_MASTER environment variable"}
+{"level":"info","ts":1750593159.507797,"caller":"log/log.go:8","msg":"Broadcasting event","cluster":"test-cluster-form","event":{"clusterName":"test-cluster-form","status":"Error","message":"Connectivity validation failed: failed to parse kubeconfig: invalid configuration: no configuration has been provided, try setting KUBERNETES_MASTER environment variable","timestamp":"2025-06-22T17:22:39.5077971+05:30"}}
+=== RUN   TestUpdateManagedClusterLabelsHandler/Missing_cluster_name
+{"level":"info","ts":1750593159.507797,"caller":"log/log.go:8","msg":"Onboarding event logged","cluster":"test-cluster-form","status":"Failed","message":"Onboarding failed: failed to parse kubeconfig: invalid configuration: no configuration has been provided, try setting KUBERNETES_MASTER environment variable"}
+{"level":"info","ts":1750593159.507797,"caller":"log/log.go:8","msg":"Broadcasting event","cluster":"test-cluster-form","event":{"clusterName":"test-cluster-form","status":"Failed","message":"Onboarding failed: failed to parse kubeconfig: invalid configuration: no configuration has been provided, try setting KUBERNETES_MASTER environment variable","timestamp":"2025-06-22T17:22:39.5077971+05:30"}}
+2025/06/22 17:22:39 Cluster 'test-cluster-form' onboarding failed: cluster validation failed: failed to parse kubeconfig: invalid configuration: no configuration has been provided, try setting KUBERNETES_MASTER environment variable
+=== RUN   TestUpdateManagedClusterLabelsHandler/Invalid_request_body
+--- PASS: TestUpdateManagedClusterLabelsHandler (0.00s)
+    --- PASS: TestUpdateManagedClusterLabelsHandler/Valid_request (0.00s)
+    --- PASS: TestUpdateManagedClusterLabelsHandler/Missing_context_name (0.00s)
+    --- PASS: TestUpdateManagedClusterLabelsHandler/Missing_cluster_name (0.00s)
+    --- PASS: TestUpdateManagedClusterLabelsHandler/Invalid_request_body (0.00s)
+PASS
+ok  	command-line-arguments	0.346s

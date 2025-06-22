@@ -1,0 +1,38 @@
+{"level":"info","ts":1750593176.8203192,"caller":"log/log.go:8","msg":"initialized redis client"}
+{"level":"warn","ts":1750593176.9030428,"caller":"log/log.go:17","msg":"pls check if redis is runnnig","err":"dial tcp [::1]:6379: connectex: No connection could be made because the target machine actively refused it."}
+{"level":"debug","ts":1750593176.931728,"caller":"log/log.go:25","msg":"Using wds context","context":"wds1"}
+{"level":"debug","ts":1750593176.9319704,"caller":"log/log.go:25","msg":"Creating client for BP","kubeconfig path":"C:\\Users\\Naman\\.kube\\config"}
+{"level":"info","ts":1750593176.9319704,"caller":"log/log.go:8","msg":"Getting Kubernetes client set with context","context":"kind-kubeflex"}
+{"level":"error","ts":1750593176.9319704,"caller":"log/log.go:13","msg":"failed to watch on BP","error":"no valid Kubernetes context found for KubeStellar operations"}
+{"level":"error","ts":1750593176.9329183,"caller":"log/log.go:13","msg":"Failed to find context","context":"kind-kubeflex"}
+{"level":"info","ts":1750593176.9329183,"caller":"log/log.go:8","msg":"Getting Kubernetes client set with context","context":"k3d-kubeflex"}
+{"level":"error","ts":1750593176.9329183,"caller":"log/log.go:13","msg":"Failed to find context","context":"k3d-kubeflex"}
+{"level":"error","ts":1750593176.9329183,"caller":"log/log.go:13","msg":"failed to initialized backup plugin","error":"failed to find context 'k3d-kubeflex'"}
+=== RUN   TestDetachClusterHandler
+=== RUN   TestDetachClusterHandler/Valid_cluster_detachment_request
+{"level":"info","ts":1750593176.9334636,"caller":"log/log.go:8","msg":"Getting Kubernetes client set with config context","context":"its1"}
+{"level":"error","ts":1750593176.9334636,"caller":"log/log.go:13","msg":"Failed to find context","context":"its1"}
+=== RUN   TestDetachClusterHandler/Missing_cluster_name
+=== RUN   TestDetachClusterHandler/Empty_cluster_name
+=== RUN   TestDetachClusterHandler/Invalid_request_body
+--- PASS: TestDetachClusterHandler (0.00s)
+    --- PASS: TestDetachClusterHandler/Valid_cluster_detachment_request (0.00s)
+    --- PASS: TestDetachClusterHandler/Missing_cluster_name (0.00s)
+    --- PASS: TestDetachClusterHandler/Empty_cluster_name (0.00s)
+    --- PASS: TestDetachClusterHandler/Invalid_request_body (0.00s)
+=== RUN   TestGetDetachmentLogsHandler
+=== RUN   TestGetDetachmentLogsHandler/Valid_cluster_name
+=== RUN   TestGetDetachmentLogsHandler/Empty_cluster_name
+=== RUN   TestGetDetachmentLogsHandler/Non-existent_cluster
+--- PASS: TestGetDetachmentLogsHandler (0.00s)
+    --- PASS: TestGetDetachmentLogsHandler/Valid_cluster_name (0.00s)
+    --- PASS: TestGetDetachmentLogsHandler/Empty_cluster_name (0.00s)
+    --- PASS: TestGetDetachmentLogsHandler/Non-existent_cluster (0.00s)
+=== RUN   TestDetachClusterHandler_EdgeCases
+=== RUN   TestDetachClusterHandler_EdgeCases/Invalid_content_type
+=== RUN   TestDetachClusterHandler_EdgeCases/Malformed_JSON
+--- PASS: TestDetachClusterHandler_EdgeCases (0.00s)
+    --- PASS: TestDetachClusterHandler_EdgeCases/Invalid_content_type (0.00s)
+    --- PASS: TestDetachClusterHandler_EdgeCases/Malformed_JSON (0.00s)
+PASS
+ok  	command-line-arguments	0.429s

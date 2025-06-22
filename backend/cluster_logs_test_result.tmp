@@ -1,0 +1,31 @@
+{"level":"info","ts":1750593146.2513728,"caller":"log/log.go:8","msg":"initialized redis client"}
+{"level":"warn","ts":1750593146.3286195,"caller":"log/log.go:17","msg":"pls check if redis is runnnig","err":"dial tcp [::1]:6379: connectex: No connection could be made because the target machine actively refused it."}
+{"level":"debug","ts":1750593146.3383892,"caller":"log/log.go:25","msg":"Using wds context","context":"wds1"}
+{"level":"debug","ts":1750593146.338906,"caller":"log/log.go:25","msg":"Creating client for BP","kubeconfig path":"C:\\Users\\Naman\\.kube\\config"}
+{"level":"info","ts":1750593146.338906,"caller":"log/log.go:8","msg":"Getting Kubernetes client set with context","context":"kind-kubeflex"}
+{"level":"error","ts":1750593146.338906,"caller":"log/log.go:13","msg":"Failed to find context","context":"kind-kubeflex"}
+{"level":"info","ts":1750593146.338906,"caller":"log/log.go:8","msg":"Getting Kubernetes client set with context","context":"k3d-kubeflex"}
+{"level":"error","ts":1750593146.338906,"caller":"log/log.go:13","msg":"failed to watch on BP","error":"no valid Kubernetes context found for KubeStellar operations"}
+{"level":"error","ts":1750593146.338906,"caller":"log/log.go:13","msg":"Failed to find context","context":"k3d-kubeflex"}
+{"level":"error","ts":1750593146.338906,"caller":"log/log.go:13","msg":"failed to initialized backup plugin","error":"failed to find context 'k3d-kubeflex'"}
+=== RUN   TestOnboardingLogsHandler
+=== RUN   TestOnboardingLogsHandler/Valid_cluster_name
+{"level":"info","ts":1750593146.3394237,"caller":"log/log.go:8","msg":"Fetching cluster name","cluster":"test-cluster"}
+{"level":"info","ts":1750593146.3394237,"caller":"log/log.go:8","msg":"Getting onboarding events","count":0,"cluster":"test-cluster"}
+{"level":"info","ts":1750593146.3394237,"caller":"log/log.go:8","msg":"Checking cluster status","cluster":"test-cluster","status":"","exists":false}
+{"level":"info","ts":1750593146.3394237,"caller":"log/log.go:8","msg":"Checking for onboarding if its in progress","cluster":"test-cluster","inProgress: ":false}
+{"level":"error","ts":1750593146.3394237,"caller":"log/log.go:13","msg":"No onboarding data found for cluster","cluster":"test-cluster"}
+=== RUN   TestOnboardingLogsHandler/Empty_cluster_name
+{"level":"error","ts":1750593146.3394237,"caller":"log/log.go:13","msg":"Cluster name is required"}
+=== RUN   TestOnboardingLogsHandler/Non-existent_cluster
+{"level":"info","ts":1750593146.3394237,"caller":"log/log.go:8","msg":"Fetching cluster name","cluster":"non-existent-cluster"}
+{"level":"info","ts":1750593146.3394237,"caller":"log/log.go:8","msg":"Getting onboarding events","count":0,"cluster":"non-existent-cluster"}
+{"level":"info","ts":1750593146.3394237,"caller":"log/log.go:8","msg":"Checking cluster status","cluster":"non-existent-cluster","status":"","exists":false}
+{"level":"info","ts":1750593146.3394237,"caller":"log/log.go:8","msg":"Checking for onboarding if its in progress","cluster":"non-existent-cluster","inProgress: ":false}
+{"level":"error","ts":1750593146.3394237,"caller":"log/log.go:13","msg":"No onboarding data found for cluster","cluster":"non-existent-cluster"}
+--- PASS: TestOnboardingLogsHandler (0.00s)
+    --- PASS: TestOnboardingLogsHandler/Valid_cluster_name (0.00s)
+    --- PASS: TestOnboardingLogsHandler/Empty_cluster_name (0.00s)
+    --- PASS: TestOnboardingLogsHandler/Non-existent_cluster (0.00s)
+PASS
+ok  	command-line-arguments	0.405s
