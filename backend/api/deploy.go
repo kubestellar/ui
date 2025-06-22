@@ -741,7 +741,16 @@ func getWebhookConfig() (*WebhookConfig, error) {
 
 	config.FolderPath, err = redis.GetFilePath()
 	if err != nil {
+		// Check if this is a Redis connectivity issue
+		if strings.Contains(err.Error(), "connection refused") || strings.Contains(err.Error(), "dial tcp") {
+			return nil, fmt.Errorf("no deployment configured for this repository")
+		}
 		return nil, fmt.Errorf("failed to get folder path: %v", err)
+	}
+
+	// If FolderPath is empty, treat as no configuration
+	if config.FolderPath == "" {
+		return nil, fmt.Errorf("no deployment configured for this repository")
 	}
 
 	config.Branch, err = redis.GetBranch()
