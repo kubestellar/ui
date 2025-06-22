@@ -28,7 +28,7 @@ const LanguageSwitcher = () => {
     setIsOpen(false);
   };
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside or pressing ESC
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -36,11 +36,20 @@ const LanguageSwitcher = () => {
       }
     };
 
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) {
+        setIsOpen(false);
+      }
+    };
+
     document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [isOpen]);
 
   // Get current language info
   const currentLang = languages.find(lang => lang.code === i18n.language) || languages[0];
@@ -122,9 +131,18 @@ const LanguageSwitcher = () => {
           >
             {!isLoginPage && (
               <div
-                className={`border-b px-3 py-2 ${isDark ? 'border-gray-700 text-gray-400' : 'border-gray-200 text-gray-500'}`}
+                className={`flex items-center justify-between border-b px-3 py-2 ${isDark ? 'border-gray-700 text-gray-400' : 'border-gray-200 text-gray-500'}`}
               >
                 <p className="text-xs font-medium uppercase tracking-wider">Select Language</p>
+                <kbd
+                  className="hidden items-center rounded px-1.5 py-0.5 text-xs font-semibold sm:inline-flex"
+                  style={{
+                    background: isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(229, 231, 235, 0.5)',
+                    color: isDark ? 'rgba(156, 163, 175, 1)' : 'rgba(107, 114, 128, 1)',
+                  }}
+                >
+                  ESC
+                </kbd>
               </div>
             )}
             <div className="max-h-60 overflow-auto py-1">
