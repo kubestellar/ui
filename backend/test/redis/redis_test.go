@@ -1,10 +1,12 @@
 package redis_test
 
 import (
+	"context"
 	"os"
 	"testing"
 	"time"
 
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 
 	redisPkg "github.com/kubestellar/ui/redis"
@@ -15,7 +17,29 @@ func setupRedisEnv() {
 	_ = os.Setenv("REDIS_PORT", "6379")
 }
 
+// isRedisAvailable checks if Redis is available for testing
+func isRedisAvailable() bool {
+	setupRedisEnv()
+
+	rdb := redis.NewClient(&redis.Options{
+		Addr:         "localhost:6379",
+		DialTimeout:  1 * time.Second,
+		ReadTimeout:  1 * time.Second,
+		WriteTimeout: 1 * time.Second,
+		MaxRetries:   1,
+	})
+	defer rdb.Close()
+
+	ctx := context.Background()
+	err := rdb.Ping(ctx).Err()
+	return err == nil
+}
+
 func TestSetAndGetNamespaceCache(t *testing.T) {
+	if !isRedisAvailable() {
+		t.Skip("Redis is not available, skipping test")
+	}
+
 	setupRedisEnv()
 
 	key := "test:namespace:key"
@@ -30,6 +54,10 @@ func TestSetAndGetNamespaceCache(t *testing.T) {
 }
 
 func TestSetAndGetFilePath(t *testing.T) {
+	if !isRedisAvailable() {
+		t.Skip("Redis is not available, skipping test")
+	}
+
 	setupRedisEnv()
 
 	path := "/tmp/test/path.yaml"
@@ -42,6 +70,10 @@ func TestSetAndGetFilePath(t *testing.T) {
 }
 
 func TestSetAndGetRepoURL(t *testing.T) {
+	if !isRedisAvailable() {
+		t.Skip("Redis is not available, skipping test")
+	}
+
 	setupRedisEnv()
 
 	url := "https://github.com/example/repo"
@@ -54,6 +86,10 @@ func TestSetAndGetRepoURL(t *testing.T) {
 }
 
 func TestSetAndGetGitToken(t *testing.T) {
+	if !isRedisAvailable() {
+		t.Skip("Redis is not available, skipping test")
+	}
+
 	setupRedisEnv()
 
 	token := "ghp_example123456789"
