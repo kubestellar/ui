@@ -277,26 +277,9 @@ spec:
             - name: KUBECONFIG
               value: "/home/kubeconfig/config"
             - name: REDIS_HOST
-              value: "redis"
+              value: "{{ .Release.Name }}-redis-master"
             - name: REDIS_PORT
-              value: "{{ .Values.redis.port }}"
-
-          # Add Redis sidecar container
-
-     # Add Redis sidecar container
-        - name: redis-sidecar
-          image: redis:7.0-alpine
-          ports:
-            - containerPort: 6379
-              # Listen on localhost (::1) which is what the backend is hardcoded to use
-              hostIP: ::1
-          resources:
-            requests:
-              cpu: 100m
-              memory: 128Mi
-            limits:
-              cpu: 200m
-              memory: 256Mi
+              value: "6379"
 ---
 apiVersion: v1
 kind: Service

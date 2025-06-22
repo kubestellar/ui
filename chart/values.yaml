@@ -12,21 +12,7 @@ backend:
   port: 4000
 
 redis:
-  image: redis:7.0-alpine
-  port: 6379
-  replicas: 1
-  resources:
-    requests:
-      cpu: 100m
-      memory: 128Mi
-    limits:
-      cpu: 200m
-      memory: 256Mi
-  persistence:
-    enabled: false
-    size: 1Gi
-    storageClass: standard
-
+  enabled: true
 
 kubeConfig: ""
 
