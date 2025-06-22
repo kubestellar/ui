@@ -6,10 +6,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/kubestellar/ui/auth"
 	jwtconfig "github.com/kubestellar/ui/jwt"
 	"github.com/kubestellar/ui/log"
+	"github.com/kubestellar/ui/postgresql"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 // AuthenticateMiddleware validates JWT token
@@ -49,24 +50,34 @@ func AuthenticateMiddleware() gin.HandlerFunc {
 		}
 
 		// Get user permissions from auth system
-		userConfig, exists, err := auth.GetUserByUsername(username)
-		if err != nil || !exists {
-			log.LogWarn("Authentication failed: user not found",
+		user, err := postgresql.GetUserByUsername(username)
+		if err != nil {
+			var msg string
+			switch {
+			case err == gorm.ErrRecordNotFound:
+				msg = "user not found in database"
+			default:
+				msg = "error when execute query on database"
+			}
+			log.LogError(
+				msg,
 				zap.String("username", username),
-				zap.String("path", c.Request.URL.Path),
-				zap.Error(err))
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+				zap.String("error", err.Error()),
+			)
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 			c.Abort()
 			return
 		}
 
-		log.LogInfo("User authenticated successfully",
+		log.LogInfo(
+			"User authenticated successfully",
 			zap.String("username", username),
-			zap.String("path", c.Request.URL.Path))
+			zap.String("path", c.Request.URL.Path),
+		)
 
 		// Store both username and permissions in context
 		c.Set("username", username)
-		c.Set("permissions", userConfig.Permissions)
+		c.Set("permissions", user.Permissions)
 		c.Next()
 	}
 }

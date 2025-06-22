@@ -4,10 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"net/http"
+	"strings"
 
+	"github.com/gin-gonic/gin"
 	jwtconfig "github.com/kubestellar/ui/jwt"
 	"github.com/kubestellar/ui/k8s"
+	log "github.com/kubestellar/ui/log"
+	"github.com/kubestellar/ui/postgresql"
+	"github.com/kubestellar/ui/utils"
+	"go.uber.org/zap"
+	"gorm.io/gorm"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -71,11 +78,11 @@ func LoadK8sConfigMap() (*Config, error) {
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// If the ConfigMap does not exist, create it
-			log.Println("ConfigMap not found. Creating a new one with admin user...")
+			log.LogError("ConfigMap not found. Creating a new one with admin user...")
 			if err := CreateConfigMap(clientset); err != nil {
 				return nil, fmt.Errorf("failed to create ConfigMap: %v", err)
 			}
-			log.Println("Admin user created successfully")
+			log.LogInfo("Admin user created successfully")
 
 			// Fetch again after creation
 			cm, err = clientset.CoreV1().ConfigMaps(Namespace).Get(context.TODO(), ConfigMapName, metav1.GetOptions{})
@@ -86,7 +93,7 @@ func LoadK8sConfigMap() (*Config, error) {
 			return nil, fmt.Errorf("error fetching ConfigMap: %v", err)
 		}
 	} else {
-		log.Println("Admin configuration already exists")
+		log.LogInfo("Admin configuration already exists")
 	}
 
 	// Parse the ConfigMap JSON data
@@ -101,7 +108,7 @@ func LoadK8sConfigMap() (*Config, error) {
 
 	// Now we can safely load other configs after ensuring JWT secret is set
 	jwtconfig.LoadConfig()
-	log.Println("ConfigMap loaded successfully and JWT secret updated.")
+	log.LogInfo("ConfigMap loaded successfully and JWT secret updated.")
 
 	return &configData, nil
 }
@@ -180,7 +187,7 @@ func CreateConfigMap(clientset *kubernetes.Clientset) error {
 		},
 	}
 
-	log.Printf("Creating admin user with JWT secret from environment")
+	log.LogInfo("Creating admin user with JWT secret from environment")
 
 	// Convert struct to JSON string
 	configDataBytes, err := json.Marshal(defaultConfig)
@@ -201,13 +208,13 @@ func CreateConfigMap(clientset *kubernetes.Clientset) error {
 	_, err = clientset.CoreV1().ConfigMaps(Namespace).Create(context.TODO(), configMap, metav1.CreateOptions{})
 	if err != nil {
 		if errors.IsAlreadyExists(err) {
-			log.Println("ConfigMap already exists, skipping creation.")
+			log.LogError("ConfigMap already exists, skipping creation.")
 			return nil
 		}
 		return fmt.Errorf("error creating ConfigMap: %v", err)
 	}
 
-	log.Println("ConfigMap created successfully with admin user.")
+	log.LogInfo("ConfigMap created successfully with admin user.")
 	return nil
 }
 
@@ -216,7 +223,7 @@ func ensureNamespaceExists(clientset *kubernetes.Clientset) error {
 	_, err := clientset.CoreV1().Namespaces().Get(context.TODO(), Namespace, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			log.Printf("Namespace %s not found. Creating it...", Namespace)
+			log.LogInfo("Namespace not found. Creating it...", zap.String("namespace", Namespace))
 			ns := &corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: Namespace,
@@ -226,7 +233,7 @@ func ensureNamespaceExists(clientset *kubernetes.Clientset) error {
 			if err != nil {
 				return fmt.Errorf("error creating namespace: %v", err)
 			}
-			log.Printf("Namespace %s created successfully", Namespace)
+			log.LogInfo("Namespace created successfully", zap.String("namespace", Namespace))
 		} else {
 			return fmt.Errorf("error checking namespace: %v", err)
 		}
@@ -451,4 +458,68 @@ func GetUserPermissions(username string) ([]string, error) {
 	}
 
 	return userConfig.Permissions, nil
+}
+
+// LoginHandler verifies user credentials and issues JWT
+func LoginHandler(c *gin.Context) {
+	var loginData struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
+	// parse the data from the context to JSON and load it to the loginData
+	if err := c.ShouldBindJSON(&loginData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	loginData.Username = strings.TrimSpace(loginData.Username)
+	loginData.Password = strings.TrimSpace(loginData.Password)
+
+	// retrieve the user with the input username
+	user, err := postgresql.GetUserByUsername(loginData.Username)
+	if err != nil {
+		var msg string
+		switch {
+		case err == gorm.ErrRecordNotFound:
+			msg = "user not found in database"
+		default:
+			msg = "error when execute query on database"
+		}
+		log.LogError(
+			msg,
+			zap.String("username", loginData.Username),
+			zap.String("error", err.Error()),
+		)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		return
+	}
+
+	// compare the input password with the hashed password in database
+	err = utils.CheckPassword(user.Password, loginData.Password)
+	if err != nil {
+		log.LogError(
+			"Invalid credentials",
+			zap.String("username", loginData.Username),
+			zap.String("error", err.Error()),
+		)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		return
+	}
+
+	// generate JWT token
+	token, err := utils.GenerateToken(loginData.Username, user.Permissions)
+	if err != nil {
+		log.LogError("unable to generate token", zap.String("error", err.Error()))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error generating token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"token": token,
+		"user": gin.H{
+			"username":    user.Username,
+			"permissions": user.Permissions,
+		},
+	})
 }

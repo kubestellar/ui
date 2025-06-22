@@ -2,50 +2,10 @@ package routes
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/auth"
-	"github.com/kubestellar/ui/models"
-	"github.com/kubestellar/ui/utils"
 )
-
-// LoginHandler verifies user credentials and issues JWT
-func LoginHandler(c *gin.Context) {
-	var loginData struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-	}
-
-	if err := c.ShouldBindJSON(&loginData); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
-		return
-	}
-
-	loginData.Username = strings.TrimSpace(loginData.Username)
-	loginData.Password = strings.TrimSpace(loginData.Password)
-
-	user, err := models.AuthenticateUser(loginData.Username, loginData.Password)
-	if user == nil || err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
-		return
-	}
-
-	// Fixed: Pass both username and permissions to GenerateToken
-	token, err := utils.GenerateToken(loginData.Username, user.Permissions)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error generating token"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"token": token,
-		"user": gin.H{
-			"username":    user.Username,
-			"permissions": user.Permissions,
-		},
-	})
-}
 
 // CurrentUserHandler returns the current user's information
 func CurrentUserHandler(c *gin.Context) {
