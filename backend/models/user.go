@@ -2,30 +2,43 @@ package models
 
 import (
 	"time"
+
+	"github.com/lib/pq"
+)
+
+type Permission string
+
+const (
+	PermissionRead  Permission = "read"
+	PermissionWrite Permission = "write"
+	PermissionAdmin Permission = "admin"
 )
 
 // User represents an authenticated user
 type User struct {
-	ID        uint      `gorm:"primaryKey;autoIncrement"`
-	Username  string    `gorm:"unique;not null"`
-	Password  string    `gorm:"not null"` // Password is never returned in JSON
-	CreatedAt time.Time `gorm:"autoCreateTime"`
-	UpdatedAt time.Time `gorm:"autoUpdateTime"`
+	ID          uint           `gorm:"primaryKey;autoIncrement"`
+	Username    string         `gorm:"unique;not null"`
+	Password    string         `gorm:"not null"`
+	Permissions pq.StringArray `gorm:"type:user_permission_enum[];not null;default:'{admin}'"`
+	CreatedAt   time.Time      `gorm:"autoCreateTime"`
+	UpdatedAt   time.Time      `gorm:"autoUpdateTime"`
 }
 
 type UserResponse struct {
-	ID        uint      `json:"id"`
-	Username  string    `json:"username"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID          uint      `json:"id"`
+	Username    string    `json:"username"`
+	Permissions []string  `json:"permissions"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 func (u *User) ToResponse() UserResponse {
 	return UserResponse{
-		ID:        u.ID,
-		Username:  u.Username,
-		CreatedAt: u.CreatedAt,
-		UpdatedAt: u.UpdatedAt,
+		ID:          u.ID,
+		Username:    u.Username,
+		Permissions: u.Permissions,
+		CreatedAt:   u.CreatedAt,
+		UpdatedAt:   u.UpdatedAt,
 	}
 }
 
