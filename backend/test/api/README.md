@@ -41,6 +41,7 @@ This test suite provides complete coverage of all API handlers in the KubeStella
 ### Local Development
 
 #### Option 1: Using Test Scripts
+
 ```bash
 # Unix/Linux/macOS
 ./run_tests.sh
@@ -50,6 +51,7 @@ run_tests.bat
 ```
 
 #### Option 2: Using Make (Unix/Linux/macOS)
+
 ```bash
 # Run all tests
 make test
@@ -71,6 +73,7 @@ make quick-test
 ```
 
 #### Option 3: Direct Go Commands
+
 ```bash
 # All tests
 go test ./test/api/... -v
@@ -92,6 +95,7 @@ go test ./test/api/... -v -coverprofile=coverage.out
 The repository includes automated testing workflows:
 
 1. **`.github/workflows/api-tests.yml`** - Main API test workflow
+
    - Runs on: Push to main/dev, PRs to main/dev
    - Platform: Ubuntu Latest
    - Go Version: 1.21
@@ -109,11 +113,11 @@ The repository includes automated testing workflows:
 name: API Tests
 on:
   push:
-    branches: [ main, dev ]
-    paths: [ 'backend/**' ]
+    branches: [main, dev]
+    paths: ['backend/**']
   pull_request:
-    branches: [ main, dev ]
-    paths: [ 'backend/**' ]
+    branches: [main, dev]
+    paths: ['backend/**']
 
 jobs:
   test:
@@ -133,6 +137,7 @@ jobs:
 #### Other CI/CD Systems
 
 **Jenkins**:
+
 ```groovy
 pipeline {
     agent any
@@ -150,6 +155,7 @@ pipeline {
 ```
 
 **GitLab CI**:
+
 ```yaml
 test:
   image: golang:1.21
@@ -163,6 +169,7 @@ test:
 ```
 
 **Azure DevOps**:
+
 ```yaml
 - task: Go@0
   displayName: 'Run API Tests'
@@ -178,6 +185,7 @@ test:
 ### Dependencies
 
 Tests require:
+
 - Go 1.20+
 - Gin web framework
 - Testify assertion library
@@ -186,6 +194,7 @@ Tests require:
 ### External Services
 
 Tests handle missing external dependencies gracefully:
+
 - **Redis**: Tests continue without Redis (warnings logged)
 - **Kubernetes**: Mock contexts used for cluster operations
 - **External APIs**: Network calls mocked or handled with appropriate errors
@@ -193,6 +202,7 @@ Tests handle missing external dependencies gracefully:
 ### Environment Variables
 
 Optional configuration:
+
 ```bash
 export KUBECONFIG=/path/to/kubeconfig    # Kubernetes configuration
 export REDIS_URL=redis://localhost:6379  # Redis connection
@@ -202,6 +212,7 @@ export LOG_LEVEL=debug                    # Logging verbosity
 ## Test Patterns
 
 ### Table-Driven Tests
+
 ```go
 tests := []struct {
     name           string
@@ -220,6 +231,7 @@ tests := []struct {
 ```
 
 ### HTTP Request Testing
+
 ```go
 gin.SetMode(gin.TestMode)
 w := httptest.NewRecorder()
@@ -239,12 +251,15 @@ assert.Equal(t, expectedStatus, w.Code)
 ### Common Issues
 
 1. **Test Timeout**: Some tests involve network calls
+
    - Solution: Run with increased timeout: `go test -timeout 5m`
 
 2. **Redis Connection Errors**: Expected in test environment
+
    - Solution: Tests handle Redis unavailability gracefully
 
 3. **Kubernetes Context Errors**: Expected without cluster setup
+
    - Solution: Tests mock Kubernetes operations appropriately
 
 4. **Race Conditions**: Rare failures when running full suite
@@ -253,6 +268,7 @@ assert.Equal(t, expectedStatus, w.Code)
 ### Debug Mode
 
 Enable debug logging:
+
 ```bash
 export LOG_LEVEL=debug
 go test ./test/api/... -v
@@ -261,6 +277,7 @@ go test ./test/api/... -v
 ### Cleaning Up
 
 Remove temporary files:
+
 ```bash
 # Unix/Linux/macOS
 make clean
@@ -309,6 +326,7 @@ rm -f *.tmp *_result.tmp test_results.txt coverage.out coverage.html
 ### Metrics Tracking
 
 Track test metrics:
+
 - Execution time trends
 - Success/failure rates
 - Coverage percentages
