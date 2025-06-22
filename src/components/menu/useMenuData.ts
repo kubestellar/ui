@@ -1,4 +1,4 @@
-import { HiOutlineHome, HiOutlineCube, HiOutlineCommandLine } from 'react-icons/hi2';
+import { HiOutlineHome, HiOutlineCube, HiOutlineCommandLine, HiOutlinePuzzlePiece } from 'react-icons/hi2';
 import { MdPolicy, MdAssuredWorkload } from 'react-icons/md';
 import { useTranslation } from 'react-i18next';
 import { MenuItemData } from './Menu';
@@ -48,6 +48,19 @@ export const useMenuData = (): MenuItemData[] => {
           url: '/wecs/treeview',
           icon: MdAssuredWorkload,
           label: t('menu.items.deployedWorkloads'),
+        },
+      ],
+    },
+    {
+      catalog: t('menu.catalogs.plugins'),
+      centered: true,
+      marginTop: '1rem',
+      listItems: [
+        {
+          isLink: true,
+          url: '/plugins/manage',
+          icon: HiOutlinePuzzlePiece,
+          label: t('menu.items.pluginManager'),
         },
       ],
     },

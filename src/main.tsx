@@ -6,17 +6,20 @@ import ClientThemeWrapper from './context/ClientThemeWrapper.tsx';
 import { QueryProvider } from './lib/react-query/QueryProvider';
 import ToastProvider from './components/providers/ToastProvider.tsx';
 import { WebSocketProvider } from './context/WebSocketProvider.tsx';
+import { PluginProvider } from './plugins/PluginLoader.tsx';
 import './i18n.ts';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryProvider>
       <WebSocketProvider>
-        <ClientThemeWrapper>
-          <ToastProvider>
-            <App />
-          </ToastProvider>
-        </ClientThemeWrapper>
+        <PluginProvider>
+          <ClientThemeWrapper>
+            <ToastProvider>
+              <App />
+            </ToastProvider>
+          </ClientThemeWrapper>
+        </PluginProvider>
       </WebSocketProvider>
     </QueryProvider>
   </StrictMode>

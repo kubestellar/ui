@@ -17,9 +17,7 @@ jobs:
       BACKEND_IMAGE_NAME: ks-ui-backend
       REGISTRY: ghcr.io/${{ github.repository_owner }}
       DOMAIN_SUFFIX: preview.kubestellar.io
-      IMAGE_NAME: ${{ env.FRONTEND_IMAGE_NAME }}  
       
-
     steps:
       - name: Set PR context
         run: |
@@ -175,7 +173,7 @@ jobs:
                   - name: ghcr-secret
                 containers:
                   - name: ks-ui
-                    image: $REGISTRY/$IMAGE_NAME:$IMAGE_TAG
+                    image: $REGISTRY/$FRONTEND_IMAGE_NAME:$IMAGE_TAG
                     ports:
                       - containerPort: 4173
                     env:
@@ -230,4 +228,4 @@ jobs:
             🌍 [View Live Preview](https://${{ env.PREVIEW_HOST }})
 
             _Namespace_: `${{ env.NAMESPACE }}`
-            _Image_: `${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}`
+            _Image_: `${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ env.IMAGE_TAG }}`
