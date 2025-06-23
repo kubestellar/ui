@@ -54,7 +54,8 @@ export function measureInitialPageLoad(): void {
     // Set up observer for First Input Delay
     const fidObserver = new PerformanceObserver(entryList => {
       const firstInput = entryList.getEntries()[0];
-      const inputDelay = (firstInput as PerformanceEventTiming).processingStart - firstInput.startTime;
+      const inputDelay =
+        (firstInput as PerformanceEventTiming).processingStart - firstInput.startTime;
       metrics.firstInputDelay = inputDelay;
 
       if (import.meta.env.DEV) {

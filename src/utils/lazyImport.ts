@@ -62,7 +62,11 @@ export function lazyModule<T extends { [key: string]: ComponentType<unknown> }>(
       if (typeof name !== 'string') return undefined;
 
       if (!(name in target)) {
-        (target as Record<string, unknown>)[name] = lazy(() => load.then(module => ({ default: (module as Record<string, unknown>)[name] as ComponentType<unknown> })));
+        (target as Record<string, unknown>)[name] = lazy(() =>
+          load.then(module => ({
+            default: (module as Record<string, unknown>)[name] as ComponentType<unknown>,
+          }))
+        );
       }
 
       return target[name as keyof T];
