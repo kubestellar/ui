@@ -13,7 +13,7 @@ export class PluginAPI {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async getPluginList(): Promise<any[]> {
-    const response = await api.get(`${this.baseURL}/list`);
+    const response = await api.get(`${this.baseURL}`);
     return response.data.plugins || [];
   }
 
