@@ -1,6 +1,6 @@
 # 🧩 KubeStellar Design Progress – Saumya Kumar
 
-This document tracks the progress of the design system foundation efforts for the KubeStellar UI during the LFX Mentorship Term 2, 2025.
+This document tracks the progress of the design system foundation efforts for the KubeStellar UI during the **LFX Mentorship Term 2, 2025**.
 
 ---
 
@@ -8,37 +8,37 @@ This document tracks the progress of the design system foundation efforts for th
 
 ### 🟠 June 9 – June 20: UI Audit & Research
 
-- **Activities**: Review current UI across KubeStellar interfaces (UI, Docs, CLI), identify visual inconsistencies, UX and accessibility issues.
+- **Activities**: Reviewed current UI across KubeStellar interfaces (UI, Docs, CLI); identified visual inconsistencies, UX and accessibility issues.
 - **Deliverables**: UI Audit Summary Report with findings and improvement suggestions.
 
 ### 🟡 June 21 – July 4: Design Foundations
 
-- **Activities**: Define typography scale, color palette, spacing, layout grid, elevation system, and design tokens.
+- **Activities**: Defined typography scale, color palette, spacing, layout grid, elevation system, and design tokens.
 - **Deliverables**: Design Foundations Guide (PDF + Figma).
 
 ### 🟢 July 5 – July 14: Component Library – Phase 1
 
-- **Activities**: Begin designing reusable UI components (e.g., buttons, inputs, cards, navbars) with states (hover, focus, disabled).
+- **Activities**: Began designing reusable UI components (e.g., buttons, inputs, cards, navbars) with all interaction states (hover, focus, disabled).
 - **Deliverables**: Initial Figma Component Library.
 
 ### 🟣 July 15: Midterm Evaluation
 
-- **Activities**: Submit current progress for mentor feedback; revise scope or timeline if necessary.
+- **Activities**: Submitted current progress for mentor feedback; revised scope or timeline if needed.
 - **Deliverables**: Midterm Feedback Reflections.
 
 ### 🔵 July 16 – August 1: Component Library – Phase 2 & Usage Docs
 
-- **Activities**: Expand and finalize components. Create a usage guide and begin drafting CSS token specifications.
+- **Activities**: Expanded and finalized components. Created a usage guide and began drafting CSS token specifications.
 - **Deliverables**: Finalized Figma Library, Usage Guide, Draft CSS Spec.
 
 ### 🟤 August 2 – August 15: Mockups + IA Evaluation
 
-- **Activities**: Design high-fidelity mockups (e.g., homepage hero, docs page), optionally review documentation IA.
+- **Activities**: Designed high-fidelity mockups (e.g., homepage hero, docs master page). Optionally reviewed documentation IA.
 - **Deliverables**: Hero & Docs Page Mockups, IA Suggestions (if applicable).
 
 ### ⚫ August 16 – August 26: Final Reviews & Refinement
 
-- **Activities**: Polish all design assets. Ensure dev-readiness, accessibility, and consistency. Prepare final handoff documentation.
+- **Activities**: Polished all design assets. Ensured dev-readiness, accessibility, and consistency. Prepared final handoff documentation.
 - **Deliverables**: Final Design System Package (Figma, CSS Specs, Docs).
 
 ### 🏁 August 29: End of Term
@@ -48,17 +48,20 @@ This document tracks the progress of the design system foundation efforts for th
 
 ---
 
-## Audit Resources
+## 📂 Audit Resources
 
 1. **UI Audit FigJam Board**  
-   Link: [View FigJam Audit Board](https://www.figma.com/board/IHLBwlFC6i4Ibh2DVIzBxX/KubeStellar%E2%80%AFv0.27.2-Documentation--UI--and-Design-System-Audit?node-id=0-1&t=SK5oQyifTdi2ji7C-1)
+   🔗 [View FigJam Audit Board](https://www.figma.com/board/IHLBwlFC6i4Ibh2DVIzBxX/KubeStellar%E2%80%AFv0.27.2-Documentation--UI--and-Design-System-Audit?node-id=0-1&t=SK5oQyifTdi2ji7C-1)
 
 2. **Define Goals & Scope Document**  
-   Link: [Google Docs - Project Goals & Scope](https://docs.google.com/document/d/1m0dAD3S4ShM32hw5k2wqGv-CZeFhnKI3t-Eto1MfVis/edit?usp=sharing)
+   🔗 [Project Goals & Scope – Google Docs](https://docs.google.com/document/d/1m0dAD3S4ShM32hw5k2wqGv-CZeFhnKI3t-Eto1MfVis/edit?usp=sharing)
+
+3. **Structure & Strategy – Information Architecture & Flow Planning**  
+   🔗 [Structure & Strategy – Google Docs](https://docs.google.com/document/d/13iG5yXS23F9JHQkxGR3ODwmc_XJVydiBYt28f4Tysxo/edit?usp=sharing)
 
 ---
 
-## 📌 Progress Update –
+## 📌 Progress Update
 
 ### ✅ UI Audit Completed
 
@@ -68,15 +71,115 @@ This document tracks the progress of the design system foundation efforts for th
   - Navigation patterns
   - Visual consistency
   - Accessibility checks
-- Identified major UX and UI issues: inconsistent typography, unclear hierarchy, visual clutter,bug, poor color contrast, and navigation redundancy.
+- Identified major UX and UI issues such as:
+  - Inconsistent typography
+  - Unclear content hierarchy
+  - Visual clutter and bugs
+  - Poor color contrast
+  - Navigation redundancy
 
 ### 🎯 Goals & Scope Defined
 
-- Established clear goals for the design system:
+- Established clear design system objectives, including:
   - Audit Focus
-  - Areas of Evaluation
+  - Evaluation Areas
   - Business Objectives
   - User Goals & Tasks
   - Success Criteria
   - Scope Summary
-- Scoped initial focus areas: documentation site, core UI components, and frontend behavior improvements.
+- Initial focus areas:
+  - Documentation site
+  - Core UI components
+  - Frontend interaction improvements
+
+### 🧭 Structure & Strategy – Information Architecture & Flow Planning
+
+This section covers foundational analysis and planning to improve the structure, navigation, and usability of the KubeStellar documentation.
+
+#### ✅ Review of Current Information Architecture (IA)
+
+- Analyzed existing doc structure across:
+  - Overview
+  - Setup
+  - Usage
+  - UI
+  - Community sections
+- Found fragmented content, duplicate topics, and inconsistent labeling.
+
+#### 📁 Observations & Proposed Hierarchy Improvements
+
+- Mixed technical/conceptual content without clear organization
+- Proposed a max of 3-level deep nested hierarchy
+- Suggested clearer top-level groups:
+  - Getting Started
+  - Usage
+  - Troubleshooting
+  - Contributing
+- Recommended removing or renaming generic paths like `/direct/`
+
+#### 🧭 Navigation Design Audit
+
+##### 🔹 Header
+
+- **Issues**: Low contrast buttons; missing version and language switchers
+- **Recommendations**: Use clear button styles; add dropdowns for versioning and multilingual support
+
+##### 🔹 Sidebar
+
+- **Issues**: Non-collapsible menus; poor hierarchy; confusing URLs
+- **Recommendations**: Implement collapsible sections; improve naming; highlight current section; remove `/direct/`
+
+##### 🔹 Footer
+
+- **Needs**:
+  - “Was this helpful?” feedback buttons
+  - GitHub "Edit this page" links
+  - Community links
+  - License and privacy info
+
+##### 🔹 Breadcrumbs
+
+- **Status**: Missing entirely
+- **Recommendation**: Add a breadcrumb trail to support user orientation
+
+#### 🔄 Key User Flows Mapped
+
+##### 1. Manual Setup Flow
+
+- **Goal**: Manually install KubeStellar using CLI, Helm, and KubeFlex
+- **Issues**: Dispersed setup steps; redundant cluster info
+- **Recommendations**: Create a unified guide; add lifecycle diagrams
+
+##### 2. OCM-Based Setup Flow
+
+- **Goal**: Automate setup via Open Cluster Management (OCM)
+- **Issues**: Lacks clarity on use-case choice; no validation steps
+- **Recommendations**: Add setup comparison chart; insert CLI output examples and diagrams
+
+##### 3. Workload Execution Flow
+
+- **Goal**: Register clusters and deploy workloads
+- **Issues**: Disconnected content; no step-by-step guidance
+- **Recommendations**: Create end-to-end deployment guide with YAML + CLI examples
+
+##### 4. Teardown Flow
+
+- **Goal**: Cleanly uninstall KubeStellar
+- **Issues**: No rollback or backup guidance; lacks automation
+- **Recommendations**: Add pre-teardown checklist; CLI cleanup scripts; multi-cluster handling
+
+#### 🚧 Identified Content & Functional Gaps
+
+- No Quickstart guide for first-time users
+- Duplicate Hosting Cluster setup across docs
+- UI documentation lacks structure and visuals
+- API docs are fragmented with minimal context
+- Troubleshooting section is hard to scan
+- Known Issues aren't categorized by severity
+- Contribution docs need more clarity and depth
+- Missing full-text search functionality
+- No user feedback mechanisms
+- Diagrams and visuals are absent from key pages
+- No glossary for technical terms (e.g., WEC, ITS)
+
+---
