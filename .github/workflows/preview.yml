@@ -228,4 +228,6 @@ jobs:
             🌍 [View Live Preview](https://${{ env.PREVIEW_HOST }})
 
             _Namespace_: `${{ env.NAMESPACE }}`
+
             _Image_: `${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ env.IMAGE_TAG }}`
+

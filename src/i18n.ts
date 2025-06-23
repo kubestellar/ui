@@ -7,8 +7,8 @@ import es from './locales/strings.es.json';
 import de from './locales/strings.de.json';
 import fr from './locales/strings.fr.json';
 import it from './locales/strings.it.json';
-import zh_CN from './locales/strings.zh_CN.json';
-import zh_TW from './locales/strings.zh_TW.json';
+import zh_Hans from './locales/strings.zh-Hans.json';
+import zh_Hant from './locales/strings.zh-Hant.json';
 
 i18next
   .use(languageDetector)
@@ -21,8 +21,8 @@ i18next
       de: { translation: de },
       fr: { translation: fr },
       it: { translation: it },
-      'zh-CN': { translation: zh_CN },
-      'zh-TW': { translation: zh_TW },
+      'zh-Hans': { translation: zh_Hans },
+      'zh-Hant': { translation: zh_Hant },
     },
     lng: localStorage.getItem('i18nextLng') || 'en',
     fallbackLng: 'en',
