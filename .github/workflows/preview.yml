@@ -59,7 +59,7 @@ jobs:
             --docker-username=clubanderson \
             --docker-password=${{ secrets.GHCR_PAT }} \
             --docker-email=dev@kubestellar.io \
-            -n $NAMESPACE
+            -n $NAMESPACE || echo "✅ Secret already exists"
 
       - name: Install Buildah
         run: |
@@ -142,9 +142,11 @@ jobs:
                 labels:
                   app: backend
               spec:
+                imagePullSecrets:
+                  - name: ghcr-secret
                 containers:
                   - name: backend
-                    image: g$REGISTRY/$BACKEND_IMAGE_NAME:$IMAGE_TAG
+                    image: $REGISTRY/$BACKEND_IMAGE_NAME:$IMAGE_TAG
                     ports:
                       - containerPort: 4000
                     env:
