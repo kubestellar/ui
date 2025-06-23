@@ -37,7 +37,7 @@ const LanguageSwitcher = () => {
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    
+
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
@@ -54,7 +54,7 @@ const LanguageSwitcher = () => {
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    
+
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
