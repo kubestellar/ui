@@ -9,7 +9,7 @@ export class PluginAPI {
       if (!response.ok) {
         throw new Error(`Failed to fetch plugin manifests: ${response.statusText}`);
       }
-      
+
       const data: PluginAPIResponse<PluginManifest[]> = await response.json();
       return data.data || [];
     } catch (error) {
@@ -25,7 +25,7 @@ export class PluginAPI {
       if (!response.ok) {
         throw new Error(`Failed to fetch plugin list: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
       return data.plugins || [];
     } catch (error) {
@@ -41,7 +41,7 @@ export class PluginAPI {
       if (!response.ok) {
         throw new Error(`Failed to fetch plugin details: ${response.statusText}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error(`Failed to get plugin details for ${pluginName}:`, error);
@@ -53,7 +53,7 @@ export class PluginAPI {
   async installPlugin(source: string, options?: any): Promise<any> {
     try {
       console.log('Installing plugin from:', source);
-      
+
       const response = await fetch('/api/wasm-plugins/install', {
         method: 'POST',
         headers: {
@@ -71,7 +71,7 @@ export class PluginAPI {
       if (!response.ok) {
         const responseText = await response.text();
         console.error('Error response body:', responseText);
-        
+
         try {
           const errorData = JSON.parse(responseText);
           throw new Error(errorData.error || `Failed to install plugin: ${response.statusText}`);
@@ -83,7 +83,7 @@ export class PluginAPI {
       // Get response as text first to debug
       const responseText = await response.text();
       console.log('Success response body:', responseText);
-      
+
       try {
         return JSON.parse(responseText);
       } catch (jsonError) {
@@ -175,7 +175,7 @@ export class PluginAPI {
       if (!response.ok) {
         throw new Error(`Failed to get plugin status: ${response.statusText}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error(`Failed to get plugin status for ${pluginName}:`, error);
@@ -212,7 +212,7 @@ export class PluginAPI {
       if (!response.ok) {
         throw new Error(`Failed to get plugin metrics: ${response.statusText}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Failed to get plugin metrics:', error);
@@ -227,7 +227,7 @@ export class PluginAPI {
       if (!response.ok) {
         throw new Error(`Failed to get plugin configuration: ${response.statusText}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Failed to get plugin configuration:', error);
@@ -288,4 +288,4 @@ export class PluginAPI {
   getPluginAssetURL(pluginName: string, assetPath: string): string {
     return `${this.baseURL}/${pluginName}/assets${assetPath}`;
   }
-} 
+}

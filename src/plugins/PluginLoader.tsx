@@ -1,5 +1,11 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { PluginManifest, PluginInstance, PluginWidgetConfig, PluginNavigationItem, PluginAssetConfig } from './types';
+import {
+  PluginManifest,
+  PluginInstance,
+  PluginWidgetConfig,
+  PluginNavigationItem,
+  PluginAssetConfig,
+} from './types';
 import { PluginAPI } from './PluginAPI';
 import { WASMPluginLoader } from './WASMPluginLoader';
 
@@ -31,7 +37,7 @@ interface PluginProviderProps {
 }
 
 // This component provides plugin functionality and exports both context and utilities
- 
+
 export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
   const [plugins, setPlugins] = useState<Map<string, PluginInstance>>(new Map());
   const [loadedPlugins, setLoadedPlugins] = useState<PluginManifest[]>([]);
@@ -52,61 +58,64 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
     }
   }, []);
 
-  const loadPlugin = useCallback(async (manifest: PluginManifest) => {
-    try {
-      console.log(`Loading plugin: ${manifest.name}`);
-      
-      // Check if plugin is already loaded
-      if (plugins.has(manifest.name)) {
-        console.warn(`Plugin ${manifest.name} is already loaded`);
-        return;
-      }
+  const loadPlugin = useCallback(
+    async (manifest: PluginManifest) => {
+      try {
+        console.log(`Loading plugin: ${manifest.name}`);
 
-      // Load WASM module if available
-      let wasmModule = null;
-      if (manifest.wasm.file) {
-        wasmModule = await wasmLoader.loadWASM(manifest.name, manifest.wasm.file);
-      }
+        // Check if plugin is already loaded
+        if (plugins.has(manifest.name)) {
+          console.warn(`Plugin ${manifest.name} is already loaded`);
+          return;
+        }
 
-      // Create plugin instance
-      const pluginInstance: PluginInstance = {
-        manifest,
-        wasmModule,
-        widgets: new Map(),
-        isLoaded: true,
-        loadedAt: new Date(),
-      };
+        // Load WASM module if available
+        let wasmModule = null;
+        if (manifest.wasm.file) {
+          wasmModule = await wasmLoader.loadWASM(manifest.name, manifest.wasm.file);
+        }
 
-      // Load plugin widgets
-      if (manifest.frontend.widgets) {
-        for (const widgetConfig of manifest.frontend.widgets) {
-          const widget = await loadPluginWidget(manifest, widgetConfig);
-          if (widget) {
-            pluginInstance.widgets.set(widgetConfig.name, widget);
+        // Create plugin instance
+        const pluginInstance: PluginInstance = {
+          manifest,
+          wasmModule,
+          widgets: new Map(),
+          isLoaded: true,
+          loadedAt: new Date(),
+        };
+
+        // Load plugin widgets
+        if (manifest.frontend.widgets) {
+          for (const widgetConfig of manifest.frontend.widgets) {
+            const widget = await loadPluginWidget(manifest, widgetConfig);
+            if (widget) {
+              pluginInstance.widgets.set(widgetConfig.name, widget);
+            }
           }
         }
-      }
 
-      // Load plugin assets (CSS, JS)
-      if (manifest.frontend.assets) {
-        await loadPluginAssets(manifest.frontend.assets, manifest.name);
-      }
+        // Load plugin assets (CSS, JS)
+        if (manifest.frontend.assets) {
+          await loadPluginAssets(manifest.frontend.assets, manifest.name);
+        }
 
-      // Update plugins map
-      setPlugins(prev => new Map(prev).set(manifest.name, pluginInstance));
-      
-      console.log(`Plugin ${manifest.name} loaded successfully`);
-    } catch (error) {
-      console.error(`Failed to load plugin ${manifest.name}:`, error);
-      throw error;
-    }
-  }, [plugins, wasmLoader, loadPluginAssets]);
+        // Update plugins map
+        setPlugins(prev => new Map(prev).set(manifest.name, pluginInstance));
+
+        console.log(`Plugin ${manifest.name} loaded successfully`);
+      } catch (error) {
+        console.error(`Failed to load plugin ${manifest.name}:`, error);
+        throw error;
+      }
+    },
+    [plugins, wasmLoader, loadPluginAssets]
+  );
 
   const loadAvailablePlugins = useCallback(async () => {
     try {
       const manifests = await pluginAPI.getPluginManifests();
       setLoadedPlugins(manifests);
-      
+
       // Auto-load enabled plugins
       for (const manifest of manifests) {
         if (manifest.frontend.enabled) {
@@ -123,35 +132,38 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
     loadAvailablePlugins();
   }, [loadAvailablePlugins]);
 
-  const unloadPlugin = useCallback(async (pluginName: string) => {
-    try {
-      const plugin = plugins.get(pluginName);
-      if (!plugin) {
-        console.warn(`Plugin ${pluginName} is not loaded`);
-        return;
+  const unloadPlugin = useCallback(
+    async (pluginName: string) => {
+      try {
+        const plugin = plugins.get(pluginName);
+        if (!plugin) {
+          console.warn(`Plugin ${pluginName} is not loaded`);
+          return;
+        }
+
+        // Cleanup WASM module
+        if (plugin.wasmModule) {
+          await wasmLoader.unloadWASM(pluginName);
+        }
+
+        // Remove plugin assets
+        removePluginAssets(pluginName);
+
+        // Update plugins map
+        setPlugins(prev => {
+          const newMap = new Map(prev);
+          newMap.delete(pluginName);
+          return newMap;
+        });
+
+        console.log(`Plugin ${pluginName} unloaded successfully`);
+      } catch (error) {
+        console.error(`Failed to unload plugin ${pluginName}:`, error);
+        throw error;
       }
-
-      // Cleanup WASM module
-      if (plugin.wasmModule) {
-        await wasmLoader.unloadWASM(pluginName);
-      }
-
-      // Remove plugin assets
-      removePluginAssets(pluginName);
-
-      // Update plugins map
-      setPlugins(prev => {
-        const newMap = new Map(prev);
-        newMap.delete(pluginName);
-        return newMap;
-      });
-
-      console.log(`Plugin ${pluginName} unloaded successfully`);
-    } catch (error) {
-      console.error(`Failed to unload plugin ${pluginName}:`, error);
-      throw error;
-    }
-  }, [plugins, wasmLoader]);
+    },
+    [plugins, wasmLoader]
+  );
 
   const loadPluginWidget = async (
     manifest: PluginManifest,
@@ -215,26 +227,29 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
     }
   };
 
-  const getPluginWidget = useCallback((pluginName: string, widgetName: string) => {
-    const plugin = plugins.get(pluginName);
-    if (!plugin) {
-      console.warn(`Plugin ${pluginName} not found`);
-      return null;
-    }
+  const getPluginWidget = useCallback(
+    (pluginName: string, widgetName: string) => {
+      const plugin = plugins.get(pluginName);
+      if (!plugin) {
+        console.warn(`Plugin ${pluginName} not found`);
+        return null;
+      }
 
-    const widget = plugin.widgets.get(widgetName);
-    if (!widget) {
-      console.warn(`Widget ${widgetName} not found in plugin ${pluginName}`);
-      return null;
-    }
+      const widget = plugin.widgets.get(widgetName);
+      if (!widget) {
+        console.warn(`Widget ${widgetName} not found in plugin ${pluginName}`);
+        return null;
+      }
 
-    return widget;
-  }, [plugins]);
+      return widget;
+    },
+    [plugins]
+  );
 
   const getPluginNavigation = useCallback(() => {
     const navigation: PluginNavigationItem[] = [];
-    
-    plugins.forEach((plugin) => {
+
+    plugins.forEach(plugin => {
       if (plugin.manifest.frontend.navigation) {
         navigation.push(...plugin.manifest.frontend.navigation);
       }
@@ -243,27 +258,33 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
     return navigation;
   }, [plugins]);
 
-  const isPluginLoaded = useCallback((pluginName: string) => {
-    return plugins.has(pluginName);
-  }, [plugins]);
+  const isPluginLoaded = useCallback(
+    (pluginName: string) => {
+      return plugins.has(pluginName);
+    },
+    [plugins]
+  );
 
-  const executePluginFunction = useCallback(async (
-    pluginName: string,
-    functionName: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    args?: any
-  ) => {
-    const plugin = plugins.get(pluginName);
-    if (!plugin) {
-      throw new Error(`Plugin ${pluginName} not found`);
-    }
+  const executePluginFunction = useCallback(
+    async (
+      pluginName: string,
+      functionName: string,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      args?: any
+    ) => {
+      const plugin = plugins.get(pluginName);
+      if (!plugin) {
+        throw new Error(`Plugin ${pluginName} not found`);
+      }
 
-    if (!plugin.wasmModule) {
-      throw new Error(`Plugin ${pluginName} does not have a WASM module`);
-    }
+      if (!plugin.wasmModule) {
+        throw new Error(`Plugin ${pluginName} does not have a WASM module`);
+      }
 
-    return wasmLoader.callFunction(pluginName, functionName, args);
-  }, [plugins, wasmLoader]);
+      return wasmLoader.callFunction(pluginName, functionName, args);
+    },
+    [plugins, wasmLoader]
+  );
 
   const contextValue: PluginContextType = {
     plugins,
@@ -276,11 +297,7 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
     executePluginFunction,
   };
 
-  return (
-    <PluginContext.Provider value={contextValue}>
-      {children}
-    </PluginContext.Provider>
-  );
+  return <PluginContext.Provider value={contextValue}>{children}</PluginContext.Provider>;
 };
 
 // Widget creation functions
@@ -310,7 +327,7 @@ const createChartWidget = (manifest: PluginManifest, config: PluginWidgetConfig)
 
     useEffect(() => {
       fetchData();
-      
+
       // Set up refresh interval if specified
       const interval = config.config.refreshInterval;
       if (interval && interval > 0) {
@@ -362,7 +379,7 @@ const createTableWidget = (manifest: PluginManifest, config: PluginWidgetConfig)
 
     useEffect(() => {
       fetchData();
-      
+
       const interval = config.config.refreshInterval;
       if (interval && interval > 0) {
         const timer = setInterval(fetchData, interval * 1000);
@@ -412,7 +429,7 @@ const createMetricsWidget = (manifest: PluginManifest, config: PluginWidgetConfi
 
     useEffect(() => {
       fetchMetrics();
-      
+
       const interval = config.config.refreshInterval;
       if (interval && interval > 0) {
         const timer = setInterval(fetchMetrics, interval * 1000);
@@ -466,7 +483,7 @@ const createCustomWidget = (manifest: PluginManifest, config: PluginWidgetConfig
 
     useEffect(() => {
       fetchContent();
-      
+
       const interval = config.config.refreshInterval;
       if (interval && interval > 0) {
         const timer = setInterval(fetchContent, interval * 1000);
@@ -481,11 +498,8 @@ const createCustomWidget = (manifest: PluginManifest, config: PluginWidgetConfig
     return (
       <div className="plugin-custom-widget">
         <h3>{config.config.title}</h3>
-        <div 
-          className="custom-widget-content"
-          dangerouslySetInnerHTML={{ __html: content }}
-        />
+        <div className="custom-widget-content" dangerouslySetInnerHTML={{ __html: content }} />
       </div>
     );
   });
-}; 
+};

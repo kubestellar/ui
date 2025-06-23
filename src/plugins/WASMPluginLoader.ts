@@ -165,14 +165,15 @@ export class WASMPluginLoader {
           const memory = new Uint8Array(module.memory.buffer);
           const method = new TextDecoder().decode(memory.slice(methodPtr, methodPtr + methodSize));
           const url = new TextDecoder().decode(memory.slice(urlPtr, urlPtr + urlSize));
-          const body = bodySize > 0 ? new TextDecoder().decode(memory.slice(bodyPtr, bodyPtr + bodySize)) : '';
+          const body =
+            bodySize > 0 ? new TextDecoder().decode(memory.slice(bodyPtr, bodyPtr + bodySize)) : '';
 
           // Make API call through backend
           this.makeAPICall(method, url, body)
-            .then((response) => {
+            .then(response => {
               console.log(`K8s API call result:`, response);
             })
-            .catch((error) => {
+            .catch(error => {
               console.error(`K8s API call failed:`, error);
             });
 
@@ -210,7 +211,12 @@ export class WASMPluginLoader {
         },
 
         // Host function: set to storage
-        host_storage_set: (keyPtr: number, keySize: number, valuePtr: number, valueSize: number) => {
+        host_storage_set: (
+          keyPtr: number,
+          keySize: number,
+          valuePtr: number,
+          valueSize: number
+        ) => {
           const module = this.loadedModules.get(pluginName);
           if (!module) return 0;
 
@@ -299,4 +305,4 @@ export class WASMPluginLoader {
     this.moduleCache.clear();
     console.log('WASM module cache cleared');
   }
-} 
+}
