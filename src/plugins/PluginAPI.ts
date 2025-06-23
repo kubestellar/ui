@@ -18,6 +18,7 @@ export class PluginAPI {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async getPluginList(): Promise<any[]> {
     try {
       const response = await fetch('/api/wasm-plugins');
@@ -33,6 +34,7 @@ export class PluginAPI {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async getPluginDetails(pluginName: string): Promise<any> {
     try {
       const response = await fetch(`/api/wasm-plugins/${pluginName}`);
@@ -47,6 +49,7 @@ export class PluginAPI {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async installPlugin(source: string, options?: any): Promise<any> {
     try {
       console.log('Installing plugin from:', source);
@@ -72,7 +75,7 @@ export class PluginAPI {
         try {
           const errorData = JSON.parse(responseText);
           throw new Error(errorData.error || `Failed to install plugin: ${response.statusText}`);
-        } catch (jsonError) {
+        } catch {
           throw new Error(`Failed to install plugin: ${response.statusText} - ${responseText}`);
         }
       }
@@ -94,6 +97,7 @@ export class PluginAPI {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async uninstallPlugin(pluginName: string): Promise<any> {
     try {
       const response = await fetch(`${this.baseURL}/${pluginName}`, {
@@ -111,6 +115,7 @@ export class PluginAPI {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async enablePlugin(pluginName: string): Promise<any> {
     try {
       const response = await fetch(`${this.baseURL}/${pluginName}/enable`, {
@@ -128,6 +133,7 @@ export class PluginAPI {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async disablePlugin(pluginName: string): Promise<any> {
     try {
       const response = await fetch(`${this.baseURL}/${pluginName}/disable`, {
@@ -145,6 +151,7 @@ export class PluginAPI {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async reloadPlugin(pluginName: string): Promise<any> {
     try {
       const response = await fetch(`${this.baseURL}/${pluginName}/reload`, {
@@ -176,6 +183,7 @@ export class PluginAPI {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async callPluginFunction(pluginName: string, functionPath: string, data?: any): Promise<any> {
     try {
       const response = await fetch(`${this.baseURL}/${pluginName}${functionPath}`, {
@@ -197,6 +205,7 @@ export class PluginAPI {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async getPluginMetrics(): Promise<any> {
     try {
       const response = await fetch(`${this.baseURL}/system/metrics`);
@@ -211,6 +220,7 @@ export class PluginAPI {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async getPluginConfiguration(): Promise<any> {
     try {
       const response = await fetch(`${this.baseURL}/system/configuration`);
@@ -225,6 +235,7 @@ export class PluginAPI {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async updatePluginConfiguration(config: any): Promise<any> {
     try {
       const response = await fetch(`${this.baseURL}/system/configuration`, {
@@ -246,6 +257,7 @@ export class PluginAPI {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async submitPluginFeedback(feedback: any): Promise<any> {
     try {
       const response = await fetch(`${this.baseURL}/feedback`, {

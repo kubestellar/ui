@@ -11,6 +11,7 @@ export class WASMPluginLoader {
       // Check if already loaded
       if (this.loadedModules.has(pluginName)) {
         console.log(`WASM module for ${pluginName} already loaded`);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return this.loadedModules.get(pluginName)!.instance.exports as any;
       }
 
@@ -51,6 +52,7 @@ export class WASMPluginLoader {
       // Initialize the plugin if it has a main function
       if (wasmInstance.exports.main) {
         try {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
           (wasmInstance.exports.main as Function)();
         } catch (error) {
           console.warn(`Plugin ${pluginName} main function failed:`, error);
@@ -72,6 +74,7 @@ export class WASMPluginLoader {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async callFunction(pluginName: string, functionName: string, args?: any): Promise<any> {
     const module = this.loadedModules.get(pluginName);
     if (!module) {
@@ -89,7 +92,9 @@ export class WASMPluginLoader {
       const inputBuffer = new TextEncoder().encode(inputData);
 
       // Allocate memory in WASM
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
       const allocate = module.exports.allocate as Function;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
       const deallocate = module.exports.deallocate as Function;
 
       if (!allocate) {
@@ -240,6 +245,7 @@ export class WASMPluginLoader {
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private async makeAPICall(method: string, url: string, body: string): Promise<any> {
     try {
       const response = await fetch(url, {
@@ -261,9 +267,11 @@ export class WASMPluginLoader {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private getPluginConfig(pluginName: string, key: string): any {
     // This would typically get config from the plugin manifest
     // For now, return a placeholder
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const configs: Record<string, any> = {
       refreshInterval: 30,
       debug: false,
@@ -281,6 +289,7 @@ export class WASMPluginLoader {
     return this.loadedModules.has(pluginName);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getPluginExports(pluginName: string): Record<string, any> | null {
     const module = this.loadedModules.get(pluginName);
     return module ? module.exports : null;

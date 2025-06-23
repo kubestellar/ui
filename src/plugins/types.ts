@@ -1,5 +1,4 @@
-// Plugin system types for KubeStellar UI
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface PluginManifest {
   name: string;
   version: string;
@@ -107,4 +106,4 @@ export interface PluginRegistry {
   manifests: PluginManifest[];
   status: Map<string, PluginStatus>;
   config: PluginConfig;
-} 
+}

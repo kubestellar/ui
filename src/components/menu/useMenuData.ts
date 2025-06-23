@@ -1,4 +1,9 @@
-import { HiOutlineHome, HiOutlineCube, HiOutlineCommandLine, HiOutlinePuzzlePiece } from 'react-icons/hi2';
+import {
+  HiOutlineHome,
+  HiOutlineCube,
+  HiOutlineCommandLine,
+  HiOutlinePuzzlePiece,
+} from 'react-icons/hi2';
 import { MdPolicy, MdAssuredWorkload } from 'react-icons/md';
 import { useTranslation } from 'react-i18next';
 import { MenuItemData } from './Menu';

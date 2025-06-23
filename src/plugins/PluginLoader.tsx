@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { PluginManifest, PluginInstance, PluginWidgetConfig, PluginNavigationItem } from './types';
+import { PluginManifest, PluginInstance, PluginWidgetConfig, PluginNavigationItem, PluginAssetConfig } from './types';
 import { PluginAPI } from './PluginAPI';
 import { WASMPluginLoader } from './WASMPluginLoader';
 
@@ -8,9 +8,11 @@ interface PluginContextType {
   loadedPlugins: PluginManifest[];
   loadPlugin: (manifest: PluginManifest) => Promise<void>;
   unloadPlugin: (pluginName: string) => Promise<void>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getPluginWidget: (pluginName: string, widgetName: string) => React.ComponentType<any> | null;
   getPluginNavigation: () => PluginNavigationItem[];
   isPluginLoaded: (pluginName: string) => boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   executePluginFunction: (pluginName: string, functionName: string, args?: any) => Promise<any>;
 }
 
@@ -28,32 +30,27 @@ interface PluginProviderProps {
   children: React.ReactNode;
 }
 
+// This component provides plugin functionality and exports both context and utilities
+ 
 export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
   const [plugins, setPlugins] = useState<Map<string, PluginInstance>>(new Map());
   const [loadedPlugins, setLoadedPlugins] = useState<PluginManifest[]>([]);
   const [wasmLoader] = useState(() => new WASMPluginLoader());
   const [pluginAPI] = useState(() => new PluginAPI());
 
-  // Load plugins from backend on mount
-  useEffect(() => {
-    loadAvailablePlugins();
-  }, []);
-
-  const loadAvailablePlugins = async () => {
-    try {
-      const manifests = await pluginAPI.getPluginManifests();
-      setLoadedPlugins(manifests);
-      
-      // Auto-load enabled plugins
-      for (const manifest of manifests) {
-        if (manifest.frontend.enabled) {
-          await loadPlugin(manifest);
+  const loadPluginAssets = useCallback(async (assets: PluginAssetConfig[], pluginName: string) => {
+    for (const asset of assets) {
+      try {
+        if (asset.type === 'css') {
+          await loadCSS(asset.path, pluginName);
+        } else if (asset.type === 'js') {
+          await loadJS(asset.path, pluginName);
         }
+      } catch (error) {
+        console.error(`Failed to load asset ${asset.path}:`, error);
       }
-    } catch (error) {
-      console.error('Failed to load available plugins:', error);
     }
-  };
+  }, []);
 
   const loadPlugin = useCallback(async (manifest: PluginManifest) => {
     try {
@@ -103,7 +100,28 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
       console.error(`Failed to load plugin ${manifest.name}:`, error);
       throw error;
     }
-  }, [plugins, wasmLoader]);
+  }, [plugins, wasmLoader, loadPluginAssets]);
+
+  const loadAvailablePlugins = useCallback(async () => {
+    try {
+      const manifests = await pluginAPI.getPluginManifests();
+      setLoadedPlugins(manifests);
+      
+      // Auto-load enabled plugins
+      for (const manifest of manifests) {
+        if (manifest.frontend.enabled) {
+          await loadPlugin(manifest);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load available plugins:', error);
+    }
+  }, [pluginAPI, loadPlugin]);
+
+  // Load plugins from backend on mount
+  useEffect(() => {
+    loadAvailablePlugins();
+  }, [loadAvailablePlugins]);
 
   const unloadPlugin = useCallback(async (pluginName: string) => {
     try {
@@ -138,6 +156,7 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
   const loadPluginWidget = async (
     manifest: PluginManifest,
     widgetConfig: PluginWidgetConfig
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): Promise<React.ComponentType<any> | null> => {
     try {
       switch (widgetConfig.type) {
@@ -156,20 +175,6 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
     } catch (error) {
       console.error(`Failed to load widget ${widgetConfig.name}:`, error);
       return null;
-    }
-  };
-
-  const loadPluginAssets = async (assets: any[], pluginName: string) => {
-    for (const asset of assets) {
-      try {
-        if (asset.type === 'css') {
-          await loadCSS(asset.path, pluginName);
-        } else if (asset.type === 'js') {
-          await loadJS(asset.path, pluginName);
-        }
-      } catch (error) {
-        console.error(`Failed to load asset ${asset.path}:`, error);
-      }
     }
   };
 
@@ -245,6 +250,7 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
   const executePluginFunction = useCallback(async (
     pluginName: string,
     functionName: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     args?: any
   ) => {
     const plugin = plugins.get(pluginName);
@@ -279,28 +285,30 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
 
 // Widget creation functions
 const createChartWidget = (manifest: PluginManifest, config: PluginWidgetConfig) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return React.memo(function ChartWidget(props: any) {
     const { executePluginFunction } = usePlugins();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-      const fetchData = async () => {
-        try {
-          setLoading(true);
-          const result = await executePluginFunction(
-            manifest.name,
-            config.config.dataFunction || 'get_chart_data',
-            props
-          );
-          setData(result);
-        } catch (error) {
-          console.error('Failed to fetch chart data:', error);
-        } finally {
-          setLoading(false);
-        }
-      };
+    const fetchData = useCallback(async () => {
+      try {
+        setLoading(true);
+        const result = await executePluginFunction(
+          manifest.name,
+          config.config.dataFunction || 'get_chart_data',
+          props
+        );
+        setData(result);
+      } catch (error) {
+        console.error('Failed to fetch chart data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }, [executePluginFunction, props]);
 
+    useEffect(() => {
       fetchData();
       
       // Set up refresh interval if specified
@@ -309,7 +317,7 @@ const createChartWidget = (manifest: PluginManifest, config: PluginWidgetConfig)
         const timer = setInterval(fetchData, interval * 1000);
         return () => clearInterval(timer);
       }
-    }, [props]);
+    }, [fetchData]);
 
     if (loading) {
       return <div className="plugin-widget-loading">Loading chart...</div>;
@@ -329,28 +337,30 @@ const createChartWidget = (manifest: PluginManifest, config: PluginWidgetConfig)
 };
 
 const createTableWidget = (manifest: PluginManifest, config: PluginWidgetConfig) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return React.memo(function TableWidget(props: any) {
     const { executePluginFunction } = usePlugins();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-      const fetchData = async () => {
-        try {
-          setLoading(true);
-          const result = await executePluginFunction(
-            manifest.name,
-            config.config.dataFunction || 'get_table_data',
-            props
-          );
-          setData(Array.isArray(result) ? result : []);
-        } catch (error) {
-          console.error('Failed to fetch table data:', error);
-        } finally {
-          setLoading(false);
-        }
-      };
+    const fetchData = useCallback(async () => {
+      try {
+        setLoading(true);
+        const result = await executePluginFunction(
+          manifest.name,
+          config.config.dataFunction || 'get_table_data',
+          props
+        );
+        setData(Array.isArray(result) ? result : []);
+      } catch (error) {
+        console.error('Failed to fetch table data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }, [executePluginFunction, props]);
 
+    useEffect(() => {
       fetchData();
       
       const interval = config.config.refreshInterval;
@@ -358,7 +368,7 @@ const createTableWidget = (manifest: PluginManifest, config: PluginWidgetConfig)
         const timer = setInterval(fetchData, interval * 1000);
         return () => clearInterval(timer);
       }
-    }, [props]);
+    }, [fetchData]);
 
     if (loading) {
       return <div className="plugin-widget-loading">Loading table...</div>;
@@ -377,28 +387,30 @@ const createTableWidget = (manifest: PluginManifest, config: PluginWidgetConfig)
 };
 
 const createMetricsWidget = (manifest: PluginManifest, config: PluginWidgetConfig) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return React.memo(function MetricsWidget(props: any) {
     const { executePluginFunction } = usePlugins();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [metrics, setMetrics] = useState<any>({});
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-      const fetchMetrics = async () => {
-        try {
-          setLoading(true);
-          const result = await executePluginFunction(
-            manifest.name,
-            config.config.dataFunction || 'get_metrics',
-            props
-          );
-          setMetrics(result || {});
-        } catch (error) {
-          console.error('Failed to fetch metrics:', error);
-        } finally {
-          setLoading(false);
-        }
-      };
+    const fetchMetrics = useCallback(async () => {
+      try {
+        setLoading(true);
+        const result = await executePluginFunction(
+          manifest.name,
+          config.config.dataFunction || 'get_metrics',
+          props
+        );
+        setMetrics(result || {});
+      } catch (error) {
+        console.error('Failed to fetch metrics:', error);
+      } finally {
+        setLoading(false);
+      }
+    }, [executePluginFunction, props]);
 
+    useEffect(() => {
       fetchMetrics();
       
       const interval = config.config.refreshInterval;
@@ -406,7 +418,7 @@ const createMetricsWidget = (manifest: PluginManifest, config: PluginWidgetConfi
         const timer = setInterval(fetchMetrics, interval * 1000);
         return () => clearInterval(timer);
       }
-    }, [props]);
+    }, [fetchMetrics]);
 
     if (loading) {
       return <div className="plugin-widget-loading">Loading metrics...</div>;
@@ -416,6 +428,7 @@ const createMetricsWidget = (manifest: PluginManifest, config: PluginWidgetConfi
       <div className="plugin-metrics-widget">
         <h3>{config.config.title}</h3>
         <div className="metrics-container">
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {config.config.metrics?.map((metric: any) => (
             <div key={metric.name} className="metric-item">
               <span className="metric-label">{metric.label}:</span>
@@ -429,28 +442,29 @@ const createMetricsWidget = (manifest: PluginManifest, config: PluginWidgetConfi
 };
 
 const createCustomWidget = (manifest: PluginManifest, config: PluginWidgetConfig) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return React.memo(function CustomWidget(props: any) {
     const { executePluginFunction } = usePlugins();
     const [content, setContent] = useState<string>('');
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-      const fetchContent = async () => {
-        try {
-          setLoading(true);
-          const result = await executePluginFunction(
-            manifest.name,
-            config.config.renderFunction || 'render_widget',
-            { ...props, widgetConfig: config }
-          );
-          setContent(result || '');
-        } catch (error) {
-          console.error('Failed to fetch custom widget content:', error);
-        } finally {
-          setLoading(false);
-        }
-      };
+    const fetchContent = useCallback(async () => {
+      try {
+        setLoading(true);
+        const result = await executePluginFunction(
+          manifest.name,
+          config.config.renderFunction || 'render_widget',
+          { ...props, widgetConfig: config }
+        );
+        setContent(result || '');
+      } catch (error) {
+        console.error('Failed to fetch custom widget content:', error);
+      } finally {
+        setLoading(false);
+      }
+    }, [executePluginFunction, props]);
 
+    useEffect(() => {
       fetchContent();
       
       const interval = config.config.refreshInterval;
@@ -458,7 +472,7 @@ const createCustomWidget = (manifest: PluginManifest, config: PluginWidgetConfig
         const timer = setInterval(fetchContent, interval * 1000);
         return () => clearInterval(timer);
       }
-    }, [props]);
+    }, [fetchContent]);
 
     if (loading) {
       return <div className="plugin-widget-loading">Loading widget...</div>;

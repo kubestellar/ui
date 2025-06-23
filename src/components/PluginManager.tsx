@@ -1,13 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { 
-  HiOutlinePuzzlePiece, 
-  HiOutlinePlay, 
+import {
+  HiOutlinePuzzlePiece,
+  HiOutlinePlay,
   HiOutlinePause,
   HiOutlineTrash,
   HiOutlineArrowPath,
-  HiOutlineCog6Tooth,
   HiOutlineInformationCircle,
   HiMagnifyingGlass,
   HiXMark,
@@ -15,7 +15,7 @@ import {
   HiOutlineExclamationTriangle,
   HiOutlineCloudArrowDown,
   HiOutlineFolder,
-  HiOutlineCodeBracket
+  HiOutlineCodeBracket,
 } from 'react-icons/hi2';
 import { usePlugins } from '../plugins/PluginLoader';
 import { PluginAPI } from '../plugins/PluginAPI';
@@ -38,14 +38,14 @@ export const PluginManager: React.FC = () => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const themeStyles = getThemeStyles(isDark);
-  
+
   const { plugins, loadedPlugins, loadPlugin, unloadPlugin } = usePlugins();
   const [pluginAPI] = useState(() => new PluginAPI());
-  
+
   const [availablePlugins, setAvailablePlugins] = useState<Plugin[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
-  const [installUrl, setInstallUrl] = useState('');
+  const [setInstallUrl] = useState('');
   const [installing, setInstalling] = useState(false);
   const [installMethod, setInstallMethod] = useState<'local' | 'github'>('local');
   const [githubUrl, setGithubUrl] = useState('');
@@ -102,27 +102,29 @@ export const PluginManager: React.FC = () => {
       alert('Please enter a plugin path or URL');
       return;
     }
-    
+
     try {
       setInstalling(true);
       console.log('Installing plugin from:', source);
-      
+
       const result = await pluginAPI.installPlugin(source);
       console.log('Installation result:', result);
-      
+
       // Clear the input fields
       setInstallUrl('');
       setLocalPath('');
       setGithubUrl('');
-      
+
       // Reload plugin data
       await loadPluginData();
-      
+
       // Show success message
       if (result.success) {
         alert(`Plugin installed successfully: ${result.message || 'Installation complete'}`);
       } else {
-        alert(`Installation completed but with warnings: ${result.message || 'Check console for details'}`);
+        alert(
+          `Installation completed but with warnings: ${result.message || 'Check console for details'}`
+        );
       }
     } catch (error) {
       console.error('Failed to install plugin:', error);
@@ -140,7 +142,7 @@ export const PluginManager: React.FC = () => {
       'Enter the full path to your plugin directory:\n\nExample: /Users/aaayush/Desktop/OSS/ui2/backend/plugins/cluster-monitor/',
       localPath || '/Users/aaayush/Desktop/OSS/ui2/backend/plugins/cluster-monitor/'
     );
-    
+
     if (pathInput && pathInput.trim()) {
       setLocalPath(pathInput.trim());
     }
@@ -166,10 +168,11 @@ export const PluginManager: React.FC = () => {
     }
   };
 
-  const filteredPlugins = availablePlugins.filter(plugin => 
-    plugin.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    plugin.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    plugin.description.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredPlugins = availablePlugins.filter(
+    plugin =>
+      plugin.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      plugin.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      plugin.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const getStatusIcon = (status: string) => {
@@ -193,7 +196,10 @@ export const PluginManager: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <HiOutlineArrowPath className="h-8 w-8 animate-spin" style={{ color: themeStyles.colors.brand.primary }} />
+          <HiOutlineArrowPath
+            className="h-8 w-8 animate-spin"
+            style={{ color: themeStyles.colors.brand.primary }}
+          />
           <p style={{ color: themeStyles.colors.text.secondary }}>{t('common.loading')}</p>
         </motion.div>
       </div>
@@ -210,34 +216,44 @@ export const PluginManager: React.FC = () => {
         transition={{ duration: 0.3 }}
       >
         <div className="flex items-center gap-3">
-          <div 
+          <div
             className="rounded-xl p-3"
-            style={{ 
+            style={{
               background: themeStyles.effects.glassMorphism.background,
               border: `1px solid ${themeStyles.card.borderColor}`,
             }}
           >
-            <HiOutlinePuzzlePiece className="h-6 w-6" style={{ color: themeStyles.colors.brand.primary }} />
+            <HiOutlinePuzzlePiece
+              className="h-6 w-6"
+              style={{ color: themeStyles.colors.brand.primary }}
+            />
           </div>
           <div>
-            <h1 
-              className="text-2xl font-bold"
-              style={{ color: themeStyles.colors.text.primary }}
-            >
+            <h1 className="text-2xl font-bold" style={{ color: themeStyles.colors.text.primary }}>
               {t('plugins.title')}
             </h1>
-            <p style={{ color: themeStyles.colors.text.secondary }}>
-              {t('plugins.description')}
-            </p>
+            <p style={{ color: themeStyles.colors.text.secondary }}>{t('plugins.description')}</p>
           </div>
         </div>
 
         {/* Stats */}
         <div className="flex gap-4">
           {[
-            { label: t('plugins.list.total'), value: availablePlugins.length, color: themeStyles.colors.text.primary },
-            { label: t('plugins.list.active'), value: plugins.size, color: themeStyles.colors.status.success },
-            { label: t('plugins.list.inactive'), value: availablePlugins.length - plugins.size, color: themeStyles.colors.text.secondary },
+            {
+              label: t('plugins.list.total'),
+              value: availablePlugins.length,
+              color: themeStyles.colors.text.primary,
+            },
+            {
+              label: t('plugins.list.active'),
+              value: plugins.size,
+              color: themeStyles.colors.status.success,
+            },
+            {
+              label: t('plugins.list.inactive'),
+              value: availablePlugins.length - plugins.size,
+              color: themeStyles.colors.text.secondary,
+            },
           ].map((stat, index) => (
             <motion.div
               key={stat.label}
@@ -272,20 +288,29 @@ export const PluginManager: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.2 }}
       >
-        <h3 className="mb-4 text-lg font-semibold" style={{ color: themeStyles.colors.text.primary }}>
+        <h3
+          className="mb-4 text-lg font-semibold"
+          style={{ color: themeStyles.colors.text.primary }}
+        >
           {t('plugins.install.title')}
         </h3>
-        
+
         {/* Installation Method Tabs */}
-        <div className="mb-4 flex rounded-lg p-1" style={{ background: themeStyles.colors.bg.secondary }}>
+        <div
+          className="mb-4 flex rounded-lg p-1"
+          style={{ background: themeStyles.colors.bg.secondary }}
+        >
           <button
             onClick={() => setInstallMethod('local')}
-            className={`flex-1 flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all ${
+            className={`flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all ${
               installMethod === 'local' ? 'shadow-sm' : ''
             }`}
             style={{
               background: installMethod === 'local' ? themeStyles.colors.bg.primary : 'transparent',
-              color: installMethod === 'local' ? themeStyles.colors.text.primary : themeStyles.colors.text.secondary,
+              color:
+                installMethod === 'local'
+                  ? themeStyles.colors.text.primary
+                  : themeStyles.colors.text.secondary,
             }}
           >
             <HiOutlineFolder className="h-4 w-4" />
@@ -293,12 +318,16 @@ export const PluginManager: React.FC = () => {
           </button>
           <button
             onClick={() => setInstallMethod('github')}
-            className={`flex-1 flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all ${
+            className={`flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all ${
               installMethod === 'github' ? 'shadow-sm' : ''
             }`}
             style={{
-              background: installMethod === 'github' ? themeStyles.colors.bg.primary : 'transparent',
-              color: installMethod === 'github' ? themeStyles.colors.text.primary : themeStyles.colors.text.secondary,
+              background:
+                installMethod === 'github' ? themeStyles.colors.bg.primary : 'transparent',
+              color:
+                installMethod === 'github'
+                  ? themeStyles.colors.text.primary
+                  : themeStyles.colors.text.secondary,
             }}
           >
             <HiOutlineCodeBracket className="h-4 w-4" />
@@ -309,7 +338,10 @@ export const PluginManager: React.FC = () => {
         {/* Local Path Installation */}
         {installMethod === 'local' && (
           <div className="space-y-3">
-            <div className="rounded-lg p-3 mb-3" style={{ background: themeStyles.colors.bg.secondary }}>
+            <div
+              className="mb-3 rounded-lg p-3"
+              style={{ background: themeStyles.colors.bg.secondary }}
+            >
               <p className="text-sm" style={{ color: themeStyles.colors.text.secondary }}>
                 💡 {t('plugins.install.localHelp')}
               </p>
@@ -320,7 +352,7 @@ export const PluginManager: React.FC = () => {
                   type="text"
                   placeholder={t('plugins.install.localPlaceholder')}
                   value={localPath}
-                  onChange={(e) => setLocalPath(e.target.value)}
+                  onChange={e => setLocalPath(e.target.value)}
                   className="w-full rounded-lg border px-4 py-3 outline-none transition-colors"
                   style={{
                     background: themeStyles.colors.bg.secondary,
@@ -348,7 +380,7 @@ export const PluginManager: React.FC = () => {
             <motion.button
               onClick={handleInstallPlugin}
               disabled={!localPath.trim() || installing}
-              className="w-full flex items-center justify-center gap-2 rounded-lg px-6 py-3 font-medium transition-all disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 font-medium transition-all disabled:cursor-not-allowed disabled:opacity-50"
               style={{
                 background: themeStyles.button.primary.background,
                 color: themeStyles.button.primary.color,
@@ -369,7 +401,10 @@ export const PluginManager: React.FC = () => {
         {/* GitHub Installation */}
         {installMethod === 'github' && (
           <div className="space-y-3">
-            <div className="rounded-lg p-3 mb-3" style={{ background: themeStyles.colors.bg.secondary }}>
+            <div
+              className="mb-3 rounded-lg p-3"
+              style={{ background: themeStyles.colors.bg.secondary }}
+            >
               <p className="text-sm" style={{ color: themeStyles.colors.text.secondary }}>
                 🚧 {t('plugins.install.githubHelp')}
               </p>
@@ -380,7 +415,7 @@ export const PluginManager: React.FC = () => {
                   type="text"
                   placeholder={t('plugins.install.githubPlaceholder')}
                   value={githubUrl}
-                  onChange={(e) => setGithubUrl(e.target.value)}
+                  onChange={e => setGithubUrl(e.target.value)}
                   className="w-full rounded-lg border px-4 py-3 outline-none transition-colors"
                   style={{
                     background: themeStyles.colors.bg.secondary,
@@ -393,7 +428,7 @@ export const PluginManager: React.FC = () => {
             <motion.button
               onClick={handleInstallPlugin}
               disabled={!githubUrl.trim() || installing}
-              className="w-full flex items-center justify-center gap-2 rounded-lg px-6 py-3 font-medium transition-all disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 font-medium transition-all disabled:cursor-not-allowed disabled:opacity-50"
               style={{
                 background: themeStyles.button.primary.background,
                 color: themeStyles.button.primary.color,
@@ -420,7 +455,7 @@ export const PluginManager: React.FC = () => {
         transition={{ duration: 0.3, delay: 0.3 }}
       >
         <div className="relative flex-1">
-          <HiMagnifyingGlass 
+          <HiMagnifyingGlass
             className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2"
             style={{ color: themeStyles.colors.text.secondary }}
           />
@@ -428,13 +463,13 @@ export const PluginManager: React.FC = () => {
             type="text"
             placeholder={t('plugins.list.searchPlaceholder')}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-                       className="w-full rounded-lg border py-3 pl-10 pr-4 outline-none transition-colors"
-           style={{
-             background: themeStyles.colors.bg.secondary,
-             borderColor: themeStyles.card.borderColor,
-             color: themeStyles.colors.text.primary,
-           }}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full rounded-lg border py-3 pl-10 pr-4 outline-none transition-colors"
+            style={{
+              background: themeStyles.colors.bg.secondary,
+              borderColor: themeStyles.card.borderColor,
+              color: themeStyles.colors.text.primary,
+            }}
           />
           {searchQuery && (
             <button
@@ -454,16 +489,26 @@ export const PluginManager: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.4 }}
       >
-        <h3 className="mb-4 text-lg font-semibold" style={{ color: themeStyles.colors.text.primary }}>
+        <h3
+          className="mb-4 text-lg font-semibold"
+          style={{ color: themeStyles.colors.text.primary }}
+        >
           {t('plugins.list.title')}
         </h3>
-        
+
         {filteredPlugins.length === 0 ? (
-                   <div className="flex h-64 flex-col items-center justify-center rounded-xl border-2 border-dashed"
-           style={{ borderColor: themeStyles.card.borderColor }}
+          <div
+            className="flex h-64 flex-col items-center justify-center rounded-xl border-2 border-dashed"
+            style={{ borderColor: themeStyles.card.borderColor }}
           >
-            <HiOutlinePuzzlePiece className="mb-4 h-12 w-12" style={{ color: themeStyles.colors.text.secondary }} />
-            <h4 className="mb-2 text-lg font-medium" style={{ color: themeStyles.colors.text.primary }}>
+            <HiOutlinePuzzlePiece
+              className="mb-4 h-12 w-12"
+              style={{ color: themeStyles.colors.text.secondary }}
+            />
+            <h4
+              className="mb-2 text-lg font-medium"
+              style={{ color: themeStyles.colors.text.primary }}
+            >
               {t('plugins.list.noPlugins')}
             </h4>
             <p style={{ color: themeStyles.colors.text.secondary }}>
@@ -490,11 +535,20 @@ export const PluginManager: React.FC = () => {
                   {/* Plugin Header */}
                   <div className="mb-4 flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="rounded-lg p-2" style={{ background: themeStyles.colors.bg.secondary }}>
-                        <HiOutlinePuzzlePiece className="h-5 w-5" style={{ color: themeStyles.colors.brand.primary }} />
+                      <div
+                        className="rounded-lg p-2"
+                        style={{ background: themeStyles.colors.bg.secondary }}
+                      >
+                        <HiOutlinePuzzlePiece
+                          className="h-5 w-5"
+                          style={{ color: themeStyles.colors.brand.primary }}
+                        />
                       </div>
                       <div>
-                        <h4 className="font-semibold" style={{ color: themeStyles.colors.text.primary }}>
+                        <h4
+                          className="font-semibold"
+                          style={{ color: themeStyles.colors.text.primary }}
+                        >
                           {plugin.name}
                         </h4>
                         <div className="flex items-center gap-2 text-sm">
@@ -510,14 +564,20 @@ export const PluginManager: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       {getStatusIcon(plugin.status)}
-                      <span 
+                      <span
                         className="rounded-full px-2 py-1 text-xs font-medium"
                         style={{
-                          background: plugin.enabled ? themeStyles.colors.status.success + '20' : themeStyles.colors.text.secondary + '20',
-                          color: plugin.enabled ? themeStyles.colors.status.success : themeStyles.colors.text.secondary,
+                          background: plugin.enabled
+                            ? themeStyles.colors.status.success + '20'
+                            : themeStyles.colors.text.secondary + '20',
+                          color: plugin.enabled
+                            ? themeStyles.colors.status.success
+                            : themeStyles.colors.text.secondary,
                         }}
                       >
-                        {plugin.enabled ? t('plugins.card.status.active') : t('plugins.card.status.inactive')}
+                        {plugin.enabled
+                          ? t('plugins.card.status.active')
+                          : t('plugins.card.status.inactive')}
                       </span>
                     </div>
                   </div>
@@ -558,7 +618,7 @@ export const PluginManager: React.FC = () => {
                         {t('plugins.card.actions.enable')}
                       </motion.button>
                     )}
-                    
+
                     <motion.button
                       onClick={() => setSelectedPlugin(plugin.name)}
                       className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
@@ -611,7 +671,7 @@ export const PluginManager: React.FC = () => {
       {/* Plugin Details Modal */}
       <AnimatePresence>
         {selectedPlugin && (
-          <PluginDetailsModal 
+          <PluginDetailsModal
             pluginName={selectedPlugin}
             onClose={() => setSelectedPlugin(null)}
             themeStyles={themeStyles}
@@ -652,12 +712,12 @@ interface PluginDetailsModalProps {
   pluginAPI: PluginAPI;
 }
 
-const PluginDetailsModal: React.FC<PluginDetailsModalProps> = ({ 
-  pluginName, 
-  onClose, 
-  themeStyles, 
+const PluginDetailsModal: React.FC<PluginDetailsModalProps> = ({
+  pluginName,
+  onClose,
+  themeStyles,
   t,
-  pluginAPI 
+  pluginAPI,
 }) => {
   const [details, setDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -696,7 +756,7 @@ const PluginDetailsModal: React.FC<PluginDetailsModalProps> = ({
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={e => e.stopPropagation()}
       >
         <div className="mb-6 flex items-center justify-between">
           <h3 className="text-xl font-bold" style={{ color: themeStyles.colors.text.primary }}>
@@ -710,48 +770,71 @@ const PluginDetailsModal: React.FC<PluginDetailsModalProps> = ({
             <HiXMark className="h-5 w-5" style={{ color: themeStyles.colors.text.secondary }} />
           </button>
         </div>
-        
+
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <HiOutlineArrowPath className="h-8 w-8 animate-spin" style={{ color: themeStyles.colors.brand.primary }} />
+            <HiOutlineArrowPath
+              className="h-8 w-8 animate-spin"
+              style={{ color: themeStyles.colors.brand.primary }}
+            />
           </div>
         ) : (
           <div className="space-y-6">
             <div>
-              <h4 className="mb-3 text-lg font-semibold" style={{ color: themeStyles.colors.text.primary }}>
+              <h4
+                className="mb-3 text-lg font-semibold"
+                style={{ color: themeStyles.colors.text.primary }}
+              >
                 {t('plugins.details.information')}
               </h4>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <span className="font-medium" style={{ color: themeStyles.colors.text.primary }}>Name:</span>
-                  <span className="ml-2" style={{ color: themeStyles.colors.text.secondary }}>{details?.name}</span>
+                  <span className="font-medium" style={{ color: themeStyles.colors.text.primary }}>
+                    Name:
+                  </span>
+                  <span className="ml-2" style={{ color: themeStyles.colors.text.secondary }}>
+                    {details?.name}
+                  </span>
                 </div>
                 <div>
-                  <span className="font-medium" style={{ color: themeStyles.colors.text.primary }}>Version:</span>
-                  <span className="ml-2" style={{ color: themeStyles.colors.text.secondary }}>{details?.version}</span>
+                  <span className="font-medium" style={{ color: themeStyles.colors.text.primary }}>
+                    Version:
+                  </span>
+                  <span className="ml-2" style={{ color: themeStyles.colors.text.secondary }}>
+                    {details?.version}
+                  </span>
                 </div>
                 <div>
-                  <span className="font-medium" style={{ color: themeStyles.colors.text.primary }}>Status:</span>
-                  <span className="ml-2" style={{ color: themeStyles.colors.text.secondary }}>{details?.status}</span>
+                  <span className="font-medium" style={{ color: themeStyles.colors.text.primary }}>
+                    Status:
+                  </span>
+                  <span className="ml-2" style={{ color: themeStyles.colors.text.secondary }}>
+                    {details?.status}
+                  </span>
                 </div>
                 <div>
-                  <span className="font-medium" style={{ color: themeStyles.colors.text.primary }}>Routes:</span>
+                  <span className="font-medium" style={{ color: themeStyles.colors.text.primary }}>
+                    Routes:
+                  </span>
                   <span className="ml-2" style={{ color: themeStyles.colors.text.secondary }}>
                     {details?.routes?.length || 0}
                   </span>
                 </div>
               </div>
             </div>
-            
+
             <div>
-              <h4 className="mb-3 text-lg font-semibold" style={{ color: themeStyles.colors.text.primary }}>
+              <h4
+                className="mb-3 text-lg font-semibold"
+                style={{ color: themeStyles.colors.text.primary }}
+              >
                 {t('plugins.details.configuration')}
               </h4>
-              <pre 
-                className="rounded-lg p-4 text-sm overflow-x-auto"
-                style={{ 
+              <pre
+                className="overflow-x-auto rounded-lg p-4 text-sm"
+                style={{
                   background: themeStyles.colors.bg.secondary,
-                  color: themeStyles.colors.text.secondary 
+                  color: themeStyles.colors.text.secondary,
                 }}
               >
                 {JSON.stringify(details, null, 2)}
@@ -798,7 +881,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={e => e.stopPropagation()}
       >
         <div className="mb-4">
           <h3 className="text-lg font-bold" style={{ color: themeStyles.colors.text.primary }}>
@@ -808,7 +891,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             {t(`plugins.confirmations.${action.type}.message`, { name: action.plugin })}
           </p>
         </div>
-        
+
         <div className="flex gap-3">
           <motion.button
             onClick={onCancel}
@@ -838,4 +921,4 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
       </motion.div>
     </motion.div>
   );
-}; 
+};

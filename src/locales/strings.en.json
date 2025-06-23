@@ -2009,7 +2009,7 @@
       "author": "by {{author}}",
       "status": {
         "active": "Active",
-        "inactive": "Inactive", 
+        "inactive": "Inactive",
         "loading": "Loading",
         "error": "Error"
       },
@@ -2036,7 +2036,7 @@
     "notifications": {
       "enableSuccess": "Plugin {{name}} enabled successfully",
       "enableError": "Failed to enable plugin {{name}}",
-      "disableSuccess": "Plugin {{name}} disabled successfully", 
+      "disableSuccess": "Plugin {{name}} disabled successfully",
       "disableError": "Failed to disable plugin {{name}}",
       "uninstallSuccess": "Plugin {{name}} uninstalled successfully",
       "uninstallError": "Failed to uninstall plugin {{name}}",
@@ -2051,7 +2051,7 @@
         "confirm": "Yes, Uninstall"
       },
       "disable": {
-        "title": "Confirm Plugin Disable", 
+        "title": "Confirm Plugin Disable",
         "message": "Disabling \"{{name}}\" will stop all plugin functionality. You can re-enable it later.",
         "confirm": "Yes, Disable"
       }
