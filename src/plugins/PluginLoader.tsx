@@ -380,9 +380,7 @@ const createCustomWidget = (manifest: PluginManifest, config: PluginWidgetConfig
     return (
       <div className="plugin-custom-widget">
         <h3>{config.config.title}</h3>
-        <div className="custom-widget-content">
-          Custom widget for {manifest.name}
-        </div>
+        <div className="custom-widget-content">Custom widget for {manifest.name}</div>
       </div>
     );
   });

@@ -110,7 +110,7 @@ export const PluginManager: React.FC = () => {
       console.log('Installation result:', result);
 
       // Clear the input fields
-     // setInstallUrl('');
+      // setInstallUrl('');
       setLocalPath('');
       setGithubUrl('');
 
