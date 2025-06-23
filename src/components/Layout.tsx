@@ -79,10 +79,26 @@ export function Layout() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Close mobile menu on route change
+  // Close mobile menu on route change and prefetch related routes
   useEffect(() => {
     setIsMobileMenuOpen(false);
+
+    // Import prefetching utility dynamically to avoid bundling with initial load
+    import('../utils/prefetchRoutes').then(({ prefetchRelatedRoutes }) => {
+      // Prefetch routes related to the current path
+      prefetchRelatedRoutes(location.pathname);
+    });
   }, [location.pathname]);
+
+  // Setup initial high priority route prefetching
+  useEffect(() => {
+    if (!isLoading) {
+      // Import and invoke prefetch only after initial loading
+      import('../utils/prefetchRoutes').then(({ prefetchHighPriorityRoutes }) => {
+        prefetchHighPriorityRoutes();
+      });
+    }
+  }, [isLoading]);
 
   // Toggle sidebar collapsed state
   const toggleSidebar = () => {

@@ -1,4 +1,4 @@
-import Editor from '@monaco-editor/react';
+import React, { lazy, Suspense } from 'react';
 import { Box, Button, FormControlLabel, Checkbox } from '@mui/material'; // Added Checkbox and FormControlLabel
 import { StyledContainer } from '../StyledComponents';
 import yaml from 'js-yaml';
@@ -7,6 +7,7 @@ import useTheme from '../../stores/themeStore';
 import WorkloadLabelInput from './WorkloadLabelInput';
 import CancelButton from '../common/CancelButton';
 import { useTranslation } from 'react-i18next';
+import { Spinner } from '../ui/Spinner';
 
 interface Props {
   editorContent: string;
@@ -26,6 +27,9 @@ interface YamlDocument {
   };
   [key: string]: unknown;
 }
+
+// Lazy load Monaco Editor
+const Editor = lazy(() => import('@monaco-editor/react'));
 
 export const YamlTab = ({
   editorContent,
@@ -186,21 +190,23 @@ export const YamlTab = ({
             margin: '0 auto',
           }}
         >
-          <Editor
-            height="435px"
-            language={detectContentType(editorContent)}
-            value={editorContent}
-            theme={theme === 'dark' ? 'vs-dark' : 'light'}
-            options={{
-              minimap: { enabled: false },
-              fontSize: 14,
-              lineNumbers: 'on',
-              scrollBeyondLastLine: false,
-              automaticLayout: true,
-              padding: { top: 27, bottom: 20 },
-            }}
-            onChange={value => setEditorContent(value || '')}
-          />
+          <Suspense fallback={<Spinner size="large" />}>
+            <Editor
+              height="435px"
+              language={detectContentType(editorContent)}
+              value={editorContent}
+              theme={theme === 'dark' ? 'vs-dark' : 'light'}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 14,
+                lineNumbers: 'on',
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                padding: { top: 27, bottom: 20 },
+              }}
+              onChange={value => setEditorContent(value || '')}
+            />
+          </Suspense>
         </Box>
       </Box>
       <Box

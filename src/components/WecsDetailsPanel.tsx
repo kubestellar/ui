@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, lazy, Suspense } from 'react';
 import {
   Box,
   Typography,
@@ -23,10 +23,7 @@ import {
   SelectChangeEvent,
 } from '@mui/material';
 import { FiX, FiGitPullRequest, FiTrash2, FiMaximize2, FiMinimize2 } from 'react-icons/fi';
-import Editor from '@monaco-editor/react';
 import jsyaml from 'js-yaml';
-import { Terminal } from 'xterm';
-import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
 import { ResourceItem } from './TreeViewComponent';
 import useTheme from '../stores/themeStore';
@@ -109,6 +106,9 @@ const StyledTab = styled(Tab)(({ theme }) => {
   };
 });
 
+// Lazy load Monaco Editor
+const Editor = lazy(() => import('@monaco-editor/react'));
+
 const WecsDetailsPanel = ({
   namespace,
   name,
@@ -137,13 +137,13 @@ const WecsDetailsPanel = ({
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
   const panelRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<HTMLDivElement>(null);
-  const terminalInstance = useRef<Terminal | null>(null);
+  const terminalInstance = useRef<import('xterm').Terminal | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
   const wsParamsRef = useRef<{ cluster: string; namespace: string; pod: string } | null>(null);
   const hasShownConnectedMessageRef = useRef<boolean>(false);
   const execTerminalRef = useRef<HTMLDivElement>(null);
-  const execTerminalInstance = useRef<Terminal | null>(null);
+  const execTerminalInstance = useRef<import('xterm').Terminal | null>(null);
   const execSocketRef = useRef<WebSocket | null>(null);
   const currentPodRef = useRef<string | null>(null);
   const [execTerminalKey, setExecTerminalKey] = useState<string>(`${cluster}-${namespace}-${name}`);
@@ -442,33 +442,39 @@ const WecsDetailsPanel = ({
       return;
     }
 
-    const term = new Terminal({
-      theme: {
-        background: theme === 'dark' ? '#1E1E1E' : '#FFFFFF',
-        foreground: theme === 'dark' ? '#D4D4D4' : '#222222',
-        cursor: '#00FF00',
-      },
-      cursorBlink: true,
-      fontSize: 14,
-      fontFamily: 'monospace',
-      scrollback: 1000,
-      disableStdin: true,
-    });
+    (async () => {
+      const Terminal = (await import('xterm')).Terminal;
+      const FitAddon = (await import('xterm-addon-fit')).FitAddon;
+      const term = new Terminal({
+        theme: {
+          background: theme === 'dark' ? '#1E1E1E' : '#FFFFFF',
+          foreground: theme === 'dark' ? '#D4D4D4' : '#222222',
+          cursor: '#00FF00',
+        },
+        cursorBlink: true,
+        fontSize: 14,
+        fontFamily: 'monospace',
+        scrollback: 1000,
+        disableStdin: true,
+      });
 
-    const fitAddon = new FitAddon();
-    term.loadAddon(fitAddon);
-    term.open(terminalRef.current);
+      const fitAddon = new FitAddon();
+      term.loadAddon(fitAddon);
+      if (terminalRef.current) term.open(terminalRef.current);
 
-    setTimeout(() => fitAddon.fit(), 100);
-    terminalInstance.current = term;
-    term.clear();
-    logs.forEach(log => {
-      term.writeln(log);
-    });
+      setTimeout(() => fitAddon.fit(), 100);
+      terminalInstance.current = term;
+      term.clear();
+      logs.forEach(log => {
+        term.writeln(log);
+      });
+    })();
 
     return () => {
-      term.dispose();
-      terminalInstance.current = null;
+      if (terminalInstance.current) {
+        terminalInstance.current.dispose();
+        terminalInstance.current = null;
+      }
     };
   }, [tabValue, theme, type, logs]); // Add logs as dependency with logic to prevent re-initialization
 
@@ -587,173 +593,177 @@ const WecsDetailsPanel = ({
       }
 
       // Create enhanced terminal with better styling
-      const term = new Terminal({
-        theme: {
-          background: theme === 'dark' ? '#1A1A1A' : '#FAFAFA',
-          foreground: theme === 'dark' ? '#E0E0E0' : '#333333',
-          cursor: theme === 'dark' ? '#4D8FCA' : '#2B7DE9',
-          black: theme === 'dark' ? '#000000' : '#333333',
-          red: '#E06C75',
-          green: '#98C379',
-          yellow: '#E5C07B',
-          blue: '#61AFEF',
-          magenta: '#C678DD',
-          cyan: '#56B6C2',
-          white: theme === 'dark' ? '#FFFFFF' : '#FAFAFA',
-        },
-        cursorBlink: true,
-        fontSize: 14,
-        fontFamily: '"Menlo", "Monaco", "Consolas", "Ubuntu Mono", monospace',
-        lineHeight: 1.3,
-        scrollback: 3000,
-        disableStdin: false,
-        convertEol: true,
-        allowProposedApi: true,
-        cursorStyle: 'bar',
-        cursorWidth: 2,
-        windowsMode: false,
-      });
+      (async () => {
+        const Terminal = (await import('xterm')).Terminal;
+        const FitAddon = (await import('xterm-addon-fit')).FitAddon;
+        const term = new Terminal({
+          theme: {
+            background: theme === 'dark' ? '#1A1A1A' : '#FAFAFA',
+            foreground: theme === 'dark' ? '#E0E0E0' : '#333333',
+            cursor: theme === 'dark' ? '#4D8FCA' : '#2B7DE9',
+            black: theme === 'dark' ? '#000000' : '#333333',
+            red: '#E06C75',
+            green: '#98C379',
+            yellow: '#E5C07B',
+            blue: '#61AFEF',
+            magenta: '#C678DD',
+            cyan: '#56B6C2',
+            white: theme === 'dark' ? '#FFFFFF' : '#FAFAFA',
+          },
+          cursorBlink: true,
+          fontSize: 14,
+          fontFamily: '"Menlo", "Monaco", "Consolas", "Ubuntu Mono", monospace',
+          lineHeight: 1.3,
+          scrollback: 3000,
+          disableStdin: false,
+          convertEol: true,
+          allowProposedApi: true,
+          cursorStyle: 'bar',
+          cursorWidth: 2,
+          windowsMode: false,
+        });
 
-      const fitAddon = new FitAddon();
-      term.loadAddon(fitAddon);
+        const fitAddon = new FitAddon();
+        term.loadAddon(fitAddon);
 
-      try {
-        // First make sure the container is empty
-        if (execTerminalRef.current) {
-          execTerminalRef.current.innerHTML = '';
-        }
-
-        term.open(execTerminalRef.current);
-        // console.log(`Terminal opened successfully for pod: ${name}`);
-
-        setTimeout(() => {
-          try {
-            fitAddon.fit();
-          } catch (error) {
-            console.error('Failed to fit terminal:', error);
-          }
-        }, 100);
-      } catch (error) {
-        console.error('Failed to open terminal:', error);
-        return;
-      }
-
-      execTerminalInstance.current = term;
-
-      // Use selectedContainer if available, otherwise use fallback
-      const containerName = selectedContainer || 'container';
-
-      const wsUrl = getWebSocketUrl(
-        `/ws/pod/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/shell/${encodeURIComponent(containerName)}?context=${encodeURIComponent(cluster)}&shell=sh`
-      );
-
-      // Show a minimal connecting message with a spinner effect
-      term.writeln(`\x1b[33mConnecting to pod shell in container ${containerName}...\x1b[0m`);
-
-      // Log full details to console for debugging but don't show in UI
-      console.log(`Creating WebSocket connection:`, {
-        pod: name,
-        namespace,
-        container: containerName,
-        context: cluster,
-        url: wsUrl,
-      });
-
-      const socket = new WebSocket(wsUrl);
-      execSocketRef.current = socket;
-
-      socket.onopen = () => {
-        // console.log(`WebSocket connection established for pod: ${name}, container: ${containerName}`);
-        // Completely clear the terminal once connected
-        term.reset();
-        term.clear();
-        term.writeln(t('wecsDetailsPanel.terminal.connected', { containerName }));
-        term.writeln('');
-      };
-
-      socket.onmessage = event => {
         try {
-          const msg = JSON.parse(event.data);
-          if (msg.Op === 'stdout') {
-            term.write(msg.Data);
-          } else {
-            console.log(`Received non-stdout message:`, msg);
+          // First make sure the container is empty
+          if (execTerminalRef.current) {
+            execTerminalRef.current.innerHTML = '';
           }
-        } catch {
-          // If it's not JSON, write it directly
-          // console.log(`Received raw message: ${event.data}`);
-          term.writeln(event.data);
+
+          if (terminalRef.current) term.open(terminalRef.current);
+          // console.log(`Terminal opened successfully for pod: ${name}`);
+
+          setTimeout(() => {
+            try {
+              fitAddon.fit();
+            } catch (error) {
+              console.error('Failed to fit terminal:', error);
+            }
+          }, 100);
+        } catch (error) {
+          console.error('Failed to open terminal:', error);
+          return;
         }
-      };
 
-      socket.onerror = error => {
-        console.error('WebSocket error:', error);
-        term.writeln(`\x1b[31mError connecting to pod. Please try again.\x1b[0m`);
-      };
+        execTerminalInstance.current = term;
 
-      socket.onclose = event => {
-        // console.log(`WebSocket closed for pod ${name}:`, event);
-        if (event.code !== 1000 && event.code !== 1001) {
-          term.writeln(t('wecsDetailsPanel.terminal.connectionClosed'));
-        }
-        execSocketRef.current = null;
-      };
+        // Use selectedContainer if available, otherwise use fallback
+        const containerName = selectedContainer || 'container';
 
-      // Handle user input including Tab completion
-      term.onData(data => {
-        if (socket.readyState === WebSocket.OPEN) {
-          // Special handling for Tab key for auto-completion
-          if (data === '\t') {
-            const msg = JSON.stringify({ Op: 'stdin', Data: data });
-            socket.send(msg);
-          } else {
-            const msg = JSON.stringify({ Op: 'stdin', Data: data });
-            socket.send(msg);
-          }
-        } else {
-          console.warn(
-            `Cannot send data: WebSocket not in OPEN state (state: ${socket.readyState})`
-          );
-          term.writeln(`\x1b[31mConnection not active. Cannot send command.\x1b[0m`);
-        }
-      });
+        const wsUrl = getWebSocketUrl(
+          `/ws/pod/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/shell/${encodeURIComponent(containerName)}?context=${encodeURIComponent(cluster)}&shell=sh`
+        );
 
-      // Add ping to keep connection alive
-      const pingInterval = setInterval(() => {
-        if (socket && socket.readyState === WebSocket.OPEN) {
-          socket.send(JSON.stringify({ Op: 'ping' }));
-        }
-      }, 30000);
+        // Show a minimal connecting message with a spinner effect
+        term.writeln(`\x1b[33mConnecting to pod shell in container ${containerName}...\x1b[0m`);
 
-      // Update current pod reference
-      currentPodRef.current = name;
+        // Log full details to console for debugging but don't show in UI
+        console.log(`Creating WebSocket connection:`, {
+          pod: name,
+          namespace,
+          container: containerName,
+          context: cluster,
+          url: wsUrl,
+        });
 
-      // Add Ctrl+L keybinding to clear the terminal
-      term.attachCustomKeyEventHandler(event => {
-        if (event.ctrlKey && event.key.toLowerCase() === 'l') {
+        const socket = new WebSocket(wsUrl);
+        execSocketRef.current = socket;
+
+        socket.onopen = () => {
+          // console.log(`WebSocket connection established for pod: ${name}, container: ${containerName}`);
+          // Completely clear the terminal once connected
+          term.reset();
           term.clear();
-          event.preventDefault();
-          return false; // Prevent default and xterm.js handling
-        }
-        return true;
-      });
+          term.writeln(t('wecsDetailsPanel.terminal.connected', { containerName }));
+          term.writeln('');
+        };
 
-      return () => {
-        // console.log(`Cleaning up exec terminal resources for pod: ${name}`);
-        clearInterval(pingInterval);
+        socket.onmessage = event => {
+          try {
+            const msg = JSON.parse(event.data);
+            if (msg.Op === 'stdout') {
+              term.write(msg.Data);
+            } else {
+              console.log(`Received non-stdout message:`, msg);
+            }
+          } catch {
+            // If it's not JSON, write it directly
+            // console.log(`Received raw message: ${event.data}`);
+            term.writeln(event.data);
+          }
+        };
 
-        if (socket && socket.readyState === WebSocket.OPEN) {
-          socket.close();
-        }
+        socket.onerror = error => {
+          console.error('WebSocket error:', error);
+          term.writeln(`\x1b[31mError connecting to pod. Please try again.\x1b[0m`);
+        };
 
-        execSocketRef.current = null;
+        socket.onclose = event => {
+          // console.log(`WebSocket closed for pod ${name}:`, event);
+          if (event.code !== 1000 && event.code !== 1001) {
+            term.writeln(t('wecsDetailsPanel.terminal.connectionClosed'));
+          }
+          execSocketRef.current = null;
+        };
 
-        if (term) {
-          term.dispose();
-        }
+        // Handle user input including Tab completion
+        term.onData(data => {
+          if (socket.readyState === WebSocket.OPEN) {
+            // Special handling for Tab key for auto-completion
+            if (data === '\t') {
+              const msg = JSON.stringify({ Op: 'stdin', Data: data });
+              socket.send(msg);
+            } else {
+              const msg = JSON.stringify({ Op: 'stdin', Data: data });
+              socket.send(msg);
+            }
+          } else {
+            console.warn(
+              `Cannot send data: WebSocket not in OPEN state (state: ${socket.readyState})`
+            );
+            term.writeln(`\x1b[31mConnection not active. Cannot send command.\x1b[0m`);
+          }
+        });
 
-        execTerminalInstance.current = null;
-      };
+        // Add ping to keep connection alive
+        const pingInterval = setInterval(() => {
+          if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ Op: 'ping' }));
+          }
+        }, 30000);
+
+        // Update current pod reference
+        currentPodRef.current = name;
+
+        // Add Ctrl+L keybinding to clear the terminal
+        term.attachCustomKeyEventHandler(event => {
+          if (event.ctrlKey && event.key.toLowerCase() === 'l') {
+            term.clear();
+            event.preventDefault();
+            return false; // Prevent default and xterm.js handling
+          }
+          return true;
+        });
+
+        return () => {
+          // console.log(`Cleaning up exec terminal resources for pod: ${name}`);
+          clearInterval(pingInterval);
+
+          if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.close();
+          }
+
+          execSocketRef.current = null;
+
+          if (term) {
+            term.dispose();
+          }
+
+          execTerminalInstance.current = null;
+        };
+      })();
     }, 50); // Small delay to ensure DOM is ready
   }, [
     tabValue,
@@ -1237,26 +1247,28 @@ const WecsDetailsPanel = ({
                     </Button>
                   </Stack>
                   <Box sx={{ overflow: 'auto', maxHeight: '500px' }}>
-                    <Editor
-                      height="500px"
-                      language={editFormat}
-                      value={
-                        editFormat === 'yaml'
-                          ? jsonToYaml(editedManifest)
-                          : editedManifest || t('wecsDetailsPanel.noManifest')
-                      }
-                      onChange={handleEditorChange}
-                      theme={theme === 'dark' ? 'vs-dark' : 'light'}
-                      options={{
-                        minimap: { enabled: false },
-                        fontSize: 14,
-                        lineNumbers: 'on',
-                        scrollBeyondLastLine: false,
-                        readOnly: false,
-                        automaticLayout: true,
-                        wordWrap: 'on',
-                      }}
-                    />
+                    <Suspense fallback={<CircularProgress />}>
+                      <Editor
+                        height="500px"
+                        language={editFormat}
+                        value={
+                          editFormat === 'yaml'
+                            ? jsonToYaml(editedManifest)
+                            : editedManifest || t('wecsDetailsPanel.noManifest')
+                        }
+                        onChange={handleEditorChange}
+                        theme={theme === 'dark' ? 'vs-dark' : 'light'}
+                        options={{
+                          minimap: { enabled: false },
+                          fontSize: 14,
+                          lineNumbers: 'on',
+                          scrollBeyondLastLine: false,
+                          readOnly: false,
+                          automaticLayout: true,
+                          wordWrap: 'on',
+                        }}
+                      />
+                    </Suspense>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                     <Button

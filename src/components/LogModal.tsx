@@ -1,8 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
-import { Terminal } from 'xterm';
-import { FitAddon } from 'xterm-addon-fit';
-import 'xterm/css/xterm.css';
+// Lazy load heavy terminal dependencies
+const Terminal = typeof window !== 'undefined' ? (await import('xterm')).Terminal : null;
+const FitAddon = typeof window !== 'undefined' ? (await import('xterm-addon-fit')).FitAddon : null;
+if (typeof window !== 'undefined') {
+  // Only import CSS on client
+  import('xterm/css/xterm.css');
+}
 import useTheme from '../stores/themeStore';
 import DownloadLogsButton from './DownloadLogsButton';
 import { useTranslation } from 'react-i18next';

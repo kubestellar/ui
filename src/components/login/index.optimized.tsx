@@ -1,9 +1,21 @@
 import { Suspense, useState, useEffect, useMemo, lazy } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { useProgress, Html } from '@react-three/drei';
-import { LazyNetworkGlobe, LazyKubeStellarLayout, LazyLoadingScreen } from './LazyComponents';
+import { useTranslation } from 'react-i18next';
 
-// Dynamically import the OrbitControls to reduce initial bundle size
+// Lazily load heavy components
+import {
+  LazyNetworkGlobe,
+  LazyKubeStellarLayout,
+  LazyLoadingScreen,
+  // These components are imported but not used directly in this file
+  // They're available for dynamic loading if needed
+  // LazyCosmicDust,
+  // LazyLogoElement,
+  // LazyDataPacket
+} from './LazyComponents';
+
+// Dynamically import OrbitControls
 const OrbitControls = lazy(() =>
   import('@react-three/drei').then(module => ({ default: module.OrbitControls }))
 );
@@ -46,17 +58,11 @@ function Loader() {
 
 /**
  * KubeStellarVisualization component for KubeStellar visualization
- *
- * This component orchestrates:
- * 1. Initial loading animation
- * 2. 3D visualization of KubeStellar architecture
- * 3. Login form with animations
- *
- * For easy implementation:
- * - Use the entire component for a full-page experience
- * - Or use individual components (NetworkGlobe, LoginForm) separately
+ * Optimized with code splitting and lazy loading
  */
 export function KubeStellarVisualization() {
+  const { t } = useTranslation();
+
   // State for controlling animations and component visibility
   const [isLoaded, setIsLoaded] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
@@ -95,10 +101,9 @@ export function KubeStellarVisualization() {
     };
   }, []);
 
-  // Simulate initial loading state - streamlined to reduce unnecessary delay
+  // Simulate initial loading state with optimized timers
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 600);
-    // Show login form with a slight delay after the main content loads
     const loginTimer = setTimeout(() => setShowLogin(true), 900);
 
     return () => {
@@ -122,12 +127,12 @@ export function KubeStellarVisualization() {
     >
       <div className="flex min-h-screen flex-col bg-[#0a0f1c] md:flex-row">
         {/* Global loading overlay */}
-        <Suspense fallback={<div className="loading-fallback">Loading...</div>}>
+        <Suspense fallback={<div className="loading-fallback">{t('Loading...')}</div>}>
           <LazyLoadingScreen isLoaded={isLoaded} />
         </Suspense>
 
         {/* Main KubeStellar Layout */}
-        <Suspense fallback={<div className="loading-fallback">Loading interface...</div>}>
+        <Suspense fallback={<div className="loading-fallback">{t('Loading interface...')}</div>}>
           <LazyKubeStellarLayout
             isLoaded={isLoaded}
             showLogin={showLogin}
@@ -139,7 +144,6 @@ export function KubeStellarVisualization() {
                     gl={{ antialias: true, alpha: false }}
                     dpr={window.devicePixelRatio > 2 ? 2 : window.devicePixelRatio} // Limit DPR for performance
                     frameloop={isDocumentVisible ? 'always' : 'never'} // Stop the render loop when tab is not visible
-                    performance={{ current: 0.8, min: 0.5, max: 1, debounce: 200 }} // Performance throttling
                   >
                     <color attach="background" args={['#050a15']} />
 
@@ -159,7 +163,7 @@ export function KubeStellarVisualization() {
                       <OrbitControls
                         enableZoom={true}
                         enablePan={false}
-                        autoRotate={isDocumentVisible} // Only auto-rotate when tab is visible
+                        autoRotate={isDocumentVisible}
                         autoRotateSpeed={0.3}
                         minDistance={8}
                         maxDistance={20}
@@ -170,7 +174,19 @@ export function KubeStellarVisualization() {
                       />
                     </Suspense>
                   </Canvas>
-                ) : null}
+                ) : (
+                  // Fallback for devices with 3D disabled
+                  <div className="flex h-full w-full items-center justify-center bg-[#050a15]">
+                    <div className="text-center">
+                      <h1 className="mb-4 text-3xl font-bold text-blue-400">KubeStellar</h1>
+                      <p className="text-lg text-blue-300">
+                        {t(
+                          'Multi-cluster Configuration Management for Edge, Multi-Cloud, and Hybrid Cloud'
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             }
           />
@@ -181,10 +197,9 @@ export function KubeStellarVisualization() {
 }
 
 // Export individual components for more flexibility
-// Fix the incorrect export path
-export { default as NetworkGlobe } from './NetworkGlobe';
-export { default as KubeStellarLayout } from './KubeStellarLayout';
-export { default as LoadingScreen } from './LoadingScreen';
+export { LazyNetworkGlobe as NetworkGlobe };
+export { LazyKubeStellarLayout as KubeStellarLayout };
+export { LazyLoadingScreen as LoadingScreen };
 
 // Default export for simpler imports
 export default KubeStellarVisualization;

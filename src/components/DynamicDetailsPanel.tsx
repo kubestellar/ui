@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, lazy, Suspense } from 'react';
 import {
   Box,
   Typography,
@@ -19,10 +19,7 @@ import {
   Chip,
 } from '@mui/material';
 import { FiX, FiGitPullRequest, FiTrash2 } from 'react-icons/fi';
-import Editor from '@monaco-editor/react';
 import jsyaml from 'js-yaml';
-import { Terminal } from 'xterm';
-import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
 import { ResourceItem } from './TreeViewComponent'; // Adjust the import path to your TreeView file
 import useTheme from '../stores/themeStore'; // Import the useTheme hook
@@ -153,6 +150,9 @@ const StyledTab = styled(Tab)(({ theme }) => {
     },
   };
 });
+
+// Lazy load Monaco Editor
+const Editor = lazy(() => import('@monaco-editor/react'));
 
 const DynamicDetailsPanel = ({
   namespace,
@@ -332,62 +332,63 @@ const DynamicDetailsPanel = ({
   useEffect(() => {
     if (tabValue !== 2 || !terminalRef.current || !resource) return;
 
-    const term = new Terminal({
-      theme: {
-        background: theme === 'dark' ? '#1E1E1E' : '#FFFFFF', // Dark or light background
-        foreground: theme === 'dark' ? '#D4D4D4' : '#222222', // Light or dark text
-        cursor: '#00FF00', // Green cursor
-      },
-      cursorBlink: true,
-      fontSize: 14,
-      fontFamily: 'monospace',
-      scrollback: 1000,
-      disableStdin: true,
-    });
-
-    const fitAddon = new FitAddon();
-    term.loadAddon(fitAddon);
-    term.open(terminalRef.current);
-
-    setTimeout(() => {
-      fitAddon.fit();
-    }, 100);
-
-    terminalInstance.current = term;
-
-    // If the resource is a Namespace, display the "No logs available" message
-    if (resource.kind === 'Namespace') {
-      term.writeln('No logs available for Namespace');
-    } else {
-      // Write existing logs once
-      logs.forEach(log => {
-        term.writeln(log);
+    (async () => {
+      const { Terminal } = await import('xterm');
+      const { FitAddon } = await import('xterm-addon-fit');
+      const term = new Terminal({
+        theme: {
+          background: theme === 'dark' ? '#181818' : '#F5F5F5',
+          foreground: theme === 'dark' ? '#D1D5DB' : '#222222',
+          cursor: '#00FF00',
+        },
+        cursorBlink: true,
+        fontSize: 14,
+        fontFamily: 'monospace',
+        scrollback: 1000,
+        disableStdin: true,
       });
-
-      // Keep track of the last log index we've written
-      let lastLogIndex = logs.length - 1;
-
-      // Watch for new logs
-      const logsWatcher = setInterval(() => {
-        if (logs.length > lastLogIndex + 1) {
-          // Only write new logs that haven't been displayed yet
-          const newLogs = logs.slice(lastLogIndex + 1);
-          newLogs.forEach(log => term.writeln(log));
-          lastLogIndex = logs.length - 1;
-        }
+      const fitAddon = new FitAddon();
+      term.loadAddon(fitAddon);
+      term.open(terminalRef.current!);
+      setTimeout(() => {
+        fitAddon.fit();
       }, 100);
+      terminalInstance.current = term;
+
+      // If the resource is a Namespace, display the "No logs available" message
+      if (resource.kind === 'Namespace') {
+        term.writeln('No logs available for Namespace');
+      } else {
+        // Write existing logs once
+        logs.forEach(log => {
+          term.writeln(log);
+        });
+
+        // Keep track of the last log index we've written
+        let lastLogIndex = logs.length - 1;
+
+        // Watch for new logs
+        const logsWatcher = setInterval(() => {
+          if (logs.length > lastLogIndex + 1) {
+            // Only write new logs that haven't been displayed yet
+            const newLogs = logs.slice(lastLogIndex + 1);
+            newLogs.forEach(log => term.writeln(log));
+            lastLogIndex = logs.length - 1;
+          }
+        }, 100);
+
+        return () => {
+          clearInterval(logsWatcher);
+          term.dispose();
+          terminalInstance.current = null;
+        };
+      }
 
       return () => {
-        clearInterval(logsWatcher);
         term.dispose();
         terminalInstance.current = null;
       };
-    }
-
-    return () => {
-      term.dispose();
-      terminalInstance.current = null;
-    };
+    })();
   }, [tabValue, resource, logs, theme]); // Add theme as dependency
 
   const calculateAge = (creationTimestamp: string | undefined): string => {
@@ -779,26 +780,28 @@ const DynamicDetailsPanel = ({
                     </Button>
                   </Stack>
                   <Box sx={{ overflow: 'auto', maxHeight: '500px' }}>
-                    <Editor
-                      height="500px"
-                      language={editFormat}
-                      value={
-                        editFormat === 'yaml'
-                          ? jsonToYaml(editedManifest)
-                          : editedManifest || 'No manifest available'
-                      }
-                      onChange={handleEditorChange}
-                      theme={theme === 'dark' ? 'vs-dark' : 'light'}
-                      options={{
-                        minimap: { enabled: false },
-                        fontSize: 14,
-                        lineNumbers: 'on',
-                        scrollBeyondLastLine: false,
-                        readOnly: false,
-                        automaticLayout: true,
-                        wordWrap: 'on',
-                      }}
-                    />
+                    <Suspense fallback={<CircularProgress />}>
+                      <Editor
+                        height="500px"
+                        language={editFormat}
+                        value={
+                          editFormat === 'yaml'
+                            ? jsonToYaml(editedManifest)
+                            : editedManifest || 'No manifest available'
+                        }
+                        onChange={handleEditorChange}
+                        theme={theme === 'dark' ? 'vs-dark' : 'light'}
+                        options={{
+                          minimap: { enabled: false },
+                          fontSize: 14,
+                          lineNumbers: 'on',
+                          scrollBeyondLastLine: false,
+                          readOnly: false,
+                          automaticLayout: true,
+                          wordWrap: 'on',
+                        }}
+                      />
+                    </Suspense>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                     <Button

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
 import {
   Paper,
   Box,
@@ -19,7 +19,6 @@ import {
 import BPHeader from '../components/BindingPolicy/Dialogs/BPHeader';
 import BPTable from '../components/BindingPolicy/BPTable';
 import BPPagination from '../components/BindingPolicy/BPPagination';
-import PreviewDialog from '../components/BindingPolicy/PreviewDialog';
 import DeleteDialog from '../components/BindingPolicy/Dialogs/DeleteDialog';
 import EditBindingPolicyDialog from '../components/BindingPolicy/Dialogs/EditBindingPolicyDialog';
 import yaml from 'js-yaml'; // Import yaml parser
@@ -30,12 +29,15 @@ import { useClusterQueries } from '../hooks/queries/useClusterQueries';
 import { useWDSQueries } from '../hooks/queries/useWDSQueries';
 import { useBPQueries } from '../hooks/queries/useBPQueries';
 import { PolicyData } from '../components/BindingPolicy/CreateBindingPolicyDialog';
-import BPVisualization from '../components/BindingPolicy/BPVisualization';
-import PolicyDragDrop from '../components/BindingPolicy/PolicyDragDrop';
 import EditIcon from '@mui/icons-material/Edit';
 import PublishIcon from '@mui/icons-material/Publish';
 import KubernetesIcon from '../components/BindingPolicy/KubernetesIcon';
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
+
+// Lazy load expensive components that aren't needed on initial render
+const BPVisualization = lazy(() => import('../components/BindingPolicy/BPVisualization'));
+const PolicyDragDrop = lazy(() => import('../components/BindingPolicy/PolicyDragDrop'));
+const PreviewDialog = lazy(() => import('../components/BindingPolicy/PreviewDialog'));
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   getTabsStyles,
@@ -915,26 +917,42 @@ const BP = () => {
                 {bindingPolicies.length === 0 ? (
                   <EmptyState onCreateClick={handleCreateDialogOpen} type="policies" />
                 ) : (
-                  <BPVisualization
-                    policies={bindingPolicies}
-                    clusters={clusters}
-                    workloads={workloads}
-                  />
+                  <Suspense
+                    fallback={
+                      <Box sx={{ p: 4, textAlign: 'center' }}>
+                        <Typography>Loading visualization...</Typography>
+                      </Box>
+                    }
+                  >
+                    <BPVisualization
+                      policies={bindingPolicies}
+                      clusters={clusters}
+                      workloads={workloads}
+                    />
+                  </Suspense>
                 )}
               </Box>
             )}
           </>
         ) : (
           <Box sx={{ position: 'relative' }}>
-            <PolicyDragDrop
-              policies={[...bindingPolicies, ...simulatedPolicies]}
-              clusters={clusters}
-              workloads={workloads}
-              onPolicyAssign={(policyName, targetType, targetName) => {
-                handleSimulatedPolicyAssign(policyName, targetType, targetName);
-              }}
-              onCreateBindingPolicy={handleCreateSimulatedBindingPolicy}
-            />
+            <Suspense
+              fallback={
+                <Box sx={{ p: 4, textAlign: 'center' }}>
+                  <Typography>Loading policy drag & drop interface...</Typography>
+                </Box>
+              }
+            >
+              <PolicyDragDrop
+                policies={[...bindingPolicies, ...simulatedPolicies]}
+                clusters={clusters}
+                workloads={workloads}
+                onPolicyAssign={(policyName, targetType, targetName) => {
+                  handleSimulatedPolicyAssign(policyName, targetType, targetName);
+                }}
+                onCreateBindingPolicy={handleCreateSimulatedBindingPolicy}
+              />
+            </Suspense>
             <Alert
               severity="info"
               sx={{
@@ -955,13 +973,21 @@ const BP = () => {
           </Box>
         )}
 
-        <PreviewDialog
-          open={previewDialogOpen}
-          onClose={handlePreviewDialogClose}
-          matchedClusters={matchedClusters}
-          matchedWorkloads={matchedWorkloads}
-          policy={selectedPolicy || undefined}
-        />
+        <Suspense
+          fallback={
+            <Box sx={{ p: 4, textAlign: 'center' }}>
+              <Typography>Loading preview...</Typography>
+            </Box>
+          }
+        >
+          <PreviewDialog
+            open={previewDialogOpen}
+            onClose={handlePreviewDialogClose}
+            matchedClusters={matchedClusters}
+            matchedWorkloads={matchedWorkloads}
+            policy={selectedPolicy || undefined}
+          />
+        </Suspense>
 
         {selectedPolicy && (
           <EditBindingPolicyDialog
