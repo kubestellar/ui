@@ -45,7 +45,6 @@ export const PluginManager: React.FC = () => {
   const [availablePlugins, setAvailablePlugins] = useState<Plugin[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
-  const [setInstallUrl] = useState('');
   const [installing, setInstalling] = useState(false);
   const [installMethod, setInstallMethod] = useState<'local' | 'github'>('local');
   const [githubUrl, setGithubUrl] = useState('');
@@ -111,7 +110,7 @@ export const PluginManager: React.FC = () => {
       console.log('Installation result:', result);
 
       // Clear the input fields
-      setInstallUrl('');
+     // setInstallUrl('');
       setLocalPath('');
       setGithubUrl('');
 

@@ -21,7 +21,7 @@ export class PluginAPI {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async getPluginList(): Promise<any[]> {
     try {
-      const response = await fetch('/api/wasm-plugins');
+      const response = await fetch(`${this.baseURL}/list`);
       if (!response.ok) {
         throw new Error(`Failed to fetch plugin list: ${response.statusText}`);
       }
@@ -37,7 +37,7 @@ export class PluginAPI {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async getPluginDetails(pluginName: string): Promise<any> {
     try {
-      const response = await fetch(`/api/wasm-plugins/${pluginName}`);
+      const response = await fetch(`${this.baseURL}/${pluginName}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch plugin details: ${response.statusText}`);
       }
@@ -54,7 +54,7 @@ export class PluginAPI {
     try {
       console.log('Installing plugin from:', source);
 
-      const response = await fetch('/api/wasm-plugins/install', {
+      const response = await fetch(`${this.baseURL}/install`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

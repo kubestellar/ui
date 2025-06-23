@@ -4,15 +4,9 @@ export interface PluginManifest {
   version: string;
   description: string;
   author: string;
-  wasm: WASMConfig;
   backend: BackendConfig;
   frontend: FrontendConfig;
   config: Record<string, any>;
-}
-
-export interface WASMConfig {
-  file: string;
-  entrypoint: string;
 }
 
 export interface BackendConfig {
@@ -52,16 +46,9 @@ export interface PluginAssetConfig {
 
 export interface PluginInstance {
   manifest: PluginManifest;
-  wasmModule: WebAssembly.Module | null;
   widgets: Map<string, React.ComponentType<any>>;
   isLoaded: boolean;
   loadedAt: Date;
-}
-
-export interface WASMModule {
-  instance: WebAssembly.Instance;
-  memory: WebAssembly.Memory;
-  exports: Record<string, any>;
 }
 
 export interface PluginError {
