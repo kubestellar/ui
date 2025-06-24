@@ -1,4 +1,3 @@
-import { useNetworkError } from '../context/NetworkErrorContext';
 import { useState, useEffect, useMemo } from 'react';
 import jsyaml from 'js-yaml';
 import {
@@ -77,7 +76,6 @@ function generateRandomString(length: number) {
 }
 
 const CreateOptions = ({ activeOption, setActiveOption, onCancel }: Props) => {
-  const { showNetworkError } = useNetworkError();
   const { t } = useTranslation(); // Add this hook
   const theme = useTheme(state => state.theme);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
