@@ -1927,7 +1927,7 @@
         "title": "Home",
         "description": "Go to dashboard"
       },
-       "plugin": {
+      "plugin": {
         "title": "Plugin Manager",
         "description": "Manage and monitor KubeStellar plugins"
       },
