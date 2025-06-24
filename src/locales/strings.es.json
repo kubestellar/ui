@@ -1960,14 +1960,114 @@
   "menu": {
     "catalogs": {
       "main": "Principal",
-      "management": "Administración"
+      "management": "Administración",
+      "plugins": "Plugins"
     },
     "items": {
       "home": "Inicio",
       "remoteClusters": "Clústeres Remotos",
       "stagedWorkloads": "Cargas de Trabajo Preparadas",
       "bindingPolicies": "Políticas de Vinculación",
-      "deployedWorkloads": "Cargas de Trabajo Desplegadas"
+      "deployedWorkloads": "Cargas de Trabajo Desplegadas",
+      "pluginManager": "Gestor de Plugins"
+    }
+  },
+  "plugins": {
+    "title": "Gestor de Plugins",
+    "description": "Gestionar y supervisar los plugins de KubeStellar",
+    "install": {
+      "title": "Instalar Nuevo Plugin",
+      "methods": {
+        "local": "Ruta Local",
+        "github": "GitHub"
+      },
+      "localPlaceholder": "Ingresa la ruta del directorio local del plugin",
+      "githubPlaceholder": "https://github.com/user/plugin-repo",
+      "browse": "Explorar",
+      "installLocal": "Instalar desde Ruta Local",
+      "installGithub": "Instalar desde GitHub",
+      "localHelp": "Instala un plugin desde un directorio local en tu sistema. Haz clic en Explorar para seleccionar una carpeta o ingresa la ruta completa manualmente.",
+      "githubHelp": "La instalación desde GitHub aún no está implementada. Usa la instalación por ruta local por ahora.",
+      "placeholder": "URL del plugin, repositorio de GitHub o ruta local",
+      "button": "Instalar",
+      "installing": "Instalando...",
+      "success": "Plugin instalado con éxito",
+      "error": "Fallo al instalar el plugin"
+    },
+    "list": {
+      "title": "Plugins Instalados",
+      "noPlugins": "No hay plugins instalados",
+      "noPluginsDescription": "Empieza instalando tu primer plugin",
+      "searchPlaceholder": "Buscar plugins por nombre, autor o estado...",
+      "total": "Total",
+      "active": "Activo",
+      "inactive": "Inactivo"
+    },
+    "card": {
+      "version": "v{{version}}",
+      "author": "por {{author}}",
+      "status": {
+        "active": "Activo",
+        "inactive": "Inactivo",
+        "loading": "Cargando",
+        "error": "Error"
+      },
+      "actions": {
+        "enable": "Habilitar",
+        "disable": "Deshabilitar",
+        "details": "Detalles",
+        "uninstall": "Desinstalar",
+        "reload": "Recargar",
+        "settings": "Configuración"
+      }
+    },
+    "details": {
+      "title": "Detalles del Plugin",
+      "information": "Información",
+      "configuration": "Configuración",
+      "routes": "Rutas API",
+      "widgets": "Widgets",
+      "assets": "Recursos",
+      "noRoutes": "No se definieron rutas API",
+      "noWidgets": "No hay widgets disponibles",
+      "noAssets": "No se cargaron recursos"
+    },
+    "notifications": {
+      "enableSuccess": "Plugin {{name}} habilitado con éxito",
+      "enableError": "Fallo al habilitar el plugin {{name}}",
+      "disableSuccess": "Plugin {{name}} deshabilitado con éxito",
+      "disableError": "Fallo al deshabilitar el plugin {{name}}",
+      "uninstallSuccess": "Plugin {{name}} desinstalado con éxito",
+      "uninstallError": "Fallo al desinstalar el plugin {{name}}",
+      "reloadSuccess": "Plugin {{name}} recargado con éxito",
+      "reloadError": "Fallo al recargar el plugin {{name}}",
+      "fetchError": "Fallo al cargar los datos del plugin"
+    },
+    "confirmations": {
+      "uninstall": {
+        "title": "Confirmar desinstalación del plugin",
+        "message": "¿Estás seguro de que deseas desinstalar \"{{name}}\"? Esta acción no se puede deshacer y eliminará todos los datos del plugin.",
+        "confirm": "Sí, desinstalar"
+      },
+      "disable": {
+        "title": "Confirmar deshabilitación del plugin",
+        "message": "Deshabilitar \"{{name}}\" detendrá toda la funcionalidad del plugin. Puedes volver a habilitarlo más tarde.",
+        "confirm": "Sí, deshabilitar"
+      }
+    },
+    "marketplace": {
+      "title": "Mercado de Plugins",
+      "browse": "Explorar Plugins Disponibles",
+      "featured": "Plugins Destacados",
+      "categories": "Categorías",
+      "search": "Buscar en el mercado..."
+    },
+    "development": {
+      "title": "Desarrollo de Plugins",
+      "createNew": "Crear Nuevo Plugin",
+      "template": "Usar Plantilla",
+      "documentation": "Ver Documentación",
+      "examples": "Ejemplos"
     }
   }
 }
