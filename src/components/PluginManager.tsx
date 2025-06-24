@@ -54,8 +54,8 @@ export const PluginManager: React.FC = () => {
     type: 'uninstall' | 'disable';
     plugin: string;
   } | null>(null);
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
   // Ref for the hidden directory input
   const directoryInputRef = useRef<HTMLInputElement>(null);
 
@@ -168,8 +168,6 @@ export const PluginManager: React.FC = () => {
       }
     }
   };
-
-
 
   const handleUninstallPlugin = async (pluginName: string) => {
     try {
