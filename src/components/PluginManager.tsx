@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
@@ -54,12 +54,12 @@ export const PluginManager: React.FC = () => {
     type: 'uninstall' | 'disable';
     plugin: string;
   } | null>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  
+  // Ref for the hidden directory input
+  const directoryInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    loadPluginData();
-  }, []);
-
-  const loadPluginData = async () => {
+  const loadPluginData = useCallback(async () => {
     try {
       setLoading(true);
       const pluginList = await pluginAPI.getPluginList();
@@ -69,7 +69,11 @@ export const PluginManager: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pluginAPI]);
+
+  useEffect(() => {
+    loadPluginData();
+  }, [loadPluginData]);
 
   const handleEnablePlugin = async (pluginName: string) => {
     try {
@@ -110,9 +114,14 @@ export const PluginManager: React.FC = () => {
       console.log('Installation result:', result);
 
       // Clear the input fields
-      // setInstallUrl('');
       setLocalPath('');
       setGithubUrl('');
+      setSelectedFile(null);
+
+      // Reset directory input
+      if (directoryInputRef.current) {
+        directoryInputRef.current.value = '';
+      }
 
       // Reload plugin data
       await loadPluginData();
@@ -135,17 +144,32 @@ export const PluginManager: React.FC = () => {
   };
 
   const handleFileSelect = () => {
-    // For development purposes, let's show a dialog to manually enter the path
-    // In a real electron app, you'd use the native file dialog
-    const pathInput = prompt(
-      'Enter the full path to your plugin directory:\n\nExample: /Users/aaayush/Desktop/OSS/ui2/backend/plugins/cluster-monitor/',
-      localPath || '/Users/aaayush/Desktop/OSS/ui2/backend/plugins/cluster-monitor/'
-    );
-
-    if (pathInput && pathInput.trim()) {
-      setLocalPath(pathInput.trim());
+    // Try to use directory picker first (for modern browsers)
+    if (directoryInputRef.current) {
+      directoryInputRef.current.click();
     }
   };
+
+  const handleDirectorySelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      // Get the first file and extract the directory path
+      const firstFile = files[0];
+      setSelectedFile(firstFile);
+
+      // Extract directory path from the file's webkitRelativePath
+      const relativePath = firstFile.webkitRelativePath;
+      if (relativePath) {
+        const directoryPath = relativePath.split('/')[0];
+        setLocalPath(directoryPath);
+      } else {
+        // Fallback to file path
+        setLocalPath(firstFile.name);
+      }
+    }
+  };
+
+
 
   const handleUninstallPlugin = async (pluginName: string) => {
     try {
@@ -342,7 +366,9 @@ export const PluginManager: React.FC = () => {
               style={{ background: themeStyles.colors.bg.secondary }}
             >
               <p className="text-sm" style={{ color: themeStyles.colors.text.secondary }}>
-                💡 {t('plugins.install.localHelp')}
+                💡 Install a plugin from your local system. Use the folder button to select a plugin
+                directory, or the document button to select individual plugin files. You can also
+                manually enter the full path.
               </p>
             </div>
             <div className="flex gap-3">
@@ -351,7 +377,13 @@ export const PluginManager: React.FC = () => {
                   type="text"
                   placeholder={t('plugins.install.localPlaceholder')}
                   value={localPath}
-                  onChange={e => setLocalPath(e.target.value)}
+                  onChange={e => {
+                    setLocalPath(e.target.value);
+                    // Clear selected file when manually typing
+                    if (selectedFile) {
+                      setSelectedFile(null);
+                    }
+                  }}
                   className="w-full rounded-lg border px-4 py-3 outline-none transition-colors"
                   style={{
                     background: themeStyles.colors.bg.secondary,
@@ -360,22 +392,52 @@ export const PluginManager: React.FC = () => {
                   }}
                 />
               </div>
-              <motion.button
-                onClick={handleFileSelect}
-                className="flex items-center gap-2 rounded-lg px-4 py-3 font-medium transition-all"
-                style={{
-                  background: themeStyles.colors.bg.secondary,
-                  borderColor: themeStyles.card.borderColor,
-                  color: themeStyles.colors.text.secondary,
-                  border: `1px solid ${themeStyles.card.borderColor}`,
-                }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <HiOutlineFolder className="h-4 w-4" />
-                {t('plugins.install.browse')}
-              </motion.button>
+              <div className="flex gap-2">
+                <motion.button
+                  onClick={handleFileSelect}
+                  className="flex items-center gap-2 rounded-lg px-4 py-3 font-medium transition-all"
+                  style={{
+                    background: themeStyles.colors.bg.secondary,
+                    borderColor: themeStyles.card.borderColor,
+                    color: themeStyles.colors.text.secondary,
+                    border: `1px solid ${themeStyles.card.borderColor}`,
+                  }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  title="Browse for plugin directory"
+                >
+                  <HiOutlineFolder className="h-4 w-4" />
+                  {t('plugins.install.browse')}
+                </motion.button>
+              </div>
             </div>
+
+            {/* File selection feedback */}
+            {selectedFile && (
+              <motion.div
+                className="rounded-lg p-3"
+                style={{ background: themeStyles.colors.status.success + '10' }}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="flex items-center gap-2">
+                  <HiOutlineCheckCircle
+                    className="h-4 w-4"
+                    style={{ color: themeStyles.colors.status.success }}
+                  />
+                  <span className="text-sm" style={{ color: themeStyles.colors.status.success }}>
+                    Selected: {selectedFile.name}
+                    {selectedFile.webkitRelativePath && (
+                      <span className="ml-2 text-xs">
+                        (Directory: {selectedFile.webkitRelativePath.split('/')[0]})
+                      </span>
+                    )}
+                  </span>
+                </div>
+              </motion.div>
+            )}
+
             <motion.button
               onClick={handleInstallPlugin}
               disabled={!localPath.trim() || installing}
@@ -394,6 +456,19 @@ export const PluginManager: React.FC = () => {
               )}
               {installing ? t('plugins.install.installing') : t('plugins.install.installLocal')}
             </motion.button>
+
+            {/* Hidden directory input for browsing */}
+            <input
+              ref={directoryInputRef}
+              type="file"
+              // @ts-expect-error webkitdirectory is not in the TypeScript types but is a valid HTML attribute
+              webkitdirectory=""
+              directory=""
+              multiple
+              onChange={handleDirectorySelect}
+              style={{ display: 'none' }}
+              accept=".js,.ts,.json"
+            />
           </div>
         )}
 
