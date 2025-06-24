@@ -364,9 +364,7 @@ export const PluginManager: React.FC = () => {
               style={{ background: themeStyles.colors.bg.secondary }}
             >
               <p className="text-sm" style={{ color: themeStyles.colors.text.secondary }}>
-                💡 Install a plugin from your local system. Use the folder button to select a plugin
-                directory, or the document button to select individual plugin files. You can also
-                manually enter the full path.
+                💡 {t('plugins.install.localHelp')}
               </p>
             </div>
             <div className="flex gap-3">
