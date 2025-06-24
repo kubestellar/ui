@@ -29,7 +29,7 @@ appVersion: "1.16.0"
 icon: https://raw.githubusercontent.com/kubestellar/ui/refs/heads/dev/public/logo.svg
 dependencies:
   - name: redis
-    version: "17.11.0"
+    version: "21.2.5"
     repository: "https://charts.bitnami.com/bitnami"
     condition: redis.enabled
 
