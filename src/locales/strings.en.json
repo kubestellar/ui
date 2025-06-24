@@ -1927,6 +1927,10 @@
         "title": "Home",
         "description": "Go to dashboard"
       },
+       "plugin": {
+        "title": "Plugin Manager",
+        "description": "Manage and monitor KubeStellar plugins"
+      },
       "clusters": {
         "title": "Remote Clusters",
         "description": "Manage Kubernetes clusters"
