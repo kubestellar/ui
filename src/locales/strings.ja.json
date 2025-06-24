@@ -1961,14 +1961,114 @@
   "menu": {
     "catalogs": {
       "main": "メイン",
-      "management": "管理"
+      "management": "管理",
+      "plugins": "プラグイン"
     },
     "items": {
       "home": "ホーム",
       "remoteClusters": "リモートクラスタ",
       "stagedWorkloads": "ステージ済みワークロード",
       "bindingPolicies": "バインディングポリシー",
-      "deployedWorkloads": "デプロイ済みワークロード"
+      "deployedWorkloads": "デプロイ済みワークロード",
+      "pluginManager": "プラグインマネージャー"
+    }
+  },
+  "plugins": {
+    "title": "プラグインマネージャー",
+    "description": "KubeStellar のプラグインを管理および監視します",
+    "install": {
+      "title": "新しいプラグインをインストール",
+      "methods": {
+        "local": "ローカルパス",
+        "github": "GitHub"
+      },
+      "localPlaceholder": "ローカルプラグインディレクトリのパスを入力してください",
+      "githubPlaceholder": "https://github.com/user/plugin-repo",
+      "browse": "参照",
+      "installLocal": "ローカルパスからインストール",
+      "installGithub": "GitHub からインストール",
+      "localHelp": "システム上のローカルディレクトリからプラグインをインストールします。「参照」をクリックしてフォルダーを選択するか、パスを直接入力してください。",
+      "githubHelp": "GitHubからのインストールはまだ実装されていません。現在はローカルパスのインストールを使用してください。",
+      "placeholder": "プラグインの URL、GitHub リポジトリ、またはローカルパス",
+      "button": "インストール",
+      "installing": "インストール中...",
+      "success": "プラグインが正常にインストールされました",
+      "error": "プラグインのインストールに失敗しました"
+    },
+    "list": {
+      "title": "インストール済みプラグイン",
+      "noPlugins": "インストール済みのプラグインはありません",
+      "noPluginsDescription": "最初のプラグインをインストールして始めましょう",
+      "searchPlaceholder": "名前、作成者、またはステータスでプラグインを検索...",
+      "total": "合計",
+      "active": "アクティブ",
+      "inactive": "非アクティブ"
+    },
+    "card": {
+      "version": "v{{version}}",
+      "author": "{{author}} による",
+      "status": {
+        "active": "アクティブ",
+        "inactive": "非アクティブ",
+        "loading": "読み込み中",
+        "error": "エラー"
+      },
+      "actions": {
+        "enable": "有効化",
+        "disable": "無効化",
+        "details": "詳細",
+        "uninstall": "アンインストール",
+        "reload": "再読み込み",
+        "settings": "設定"
+      }
+    },
+    "details": {
+      "title": "プラグインの詳細",
+      "information": "情報",
+      "configuration": "設定",
+      "routes": "API ルート",
+      "widgets": "ウィジェット",
+      "assets": "アセット",
+      "noRoutes": "API ルートは定義されていません",
+      "noWidgets": "利用可能なウィジェットはありません",
+      "noAssets": "アセットは読み込まれていません"
+    },
+    "notifications": {
+      "enableSuccess": "プラグイン {{name}} が正常に有効化されました",
+      "enableError": "プラグイン {{name}} の有効化に失敗しました",
+      "disableSuccess": "プラグイン {{name}} が正常に無効化されました",
+      "disableError": "プラグイン {{name}} の無効化に失敗しました",
+      "uninstallSuccess": "プラグイン {{name}} が正常にアンインストールされました",
+      "uninstallError": "プラグイン {{name}} のアンインストールに失敗しました",
+      "reloadSuccess": "プラグイン {{name}} が正常に再読み込みされました",
+      "reloadError": "プラグイン {{name}} の再読み込みに失敗しました",
+      "fetchError": "プラグインデータの読み込みに失敗しました"
+    },
+    "confirmations": {
+      "uninstall": {
+        "title": "プラグインのアンインストール確認",
+        "message": "「{{name}}」をアンインストールしてもよろしいですか？この操作は取り消せず、すべてのプラグインデータが削除されます。",
+        "confirm": "はい、アンインストールします"
+      },
+      "disable": {
+        "title": "プラグインの無効化確認",
+        "message": "「{{name}}」を無効化すると、すべての機能が停止します。後で再度有効化できます。",
+        "confirm": "はい、無効化します"
+      }
+    },
+    "marketplace": {
+      "title": "プラグインマーケットプレイス",
+      "browse": "利用可能なプラグインを参照",
+      "featured": "おすすめプラグイン",
+      "categories": "カテゴリ",
+      "search": "マーケットプレイスを検索..."
+    },
+    "development": {
+      "title": "プラグイン開発",
+      "createNew": "新しいプラグインを作成",
+      "template": "テンプレートを使用",
+      "documentation": "ドキュメントを表示",
+      "examples": "サンプル"
     }
   }
 }
