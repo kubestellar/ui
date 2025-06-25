@@ -25,6 +25,10 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../components/LanguageSwitcher';
+import useTheme from '../stores/themeStore';
+import { FiSun, FiMoon } from 'react-icons/fi';
+import { AnimatePresence } from 'framer-motion';
 
 // Define platform type for installation
 type Platform = 'kind' | 'k3d';
@@ -511,6 +515,8 @@ const InstallationScript = ({ platform }: { platform: Platform }) => {
 // Main installation page component
 const InstallationPage = () => {
   const { t } = useTranslation();
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === 'dark';
 
   // State for platform selection
   const [platform, setPlatform] = useState<Platform>('kind');
@@ -912,6 +918,38 @@ const InstallationPage = () => {
                 <Book size={18} className="mr-1.5 transition-transform group-hover:scale-110" />
                 {t('installationPage.footer.documentation')}
               </a>
+              <motion.button
+                onClick={toggleTheme}
+                className="btn btn-circle flex items-center justify-center rounded-full bg-slate-800/80 p-2 text-slate-300 transition-all duration-300 hover:scale-105 hover:bg-slate-700/90 hover:text-white active:scale-95"
+                aria-label={t('header.themeToggle')}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <AnimatePresence mode="wait">
+                  {!isDark ? (
+                    <motion.div
+                      key="moon"
+                      initial={{ opacity: 0, rotate: -30 }}
+                      animate={{ opacity: 1, rotate: 0 }}
+                      exit={{ opacity: 0, rotate: 30 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <FiMoon className="text-lg" />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="sun"
+                      initial={{ opacity: 0, rotate: 30 }}
+                      animate={{ opacity: 1, rotate: 0 }}
+                      exit={{ opacity: 0, rotate: -30 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <FiSun className="text-lg text-yellow-400" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.button>
+              <LanguageSwitcher />
               <a
                 href="https://kubestellar.io"
                 target="_blank"
