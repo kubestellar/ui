@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
@@ -55,11 +55,7 @@ export const PluginManager: React.FC = () => {
     plugin: string;
   } | null>(null);
 
-  useEffect(() => {
-    loadPluginData();
-  }, []);
-
-  const loadPluginData = async () => {
+  const loadPluginData = useCallback(async () => {
     try {
       setLoading(true);
       const pluginList = await pluginAPI.getPluginList();
@@ -69,7 +65,11 @@ export const PluginManager: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pluginAPI]);
+
+  useEffect(() => {
+    loadPluginData();
+  }, [loadPluginData]);
 
   const handleEnablePlugin = async (pluginName: string) => {
     try {
