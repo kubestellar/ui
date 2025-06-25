@@ -25,6 +25,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 // Define platform type for installation
 type Platform = 'kind' | 'k3d';
@@ -912,6 +913,7 @@ const InstallationPage = () => {
                 <Book size={18} className="mr-1.5 transition-transform group-hover:scale-110" />
                 {t('installationPage.footer.documentation')}
               </a>
+              <LanguageSwitcher />
               <a
                 href="https://kubestellar.io"
                 target="_blank"
