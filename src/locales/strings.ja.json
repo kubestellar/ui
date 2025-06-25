@@ -69,6 +69,13 @@
     "filteredFrom": "フィルター対象："
   },
   "installationPage": {
+    "successSection": {
+      "installed": "は正しくインストールされており、バージョン要件を満たしています。"
+    },
+    "errorSection": {
+      "title": "インストール手順",
+      "viewGuide": "インストールガイドを見る"
+    },
     "statusBadge": {
       "installed": "インストール済み",
       "versionMismatch": "バージョンの不一致",
