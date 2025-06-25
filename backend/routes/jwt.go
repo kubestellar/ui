@@ -2,10 +2,10 @@ package routes
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/auth"
 	"github.com/kubestellar/ui/middleware"
 	"github.com/kubestellar/ui/models"
 	"github.com/kubestellar/ui/utils"
@@ -47,8 +47,8 @@ func setupAuthRoutes(router *gin.Engine) {
 		{
 			admin.GET("/users", ListUsersHandler)
 			admin.POST("/users", CreateUserHandler)
-			admin.PUT("/users/:username", UpdateUserHandler)
-			admin.DELETE("/users/:username", DeleteUserHandler)
+			admin.PUT("/users/:id", UpdateUserHandler)
+			admin.DELETE("/users/:id", DeleteUserHandler)
 		}
 	}
 
@@ -92,6 +92,7 @@ func LoginHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"token": token,
 		"user": gin.H{
+			"id":          user.ID,
 			"username":    user.Username,
 			"permissions": user.Permissions,
 		},
@@ -120,7 +121,7 @@ func CurrentUserHandler(c *gin.Context) {
 
 // ListUsersHandler returns a list of all users (admin only)
 func ListUsersHandler(c *gin.Context) {
-	users, err := auth.ListUsersWithPermissions()
+	users, err := models.ListUsers()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve users"})
 		return
@@ -131,18 +132,14 @@ func ListUsersHandler(c *gin.Context) {
 
 // CreateUserHandler creates a new user (admin only)
 func CreateUserHandler(c *gin.Context) {
-	var userData struct {
-		Username    string   `json:"username" binding:"required"`
-		Password    string   `json:"password" binding:"required"`
-		Permissions []string `json:"permissions" binding:"required"`
-	}
+	var req models.UserCreateRequest
 
-	if err := c.ShouldBindJSON(&userData); err != nil {
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
 		return
 	}
 
-	err := auth.AddOrUpdateUser(userData.Username, userData.Password, userData.Permissions)
+	user, err := models.CreateUser(req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to create user",
@@ -152,51 +149,35 @@ func CreateUserHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message":  "User created successfully",
-		"username": userData.Username,
+		"message": "User created successfully",
+		"user":    user,
 	})
 }
 
 // UpdateUserHandler updates an existing user (admin only)
 func UpdateUserHandler(c *gin.Context) {
-	username := c.Param("username")
-
-	var userData struct {
-		Password    string   `json:"password"`
-		Permissions []string `json:"permissions"`
+	// Get user ID from URL parameter
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
 	}
 
-	if err := c.ShouldBindJSON(&userData); err != nil {
+	var req models.UserUpdateRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
 		return
 	}
 
-	// Get existing user data
-	userConfig, exists, err := auth.GetUserByUsername(username)
+	// Update user
+	user, err := models.UpdateUser(id, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user"})
-		return
-	}
-
-	if !exists {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		return
-	}
-
-	// Update only provided fields
-	if userData.Password != "" {
-		// Update password if provided
-		userConfig.Password = userData.Password
-	}
-
-	// Update permissions if provided
-	if userData.Permissions != nil {
-		userConfig.Permissions = userData.Permissions
-	}
-
-	// Save updated user
-	err = auth.AddOrUpdateUser(username, userConfig.Password, userConfig.Permissions)
-	if err != nil {
+		if err.Error() == "user not found" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to update user",
 			"details": err.Error(),
@@ -205,17 +186,27 @@ func UpdateUserHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message":  "User updated successfully",
-		"username": username,
+		"message": "User updated successfully",
+		"user":    user,
 	})
 }
 
 // DeleteUserHandler deletes a user (admin only)
 func DeleteUserHandler(c *gin.Context) {
-	username := c.Param("username")
-
-	err := auth.RemoveUser(username)
+	// Get user ID from URL parameter
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	err = models.DeleteUser(id)
+	if err != nil {
+		if err.Error() == "user not found" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to delete user",
 			"details": err.Error(),
@@ -224,24 +215,26 @@ func DeleteUserHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message":  "User deleted successfully",
-		"username": username,
+		"message": "User deleted successfully",
 	})
 }
 
-// Example handlers for resource endpoints (implement as needed)
+// GetResourcesHandler placeholder for read-only resources
 func GetResourcesHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "Resources retrieved successfully"})
+	c.JSON(http.StatusOK, gin.H{"message": "Resources endpoint"})
 }
 
+// CreateResourceHandler placeholder for creating resources
 func CreateResourceHandler(c *gin.Context) {
-	c.JSON(http.StatusCreated, gin.H{"message": "Resource created successfully"})
+	c.JSON(http.StatusOK, gin.H{"message": "Create resource endpoint"})
 }
 
+// UpdateResourceHandler placeholder for updating resources
 func UpdateResourceHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "Resource updated successfully"})
+	c.JSON(http.StatusOK, gin.H{"message": "Update resource endpoint"})
 }
 
+// DeleteResourceHandler placeholder for deleting resources
 func DeleteResourceHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "Resource deleted successfully"})
+	c.JSON(http.StatusOK, gin.H{"message": "Delete resource endpoint"})
 }

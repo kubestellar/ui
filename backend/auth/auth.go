@@ -1,237 +1,28 @@
 package auth
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
-	"log"
 
-	jwtconfig "github.com/kubestellar/ui/jwt"
-	"github.com/kubestellar/ui/k8s"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	"github.com/kubestellar/ui/models"
 )
 
-// ConfigMapName and Namespace
-const (
-	ConfigMapName = "jwt-config"
-	Namespace     = "kubestellar"
-)
-
-// UserConfig holds configuration for a single user
+// UserConfig holds configuration for a single user (compatibility layer)
 type UserConfig struct {
 	Password    string   `json:"password"`
 	Permissions []string `json:"permissions"`
 }
 
-// Config struct to hold global and per-user configuration data
+// Config struct to hold global and per-user configuration data (compatibility layer)
 type Config struct {
 	JWTSecret string                `json:"jwt_secret"`
 	Users     map[string]UserConfig `json:"users"`
 }
 
-// GetUser retrieves a specific user's configuration
-func (c *Config) GetUser(username string) (UserConfig, bool) {
-	userConfig, exists := c.Users[username]
-	return userConfig, exists
-}
-
-// AddUser adds or updates a user in the configuration
-func (c *Config) AddUser(username string, password string, permissions []string) {
-	if c.Users == nil {
-		c.Users = make(map[string]UserConfig)
-	}
-
-	c.Users[username] = UserConfig{
-		Password:    password,
-		Permissions: permissions,
-	}
-}
-
-// LoadK8sConfigMap checks if the ConfigMap exists, creates it if not, and returns its data.
-func LoadK8sConfigMap() (*Config, error) {
-	// We'll load the JWT secret from ConfigMap first, then initialize other configs
-	// This prevents generating a new random secret on each restart
-
-	// Get the Kubernetes clientset
-	clientset, _, err := k8s.GetClientSetWithContext("its1")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get Kubernetes clientset: %v", err)
-	}
-
-	// Check if namespace exists, create it if it doesn't
-	if err := ensureNamespaceExists(clientset); err != nil {
-		return nil, fmt.Errorf("failed to ensure namespace exists: %v", err)
-	}
-
-	// Try to get the ConfigMap
-	cm, err := clientset.CoreV1().ConfigMaps(Namespace).Get(context.TODO(), ConfigMapName, metav1.GetOptions{})
-	if err != nil {
-		if errors.IsNotFound(err) {
-			// If the ConfigMap does not exist, create it
-			log.Println("ConfigMap not found. Creating a new one with admin user...")
-			if err := CreateConfigMap(clientset); err != nil {
-				return nil, fmt.Errorf("failed to create ConfigMap: %v", err)
-			}
-			log.Println("Admin user created successfully")
-
-			// Fetch again after creation
-			cm, err = clientset.CoreV1().ConfigMaps(Namespace).Get(context.TODO(), ConfigMapName, metav1.GetOptions{})
-			if err != nil {
-				return nil, fmt.Errorf("failed to get ConfigMap after creation: %v", err)
-			}
-		} else {
-			return nil, fmt.Errorf("error fetching ConfigMap: %v", err)
-		}
-	} else {
-		log.Println("Admin configuration already exists")
-	}
-
-	// Parse the ConfigMap JSON data
-	var configData Config
-	if err := json.Unmarshal([]byte(cm.Data["config"]), &configData); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal ConfigMap data: %v", err)
-	}
-
-	// Update JWT secret in environment to match the one from ConfigMap
-	// This ensures tokens remain valid after server restarts
-	jwtconfig.SetJWTSecret(configData.JWTSecret)
-
-	// Now we can safely load other configs after ensuring JWT secret is set
-	jwtconfig.LoadConfig()
-	log.Println("ConfigMap loaded successfully and JWT secret updated.")
-
-	return &configData, nil
-}
-
-// GetUserByUsername retrieves a user configuration by username
-func GetUserByUsername(username string) (UserConfig, bool, error) {
-	config, err := LoadK8sConfigMap()
-	if err != nil {
-		return UserConfig{}, false, fmt.Errorf("failed to load config: %v", err)
-	}
-
-	userConfig, exists := config.GetUser(username)
-	return userConfig, exists, nil
-}
-
-// SaveConfig saves the current configuration to the ConfigMap
-func SaveConfig(config *Config) error {
-	clientset, _, err := k8s.GetClientSetWithContext("its1")
-	if err != nil {
-		return fmt.Errorf("failed to get Kubernetes clientset: %v", err)
-	}
-
-	// Convert struct to JSON string
-	configDataBytes, err := json.Marshal(config)
-	if err != nil {
-		return fmt.Errorf("failed to marshal config: %v", err)
-	}
-
-	// Try to get the existing ConfigMap
-	cm, err := clientset.CoreV1().ConfigMaps(Namespace).Get(context.TODO(), ConfigMapName, metav1.GetOptions{})
-	if err != nil {
-		if errors.IsNotFound(err) {
-			// Create new ConfigMap if it doesn't exist
-			configMap := &corev1.ConfigMap{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      ConfigMapName,
-					Namespace: Namespace,
-				},
-				Data: map[string]string{
-					"config": string(configDataBytes),
-				},
-			}
-			_, err = clientset.CoreV1().ConfigMaps(Namespace).Create(context.TODO(), configMap, metav1.CreateOptions{})
-			if err != nil {
-				return fmt.Errorf("error creating ConfigMap: %v", err)
-			}
-		} else {
-			return fmt.Errorf("error fetching ConfigMap: %v", err)
-		}
-	} else {
-		// Update existing ConfigMap
-		cm.Data = map[string]string{
-			"config": string(configDataBytes),
-		}
-		_, err = clientset.CoreV1().ConfigMaps(Namespace).Update(context.TODO(), cm, metav1.UpdateOptions{})
-		if err != nil {
-			return fmt.Errorf("error updating ConfigMap: %v", err)
-		}
-	}
-
-	return nil
-}
-
-// CreateConfigMap creates a new ConfigMap with default values.
-func CreateConfigMap(clientset *kubernetes.Clientset) error {
-	// Get JWT secret from environment
-	jwtSecret := jwtconfig.GetJWTSecret()
-
-	defaultConfig := Config{
-		JWTSecret: jwtSecret, // Use JWT secret from environment
-		Users: map[string]UserConfig{
-			"admin": {
-				Password:    "admin",
-				Permissions: []string{"read", "write", "admin"},
-			},
-		},
-	}
-
-	log.Printf("Creating admin user with JWT secret from environment")
-
-	// Convert struct to JSON string
-	configDataBytes, err := json.Marshal(defaultConfig)
-	if err != nil {
-		return fmt.Errorf("failed to marshal default config: %v", err)
-	}
-
-	configMap := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      ConfigMapName,
-			Namespace: Namespace,
-		},
-		Data: map[string]string{
-			"config": string(configDataBytes),
-		},
-	}
-
-	_, err = clientset.CoreV1().ConfigMaps(Namespace).Create(context.TODO(), configMap, metav1.CreateOptions{})
-	if err != nil {
-		if errors.IsAlreadyExists(err) {
-			log.Println("ConfigMap already exists, skipping creation.")
-			return nil
-		}
-		return fmt.Errorf("error creating ConfigMap: %v", err)
-	}
-
-	log.Println("ConfigMap created successfully with admin user.")
-	return nil
-}
-
-// ensureNamespaceExists checks if the namespace exists and creates it if it doesn't
-func ensureNamespaceExists(clientset *kubernetes.Clientset) error {
-	_, err := clientset.CoreV1().Namespaces().Get(context.TODO(), Namespace, metav1.GetOptions{})
-	if err != nil {
-		if errors.IsNotFound(err) {
-			log.Printf("Namespace %s not found. Creating it...", Namespace)
-			ns := &corev1.Namespace{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: Namespace,
-				},
-			}
-			_, err = clientset.CoreV1().Namespaces().Create(context.TODO(), ns, metav1.CreateOptions{})
-			if err != nil {
-				return fmt.Errorf("error creating namespace: %v", err)
-			}
-			log.Printf("Namespace %s created successfully", Namespace)
-		} else {
-			return fmt.Errorf("error checking namespace: %v", err)
-		}
-	}
-	return nil
+// UserWithPermissions holds a username and its associated permissions (compatibility layer)
+type UserWithPermissions struct {
+	Username    string   `json:"username"`
+	Password    string   `json:"password,omitempty"` // Password is omitted in responses
+	Permissions []string `json:"permissions"`
 }
 
 // Permission constants
@@ -274,25 +65,62 @@ func GetAvailablePermissionSets() []PermissionSet {
 	}
 }
 
-// AddOrUpdateUser adds a new user or updates an existing user in the configuration
+// GetUserByUsername retrieves a user configuration by username (compatibility layer)
+func GetUserByUsername(username string) (UserConfig, bool, error) {
+	user, err := models.GetUserByUsername(username)
+	if err != nil {
+		if err.Error() == "user not found" {
+			return UserConfig{}, false, nil
+		}
+		return UserConfig{}, false, fmt.Errorf("failed to get user: %v", err)
+	}
+
+	userConfig := UserConfig{
+		Password:    "", // Passwords are not returned for security
+		Permissions: user.Permissions,
+	}
+
+	return userConfig, true, nil
+}
+
+// AddOrUpdateUser adds a new user or updates an existing user (compatibility layer)
 func AddOrUpdateUser(username, password string, permissions []string) error {
 	if username == "" {
 		return fmt.Errorf("username cannot be empty")
 	}
 
-	config, err := LoadK8sConfigMap()
-	if err != nil {
-		return fmt.Errorf("failed to load config: %v", err)
+	// Check if user exists
+	existingUser, err := models.GetUserByUsername(username)
+	if err != nil && err.Error() != "user not found" {
+		return fmt.Errorf("failed to check existing user: %v", err)
 	}
 
-	// Check if we're updating the last admin user and removing admin permissions
-	if isLastAdminUser(config, username) && !containsPermission(permissions, PermissionAdmin) {
-		return fmt.Errorf("cannot remove admin permission from the last admin user")
+	if err != nil && err.Error() == "user not found" {
+		// Create new user
+		req := models.UserCreateRequest{
+			Username:    username,
+			Password:    password,
+			Permissions: permissions,
+		}
+
+		_, err = models.CreateUser(req)
+		if err != nil {
+			return fmt.Errorf("failed to create user: %v", err)
+		}
+	} else {
+		// Update existing user
+		req := models.UserUpdateRequest{
+			Password:    password,
+			Permissions: permissions,
+		}
+
+		_, err = models.UpdateUser(existingUser.ID, req)
+		if err != nil {
+			return fmt.Errorf("failed to update user: %v", err)
+		}
 	}
 
-	config.AddUser(username, password, permissions)
-
-	return SaveConfig(config)
+	return nil
 }
 
 // AddUserWithPermissionSet adds a new user with a predefined permission set
@@ -300,60 +128,107 @@ func AddUserWithPermissionSet(username, password string, permissionSet Permissio
 	return AddOrUpdateUser(username, password, permissionSet.Permissions)
 }
 
-// RemoveUser removes a user from the configuration
+// RemoveUser removes a user from the configuration (compatibility layer)
 func RemoveUser(username string) error {
 	if username == "" {
 		return fmt.Errorf("username cannot be empty")
 	}
 
-	config, err := LoadK8sConfigMap()
+	// Get user by username to get ID
+	user, err := models.GetUserByUsername(username)
 	if err != nil {
-		return fmt.Errorf("failed to load config: %v", err)
+		if err.Error() == "user not found" {
+			return fmt.Errorf("user %s does not exist", username)
+		}
+		return fmt.Errorf("failed to get user: %v", err)
 	}
 
-	if config.Users == nil {
-		return fmt.Errorf("no users found in configuration")
+	// Delete user by ID
+	err = models.DeleteUser(user.ID)
+	if err != nil {
+		return fmt.Errorf("failed to delete user: %v", err)
 	}
 
-	if _, exists := config.Users[username]; !exists {
-		return fmt.Errorf("user %s does not exist", username)
-	}
-
-	// Check if this is the last admin user
-	if isLastAdminUser(config, username) {
-		return fmt.Errorf("cannot delete the last admin user")
-	}
-
-	delete(config.Users, username)
-
-	return SaveConfig(config)
+	return nil
 }
 
-// UpdateUserPermissions updates only the permissions for an existing user
+// UpdateUserPermissions updates only the permissions for an existing user (compatibility layer)
 func UpdateUserPermissions(username string, permissions []string) error {
 	if username == "" {
 		return fmt.Errorf("username cannot be empty")
 	}
 
-	config, err := LoadK8sConfigMap()
+	// Get user by username to get ID
+	user, err := models.GetUserByUsername(username)
 	if err != nil {
-		return fmt.Errorf("failed to load config: %v", err)
+		if err.Error() == "user not found" {
+			return fmt.Errorf("user %s does not exist", username)
+		}
+		return fmt.Errorf("failed to get user: %v", err)
 	}
 
-	userConfig, exists := config.GetUser(username)
-	if !exists {
-		return fmt.Errorf("user %s does not exist", username)
+	// Update user permissions
+	req := models.UserUpdateRequest{
+		Permissions: permissions,
 	}
 
-	// Check if we're updating the last admin user and removing admin permissions
-	if isLastAdminUser(config, username) && !containsPermission(permissions, PermissionAdmin) {
-		return fmt.Errorf("cannot remove admin permission from the last admin user")
+	_, err = models.UpdateUser(user.ID, req)
+	if err != nil {
+		return fmt.Errorf("failed to update user permissions: %v", err)
 	}
 
-	userConfig.Permissions = permissions
-	config.Users[username] = userConfig
+	return nil
+}
 
-	return SaveConfig(config)
+// ListUsers returns a list of all usernames in the configuration (compatibility layer)
+func ListUsers() ([]string, error) {
+	users, err := models.ListUsers()
+	if err != nil {
+		return nil, fmt.Errorf("failed to list users: %v", err)
+	}
+
+	usernames := make([]string, 0, len(users))
+	for _, user := range users {
+		usernames = append(usernames, user.Username)
+	}
+
+	return usernames, nil
+}
+
+// ListUsersWithPermissions returns detailed information about all users (compatibility layer)
+func ListUsersWithPermissions() ([]UserWithPermissions, error) {
+	users, err := models.ListUsers()
+	if err != nil {
+		return nil, fmt.Errorf("failed to list users: %v", err)
+	}
+
+	userWithPermissions := make([]UserWithPermissions, 0, len(users))
+	for _, user := range users {
+		userWithPermissions = append(userWithPermissions, UserWithPermissions{
+			Username:    user.Username,
+			Permissions: user.Permissions,
+			// Password is intentionally omitted for security
+		})
+	}
+
+	return userWithPermissions, nil
+}
+
+// GetUserPermissions gets the permissions for a specific user (compatibility layer)
+func GetUserPermissions(username string) ([]string, error) {
+	if username == "" {
+		return nil, fmt.Errorf("username cannot be empty")
+	}
+
+	user, err := models.GetUserByUsername(username)
+	if err != nil {
+		if err.Error() == "user not found" {
+			return nil, fmt.Errorf("user %s does not exist", username)
+		}
+		return nil, fmt.Errorf("error fetching user: %v", err)
+	}
+
+	return user.Permissions, nil
 }
 
 // containsPermission checks if a permission slice contains a specific permission
@@ -394,61 +269,51 @@ func isLastAdminUser(config *Config, username string) bool {
 	return adminCount == 1
 }
 
-// ListUsers returns a list of all usernames in the configuration
-func ListUsers() ([]string, error) {
-	config, err := LoadK8sConfigMap()
-	if err != nil {
-		return nil, fmt.Errorf("failed to load config: %v", err)
-	}
-
-	usernames := make([]string, 0, len(config.Users))
-	for username := range config.Users {
-		usernames = append(usernames, username)
-	}
-
-	return usernames, nil
+// GetUser retrieves a specific user's configuration (compatibility layer)
+func (c *Config) GetUser(username string) (UserConfig, bool) {
+	userConfig, exists := c.Users[username]
+	return userConfig, exists
 }
 
-// UserWithPermissions holds a username and its associated permissions
-type UserWithPermissions struct {
-	Username    string   `json:"username"`
-	Password    string   `json:"password,omitempty"` // Password is omitted in responses
-	Permissions []string `json:"permissions"`
+// AddUser adds or updates a user in the configuration (compatibility layer)
+func (c *Config) AddUser(username string, password string, permissions []string) {
+	if c.Users == nil {
+		c.Users = make(map[string]UserConfig)
+	}
+
+	c.Users[username] = UserConfig{
+		Password:    password,
+		Permissions: permissions,
+	}
 }
 
-// ListUsersWithPermissions returns detailed information about all users
-func ListUsersWithPermissions() ([]UserWithPermissions, error) {
-	config, err := LoadK8sConfigMap()
-	if err != nil {
-		return nil, fmt.Errorf("failed to load config: %v", err)
-	}
-
-	users := make([]UserWithPermissions, 0, len(config.Users))
-	for username, userConfig := range config.Users {
-		users = append(users, UserWithPermissions{
-			Username:    username,
-			Permissions: userConfig.Permissions,
-			// Password is intentionally omitted for security
-		})
-	}
-
-	return users, nil
+// LoadK8sConfigMap is kept for compatibility but now returns empty config
+// This function is deprecated and should not be used in new code
+func LoadK8sConfigMap() (*Config, error) {
+	// Return empty config since we're now using PostgreSQL
+	return &Config{
+		JWTSecret: "",
+		Users:     make(map[string]UserConfig),
+	}, nil
 }
 
-// GetUserPermissions gets the permissions for a specific user
-func GetUserPermissions(username string) ([]string, error) {
-	if username == "" {
-		return nil, fmt.Errorf("username cannot be empty")
-	}
+// SaveConfig is kept for compatibility but does nothing
+// This function is deprecated and should not be used in new code
+func SaveConfig(config *Config) error {
+	// No-op since we're now using PostgreSQL
+	return nil
+}
 
-	userConfig, exists, err := GetUserByUsername(username)
-	if err != nil {
-		return nil, fmt.Errorf("error fetching user: %v", err)
-	}
+// CreateConfigMap is kept for compatibility but does nothing
+// This function is deprecated and should not be used in new code
+func CreateConfigMap(clientset interface{}) error {
+	// No-op since we're now using PostgreSQL
+	return nil
+}
 
-	if !exists {
-		return nil, fmt.Errorf("user %s does not exist", username)
-	}
-
-	return userConfig.Permissions, nil
+// ensureNamespaceExists is kept for compatibility but does nothing
+// This function is deprecated and should not be used in new code
+func ensureNamespaceExists(clientset interface{}) error {
+	// No-op since we're now using PostgreSQL
+	return nil
 }

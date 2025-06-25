@@ -9,14 +9,31 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kubestellar/ui/models"
+	"github.com/kubestellar/ui/postgresql"
 	"github.com/kubestellar/ui/routes"
-
 	"github.com/kubestellar/ui/api"
 	"go.uber.org/zap"
 )
 
 func main() {
 	initLogger()
+	
+	// Initialize PostgreSQL connection
+	if err := postgresql.Initialize(); err != nil {
+		log.Fatalf("Failed to initialize PostgreSQL: %v", err)
+	}
+	
+	// Create users table
+	if err := models.CreateUsersTable(); err != nil {
+		log.Fatalf("Failed to create users table: %v", err)
+	}
+	
+	// Initialize default admin user
+	if err := models.InitializeDefaultAdmin(); err != nil {
+		log.Fatalf("Failed to initialize default admin user: %v", err)
+	}
+	
 	router := gin.Default()
 
 	router.Use(ZapMiddleware())
