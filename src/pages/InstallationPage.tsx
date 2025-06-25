@@ -25,7 +25,6 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import LanguageSwitcher from '../components/LanguageSwitcher';
 import useTheme from '../stores/themeStore';
 import { FiSun, FiMoon } from 'react-icons/fi';
 import { AnimatePresence } from 'framer-motion';
@@ -177,17 +176,23 @@ const AnimatedCard = ({
   children,
   delay = 0,
   className = '',
+  isDark = true,
 }: {
   children: React.ReactNode;
   delay?: number;
   className?: string;
+  isDark?: boolean;
 }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.4 }}
-      className={`overflow-hidden rounded-xl border border-slate-800/80 bg-slate-900/80 shadow-xl backdrop-blur-sm ${className}`}
+      className={`overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-colors duration-300 ${
+        isDark 
+          ? 'border-slate-800/80 bg-slate-900/80' 
+          : 'border-gray-200/80 bg-white/80'
+      } ${className}`}
     >
       {children}
     </motion.div>
@@ -199,18 +204,20 @@ const SectionHeader = ({
   icon,
   title,
   description,
+  isDark = true,
 }: {
   icon: React.ReactNode;
   title: string;
   description: string;
+  isDark?: boolean;
 }) => {
   return (
     <div className="mb-6">
       <div className="mb-2 flex items-center">
         <div className="mr-3 text-blue-400">{icon}</div>
-        <h2 className="text-xl font-semibold text-white">{title}</h2>
+        <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{title}</h2>
       </div>
-      <p className="ml-9 text-slate-400">{description}</p>
+      <p className={`ml-9 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>{description}</p>
     </div>
   );
 };
@@ -411,11 +418,13 @@ const TabButton = ({
   onClick,
   children,
   disabled = false,
+  isDark = true,
 }: {
   active: boolean;
   onClick: () => void;
   children: React.ReactNode;
   disabled?: boolean;
+  isDark?: boolean;
 }) => {
   return (
     <button
@@ -423,10 +432,14 @@ const TabButton = ({
       disabled={disabled}
       className={`rounded-md px-4 py-2 text-sm transition-colors ${
         disabled
-          ? 'cursor-not-allowed bg-slate-800/50 text-slate-500'
+          ? isDark 
+            ? 'cursor-not-allowed bg-slate-800/50 text-slate-500'
+            : 'cursor-not-allowed bg-gray-300/50 text-gray-400'
           : active
             ? 'bg-blue-600 font-medium text-white'
-            : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+            : isDark
+              ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
       }`}
     >
       {children}
@@ -883,9 +896,17 @@ const InstallationPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-blue-950/30">
-      {/* Top Navigation Bar */}
-      <div className="fixed left-0 right-0 top-0 z-50 border-b border-slate-800/50 bg-slate-900/90 backdrop-blur-sm">
+    <div className={`min-h-screen transition-colors duration-300 ${
+      isDark 
+        ? 'bg-gradient-to-b from-slate-950 via-slate-900 to-blue-950/30' 
+        : 'bg-gradient-to-b from-gray-50 via-white to-blue-50/30'
+    }`}>
+              {/* Top Navigation Bar */}
+        <div className={`fixed left-0 right-0 top-0 z-50 border-b backdrop-blur-sm transition-colors duration-300 ${
+          isDark 
+            ? 'border-slate-800/50 bg-slate-900/90' 
+            : 'border-gray-200/50 bg-white/90'
+        }`}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center">
@@ -898,7 +919,11 @@ const InstallationPage = () => {
                 href="https://github.com/kubestellar/kubestellar"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex items-center text-sm font-medium text-slate-300 transition-colors hover:text-white"
+                className={`group flex items-center text-sm font-medium transition-colors ${
+                  isDark 
+                    ? 'text-slate-300 hover:text-white' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -913,14 +938,22 @@ const InstallationPage = () => {
                 href="https://docs.kubestellar.io/release-0.27.2/direct/get-started/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex items-center text-sm font-medium text-slate-300 transition-colors hover:text-white"
+                className={`group flex items-center text-sm font-medium transition-colors ${
+                  isDark 
+                    ? 'text-slate-300 hover:text-white' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
               >
                 <Book size={18} className="mr-1.5 transition-transform group-hover:scale-110" />
                 {t('installationPage.footer.documentation')}
               </a>
               <motion.button
                 onClick={toggleTheme}
-                className="btn btn-circle flex items-center justify-center rounded-full bg-slate-800/80 p-2 text-slate-300 transition-all duration-300 hover:scale-105 hover:bg-slate-700/90 hover:text-white active:scale-95"
+                className={`btn btn-circle flex items-center justify-center rounded-full p-2 transition-all duration-300 hover:scale-105 active:scale-95 ${
+                  isDark 
+                    ? 'bg-slate-800/80 text-slate-300 hover:bg-slate-700/90 hover:text-white' 
+                    : 'bg-gray-200/80 text-gray-600 hover:bg-gray-300/90 hover:text-gray-900'
+                }`}
                 aria-label={t('header.themeToggle')}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
@@ -949,7 +982,6 @@ const InstallationPage = () => {
                   )}
                 </AnimatePresence>
               </motion.button>
-              <LanguageSwitcher />
               <a
                 href="https://kubestellar.io"
                 target="_blank"
@@ -973,10 +1005,16 @@ const InstallationPage = () => {
             animate={{ opacity: 1, y: 0 }}
             className="mb-12 text-center"
           >
-            <h1 className="mb-4 bg-gradient-to-r from-blue-400 via-indigo-400 to-teal-400 bg-clip-text text-5xl font-bold text-transparent text-white">
+            <h1 className={`mb-4 text-5xl font-bold ${
+              isDark 
+                ? 'bg-gradient-to-r from-blue-400 via-indigo-400 to-teal-400 bg-clip-text text-transparent' 
+                : 'text-gray-900'
+            }`}>
               {t('installationPage.welcome')}
             </h1>
-            <p className="mx-auto max-w-2xl text-lg leading-relaxed text-slate-300">
+            <p className={`mx-auto max-w-2xl text-lg leading-relaxed ${
+              isDark ? 'text-slate-300' : 'text-gray-600'
+            }`}>
               {t('installationPage.gettingStarted')}
             </p>
           </motion.div>
@@ -1035,11 +1073,12 @@ const InstallationPage = () => {
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {/* Left sidebar - make it sticky */}
             <div className="lg:sticky lg:top-24">
-              <AnimatedCard delay={0.1} className="p-6">
+              <AnimatedCard delay={0.1} className="p-6" isDark={isDark}>
                 <SectionHeader
                   icon={<List size={22} />}
                   title={t('installationPage.sidebarSteps.title')}
                   description={t('installationPage.sidebarSteps.description')}
+                  isDark={isDark}
                 />
 
                 <div className="space-y-4">
@@ -1118,9 +1157,13 @@ const InstallationPage = () => {
             </div>
 
             {/* Main content area */}
-            <AnimatedCard delay={0.2} className="lg:col-span-2">
+            <AnimatedCard delay={0.2} className="lg:col-span-2" isDark={isDark}>
               {/* Tabs */}
-              <div className="border-b border-slate-800 bg-slate-900/90 px-6 py-4">
+              <div className={`border-b px-6 py-4 transition-colors duration-300 ${
+                isDark 
+                  ? 'border-slate-800 bg-slate-900/90' 
+                  : 'border-gray-200 bg-gray-50/90'
+              }`}>
                 <div className="flex gap-3">
                   <TabButton
                     active={activeTab === 'prerequisites'}
@@ -1129,6 +1172,7 @@ const InstallationPage = () => {
                       setCurrentStep('prerequisites');
                     }}
                     disabled={skipPrerequisitesCheck}
+                    isDark={isDark}
                   >
                     {t('installationPage.tabs.prerequisites')}
                   </TabButton>
@@ -1138,6 +1182,7 @@ const InstallationPage = () => {
                       setActiveTab('install');
                       setCurrentStep('install');
                     }}
+                    isDark={isDark}
                   >
                     {t('installationPage.tabs.installation')}
                   </TabButton>
@@ -1152,6 +1197,7 @@ const InstallationPage = () => {
                       icon={<Server size={22} />}
                       title={t('installationPage.prerequisites.title')}
                       description={t('installationPage.prerequisites.description')}
+                      isDark={isDark}
                     />
 
                     {/* Status summary */}
@@ -1251,6 +1297,7 @@ const InstallationPage = () => {
                       icon={<Terminal size={22} />}
                       title={t('installationPage.installation.title')}
                       description={t('installationPage.installation.description')}
+                      isDark={isDark}
                     />
 
                     {/* Prerequisites Documentation Link */}
