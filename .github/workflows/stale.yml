@@ -44,8 +44,8 @@ jobs:
             Thank you for your contribution! 🚀
           
           # Timing configuration
-          days-before-stale: 30      # Mark as stale after 30 days of inactivity
-          days-before-close: 7       # Close after 7 additional days of being stale
+          days-before-stale: 45      # Mark as stale after 30 days of inactivity
+          days-before-close: 10       # Close after 7 additional days of being stale
           
           # Labels
           stale-issue-label: 'stale'
