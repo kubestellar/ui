@@ -774,11 +774,17 @@
       "selectContainer": "Select container",
       "noContainersFound": "No containers found"
     },
+    "logs": {
+      "previousLogs": "Previous Logs",
+      "currentLogs": "Current Logs",
+      "selectLogsContainer": "Select logs container"
+    },
     "errors": {
       "failedLoadClusterDetails": "Failed to load cluster details.",
       "failedLoadDetails": "Failed to load {{type}} details.",
       "apiNotImplemented": "API not implemented for updating pod \"{{resourceName}}\"",
-      "failedFetchContainers": "Failed to fetch container list"
+      "failedFetchContainers": "Failed to fetch container list",
+      "failedFetchLogsContainers": "Failed to fetch container list for logs"
     },
     "cluster": {
       "active": "Active"

@@ -58,7 +58,6 @@ export const PluginManager: React.FC = () => {
 
   // Ref for the hidden directory input
   const directoryInputRef = useRef<HTMLInputElement>(null);
-
   const loadPluginData = useCallback(async () => {
     try {
       setLoading(true);
