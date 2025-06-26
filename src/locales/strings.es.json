@@ -68,6 +68,13 @@
     "filteredFrom": "filtrado de"
   },
   "installationPage": {
+    "successSection": {
+      "installed": "está correctamente instalado y cumple con los requisitos de versión."
+    },
+    "errorSection": {
+      "title": "Instrucciones de instalación",
+      "viewGuide": "Ver guía de instalación"
+    },
     "statusBadge": {
       "installed": "Instalado",
       "versionMismatch": "Versión incompatible",

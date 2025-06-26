@@ -25,6 +25,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import useTheme from '../stores/themeStore';
 import { FiSun, FiMoon } from 'react-icons/fi';
 import { AnimatePresence } from 'framer-motion';
@@ -1055,6 +1056,7 @@ const InstallationPage = () => {
                 <Book size={18} className="mr-1.5 transition-transform group-hover:scale-110" />
                 {t('installationPage.footer.documentation')}
               </a>
+              <LanguageSwitcher />
               <motion.button
                 onClick={toggleTheme}
                 className={`btn btn-circle flex items-center justify-center rounded-full p-2 transition-all duration-300 hover:scale-105 active:scale-95 ${
