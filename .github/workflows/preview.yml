@@ -65,24 +65,24 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y buildah
 
-      - name: Login to GHCR
-        run: echo ${{ secrets.GHCR_PAT }} | buildah login --username clubanderson --password-stdin ghcr.io
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Build and push frontend and backend images
         run: |
           echo "🔧 Building frontend..."
-          buildah bud \
+          docker build \
             --build-arg VITE_BASE_URL=http://backend:4000 \
             -t $REGISTRY/$FRONTEND_IMAGE_NAME:$IMAGE_TAG .
 
           echo "📦 Pushing frontend..."
-          buildah push $REGISTRY/$FRONTEND_IMAGE_NAME:$IMAGE_TAG
+          docker push $REGISTRY/$FRONTEND_IMAGE_NAME:$IMAGE_TAG
 
           echo "🔧 Building backend..."
-          buildah bud -t $REGISTRY/$BACKEND_IMAGE_NAME:$IMAGE_TAG ./backend
+          docker build -t $REGISTRY/$BACKEND_IMAGE_NAME:$IMAGE_TAG ./backend
 
           echo "📦 Pushing backend..."
-          buildah push $REGISTRY/$BACKEND_IMAGE_NAME:$IMAGE_TAG
+          docker push $REGISTRY/$BACKEND_IMAGE_NAME:$IMAGE_TAG
                   
       - name: Deploy Kubestellar UI
         run: |
