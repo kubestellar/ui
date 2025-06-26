@@ -144,6 +144,7 @@ docker ps
 ```
 
 This will start:
+
 - PostgreSQL on port 5432 (for persistent data storage)
 - Redis on port 6379 (for caching WebSocket updates)
 
