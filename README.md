@@ -13,10 +13,8 @@
 <!-- 🚀 Quick Links Section -->
 <p align="center">
   <h3 align="center">🚀 Quick Links</h3>
-  <a href="https://discord.gg/9nYyQw4y6d"><img alt="Discord" src="https://img.shields.io/badge/discord-5865F2?logo=discord&logoColor=white&style=for-the-badge"></a>
   <a href="https://kubernetes.slack.com/archives/C058SUSL5AA"><img alt="Join Community" src="https://img.shields.io/badge/join%20community-blue?style=for-the-badge"></a>
   <a href="https://kubestellar.io/try"><img alt="Try It Out" src="https://img.shields.io/badge/try%20it%20out-6c63ff?style=for-the-badge"></a>
-  <a href="https://demo.kubestellar.io"><img alt="Live Demo" src="https://img.shields.io/badge/live%20demo-ff4b4b?style=for-the-badge"></a>
   <a href="mailto:contact@kubestellar.io"><img alt="Contact Us" src="https://img.shields.io/badge/contact%20us-333333?style=for-the-badge"></a>
   <a href="https://kubestellar.io/contact"><img alt="Get In Touch" src="https://img.shields.io/badge/get%20in%20touch-43d9ad?style=for-the-badge"></a>
 </p>
