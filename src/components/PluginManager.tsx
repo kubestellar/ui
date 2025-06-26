@@ -56,7 +56,7 @@ export const PluginManager: React.FC = () => {
   } | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-// Ref for the hidden directory input
+  // Ref for the hidden directory input
   const directoryInputRef = useRef<HTMLInputElement>(null);
   const loadPluginData = useCallback(async () => {
     try {
