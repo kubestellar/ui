@@ -18,17 +18,24 @@ interface LogModalProps {
   cluster?: string; // Added cluster prop
 }
 
+interface TerminalInstance {
+  writeln: (data: string) => void;
+  dispose: () => void;
+  loadAddon: (addon: unknown) => void;
+  open: (element: HTMLElement) => void;
+}
+
 const LogModal = ({ namespace, deploymentName, onClose, cluster = 'default' }: LogModalProps) => {
   const { t } = useTranslation();
   const terminalRef = useRef<HTMLDivElement>(null);
-  const terminalInstance = useRef<Terminal | null>(null);
+  const terminalInstance = useRef<TerminalInstance | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [logContent, setLogContent] = useState<string>('');
   const theme = useTheme(state => state.theme);
 
   useEffect(() => {
-    if (!terminalRef.current) return;
+    if (!terminalRef.current || !Terminal || !FitAddon) return;
 
     const term = new Terminal({
       theme: {
@@ -41,7 +48,7 @@ const LogModal = ({ namespace, deploymentName, onClose, cluster = 'default' }: L
       fontFamily: 'monospace',
       scrollback: 1000,
       disableStdin: true,
-    });
+    }) as TerminalInstance;
 
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
