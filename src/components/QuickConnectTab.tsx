@@ -1,5 +1,3 @@
-import React, { ChangeEvent, RefObject, useState, useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Box,
@@ -15,7 +13,7 @@ import {
   Zoom,
 } from '@mui/material';
 import { TOptions } from 'i18next';
-import React, { ChangeEvent, RefObject, useEffect } from 'react';
+import React, { ChangeEvent, RefObject, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Colors, CommandResponse } from './ImportClusters';
 import OnboardingLogsDisplay from './OnboardingLogsDisplay';
@@ -118,7 +116,6 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
       }
     };
   }, [showLogs, onboardingStatus, setOnboardingStatus, setOnboardingError, setManualLoading]);
-  ]);
 
   // This function will be called when the onboarding is completed via logs
   const handleOnboardingComplete = () => {
