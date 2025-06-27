@@ -106,7 +106,6 @@ const StyledTab = styled(Tab)(({ theme }) => {
   };
 });
 
-// Lazy load Monaco Editor
 const Editor = lazy(() => import('@monaco-editor/react'));
 
 const WecsDetailsPanel = ({
@@ -846,23 +845,17 @@ const WecsDetailsPanel = ({
     execTerminalKey,
     selectedContainer,
     t,
-  ]); // Added selectedContainer as dependency
+  ]);
 
-  // Add a useEffect that resets container selection when the pod changes
   useEffect(() => {
-    // Reset container selection and containers list when pod changes
     if (type.toLowerCase() === 'pod') {
-      // console.log(`Pod changed to ${name}, resetting container selection`);
       setSelectedContainer('');
       setContainers([]);
     }
   }, [name, type]);
 
-  // Add a useEffect that resets logs container selection when the pod changes
   useEffect(() => {
-    // Reset logs container selection and containers list when pod changes
     if (type.toLowerCase() === 'pod') {
-      // console.log(`Pod changed to ${name}, resetting logs container selection`);
       setSelectedLogsContainer('');
       setLogsContainers([]);
       setShowPreviousLogs(false);
@@ -894,9 +887,7 @@ const WecsDetailsPanel = ({
   };
 
   const handleClose = useCallback(() => {
-    // Don't close if container selection is active
     if (isContainerSelectActive || isLogsContainerSelectActive) {
-      // console.log("Container select is active, preventing panel close");
       return;
     }
 

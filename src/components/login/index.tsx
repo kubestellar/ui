@@ -3,7 +3,6 @@ import { Canvas } from '@react-three/fiber';
 import { useProgress, Html } from '@react-three/drei';
 import { LazyNetworkGlobe, LazyKubeStellarLayout, LazyLoadingScreen } from './LazyComponents';
 
-// Dynamically import the OrbitControls to reduce initial bundle size
 const OrbitControls = lazy(() =>
   import('@react-three/drei').then(module => ({ default: module.OrbitControls }))
 );
@@ -61,35 +60,16 @@ export function KubeStellarVisualization() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [isDocumentVisible, setIsDocumentVisible] = useState(true);
-  const [is3DEnabled, setIs3DEnabled] = useState(true);
+  const [is3DEnabled] = useState(true);
 
   // Track document visibility to pause rendering when tab/page is not active
   useEffect(() => {
     const handleVisibilityChange = () => {
       setIsDocumentVisible(!document.hidden);
     };
-
-    // Check if device might have performance issues with 3D
-    const checkDeviceCapabilities = () => {
-      // Simple check based on navigator properties - can be expanded
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-        navigator.userAgent
-      );
-      const navWithMemory = navigator as Navigator & { deviceMemory?: number };
-      const hasLowMemory = navWithMemory.deviceMemory && navWithMemory.deviceMemory < 4;
-
-      // Disable 3D for low-end devices
-      if (isMobile || hasLowMemory) {
-        setIs3DEnabled(false);
-      }
-    };
-
-    checkDeviceCapabilities();
-
     // Add event listener for visibility change
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Clean up event listener
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };

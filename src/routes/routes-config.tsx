@@ -6,25 +6,20 @@ import PublicRoute from '../components/PublicRoute';
 import KubeStellarStatusChecker from '../components/KubeStellarStatusChecker';
 import { PluginManager } from '../components/PluginManager';
 
-// Lazily load all major components to reduce initial bundle size
 const Layout = lazy(() =>
-  import(/* webpackPrefetch: true */ '../components/Layout').then(module => ({
+  import('../components/Layout').then(module => ({
     default: module.Layout,
   }))
 );
-const KubeStellarVisualization = lazy(
-  () => import(/* webpackPrefetch: true */ '../components/login/index.optimized')
-);
-const InstallationPage = lazy(
-  () => import(/* webpackPrefetch: true */ '../pages/InstallationPage')
-);
-const WDS = lazy(() => import(/* webpackPrefetch: true */ '../pages/WDS'));
-const BP = lazy(() => import(/* webpackPrefetch: true */ '../pages/BP'));
-const TreeView = lazy(() => import(/* webpackPrefetch: true */ '../components/TreeViewComponent'));
-const WecsTreeview = lazy(() => import(/* webpackPrefetch: true */ '../components/WecsTopology'));
+const KubeStellarVisualization = lazy(() => import('../components/login/index.optimized'));
+const InstallationPage = lazy(() => import('../pages/InstallationPage'));
+const WDS = lazy(() => import('../pages/WDS'));
+const BP = lazy(() => import('../pages/BP'));
+const TreeView = lazy(() => import('../components/TreeViewComponent'));
+const WecsTreeview = lazy(() => import('../components/WecsTopology'));
 const NotFoundPage = lazy(() => import('../pages/NotFoundPage'));
-const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ '../components/Clusters'));
-const ITSLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/ITS'));
+const ClustersLazy = lazy(() => import('../components/Clusters'));
+const ITSLazy = lazy(() => import('../pages/ITS'));
 
 export const routesConfig: RouteObject[] = [
   {

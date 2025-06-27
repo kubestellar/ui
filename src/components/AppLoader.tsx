@@ -2,12 +2,8 @@ import { Suspense, lazy, useState, useEffect } from 'react';
 import { Spinner } from './ui/Spinner';
 import useTheme from '../stores/themeStore';
 
-// Lazy load the actual App component
 const LazyApp = lazy(() => import('../App'));
 
-/**
- * Spinner component shown while the app is loading
- */
 const LoadingSpinner = () => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -31,28 +27,13 @@ const LoadingSpinner = () => {
   );
 };
 
-/**
- * AppLoader component with intelligent loading behavior
- * - Shows a splash screen while loading
- * - Handles loading states
- * - Lazy loads the actual app component
- */
 const AppLoader = () => {
-  // Track loading state
   const [isLoading, setIsLoading] = useState(true);
-
-  // Set up loading timeout and fake minimum loading time
-  // for smoother perceived performance
   useEffect(() => {
-    const minLoadingTime = 800; // ms
+    const minLoadingTime = 800;
     const startTime = Date.now();
-
-    // Start loading the main app immediately
     Promise.all([
-      // Start loading the app component
       import('../App'),
-
-      // Ensure minimum loading time for better UX
       new Promise(resolve => {
         const elapsed = Date.now() - startTime;
         const timeRemaining = Math.max(0, minLoadingTime - elapsed);
@@ -63,12 +44,10 @@ const AppLoader = () => {
     });
   }, []);
 
-  // Show loading spinner while loading app
   if (isLoading) {
     return <LoadingSpinner />;
   }
 
-  // Render the actual app when loaded
   return (
     <Suspense fallback={<LoadingSpinner />}>
       <LazyApp />

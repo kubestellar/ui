@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { Box, Button, FormControlLabel, Checkbox } from '@mui/material'; // Added Checkbox and FormControlLabel
 import { StyledContainer } from '../StyledComponents';
 import yaml from 'js-yaml';
@@ -28,7 +28,6 @@ interface YamlDocument {
   [key: string]: unknown;
 }
 
-// Lazy load Monaco Editor
 const Editor = lazy(() => import('@monaco-editor/react'));
 
 export const YamlTab = ({

@@ -33,8 +33,6 @@ import EditIcon from '@mui/icons-material/Edit';
 import PublishIcon from '@mui/icons-material/Publish';
 import KubernetesIcon from '../components/BindingPolicy/KubernetesIcon';
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
-
-// Lazy load expensive components that aren't needed on initial render
 const BPVisualization = lazy(() => import('../components/BindingPolicy/BPVisualization'));
 const PolicyDragDrop = lazy(() => import('../components/BindingPolicy/PolicyDragDrop'));
 const PreviewDialog = lazy(() => import('../components/BindingPolicy/PreviewDialog'));

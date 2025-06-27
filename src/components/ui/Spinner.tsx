@@ -7,21 +7,12 @@ interface SpinnerProps {
   color?: string;
 }
 
-/**
- * Size mappings for different spinner sizes
- */
 const SIZE_MAP: Record<SpinnerSize, number> = {
   small: 16,
   medium: 24,
   large: 40,
 };
 
-/**
- * Spinner component for loading states
- *
- * @param size - The size of the spinner (small, medium, large)
- * @param color - Override the default theme color
- */
 export const Spinner = memo(({ size = 'medium', color }: SpinnerProps) => {
   const sizeValue = SIZE_MAP[size] || SIZE_MAP.medium;
 

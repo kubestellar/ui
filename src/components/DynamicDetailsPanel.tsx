@@ -27,6 +27,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import { api } from '../lib/api';
 import { useResourceLogsWebSocket } from '../hooks/useWebSocket';
 import DownloadLogsButton from './DownloadLogsButton';
+import { Terminal } from 'xterm';
 
 interface DynamicDetailsProps {
   namespace: string;
@@ -151,7 +152,6 @@ const StyledTab = styled(Tab)(({ theme }) => {
   };
 });
 
-// Lazy load Monaco Editor
 const Editor = lazy(() => import('@monaco-editor/react'));
 
 const DynamicDetailsPanel = ({

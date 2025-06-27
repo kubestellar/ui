@@ -9,6 +9,7 @@ import React, { lazy, Suspense } from 'react';
 import WorkloadLabelInput from './WorkloadLabelInput';
 import CancelButton from '../common/CancelButton';
 import { useTranslation } from 'react-i18next';
+import Spinner from '../ui/Spinner';
 
 // Define the type for the YAML document
 interface YamlDocument {
@@ -33,7 +34,6 @@ interface Props {
   handleCancelClick: () => void;
 }
 
-// Lazy load Monaco Editor
 const Editor = lazy(() => import('@monaco-editor/react'));
 
 export const UploadFileTab = ({
@@ -245,7 +245,7 @@ export const UploadFileTab = ({
                 flexDirection: 'column',
               }}
             >
-              <Suspense fallback={<SpinnerComponentOrCircularProgress />}>
+              <Suspense fallback={<Spinner />}>
                 <Editor
                   height="27vh"
                   language="yaml"
