@@ -62,6 +62,10 @@ This document tracks the progress of the design system foundation efforts for th
 4. **Structure & Strategy – Information Architecture & Flow Planning**  
    🔗 [Structure & Strategy – Google Docs](https://docs.google.com/document/d/13iG5yXS23F9JHQkxGR3ODwmc_XJVydiBYt28f4Tysxo/edit?usp=sharing)
 
+5. **Wireframing**  
+   🔗 [Wireframing – Figma](https://www.figma.com/design/GLUwDDSxzkL8Evhgsec4JM/Wireframing--kubestellar.io?node-id=0-1&t=LaikrxjMxKaexwZd-1)
+
+
 ---
 
 ## 📌 Progress Update
@@ -192,5 +196,14 @@ This section covers foundational analysis and planning to improve the structure,
   - Confusing flows in the current IA
   - User expectations from documentation and setup guides
 - Insights helped inform the new IA and navigation recommendations
+
+### 🔳 Wireframes Designed
+
+- Developed low-fidelity wireframes for:
+  - Documentation homepage layout
+  - Setup guide experience
+  - Component structure (inputs, buttons, sidebars)
+- Used layout grid and spacing tokens from the design system
+- Aligned wireframes with IA improvements
 
 ---
