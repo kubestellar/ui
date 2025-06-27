@@ -1678,6 +1678,7 @@
     "account": "Cuenta",
     "admin": "Administrador",
     "helpSupport": "Ayuda y Soporte",
+    "raiseIssue": "Reportar un problema",
     "signOut": "Cerrar sesión"
   },
   "onboardingLogs": {

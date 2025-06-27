@@ -172,7 +172,7 @@
     },
     "checkingStatus": {
       "title": "Vérification du statut d'installation de KubeStellar...",
-      "description": "Cela ne devrait prendre qu’un instant. Nous vérifions si KubeStellar est déjà installé sur votre système."
+      "description": "Cela ne devrait prendre qu'un instant. Nous vérifions si KubeStellar est déjà installé sur votre système."
     },
     "checkError": {
       "title": "Échec de la vérification du statut",
@@ -193,7 +193,7 @@
     },
     "toasts": {
       "alreadyInstalled": "KubeStellar est déjà installé ! Redirection vers la connexion...",
-      "notInstalled": "Cluster Kubeflex introuvable. Suivez les étapes pour configurer l’environnement KubeStellar.",
+      "notInstalled": "Cluster Kubeflex introuvable. Suivez les étapes pour configurer l'environnement KubeStellar.",
       "checkFailed": "Échec de la vérification du statut de KubeStellar",
       "preparingInstructions": "Préparation des instructions d'installation...",
       "followInstructions": "Suivez les instructions CLI ci-dessous pour installer KubeStellar",
@@ -212,7 +212,7 @@
     "language": "Langue",
     "importCluster": "Importer un cluster",
     "menu": "Menu",
-    "goToHome": "Aller à la page d’accueil",
+    "goToHome": "Aller à la page d'accueil",
     "logoAlt": "Logo KubeStellar",
     "themeToggleTip": "Alt+Q pour changer de thème",
     "switchTheme": "Passer en mode {{mode}}"
@@ -227,15 +227,15 @@
       "welcomeBack": "Bon retour",
       "accessDashboard": "Accéder à votre tableau de bord",
       "enterCredentials": "Entrez vos identifiants ci-dessous",
-      "needHelp": "Besoin d’aide ?",
+      "needHelp": "Besoin d'aide ?",
       "contactSupport": "Contacter le support"
     },
     "loading": {
       "logoAlt": "KubeStellar",
-      "initializing": "Initialisation de l’environnement KubeStellar..."
+      "initializing": "Initialisation de l'environnement KubeStellar..."
     },
     "form": {
-      "username": "Nom d’utilisateur",
+      "username": "Nom d'utilisateur",
       "password": "Mot de passe",
       "rememberMe": "Se souvenir de moi",
       "signIn": "Se connecter à KubeStellar",
@@ -243,7 +243,7 @@
       "showPassword": "Afficher le mot de passe",
       "hidePassword": "Masquer le mot de passe",
       "errors": {
-        "usernameRequired": "Le nom d’utilisateur est requis",
+        "usernameRequired": "Le nom d'utilisateur est requis",
         "passwordRequired": "Le mot de passe est requis"
       }
     }
@@ -356,7 +356,7 @@
       "noLabelsAvailable": "Aucune étiquette de cluster disponible. Veuillez ajouter des clusters avec des étiquettes pour les utiliser dans les politiques de liaison.",
       "noLabelsMatchSearch": "Aucune étiquette ne correspond à votre recherche.",
       "noLabelsFound": "Aucune étiquette trouvée dans les clusters disponibles.",
-      "clickToAdd": "Cliquez sur une étiquette pour l’ajouter au canevas",
+      "clickToAdd": "Cliquez sur une étiquette pour l'ajouter au canevas",
       "edit": "Modifier les étiquettes",
       "add": "Ajouter des étiquettes",
       "for": "pour",
@@ -364,10 +364,10 @@
       "appendToExisting": "Ajouter aux étiquettes existantes",
       "key": "Clé de l'étiquette",
       "value": "Valeur de l'étiquette",
-      "noLabels": "Aucune étiquette ajoutée pour l’instant",
+      "noLabels": "Aucune étiquette ajoutée pour l'instant",
       "noMatchingLabels": "Aucune étiquette correspondante trouvée",
-      "addYourFirst": "Ajoutez votre première étiquette à l’aide des champs ci-dessus pour organiser ce cluster.",
-      "tip": "Astuce : Appuyez sur Entrée pour passer d’un champ à l’autre, ou double-cliquez sur une étiquette pour la modifier",
+      "addYourFirst": "Ajoutez votre première étiquette à l'aide des champs ci-dessus pour organiser ce cluster.",
+      "tip": "Astuce : Appuyez sur Entrée pour passer d'un champ à l'autre, ou double-cliquez sur une étiquette pour la modifier",
       "tryDifferentSearch": "Essayez un autre terme ou effacez la recherche",
       "count": "{{count}} étiquette{{count, plural, one {} other {s}}}",
       "description": "Ajoutez, modifiez ou supprimez des étiquettes pour organiser et catégoriser votre cluster.",
@@ -375,15 +375,15 @@
       "bindingProtected": "Utilisée dans une politique de liaison - Ne peut pas être modifiée",
       "manageLabels": "Gérer les étiquettes",
       "bulkLabels": "Étiquettes en masse",
-      "editValue": "Modifier l’étiquette",
-      "removeLabel": "Supprimer l’étiquette",
+      "editValue": "Modifier l'étiquette",
+      "removeLabel": "Supprimer l'étiquette",
       "cancelEdit": "Annuler la modification",
       "added": "Nouvelle étiquette ajoutée : {{key}}",
       "updated": "Étiquette mise à jour : {{key}}",
       "removed": "Étiquette supprimée : {{key}}",
       "updateSuccess": "Étiquette mise à jour avec succès",
       "duplicate": "Une étiquette avec la clé \"{{key}}\" existe déjà",
-      "protected": "Impossible de modifier l’étiquette protégée : {{key}}",
+      "protected": "Impossible de modifier l'étiquette protégée : {{key}}",
       "finishEditing": "Terminer la modification",
       "noClustersToEdit": "Aucun cluster disponible à modifier",
       "noClustersSelected": "Aucun cluster sélectionné",
@@ -455,10 +455,10 @@
         "appendToExisting": "Ajouter aux étiquettes existantes",
         "key": "Clé de l'étiquette",
         "value": "Valeur de l'étiquette",
-        "noLabels": "Aucune étiquette ajoutée pour l’instant",
+        "noLabels": "Aucune étiquette ajoutée pour l'instant",
         "noMatchingLabels": "Aucune étiquette correspondante trouvée",
-        "addYourFirst": "Ajoutez votre première étiquette à l’aide des champs ci-dessus pour organiser ce cluster.",
-        "tip": "Astuce : Appuyez sur Entrée pour passer d’un champ à l’autre, ou double-cliquez sur une étiquette pour la modifier",
+        "addYourFirst": "Ajoutez votre première étiquette à l'aide des champs ci-dessus pour organiser ce cluster.",
+        "tip": "Astuce : Appuyez sur Entrée pour passer d'un champ à l'autre, ou double-cliquez sur une étiquette pour la modifier",
         "tryDifferentSearch": "Essayez un autre terme de recherche ou effacez la recherche",
         "count": "{{count}} étiquette{{count, plural, one {} other {s}}}",
         "description": "Ajoutez, modifiez ou supprimez des étiquettes pour organiser et catégoriser votre cluster.",
@@ -491,7 +491,7 @@
       "createdOn": "Créé le {{date}}",
       "labels": "Étiquettes",
       "labelCount": "{{count}} étiquette(s)",
-      "noLabels": "Aucune étiquette n’a été attribuée à ce cluster",
+      "noLabels": "Aucune étiquette n'a été attribuée à ce cluster",
       "capacityResources": "Capacité et ressources",
       "cpuCores": "Cœurs CPU",
       "memory": "Mémoire",
@@ -501,7 +501,7 @@
     },
     "dashboard": {
       "title": "Tableau de bord",
-      "lastUpdatedJustNow": "Dernière mise à jour : à l’instant",
+      "lastUpdatedJustNow": "Dernière mise à jour : à l'instant",
       "status": "Statut : Optimal",
       "other": "Autres",
       "distribution": "Répartition",
@@ -540,12 +540,12 @@
         "calculation": "Calculée sur la base du ratio entre les pods sains et le nombre total de pods dans tous les espaces de noms.",
         "status": "Prend en compte le statut des pods, les probes de readiness et de liveness",
         "value": "Des valeurs plus élevées indiquent une meilleure santé du cluster",
-        "formulaDesc": "(Pods en cours d’exécution / Total des pods) × 100 %",
+        "formulaDesc": "(Pods en cours d'exécution / Total des pods) × 100 %",
         "health": "Santé des pods"
       },
       "cpu": {
         "usage": "Utilisation CPU",
-        "formula": "Formule d’utilisation CPU",
+        "formula": "Formule d'utilisation CPU",
         "calculation": "Calculée comme le pourcentage de ressources CPU allouées actuellement utilisées sur tous les nœuds du cluster.",
         "value": "Des valeurs plus faibles indiquent une meilleure disponibilité des ressources",
         "formulaDesc": "(CPU utilisé / CPU total) × 100 %",
@@ -553,13 +553,13 @@
       },
       "memory": {
         "usage": "Utilisation mémoire",
-        "formula": "Formule d’utilisation mémoire",
+        "formula": "Formule d'utilisation mémoire",
         "calculation": "Calculée comme le pourcentage de mémoire allouée actuellement utilisée sur tous les nœuds du cluster.",
         "value": "Des valeurs plus faibles indiquent une meilleure disponibilité des ressources",
         "formulaDesc": "(Mémoire utilisée / Mémoire totale) × 100 %"
       },
       "stats": {
-        "running": "En cours d’exécution et disponible",
+        "running": "En cours d'exécution et disponible",
         "totalClusters": "Nombre total de clusters",
         "activeClusters": "Clusters actifs",
         "bindingPolicies": "Politiques de liaison",
@@ -598,7 +598,7 @@
     "errors": {
       "notConnected": "WebSocket non connecté",
       "closingError": "Erreur lors de la fermeture du WebSocket :",
-      "expectedStringData": "Données chaîne attendues pour l’analyse JSON",
+      "expectedStringData": "Données chaîne attendues pour l'analyse JSON",
       "processingFailed": "Échec du traitement du message WebSocket",
       "connectionError": "Erreur WebSocket"
     }
@@ -616,8 +616,8 @@
       "errorUploadingFile": "Erreur lors du téléversement du fichier :",
       "updateWorkloadFailed": "Échec de la mise à jour de la charge de travail",
       "errorUpdatingWorkload": "Erreur lors de la mise à jour de la charge de travail :",
-      "scaleWorkloadFailed": "Échec de la mise à l’échelle de la charge de travail",
-      "errorScalingWorkload": "Erreur lors de la mise à l’échelle de la charge de travail :",
+      "scaleWorkloadFailed": "Échec de la mise à l'échelle de la charge de travail",
+      "errorScalingWorkload": "Erreur lors de la mise à l'échelle de la charge de travail :",
       "deleteWorkloadFailed": "Échec de la suppression de la charge de travail",
       "errorDeletingWorkload": "Erreur lors de la suppression de la charge de travail :",
       "fetchWorkloadLogsFailed": "Échec de la récupération des journaux de la charge de travail",
@@ -627,7 +627,7 @@
       "workloadCreated": "Charge de travail créée avec succès",
       "fileUploaded": "Fichier téléversé avec succès",
       "workloadUpdated": "Charge de travail mise à jour avec succès",
-      "workloadScaled": "Charge de travail mise à l’échelle à {{replicas}} répliques",
+      "workloadScaled": "Charge de travail mise à l'échelle à {{replicas}} répliques",
       "workloadDeleted": "Charge de travail supprimée avec succès"
     },
     "defaults": {
@@ -689,8 +689,8 @@
     },
     "errors": {
       "policyNotFound": "Politique {{policyName}} introuvable dans la réponse principale",
-      "errorParsingJson": "Erreur lors de l’analyse JSON depuis raw fieldsv1 :",
-      "resourcesNull": "Resources est nul pour l’espace de noms {{namespace}}, type de ressource {{resourceType}}",
+      "errorParsingJson": "Erreur lors de l'analyse JSON depuis raw fieldsv1 :",
+      "resourcesNull": "Resources est nul pour l'espace de noms {{namespace}}, type de ressource {{resourceType}}",
       "resourcesNullClusterScoped": "Resources est nul pour le type de ressource à portée de cluster {{resourceType}}"
     }
   },
@@ -701,7 +701,7 @@
       "tiles": "Tuiles",
       "list": "Liste"
     },
-    "note": "Remarque : Les espaces de noms par défaut, du système Kubernetes et d’OpenShift sont filtrés de cette vue.",
+    "note": "Remarque : Les espaces de noms par défaut, du système Kubernetes et d'OpenShift sont filtrés de cette vue.",
     "emptyState": {
       "title": "Aucune charge de travail trouvée",
       "description": "Commencez par créer votre première charge de travail"
@@ -716,7 +716,7 @@
       "toggle": "Basculer en mode plein écran"
     },
     "timeAgo": {
-      "today": "Aujourd’hui",
+      "today": "Aujourd'hui",
       "days": "{{count}} jour",
       "days_plural": "{{count}} jours"
     },
@@ -744,7 +744,7 @@
       "close": "Fermer",
       "unknown": "Inconnu",
       "na": "N/A",
-      "today": "Aujourd’hui",
+      "today": "Aujourd'hui",
       "daysAgo": "Il y a {{count}} jours"
     },
     "buttons": {
@@ -762,7 +762,7 @@
       "connecting": "Connexion au shell du pod dans le conteneur {{containerName}}...",
       "connected": "Connecté au shell du pod dans le conteneur {{containerName}}",
       "connectionClosed": "Connexion fermée",
-      "connectionNotActive": "Connexion inactive. Impossible d’envoyer la commande.",
+      "connectionNotActive": "Connexion inactive. Impossible d'envoyer la commande.",
       "errorConnecting": "Erreur de connexion au pod. Veuillez réessayer."
     },
     "format": {
@@ -784,7 +784,7 @@
     "errors": {
       "failedLoadClusterDetails": "Échec du chargement des détails du cluster.",
       "failedLoadDetails": "Échec du chargement des détails de {{type}}.",
-      "apiNotImplemented": "API non implémentée pour la mise à jour du pod « {{resourceName}} »",
+      "apiNotImplemented": "API non implémentée pour la mise à jour du pod « {{resourceName}} »",
       "failedFetchContainers": "Échec de la récupération de la liste des conteneurs"
     },
     "cluster": {
@@ -795,7 +795,7 @@
   "treeView": {
     "title": "Gérer les charges de travail",
     "createWorkload": "Créer une charge de travail",
-    "note": "Remarque : Les espaces de noms par défaut, du système Kubernetes et d’OpenShift sont filtrés de cette vue.",
+    "note": "Remarque : Les espaces de noms par défaut, du système Kubernetes et d'OpenShift sont filtrés de cette vue.",
     "filteringContext": "Filtrage : affichage uniquement des ressources du contexte {{context}}.",
     "unknown": "Inconnu",
     "viewModes": {
@@ -803,7 +803,7 @@
       "list": "Liste"
     },
     "timeAgo": {
-      "today": "Aujourd’hui",
+      "today": "Aujourd'hui",
       "days": "{{count}} jour",
       "days_plural": "{{count}} jours"
     },
@@ -822,19 +822,19 @@
     },
     "deleteDialog": {
       "title": "Confirmer la suppression de la ressource",
-      "message": "Êtes-vous sûr de vouloir supprimer « {{name}} » ? Cette action est irréversible.",
+      "message": "Êtes-vous sûr de vouloir supprimer « {{name}} » ? Cette action est irréversible.",
       "confirm": "Oui, supprimer"
     }
   },
   "quickConnect": {
     "title": "Configuration de cluster en un clic",
-    "description": "Intégration simplifiée et automatisée des clusters sans aucune commande. Sélectionnez votre cluster et laissez le système s’occuper du reste.",
+    "description": "Intégration simplifiée et automatisée des clusters sans aucune commande. Sélectionnez votre cluster et laissez le système s'occuper du reste.",
     "selectCluster": "Sélectionner un cluster Kubernetes",
     "searchingClusters": "Recherche de clusters disponibles...",
     "errorLoadingClusters": "Erreur lors du chargement des clusters",
     "automatedOnboarding": "Intégration automatisée des clusters",
     "new": "Nouveau",
-    "automatedDescription": "C’est le moyen le plus simple de connecter votre cluster Kubernetes. Sélectionnez un cluster et cliquez sur le bouton Intégrer pour le connecter directement sans aucune commande manuelle.",
+    "automatedDescription": "C'est le moyen le plus simple de connecter votre cluster Kubernetes. Sélectionnez un cluster et cliquez sur le bouton Intégrer pour le connecter directement sans aucune commande manuelle.",
     "retry": "Réessayer",
     "chooseCluster": "Choisir un cluster...",
     "noClusters": "Aucun cluster disponible",
@@ -851,22 +851,22 @@
       },
       "step2": {
         "title": "Intégration en un clic",
-        "description": "Cliquez sur le bouton « Intégrer le cluster » pour démarrer le processus automatisé"
+        "description": "Cliquez sur le bouton « Intégrer le cluster » pour démarrer le processus automatisé"
       },
       "step3": {
         "title": "Connexion instantanée",
         "description": "Votre cluster sera intégré automatiquement sans commandes manuelles"
       }
     },
-    "whyUseAutomated": "Pourquoi utiliser l’intégration automatisée ?",
+    "whyUseAutomated": "Pourquoi utiliser l'intégration automatisée ?",
     "approaches": {
       "automated": {
         "title": "Approche automatisée (nouvelle)",
         "features": [
-          "Processus d’installation en un clic",
+          "Processus d'installation en un clic",
           "Aucune exécution de commande manuelle",
           "Expérience simplifiée",
-          "Moins de risques d’erreurs"
+          "Moins de risques d'erreurs"
         ]
       },
       "manual": {
@@ -941,7 +941,7 @@
       "uploadFile": "Téléverser un fichier"
     },
     "upload": {
-      "createNamespaceAutomatically": "Créer automatiquement l’espace de noms",
+      "createNamespaceAutomatically": "Créer automatiquement l'espace de noms",
       "chooseDifferentYaml": "Choisir un autre fichier YAML",
       "filePreview": "Aperçu du fichier",
       "chooseOrDrag": "Choisissez ou glissez-déposez un fichier YAML",
@@ -1065,12 +1065,12 @@
     "emptyState": {
       "noClusters": {
         "title": "Aucun cluster prêt",
-        "description": "Aucun cluster n’est actuellement disponible pour la liaison. Vous devez avoir au moins un cluster à l’état « Prêt » avant de créer des politiques de liaison.",
+        "description": "Aucun cluster n'est actuellement disponible pour la liaison. Vous devez avoir au moins un cluster à l'état « Prêt » avant de créer des politiques de liaison.",
         "button": "Gérer les clusters"
       },
       "noWorkloads": {
         "title": "Aucune charge de travail trouvée",
-        "description": "Aucune charge de travail disponible. Veuillez vous assurer d’avoir accès aux charges de travail.",
+        "description": "Aucune charge de travail disponible. Veuillez vous assurer d'avoir accès aux charges de travail.",
         "button": "Aller aux charges de travail"
       },
       "noResources": {
@@ -1093,9 +1093,9 @@
         "steps": {
           "selectClusters": "1. Sélectionnez les clusters dans le panneau de gauche pour les inclure dans le canevas",
           "selectWorkloads": "2. Sélectionnez les charges de travail dans le panneau de droite pour les inclure dans le canevas",
-          "createConnection": "3. Cliquez d’abord sur une charge de travail, puis sur un cluster pour créer une connexion directe",
-          "fillDetails": "4. Remplissez les détails de la politique dans la boîte de dialogue qui s’affiche",
-          "deploy": "5. Cliquez sur « Déployer les politiques de liaison » pour simuler le déploiement"
+          "createConnection": "3. Cliquez d'abord sur une charge de travail, puis sur un cluster pour créer une connexion directe",
+          "fillDetails": "4. Remplissez les détails de la politique dans la boîte de dialogue qui s'affiche",
+          "deploy": "5. Cliquez sur « Déployer les politiques de liaison » pour simuler le déploiement"
         },
         "gotIt": "Compris",
         "helpDialog": {
@@ -1105,9 +1105,9 @@
             "selectLabels": "1. Sélectionnez des étiquettes à ajouter au canevas",
             "selectLabelsDesc": "Cliquez sur des clusters depuis le panneau de gauche et sur des charges de travail depuis le panneau de droite pour les ajouter au canevas de politique",
             "deploy": "2. Déployez vos politiques",
-            "deployDesc": "Cliquez sur « Déployer les politiques de liaison » pour créer et déployer des politiques qui relient les charges de travail aux clusters selon les étiquettes sélectionnées"
+            "deployDesc": "Cliquez sur « Déployer les politiques de liaison » pour créer et déployer des politiques qui relient les charges de travail aux clusters selon les étiquettes sélectionnées"
           },
-          "tip": "Astuce : l’approche basée sur les étiquettes permet de créer des politiques puissantes qui s’appliquent automatiquement à toutes les ressources correspondant aux étiquettes, maintenant et à l’avenir.",
+          "tip": "Astuce : l'approche basée sur les étiquettes permet de créer des politiques puissantes qui s'appliquent automatiquement à toutes les ressources correspondant aux étiquettes, maintenant et à l'avenir.",
           "dontShowAgain": "Ne plus afficher",
           "tooltip": "Afficher les instructions de sélection"
         }
@@ -1118,15 +1118,15 @@
       "invalidPolicyNames": "Erreur : certains noms de politiques sélectionnés sont invalides",
       "partialDeleteSuccess": "{{success}} politiques supprimées, mais échec pour {{failures}}",
       "deleteError": "Erreur lors de la suppression des politiques : {{errorMessage}}",
-      "updateSuccess": "Politique de liaison « {{name}} » mise à jour avec succès",
-      "updateError": "Erreur lors de la mise à jour de la politique « {{name}} »",
+      "updateSuccess": "Politique de liaison « {{name}} » mise à jour avec succès",
+      "updateError": "Erreur lors de la mise à jour de la politique « {{name}} »",
       "simulatedAssignment": "Politique {{policy}} assignée avec succès à {{targetType}} {{target}}",
       "policyCreatedSuccess": "Politique de liaison créée avec succès : {{name}}"
     },
     "editDialog": {
       "title": "Modifier la politique de liaison",
       "infoTitle": "Infos",
-      "info": "Modifiez la configuration de votre politique de liaison. Les modifications seront appliquées après l’enregistrement.",
+      "info": "Modifiez la configuration de votre politique de liaison. Les modifications seront appliquées après l'enregistrement.",
       "name": "Nom de la politique de liaison",
       "save": "Enregistrer les modifications",
       "unsavedTitle": "Modifications non enregistrées",
@@ -1137,14 +1137,14 @@
     },
     "deleteDialog": {
       "title": "Supprimer la politique de liaison",
-      "confirm": "Êtes-vous sûr de vouloir supprimer la politique de liaison « {{name}} » ? Cette action est irréversible."
+      "confirm": "Êtes-vous sûr de vouloir supprimer la politique de liaison « {{name}} » ? Cette action est irréversible."
     },
     "header": {
       "searchPlaceholder": "Rechercher des politiques par nom, étiquette ou statut",
       "clearSearch": "Appuyez sur Échap pour effacer la recherche",
       "deleteSelected": "Supprimer la sélection",
       "create": "Créer une politique de liaison",
-      "activeFilters": "Filtres actifs :",
+      "activeFilters": "Filtres actifs :",
       "search": "Rechercher",
       "status": "Statut",
       "clearAll": "Tout effacer"
@@ -1162,7 +1162,7 @@
       "policy-list": "Politiques",
       "cluster-list": "Clusters",
       "workload-list": "Charges de travail",
-      "clickToAdd": "Cliquez sur un élément pour l’ajouter au canevas",
+      "clickToAdd": "Cliquez sur un élément pour l'ajouter au canevas",
       "none": "Aucun {{title}} disponible"
     },
     "canvas": {
@@ -1223,12 +1223,12 @@
       "namespaceHelper": "Espace de noms de la politique",
       "updateStrategyHelper": "Sélectionnez comment les modifications doivent être appliquées aux clusters. Ajoutez des clusters et charges de travail en les sélectionnant dans les panneaux.",
       "addCustomLabels": "Ajouter des étiquettes personnalisées",
-      "labelsTooltip": "Les étiquettes permettent d’identifier et de sélectionner des ressources",
+      "labelsTooltip": "Les étiquettes permettent d'identifier et de sélectionner des ressources",
       "tolerationsTitle": "Tolérances (Avancé)",
       "tolerationExpression": "Expression de tolérance",
       "tolerationRequired": "Une tolérance est requise",
       "schedulingRules": "Règles de planification",
-      "schedulingTooltip": "Définissez les conditions nécessaires pour qu’un cluster reçoive cette charge de travail",
+      "schedulingTooltip": "Définissez les conditions nécessaires pour qu'un cluster reçoive cette charge de travail",
       "resource": "Ressource",
       "resource.cpu": "Cœurs CPU",
       "resource.memory": "Mémoire",
@@ -1236,7 +1236,7 @@
       "resource.pods": "Pods disponibles",
       "operator": "Opérateur",
       "activeRules": "Règles actives :",
-      "noSchedulingRules": "Aucune règle de planification ajoutée. La politique s’appliquera à tous les clusters correspondants, quel que soit leur niveau de ressources.",
+      "noSchedulingRules": "Aucune règle de planification ajoutée. La politique s'appliquera à tous les clusters correspondants, quel que soit leur niveau de ressources.",
       "yamlPreview": "Aperçu YAML",
       "yamlPreviewInfo": "Voici un aperçu du YAML qui sera appliqué. Vous pouvez modifier les autres onglets pour mettre à jour cet aperçu."
     }
@@ -1246,7 +1246,7 @@
       "title": "Étiquette de Charge de Travail *",
       "prefix": "kubestellar.io/workload:",
       "helpTextError": "Étiquette non trouvée",
-      "helpText": "L’étiquette de charge de travail est une paire clé:valeur. La clé est constante et définie par défaut sur 'kubestellar.io/workload'. Seule la valeur peut être modifiée."
+      "helpText": "L'étiquette de charge de travail est une paire clé:valeur. La clé est constante et définie par défaut sur 'kubestellar.io/workload'. Seule la valeur peut être modifiée."
     },
     "github": {
       "repositoryUrlLabel": "URL du dépôt *",
@@ -1280,7 +1280,7 @@
       "branchTip": "Spécifiez la branche à utiliser pour le déploiement",
       "credentials": "Identifiants",
       "credentialsPlaceholder": "ex. : nomutilisateur-pat",
-      "title": "Créez à partir de votre dépôt GitHub et déployez !",
+      "title": "Créez à partir de votre dépôt GitHub et déployez !",
       "tab": {
         "importFromGitHub": "Importer depuis GitHub",
         "selectRepositorySource": "Sélectionner une source de dépôt pour importer votre application",
@@ -1295,7 +1295,7 @@
           "description": "Importer depuis votre propre dépôt GitHub"
         },
         "enterprise": {
-          "title": "Dépôt d’entreprise",
+          "title": "Dépôt d'entreprise",
           "description": "Importer depuis un dépôt GitHub Enterprise"
         },
         "public": {
@@ -1304,11 +1304,11 @@
         },
         "popular": {
           "title": "Dépôts populaires",
-          "description": "Choisissez parmi notre liste d’exemples sélectionnés"
+          "description": "Choisissez parmi notre liste d'exemples sélectionnés"
         },
         "placeholder": {
           "yourGitHub": "Le formulaire pour votre dépôt GitHub apparaîtra ici",
-          "enterprise": "Le formulaire pour le dépôt d’entreprise apparaîtra ici",
+          "enterprise": "Le formulaire pour le dépôt d'entreprise apparaîtra ici",
           "public": "Le formulaire pour le dépôt public apparaîtra ici"
         }
       }
@@ -1333,7 +1333,7 @@
         "namespace": "Espace de noms",
         "namespaceTooltip": "Espace de noms Kubernetes dans lequel déployer",
         "namespacePlaceholder": "default",
-        "namespaceTip": "Spécifiez l’espace de noms de déploiement (par défaut : 'default')",
+        "namespaceTip": "Spécifiez l'espace de noms de déploiement (par défaut : 'default')",
         "customValues": "Valeurs Personnalisées",
         "customValuesTooltip": "Format : clé=valeur,clé2=valeur2 (ex. : service.type=LoadBalancer,service.port=80)",
         "customValuesPlaceholder": "service.type=LoadBalancer,service.port=80",
@@ -1381,7 +1381,7 @@
       }
     },
     "yaml": {
-      "createNamespaceAutomatically": "Créer automatiquement l’espace de noms",
+      "createNamespaceAutomatically": "Créer automatiquement l'espace de noms",
       "editor": "Éditeur YAML",
       "deploy": "Déployer"
     },
@@ -1405,7 +1405,7 @@
         "versionTip": "Spécifiez la version du chart à déployer",
         "versionPlaceholder": "ex. : 1.2.3",
         "namespace": "Espace de Noms *",
-        "namespaceTip": "Spécifiez l’espace de noms pour le chart Helm",
+        "namespaceTip": "Spécifiez l'espace de noms pour le chart Helm",
         "namespacePlaceholder": "ex. : default, mon-namespace",
         "searchChartLabel": "Rechercher un Chart Helm"
       },
@@ -1416,7 +1416,7 @@
         "confirmDeletion": "Confirmer la Suppression de la Ressource",
         "deleteConfirmation": "Êtes-vous sûr de vouloir supprimer \"{{chartId}}\" ? Cette action est irréversible.",
         "deleteSuccess": "Chart {{chartId}} supprimé avec succès !",
-        "deleteError": "Le chart {{chartId}} n’a pas été supprimé !"
+        "deleteError": "Le chart {{chartId}} n'a pas été supprimé !"
       },
       "buttons": {
         "cancel": "Annuler",
@@ -1501,7 +1501,7 @@
         "userCharts": {
           "title": "Liste des Charts créés par l'utilisateur",
           "deleteSuccess": "Chart {{chartId}} supprimé avec succès !",
-          "deleteError": "Le chart {{chartId}} n’a pas été supprimé !",
+          "deleteError": "Le chart {{chartId}} n'a pas été supprimé !",
           "loading": "Chargement des charts utilisateur...",
           "noCharts": "Aucun chart créé par l'utilisateur disponible.",
           "delete": "Supprimer",
@@ -1555,10 +1555,10 @@
         "gitRepoError": "Échec du clonage du dépôt, vérifiez l'URL et le chemin !",
         "enterWorkloadLabel": "Veuillez saisir une étiquette de charge de travail.",
         "invalidWorkloadLabel": "Vous ne pouvez entrer que la valeur. La clé est constante et vaut 'kubestellar.io/workload'.",
-        "enterGitRepo": "Veuillez entrer l’URL du dépôt Git.",
+        "enterGitRepo": "Veuillez entrer l'URL du dépôt Git.",
         "enterPath": "Veuillez entrer le chemin.",
         "enterRepoName": "Veuillez entrer le nom du dépôt.",
-        "enterRepoUrl": "Veuillez entrer l’URL du dépôt.",
+        "enterRepoUrl": "Veuillez entrer l'URL du dépôt.",
         "enterChartName": "Veuillez entrer le nom du chart.",
         "enterReleaseName": "Veuillez entrer le nom du déploiement.",
         "enterNamespace": "Veuillez entrer un espace de noms.",
@@ -1571,20 +1571,20 @@
     "policyDistribution": "{{count}} connexions",
     "clusters": {
       "edge": "Cluster Edge",
-      "aiInference": "Cluster d’inférence IA",
-      "aiTraining": "Cluster d’entraînement IA",
+      "aiInference": "Cluster d'inférence IA",
+      "aiTraining": "Cluster d'entraînement IA",
       "service": "Cluster de services",
       "compute": "Cluster de calcul",
       "descriptions": {
         "edge": "Ressources de calcul en périphérie pour un traitement à faible latence",
-        "aiInference": "Services d’inférence et de prédiction de modèles IA en temps réel",
-        "aiTraining": "Calcul haute performance pour l’entraînement de modèles IA",
-        "service": "Microservices principaux et points d’accès API",
+        "aiInference": "Services d'inférence et de prédiction de modèles IA en temps réel",
+        "aiTraining": "Calcul haute performance pour l'entraînement de modèles IA",
+        "service": "Microservices principaux et points d'accès API",
         "compute": "Ressources de calcul polyvalentes"
       }
     },
     "title": "Visualisation",
-    "controls": "Commandes d’affichage",
+    "controls": "Commandes d'affichage",
     "zoom": "Zoom",
     "searchResources": "Rechercher des ressources"
   },
@@ -1596,34 +1596,34 @@
   "errors": {
     "policyNameRequired": "Le nom de la politique est requis",
     "policyNotFound": "Politique {{name}} introuvable",
-    "parseError": "Impossible d’analyser la réponse des politiques de liaison",
+    "parseError": "Impossible d'analyser la réponse des politiques de liaison",
     "unexpectedFormat": "Format de réponse API inattendu",
     "error": "Erreur",
     "required": "Ce champ est requis",
     "invalidFormat": "Format invalide",
     "connectionFailed": "Échec de la connexion",
-    "forbidden": "Vous n’avez pas la permission d’accéder à cette ressource",
-    "serverError": "Une erreur serveur s’est produite",
+    "forbidden": "Vous n'avez pas la permission d'accéder à cette ressource",
+    "serverError": "Une erreur serveur s'est produite",
     "notFound": "Ressource introuvable",
-    "timeout": "Délai d’attente dépassé",
-    "unknown": "Une erreur inconnue s’est produite",
+    "timeout": "Délai d'attente dépassé",
+    "unknown": "Une erreur inconnue s'est produite",
     "contextNameRequired": "Le nom du contexte est requis",
     "versionRequired": "La version de KubeStellar est requise",
-    "operationTimeout": "Délai de l’opération dépassé. Le processus peut encore s’exécuter en arrière-plan.",
+    "operationTimeout": "Délai de l'opération dépassé. Le processus peut encore s'exécuter en arrière-plan.",
     "failedToCreateContext": "Échec de la création du contexte",
     "creatingContext": "Erreur lors de la création du contexte :",
     "websocketConnectionFailed": "Impossible de se connecter au serveur. Veuillez vérifier votre connexion réseau et réessayer.",
-    "websocketClosedUnexpectedly": "La connexion WebSocket s’est fermée de manière inattendue",
+    "websocketClosedUnexpectedly": "La connexion WebSocket s'est fermée de manière inattendue",
     "fetchingContexts": "Erreur lors de la récupération des contextes :"
   },
   "contexts": {
     "filterByContext": "Filtrer par contexte",
     "allContexts": "Tous les contextes",
     "showingAllContexts": "Affichage des ressources de tous les contextes",
-    "filteringByContext": "Filtrage pour n’afficher que le contexte {{context}}",
+    "filteringByContext": "Filtrage pour n'afficher que le contexte {{context}}",
     "createdSuccessfully": "Contexte créé avec succès !",
     "websocketClosed": "Connexion WebSocket fermée :",
-    "contextCreatedSuccess": "Contexte « {{contextName}} » créé avec succès !",
+    "contextCreatedSuccess": "Contexte « {{contextName}} » créé avec succès !",
     "createNewContext": "Créer un nouveau contexte",
     "contextName": "Nom du contexte",
     "kubestellarVersion": "Version de KubeStellar",
@@ -1680,6 +1680,7 @@
     "account": "Compte",
     "admin": "Admin",
     "helpSupport": "Aide et support",
+    "raiseIssue": "Signaler un problème",
     "signOut": "Déconnexion"
   },
   "onboardingLogs": {
@@ -1850,7 +1851,7 @@
   "downloadLogsButton": {
     "title": "Télécharger les journaux",
     "placeholder": {
-      "header": "Journaux pour le pod {{podName}} dans l’espace de noms {{namespace}} sur le cluster {{cluster}}",
+      "header": "Journaux pour le pod {{podName}} dans l'espace de noms {{namespace}} sur le cluster {{cluster}}",
       "generated": "Généré le : {{date}}",
       "noContent": "Contenu des journaux non disponible directement. Veuillez utiliser la fonctionnalité de journaux en streaming."
     },
@@ -1944,8 +1945,8 @@
         "description": "Gérer les charges de travail sur les clusters"
       },
       "bindingPolicies": {
-        "title": "Politiques d’assignation",
-        "description": "Configurer les politiques d’assignation"
+        "title": "Politiques d'assignation",
+        "description": "Configurer les politiques d'assignation"
       },
       "wdsTreeview": {
         "title": "Vue en arborescence WDS",
@@ -1976,7 +1977,7 @@
       "home": "Accueil",
       "remoteClusters": "Clusters Distants",
       "stagedWorkloads": "Charges en attente",
-      "bindingPolicies": "Politiques d’assignation",
+      "bindingPolicies": "Politiques d'assignation",
       "deployedWorkloads": "Charges déployées",
       "pluginManager": "Gestionnaire de Plugins"
     }
@@ -1996,7 +1997,7 @@
       "installLocal": "Installer depuis un chemin local",
       "installGithub": "Installer depuis GitHub",
       "localHelp": "Installez un plugin depuis un répertoire local sur votre système. Cliquez sur Parcourir ou entrez le chemin complet.",
-      "githubHelp": "L'installation via GitHub n'est pas encore implémentée. Utilisez l’installation locale pour le moment.",
+      "githubHelp": "L'installation via GitHub n'est pas encore implémentée. Utilisez l'installation locale pour le moment.",
       "placeholder": "URL du plugin, dépôt GitHub ou chemin local",
       "button": "Installer",
       "installing": "Installation...",
@@ -2043,7 +2044,7 @@
     },
     "notifications": {
       "enableSuccess": "Plugin {{name}} activé avec succès",
-      "enableError": "Échec de l’activation du plugin {{name}}",
+      "enableError": "Échec de l'activation du plugin {{name}}",
       "disableSuccess": "Plugin {{name}} désactivé avec succès",
       "disableError": "Échec de la désactivation du plugin {{name}}",
       "uninstallSuccess": "Plugin {{name}} désinstallé avec succès",
