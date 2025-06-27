@@ -65,7 +65,6 @@ This document tracks the progress of the design system foundation efforts for th
 5. **Wireframing**  
    🔗 [Wireframing – Figma](https://www.figma.com/design/GLUwDDSxzkL8Evhgsec4JM/Wireframing--kubestellar.io?node-id=0-1&t=LaikrxjMxKaexwZd-1)
 
-
 ---
 
 ## 📌 Progress Update
