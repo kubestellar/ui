@@ -50,13 +50,16 @@ This document tracks the progress of the design system foundation efforts for th
 
 ## 📂 Audit Resources
 
-1. **UI Audit FigJam Board**  
+1. **Design System – Objective & Timeline**  
+   🔗 [Objective & Timeline – Google Docs](https://docs.google.com/document/d/1u06DFqyFBBe8NcgUUhRvDRMVmf57BUUAHBY8VtZbj1g/edit?usp=sharing)
+
+2. **UI Audit FigJam Board**  
    🔗 [View FigJam Audit Board](https://www.figma.com/board/IHLBwlFC6i4Ibh2DVIzBxX/KubeStellar%E2%80%AFv0.27.2-Documentation--UI--and-Design-System-Audit?node-id=0-1&t=SK5oQyifTdi2ji7C-1)
 
-2. **Define Goals & Scope Document**  
+3. **Define Goals & Scope Document**  
    🔗 [Project Goals & Scope – Google Docs](https://docs.google.com/document/d/1m0dAD3S4ShM32hw5k2wqGv-CZeFhnKI3t-Eto1MfVis/edit?usp=sharing)
 
-3. **Structure & Strategy – Information Architecture & Flow Planning**  
+4. **Structure & Strategy – Information Architecture & Flow Planning**  
    🔗 [Structure & Strategy – Google Docs](https://docs.google.com/document/d/13iG5yXS23F9JHQkxGR3ODwmc_XJVydiBYt28f4Tysxo/edit?usp=sharing)
 
 ---
@@ -181,5 +184,13 @@ This section covers foundational analysis and planning to improve the structure,
 - No user feedback mechanisms
 - Diagrams and visuals are absent from key pages
 - No glossary for technical terms (e.g., WEC, ITS)
+
+### 🧪 User Research & Interviews Conducted
+
+- Conducted user interviews and research to understand:
+  - Common navigation pain points
+  - Confusing flows in the current IA
+  - User expectations from documentation and setup guides
+- Insights helped inform the new IA and navigation recommendations
 
 ---

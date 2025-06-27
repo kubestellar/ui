@@ -25,6 +25,10 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../components/LanguageSwitcher';
+import useTheme from '../stores/themeStore';
+import { FiSun, FiMoon } from 'react-icons/fi';
+import { AnimatePresence } from 'framer-motion';
 
 // Define platform type for installation
 type Platform = 'kind' | 'k3d';
@@ -173,17 +177,21 @@ const AnimatedCard = ({
   children,
   delay = 0,
   className = '',
+  isDark = true,
 }: {
   children: React.ReactNode;
   delay?: number;
   className?: string;
+  isDark?: boolean;
 }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.4 }}
-      className={`overflow-hidden rounded-xl border border-slate-800/80 bg-slate-900/80 shadow-xl backdrop-blur-sm ${className}`}
+      className={`overflow-hidden rounded-xl border shadow-xl backdrop-blur-sm transition-colors duration-300 ${
+        isDark ? 'border-slate-800/80 bg-slate-900/80' : 'border-gray-200/80 bg-white/80'
+      } ${className}`}
     >
       {children}
     </motion.div>
@@ -195,24 +203,36 @@ const SectionHeader = ({
   icon,
   title,
   description,
+  isDark = true,
 }: {
   icon: React.ReactNode;
   title: string;
   description: string;
+  isDark?: boolean;
 }) => {
   return (
     <div className="mb-6">
       <div className="mb-2 flex items-center">
         <div className="mr-3 text-blue-400">{icon}</div>
-        <h2 className="text-xl font-semibold text-white">{title}</h2>
+        <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          {title}
+        </h2>
       </div>
-      <p className="ml-9 text-slate-400">{description}</p>
+      <p className={`ml-9 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>{description}</p>
     </div>
   );
 };
 
 // Code block component with copy button
-const CodeBlock = ({ code, language = 'bash' }: { code: string; language?: string }) => {
+const CodeBlock = ({
+  code,
+  language = 'bash',
+  isDark = true,
+}: {
+  code: string;
+  language?: string;
+  isDark?: boolean;
+}) => {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
@@ -234,56 +254,83 @@ const CodeBlock = ({ code, language = 'bash' }: { code: string; language?: strin
 
   return (
     <div className="relative mb-4 overflow-hidden rounded-md" onClick={e => e.stopPropagation()}>
-      <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950/80 px-4 py-2">
-        <span className="font-mono text-xs text-slate-400">
+      <div
+        className={`flex items-center justify-between border-b px-4 py-2 transition-colors duration-300 ${
+          isDark ? 'border-slate-700 bg-slate-900/90' : 'border-gray-700 bg-gray-800'
+        }`}
+      >
+        <span className={`font-mono text-xs ${isDark ? 'text-slate-300' : 'text-gray-300'}`}>
           {t(`installationPage.codeBlock.${language}`)}
         </span>
         <button
           onClick={copyToClipboard}
-          className="rounded p-1 text-slate-400 transition-colors hover:text-white"
+          className={`rounded p-1 transition-colors ${
+            isDark ? 'text-slate-300 hover:text-white' : 'text-gray-300 hover:text-white'
+          }`}
           aria-label="Copy code"
         >
           {copied ? <CheckCircle size={16} /> : <Copy size={16} />}
         </button>
       </div>
-      <div className="overflow-x-auto bg-slate-950/60 p-4">
-        <pre className="whitespace-pre-wrap break-all font-mono text-sm text-blue-100">{code}</pre>
+      <div
+        className={`overflow-x-auto p-4 transition-colors duration-300 ${
+          isDark ? 'bg-slate-950' : 'bg-gray-900'
+        }`}
+      >
+        <pre
+          className={`whitespace-pre-wrap break-all font-mono text-sm ${
+            isDark ? 'text-emerald-300' : 'text-green-400'
+          }`}
+        >
+          {code}
+        </pre>
       </div>
     </div>
   );
 };
 
 // Status badge component
-const StatusBadge = ({ status }: { status: PrereqStatus }) => {
+const StatusBadge = ({ status, isDark = true }: { status: PrereqStatus; isDark?: boolean }) => {
   const { t } = useTranslation();
 
   const getStatusStyles = () => {
     switch (status) {
       case PrereqStatus.Success:
-        return 'bg-emerald-950/30 text-emerald-400 border-emerald-500/30';
+        return isDark
+          ? 'bg-emerald-950/30 text-emerald-400 border-emerald-500/30'
+          : 'bg-emerald-100 text-emerald-700 border-emerald-300';
       case PrereqStatus.Warning:
-        return 'bg-amber-950/30 text-amber-400 border-amber-500/30';
+        return isDark
+          ? 'bg-amber-950/30 text-amber-400 border-amber-500/30'
+          : 'bg-amber-100 text-amber-700 border-amber-300';
       case PrereqStatus.Error:
-        return 'bg-rose-950/30 text-rose-400 border-rose-500/30';
+        return isDark
+          ? 'bg-rose-950/30 text-rose-400 border-rose-500/30'
+          : 'bg-rose-100 text-rose-700 border-rose-300';
       case PrereqStatus.Checking:
-        return 'bg-blue-950/30 text-blue-400 border-blue-500/30';
+        return isDark
+          ? 'bg-blue-950/30 text-blue-400 border-blue-500/30'
+          : 'bg-blue-100 text-blue-700 border-blue-300';
       default:
-        return 'bg-slate-950/30 text-slate-400 border-slate-500/30';
+        return isDark
+          ? 'bg-slate-950/30 text-slate-400 border-slate-500/30'
+          : 'bg-gray-100 text-gray-700 border-gray-300';
     }
   };
 
   const getStatusIcon = () => {
+    const iconClass = 'w-3.5 h-3.5';
     switch (status) {
       case PrereqStatus.Success:
-        return <CheckCircle2 size={14} />;
+        return <CheckCircle2 size={14} className={iconClass} />;
       case PrereqStatus.Warning:
-        return <AlertTriangle size={14} />;
+        return <AlertTriangle size={14} className={iconClass} />;
       case PrereqStatus.Error:
-        return <XCircle size={14} />;
+        return <XCircle size={14} className={iconClass} />;
       case PrereqStatus.Checking:
-        return <RefreshCw size={14} className="animate-spin" />;
+        return <RefreshCw size={14} className={`${iconClass} animate-spin`} />;
       default:
-        return <HelpCircle size={14} />;
+        return <HelpCircle size={14} className={iconClass} />;
     }
   };
 
@@ -304,7 +351,7 @@ const StatusBadge = ({ status }: { status: PrereqStatus }) => {
 
   return (
     <div
-      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${getStatusStyles()}`}
+      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors duration-300 ${getStatusStyles()}`}
     >
       <span className="mr-1">{getStatusIcon()}</span>
       {getStatusText()}
@@ -313,7 +360,13 @@ const StatusBadge = ({ status }: { status: PrereqStatus }) => {
 };
 
 // Prerequisite card component with internal state management
-const PrerequisiteCard = ({ prerequisite }: { prerequisite: Prerequisite }) => {
+const PrerequisiteCard = ({
+  prerequisite,
+  isDark = true,
+}: {
+  prerequisite: Prerequisite;
+  isDark?: boolean;
+}) => {
   const { t } = useTranslation();
   // Use local state for expansion instead of props
   const [isExpanded, setIsExpanded] = useState(false);
@@ -326,42 +379,58 @@ const PrerequisiteCard = ({ prerequisite }: { prerequisite: Prerequisite }) => {
 
   return (
     <div
-      className={`mb-3 overflow-hidden rounded-lg border border-slate-800/60 transition-all duration-200 ${isExpanded ? 'bg-slate-900/60' : 'bg-slate-900/30 hover:bg-slate-900/50'}`}
+      className={`mb-3 overflow-hidden rounded-lg border transition-all duration-200 ${
+        isDark
+          ? `border-slate-800/60 ${isExpanded ? 'bg-slate-900/60' : 'bg-slate-900/30 hover:bg-slate-900/50'}`
+          : `border-gray-200 ${isExpanded ? 'bg-gray-50/80' : 'bg-white hover:bg-gray-50/50'} shadow-sm`
+      }`}
     >
       <div className="flex cursor-pointer items-center justify-between p-3" onClick={handleToggle}>
         <div className="flex items-center">
           <div className="mr-3">
             {isExpanded ? (
-              <ChevronDown size={18} className="text-slate-400" />
+              <ChevronDown size={18} className={isDark ? 'text-slate-400' : 'text-gray-500'} />
             ) : (
-              <ChevronRight size={18} className="text-slate-400" />
+              <ChevronRight size={18} className={isDark ? 'text-slate-400' : 'text-gray-500'} />
             )}
           </div>
           <div>
             <div className="flex items-center">
-              <h3 className="mr-2 font-medium text-white">{prerequisite.displayName}</h3>
-              <StatusBadge status={prerequisite.status} />
+              <h3 className={`mr-2 font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                {prerequisite.displayName}
+              </h3>
+              <StatusBadge status={prerequisite.status} isDark={isDark} />
             </div>
-            <p className="mt-0.5 text-sm text-slate-400">{prerequisite.description}</p>
+            <p className={`mt-0.5 text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+              {prerequisite.description}
+            </p>
           </div>
         </div>
-        <div className="font-mono text-xs text-slate-300">{prerequisite.version || '—'}</div>
+        <div className={`font-mono text-xs ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>
+          {prerequisite.version || '—'}
+        </div>
       </div>
 
       {isExpanded && (
-        <div className="border-t border-slate-800/60 p-4 pt-0">
+        <div className={`border-t p-4 pt-0 ${isDark ? 'border-slate-800/60' : 'border-gray-200'}`}>
           {prerequisite.status === PrereqStatus.Error && (
             <div className="mb-4">
-              <h4 className="mb-2 text-sm font-medium text-white">
+              <h4 className={`mb-2 text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 {t('installationPage.errorSection.title')}
               </h4>
-              {prerequisite.installCommand && <CodeBlock code={prerequisite.installCommand} />}
+              {prerequisite.installCommand && (
+                <CodeBlock code={prerequisite.installCommand} isDark={isDark} />
+              )}
               {prerequisite.installUrl && (
                 <a
                   href={prerequisite.installUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center text-sm text-blue-400 hover:text-blue-300"
+                  className={`inline-flex items-center text-sm transition-colors ${
+                    isDark
+                      ? 'text-blue-400 hover:text-blue-300'
+                      : 'text-blue-600 hover:text-blue-500'
+                  }`}
                   onClick={e => e.stopPropagation()} // Prevent toggle when clicking link
                 >
                   {t('installationPage.errorSection.viewGuide')}
@@ -373,24 +442,36 @@ const PrerequisiteCard = ({ prerequisite }: { prerequisite: Prerequisite }) => {
 
           {prerequisite.status === PrereqStatus.Warning && (
             <div className="mb-4">
-              <div className="mb-3 flex items-start rounded-md border border-amber-800/30 bg-amber-950/20 p-3">
-                <AlertTriangle size={18} className="mr-2 mt-0.5 flex-shrink-0 text-amber-400" />
-                <p className="text-sm text-amber-200">
+              <div
+                className={`mb-3 flex items-start rounded-md border p-3 ${
+                  isDark ? 'border-amber-800/30 bg-amber-950/20' : 'border-amber-200 bg-amber-50'
+                }`}
+              >
+                <AlertTriangle size={18} className="mr-2 mt-0.5 flex-shrink-0 text-amber-500" />
+                <p className={`text-sm ${isDark ? 'text-amber-200' : 'text-amber-800'}`}>
                   {prerequisite.details ||
                     `${t('installationPage.warningSection.versionMismatch')} ${prerequisite.minVersion}${prerequisite.maxVersion ? ` ${t('installationPage.warningSection.to')} ${prerequisite.maxVersion}` : ` ${t('installationPage.warningSection.orHigher')}.`}`}
                 </p>
               </div>
-              <h4 className="mb-2 text-sm font-medium text-white">
+              <h4 className={`mb-2 text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 {t('installationPage.warningSection.updateInstructions')}
               </h4>
-              {prerequisite.installCommand && <CodeBlock code={prerequisite.installCommand} />}
+              {prerequisite.installCommand && (
+                <CodeBlock code={prerequisite.installCommand} isDark={isDark} />
+              )}
             </div>
           )}
 
           {prerequisite.status === PrereqStatus.Success && (
-            <div className="flex items-start rounded-md border border-emerald-800/30 bg-emerald-950/20 p-3">
-              <CheckCircle2 size={18} className="mr-2 mt-0.5 flex-shrink-0 text-emerald-400" />
-              <p className="text-sm text-emerald-200">
+            <div
+              className={`flex items-start rounded-md border p-3 ${
+                isDark
+                  ? 'border-emerald-800/30 bg-emerald-950/20'
+                  : 'border-emerald-200 bg-emerald-50'
+              }`}
+            >
+              <CheckCircle2 size={18} className="mr-2 mt-0.5 flex-shrink-0 text-emerald-500" />
+              <p className={`text-sm ${isDark ? 'text-emerald-200' : 'text-emerald-800'}`}>
                 {prerequisite.displayName} {t('installationPage.successSection.installed')}
               </p>
             </div>
@@ -407,11 +488,13 @@ const TabButton = ({
   onClick,
   children,
   disabled = false,
+  isDark = true,
 }: {
   active: boolean;
   onClick: () => void;
   children: React.ReactNode;
   disabled?: boolean;
+  isDark?: boolean;
 }) => {
   return (
     <button
@@ -419,10 +502,14 @@ const TabButton = ({
       disabled={disabled}
       className={`rounded-md px-4 py-2 text-sm transition-colors ${
         disabled
-          ? 'cursor-not-allowed bg-slate-800/50 text-slate-500'
+          ? isDark
+            ? 'cursor-not-allowed bg-slate-800/50 text-slate-500'
+            : 'cursor-not-allowed bg-gray-300/50 text-gray-400'
           : active
             ? 'bg-blue-600 font-medium text-white'
-            : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+            : isDark
+              ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
       }`}
     >
       {children}
@@ -431,27 +518,46 @@ const TabButton = ({
 };
 
 // Script installation section
-const InstallationScript = ({ platform }: { platform: Platform }) => {
+const InstallationScript = ({
+  platform,
+  isDark = true,
+}: {
+  platform: Platform;
+  isDark?: boolean;
+}) => {
   const { t } = useTranslation();
   const scriptCommand = `bash <(curl -s https://raw.githubusercontent.com/kubestellar/kubestellar/refs/tags/v0.27.2/scripts/create-kubestellar-demo-env.sh) --platform ${platform}`;
 
   return (
     <div>
-      <p className="mb-4 text-slate-300">
+      <p className={`mb-4 ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
         {t('installationPage.installation.scriptInstructions')} {platform}:
       </p>
 
-      <CodeBlock code={scriptCommand} />
+      <CodeBlock code={scriptCommand} isDark={isDark} />
 
       <div className="mt-6 space-y-4">
-        <div className="rounded-md border border-blue-800/30 bg-gradient-to-r from-blue-950/20 to-indigo-950/20 p-4">
+        <div
+          className={`rounded-md border p-4 transition-colors duration-300 ${
+            isDark
+              ? 'border-blue-800/30 bg-gradient-to-r from-blue-950/20 to-indigo-950/20'
+              : 'border-blue-200 bg-blue-50'
+          }`}
+        >
           <div className="flex items-start">
-            <Info size={18} className="mr-3 mt-0.5 flex-shrink-0 text-blue-400" />
+            <Info
+              size={18}
+              className={`mr-3 mt-0.5 flex-shrink-0 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}
+            />
             <div>
-              <h4 className="mb-2 text-sm font-medium text-blue-300">
+              <h4
+                className={`mb-2 text-sm font-medium ${isDark ? 'text-blue-300' : 'text-blue-800'}`}
+              >
                 {t('installationPage.installation.installationProcess.title')}
               </h4>
-              <ul className="list-disc space-y-2 pl-4 text-sm text-blue-200">
+              <ul
+                className={`list-disc space-y-2 pl-4 text-sm ${isDark ? 'text-blue-200' : 'text-blue-700'}`}
+              >
                 {(
                   t('installationPage.installation.installationProcess.steps', {
                     returnObjects: true,
@@ -464,14 +570,25 @@ const InstallationScript = ({ platform }: { platform: Platform }) => {
           </div>
         </div>
 
-        <div className="rounded-md border border-amber-800/30 bg-amber-950/20 p-4">
+        <div
+          className={`rounded-md border p-4 transition-colors duration-300 ${
+            isDark ? 'border-amber-800/30 bg-amber-950/20' : 'border-amber-200 bg-amber-50'
+          }`}
+        >
           <div className="flex items-start">
-            <AlertTriangle size={18} className="mr-3 mt-0.5 flex-shrink-0 text-amber-400" />
+            <AlertTriangle
+              size={18}
+              className={`mr-3 mt-0.5 flex-shrink-0 ${isDark ? 'text-amber-400' : 'text-amber-600'}`}
+            />
             <div>
-              <h4 className="mb-2 text-sm font-medium text-amber-300">
+              <h4
+                className={`mb-2 text-sm font-medium ${isDark ? 'text-amber-300' : 'text-amber-800'}`}
+              >
                 {t('installationPage.installation.importantNotes.title')}
               </h4>
-              <ul className="list-disc space-y-2 pl-4 text-sm text-amber-200">
+              <ul
+                className={`list-disc space-y-2 pl-4 text-sm ${isDark ? 'text-amber-200' : 'text-amber-700'}`}
+              >
                 {(
                   t('installationPage.installation.importantNotes.notes', {
                     returnObjects: true,
@@ -484,14 +601,25 @@ const InstallationScript = ({ platform }: { platform: Platform }) => {
           </div>
         </div>
 
-        <div className="rounded-md border border-emerald-800/30 bg-emerald-950/20 p-4">
+        <div
+          className={`rounded-md border p-4 transition-colors duration-300 ${
+            isDark ? 'border-emerald-800/30 bg-emerald-950/20' : 'border-emerald-200 bg-emerald-50'
+          }`}
+        >
           <div className="flex items-start">
-            <CheckCircle2 size={18} className="mr-3 mt-0.5 flex-shrink-0 text-emerald-400" />
+            <CheckCircle2
+              size={18}
+              className={`mr-3 mt-0.5 flex-shrink-0 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}
+            />
             <div>
-              <h4 className="mb-2 text-sm font-medium text-emerald-300">
+              <h4
+                className={`mb-2 text-sm font-medium ${isDark ? 'text-emerald-300' : 'text-emerald-800'}`}
+              >
                 {t('installationPage.installation.afterInstallation.title')}
               </h4>
-              <ul className="list-disc space-y-2 pl-4 text-sm text-emerald-200">
+              <ul
+                className={`list-disc space-y-2 pl-4 text-sm ${isDark ? 'text-emerald-200' : 'text-emerald-700'}`}
+              >
                 {(
                   t('installationPage.installation.afterInstallation.steps', {
                     returnObjects: true,
@@ -511,6 +639,8 @@ const InstallationScript = ({ platform }: { platform: Platform }) => {
 // Main installation page component
 const InstallationPage = () => {
   const { t } = useTranslation();
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === 'dark';
 
   // State for platform selection
   const [platform, setPlatform] = useState<Platform>('kind');
@@ -877,9 +1007,19 @@ const InstallationPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-blue-950/30">
+    <div
+      className={`min-h-screen transition-colors duration-300 ${
+        isDark
+          ? 'bg-gradient-to-b from-slate-950 via-slate-900 to-blue-950/30'
+          : 'bg-gradient-to-b from-gray-50 via-white to-blue-50/30'
+      }`}
+    >
       {/* Top Navigation Bar */}
-      <div className="fixed left-0 right-0 top-0 z-50 border-b border-slate-800/50 bg-slate-900/90 backdrop-blur-sm">
+      <div
+        className={`fixed left-0 right-0 top-0 z-50 border-b backdrop-blur-sm transition-colors duration-300 ${
+          isDark ? 'border-slate-800/50 bg-slate-900/90' : 'border-gray-200/50 bg-white/90'
+        }`}
+      >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center">
@@ -892,7 +1032,9 @@ const InstallationPage = () => {
                 href="https://github.com/kubestellar/kubestellar"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex items-center text-sm font-medium text-slate-300 transition-colors hover:text-white"
+                className={`group flex items-center text-sm font-medium transition-colors ${
+                  isDark ? 'text-slate-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'
+                }`}
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -907,11 +1049,49 @@ const InstallationPage = () => {
                 href="https://docs.kubestellar.io/release-0.27.2/direct/get-started/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex items-center text-sm font-medium text-slate-300 transition-colors hover:text-white"
+                className={`group flex items-center text-sm font-medium transition-colors ${
+                  isDark ? 'text-slate-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'
+                }`}
               >
                 <Book size={18} className="mr-1.5 transition-transform group-hover:scale-110" />
                 {t('installationPage.footer.documentation')}
               </a>
+              <LanguageSwitcher />
+              <motion.button
+                onClick={toggleTheme}
+                className={`btn btn-circle flex items-center justify-center rounded-full p-2 transition-all duration-300 hover:scale-105 active:scale-95 ${
+                  isDark
+                    ? 'bg-slate-800/80 text-slate-300 hover:bg-slate-700/90 hover:text-white'
+                    : 'bg-gray-200/80 text-gray-600 hover:bg-gray-300/90 hover:text-gray-900'
+                }`}
+                aria-label={t('header.themeToggle')}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <AnimatePresence mode="wait">
+                  {!isDark ? (
+                    <motion.div
+                      key="moon"
+                      initial={{ opacity: 0, rotate: -30 }}
+                      animate={{ opacity: 1, rotate: 0 }}
+                      exit={{ opacity: 0, rotate: 30 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <FiMoon className="text-lg" />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="sun"
+                      initial={{ opacity: 0, rotate: 30 }}
+                      animate={{ opacity: 1, rotate: 0 }}
+                      exit={{ opacity: 0, rotate: -30 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <FiSun className="text-lg text-yellow-400" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.button>
               <a
                 href="https://kubestellar.io"
                 target="_blank"
@@ -935,10 +1115,20 @@ const InstallationPage = () => {
             animate={{ opacity: 1, y: 0 }}
             className="mb-12 text-center"
           >
-            <h1 className="mb-4 bg-gradient-to-r from-blue-400 via-indigo-400 to-teal-400 bg-clip-text text-5xl font-bold text-transparent text-white">
+            <h1
+              className={`mb-4 text-5xl font-bold ${
+                isDark
+                  ? 'bg-gradient-to-r from-blue-400 via-indigo-400 to-teal-400 bg-clip-text text-transparent'
+                  : 'text-gray-900'
+              }`}
+            >
               {t('installationPage.welcome')}
             </h1>
-            <p className="mx-auto max-w-2xl text-lg leading-relaxed text-slate-300">
+            <p
+              className={`mx-auto max-w-2xl text-lg leading-relaxed ${
+                isDark ? 'text-slate-300' : 'text-gray-600'
+              }`}
+            >
               {t('installationPage.gettingStarted')}
             </p>
           </motion.div>
@@ -950,39 +1140,76 @@ const InstallationPage = () => {
             transition={{ delay: 0.2 }}
             className="mb-12 grid grid-cols-1 gap-4 md:grid-cols-3"
           >
-            <div className="flex items-center rounded-xl border border-slate-800/60 bg-slate-900/60 p-4">
-              <div className="mr-4 rounded-lg bg-blue-500/10 p-3">
-                <Server size={24} className="text-blue-400" />
+            <div
+              className={`flex items-center rounded-xl border p-4 transition-colors duration-300 ${
+                isDark
+                  ? 'border-slate-800/60 bg-slate-900/60'
+                  : 'border-gray-200 bg-white shadow-sm'
+              }`}
+            >
+              <div className={`mr-4 rounded-lg p-3 ${isDark ? 'bg-blue-500/10' : 'bg-blue-100'}`}>
+                <Server size={24} className={isDark ? 'text-blue-400' : 'text-blue-600'} />
               </div>
               <div>
-                <div className="text-sm text-slate-400">
+                <div className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
                   {t('installationPage.prerequisites.prerequisites')}
                 </div>
-                <div className="text-2xl font-semibold text-white">
+                <div
+                  className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}
+                >
                   {getPrereqStatusCounts().success} / {getPrereqStatusCounts().total}
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center rounded-xl border border-slate-800/60 bg-slate-900/60 p-4">
-              <div className="mr-4 rounded-lg bg-emerald-500/10 p-3">
-                <CheckCircle2 size={24} className="text-emerald-400" />
+            <div
+              className={`flex items-center rounded-xl border p-4 transition-colors duration-300 ${
+                isDark
+                  ? 'border-slate-800/60 bg-slate-900/60'
+                  : 'border-gray-200 bg-white shadow-sm'
+              }`}
+            >
+              <div
+                className={`mr-4 rounded-lg p-3 ${isDark ? 'bg-emerald-500/10' : 'bg-emerald-100'}`}
+              >
+                <CheckCircle2
+                  size={24}
+                  className={isDark ? 'text-emerald-400' : 'text-emerald-600'}
+                />
               </div>
               <div>
-                <div className="text-sm text-slate-400">
+                <div className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
                   {t('installationPage.installation.platform')}
                 </div>
-                <div className="text-2xl font-semibold capitalize text-white">{platform}</div>
+                <div
+                  className={`text-2xl font-semibold capitalize ${
+                    isDark ? 'text-white' : 'text-gray-900'
+                  }`}
+                >
+                  {platform}
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center rounded-xl border border-slate-800/60 bg-slate-900/60 p-4">
-              <div className="mr-4 rounded-lg bg-indigo-500/10 p-3">
-                <Zap size={24} className="text-indigo-400" />
+            <div
+              className={`flex items-center rounded-xl border p-4 transition-colors duration-300 ${
+                isDark
+                  ? 'border-slate-800/60 bg-slate-900/60'
+                  : 'border-gray-200 bg-white shadow-sm'
+              }`}
+            >
+              <div
+                className={`mr-4 rounded-lg p-3 ${isDark ? 'bg-indigo-500/10' : 'bg-indigo-100'}`}
+              >
+                <Zap size={24} className={isDark ? 'text-indigo-400' : 'text-indigo-600'} />
               </div>
               <div>
-                <div className="text-sm text-slate-400">{t('common.status.status')}</div>
-                <div className="text-2xl font-semibold text-white">
+                <div className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                  {t('common.status.status')}
+                </div>
+                <div
+                  className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}
+                >
                   {currentStep === 'prerequisites'
                     ? t('common.status.checking')
                     : currentStep === 'install'
@@ -997,11 +1224,12 @@ const InstallationPage = () => {
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {/* Left sidebar - make it sticky */}
             <div className="lg:sticky lg:top-24">
-              <AnimatedCard delay={0.1} className="p-6">
+              <AnimatedCard delay={0.1} className="p-6" isDark={isDark}>
                 <SectionHeader
                   icon={<List size={22} />}
                   title={t('installationPage.sidebarSteps.title')}
                   description={t('installationPage.sidebarSteps.description')}
+                  isDark={isDark}
                 />
 
                 <div className="space-y-4">
@@ -1015,11 +1243,21 @@ const InstallationPage = () => {
                     </div>
                     <div>
                       <h3
-                        className={`font-medium ${currentStep === 'prerequisites' ? 'text-white' : currentStep === 'install' ? 'text-emerald-400' : 'text-slate-300'}`}
+                        className={`font-medium ${
+                          currentStep === 'prerequisites'
+                            ? isDark
+                              ? 'text-white'
+                              : 'text-gray-900'
+                            : currentStep === 'install'
+                              ? 'text-emerald-400'
+                              : isDark
+                                ? 'text-slate-300'
+                                : 'text-gray-600'
+                        }`}
                       >
                         {t('installationPage.sidebarSteps.checkPrerequisites')}
                       </h3>
-                      <p className="mt-1 text-sm text-slate-400">
+                      <p className={`mt-1 text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
                         {t('installationPage.sidebarSteps.checkPrerequisitesDescription')}
                       </p>
                     </div>
@@ -1033,11 +1271,19 @@ const InstallationPage = () => {
                     </div>
                     <div>
                       <h3
-                        className={`font-medium ${currentStep === 'install' ? 'text-white' : 'text-slate-300'}`}
+                        className={`font-medium ${
+                          currentStep === 'install'
+                            ? isDark
+                              ? 'text-white'
+                              : 'text-gray-900'
+                            : isDark
+                              ? 'text-slate-300'
+                              : 'text-gray-600'
+                        }`}
                       >
                         {t('installationPage.sidebarSteps.installKubestellar')}
                       </h3>
-                      <p className="mt-1 text-sm text-slate-400">
+                      <p className={`mt-1 text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
                         {t('installationPage.sidebarSteps.installKubestellarDescription')}
                       </p>
                     </div>
@@ -1051,23 +1297,37 @@ const InstallationPage = () => {
                     </div>
                     <div>
                       <h3
-                        className={`font-medium ${currentStep === 'install' ? 'text-white' : 'text-slate-300'}`}
+                        className={`font-medium ${
+                          currentStep === 'install'
+                            ? isDark
+                              ? 'text-white'
+                              : 'text-gray-900'
+                            : isDark
+                              ? 'text-slate-300'
+                              : 'text-gray-600'
+                        }`}
                       >
                         {t('installationPage.sidebarSteps.startUsingKubestellar')}
                       </h3>
-                      <p className="mt-1 text-sm text-slate-400">
+                      <p className={`mt-1 text-sm ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
                         {t('installationPage.sidebarSteps.startUsingKubestellarDescription')}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-6 border-t border-slate-800 pt-6">
+                <div
+                  className={`mt-6 border-t pt-6 ${isDark ? 'border-slate-800' : 'border-gray-200'}`}
+                >
                   <a
                     href="https://docs.kubestellar.io/release-0.27.2/direct/pre-reqs/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex items-center text-blue-400 transition-colors hover:text-blue-300"
+                    className={`group flex items-center transition-colors ${
+                      isDark
+                        ? 'text-blue-400 hover:text-blue-300'
+                        : 'text-blue-600 hover:text-blue-500'
+                    }`}
                   >
                     <ExternalLink
                       size={16}
@@ -1080,9 +1340,13 @@ const InstallationPage = () => {
             </div>
 
             {/* Main content area */}
-            <AnimatedCard delay={0.2} className="lg:col-span-2">
+            <AnimatedCard delay={0.2} className="lg:col-span-2" isDark={isDark}>
               {/* Tabs */}
-              <div className="border-b border-slate-800 bg-slate-900/90 px-6 py-4">
+              <div
+                className={`border-b px-6 py-4 transition-colors duration-300 ${
+                  isDark ? 'border-slate-800 bg-slate-900/90' : 'border-gray-200 bg-gray-50/90'
+                }`}
+              >
                 <div className="flex gap-3">
                   <TabButton
                     active={activeTab === 'prerequisites'}
@@ -1091,6 +1355,7 @@ const InstallationPage = () => {
                       setCurrentStep('prerequisites');
                     }}
                     disabled={skipPrerequisitesCheck}
+                    isDark={isDark}
                   >
                     {t('installationPage.tabs.prerequisites')}
                   </TabButton>
@@ -1100,6 +1365,7 @@ const InstallationPage = () => {
                       setActiveTab('install');
                       setCurrentStep('install');
                     }}
+                    isDark={isDark}
                   >
                     {t('installationPage.tabs.installation')}
                   </TabButton>
@@ -1114,43 +1380,84 @@ const InstallationPage = () => {
                       icon={<Server size={22} />}
                       title={t('installationPage.prerequisites.title')}
                       description={t('installationPage.prerequisites.description')}
+                      isDark={isDark}
                     />
 
                     {/* Status summary */}
                     <div className="mb-6 flex flex-wrap gap-4">
-                      <div className="rounded-lg border border-slate-800/80 bg-slate-900/60 px-4 py-3">
-                        <div className="mb-1 text-xs text-slate-400">
+                      <div
+                        className={`rounded-lg border px-4 py-3 transition-colors duration-300 ${
+                          isDark
+                            ? 'border-slate-800/80 bg-slate-900/60'
+                            : 'border-gray-200 bg-white shadow-sm'
+                        }`}
+                      >
+                        <div
+                          className={`mb-1 text-xs ${isDark ? 'text-slate-400' : 'text-gray-600'}`}
+                        >
                           {t('installationPage.prerequisites.status.success')}
                         </div>
-                        <div className="text-2xl font-semibold text-emerald-400">
+                        <div
+                          className={`text-2xl font-semibold ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}
+                        >
                           {getPrereqStatusCounts().success} / {getPrereqStatusCounts().total}
                         </div>
                       </div>
 
-                      <div className="rounded-lg border border-slate-800/80 bg-slate-900/60 px-4 py-3">
-                        <div className="mb-1 text-xs text-slate-400">
+                      <div
+                        className={`rounded-lg border px-4 py-3 transition-colors duration-300 ${
+                          isDark
+                            ? 'border-slate-800/80 bg-slate-900/60'
+                            : 'border-gray-200 bg-white shadow-sm'
+                        }`}
+                      >
+                        <div
+                          className={`mb-1 text-xs ${isDark ? 'text-slate-400' : 'text-gray-600'}`}
+                        >
                           {t('installationPage.prerequisites.status.warnings')}
                         </div>
-                        <div className="text-2xl font-semibold text-amber-400">
+                        <div
+                          className={`text-2xl font-semibold ${isDark ? 'text-amber-400' : 'text-amber-600'}`}
+                        >
                           {getPrereqStatusCounts().warning}
                         </div>
                       </div>
 
-                      <div className="rounded-lg border border-slate-800/80 bg-slate-900/60 px-4 py-3">
-                        <div className="mb-1 text-xs text-slate-400">
+                      <div
+                        className={`rounded-lg border px-4 py-3 transition-colors duration-300 ${
+                          isDark
+                            ? 'border-slate-800/80 bg-slate-900/60'
+                            : 'border-gray-200 bg-white shadow-sm'
+                        }`}
+                      >
+                        <div
+                          className={`mb-1 text-xs ${isDark ? 'text-slate-400' : 'text-gray-600'}`}
+                        >
                           {t('installationPage.prerequisites.status.missing')}
                         </div>
-                        <div className="text-2xl font-semibold text-rose-400">
+                        <div
+                          className={`text-2xl font-semibold ${isDark ? 'text-rose-400' : 'text-rose-600'}`}
+                        >
                           {getPrereqStatusCounts().error}
                         </div>
                       </div>
 
                       {getPrereqStatusCounts().checking > 0 && (
-                        <div className="rounded-lg border border-slate-800/80 bg-slate-900/60 px-4 py-3">
-                          <div className="mb-1 text-xs text-slate-400">
+                        <div
+                          className={`rounded-lg border px-4 py-3 transition-colors duration-300 ${
+                            isDark
+                              ? 'border-slate-800/80 bg-slate-900/60'
+                              : 'border-gray-200 bg-white shadow-sm'
+                          }`}
+                        >
+                          <div
+                            className={`mb-1 text-xs ${isDark ? 'text-slate-400' : 'text-gray-600'}`}
+                          >
                             {t('installationPage.prerequisites.status.checking')}
                           </div>
-                          <div className="text-2xl font-semibold text-blue-400">
+                          <div
+                            className={`text-2xl font-semibold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}
+                          >
                             {getPrereqStatusCounts().checking}
                           </div>
                         </div>
@@ -1159,25 +1466,37 @@ const InstallationPage = () => {
 
                     {/* Core prerequisites */}
                     <div className="mb-6">
-                      <h3 className="mb-3 text-lg font-medium text-white">
+                      <h3
+                        className={`mb-3 text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}
+                      >
                         {t('installationPage.prerequisites.coreRequirements')}
                       </h3>
 
                       {/* Map all core prerequisites */}
                       {getPrereqsByCategory(PrereqCategory.Core).map(prereq => (
-                        <PrerequisiteCard key={`prereq-${prereq.name}`} prerequisite={prereq} />
+                        <PrerequisiteCard
+                          key={`prereq-${prereq.name}`}
+                          prerequisite={prereq}
+                          isDark={isDark}
+                        />
                       ))}
                     </div>
 
                     {/* Setup prerequisites */}
                     <div className="mb-6">
-                      <h3 className="mb-3 text-lg font-medium text-white">
+                      <h3
+                        className={`mb-3 text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}
+                      >
                         {t('installationPage.prerequisites.demoEnvironmentRequirements')}
                       </h3>
 
                       {/* Map all setup prerequisites */}
                       {getPrereqsByCategory(PrereqCategory.Setup).map(prereq => (
-                        <PrerequisiteCard key={`prereq-${prereq.name}`} prerequisite={prereq} />
+                        <PrerequisiteCard
+                          key={`prereq-${prereq.name}`}
+                          prerequisite={prereq}
+                          isDark={isDark}
+                        />
                       ))}
                     </div>
 
@@ -1185,7 +1504,11 @@ const InstallationPage = () => {
                     <div className="mt-8 flex justify-between">
                       <button
                         onClick={() => window.location.reload()}
-                        className="flex items-center rounded-lg bg-slate-800 px-4 py-2 text-white transition-colors hover:bg-slate-700"
+                        className={`flex items-center rounded-lg px-4 py-2 transition-colors ${
+                          isDark
+                            ? 'bg-slate-800 text-white hover:bg-slate-700'
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
                       >
                         <RefreshCw size={16} className="mr-2" />
                         {t('installationPage.prerequisites.buttons.refresh')}
@@ -1197,7 +1520,9 @@ const InstallationPage = () => {
                         className={`flex items-center rounded-lg px-5 py-2 text-white transition-colors ${
                           canProceed() && getPrereqStatusCounts().checking === 0
                             ? 'bg-blue-600 hover:bg-blue-500'
-                            : 'cursor-not-allowed bg-slate-700 opacity-50'
+                            : isDark
+                              ? 'cursor-not-allowed bg-slate-700 opacity-50'
+                              : 'cursor-not-allowed bg-gray-400 opacity-50'
                         }`}
                       >
                         {t('installationPage.prerequisites.buttons.nextInstallation')}
@@ -1213,17 +1538,31 @@ const InstallationPage = () => {
                       icon={<Terminal size={22} />}
                       title={t('installationPage.installation.title')}
                       description={t('installationPage.installation.description')}
+                      isDark={isDark}
                     />
 
                     {/* Prerequisites Documentation Link */}
-                    <div className="mb-6 rounded-lg border border-blue-800/40 bg-blue-950/30 p-4">
+                    <div
+                      className={`mb-6 rounded-lg border p-4 transition-colors duration-300 ${
+                        isDark ? 'border-blue-800/40 bg-blue-950/30' : 'border-blue-200 bg-blue-50'
+                      }`}
+                    >
                       <div className="flex items-start">
-                        <FileText size={24} className="mr-3 mt-0.5 flex-shrink-0 text-blue-400" />
+                        <FileText
+                          size={24}
+                          className={`mr-3 mt-0.5 flex-shrink-0 ${
+                            isDark ? 'text-blue-400' : 'text-blue-600'
+                          }`}
+                        />
                         <div>
-                          <h3 className="mb-2 text-lg font-medium text-white">
+                          <h3
+                            className={`mb-2 text-lg font-medium ${
+                              isDark ? 'text-white' : 'text-gray-900'
+                            }`}
+                          >
                             {t('installationPage.installation.installPrerequisitesFirst.title')}
                           </h3>
-                          <p className="mb-3 text-slate-300">
+                          <p className={`mb-3 ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
                             {t(
                               'installationPage.installation.installPrerequisitesFirst.description'
                             )}
@@ -1243,29 +1582,37 @@ const InstallationPage = () => {
 
                     {/* Platform selection */}
                     <div className="mb-6">
-                      <h3 className="mb-3 text-lg font-medium text-white">
+                      <h3
+                        className={`mb-3 text-lg font-medium ${
+                          isDark ? 'text-white' : 'text-gray-900'
+                        }`}
+                      >
                         {t('installationPage.installation.platform')}
                       </h3>
 
                       <div className="mb-4 flex flex-wrap gap-3">
                         <button
                           onClick={() => setPlatform('kind')}
-                          className={`flex items-center rounded-md px-4 py-2 text-sm ${
+                          className={`flex items-center rounded-md px-4 py-2 text-sm transition-colors ${
                             platform === 'kind'
                               ? 'bg-blue-600 font-medium text-white'
-                              : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                          } transition-colors`}
+                              : isDark
+                                ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                          }`}
                         >
                           <Server size={16} className="mr-2" />
                           {t('installationPage.installation.platforms.kind')}
                         </button>
                         <button
                           onClick={() => setPlatform('k3d')}
-                          className={`flex items-center rounded-md px-4 py-2 text-sm ${
+                          className={`flex items-center rounded-md px-4 py-2 text-sm transition-colors ${
                             platform === 'k3d'
                               ? 'bg-blue-600 font-medium text-white'
-                              : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                          } transition-colors`}
+                              : isDark
+                                ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                          }`}
                         >
                           <Server size={16} className="mr-2" />
                           {t('installationPage.installation.platforms.k3d')}
@@ -1275,18 +1622,26 @@ const InstallationPage = () => {
 
                     {/* Installation instructions */}
                     <div className="mb-6">
-                      <h3 className="mb-3 text-lg font-medium text-white">
+                      <h3
+                        className={`mb-3 text-lg font-medium ${
+                          isDark ? 'text-white' : 'text-gray-900'
+                        }`}
+                      >
                         {t('installationPage.installation.installationScript')}
                       </h3>
 
-                      <InstallationScript platform={platform} />
+                      <InstallationScript platform={platform} isDark={isDark} />
                     </div>
 
                     {/* Navigation buttons */}
                     <div className="mt-8 flex justify-between">
                       <button
                         onClick={() => setActiveTab('prerequisites')}
-                        className="flex items-center rounded-lg bg-slate-800 px-4 py-2 text-white transition-colors hover:bg-slate-700"
+                        className={`flex items-center rounded-lg px-4 py-2 transition-colors ${
+                          isDark
+                            ? 'bg-slate-800 text-white hover:bg-slate-700'
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
                       >
                         <ArrowRight size={16} className="mr-2 rotate-180" />
                         {t('installationPage.installation.buttons.backPrerequisites')}
@@ -1322,16 +1677,20 @@ const InstallationPage = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="mt-16 text-center text-sm text-slate-500"
+          className={`mt-16 text-center text-sm ${isDark ? 'text-slate-500' : 'text-gray-600'}`}
         >
-          <div className="mx-auto max-w-5xl border-t border-slate-800/50 pt-8">
+          <div
+            className={`mx-auto max-w-5xl border-t pt-8 ${isDark ? 'border-slate-800/50' : 'border-gray-200'}`}
+          >
             <p className="mb-4">
               {t('installationPage.footer.copyright')} {new Date().getFullYear()} &bull;{' '}
               <a
                 href="https://docs.kubestellar.io"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300"
+                className={
+                  isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'
+                }
               >
                 {t('installationPage.footer.documentation')}
               </a>{' '}
@@ -1340,12 +1699,16 @@ const InstallationPage = () => {
                 href="https://github.com/kubestellar/kubestellar"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300"
+                className={
+                  isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'
+                }
               >
                 {t('installationPage.footer.github')}
               </a>
             </p>
-            <p className="text-xs text-slate-600">{t('installationPage.footer.description')}</p>
+            <p className={`text-xs ${isDark ? 'text-slate-600' : 'text-gray-500'}`}>
+              {t('installationPage.footer.description')}
+            </p>
           </div>
         </motion.div>
 

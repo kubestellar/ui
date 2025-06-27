@@ -1,8 +1,8 @@
 name: Deploy Kubestellar UI Preview
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  # pull_request:
+  #   types: [opened, synchronize, reopened]
   workflow_dispatch:
     inputs:
       pr_number:

@@ -15,6 +15,7 @@ import {
 } from 'react-icons/fi';
 import { useAuthActions } from '../hooks/useAuth';
 import { useTranslation } from 'react-i18next';
+import { HiOutlinePuzzlePiece } from 'react-icons/hi2';
 
 // Command types to support various actions
 type CommandType = 'navigation' | 'action' | 'documentation';
@@ -147,6 +148,16 @@ const CommandPalette: React.FC = () => {
         'daemonsets',
         'replicasets',
       ],
+      section: t('commandPalette.sections.navigation'),
+    },
+    {
+      id: 'plugin',
+      type: 'navigation',
+      icon: HiOutlinePuzzlePiece,
+      title: t('commandPalette.commands.plugin.title'),
+      description: t('commandPalette.commands.plugin.description'),
+      action: () => navigate('/plugins/manage'),
+      keywords: ['plugin', 'manage', 'install', 'wasm', 'monitor'],
       section: t('commandPalette.sections.navigation'),
     },
     {

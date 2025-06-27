@@ -1,5 +1,5 @@
 # Stage 1: Build the backend
-FROM ghcr.io/kubestellar/ui/golang:1.24 AS backend-builder
+FROM golang:1.24 AS backend-builder
 
 # Set the working directory
 WORKDIR /app
@@ -10,14 +10,14 @@ COPY go.mod go.sum ./
 # Download dependencies
 RUN go mod download
 
-# Copy the source codesudo apt  install docker-compose 
+# Copy the source code
 COPY . .
 
 # Build the binary
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -o backend main.go
 
 # Stage 2: Create a lightweight runtime image
-FROM alpine:latest
+FROM alpine:latest AS stage-1
 
 # Install necessary packages, Helm, and clusteradm
 RUN apk --no-cache add ca-certificates curl openssl git bash kubectl && \

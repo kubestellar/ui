@@ -69,6 +69,13 @@
     "filteredFrom": "filtered from"
   },
   "installationPage": {
+    "successSection": {
+      "installed": "is correctly installed and meets the version requirements."
+    },
+    "errorSection": {
+      "title": "Installation Instructions",
+      "viewGuide": "View installation guide"
+    },
     "statusBadge": {
       "installed": "Installed",
       "versionMismatch": "Version mismatch",
@@ -774,11 +781,17 @@
       "selectContainer": "Select container",
       "noContainersFound": "No containers found"
     },
+    "logs": {
+      "previousLogs": "Previous Logs",
+      "currentLogs": "Current Logs",
+      "selectLogsContainer": "Select logs container"
+    },
     "errors": {
       "failedLoadClusterDetails": "Failed to load cluster details.",
       "failedLoadDetails": "Failed to load {{type}} details.",
       "apiNotImplemented": "API not implemented for updating pod \"{{resourceName}}\"",
-      "failedFetchContainers": "Failed to fetch container list"
+      "failedFetchContainers": "Failed to fetch container list",
+      "failedFetchLogsContainers": "Failed to fetch container list for logs"
     },
     "cluster": {
       "active": "Active"
@@ -1926,6 +1939,10 @@
       "home": {
         "title": "Home",
         "description": "Go to dashboard"
+      },
+      "plugin": {
+        "title": "Plugin Manager",
+        "description": "Manage and monitor KubeStellar plugins"
       },
       "clusters": {
         "title": "Remote Clusters",
