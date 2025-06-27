@@ -151,8 +151,13 @@ const ProfileSection = () => {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmNewPassword('');
-    } catch (error: any) {
-      setFormError(error?.response?.data?.error || t('profileSection.passwordChangedError'));
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'response' in error) {
+        const err = error as { response?: { data?: { error?: string } } };
+        setFormError(err.response?.data?.error || t('profileSection.passwordChangedError'));
+      } else {
+        setFormError(t('profileSection.passwordChangedError'));
+      }
     } finally {
       setIsSubmitting(false);
     }
