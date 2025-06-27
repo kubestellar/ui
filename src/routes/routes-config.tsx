@@ -13,6 +13,7 @@ import KubeStellarVisualization from '../components/login/index';
 import InstallationPage from '../pages/InstallationPage';
 import KubeStellarStatusChecker from '../components/KubeStellarStatusChecker';
 import { PluginManager } from '../components/PluginManager';
+import { DynamicPluginRoute } from '../components/DynamicPluginRoute';
 
 const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ '../components/Clusters'));
 const ITSLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/ITS'));
@@ -103,6 +104,14 @@ export const routesConfig: RouteObject[] = [
         element: (
           <ProtectedRoute>
             <PluginManager />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'plugin/:pluginName',
+        element: (
+          <ProtectedRoute>
+            <DynamicPluginRoute />
           </ProtectedRoute>
         ),
       },

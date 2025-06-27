@@ -6,10 +6,17 @@ const NotFoundPage: React.FC = () => {
   const { t } = useTranslation();
   const [currentQuote, setCurrentQuote] = useState(0);
 
-  const quotes = t('notFoundPage.quotes', { returnObjects: true }) as Array<{
+  const quotes = (t('notFoundPage.quotes', { returnObjects: true }) as Array<{
     text: string;
     author: string;
-  }>;
+  }>) || [
+    {
+      text: 'The journey to the stars begins with a single step into the unknown.',
+      author: 'Explorer',
+    },
+    { text: 'Every lost path leads to a new discovery.', author: 'Navigator' },
+    { text: 'In the vastness of space, every coordinate matters.', author: 'Astronomer' },
+  ];
 
   useEffect(() => {
     const timer = setInterval(() => {

@@ -33,9 +33,8 @@ interface PluginProviderProps {
   children: React.ReactNode;
 }
 
-// This component provides plugin functionality and exports both context and utilities
-
-export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
+// Component for providing plugin functionality
+const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
   const [plugins, setPlugins] = useState<Map<string, PluginInstance>>(new Map());
   const [loadedPlugins, setLoadedPlugins] = useState<PluginManifest[]>([]);
   const [pluginAPI] = useState(() => new PluginAPI());
@@ -385,3 +384,5 @@ const createCustomWidget = (manifest: PluginManifest, config: PluginWidgetConfig
     );
   });
 };
+
+export { PluginProvider };

@@ -2,11 +2,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import {
   HiOutlinePuzzlePiece,
   HiOutlinePlay,
   HiOutlinePause,
-  HiOutlineTrash,
   HiOutlineArrowPath,
   HiOutlineInformationCircle,
   HiMagnifyingGlass,
@@ -31,10 +31,47 @@ interface Plugin {
   enabled: boolean;
   loadTime?: Date;
   routes?: string[];
+  metrics?: any;
 }
+
+// Helper functions for plugin metadata
+const getPluginDescription = (name: string): string => {
+  const descriptions: Record<string, string> = {
+    'sample-analytics':
+      'Advanced analytics and metrics tracking for your application with real-time insights.',
+    'backup-plugin': 'Automated backup solution for data protection and disaster recovery.',
+    monitoring: 'System monitoring and alerting for application health.',
+    security: 'Security scanning and vulnerability detection.',
+    dashboard: 'Customizable dashboard for data visualization.',
+  };
+  return descriptions[name] || 'Plugin for extending application functionality.';
+};
+
+const getPluginAuthor = (name: string): string => {
+  const authors: Record<string, string> = {
+    'sample-analytics': 'KubeStellar Team',
+    'backup-plugin': 'Infrastructure Team',
+    monitoring: 'DevOps Team',
+    security: 'Security Team',
+    dashboard: 'UI Team',
+  };
+  return authors[name] || 'Unknown';
+};
+
+const getPluginIcon = (name: string): string => {
+  const iconMap: Record<string, string> = {
+    'sample-analytics': '📊',
+    'backup-plugin': '💾',
+    monitoring: '📈',
+    security: '🔒',
+    dashboard: '📋',
+  };
+  return iconMap[name] || '🧩';
+};
 
 export const PluginManager: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const themeStyles = getThemeStyles(isDark);
@@ -55,16 +92,64 @@ export const PluginManager: React.FC = () => {
     plugin: string;
   } | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [refreshing, setRefreshing] = useState<string | null>(null);
 
   // Ref for the hidden directory input
   const directoryInputRef = useRef<HTMLInputElement>(null);
   const loadPluginData = useCallback(async () => {
     try {
       setLoading(true);
+
+      // Try to fetch from demo backend first for enhanced plugin cards
+      try {
+        const response = await fetch('http://localhost:8080/demo/plugins');
+        const data = await response.json();
+
+        if (data.success && data.plugins) {
+          const enhancedPlugins = await Promise.all(
+            data.plugins.map(async (plugin: any) => {
+              const enhancedPlugin: Plugin = {
+                name: plugin.name,
+                version: plugin.version,
+                description: getPluginDescription(plugin.name),
+                author: getPluginAuthor(plugin.name),
+                status: plugin.enabled ? 'active' : 'inactive',
+                enabled: plugin.enabled,
+                routes: plugin.routes || [],
+                loadTime: new Date(),
+              };
+
+              // Load metrics for enabled plugins (sample-analytics)
+              if (plugin.enabled && plugin.name === 'sample-analytics') {
+                try {
+                  const metricsResponse = await fetch(
+                    `http://localhost:8080/api/plugins/${plugin.name}/metrics`
+                  );
+                  if (metricsResponse.ok) {
+                    const metricsData = await metricsResponse.json();
+                    enhancedPlugin.metrics = metricsData.metrics;
+                  }
+                } catch {
+                  console.log(`No metrics available for ${plugin.name}`);
+                }
+              }
+
+              return enhancedPlugin;
+            })
+          );
+
+          setAvailablePlugins(enhancedPlugins);
+          return;
+        }
+      } catch {
+        console.log('Demo backend not available, falling back to plugin API');
+      }
+
+      // Fallback to original plugin API
       const pluginList = await pluginAPI.getPluginList();
       setAvailablePlugins(pluginList);
-    } catch (error) {
-      console.error('Failed to load plugin data:', error);
+    } catch {
+      console.error('Failed to load plugin data');
     } finally {
       setLoading(false);
     }
@@ -72,7 +157,15 @@ export const PluginManager: React.FC = () => {
 
   useEffect(() => {
     loadPluginData();
+
+    // Auto-refresh every 30 seconds for real-time data
+    const interval = setInterval(loadPluginData, 30000);
+    return () => clearInterval(interval);
   }, [loadPluginData]);
+
+  const handleViewPlugin = (pluginName: string) => {
+    navigate(`/plugin/${pluginName}`);
+  };
 
   const handleEnablePlugin = async (pluginName: string) => {
     try {
@@ -82,8 +175,23 @@ export const PluginManager: React.FC = () => {
         await loadPlugin(manifest);
       }
       await loadPluginData();
+    } catch {
+      console.error('Failed to enable plugin');
+    }
+  };
+
+  const handleTogglePlugin = async (pluginName: string, currentlyEnabled: boolean) => {
+    setRefreshing(pluginName);
+    try {
+      if (currentlyEnabled) {
+        await handleDisablePlugin(pluginName);
+      } else {
+        await handleEnablePlugin(pluginName);
+      }
     } catch (error) {
-      console.error('Failed to enable plugin:', error);
+      console.error('Failed to toggle plugin:', error);
+    } finally {
+      setRefreshing(null);
     }
   };
 
@@ -179,15 +287,6 @@ export const PluginManager: React.FC = () => {
     }
   };
 
-  const handleReloadPlugin = async (pluginName: string) => {
-    try {
-      await pluginAPI.reloadPlugin(pluginName);
-      await loadPluginData();
-    } catch (error) {
-      console.error('Failed to reload plugin:', error);
-    }
-  };
-
   const filteredPlugins = availablePlugins.filter(
     plugin =>
       plugin.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -195,16 +294,29 @@ export const PluginManager: React.FC = () => {
       plugin.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
+  const getStatusColor = (plugin: Plugin, refreshing: string | null) => {
+    if (refreshing === plugin.name) return themeStyles.colors.brand.primary;
+    switch (plugin.status) {
       case 'active':
-        return <HiOutlineCheckCircle className="text-green-500" />;
-      case 'loading':
-        return <HiOutlineArrowPath className="animate-spin text-blue-500" />;
+        return themeStyles.colors.status.success;
       case 'error':
-        return <HiOutlineExclamationTriangle className="text-red-500" />;
+        return themeStyles.colors.status.error;
       default:
-        return <HiOutlinePause className="text-gray-500" />;
+        return themeStyles.colors.text.secondary;
+    }
+  };
+
+  const getEnhancedStatusIcon = (plugin: Plugin, refreshing: string | null) => {
+    if (refreshing === plugin.name) {
+      return <HiOutlineArrowPath className="h-4 w-4 animate-spin" />;
+    }
+    switch (plugin.status) {
+      case 'active':
+        return <HiOutlineCheckCircle className="h-4 w-4" />;
+      case 'error':
+        return <HiOutlineExclamationTriangle className="h-4 w-4" />;
+      default:
+        return <HiOutlinePause className="h-4 w-4" />;
     }
   };
 
@@ -585,151 +697,196 @@ export const PluginManager: React.FC = () => {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             <AnimatePresence mode="popLayout">
               {filteredPlugins.map((plugin, index) => (
                 <motion.div
                   key={plugin.name}
-                  className="rounded-xl p-6"
+                  className="group relative cursor-pointer rounded-xl border p-6 transition-all duration-300 hover:shadow-lg"
                   style={{
                     background: themeStyles.effects.glassMorphism.background,
-                    border: `1px solid ${themeStyles.card.borderColor}`,
+                    borderColor: plugin.enabled
+                      ? themeStyles.colors.status.success + '40'
+                      : themeStyles.card.borderColor,
+                    backdropFilter: 'blur(10px)',
                   }}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.2, delay: index * 0.05 }}
-                  whileHover={{ y: -2 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                  whileHover={{ y: -4, scale: 1.02 }}
+                  onClick={() => handleViewPlugin(plugin.name)}
                 >
+                  {/* Status Indicator */}
+                  <div className="absolute right-4 top-4 flex items-center gap-2">
+                    <div style={{ color: getStatusColor(plugin, refreshing) }}>
+                      {getEnhancedStatusIcon(plugin, refreshing)}
+                    </div>
+                    <div
+                      className={`h-2 w-2 rounded-full ${plugin.enabled ? 'animate-pulse' : ''}`}
+                      style={{ backgroundColor: getStatusColor(plugin, refreshing) }}
+                    />
+                  </div>
+
                   {/* Plugin Header */}
-                  <div className="mb-4 flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="rounded-lg p-2"
-                        style={{ background: themeStyles.colors.bg.secondary }}
-                      >
-                        <HiOutlinePuzzlePiece
-                          className="h-5 w-5"
-                          style={{ color: themeStyles.colors.brand.primary }}
-                        />
-                      </div>
-                      <div>
-                        <h4
-                          className="font-semibold"
+                  <div className="mb-4 flex items-start gap-4">
+                    <div
+                      className="flex h-12 w-12 items-center justify-center rounded-xl text-2xl"
+                      style={{
+                        background: `${themeStyles.colors.brand.primary}20`,
+                        border: `1px solid ${themeStyles.colors.brand.primary}40`,
+                      }}
+                    >
+                      {getPluginIcon(plugin.name)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3
+                          className="truncate text-lg font-semibold"
                           style={{ color: themeStyles.colors.text.primary }}
                         >
                           {plugin.name}
-                        </h4>
-                        <div className="flex items-center gap-2 text-sm">
-                          <span style={{ color: themeStyles.colors.text.secondary }}>
-                            {t('plugins.card.version', { version: plugin.version })}
-                          </span>
-                          <span style={{ color: themeStyles.colors.text.secondary }}>•</span>
-                          <span style={{ color: themeStyles.colors.text.secondary }}>
-                            {t('plugins.card.author', { author: plugin.author })}
-                          </span>
-                        </div>
+                        </h3>
+                        <span
+                          className="rounded-full px-2 py-1 text-xs"
+                          style={{
+                            background: `${themeStyles.colors.brand.primary}10`,
+                            color: themeStyles.colors.brand.primary,
+                          }}
+                        >
+                          v{plugin.version}
+                        </span>
+                      </div>
+                      <p
+                        className="mt-1 line-clamp-2 text-sm"
+                        style={{ color: themeStyles.colors.text.secondary }}
+                      >
+                        {plugin.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Plugin Metrics */}
+                  {plugin.enabled && plugin.metrics && (
+                    <div className="mb-4">
+                      <div className="grid grid-cols-2 gap-3">
+                        {plugin.metrics.analytics_data && (
+                          <>
+                            <div className="text-center">
+                              <div
+                                className="text-lg font-bold"
+                                style={{ color: themeStyles.colors.brand.primary }}
+                              >
+                                {plugin.metrics.analytics_data.page_views?.toLocaleString() || '0'}
+                              </div>
+                              <div
+                                className="text-xs"
+                                style={{ color: themeStyles.colors.text.secondary }}
+                              >
+                                Page Views
+                              </div>
+                            </div>
+                            <div className="text-center">
+                              <div
+                                className="text-lg font-bold"
+                                style={{ color: themeStyles.colors.status.success }}
+                              >
+                                {plugin.metrics.analytics_data.unique_users?.toLocaleString() ||
+                                  '0'}
+                              </div>
+                              <div
+                                className="text-xs"
+                                style={{ color: themeStyles.colors.text.secondary }}
+                              >
+                                Users
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(plugin.status)}
-                      <span
-                        className="rounded-full px-2 py-1 text-xs font-medium"
-                        style={{
-                          background: plugin.enabled
-                            ? themeStyles.colors.status.success + '20'
-                            : themeStyles.colors.text.secondary + '20',
-                          color: plugin.enabled
-                            ? themeStyles.colors.status.success
-                            : themeStyles.colors.text.secondary,
-                        }}
-                      >
-                        {plugin.enabled
-                          ? t('plugins.card.status.active')
-                          : t('plugins.card.status.inactive')}
+                  )}
+
+                  {/* Plugin Info */}
+                  <div className="mb-4 space-y-2">
+                    <div className="flex items-center gap-2 text-xs">
+                      <HiOutlineInformationCircle className="h-3 w-3" />
+                      <span style={{ color: themeStyles.colors.text.secondary }}>
+                        {plugin.author}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs">
+                      <HiOutlineCodeBracket className="h-3 w-3" />
+                      <span style={{ color: themeStyles.colors.text.secondary }}>
+                        {plugin.routes?.length || 0} API routes
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs">
+                      <HiOutlineArrowPath className="h-3 w-3" />
+                      <span style={{ color: themeStyles.colors.text.secondary }}>
+                        Updated {plugin.loadTime?.toLocaleTimeString() || 'Unknown'}
                       </span>
                     </div>
                   </div>
 
-                  {/* Plugin Description */}
-                  <p className="mb-4 text-sm" style={{ color: themeStyles.colors.text.secondary }}>
-                    {plugin.description}
-                  </p>
-
-                  {/* Plugin Actions */}
-                  <div className="flex flex-wrap gap-2">
-                    {plugin.enabled ? (
-                      <motion.button
-                        onClick={() => setConfirmAction({ type: 'disable', plugin: plugin.name })}
-                        className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
-                        style={{
-                          background: themeStyles.colors.status.warning + '20',
-                          color: themeStyles.colors.status.warning,
-                        }}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <HiOutlinePause className="h-3 w-3" />
-                        {t('plugins.card.actions.disable')}
-                      </motion.button>
-                    ) : (
-                      <motion.button
-                        onClick={() => handleEnablePlugin(plugin.name)}
-                        className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
-                        style={{
-                          background: themeStyles.colors.status.success + '20',
-                          color: themeStyles.colors.status.success,
-                        }}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <HiOutlinePlay className="h-3 w-3" />
-                        {t('plugins.card.actions.enable')}
-                      </motion.button>
-                    )}
+                  {/* Action Buttons */}
+                  <div className="flex gap-2">
+                    <motion.button
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleTogglePlugin(plugin.name, plugin.enabled);
+                      }}
+                      disabled={refreshing === plugin.name}
+                      className="flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all"
+                      style={{
+                        background: plugin.enabled
+                          ? `${themeStyles.colors.status.warning}20`
+                          : `${themeStyles.colors.status.success}20`,
+                        color: plugin.enabled
+                          ? themeStyles.colors.status.warning
+                          : themeStyles.colors.status.success,
+                      }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      {refreshing === plugin.name ? (
+                        <HiOutlineArrowPath className="h-4 w-4 animate-spin" />
+                      ) : plugin.enabled ? (
+                        <HiOutlinePause className="h-4 w-4" />
+                      ) : (
+                        <HiOutlinePlay className="h-4 w-4" />
+                      )}
+                      {refreshing === plugin.name
+                        ? 'Processing...'
+                        : plugin.enabled
+                          ? 'Disable'
+                          : 'Enable'}
+                    </motion.button>
 
                     <motion.button
-                      onClick={() => setSelectedPlugin(plugin.name)}
-                      className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleViewPlugin(plugin.name);
+                      }}
+                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
                       style={{
-                        background: themeStyles.colors.brand.primary + '20',
+                        background: `${themeStyles.colors.brand.primary}20`,
                         color: themeStyles.colors.brand.primary,
                       }}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                     >
-                      <HiOutlineInformationCircle className="h-3 w-3" />
-                      {t('plugins.card.actions.details')}
-                    </motion.button>
-
-                    <motion.button
-                      onClick={() => handleReloadPlugin(plugin.name)}
-                      className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
-                      style={{
-                        background: themeStyles.colors.text.secondary + '20',
-                        color: themeStyles.colors.text.secondary,
-                      }}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <HiOutlineArrowPath className="h-3 w-3" />
-                      {t('plugins.card.actions.reload')}
-                    </motion.button>
-
-                    <motion.button
-                      onClick={() => setConfirmAction({ type: 'uninstall', plugin: plugin.name })}
-                      className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
-                      style={{
-                        background: themeStyles.colors.status.error + '20',
-                        color: themeStyles.colors.status.error,
-                      }}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <HiOutlineTrash className="h-3 w-3" />
-                      {t('plugins.card.actions.uninstall')}
+                      <HiOutlineInformationCircle className="h-4 w-4" />
+                      Open
                     </motion.button>
                   </div>
+
+                  {/* Hover Effect */}
+                  <div
+                    className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition-opacity group-hover:opacity-100"
+                    style={{
+                      background: `linear-gradient(135deg, ${themeStyles.colors.brand.primary}05, ${themeStyles.colors.brand.secondary}05)`,
+                    }}
+                  />
                 </motion.div>
               ))}
             </AnimatePresence>
