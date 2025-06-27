@@ -1,0 +1,16 @@
+# This chart was originally developed by @MAVRICK-1
+# Source: https://github.com/MAVRICK-1/kubestellar-ui
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+spec:
+  type: NodePort
+  selector:
+    app: frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: {{ .Values.frontend.port }}
+      nodePort: 30137

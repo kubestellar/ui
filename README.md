@@ -128,17 +128,27 @@ KubestellarUI uses environment variables to track the app version and the curren
 
 KubestellarUI uses Redis for caching real-time WebSocket updates to prevent excessive Kubernetes API calls.
 
-Run Redis using Docker:
+#### Step 3: Run PostgreSQL and Redis with Docker Compose
+
+To run PostgreSQL and Redis services:
 
 ```bash
-docker run --name redis -d -p 6379:6379 redis
+# Navigate to the backend directory
+cd backend
+
+# Start PostgreSQL and Redis services in detached mode
+docker compose up -d
+
+# Verify that services are running
+docker ps
 ```
 
-Verify Redis is running:
+This will start:
 
-```bash
-docker ps | grep redis
-```
+- PostgreSQL on port 5432 (for persistent data storage)
+- Redis on port 6379 (for caching WebSocket updates)
+
+Both services are configured with appropriate volumes to persist data between restarts.
 
 #### Step 3: Install and Run the Backend
 
