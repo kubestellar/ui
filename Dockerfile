@@ -1,5 +1,5 @@
 # Stage 1: Build frontend
-FROM ghcr.io/kubestellar/ui/node:20 AS frontend-builder
+FROM node:20 AS frontend-builder
 
 # Set working directory
 WORKDIR /app
@@ -37,7 +37,7 @@ RUN npm run build
 RUN mv commit_hash.txt dist/
 
 # Stage 2: Serve with Nginx
-FROM ghcr.io/kubestellar/nginx:alpine AS frontend
+FROM nginx:alpine AS frontend
 
 # Install gettext for envsubst
 RUN apk add --no-cache gettext

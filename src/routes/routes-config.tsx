@@ -4,6 +4,7 @@ import LoadingFallback from '../components/LoadingFallback';
 import ProtectedRoute from '../components/ProtectedRoute';
 import PublicRoute from '../components/PublicRoute';
 import KubeStellarStatusChecker from '../components/KubeStellarStatusChecker';
+import { PluginManager } from '../components/PluginManager';
 
 // Lazily load all major components to reduce initial bundle size
 const Layout = lazy(() =>
@@ -121,6 +122,14 @@ export const routesConfig: RouteObject[] = [
             <Suspense fallback={<LoadingFallback message="Loading topology..." size="medium" />}>
               <WecsTreeview />
             </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'plugins/manage',
+        element: (
+          <ProtectedRoute>
+            <PluginManager />
           </ProtectedRoute>
         ),
       },

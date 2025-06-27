@@ -152,6 +152,11 @@ const WecsDetailsPanel = ({
   const [selectedContainer, setSelectedContainer] = useState<string>('');
   const [loadingContainers, setLoadingContainers] = useState<boolean>(false);
   const [isContainerSelectActive, setIsContainerSelectActive] = useState<boolean>(false);
+  const [logsContainers, setLogsContainers] = useState<ContainerInfo[]>([]);
+  const [selectedLogsContainer, setSelectedLogsContainer] = useState<string>('');
+  const [loadingLogsContainers, setLoadingLogsContainers] = useState<boolean>(false);
+  const [isLogsContainerSelectActive, setIsLogsContainerSelectActive] = useState<boolean>(false);
+  const [showPreviousLogs, setShowPreviousLogs] = useState<boolean>(false);
   // Track the previous node to detect node changes
   const previousNodeRef = useRef<{ name: string; namespace: string; type: string }>({
     name: '',
@@ -349,12 +354,25 @@ const WecsDetailsPanel = ({
     if (!wsParamsRef.current || !isOpen) return;
 
     const { cluster, namespace, pod } = wsParamsRef.current;
-    const wsUrl = getWebSocketUrl(`/ws/logs?cluster=${cluster}&namespace=${namespace}&pod=${pod}`);
+    // Build WebSocket URL with container and previous logs parameters
+    let wsUrl = getWebSocketUrl(`/ws/logs?cluster=${cluster}&namespace=${namespace}&pod=${pod}`);
+
+    // Add container parameter if selected
+    if (selectedLogsContainer) {
+      wsUrl += `&container=${encodeURIComponent(selectedLogsContainer)}`;
+    }
+
+    // Add previous parameter if showPreviousLogs is true
+    if (showPreviousLogs) {
+      wsUrl += `&previous=true`;
+    }
 
     setLogs(prev => [
       ...prev,
       `\x1b[33m[Connecting] WebSocket Request\x1b[0m`,
       `URL: ${wsUrl}`,
+      `Container: ${selectedLogsContainer || 'default'}`,
+      `Previous Logs: ${showPreviousLogs ? 'Yes' : 'No'}`,
       `Timestamp: ${new Date().toISOString()}`,
       `-----------------------------------`,
     ]);
@@ -367,6 +385,8 @@ const WecsDetailsPanel = ({
         ...prev,
         `\x1b[32m[Connected] WebSocket Connection Established\x1b[0m`,
         `Status: OPEN`,
+        `Container: ${selectedLogsContainer || 'default'}`,
+        `Previous Logs: ${showPreviousLogs ? 'Yes' : 'No'}`,
         `Timestamp: ${new Date().toISOString()}`,
         `-----------------------------------`,
       ]);
@@ -400,7 +420,7 @@ const WecsDetailsPanel = ({
       ]);
       wsRef.current = null;
     };
-  }, [isOpen]); // Add isOpen as dependency
+  }, [isOpen, selectedLogsContainer, showPreviousLogs]); // Add new dependencies
 
   // Initialize WebSocket connection only once when the panel opens
   useEffect(() => {
@@ -414,7 +434,13 @@ const WecsDetailsPanel = ({
       return;
     }
 
-    if (!wsRef.current && wsParamsRef.current) {
+    // Close existing connection if container or previous logs selection changes
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+
+    if (wsParamsRef.current) {
       connectWebSocket();
     }
 
@@ -424,7 +450,7 @@ const WecsDetailsPanel = ({
         wsRef.current = null;
       }
     };
-  }, [isOpen, type, connectWebSocket]); // Add connectWebSocket to dependencies
+  }, [isOpen, type, connectWebSocket, selectedLogsContainer, showPreviousLogs]); // Add new dependencies
 
   useEffect(() => {
     // Only initialize terminal if needed and if it doesn't exist yet
@@ -533,6 +559,39 @@ const WecsDetailsPanel = ({
     fetchContainers();
   }, [tabValue, namespace, name, cluster, type, isOpen]);
 
+  // Add useEffect to fetch containers for the current pod when in logs tab
+  useEffect(() => {
+    // Only fetch containers when the logs tab is active and for pod resources
+    if (tabValue !== 2 || type.toLowerCase() !== 'pod' || !isOpen) return;
+
+    const fetchLogsContainers = async () => {
+      setLoadingLogsContainers(true);
+      try {
+        // console.log(`Fetching containers for logs tab, pod: ${name}`);
+        const response = await api.get(
+          `/list/container/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}?context=${encodeURIComponent(cluster)}`
+        );
+        if (response.data && response.data.data) {
+          setLogsContainers(response.data.data);
+          // Set the first container as selected by default if available
+          if (response.data.data.length > 0) {
+            // console.log(`Setting default logs container to: ${response.data.data[0].ContainerName}`);
+            setSelectedLogsContainer(response.data.data[0].ContainerName);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch containers for logs:', error);
+        setSnackbarMessage('Failed to fetch container list for logs');
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+      } finally {
+        setLoadingLogsContainers(false);
+      }
+    };
+
+    fetchLogsContainers();
+  }, [tabValue, namespace, name, cluster, type, isOpen]);
+
   // Modify the terminal key update to include the selected container
   useEffect(() => {
     if (type.toLowerCase() === 'pod') {
@@ -549,6 +608,17 @@ const WecsDetailsPanel = ({
 
     // Set the selected container
     setSelectedContainer(event.target.value);
+  };
+
+  // Handle logs container selection change
+  const handleLogsContainerChange = (event: SelectChangeEvent<string>) => {
+    event.stopPropagation();
+    setSelectedLogsContainer(event.target.value);
+  };
+
+  // Handle previous logs toggle
+  const handlePreviousLogsToggle = () => {
+    setShowPreviousLogs(!showPreviousLogs);
   };
 
   // Also make sure the container is still selected after switching tabs
@@ -788,6 +858,17 @@ const WecsDetailsPanel = ({
     }
   }, [name, type]);
 
+  // Add a useEffect that resets logs container selection when the pod changes
+  useEffect(() => {
+    // Reset logs container selection and containers list when pod changes
+    if (type.toLowerCase() === 'pod') {
+      // console.log(`Pod changed to ${name}, resetting logs container selection`);
+      setSelectedLogsContainer('');
+      setLogsContainers([]);
+      setShowPreviousLogs(false);
+    }
+  }, [name, type]);
+
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
@@ -814,7 +895,7 @@ const WecsDetailsPanel = ({
 
   const handleClose = useCallback(() => {
     // Don't close if container selection is active
-    if (isContainerSelectActive) {
+    if (isContainerSelectActive || isLogsContainerSelectActive) {
       // console.log("Container select is active, preventing panel close");
       return;
     }
@@ -824,7 +905,7 @@ const WecsDetailsPanel = ({
       setIsClosing(false);
       onClose();
     }, 400);
-  }, [isContainerSelectActive, onClose]);
+  }, [isContainerSelectActive, isLogsContainerSelectActive, onClose]);
 
   const handleFormatChange = (format: 'yaml' | 'json') => {
     if (editFormat === 'yaml' && format === 'json') {
@@ -1291,9 +1372,165 @@ const WecsDetailsPanel = ({
               )}
               {tabValue === 2 && (
                 <>
-                  {/* Add download logs button if the resource is a pod */}
+                  {/* Add container selection and previous logs controls if the resource is a pod */}
                   {type.toLowerCase() === 'pod' && (
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        mb: 2,
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        {/* Container selection dropdown for logs */}
+                        <FormControl
+                          size="small"
+                          className="logs-container-dropdown"
+                          onMouseDown={() => {
+                            setIsLogsContainerSelectActive(true);
+                          }}
+                          sx={{
+                            minWidth: 200,
+                            '& .MuiInputBase-root': {
+                              color: theme === 'dark' ? '#CCC' : '#444',
+                              fontSize: '13px',
+                              backgroundColor: theme === 'dark' ? '#333' : '#FFF',
+                              border: theme === 'dark' ? '1px solid #444' : '1px solid #DDD',
+                              borderRadius: '4px',
+                              height: '36px',
+                            },
+                            '& .MuiOutlinedInput-notchedOutline': {
+                              border: 'none',
+                            },
+                          }}
+                          onClick={(e: React.MouseEvent<HTMLDivElement>) => {
+                            e.stopPropagation();
+                          }}
+                        >
+                          <Select
+                            value={selectedLogsContainer}
+                            onChange={handleLogsContainerChange}
+                            displayEmpty
+                            onMouseDown={(e: React.MouseEvent<HTMLElement>) => {
+                              e.stopPropagation();
+                              setIsLogsContainerSelectActive(true);
+                            }}
+                            onClose={() => {
+                              setTimeout(() => setIsLogsContainerSelectActive(false), 300);
+                            }}
+                            MenuProps={{
+                              slotProps: {
+                                paper: {
+                                  onClick: (e: React.MouseEvent<HTMLDivElement>) => {
+                                    e.stopPropagation();
+                                  },
+                                  onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => {
+                                    e.stopPropagation();
+                                    setIsLogsContainerSelectActive(true);
+                                  },
+                                  style: {
+                                    zIndex: 9999,
+                                  },
+                                },
+                                root: {
+                                  onClick: (e: React.MouseEvent<HTMLDivElement>) => {
+                                    e.stopPropagation();
+                                  },
+                                  onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => {
+                                    e.stopPropagation();
+                                    setIsLogsContainerSelectActive(true);
+                                  },
+                                },
+                              },
+                              anchorOrigin: {
+                                vertical: 'bottom',
+                                horizontal: 'left',
+                              },
+                              transformOrigin: {
+                                vertical: 'top',
+                                horizontal: 'left',
+                              },
+                            }}
+                            renderValue={value => (
+                              <Box
+                                sx={{ display: 'flex', alignItems: 'center' }}
+                                onClick={(e: React.MouseEvent<HTMLDivElement>) => {
+                                  e.stopPropagation();
+                                }}
+                              >
+                                {loadingLogsContainers ? (
+                                  <CircularProgress size={14} sx={{ mr: 1 }} />
+                                ) : (
+                                  <span
+                                    className="fas fa-cube"
+                                    style={{ marginRight: '8px', fontSize: '12px' }}
+                                  />
+                                )}
+                                {value || t('wecsDetailsPanel.containers.selectContainer')}
+                              </Box>
+                            )}
+                          >
+                            {logsContainers.map(container => (
+                              <MenuItem
+                                key={container.ContainerName}
+                                value={container.ContainerName}
+                                sx={{
+                                  fontSize: '13px',
+                                  py: 0.75,
+                                }}
+                                onMouseDown={(e: React.MouseEvent<HTMLLIElement>) => {
+                                  e.stopPropagation();
+                                  setIsLogsContainerSelectActive(true);
+                                }}
+                              >
+                                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                  <Typography variant="body2">{container.ContainerName}</Typography>
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      color: theme === 'dark' ? '#888' : '#666',
+                                      fontSize: '11px',
+                                    }}
+                                  >
+                                    {container.Image}
+                                  </Typography>
+                                </Box>
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+
+                        {/* Previous logs toggle */}
+                        <Button
+                          variant={showPreviousLogs ? 'contained' : 'outlined'}
+                          onClick={handlePreviousLogsToggle}
+                          size="small"
+                          sx={{
+                            textTransform: 'none',
+                            backgroundColor: showPreviousLogs ? '#2F86FF' : 'transparent',
+                            borderRadius: '6px',
+                            color: showPreviousLogs ? '#fff' : '#2F86FF',
+                            border: showPreviousLogs ? 'none' : '1px solid #2F86FF',
+                            fontSize: '12px',
+                            height: '36px',
+                            px: 2,
+                            '&:hover': {
+                              backgroundColor: showPreviousLogs
+                                ? '#1565c0'
+                                : 'rgba(47, 134, 255, 0.08)',
+                            },
+                          }}
+                        >
+                          <span
+                            className="fas fa-history"
+                            style={{ marginRight: '6px', fontSize: '11px' }}
+                          />
+                          {t('wecsDetailsPanel.logs.previousLogs')}
+                        </Button>
+                      </Box>
+
+                      {/* Download logs button */}
                       <DownloadLogsButton
                         cluster={cluster}
                         namespace={namespace}
