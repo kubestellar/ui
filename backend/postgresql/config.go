@@ -1,44 +1,28 @@
-package postgresql
+package config
 
 import (
-	"database/sql"
-	"fmt"
-	"log"
 	"os"
-
-	"github.com/joho/godotenv"
-	_ "github.com/lib/pq"
 )
 
-var DB *sql.DB
+type Config struct {
+	DatabaseURL string
+	JWTSecret   string
+	Port        string
+	GinMode     string
+}
 
-func LoadConfig() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("Warning: No .env file found. Using default values.")
+func LoadConfig() *Config {
+	return &Config{
+		DatabaseURL: getEnv("DATABASE_URL", "postgres://authuser:authpass123@localhost:5400/authdb?sslmode=disable"),
+		JWTSecret:   getEnv("JWT_SECRET", "your-secret-key-here"),
+		Port:        getEnv("PORT", "5400"),
+		GinMode:     getEnv("GIN_MODE", "debug"),
 	}
 }
 
-func ConnectDB() {
-	LoadConfig()
-
-	dsn := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		os.Getenv("POSTGRES_HOST"), os.Getenv("POSTGRES_PORT"),
-		os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_PASSWORD"),
-		os.Getenv("POSTGRES_DB"),
-	)
-
-	var err error
-	DB, err = sql.Open("postgres", dsn)
-	if err != nil {
-		log.Fatal("Failed to connect to database:", err)
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
 	}
-
-	err = DB.Ping()
-	if err != nil {
-		log.Fatal("Database not responding:", err)
-	}
-
-	fmt.Println("✅ Connected to PostgreSQL")
+	return defaultValue
 }
