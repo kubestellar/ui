@@ -7,7 +7,9 @@ import { HiLanguage } from 'react-icons/hi2';
 const LanguageSwitcher = () => {
   const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
@@ -28,8 +30,38 @@ const LanguageSwitcher = () => {
     setIsOpen(false);
   };
 
-  // Close dropdown when clicking outside
+  const currentLang = languages.find(lang => lang.code === i18n.language) || languages[0];
+  const isLoginPage = window.location.pathname.includes('login');
+
+  // 🧠 Attach keydown listener only when dropdown is open
   useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setFocusedIndex(prev => (prev === null ? 0 : (prev + 1) % languages.length));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setFocusedIndex(prev =>
+          prev === null ? languages.length - 1 : (prev - 1 + languages.length) % languages.length
+        );
+      } else if (e.key === 'Enter' && focusedIndex !== null) {
+        e.preventDefault();
+        changeLanguage(languages[focusedIndex].code);
+      } else if (e.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, focusedIndex]);
+
+  // 🧠 Attach mousedown listener only when dropdown is open
+  useEffect(() => {
+    if (!isOpen) return;
+
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
@@ -37,38 +69,19 @@ const LanguageSwitcher = () => {
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  // Close dropdown when pressing ESC (only when dropdown is open)
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
-  // Get current language info
-  const currentLang = languages.find(lang => lang.code === i18n.language) || languages[0];
-
-  // Apply styles based on theme context and location
-  const isLoginPage = window.location.pathname.includes('login');
+  // 🧠 Focus language button on Arrow key navigation
+  useEffect(() => {
+    if (focusedIndex !== null) {
+      itemRefs.current[focusedIndex]?.focus();
+    }
+  }, [focusedIndex]);
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Selected language button */}
+      {/* Trigger Button */}
       {isLoginPage ? (
         <button
           onClick={() => setIsOpen(!isOpen)}
@@ -120,7 +133,7 @@ const LanguageSwitcher = () => {
         </motion.button>
       )}
 
-      {/* Dropdown list */}
+      {/* Dropdown */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -140,7 +153,9 @@ const LanguageSwitcher = () => {
           >
             {!isLoginPage && (
               <div
-                className={`flex items-center justify-between border-b px-3 py-2 ${isDark ? 'border-gray-700 text-gray-400' : 'border-gray-200 text-gray-500'}`}
+                className={`flex items-center justify-between border-b px-3 py-2 ${
+                  isDark ? 'border-gray-700 text-gray-400' : 'border-gray-200 text-gray-500'
+                }`}
               >
                 <p className="text-xs font-medium uppercase tracking-wider">Select Language</p>
                 <kbd
@@ -155,15 +170,12 @@ const LanguageSwitcher = () => {
               </div>
             )}
             <div className="max-h-60 overflow-auto py-1">
-              {languages.map(lang => (
+              {languages.map((lang, idx) => (
                 <button
                   key={lang.code}
+                  ref={el => (itemRefs.current[idx] = el)}
+                  tabIndex={0}
                   onClick={() => changeLanguage(lang.code)}
-                  style={
-                    !isLoginPage && !isDark
-                      ? { backgroundColor: i18n.language === lang.code ? '#ebf5ff' : '#ffffff' }
-                      : {}
-                  }
                   className={
                     isLoginPage
                       ? `flex w-full items-center justify-between px-4 py-2 text-left text-sm transition-colors hover:bg-blue-700/30 ${
