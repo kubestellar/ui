@@ -19,6 +19,7 @@ import (
 	"github.com/kubestellar/ui/routes"
 	"github.com/kubestellar/ui/utils"
 	"go.uber.org/zap"
+	"github.com/kubestellar/ui/models"
 )
 
 var logger *zap.Logger
@@ -286,7 +287,7 @@ func initializeAdminUser() error {
 	log.Println("Creating admin user...")
 
 	// Hash the password
-	hashedPassword, err := hashPassword("admin")
+	hashedPassword, err := models.HashPassword("admin")
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %v", err)
 	}
@@ -373,16 +374,6 @@ func ensureAdminPermissions(userID int) error {
 	}
 
 	return nil
-}
-
-// hashPassword hashes a plain text password using bcrypt
-func hashPassword(password string) (string, error) {
-	// For now, return a consistent hash for the demo admin user
-	// In production, implement proper bcrypt hashing
-	if password == "admin" {
-		return "admin_hashed", nil
-	}
-	return password + "_hashed", nil
 }
 
 // debugCheckAdminUser checks if admin user exists and logs details

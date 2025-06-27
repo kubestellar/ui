@@ -277,68 +277,7 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
-	// TEMPORARY: Try direct database authentication for debugging
-	if loginData.Username == "admin" && loginData.Password == "admin" {
-		// Get user directly from database
-		query := "SELECT id, username, password, is_admin FROM users WHERE username = $1"
-		var id int
-		var username, dbPassword string
-		var isAdmin bool
-
-		err := database.DB.QueryRow(query, "admin").Scan(&id, &username, &dbPassword, &isAdmin)
-		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found in database"})
-			return
-		}
-
-		// Check if password matches what we expect
-		if dbPassword == "admin_hashed" {
-			// Create a simple user object for response
-			user := struct {
-				ID          int               `json:"id"`
-				Username    string            `json:"username"`
-				IsAdmin     bool              `json:"is_admin"`
-				Permissions map[string]string `json:"permissions"`
-			}{
-				ID:       id,
-				Username: username,
-				IsAdmin:  isAdmin,
-				Permissions: map[string]string{
-					"users":     "write",
-					"resources": "write",
-					"system":    "write",
-					"dashboard": "write",
-				},
-			}
-
-			// Generate JWT token
-			token, err := utils.GenerateToken(user.Username, user.IsAdmin, user.Permissions)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Token generation failed"})
-				return
-			}
-
-			// Return success response
-			c.JSON(http.StatusOK, gin.H{
-				"success": true,
-				"token":   token,
-				"user": gin.H{
-					"username":    user.Username,
-					"is_admin":    user.IsAdmin,
-					"permissions": user.Permissions,
-				},
-			})
-			return
-		} else {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Password mismatch",
-				"debug": "Expected: admin_hashed, Got: " + dbPassword,
-			})
-			return
-		}
-	}
-
-	// Try to authenticate user using models (for other users)
+	// Authenticate user using models for all users (including admin)
 	user, err := models.AuthenticateUser(loginData.Username, loginData.Password)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password", "debug": err.Error()})
