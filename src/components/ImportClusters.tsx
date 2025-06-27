@@ -197,7 +197,7 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
   const theme = useTheme(state => state.theme);
   const textColor = theme === 'dark' ? 'white' : 'black';
   const bgColor = theme === 'dark' ? '#1F2937' : 'background.paper';
-  const [, setShowLogs] = useState(false);
+  const [, setShowLogs] = useState(false); 
   const [onboardingStatus, setOnboardingStatus] = useState<
     'idle' | 'processing' | 'success' | 'failed'
   >('idle');
