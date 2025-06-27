@@ -5,10 +5,10 @@ import ClientThemeWrapper from './context/ClientThemeWrapper.tsx';
 import { QueryProvider } from './lib/react-query/QueryProvider';
 import ToastProvider from './components/providers/ToastProvider.tsx';
 import { WebSocketProvider } from './context/WebSocketProvider.tsx';
+import { PluginProvider } from './plugins/PluginLoader';
 import './i18n.ts';
 import AppLoader from './components/AppLoader';
 
-// Add enhanced performance monitoring
 import {
   measureInitialPageLoad,
   recordChunkLoadTiming,
@@ -16,17 +16,13 @@ import {
 } from './utils/performanceMonitoring';
 
 const reportWebVitals = () => {
-  // Initialize comprehensive performance monitoring
   measureInitialPageLoad();
   recordChunkLoadTiming();
-
-  // Report metrics after a delay to ensure all metrics are collected
   setTimeout(() => {
     reportMetricsToAnalytics();
   }, 3000);
 };
 
-// Create root and render app with optimization wrapper
 const rootElement = document.getElementById('root');
 if (rootElement) {
   const root = createRoot(rootElement);
@@ -35,16 +31,16 @@ if (rootElement) {
     <StrictMode>
       <QueryProvider>
         <WebSocketProvider>
-          <ClientThemeWrapper>
-            <ToastProvider>
-              <AppLoader />
-            </ToastProvider>
-          </ClientThemeWrapper>
+          <PluginProvider>
+            <ClientThemeWrapper>
+              <ToastProvider>
+                <AppLoader />
+              </ToastProvider>
+            </ClientThemeWrapper>
+          </PluginProvider>
         </WebSocketProvider>
       </QueryProvider>
     </StrictMode>
   );
-
-  // Report web vitals after app has loaded
   reportWebVitals();
 }
