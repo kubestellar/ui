@@ -206,8 +206,8 @@ const ProfileSection = () => {
       <button
         ref={buttonRef}
         onClick={() => setShowUserMenu(!showUserMenu)}
-        className="btn btn-circle border-2 border-primary/30 bg-primary/5 shadow-sm \
-          transition-all duration-300 hover:scale-105 hover:bg-primary/10\
+        className="\ hover:bg-primary/10\ btn btn-circle border-2 border-primary/30 bg-primary/5
+          shadow-sm transition-all duration-300 hover:scale-105
           hover:shadow-md active:scale-95"
         aria-label="Open user menu"
         aria-expanded={showUserMenu}
@@ -220,7 +220,7 @@ const ProfileSection = () => {
       {showUserMenu && (
         <div
           ref={userMenuRef}
-          className="animate-in fade-in slide-in-from-top-5 absolute right-0 top-full z-50 mt-2 \
+          className="animate-in fade-in slide-in-from-top-5 \ absolute right-0 top-full z-50 mt-2
             w-64 origin-top-right overflow-hidden rounded-xl duration-300 ease-out"
           style={{
             backgroundColor: styles.profileMenu.backgroundColor,
@@ -285,7 +285,7 @@ const ProfileSection = () => {
             <div className="grid grid-cols-1 gap-1">
               <button
                 onClick={() => setShowChangePasswordModal(true)}
-                className="group flex w-full items-center rounded-lg px-4 py-3\
+                className="py-3\ group flex w-full items-center rounded-lg px-4
                   text-sm font-medium transition-colors duration-150"
                 style={{
                   color: styles.helpButton.color,
@@ -324,7 +324,7 @@ const ProfileSection = () => {
               </button>
               <button
                 onClick={openRaiseIssue}
-                className="group flex w-full items-center rounded-lg px-4 py-3\
+                className="py-3\ group flex w-full items-center rounded-lg px-4
                   text-sm font-medium transition-colors duration-150"
                 style={{
                   color: styles.helpButton.color,
@@ -359,7 +359,7 @@ const ProfileSection = () => {
               </button>
               <button
                 onClick={openDocs}
-                className="group flex w-full items-center rounded-lg px-4 py-3\
+                className="py-3\ group flex w-full items-center rounded-lg px-4
                   text-sm font-medium transition-colors duration-150"
                 style={{
                   color: styles.helpButton.color,
@@ -405,7 +405,7 @@ const ProfileSection = () => {
           >
             <button
               onClick={handleLogout}
-              className="group flex w-full items-center rounded-lg px-4 py-3\
+              className="py-3\ group flex w-full items-center rounded-lg px-4
                 text-sm font-medium transition-all duration-200"
               style={{
                 color: styles.logoutButton.color,
