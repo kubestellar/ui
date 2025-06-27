@@ -206,8 +206,8 @@ const ProfileSection = () => {
       <button
         ref={buttonRef}
         onClick={() => setShowUserMenu(!showUserMenu)}
-        className="btn btn-circle border-2 border-primary/30 bg-primary/5 shadow-sm 
-          transition-all duration-300 hover:scale-105 hover:bg-primary/10
+        className="btn btn-circle border-2 border-primary/30 bg-primary/5 shadow-sm \
+          transition-all duration-300 hover:scale-105 hover:bg-primary/10\
           hover:shadow-md active:scale-95"
         aria-label="Open user menu"
         aria-expanded={showUserMenu}
@@ -220,7 +220,7 @@ const ProfileSection = () => {
       {showUserMenu && (
         <div
           ref={userMenuRef}
-          className="animate-in fade-in slide-in-from-top-5 absolute right-0 top-full z-50 mt-2 
+          className="animate-in fade-in slide-in-from-top-5 absolute right-0 top-full z-50 mt-2 \
             w-64 origin-top-right overflow-hidden rounded-xl duration-300 ease-out"
           style={{
             backgroundColor: styles.profileMenu.backgroundColor,
@@ -285,7 +285,7 @@ const ProfileSection = () => {
             <div className="grid grid-cols-1 gap-1">
               <button
                 onClick={() => setShowChangePasswordModal(true)}
-                className="group flex w-full items-center rounded-lg px-4 py-3
+                className="group flex w-full items-center rounded-lg px-4 py-3\
                   text-sm font-medium transition-colors duration-150"
                 style={{
                   color: styles.helpButton.color,
@@ -324,7 +324,7 @@ const ProfileSection = () => {
               </button>
               <button
                 onClick={openRaiseIssue}
-                className="group flex w-full items-center rounded-lg px-4 py-3
+                className="group flex w-full items-center rounded-lg px-4 py-3\
                   text-sm font-medium transition-colors duration-150"
                 style={{
                   color: styles.helpButton.color,
@@ -359,7 +359,7 @@ const ProfileSection = () => {
               </button>
               <button
                 onClick={openDocs}
-                className="group flex w-full items-center rounded-lg px-4 py-3
+                className="group flex w-full items-center rounded-lg px-4 py-3\
                   text-sm font-medium transition-colors duration-150"
                 style={{
                   color: styles.helpButton.color,
@@ -405,7 +405,7 @@ const ProfileSection = () => {
           >
             <button
               onClick={handleLogout}
-              className="group flex w-full items-center rounded-lg px-4 py-3
+              className="group flex w-full items-center rounded-lg px-4 py-3\
                 text-sm font-medium transition-all duration-200"
               style={{
                 color: styles.logoutButton.color,
@@ -491,7 +491,7 @@ const ProfileSection = () => {
               <div
                 style={{ color: '#cbd5e1', fontSize: 16, marginBottom: '2rem', textAlign: 'left' }}
               >
-                Please enter your current password and choose a new one.
+                {t('profileSection.changePasswordSubtitle')}
               </div>
               <form onSubmit={handleChangePassword}>
                 <div style={{ marginBottom: '1.2rem' }}>
@@ -517,7 +517,7 @@ const ProfileSection = () => {
                         outline: 'none',
                         marginBottom: 0,
                       }}
-                      placeholder="Enter current password"
+                      placeholder={t('profileSection.currentPassword')}
                       value={currentPassword}
                       onChange={e => setCurrentPassword(e.target.value)}
                       autoComplete="current-password"
@@ -563,7 +563,7 @@ const ProfileSection = () => {
                         outline: 'none',
                         marginBottom: 0,
                       }}
-                      placeholder="Enter new password"
+                      placeholder={t('profileSection.newPassword')}
                       value={newPassword}
                       onChange={e => setNewPassword(e.target.value)}
                       autoComplete="new-password"
@@ -609,7 +609,7 @@ const ProfileSection = () => {
                         outline: 'none',
                         marginBottom: 0,
                       }}
-                      placeholder="Confirm new password"
+                      placeholder={t('profileSection.confirmNewPassword')}
                       value={confirmNewPassword}
                       onChange={e => setConfirmNewPassword(e.target.value)}
                       autoComplete="new-password"
@@ -673,7 +673,7 @@ const ProfileSection = () => {
                     }}
                     disabled={isSubmitting}
                   >
-                    Cancel
+                    {t('profileSection.cancel')}
                   </button>
                   <button
                     type="submit"
@@ -694,7 +694,7 @@ const ProfileSection = () => {
                     onMouseOut={e => (e.currentTarget.style.background = '#2563eb')}
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? t('common.loading') : 'Change Password'}
+                    {isSubmitting ? t('common.loading') : t('profileSection.changePasswordButton')}
                   </button>
                 </div>
               </form>
