@@ -24,6 +24,9 @@ interface Props {
   selectedFile: File | null;
   setSelectedFile: (file: File | null) => void;
   loading: boolean;
+  handleDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
+  handleDragLeave: (e: React.DragEvent<HTMLDivElement>) => void;
+  handleDrop: (e: React.DragEvent<HTMLDivElement>) => void;
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   formatFileSize: (size: number) => string;
   handleFileUpload: (autoNs: boolean) => void;
@@ -34,6 +37,9 @@ export const UploadFileTab = ({
   selectedFile,
   setSelectedFile,
   loading,
+  handleDragOver,
+  handleDragLeave,
+  handleDrop,
   handleFileChange,
   formatFileSize,
   handleFileUpload,
@@ -256,6 +262,9 @@ export const UploadFileTab = ({
           </Box>
         ) : (
           <StyledPaper
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
             sx={{
               border: theme === 'dark' ? '2px dashed #444' : '2px dashed #e0e0e0',
             }}

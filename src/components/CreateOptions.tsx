@@ -806,6 +806,30 @@ spec:
     setFormData({ ...formData, webhook: 'none' });
   };
 
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.currentTarget.style.borderColor = '#1976d2';
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.currentTarget.style.borderColor = '#bdbdbd';
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.currentTarget.style.borderColor = '#bdbdbd';
+    const file = e.dataTransfer.files?.[0] || null;
+    if (
+      file &&
+      (file.name.endsWith('.yaml') || file.name.endsWith('.yml') || file.name.endsWith('.json'))
+    ) {
+      setSelectedFile(file);
+    } else {
+      toast.error(t('workloads.createOptions.file.invalidFile'));
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     if (file) {
@@ -956,6 +980,9 @@ spec:
                 selectedFile={selectedFile}
                 setSelectedFile={setSelectedFile}
                 loading={loading}
+                handleDragOver={handleDragOver}
+                handleDragLeave={handleDragLeave}
+                handleDrop={handleDrop}
                 handleFileUpload={handleFileUpload}
                 handleCancelClick={handleCancelClick}
                 handleFileChange={handleFileChange}
