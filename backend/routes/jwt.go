@@ -318,6 +318,15 @@ func LoginHandler(c *gin.Context) {
 				return
 			}
 
+			// Generate refresh token
+			refreshToken, err := utils.GenerateRefreshToken(user.Username)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Refresh token generation failed"})
+				return
+			}
+
+			c.SetCookie("refreshToken", refreshToken, 7*24*3600, "/", "", true, true)
+
 			// Return success response
 			c.JSON(http.StatusOK, gin.H{
 				"success": true,
