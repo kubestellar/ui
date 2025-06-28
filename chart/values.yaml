@@ -4,11 +4,11 @@
 replicaCount: 1
 
 frontend:
-  image: mavrick1/kubestellar-f:latest
+  image: ghcr.io/kubestellar/ui/frontend:latest
   port: 80
 
 backend:
-  image: mavrick1/kubestellar-b:latest
+  image: ghcr.io/kubestellar/ui/backend:latest
   port: 4000
 
 redis:
