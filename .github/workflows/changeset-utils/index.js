@@ -15,46 +15,50 @@ const getFormattedCommits = async (pullRequest, github) => {
   const commits = await github.paginate(commitOpts);
 
   // Filter merge commits and commits by bots
-  const filteredCommits = commits.filter((commit) => {
-    return !commit.commit.message.startsWith('Merge pull request') && 
-           !commit.commit.message.startsWith('Merge branch') && 
-           !commit.commit.author.name.startsWith('github-actions[bot]') && 
-           !commit.commit.author.name.startsWith('dependabot[bot]') &&
-           !commit.commit.author.name.startsWith('asyncapi-bot');
+  const filteredCommits = commits.filter(commit => {
+    return (
+      !commit.commit.message.startsWith('Merge pull request') &&
+      !commit.commit.message.startsWith('Merge branch') &&
+      !commit.commit.author.name.startsWith('github-actions[bot]') &&
+      !commit.commit.author.name.startsWith('dependabot[bot]') &&
+      !commit.commit.author.name.startsWith('asyncapi-bot')
+    );
   });
 
-  return filteredCommits.map((commit) => {
+  return filteredCommits.map(commit => {
     return {
       commit_sha: commit.sha.slice(0, 7), // first 7 characters of the commit sha is enough to identify the commit
       commit_message: commit.commit.message,
     };
   });
-}
+};
 
 /**
  * Get released packages by analyzing modified files
  * Identifies which packages are affected by the changes
  */
 const getReleasedPackages = async (pullRequest, github) => {
-  const files = await github.paginate(github.rest.pulls.listFiles.endpoint.merge({
-    owner: pullRequest.base.repo.owner.login,
-    repo: pullRequest.base.repo.name,
-    pull_number: pullRequest.number,
-  }));
+  const files = await github.paginate(
+    github.rest.pulls.listFiles.endpoint.merge({
+      owner: pullRequest.base.repo.owner.login,
+      repo: pullRequest.base.repo.name,
+      pull_number: pullRequest.number,
+    })
+  );
 
   const releasedPackages = [];
   const ignoredFiles = [
-    'README.md', 
-    'CHANGELOG.md', 
-    './changeset/README.md', 
-    'package.json', 
-    'package-lock.json', 
-    'yarn.lock', 
+    'README.md',
+    'CHANGELOG.md',
+    './changeset/README.md',
+    'package.json',
+    'package-lock.json',
+    'yarn.lock',
     'pnpm-lock.yaml',
     '.github/workflows/auto-changeset.yml',
-    '.github/workflows/changeset-utils/index.js'
+    '.github/workflows/changeset-utils/index.js',
   ];
-  
+
   for (const file of files) {
     if (!ignoredFiles.includes(file.filename)) {
       const cwd = path.resolve(path.dirname(file.filename));
@@ -66,7 +70,7 @@ const getReleasedPackages = async (pullRequest, github) => {
       } catch (error) {
         console.debug(`Error reading package for file ${file.filename}:`, error.message);
       }
-    } 
+    }
   }
 
   // If no packages found, default to the main package
@@ -81,10 +85,13 @@ const getReleasedPackages = async (pullRequest, github) => {
     }
   }
 
-  console.debug('Filenames', files.map((file) => file.filename));
+  console.debug(
+    'Filenames',
+    files.map(file => file.filename)
+  );
   console.debug('Released packages', releasedPackages);
   return releasedPackages;
-}
+};
 
 /**
  * Generate release notes from commit messages
@@ -97,12 +104,17 @@ const getReleaseNotes = async (pullRequest, github) => {
    * - title
    * - commit_sha: commit_message (Array of commits)
    */
-  const releaseNotes = pullRequest.title + '\n\n' + commits.map((commit) => {
-    return `- ${commit.commit_sha}: ${commit.commit_message}`;
-  }).join('\n');
+  const releaseNotes =
+    pullRequest.title +
+    '\n\n' +
+    commits
+      .map(commit => {
+        return `- ${commit.commit_sha}: ${commit.commit_message}`;
+      })
+      .join('\n');
 
   return releaseNotes;
-}
+};
 
 /**
  * Generate changeset contents based on PR title and release notes
@@ -111,7 +123,7 @@ const getChangesetContents = async (pullRequest, github) => {
   const title = pullRequest.title;
   const releaseType = title.split(':')[0];
   let releaseVersion = 'patch';
-  
+
   switch (releaseType) {
     case 'fix':
       releaseVersion = 'patch';
@@ -154,13 +166,18 @@ const getChangesetContents = async (pullRequest, github) => {
     console.debug('No packages released');
     return '';
   }
-  
+
   console.debug('Released packages', releasedPackages);
   console.debug('Release notes', releaseNotes);
 
-  const changesetContents = `---\n` + releasedPackages.map((pkg) => {
-    return `'${pkg}': ${releaseVersion}`;
-  }).join('\n') + `\n---\n\n${releaseNotes}\n\n`
+  const changesetContents =
+    `---\n` +
+    releasedPackages
+      .map(pkg => {
+        return `'${pkg}': ${releaseVersion}`;
+      })
+      .join('\n') +
+    `\n---\n\n${releaseNotes}\n\n`;
 
   return changesetContents;
 };
@@ -191,7 +208,11 @@ ${changesetContents}
     issue_number: pullRequest.number,
   });
 
-  const comment = comments.data.find((comment) => comment.body.includes('Changeset has been generated for this PR as part of auto-changeset workflow.'));
+  const comment = comments.data.find(comment =>
+    comment.body.includes(
+      'Changeset has been generated for this PR as part of auto-changeset workflow.'
+    )
+  );
   if (comment) {
     await github.rest.issues.updateComment({
       owner: pullRequest.base.repo.owner.login,
@@ -207,9 +228,9 @@ ${changesetContents}
       body: body,
     });
   }
-}
+};
 
 module.exports = {
   getChangesetContents,
   commentWorkflow,
-}; 
+};

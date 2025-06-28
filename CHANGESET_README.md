@@ -123,6 +123,7 @@ package.json                        # Updated with changeset scripts
 ### For Contributors
 
 1. **Create a PR** with a conventional commit title:
+
    ```
    feat: add new cluster management feature
    fix: resolve authentication issue
@@ -130,6 +131,7 @@ package.json                        # Updated with changeset scripts
    ```
 
 2. **The automation will**:
+
    - Generate a changeset file (`.changeset/PR_NUMBER.md`)
    - Add it to your PR branch
    - Comment on the PR with the changeset content
@@ -160,6 +162,7 @@ To skip changeset generation for a PR:
 ### `getFormattedCommits(pullRequest, github)`
 
 Filters and formats commits from a pull request:
+
 - Removes merge commits
 - Removes bot commits (github-actions[bot], dependabot[bot], etc.)
 - Returns commit SHA and message
@@ -167,6 +170,7 @@ Filters and formats commits from a pull request:
 ### `getReleasedPackages(pullRequest, github)`
 
 Identifies which packages are affected by changes:
+
 - Analyzes modified files
 - Reads package.json files to find package names
 - Ignores documentation and configuration files
@@ -175,6 +179,7 @@ Identifies which packages are affected by changes:
 ### `getReleaseNotes(pullRequest, github)`
 
 Generates release notes from commit messages:
+
 - Uses PR title as main description
 - Lists all commits with SHA and message
 - Formats for changeset consumption
@@ -182,6 +187,7 @@ Generates release notes from commit messages:
 ### `getChangesetContents(pullRequest, github)`
 
 Creates the final changeset content:
+
 - Determines version bump type from PR title
 - Generates release notes
 - Identifies affected packages
@@ -190,24 +196,25 @@ Creates the final changeset content:
 ### `commentWorkflow(pullRequest, github, changesetContents)`
 
 Manages PR comments:
+
 - Creates or updates comment with changeset
 - Provides link to edit changeset
 - Includes instructions for skipping automation
 
 ## Version Bump Rules
 
-| PR Title Prefix | Version Bump | Description |
-|----------------|--------------|-------------|
-| `fix:` | patch | Bug fixes |
-| `feat:` | minor | New features |
-| `fix!:` | major | Breaking bug fixes |
-| `feat!:` | major | Breaking new features |
-| `docs:` | patch | Documentation |
-| `style:` | patch | Code style |
-| `refactor:` | patch | Code refactoring |
-| `perf:` | patch | Performance |
-| `test:` | patch | Tests |
-| `chore:` | patch | Maintenance |
+| PR Title Prefix | Version Bump | Description           |
+| --------------- | ------------ | --------------------- |
+| `fix:`          | patch        | Bug fixes             |
+| `feat:`         | minor        | New features          |
+| `fix!:`         | major        | Breaking bug fixes    |
+| `feat!:`        | major        | Breaking new features |
+| `docs:`         | patch        | Documentation         |
+| `style:`        | patch        | Code style            |
+| `refactor:`     | patch        | Code refactoring      |
+| `perf:`         | patch        | Performance           |
+| `test:`         | patch        | Tests                 |
+| `chore:`        | patch        | Maintenance           |
 
 ## Docker Image Tags
 
@@ -217,6 +224,7 @@ When a release is published, Docker images are tagged with:
 - `{version}` - Specific version (e.g., `1.2.3`)
 
 Images are pushed to:
+
 - `ghcr.io/{owner}/ui/frontend:{tag}`
 - `ghcr.io/{owner}/ui/backend:{tag}`
 
@@ -225,11 +233,13 @@ Images are pushed to:
 ### Common Issues
 
 1. **Changeset not generated**:
+
    - Check PR title follows conventional commit format
    - Ensure `skip-changeset` label is not present
    - Verify workflow has proper permissions
 
 2. **Package not detected**:
+
    - Check if modified files are in ignored list
    - Verify package.json exists in relevant directories
    - Check for errors in workflow logs
@@ -242,6 +252,7 @@ Images are pushed to:
 ### Debugging
 
 Enable debug logging by checking workflow logs for:
+
 - `console.debug()` output in utility functions
 - Package detection results
 - Changeset content generation
@@ -256,6 +267,7 @@ Enable debug logging by checking workflow logs for:
 ## Future Enhancements
 
 Potential improvements:
+
 - Support for monorepo with multiple packages
 - Custom changelog templates
 - Integration with external release tools
@@ -267,4 +279,4 @@ Potential improvements:
 - [AsyncAPI CLI Changeset Implementation](https://github.com/asyncapi/cli)
 - [Changesets Documentation](https://github.com/changesets/changesets)
 - [Conventional Commits](https://www.conventionalcommits.org/)
-- [GitHub Actions Documentation](https://docs.github.com/en/actions) 
+- [GitHub Actions Documentation](https://docs.github.com/en/actions)
