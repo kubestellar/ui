@@ -18,20 +18,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      # Step 1: Run Trivy with table format. This step will fail the build.
+        
       - name: Run Trivy vulnerability scanner (log output)
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           format: 'table'
-          # Widen severity to include both CRITICAL and HIGH.
           severity: 'CRITICAL,HIGH'
-          # Remove 'ignore-unfixed: true' to see ALL vulnerabilities, even those without a direct fix.
-          # This is the most likely reason your scan was coming up empty.
-          # ignore-unfixed: true
           vuln-type: 'os,library'
-          exit-code: '1' # This will fail the build if vulnerabilities are found.
+          exit-code: '1' 
 
       - name: Run Trivy vulnerability scanner (SARIF report)
         if: always()
@@ -41,8 +36,8 @@ jobs:
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
-          exit-code: '0' # This step only generates a report, it does not fail the build.
-                # Step 3: Upload the SARIF report.
+          exit-code: '0' 
+          
       - name: Upload Trivy scan results to GitHub Security tab
         if: always()
         uses: github/codeql-action/upload-sarif@v3
