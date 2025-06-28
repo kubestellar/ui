@@ -38,8 +38,7 @@ Before proceeding, ensure you have the following installed:
 - **Make** (For running backend scripts via makefile)
 - **Air** (For hot reloading - optional but recommended)
 
-> [!NOTE]
-> **Recommended Setup**: Use Docker Compose for the easiest setup experience. This automatically handles PostgreSQL and Redis containers with proper configuration.
+> [!NOTE] > **Recommended Setup**: Use Docker Compose for the easiest setup experience. This automatically handles PostgreSQL and Redis containers with proper configuration.
 
 ---
 
