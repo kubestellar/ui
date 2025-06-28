@@ -58,7 +58,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const { getChangesetContents } = require('./.github/workflows/changeset-utils/index.js')
+            const { getChangesetContents } = require('./.github/workflows/changeset-utils/index.cjs')
             
             const pullRequest = context.payload.pull_request;
             const changesetContents = await getChangesetContents(pullRequest, github)
@@ -97,7 +97,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const { commentWorkflow } = require('./.github/workflows/changeset-utils/index.js')
+            const { commentWorkflow } = require('./.github/workflows/changeset-utils/index.cjs')
             const pullRequest = context.payload.pull_request;
             const changesetContents = ${{ steps.get_changeset_contents.outputs.result }}
             await commentWorkflow(pullRequest, github, changesetContents) 
