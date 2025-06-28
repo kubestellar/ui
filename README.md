@@ -63,7 +63,7 @@ Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI 
 
 - **Kubestellar guide**: [Guide](https://docs.kubestellar.io/release-0.25.1/direct/get-started/)
 
-> [!NOTE]  
+> [!NOTE]
 > If you're running on macOS, you may need to manually add a host entry to resolve `its1.localtest.me` to `localhost` using:
 >
 > ```bash
@@ -322,7 +322,8 @@ REDIS_IMAGE=redis:7-alpine docker compose up
 
 ---
 
-> **Note for WSL Users 🐧**
+> [!NOTE]
+> **For WSL Users 🐧**
 >
 > If you've successfully installed the KubeStellar but they are not detected by frontend, it might be due to a communication issue between Docker and WSL.
 >
@@ -342,7 +343,7 @@ REDIS_IMAGE=redis:7-alpine docker compose up
 - **Username: admin**
 - **Password: admin**
 
-> [!NOTE]  
+> [!NOTE]
 > If you're encountering errors while setting up the Kubestellar UI, even after correctly following the guide, try pruning the Docker images and containers related to the KS core.  
 > Rebuild them and perform a restart.
 >
