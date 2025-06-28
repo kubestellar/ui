@@ -6,6 +6,7 @@ presubmits:
     spec:
       containers:
         - image: node:20
+          workingDir: /home/prow/go/src/github.com/kubestellar/ui/frontend
           command:
             - /bin/bash
             - -c
@@ -23,6 +24,7 @@ presubmits:
     spec:
       containers:
         - image: node:20
+          workingDir: /home/prow/go/src/github.com/kubestellar/ui/frontend
           command:
             - /bin/bash
             - -c
@@ -40,6 +42,7 @@ presubmits:
     spec:
       containers:
         - image: node:20
+          workingDir: /home/prow/go/src/github.com/kubestellar/ui/frontend
           command:
             - /bin/bash
             - -c
