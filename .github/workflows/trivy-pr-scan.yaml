@@ -3,7 +3,7 @@ name: Trivy Vulnerability Scanner
 on:
   pull_request:
     paths:
-      - '**/package*.json'
+      - '**/package.json'
       - '**/go.mod'
       - '**/go.sum'
       - '**/Dockerfile'
