@@ -2,6 +2,7 @@ package routes
 
 import (
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -176,6 +177,7 @@ func setupAuthRoutes(router *gin.Engine) {
 	setupdebug(router) // Add debug routes for testing
 	// Public routes (no authentication required)
 	router.POST("/login", LoginHandler)
+	router.POST("/refresh-token", RefreshAccessTokenHandler)
 
 	// Remove this duplicate health check since main.go already has one
 	// router.GET("/api/health", func(c *gin.Context) {
@@ -263,6 +265,8 @@ func LoginHandler(c *gin.Context) {
 		Password string `json:"password" binding:"required"`
 	}
 
+	APP_ENVIRONMENT := os.Getenv("APP_ENVIRONMENT")
+
 	if err := c.ShouldBindJSON(&loginData); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
 		return
@@ -325,7 +329,7 @@ func LoginHandler(c *gin.Context) {
 				return
 			}
 
-			c.SetCookie("refreshToken", refreshToken, 7*24*3600, "/", "", true, true)
+			c.SetCookie("refreshToken", refreshToken, 7*24*3600, "/", "", APP_ENVIRONMENT == "prod", true)
 
 			// Return success response
 			c.JSON(http.StatusOK, gin.H{
@@ -366,6 +370,15 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
+	// Generate refresh token
+	refreshToken, err := utils.GenerateRefreshToken(user.Username)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Refresh token generation failed"})
+		return
+	}
+
+	c.SetCookie("refreshToken", refreshToken, 7*24*3600, "/", "", APP_ENVIRONMENT == "prod", true)
+
 	// Return success response
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
@@ -376,6 +389,70 @@ func LoginHandler(c *gin.Context) {
 			"permissions": user.Permissions,
 		},
 	})
+}
+
+// Sends Access and refresh token if jwt(access token) is invalid
+func RefreshAccessTokenHandler(c *gin.Context) {
+
+	APP_ENVIRONMENT := os.Getenv("APP_ENVIRONMENT")
+
+	// retrive refresh token from cookie
+	refreshToken, err := c.Cookie("refreshToken")
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "Refresh token not found",
+		})
+		return
+	}
+
+	// validate refresh token
+	claims, err := utils.ValidateRefreshToken(refreshToken)
+
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired refresh token"})
+		return
+	}
+
+	username := claims.Subject
+
+	if username == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid refresh token claims"})
+		return
+	}
+
+	user, err := models.GetUserByUsername(username)
+	if err != nil || user == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		return
+	}
+
+	// Generate JWT token
+	token, err := utils.GenerateToken(user.Username, user.IsAdmin, user.Permissions)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Authentication successful but token generation failed"})
+		return
+	}
+
+	// Generate refresh token
+	newRefreshToken, err := utils.GenerateRefreshToken(user.Username)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Refresh token generation failed"})
+		return
+	}
+
+	c.SetCookie("refreshToken", newRefreshToken, 7*24*3600, "/", "", APP_ENVIRONMENT == "prod", true)
+
+	// Return success response
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"token":   token,
+		"user": gin.H{
+			"username":    user.Username,
+			"is_admin":    user.IsAdmin,
+			"permissions": user.Permissions,
+		},
+	})
+
 }
 
 // RegisterHandler creates a new user (removed - no public registration)
