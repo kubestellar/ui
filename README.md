@@ -322,7 +322,8 @@ REDIS_IMAGE=redis:7-alpine docker compose up
 
 ---
 
-> [!NOTE] > **For WSL Users 🐧**
+> [!NOTE]
+> **For WSL Users 🐧**
 >
 > If you've successfully installed the KubeStellar but they are not detected by frontend, it might be due to a communication issue between Docker and WSL.
 >
