@@ -48,7 +48,6 @@ const getReleasedPackages = async (pullRequest, github) => {
 
   const releasedPackages = [];
   const ignoredFiles = [
-    'README.md',
     'CHANGELOG.md',
     './changeset/README.md',
     'package.json',
