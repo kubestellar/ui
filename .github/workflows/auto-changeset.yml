@@ -12,7 +12,7 @@ on:
 jobs:
   auto-changeset:
     if: |
-      (!contains(github.event.pull_request.labels, 'skip-changeset')) &&
+      (!contains(github.event.pull_request.labels.*.name, 'skip-changeset')) &&
       ( startsWith(github.event.pull_request.title, 'fix:') ||
         startsWith(github.event.pull_request.title, 'feat:') ||
         startsWith(github.event.pull_request.title, 'fix!:') ||
@@ -59,7 +59,6 @@ jobs:
         with:
           script: |
             const { getChangesetContents } = require('./.github/workflows/changeset-utils/index.cjs')
-            
             const pullRequest = context.payload.pull_request;
             const changesetContents = await getChangesetContents(pullRequest, github)
             return changesetContents;
@@ -67,7 +66,9 @@ jobs:
       - name: Create changeset file
         run: |
           if [ -n "${{ steps.get_changeset_contents.outputs.result }}" ]; then
-            echo -e "${{ steps.get_changeset_contents.outputs.result }}" > .changeset/${{ github.event.pull_request.number }}.md
+            cat <<'EOF' > .changeset/${{ github.event.pull_request.number }}.md
+          ${{ steps.get_changeset_contents.outputs.result }}
+          EOF
           else
             echo "No changeset content generated"
           fi
@@ -90,7 +91,7 @@ jobs:
         run: |
           git remote set-url origin https://github.com/${{ github.event.pull_request.head.repo.full_name }}
           git push origin HEAD:${{ github.event.pull_request.head.ref }}
-      
+
       - name: Comment workflow
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -100,4 +101,4 @@ jobs:
             const { commentWorkflow } = require('./.github/workflows/changeset-utils/index.cjs')
             const pullRequest = context.payload.pull_request;
             const changesetContents = ${{ steps.get_changeset_contents.outputs.result }}
-            await commentWorkflow(pullRequest, github, changesetContents) 
+            await commentWorkflow(pullRequest, github, changesetContents)
