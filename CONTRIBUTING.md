@@ -68,60 +68,6 @@ Both services are configured with appropriate volumes to persist data between re
 
 ---
 
-## **Alternative: Setup Individual Containers**
-
-If you prefer to run containers individually or don't have Docker Compose:
-
-### **Setup PostgreSQL Container**
-
-```bash
-docker run --name postgres -d \
-  -e POSTGRES_DB=kubestellar \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=postgres \
-  -p 5432:5432 \
-  -v postgres_data:/var/lib/postgresql/data \
-  postgres:15
-```
-
-### **Setup Redis Container**
-
-```bash
-docker run --name redis -d -p 6379:6379 redis
-```
-
-### **Breakdown of PostgreSQL Flags:**
-
-- `--name postgres` → Container name
-- `-e POSTGRES_DB=kubestellar` → Database name
-- `-e POSTGRES_USER=postgres` → Database user
-- `-e POSTGRES_PASSWORD=postgres` → Database password
-- `-p 5432:5432` → Expose PostgreSQL on port **5432**
-- `-v postgres_data:/var/lib/postgresql/data` → Persist data
-- `-d` → Run the container in detached mode
-- `postgres:15` → Image name and version
-
-### **Breakdown of Redis Flags:**
-
-- `--name redis` → Container name
-- `-p 6379:6379` → Expose Redis on port **6379**
-- `-d` → Run the container in detached mode
-- `redis` → Image name
-
----
-
-## **Verify Services are Running**
-
-**Check running containers:**
-
-```bash
-docker ps | grep -E "(postgres|redis)"
-```
-
-You should see both PostgreSQL and Redis containers running.
-
----
-
 ## **Setting Up JWT Authentication**
 
 ### **Generate a JWT Secret Key**
@@ -533,15 +479,5 @@ make fix-lint
 ```bash
 make lint
 ```
-
----
-
-## **Extending KS-UI API through Plugins**
-
-### **Static plugins**
-
-To write static plugins define your plugin type inside `/backend/plugin/plugins`, you have to implement methods to satisfy the plugin interface basically name, version, Routes methods. You can define the functionality of the plugin as you like. Follow the standard of defining routes for your plugin in this form `/plugins/your-plugin-name/`. After writing all the methods (name, version, routes...) make sure to call `pm.register(your-plugin-name)` so that your routes are sent to gin at start time. pm is the plugin manager (defined at `/backend/plugin/plugins/manager.go`) basically a record of all static plugins.
-
-- **backup plugin**: currently only supporting postgres backend, takes a snapshot of the wds on `/plugins/backup-plugin/snapshot`
 
 ---
