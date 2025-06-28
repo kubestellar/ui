@@ -30,6 +30,7 @@ presubmits:
             - /bin/bash
             - -c
             - |
+              cd frontend
               npm ci
               npm run build
           resources:
@@ -48,6 +49,7 @@ presubmits:
             - /bin/bash
             - -c
             - |
+              cd frontend
               npm ci
               npm test
           resources:
