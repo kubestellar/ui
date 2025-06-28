@@ -45,7 +45,7 @@ func main() {
 	gin.SetMode(cfg.GinMode)
 
 	// Initialize JWT
-	utils.InitJWT(cfg.JWTSecret)
+	utils.InitJWT(cfg.JWTSecret, cfg.AccessTokenSecret)
 
 	// Initialize database with retry logic for Docker
 	logger.Info("Connecting to database...", zap.String("url", maskPassword(cfg.DatabaseURL)))

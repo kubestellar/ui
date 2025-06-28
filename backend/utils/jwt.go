@@ -8,9 +8,11 @@ import (
 )
 
 var jwtSecret []byte
+var refreshSecret []byte
 
-func InitJWT(secret string) {
-	jwtSecret = []byte(secret)
+func InitJWT(accessSecret, refreshSecretToken string) {
+	jwtSecret = []byte(accessSecret)
+	refreshSecret = []byte(refreshSecretToken)
 }
 
 type Claims struct {
@@ -55,4 +57,16 @@ func ValidateToken(tokenString string) (*Claims, error) {
 	}
 
 	return claims, nil
+}
+
+// GenerateRefreshToken creates a long-lived JWT refresh token
+func GenerateRefreshToken(username string) (string, error) {
+	claims := &jwt.RegisteredClaims{
+		Subject:   username,
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),
+		IssuedAt:  jwt.NewNumericDate(time.Now()),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(refreshSecret)
 }
