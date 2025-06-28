@@ -77,12 +77,16 @@ jobs:
         run: |
           git config --global user.name github-actions[bot]
           git config --global user.email github-actions[bot]@users.noreply.github.com
-          git add .changeset/${{ github.event.pull_request.number }}.md
-          # Check if there are any changes to commit
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
+          if [ -f .changeset/${{ github.event.pull_request.number }}.md ]; then
+            git add .changeset/${{ github.event.pull_request.number }}.md
+            # Check if there are any changes to commit
+            if git diff --staged --quiet; then
+              echo "No changes to commit"
+            else
+              git commit -m "chore: add changeset for PR #${{ github.event.pull_request.number }}"
+            fi
           else
-            git commit -m "chore: add changeset for PR #${{ github.event.pull_request.number }}"
+            echo "No changeset file to add"
           fi
 
       - name: Push changeset file
