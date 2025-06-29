@@ -67,7 +67,9 @@ jobs:
       - name: Create changeset file
         run: |
           if [ -n "${{ steps.get_changeset_contents.outputs.result }}" ]; then
-            echo "${{ steps.get_changeset_contents.outputs.result }}" > .changeset/${{ github.event.pull_request.number }}.md
+            cat <<EOF > .changeset/${{ github.event.pull_request.number }}.md
+${{ steps.get_changeset_contents.outputs.result }}
+EOF
           else
             echo "No changeset content generated"
           fi
