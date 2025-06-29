@@ -13,6 +13,9 @@ import { useTreeViewData } from './TreeView/hooks/useTreeViewData';
 import { useTreeViewActions } from './TreeView/hooks/useTreeViewActions';
 import { ResourceItem, CustomNode, CustomEdge } from './TreeView/types';
 
+// Re-export types for other components to import
+export type { ResourceItem, CustomNode, CustomEdge } from './TreeView/types';
+
 interface TreeViewComponentProps {
   onViewModeChange?: (viewMode: 'tiles' | 'list') => void;
 }
