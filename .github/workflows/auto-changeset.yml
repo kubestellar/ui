@@ -12,29 +12,26 @@ on:
 jobs:
   auto-changeset:
     if: |
-      (!contains(github.event.pull_request.labels.*.name, 'skip-changeset')) &&
-      (
-        startsWith(github.event.pull_request.title, 'fix:') ||
+      startsWith(github.repository, 'Arpit529Srivastava/') &&
+      (!contains(github.event.pull_request.labels, 'skip-changeset')) &&
+      ( startsWith(github.event.pull_request.title, 'fix:') ||
         startsWith(github.event.pull_request.title, 'feat:') ||
         startsWith(github.event.pull_request.title, 'fix!:') ||
-        startsWith(github.event.pull_request.title, 'feat!:') ||
-        startsWith(github.event.pull_request.title, 'docs:') ||
-        startsWith(github.event.pull_request.title, 'style:') ||
-        startsWith(github.event.pull_request.title, 'refactor:') ||
-        startsWith(github.event.pull_request.title, 'perf:') ||
-        startsWith(github.event.pull_request.title, 'test:') ||
-        startsWith(github.event.pull_request.title, 'chore:')
+        startsWith(github.event.pull_request.title, 'feat!:')
       )
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GH_TOKEN }}
+
+      - name: Create Changeset
+        uses: changesets/action@v1
+        with:
+          title: "chore: add changeset for PR #${{ github.event.pull_request.number }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Checkout PR
         env:
@@ -50,59 +47,42 @@ jobs:
           cp -r node_modules ../node_modules
           cd ..
           rm -rf temp-install
-
-      - name: Create .changeset directory
-        run: mkdir -p .changeset
-
       - name: Get changeset contents
         id: get_changeset_contents
         uses: actions/github-script@v7
         with:
           script: |
-            const { getChangesetContents } = require('./.github/workflows/changeset-utils/index.cjs');
+            const { getChangesetContents } = await import('./.github/workflows/changeset-utils/index.js')            
             const pullRequest = context.payload.pull_request;
-            const changesetContents = await getChangesetContents(pullRequest, github);
+            const changesetContents = await getChangesetContents(pullRequest, github)
             return changesetContents;
-
       - name: Create changeset file
-        run: |
-          if [ -n "${{ steps.get_changeset_contents.outputs.result }}" ]; then
-            cat <<EOF > .changeset/${{ github.event.pull_request.number }}.md
-${{ steps.get_changeset_contents.outputs.result }}
-EOF
-          else
-            echo "No changeset content generated"
-          fi
+        run: "echo -e ${{ steps.get_changeset_contents.outputs.result }} > .changeset/${{ github.event.pull_request.number }}.md"
 
       - name: Commit changeset file
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          if [ -f .changeset/${{ github.event.pull_request.number }}.md ]; then
-            git add .changeset/${{ github.event.pull_request.number }}.md
-            if git diff --staged --quiet; then
-              echo "No changes to commit"
-            else
-              git commit -m "chore: add changeset for PR #${{ github.event.pull_request.number }}"
-            fi
+          git config --global user.name kubestellar-bot
+          git config --global user.email bot@kubestellar.io
+          git add .changeset/${{ github.event.pull_request.number }}.md
+          if git diff --quiet HEAD; then
+            echo "No changes to commit"
           else
-            echo "No changeset file to add"
+            git commit -m "chore: add changeset for PR #${{ github.event.pull_request.number }}"
           fi
-
       - name: Push changeset file
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           git remote set-url origin https://github.com/${{ github.event.pull_request.head.repo.full_name }}
           git push origin HEAD:${{ github.event.pull_request.head.ref }}
-
+      
       - name: Comment workflow
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         uses: actions/github-script@v7
         with:
           script: |
-            const { commentWorkflow } = require('./.github/workflows/changeset-utils/index.cjs');
+            const { commentWorkflow } = await import('./.github/workflows/changeset-utils/index.js')
             const pullRequest = context.payload.pull_request;
-            const changesetContents = `${{ steps.get_changeset_contents.outputs.result }}`;
-            await commentWorkflow(pullRequest, github, changesetContents);
+            const changesetContents = ${{ steps.get_changeset_contents.outputs.result }}
+            await commentWorkflow(pullRequest, github, changesetContents) 
