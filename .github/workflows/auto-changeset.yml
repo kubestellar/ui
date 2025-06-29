@@ -89,14 +89,14 @@ jobs:
 
       - name: Push changeset file
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           git remote set-url origin https://github.com/${{ github.event.pull_request.head.repo.full_name }}
           git push origin HEAD:${{ github.event.pull_request.head.ref }}
 
       - name: Comment workflow
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         uses: actions/github-script@v7
         with:
           script: |
