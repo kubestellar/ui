@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { Menu, MenuItem } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import useTheme from '../../stores/themeStore';

@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { Position, MarkerType } from 'reactflow';
 import { NodeLabel } from '../Wds_Topology/NodeLabel';
 import useTheme from '../../stores/themeStore';
@@ -219,7 +219,7 @@ const getTimeAgo = (timestamp: string | undefined, t: (key: string) => string): 
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   return diffDays === 0
     ? t('treeView.timeAgo.today')
-    : t('treeView.timeAgo.days', { count: diffDays });
+    : t(`treeView.timeAgo.days${diffDays === 1 ? '.one' : ''}`).replace('{{count}}', diffDays.toString());
 };
 
 export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeViewNodesProps) => {

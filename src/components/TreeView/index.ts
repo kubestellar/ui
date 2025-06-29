@@ -1,5 +1,5 @@
 // Main component
-export { default as TreeViewComponent } from './TreeViewComponent';
+export { default as TreeViewComponent } from '../TreeViewComponent';
 
 // Subcomponents
 export { default as TreeViewHeader } from './TreeViewHeader';

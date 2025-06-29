@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import { ReactFlowProvider } from 'reactflow';
 import { Plus } from 'lucide-react';
@@ -10,7 +10,28 @@ import FullScreenToggle from '../ui/FullScreenToggle';
 import ListViewComponent from '../ListViewComponent';
 import ListViewSkeleton from '../ui/ListViewSkeleton';
 import TreeViewSkeleton from '../ui/TreeViewSkeleton';
-import { CustomNode, CustomEdge, ResourceDataChangeEvent } from './types';
+import { CustomNode, CustomEdge, ResourceDataChangeEvent, ResourceItem as TreeViewResourceItem } from './types';
+
+// Import the ListViewComponent ResourceItem type
+import type { ResourceItem as ListViewResourceItem } from '../ListViewComponent';
+
+// Type adapter to convert ListViewComponent ResourceItem to TreeView ResourceItem
+const adaptResourceItem = (listViewItem: ListViewResourceItem): TreeViewResourceItem => {
+  return {
+    apiVersion: 'v1', // Default value since ListViewComponent doesn't have this
+    kind: listViewItem.kind,
+    metadata: {
+      name: listViewItem.name,
+      namespace: listViewItem.namespace,
+      creationTimestamp: listViewItem.createdAt,
+      labels: listViewItem.labels || {},
+      uid: listViewItem.uid,
+    },
+    // Add other required fields with default values
+    spec: {},
+    status: {},
+  };
+};
 
 interface TreeViewCanvasProps {
   isLoading: boolean;
@@ -52,6 +73,26 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
       [nodes.length, edges.length]
     );
 
+    // Create a wrapper function that adapts the data before calling the original callback
+    const handleResourceDataChange = useMemo(() => {
+      if (!onResourceDataChange) return undefined;
+      
+      return (data: {
+        resources: ListViewResourceItem[];
+        filteredResources: ListViewResourceItem[];
+        contextCounts: Record<string, number>;
+        totalCount: number;
+      }) => {
+        const adaptedData: ResourceDataChangeEvent = {
+          resources: data.resources.map(adaptResourceItem),
+          filteredResources: data.filteredResources.map(adaptResourceItem),
+          contextCounts: data.contextCounts,
+          totalCount: data.totalCount,
+        };
+        onResourceDataChange(adaptedData);
+      };
+    }, [onResourceDataChange]);
+
     if (isLoading) {
       return viewMode === 'list' ? <ListViewSkeleton itemCount={8} /> : <TreeViewSkeleton />;
     }
@@ -60,7 +101,7 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
       return (
         <ListViewComponent
           filteredContext={filteredContext}
-          onResourceDataChange={onResourceDataChange}
+          onResourceDataChange={handleResourceDataChange}
         />
       );
     }

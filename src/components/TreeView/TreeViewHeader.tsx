@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { Box, Typography, IconButton, Button } from '@mui/material';
 import { Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';

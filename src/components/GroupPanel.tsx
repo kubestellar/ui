@@ -10,7 +10,7 @@ import {
   IconButton,
 } from '@mui/material';
 import { FiX } from 'react-icons/fi';
-import { ResourceItem } from './TreeViewComponent'; // Adjust the import path
+import { ResourceItem } from './TreeView/types';
 import useTheme from '../stores/themeStore';
 import DynamicDetailsPanel from './DynamicDetailsPanel'; // Adjust the import path
 import SettingsIcon from '@mui/icons-material/Settings'; // Placeholder for ArgoCD icon

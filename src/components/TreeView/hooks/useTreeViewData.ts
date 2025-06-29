@@ -2,7 +2,6 @@ import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useWebSocket } from '../../../context/webSocketExports';
 import { useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import * as dagre from 'dagre';
 import { isEqual } from 'lodash';
 import ReactDOM from 'react-dom';
@@ -38,8 +37,6 @@ export const useTreeViewData = ({
   onNodeSelect,
   onMenuOpen,
 }: UseTreeViewDataProps) => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { t } = useTranslation();
   const location = useLocation();
   const { isConnected, connect, hasValidData } = useWebSocket();
   const [nodes, setNodes] = useState<CustomNode[]>([]);

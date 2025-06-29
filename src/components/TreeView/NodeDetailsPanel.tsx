@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 import DynamicDetailsPanel from '../DynamicDetailsPanel';
 import GroupPanel from '../GroupPanel';
 import { ResourceItem } from './types';
