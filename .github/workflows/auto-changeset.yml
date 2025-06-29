@@ -26,6 +26,9 @@ jobs:
         with:
           token: ${{ secrets.GH_TOKEN }}
 
+      - name: Install dependencies
+        run: npm ci
+
       - name: Create Changeset
         uses: changesets/action@v1
         with:
