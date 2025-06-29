@@ -1,7 +1,11 @@
 {
   "common": {
     "changes": "Changes",
-    "clearFilter": "Clear Canvas",
+    "clusterLabel": "Cluster Label",
+    "workloadLabel": "Workload Label",
+    "workloads": "Workloads",
+    "clearCanvas": "Clear Canvas",
+    "clearFilter": "Clear Filter",
     "cancel": "Cancel",
     "save": "Save",
     "edit": "Edit",
@@ -18,6 +22,7 @@
     "warning": "Warning",
     "actions": "Actions",
     "status": {
+      "status": "Status",
       "active": "Active",
       "inactive": "Inactive",
       "pending": "Pending",
@@ -30,6 +35,10 @@
     "noResource": "No {{resource}} specified",
     "copy": "Copy",
     "close": "Close",
+    "update": "Update",
+    "unknown": "Unknown",
+    "workload": "Workload",
+    "tryAgain": "Try Again",
     "confirm": "Confirm",
     "continue": "Continue",
     "back": "Back",
@@ -45,13 +54,28 @@
     "ok": "OK",
     "finish": "Finish",
     "next": "Next",
+    "retry": "Retry",
     "previous": "Previous",
     "page": "Page",
+    "sync": "Sync",
+    "clearAll": "Clear All",
+    "fitView": "Fit View",
+    "clearSearch": "Clear Search",
+    "clearFilters": "Clear Filters",
+    "clear": "Clear",
     "of": "of",
-    "items": "item{{count, plural, one {} other {s}}}",
-    "filteredFrom": "filtered from {{total}}"
+    "items": "{{count}} item",
+    "items_plural": "{{count}} items",
+    "filteredFrom": "filtered from"
   },
   "installationPage": {
+    "successSection": {
+      "installed": "is correctly installed and meets the version requirements."
+    },
+    "errorSection": {
+      "title": "Installation Instructions",
+      "viewGuide": "View installation guide"
+    },
     "statusBadge": {
       "installed": "Installed",
       "versionMismatch": "Version mismatch",
@@ -83,6 +107,7 @@
     },
     "documentationLink": "View full installation guide",
     "prerequisites": {
+      "prerequisites": "Prerequisites",
       "title": "System Prerequisites",
       "description": "Ensure these tools are installed before proceeding",
       "status": {
@@ -193,6 +218,7 @@
     "switchTheme": "Switch to {{mode}} mode"
   },
   "login": {
+    "controlPlane": "Control Plane",
     "layout": {
       "logoAlt": "KubeStellar",
       "tagline": "Seamless Multi-Cluster Management",
@@ -235,7 +261,7 @@
     "noClustersMatchFilter": "No clusters match your filter selection",
     "noClustersAvailable": "No clusters available yet. Import your first cluster to get started.",
     "importYourFirst": "Import Your First Cluster",
-    "filterByLabel": "Filter by Label",
+    "filteredByLabel": "Filter by Label",
     "actions": {
       "viewDetails": "View Details",
       "editLabels": "Edit Labels",
@@ -383,7 +409,6 @@
       "creationTime": "Creation Time",
       "context": "Context",
       "description": "Manage and monitor your Kubernetes clusters",
-      "searchTip": "Press Esc to clear search",
       "filter": "Status Filter",
       "activeFilters": "Active Filters:",
       "searchFilter": "Search: \"{{query}}\"",
@@ -476,10 +501,65 @@
     },
     "dashboard": {
       "title": "Dashboard",
+      "lastUpdatedJustNow": "Last updated: just now",
+      "status": "Status: Optimal",
+      "other": "Other",
+      "distribution": "Distribution",
+      "state": "Pending or inactive",
+      "otherClusters": "Other Clusters",
+      "hoverFormula": "Hover to see the formula breakdown",
+      "healthScore": "Health Score Formula",
+      "clusterHealth": "Overall Cluster Health",
+      "clusterStatus": "Cluster Status",
       "welcome": "Welcome to the KubeStellar management dashboard",
       "errorLoading": "Error loading cluster information",
       "addCluster": "Add Cluster",
+      "notAvailable": "N/A",
+      "invalidDate": "Invalid Date",
+      "managedClusters": "Managed Clusters",
+      "total": "total",
+      "viewAll": "View all",
+      "cpuCapacity": "CPU Capacity",
+      "memoryCapacity": "Memory Capacity",
+      "podCapacity": "Pod Capacity",
+      "podCapacityLabel": "Pod Capacity",
+      "active": "Active",
+      "inactive": "Inactive",
+      "noManagedClusters": "No managed clusters found",
+      "importCluster": "Import Cluster",
+      "showMoreClusters": "Show more clusters",
+      "clustersActive": "Clusters Active",
+      "systemHealth": "System Health",
+      "refresh": "Refresh",
+      "noRecentActivity": "No recent activity found",
+      "recentActivity": "Recent Activity",
+      "resourceUtilization": "Resource Utilization",
+      "clusterMetrics": "Based on cluster metrics",
+      "pods": {
+        "formula": "Pod Health Formula",
+        "calculation": "Calculated based on the ratio of healthy pods to total pods across all namespaces.",
+        "status": "Factors in pod status, readiness probes, and liveness checks",
+        "value": "Higher values indicate better cluster health",
+        "formulaDesc": "(Running Pods / Total Pods) × 100%",
+        "health": "Pod Health"
+      },
+      "cpu": {
+        "usage": "CPU Usage",
+        "formula": "CPU Usage Formula",
+        "calculation": "Calculated as the percentage of allocated CPU resources currently in use across all nodes in the cluster.",
+        "value": "Lower values indicate better resource availability",
+        "formulaDesc": "(Used CPU Cores / Total CPU Cores) × 100%",
+        "health": "Lower values indicate better performance"
+      },
+      "memory": {
+        "usage": "Memory Usage",
+        "formula": "Memory Usage Formula",
+        "calculation": "Calculated as the percentage of allocated memory resources currently in use across all nodes in the cluster.",
+        "value": "Lower values indicate better resource availability",
+        "formulaDesc": "(Used Memory / Total Memory) × 100%"
+      },
       "stats": {
+        "running": "Running and available",
         "totalClusters": "Total Clusters",
         "activeClusters": "Active Clusters",
         "bindingPolicies": "Binding Policies",
@@ -701,11 +781,17 @@
       "selectContainer": "Select container",
       "noContainersFound": "No containers found"
     },
+    "logs": {
+      "previousLogs": "Previous Logs",
+      "currentLogs": "Current Logs",
+      "selectLogsContainer": "Select logs container"
+    },
     "errors": {
       "failedLoadClusterDetails": "Failed to load cluster details.",
       "failedLoadDetails": "Failed to load {{type}} details.",
       "apiNotImplemented": "API not implemented for updating pod \"{{resourceName}}\"",
-      "failedFetchContainers": "Failed to fetch container list"
+      "failedFetchContainers": "Failed to fetch container list",
+      "failedFetchLogsContainers": "Failed to fetch container list for logs"
     },
     "cluster": {
       "active": "Active"
@@ -752,6 +838,9 @@
     "selectCluster": "Select a Kubernetes Cluster",
     "searchingClusters": "Searching for available clusters...",
     "errorLoadingClusters": "Error Loading Clusters",
+    "automatedOnboarding": "Automated Cluster Onboarding",
+    "new": "New",
+    "automatedDescription": "This is the simplest way to connect your Kubernetes cluster. Select a cluster and click the Onboard button to directly connect it without any manual commands.",
     "retry": "Retry",
     "chooseCluster": "Choose a cluster...",
     "noClusters": "No clusters available",
@@ -806,6 +895,8 @@
     },
     "success": {
       "title": "Cluster Onboarded Successfully",
+      "clusterAdded": "Cluster added successfully",
+      "clusterAvailable": "Your cluster is now available in the platform",
       "message": "Cluster {{clusterName}} has been successfully onboarded to the platform.",
       "detailMessage": "Your cluster {{clusterName}} has been successfully onboarded. Here's what you can do next:",
       "nextSteps": {
@@ -844,7 +935,11 @@
       "deploySuccess": "Deployment completed successfully",
       "deployError": "Deployment failed",
       "yamlGenerateError": "Failed to generate binding policy YAML",
-      "quickConnectError": "Failed to create binding policy"
+      "quickConnectError": "Failed to create binding policy",
+      "labelsAssignedTitle": "Labels Assigned",
+      "policyBindingCreatedTitle": "Policy Binding Created",
+      "labelsAssignedChip": "Labels help target policies to specific resources",
+      "policyBindingCreatedChip": "Binding created for policy propagation"
     },
     "tabs": {
       "selectItems": "Select Items",
@@ -852,13 +947,18 @@
       "uploadFile": "Upload File"
     },
     "upload": {
+      "createNamespaceAutomatically": "Create Namespace Automatically",
+      "chooseDifferentYaml": "Choose Different YAML File",
+      "filePreview": "File Preview",
+      "chooseOrDrag": "Choose or Drag & Drop a YAML File",
+      "or": "- or -",
+      "chooseYaml": "Choose YAML File",
+      "uploadAndDeploy": "Upload and Deploy",
       "dropHere": "Drop YAML File Here",
       "chooseOrUpload": "Choose or Upload a YAML File",
-      "or": "- or -",
       "selectFile": "Select YAML File",
       "acceptedFormats": "Accepted formats: .yaml, .yml",
-      "chooseDifferentFile": "Choose Different File",
-      "filePreview": "File Preview:"
+      "chooseDifferentFile": "Choose Different File"
     },
     "previewGeneratedYaml": "Preview Generated YAML",
     "deployBindingPolicies": "Deploy Binding Policies",
@@ -1015,7 +1115,6 @@
           },
           "tip": "Tip: The label-based approach allows you to create powerful binding policies that automatically apply to all resources matching the selected labels, both now and in the future.",
           "dontShowAgain": "Don't Show Again",
-          "gotIt": "Got it",
           "tooltip": "View selection instructions"
         }
       }
@@ -1078,13 +1177,18 @@
       "workloads": "{{count}} Workloads",
       "status": "Status:",
       "namespace": "Namespace:",
-      "namespaces": "Namespaces:"
+      "namespaces": "Namespaces:",
+      "clustersOnCanvas": "Clusters on Canvas:",
+      "workloadsOnCanvas": "Workloads on Canvas:",
+      "selectClusters": "Select Clusters here",
+      "matches": "Matches: {{count}} {{resourceType}}"
     },
     "labels": {
       "title": "Labels:",
       "key": "Key",
       "value": "Value",
-      "add": "Add"
+      "add": "Add",
+      "count": "{{count}} unique labels across {{total}}"
     },
     "creatingConnection": "Creating connection:",
     "previewDialog": {
@@ -1150,6 +1254,26 @@
       "helpText": "Workload label is key:value pair. Key is constant and defaulted to 'kubestellar.io/workload', you can only change the value."
     },
     "github": {
+      "repositoryUrlLabel": "Repository URL *",
+      "pathLabel": "Path *",
+      "branchLabel": "Branch (default: main) *",
+      "credentialsLabel": "Credentials",
+      "credentialsTip": "Select or add credentials for private repositories",
+      "addCredentials": "Add Cred",
+      "webhooksLabel": "Webhooks",
+      "webhooksTip": "Select or add a webhook for automated deployments",
+      "addWebhook": "Add Webhook",
+      "previousDeploymentsTitle": "List of Previous Deployments",
+      "loadingPreviousDeployments": "Loading previous deployments...",
+      "noPreviousDeployments": "No previous deployments available.",
+      "confirmResourceDeletion": "Confirm Resource Deletion",
+      "deleteConfirmation": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+      "yesDelete": "Yes, Delete",
+      "apply": "Apply",
+      "deploying": "Deploying...",
+      "createFromYourGitHub": "Create from your Github",
+      "deployFromPopularRepositories": "Deploy from popular repositories",
+      "listOfPreviousDeployments": "List of Previous Deployments",
       "repositoryUrl": "Repository URL *",
       "repositoryUrlPlaceholder": "e.g., https://github.com/username/repo",
       "repositoryUrlTip": "Use a valid GitHub repository URL",
@@ -1161,6 +1285,7 @@
       "branchTip": "Specify the branch to deploy from",
       "credentials": "Credentials",
       "credentialsPlaceholder": "e.g., username-pat",
+      "title": "Create from your GitHub Repository and deploy!",
       "tab": {
         "importFromGitHub": "Import from GitHub",
         "selectRepositorySource": "Select a repository source to import your application",
@@ -1191,33 +1316,6 @@
           "enterprise": "Enterprise Repository form would go here",
           "public": "Public Repository form would go here"
         }
-      },
-      "form": {
-        "title": "Create from your GitHub Repository and deploy!",
-        "repositoryUrl": "Repository URL *",
-        "repositoryUrlPlaceholder": "e.g., https://github.com/username/repo",
-        "repositoryUrlTip": "Use a valid GitHub repository URL",
-        "path": "Path *",
-        "pathPlaceholder": "e.g., /path/to/yaml",
-        "pathTip": "Specify the path to your YAML files in the repository",
-        "branch": "Branch (default: main) *",
-        "branchPlaceholder": "e.g., master, dev-branch",
-        "branchTip": "Specify the branch to deploy from",
-        "credentials": "Credentials",
-        "credentialsPlaceholder": "e.g., username-pat",
-        "credentialsTip": "Select or add credentials for private repositories",
-        "addCredentials": "Add Cred",
-        "webhooks": "Webhooks",
-        "webhooksTip": "Select or add a webhook for automated deployments",
-        "addWebhook": "Add Webhook",
-        "previousDeploymentsTitle": "List of Previous Deployments",
-        "loadingPreviousDeployments": "Loading previous deployments...",
-        "noPreviousDeployments": "No previous deployments available.",
-        "confirmResourceDeletion": "Confirm Resource Deletion",
-        "deleteConfirmation": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
-        "yesDelete": "Yes, Delete",
-        "apply": "Apply",
-        "deploying": "Deploying..."
       }
     },
     "artifactHub": {
@@ -1289,7 +1387,8 @@
     },
     "yaml": {
       "createNamespaceAutomatically": "Create Namespace Automatically",
-      "editor": "YAML Editor"
+      "editor": "YAML Editor",
+      "deploy": "Deploy"
     },
     "helm": {
       "createOwn": "Create your own Helm chart",
@@ -1403,7 +1502,17 @@
         "workloadLabel": "Workload Label",
         "workloadLabelPlaceholder": "Enter value for label 'kubestellar.io/workload'",
         "deploy": "Deploy",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "userCharts": {
+          "title": "List of user created Charts",
+          "deleteSuccess": "Chart {{chartId}} deleted successfully!",
+          "deleteError": "Chart {{chartId}} not deleted!",
+          "loading": "Loading user charts...",
+          "noCharts": "No user-created charts available.",
+          "delete": "Delete",
+          "confirmDeletion": "Confirm Resource Deletion",
+          "deleteConfirmation": "Are you sure you want to delete \"{{chartId}}\"? This action cannot be undone."
+        }
       },
       "artifactHub": {
         "title": "Artifact Hub",
@@ -1576,6 +1685,7 @@
     "account": "Account",
     "admin": "Admin",
     "helpSupport": "Help & Support",
+    "raiseIssue": "Report an Issue",
     "signOut": "Sign Out"
   },
   "onboardingLogs": {
@@ -1804,30 +1914,179 @@
     "tokenPlaceholder": "e.g., ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     "tokenTip": "Enter your GitHub Personal Access Token"
   },
-  "githubTab": {
-    "repositoryUrlLabel": "Repository URL *",
-    "repositoryUrlPlaceholder": "e.g., https://github.com/username/repo",
-    "repositoryUrlTip": "Use a valid GitHub repository URL",
-    "pathLabel": "Path *",
-    "pathPlaceholder": "e.g., /path/to/yaml",
-    "pathTip": "Specify the path to your YAML files in the repository",
-    "branchLabel": "Branch (default: main) *",
-    "branchPlaceholder": "e.g., master, dev-branch",
-    "branchTip": "Specify the branch to deploy from",
-    "credentialsLabel": "Credentials",
-    "credentialsPlaceholder": "e.g., username-pat",
-    "credentialsTip": "Select or add credentials for private repositories",
-    "addCredentials": "Add Cred",
-    "webhooksLabel": "Webhooks",
-    "webhooksTip": "Select or add a webhook for automated deployments",
-    "addWebhook": "Add Webhook",
-    "previousDeploymentsTitle": "List of Previous Deployments",
-    "loadingPreviousDeployments": "Loading previous deployments...",
-    "noPreviousDeployments": "No previous deployments available.",
-    "confirmResourceDeletion": "Confirm Resource Deletion",
-    "deleteConfirmation": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
-    "yesDelete": "Yes, Delete",
-    "apply": "Apply",
-    "deploying": "Deploying..."
+  "commandPalette": {
+    "ariaLabel": "Open command palette",
+    "title": "Command Palette (Ctrl+K)",
+    "badge": "K",
+    "searchPlaceholder": "Search commands...",
+    "noCommandsFound": "No commands found. Try a different search term.",
+    "footer": {
+      "navigate": "navigate",
+      "select": "select",
+      "shortcut": "Ctrl+K"
+    },
+    "kbd": {
+      "esc": "ESC",
+      "arrows": "↑↓",
+      "enter": "↵"
+    },
+    "sections": {
+      "navigation": "Navigation",
+      "visualizations": "Visualizations",
+      "help": "Help",
+      "account": "Account"
+    },
+    "commands": {
+      "home": {
+        "title": "Home",
+        "description": "Go to dashboard"
+      },
+      "plugin": {
+        "title": "Plugin Manager",
+        "description": "Manage and monitor KubeStellar plugins"
+      },
+      "clusters": {
+        "title": "Remote Clusters",
+        "description": "Manage Kubernetes clusters"
+      },
+      "workloads": {
+        "title": "Workloads",
+        "description": "Manage workloads across clusters"
+      },
+      "bindingPolicies": {
+        "title": "Binding Policies",
+        "description": "Configure binding policies"
+      },
+      "wdsTreeview": {
+        "title": "WDS Treeview",
+        "description": "Visualize workload distribution"
+      },
+      "wecsTreeview": {
+        "title": "WECS Treeview",
+        "description": "Visualize Deployed Workloads structure"
+      },
+      "documentation": {
+        "title": "Open Documentation",
+        "description": "Launch KubeStellar documentation"
+      },
+      "logout": {
+        "title": "Logout",
+        "description": "Sign out of your account",
+        "infoMessage": "You have been successfully logged out."
+      }
+    }
+  },
+  "menu": {
+    "catalogs": {
+      "main": "Main",
+      "management": "Management",
+      "plugins": "Plugins"
+    },
+    "items": {
+      "home": "Home",
+      "remoteClusters": "Remote Clusters",
+      "stagedWorkloads": "Staged Workloads",
+      "bindingPolicies": "Binding Policies",
+      "deployedWorkloads": "Deployed Workloads",
+      "pluginManager": "Plugin Manager"
+    }
+  },
+  "plugins": {
+    "title": "Plugin Manager",
+    "description": "Manage and monitor KubeStellar plugins",
+    "install": {
+      "title": "Install New Plugin",
+      "methods": {
+        "local": "Local Path",
+        "github": "GitHub"
+      },
+      "localPlaceholder": "Enter local plugin directory path",
+      "githubPlaceholder": "https://github.com/user/plugin-repo",
+      "browse": "Browse",
+      "installLocal": "Install from Local Path",
+      "installGithub": "Install from GitHub",
+      "localHelp": "Install a plugin from a local directory on your system. Click Browse to select a folder or manually enter the full path.",
+      "githubHelp": "GitHub installation is not yet implemented. Use local path installation for now.",
+      "placeholder": "Plugin URL, GitHub repository, or local path",
+      "button": "Install",
+      "installing": "Installing...",
+      "success": "Plugin installed successfully",
+      "error": "Failed to install plugin"
+    },
+    "list": {
+      "title": "Installed Plugins",
+      "noPlugins": "No plugins installed",
+      "noPluginsDescription": "Get started by installing your first plugin",
+      "searchPlaceholder": "Search plugins by name, author, or status...",
+      "total": "Total",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "card": {
+      "version": "v{{version}}",
+      "author": "by {{author}}",
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "loading": "Loading",
+        "error": "Error"
+      },
+      "actions": {
+        "enable": "Enable",
+        "disable": "Disable",
+        "details": "Details",
+        "uninstall": "Uninstall",
+        "reload": "Reload",
+        "settings": "Settings"
+      }
+    },
+    "details": {
+      "title": "Plugin Details",
+      "information": "Information",
+      "configuration": "Configuration",
+      "routes": "API Routes",
+      "widgets": "Widgets",
+      "assets": "Assets",
+      "noRoutes": "No API routes defined",
+      "noWidgets": "No widgets available",
+      "noAssets": "No assets loaded"
+    },
+    "notifications": {
+      "enableSuccess": "Plugin {{name}} enabled successfully",
+      "enableError": "Failed to enable plugin {{name}}",
+      "disableSuccess": "Plugin {{name}} disabled successfully",
+      "disableError": "Failed to disable plugin {{name}}",
+      "uninstallSuccess": "Plugin {{name}} uninstalled successfully",
+      "uninstallError": "Failed to uninstall plugin {{name}}",
+      "reloadSuccess": "Plugin {{name}} reloaded successfully",
+      "reloadError": "Failed to reload plugin {{name}}",
+      "fetchError": "Failed to load plugin data"
+    },
+    "confirmations": {
+      "uninstall": {
+        "title": "Confirm Plugin Uninstallation",
+        "message": "Are you sure you want to uninstall \"{{name}}\"? This action cannot be undone and will remove all plugin data.",
+        "confirm": "Yes, Uninstall"
+      },
+      "disable": {
+        "title": "Confirm Plugin Disable",
+        "message": "Disabling \"{{name}}\" will stop all plugin functionality. You can re-enable it later.",
+        "confirm": "Yes, Disable"
+      }
+    },
+    "marketplace": {
+      "title": "Plugin Marketplace",
+      "browse": "Browse Available Plugins",
+      "featured": "Featured Plugins",
+      "categories": "Categories",
+      "search": "Search marketplace..."
+    },
+    "development": {
+      "title": "Plugin Development",
+      "createNew": "Create New Plugin",
+      "template": "Use Template",
+      "documentation": "View Documentation",
+      "examples": "Examples"
+    }
   }
 }

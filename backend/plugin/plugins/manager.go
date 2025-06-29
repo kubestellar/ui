@@ -74,4 +74,18 @@ func (pm *pluginManager) Deregister(p plugin.Plugin) {
 	log.LogInfo("deregistered plugin", zap.String("NAME", p.Name()))
 }
 
+// GetPlugins returns all registered plugins
+func (pm *pluginManager) GetPlugins() map[string]plugin.Plugin {
+	pm.mx.Lock()
+	defer pm.mx.Unlock()
+
+	// Return a copy to avoid concurrent map access issues
+	pluginsCopy := make(map[string]plugin.Plugin, len(pm.plugins))
+	for k, v := range pm.plugins {
+		pluginsCopy[k] = v
+	}
+
+	return pluginsCopy
+}
+
 var Pm *pluginManager = &pluginManager{plugins: map[string]plugin.Plugin{}}

@@ -473,7 +473,7 @@ const ListViewComponent = ({
         eventSource.close();
       }
     };
-  }, []); // Keep original dependencies
+  }, [t]); // Keep original dependencies
 
   // Calculate pagination values using filteredResources instead of resources
   const totalPages = Math.ceil(totalItems / itemsPerPage);

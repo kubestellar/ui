@@ -22,6 +22,9 @@ Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI 
 <a href="https://kubernetes.slack.com/archives/C058SUSL5AA"> 
   <img alt="Join Slack" src="https://img.shields.io/badge/KubeStellar-Join%20Slack-blue?logo=slack">
 </a>
+<a href="https://deepwiki.com/kubestellar/ui">
+  <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki">
+</a>
 
 ## Contents
 
@@ -33,7 +36,7 @@ Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI 
 
 ## Prerequisites
 
-Before you begin, ensure that your system meets the following requirements:
+**Before you begin, ensure that your system meets the following requirements:**
 
 ### 1. Golang
 
@@ -59,7 +62,13 @@ Before you begin, ensure that your system meets the following requirements:
 - Ensure you have access to a Kubernetes clusters setup with Kubestellar Getting Started Guide & Kubestellar prerequisites installed
 
 - **Kubestellar guide**: [Guide](https://docs.kubestellar.io/release-0.25.1/direct/get-started/)
-  > [!NOTE] If you're running on macOS, you may need to manually add a host entry to resolve its1.localtest.me to localhost using `echo "127.0.0.1 its1.localtest.me" | sudo tee -a /etc/hosts`
+
+> [!NOTE]
+> If you're running on macOS, you may need to manually add a host entry to resolve `its1.localtest.me` to `localhost` using:
+>
+> ```bash
+> echo "127.0.0.1 its1.localtest.me" | sudo tee -a /etc/hosts
+> ```
 
 ### 5. Make and Air
 
@@ -119,17 +128,27 @@ KubestellarUI uses environment variables to track the app version and the curren
 
 KubestellarUI uses Redis for caching real-time WebSocket updates to prevent excessive Kubernetes API calls.
 
-Run Redis using Docker:
+#### Step 3: Run PostgreSQL and Redis with Docker Compose
+
+To run PostgreSQL and Redis services:
 
 ```bash
-docker run --name redis -d -p 6379:6379 redis
+# Navigate to the backend directory
+cd backend
+
+# Start PostgreSQL and Redis services in detached mode
+docker compose up -d
+
+# Verify that services are running
+docker ps
 ```
 
-Verify Redis is running:
+This will start:
 
-```bash
-docker ps | grep redis
-```
+- PostgreSQL on port 5432 (for persistent data storage)
+- Redis on port 6379 (for caching WebSocket updates)
+
+Both services are configured with appropriate volumes to persist data between restarts.
 
 #### Step 3: Install and Run the Backend
 
@@ -303,7 +322,8 @@ REDIS_IMAGE=redis:7-alpine docker compose up
 
 ---
 
-> **Note for WSL Users 🐧**
+> [!NOTE]
+> **For WSL Users 🐧**
 >
 > If you've successfully installed the KubeStellar but they are not detected by frontend, it might be due to a communication issue between Docker and WSL.
 >
@@ -322,6 +342,12 @@ REDIS_IMAGE=redis:7-alpine docker compose up
 
 - **Username: admin**
 - **Password: admin**
+
+> [!NOTE]
+> If you're encountering errors while setting up the Kubestellar UI, even after correctly following the guide, try pruning the Docker images and containers related to the KS core.  
+> Rebuild them and perform a restart.
+>
+> This resolves almost 80% of issues caused by overridden changes during installation on existing systems.
 
 <div>
 <h2><font size="6"><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Red%20Heart.png" alt="Red Heart" width="40" height="40" /> Contributors </font></h2>

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HiUserCircle } from 'react-icons/hi2';
-import { FiLogOut, FiHelpCircle } from 'react-icons/fi';
+import { FiLogOut, FiHelpCircle, FiExternalLink } from 'react-icons/fi';
 import { useAuth, useAuthActions } from '../hooks/useAuth';
 import { api } from '../lib/api';
 import useTheme from '../stores/themeStore';
@@ -88,6 +88,11 @@ const ProfileSection = () => {
 
   const openDocs = () => {
     window.open('https://docs.kubestellar.io/release-0.27.2/', '_blank', 'noopener,noreferrer');
+    setShowUserMenu(false);
+  };
+
+  const openRaiseIssue = () => {
+    window.open('https://github.com/kubestellar/ui/issues', '_blank', 'noopener,noreferrer');
     setShowUserMenu(false);
   };
 
@@ -205,7 +210,7 @@ const ProfileSection = () => {
                     color: isDark ? '#9ca3af' : '#6b7280',
                   }}
                 >
-                  Account
+                  {t('profileSection.account')}
                 </div>
                 <div
                   className="mt-1 text-lg font-semibold"
@@ -222,6 +227,41 @@ const ProfileSection = () => {
           {/* Menu Items */}
           <div className="p-2" style={{ backgroundColor: styles.menuSection.backgroundColor }}>
             <div className="grid grid-cols-1 gap-1">
+              <button
+                onClick={openRaiseIssue}
+                className="group flex w-full items-center rounded-lg px-4 py-3
+                  text-sm font-medium transition-colors duration-150"
+                style={{
+                  color: styles.helpButton.color,
+                  backgroundColor: styles.helpButton.backgroundColor,
+                }}
+                onMouseOver={e => {
+                  e.currentTarget.style.backgroundColor = isDark
+                    ? 'rgba(124, 58, 237, 0.1)'
+                    : '#f5f3ff';
+                }}
+                onMouseOut={e => {
+                  e.currentTarget.style.backgroundColor = isDark ? '#1f2937' : '#ffffff';
+                }}
+                role="menuitem"
+              >
+                <div className="flex w-full items-center gap-3">
+                  <div
+                    className="rounded-full p-2 transition-colors duration-200"
+                    style={{
+                      backgroundColor: isDark ? 'rgba(124, 58, 237, 0.1)' : '#f5f3ff',
+                    }}
+                  >
+                    <FiExternalLink
+                      style={{
+                        color: isDark ? '#38bdf8' : '#2563eb',
+                      }}
+                      size={16}
+                    />
+                  </div>
+                  <span>{t('profileSection.raiseIssue')}</span>
+                </div>
+              </button>
               <button
                 onClick={openDocs}
                 className="group flex w-full items-center rounded-lg px-4 py-3

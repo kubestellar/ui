@@ -1,0 +1,10 @@
+# This chart was originally developed by @MAVRICK-1
+# Source: https://github.com/MAVRICK-1/kubestellar-ui
+
+apiVersion: v2
+name: kubestellar-ui
+description: A Helm chart for kubestellar UI on Kubernetes
+type: application
+version: "0.1.0"
+appVersion: "0.1.0"
+icon: https://raw.githubusercontent.com/kubestellar/ui/refs/heads/dev/public/logo.svg

@@ -20,6 +20,9 @@ func SetupAllRoutes(router *gin.Engine) {
 	setupDeploymentHistoryRoutes(router)
 	setupWebhookRoutes(router)
 	setupValidationRoutes(router)
+	setupResourceRoutes(router)
+	setupClusterRoutes(router)
+	setupBindingPolicyRoutes(router)
 }
 
 // setupHealthRoutes registers health check and monitoring routes

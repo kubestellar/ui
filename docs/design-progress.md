@@ -1,0 +1,208 @@
+# 🧩 KubeStellar Design Progress – Saumya Kumar
+
+This document tracks the progress of the design system foundation efforts for the KubeStellar UI during the **LFX Mentorship Term 2, 2025**.
+
+---
+
+## 📅 Timeline Overview
+
+### 🟠 June 9 – June 20: UI Audit & Research
+
+- **Activities**: Reviewed current UI across KubeStellar interfaces (UI, Docs, CLI); identified visual inconsistencies, UX and accessibility issues.
+- **Deliverables**: UI Audit Summary Report with findings and improvement suggestions.
+
+### 🟡 June 21 – July 4: Design Foundations
+
+- **Activities**: Defined typography scale, color palette, spacing, layout grid, elevation system, and design tokens.
+- **Deliverables**: Design Foundations Guide (PDF + Figma).
+
+### 🟢 July 5 – July 14: Component Library – Phase 1
+
+- **Activities**: Began designing reusable UI components (e.g., buttons, inputs, cards, navbars) with all interaction states (hover, focus, disabled).
+- **Deliverables**: Initial Figma Component Library.
+
+### 🟣 July 15: Midterm Evaluation
+
+- **Activities**: Submitted current progress for mentor feedback; revised scope or timeline if needed.
+- **Deliverables**: Midterm Feedback Reflections.
+
+### 🔵 July 16 – August 1: Component Library – Phase 2 & Usage Docs
+
+- **Activities**: Expanded and finalized components. Created a usage guide and began drafting CSS token specifications.
+- **Deliverables**: Finalized Figma Library, Usage Guide, Draft CSS Spec.
+
+### 🟤 August 2 – August 15: Mockups + IA Evaluation
+
+- **Activities**: Designed high-fidelity mockups (e.g., homepage hero, docs master page). Optionally reviewed documentation IA.
+- **Deliverables**: Hero & Docs Page Mockups, IA Suggestions (if applicable).
+
+### ⚫ August 16 – August 26: Final Reviews & Refinement
+
+- **Activities**: Polished all design assets. Ensured dev-readiness, accessibility, and consistency. Prepared final handoff documentation.
+- **Deliverables**: Final Design System Package (Figma, CSS Specs, Docs).
+
+### 🏁 August 29: End of Term
+
+- **Activities**: Final sync with mentors and maintainers.
+- **Deliverables**: — (Wrap-up only)
+
+---
+
+## 📂 Audit Resources
+
+1. **Design System – Objective & Timeline**  
+   🔗 [Objective & Timeline – Google Docs](https://docs.google.com/document/d/1u06DFqyFBBe8NcgUUhRvDRMVmf57BUUAHBY8VtZbj1g/edit?usp=sharing)
+
+2. **UI Audit FigJam Board**  
+   🔗 [View FigJam Audit Board](https://www.figma.com/board/IHLBwlFC6i4Ibh2DVIzBxX/KubeStellar%E2%80%AFv0.27.2-Documentation--UI--and-Design-System-Audit?node-id=0-1&t=SK5oQyifTdi2ji7C-1)
+
+3. **Define Goals & Scope Document**  
+   🔗 [Project Goals & Scope – Google Docs](https://docs.google.com/document/d/1m0dAD3S4ShM32hw5k2wqGv-CZeFhnKI3t-Eto1MfVis/edit?usp=sharing)
+
+4. **Structure & Strategy – Information Architecture & Flow Planning**  
+   🔗 [Structure & Strategy – Google Docs](https://docs.google.com/document/d/13iG5yXS23F9JHQkxGR3ODwmc_XJVydiBYt28f4Tysxo/edit?usp=sharing)
+
+5. **Wireframing**  
+   🔗 [Wireframing – Figma](https://www.figma.com/design/GLUwDDSxzkL8Evhgsec4JM/Wireframing--kubestellar.io?node-id=0-1&t=LaikrxjMxKaexwZd-1)
+
+---
+
+## 📌 Progress Update
+
+### ✅ UI Audit Completed
+
+- Conducted a full audit of KubeStellar’s current UI, including:
+  - Documentation site
+  - Dashboard
+  - Navigation patterns
+  - Visual consistency
+  - Accessibility checks
+- Identified major UX and UI issues such as:
+  - Inconsistent typography
+  - Unclear content hierarchy
+  - Visual clutter and bugs
+  - Poor color contrast
+  - Navigation redundancy
+
+### 🎯 Goals & Scope Defined
+
+- Established clear design system objectives, including:
+  - Audit Focus
+  - Evaluation Areas
+  - Business Objectives
+  - User Goals & Tasks
+  - Success Criteria
+  - Scope Summary
+- Initial focus areas:
+  - Documentation site
+  - Core UI components
+  - Frontend interaction improvements
+
+### 🧭 Structure & Strategy – Information Architecture & Flow Planning
+
+This section covers foundational analysis and planning to improve the structure, navigation, and usability of the KubeStellar documentation.
+
+#### ✅ Review of Current Information Architecture (IA)
+
+- Analyzed existing doc structure across:
+  - Overview
+  - Setup
+  - Usage
+  - UI
+  - Community sections
+- Found fragmented content, duplicate topics, and inconsistent labeling.
+
+#### 📁 Observations & Proposed Hierarchy Improvements
+
+- Mixed technical/conceptual content without clear organization
+- Proposed a max of 3-level deep nested hierarchy
+- Suggested clearer top-level groups:
+  - Getting Started
+  - Usage
+  - Troubleshooting
+  - Contributing
+- Recommended removing or renaming generic paths like `/direct/`
+
+#### 🧭 Navigation Design Audit
+
+##### 🔹 Header
+
+- **Issues**: Low contrast buttons; missing version and language switchers
+- **Recommendations**: Use clear button styles; add dropdowns for versioning and multilingual support
+
+##### 🔹 Sidebar
+
+- **Issues**: Non-collapsible menus; poor hierarchy; confusing URLs
+- **Recommendations**: Implement collapsible sections; improve naming; highlight current section; remove `/direct/`
+
+##### 🔹 Footer
+
+- **Needs**:
+  - “Was this helpful?” feedback buttons
+  - GitHub "Edit this page" links
+  - Community links
+  - License and privacy info
+
+##### 🔹 Breadcrumbs
+
+- **Status**: Missing entirely
+- **Recommendation**: Add a breadcrumb trail to support user orientation
+
+#### 🔄 Key User Flows Mapped
+
+##### 1. Manual Setup Flow
+
+- **Goal**: Manually install KubeStellar using CLI, Helm, and KubeFlex
+- **Issues**: Dispersed setup steps; redundant cluster info
+- **Recommendations**: Create a unified guide; add lifecycle diagrams
+
+##### 2. OCM-Based Setup Flow
+
+- **Goal**: Automate setup via Open Cluster Management (OCM)
+- **Issues**: Lacks clarity on use-case choice; no validation steps
+- **Recommendations**: Add setup comparison chart; insert CLI output examples and diagrams
+
+##### 3. Workload Execution Flow
+
+- **Goal**: Register clusters and deploy workloads
+- **Issues**: Disconnected content; no step-by-step guidance
+- **Recommendations**: Create end-to-end deployment guide with YAML + CLI examples
+
+##### 4. Teardown Flow
+
+- **Goal**: Cleanly uninstall KubeStellar
+- **Issues**: No rollback or backup guidance; lacks automation
+- **Recommendations**: Add pre-teardown checklist; CLI cleanup scripts; multi-cluster handling
+
+#### 🚧 Identified Content & Functional Gaps
+
+- No Quickstart guide for first-time users
+- Duplicate Hosting Cluster setup across docs
+- UI documentation lacks structure and visuals
+- API docs are fragmented with minimal context
+- Troubleshooting section is hard to scan
+- Known Issues aren't categorized by severity
+- Contribution docs need more clarity and depth
+- Missing full-text search functionality
+- No user feedback mechanisms
+- Diagrams and visuals are absent from key pages
+- No glossary for technical terms (e.g., WEC, ITS)
+
+### 🧪 User Research & Interviews Conducted
+
+- Conducted user interviews and research to understand:
+  - Common navigation pain points
+  - Confusing flows in the current IA
+  - User expectations from documentation and setup guides
+- Insights helped inform the new IA and navigation recommendations
+
+### 🔳 Wireframes Designed
+
+- Developed low-fidelity wireframes for:
+  - Documentation homepage layout
+  - Setup guide experience
+  - Component structure (inputs, buttons, sidebars)
+- Used layout grid and spacing tokens from the design system
+- Aligned wireframes with IA improvements
+
+---

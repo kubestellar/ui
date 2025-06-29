@@ -14,6 +14,8 @@ import {
   FiLogOut,
 } from 'react-icons/fi';
 import { useAuthActions } from '../hooks/useAuth';
+import { useTranslation } from 'react-i18next';
+import { HiOutlinePuzzlePiece } from 'react-icons/hi2';
 
 // Command types to support various actions
 type CommandType = 'navigation' | 'action' | 'documentation';
@@ -41,6 +43,7 @@ const CommandPalette: React.FC = () => {
   const isDark = theme === 'dark';
   const themeStyles = getThemeStyles(isDark);
   const { logout } = useAuthActions();
+  const { t } = useTranslation();
 
   // Close the command palette on Escape key
   useEffect(() => {
@@ -78,7 +81,7 @@ const CommandPalette: React.FC = () => {
     logout();
     navigate('/login', {
       state: {
-        infoMessage: 'You have been successfully logged out.',
+        infoMessage: t('commandPalette.commands.logout.infoMessage'),
       },
     });
   };
@@ -89,18 +92,18 @@ const CommandPalette: React.FC = () => {
       id: 'home',
       type: 'navigation',
       icon: FiHome,
-      title: 'Home',
-      description: 'Go to dashboard',
+      title: t('commandPalette.commands.home.title'),
+      description: t('commandPalette.commands.home.description'),
       action: () => navigate('/'),
-      keywords: ['dashboard', 'home', 'main', 'dashboard', 'home', 'main'],
-      section: 'Navigation',
+      keywords: ['dashboard', 'home', 'main'],
+      section: t('commandPalette.sections.navigation'),
     },
     {
       id: 'clusters',
       type: 'navigation',
       icon: FiServer,
-      title: 'Remote Clusters',
-      description: 'Manage Kubernetes clusters',
+      title: t('commandPalette.commands.clusters.title'),
+      description: t('commandPalette.commands.clusters.description'),
       action: () => navigate('/its'),
       keywords: [
         'kubernetes',
@@ -117,14 +120,14 @@ const CommandPalette: React.FC = () => {
         'import',
         'onboard',
       ],
-      section: 'Navigation',
+      section: t('commandPalette.sections.navigation'),
     },
     {
       id: 'workloads',
       type: 'navigation',
       icon: FiBox,
-      title: 'Workloads',
-      description: 'Manage workloads across clusters',
+      title: t('commandPalette.commands.workloads.title'),
+      description: t('commandPalette.commands.workloads.description'),
       action: () => navigate('/workloads/manage'),
       keywords: [
         'workload',
@@ -145,14 +148,24 @@ const CommandPalette: React.FC = () => {
         'daemonsets',
         'replicasets',
       ],
-      section: 'Navigation',
+      section: t('commandPalette.sections.navigation'),
+    },
+    {
+      id: 'plugin',
+      type: 'navigation',
+      icon: HiOutlinePuzzlePiece,
+      title: t('commandPalette.commands.plugin.title'),
+      description: t('commandPalette.commands.plugin.description'),
+      action: () => navigate('/plugins/manage'),
+      keywords: ['plugin', 'manage', 'install', 'wasm', 'monitor'],
+      section: t('commandPalette.sections.navigation'),
     },
     {
       id: 'binding-policies',
       type: 'navigation',
       icon: FiLayers,
-      title: 'Binding Policies',
-      description: 'Configure binding policies',
+      title: t('commandPalette.commands.bindingPolicies.title'),
+      description: t('commandPalette.commands.bindingPolicies.description'),
       action: () => navigate('/bp/manage'),
       keywords: [
         'binding',
@@ -166,24 +179,24 @@ const CommandPalette: React.FC = () => {
         'rules',
         'configuration',
       ],
-      section: 'Navigation',
+      section: t('commandPalette.sections.navigation'),
     },
     {
       id: 'wds-treeview',
       type: 'navigation',
       icon: FiGitBranch,
-      title: 'WDS Treeview',
-      description: 'Visualize workload distribution',
+      title: t('commandPalette.commands.wdsTreeview.title'),
+      description: t('commandPalette.commands.wdsTreeview.description'),
       action: () => navigate('/wds/treeview'),
       keywords: ['tree', 'view', 'wds', 'hierarchy', 'structure'],
-      section: 'Visualizations',
+      section: t('commandPalette.sections.visualizations'),
     },
     {
       id: 'wecs-treeview',
       type: 'navigation',
       icon: FiGitBranch,
-      title: 'WECS Treeview',
-      description: 'Visualize Deployed Workloads structure',
+      title: t('commandPalette.commands.wecsTreeview.title'),
+      description: t('commandPalette.commands.wecsTreeview.description'),
       action: () => navigate('/wecs/treeview'),
       keywords: [
         'tree',
@@ -207,14 +220,14 @@ const CommandPalette: React.FC = () => {
         'daemonsets',
         'replicasets',
       ],
-      section: 'Visualizations',
+      section: t('commandPalette.sections.visualizations'),
     },
     {
       id: 'documentation',
       type: 'documentation',
       icon: FiSearch,
-      title: 'Open Documentation',
-      description: 'Launch KubeStellar documentation',
+      title: t('commandPalette.commands.documentation.title'),
+      description: t('commandPalette.commands.documentation.description'),
       action: () =>
         window.open('https://docs.kubestellar.io/release-0.27.2/', '_blank', 'noopener,noreferrer'),
       keywords: [
@@ -230,14 +243,14 @@ const CommandPalette: React.FC = () => {
         'manual',
         'reference',
       ],
-      section: 'Help',
+      section: t('commandPalette.sections.help'),
     },
     {
       id: 'logout',
       type: 'action',
       icon: FiLogOut,
-      title: 'Logout',
-      description: 'Sign out of your account',
+      title: t('commandPalette.commands.logout.title'),
+      description: t('commandPalette.commands.logout.description'),
       action: handleLogout,
       keywords: [
         'sign out',
@@ -250,7 +263,7 @@ const CommandPalette: React.FC = () => {
         'quit',
         'log out',
       ],
-      section: 'Account',
+      section: t('commandPalette.sections.account'),
     },
   ];
 
@@ -357,8 +370,8 @@ const CommandPalette: React.FC = () => {
             boxShadow: themeStyles.colors.shadow.sm,
             overflow: 'hidden',
           }}
-          aria-label="Open command palette"
-          title="Command Palette (Ctrl+K)"
+          aria-label={t('commandPalette.ariaLabel')}
+          title={t('commandPalette.title')}
         >
           <motion.div
             className="absolute inset-0 rounded-full"
@@ -395,7 +408,7 @@ const CommandPalette: React.FC = () => {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
         >
-          K
+          {t('commandPalette.badge')}
         </motion.div>
       </motion.div>
 
@@ -467,7 +480,7 @@ const CommandPalette: React.FC = () => {
                         setSelectedIndex(0);
                       }}
                       onKeyDown={handleKeyDown}
-                      placeholder="Search commands..."
+                      placeholder={t('commandPalette.searchPlaceholder')}
                       className="w-full bg-transparent text-base focus:outline-none"
                       style={{
                         color: themeStyles.colors.text.primary,
@@ -481,7 +494,7 @@ const CommandPalette: React.FC = () => {
                         color: themeStyles.colors.text.secondary,
                       }}
                     >
-                      ESC
+                      {t('commandPalette.kbd.esc')}
                     </kbd>
                   </div>
                 </div>
@@ -502,7 +515,7 @@ const CommandPalette: React.FC = () => {
                       className="px-3 py-8 text-center"
                       style={{ color: themeStyles.colors.text.tertiary }}
                     >
-                      No commands found. Try a different search term.
+                      {t('commandPalette.noCommandsFound')}
                     </div>
                   ) : (
                     <div className="py-1">
@@ -583,9 +596,9 @@ const CommandPalette: React.FC = () => {
                           background: isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(229, 231, 235, 0.5)',
                         }}
                       >
-                        ↑↓
+                        {t('commandPalette.kbd.arrows')}
                       </kbd>
-                      <span className="ml-0.5">navigate</span>
+                      <span className="ml-0.5">{t('commandPalette.footer.navigate')}</span>
                     </div>
 
                     <div className="flex items-center gap-1">
@@ -595,9 +608,9 @@ const CommandPalette: React.FC = () => {
                           background: isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(229, 231, 235, 0.5)',
                         }}
                       >
-                        ↵
+                        {t('commandPalette.kbd.enter')}
                       </kbd>
-                      <span className="ml-0.5">select</span>
+                      <span className="ml-0.5">{t('commandPalette.footer.select')}</span>
                     </div>
                   </div>
 
@@ -608,7 +621,7 @@ const CommandPalette: React.FC = () => {
                         background: isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(229, 231, 235, 0.5)',
                       }}
                     >
-                      Ctrl+K
+                      {t('commandPalette.footer.shortcut')}
                     </kbd>
                   </div>
                 </div>

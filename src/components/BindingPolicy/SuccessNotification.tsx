@@ -5,6 +5,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import LabelIcon from '@mui/icons-material/Label';
 import LinkIcon from '@mui/icons-material/Link';
 import { usePolicyDragDropStore } from '../../stores/policyDragDropStore';
+import { useTranslation } from 'react-i18next'; // Add this import
 
 interface SuccessNotificationProps {
   open?: boolean;
@@ -22,6 +23,7 @@ const SuccessNotification: React.FC<SuccessNotificationProps> = ({
     clearSuccessMessageAfterDelay,
     setSuccessMessage,
   } = usePolicyDragDropStore();
+  const { t } = useTranslation(); // Add translation hook
 
   // Use provided props or fallback to store values
   const successMessage = propMessage || storeMessage;
@@ -87,10 +89,10 @@ const SuccessNotification: React.FC<SuccessNotificationProps> = ({
           <Box>
             <Typography variant="body1" fontWeight="medium" color="text.primary">
               {isLabelNotification
-                ? 'Labels Assigned'
+                ? t('bindingPolicy.notifications.labelsAssignedTitle')
                 : isPolicyAssignment
-                  ? 'Policy Binding Created'
-                  : 'Success'}
+                  ? t('bindingPolicy.notifications.policyBindingCreatedTitle')
+                  : t('common.success')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               {successMessage}
@@ -101,7 +103,7 @@ const SuccessNotification: React.FC<SuccessNotificationProps> = ({
               <Chip
                 size="small"
                 icon={<LabelIcon />}
-                label="Labels help target policies to specific resources"
+                label={t('bindingPolicy.notifications.labelsAssignedChip')}
                 variant="outlined"
                 color="info"
                 sx={{ mt: 1, fontSize: '0.75rem' }}
@@ -113,7 +115,7 @@ const SuccessNotification: React.FC<SuccessNotificationProps> = ({
               <Chip
                 size="small"
                 icon={<LinkIcon />}
-                label="Binding created for policy propagation"
+                label={t('bindingPolicy.notifications.policyBindingCreatedChip')}
                 variant="outlined"
                 color="success"
                 sx={{ mt: 1, fontSize: '0.75rem' }}

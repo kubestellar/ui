@@ -1063,6 +1063,7 @@ func StreamPodLogs(c *gin.Context) {
 	cluster := c.Query("cluster")
 	namespace := c.Query("namespace")
 	podName := c.Query("pod")
+	container := c.Query("container")
 	previous := c.Query("previous")
 
 	if cluster == "" || namespace == "" || podName == "" {
@@ -1105,7 +1106,8 @@ func StreamPodLogs(c *gin.Context) {
 		return
 	}
 
-	cacheKey := getCacheKey("podlogs", cluster, namespace, podName)
+	// Update cache key to include container information
+	cacheKey := getCacheKey("podlogs", cluster, namespace, podName, container)
 	var lastSentLogs string
 
 	// Continuously stream logs.
@@ -1130,13 +1132,14 @@ func StreamPodLogs(c *gin.Context) {
 				podLogOpts := &corev1.PodLogOptions{
 					Timestamps: true,
 					Previous:   previous == "true",
+					Container:  container,
 				}
 
 				// Build and execute the log request.
 				req := clientset.CoreV1().Pods(namespace).GetLogs(podName, podLogOpts)
 				podLogsStream, err := req.Stream(context.TODO())
 				if err != nil {
-					errMsg := fmt.Sprintf("Error streaming logs for pod %s in namespace %s: %v", podName, namespace, err)
+					errMsg := fmt.Sprintf("Error streaming logs for pod %s in namespace %s (container: %s): %v", podName, namespace, container, err)
 					log.Print(errMsg)
 					conn.WriteMessage(websocket.TextMessage, []byte(errMsg))
 					time.Sleep(5 * time.Second) // Wait longer before retrying on error
@@ -1147,7 +1150,7 @@ func StreamPodLogs(c *gin.Context) {
 				logsBytes, err := io.ReadAll(podLogsStream)
 				podLogsStream.Close()
 				if err != nil {
-					errMsg := fmt.Sprintf("Error reading logs for pod %s in namespace %s: %v", podName, namespace, err)
+					errMsg := fmt.Sprintf("Error reading logs for pod %s in namespace %s (container: %s): %v", podName, namespace, container, err)
 					log.Print(errMsg)
 					conn.WriteMessage(websocket.TextMessage, []byte(errMsg))
 					time.Sleep(5 * time.Second) // Wait longer before retrying on error

@@ -10,4 +10,13 @@ export default {
   arrowParens: 'avoid',
   endOfLine: 'lf',
   plugins: ['prettier-plugin-tailwindcss'],
+  overrides: [
+    {
+      files: '*.md',
+      options: {
+        proseWrap: 'preserve',
+        embeddedLanguageFormatting: 'off',
+      },
+    },
+  ],
 };
