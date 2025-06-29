@@ -291,8 +291,8 @@ func LoginHandler(c *gin.Context) {
 			return
 		}
 
-		// Check if password matches what we expect
-		if dbPassword == "admin_hashed" {
+		// Check if password matches using bcrypt
+		if models.CheckPasswordHash(loginData.Password, dbPassword) {
 			// Create a simple user object for response
 			user := struct {
 				ID          int               `json:"id"`
@@ -332,7 +332,7 @@ func LoginHandler(c *gin.Context) {
 		} else {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "Password mismatch",
-				"debug": "Expected: admin_hashed, Got: " + dbPassword,
+				"debug": "Bcrypt verification failed for stored hash: " + dbPassword,
 			})
 			return
 		}
