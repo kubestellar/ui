@@ -3,8 +3,8 @@
 # ==============================================================================
 include .env
 
-DB_URL= ${DATABASE_URL}
-MIGRATION_PATH = ./postgresql/migrations
+DB_URL=${DATABASE_URL}
+MIGRATION_PATH=./postgresql/migrations
 
 # Declare all targets as phony (they don't create files with these names)
 .PHONY: help dev build test test-verbose test-coverage test-individual test-file test-func test-watch quick-test fmt lint clean deps create-migration migrate-up migrate-down migrate-force
@@ -160,12 +160,13 @@ create-migration:
 	migrate create -ext sql -dir ${MIGRATION_PATH} -seq $${name}
 
 migrate-up:
-	@migrate -path=${MIGRATION_PATH} -database ${DB_URL} up
+	@migrate -path=${MIGRATION_PATH} -database "${DB_URL}" up
 
 migrate-down:
-	@read -p "Number of migrations you want to rollback (default: 1): " NUM; NUM=$${NUM:-1}; \
- 	migrate -path=${MIGRATION_PATH} -database ${DB_URL} down $${NUM}
+	@read -p "Number of migrations you want to rollback (default: 1): " NUM; \
+	NUM=$${NUM:-1}; \
+	migrate -path=${MIGRATION_PATH} -database "${DB_URL}" down $${NUM}
 
 migrate-force:
- @read -p "Enter the version to force: " VERSION; \
- migrate -path=${MIGRATION_PATH} -database ${DB_URL} force $${VERSION}
+	@read -p "Enter the version to force: " VERSION; \
+	migrate -path=${MIGRATION_PATH} -database "${DB_URL}" force $${VERSION}
