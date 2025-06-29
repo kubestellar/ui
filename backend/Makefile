@@ -1,9 +1,13 @@
 # ==============================================================================
 # Makefile for KubeStellar Backend
 # ==============================================================================
+include .env
+
+DB_URL= ${DATABASE_URL}
+MIGRATION_PATH = ./postgresql/migrations
 
 # Declare all targets as phony (they don't create files with these names)
-.PHONY: help dev build test test-verbose test-coverage test-individual test-file test-func test-watch quick-test fmt lint clean deps
+.PHONY: help dev build test test-verbose test-coverage test-individual test-file test-func test-watch quick-test fmt lint clean deps create-migration migrate-up migrate-down migrate-force
 
 # Default target - show help
 help:
@@ -33,6 +37,11 @@ help:
 	@echo "  make clean         - Clean test cache and temporary files"
 	@echo "  make deps          - Install and tidy Go dependencies"
 	@echo ""
+	@echo "Database Migration Commands:"
+	@echo "  make create-migration     - Create a new database migration file"
+	@echo "  make migrate-up           - Apply all pending database migrations"
+	@echo "  make migrate-down         - Rollback last N database migrations"
+	@echo "  make migrate-force        - Force a specific migration version (e.g., when tables already exist)"
 
 # ==============================================================================
 # Development Commands
@@ -144,3 +153,19 @@ deps:
 	go mod download
 	go mod tidy
 	@echo "Dependencies updated"
+
+# Database Migration Commands
+create-migration:
+	@read -p "Enter migration name: " name; \
+	migrate create -ext sql -dir ${MIGRATION_PATH} -seq $${name}
+
+migrate-up:
+	@migrate -path=${MIGRATION_PATH} -database ${DB_URL} up
+
+migrate-down:
+	@read -p "Number of migrations you want to rollback (default: 1): " NUM; NUM=$${NUM:-1}; \
+ 	migrate -path=${MIGRATION_PATH} -database ${DB_URL} down $${NUM}
+
+migrate-force:
+ @read -p "Enter the version to force: " VERSION; \
+ migrate -path=${MIGRATION_PATH} -database ${DB_URL} force $${VERSION}
