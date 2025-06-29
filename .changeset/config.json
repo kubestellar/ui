@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/@changesets/config@2.3.0/schema.json",
-  "changelog": ["@changesets/changelog-git", { "repo": "kubestellar/ui" }],
+  "changelog": ["@changesets/changelog-git", { "repo": "Arpit529Srivastava/ui" }],
   "commit": false,
   "fixed": [],
   "linked": [],
