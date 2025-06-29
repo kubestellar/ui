@@ -10,7 +10,12 @@ import FullScreenToggle from '../ui/FullScreenToggle';
 import ListViewComponent from '../ListViewComponent';
 import ListViewSkeleton from '../ui/ListViewSkeleton';
 import TreeViewSkeleton from '../ui/TreeViewSkeleton';
-import { CustomNode, CustomEdge, ResourceDataChangeEvent, ResourceItem as TreeViewResourceItem } from './types';
+import {
+  CustomNode,
+  CustomEdge,
+  ResourceDataChangeEvent,
+  ResourceItem as TreeViewResourceItem,
+} from './types';
 
 // Import the ListViewComponent ResourceItem type
 import type { ResourceItem as ListViewResourceItem } from '../ListViewComponent';
@@ -76,7 +81,7 @@ const TreeViewCanvas = memo<TreeViewCanvasProps>(
     // Create a wrapper function that adapts the data before calling the original callback
     const handleResourceDataChange = useMemo(() => {
       if (!onResourceDataChange) return undefined;
-      
+
       return (data: {
         resources: ListViewResourceItem[];
         filteredResources: ListViewResourceItem[];
