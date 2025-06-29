@@ -230,6 +230,7 @@ export const useTreeViewData = ({
 
                 Object.entries(resourcesMap).forEach(([key, items]) => {
                   // Group items by kind for collapsed view
+                  console.log(`Processing resource type: ${key} with ${items.length} items`);
                   items.forEach((item: ResourceItem) => {
                     const kindLower = item.kind.toLowerCase();
                     if (!resourceGroups[kindLower]) {
