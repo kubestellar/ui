@@ -36,8 +36,9 @@ jobs:
 
       - name: Update image versions in values.yaml
         run: |
-          sed -i "s|image:.*kubestellar-f.*|image: ghcr.io/kubestellar/ui/frontend:${{ env.RELEASE_TAG }}|" chart/values.yaml
-          sed -i "s|image:.*kubestellar-b.*|image: ghcr.io/kubestellar/ui/backend:${{ env.RELEASE_TAG }}|" chart/values.yaml
+          sed -i "s|image: ghcr.io/kubestellar/ui/frontend:.*|image: ghcr.io/kubestellar/ui/frontend:${{ env.RELEASE_TAG }}|" chart/values.yaml
+          sed -i "s|image: ghcr.io/kubestellar/ui/backend:.*|image: ghcr.io/kubestellar/ui/backend:${{ env.RELEASE_TAG }}|" chart/values.yaml
+
 
       - name: Package Helm Chart
         run: |
