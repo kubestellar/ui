@@ -115,10 +115,10 @@ const TreeViewComponent = memo<TreeViewComponentProps>(props => {
   }, []);
 
   // Context filter handler
+
   const handleContextFilter = useCallback((context: string) => {
     setFilteredContext(context);
   }, []);
-
   // Create options handlers
   const handleCancelCreateOptions = useCallback(() => {
     setShowCreateOptions(false);

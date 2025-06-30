@@ -14,11 +14,16 @@ RUN npm install --legacy-peer-deps
 # Copy source code
 COPY . .
 
-# Explicitly copy .git to access commit hash
-COPY .git .git
 
-# Extract Git commit hash
-RUN git rev-parse HEAD > commit_hash.txt
+# Get commit hash or use a default value
+RUN if [ -d .git ]; then \
+      git rev-parse HEAD > commit_hash.txt; \
+    elif [ -f commit_hash.txt ]; then \
+      echo "Using existing commit_hash.txt"; \
+    else \
+      echo "no-git-version" > commit_hash.txt; \
+    fi
+
 
 # Accept build arguments
 ARG VITE_APP_VERSION=0.1.0

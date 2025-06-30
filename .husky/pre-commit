@@ -1,9 +1,10 @@
 echo "🔧 Running Prettier on frontend files (excluding ignored files)..."
+
 cd frontend
 npx prettier --write --ignore-path .prettierignore .
 
 echo "🔍 Running frontend lint checks..."
-npm run lint
+cd frontend && npm run lint
 
 cd ..
 

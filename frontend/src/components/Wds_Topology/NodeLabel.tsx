@@ -98,12 +98,15 @@ export const NodeLabel = memo<NodeLabelProps>(
                 if (isAlreadyHighlighted) {
                   clearHighlightedLabels();
                 } else {
+
                   setHighlightedLabels({ key, value: value as string });
+
                 }
               }}
               onMouseEnter={() => {
                 // Set highlighting on hover
                 setHighlightedLabels({ key, value: value as string });
+
               }}
               onMouseLeave={() => {
                 // Clear highlighting when mouse leaves
