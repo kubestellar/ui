@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="KubeStellar Logo" width="250px" src="public/Kubestellar-logo.png" />
+  <img alt="KubeStellar Logo" width="250px" src="frontend/public/Kubestellar-logo.png" />
 </p>
 
 <h2 align="center">Multi-cluster Configuration Management for Edge, Multi-Cloud, and Hybrid Cloud</h2>
@@ -95,9 +95,11 @@ Then go through one of the setup options below:
 
 #### Step 1: Create `.env` File for Frontend Configuration
 
-To configure the frontend, copy the `.env.example` file to a `.env` file in the project root directory (where `package.json` is located).
+To configure the frontend, copy the `.env.example` file to a `.env` file in the `frontend/` directory (where `package.json` is located).
 
 ```bash
+cd frontend/
+
 cp .env.example .env
 ```
 
@@ -173,7 +175,11 @@ You should see output indicating the server is running on port `4000`.
 Open another terminal and make sure you are in the root directory of the project.
 
 ```bash
+cd frontend
+
 npm install
+
+npm install vite@5.4.11
 
 npm run dev
 ```
@@ -201,9 +207,11 @@ Docker Compose is configured to use environment variables with sensible defaults
 
 **Option 1: Using a .env file** (Recommended for persistent configuration)
 
-Create a `.env` file in the project root directory:
+Create a `.env` file in the `frontend/` directory:
 
 ```bash
+cd frontend/
+
 cp .env.example .env
 ```
 
