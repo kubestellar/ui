@@ -1,20 +1,21 @@
 # **Contributing to Kubestellar UI**
 
-This guide will help you set up a **Redis container**, configure **JWT authentication**, test the authentication flow using different tools, and log into Kubestellar UI.
+This guide will help you set up **PostgreSQL and Redis containers**, configure **JWT authentication**, test the authentication flow using different tools, and log into Kubestellar UI.
 
 ---
 
 ## **Contents**
 
 - [Prerequisites](#prerequisites)
-- [Setup Redis Container with Docker](#setup-redis-container-with-docker)
-- [Verify Redis is Running](#verify-redis-is-running)
+- [Setup PostgreSQL and Redis with Docker Compose](#setup-postgresql-and-redis-with-docker-compose)
+- [Alternative: Setup Individual Containers](#alternative-setup-individual-containers)
+- [Verify Services are Running](#verify-services-are-running)
 - [Setting Up JWT Authentication](#setting-up-jwt-authentication)
 - [Set Up Environment Variables](#set-up-environment-variables)
 - [Export Environment Variables](#export-environment-variables-linuxmac)
 - [Running the Go Backend](#running-the-go-backend)
 - [Testing JWT Authentication](#testing-jwt-authentication)
-- [Stopping and Removing Redis Container](#stopping-and-removing-redis-container)
+- [Stopping and Removing Containers](#stopping-and-removing-containers)
 - [Login to Kubestellar UI](#login-to-kubestellar-ui)
 - [Docker Compose Development Cycle](#docker-compose-development-cycle)
 - [Docker Image Versioning and Pulling](#docker-image-versioning-and-pulling)
@@ -28,38 +29,42 @@ This guide will help you set up a **Redis container**, configure **JWT authentic
 
 Before proceeding, ensure you have the following installed:
 
-- **Redis**
-- **Docker** (For running Redis in a container)
+- **Docker** (For running PostgreSQL and Redis containers)
+- **PostgreSQL** (Optional - if not using Docker)
+- **Redis** (Optional - if not using Docker)
 - **Postman or cURL** (For API testing)
 - **Go** (For running the backend)
 - **OpenSSL** (For generating JWT secrets securely)
+- **Make** (For running backend scripts via makefile)
+- **Air** (For hot reloading - optional but recommended)
+
+> [!NOTE] > **Recommended Setup**: Use Docker Compose for the easiest setup experience. This automatically handles PostgreSQL and Redis containers with proper configuration.
 
 ---
 
-## **Setup Redis Container with Docker**
+## **Setup PostgreSQL and Redis with Docker Compose**
 
-**Run Redis using Docker if you haven't already**
+**Recommended approach for the best contributor experience**
 
-```sh
-docker run --name redis -d -p 6379:6379 redis
+Navigate to the backend directory and start PostgreSQL and Redis services:
+
+```bash
+# Navigate to the backend directory
+cd backend
+
+# Start PostgreSQL and Redis services in detached mode
+docker compose up -d
+
+# Verify that services are running
+docker ps
 ```
 
-### **Breakdown of Flags:**
+This will start:
 
-- `--name redis` → Container name
-- `-p 5432:5432` → Expose Redis on port **6379**
-- `-d` → Run the container in detached mode
-- `redis` → Image name
+- **PostgreSQL** on port **5432** (for persistent data storage)
+- **Redis** on port **6379** (for caching WebSocket updates)
 
----
-
-## **Verify Redis is Running**
-
-**Check running containers:**
-
-```sh
-docker ps | grep redis
-```
+Both services are configured with appropriate volumes to persist data between restarts.
 
 ---
 
@@ -71,7 +76,7 @@ There are multiple ways to generate a secure JWT secret key.
 
 #### **(1) Using OpenSSL**
 
-```sh
+```bash
 openssl rand -base64 32
 ```
 
@@ -79,7 +84,7 @@ This generates a **random 32-byte** secret key.
 
 #### **(2) Using a Python One-Liner**
 
-```sh
+```bash
 python3 -c "import secrets; print(secrets.token_hex(32))"
 ```
 
@@ -96,6 +101,13 @@ JWT_SECRET=mysecurekeygeneratedhere
 Create a **`.env`** file in the **`/backend`** directory (where `main.go` is located):
 
 ```ini
+# PostgreSQL Configuration
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=kubestellar
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+
 # Redis Configuration
 REDIS_HOST=localhost
 REDIS_PORT=6379
@@ -110,7 +122,12 @@ JWT_SECRET=mysecurekeygeneratedhere
 
 If you prefer not to use a `.env` file, you can export variables manually in your terminal:
 
-```sh
+```bash
+export POSTGRES_HOST=localhost
+export POSTGRES_PORT=5432
+export POSTGRES_DB=kubestellar
+export POSTGRES_USER=postgres
+export POSTGRES_PASSWORD=postgres
 export REDIS_HOST=localhost
 export REDIS_PORT=6379
 export JWT_SECRET=mysecurekeygeneratedhere
@@ -122,11 +139,24 @@ export JWT_SECRET=mysecurekeygeneratedhere
 
 Ensure you have Go installed, then run:
 
-```sh
+```bash
+# Navigate to backend directory
+cd backend
+
+# Download dependencies
+go mod download
+
+# Option 1: Start backend with hot reloading (recommended)
+make dev
+
+# Option 2: Start backend without hot reloading
 go run main.go
 ```
 
-**Your API is now running!**
+**Your API is now running on port 4000!**
+
+> [!TIP]
+> The `make dev` command uses Air for hot reloading, which automatically restarts the server when you make code changes.
 
 ---
 
@@ -141,7 +171,7 @@ You can either generate your JWT Token with **Postman** or **cURL.**
 #### **Request:**
 
 - **Method:** `POST`
-- **Endpoint:** `/login`
+- **Endpoint:** `http://localhost:4000/login`
 - **Headers:**
   ```
   Content-Type: application/json
@@ -150,7 +180,7 @@ You can either generate your JWT Token with **Postman** or **cURL.**
   ```json
   {
     "username": "admin",
-    "password": " "
+    "password": "admin"
   }
   ```
 
@@ -169,7 +199,7 @@ You can either generate your JWT Token with **Postman** or **cURL.**
 #### **Request:**
 
 - **Method:** `GET`
-- **Endpoint:** `/protected`
+- **Endpoint:** `http://localhost:4000/protected`
 - **Headers:**
   ```
   Authorization: Bearer <your_generated_jwt_token>
@@ -211,13 +241,13 @@ You can either generate your JWT Token with **Postman** or **cURL.**
      ```json
      {
        "username": "admin",
-       "password": ""
+       "password": "admin"
      }
      ```
    - Click **Send**, and copy the `token` from the response.
 
 2. **Access Protected Route**
-   - Make a `GET` request to `http://localhost:8080/protected`
+   - Make a `GET` request to `http://localhost:4000/protected`
    - Go to the **Headers** section and add:
      ```
      Authorization: Bearer <your_token>
@@ -232,53 +262,80 @@ If you prefer the terminal, you can use `cURL`:
 
 ### **Login**
 
-```sh
-curl -X POST http://localhost:4000/login -H "Content-Type: application/json" -d '{
-  "username": "admin",
-  "password": ""
-}'
+```bash
+curl -X POST http://localhost:4000/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "admin",
+    "password": "admin"
+  }'
 ```
 
 ### **Access Protected Route**
 
-```sh
-curl -X GET http://localhost:4000/protected -H "Authorization: Bearer <your_token>"
+```bash
+curl -X GET http://localhost:4000/protected \
+  -H "Authorization: Bearer <your_token>"
 ```
 
 ---
 
-## **Stopping and Removing Redis Container**
+## **Stopping and Removing Containers**
 
-**Stop the container:**
+### **If using Docker Compose:**
 
-```sh
-docker stop redis
+```bash
+# Stop and remove containers
+docker compose down
+
+# To also remove volumes (this will delete all data)
+docker compose down -v
 ```
 
-**Remove the container:**
+### **If using individual containers:**
 
-```sh
-docker docker rm redis
+**Stop the containers:**
+
+```bash
+docker stop postgres redis
+```
+
+**Remove the containers:**
+
+```bash
+docker rm postgres redis
+```
+
+**Remove volumes (optional - this will delete all data):**
+
+```bash
+docker volume rm postgres_data
 ```
 
 ---
 
 ## **Login to Kubestellar UI**
 
-Run the Frontend if you haven't already
+Run the Frontend if you haven't already:
 
-```sh
+```bash
+# Navigate to project root
+cd ..
+
+# Install dependencies
 npm install
 
+# Start development server
 npm run dev
 ```
 
-Login with these credentials
+Login with these credentials:
 
-- **Username: admin**
-- **Password: admin**
+- **Username:** `admin`
+- **Password:** `admin`
 
-\*Note: You can input any word or strings of letters and numbers. Just as long as you have the username **admin.\***
+> [!NOTE]
+> You can input any word or strings of letters and numbers. Just as long as you have the username **admin**.
 
 ---
 
@@ -288,19 +345,19 @@ For ongoing development with Docker Compose, follow these steps:
 
 ### **Step 1: Stop the running Application**
 
-```sh
+```bash
 docker compose down
 ```
 
 ### **Step 2: Pull the Latest Source Code Changes**
 
-```sh
+```bash
 git pull origin main
 ```
 
 ### **Step 3: Rebuild and Restart the Application**
 
-```sh
+```bash
 docker compose up --build
 ```
 
@@ -333,12 +390,12 @@ If you'd like to work with the Docker images for the **KubestellarUI** project, 
 
 - **Frontend Image**:
 
-  ```sh
+  ```bash
   docker pull quay.io/kubestellar/ui:frontend
   ```
 
 - **Backend Image**:
-  ```sh
+  ```bash
   docker pull quay.io/kubestellar/ui:backend
   ```
 
@@ -348,12 +405,12 @@ If you want to pull an image for a specific version (e.g., commit hash), use:
 
 - **Frontend Image with Version**:
 
-  ```sh
+  ```bash
   docker pull quay.io/kubestellar/ui:frontend-abcd1234
   ```
 
 - **Backend Image with Version**:
-  ```sh
+  ```bash
   docker pull quay.io/kubestellar/ui:backend-abcd1234
   ```
 
@@ -367,13 +424,13 @@ To install **GolangCI-Lint** for code quality checks, follow these steps:
 
 Run the following command:
 
-```sh
+```bash
 curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.54.2
 ```
 
 Ensure `$(go env GOPATH)/bin` is in your `PATH`:
 
-```sh
+```bash
 export PATH=$(go env GOPATH)/bin:$PATH
 ```
 
@@ -387,7 +444,7 @@ scoop install golangci-lint
 
 Or **Go install**:
 
-```sh
+```bash
 go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 ```
 
@@ -395,7 +452,7 @@ go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
 Run:
 
-```sh
+```bash
 golangci-lint --version
 ```
 
@@ -407,28 +464,20 @@ Maintaining code quality is essential for collaboration. Use these commands to c
 
 ### **Check for Issues**
 
-```sh
+```bash
 make check-lint
 ```
 
 ### **Auto-Fix Issues**
 
-```sh
+```bash
 make fix-lint
 ```
 
 ### **Run Both**
 
-```sh
+```bash
 make lint
 ```
 
-## extending KS-UI API through Plugins
-
-### Static plugins
-
-To write static plugins define your plugin type inside `/backend/plugin/plugins`, you have to implement methods to satisfy the plugin interface basically name,version,Routes methods. you can define the functionality of the plugin as you like. follow the standard of
-definining routes for your plugin in this form `/plugins/your-plugin-name/`.after writing all the methods (name,version,routes...) make sure to call `pm.register(your-plugin-name)` so that your routes are send to gin at start time. pm is the plugin manager (defined at `/backend/plugin/plugins/manager.go`) basically a record of all static plugins.
-
-- backup plugin: currently only supporting postgres backend ,takes a snapshot of the wds on
-  `/plugins/backup-plugin/snapshot`
+---

@@ -1686,6 +1686,7 @@
     "admin": "Admin",
     "helpSupport": "Help & Support",
     "raiseIssue": "Report an Issue",
+
     "signOut": "Sign Out",
     "changePassword": "Change Password",
     "changePasswordSubtitle": "Please enter your current password and choose a new one.",

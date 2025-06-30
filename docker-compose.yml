@@ -1,6 +1,7 @@
 services:
   frontend:
     build:
+      context: ./frontend
       dockerfile: Dockerfile
       args:
         - VITE_BASE_URL=${VITE_BASE_URL:-http://localhost:4000}
