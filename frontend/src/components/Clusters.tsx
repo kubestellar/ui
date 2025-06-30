@@ -346,7 +346,6 @@ const StatCard = ({
         </div>
       </motion.div>
     </CardLinkWrapper>
-
   );
 };
 
@@ -699,7 +698,6 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
                     </div>
                   </motion.div>
                 </Link>
-
               );
             })}
           </div>

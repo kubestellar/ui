@@ -10,7 +10,6 @@ import toast from 'react-hot-toast';
 import { Eye, EyeOff } from 'lucide-react';
 import CloseIcon from '@mui/icons-material/Close';
 
-
 // Array of profile icon components to randomly select from
 const profileIcons = [
   HiUserCircle,
@@ -405,7 +404,6 @@ const ProfileSection = () => {
           >
             <button
               onClick={handleLogout}
-
               className="py-3\ group flex w-full items-center rounded-lg px-4
                 text-sm font-medium transition-all duration-200"
               style={{
