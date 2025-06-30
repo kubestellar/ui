@@ -2,7 +2,7 @@
 . "$(dirname -- "$0")/_/husky.sh"
 
 echo "🔧 Running Prettier on frontend files (excluding ignored files)..."
-npx prettier --write --ignore-path .prettierignore .
+cd frontend && npx prettier --write --ignore-path .prettierignore .
 
 echo "🔍 Running frontend lint checks..."
 cd frontend && npm run lint
