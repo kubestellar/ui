@@ -1,14 +1,14 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
 echo "🔧 Running Prettier on frontend files (excluding ignored files)..."
-cd frontend && npx prettier --write --ignore-path .prettierignore .
+cd frontend
+npx prettier --write --ignore-path .prettierignore .
 
 echo "🔍 Running frontend lint checks..."
-cd frontend && npm run lint
+npm run lint
+
+cd ..
 
 echo "🧹 Running gofmt on Go files (excluding vendor)..."
-find . -type f -name '*.go' -not -path "./vendor/*" | xargs gofmt -w
+find . -type f -name '*.go' -not -path "./vendor/*" -exec gofmt -w {} +
 
 echo "🧪 Running golint on Go files (excluding vendor)..."
 if command -v golint >/dev/null 2>&1; then
