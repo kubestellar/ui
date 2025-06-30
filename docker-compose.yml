@@ -17,9 +17,8 @@ services:
       - VITE_BASE_URL=${VITE_BASE_URL:-http://localhost:4000}
       - NGINX_HOST=${NGINX_HOST:-localhost}
       - BACKEND_URL=${BACKEND_URL:-http://localhost:4000}
-    network_mode: 'host'
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5173"]
+      test: ["CMD", "curl", "-f", "http://localhost"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -29,26 +28,24 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    ports:
-      - '${BACKEND_PORT:-4000}:4000'
+    network_mode: host
     volumes:
       - ~/.kube:/root/.kube
-    environment:
-      - DATABASE_URL=${DATABASE_URL:-postgres://authuser:authpass123@localhost:5432/authdb?sslmode=disable}
-      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
-      - PORT=${BACKEND_PORT:-4000}
-      - GIN_MODE=${GIN_MODE:-release}
-      - REDIS_HOST=${REDIS_HOST:-localhost}
-      - REDIS_PORT=${REDIS_PORT:-6379}
-      - CORS_ALLOWED_ORIGIN=${CORS_ALLOWED_ORIGIN:-http://localhost:5173}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_started
-    network_mode: 'host'
+    environment:
+      - PORT=${BACKEND_PORT:-4000}
+      - GIN_MODE=${GIN_MODE:-release}
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
+      - DATABASE_URL=postgres://authuser:authpass123@127.0.0.1:5400/authdb?sslmode=disable
+      - REDIS_HOST=127.0.0.1
+      - REDIS_PORT=6379
+      - CORS_ALLOWED_ORIGIN=${CORS_ALLOWED_ORIGIN:-http://localhost:5173}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4000/healthz"]
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -56,31 +53,26 @@ services:
 
   postgres:
     image: postgres:15-alpine
-    container_name: '${POSTGRES_CONTAINER_NAME:-kubestellar-postgres}'
+    container_name: auth_postgres
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-authdb}
-      POSTGRES_USER: ${POSTGRES_USER:-authuser}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-authpass123}
-      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_DB: authdb
+      POSTGRES_USER: authuser
+      POSTGRES_PASSWORD: authpass123
     ports:
-      - '${POSTGRES_PORT:-5432}:5432'
+      - '5400:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    network_mode: 'host'
-    restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-authuser} -d ${POSTGRES_DB:-authdb}"]
+      test: ["CMD-SHELL", "pg_isready -U authuser -d authdb"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
 
   redis:
     image: '${REDIS_IMAGE:-ghcr.io/kubestellar/ui/redis:latest}'
     container_name: '${REDIS_CONTAINER_NAME:-kubestellar-redis}'
     ports:
       - '${REDIS_PORT:-6379}:6379'
-    network_mode: 'host'
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -89,4 +81,4 @@ services:
       start_period: 30s
 
 volumes:
-  postgres_data:
+  postgres_data: {}
