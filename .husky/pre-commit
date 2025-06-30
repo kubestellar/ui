@@ -2,10 +2,10 @@
 . "$(dirname -- "$0")/_/husky.sh"
 
 echo "🔧 Running Prettier on frontend files (excluding ignored files)..."
-npx prettier --write --ignore-path .prettierignore .
+cd frontend && npx prettier --write --ignore-path .prettierignore .
 
 echo "🔍 Running frontend lint checks..."
-npm run lint
+cd frontend && npm run lint
 
 echo "🧹 Running gofmt on Go files (excluding vendor)..."
 find . -type f -name '*.go' -not -path "./vendor/*" | xargs gofmt -w
