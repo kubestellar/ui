@@ -179,8 +179,6 @@ cd frontend
 
 npm install
 
-npm install vite@5.4.11
-
 npm run dev
 ```
 
