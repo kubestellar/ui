@@ -1,3 +1,4 @@
+
 #
 # Add component-specific labels
 #
@@ -11,8 +12,8 @@
 
 # Add 'frontend' label for frontend-related files
 'frontend':
-  - src/**
-  - public/**
+  - frontend/**
+  - frontend/**/*
 
 # Add 'ci' label for GitHub Actions workflows
 'ci':
@@ -20,22 +21,27 @@
 
 # Add 'config' label for configuration files
 'config':
-  - tailwind.config.js
-  - vite.config.ts
-  - eslint.config.js
-  - tsconfig*.json
+  - frontend/tailwind.config.js
+  - frontend/vite.config.ts
+  - frontend/eslint.config.js
+  - frontend/tsconfig*.json
+  - frontend/prettier.config.js
+  - frontend/postcss.config.js
 
 # Add 'documentation' label for documentation-related files
 'documentation':
   - README.md
   - LICENSE
+  - CONTRIBUTING.md
+  - CODE_OF_CONDUCT.md
+  - SECURITY.md
   - .github/ISSUE_TEMPLATE/**
 
 # Add 'docker' label for Docker-related files
 'docker':
-  - Dockerfile
+  - frontend/Dockerfile
   - docker-compose.yml
-  - .dockerignore
+  - frontend/.dockerignore
   - backend/Dockerfile
   - backend/.dockerignore
 
