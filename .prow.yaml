@@ -10,6 +10,7 @@ presubmits:
             - /bin/bash
             - -c
             - |
+              cd frontend
               npm ci
               npm run lint
           resources:
@@ -27,6 +28,7 @@ presubmits:
             - /bin/bash
             - -c
             - |
+              cd frontend
               npm ci
               npm run build
           resources:
@@ -44,6 +46,7 @@ presubmits:
             - /bin/bash
             - -c
             - |
+              cd frontend
               npm ci
               npm test
           resources:
@@ -115,9 +118,11 @@ postsubmits:
             - -c
             - |
               # Build and push frontend
+              cd frontend
               buildah bud -t quay.io/kubestellar/ui:frontend-$(git rev-parse --short HEAD) -t quay.io/kubestellar/ui:frontend-latest .
               buildah push quay.io/kubestellar/ui:frontend-$(git rev-parse --short HEAD)
               buildah push quay.io/kubestellar/ui:frontend-latest
+              cd ..
 
               # Build and push backend
               cd backend
@@ -144,9 +149,11 @@ postsubmits:
             - -c
             - |
               # Build and push frontend
+              cd frontend
               buildah bud -t quay.io/kubestellar/ui:frontend-dev-$(git rev-parse --short HEAD) -t quay.io/kubestellar/ui:frontend-dev-latest .
               buildah push quay.io/kubestellar/ui:frontend-dev-$(git rev-parse --short HEAD)
               buildah push quay.io/kubestellar/ui:frontend-dev-latest
+              cd ..
 
               # Build and push backend
               cd backend
