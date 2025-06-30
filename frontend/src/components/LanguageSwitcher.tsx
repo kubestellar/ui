@@ -62,7 +62,6 @@ const LanguageSwitcher = () => {
   useEffect(() => {
     if (!isOpen) return;
 
-
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
@@ -134,7 +133,6 @@ const LanguageSwitcher = () => {
         </motion.button>
       )}
 
-
       {/* Dropdown list */}
       <AnimatePresence>
         {isOpen && (
@@ -178,7 +176,6 @@ const LanguageSwitcher = () => {
                   ref={el => (itemRefs.current[idx] = el)}
                   tabIndex={0}
                   onClick={() => changeLanguage(lang.code)}
-
                   className={
                     isLoginPage
                       ? `flex w-full items-center justify-between px-4 py-2 text-left text-sm transition-colors hover:bg-blue-700/30 ${
