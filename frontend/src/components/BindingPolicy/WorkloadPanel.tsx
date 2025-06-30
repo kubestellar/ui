@@ -43,7 +43,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LabelIcon from '@mui/icons-material/Label';
 import { Tag, Tags } from 'lucide-react';
-import { usePolicyDragDropStore } from '../../stores/policyDragDropStore';
+import { usePolicySelectionStore } from '../../stores/policySelectionStore';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useBPQueries } from '../../hooks/queries/useBPQueries';
 import { toast } from 'react-hot-toast';
@@ -672,7 +672,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
     const itemId = `label-${labelGroup.key}:${labelGroup.value}`;
 
     // Check if this item is in the canvas
-    const { canvasEntities } = usePolicyDragDropStore.getState();
+    const { canvasEntities } = usePolicySelectionStore.getState();
     const isInCanvas = canvasEntities.workloads.includes(itemId);
 
     // Check if this is from a cluster-scoped resource

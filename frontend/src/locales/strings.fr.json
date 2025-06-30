@@ -1630,7 +1630,7 @@
     "creating": "Création...",
     "createContext": "Créer un contexte"
   },
-  "policyDragDropStore": {
+  "policySelectionStore": {
     "labelsAssigned": "Étiquettes automatiquement attribuées à {{itemType}} {{itemId}}",
     "policyAssigned": "Politique {{policyName}} assignée avec succès à {{targetType}} {{targetName}}",
     "clusterAlreadyAssigned": "Le cluster {{targetName}} est déjà assigné à la politique {{policyName}}",

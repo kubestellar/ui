@@ -31,7 +31,7 @@ import { useWDSQueries } from '../hooks/queries/useWDSQueries';
 import { useBPQueries } from '../hooks/queries/useBPQueries';
 import { PolicyData } from '../components/BindingPolicy/CreateBindingPolicyDialog';
 import BPVisualization from '../components/BindingPolicy/BPVisualization';
-import PolicyDragDrop from '../components/BindingPolicy/PolicyDragDrop';
+import PolicySelection from '../components/BindingPolicy/PolicySelection';
 import EditIcon from '@mui/icons-material/Edit';
 import PublishIcon from '@mui/icons-material/Publish';
 import KubernetesIcon from '../components/BindingPolicy/KubernetesIcon';
@@ -164,11 +164,11 @@ const BP = () => {
   const itemsPerPage = 10;
   const [successMessage, setSuccessMessage] = useState<string>('');
 
-  // Check if we need to activate dragdrop view based on location state
-  const initialViewMode = location.state?.activateView === 'dragdrop' ? 'dragdrop' : 'table';
-  const [viewMode, setViewMode] = useState<'table' | 'dragdrop' | 'visualize'>(initialViewMode);
-  const [showDragDropHelp, setShowDragDropHelp] = useState(
-    location.state?.activateView === 'dragdrop'
+  // Check if we need to activate selection view based on location state
+  const initialViewMode = location.state?.activateView === 'selection' ? 'selection' : 'table';
+  const [viewMode, setViewMode] = useState<'table' | 'selection' | 'visualize'>(initialViewMode);
+  const [showSelectionHelp, setShowSelectionHelp] = useState(
+    location.state?.activateView === 'selection'
   );
 
   const [clusters, setClusters] = useState<ManagedCluster[]>([]);
@@ -179,10 +179,10 @@ const BP = () => {
   useEffect(() => {
     console.log('Location state:', location.state);
 
-    if (location.state?.activateView === 'dragdrop') {
-      console.log('Setting viewMode to dragdrop from location state');
-      setViewMode('dragdrop');
-      setShowDragDropHelp(true);
+    if (location.state?.activateView === 'selection') {
+      console.log('Setting viewMode to selection from location state');
+      setViewMode('selection');
+      setShowSelectionHelp(true);
     }
   }, [location.state]);
 
@@ -196,8 +196,8 @@ const BP = () => {
 
   // Show drag & drop help when the view is activated
   useEffect(() => {
-    if (viewMode === 'dragdrop') {
-      setShowDragDropHelp(true);
+    if (viewMode === 'selection') {
+      setShowSelectionHelp(true);
     }
   }, [viewMode]);
 
@@ -362,12 +362,12 @@ const BP = () => {
 
   // Memoize the tab change handler to prevent rerenders
   const handleViewModeChange = useCallback(
-    (_: React.SyntheticEvent, newValue: 'table' | 'dragdrop' | 'visualize') => {
+    (_: React.SyntheticEvent, newValue: 'table' | 'selection' | 'visualize') => {
       console.log('Tab change to:', newValue, 'from:', viewMode);
       if (newValue && newValue !== viewMode) {
         setViewMode(newValue);
-        if (newValue === 'dragdrop') {
-          setShowDragDropHelp(true);
+        if (newValue === 'selection') {
+          setShowSelectionHelp(true);
         }
       }
     },
@@ -926,7 +926,7 @@ const BP = () => {
           </>
         ) : (
           <Box sx={{ position: 'relative' }}>
-            <PolicyDragDrop
+            <PolicySelection
               policies={[...bindingPolicies, ...simulatedPolicies]}
               clusters={clusters}
               workloads={workloads}
@@ -950,7 +950,7 @@ const BP = () => {
                 },
               }}
             >
-              <Typography variant="body2">{t('bindingPolicy.dragDrop.infoAlert')}</Typography>
+              <Typography variant="body2">{t('bindingPolicy.selection.infoAlert')}</Typography>
             </Alert>
           </Box>
         )}
@@ -981,8 +981,8 @@ const BP = () => {
       </Paper>
       {/* Drag & Drop Help Dialog */}
       <Dialog
-        open={showDragDropHelp}
-        onClose={() => setShowDragDropHelp(false)}
+        open={showSelectionHelp}
+        onClose={() => setShowSelectionHelp(false)}
         maxWidth="sm"
         fullWidth
         PaperProps={{
@@ -1005,7 +1005,7 @@ const BP = () => {
               sx={{ mr: 1, color: theme === 'dark' ? '#90CAF9' : undefined }}
             />
             <Typography variant="h6" sx={{ color: theme === 'dark' ? '#E5E7EB' : undefined }}>
-              {t('bindingPolicy.dragDrop.helpDialog.title')}
+              {t('bindingPolicy.selection.helpDialog.title')}
             </Typography>
           </Box>
         </DialogTitle>
@@ -1016,7 +1016,7 @@ const BP = () => {
           }}
         >
           <Typography paragraph sx={{ color: theme === 'dark' ? '#E5E7EB' : undefined }}>
-            {t('bindingPolicy.dragDrop.helpDialog.intro')}
+            {t('bindingPolicy.selection.helpDialog.intro')}
           </Typography>
           <List
             sx={{
@@ -1032,14 +1032,16 @@ const BP = () => {
               <ListItemIcon>
                 <KubernetesIcon type="cluster" size={24} />
               </ListItemIcon>
-              <ListItemText primary={t('bindingPolicy.dragDrop.helpDialog.steps.selectClusters')} />
+              <ListItemText
+                primary={t('bindingPolicy.selection.helpDialog.steps.selectClusters')}
+              />
             </ListItem>
             <ListItem>
               <ListItemIcon>
                 <KubernetesIcon type="workload" size={24} />
               </ListItemIcon>
               <ListItemText
-                primary={t('bindingPolicy.dragDrop.helpDialog.steps.selectWorkloads')}
+                primary={t('bindingPolicy.selection.helpDialog.steps.selectWorkloads')}
               />
             </ListItem>
             <ListItem>
@@ -1051,20 +1053,20 @@ const BP = () => {
                 </Box>
               </ListItemIcon>
               <ListItemText
-                primary={t('bindingPolicy.dragDrop.helpDialog.steps.createConnection')}
+                primary={t('bindingPolicy.selection.helpDialog.steps.createConnection')}
               />
             </ListItem>
             <ListItem>
               <ListItemIcon>
                 <EditIcon />
               </ListItemIcon>
-              <ListItemText primary={t('bindingPolicy.dragDrop.helpDialog.steps.fillDetails')} />
+              <ListItemText primary={t('bindingPolicy.selection.helpDialog.steps.fillDetails')} />
             </ListItem>
             <ListItem>
               <ListItemIcon>
                 <PublishIcon color="primary" />
               </ListItemIcon>
-              <ListItemText primary={t('bindingPolicy.dragDrop.helpDialog.steps.deploy')} />
+              <ListItemText primary={t('bindingPolicy.selection.helpDialog.steps.deploy')} />
             </ListItem>
           </List>
         </DialogContent>
@@ -1075,8 +1077,8 @@ const BP = () => {
             py: 2,
           }}
         >
-          <Button onClick={() => setShowDragDropHelp(false)} variant="contained" color="primary">
-            {t('bindingPolicy.dragDrop.helpDialog.gotIt')}
+          <Button onClick={() => setShowSelectionHelp(false)} variant="contained" color="primary">
+            {t('bindingPolicy.selection.helpDialog.gotIt')}
           </Button>
         </DialogActions>
       </Dialog>

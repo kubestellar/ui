@@ -1629,7 +1629,7 @@
     "creating": "作成中...",
     "createContext": "コンテキストを作成"
   },
-  "policyDragDropStore": {
+  "policySelectionStore": {
     "labelsAssigned": "{{itemType}}「{{itemId}}」にラベルを自動で割り当てました",
     "policyAssigned": "ポリシー「{{policyName}}」を{{targetType}}「{{targetName}}」に正常に割り当てました",
     "clusterAlreadyAssigned": "クラスタ「{{targetName}}」はすでにポリシー「{{policyName}}」に割り当てられています",

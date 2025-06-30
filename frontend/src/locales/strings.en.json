@@ -1091,7 +1091,7 @@
       }
     },
     "loadingCanvas": "Loading canvas data...",
-    "dragDrop": {
+    "selection": {
       "infoAlert": "This interface is using simulated responses to create binding policies. Select clusters and workloads from the lists to add them to the canvas, then click on a workload and then a cluster to create a binding policy connection.",
       "helpDialog": {
         "title": "Create Binding Policies with Direct Connections",
@@ -1635,7 +1635,8 @@
     "creating": "Creating...",
     "createContext": "Create Context"
   },
-  "policyDragDropStore": {
+
+  "policySelectionStore": {
     "labelsAssigned": "Labels automatically assigned to {{itemType}} {{itemId}}",
     "policyAssigned": "Successfully assigned {{policyName}} to {{targetType}} {{targetName}}",
     "clusterAlreadyAssigned": "Cluster {{targetName}} is already assigned to policy {{policyName}}",

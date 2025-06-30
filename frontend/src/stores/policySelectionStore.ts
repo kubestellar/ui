@@ -1,12 +1,12 @@
 import { create } from 'zustand';
 import { BindingPolicyInfo } from '../types/bindingPolicy';
 
-// Define the drag types
-export const DragTypes = {
-  CLUSTER: 'CLUSTER_OR_WORKLOAD',
-  WORKLOAD: 'CLUSTER_OR_WORKLOAD',
-  POLICY: 'POLICY',
-};
+// Define selection types
+export enum SelectionTypes {
+  POLICY = 'POLICY',
+  CLUSTER = 'CLUSTER',
+  WORKLOAD = 'WORKLOAD',
+}
 
 type EntityType = 'policy' | 'cluster' | 'workload';
 
@@ -23,18 +23,18 @@ interface ItemLabels {
   workloads: Record<string, Record<string, string>>;
 }
 
-export interface PolicyDragDropTranslations {
+export interface PolicySelectionTranslations {
   labelsAssigned: (itemType: string, itemId: string) => string;
   policyAssigned: (policyName: string, targetType: string, targetName: string) => string;
   clusterAlreadyAssigned: (targetName: string, policyName: string) => string;
   workloadAlreadyAssigned: (targetName: string, policyName: string) => string;
 }
 
-interface PolicyDragDropState {
+interface PolicySelectionState {
   // UI state
-  activeDragItem: { type: string; id: string } | null;
+  activeSelectionItem: { type: string; id: string } | null;
   successMessage: string | null;
-  translations: PolicyDragDropTranslations | null;
+  translations: PolicySelectionTranslations | null;
 
   // Data state
   assignmentMap: Record<string, { clusters: string[]; workloads: string[] }>;
@@ -42,10 +42,10 @@ interface PolicyDragDropState {
   itemLabels: ItemLabels;
 
   // Actions
-  setActiveDragItem: (item: { type: string; id: string } | null) => void;
+  setActiveSelectionItem: (item: { type: string; id: string } | null) => void;
   setSuccessMessage: (message: string | null) => void;
   clearSuccessMessageAfterDelay: () => void;
-  setTranslations: (translations: PolicyDragDropTranslations) => void;
+  setTranslations: (translations: PolicySelectionTranslations) => void;
 
   // Canvas management
   addToCanvas: (itemType: EntityType, itemId: string) => void;
@@ -75,9 +75,9 @@ interface PolicyDragDropState {
 }
 
 // Create the store
-export const usePolicyDragDropStore = create<PolicyDragDropState>((set, get) => ({
+export const usePolicySelectionStore = create<PolicySelectionState>((set, get) => ({
   // Initial state
-  activeDragItem: null,
+  activeSelectionItem: null,
   successMessage: null,
   translations: null,
   assignmentMap: {},
@@ -92,7 +92,7 @@ export const usePolicyDragDropStore = create<PolicyDragDropState>((set, get) => 
   },
 
   // UI state actions
-  setActiveDragItem: item => set({ activeDragItem: item }),
+  setActiveSelectionItem: item => set({ activeSelectionItem: item }),
   setSuccessMessage: message => set({ successMessage: message }),
   setTranslations: translations => set({ translations }),
   clearSuccessMessageAfterDelay: () => {
