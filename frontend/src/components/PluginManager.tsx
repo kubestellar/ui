@@ -51,7 +51,7 @@ export const PluginManager: React.FC = () => {
   const [localPath, setLocalPath] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [confirmAction, setConfirmAction] = useState<{
-    type: 'uninstall' | 'disable';
+    type: 'uninstall' | 'disable' | 'enable';
     plugin: string;
   } | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -82,6 +82,7 @@ export const PluginManager: React.FC = () => {
         await loadPlugin(manifest);
       }
       await loadPluginData();
+      setConfirmAction(null);
     } catch (error) {
       console.error('Failed to enable plugin:', error);
     }
@@ -266,12 +267,12 @@ export const PluginManager: React.FC = () => {
             },
             {
               label: t('plugins.list.active'),
-              value: plugins.size,
+              value: availablePlugins.filter(p => p.enabled).length,
               color: themeStyles.colors.status.success,
             },
             {
               label: t('plugins.list.inactive'),
-              value: availablePlugins.length - plugins.size,
+              value: availablePlugins.filter(p => !p.enabled).length,
               color: themeStyles.colors.text.secondary,
             },
           ].map((stat, index) => (
@@ -677,7 +678,7 @@ export const PluginManager: React.FC = () => {
                       </motion.button>
                     ) : (
                       <motion.button
-                        onClick={() => handleEnablePlugin(plugin.name)}
+                        onClick={() => setConfirmAction({ type: 'enable', plugin: plugin.name })}
                         className="flex items-center justify-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
                         style={{
                           background: themeStyles.colors.status.success + '20',
@@ -761,8 +762,10 @@ export const PluginManager: React.FC = () => {
             onConfirm={() => {
               if (confirmAction.type === 'uninstall') {
                 handleUninstallPlugin(confirmAction.plugin);
-              } else {
+              } else if (confirmAction.type === 'disable') {
                 handleDisablePlugin(confirmAction.plugin);
+              } else if (confirmAction.type === 'enable') {
+                handleEnablePlugin(confirmAction.plugin);
               }
             }}
             onCancel={() => setConfirmAction(null)}
@@ -921,7 +924,7 @@ const PluginDetailsModal: React.FC<PluginDetailsModalProps> = ({
 
 // Confirmation Modal Component
 interface ConfirmationModalProps {
-  action: { type: 'uninstall' | 'disable'; plugin: string };
+  action: { type: 'uninstall' | 'disable' | 'enable'; plugin: string };
   onConfirm: () => void;
   onCancel: () => void;
   themeStyles: any;
@@ -981,7 +984,9 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             onClick={onConfirm}
             className="flex-1 rounded-lg px-4 py-2 font-medium transition-colors"
             style={{
-              background: themeStyles.colors.status.error,
+              background: action.type === 'enable' 
+                ? themeStyles.colors.status.success 
+                : themeStyles.colors.status.error,
               color: 'white',
             }}
             whileHover={{ scale: 1.02 }}

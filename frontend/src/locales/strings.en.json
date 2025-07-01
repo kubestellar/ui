@@ -2085,6 +2085,11 @@
         "title": "Confirm Plugin Disable",
         "message": "Disabling \"{{name}}\" will stop all plugin functionality. You can re-enable it later.",
         "confirm": "Yes, Disable"
+      },
+      "enable": {
+        "title": "Confirm Plugin Enable",
+        "message": "Enabling \"{{name}}\" will activate all plugin functionality and make it available for use.",
+        "confirm": "Yes, Enable"
       }
     },
     "marketplace": {
