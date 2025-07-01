@@ -33,7 +33,7 @@ interface Plugin {
   enabled: boolean;
   loadTime?: Date;
   routes?: string[];
-  id: number;
+  id: string;
 }
 
 export const PluginManager: React.FC = () => {
@@ -58,7 +58,7 @@ export const PluginManager: React.FC = () => {
     plugin: string;
   } | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [feedbackClick, setFeedbackClick] = useState<number | null>(null);
+  const [feedbackClick, setFeedbackClick] = useState<string | null>(null);
 
   // Ref for the hidden directory input
   const directoryInputRef = useRef<HTMLInputElement>(null);

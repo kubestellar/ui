@@ -10,13 +10,13 @@ import { Star } from '@mui/icons-material';
 import logo from '../../assets/logo.svg';
 
 interface IfeedbackModalProps {
-  pluginId: number;
+  pluginId: string;
   onClose: () => void;
   pluginAPI: PluginAPI;
 }
 
 interface IFeedbackFormData {
-  pluginId: number;
+  pluginId: string;
   rating: number | null;
   comment: string;
   suggestion: string;
@@ -43,6 +43,7 @@ const FeedbackModel = ({ pluginId, pluginAPI, onClose }: IfeedbackModalProps) =>
     5: 'Excellent',
   };
 
+  console.log(pluginId);
   const handleStarClick = (starIndex: number) => {
     setFormData(prv => ({
       ...prv,
