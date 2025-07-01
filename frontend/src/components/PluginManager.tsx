@@ -39,7 +39,7 @@ export const PluginManager: React.FC = () => {
   const isDark = theme === 'dark';
   const themeStyles = getThemeStyles(isDark);
 
-  const { plugins, loadedPlugins, loadPlugin, unloadPlugin } = usePlugins();
+  const { loadedPlugins, loadPlugin, unloadPlugin } = usePlugins();
   const [pluginAPI] = useState(() => new PluginAPI());
 
   const [availablePlugins, setAvailablePlugins] = useState<Plugin[]>([]);
@@ -984,9 +984,10 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             onClick={onConfirm}
             className="flex-1 rounded-lg px-4 py-2 font-medium transition-colors"
             style={{
-              background: action.type === 'enable' 
-                ? themeStyles.colors.status.success 
-                : themeStyles.colors.status.error,
+              background:
+                action.type === 'enable'
+                  ? themeStyles.colors.status.success
+                  : themeStyles.colors.status.error,
               color: 'white',
             }}
             whileHover={{ scale: 1.02 }}
