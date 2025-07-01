@@ -99,15 +99,8 @@ func main() {
 		c.Next()
 	})
 
-	// Health check endpoint (public)
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"status":  "healthy",
-			"service": "kubestellar-ui",
-			"version": "1.0.0",
-			"auth":    "enabled",
-		})
-	})
+	// Setting up comprehensive health endpoints using the existing health routes
+	routes.SetupHealthEndpoints(router, logger)
 
 	// Setup authentication routes
 	routes.SetupRoutes(router)
@@ -123,7 +116,11 @@ func main() {
 			zap.String("mode", cfg.GinMode),
 			zap.String("cors_origin", os.Getenv("CORS_ALLOWED_ORIGIN")))
 		logger.Info("Default admin credentials: admin/admin - CHANGE IMMEDIATELY!")
-		logger.Info("Health check available at: http://localhost:" + cfg.Port + "/health")
+		logger.Info("Health endpoints available:")
+		logger.Info("  - Comprehensive health: http://localhost:" + cfg.Port + "/health")
+		logger.Info("  - Kubernetes liveness: http://localhost:" + cfg.Port + "/healthz")
+		logger.Info("  - Kubernetes readiness: http://localhost:" + cfg.Port + "/readyz")
+		logger.Info("  - Simple status: http://localhost:" + cfg.Port + "/status")
 
 		if err := router.Run(":" + cfg.Port); err != nil {
 			logger.Fatal("Failed to start server", zap.Error(err))
