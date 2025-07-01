@@ -590,7 +590,7 @@ export const PluginManager: React.FC = () => {
               {filteredPlugins.map((plugin, index) => (
                 <motion.div
                   key={plugin.name}
-                  className="rounded-xl p-6"
+                  className="flex h-full min-h-[15rem] flex-col rounded-xl p-6 transition-shadow hover:shadow-lg"
                   style={{
                     background: themeStyles.effects.glassMorphism.background,
                     border: `1px solid ${themeStyles.card.borderColor}`,
@@ -602,10 +602,10 @@ export const PluginManager: React.FC = () => {
                   whileHover={{ y: -2 }}
                 >
                   {/* Plugin Header */}
-                  <div className="mb-4 flex items-start justify-between">
-                    <div className="flex items-center gap-3">
+                  <div className="mb-4 grid grid-cols-1 items-start gap-2 sm:grid-cols-[1fr_auto]">
+                    <div className="flex min-w-0 items-center gap-3">
                       <div
-                        className="rounded-lg p-2"
+                        className="shrink-0 rounded-lg p-2"
                         style={{ background: themeStyles.colors.bg.secondary }}
                       >
                         <HiOutlinePuzzlePiece
@@ -613,9 +613,9 @@ export const PluginManager: React.FC = () => {
                           style={{ color: themeStyles.colors.brand.primary }}
                         />
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <h4
-                          className="font-semibold"
+                          className="max-w-full truncate font-semibold"
                           style={{ color: themeStyles.colors.text.primary }}
                         >
                           {plugin.name}
@@ -631,10 +631,10 @@ export const PluginManager: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-start gap-2 sm:justify-end">
                       {getStatusIcon(plugin.status)}
                       <span
-                        className="rounded-full px-2 py-1 text-xs font-medium"
+                        className="whitespace-nowrap rounded-full px-2 py-1 text-xs font-medium"
                         style={{
                           background: plugin.enabled
                             ? themeStyles.colors.status.success + '20'
@@ -652,16 +652,19 @@ export const PluginManager: React.FC = () => {
                   </div>
 
                   {/* Plugin Description */}
-                  <p className="mb-4 text-sm" style={{ color: themeStyles.colors.text.secondary }}>
+                  <p
+                    className="mb-4 line-clamp-2 text-sm"
+                    style={{ color: themeStyles.colors.text.secondary }}
+                  >
                     {plugin.description}
                   </p>
 
                   {/* Plugin Actions */}
-                  <div className="flex flex-wrap gap-2">
+                  <div className="mt-auto grid w-full grid-cols-1 gap-2 sm:grid-cols-2">
                     {plugin.enabled ? (
                       <motion.button
                         onClick={() => setConfirmAction({ type: 'disable', plugin: plugin.name })}
-                        className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+                        className="flex items-center justify-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
                         style={{
                           background: themeStyles.colors.status.warning + '20',
                           color: themeStyles.colors.status.warning,
@@ -675,7 +678,7 @@ export const PluginManager: React.FC = () => {
                     ) : (
                       <motion.button
                         onClick={() => handleEnablePlugin(plugin.name)}
-                        className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+                        className="flex items-center justify-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
                         style={{
                           background: themeStyles.colors.status.success + '20',
                           color: themeStyles.colors.status.success,
@@ -690,7 +693,7 @@ export const PluginManager: React.FC = () => {
 
                     <motion.button
                       onClick={() => setSelectedPlugin(plugin.name)}
-                      className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+                      className="flex items-center justify-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
                       style={{
                         background: themeStyles.colors.brand.primary + '20',
                         color: themeStyles.colors.brand.primary,
@@ -704,7 +707,7 @@ export const PluginManager: React.FC = () => {
 
                     <motion.button
                       onClick={() => handleReloadPlugin(plugin.name)}
-                      className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+                      className="flex items-center justify-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
                       style={{
                         background: themeStyles.colors.text.secondary + '20',
                         color: themeStyles.colors.text.secondary,
@@ -718,7 +721,7 @@ export const PluginManager: React.FC = () => {
 
                     <motion.button
                       onClick={() => setConfirmAction({ type: 'uninstall', plugin: plugin.name })}
-                      className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+                      className="flex items-center justify-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
                       style={{
                         background: themeStyles.colors.status.error + '20',
                         color: themeStyles.colors.status.error,
