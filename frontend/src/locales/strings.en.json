@@ -2050,7 +2050,8 @@
         "details": "Details",
         "uninstall": "Uninstall",
         "reload": "Reload",
-        "settings": "Settings"
+        "settings": "Settings",
+        "feedback": "Feedback"
       }
     },
     "details": {
@@ -2105,6 +2106,18 @@
       "template": "Use Template",
       "documentation": "View Documentation",
       "examples": "Examples"
+    },
+    "feedback": {
+      "title": "Share Your Feedback",
+      "rate": "Rate this plugin",
+      "comment": {
+        "title": "Your Comment",
+        "placeholder": "Tell us about your experience"
+      },
+      "suggestion": {
+        "title": "Suggestions for Improvement",
+        "placeholder": "Any suggestions for Improvements ?"
+      }
     }
   }
 }

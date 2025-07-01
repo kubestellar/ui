@@ -2088,6 +2088,18 @@
       "template": "Usar Plantilla",
       "documentation": "Ver Documentación",
       "examples": "Ejemplos"
+    },
+    "feedback": {
+      "title": "Comparte tu opinión",
+      "rate": "Califica este complemento",
+      "comment": {
+        "title": "Tu comentario",
+        "placeholder": "Cuéntanos sobre tu experiencia"
+      },
+      "suggestion": {
+        "title": "Sugerencias de mejora",
+        "placeholder": "¿Alguna sugerencia para mejorar?"
+      }
     }
   }
 }

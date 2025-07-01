@@ -2089,6 +2089,18 @@
       "template": "テンプレートを使用",
       "documentation": "ドキュメントを表示",
       "examples": "サンプル"
+    },
+    "feedback": {
+      "title": "フィードバックを共有する",
+      "rate": "このプラグインを評価してください",
+      "comment": {
+        "title": "あなたのコメント",
+        "placeholder": "ご利用の感想をお聞かせください"
+      },
+      "suggestion": {
+        "title": "改善の提案",
+        "placeholder": "改善の提案があればご記入ください"
+      }
     }
   }
 }

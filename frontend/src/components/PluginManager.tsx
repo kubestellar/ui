@@ -16,11 +16,13 @@ import {
   HiOutlineCloudArrowDown,
   HiOutlineFolder,
   HiOutlineCodeBracket,
+  HiChatBubbleLeftEllipsis,
 } from 'react-icons/hi2';
 import { usePlugins } from '../plugins/PluginLoader';
 import { PluginAPI } from '../plugins/PluginAPI';
 import useTheme from '../stores/themeStore';
 import getThemeStyles from '../lib/theme-utils';
+import FeedbackModel from './plugin/FeedbackModel';
 
 interface Plugin {
   name: string;
@@ -31,6 +33,7 @@ interface Plugin {
   enabled: boolean;
   loadTime?: Date;
   routes?: string[];
+  id: string;
 }
 
 export const PluginManager: React.FC = () => {
@@ -55,6 +58,7 @@ export const PluginManager: React.FC = () => {
     plugin: string;
   } | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [feedbackClick, setFeedbackClick] = useState<string | null>(null);
 
   // Ref for the hidden directory input
   const directoryInputRef = useRef<HTMLInputElement>(null);
@@ -733,6 +737,20 @@ export const PluginManager: React.FC = () => {
                       <HiOutlineTrash className="h-3 w-3" />
                       {t('plugins.card.actions.uninstall')}
                     </motion.button>
+
+                    <motion.button
+                      onClick={() => setFeedbackClick(plugin.id)}
+                      className="flex items-center justify-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+                      style={{
+                        background: themeStyles.colors.brand.primary + '20',
+                        color: themeStyles.colors.text.primary,
+                      }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <HiChatBubbleLeftEllipsis className="h-3 w-3" />
+                      {t('plugins.card.actions.feedback')}
+                    </motion.button>
                   </div>
                 </motion.div>
               ))}
@@ -771,6 +789,17 @@ export const PluginManager: React.FC = () => {
             onCancel={() => setConfirmAction(null)}
             themeStyles={themeStyles}
             t={t}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Feedback Modal */}
+      <AnimatePresence>
+        {feedbackClick && (
+          <FeedbackModel
+            pluginId={feedbackClick}
+            onClose={() => setFeedbackClick(null)}
+            pluginAPI={pluginAPI}
           />
         )}
       </AnimatePresence>
