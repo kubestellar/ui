@@ -58,7 +58,7 @@ const FeedbackModel = ({ pluginId, pluginAPI, onClose }: IfeedbackModalProps) =>
     return texts[rating as keyof typeof texts] || '';
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const { name, value } = e.target;
 
     setFormData(prv => ({
@@ -168,8 +168,7 @@ const FeedbackModel = ({ pluginId, pluginAPI, onClose }: IfeedbackModalProps) =>
           </div>
           <div className="flex flex-col gap-3">
             <div>{t('plugins.feedback.comment.title')}</div>
-            <input
-              type="text"
+            <textarea
               name="comment"
               placeholder={t('plugins.feedback.comment.placeholder')}
               value={formData.comment}
@@ -186,8 +185,7 @@ const FeedbackModel = ({ pluginId, pluginAPI, onClose }: IfeedbackModalProps) =>
           </div>
           <div className="flex flex-col gap-3">
             <div>{t('plugins.feedback.suggestion.title')}</div>
-            <input
-              type="text"
+            <textarea
               name="suggestion"
               placeholder={t('plugins.feedback.suggestion.placeholder')}
               value={formData.suggestion}
