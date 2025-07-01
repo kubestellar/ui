@@ -6,8 +6,8 @@ import { useTranslation } from 'react-i18next';
 import getThemeStyles from '../../lib/theme-utils';
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { Star } from '@mui/icons-material';
 import logo from '../../assets/logo.svg';
+import { Circle } from 'lucide-react';
 
 interface IfeedbackModalProps {
   pluginId: string;
@@ -147,7 +147,6 @@ const FeedbackModel = ({ pluginId, pluginAPI, onClose }: IfeedbackModalProps) =>
                       style={
                         showLogo
                           ? {
-                              WebkitMaskImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M12 .587l3.668 7.568 8.332 1.151-6.064 5.923 1.512 8.257L12 18.896l-7.448 4.59 1.512-8.257L0 9.306l8.332-1.151z'/%3E%3C/svg%3E")`,
                               WebkitMaskRepeat: 'no-repeat',
                               WebkitMaskSize: 'cover',
                               backgroundImage: `url(${logo})`,
@@ -155,7 +154,7 @@ const FeedbackModel = ({ pluginId, pluginAPI, onClose }: IfeedbackModalProps) =>
                           : {}
                       }
                     >
-                      {!showLogo && <Star className="h-6 w-6 text-gray-400 transition-colors" />}
+                      {!showLogo && <Circle className="h-6 w-6 text-gray-400 transition-colors" />}
                     </div>
                   </button>
                 );
