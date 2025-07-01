@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="KubeStellar Logo" width="250px" src="public/Kubestellar-logo.png" />
+  <img alt="KubeStellar Logo" width="250px" src="frontend/public/Kubestellar-logo.png" />
 </p>
 
 <h2 align="center">Multi-cluster Configuration Management for Edge, Multi-Cloud, and Hybrid Cloud</h2>
@@ -63,7 +63,7 @@ Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI 
 
 - **Kubestellar guide**: [Guide](https://docs.kubestellar.io/release-0.25.1/direct/get-started/)
 
-> [!NOTE]  
+> [!NOTE]
 > If you're running on macOS, you may need to manually add a host entry to resolve `its1.localtest.me` to `localhost` using:
 >
 > ```bash
@@ -95,9 +95,11 @@ Then go through one of the setup options below:
 
 #### Step 1: Create `.env` File for Frontend Configuration
 
-To configure the frontend, copy the `.env.example` file to a `.env` file in the project root directory (where `package.json` is located).
+To configure the frontend, copy the `.env.example` file to a `.env` file in the `frontend/` directory (where `package.json` is located).
 
 ```bash
+cd frontend/
+
 cp .env.example .env
 ```
 
@@ -173,6 +175,8 @@ You should see output indicating the server is running on port `4000`.
 Open another terminal and make sure you are in the root directory of the project.
 
 ```bash
+cd frontend
+
 npm install
 
 npm run dev
@@ -201,9 +205,11 @@ Docker Compose is configured to use environment variables with sensible defaults
 
 **Option 1: Using a .env file** (Recommended for persistent configuration)
 
-Create a `.env` file in the project root directory:
+Create a `.env` file in the `frontend/` directory:
 
 ```bash
+cd frontend/
+
 cp .env.example .env
 ```
 
@@ -322,7 +328,8 @@ REDIS_IMAGE=redis:7-alpine docker compose up
 
 ---
 
-> **Note for WSL Users 🐧**
+> [!NOTE]
+> **For WSL Users 🐧**
 >
 > If you've successfully installed the KubeStellar but they are not detected by frontend, it might be due to a communication issue between Docker and WSL.
 >
@@ -342,7 +349,7 @@ REDIS_IMAGE=redis:7-alpine docker compose up
 - **Username: admin**
 - **Password: admin**
 
-> [!NOTE]  
+> [!NOTE]
 > If you're encountering errors while setting up the Kubestellar UI, even after correctly following the guide, try pruning the Docker images and containers related to the KS core.  
 > Rebuild them and perform a restart.
 >
