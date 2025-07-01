@@ -65,6 +65,10 @@ This document tracks the progress of the design system foundation efforts for th
 5. **Wireframing**  
    🔗 [Wireframing – Figma](https://www.figma.com/design/GLUwDDSxzkL8Evhgsec4JM/Wireframing--kubestellar.io?node-id=0-1&t=LaikrxjMxKaexwZd-1)
 
+6. **Type Hierarchy**  
+   🔗 [Type Hierarchy – Figma](https://www.figma.com/design/Gi24EeUOBqcWbdutYEPlE4/Type-Hierarchy?node-id=0-1&t=XXfQVjh9T7DgVtXB-1)
+
+
 ---
 
 ## 📌 Progress Update
@@ -204,5 +208,12 @@ This section covers foundational analysis and planning to improve the structure,
   - Component structure (inputs, buttons, sidebars)
 - Used layout grid and spacing tokens from the design system
 - Aligned wireframes with IA improvements
+
+
+### 🔤 Type Hierarchy Defined
+
+- Established a consistent typography system for the documentation and UI
+- Defined font sizes, weights, and heading structures aligned with visual hierarchy
+- Resource: [Type Hierarchy – Figma](https://www.figma.com/design/Gi24EeUOBqcWbdutYEPlE4/Type-Hierarchy?node-id=0-1&t=XXfQVjh9T7DgVtXB-1)
 
 ---
