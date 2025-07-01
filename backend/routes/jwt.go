@@ -291,8 +291,8 @@ func LoginHandler(c *gin.Context) {
 			return
 		}
 
-		// Check if password matches what we expect
-		if dbPassword == "admin_hashed" {
+		// Check if password matches using bcrypt
+		if models.CheckPasswordHash(loginData.Password, dbPassword) {
 			// Create a simple user object for response
 			user := struct {
 				ID          int               `json:"id"`
@@ -332,28 +332,63 @@ func LoginHandler(c *gin.Context) {
 		} else {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "Password mismatch",
-				"debug": "Expected: admin_hashed, Got: " + dbPassword,
+				"debug": "Bcrypt verification failed for stored hash: " + dbPassword,
 			})
 			return
 		}
 	}
 
-	// Try to authenticate user using models (for other users)
-	user, err := models.AuthenticateUser(loginData.Username, loginData.Password)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password", "debug": err.Error()})
-		return
-	}
+	// Get user from database
+	query := "SELECT id, username, password, is_admin FROM users WHERE username = $1"
+	var id int
+	var username, dbPassword string
+	var isAdmin bool
 
-	if user == nil {
+	err := database.DB.QueryRow(query, loginData.Username).Scan(&id, &username, &dbPassword, &isAdmin)
+	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
 		return
 	}
 
-	// Generate JWT token
-	token, err := utils.GenerateToken(user.Username, user.IsAdmin, user.Permissions)
+	// Verify password using bcrypt
+	if !models.CheckPasswordHash(loginData.Password, dbPassword) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
+		return
+	}
+
+	// Get user permissions
+	permissionsQuery := "SELECT component, permission FROM user_permissions WHERE user_id = $1"
+	permRows, err := database.DB.Query(permissionsQuery, id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Authentication successful but token generation failed"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user permissions"})
+		return
+	}
+	defer permRows.Close()
+
+	permissions := make(map[string]string)
+	for permRows.Next() {
+		var component, permission string
+		err := permRows.Scan(&component, &permission)
+		if err != nil {
+			continue
+		}
+		permissions[component] = permission
+	}
+
+	// If admin user has no specific permissions, give them all permissions
+	if isAdmin && len(permissions) == 0 {
+		permissions = map[string]string{
+			"users":     "write",
+			"resources": "write",
+			"system":    "write",
+			"dashboard": "write",
+		}
+	}
+
+	// Generate JWT token
+	token, err := utils.GenerateToken(username, isAdmin, permissions)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Token generation failed"})
 		return
 	}
 
@@ -362,9 +397,9 @@ func LoginHandler(c *gin.Context) {
 		"success": true,
 		"token":   token,
 		"user": gin.H{
-			"username":    user.Username,
-			"is_admin":    user.IsAdmin,
-			"permissions": user.Permissions,
+			"username":    username,
+			"is_admin":    isAdmin,
+			"permissions": permissions,
 		},
 	})
 }

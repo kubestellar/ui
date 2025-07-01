@@ -1681,7 +1681,19 @@
     "admin": "Admin",
     "helpSupport": "Aide et support",
     "raiseIssue": "Signaler un problème",
-    "signOut": "Déconnexion"
+    "signOut": "Déconnexion",
+    "changePassword": "Changer le mot de passe",
+    "changePasswordSubtitle": "Veuillez entrer votre mot de passe actuel et choisir un nouveau.",
+    "currentPassword": "Mot de passe actuel",
+    "newPassword": "Nouveau mot de passe",
+    "confirmNewPassword": "Confirmer le nouveau mot de passe",
+    "passwordChangedSuccess": "Mot de passe changé avec succès.",
+    "passwordChangedError": "Échec du changement de mot de passe.",
+    "passwordsDoNotMatch": "Les nouveaux mots de passe ne correspondent pas.",
+    "passwordRequired": "Le mot de passe est requis.",
+    "errorCurrentPasswordIncorrect": "Le mot de passe actuel est incorrect",
+    "cancel": "Annuler",
+    "changePasswordButton": "Changer le mot de passe"
   },
   "onboardingLogs": {
     "onboarding": "Intégration",

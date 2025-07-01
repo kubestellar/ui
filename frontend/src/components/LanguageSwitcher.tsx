@@ -61,7 +61,6 @@ const LanguageSwitcher = () => {
   // 🧠 Attach mousedown listener only when dropdown is open
   useEffect(() => {
     if (!isOpen) return;
-
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
@@ -132,8 +131,8 @@ const LanguageSwitcher = () => {
           </AnimatePresence>
         </motion.button>
       )}
-
       {/* Dropdown */}
+
       <AnimatePresence>
         {isOpen && (
           <motion.div

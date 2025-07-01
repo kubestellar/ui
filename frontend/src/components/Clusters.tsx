@@ -188,7 +188,6 @@ const StatCard = ({
       return 'bg-gradient-to-br from-gray-500 to-gray-600 dark:from-gray-400 dark:to-gray-500';
     }
   };
-
   interface CardLinkWrapperProps {
     children: React.ReactNode;
     link?: string;

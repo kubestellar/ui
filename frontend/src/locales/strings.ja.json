@@ -1680,7 +1680,19 @@
     "admin": "管理者",
     "helpSupport": "ヘルプとサポート",
     "raiseIssue": "問題を報告する",
-    "signOut": "ログアウト"
+    "signOut": "ログアウト",
+    "changePassword": "パスワードの変更",
+    "changePasswordSubtitle": "現在のパスワードを入力し、新しいパスワードを選択してください。",
+    "currentPassword": "現在のパスワード",
+    "newPassword": "新しいパスワード",
+    "confirmNewPassword": "新しいパスワードの確認",
+    "passwordChangedSuccess": "パスワードが正常に変更されました。",
+    "passwordChangedError": "パスワードの変更に失敗しました。",
+    "passwordsDoNotMatch": "新しいパスワードが一致しません。",
+    "passwordRequired": "パスワードは必須です。",
+    "errorCurrentPasswordIncorrect": "現在のパスワードが正しくありません",
+    "cancel": "キャンセル",
+    "changePasswordButton": "パスワードの変更"
   },
   "onboardingLogs": {
     "onboarding": "オンボーディング",

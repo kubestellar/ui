@@ -1686,7 +1686,20 @@
     "admin": "Admin",
     "helpSupport": "Help & Support",
     "raiseIssue": "Report an Issue",
-    "signOut": "Sign Out"
+
+    "signOut": "Sign Out",
+    "changePassword": "Change Password",
+    "changePasswordSubtitle": "Please enter your current password and choose a new one.",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "passwordChangedSuccess": "Password changed successfully.",
+    "passwordChangedError": "Failed to change password.",
+    "passwordsDoNotMatch": "New passwords do not match.",
+    "passwordRequired": "Password is required.",
+    "errorCurrentPasswordIncorrect": "Current password is incorrect",
+    "cancel": "Cancel",
+    "changePasswordButton": "Change Password"
   },
   "onboardingLogs": {
     "onboarding": "Onboarding",

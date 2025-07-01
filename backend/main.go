@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv" // Add this import
 	"github.com/kubestellar/ui/api"
+	"github.com/kubestellar/ui/models"
 	config "github.com/kubestellar/ui/postgresql"
 	database "github.com/kubestellar/ui/postgresql/Database"
 	"github.com/kubestellar/ui/routes"
@@ -286,7 +287,7 @@ func initializeAdminUser() error {
 	log.Println("Creating admin user...")
 
 	// Hash the password
-	hashedPassword, err := hashPassword("admin")
+	hashedPassword, err := models.HashPassword("admin")
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %v", err)
 	}
@@ -373,16 +374,6 @@ func ensureAdminPermissions(userID int) error {
 	}
 
 	return nil
-}
-
-// hashPassword hashes a plain text password using bcrypt
-func hashPassword(password string) (string, error) {
-	// For now, return a consistent hash for the demo admin user
-	// In production, implement proper bcrypt hashing
-	if password == "admin" {
-		return "admin_hashed", nil
-	}
-	return password + "_hashed", nil
 }
 
 // debugCheckAdminUser checks if admin user exists and logs details

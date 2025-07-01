@@ -1,5 +1,3 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
 
 echo "🔧 Running Prettier on frontend files (excluding ignored files)..."
 if [ -d "frontend" ]; then

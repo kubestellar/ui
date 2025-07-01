@@ -1679,7 +1679,19 @@
     "admin": "Administrador",
     "helpSupport": "Ayuda y Soporte",
     "raiseIssue": "Reportar un problema",
-    "signOut": "Cerrar sesión"
+    "signOut": "Cerrar sesión",
+    "changePassword": "Cambiar contraseña",
+    "changePasswordSubtitle": "Por favor, introduce tu contraseña actual y elige una nueva.",
+    "currentPassword": "Contraseña actual",
+    "newPassword": "Nueva contraseña",
+    "confirmNewPassword": "Confirmar nueva contraseña",
+    "passwordChangedSuccess": "Contraseña cambiada con éxito.",
+    "passwordChangedError": "No se pudo cambiar la contraseña.",
+    "passwordsDoNotMatch": "Las nuevas contraseñas no coinciden.",
+    "passwordRequired": "La contraseña es obligatoria.",
+    "errorCurrentPasswordIncorrect": "La contraseña actual es incorrecta",
+    "cancel": "Cancelar",
+    "changePasswordButton": "Cambiar contraseña"
   },
   "onboardingLogs": {
     "onboarding": "Incorporación",
