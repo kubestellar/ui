@@ -2078,6 +2078,18 @@
       "template": "Utiliser un modèle",
       "documentation": "Voir la documentation",
       "examples": "Exemples"
+    },
+    "feedback": {
+      "title": "Partagez vos commentaires",
+      "rate": "Évaluez ce plugin",
+      "comment": {
+        "title": "Votre commentaire",
+        "placeholder": "Parlez-nous de votre expérience"
+      },
+      "suggestion": {
+        "title": "Suggestions d'amélioration",
+        "placeholder": "Des suggestions pour améliorer ?"
+      }
     }
   }
 }
