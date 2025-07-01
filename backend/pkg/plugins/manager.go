@@ -7,6 +7,7 @@ package plugins
 import (
 	"context"
 	"errors"
+	"log"
 	"os"
 	"path/filepath"
 	"sync"
@@ -54,12 +55,22 @@ type PluginRoute struct {
 func NewPluginManager(router *gin.Engine) *PluginManager {
 	ctx := context.Background()
 	runtime := wazero.NewRuntimeWithConfig(ctx, wazero.NewRuntimeConfigInterpreter())
-	return &PluginManager{
+
+	pm := &PluginManager{
 		runtime: runtime,
 		plugins: make(map[string]*Plugin),
 		router:  router,
 		ctx:     ctx,
 	}
+
+	// Register host functions for WASM runtime bridge
+	if err := pm.buildHostFunctions(ctx, runtime); err != nil {
+		// Log error but continue - this is during initialization
+		// In a production system, you might want to handle this differently
+		log.Printf("Failed to register host functions: %v", err)
+	}
+
+	return pm
 }
 
 // LoadPlugin loads and initializes a plugin from a given directory.
