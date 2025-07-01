@@ -1,9 +1,9 @@
-import React, { ChangeEvent, RefObject, useState } from 'react';
-import { Box, Button, CircularProgress, Alert, SxProps, Theme } from '@mui/material';
-import { CommandResponse, Colors } from './ImportClusters';
+import { Alert, Box, Button, CircularProgress, SxProps, Theme } from '@mui/material';
+import React, { ChangeEvent, RefObject } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Colors, CommandResponse } from './ImportClusters';
 import OnboardingLogsDisplay from './OnboardingLogsDisplay';
 import CancelButton from './common/CancelButton';
-import { useTranslation } from 'react-i18next';
 
 interface ManualImportTabProps {
   theme: string;
@@ -33,6 +33,12 @@ interface ManualImportTabProps {
   }) => void;
   successAlertRef: RefObject<HTMLDivElement>;
   setManualCommand: (command: CommandResponse | null) => void;
+  showLogs: boolean;
+  setShowLogs: (show: boolean) => void;
+  onboardingStatus: 'idle' | 'processing' | 'success' | 'failed';
+  setOnboardingStatus: (status: 'idle' | 'processing' | 'success' | 'failed') => void;
+  onboardingError: string | null;
+  setOnboardingError: (error: string | null) => void;
 }
 
 const ManualImportTab: React.FC<ManualImportTabProps> = ({
@@ -57,25 +63,30 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
   setSnackbar,
   successAlertRef,
   setManualCommand,
+  showLogs,
+  setShowLogs,
+  onboardingStatus,
+  setOnboardingStatus,
+  setOnboardingError,
 }) => {
   const { t } = useTranslation();
   const textColor = theme === 'dark' ? colors.white : colors.text;
-  const [showLogs, setShowLogs] = useState(false);
 
   // This function will be called when the onboarding is completed via logs
   const handleOnboardingComplete = () => {
-    // Wait a moment for last logs to be visible
     setTimeout(() => {
       setShowLogs(false);
-      // Set the success message
-      if (!manualCommand) {
+      setManualLoading(false);
+
+      // Only set success command if onboarding was successful
+      if (onboardingStatus === 'success' && !manualCommand) {
         const successCommand = {
           clusterName: formData.clusterName,
           token: '',
           command:
             'Cluster onboarded successfully! The cluster is now being added to the platform.',
         };
-        clearManualCommand(); // Clear any existing command
+        clearManualCommand();
         setTimeout(() => {
           setManualCommand(successCommand);
           setSnackbar({
@@ -92,6 +103,9 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
     if (!formData.clusterName.trim()) return;
     setShowLogs(true);
     handleGenerateCommand();
+    setOnboardingStatus('processing');
+    setOnboardingError(null);
+    setManualLoading(true);
 
     // Reset loading state after WebSocket takes over
     setTimeout(() => {
@@ -211,6 +225,8 @@ const ManualImportTab: React.FC<ManualImportTabProps> = ({
             onComplete={handleOnboardingComplete}
             theme={theme}
             colors={colors}
+            setOnboardingStatus={setOnboardingStatus}
+            setOnboardingError={setOnboardingError}
           />
         )}
 

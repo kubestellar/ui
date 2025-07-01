@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Box, Typography, LinearProgress, Paper } from '@mui/material';
+import { Box, LinearProgress, Paper, Typography } from '@mui/material';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface LogMessage {
@@ -23,6 +23,8 @@ interface OnboardingLogsDisplayProps {
   onComplete: () => void;
   theme: string;
   colors: ColorScheme;
+  setOnboardingStatus: (status: 'idle' | 'processing' | 'success' | 'failed') => void;
+  setOnboardingError: (error: string | null) => void;
 }
 
 const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
@@ -30,6 +32,8 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
   onComplete,
   theme,
   colors,
+  setOnboardingStatus,
+  setOnboardingError,
 }) => {
   const { t } = useTranslation();
   const [logs, setLogs] = useState<LogMessage[]>([]);
@@ -69,14 +73,25 @@ const OnboardingLogsDisplay: React.FC<OnboardingLogsDisplayProps> = ({
             const data = JSON.parse(event.data) as LogMessage;
             setLogs(prevLogs => [...prevLogs, data]);
 
-            // If status is Completed, trigger the onComplete callback
-            if (data.status === 'Completed') {
+            // Check for completion status
+            if (data.status === 'Completed' || data.status === 'Success') {
+              setOnboardingStatus('success');
+              setOnboardingError(null);
+              setTimeout(() => {
+                onComplete();
+              }, 1000);
+            } else if (data.status === 'Error' || data.status === 'Failed') {
+              setOnboardingStatus('failed');
+              setOnboardingError(data.message || 'Onboarding failed');
               setTimeout(() => {
                 onComplete();
               }, 1000);
             }
           } catch (err) {
             console.error('Error parsing WebSocket message:', err);
+            setOnboardingStatus('failed');
+            setOnboardingError('Failed to parse response');
+            onComplete();
           }
         };
 
