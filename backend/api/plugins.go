@@ -435,7 +435,7 @@ func SubmitPluginFeedbackHandler(c *gin.Context) {
 // GetAllPluginManifestsHandler returns all plugin manifests
 func GetAllPluginManifestsHandler(c *gin.Context) {
 	// Get the plugin manager instance
-	pm := pkg.NewPluginManager(gin.Default()) // Pass a *gin.Engine as required
+	pm := pkg.NewPluginManager(&gin.Engine{})
 
 	// Get all plugins
 	pluginList := pm.GetPluginList()
