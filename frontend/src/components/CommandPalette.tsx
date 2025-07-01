@@ -351,6 +351,18 @@ const CommandPalette: React.FC = () => {
     },
   };
 
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   return (
     <>
       {/* Command palette toggle button */}
@@ -425,7 +437,9 @@ const CommandPalette: React.FC = () => {
               onClick={() => setIsOpen(false)}
               style={{
                 backgroundColor: 'rgba(0, 0, 0, 0.45)',
-                backdropFilter: 'blur(3px)',
+                backdropFilter: 'blur(6px)',
+                WebkitBackdropFilter: 'blur(6px)',
+                pointerEvents: 'auto',
               }}
             />
 

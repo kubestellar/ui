@@ -481,3 +481,20 @@ make lint
 ```
 
 ---
+
+## Issue Assignment Guide
+
+To manage issue assignments using GitHub comments:
+
+- **To assign yourself to an issue**, comment:
+
+`/assign`
+
+- **To remove yourself from an issue**, comment:
+
+`/unassign`
+
+---
+
+
+
