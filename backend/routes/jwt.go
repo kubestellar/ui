@@ -3,7 +3,6 @@ package routes
 import (
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/auth"
@@ -15,8 +14,6 @@ import (
 
 // SetupRoutes initializes all routes - THIS IS THE MISSING FUNCTION!
 func setupdebug(router *gin.Engine) {
-	setupHealthRoute(router)
-
 	// Temporary debug endpoint - REMOVE IN PRODUCTION
 	router.GET("/debug/admin", func(c *gin.Context) {
 		// Check if admin user exists
@@ -110,81 +107,12 @@ func setupdebug(router *gin.Engine) {
 	})
 }
 
-// setupHealthRoutes adds the missing health check routes
-func setupHealthRoute(router *gin.Engine) {
-	// Liveness probe
-	router.GET("/apih", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"status":    "alive",
-			"timestamp": time.Now().UTC().Format(time.RFC3339),
-		})
-	})
-
-	// Readiness probe
-	router.GET("/readyz", func(c *gin.Context) {
-		// Check if database is ready
-		if err := database.DB.Ping(); err != nil {
-			c.JSON(503, gin.H{
-				"status":    "not ready",
-				"timestamp": time.Now().UTC().Format(time.RFC3339),
-				"error":     "database not ready",
-			})
-			return
-		}
-
-		c.JSON(200, gin.H{
-			"status":    "ready",
-			"timestamp": time.Now().UTC().Format(time.RFC3339),
-		})
-	})
-
-	// Enhanced health check with component status
-	router.GET("/health/detailed", func(c *gin.Context) {
-		dbStatus := "healthy"
-		dbMessage := "database connection successful"
-		dbLatency := "0ms"
-
-		start := time.Now()
-		if err := database.DB.Ping(); err != nil {
-			dbStatus = "unhealthy"
-			dbMessage = "database connection failed: " + err.Error()
-		} else {
-			dbLatency = time.Since(start).String()
-		}
-
-		c.JSON(200, gin.H{
-			"status":      "healthy",
-			"service":     "kubestellar-ui",
-			"version":     "1.0.0",
-			"timestamp":   time.Now().UTC().Format(time.RFC3339),
-			"uptime":      time.Since(startTime).String(),
-			"environment": "debug",
-			"components": gin.H{
-				"database": gin.H{
-					"status":  dbStatus,
-					"message": dbMessage,
-					"latency": dbLatency,
-				},
-			},
-		})
-	})
-}
-
 // setupAuthRoutes initializes authentication-related routes
 func setupAuthRoutes(router *gin.Engine) {
 
 	setupdebug(router) // Add debug routes for testing
 	// Public routes (no authentication required)
 	router.POST("/login", LoginHandler)
-
-	// Remove this duplicate health check since main.go already has one
-	// router.GET("/api/health", func(c *gin.Context) {
-	//	c.JSON(200, gin.H{
-	//		"status":  "healthy",
-	//		"service": "auth-system",
-	//		"version": "1.0.0",
-	//	})
-	// })
 
 	// API group - ALL endpoints require authentication
 	api := router.Group("/api")
