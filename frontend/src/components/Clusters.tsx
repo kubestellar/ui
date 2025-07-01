@@ -100,7 +100,7 @@ const OptimizedProgressBar = ({
   color: string;
   label: string;
   icon?: React.ElementType;
-  tooltip?: string;
+  tooltip?: React.ReactNode;
   delay?: number;
 }) => {
   return (
