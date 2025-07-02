@@ -13,5 +13,67 @@
     "errorCurrentPasswordIncorrect": "目前的密碼不正確",
     "cancel": "取消",
     "changePasswordButton": "修改密碼"
+  },
+  "commandPalette": {
+    "ariaLabel": "打開命令面板",
+    "title": "命令面板（Ctrl+K）",
+    "badge": "K",
+    "searchPlaceholder": "搜尋命令...",
+    "noCommandsFound": "未找到命令。請嘗試其他搜尋詞。",
+    "footer": {
+      "navigate": "導航",
+      "select": "選擇",
+      "shortcut": "Ctrl+K"
+    },
+    "kbd": {
+      "esc": "ESC",
+      "arrows": "↑↓",
+      "enter": "↵"
+    },
+    "sections": {
+      "navigation": "導航",
+      "visualizations": "可視化",
+      "help": "幫助",
+      "account": "帳戶"
+    },
+    "commands": {
+      "home": {
+        "title": "首頁",
+        "description": "前往儀表板"
+      },
+      "plugin": {
+        "title": "插件管理器",
+        "description": "管理和監控 KubeStellar 插件"
+      },
+      "clusters": {
+        "title": "遠端叢集",
+        "description": "管理 Kubernetes 叢集"
+      },
+      "workloads": {
+        "title": "工作負載",
+        "description": "跨叢集管理工作負載"
+      },
+      "bindingPolicies": {
+        "title": "綁定策略",
+        "description": "配置綁定策略"
+      },
+      "wdsTreeview": {
+        "title": "WDS 樹狀圖",
+        "description": "可視化工作負載分布"
+      },
+      "wecsTreeview": {
+        "title": "WECS 樹狀圖",
+        "description": "可視化已部署工作負載結構"
+      },
+      "documentation": {
+        "title": "打開文件",
+        "description": "啟動 KubeStellar 文件"
+      },
+      "logout": {
+        "title": "登出",
+        "description": "登出您的帳戶",
+        "infoMessage": "您已成功登出。"
+      }
+    }
   }
 }

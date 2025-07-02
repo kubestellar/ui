@@ -1948,6 +1948,10 @@
         "title": "Accueil",
         "description": "Aller au tableau de bord"
       },
+      "plugin": {
+        "title": "Gestionnaire de Plugins",
+        "description": "Gérer et surveiller les plugins de KubeStellar"
+      },
       "clusters": {
         "title": "Clusters Distants",
         "description": "Gérer les clusters Kubernetes"
