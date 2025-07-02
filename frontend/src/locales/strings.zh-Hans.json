@@ -1,3 +1,79 @@
 {
-  "raiseIssue": "报告问题"
+  "raiseIssue": "报告问题",
+  "profileSection": {
+    "changePassword": "修改密码",
+    "changePasswordSubtitle": "请输入您当前的密码并选择一个新密码。",
+    "currentPassword": "当前密码",
+    "newPassword": "新密码",
+    "confirmNewPassword": "确认新密码",
+    "passwordChangedSuccess": "密码修改成功。",
+    "passwordChangedError": "修改密码失败。",
+    "passwordsDoNotMatch": "新密码不匹配。",
+    "passwordRequired": "密码是必填项。",
+    "errorCurrentPasswordIncorrect": "当前密码不正确",
+    "cancel": "取消",
+    "changePasswordButton": "修改密码"
+  },
+  "commandPalette": {
+    "ariaLabel": "打开命令面板",
+    "title": "命令面板（Ctrl+K）",
+    "badge": "K",
+    "searchPlaceholder": "搜索命令...",
+    "noCommandsFound": "未找到命令。请尝试其他搜索词。",
+    "footer": {
+      "navigate": "导航",
+      "select": "选择",
+      "shortcut": "Ctrl+K"
+    },
+    "kbd": {
+      "esc": "ESC",
+      "arrows": "↑↓",
+      "enter": "↵"
+    },
+    "sections": {
+      "navigation": "导航",
+      "visualizations": "可视化",
+      "help": "帮助",
+      "account": "账户"
+    },
+    "commands": {
+      "home": {
+        "title": "首页",
+        "description": "前往仪表盘"
+      },
+      "plugin": {
+        "title": "插件管理器",
+        "description": "管理和监控 KubeStellar 插件"
+      },
+      "clusters": {
+        "title": "远程集群",
+        "description": "管理 Kubernetes 集群"
+      },
+      "workloads": {
+        "title": "工作负载",
+        "description": "跨集群管理工作负载"
+      },
+      "bindingPolicies": {
+        "title": "绑定策略",
+        "description": "配置绑定策略"
+      },
+      "wdsTreeview": {
+        "title": "WDS 树视图",
+        "description": "可视化工作负载分布"
+      },
+      "wecsTreeview": {
+        "title": "WECS 树视图",
+        "description": "可视化已部署工作负载结构"
+      },
+      "documentation": {
+        "title": "打开文档",
+        "description": "启动 KubeStellar 文档"
+      },
+      "logout": {
+        "title": "退出登录",
+        "description": "退出您的账户",
+        "infoMessage": "您已成功退出登录。"
+      }
+    }
+  }
 }

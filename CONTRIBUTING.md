@@ -235,7 +235,6 @@ You can either generate your JWT Token with **Postman** or **cURL.**
 ### **Step 3: Testing with Postman**
 
 1. **Login and Get a Token**
-
    - Open **Postman** and make a `POST` request to `http://localhost:4000/login`
    - Add the JSON payload:
      ```json
@@ -376,7 +375,6 @@ If you'd like to work with the Docker images for the **KubestellarUI** project, 
 ### **Available Images**
 
 1. **Frontend Image**:
-
    - Tag: `quay.io/kubestellar/ui:frontend`
    - Latest Version: `latest`
    - Specific Version (Commit Hash): `frontend-<commit-hash>`
@@ -481,3 +479,20 @@ make lint
 ```
 
 ---
+
+## Issue Assignment Guide
+
+To manage issue assignments using GitHub comments:
+
+- **To assign yourself to an issue**, comment:
+
+`/assign`
+
+- **To remove yourself from an issue**, comment:
+
+`/unassign`
+
+---
+
+
+

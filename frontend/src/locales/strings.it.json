@@ -1,3 +1,79 @@
 {
-  "raiseIssue": "Segnala un problema"
+  "raiseIssue": "Segnala un problema",
+  "profileSection": {
+    "changePassword": "Cambia password",
+    "changePasswordSubtitle": "Inserisci la tua password attuale e scegline una nuova.",
+    "currentPassword": "Password attuale",
+    "newPassword": "Nuova password",
+    "confirmNewPassword": "Conferma nuova password",
+    "passwordChangedSuccess": "Password cambiata con successo.",
+    "passwordChangedError": "Impossibile cambiare la password.",
+    "passwordsDoNotMatch": "Le nuove password non corrispondono.",
+    "passwordRequired": "La password è obbligatoria.",
+    "errorCurrentPasswordIncorrect": "La password attuale non è corretta",
+    "cancel": "Annulla",
+    "changePasswordButton": "Cambia password"
+  },
+  "commandPalette": {
+    "ariaLabel": "Apri la palette dei comandi",
+    "title": "Palette dei comandi (Ctrl+K)",
+    "badge": "K",
+    "searchPlaceholder": "Cerca comandi...",
+    "noCommandsFound": "Nessun comando trovato. Prova un altro termine di ricerca.",
+    "footer": {
+      "navigate": "naviga",
+      "select": "seleziona",
+      "shortcut": "Ctrl+K"
+    },
+    "kbd": {
+      "esc": "ESC",
+      "arrows": "↑↓",
+      "enter": "↵"
+    },
+    "sections": {
+      "navigation": "Navigazione",
+      "visualizations": "Visualizzazioni",
+      "help": "Aiuto",
+      "account": "Account"
+    },
+    "commands": {
+      "home": {
+        "title": "Home",
+        "description": "Vai alla dashboard"
+      },
+      "plugin": {
+        "title": "Gestore Plugin",
+        "description": "Gestisci e monitora i plugin KubeStellar"
+      },
+      "clusters": {
+        "title": "Cluster Remoti",
+        "description": "Gestisci i cluster Kubernetes"
+      },
+      "workloads": {
+        "title": "Workloads",
+        "description": "Gestisci i workloads tra i cluster"
+      },
+      "bindingPolicies": {
+        "title": "Policy di binding",
+        "description": "Configura le policy di binding"
+      },
+      "wdsTreeview": {
+        "title": "Vista ad albero WDS",
+        "description": "Visualizza la distribuzione dei workloads"
+      },
+      "wecsTreeview": {
+        "title": "Vista ad albero WECS",
+        "description": "Visualizza la struttura dei workloads distribuiti"
+      },
+      "documentation": {
+        "title": "Apri documentazione",
+        "description": "Avvia la documentazione di KubeStellar"
+      },
+      "logout": {
+        "title": "Disconnetti",
+        "description": "Esci dal tuo account",
+        "infoMessage": "Disconnessione avvenuta con successo."
+      }
+    }
+  }
 }

@@ -1,25 +1,36 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
 echo "🔧 Running Prettier on frontend files (excluding ignored files)..."
-cd frontend && npx prettier --write --ignore-path .prettierignore .
+if [ -d "frontend" ]; then
+  cd frontend && npx prettier --write --ignore-path .prettierignore . && cd ..
+else
+  echo "⚠️ frontend directory not found, skipping prettier"
+fi
 
 echo "🔍 Running frontend lint checks..."
-cd frontend && npm run lint
+if [ -d "frontend" ]; then
+  cd frontend && npm run lint && cd ..
+else
+  echo "⚠️ frontend directory not found, skipping lint"
+fi
+
+cd ..
 
 echo "🧹 Running gofmt on Go files (excluding vendor)..."
-find . -type f -name '*.go' -not -path "./vendor/*" | xargs gofmt -w
+find . -type f -name '*.go' -not -path "./vendor/*" -print0 | xargs -0 -r gofmt -w
 
 echo "🧪 Running golint on Go files (excluding vendor)..."
 if command -v golint >/dev/null 2>&1; then
-  find . -type f -name '*.go' -not -path "./vendor/*" | xargs golint || echo "ℹ️ golint produced warnings (non-blocking)."
+  find . -type f -name '*.go' -not -path "./vendor/*" -print0 | xargs -0 -r golint || echo "ℹ️ golint produced warnings (non-blocking)."
 else
   echo "⚠️ golint not installed. Run: go install golang.org/x/lint/golint@latest"
 fi
 
 echo "🔒 Running gosec for security checks (excluding vendor)..."
 if command -v gosec >/dev/null 2>&1; then
-  gosec $(go list ./... | grep -v /vendor/) || echo "⚠️ gosec found issues."
+  if go list ./... >/dev/null 2>&1; then
+    gosec $(go list ./... | grep -v /vendor/) || echo "⚠️ gosec found issues."
+  else
+    echo "ℹ️ No Go modules found, skipping gosec"
+  fi
 else
   echo "ℹ️ gosec not installed. Run: go install github.com/securego/gosec/v2/cmd/gosec@latest"
 fi

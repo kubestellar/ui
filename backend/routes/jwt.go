@@ -3,7 +3,6 @@ package routes
 import (
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/auth"
@@ -15,8 +14,6 @@ import (
 
 // SetupRoutes initializes all routes - THIS IS THE MISSING FUNCTION!
 func setupdebug(router *gin.Engine) {
-	setupHealthRoute(router)
-
 	// Temporary debug endpoint - REMOVE IN PRODUCTION
 	router.GET("/debug/admin", func(c *gin.Context) {
 		// Check if admin user exists
@@ -110,81 +107,12 @@ func setupdebug(router *gin.Engine) {
 	})
 }
 
-// setupHealthRoutes adds the missing health check routes
-func setupHealthRoute(router *gin.Engine) {
-	// Liveness probe
-	router.GET("/apih", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"status":    "alive",
-			"timestamp": time.Now().UTC().Format(time.RFC3339),
-		})
-	})
-
-	// Readiness probe
-	router.GET("/readyz", func(c *gin.Context) {
-		// Check if database is ready
-		if err := database.DB.Ping(); err != nil {
-			c.JSON(503, gin.H{
-				"status":    "not ready",
-				"timestamp": time.Now().UTC().Format(time.RFC3339),
-				"error":     "database not ready",
-			})
-			return
-		}
-
-		c.JSON(200, gin.H{
-			"status":    "ready",
-			"timestamp": time.Now().UTC().Format(time.RFC3339),
-		})
-	})
-
-	// Enhanced health check with component status
-	router.GET("/health/detailed", func(c *gin.Context) {
-		dbStatus := "healthy"
-		dbMessage := "database connection successful"
-		dbLatency := "0ms"
-
-		start := time.Now()
-		if err := database.DB.Ping(); err != nil {
-			dbStatus = "unhealthy"
-			dbMessage = "database connection failed: " + err.Error()
-		} else {
-			dbLatency = time.Since(start).String()
-		}
-
-		c.JSON(200, gin.H{
-			"status":      "healthy",
-			"service":     "kubestellar-ui",
-			"version":     "1.0.0",
-			"timestamp":   time.Now().UTC().Format(time.RFC3339),
-			"uptime":      time.Since(startTime).String(),
-			"environment": "debug",
-			"components": gin.H{
-				"database": gin.H{
-					"status":  dbStatus,
-					"message": dbMessage,
-					"latency": dbLatency,
-				},
-			},
-		})
-	})
-}
-
 // setupAuthRoutes initializes authentication-related routes
 func setupAuthRoutes(router *gin.Engine) {
 
 	setupdebug(router) // Add debug routes for testing
 	// Public routes (no authentication required)
 	router.POST("/login", LoginHandler)
-
-	// Remove this duplicate health check since main.go already has one
-	// router.GET("/api/health", func(c *gin.Context) {
-	//	c.JSON(200, gin.H{
-	//		"status":  "healthy",
-	//		"service": "auth-system",
-	//		"version": "1.0.0",
-	//	})
-	// })
 
 	// API group - ALL endpoints require authentication
 	api := router.Group("/api")
@@ -291,8 +219,8 @@ func LoginHandler(c *gin.Context) {
 			return
 		}
 
-		// Check if password matches what we expect
-		if dbPassword == "admin_hashed" {
+		// Check if password matches using bcrypt
+		if models.CheckPasswordHash(loginData.Password, dbPassword) {
 			// Create a simple user object for response
 			user := struct {
 				ID          int               `json:"id"`
@@ -332,28 +260,63 @@ func LoginHandler(c *gin.Context) {
 		} else {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "Password mismatch",
-				"debug": "Expected: admin_hashed, Got: " + dbPassword,
+				"debug": "Bcrypt verification failed for stored hash: " + dbPassword,
 			})
 			return
 		}
 	}
 
-	// Try to authenticate user using models (for other users)
-	user, err := models.AuthenticateUser(loginData.Username, loginData.Password)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password", "debug": err.Error()})
-		return
-	}
+	// Get user from database
+	query := "SELECT id, username, password, is_admin FROM users WHERE username = $1"
+	var id int
+	var username, dbPassword string
+	var isAdmin bool
 
-	if user == nil {
+	err := database.DB.QueryRow(query, loginData.Username).Scan(&id, &username, &dbPassword, &isAdmin)
+	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
 		return
 	}
 
-	// Generate JWT token
-	token, err := utils.GenerateToken(user.Username, user.IsAdmin, user.Permissions)
+	// Verify password using bcrypt
+	if !models.CheckPasswordHash(loginData.Password, dbPassword) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
+		return
+	}
+
+	// Get user permissions
+	permissionsQuery := "SELECT component, permission FROM user_permissions WHERE user_id = $1"
+	permRows, err := database.DB.Query(permissionsQuery, id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Authentication successful but token generation failed"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user permissions"})
+		return
+	}
+	defer permRows.Close()
+
+	permissions := make(map[string]string)
+	for permRows.Next() {
+		var component, permission string
+		err := permRows.Scan(&component, &permission)
+		if err != nil {
+			continue
+		}
+		permissions[component] = permission
+	}
+
+	// If admin user has no specific permissions, give them all permissions
+	if isAdmin && len(permissions) == 0 {
+		permissions = map[string]string{
+			"users":     "write",
+			"resources": "write",
+			"system":    "write",
+			"dashboard": "write",
+		}
+	}
+
+	// Generate JWT token
+	token, err := utils.GenerateToken(username, isAdmin, permissions)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Token generation failed"})
 		return
 	}
 
@@ -362,9 +325,9 @@ func LoginHandler(c *gin.Context) {
 		"success": true,
 		"token":   token,
 		"user": gin.H{
-			"username":    user.Username,
-			"is_admin":    user.IsAdmin,
-			"permissions": user.Permissions,
+			"username":    username,
+			"is_admin":    isAdmin,
+			"permissions": permissions,
 		},
 	})
 }

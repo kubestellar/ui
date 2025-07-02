@@ -1386,6 +1386,7 @@
     "helm": {
       "createOwn": "Crea tu propio chart de Helm",
       "popularCharts": "Implementa desde charts populares de Helm",
+      "prevCharts": "Lista de charts creados por el usuario",
       "form": {
         "repositoryName": "Nombre del repositorio *",
         "repositoryNameTip": "Especifica el nombre del repositorio de Helm",
@@ -1679,7 +1680,19 @@
     "admin": "Administrador",
     "helpSupport": "Ayuda y Soporte",
     "raiseIssue": "Reportar un problema",
-    "signOut": "Cerrar sesión"
+    "signOut": "Cerrar sesión",
+    "changePassword": "Cambiar contraseña",
+    "changePasswordSubtitle": "Por favor, introduce tu contraseña actual y elige una nueva.",
+    "currentPassword": "Contraseña actual",
+    "newPassword": "Nueva contraseña",
+    "confirmNewPassword": "Confirmar nueva contraseña",
+    "passwordChangedSuccess": "Contraseña cambiada con éxito.",
+    "passwordChangedError": "No se pudo cambiar la contraseña.",
+    "passwordsDoNotMatch": "Las nuevas contraseñas no coinciden.",
+    "passwordRequired": "La contraseña es obligatoria.",
+    "errorCurrentPasswordIncorrect": "La contraseña actual es incorrecta",
+    "cancel": "Cancelar",
+    "changePasswordButton": "Cambiar contraseña"
   },
   "onboardingLogs": {
     "onboarding": "Incorporación",
@@ -1934,6 +1947,10 @@
         "title": "Inicio",
         "description": "Ir al panel principal"
       },
+      "plugin": {
+        "title": "Gestor de Plugins",
+        "description": "Gestionar y supervisar los plugins de KubeStellar"
+      },
       "clusters": {
         "title": "Clusters Remotos",
         "description": "Administrar clusters de Kubernetes"
@@ -2076,6 +2093,18 @@
       "template": "Usar Plantilla",
       "documentation": "Ver Documentación",
       "examples": "Ejemplos"
+    },
+    "feedback": {
+      "title": "Comparte tu opinión",
+      "rate": "Califica este complemento",
+      "comment": {
+        "title": "Tu comentario",
+        "placeholder": "Cuéntanos sobre tu experiencia"
+      },
+      "suggestion": {
+        "title": "Sugerencias de mejora",
+        "placeholder": "¿Alguna sugerencia para mejorar?"
+      }
     }
   }
 }

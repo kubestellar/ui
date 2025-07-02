@@ -1393,6 +1393,7 @@
     "helm": {
       "createOwn": "Create your own Helm chart",
       "popularCharts": "Deploy from popular Helm charts",
+      "prevCharts": "Previously Deployed Helm Charts",
       "form": {
         "repositoryName": "Repository Name *",
         "repositoryNameTip": "Specify the name of the Helm repository",
@@ -1687,7 +1688,20 @@
     "admin": "Admin",
     "helpSupport": "Help & Support",
     "raiseIssue": "Report an Issue",
-    "signOut": "Sign Out"
+
+    "signOut": "Sign Out",
+    "changePassword": "Change Password",
+    "changePasswordSubtitle": "Please enter your current password and choose a new one.",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "passwordChangedSuccess": "Password changed successfully.",
+    "passwordChangedError": "Failed to change password.",
+    "passwordsDoNotMatch": "New passwords do not match.",
+    "passwordRequired": "Password is required.",
+    "errorCurrentPasswordIncorrect": "Current password is incorrect",
+    "cancel": "Cancel",
+    "changePasswordButton": "Change Password"
   },
   "onboardingLogs": {
     "onboarding": "Onboarding",
@@ -2038,7 +2052,8 @@
         "details": "Details",
         "uninstall": "Uninstall",
         "reload": "Reload",
-        "settings": "Settings"
+        "settings": "Settings",
+        "feedback": "Feedback"
       }
     },
     "details": {
@@ -2073,6 +2088,11 @@
         "title": "Confirm Plugin Disable",
         "message": "Disabling \"{{name}}\" will stop all plugin functionality. You can re-enable it later.",
         "confirm": "Yes, Disable"
+      },
+      "enable": {
+        "title": "Confirm Plugin Enable",
+        "message": "Enabling \"{{name}}\" will activate all plugin functionality and make it available for use.",
+        "confirm": "Yes, Enable"
       }
     },
     "marketplace": {
@@ -2088,6 +2108,18 @@
       "template": "Use Template",
       "documentation": "View Documentation",
       "examples": "Examples"
+    },
+    "feedback": {
+      "title": "Share Your Feedback",
+      "rate": "Rate this plugin",
+      "comment": {
+        "title": "Your Comment",
+        "placeholder": "Tell us about your experience"
+      },
+      "suggestion": {
+        "title": "Suggestions for Improvement",
+        "placeholder": "Any suggestions for Improvements ?"
+      }
     }
   }
 }

@@ -1388,6 +1388,7 @@
     "helm": {
       "createOwn": "Créez votre propre chart Helm",
       "popularCharts": "Déployer à partir de charts Helm populaires",
+      "prevCharts": "Liste des charts créés par l'utilisateur",
       "form": {
         "repositoryName": "Nom du Dépôt *",
         "repositoryNameTip": "Spécifiez le nom du dépôt Helm",
@@ -1681,7 +1682,19 @@
     "admin": "Admin",
     "helpSupport": "Aide et support",
     "raiseIssue": "Signaler un problème",
-    "signOut": "Déconnexion"
+    "signOut": "Déconnexion",
+    "changePassword": "Changer le mot de passe",
+    "changePasswordSubtitle": "Veuillez entrer votre mot de passe actuel et choisir un nouveau.",
+    "currentPassword": "Mot de passe actuel",
+    "newPassword": "Nouveau mot de passe",
+    "confirmNewPassword": "Confirmer le nouveau mot de passe",
+    "passwordChangedSuccess": "Mot de passe changé avec succès.",
+    "passwordChangedError": "Échec du changement de mot de passe.",
+    "passwordsDoNotMatch": "Les nouveaux mots de passe ne correspondent pas.",
+    "passwordRequired": "Le mot de passe est requis.",
+    "errorCurrentPasswordIncorrect": "Le mot de passe actuel est incorrect",
+    "cancel": "Annuler",
+    "changePasswordButton": "Changer le mot de passe"
   },
   "onboardingLogs": {
     "onboarding": "Intégration",
@@ -1936,6 +1949,10 @@
         "title": "Accueil",
         "description": "Aller au tableau de bord"
       },
+      "plugin": {
+        "title": "Gestionnaire de Plugins",
+        "description": "Gérer et surveiller les plugins de KubeStellar"
+      },
       "clusters": {
         "title": "Clusters Distants",
         "description": "Gérer les clusters Kubernetes"
@@ -2078,6 +2095,18 @@
       "template": "Utiliser un modèle",
       "documentation": "Voir la documentation",
       "examples": "Exemples"
+    },
+    "feedback": {
+      "title": "Partagez vos commentaires",
+      "rate": "Évaluez ce plugin",
+      "comment": {
+        "title": "Votre commentaire",
+        "placeholder": "Parlez-nous de votre expérience"
+      },
+      "suggestion": {
+        "title": "Suggestions d'amélioration",
+        "placeholder": "Des suggestions pour améliorer ?"
+      }
     }
   }
 }
