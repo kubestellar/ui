@@ -1387,6 +1387,7 @@
     "helm": {
       "createOwn": "独自の Helm チャートを作成",
       "popularCharts": "人気の Helm チャートからデプロイ",
+      "prevCharts": "ユーザー作成チャート一覧",
       "form": {
         "repositoryName": "リポジトリ名 *",
         "repositoryNameTip": "Helm リポジトリの名前を指定してください",
