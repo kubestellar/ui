@@ -203,6 +203,7 @@ const FeedbackModel = ({ pluginId, pluginAPI, onClose }: IfeedbackModalProps) =>
           <div className="flex justify-end gap-4">
             <div className="flex gap-3">
               <motion.button
+                type="button"
                 onClick={onClose}
                 className="flex-1 rounded-lg px-4 py-2 font-medium transition-colors"
                 style={{
