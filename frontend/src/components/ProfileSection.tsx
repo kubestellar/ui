@@ -296,9 +296,7 @@ const ProfileSection = () => {
                     type="button"
                     tabIndex={0}
                     aria-label={
-                      showNewPassword
-                        ? t('login.form.hidePassword')
-                        : t('login.form.showPassword')
+                      showNewPassword ? t('login.form.hidePassword') : t('login.form.showPassword')
                     }
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 focus:outline-none"
                     onClick={() => setShowNewPassword(v => !v)}
