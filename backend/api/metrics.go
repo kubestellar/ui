@@ -12,7 +12,6 @@ import (
 	"go.uber.org/zap"
 )
 
-
 func processBuckets(buckets []*dto.Bucket) []gin.H {
 	processed := make([]gin.H, len(buckets))
 	for i, b := range buckets {
@@ -140,7 +139,7 @@ func GetMetrics(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "metric component not found or suffix is not applicable for this metric type"})
 		return
 	}
-	
+
 	if len(results) == 1 {
 		labels, ok := results[0]["labels"].(gin.H)
 		if !ok || len(labels) == 0 {
@@ -148,7 +147,7 @@ func GetMetrics(c *gin.Context) {
 			return
 		}
 	}
-	
+
 	c.JSON(http.StatusOK, results)
 }
 
