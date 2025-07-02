@@ -13,6 +13,7 @@ import KubeStellarVisualization from '../components/login/index';
 import InstallationPage from '../pages/InstallationPage';
 import KubeStellarStatusChecker from '../components/KubeStellarStatusChecker';
 import { PluginManager } from '../components/PluginManager';
+import UserManagement from '../components/admin/UserManagement';
 
 const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ '../components/Clusters'));
 const ITSLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/ITS'));
@@ -110,7 +111,7 @@ export const routesConfig: RouteObject[] = [
         path: 'admin/users',
         element: (
           <ProtectedRoute>
-            <></>
+            <UserManagement />
           </ProtectedRoute>
         ),
       },
