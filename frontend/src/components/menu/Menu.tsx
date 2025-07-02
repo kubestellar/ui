@@ -65,15 +65,11 @@ const Menu: React.FC<MenuProps> = ({ collapsed = false }) => {
 
   return (
     <motion.div
-      className="flex w-full flex-col rounded-xl border backdrop-blur-sm overflow-hidden"
+      className="flex w-full flex-col overflow-hidden rounded-xl border backdrop-blur-sm"
       style={{
-        background: isDark 
-          ? 'rgba(15, 23, 42, 0.65)' 
-          : 'rgba(255, 255, 255, 0.85)',
+        background: isDark ? 'rgba(15, 23, 42, 0.65)' : 'rgba(255, 255, 255, 0.85)',
         backdropFilter: 'blur(12px)',
-        borderColor: isDark 
-          ? 'rgba(71, 85, 105, 0.2)' 
-          : 'rgba(226, 232, 240, 0.7)',
+        borderColor: isDark ? 'rgba(71, 85, 105, 0.2)' : 'rgba(226, 232, 240, 0.7)',
         boxShadow: isDark
           ? '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.05) inset'
           : '0 8px 32px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.02) inset',
@@ -89,10 +85,10 @@ const Menu: React.FC<MenuProps> = ({ collapsed = false }) => {
       onAnimationComplete={() => setIsAnimating(false)}
     >
       {/* Top accent line */}
-      <div className="w-full h-[2px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50" />
-      
+      <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50" />
+
       {/* Menu content */}
-      <div className="relative z-10 p-3 space-y-4">
+      <div className="relative z-10 space-y-4 p-3">
         {menu.map((item: MenuItemData, index: number) => (
           <div key={index} className="relative">
             {/* Section divider */}
@@ -108,7 +104,7 @@ const Menu: React.FC<MenuProps> = ({ collapsed = false }) => {
                 />
               </div>
             )}
-            
+
             <MenuItem
               key={index}
               catalog={item.catalog}

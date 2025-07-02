@@ -103,14 +103,12 @@ const MenuItem: React.FC<MenuItemProps> = ({
       animate={collapsed ? 'collapsed' : 'expanded'}
     >
       {/* Category header */}
-      <div
-        className="px-3 py-1.5 rounded-lg"
-      >
+      <div className="rounded-lg px-3 py-1.5">
         <span
           className={`text-sm font-semibold uppercase tracking-[0.15em] transition-colors 
           duration-300 ${centered || collapsed ? 'text-center' : 'pl-2'}`}
-          style={{ 
-            color: isDark ? 'rgba(226, 232, 240, 0.9)' : 'rgba(30, 41, 59, 0.9)'
+          style={{
+            color: isDark ? 'rgba(226, 232, 240, 0.9)' : 'rgba(30, 41, 59, 0.9)',
           }}
         >
           {collapsed ? catalog.charAt(0) : catalog}
@@ -122,10 +120,10 @@ const MenuItem: React.FC<MenuItemProps> = ({
         {listItems.map((listItem, index) => {
           if (listItem.isLink) {
             return (
-              <NavLink 
-                key={index} 
-                onClick={onClick} 
-                to={listItem.url || ''} 
+              <NavLink
+                key={index}
+                onClick={onClick}
+                to={listItem.url || ''}
                 className="relative w-full"
                 onMouseEnter={() => setHoveredItem(index)}
                 onMouseLeave={() => setHoveredItem(null)}
@@ -140,11 +138,17 @@ const MenuItem: React.FC<MenuItemProps> = ({
                       isActive || hoveredItem === index
                         ? {
                             background: isActive
-                              ? isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.08)'
-                              : isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)',
-                            boxShadow: collapsed ? 'none' : isDark 
-                              ? '0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.1)' 
-                              : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
+                              ? isDark
+                                ? 'rgba(59, 130, 246, 0.15)'
+                                : 'rgba(59, 130, 246, 0.08)'
+                              : isDark
+                                ? 'rgba(59, 130, 246, 0.1)'
+                                : 'rgba(59, 130, 246, 0.05)',
+                            boxShadow: collapsed
+                              ? 'none'
+                              : isDark
+                                ? '0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.1)'
+                                : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
                           }
                         : {}
                     }
@@ -152,18 +156,18 @@ const MenuItem: React.FC<MenuItemProps> = ({
                     {/* Active item indicator */}
                     <AnimatePresence>
                       {isActive && !collapsed && (
-                        <motion.div 
-                          className="absolute left-0 top-0 bottom-0 w-1 rounded-l-full"
+                        <motion.div
+                          className="absolute bottom-0 left-0 top-0 w-1 rounded-l-full"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
-                          style={{ 
+                          style={{
                             background: isDark ? '#60a5fa' : '#3b82f6',
                           }}
                         />
                       )}
                     </AnimatePresence>
-                    
+
                     <div className="relative flex items-center justify-center">
                       <motion.div
                         animate={{
@@ -178,13 +182,19 @@ const MenuItem: React.FC<MenuItemProps> = ({
                           className="shrink-0 text-xl"
                           style={{
                             color: isActive
-                              ? isDark ? '#60a5fa' : '#3b82f6'
+                              ? isDark
+                                ? '#60a5fa'
+                                : '#3b82f6'
                               : hoveredItem === index
-                                ? isDark ? '#93c5fd' : '#2563eb'
-                                : isDark ? '#cbd5e1' : '#64748b',
-                            filter: isActive 
-                              ? isDark 
-                                ? 'drop-shadow(0 0 6px rgba(96, 165, 250, 0.5))' 
+                                ? isDark
+                                  ? '#93c5fd'
+                                  : '#2563eb'
+                                : isDark
+                                  ? '#cbd5e1'
+                                  : '#64748b',
+                            filter: isActive
+                              ? isDark
+                                ? 'drop-shadow(0 0 6px rgba(96, 165, 250, 0.5))'
                                 : 'drop-shadow(0 0 6px rgba(59, 130, 246, 0.3))'
                               : 'none',
                           }}
@@ -195,8 +205,10 @@ const MenuItem: React.FC<MenuItemProps> = ({
                         {isActive && (
                           <motion.div
                             className="absolute inset-0 rounded-full"
-                            style={{ 
-                              backgroundColor: isDark ? 'rgba(96, 165, 250, 0.2)' : 'rgba(59, 130, 246, 0.15)' 
+                            style={{
+                              backgroundColor: isDark
+                                ? 'rgba(96, 165, 250, 0.2)'
+                                : 'rgba(59, 130, 246, 0.15)',
                             }}
                             animate={{
                               scale: [0.8, 1.2, 1],
@@ -217,10 +229,16 @@ const MenuItem: React.FC<MenuItemProps> = ({
                           className="ml-3 text-sm font-medium"
                           style={{
                             color: isActive
-                              ? isDark ? '#60a5fa' : '#3b82f6'
+                              ? isDark
+                                ? '#60a5fa'
+                                : '#3b82f6'
                               : hoveredItem === index
-                                ? isDark ? '#93c5fd' : '#2563eb'
-                                : isDark ? '#e2e8f0' : '#334155',
+                                ? isDark
+                                  ? '#93c5fd'
+                                  : '#2563eb'
+                                : isDark
+                                  ? '#e2e8f0'
+                                  : '#334155',
                           }}
                           variants={textVariants}
                           initial="expanded"
@@ -247,10 +265,10 @@ const MenuItem: React.FC<MenuItemProps> = ({
                 hover:${collapsed ? 'scale-110' : 'translate-x-1'} group/item
                 group hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50`}
                 style={{
-                  backgroundImage: collapsed 
-                    ? 'none' 
-                    : isDark 
-                      ? 'linear-gradient(to right, rgba(30, 41, 59, 0.5), rgba(30, 41, 59, 0.3))' 
+                  backgroundImage: collapsed
+                    ? 'none'
+                    : isDark
+                      ? 'linear-gradient(to right, rgba(30, 41, 59, 0.5), rgba(30, 41, 59, 0.3))'
                       : 'linear-gradient(to right, rgba(241, 245, 249, 0.5), rgba(241, 245, 249, 0.3))',
                 }}
                 onMouseEnter={() => setHoveredItem(index)}
@@ -267,9 +285,14 @@ const MenuItem: React.FC<MenuItemProps> = ({
                   <listItem.icon
                     className="shrink-0 text-xl"
                     style={{
-                      color: hoveredItem === index
-                        ? isDark ? '#93c5fd' : '#2563eb'
-                        : isDark ? '#cbd5e1' : '#64748b',
+                      color:
+                        hoveredItem === index
+                          ? isDark
+                            ? '#93c5fd'
+                            : '#2563eb'
+                          : isDark
+                            ? '#cbd5e1'
+                            : '#64748b',
                     }}
                     aria-hidden="true"
                   />
@@ -277,11 +300,16 @@ const MenuItem: React.FC<MenuItemProps> = ({
 
                 {!collapsed && (
                   <motion.span
-                    className="text-sm font-medium ml-3"
+                    className="ml-3 text-sm font-medium"
                     style={{
-                      color: hoveredItem === index
-                        ? isDark ? '#93c5fd' : '#2563eb'
-                        : isDark ? '#e2e8f0' : '#334155',
+                      color:
+                        hoveredItem === index
+                          ? isDark
+                            ? '#93c5fd'
+                            : '#2563eb'
+                          : isDark
+                            ? '#e2e8f0'
+                            : '#334155',
                     }}
                     variants={textVariants}
                     initial="expanded"

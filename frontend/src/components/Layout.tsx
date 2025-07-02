@@ -230,8 +230,8 @@ export function Layout() {
                     background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                     backdropFilter: 'blur(10px)',
                     borderRight: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.3)' : 'rgba(226, 232, 240, 0.6)'}`,
-                    boxShadow: isDark 
-                      ? '0 8px 32px rgba(0, 0, 0, 0.3)' 
+                    boxShadow: isDark
+                      ? '0 8px 32px rgba(0, 0, 0, 0.3)'
                       : '0 8px 32px rgba(0, 0, 0, 0.1)',
                   }}
                 >

@@ -12,7 +12,7 @@ import { useAdminCheck } from '../../hooks/useAuth';
 export const useMenuData = (): MenuItemData[] => {
   const { t } = useTranslation();
   const { isAdmin } = useAdminCheck();
-  
+
   const menuItems: MenuItemData[] = [
     {
       catalog: t('menu.catalogs.main'),
@@ -72,7 +72,7 @@ export const useMenuData = (): MenuItemData[] => {
       ],
     },
   ];
-  
+
   // Add User Management option only for admins
   if (isAdmin) {
     menuItems.push({
