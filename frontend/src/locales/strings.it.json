@@ -1,3 +1,17 @@
 {
-  "raiseIssue": "Segnala un problema"
+  "raiseIssue": "Segnala un problema",
+  "profileSection": {
+    "changePassword": "Cambia password",
+    "changePasswordSubtitle": "Inserisci la tua password attuale e scegline una nuova.",
+    "currentPassword": "Password attuale",
+    "newPassword": "Nuova password",
+    "confirmNewPassword": "Conferma nuova password",
+    "passwordChangedSuccess": "Password cambiata con successo.",
+    "passwordChangedError": "Impossibile cambiare la password.",
+    "passwordsDoNotMatch": "Le nuove password non corrispondono.",
+    "passwordRequired": "La password è obbligatoria.",
+    "errorCurrentPasswordIncorrect": "La password attuale non è corretta",
+    "cancel": "Annulla",
+    "changePasswordButton": "Cambia password"
+  }
 }

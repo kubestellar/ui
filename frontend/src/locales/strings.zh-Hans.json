@@ -1,3 +1,17 @@
 {
-  "raiseIssue": "报告问题"
+  "raiseIssue": "报告问题",
+  "profileSection": {
+    "changePassword": "修改密码",
+    "changePasswordSubtitle": "请输入您当前的密码并选择一个新密码。",
+    "currentPassword": "当前密码",
+    "newPassword": "新密码",
+    "confirmNewPassword": "确认新密码",
+    "passwordChangedSuccess": "密码修改成功。",
+    "passwordChangedError": "修改密码失败。",
+    "passwordsDoNotMatch": "新密码不匹配。",
+    "passwordRequired": "密码是必填项。",
+    "errorCurrentPasswordIncorrect": "当前密码不正确",
+    "cancel": "取消",
+    "changePasswordButton": "修改密码"
+  }
 }

@@ -1,7 +1,10 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
+	"runtime"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -10,6 +13,27 @@ import (
 	"github.com/kubestellar/ui/plugin"
 	"github.com/kubestellar/ui/plugin/plugins"
 	"go.uber.org/zap"
+)
+
+// In-memory storage for plugin system state
+var (
+	// Map to store disabled plugin instances so they can be re-enabled
+	disabledPlugins      = make(map[string]plugin.Plugin)
+	disabledPluginsMutex = sync.RWMutex{}
+
+	// Plugin system configuration
+	systemConfig = PluginSystemConfig{
+		PluginsDirectory:   "/plugins",
+		AutoloadPlugins:    true,
+		PluginTimeout:      30,
+		MaxConcurrentCalls: 10,
+		LogLevel:           "info",
+	}
+	systemConfigMutex = sync.RWMutex{}
+
+	// Plugin feedback storage
+	pluginFeedbacks = make([]PluginFeedback, 0)
+	feedbackMutex   = sync.RWMutex{}
 )
 
 // PluginDetails represents the detailed information of a plugin
@@ -60,20 +84,34 @@ type PluginFeedback struct {
 func ListPluginsHandler(c *gin.Context) {
 	log.LogInfo("Handling ListPluginsHandler request")
 
-	// Currently, we'll retrieve plugins from the PluginManager
 	pluginsList := []PluginDetails{}
 
-	// Get all registered plugins from the plugin manager
-	for _, p := range getRegisteredPlugins() {
+	// Get enabled plugins from plugin manager
+	enabledPlugins := getRegisteredPlugins()
+	for _, p := range enabledPlugins {
 		pluginsList = append(pluginsList, PluginDetails{
 			ID:      p.Name(),
 			Name:    p.Name(),
 			Version: p.Version(),
-			Enabled: p.Enabled() == 1,
-			Status:  getPluginStatus(p),
+			Enabled: true,
+			Status:  "active",
 			Routes:  extractPluginRoutes(p),
 		})
 	}
+
+	// Get disabled plugins from storage
+	disabledPluginsMutex.RLock()
+	for _, p := range disabledPlugins {
+		pluginsList = append(pluginsList, PluginDetails{
+			ID:      p.Name(),
+			Name:    p.Name(),
+			Version: p.Version(),
+			Enabled: false,
+			Status:  "inactive",
+			Routes:  extractPluginRoutes(p),
+		})
+	}
+	disabledPluginsMutex.RUnlock()
 
 	c.JSON(http.StatusOK, gin.H{
 		"plugins": pluginsList,
@@ -91,24 +129,42 @@ func GetPluginDetailsHandler(c *gin.Context) {
 		return
 	}
 
+	// Check enabled plugins first
 	plugin := findPluginByID(pluginID)
-	if plugin == nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Plugin not found",
-		})
+	if plugin != nil {
+		details := PluginDetails{
+			ID:      plugin.Name(),
+			Name:    plugin.Name(),
+			Version: plugin.Version(),
+			Enabled: true,
+			Status:  "active",
+			Routes:  extractPluginRoutes(plugin),
+		}
+		c.JSON(http.StatusOK, details)
 		return
 	}
 
-	details := PluginDetails{
-		ID:      plugin.Name(),
-		Name:    plugin.Name(),
-		Version: plugin.Version(),
-		Enabled: plugin.Enabled() == 1,
-		Status:  getPluginStatus(plugin),
-		Routes:  extractPluginRoutes(plugin),
+	// Check disabled plugins
+	disabledPluginsMutex.RLock()
+	disabledPlugin, exists := disabledPlugins[pluginID]
+	disabledPluginsMutex.RUnlock()
+
+	if exists {
+		details := PluginDetails{
+			ID:      disabledPlugin.Name(),
+			Name:    disabledPlugin.Name(),
+			Version: disabledPlugin.Version(),
+			Enabled: false,
+			Status:  "inactive",
+			Routes:  extractPluginRoutes(disabledPlugin),
+		}
+		c.JSON(http.StatusOK, details)
+		return
 	}
 
-	c.JSON(http.StatusOK, details)
+	c.JSON(http.StatusNotFound, gin.H{
+		"error": "Plugin not found",
+	})
 }
 
 // InstallPluginHandler installs a new plugin
@@ -164,26 +220,40 @@ func UninstallPluginHandler(c *gin.Context) {
 		return
 	}
 
+	// Check if plugin exists (enabled or disabled)
 	plugin := findPluginByID(pluginID)
-	if plugin == nil {
+	var found bool = plugin != nil
+
+	if !found {
+		disabledPluginsMutex.RLock()
+		_, found = disabledPlugins[pluginID]
+		disabledPluginsMutex.RUnlock()
+	}
+
+	if !found {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "Plugin not found",
 		})
 		return
 	}
 
-	// For now, we'll simulate the uninstallation process
-	// In a real implementation, you would:
-	// 1. Deregister the plugin from the plugin manager
-	// 2. Stop any running processes
-	// 3. Remove the plugin files
+	// If plugin is currently enabled, deregister it
+	if plugin != nil {
+		plugins.Pm.Deregister(plugin)
+		log.LogInfo("Deregistered plugin from manager", zap.String("id", pluginID))
+	}
 
-	log.LogInfo("Plugin uninstallation requested", zap.String("id", pluginID))
+	// Remove from disabled plugins storage if it exists there
+	disabledPluginsMutex.Lock()
+	delete(disabledPlugins, pluginID)
+	disabledPluginsMutex.Unlock()
 
-	c.JSON(http.StatusAccepted, gin.H{
-		"message": "Plugin uninstallation initiated",
+	log.LogInfo("Plugin uninstalled successfully", zap.String("id", pluginID))
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Plugin uninstalled successfully",
 		"id":      pluginID,
-		"status":  "uninstalling",
+		"status":  "uninstalled",
 	})
 }
 
@@ -200,22 +270,21 @@ func ReloadPluginHandler(c *gin.Context) {
 	plugin := findPluginByID(pluginID)
 	if plugin == nil {
 		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Plugin not found",
+			"error": "Plugin not found or not enabled",
 		})
 		return
 	}
 
-	// For now, we'll simulate the reload process
-	// In a real implementation, you would:
-	// 1. Deregister the plugin from the plugin manager
-	// 2. Reload the plugin code
-	// 3. Register it again with the plugin manager
+	// Deregister and re-register the plugin to simulate reload
+	plugins.Pm.Deregister(plugin)
+	plugins.Pm.Register(plugin)
 
-	log.LogInfo("Plugin reload requested", zap.String("id", pluginID))
+	log.LogInfo("Plugin reloaded successfully", zap.String("id", pluginID))
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Plugin reloaded successfully",
 		"id":      pluginID,
+		"status":  "active",
 	})
 }
 
@@ -229,16 +298,9 @@ func EnablePluginHandler(c *gin.Context) {
 		return
 	}
 
+	// Check if plugin is already enabled
 	plugin := findPluginByID(pluginID)
-	if plugin == nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Plugin not found",
-		})
-		return
-	}
-
-	// If the plugin is already enabled, return success
-	if plugin.Enabled() == 1 {
+	if plugin != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "Plugin is already enabled",
 			"id":      pluginID,
@@ -247,12 +309,25 @@ func EnablePluginHandler(c *gin.Context) {
 		return
 	}
 
-	// For now, we'll simulate enabling the plugin
-	// In a real implementation, you would:
-	// 1. Update the plugin's enabled status
-	// 2. Start any necessary processes
+	// Check if plugin exists in disabled storage
+	disabledPluginsMutex.Lock()
+	disabledPlugin, exists := disabledPlugins[pluginID]
+	if !exists {
+		disabledPluginsMutex.Unlock()
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Plugin not found",
+		})
+		return
+	}
 
-	log.LogInfo("Plugin enable requested", zap.String("id", pluginID))
+	// Move plugin from disabled to enabled
+	delete(disabledPlugins, pluginID)
+	disabledPluginsMutex.Unlock()
+
+	// Register with plugin manager
+	plugins.Pm.Register(disabledPlugin)
+
+	log.LogInfo("Plugin enabled successfully", zap.String("id", pluginID))
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Plugin enabled successfully",
@@ -273,28 +348,34 @@ func DisablePluginHandler(c *gin.Context) {
 
 	plugin := findPluginByID(pluginID)
 	if plugin == nil {
+		// Check if already disabled
+		disabledPluginsMutex.RLock()
+		_, exists := disabledPlugins[pluginID]
+		disabledPluginsMutex.RUnlock()
+
+		if exists {
+			c.JSON(http.StatusOK, gin.H{
+				"message": "Plugin is already disabled",
+				"id":      pluginID,
+				"status":  "disabled",
+			})
+			return
+		}
+
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "Plugin not found",
 		})
 		return
 	}
 
-	// If the plugin is already disabled, return success
-	if plugin.Enabled() == 0 {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "Plugin is already disabled",
-			"id":      pluginID,
-			"status":  "disabled",
-		})
-		return
-	}
+	// Move plugin from enabled to disabled
+	plugins.Pm.Deregister(plugin)
 
-	// For now, we'll simulate disabling the plugin
-	// In a real implementation, you would:
-	// 1. Update the plugin's enabled status
-	// 2. Stop any running processes
+	disabledPluginsMutex.Lock()
+	disabledPlugins[pluginID] = plugin
+	disabledPluginsMutex.Unlock()
 
-	log.LogInfo("Plugin disable requested", zap.String("id", pluginID))
+	log.LogInfo("Plugin disabled successfully", zap.String("id", pluginID))
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Plugin disabled successfully",
@@ -313,43 +394,68 @@ func GetPluginStatusHandler(c *gin.Context) {
 		return
 	}
 
+	// Check enabled plugins first
 	plugin := findPluginByID(pluginID)
-	if plugin == nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Plugin not found",
-		})
+	if plugin != nil {
+		status := gin.H{
+			"id":      pluginID,
+			"name":    plugin.Name(),
+			"version": plugin.Version(),
+			"enabled": true,
+			"status":  "active",
+			"routes":  extractPluginRoutes(plugin),
+		}
+		c.JSON(http.StatusOK, status)
 		return
 	}
 
-	status := gin.H{
-		"id":      pluginID,
-		"name":    plugin.Name(),
-		"version": plugin.Version(),
-		"enabled": plugin.Enabled() == 1,
-		"status":  getPluginStatus(plugin),
-		"routes":  extractPluginRoutes(plugin),
+	// Check disabled plugins
+	disabledPluginsMutex.RLock()
+	disabledPlugin, exists := disabledPlugins[pluginID]
+	disabledPluginsMutex.RUnlock()
+
+	if exists {
+		status := gin.H{
+			"id":      pluginID,
+			"name":    disabledPlugin.Name(),
+			"version": disabledPlugin.Version(),
+			"enabled": false,
+			"status":  "inactive",
+			"routes":  extractPluginRoutes(disabledPlugin),
+		}
+		c.JSON(http.StatusOK, status)
+		return
 	}
 
-	c.JSON(http.StatusOK, status)
+	c.JSON(http.StatusNotFound, gin.H{
+		"error": "Plugin not found",
+	})
 }
 
 // GetPluginSystemMetricsHandler returns system-wide metrics for plugins
 func GetPluginSystemMetricsHandler(c *gin.Context) {
-	plugins := getRegisteredPlugins()
+	enabledPlugins := getRegisteredPlugins()
 
-	enabledCount := 0
-	for _, p := range plugins {
-		if p.Enabled() == 1 {
-			enabledCount++
-		}
-	}
+	disabledPluginsMutex.RLock()
+	disabledCount := len(disabledPlugins)
+	disabledPluginsMutex.RUnlock()
+
+	// Get system metrics
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+
+	systemConfigMutex.RLock()
+	pluginsDir := systemConfig.PluginsDirectory
+	systemConfigMutex.RUnlock()
 
 	metrics := PluginSystemMetrics{
-		TotalPlugins:     len(plugins),
-		EnabledPlugins:   enabledCount,
-		DisabledPlugins:  len(plugins) - enabledCount,
+		TotalPlugins:     len(enabledPlugins) + disabledCount,
+		EnabledPlugins:   len(enabledPlugins),
+		DisabledPlugins:  disabledCount,
+		SystemLoad:       0.0, // Could be implemented with system calls
+		MemoryUsage:      fmt.Sprintf("%.2f MB", float64(m.Alloc)/1024/1024),
 		LastUpdated:      time.Now(),
-		PluginsDirectory: "/plugins", // This would be configurable in a real implementation
+		PluginsDirectory: pluginsDir,
 	}
 
 	c.JSON(http.StatusOK, metrics)
@@ -357,38 +463,52 @@ func GetPluginSystemMetricsHandler(c *gin.Context) {
 
 // GetPluginSystemConfigHandler returns the configuration for the plugin system
 func GetPluginSystemConfigHandler(c *gin.Context) {
-	// In a real implementation, this would be loaded from a configuration file or database
-	config := PluginSystemConfig{
-		PluginsDirectory:   "/plugins",
-		AutoloadPlugins:    true,
-		PluginTimeout:      30,
-		MaxConcurrentCalls: 10,
-		LogLevel:           "info",
-	}
+	systemConfigMutex.RLock()
+	config := systemConfig
+	systemConfigMutex.RUnlock()
 
 	c.JSON(http.StatusOK, config)
 }
 
 // UpdatePluginSystemConfigHandler updates the configuration for the plugin system
 func UpdatePluginSystemConfigHandler(c *gin.Context) {
-	var config PluginSystemConfig
+	var newConfig PluginSystemConfig
 
-	if err := c.ShouldBindJSON(&config); err != nil {
+	if err := c.ShouldBindJSON(&newConfig); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid configuration: " + err.Error(),
 		})
 		return
 	}
 
-	// In a real implementation, this would save the configuration to a file or database
-	log.LogInfo("Plugin system configuration update requested",
-		zap.String("pluginsDirectory", config.PluginsDirectory),
-		zap.Bool("autoloadPlugins", config.AutoloadPlugins),
-		zap.Int("pluginTimeout", config.PluginTimeout))
+	// Validate configuration
+	if newConfig.PluginTimeout <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Plugin timeout must be greater than 0",
+		})
+		return
+	}
+
+	if newConfig.MaxConcurrentCalls <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Max concurrent calls must be greater than 0",
+		})
+		return
+	}
+
+	// Update configuration
+	systemConfigMutex.Lock()
+	systemConfig = newConfig
+	systemConfigMutex.Unlock()
+
+	log.LogInfo("Plugin system configuration updated successfully",
+		zap.String("pluginsDirectory", newConfig.PluginsDirectory),
+		zap.Bool("autoloadPlugins", newConfig.AutoloadPlugins),
+		zap.Int("pluginTimeout", newConfig.PluginTimeout))
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Plugin system configuration updated successfully",
-		"config":  config,
+		"config":  newConfig,
 	})
 }
 
@@ -403,9 +523,17 @@ func SubmitPluginFeedbackHandler(c *gin.Context) {
 		return
 	}
 
-	// Check if the plugin exists
+	// Check if the plugin exists (enabled or disabled)
 	plugin := findPluginByID(feedback.PluginID)
-	if plugin == nil {
+	var found bool = plugin != nil
+
+	if !found {
+		disabledPluginsMutex.RLock()
+		_, found = disabledPlugins[feedback.PluginID]
+		disabledPluginsMutex.RUnlock()
+	}
+
+	if !found {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "Plugin not found",
 		})
@@ -415,10 +543,10 @@ func SubmitPluginFeedbackHandler(c *gin.Context) {
 	// Set creation time
 	feedback.CreatedAt = time.Now()
 
-	// In a real implementation, you would:
-	// 1. Store the feedback in a database
-	// 2. Update plugin ratings
-	// 3. Notify plugin maintainers
+	// Store feedback
+	feedbackMutex.Lock()
+	pluginFeedbacks = append(pluginFeedbacks, feedback)
+	feedbackMutex.Unlock()
 
 	log.LogInfo("Plugin feedback submitted",
 		zap.String("pluginId", feedback.PluginID),
@@ -458,12 +586,7 @@ func GetAllPluginManifestsHandler(c *gin.Context) {
 func getRegisteredPlugins() []plugin.Plugin {
 	result := []plugin.Plugin{}
 
-	// For demonstration purposes, we'll return all plugins from the plugin manager
-	// This is a simplified approach; a real implementation would have more sophisticated
-	// plugin management
-
-	// Access the plugins field of the PluginManager (assuming it's accessible)
-	// This is a placeholder; you would need to implement actual access to the plugin manager
+	// Get all plugins from the plugin manager
 	for _, p := range plugins.Pm.GetPlugins() {
 		result = append(result, p)
 	}
@@ -471,7 +594,7 @@ func getRegisteredPlugins() []plugin.Plugin {
 	return result
 }
 
-// findPluginByID finds a plugin by its ID
+// findPluginByID finds a plugin by its ID in the enabled plugins
 func findPluginByID(id string) plugin.Plugin {
 	for _, p := range getRegisteredPlugins() {
 		if p.Name() == id {
@@ -481,12 +604,9 @@ func findPluginByID(id string) plugin.Plugin {
 	return nil
 }
 
-// getPluginStatus returns the status of a plugin
+// getPluginStatus returns the status of a plugin (this is now simplified since we manage enabled/disabled state)
 func getPluginStatus(p plugin.Plugin) string {
-	if p.Enabled() == 1 {
-		return "active"
-	}
-	return "inactive"
+	return "active" // If plugin is registered, it's active
 }
 
 // extractPluginRoutes extracts the routes of a plugin
