@@ -1,19 +1,21 @@
 import { RouteObject } from 'react-router-dom';
 import { Layout } from '../components/Layout';
-import WDS from '../pages/WDS';
-import BP from '../pages/BP';
-import NotFoundPage from '../pages/NotFoundPage';
-import TreeView from '../components/TreeViewComponent';
 import { lazy, Suspense } from 'react';
 import LoadingFallback from '../components/LoadingFallback';
-import WecsTreeview from '../components/WecsTopology';
 import ProtectedRoute from '../components/ProtectedRoute';
 import PublicRoute from '../components/PublicRoute';
-import KubeStellarVisualization from '../components/login/index';
-import InstallationPage from '../pages/InstallationPage';
 import KubeStellarStatusChecker from '../components/KubeStellarStatusChecker';
-import { PluginManager } from '../components/PluginManager';
 
+const WDSLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/WDS'));
+const BPLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/BP'));
+const NotFoundPageLazy = lazy(() => import('../pages/NotFoundPage'));
+const TreeViewLazy = lazy(() => import('../components/TreeViewComponent'));
+const WecsTreeviewLazy = lazy(() => import('../components/WecsTopology'));
+const PluginManagerLazy = lazy(() =>
+  import('../components/PluginManager').then(module => ({ default: module.PluginManager }))
+);
+const KubeStellarVisualizationLazy = lazy(() => import('../components/login/index'));
+const InstallationPageLazy = lazy(() => import('../pages/InstallationPage'));
 const ClustersLazy = lazy(() => import(/* webpackPrefetch: true */ '../components/Clusters'));
 const ITSLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/ITS'));
 
@@ -23,7 +25,9 @@ export const routesConfig: RouteObject[] = [
     element: (
       <PublicRoute>
         <KubeStellarStatusChecker>
-          <KubeStellarVisualization />
+          <Suspense fallback={<LoadingFallback message="Loading login..." size="medium" />}>
+            <KubeStellarVisualizationLazy />
+          </Suspense>
         </KubeStellarStatusChecker>
       </PublicRoute>
     ),
@@ -33,7 +37,9 @@ export const routesConfig: RouteObject[] = [
     element: (
       <PublicRoute>
         <KubeStellarStatusChecker>
-          <InstallationPage />
+          <Suspense fallback={<LoadingFallback message="Loading installation..." size="medium" />}>
+            <InstallationPageLazy />
+          </Suspense>
         </KubeStellarStatusChecker>
       </PublicRoute>
     ),
@@ -70,7 +76,9 @@ export const routesConfig: RouteObject[] = [
         path: 'workloads/manage',
         element: (
           <ProtectedRoute>
-            <WDS />
+            <Suspense fallback={<LoadingFallback message="Loading Workloads..." size="medium" />}>
+              <WDSLazy />
+            </Suspense>
           </ProtectedRoute>
         ),
       },
@@ -78,7 +86,9 @@ export const routesConfig: RouteObject[] = [
         path: 'bp/manage',
         element: (
           <ProtectedRoute>
-            <BP />
+            <Suspense fallback={<LoadingFallback message="Loading Binding Policies..." size="medium" />}>
+              <BPLazy />
+            </Suspense>
           </ProtectedRoute>
         ),
       },
@@ -86,7 +96,9 @@ export const routesConfig: RouteObject[] = [
         path: 'wds/treeview',
         element: (
           <ProtectedRoute>
-            <TreeView />
+            <Suspense fallback={<LoadingFallback message="Loading Tree View..." size="medium" />}>
+              <TreeViewLazy />
+            </Suspense>
           </ProtectedRoute>
         ),
       },
@@ -94,7 +106,9 @@ export const routesConfig: RouteObject[] = [
         path: 'wecs/treeview',
         element: (
           <ProtectedRoute>
-            <WecsTreeview />
+            <Suspense fallback={<LoadingFallback message="Loading WECS Tree View..." size="medium" />}>
+              <WecsTreeviewLazy />
+            </Suspense>
           </ProtectedRoute>
         ),
       },
@@ -102,13 +116,19 @@ export const routesConfig: RouteObject[] = [
         path: 'plugins/manage',
         element: (
           <ProtectedRoute>
-            <PluginManager />
+            <Suspense fallback={<LoadingFallback message="Loading Plugin Manager..." size="medium" />}>
+              <PluginManagerLazy />
+            </Suspense>
           </ProtectedRoute>
         ),
       },
       {
         path: '*',
-        element: <NotFoundPage />,
+        element: (
+          <Suspense fallback={<LoadingFallback message="Loading..." size="small" />}>
+            <NotFoundPageLazy />
+          </Suspense>
+        ),
       },
     ],
   },

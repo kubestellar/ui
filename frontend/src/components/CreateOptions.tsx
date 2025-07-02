@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react';
-import jsyaml from 'js-yaml';
 import {
   Dialog,
   DialogContent,
@@ -11,7 +10,6 @@ import {
   Typography,
   Snackbar,
 } from '@mui/material';
-import GitHubIcon from '@mui/icons-material/GitHub';
 import { AxiosError } from 'axios';
 import { useWDSQueries } from '../hooks/queries/useWDSQueries';
 import { toast } from 'react-hot-toast';
@@ -29,6 +27,8 @@ import helmicon from '../assets/Helm.png';
 import { api } from '../lib/api';
 import { ArtifactHubTab, ArtifactHubFormData } from './Workloads/AirtfactTab/ArtifactHubTab';
 import { useTranslation } from 'react-i18next'; // Add this import
+import React, { Suspense } from 'react';
+const GitHubIcon = React.lazy(() => import('@mui/icons-material/GitHub'));
 
 interface Props {
   activeOption: string | null;
@@ -185,23 +185,25 @@ spec:
       return;
     }
 
-    try {
-      let documents: Workload[] = [];
-      const contentType = detectContentType(editorContent);
-      if (contentType === 'json') {
-        const parsed = JSON.parse(editorContent);
-        documents = Array.isArray(parsed) ? parsed : [parsed];
-      } else {
-        jsyaml.loadAll(editorContent, doc => documents.push(doc as Workload), {});
+    const parseYaml = async () => {
+      try {
+        let documents: Workload[] = [];
+        const contentType = detectContentType(editorContent);
+        if (contentType === 'json') {
+          const parsed = JSON.parse(editorContent);
+          documents = Array.isArray(parsed) ? parsed : [parsed];
+        } else {
+          const jsyaml = (await import('js-yaml')).default;
+          jsyaml.loadAll(editorContent, doc => documents.push(doc as Workload), {});
+        }
+        const docWithName = documents.find(doc => doc?.metadata?.name);
+        const name = docWithName?.metadata?.name || '';
+        setWorkloadName(name);
+      } catch (e) {
+        setWorkloadName('');
       }
-
-      const docWithName = documents.find(doc => doc?.metadata?.name);
-      const name = docWithName?.metadata?.name || '';
-      setWorkloadName(name);
-    } catch (error) {
-      console.error('Error parsing editor content:', error);
-      setWorkloadName('');
-    }
+    };
+    parseYaml();
   }, [editorContent]);
 
   useEffect(() => {
@@ -218,23 +220,25 @@ spec:
         return;
       }
 
-      try {
-        let documents: Workload[] = [];
-        const contentType = detectContentType(content);
-        if (contentType === 'json') {
-          const parsed = JSON.parse(content);
-          documents = Array.isArray(parsed) ? parsed : [parsed];
-        } else {
-          jsyaml.loadAll(content, doc => documents.push(doc as Workload), {});
+      const parseYaml = async () => {
+        try {
+          let documents: Workload[] = [];
+          const contentType = detectContentType(content);
+          if (contentType === 'json') {
+            const parsed = JSON.parse(content);
+            documents = Array.isArray(parsed) ? parsed : [parsed];
+          } else {
+            const jsyaml = (await import('js-yaml')).default;
+            jsyaml.loadAll(content, doc => documents.push(doc as Workload), {});
+          }
+          const docWithName = documents.find(doc => doc?.metadata?.name);
+          const name = docWithName?.metadata?.name || '';
+          setWorkloadName(name);
+        } catch (e) {
+          setWorkloadName('');
         }
-
-        const docWithName = documents.find(doc => doc?.metadata?.name);
-        const name = docWithName?.metadata?.name || '';
-        setWorkloadName(name);
-      } catch (error) {
-        console.error('Error parsing uploaded file:', error);
-        setWorkloadName('');
-      }
+      };
+      parseYaml();
     };
     reader.readAsText(selectedFile);
   }, [selectedFile]);
@@ -343,29 +347,33 @@ spec:
         reader.onload = e => {
           const content = e.target?.result as string;
           if (content) {
-            try {
-              let documents: Workload[] = [];
-              const contentType = detectContentType(content);
-              if (contentType === 'json') {
-                const parsed = JSON.parse(content);
-                documents = Array.isArray(parsed) ? parsed : [parsed];
-              } else {
-                jsyaml.loadAll(content, doc => documents.push(doc as Workload), {});
+            const parseYaml = async () => {
+              try {
+                let documents: Workload[] = [];
+                const contentType = detectContentType(content);
+                if (contentType === 'json') {
+                  const parsed = JSON.parse(content);
+                  documents = Array.isArray(parsed) ? parsed : [parsed];
+                } else {
+                  const jsyaml = (await import('js-yaml')).default;
+                  jsyaml.loadAll(content, doc => documents.push(doc as Workload), {});
+                }
+                const docWithKind = documents.find(doc => doc?.kind);
+                const kind = docWithKind?.kind || 'Unknown';
+                const namespace = docWithKind?.metadata?.namespace || 'default';
+                toast.error(
+                  t('workloads.createOptions.notifications.workloadAlreadyExists', {
+                    kind,
+                    name: workloadName,
+                    namespace,
+                  })
+                );
+              } catch (parseError) {
+                console.error('Error parsing file for kind:', parseError);
+                toast.error(`Failed to create Unknown ${workloadName} workload is already exists`);
               }
-              const docWithKind = documents.find(doc => doc?.kind);
-              const kind = docWithKind?.kind || 'Unknown';
-              const namespace = docWithKind?.metadata?.namespace || 'default';
-              toast.error(
-                t('workloads.createOptions.notifications.workloadAlreadyExists', {
-                  kind,
-                  name: workloadName,
-                  namespace,
-                })
-              );
-            } catch (parseError) {
-              console.error('Error parsing file for kind:', parseError);
-              toast.error(`Failed to create Unknown ${workloadName} workload is already exists`);
-            }
+            };
+            parseYaml();
           } else {
             toast.error(`Failed to create Unknown ${workloadName} workload is already exists`);
           }
@@ -394,6 +402,7 @@ spec:
         const parsed = JSON.parse(fileContent);
         documents = Array.isArray(parsed) ? parsed : [parsed];
       } else {
+        const jsyaml = (await import('js-yaml')).default;
         jsyaml.loadAll(fileContent, doc => documents.push(doc as Workload), {});
       }
 
@@ -425,6 +434,7 @@ spec:
             const parsed = JSON.parse(fileContent);
             documents = Array.isArray(parsed) ? parsed : [parsed];
           } else {
+            const jsyaml = (await import('js-yaml')).default;
             jsyaml.loadAll(fileContent, doc => documents.push(doc as Workload), {});
           }
           const docWithKind = documents.find(doc => doc?.kind);
@@ -914,7 +924,7 @@ spec:
             <StyledTab
               label={t('workloads.tabs.github')}
               value="option3"
-              icon={<GitHubIcon sx={{ fontSize: '0.9rem' }} />}
+              icon={<Suspense fallback={<span />}><GitHubIcon /></Suspense>}
               iconPosition="start"
             />
             <StyledTab
