@@ -44,7 +44,6 @@ import { useTranslation } from 'react-i18next';
 import React, { Suspense } from 'react';
 const EditIcon = React.lazy(() => import('@mui/icons-material/Edit'));
 const PublishIcon = React.lazy(() => import('@mui/icons-material/Publish'));
-const ArrowRightAltIcon = React.lazy(() => import('@mui/icons-material/ArrowRightAlt'));
 
 // Define EmptyState component outside of the BP component
 const EmptyState: React.FC<{
