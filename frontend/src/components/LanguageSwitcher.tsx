@@ -131,8 +131,8 @@ const LanguageSwitcher = () => {
           </AnimatePresence>
         </motion.button>
       )}
-      {/* Dropdown */}
 
+      {/* Dropdown list */}
       <AnimatePresence>
         {isOpen && (
           <motion.div

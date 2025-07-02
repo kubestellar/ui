@@ -9,7 +9,7 @@ import {
   TableRow,
   IconButton,
 } from '@mui/material';
-import { ResourceItem } from './TreeViewComponent'; // Adjust the import path
+import { ResourceItem } from './TreeViewComponent';
 import useTheme from '../stores/themeStore';
 import { useTranslation } from 'react-i18next';
 
