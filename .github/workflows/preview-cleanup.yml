@@ -1,0 +1,21 @@
+name: Cleanup PR Preview
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    env:
+      NAMESPACE: ks-ui-pr-${{ github.event.pull_request.number }}
+    steps:
+      - name: Set up KUBECONFIG
+        run: |
+          echo "${{ secrets.OCI_KUBECONFIG }}" | base64 --decode > kubeconfig
+          export KUBECONFIG=$PWD/kubeconfig
+          echo "KUBECONFIG=$PWD/kubeconfig" >> $GITHUB_ENV
+
+      - name: Delete namespace
+        run: |
+          kubectl delete namespace $NAMESPACE || echo "Already deleted"

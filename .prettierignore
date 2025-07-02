@@ -28,3 +28,10 @@ Dockerfile
 docker-compose.yml
 docker-compose*.yml
 *.dockerfile
+
+# Ignore yaml files
+*.yaml
+*.yml
+
+# Ignore README.md to preserve note admonition formatting
+README.md

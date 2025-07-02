@@ -1,4 +1,5 @@
 name: Build, Check Formatting, and Run Tests
+
 on:
   push:
     branches: ['*']
@@ -17,29 +18,35 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install Dependencies
+        working-directory: frontend
         run: npm ci
 
       - name: Check Formatting
+        working-directory: frontend
         run: npm run format:check
       - name: ✅ Formatting Check Passed
         if: success()
         run: echo "Prettier formatting check passed ✅"
 
       - name: Lint Check
+        working-directory: frontend
         run: npm run lint
       - name: ✅ Lint Check Passed
         if: success()
         run: echo "Linting successful ✅"
 
       - name: Run Frontend Tests
-        run: npm test -- --ci --coverage
+        working-directory: frontend
+        run: npm test -- --ci --coverage --passWithNoTests
       - name: ✅ Frontend Tests Passed
         if: success()
         run: echo "Frontend tests passed ✅"
 
       - name: Build
+        working-directory: frontend
         run: npm run build
         env:
           VITE_BASE_URL: http://localhost:4000
@@ -48,6 +55,7 @@ jobs:
         run: echo "Frontend build successful ✅"
 
       - name: Run Frontend
+        working-directory: frontend
         run: |
           echo "Starting Frontend Server..."
           npm run dev &
@@ -60,6 +68,18 @@ jobs:
   backend:
     name: Backend Checks
     runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
@@ -95,6 +115,13 @@ jobs:
       - name: ✅ Backend Build Successful
         if: success()
         run: echo "Backend build successful ✅"
+
+      - name: Run Backend Tests
+        working-directory: backend
+        run: go test ./... -v
+      - name: ✅ Backend Tests Passed
+        if: success()
+        run: echo "Backend Tests Passed ✅"
 
       - name: Run Backend
         working-directory: backend

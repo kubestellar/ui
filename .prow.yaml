@@ -10,6 +10,7 @@ presubmits:
             - /bin/bash
             - -c
             - |
+              cd frontend
               npm ci
               npm run lint
           resources:
@@ -27,6 +28,7 @@ presubmits:
             - /bin/bash
             - -c
             - |
+              cd frontend
               npm ci
               npm run build
           resources:
@@ -44,6 +46,7 @@ presubmits:
             - /bin/bash
             - -c
             - |
+              cd frontend
               npm ci
               npm test
           resources:
@@ -79,6 +82,18 @@ presubmits:
             - /bin/bash
             - -c
             - |
+              apt-get update && apt-get install -y redis-server redis-tools
+              redis-server --daemonize yes --port 6379 --bind 127.0.0.1 --save "" --appendonly no
+              echo "Waiting for Redis to start..."
+              sleep 3
+
+              if redis-cli ping | grep -q PONG; then
+                echo "✓ Redis is running"
+              else
+                echo "✗ Redis failed to start"
+                exit 1
+              fi
+
               cd backend
               go mod download
               go test ./...
@@ -103,9 +118,11 @@ postsubmits:
             - -c
             - |
               # Build and push frontend
+              cd frontend
               buildah bud -t quay.io/kubestellar/ui:frontend-$(git rev-parse --short HEAD) -t quay.io/kubestellar/ui:frontend-latest .
               buildah push quay.io/kubestellar/ui:frontend-$(git rev-parse --short HEAD)
               buildah push quay.io/kubestellar/ui:frontend-latest
+              cd ..
 
               # Build and push backend
               cd backend
@@ -132,9 +149,11 @@ postsubmits:
             - -c
             - |
               # Build and push frontend
+              cd frontend
               buildah bud -t quay.io/kubestellar/ui:frontend-dev-$(git rev-parse --short HEAD) -t quay.io/kubestellar/ui:frontend-dev-latest .
               buildah push quay.io/kubestellar/ui:frontend-dev-$(git rev-parse --short HEAD)
               buildah push quay.io/kubestellar/ui:frontend-dev-latest
+              cd ..
 
               # Build and push backend
               cd backend

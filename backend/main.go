@@ -2,25 +2,77 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"log"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/routes"
-
+	"github.com/joho/godotenv" // Add this import
 	"github.com/kubestellar/ui/api"
+	"github.com/kubestellar/ui/models"
+	config "github.com/kubestellar/ui/postgresql"
+	database "github.com/kubestellar/ui/postgresql/Database"
+	"github.com/kubestellar/ui/routes"
+	"github.com/kubestellar/ui/utils"
 	"go.uber.org/zap"
 )
 
+var logger *zap.Logger
+
 func main() {
+	// Load .env file FIRST before anything else
+	if err := godotenv.Load(); err != nil {
+		log.Println("Warning: No .env file found, using default values")
+	}
+
+	// Initialize logger
 	initLogger()
+
+	// Load configuration (now it will read from .env)
+	cfg := config.LoadConfig()
+
+	// Debug: Log the loaded configuration
+	logger.Info("Configuration loaded",
+		zap.String("port", cfg.Port),
+		zap.String("gin_mode", cfg.GinMode),
+		zap.String("database_url", maskPassword(cfg.DatabaseURL)))
+
+	// Set Gin mode
+	gin.SetMode(cfg.GinMode)
+
+	// Initialize JWT
+	utils.InitJWT(cfg.JWTSecret)
+
+	// Initialize database with retry logic for Docker
+	logger.Info("Connecting to database...", zap.String("url", maskPassword(cfg.DatabaseURL)))
+	if err := database.InitDatabase(cfg.DatabaseURL); err != nil {
+		logger.Fatal("Failed to initialize database", zap.Error(err))
+	}
+
+	// Initialize admin user
+	logger.Info("Initializing admin user...")
+	if err := initializeAdminUser(); err != nil {
+		logger.Fatal("Failed to initialize admin user", zap.Error(err))
+	}
+
+	// Debug: Check if admin user exists
+	logger.Info("Checking admin user in database...")
+	if err := debugCheckAdminUser(); err != nil {
+		logger.Error("Failed to check admin user", zap.Error(err))
+	}
+
+	// Setup Gin router
 	router := gin.Default()
 
+	// Add Zap middleware first
 	router.Use(ZapMiddleware())
-	log.Println("Debug: KubestellarUI application started")
+
+	logger.Info("KubestellarUI application started")
 
 	// CORS Middleware
 	router.Use(func(c *gin.Context) {
@@ -31,7 +83,7 @@ func main() {
 			corsOrigin = "http://localhost:5173" // default
 		}
 
-		// Fixed: Use the corsOrigin variable instead of hardcoded value
+		// Use the corsOrigin variable instead of hardcoded value
 		if origin == corsOrigin {
 			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
 			c.Writer.Header().Set("Access-Control-Allow-Credentials", "true") // for cookies/auth
@@ -48,22 +100,57 @@ func main() {
 		c.Next()
 	})
 
+	// Setting up comprehensive health endpoints using the existing health routes
+	routes.SetupHealthEndpoints(router, logger)
+
+	// Setup authentication routes
 	routes.SetupRoutes(router)
-	router.POST("api/webhook", api.GitHubWebhookHandler)
 
-	if err := router.Run(":4000"); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+	// Add webhook endpoint (you may want to protect this with auth too)
+	router.POST("/api/webhook", api.GitHubWebhookHandler)
+
+	// Graceful shutdown
+	go func() {
+		// Start server
+		logger.Info("Server starting",
+			zap.String("port", cfg.Port),
+			zap.String("mode", cfg.GinMode),
+			zap.String("cors_origin", os.Getenv("CORS_ALLOWED_ORIGIN")))
+		logger.Info("Default admin credentials: admin/admin - CHANGE IMMEDIATELY!")
+		logger.Info("Health endpoints available:")
+		logger.Info("  - Comprehensive health: http://localhost:" + cfg.Port + "/health")
+		logger.Info("  - Kubernetes liveness: http://localhost:" + cfg.Port + "/healthz")
+		logger.Info("  - Kubernetes readiness: http://localhost:" + cfg.Port + "/readyz")
+		logger.Info("  - Simple status: http://localhost:" + cfg.Port + "/status")
+
+		if err := router.Run(":" + cfg.Port); err != nil {
+			logger.Fatal("Failed to start server", zap.Error(err))
+		}
+	}()
+
+	// Wait for interrupt signal to gracefully shutdown the server
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	logger.Info("Shutting down server...")
+
+	// Close database connection
+	if err := database.CloseDatabase(); err != nil {
+		logger.Error("Error closing database", zap.Error(err))
 	}
-}
 
-var logger *zap.Logger
+	logger.Info("Server exited")
+}
 
 // Initialize Zap Logger
 func initLogger() {
 	config := zap.NewProductionConfig()
 	config.Encoding = "json"                // Ensure JSON format
 	config.OutputPaths = []string{"stdout"} // Console output (can also log to a file)
-	log, _ := config.Build()
+	log, err := config.Build()
+	if err != nil {
+		panic("Failed to initialize logger: " + err.Error())
+	}
 	logger = log
 }
 
@@ -138,9 +225,172 @@ func ZapMiddleware() gin.HandlerFunc {
 	}
 }
 
+// Helper function to mask password in database URL for logging
+func maskPassword(dbURL string) string {
+	if strings.Contains(dbURL, "@") {
+		parts := strings.Split(dbURL, "@")
+		if len(parts) >= 2 {
+			userPart := strings.Split(parts[0], ":")
+			if len(userPart) >= 3 {
+				userPart[len(userPart)-1] = "****"
+				parts[0] = strings.Join(userPart, ":")
+			}
+			return strings.Join(parts, "@")
+		}
+	}
+	return dbURL
+}
+
 func homeDir() string {
 	if h := os.Getenv("HOME"); h != "" {
 		return h
 	}
 	return os.Getenv("USERPROFILE") // windows
+}
+
+// initializeAdminUser creates default admin user if no users exist
+func initializeAdminUser() error {
+	// First check if admin user specifically exists
+	adminQuery := "SELECT id, username, is_admin FROM users WHERE username = $1"
+	var adminID int
+	var adminUsername string
+	var isAdmin bool
+
+	err := database.DB.QueryRow(adminQuery, "admin").Scan(&adminID, &adminUsername, &isAdmin)
+	if err == nil {
+		// Admin user exists
+		logger.Info("Admin user already exists",
+			zap.Int("id", adminID),
+			zap.String("username", adminUsername),
+			zap.Bool("is_admin", isAdmin))
+
+		// Verify admin has proper permissions
+		return ensureAdminPermissions(adminID)
+	}
+
+	// Admin doesn't exist, check if any users exist
+	totalUsersQuery := "SELECT COUNT(*) FROM users"
+	var count int
+	err = database.DB.QueryRow(totalUsersQuery).Scan(&count)
+	if err != nil {
+		return fmt.Errorf("failed to check existing users: %v", err)
+	}
+
+	logger.Info("Database user status",
+		zap.Int("total_users", count),
+		zap.Bool("admin_exists", false))
+
+	// Create admin user (either first user or admin is missing)
+	log.Println("Creating admin user...")
+
+	// Hash the password
+	hashedPassword, err := models.HashPassword("admin")
+	if err != nil {
+		return fmt.Errorf("failed to hash password: %v", err)
+	}
+
+	// Insert admin user
+	insertQuery := `
+		INSERT INTO users (username, password, is_admin) 
+		VALUES ($1, $2, $3) 
+		RETURNING id`
+
+	var userID int
+	err = database.DB.QueryRow(insertQuery, "admin", hashedPassword, true).Scan(&userID)
+	if err != nil {
+		return fmt.Errorf("failed to create admin user: %v", err)
+	}
+
+	logger.Info("Admin user created", zap.Int("user_id", userID))
+
+	// Set admin permissions for all components
+	err = ensureAdminPermissions(userID)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Default admin user created successfully with username: admin, password: admin")
+	return nil
+}
+
+// ensureAdminPermissions ensures admin user has all required permissions
+func ensureAdminPermissions(userID int) error {
+	// Define required admin permissions
+	requiredPermissions := []struct {
+		component  string
+		permission string
+	}{
+		{"users", "write"},
+		{"resources", "write"},
+		{"system", "write"},
+		{"dashboard", "write"},
+	}
+
+	// Check existing permissions
+	existingPermsQuery := "SELECT component, permission FROM user_permissions WHERE user_id = $1"
+	rows, err := database.DB.Query(existingPermsQuery, userID)
+	if err != nil {
+		return fmt.Errorf("failed to check existing permissions: %v", err)
+	}
+	defer rows.Close()
+
+	existingPerms := make(map[string]string)
+	for rows.Next() {
+		var component, permission string
+		if err := rows.Scan(&component, &permission); err != nil {
+			return fmt.Errorf("failed to scan permission: %v", err)
+		}
+		existingPerms[component] = permission
+	}
+
+	// Add missing permissions
+	for _, perm := range requiredPermissions {
+		if existing, exists := existingPerms[perm.component]; !exists || existing != perm.permission {
+			// Delete existing permission if different
+			if exists {
+				_, err = database.DB.Exec(
+					"DELETE FROM user_permissions WHERE user_id = $1 AND component = $2",
+					userID, perm.component)
+				if err != nil {
+					return fmt.Errorf("failed to delete old permission: %v", err)
+				}
+			}
+
+			// Insert new permission
+			_, err = database.DB.Exec(
+				"INSERT INTO user_permissions (user_id, component, permission) VALUES ($1, $2, $3)",
+				userID, perm.component, perm.permission)
+			if err != nil {
+				return fmt.Errorf("failed to set admin permission %s: %v", perm.component, err)
+			}
+
+			logger.Info("Admin permission set",
+				zap.String("component", perm.component),
+				zap.String("permission", perm.permission))
+		}
+	}
+
+	return nil
+}
+
+// debugCheckAdminUser checks if admin user exists and logs details
+func debugCheckAdminUser() error {
+	query := "SELECT id, username, password, is_admin FROM users WHERE username = $1"
+	var id int
+	var username, password string
+	var isAdmin bool
+
+	err := database.DB.QueryRow(query, "admin").Scan(&id, &username, &password, &isAdmin)
+	if err != nil {
+		logger.Error("Admin user not found in database", zap.Error(err))
+		return err
+	}
+
+	logger.Info("Admin user found in database",
+		zap.Int("id", id),
+		zap.String("username", username),
+		zap.String("password_hash", password),
+		zap.Bool("is_admin", isAdmin))
+
+	return nil
 }
