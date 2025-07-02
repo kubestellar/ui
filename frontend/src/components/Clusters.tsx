@@ -676,7 +676,9 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
                 const isPolicy = item.type === 'binding-policy';
 
                 // Status colors based on item status
-                const getStatusColors = (status: string): { bgColor: string; textColor: string } => {
+                const getStatusColors = (
+                  status: string
+                ): { bgColor: string; textColor: string } => {
                   if (status === 'Active' || status === 'Available' || status === 'Synced') {
                     return {
                       bgColor: isDark ? 'bg-green-900/30' : 'bg-green-100',
@@ -1473,7 +1475,9 @@ const K8sInfo = () => {
                     transition={{ duration: 0.3, delay: index * 0.05 }}
                     onClick={() => handleClusterClick(cluster.name)}
                     whileHover={{
-                      backgroundColor: isDark ? 'rgba(31, 41, 55, 0.5)' : 'rgba(249, 250, 251, 0.8)',
+                      backgroundColor: isDark
+                        ? 'rgba(31, 41, 55, 0.5)'
+                        : 'rgba(249, 250, 251, 0.8)',
                       scale: 1.01,
                       transition: { duration: 0.2 },
                     }}
@@ -1494,16 +1498,25 @@ const K8sInfo = () => {
                               {cluster.context || cluster.name}
                             </span>
                             {/* Capacity metrics with responsive design */}
-                            <div className="hidden flex-wrap gap-1 text-xs text-gray-500 sm:flex dark:text-gray-400">
-                              <div className="flex items-center" title={t('clusters.dashboard.cpuCapacity')}>
+                            <div className="hidden flex-wrap gap-1 text-xs text-gray-500 dark:text-gray-400 sm:flex">
+                              <div
+                                className="flex items-center"
+                                title={t('clusters.dashboard.cpuCapacity')}
+                              >
                                 <Cpu size={10} className="mr-1 text-blue-500" />
                                 <span className="truncate">{cluster.cpuCapacity || 'N/A'}</span>
                               </div>
-                              <div className="flex items-center" title={t('clusters.dashboard.memoryCapacity')}>
+                              <div
+                                className="flex items-center"
+                                title={t('clusters.dashboard.memoryCapacity')}
+                              >
                                 <HardDrive size={10} className="mr-1 text-purple-500" />
                                 <span className="truncate">{cluster.memCapacity || 'N/A'}</span>
                               </div>
-                              <div className="flex items-center" title={t('clusters.dashboard.podCapacity')}>
+                              <div
+                                className="flex items-center"
+                                title={t('clusters.dashboard.podCapacity')}
+                              >
                                 <Layers size={10} className="mr-1 text-green-500" />
                                 <span className="truncate">{cluster.podsCapacity || 'N/A'}</span>
                               </div>
@@ -1516,12 +1529,16 @@ const K8sInfo = () => {
                         {isActive ? (
                           <span className="mb-1 flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-600 transition-colors dark:bg-green-900/30 dark:text-green-400">
                             <CheckCircle size={8} className="mr-1" />
-                            <span className="hidden sm:inline">{t('clusters.dashboard.active')}</span>
+                            <span className="hidden sm:inline">
+                              {t('clusters.dashboard.active')}
+                            </span>
                           </span>
                         ) : (
                           <span className="mb-1 flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-600 transition-colors dark:bg-amber-900/30 dark:text-amber-400">
                             <AlertTriangle size={8} className="mr-1" />
-                            <span className="hidden sm:inline">{t('clusters.dashboard.inactive')}</span>
+                            <span className="hidden sm:inline">
+                              {t('clusters.dashboard.inactive')}
+                            </span>
                           </span>
                         )}
                         <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -1557,7 +1574,8 @@ const K8sInfo = () => {
               to="/its"
               className="flex w-full items-center justify-center rounded-lg bg-blue-50 py-2 text-sm text-blue-600 transition-colors hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
             >
-              {t('clusters.dashboard.showMoreClusters')} <ArrowRightCircle size={14} className="ml-2" />
+              {t('clusters.dashboard.showMoreClusters')}{' '}
+              <ArrowRightCircle size={14} className="ml-2" />
             </Link>
           </div>
         )}
