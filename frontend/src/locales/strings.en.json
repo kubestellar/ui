@@ -1393,6 +1393,7 @@
     "helm": {
       "createOwn": "Create your own Helm chart",
       "popularCharts": "Deploy from popular Helm charts",
+      "prevCharts": "Previously Deployed Helm Charts",
       "form": {
         "repositoryName": "Repository Name *",
         "repositoryNameTip": "Specify the name of the Helm repository",

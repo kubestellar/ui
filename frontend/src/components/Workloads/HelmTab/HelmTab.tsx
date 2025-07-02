@@ -192,7 +192,7 @@ export const HelmTab = ({
             <FormControlLabel
               value="userCharts"
               control={<Radio />}
-              label={t('workloads.helm.userCharts')} // Instead of "List of user created Charts"
+              label={t('workloads.helm.prevCharts')} // Instead of "List of user created Charts"
               sx={{
                 '& .MuiTypography-root': {
                   color: theme === 'dark' ? '#d4d4d4' : '#333',
