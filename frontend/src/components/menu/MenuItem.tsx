@@ -105,8 +105,8 @@ const MenuItem: React.FC<MenuItemProps> = ({
     >
       {/* Category header - show only first letter when collapsed */}
       <motion.span
-        className={`border-l-[3px] border-transparent px-2 text-sm font-semibold 
-        uppercase tracking-[0.15em] transition-all 
+        className={`overflow-hidden border-l-[3px] border-transparent px-2 text-sm  font-semibold
+        uppercase tracking-[0.15em] transition-all  
         duration-300 ${centered || collapsed ? 'text-center' : ''}`}
         style={{ color: themeStyles.menu.catalog.color }}
         animate={{
@@ -182,19 +182,32 @@ const MenuItem: React.FC<MenuItemProps> = ({
 
                       {/* Text label */}
                       {!collapsed && (
-                        <motion.span
-                          className="ml-3 text-sm font-medium tracking-wide"
-                          style={{
-                            color: isActive
-                              ? themeStyles.colors.brand.primary
-                              : themeStyles.colors.text.primary,
-                          }}
-                          variants={textVariants}
-                          initial="expanded"
-                          animate={collapsed ? 'collapsed' : 'expanded'}
+                        <motion.div
+                          className="ml-3 overflow-hidden"
+                          initial={{ opacity: 0, width: 0 }}
+                          animate={
+                            collapsed
+                              ? { opacity: 0, width: 0 }
+                              : {
+                                  opacity: 1,
+                                  width: 'auto',
+                                  transition: { delay: 0.3, duration: 0.2 },
+                                }
+                          }
+                          exit={{ opacity: 0, width: 0 }}
+                          transition={{ ease: 'easeInOut' }}
                         >
-                          {listItem.label}
-                        </motion.span>
+                          <span
+                            className="whitespace-nowrap text-sm font-medium tracking-wide"
+                            style={{
+                              color: isActive
+                                ? themeStyles.colors.brand.primary
+                                : themeStyles.colors.text.primary,
+                            }}
+                          >
+                            {listItem.label}
+                          </span>
+                        </motion.div>
                       )}
 
                       {/* Enhanced custom tooltip */}

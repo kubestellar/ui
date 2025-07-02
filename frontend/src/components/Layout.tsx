@@ -200,10 +200,17 @@ export function Layout() {
                 </div>
               </motion.button>
             </div>
-
-            <Suspense fallback={<LoadingPlaceholder />}>
-              <Menu collapsed={isSidebarCollapsed} />
-            </Suspense>
+            <motion.div
+              key={isSidebarCollapsed ? 'collapsed' : 'expanded'}
+              transition={{
+                delay: isSidebarCollapsed ? 0 : 0.5,
+                duration: 0.1,
+              }}
+            >
+              <Suspense fallback={<LoadingPlaceholder />}>
+                <Menu collapsed={isSidebarCollapsed} />
+              </Suspense>
+            </motion.div>
           </motion.aside>
 
           {/* Mobile Menu - Overlay */}
