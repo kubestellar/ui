@@ -201,6 +201,7 @@ spec:
         setWorkloadName(name);
       } catch (e) {
         setWorkloadName('');
+        console.log('Error is', e);
       }
     };
     parseYaml();
@@ -236,6 +237,7 @@ spec:
           setWorkloadName(name);
         } catch (e) {
           setWorkloadName('');
+          console.log('Error is', e);
         }
       };
       parseYaml();
