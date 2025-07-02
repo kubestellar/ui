@@ -1388,6 +1388,7 @@
     "helm": {
       "createOwn": "Créez votre propre chart Helm",
       "popularCharts": "Déployer à partir de charts Helm populaires",
+      "prevCharts": "Liste des charts créés par l'utilisateur",
       "form": {
         "repositoryName": "Nom du Dépôt *",
         "repositoryNameTip": "Spécifiez le nom du dépôt Helm",
