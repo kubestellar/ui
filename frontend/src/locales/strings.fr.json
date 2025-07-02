@@ -1085,7 +1085,7 @@
       }
     },
     "loadingCanvas": "Chargement des données du canevas...",
-    "dragDrop": {
+    "selection": {
       "infoAlert": "Cette interface utilise des réponses simulées pour créer des politiques de liaison. Sélectionnez des clusters et des charges de travail dans les listes pour les ajouter au canevas, puis cliquez sur une charge de travail puis sur un cluster pour créer une connexion de politique de liaison.",
       "helpDialog": {
         "title": "Créer des politiques de liaison avec des connexions directes",

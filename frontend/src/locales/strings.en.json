@@ -942,7 +942,7 @@
       "policyBindingCreatedChip": "Binding created for policy propagation"
     },
     "tabs": {
-      "selectItems": "Select Items",
+      "selectItems": "Click and Drop",
       "yaml": "YAML",
       "uploadFile": "Upload File"
     },
@@ -1187,8 +1187,7 @@
       "title": "Labels:",
       "key": "Key",
       "value": "Value",
-      "add": "Add",
-      "count": "{{count}} unique labels across {{total}}"
+      "add": "Add"
     },
     "creatingConnection": "Creating connection:",
     "previewDialog": {

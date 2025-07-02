@@ -565,7 +565,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
     disabled: isDarkTheme ? '#475569' : '#94a3b8',
   };
 
-  // Extract unique labels from workloads
+  // Extract from workloads
   const uniqueLabels = React.useMemo(() => {
     const labelMap: Record<string, LabelGroup> = {};
 
@@ -1108,24 +1108,6 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
               </Typography>
             ) : (
               <>
-                {(state.status === 'success' || state.status === 'loading') && state.data && (
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      px: 2,
-                      display: 'block',
-                      color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary',
-                    }}
-                  >
-                    {t('bindingPolicy.labels.count', {
-                      count: filteredLabels.length,
-                      total: panelWorkloads.length,
-                    })}
-                    {state.status === 'loading'
-                      ? ` (${t('common.loading')})`
-                      : t('bindingPolicy.visualization.legendItems.activePolicy')}
-                  </Typography>
-                )}
                 {filteredLabels.map(labelGroup => renderLabelItem(labelGroup))}
               </>
             )}
@@ -1194,10 +1176,10 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
     labelSearch.trim() === ''
       ? labels
       : labels.filter(
-          label =>
-            label.key.toLowerCase().includes(labelSearch.toLowerCase()) ||
-            label.value.toLowerCase().includes(labelSearch.toLowerCase())
-        );
+        label =>
+          label.key.toLowerCase().includes(labelSearch.toLowerCase()) ||
+          label.value.toLowerCase().includes(labelSearch.toLowerCase())
+      );
 
   useEffect(() => {
     if (open) {
@@ -1760,17 +1742,17 @@ const SelectWorkloadDialog: React.FC<SelectWorkloadDialogProps> = ({
 
   const filteredWorkloads = searchTerm
     ? workloads.filter(
-        workload =>
-          workload.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          workload.kind.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (workload.namespace &&
-            workload.namespace.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          Object.entries(workload.labels || {}).some(
-            ([key, value]) =>
-              key.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              value.toLowerCase().includes(searchTerm.toLowerCase())
-          )
-      )
+      workload =>
+        workload.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        workload.kind.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (workload.namespace &&
+          workload.namespace.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        Object.entries(workload.labels || {}).some(
+          ([key, value]) =>
+            key.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            value.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+    )
     : workloads;
 
   const toggleItemSelection = (workload: Workload) => {
