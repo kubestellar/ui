@@ -15,4 +15,4 @@ func TestHashAndCheckPassword(t *testing.T) {
 
 	assert.True(t, models.CheckPasswordHash(password, hash))
 	assert.False(t, models.CheckPasswordHash("wrongpassword", hash))
-} 
+}
