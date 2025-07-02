@@ -392,6 +392,22 @@ const ProfileSection = () => {
                         aria-label="Passwords do not match"
                       />
                     ))}
+                  {/* Show success message if passwords match and both are non-empty */}
+                  {!confirmPasswordError && newPassword && confirmNewPassword && newPassword === confirmNewPassword && (
+                    <div
+                      style={{
+                        color: '#4ade80', // green-400
+                        fontSize: 14,
+                        marginTop: '0.3rem',
+                        marginBottom: '0.5rem',
+                        textAlign: 'left',
+                        fontWeight: 500,
+                      }}
+                      role="status"
+                    >
+                      {t('profileSection.passwordsMatch') || 'Passwords match!'}
+                    </div>
+                  )}
                   <button
                     type="button"
                     tabIndex={0}

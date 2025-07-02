@@ -1692,7 +1692,8 @@
     "passwordRequired": "La contraseña es obligatoria.",
     "errorCurrentPasswordIncorrect": "La contraseña actual es incorrecta",
     "cancel": "Cancelar",
-    "changePasswordButton": "Cambiar contraseña"
+    "changePasswordButton": "Cambiar contraseña",
+    "passwordsMatch": "¡Las contraseñas coinciden!"
   },
   "onboardingLogs": {
     "onboarding": "Incorporación",

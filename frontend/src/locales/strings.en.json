@@ -1700,7 +1700,8 @@
     "passwordRequired": "Password is required.",
     "errorCurrentPasswordIncorrect": "Current password is incorrect",
     "cancel": "Cancel",
-    "changePasswordButton": "Change Password"
+    "changePasswordButton": "Change Password",
+    "passwordsMatch": "Passwords match!"
   },
   "onboardingLogs": {
     "onboarding": "Onboarding",

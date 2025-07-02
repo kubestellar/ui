@@ -12,7 +12,8 @@
     "passwordRequired": "La password è obbligatoria.",
     "errorCurrentPasswordIncorrect": "La password attuale non è corretta",
     "cancel": "Annulla",
-    "changePasswordButton": "Cambia password"
+    "changePasswordButton": "Cambia password",
+    "passwordsMatch": "Le password corrispondono!"
   },
   "commandPalette": {
     "ariaLabel": "Apri la palette dei comandi",

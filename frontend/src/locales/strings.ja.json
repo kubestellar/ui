@@ -1693,7 +1693,8 @@
     "passwordRequired": "パスワードは必須です。",
     "errorCurrentPasswordIncorrect": "現在のパスワードが正しくありません",
     "cancel": "キャンセル",
-    "changePasswordButton": "パスワードの変更"
+    "changePasswordButton": "パスワードを変更",
+    "passwordsMatch": "パスワードが一致しました！"
   },
   "onboardingLogs": {
     "onboarding": "オンボーディング",

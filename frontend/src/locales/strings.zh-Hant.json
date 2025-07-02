@@ -12,7 +12,8 @@
     "passwordRequired": "密碼為必填項。",
     "errorCurrentPasswordIncorrect": "目前的密碼不正確",
     "cancel": "取消",
-    "changePasswordButton": "修改密碼"
+    "changePasswordButton": "修改密碼",
+    "passwordsMatch": "密碼相符！"
   },
   "commandPalette": {
     "ariaLabel": "打開命令面板",
