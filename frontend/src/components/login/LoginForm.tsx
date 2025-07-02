@@ -186,6 +186,7 @@ const LoginForm = () => {
             [&:-webkit-autofill]:shadow-[inset_0_0_0_1000px_#1a1f2e]
             [&:-webkit-autofill]:[transition:_background-color_9999s_ease-in-out_0s]`}
             required
+            disabled={isPending}
           />
         </div>
         {errors.username && (
@@ -213,6 +214,7 @@ const LoginForm = () => {
           <input
             type={showPassword ? 'text' : 'password'}
             value={password}
+            disabled={isPending}
             onChange={e => {
               setPassword(e.target.value);
               setErrors(prev => ({ ...prev, password: '' }));
