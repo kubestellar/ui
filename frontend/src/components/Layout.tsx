@@ -146,7 +146,7 @@ export function Layout() {
             style={{
               height: 'calc(100vh - 96px)',
               top: '96px',
-              borderRight: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(226, 232, 240, 0.8)'}`,
+              borderRight: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.3)' : 'rgba(226, 232, 240, 0.6)'}`,
             }}
             animate={{
               width: isSidebarCollapsed ? '80px' : '280px',
@@ -227,8 +227,12 @@ export function Layout() {
                   transition={{ duration: 0.3, ease: 'easeInOut' }}
                   className="fixed left-0 top-[72px] z-30 h-[calc(100vh-72px)] w-[280px] overflow-y-auto xl:hidden"
                   style={{
-                    background: themeStyles.colors.bg.secondary,
-                    borderRight: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(226, 232, 240, 0.8)'}`,
+                    background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                    backdropFilter: 'blur(10px)',
+                    borderRight: `1px solid ${isDark ? 'rgba(55, 65, 81, 0.3)' : 'rgba(226, 232, 240, 0.6)'}`,
+                    boxShadow: isDark 
+                      ? '0 8px 32px rgba(0, 0, 0, 0.3)' 
+                      : '0 8px 32px rgba(0, 0, 0, 0.1)',
                   }}
                 >
                   <div className="px-4 py-4">
