@@ -13,5 +13,67 @@
     "errorCurrentPasswordIncorrect": "Das aktuelle Passwort ist falsch",
     "cancel": "Abbrechen",
     "changePasswordButton": "Passwort ändern"
+  },
+  "commandPalette": {
+    "ariaLabel": "Befehls-Palette öffnen",
+    "title": "Befehls-Palette (Ctrl+K)",
+    "badge": "K",
+    "searchPlaceholder": "Befehle suchen...",
+    "noCommandsFound": "Keine Befehle gefunden. Versuchen Sie einen anderen Suchbegriff.",
+    "footer": {
+      "navigate": "navigieren",
+      "select": "auswählen",
+      "shortcut": "Ctrl+K"
+    },
+    "kbd": {
+      "esc": "ESC",
+      "arrows": "↑↓",
+      "enter": "↵"
+    },
+    "sections": {
+      "navigation": "Navigation",
+      "visualizations": "Visualisierungen",
+      "help": "Hilfe",
+      "account": "Konto"
+    },
+    "commands": {
+      "home": {
+        "title": "Startseite",
+        "description": "Zum Dashboard gehen"
+      },
+      "plugin": {
+        "title": "Plugin-Manager",
+        "description": "KubeStellar-Plugins verwalten und überwachen"
+      },
+      "clusters": {
+        "title": "Remote-Cluster",
+        "description": "Kubernetes-Cluster verwalten"
+      },
+      "workloads": {
+        "title": "Workloads",
+        "description": "Workloads über Cluster verwalten"
+      },
+      "bindingPolicies": {
+        "title": "Bindungsrichtlinien",
+        "description": "Bindungsrichtlinien konfigurieren"
+      },
+      "wdsTreeview": {
+        "title": "WDS-Baumansicht",
+        "description": "Workload-Verteilung visualisieren"
+      },
+      "wecsTreeview": {
+        "title": "WECS-Baumansicht",
+        "description": "Struktur der bereitgestellten Workloads visualisieren"
+      },
+      "documentation": {
+        "title": "Dokumentation öffnen",
+        "description": "KubeStellar-Dokumentation starten"
+      },
+      "logout": {
+        "title": "Abmelden",
+        "description": "Von Ihrem Konto abmelden",
+        "infoMessage": "Sie wurden erfolgreich abgemeldet."
+      }
+    }
   }
 }

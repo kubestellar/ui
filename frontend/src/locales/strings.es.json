@@ -1946,6 +1946,10 @@
         "title": "Inicio",
         "description": "Ir al panel principal"
       },
+      "plugin": {
+        "title": "Gestor de Plugins",
+        "description": "Gestionar y supervisar los plugins de KubeStellar"
+      },
       "clusters": {
         "title": "Clusters Remotos",
         "description": "Administrar clusters de Kubernetes"
