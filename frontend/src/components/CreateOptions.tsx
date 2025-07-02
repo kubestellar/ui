@@ -924,7 +924,11 @@ spec:
             <StyledTab
               label={t('workloads.tabs.github')}
               value="option3"
-              icon={<Suspense fallback={<span />}><GitHubIcon /></Suspense>}
+              icon={
+                <Suspense fallback={<span />}>
+                  <GitHubIcon />
+                </Suspense>
+              }
               iconPosition="start"
             />
             <StyledTab

@@ -1046,7 +1046,9 @@ const BP = () => {
               <ListItemIcon>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <KubernetesIcon type="workload" size={20} />
-                  <Suspense fallback={<span />}><EditIcon /></Suspense>
+                  <Suspense fallback={<span />}>
+                    <EditIcon />
+                  </Suspense>
                   <KubernetesIcon type="cluster" size={20} />
                 </Box>
               </ListItemIcon>
@@ -1056,13 +1058,17 @@ const BP = () => {
             </ListItem>
             <ListItem>
               <ListItemIcon>
-                <Suspense fallback={<span />}><EditIcon /></Suspense>
+                <Suspense fallback={<span />}>
+                  <EditIcon />
+                </Suspense>
               </ListItemIcon>
               <ListItemText primary={t('bindingPolicy.dragDrop.helpDialog.steps.fillDetails')} />
             </ListItem>
             <ListItem>
               <ListItemIcon>
-                <Suspense fallback={<span />}><PublishIcon color="primary" /></Suspense>
+                <Suspense fallback={<span />}>
+                  <PublishIcon color="primary" />
+                </Suspense>
               </ListItemIcon>
               <ListItemText primary={t('bindingPolicy.dragDrop.helpDialog.steps.deploy')} />
             </ListItem>

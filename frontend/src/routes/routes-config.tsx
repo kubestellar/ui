@@ -86,7 +86,9 @@ export const routesConfig: RouteObject[] = [
         path: 'bp/manage',
         element: (
           <ProtectedRoute>
-            <Suspense fallback={<LoadingFallback message="Loading Binding Policies..." size="medium" />}>
+            <Suspense
+              fallback={<LoadingFallback message="Loading Binding Policies..." size="medium" />}
+            >
               <BPLazy />
             </Suspense>
           </ProtectedRoute>
@@ -106,7 +108,9 @@ export const routesConfig: RouteObject[] = [
         path: 'wecs/treeview',
         element: (
           <ProtectedRoute>
-            <Suspense fallback={<LoadingFallback message="Loading WECS Tree View..." size="medium" />}>
+            <Suspense
+              fallback={<LoadingFallback message="Loading WECS Tree View..." size="medium" />}
+            >
               <WecsTreeviewLazy />
             </Suspense>
           </ProtectedRoute>
@@ -116,7 +120,9 @@ export const routesConfig: RouteObject[] = [
         path: 'plugins/manage',
         element: (
           <ProtectedRoute>
-            <Suspense fallback={<LoadingFallback message="Loading Plugin Manager..." size="medium" />}>
+            <Suspense
+              fallback={<LoadingFallback message="Loading Plugin Manager..." size="medium" />}
+            >
               <PluginManagerLazy />
             </Suspense>
           </ProtectedRoute>
