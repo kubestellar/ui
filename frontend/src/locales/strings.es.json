@@ -1940,7 +1940,8 @@
       "navigation": "Navegación",
       "visualizations": "Visualizaciones",
       "help": "Ayuda",
-      "account": "Cuenta"
+      "account": "Cuenta",
+      "admin": "Administración"
     },
     "commands": {
       "home": {
@@ -1986,7 +1987,8 @@
     "catalogs": {
       "main": "Principal",
       "management": "Administración",
-      "plugins": "Plugins"
+      "plugins": "Plugins",
+      "admin": "Administración"
     },
     "items": {
       "home": "Inicio",
@@ -1994,7 +1996,8 @@
       "stagedWorkloads": "Cargas de Trabajo Preparadas",
       "bindingPolicies": "Políticas de Vinculación",
       "deployedWorkloads": "Cargas de Trabajo Desplegadas",
-      "pluginManager": "Gestor de Plugins"
+      "pluginManager": "Gestor de Plugins",
+      "userManagement": "Gestión de Usuarios"
     }
   },
   "plugins": {
@@ -2104,6 +2107,78 @@
       "suggestion": {
         "title": "Sugerencias de mejora",
         "placeholder": "¿Alguna sugerencia para mejorar?"
+      }
+    }
+  },
+  "admin": {
+    "users": {
+      "title": "Gestión de Usuarios",
+      "subtitle": "Usuarios del Sistema",
+      "noUsers": "No se encontraron usuarios",
+      "noUsersDescription": "Aún no hay usuarios en el sistema. Haga clic en 'Agregar Usuario' para crear su primer usuario.",
+      "noPermissions": "Sin permisos asignados",
+      "actions": {
+        "addUser": "Agregar Usuario",
+        "editUser": "Editar Usuario",
+        "add": "Agregar Usuario",
+        "update": "Actualizar Usuario",
+        "delete": "Eliminar Usuario",
+        "edit": "Editar",
+        "deleteUser": "Eliminar Usuario"
+      },
+      "table": {
+        "username": "Nombre de Usuario",
+        "role": "Rol",
+        "permissions": "Permisos",
+        "actions": "Acciones"
+      },
+      "roles": {
+        "admin": "Administrador",
+        "user": "Usuario"
+      },
+      "permissions": {
+        "users": "Usuarios",
+        "resources": "Recursos",
+        "system": "Sistema",
+        "dashboard": "Panel de Control",
+        "levels": {
+          "read": "Lectura",
+          "write": "Escritura",
+          "none": "Ninguno"
+        }
+      },
+      "form": {
+        "username": "Nombre de Usuario",
+        "usernamePlaceholder": "Ingrese nombre de usuario",
+        "password": "Contraseña",
+        "passwordPlaceholder": "Ingrese contraseña",
+        "passwordOptional": "Contraseña (opcional)",
+        "passwordOptionalPlaceholder": "Ingrese nueva contraseña o deje en blanco",
+        "confirmPassword": "Confirmar Contraseña",
+        "confirmPasswordPlaceholder": "Confirme contraseña",
+        "isAdmin": "Acceso de Administrador",
+        "permissions": "Permisos de Componentes",
+        "cancel": "Cancelar",
+        "optional": "opcional"
+      },
+      "delete": {
+        "title": "Eliminar Usuario",
+        "confirmTitle": "Confirmar Eliminación",
+        "confirmMessage": "¿Está seguro de que desea eliminar el usuario \"{{username}}\"? Esta acción no se puede deshacer.",
+        "confirm": "Eliminar Usuario"
+      },
+      "errors": {
+        "fetchFailed": "Error al obtener usuarios",
+        "missingFields": "Por favor complete todos los campos requeridos",
+        "passwordMismatch": "Las contraseñas no coinciden",
+        "addFailed": "Error al agregar usuario",
+        "updateFailed": "Error al actualizar usuario",
+        "deleteFailed": "Error al eliminar usuario"
+      },
+      "success": {
+        "userAdded": "Usuario agregado correctamente",
+        "userUpdated": "Usuario actualizado correctamente",
+        "userDeleted": "Usuario eliminado correctamente"
       }
     }
   }

@@ -34,7 +34,8 @@
       "navigation": "Navigation",
       "visualizations": "Visualisierungen",
       "help": "Hilfe",
-      "account": "Konto"
+      "account": "Konto",
+      "admin": "Administration"
     },
     "commands": {
       "home": {
@@ -74,6 +75,95 @@
         "description": "Von Ihrem Konto abmelden",
         "infoMessage": "Sie wurden erfolgreich abgemeldet."
       }
+    }
+  },
+  "admin": {
+    "users": {
+      "title": "Benutzerverwaltung",
+      "subtitle": "Systembenutzer",
+      "noUsers": "Keine Benutzer gefunden",
+      "noUsersDescription": "Es gibt noch keine Benutzer im System. Klicken Sie auf 'Benutzer hinzufügen', um Ihren ersten Benutzer zu erstellen.",
+      "noPermissions": "Keine Berechtigungen zugewiesen",
+      "actions": {
+        "addUser": "Benutzer hinzufügen",
+        "editUser": "Benutzer bearbeiten",
+        "add": "Benutzer hinzufügen",
+        "update": "Benutzer aktualisieren",
+        "delete": "Benutzer löschen",
+        "edit": "Bearbeiten",
+        "deleteUser": "Benutzer löschen"
+      },
+      "table": {
+        "username": "Benutzername",
+        "role": "Rolle",
+        "permissions": "Berechtigungen",
+        "actions": "Aktionen"
+      },
+      "roles": {
+        "admin": "Administrator",
+        "user": "Benutzer"
+      },
+      "permissions": {
+        "users": "Benutzer",
+        "resources": "Ressourcen",
+        "system": "System",
+        "dashboard": "Dashboard",
+        "levels": {
+          "read": "Lesen",
+          "write": "Schreiben",
+          "none": "Keine"
+        }
+      },
+      "form": {
+        "username": "Benutzername",
+        "usernamePlaceholder": "Benutzername eingeben",
+        "password": "Passwort",
+        "passwordPlaceholder": "Passwort eingeben",
+        "passwordOptional": "Passwort (optional)",
+        "passwordOptionalPlaceholder": "Neues Passwort eingeben oder leer lassen",
+        "confirmPassword": "Passwort bestätigen",
+        "confirmPasswordPlaceholder": "Passwort bestätigen",
+        "isAdmin": "Administratorzugriff",
+        "permissions": "Komponentenberechtigungen",
+        "cancel": "Abbrechen",
+        "optional": "optional"
+      },
+      "delete": {
+        "title": "Benutzer löschen",
+        "confirmTitle": "Löschen bestätigen",
+        "confirmMessage": "Sind Sie sicher, dass Sie den Benutzer \"{{username}}\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+        "confirm": "Benutzer löschen"
+      },
+      "errors": {
+        "fetchFailed": "Benutzer konnten nicht abgerufen werden",
+        "missingFields": "Bitte füllen Sie alle erforderlichen Felder aus",
+        "passwordMismatch": "Passwörter stimmen nicht überein",
+        "addFailed": "Benutzer konnte nicht hinzugefügt werden",
+        "updateFailed": "Benutzer konnte nicht aktualisiert werden",
+        "deleteFailed": "Benutzer konnte nicht gelöscht werden"
+      },
+      "success": {
+        "userAdded": "Benutzer erfolgreich hinzugefügt",
+        "userUpdated": "Benutzer erfolgreich aktualisiert",
+        "userDeleted": "Benutzer erfolgreich gelöscht"
+      }
+    }
+  },
+  "menu": {
+    "catalogs": {
+      "main": "Hauptmenü",
+      "management": "Verwaltung",
+      "plugins": "Plugins",
+      "admin": "Administration"
+    },
+    "items": {
+      "home": "Startseite",
+      "remoteClusters": "Remote-Cluster",
+      "stagedWorkloads": "Vorbereitete Workloads",
+      "bindingPolicies": "Bindungsrichtlinien",
+      "deployedWorkloads": "Bereitgestellte Workloads",
+      "pluginManager": "Plugin-Manager",
+      "userManagement": "Benutzerverwaltung"
     }
   }
 }
