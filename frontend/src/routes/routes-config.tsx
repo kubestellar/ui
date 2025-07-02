@@ -107,6 +107,14 @@ export const routesConfig: RouteObject[] = [
         ),
       },
       {
+        path: 'admin/users',
+        element: (
+          <ProtectedRoute>
+            <></>
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: '*',
         element: <NotFoundPage />,
       },
