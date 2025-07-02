@@ -7,8 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/api"
 	"github.com/kubestellar/ui/k8s"
-	"github.com/kubestellar/ui/telemetry"
 	"github.com/kubestellar/ui/redis"
+	"github.com/kubestellar/ui/telemetry"
 )
 
 // SetupAllRoutes initializes all API routes
@@ -83,7 +83,7 @@ func setupGitHubRoutes(router *gin.Engine) {
 			deploymentID := c.Param("id")
 			deployments, err := k8s.GetGithubDeployments("its1")
 			if err != nil {
-				telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/deployments/github/:id", "500").Inc()	
+				telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/deployments/github/:id", "500").Inc()
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"error":   "Failed to retrieve deployments",
 					"details": err.Error(),

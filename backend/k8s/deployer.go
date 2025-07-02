@@ -709,7 +709,7 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 	if needsContextSwitch {
 		cmd = exec.CommandContext(ctx, "kubectl", "config", "use-context", "wds1")
 		if err := cmd.Run(); err != nil {
-			telemetry.InstrumentKubectlCommand(cmd,"DeployHelmChart", "wds1")
+			telemetry.InstrumentKubectlCommand(cmd, "DeployHelmChart", "wds1")
 			telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "switch_context", "500").Inc()
 			return nil, fmt.Errorf("failed to switch to wds1 context: %v", err)
 		}
@@ -717,7 +717,7 @@ func DeployHelmChart(req HelmDeploymentRequest, store bool) (*release.Release, e
 		// Ensure the original context is restored after execution
 		defer func() {
 			restoreCmd := exec.CommandContext(ctx, "kubectl", "config", "use-context", currentContext)
-			telemetry.InstrumentKubectlCommand(cmd,"DeployHelmChart", currentContext)
+			telemetry.InstrumentKubectlCommand(cmd, "DeployHelmChart", currentContext)
 			if restoreErr := restoreCmd.Run(); restoreErr != nil {
 				telemetry.K8sClientErrorCounter.WithLabelValues("DeployHelmChart", "restore_context", "500").Inc()
 				fmt.Printf("Warning: failed to restore original context: %v\n", restoreErr)

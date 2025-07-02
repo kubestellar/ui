@@ -65,8 +65,8 @@ func GetBindingPolicies(namespace string) ([]map[string]interface{}, error) {
 		telemetry.BindingPolicyCacheMisses.WithLabelValues("get", "cache_miss").Inc()
 		log.LogWarn("failed to get binding policies from Redis cache", zap.Error(err))
 	} else if cachedPolicies != nil {
-telemetry.BindingPolicyCacheHits.WithLabelValues("redis").Inc()
-telemetry.BindingPolicyOperationsTotal.WithLabelValues("get", "cache_hit").Inc()
+		telemetry.BindingPolicyCacheHits.WithLabelValues("redis").Inc()
+		telemetry.BindingPolicyOperationsTotal.WithLabelValues("get", "cache_hit").Inc()
 
 		log.LogInfo("Using cached binding policies from Redis", zap.Int("count", len(cachedPolicies)))
 		// Convert cached policies to response format

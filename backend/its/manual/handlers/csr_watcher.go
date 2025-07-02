@@ -34,7 +34,7 @@ func GetCSRsExecHandler(c *gin.Context) {
 	startTime := time.Now()
 	output, err := cmd.Output()
 	if err != nil {
-		telemetry.InstrumentKubectlCommand(cmd, "get-csr", "none",)
+		telemetry.InstrumentKubectlCommand(cmd, "get-csr", "none")
 		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/clusters/watch-csr", "500").Inc()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to run kubectl command: " + err.Error()})
 		return

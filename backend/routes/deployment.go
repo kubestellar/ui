@@ -7,11 +7,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/kubestellar/ui/telemetry"
 	"github.com/kubestellar/ui/wds"
 	"github.com/kubestellar/ui/wds/deployment"
 	"k8s.io/client-go/informers"
-	"github.com/kubestellar/ui/telemetry"
-
 )
 
 func setupDeploymentRoutes(router *gin.Engine) {

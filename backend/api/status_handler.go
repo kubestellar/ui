@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/installer"
 	"github.com/kubestellar/ui/telemetry"
-
 )
 
 // CheckKubeStellarStatusHandler checks if KubeStellar is installed and returns status

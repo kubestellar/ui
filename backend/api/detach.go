@@ -41,7 +41,7 @@ func DetachClusterHandler(c *gin.Context) {
 	var req struct {
 		ClusterName string `json:"clusterName" binding:"required"`
 	}
-	startTime:= time.Now()
+	startTime := time.Now()
 	if err := c.BindJSON(&req); err != nil {
 		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/detach", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload, clusterName is required"})
@@ -242,7 +242,7 @@ func waitForClusterRemoval(clientset *kubernetes.Clientset, clusterName string) 
 // GetDetachmentLogsHandler returns all logs for a specific cluster's detachment process
 func GetDetachmentLogsHandler(c *gin.Context) {
 	clusterName := c.Param("cluster")
-	startTime:= time.Now()
+	startTime := time.Now()
 	if clusterName == "" {
 		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/clusters/detach/logs/:cluster", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Cluster name is required"})

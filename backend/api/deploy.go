@@ -5,6 +5,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/gin-gonic/gin"
+	"github.com/kubestellar/ui/k8s"
+	"github.com/kubestellar/ui/redis"
+	"github.com/kubestellar/ui/telemetry"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/cli"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -14,12 +20,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"github.com/kubestellar/ui/telemetry"
-	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/k8s"
-	"github.com/kubestellar/ui/redis"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/cli"
 )
 
 type DeployRequest struct {

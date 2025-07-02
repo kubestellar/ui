@@ -29,7 +29,7 @@ type WorkloadInfo struct {
 func GetDeploymentByName(c *gin.Context) {
 	name := c.Param("name")
 	namespace := c.Query("namespace")
-	startTime:=time.Now()
+	startTime := time.Now()
 	if namespace == "" {
 		namespace = "default" // Use "default" namespace if not provided
 	}

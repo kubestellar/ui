@@ -24,7 +24,7 @@ func LogsWebSocketHandler(c *gin.Context) {
 	installID := c.Param("id")
 
 	// Check if installation ID exists
-	if !installer.InstallationExists(installID) {	
+	if !installer.InstallationExists(installID) {
 		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/ws/logs/:id", "404").Inc()
 		c.JSON(http.StatusNotFound, gin.H{"error": "Installation ID not found"})
 		return

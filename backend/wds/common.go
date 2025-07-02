@@ -2,18 +2,18 @@ package wds
 
 import (
 	"fmt"
-	"log"
-	"net/http"
-	"os"
-	"os/exec"
-	"strings"
-	"time"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/kubestellar/ui/telemetry"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
+	"log"
+	"net/http"
+	"os"
+	"os/exec"
+	"strings"
+	"time"
 )
 
 /*

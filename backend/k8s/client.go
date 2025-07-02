@@ -5,11 +5,11 @@ import (
 	"os"
 
 	"github.com/kubestellar/ui/log"
-	"go.uber.org/zap"
-	"k8s.io/client-go/rest"
 	"github.com/kubestellar/ui/telemetry"
+	"go.uber.org/zap"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 

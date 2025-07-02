@@ -136,7 +136,7 @@ func ListAllResourcesDetailsSSE(c *gin.Context) {
 	c.Writer.Header().Set("Connection", "keep-alive")
 	c.Writer.WriteHeader(http.StatusOK)
 	c.Writer.Flush()
-	startTime:= time.Now()
+	startTime := time.Now()
 	sendEvent := func(event string, data any) {
 		jsonData, _ := json.Marshal(data)
 		fmt.Fprintf(c.Writer, "event: %s\n", event)
@@ -255,7 +255,7 @@ func ListAllResourcesDetailsSSE(c *gin.Context) {
 						//	result.Namespaced[ns][res.Kind] = append(result.Namespaced[ns][res.Kind], extractObjDetails(&obj))
 						//}
 						mutex.Unlock()
-						
+
 						sendEvent("progress", gin.H{
 							"scope":     "namespaced",
 							"namespace": ns,
