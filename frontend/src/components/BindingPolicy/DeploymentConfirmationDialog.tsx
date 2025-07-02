@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -22,7 +22,7 @@ import CodeIcon from '@mui/icons-material/Code';
 import { PolicyConfiguration } from './ConfigurationSidebar';
 import { ManagedCluster, Workload } from '../../types/bindingPolicy';
 import KubernetesIcon from './KubernetesIcon';
-import { Editor } from '@monaco-editor/react';
+const MonacoEditor = React.lazy(() => import('@monaco-editor/react'));
 import CancelButton from '../common/CancelButton';
 import { useTranslation } from 'react-i18next';
 
@@ -291,22 +291,24 @@ const DeploymentConfirmationDialog: React.FC<DeploymentConfirmationDialogProps> 
               border: darkMode ? '1px solid rgba(255, 255, 255, 0.15)' : undefined,
             }}
           >
-            <Editor
-              height="100%"
-              language="yaml"
-              value={selectedPolicy?.yaml || ''}
-              theme={darkMode ? 'vs-dark' : 'light'}
-              options={{
-                minimap: { enabled: false },
-                fontSize: 14,
-                lineNumbers: 'on',
-                scrollBeyondLastLine: false,
-                automaticLayout: true,
-                fontFamily: "'JetBrains Mono', monospace",
-                padding: { top: 10 },
-                readOnly: true,
-              }}
-            />
+            <Suspense fallback={<div>Loading editor...</div>}>
+              <MonacoEditor
+                height="100%"
+                language="yaml"
+                value={selectedPolicy?.yaml || ''}
+                theme={darkMode ? 'vs-dark' : 'light'}
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 14,
+                  lineNumbers: 'on',
+                  scrollBeyondLastLine: false,
+                  automaticLayout: true,
+                  fontFamily: "'JetBrains Mono', monospace",
+                  padding: { top: 10 },
+                  readOnly: true,
+                }}
+              />
+            </Suspense>
           </Paper>
         </DialogContent>
         <DialogActions

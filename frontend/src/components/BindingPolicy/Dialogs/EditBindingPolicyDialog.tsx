@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import Editor from '@monaco-editor/react';
+import React, { useState, useEffect, Suspense } from 'react';
 import yaml from 'js-yaml';
 import {
   Dialog,
@@ -24,6 +23,8 @@ interface EditBindingPolicyDialogProps {
   onSave: (policyData: Partial<BindingPolicyInfo>) => void;
   policy: BindingPolicyInfo;
 }
+
+const MonacoEditor = React.lazy(() => import('@monaco-editor/react'));
 
 const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
   open,
@@ -160,20 +161,22 @@ const EditBindingPolicyDialog: React.FC<EditBindingPolicyDialogProps> = ({
           />
 
           <Box sx={{ mt: 4, border: 1, borderColor: isDarkTheme ? 'gray.700' : 'divider' }}>
-            <Editor
-              height="400px"
-              language="yaml"
-              value={editorContent}
-              theme={isDarkTheme ? 'vs-dark' : 'light'}
-              options={{
-                minimap: { enabled: false },
-                fontSize: 14,
-                lineNumbers: 'on',
-                scrollBeyondLastLine: false,
-                automaticLayout: true,
-              }}
-              onChange={value => setEditorContent(value || '')}
-            />
+            <Suspense fallback={<div>Loading editor...</div>}>
+              <MonacoEditor
+                height="400px"
+                language="yaml"
+                value={editorContent}
+                theme={isDarkTheme ? 'vs-dark' : 'light'}
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 14,
+                  lineNumbers: 'on',
+                  scrollBeyondLastLine: false,
+                  automaticLayout: true,
+                }}
+                onChange={value => setEditorContent(value || '')}
+              />
+            </Suspense>
           </Box>
         </DialogContent>
 

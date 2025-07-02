@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useState, Suspense, lazy } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -13,7 +13,6 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
-import { Editor } from '@monaco-editor/react';
 import ContentCopy from '@mui/icons-material/ContentCopy';
 import useTheme from '../../../stores/themeStore';
 import { PolicyDetailDialogProps } from '../../../types/bindingPolicy';
@@ -27,6 +26,8 @@ interface PolicyCondition {
   reason?: string;
   message?: string;
 }
+
+const MonacoEditor = lazy(() => import('@monaco-editor/react'));
 
 const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
   open,
@@ -544,23 +545,28 @@ const PolicyDetailDialog: FC<PolicyDetailDialogProps> = ({
                     </Alert>
                   </Box>
                 ) : (
-                  <Editor
-                    height="400px"
-                    language="yaml"
-                    value={yamlContent}
-                    theme={isDarkTheme ? 'vs-dark' : 'light'}
-                    options={{
-                      readOnly: true,
-                      minimap: { enabled: false },
-                      fontSize: 14,
-                      lineNumbers: 'on',
-                      scrollBeyondLastLine: false,
-                      automaticLayout: true,
-                    }}
-                    onMount={() => {
-                      console.log('Editor mounted. YAML content length:', yamlContent?.length || 0);
-                    }}
-                  />
+                  <Suspense fallback={<div>Loading editor...</div>}>
+                    <MonacoEditor
+                      height="400px"
+                      language="yaml"
+                      value={yamlContent}
+                      theme={isDarkTheme ? 'vs-dark' : 'light'}
+                      options={{
+                        readOnly: true,
+                        minimap: { enabled: false },
+                        fontSize: 14,
+                        lineNumbers: 'on',
+                        scrollBeyondLastLine: false,
+                        automaticLayout: true,
+                      }}
+                      onMount={() => {
+                        console.log(
+                          'Editor mounted. YAML content length:',
+                          yamlContent?.length || 0
+                        );
+                      }}
+                    />
+                  </Suspense>
                 )}
               </Box>
             </Paper>
