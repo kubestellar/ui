@@ -8,6 +8,7 @@ import useTheme from '../stores/themeStore';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Eye, EyeOff } from 'lucide-react';
+import { CheckCircle, XCircle } from 'lucide-react';
 import CloseIcon from '@mui/icons-material/Close';
 import { createPortal } from 'react-dom';
 
@@ -45,6 +46,7 @@ const ProfileSection = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
 
   // Fetch user data
   useEffect(() => {
@@ -151,6 +153,7 @@ const ProfileSection = () => {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmNewPassword('');
+      setConfirmPasswordError('');
     } catch (error: unknown) {
       if (error && typeof error === 'object' && 'response' in error) {
         const err = error as { response?: { data?: { error?: string } } };
@@ -160,6 +163,28 @@ const ProfileSection = () => {
       }
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Real-time confirm password error
+  const handleConfirmNewPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setConfirmNewPassword(value);
+    if (newPassword && value && newPassword !== value) {
+      setConfirmPasswordError(t('profileSection.passwordsDoNotMatch'));
+    } else {
+      setConfirmPasswordError('');
+    }
+  };
+
+  // Update new password and re-validate confirm password
+  const handleNewPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setNewPassword(value);
+    if (confirmNewPassword && value !== confirmNewPassword) {
+      setConfirmPasswordError(t('profileSection.passwordsDoNotMatch'));
+    } else {
+      setConfirmPasswordError('');
     }
   };
 
@@ -193,6 +218,7 @@ const ProfileSection = () => {
               setNewPassword('');
               setConfirmNewPassword('');
               setFormError('');
+              setConfirmPasswordError('');
             }}
           >
             <CloseIcon fontSize="medium" />
@@ -287,7 +313,7 @@ const ProfileSection = () => {
                     }}
                     placeholder={t('profileSection.newPassword')}
                     value={newPassword}
-                    onChange={e => setNewPassword(e.target.value)}
+                    onChange={handleNewPasswordChange}
                     autoComplete="new-password"
                     required
                     aria-label={t('profileSection.newPassword')}
@@ -331,11 +357,41 @@ const ProfileSection = () => {
                     }}
                     placeholder={t('profileSection.confirmNewPassword')}
                     value={confirmNewPassword}
-                    onChange={e => setConfirmNewPassword(e.target.value)}
+                    onChange={handleConfirmNewPasswordChange}
                     autoComplete="new-password"
                     required
                     aria-label={t('profileSection.confirmNewPassword')}
                   />
+                  {/* Password match/mismatch icon */}
+                  {confirmNewPassword &&
+                    newPassword &&
+                    (newPassword === confirmNewPassword ? (
+                      <CheckCircle
+                        size={22}
+                        style={{
+                          color: '#4ade80', // green-400
+                          position: 'absolute',
+                          right: 38,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          pointerEvents: 'none',
+                        }}
+                        aria-label="Passwords match"
+                      />
+                    ) : (
+                      <XCircle
+                        size={22}
+                        style={{
+                          color: '#f87171', // red-400
+                          position: 'absolute',
+                          right: 38,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          pointerEvents: 'none',
+                        }}
+                        aria-label="Passwords do not match"
+                      />
+                    ))}
                   <button
                     type="button"
                     tabIndex={0}
@@ -346,12 +402,36 @@ const ProfileSection = () => {
                     }
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 focus:outline-none"
                     onClick={() => setShowConfirmNewPassword(v => !v)}
-                    style={{ background: 'none', border: 'none', padding: 0, margin: 0 }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      margin: 0,
+                      right: 8,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      position: 'absolute',
+                    }}
                   >
                     {showConfirmNewPassword ? <EyeOff size={22} /> : <Eye size={22} />}
                   </button>
                 </div>
               </div>
+              {confirmPasswordError && (
+                <div
+                  style={{
+                    color: '#e57373',
+                    fontSize: 14,
+                    marginTop: '0.3rem',
+                    marginBottom: '0.5rem',
+                    textAlign: 'left',
+                    fontWeight: 500,
+                  }}
+                  role="alert"
+                >
+                  {confirmPasswordError}
+                </div>
+              )}
               {formError && (
                 <div
                   style={{
@@ -390,6 +470,7 @@ const ProfileSection = () => {
                     setNewPassword('');
                     setConfirmNewPassword('');
                     setFormError('');
+                    setConfirmPasswordError('');
                   }}
                   disabled={isSubmitting}
                 >
