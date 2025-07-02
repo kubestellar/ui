@@ -15,13 +15,13 @@ import {
   Theme,
 } from '@mui/material';
 import React, { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useClusterQueries } from '../hooks/queries/useClusterQueries';
 import { api } from '../lib/api';
 import useTheme from '../stores/themeStore';
 import ApiUrlImportTab from './ApiUrlImportTab';
 import KubeconfigImportTab from './KubeconfigImportTab';
 import QuickConnectTab from './QuickConnectTab';
-import { useTranslation } from 'react-i18next';
 
 // Define the Colors interface for consistent typing across components
 export interface Colors {
@@ -197,7 +197,11 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
   const theme = useTheme(state => state.theme);
   const textColor = theme === 'dark' ? 'white' : 'black';
   const bgColor = theme === 'dark' ? '#1F2937' : 'background.paper';
-
+  const [, setShowLogs] = useState(false);
+  const [onboardingStatus, setOnboardingStatus] = useState<
+    'idle' | 'processing' | 'success' | 'failed'
+  >('idle');
+  const [onboardingError, setOnboardingError] = useState<string | null>(null);
   // Define colors first, before any styling objects that use it
   const colors: Colors = {
     primary: '#2f86ff',
@@ -393,6 +397,9 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
     } catch (error) {
       console.error('[DEBUG] Cluster onboarding error details:', error);
       let errorMessage = 'An unknown error occurred.';
+      setManualLoading(false);
+      setOnboardingStatus('failed');
+      setOnboardingError(errorMessage);
       // Type guard to check if error is an Error object
       if (error instanceof Error) {
         // Log error object structure for debugging
@@ -986,6 +993,12 @@ const ImportClusters: React.FC<Props> = ({ activeOption, setActiveOption, onCanc
                   successAlertRef={successAlertRef}
                   setManualCommand={setManualCommand}
                   setManualLoading={setManualLoading}
+                  setShowLogs={setShowLogs}
+                  showLogs
+                  onboardingStatus={onboardingStatus}
+                  setOnboardingStatus={setOnboardingStatus}
+                  onboardingError={onboardingError}
+                  setOnboardingError={setOnboardingError}
                 />
               )}
             </Box>

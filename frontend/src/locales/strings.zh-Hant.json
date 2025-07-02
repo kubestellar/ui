@@ -1,0 +1,17 @@
+{
+  "raiseIssue": "回報問題",
+  "profileSection": {
+    "changePassword": "修改密碼",
+    "changePasswordSubtitle": "請輸入您目前的密碼並選擇一個新密碼。",
+    "currentPassword": "目前的密碼",
+    "newPassword": "新密碼",
+    "confirmNewPassword": "確認新密碼",
+    "passwordChangedSuccess": "密碼修改成功。",
+    "passwordChangedError": "密碼修改失敗。",
+    "passwordsDoNotMatch": "新密碼不相符。",
+    "passwordRequired": "密碼為必填項。",
+    "errorCurrentPasswordIncorrect": "目前的密碼不正確",
+    "cancel": "取消",
+    "changePasswordButton": "修改密碼"
+  }
+}

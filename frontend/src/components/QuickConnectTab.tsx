@@ -1,24 +1,23 @@
-import React, { ChangeEvent, RefObject, useState, useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
+  Alert,
   Box,
   Button,
   CircularProgress,
-  Alert,
+  Divider,
+  Fade,
+  Paper,
   SxProps,
   Theme,
   Typography,
-  Fade,
-  Zoom,
-  Paper,
-  Divider,
   useMediaQuery,
+  Zoom,
 } from '@mui/material';
-import { CommandResponse, Colors } from './ImportClusters';
+import { TOptions } from 'i18next';
+import React, { ChangeEvent, RefObject, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Colors, CommandResponse } from './ImportClusters';
 import OnboardingLogsDisplay from './OnboardingLogsDisplay';
 import CancelButton from './common/CancelButton';
-import { TOptions } from 'i18next';
-
 interface QuickConnectProps {
   theme: string;
   colors: Colors;
@@ -47,6 +46,12 @@ interface QuickConnectProps {
   }) => void;
   successAlertRef: RefObject<HTMLDivElement>;
   setManualCommand: (command: CommandResponse | null) => void;
+  showLogs: boolean;
+  setShowLogs: (show: boolean) => void;
+  onboardingStatus: 'idle' | 'processing' | 'success' | 'failed';
+  setOnboardingStatus: (status: 'idle' | 'processing' | 'success' | 'failed') => void;
+  onboardingError: string | null;
+  setOnboardingError: (error: string | null) => void;
 }
 
 const QuickConnectTab: React.FC<QuickConnectProps> = ({
@@ -70,10 +75,15 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
   setSnackbar,
   successAlertRef,
   setManualCommand,
+  showLogs,
+  setShowLogs,
+  onboardingStatus,
+  setOnboardingStatus,
+  setOnboardingError,
 }) => {
   const { t } = useTranslation();
   const textColor = theme === 'dark' ? colors.white : colors.text;
-  const [showLogs, setShowLogs] = useState(false);
+  // const [showLogs, setShowLogs] = useState(false);
   const isMobile = useMediaQuery('(max-width:600px)');
   const initialFetchAttempted = useRef(false);
 
@@ -94,22 +104,32 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
     availableClustersError,
     availableClustersLoading,
     fetchAvailableClusters,
-  ]);
+  ]); // Include all dependencies
+  useEffect(() => {
+    return () => {
+      // This runs when component unmounts (tab switch)
+      if (showLogs && onboardingStatus === 'processing') {
+        // User switched tabs during onboarding
+        setOnboardingStatus('failed');
+        setOnboardingError('Onboarding interrupted by tab switch');
+        setManualLoading(false); // Reset loading state
+      }
+    };
+  }, [showLogs, onboardingStatus, setOnboardingStatus, setOnboardingError, setManualLoading]);
 
   // This function will be called when the onboarding is completed via logs
   const handleOnboardingComplete = () => {
-    // Wait a moment for last logs to be visible
     setTimeout(() => {
       setShowLogs(false);
-      // Set the success message
-      if (!manualCommand) {
+      // Only set success command if onboarding was successful
+      if (onboardingStatus === 'success' && !manualCommand) {
         const successCommand = {
           clusterName: formData.clusterName,
           token: '',
           command:
             'Cluster onboarded successfully! The cluster is now being added to the platform.',
         };
-        clearManualCommand(); // Clear any existing command
+        clearManualCommand();
         setTimeout(() => {
           setManualCommand(successCommand);
           setSnackbar({
@@ -126,6 +146,8 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
     if (!formData.clusterName.trim()) return;
     setShowLogs(true);
     handleGenerateCommand();
+    setOnboardingStatus('processing');
+    setOnboardingError(null);
 
     // Reset loading state after WebSocket takes over
     setTimeout(() => {
@@ -335,10 +357,12 @@ const QuickConnectTab: React.FC<QuickConnectProps> = ({
                   onComplete={handleOnboardingComplete}
                   theme={theme}
                   colors={colors}
+                  setOnboardingStatus={setOnboardingStatus}
+                  setOnboardingError={setOnboardingError}
                 />
               </Box>
             </Fade>
-          ) : manualCommand && !showLogs ? (
+          ) : manualCommand && !showLogs && onboardingStatus === 'success' ? (
             <SuccessView
               theme={theme}
               colors={colors}

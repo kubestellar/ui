@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv" // Add this import
 	"github.com/kubestellar/ui/api"
+	"github.com/kubestellar/ui/models"
 	config "github.com/kubestellar/ui/postgresql"
 	database "github.com/kubestellar/ui/postgresql/Database"
 	"github.com/kubestellar/ui/routes"
@@ -99,15 +100,8 @@ func main() {
 		c.Next()
 	})
 
-	// Health check endpoint (public)
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"status":  "healthy",
-			"service": "kubestellar-ui",
-			"version": "1.0.0",
-			"auth":    "enabled",
-		})
-	})
+	// Setting up comprehensive health endpoints using the existing health routes
+	routes.SetupHealthEndpoints(router, logger)
 
 	// Setup authentication routes
 	routes.SetupRoutes(router)
@@ -123,7 +117,11 @@ func main() {
 			zap.String("mode", cfg.GinMode),
 			zap.String("cors_origin", os.Getenv("CORS_ALLOWED_ORIGIN")))
 		logger.Info("Default admin credentials: admin/admin - CHANGE IMMEDIATELY!")
-		logger.Info("Health check available at: http://localhost:" + cfg.Port + "/health")
+		logger.Info("Health endpoints available:")
+		logger.Info("  - Comprehensive health: http://localhost:" + cfg.Port + "/health")
+		logger.Info("  - Kubernetes liveness: http://localhost:" + cfg.Port + "/healthz")
+		logger.Info("  - Kubernetes readiness: http://localhost:" + cfg.Port + "/readyz")
+		logger.Info("  - Simple status: http://localhost:" + cfg.Port + "/status")
 
 		if err := router.Run(":" + cfg.Port); err != nil {
 			logger.Fatal("Failed to start server", zap.Error(err))
@@ -286,7 +284,7 @@ func initializeAdminUser() error {
 	log.Println("Creating admin user...")
 
 	// Hash the password
-	hashedPassword, err := hashPassword("admin")
+	hashedPassword, err := models.HashPassword("admin")
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %v", err)
 	}
@@ -373,16 +371,6 @@ func ensureAdminPermissions(userID int) error {
 	}
 
 	return nil
-}
-
-// hashPassword hashes a plain text password using bcrypt
-func hashPassword(password string) (string, error) {
-	// For now, return a consistent hash for the demo admin user
-	// In production, implement proper bcrypt hashing
-	if password == "admin" {
-		return "admin_hashed", nil
-	}
-	return password + "_hashed", nil
 }
 
 // debugCheckAdminUser checks if admin user exists and logs details

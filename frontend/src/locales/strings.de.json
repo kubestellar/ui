@@ -1,0 +1,17 @@
+{
+  "raiseIssue": "Problem melden",
+  "profileSection": {
+    "changePassword": "Passwort ändern",
+    "changePasswordSubtitle": "Bitte geben Sie Ihr aktuelles Passwort ein und wählen Sie ein neues.",
+    "currentPassword": "Aktuelles Passwort",
+    "newPassword": "Neues Passwort",
+    "confirmNewPassword": "Neues Passwort bestätigen",
+    "passwordChangedSuccess": "Passwort erfolgreich geändert.",
+    "passwordChangedError": "Passwort konnte nicht geändert werden.",
+    "passwordsDoNotMatch": "Die neuen Passwörter stimmen nicht überein.",
+    "passwordRequired": "Passwort ist erforderlich.",
+    "errorCurrentPasswordIncorrect": "Das aktuelle Passwort ist falsch",
+    "cancel": "Abbrechen",
+    "changePasswordButton": "Passwort ändern"
+  }
+}

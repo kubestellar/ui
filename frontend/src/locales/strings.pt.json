@@ -1,0 +1,17 @@
+{
+  "raiseIssue": "Reportar um problema",
+  "profileSection": {
+    "changePassword": "Alterar senha",
+    "changePasswordSubtitle": "Por favor, insira sua senha atual e escolha uma nova.",
+    "currentPassword": "Senha atual",
+    "newPassword": "Nova senha",
+    "confirmNewPassword": "Confirmar nova senha",
+    "passwordChangedSuccess": "Senha alterada com sucesso.",
+    "passwordChangedError": "Falha ao alterar a senha.",
+    "passwordsDoNotMatch": "As novas senhas não coincidem.",
+    "passwordRequired": "A senha é obrigatória.",
+    "errorCurrentPasswordIncorrect": "A senha atual está incorreta",
+    "cancel": "Cancelar",
+    "changePasswordButton": "Alterar senha"
+  }
+}
