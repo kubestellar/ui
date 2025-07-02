@@ -3,7 +3,6 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useTheme from '../stores/themeStore';
 import { HiLanguage } from 'react-icons/hi2';
-
 const LanguageSwitcher = () => {
   const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
@@ -12,7 +11,6 @@ const LanguageSwitcher = () => {
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const { theme } = useTheme();
   const isDark = theme === 'dark';
-
   const languages = [
     { code: 'en', name: 'English' },
     { code: 'ja', name: '日本語' },
@@ -24,19 +22,15 @@ const LanguageSwitcher = () => {
     { code: 'zh-Hant', name: '繁體中文' },
     { code: 'pt', name: 'Português' },
   ];
-
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
     setIsOpen(false);
   };
-
   const currentLang = languages.find(lang => lang.code === i18n.language) || languages[0];
   const isLoginPage = window.location.pathname.includes('login');
-
   // 🧠 Attach keydown listener only when dropdown is open
   useEffect(() => {
     if (!isOpen) return;
-
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
@@ -53,32 +47,26 @@ const LanguageSwitcher = () => {
         setIsOpen(false);
       }
     };
-
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, focusedIndex]);
-
   // 🧠 Attach mousedown listener only when dropdown is open
   useEffect(() => {
     if (!isOpen) return;
-
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
-
   // 🧠 Focus language button on Arrow key navigation
   useEffect(() => {
     if (focusedIndex !== null) {
       itemRefs.current[focusedIndex]?.focus();
     }
   }, [focusedIndex]);
-
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Trigger Button */}
@@ -132,8 +120,7 @@ const LanguageSwitcher = () => {
           </AnimatePresence>
         </motion.button>
       )}
-
-      {/* Dropdown */}
+      {/* Dropdown list */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -141,12 +128,11 @@ const LanguageSwitcher = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            style={{ backgroundColor: isDark ? 'rgba(31, 41, 55, 0.95)' : '#ffffff' }}
             className={
               isLoginPage
                 ? 'absolute right-0 z-50 mt-1 w-40 overflow-hidden rounded-md border border-white/10 bg-gradient-to-b from-blue-900/90 to-purple-900/90 shadow-lg'
                 : `absolute right-0 z-50 mt-1 w-48 overflow-hidden rounded-lg border shadow-xl ${
-                    isDark ? 'border-gray-700 text-gray-200' : 'border-gray-200 text-gray-700'
+                    isDark ? 'border-gray-700 bg-gray-800/95 text-gray-200' : 'border-gray-200 bg-white text-gray-700'
                   }`
             }
             role="listbox"
@@ -255,5 +241,4 @@ const LanguageSwitcher = () => {
     </div>
   );
 };
-
 export default LanguageSwitcher;
