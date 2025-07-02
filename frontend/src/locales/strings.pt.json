@@ -12,7 +12,8 @@
     "passwordRequired": "A senha é obrigatória.",
     "errorCurrentPasswordIncorrect": "A senha atual está incorreta",
     "cancel": "Cancelar",
-    "changePasswordButton": "Alterar senha"
+    "changePasswordButton": "Alterar senha",
+    "passwordsMatch": "As senhas coincidem!"
   },
   "commandPalette": {
     "ariaLabel": "Abrir paleta de comandos",

@@ -12,7 +12,8 @@
     "passwordRequired": "Passwort ist erforderlich.",
     "errorCurrentPasswordIncorrect": "Das aktuelle Passwort ist falsch",
     "cancel": "Abbrechen",
-    "changePasswordButton": "Passwort ändern"
+    "changePasswordButton": "Passwort ändern",
+    "passwordsMatch": "Passwörter stimmen überein!"
   },
   "commandPalette": {
     "ariaLabel": "Befehls-Palette öffnen",

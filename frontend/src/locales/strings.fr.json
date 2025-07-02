@@ -1694,7 +1694,8 @@
     "passwordRequired": "Le mot de passe est requis.",
     "errorCurrentPasswordIncorrect": "Le mot de passe actuel est incorrect",
     "cancel": "Annuler",
-    "changePasswordButton": "Changer le mot de passe"
+    "changePasswordButton": "Changer le mot de passe",
+    "passwordsMatch": "Les mots de passe correspondent !"
   },
   "onboardingLogs": {
     "onboarding": "Intégration",

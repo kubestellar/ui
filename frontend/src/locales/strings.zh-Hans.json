@@ -12,7 +12,8 @@
     "passwordRequired": "密码是必填项。",
     "errorCurrentPasswordIncorrect": "当前密码不正确",
     "cancel": "取消",
-    "changePasswordButton": "修改密码"
+    "changePasswordButton": "修改密码",
+    "passwordsMatch": "密码匹配！"
   },
   "commandPalette": {
     "ariaLabel": "打开命令面板",
