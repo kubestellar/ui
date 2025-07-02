@@ -111,7 +111,7 @@ export const routesConfig: RouteObject[] = [
         path: 'admin/users',
         element: (
           <ProtectedRoute>
-            <UserManagement />
+          <></>
           </ProtectedRoute>
         ),
       },
