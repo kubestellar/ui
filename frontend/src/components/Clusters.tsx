@@ -34,26 +34,120 @@ import { useTranslation } from 'react-i18next';
 
 // Health indicator component
 const HealthIndicator = ({ value }: { value: number }) => {
-  let color = '';
-
-  if (value >= 90) {
-    color = 'bg-gradient-to-r from-emerald-500 to-green-500 text-white dark:text-white';
-  } else if (value >= 75) {
-    color = 'bg-gradient-to-r from-green-500 to-teal-500 text-white dark:text-white';
-  } else if (value >= 60) {
-    color = 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white dark:text-white';
-  } else if (value >= 40) {
-    color = 'bg-gradient-to-r from-amber-400 to-amber-500 text-white dark:text-white';
-  } else {
-    color = 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white dark:text-white';
-  }
+  // Memoize the color calculation to avoid recalculating on every render
+  const { color, bgGradient } = useMemo(() => {
+    if (value >= 90) {
+      return {
+        color: 'bg-gradient-to-r from-emerald-500 to-green-500 text-white dark:text-white',
+        bgGradient: 'from-emerald-500 to-green-500',
+      };
+    } else if (value >= 75) {
+      return {
+        color: 'bg-gradient-to-r from-green-500 to-teal-500 text-white dark:text-white',
+        bgGradient: 'from-green-500 to-teal-500',
+      };
+    } else if (value >= 60) {
+      return {
+        color: 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white dark:text-white',
+        bgGradient: 'from-blue-500 to-indigo-500',
+      };
+    } else if (value >= 40) {
+      return {
+        color: 'bg-gradient-to-r from-amber-400 to-amber-500 text-white dark:text-white',
+        bgGradient: 'from-amber-400 to-amber-500',
+      };
+    } else {
+      return {
+        color: 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white dark:text-white',
+        bgGradient: 'from-amber-500 to-yellow-500',
+      };
+    }
+  }, [value]);
 
   return (
     <div
-      className={`inline-flex items-center rounded-full px-2 py-1 ${color} shadow-sm transition-colors`}
+      className={`inline-flex items-center rounded-full px-2 py-1 ${color} relative overflow-hidden shadow-sm transition-colors`}
     >
-      <span className="mr-1 flex h-2 w-2 rounded-full bg-white opacity-80"></span>
-      <span className="text-xs font-medium">{value}%</span>
+      {/* Pulse effect without animation loop */}
+      <span
+        className="mr-1 flex h-2 w-2 rounded-full bg-white opacity-80"
+        style={{ boxShadow: '0 0 5px rgba(255,255,255,0.8)' }}
+      ></span>
+      <span className="relative z-10 text-xs font-medium">{value}%</span>
+
+      {/* Static gradient background */}
+      <div
+        className={`absolute inset-0 bg-gradient-to-r ${bgGradient} opacity-90`}
+        style={{
+          clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0% 100%)',
+          boxShadow: 'inset 0 0 10px rgba(255,255,255,0.3)',
+        }}
+      ></div>
+    </div>
+  );
+};
+
+// Create an optimized progress bar component
+const OptimizedProgressBar = ({
+  value,
+  color,
+  label,
+  icon: Icon,
+  tooltip,
+  delay = 0,
+}: {
+  value: number;
+  color: string;
+  label: string;
+  icon?: React.ElementType;
+  tooltip?: React.ReactNode;
+  delay?: number;
+}) => {
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between">
+        <span className="group relative flex items-center text-sm font-medium text-gray-600 dark:text-gray-300">
+          {Icon && <Icon size={14} className="mr-2 text-gray-500" />}
+          {label}
+          {tooltip && (
+            <>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="ml-1.5 opacity-60"
+              >
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              <div className="pointer-events-none invisible absolute -left-4 -top-28 z-10 w-64 whitespace-normal rounded-md border border-gray-200 bg-white p-3 text-xs opacity-0 shadow-lg transition-all duration-200 group-hover:visible group-hover:opacity-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                {tooltip}
+              </div>
+            </>
+          )}
+        </span>
+        <HealthIndicator value={value} />
+      </div>
+      <div className="relative h-4 w-full overflow-hidden rounded-full bg-gray-100 shadow-inner dark:bg-gray-700">
+        <motion.div
+          className={`absolute left-0 top-0 h-full rounded-full shadow ${color}`}
+          initial={{ width: 0 }}
+          animate={{ width: `${value}%` }}
+          transition={{ duration: 1, ease: 'easeOut', delay }}
+        />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-xs font-medium text-gray-700 drop-shadow-sm dark:text-gray-200">
+            {value}%
+          </span>
+        </div>
+      </div>
     </div>
   );
 };
@@ -145,6 +239,7 @@ const StatCard = ({
   change,
   iconColor,
   isContext = false,
+  link,
 }: {
   title: string;
   value: number | string;
@@ -152,6 +247,7 @@ const StatCard = ({
   change?: number;
   iconColor: string;
   isContext?: boolean;
+  link?: string;
 }) => {
   // Determine if change is positive, negative or neutral
   const isPositive = typeof change === 'number' && change > 0;
@@ -187,147 +283,145 @@ const StatCard = ({
     }
   };
 
-  return (
-    <motion.div
-      className={`flex flex-col rounded-xl border border-gray-100 p-6 shadow-sm transition-all duration-300 dark:border-gray-700 ${getGradient()}`}
-      whileHover={{
-        y: -4,
-        boxShadow: '0 12px 24px rgba(0, 0, 0, 0.12)',
-        transition: { duration: 0.3, ease: [0.23, 1, 0.32, 1] },
-      }}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      variants={itemAnimationVariant}
-    >
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center">
-          <div className={`rounded-xl p-2.5 ${getIconGradient()} mr-3 text-white shadow-lg`}>
-            <Icon size={18} />
-          </div>
-          <span className="text-sm font-medium text-gray-700 transition-colors dark:text-gray-300">
-            {title}
-          </span>
-        </div>
-      </div>
+  interface CardLinkWrapperProps {
+    children: React.ReactNode;
+    link?: string;
+  }
 
-      <div className="mt-1 flex items-end justify-between">
-        <div className="flex-grow">
+  const CardLinkWrapper: React.FC<CardLinkWrapperProps> = ({ children, link }) => {
+    return link ? (
+      <Link to={link} className="block h-full w-full">
+        {children}
+      </Link>
+    ) : (
+      <div className="block h-full w-full cursor-default">{children}</div>
+    );
+  };
+
+  // Get indicator component based on card type
+  const getIndicator = () => {
+    if (title === 'Total Clusters') {
+      return (
+        <div className="flex h-10 items-end space-x-1">
+          {[0.4, 0.7, 1, 0.6, 0.8].map((height, i) => (
+            <motion.div
+              key={i}
+              className="w-1.5 rounded-t bg-blue-500/70 dark:bg-blue-400/70"
+              initial={{ height: 0 }}
+              animate={{ height: `${height * 40}px` }}
+              transition={{ delay: i * 0.1, duration: 0.5 }}
+            ></motion.div>
+          ))}
+        </div>
+      );
+    }
+
+    if (title === 'Active Clusters') {
+      return (
+        <div className="flex -space-x-1.5">
+          {[...Array(3)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="h-5 w-5 rounded-full border-2 border-white bg-emerald-500/80 dark:border-gray-800 dark:bg-emerald-400/80"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: i * 0.1, duration: 0.3 }}
+            ></motion.div>
+          ))}
+        </div>
+      );
+    }
+
+    if (title === 'Binding Policies') {
+      return (
+        <div className="relative flex h-10 w-10 items-center justify-center">
+          <div className="absolute inset-0 rounded-full bg-purple-100 dark:bg-purple-900/30"></div>
+          <FileText
+            size={60}
+            className="scale-[0.65] transform text-purple-600/80 dark:text-purple-400/80"
+          />
+        </div>
+      );
+    }
+
+    if (title === 'Current Context') {
+      return (
+        <div className="relative flex h-12 w-12 items-center justify-center">
+          <div className="absolute inset-0 rounded-full border-2 border-amber-500/30 bg-amber-500/10 dark:border-amber-400/30 dark:bg-amber-400/10"></div>
+          <div className="absolute inset-0 rounded-full border-2 border-dashed border-amber-500/40 dark:border-amber-400/40"></div>
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-amber-500/20 to-amber-600/30 dark:from-amber-400/20 dark:to-amber-500/30">
+            <Activity size={14} className="text-amber-600 dark:text-amber-400" />
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  return (
+    <CardLinkWrapper link={link}>
+      <motion.div
+        className={`flex flex-col rounded-xl border border-gray-100 p-6 shadow-sm transition-all duration-300 dark:border-gray-700 ${getGradient()} relative overflow-hidden`}
+        whileHover={{
+          y: -4,
+          boxShadow: '0 12px 24px rgba(0, 0, 0, 0.12)',
+          transition: { duration: 0.3, ease: [0.23, 1, 0.32, 1] },
+        }}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        variants={itemAnimationVariant}
+      >
+        {/* Decorative background elements for visual interest without animation loops */}
+        <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-gradient-to-br from-white/5 to-white/10 dark:from-gray-700/10 dark:to-gray-700/20"></div>
+        <div className="absolute -bottom-6 -left-6 h-24 w-24 rounded-full bg-gradient-to-tl from-white/5 to-white/0 dark:from-gray-700/5 dark:to-transparent"></div>
+
+        <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center">
-            <h3 className="text-3xl font-bold text-gray-900 transition-colors dark:text-gray-50">
-              {value}
-            </h3>
-            {isContext && (
-              <motion.div
-                className="ml-2 h-2.5 w-2.5 rounded-full bg-green-500"
-                initial={{ scale: 0.8, opacity: 0.8 }}
-                animate={{
-                  scale: [0.8, 1.2, 0.8],
-                  opacity: [0.8, 1, 0.8],
-                  boxShadow: [
-                    '0 0 0px rgba(34,197,94,0.5)',
-                    '0 0 12px rgba(34,197,94,0.8)',
-                    '0 0 0px rgba(34,197,94,0.5)',
-                  ],
-                }}
-                transition={{
-                  repeat: Infinity,
-                  duration: 2,
-                }}
-              ></motion.div>
+            <div className={`rounded-xl p-2.5 ${getIconGradient()} mr-3 text-white shadow-lg`}>
+              <Icon size={18} />
+            </div>
+            <span className="text-sm font-medium text-gray-700 transition-colors dark:text-gray-300">
+              {title}
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-1 flex items-end justify-between">
+          <div className="flex-grow">
+            <div className="flex items-center">
+              <h3 className="text-3xl font-bold text-gray-900 transition-colors dark:text-gray-50">
+                {value}
+              </h3>
+              {isContext && (
+                <div className="ml-2 h-2.5 w-2.5 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)]"></div>
+              )}
+            </div>
+            {change !== undefined && (
+              <div className="mt-2.5 flex w-fit items-center rounded-full bg-gray-50 px-3 py-1 dark:bg-gray-800/50">
+                {isPositive && <ChevronUp size={16} className="mr-1.5 text-emerald-500" />}
+                {isNegative && <ChevronDown size={16} className="mr-1.5 text-red-500" />}
+                <span
+                  className={
+                    isPositive
+                      ? 'text-sm font-medium text-emerald-500'
+                      : isNegative
+                        ? 'text-sm font-medium text-red-500'
+                        : 'text-sm font-medium text-gray-500 dark:text-gray-400'
+                  }
+                >
+                  {Math.abs(change)}% {isPositive ? 'increase' : isNegative ? 'decrease' : 'change'}
+                </span>
+              </div>
             )}
           </div>
-          {change !== undefined && (
-            <div className="mt-2.5 flex w-fit items-center rounded-full bg-gray-50 px-3 py-1 dark:bg-gray-800/50">
-              {isPositive && <ChevronUp size={16} className="mr-1.5 text-emerald-500" />}
-              {isNegative && <ChevronDown size={16} className="mr-1.5 text-red-500" />}
-              <span
-                className={
-                  isPositive
-                    ? 'text-sm font-medium text-emerald-500'
-                    : isNegative
-                      ? 'text-sm font-medium text-red-500'
-                      : 'text-sm font-medium text-gray-500 dark:text-gray-400'
-                }
-              >
-                {Math.abs(change)}% {isPositive ? 'increase' : isNegative ? 'decrease' : 'change'}
-              </span>
-            </div>
-          )}
+
+          {/* Static visual indicators that don't use infinite animation loops */}
+          {getIndicator()}
         </div>
-
-        {/* Add mini visual indicator based on card type */}
-        {title === 'Total Clusters' && (
-          <div className="flex h-10 items-end space-x-1">
-            {[0.4, 0.7, 1, 0.6, 0.8].map((height, i) => (
-              <motion.div
-                key={i}
-                className="w-1.5 rounded-t bg-blue-500/70 dark:bg-blue-400/70"
-                initial={{ height: 0 }}
-                animate={{ height: `${height * 40}px` }}
-                transition={{ delay: i * 0.1, duration: 0.5 }}
-              ></motion.div>
-            ))}
-          </div>
-        )}
-
-        {title === 'Active Clusters' && (
-          <div className="flex -space-x-1.5">
-            {[...Array(3)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="h-5 w-5 rounded-full border-2 border-white bg-emerald-500/80 dark:border-gray-800 dark:bg-emerald-400/80"
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: i * 0.2, duration: 0.3 }}
-              ></motion.div>
-            ))}
-          </div>
-        )}
-
-        {title === 'Binding Policies' && (
-          <div className="relative flex h-10 w-10 items-center justify-center">
-            <div className="absolute inset-0 rounded-full bg-purple-100 dark:bg-purple-900/30"></div>
-            <motion.div
-              initial={{ opacity: 0.4, scale: 0.6 }}
-              animate={{
-                opacity: [0.4, 0.8, 0.4],
-                scale: [0.6, 0.7, 0.6],
-              }}
-              transition={{
-                duration: 5,
-                repeat: Infinity,
-                repeatType: 'reverse',
-              }}
-            >
-              <FileText size={60} className="text-purple-600 dark:text-purple-400" />
-            </motion.div>
-          </div>
-        )}
-
-        {title === 'Current Context' && (
-          <motion.div
-            className="relative flex h-12 w-12 items-center justify-center rounded-full border-2 border-amber-500/30 bg-amber-500/10 dark:border-amber-400/30 dark:bg-amber-400/10"
-            animate={{
-              boxShadow: [
-                '0 0 0 0 rgba(245, 158, 11, 0)',
-                '0 0 0 8px rgba(245, 158, 11, 0.15)',
-                '0 0 0 0 rgba(245, 158, 11, 0)',
-              ],
-            }}
-            transition={{ duration: 3, repeat: Infinity }}
-          >
-            <div
-              className="absolute inset-0 animate-spin rounded-full border-2 border-dashed border-amber-500/40 dark:border-amber-400/40"
-              style={{ animationDuration: '12s' }}
-            ></div>
-            <div className="absolute flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-amber-500/20 to-amber-600/30 dark:from-amber-400/20 dark:to-amber-500/30">
-              <Activity size={14} className="text-amber-600 dark:text-amber-400" />
-            </div>
-          </motion.div>
-        )}
-      </div>
-    </motion.div>
+      </motion.div>
+    </CardLinkWrapper>
   );
 };
 
@@ -620,60 +714,69 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
                   };
 
               return (
-                <motion.div
+                <Link
+                  to={isPolicy ? '/bp/manage' : '/its'}
                   key={`${item.type}-${item.name}-${index}`}
-                  className="relative overflow-hidden rounded-lg border border-gray-100 bg-white p-4 transition-all duration-200 dark:border-gray-600 dark:bg-gray-700"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
-                  whileHover={{
-                    scale: 1.01,
-                    boxShadow: isDark
-                      ? '0 4px 12px rgba(0, 0, 0, 0.3)'
-                      : '0 4px 12px rgba(0, 0, 0, 0.1)',
-                    transition: { duration: 0.2 },
-                  }}
+                  className="block"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-start space-x-3">
-                      {/* Icon with proper styling */}
-                      <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-full shadow-sm ${typeColors.bg} ${typeColors.text} transition-colors`}
-                      >
-                        {typeColors.icon}
-                      </div>
+                  <motion.div
+                    key={`${item.type}-${item.name}-${index}`}
+                    className="relative overflow-hidden rounded-lg border border-gray-100 bg-white p-4 transition-all duration-200 dark:border-gray-600 dark:bg-gray-700"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    whileHover={{
+                      scale: 1.01,
+                      boxShadow: isDark
+                        ? '0 4px 12px rgba(0, 0, 0, 0.3)'
+                        : '0 4px 12px rgba(0, 0, 0, 0.1)',
+                      transition: { duration: 0.2 },
+                    }}
+                  >
+                    {/* Add subtle decorative element without animation */}
+                    <div className="absolute -right-4 -top-4 h-12 w-12 rounded-full bg-gray-50/40 dark:bg-gray-600/20"></div>
 
-                      {/* Content with better spacing and text styling */}
-                      <div>
-                        <div className="mb-1 flex items-center">
-                          <h3
-                            className="mr-2 font-medium text-gray-900 transition-colors dark:text-gray-100"
-                            title={item.name}
-                          >
-                            <span>{trimName(item.name)}</span>
-                          </h3>
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-xs transition-colors ${typeColors.bg} ${typeColors.text}`}
-                          >
-                            {isPolicy ? 'Policy' : 'Cluster'}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-start space-x-3">
+                        {/* Icon with proper styling */}
+                        <div
+                          className={`flex h-10 w-10 items-center justify-center rounded-full shadow-sm ${typeColors.bg} ${typeColors.text} transition-colors`}
+                        >
+                          {typeColors.icon}
+                        </div>
+
+                        {/* Content with better spacing and text styling */}
+                        <div>
+                          <div className="mb-1 flex items-center">
+                            <h3
+                              className="mr-2 font-medium text-gray-900 transition-colors dark:text-gray-100"
+                              title={item.name}
+                            >
+                              <span>{trimName(item.name)}</span>
+                            </h3>
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-xs transition-colors ${typeColors.bg} ${typeColors.text}`}
+                            >
+                              {isPolicy ? 'Policy' : 'Cluster'}
+                            </span>
+                          </div>
+                          <span className="flex items-center text-xs text-gray-500 transition-colors dark:text-gray-400">
+                            <Clock size={12} className="mr-1 inline" />
+                            {formatRelativeTime(item.timestamp)}
                           </span>
                         </div>
-                        <span className="flex items-center text-xs text-gray-500 transition-colors dark:text-gray-400">
-                          <Clock size={12} className="mr-1 inline" />
-                          {formatRelativeTime(item.timestamp)}
-                        </span>
+                      </div>
+
+                      {/* Status badge with consistent styling */}
+                      <div
+                        className={`inline-flex items-center rounded-full px-2 py-1 ${statusColors.bgColor} ${statusColors.textColor} text-xs font-medium transition-colors`}
+                      >
+                        {getStatusIcon(item.status)}
+                        <span className="ml-1">{item.status}</span>
                       </div>
                     </div>
-
-                    {/* Status badge with consistent styling */}
-                    <div
-                      className={`inline-flex items-center rounded-full px-2 py-1 ${statusColors.bgColor} ${statusColors.textColor} text-xs font-medium transition-colors`}
-                    >
-                      {getStatusIcon(item.status)}
-                      <span className="ml-1">{item.status}</span>
-                    </div>
-                  </div>
-                </motion.div>
+                  </motion.div>
+                </Link>
               );
             })}
           </div>
@@ -1079,19 +1182,21 @@ const K8sInfo = () => {
           value={stats.totalClusters}
           icon={Server}
           iconColor="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+          link={'/its'}
         />
         <StatCard
           title={t('clusters.dashboard.stats.activeClusters')}
           value={stats.activeClusters}
           icon={CircleCheck}
-          change={50} // Fixed 50% increase as requested
           iconColor="bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
+          link={'/its'}
         />
         <StatCard
           title={t('clusters.dashboard.stats.bindingPolicies')}
           value={stats.totalBindingPolicies}
           icon={FileText}
           iconColor="bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
+          link={'/bp/manage'}
         />
         <StatCard
           title={t('clusters.dashboard.stats.currentContext')}
@@ -1146,183 +1251,87 @@ const K8sInfo = () => {
           </h3>
 
           <div className="space-y-6">
-            {/* Enhanced CPU Usage with icon */}
-            <div>
-              <div className="mb-2 flex items-center justify-between">
-                <span className="group relative flex items-center text-sm font-medium text-gray-600 dark:text-gray-300">
-                  <Cpu size={14} className="mr-2 text-blue-500" />
-                  {t('clusters.dashboard.cpu.usage')}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="ml-1.5 opacity-60"
-                  >
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                  </svg>
-                  <div className="pointer-events-none invisible absolute -left-4 -top-28 z-10 w-64 whitespace-normal rounded-md border border-gray-200 bg-white p-3 text-xs opacity-0 shadow-lg transition-all duration-200 group-hover:visible group-hover:opacity-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
-                    <div className="mb-2 font-medium text-blue-600 dark:text-blue-400">
-                      {t('clusters.dashboard.cpu.formula')}
-                    </div>
-                    <div className="space-y-2 text-gray-600 dark:text-gray-300">
-                      <p>{t('clusters.dashboard.cpu.calculation')}</p>
-                      <div className="rounded-md bg-blue-50 p-2 dark:bg-blue-900/20">
-                        <code className="text-blue-700 dark:text-blue-300">
-                          {t('clusters.dashboard.cpu.formulaDesc')}
-                        </code>
-                      </div>
-                    </div>
-                    <div className="mt-2 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                      {t('clusters.dashboard.cpu.health')}
+            {/* CPU Usage with OptimizedProgressBar */}
+            <OptimizedProgressBar
+              value={stats.cpuUsage}
+              color="bg-gradient-to-br from-blue-500 to-indigo-600"
+              label={t('clusters.dashboard.cpu.usage')}
+              icon={Cpu}
+              tooltip={
+                <div>
+                  <div className="mb-2 font-medium text-blue-600 dark:text-blue-400">
+                    {t('clusters.dashboard.cpu.formula')}
+                  </div>
+                  <div className="space-y-2 text-gray-600 dark:text-gray-300">
+                    <p>{t('clusters.dashboard.cpu.calculation')}</p>
+                    <div className="rounded-md bg-blue-50 p-2 dark:bg-blue-900/20">
+                      <code className="text-blue-700 dark:text-blue-300">
+                        {t('clusters.dashboard.cpu.formulaDesc')}
+                      </code>
                     </div>
                   </div>
-                </span>
-                <HealthIndicator value={stats.cpuUsage} />
-              </div>
-              <div className="relative h-4 w-full overflow-hidden rounded-full bg-gray-100 shadow-inner dark:bg-gray-700">
-                <motion.div
-                  className="absolute left-0 top-0 h-full rounded-full shadow"
-                  style={{
-                    backgroundImage: 'linear-gradient(90deg, #3b82f6 0%, #2563eb 100%)',
-                  }}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${stats.cpuUsage}%` }}
-                  transition={{ duration: 1, ease: 'easeOut' }}
-                />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xs font-medium text-gray-700 drop-shadow-sm dark:text-gray-200">
-                    {stats.cpuUsage}%
-                  </span>
+                  <div className="mt-2 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                    {t('clusters.dashboard.cpu.health')}
+                  </div>
                 </div>
-              </div>
-            </div>
+              }
+              delay={0}
+            />
 
-            {/* Enhanced Memory Usage with icon */}
-            <div>
-              <div className="mb-2 flex items-center justify-between">
-                <span className="group relative flex items-center text-sm font-medium text-gray-600 dark:text-gray-300">
-                  <HardDrive size={14} className="mr-2 text-purple-500" />
-                  {t('clusters.dashboard.memory.usage')}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="ml-1.5 opacity-60"
-                  >
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                  </svg>
-                  <div className="pointer-events-none invisible absolute -left-4 -top-28 z-10 w-64 whitespace-normal rounded-md border border-gray-200 bg-white p-3 text-xs opacity-0 shadow-lg transition-all duration-200 group-hover:visible group-hover:opacity-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
-                    <div className="mb-2 font-medium text-purple-600 dark:text-purple-400">
-                      {t('clusters.dashboard.memory.formula')}
-                    </div>
-                    <div className="space-y-2 text-gray-600 dark:text-gray-300">
-                      <p>{t('clusters.dashboard.memory.calculation')}</p>
-                      <div className="rounded-md bg-purple-50 p-2 dark:bg-purple-900/20">
-                        <code className="text-purple-700 dark:text-purple-300">
-                          {t('clusters.dashboard.memory.formulaDesc')}
-                        </code>
-                      </div>
-                    </div>
-                    <div className="mt-2 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                      {t('clusters.dashboard.memory.value')}
+            {/* Memory Usage with OptimizedProgressBar */}
+            <OptimizedProgressBar
+              value={stats.memoryUsage}
+              color="bg-gradient-to-br from-violet-500 to-purple-600"
+              label={t('clusters.dashboard.memory.usage')}
+              icon={HardDrive}
+              tooltip={
+                <div>
+                  <div className="mb-2 font-medium text-purple-600 dark:text-purple-400">
+                    {t('clusters.dashboard.memory.formula')}
+                  </div>
+                  <div className="space-y-2 text-gray-600 dark:text-gray-300">
+                    <p>{t('clusters.dashboard.memory.calculation')}</p>
+                    <div className="rounded-md bg-purple-50 p-2 dark:bg-purple-900/20">
+                      <code className="text-purple-700 dark:text-purple-300">
+                        {t('clusters.dashboard.memory.formulaDesc')}
+                      </code>
                     </div>
                   </div>
-                </span>
-                <HealthIndicator value={stats.memoryUsage} />
-              </div>
-              <div className="relative h-4 w-full overflow-hidden rounded-full bg-gray-100 shadow-inner dark:bg-gray-700">
-                <motion.div
-                  className="absolute left-0 top-0 h-full rounded-full shadow"
-                  style={{
-                    backgroundImage: 'linear-gradient(90deg, #8b5cf6 0%, #6d28d9 100%)',
-                  }}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${stats.memoryUsage}%` }}
-                  transition={{ duration: 1, ease: 'easeOut', delay: 0.2 }}
-                />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xs font-medium text-gray-700 drop-shadow-sm dark:text-gray-200">
-                    {stats.memoryUsage}%
-                  </span>
+                  <div className="mt-2 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                    {t('clusters.dashboard.memory.value')}
+                  </div>
                 </div>
-              </div>
-            </div>
+              }
+              delay={0.2}
+            />
 
-            {/* Pod Health with icon */}
-            <div>
-              <div className="mb-2 flex items-center justify-between">
-                <span className="group relative flex items-center text-sm font-medium text-gray-600 dark:text-gray-300">
-                  <Layers size={14} className="mr-2 text-green-500" />
-                  {t('clusters.dashboard.pods.health')}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="ml-1.5 opacity-60"
-                  >
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                  </svg>
-                  <div className="pointer-events-none invisible absolute -left-4 -top-28 z-10 w-64 whitespace-normal rounded-md border border-gray-200 bg-white p-3 text-xs opacity-0 shadow-lg transition-all duration-200 group-hover:visible group-hover:opacity-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
-                    <div className="mb-2 font-medium text-green-600 dark:text-green-400">
-                      {t('clusters.dashboard.pods.formula')}
-                    </div>
-                    <div className="space-y-2 text-gray-600 dark:text-gray-300">
-                      <p>{t('clusters.dashboard.pods.calculation')}</p>
-                      <div className="rounded-md bg-green-50 p-2 dark:bg-green-900/20">
-                        <code className="text-green-700 dark:text-green-300">
-                          {t('clusters.dashboard.pods.formulaDesc')}
-                        </code>
-                      </div>
-                      <p className="text-xs italic">{t('clusters.dashboard.pods.status')}</p>
-                    </div>
-                    <div className="mt-2 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                      {t('clusters.dashboard.pods.value')}
-                    </div>
+            {/* Pod Health with OptimizedProgressBar */}
+            <OptimizedProgressBar
+              value={85}
+              color="bg-gradient-to-br from-emerald-500 to-green-600"
+              label={t('clusters.dashboard.pods.health')}
+              icon={Layers}
+              tooltip={
+                <div>
+                  <div className="mb-2 font-medium text-green-600 dark:text-green-400">
+                    {t('clusters.dashboard.pods.formula')}
                   </div>
-                </span>
-                <HealthIndicator value={85} />
-              </div>
-              <div className="relative h-4 w-full overflow-hidden rounded-full bg-gray-100 shadow-inner dark:bg-gray-700">
-                <motion.div
-                  className="absolute left-0 top-0 h-full rounded-full shadow"
-                  style={{
-                    backgroundImage: 'linear-gradient(90deg, #10b981 0%, #059669 100%)',
-                  }}
-                  initial={{ width: 0 }}
-                  animate={{ width: `85%` }}
-                  transition={{ duration: 1, ease: 'easeOut', delay: 0.4 }}
-                />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xs font-medium text-gray-700 drop-shadow-sm dark:text-gray-200">
-                    85%
-                  </span>
+                  <div className="space-y-2 text-gray-600 dark:text-gray-300">
+                    <p>{t('clusters.dashboard.pods.calculation')}</p>
+                    <div className="rounded-md bg-green-50 p-2 dark:bg-green-900/20">
+                      <code className="text-green-700 dark:text-green-300">
+                        {t('clusters.dashboard.pods.formulaDesc')}
+                      </code>
+                    </div>
+                    <p className="text-xs italic">{t('clusters.dashboard.pods.status')}</p>
+                  </div>
+                  <div className="mt-2 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                    {t('clusters.dashboard.pods.value')}
+                  </div>
                 </div>
-              </div>
-            </div>
+              }
+              delay={0.4}
+            />
           </div>
         </div>
 
@@ -1407,90 +1416,6 @@ const K8sInfo = () => {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Add overall health score - a new feature */}
-      <div className="mt-6 border-t border-gray-200 pt-6 dark:border-gray-700">
-        <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            {t('clusters.dashboard.clusterHealth')}
-          </h3>
-          <div className="flex items-center">
-            <div className="group relative">
-              <span className="flex items-center rounded-full bg-gradient-to-r from-emerald-500 to-green-500 px-3 py-1 text-sm font-semibold text-white shadow-sm">
-                <span className="mr-1">
-                  {Math.round(
-                    (stats.activeClusters / Math.max(stats.totalClusters, 1)) * 50 +
-                      (stats.activeBindingPolicies / Math.max(stats.totalBindingPolicies, 1)) * 25 +
-                      (100 - stats.cpuUsage) / 4
-                  )}
-                  %
-                </span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="opacity-70"
-                >
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                </svg>
-              </span>
-              <div className="pointer-events-none invisible absolute -left-64 -top-28 z-10 w-64 whitespace-normal rounded-md border border-gray-200 bg-white p-3 text-xs opacity-0 shadow-lg transition-all duration-200 group-hover:visible group-hover:opacity-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
-                <div className="mb-2 font-medium text-blue-600 dark:text-blue-400">
-                  {t('clusters.dashboard.healthScore')}
-                </div>
-                <ul className="list-inside list-disc space-y-2 text-gray-600 dark:text-gray-300">
-                  <li className="flex items-center">
-                    <span className="mr-1 h-2 w-2 rounded-full bg-blue-500"></span>
-                    <span>50% × (Active Clusters ÷ Total Clusters)</span>
-                  </li>
-                  <li className="flex items-center">
-                    <span className="mr-1 h-2 w-2 rounded-full bg-purple-500"></span>
-                    <span>25% × (Active Policies ÷ Total Policies)</span>
-                  </li>
-                  <li className="flex items-center">
-                    <span className="mr-1 h-2 w-2 rounded-full bg-green-500"></span>
-                    <span>25% × (100% - CPU Usage) ÷ 4</span>
-                  </li>
-                </ul>
-                <div className="mt-2 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                  {t('clusters.dashboard.hoverFormula')}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-100 shadow-inner dark:bg-gray-700">
-          <motion.div
-            className="h-full bg-gradient-to-r from-emerald-500 to-green-500"
-            initial={{ width: 0 }}
-            animate={{
-              width: `${Math.round(
-                (stats.activeClusters / Math.max(stats.totalClusters, 1)) * 50 +
-                  (stats.activeBindingPolicies / Math.max(stats.totalBindingPolicies, 1)) * 25 +
-                  (100 - stats.cpuUsage) / 4
-              )}%`,
-            }}
-            transition={{ duration: 1.2 }}
-          />
-        </div>
-        <div className="mt-1 flex justify-between">
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            {t('clusters.dashboard.status')}
-          </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            {t('clusters.dashboard.lastUpdatedJustNow')}
           </div>
         </div>
       </div>

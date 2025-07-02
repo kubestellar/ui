@@ -1680,7 +1680,19 @@
     "admin": "管理者",
     "helpSupport": "ヘルプとサポート",
     "raiseIssue": "問題を報告する",
-    "signOut": "ログアウト"
+    "signOut": "ログアウト",
+    "changePassword": "パスワードの変更",
+    "changePasswordSubtitle": "現在のパスワードを入力し、新しいパスワードを選択してください。",
+    "currentPassword": "現在のパスワード",
+    "newPassword": "新しいパスワード",
+    "confirmNewPassword": "新しいパスワードの確認",
+    "passwordChangedSuccess": "パスワードが正常に変更されました。",
+    "passwordChangedError": "パスワードの変更に失敗しました。",
+    "passwordsDoNotMatch": "新しいパスワードが一致しません。",
+    "passwordRequired": "パスワードは必須です。",
+    "errorCurrentPasswordIncorrect": "現在のパスワードが正しくありません",
+    "cancel": "キャンセル",
+    "changePasswordButton": "パスワードの変更"
   },
   "onboardingLogs": {
     "onboarding": "オンボーディング",
@@ -2077,6 +2089,18 @@
       "template": "テンプレートを使用",
       "documentation": "ドキュメントを表示",
       "examples": "サンプル"
+    },
+    "feedback": {
+      "title": "フィードバックを共有する",
+      "rate": "このプラグインを評価してください",
+      "comment": {
+        "title": "あなたのコメント",
+        "placeholder": "ご利用の感想をお聞かせください"
+      },
+      "suggestion": {
+        "title": "改善の提案",
+        "placeholder": "改善の提案があればご記入ください"
+      }
     }
   }
 }
