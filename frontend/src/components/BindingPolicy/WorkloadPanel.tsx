@@ -1107,9 +1107,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
                   : t('clusters.labels.noLabelsFound')}
               </Typography>
             ) : (
-              <>
-                {filteredLabels.map(labelGroup => renderLabelItem(labelGroup))}
-              </>
+              <>{filteredLabels.map(labelGroup => renderLabelItem(labelGroup))}</>
             )}
           </Box>
         )}
@@ -1176,10 +1174,10 @@ const LabelEditDialog: React.FC<LabelEditDialogProps> = ({
     labelSearch.trim() === ''
       ? labels
       : labels.filter(
-        label =>
-          label.key.toLowerCase().includes(labelSearch.toLowerCase()) ||
-          label.value.toLowerCase().includes(labelSearch.toLowerCase())
-      );
+          label =>
+            label.key.toLowerCase().includes(labelSearch.toLowerCase()) ||
+            label.value.toLowerCase().includes(labelSearch.toLowerCase())
+        );
 
   useEffect(() => {
     if (open) {
@@ -1742,17 +1740,17 @@ const SelectWorkloadDialog: React.FC<SelectWorkloadDialogProps> = ({
 
   const filteredWorkloads = searchTerm
     ? workloads.filter(
-      workload =>
-        workload.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        workload.kind.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (workload.namespace &&
-          workload.namespace.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        Object.entries(workload.labels || {}).some(
-          ([key, value]) =>
-            key.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            value.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-    )
+        workload =>
+          workload.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          workload.kind.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (workload.namespace &&
+            workload.namespace.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          Object.entries(workload.labels || {}).some(
+            ([key, value]) =>
+              key.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              value.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+      )
     : workloads;
 
   const toggleItemSelection = (workload: Workload) => {
