@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/kubestellar/ui/k8s"
+	"github.com/kubestellar/ui/telemetry"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -40,14 +41,16 @@ func DetachClusterHandler(c *gin.Context) {
 	var req struct {
 		ClusterName string `json:"clusterName" binding:"required"`
 	}
-
+	startTime:= time.Now()
 	if err := c.BindJSON(&req); err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/detach", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload, clusterName is required"})
 		return
 	}
 
 	clusterName := req.ClusterName
 	if clusterName == "" {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/detach", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Cluster name is required"})
 		return
 	}
@@ -62,6 +65,7 @@ func DetachClusterHandler(c *gin.Context) {
 		itsContext := "its1" // Could be parameterized
 		hubClientset, _, err := k8s.GetClientSetWithConfigContext(itsContext)
 		if err != nil {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/detach", "500").Inc()
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": fmt.Sprintf("Failed to connect to OCM hub: %v", err),
 			})
@@ -77,6 +81,7 @@ func DetachClusterHandler(c *gin.Context) {
 
 		err = result.Error()
 		if err != nil {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/detach", "404").Inc()
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": fmt.Sprintf("Cluster '%s' not found in OCM hub", clusterName),
 			})
@@ -98,6 +103,7 @@ func DetachClusterHandler(c *gin.Context) {
 		err := DetachCluster(clusterName)
 		mutex.Lock()
 		if err != nil {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/detach", "500").Inc()
 			log.Printf("Cluster '%s' detachment failed: %v", clusterName, err)
 			clusterStatuses[clusterName] = "DetachmentFailed"
 		} else {
@@ -106,7 +112,8 @@ func DetachClusterHandler(c *gin.Context) {
 		}
 		mutex.Unlock()
 	}()
-
+	telemetry.TotalHTTPRequests.WithLabelValues("POST", "/clusters/detach", "200").Inc()
+	telemetry.HTTPRequestDuration.WithLabelValues("POST", "/clusters/detach").Observe(time.Since(startTime).Seconds())
 	c.JSON(http.StatusOK, gin.H{
 		"message":           fmt.Sprintf("Cluster '%s' is being detached", clusterName),
 		"status":            "Detaching",
@@ -235,7 +242,9 @@ func waitForClusterRemoval(clientset *kubernetes.Clientset, clusterName string) 
 // GetDetachmentLogsHandler returns all logs for a specific cluster's detachment process
 func GetDetachmentLogsHandler(c *gin.Context) {
 	clusterName := c.Param("cluster")
+	startTime:= time.Now()
 	if clusterName == "" {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/clusters/detach/logs/:cluster", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Cluster name is required"})
 		return
 	}
@@ -259,11 +268,12 @@ func GetDetachmentLogsHandler(c *gin.Context) {
 			})
 			return
 		}
-
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/clusters/detach/logs/:cluster", "404").Inc()
 		c.JSON(http.StatusNotFound, gin.H{"error": "No detachment data found for cluster"})
 		return
 	}
-
+	telemetry.HTTPRequestDuration.WithLabelValues("GET", "/clusters/detach/logs/:cluster").Observe(time.Since(startTime).Seconds())
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/clusters/detach/logs/:cluster", "200").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"clusterName": clusterName,
 		"status":      status,
@@ -285,10 +295,11 @@ func HandleDetachmentWebSocket(c *gin.Context) {
 	// Upgrade the HTTP connection to a WebSocket connection
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
+		telemetry.WebsocketConnectionsFailed.WithLabelValues("detachment", "upgrade_error").Inc()
 		log.Printf("Failed to upgrade connection to WebSocket: %v", err)
 		return
 	}
-
+	telemetry.WebsocketConnectionUpgradedSuccess.WithLabelValues("detachment", clusterName).Inc()
 	// Create a new client
 	client := &WebSocketClient{
 		Conn:      conn,

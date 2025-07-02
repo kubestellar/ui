@@ -7,9 +7,10 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-
+	"time"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/kubestellar/ui/telemetry"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -122,13 +123,16 @@ func SetWdsContextCookies(c *gin.Context) {
 	var request struct {
 		Context string `json:"context"`
 	}
+	startTime := time.Now()
 	if err := c.ShouldBindJSON(&request); err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/wds/context", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
 	_, context, err := ListContexts()
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/wds/context", "500").Inc()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -140,6 +144,7 @@ func SetWdsContextCookies(c *gin.Context) {
 		}
 	}
 	if !isContextPresent {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/wds/context", "404").Inc()
 		msg := fmt.Sprintf("no context with %s present", request.Context)
 		c.JSON(http.StatusOK, gin.H{
 			"error":   msg,
@@ -149,6 +154,8 @@ func SetWdsContextCookies(c *gin.Context) {
 	}
 	c.SetCookie("ui-wds-context", request.Context, 3600, "/", "", false, true)
 	msg := fmt.Sprintf("switched to %s context", request.Context)
+	telemetry.TotalHTTPRequests.WithLabelValues("POST", "/wds/context", "200").Inc()
+	telemetry.HTTPRequestDuration.WithLabelValues("POST", "/wds/context").Observe(time.Since(startTime).Seconds())
 	c.JSON(http.StatusOK, gin.H{
 		"message":            msg,
 		"current-ui-context": request.Context,
@@ -158,19 +165,24 @@ func SetWdsContextCookies(c *gin.Context) {
 func GetWdsContextCookies(c *gin.Context) {
 	// currentContext : is system context (may be differnet from wds)
 	// TODO: improve this ListContexts function
+	startTime := time.Now()
 	currentContext, context, err := ListContexts()
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/wds/context", "500").Inc()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	cookieContext, err := c.Cookie("ui-wds-context")
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/wds/context", "400").Inc()
 		if strings.Contains("wds", currentContext) {
 			cookieContext = currentContext // Default to Kubernetes API context
 		} else {
 			cookieContext = "wds1"
 		}
 	}
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/wds/context", "200").Inc()
+	telemetry.HTTPRequestDuration.WithLabelValues("GET", "/wds/context").Observe(time.Since(startTime).Seconds())
 	c.JSON(http.StatusOK, gin.H{
 		"ui-wds-context":    cookieContext,
 		"system-context":    currentContext,
@@ -189,9 +201,11 @@ func CreateWDSContextUsingCommand(w http.ResponseWriter, r *http.Request, c *gin
 	}
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
+		telemetry.WebsocketConnectionsFailed.WithLabelValues("create-wds-context", "upgrade_error").Inc()
 		log.Println("WebSocket Upgrade Error:", err)
 		return
 	}
+	telemetry.WebsocketConnectionUpgradedSuccess.WithLabelValues("create-wds-context", "upgrade_success").Inc()
 	defer conn.Close()
 	if newWdsContext == "" {
 		msg := "context query must be present ?context=<your_new_context>"
@@ -236,6 +250,7 @@ func CreateWDSContextUsingCommand(w http.ResponseWriter, r *http.Request, c *gin
 	flexCmd := exec.Command("kubectl", "config", "use-context", kflexContextType)
 	output, err := flexCmd.CombinedOutput()
 	if err != nil {
+		telemetry.InstrumentKubectlCommand(flexCmd, "create-wds-context", kflexContextType)
 		message := fmt.Sprintf("Failed to execute kubectl command: %v\nOutput: %s", err.Error(), string(output))
 		writeMessage(conn, message)
 		return
@@ -273,6 +288,7 @@ func CreateWDSContextUsingCommand(w http.ResponseWriter, r *http.Request, c *gin
 	delCtxOutput, delCtxErr := delCtxCmd.CombinedOutput()
 
 	if delCtxErr != nil {
+		telemetry.InstrumentKubectlCommand(delCtxCmd, "delete-wds-context", newWdsContext)
 		writeMessage(conn, fmt.Sprintf("Warning: Failed to delete context '%s' (may not exist): %v\nOutput: %s", newWdsContext, delCtxErr, string(delCtxOutput)))
 	} else {
 		writeMessage(conn, fmt.Sprintf("Deleted context '%s' successfully", newWdsContext))

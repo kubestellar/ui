@@ -10,6 +10,8 @@ import (
 	"github.com/kubestellar/ui/wds"
 	"github.com/kubestellar/ui/wds/deployment"
 	"k8s.io/client-go/informers"
+	"github.com/kubestellar/ui/telemetry"
+
 )
 
 func setupDeploymentRoutes(router *gin.Engine) {
@@ -31,14 +33,17 @@ func setupDeploymentRoutes(router *gin.Engine) {
 		var r = ctx.Request
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
+			telemetry.WebsocketConnectionsFailed.WithLabelValues("GET", "/api/wds/logs", "upgrade_error").Inc()
 			log.Println("Failed to upgrade connection:", err)
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Failed to upgrade to WebSocket"})
 			return
 		}
+		telemetry.WebsocketConnectionUpgradedSuccess.WithLabelValues("GET", "/api/wds/logs", "upgrade_success").Inc()
 		//defer conn.Close()
 
 		clientset, err := wds.GetClientSetKubeConfig()
 		if err != nil {
+			telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/wds/logs", "500").Inc()
 			log.Println("Failed to get Kubernetes client:", err)
 			conn.WriteMessage(websocket.TextMessage, []byte("Error getting Kubernetes client"))
 			return
@@ -54,9 +59,11 @@ func setupDeploymentRoutes(router *gin.Engine) {
 	router.GET("/api/context", func(c *gin.Context) {
 		currentContext, context, err := wds.ListContexts()
 		if err != nil {
+			telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/context", "500").Inc()
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+		telemetry.TotalHTTPRequests.WithLabelValues("GET", "/api/context", "200").Inc()
 		c.JSON(http.StatusOK, gin.H{
 			"wds-context":     context,        // this only contains wds named context
 			"current-context": currentContext, // current context can be anything

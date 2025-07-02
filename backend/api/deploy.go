@@ -14,7 +14,7 @@ import (
 	"strings"
 	"sync"
 	"time"
-
+	"github.com/kubestellar/ui/telemetry"
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/k8s"
 	"github.com/kubestellar/ui/redis"
@@ -415,6 +415,7 @@ func DeployHandler(c *gin.Context) {
 	var request DeployRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/api/deploy", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid request body",
 			"details": err.Error(),
@@ -425,11 +426,13 @@ func DeployHandler(c *gin.Context) {
 	// Validate request
 	if err := validateDeployRequest(&request); err != nil {
 		if apiErr, ok := err.(*APIError); ok {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/api/deploy", fmt.Sprintf("%d", apiErr.Code)).Inc()
 			c.JSON(apiErr.Code, gin.H{
 				"error":   apiErr.Message,
 				"details": apiErr.Details,
 			})
 		} else {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/api/deploy", "400").Inc()
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		}
 		return
@@ -467,6 +470,7 @@ func DeployHandler(c *gin.Context) {
 	// Perform deployment with better error handling
 	deploymentTree, err := performDeployment(request, branch, gitUsername, gitToken, dryRun, dryRunStrategy)
 	if err != nil {
+		telemetry.GithubDeploymentsTotal.WithLabelValues("manual", "failure").Inc()
 		if apiErr, ok := err.(*APIError); ok {
 			c.JSON(apiErr.Code, gin.H{
 				"error":   apiErr.Message,
@@ -478,6 +482,7 @@ func DeployHandler(c *gin.Context) {
 				"details": err.Error(),
 			})
 		}
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/api/deploy", "500").Inc()
 		return
 	}
 
@@ -511,7 +516,8 @@ func DeployHandler(c *gin.Context) {
 			response["storage_details"] = "Deployment data stored in ConfigMap for future reference"
 		}
 	}
-
+	telemetry.GithubDeploymentsTotal.WithLabelValues("manual", "success").Inc()
+	telemetry.TotalHTTPRequests.WithLabelValues("POST", "/api/deploy", "200").Inc()
 	c.JSON(http.StatusOK, response)
 }
 
@@ -642,6 +648,7 @@ func GitHubWebhookHandler(c *gin.Context) {
 		}
 
 		if err := c.ShouldBindJSON(&webhookWrapper); err != nil {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/api/webhook/github", "400").Inc()
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error":   "Invalid webhook payload format",
 				"details": err.Error(),
@@ -651,6 +658,7 @@ func GitHubWebhookHandler(c *gin.Context) {
 
 		// Parse the inner payload JSON string
 		if err := json.Unmarshal([]byte(webhookWrapper.Payload), &request); err != nil {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/api/webhook/github", "400").Inc()
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error":   "Failed to parse webhook payload",
 				"details": err.Error(),
@@ -661,6 +669,7 @@ func GitHubWebhookHandler(c *gin.Context) {
 
 	// Validate webhook payload
 	if request.Repository.CloneURL == "" {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/api/webhook/github", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Repository clone URL is missing from webhook payload"})
 		return
 	}
@@ -668,6 +677,7 @@ func GitHubWebhookHandler(c *gin.Context) {
 	// Get deployment configuration from Redis with better error handling
 	config, err := getWebhookConfig()
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/api/webhook/github", "500").Inc()
 		c.JSON(http.StatusNotFound, gin.H{
 			"error":   "No deployment configured for this repository",
 			"details": err.Error(),
@@ -678,6 +688,7 @@ func GitHubWebhookHandler(c *gin.Context) {
 	// Validate branch
 	branchFromRef := strings.TrimPrefix(request.Ref, "refs/heads/")
 	if branchFromRef != config.Branch {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/api/webhook/github", "200").Inc()
 		c.JSON(http.StatusOK, gin.H{
 			"message": fmt.Sprintf("Ignoring push to branch '%s'. Configured branch is '%s'", branchFromRef, config.Branch),
 		})
@@ -687,6 +698,7 @@ func GitHubWebhookHandler(c *gin.Context) {
 	// Check for relevant changes
 	relevantChanges, changedFiles := checkRelevantChanges(request.Commits, config.FolderPath)
 	if !relevantChanges {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/api/webhook/github", "200").Inc()
 		c.JSON(http.StatusOK, gin.H{
 			"message": "No relevant changes detected in the specified folder path",
 		})
@@ -697,11 +709,13 @@ func GitHubWebhookHandler(c *gin.Context) {
 	deploymentResult, err := performWebhookDeployment(request, config)
 	if err != nil {
 		if apiErr, ok := err.(*APIError); ok {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/api/webhook/github", fmt.Sprintf("%d", apiErr.Code)).Inc()
 			c.JSON(apiErr.Code, gin.H{
 				"error":   apiErr.Message,
 				"details": apiErr.Details,
 			})
 		} else {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/api/webhook/github", "500").Inc()
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error":   "Webhook deployment failed",
 				"details": err.Error(),
@@ -709,7 +723,7 @@ func GitHubWebhookHandler(c *gin.Context) {
 		}
 		return
 	}
-
+	telemetry.TotalHTTPRequests.WithLabelValues("POST", "/api/webhook/github", "200").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message":         "Webhook deployment successful",
 		"deployment_id":   deploymentResult.ID,
@@ -965,6 +979,7 @@ func HealthCheckHandler(c *gin.Context) {
 func DeploymentStatusHandler(c *gin.Context) {
 	deploymentID := c.Param("id")
 	if deploymentID == "" {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/deployments/:id", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Deployment ID is required"})
 		return
 	}
@@ -972,6 +987,7 @@ func DeploymentStatusHandler(c *gin.Context) {
 	// Get deployments from ConfigMap
 	deployments, err := k8s.GetGithubDeployments("its1")
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/deployments/:"+deploymentID, "500").Inc()
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to retrieve deployments",
 			"details": err.Error(),
@@ -987,11 +1003,12 @@ func DeploymentStatusHandler(c *gin.Context) {
 					"deployment": deploymentMap,
 					"found":      true,
 				})
+				telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/deployments/:"+deploymentID, "200").Inc()
 				return
 			}
 		}
 	}
-
+	telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/deployments/:"+deploymentID, "404").Inc()
 	c.JSON(http.StatusNotFound, gin.H{
 		"error": "Deployment not found",
 		"id":    deploymentID,
@@ -1015,6 +1032,7 @@ func ListDeploymentsHandler(c *gin.Context) {
 	// Get deployments from ConfigMap
 	deployments, err := k8s.GetGithubDeployments("its1")
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/deployments", "500").Inc()
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to retrieve deployments",
 			"details": err.Error(),
@@ -1048,7 +1066,7 @@ func ListDeploymentsHandler(c *gin.Context) {
 	if limit > 0 && len(filteredDeployments) > limit {
 		filteredDeployments = filteredDeployments[:limit]
 	}
-
+	telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/deployments", "200").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"deployments": filteredDeployments,
 		"count":       len(filteredDeployments),
@@ -1065,6 +1083,7 @@ func ListDeploymentsHandler(c *gin.Context) {
 func DeleteDeploymentHandler(c *gin.Context) {
 	deploymentID := c.Param("id")
 	if deploymentID == "" {
+		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/api/deployments/:id", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Deployment ID is required"})
 		return
 	}
@@ -1072,6 +1091,7 @@ func DeleteDeploymentHandler(c *gin.Context) {
 	// Get existing deployments
 	deployments, err := k8s.GetGithubDeployments("its1")
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/api/deployments/:"+deploymentID, "500").Inc()
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to retrieve deployments",
 			"details": err.Error(),
@@ -1093,6 +1113,7 @@ func DeleteDeploymentHandler(c *gin.Context) {
 	}
 
 	if !found {
+		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/api/deployments/:"+deploymentID, "404").Inc()
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "Deployment not found",
 			"id":    deploymentID,
@@ -1103,6 +1124,7 @@ func DeleteDeploymentHandler(c *gin.Context) {
 	// Save updated deployments
 	deploymentsJSON, err := json.Marshal(updatedDeployments)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/api/deployments/:"+deploymentID, "500").Inc()
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to marshal updated deployments",
 			"details": err.Error(),
@@ -1115,13 +1137,14 @@ func DeleteDeploymentHandler(c *gin.Context) {
 	}
 
 	if err := k8s.StoreGitHubDeployment(cmData); err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("DELETE", "/api/deployments/:"+deploymentID, "500").Inc()
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to update deployment storage",
 			"details": err.Error(),
 		})
 		return
 	}
-
+	telemetry.TotalHTTPRequests.WithLabelValues("DELETE", "/api/deployments/:"+deploymentID, "200").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message":         "Deployment deleted successfully",
 		"deleted_id":      deploymentID,
@@ -1139,6 +1162,7 @@ func ValidateConfigHandler(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&config); err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/api/validate_config", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid configuration",
 			"details": err.Error(),
@@ -1162,11 +1186,13 @@ func ValidateConfigHandler(c *gin.Context) {
 	// Test repository access
 	_, err := fetchGitHubYAMLs(config.RepoURL, config.FolderPath, config.Branch, "", config.GitToken)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/api/validate_config", "400").Inc()
 		validationResults["validations"].(gin.H)["repository_access"] = gin.H{
 			"status": "failed",
 			"error":  err.Error(),
 		}
 	} else {
+		telemetry.TotalHTTPRequests.WithLabelValues("POST", "/api/validate_config", "200").Inc()
 		validationResults["validations"].(gin.H)["repository_access"] = gin.H{
 			"status": "passed",
 		}
@@ -1174,11 +1200,13 @@ func ValidateConfigHandler(c *gin.Context) {
 
 	// Test Redis connectivity
 	if err := redis.SetRepoURL("test"); err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/api/validate_config", "500").Inc()
 		validationResults["validations"].(gin.H)["redis_connectivity"] = gin.H{
 			"status": "failed",
 			"error":  err.Error(),
 		}
 	} else {
+		telemetry.TotalHTTPRequests.WithLabelValues("POST", "/api/validate_config", "200").Inc()
 		validationResults["validations"].(gin.H)["redis_connectivity"] = gin.H{
 			"status": "passed",
 		}
@@ -1186,11 +1214,13 @@ func ValidateConfigHandler(c *gin.Context) {
 
 	// Test Kubernetes connectivity
 	if _, err := k8s.GetGithubDeployments("its1"); err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/api/validate_config", "500").Inc()
 		validationResults["validations"].(gin.H)["kubernetes_connectivity"] = gin.H{
 			"status": "failed",
 			"error":  err.Error(),
 		}
 	} else {
+		telemetry.TotalHTTPRequests.WithLabelValues("POST", "/api/validate_config", "200").Inc()
 		validationResults["validations"].(gin.H)["kubernetes_connectivity"] = gin.H{
 			"status": "passed",
 		}
@@ -1218,6 +1248,6 @@ func ValidateConfigHandler(c *gin.Context) {
 	if !allPassed {
 		statusCode = http.StatusBadRequest
 	}
-
+	telemetry.TotalHTTPRequests.WithLabelValues("POST", "/api/validate_config", fmt.Sprintf("%d", statusCode)).Inc()
 	c.JSON(statusCode, validationResults)
 }

@@ -7,11 +7,13 @@ GetDeploymentByName, GetWDSWorkloads
 
 import (
 	"context"
-	"github.com/kubestellar/ui/k8s"
 	"net/http"
 	"time"
 
+	"github.com/kubestellar/ui/k8s"
+
 	"github.com/gin-gonic/gin"
+	"github.com/kubestellar/ui/telemetry"
 	"github.com/kubestellar/ui/wds"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -27,12 +29,14 @@ type WorkloadInfo struct {
 func GetDeploymentByName(c *gin.Context) {
 	name := c.Param("name")
 	namespace := c.Query("namespace")
+	startTime:=time.Now()
 	if namespace == "" {
 		namespace = "default" // Use "default" namespace if not provided
 	}
 
 	clientset, err := wds.GetClientSetKubeConfig()
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/wds/"+name, "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "failed to create Kubernetes clientset",
 			"err":     err,
@@ -42,6 +46,7 @@ func GetDeploymentByName(c *gin.Context) {
 	// deployment, err := clientset.AppsV1().Deployments(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	deployment, err := clientset.AppsV1().Deployments(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/wds/"+name, "404").Inc()
 		c.JSON(http.StatusNotFound, gin.H{"error": "Deployment not found", "details": err.Error()})
 		return
 	}
@@ -55,6 +60,8 @@ func GetDeploymentByName(c *gin.Context) {
 	if len(deployment.Status.Conditions) > 0 {
 		status["conditions"] = deployment.Status.Conditions
 	}
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/api/wds/"+name, "200").Inc()
+	telemetry.HTTPRequestDuration.WithLabelValues("GET", "/api/wds/"+name).Observe(time.Since(startTime).Seconds())
 	c.JSON(http.StatusOK, gin.H{
 		"apiVersion": deployment.APIVersion,
 		"kind":       deployment.Kind,
@@ -66,11 +73,13 @@ func GetDeploymentByName(c *gin.Context) {
 
 func GetWDSWorkloads(c *gin.Context) {
 	cookieContext, err := c.Cookie("ui-wds-context")
+	startTime := time.Now()
 	if err != nil {
 		cookieContext = "wds1"
 	}
 	clientset, _, err := k8s.GetClientSetWithContext(cookieContext)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/wds/workloads", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "failed to create Kubernetes clientset",
 			"err":     err,
@@ -86,6 +95,7 @@ func GetWDSWorkloads(c *gin.Context) {
 	// Get Deployments
 	deployments, err := clientset.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/wds/workloads", "404").Inc()
 		c.JSON(http.StatusNotFound, gin.H{"error": "Deployment not found", "details": err.Error()})
 		return
 	}
@@ -93,6 +103,7 @@ func GetWDSWorkloads(c *gin.Context) {
 	// Get Services
 	services, err := clientset.CoreV1().Services(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/wds/workloads", "404").Inc()
 		c.JSON(http.StatusNotFound, gin.H{"error": "Services not found", "details": err.Error()})
 		return
 	}
@@ -120,5 +131,7 @@ func GetWDSWorkloads(c *gin.Context) {
 			Labels:       service.Labels,
 		})
 	}
+	telemetry.HTTPRequestDuration.WithLabelValues("GET", "/api/wds/workloads").Observe(time.Since(startTime).Seconds())
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/api/wds/workloads", "200").Inc()
 	c.JSON(http.StatusOK, workloads)
 }
