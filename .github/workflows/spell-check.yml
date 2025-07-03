@@ -57,7 +57,7 @@ jobs:
       - name: Run spell check
         if: env.MERGE_FAILED != '1'
         id: spelling
-        uses: check-spelling/check-spelling@v0.0.20
+        uses: check-spelling/check-spelling@prerelease
         with:
           config: introspected/.github/actions/spelling
           suppress_push_for_open_pull_request: 1
@@ -93,7 +93,7 @@ jobs:
     if: (success() || failure()) && needs.spelling.outputs.followup && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
-      - uses: check-spelling/check-spelling@v0.0.20
+      - uses: check-spelling/check-spelling@prerelease
         with:
           checkout: false
           spell_check_this: check-spelling/spell-check-this@prerelease
@@ -110,7 +110,7 @@ jobs:
     if: (success() || failure()) && needs.spelling.outputs.followup && contains(github.event_name, 'pull_request')
     steps:
       - uses: actions/checkout@v4
-      - uses: check-spelling/check-spelling@v0.0.20
+      - uses: check-spelling/check-spelling@prerelease
         with:
           checkout: false
           spell_check_this: check-spelling/spell-check-this@prerelease
@@ -132,7 +132,7 @@ jobs:
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
-      - uses: check-spelling/check-spelling@v0.0.20
+      - uses: check-spelling/check-spelling@prerelease
         with:
           experimental_apply_changes_via_bot: 1
           checkout: false
