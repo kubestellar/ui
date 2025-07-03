@@ -18,10 +18,10 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: frontend/npm-lock.yaml
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Setup PNPM
-        uses: npm install -g pnpm@9
+        run: npm install -g pnpm@9
   
       - name: Install Dependencies
         working-directory: frontend
