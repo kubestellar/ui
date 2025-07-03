@@ -30,7 +30,6 @@ func init() {
 	cfg := zap.NewProductionConfig()
 	cfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
 	cfg.DisableStacktrace = true
-	zapLogger, _ := cfg.Build()
-	logger = zapLogger
-
+	baseLogger, _ := cfg.Build()
+	logger = baseLogger.WithOptions(zap.AddCallerSkip(1))
 }
