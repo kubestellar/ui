@@ -1,0 +1,11 @@
+{
+  "name": "kubestellar-ui-workspace",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+} 
