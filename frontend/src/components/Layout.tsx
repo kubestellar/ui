@@ -110,11 +110,11 @@ export function Layout() {
   const mainContentVariants = {
     expanded: {
       marginLeft: 0,
-      transition: { type: 'spring', stiffness: 300, damping: 30 },
+      transition: { type: 'spring', stiffness: 300, damping: 30 } as const,
     },
     collapsed: {
       marginLeft: 0,
-      transition: { type: 'spring', stiffness: 300, damping: 30 },
+      transition: { type: 'spring', stiffness: 300, damping: 30 } as const,
     },
   };
 
@@ -150,7 +150,7 @@ export function Layout() {
             }}
             animate={{
               width: isSidebarCollapsed ? '80px' : '280px',
-              transition: { duration: 0.3, ease: 'easeInOut' },
+              transition: { duration: 0.3, ease: 'easeInOut' as const } as const,
             }}
             initial={false}
           >

@@ -373,7 +373,7 @@ const CommandPalette: React.FC = () => {
         type: 'spring',
         stiffness: 400,
         damping: 8,
-      },
+      } as const,
     },
     tap: {
       rotate: 0,

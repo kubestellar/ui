@@ -11,8 +11,10 @@ presubmits:
             - -c
             - |
               cd frontend
-              npm ci
-              npm run lint
+              corepack enable
+              corepack prepare pnpm@latest --activate
+              pnpm install --frozen-lockfile
+              pnpm run lint
           resources:
             requests:
               memory: 2Gi
@@ -29,8 +31,10 @@ presubmits:
             - -c
             - |
               cd frontend
-              npm ci
-              npm run build
+              corepack enable
+              corepack prepare pnpm@latest --activate
+              pnpm install --frozen-lockfile
+              pnpm run build
           resources:
             requests:
               memory: 2Gi
@@ -47,8 +51,10 @@ presubmits:
             - -c
             - |
               cd frontend
-              npm ci
-              npm test
+              corepack enable
+              corepack prepare pnpm@latest --activate
+              pnpm install --frozen-lockfile
+              pnpm run test
           resources:
             requests:
               memory: 2Gi

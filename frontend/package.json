@@ -14,7 +14,9 @@
     "test:coverage": "jest --coverage",
     "prepare": "husky",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
-    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md}\""
+    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
+    "changeset": "changeset",
+    "version-packages": "changeset version --no-git-tag-version"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -33,10 +35,11 @@
     "@types/js-yaml": "^4.0.9",
     "@xyflow/react": "^12.4.4",
     "axios": "^1.8.2",
+    "buffer": "^6.0.3",
     "dagre": "^0.8.5",
     "elkjs": "^0.10.0",
     "estimo": "^3.0.3",
-    "framer-motion": "^12.5.0",
+    "framer-motion": "^12.23.0",
     "i18next": "^25.2.1",
     "i18next-browser-languagedetector": "^8.1.0",
     "js-yaml": "^4.1.0",
@@ -65,6 +68,9 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.5",
+    "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
+    "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
     "@eslint/js": "^9.11.1",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
@@ -78,6 +84,7 @@
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@types/testing-library__jest-dom": "^6.0.0",
+    "@types/three": "^0.178.0",
     "@types/xterm": "^3.0.0",
     "@vitejs/plugin-react": "^4.3.2",
     "autoprefixer": "^10.4.20",
@@ -96,6 +103,7 @@
     "postcss": "^8.4.47",
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.5.14",
+    "rollup-plugin-node-polyfills": "^0.2.1",
     "tailwindcss": "^3.4.14",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
