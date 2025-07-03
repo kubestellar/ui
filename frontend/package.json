@@ -13,8 +13,10 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "prepare": "husky",
-    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
-    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md}\""
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\",
+    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md}\",
+    "changeset": "changeset",
+    "version-packages": "changeset version --no-git-tag-version"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -65,6 +67,7 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.5",
     "@eslint/js": "^9.11.1",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
