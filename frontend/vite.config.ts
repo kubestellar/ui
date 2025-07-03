@@ -2,9 +2,9 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import EnvironmentPlugin from 'vite-plugin-environment';
 import { execSync } from 'child_process';
-import rollupNodePolyFill from 'rollup-plugin-node-polyfills'; 
-import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill'; 
-import { NodeModulesPolyfillPlugin } from '@esbuild-plugins/node-modules-polyfill'; 
+import rollupNodePolyFill from 'rollup-plugin-node-polyfills';
+import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill';
+import { NodeModulesPolyfillPlugin } from '@esbuild-plugins/node-modules-polyfill';
 
 // Utility function to extract the current git commit hash
 // Provides a short 7-character version of the full commit hash
