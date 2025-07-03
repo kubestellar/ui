@@ -1,0 +1,140 @@
+name: Check Spelling
+
+on:
+  push:
+    branches:
+      - "**"
+    tags-ignore:
+      - "**"
+  pull_request_target:
+    branches:
+      - "**"
+    types: [opened, reopened, synchronize]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+
+jobs:
+  spelling:
+    name: Check Spelling
+    permissions:
+      contents: read
+      pull-requests: read
+      actions: read
+      security-events: write
+    outputs:
+      followup: ${{ steps.spelling.outputs.followup }}
+      internal_state_directory: ${{ steps.spelling.outputs.internal_state_directory }}
+      docker_container: ${{ steps.spelling.outputs.docker_container }}
+    env:
+      workflow_check_commit_messages: commits
+    runs-on: ubuntu-latest
+    if: ${{ contains(github.event_name, 'pull_request') || github.event_name == 'push' }}
+    concurrency:
+      group: spelling-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: ${{ !contains(env.workflow_check_commit_messages, 'commits') && '1' || '0' }}
+          filter: ${{ contains(env.workflow_check_commit_messages, 'commits') && 'tree:0' || '' }}
+
+      - name: Prepare working directory
+        run: |
+          git clone . ../introspected/
+          mv ../introspected .
+          cp .git/config introspected/.git
+
+      - name: Merge PR code
+        if: ${{ contains(github.event_name, 'pull_request') }}
+        uses: check-spelling/checkout-merge@v0.0.6
+        with:
+          path: introspected
+
+      - name: Run spell check
+        if: env.MERGE_FAILED != '1'
+        id: spelling
+        uses: check-spelling/check-spelling@v0.0.20
+        with:
+          config: introspected/.github/actions/spelling
+          suppress_push_for_open_pull_request: 1
+          check_file_names: 1
+          experimental_path: introspected
+          spell_check_this: check-spelling/spell-check-this@prerelease
+          checkout: false
+          post_comment: 0
+          use_magic_file: 1
+          report-timing: 1
+          experimental_apply_changes_via_bot: 1
+          use_sarif: ${{ (!github.event.pull_request || (github.event.pull_request.head.repo.full_name == github.repository)) && 1 }}
+          extra_dictionary_limit: 10
+          extra_dictionaries: |
+            cspell:software-terms/dict/softwareTerms.txt
+            cspell:node/node.txt
+            cspell:python/src/python/python-lib.txt
+            cspell:shell/dict/shell-all-words.txt
+          check_commit_messages: ${{ env.workflow_check_commit_messages }}
+          ignore-pattern: '[^\p{Ll}\p{Lm}\p{Lt}\p{Lu}]'
+          upper-pattern: '[\p{Lu}\p{Lt}\p{Lm}]'
+          lower-pattern: '[\p{Ll}\p{Lm}]'
+          not-lower-pattern: '[^\p{Ll}\p{Lm}]'
+          not-upper-or-lower-pattern: '[^\p{Lu}\p{Lt}\p{Lm}]'
+          punctuation-pattern: "'"
+
+  comment-push:
+    name: Report (Push)
+    runs-on: ubuntu-latest
+    needs: spelling
+    permissions:
+      contents: write
+    if: (success() || failure()) && needs.spelling.outputs.followup && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: check-spelling/check-spelling@v0.0.20
+        with:
+          checkout: false
+          spell_check_this: check-spelling/spell-check-this@prerelease
+          task: ${{ needs.spelling.outputs.followup }}
+          internal_state_directory: ${{ needs.spelling.outputs.internal_state_directory }}
+          caller_container: ${{ needs.spelling.outputs.docker_container }}
+
+  comment-pr:
+    name: Report (PR)
+    runs-on: ubuntu-latest
+    needs: spelling
+    permissions:
+      pull-requests: write
+    if: (success() || failure()) && needs.spelling.outputs.followup && contains(github.event_name, 'pull_request')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: check-spelling/check-spelling@v0.0.20
+        with:
+          checkout: false
+          spell_check_this: check-spelling/spell-check-this@prerelease
+          task: ${{ needs.spelling.outputs.followup }}
+          internal_state_directory: ${{ needs.spelling.outputs.internal_state_directory }}
+          caller_container: ${{ needs.spelling.outputs.docker_container }}
+          experimental_apply_changes_via_bot: 1
+
+  update:
+    name: Update Expect List
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+    if: ${{ github.event_name == 'issue_comment' && github.event.issue.pull_request && contains(github.event.comment.body, '@check-spelling-bot apply') }}
+    concurrency:
+      group: spelling-update-${{ github.event.issue.number }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: check-spelling/check-spelling@v0.0.20
+        with:
+          experimental_apply_changes_via_bot: 1
+          checkout: false
+          ssh_key: "${{ secrets.CHECK_SPELLING }}"
+
