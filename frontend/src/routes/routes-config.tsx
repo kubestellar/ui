@@ -5,6 +5,7 @@ import LoadingFallback from '../components/LoadingFallback';
 import ProtectedRoute from '../components/ProtectedRoute';
 import PublicRoute from '../components/PublicRoute';
 import KubeStellarStatusChecker from '../components/KubeStellarStatusChecker';
+import UserManagement from '../components/admin/UserManagement';
 
 const WDSLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/WDS'));
 const BPLazy = lazy(() => import(/* webpackPrefetch: true */ '../pages/BP'));
@@ -125,6 +126,14 @@ export const routesConfig: RouteObject[] = [
             >
               <PluginManagerLazy />
             </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'admin/users',
+        element: (
+          <ProtectedRoute>
+            <UserManagement />
           </ProtectedRoute>
         ),
       },
