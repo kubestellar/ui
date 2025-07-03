@@ -863,6 +863,7 @@ spec:
         >
           <Typography
             variant="h6"
+            component="span"
             sx={{
               fontWeight: 600,
               color: theme === 'dark' ? '#d4d4d4' : 'black',

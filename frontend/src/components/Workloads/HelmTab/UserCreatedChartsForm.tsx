@@ -148,7 +148,7 @@ export const UserCreatedChartsForm = ({
             display: 'none',
           },
           scrollbarWidth: 'none',
-          '-ms-overflow-style': 'none',
+          msOverflowStyle: 'none',
           display: 'flex',
           flexDirection: 'column',
           gap: 2,

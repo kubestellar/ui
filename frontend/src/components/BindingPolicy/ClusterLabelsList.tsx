@@ -265,7 +265,7 @@ const ClusterLabelsList: React.FC<ClusterLabelsListProps> = ({
           display: 'none',
         },
         scrollbarWidth: 'none',
-        '-ms-overflow-style': 'none',
+        msOverflowStyle: 'none',
         backgroundColor: isDarkTheme ? 'rgba(17, 25, 40, 0.8)' : 'transparent',
       }}
     >

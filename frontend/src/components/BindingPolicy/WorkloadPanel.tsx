@@ -1063,7 +1063,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
             display: 'none',
           },
           scrollbarWidth: 'none',
-          '-ms-overflow-style': 'none',
+          msOverflowStyle: 'none',
           backgroundColor: isDarkTheme ? 'rgba(17, 25, 40, 0.8)' : 'transparent',
         }}
       >

@@ -93,7 +93,7 @@ const CreateFromYourGitHub = ({
           display: 'none',
         },
         scrollbarWidth: 'none',
-        '-ms-overflow-style': 'none',
+        msOverflowStyle: 'none',
         height: '55vh',
       }}
     >
@@ -445,12 +445,14 @@ export const GitHubTab = ({
       try {
         const response = await api.get('/api/deployments/github/list');
         if (response.status === 200) {
-          const deployments = response.data.deployments.map((deployment: PreviousDeployment) => ({
-            id: deployment.id,
-            repo_url: deployment.repo_url,
-            folder_path: deployment.folder_path,
-            branch: deployment.branch || 'main',
-          }));
+          const deployments = Array.isArray(response.data.deployments)
+            ? response.data.deployments.map((deployment: PreviousDeployment) => ({
+                id: deployment.id,
+                repo_url: deployment.repo_url,
+                folder_path: deployment.folder_path,
+                branch: deployment.branch || 'main',
+              }))
+            : [];
           setPreviousDeployments(deployments);
         } else {
           throw new Error('Failed to fetch previous deployments');
@@ -801,7 +803,7 @@ export const GitHubTab = ({
             display: 'none',
           },
           scrollbarWidth: 'none',
-          '-ms-overflow-style': 'none',
+          msOverflowStyle: 'none',
           display: 'flex',
           flexDirection: 'column',
           gap: 2,
@@ -1195,7 +1197,7 @@ const PopularRepositoriesForm = ({
               display: 'none',
             },
             scrollbarWidth: 'none',
-            '-ms-overflow-style': 'none',
+            msOverflowStyle: 'none',
             display: 'flex',
             flexDirection: 'column',
             gap: 2,
