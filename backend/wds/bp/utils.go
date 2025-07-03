@@ -300,7 +300,7 @@ func extractTargetClusters(bp *v1alpha1.BindingPolicy) []string {
 		}
 	}
 
-	log.LogInfo("ectractTargetCLusters - returning clusters", zap.Int("count", len(clusters)), zap.Strings("clusters", clusters))
+	log.LogInfo("extractTargetCLusters - returning clusters", zap.Int("count", len(clusters)), zap.Strings("clusters", clusters))
 	return clusters
 }
 
