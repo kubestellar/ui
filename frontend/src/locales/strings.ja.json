@@ -68,6 +68,78 @@
     "items_plural": "{{count}}件",
     "filteredFrom": "フィルター対象："
   },
+  "admin": {
+    "users": {
+      "title": "ユーザー管理",
+      "subtitle": "システムユーザー",
+      "noUsers": "ユーザーが見つかりません",
+      "noUsersDescription": "システムにはまだユーザーがいません。「ユーザーを追加」をクリックして最初のユーザーを作成してください。",
+      "noPermissions": "権限が割り当てられていません",
+      "actions": {
+        "addUser": "ユーザーを追加",
+        "editUser": "ユーザーを編集",
+        "add": "ユーザーを追加",
+        "update": "ユーザーを更新",
+        "delete": "ユーザーを削除",
+        "edit": "編集",
+        "deleteUser": "ユーザーを削除"
+      },
+      "table": {
+        "username": "ユーザー名",
+        "role": "役割",
+        "permissions": "権限",
+        "actions": "操作"
+      },
+      "roles": {
+        "admin": "管理者",
+        "user": "ユーザー"
+      },
+      "permissions": {
+        "users": "ユーザー",
+        "resources": "リソース",
+        "system": "システム",
+        "dashboard": "ダッシュボード",
+        "levels": {
+          "read": "読み取り",
+          "write": "書き込み",
+          "none": "なし"
+        }
+      },
+      "form": {
+        "username": "ユーザー名",
+        "usernamePlaceholder": "ユーザー名を入力",
+        "password": "パスワード",
+        "passwordPlaceholder": "パスワードを入力",
+        "passwordOptional": "パスワード（オプション）",
+        "passwordOptionalPlaceholder": "新しいパスワードを入力するか空白のままにする",
+        "confirmPassword": "パスワードの確認",
+        "confirmPasswordPlaceholder": "パスワードを確認",
+        "isAdmin": "管理者アクセス",
+        "permissions": "コンポーネント権限",
+        "cancel": "キャンセル",
+        "optional": "オプション"
+      },
+      "delete": {
+        "title": "ユーザーの削除",
+        "confirmTitle": "削除の確認",
+        "confirmMessage": "ユーザー「{{username}}」を削除してもよろしいですか？この操作は元に戻せません。",
+        "confirm": "ユーザーを削除"
+      },
+      "errors": {
+        "fetchFailed": "ユーザーの取得に失敗しました",
+        "missingFields": "すべての必須フィールドに入力してください",
+        "passwordMismatch": "パスワードが一致しません",
+        "addFailed": "ユーザーの追加に失敗しました",
+        "updateFailed": "ユーザーの更新に失敗しました",
+        "deleteFailed": "ユーザーの削除に失敗しました"
+      },
+      "success": {
+        "userAdded": "ユーザーが正常に追加されました",
+        "userUpdated": "ユーザーが正常に更新されました",
+        "userDeleted": "ユーザーが正常に削除されました"
+      }
+    }
+  },
   "installationPage": {
     "successSection": {
       "installed": "は正しくインストールされており、バージョン要件を満たしています。"
@@ -1942,7 +2014,8 @@
       "navigation": "ナビゲーション",
       "visualizations": "可視化",
       "help": "ヘルプ",
-      "account": "アカウント"
+      "account": "アカウント",
+      "admin": "管理"
     },
     "commands": {
       "home": {
@@ -1988,7 +2061,8 @@
     "catalogs": {
       "main": "メイン",
       "management": "管理",
-      "plugins": "プラグイン"
+      "plugins": "プラグイン",
+      "admin": "管理"
     },
     "items": {
       "home": "ホーム",
@@ -1996,7 +2070,8 @@
       "stagedWorkloads": "ステージ済みワークロード",
       "bindingPolicies": "バインディングポリシー",
       "deployedWorkloads": "デプロイ済みワークロード",
-      "pluginManager": "プラグインマネージャー"
+      "pluginManager": "プラグインマネージャー",
+      "userManagement": "ユーザー管理"
     }
   },
   "plugins": {

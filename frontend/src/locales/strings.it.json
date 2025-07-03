@@ -35,7 +35,8 @@
       "navigation": "Navigazione",
       "visualizations": "Visualizzazioni",
       "help": "Aiuto",
-      "account": "Account"
+      "account": "Account",
+      "admin": "Amministrazione"
     },
     "commands": {
       "home": {
@@ -74,6 +75,95 @@
         "title": "Disconnetti",
         "description": "Esci dal tuo account",
         "infoMessage": "Disconnessione avvenuta con successo."
+      }
+    }
+  },
+  "menu": {
+    "catalogs": {
+      "main": "Principale",
+      "management": "Gestione",
+      "plugins": "Plugin",
+      "admin": "Amministrazione"
+    },
+    "items": {
+      "home": "Home",
+      "remoteClusters": "Cluster Remoti",
+      "stagedWorkloads": "Workload Preparati",
+      "bindingPolicies": "Policy di Binding",
+      "deployedWorkloads": "Workload Distribuiti",
+      "pluginManager": "Gestore Plugin",
+      "userManagement": "Gestione Utenti"
+    }
+  },
+  "admin": {
+    "users": {
+      "title": "Gestione Utenti",
+      "subtitle": "Utenti di Sistema",
+      "noUsers": "Nessun Utente Trovato",
+      "noUsersDescription": "Non ci sono ancora utenti nel sistema. Clicca su 'Aggiungi Utente' per creare il tuo primo utente.",
+      "noPermissions": "Nessuna autorizzazione assegnata",
+      "actions": {
+        "addUser": "Aggiungi Utente",
+        "editUser": "Modifica Utente",
+        "add": "Aggiungi Utente",
+        "update": "Aggiorna Utente",
+        "delete": "Elimina Utente",
+        "edit": "Modifica",
+        "deleteUser": "Elimina Utente"
+      },
+      "table": {
+        "username": "Nome Utente",
+        "role": "Ruolo",
+        "permissions": "Autorizzazioni",
+        "actions": "Azioni"
+      },
+      "roles": {
+        "admin": "Amministratore",
+        "user": "Utente"
+      },
+      "permissions": {
+        "users": "Utenti",
+        "resources": "Risorse",
+        "system": "Sistema",
+        "dashboard": "Dashboard",
+        "levels": {
+          "read": "Lettura",
+          "write": "Scrittura",
+          "none": "Nessuna"
+        }
+      },
+      "form": {
+        "username": "Nome Utente",
+        "usernamePlaceholder": "Inserisci nome utente",
+        "password": "Password",
+        "passwordPlaceholder": "Inserisci password",
+        "passwordOptional": "Password (opzionale)",
+        "passwordOptionalPlaceholder": "Inserisci nuova password o lascia vuoto",
+        "confirmPassword": "Conferma Password",
+        "confirmPasswordPlaceholder": "Conferma password",
+        "isAdmin": "Accesso Amministratore",
+        "permissions": "Autorizzazioni Componenti",
+        "cancel": "Annulla",
+        "optional": "opzionale"
+      },
+      "delete": {
+        "title": "Elimina Utente",
+        "confirmTitle": "Conferma Eliminazione",
+        "confirmMessage": "Sei sicuro di voler eliminare l'utente \"{{username}}\"? Questa azione non può essere annullata.",
+        "confirm": "Elimina Utente"
+      },
+      "errors": {
+        "fetchFailed": "Impossibile recuperare gli utenti",
+        "missingFields": "Si prega di compilare tutti i campi obbligatori",
+        "passwordMismatch": "Le password non corrispondono",
+        "addFailed": "Impossibile aggiungere l'utente",
+        "updateFailed": "Impossibile aggiornare l'utente",
+        "deleteFailed": "Impossibile eliminare l'utente"
+      },
+      "success": {
+        "userAdded": "Utente aggiunto con successo",
+        "userUpdated": "Utente aggiornato con successo",
+        "userDeleted": "Utente eliminato con successo"
       }
     }
   }

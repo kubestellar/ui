@@ -35,7 +35,8 @@
       "navigation": "導航",
       "visualizations": "可視化",
       "help": "幫助",
-      "account": "帳戶"
+      "account": "帳戶",
+      "admin": "管理"
     },
     "commands": {
       "home": {
@@ -75,6 +76,95 @@
         "description": "登出您的帳戶",
         "infoMessage": "您已成功登出。"
       }
+    }
+  },
+  "admin": {
+    "users": {
+      "title": "用戶管理",
+      "subtitle": "系統用戶",
+      "noUsers": "未找到用戶",
+      "noUsersDescription": "系統中還沒有用戶。點擊\"添加用戶\"創建您的第一個用戶。",
+      "noPermissions": "未分配權限",
+      "actions": {
+        "addUser": "添加用戶",
+        "editUser": "編輯用戶",
+        "add": "添加用戶",
+        "update": "更新用戶",
+        "delete": "刪除用戶",
+        "edit": "編輯",
+        "deleteUser": "刪除用戶"
+      },
+      "table": {
+        "username": "用戶名",
+        "role": "角色",
+        "permissions": "權限",
+        "actions": "操作"
+      },
+      "roles": {
+        "admin": "管理員",
+        "user": "用戶"
+      },
+      "permissions": {
+        "users": "用戶",
+        "resources": "資源",
+        "system": "系統",
+        "dashboard": "儀表板",
+        "levels": {
+          "read": "讀取",
+          "write": "寫入",
+          "none": "無"
+        }
+      },
+      "form": {
+        "username": "用戶名",
+        "usernamePlaceholder": "輸入用戶名",
+        "password": "密碼",
+        "passwordPlaceholder": "輸入密碼",
+        "passwordOptional": "密碼（可選）",
+        "passwordOptionalPlaceholder": "輸入新密碼或留空",
+        "confirmPassword": "確認密碼",
+        "confirmPasswordPlaceholder": "確認密碼",
+        "isAdmin": "管理員訪問權限",
+        "permissions": "組件權限",
+        "cancel": "取消",
+        "optional": "可選"
+      },
+      "delete": {
+        "title": "刪除用戶",
+        "confirmTitle": "確認刪除",
+        "confirmMessage": "您確定要刪除用戶\"{{username}}\"嗎？此操作無法撤消。",
+        "confirm": "刪除用戶"
+      },
+      "errors": {
+        "fetchFailed": "獲取用戶失敗",
+        "missingFields": "請填寫所有必填欄位",
+        "passwordMismatch": "密碼不匹配",
+        "addFailed": "添加用戶失敗",
+        "updateFailed": "更新用戶失敗",
+        "deleteFailed": "刪除用戶失敗"
+      },
+      "success": {
+        "userAdded": "用戶添加成功",
+        "userUpdated": "用戶更新成功",
+        "userDeleted": "用戶刪除成功"
+      }
+    }
+  },
+  "menu": {
+    "catalogs": {
+      "main": "主要",
+      "management": "管理",
+      "plugins": "插件",
+      "admin": "管理"
+    },
+    "items": {
+      "home": "首頁",
+      "remoteClusters": "遠端叢集",
+      "stagedWorkloads": "已暫存工作負載",
+      "bindingPolicies": "綁定策略",
+      "deployedWorkloads": "已部署工作負載",
+      "pluginManager": "插件管理器",
+      "userManagement": "用戶管理"
     }
   }
 }
