@@ -59,7 +59,6 @@ jobs:
         id: spelling
         uses: check-spelling/check-spelling@prerelease
         with:
-          config: introspected/.github/actions/spelling
           suppress_push_for_open_pull_request: 1
           check_file_names: 1
           experimental_path: introspected
