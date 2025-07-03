@@ -1479,7 +1479,7 @@ const K8sInfo = () => {
                         ? 'rgba(31, 41, 55, 0.5)'
                         : 'rgba(249, 250, 251, 0.8)',
                       scale: 1.01,
-                      transition: { duration: 0.2 } as const ,
+                      transition: { duration: 0.2 } as const,
                     }}
                   >
                     <div className="flex items-center justify-between">
