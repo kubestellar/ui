@@ -21,10 +21,8 @@ jobs:
           cache-dependency-path: frontend/npm-lock.yaml
 
       - name: Setup PNPM
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9
-
+        uses: npm install -g pnpm@9
+  
       - name: Install Dependencies
         working-directory: frontend
         run: pnpm install --frozen-lockfile
