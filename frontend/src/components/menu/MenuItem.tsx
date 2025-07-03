@@ -226,7 +226,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
                       {/* Text label */}
                       {!collapsed && (
                         <motion.span
-                          className="ml-3 text-sm font-medium"
+                          className="ml-3 whitespace-nowrap text-sm font-medium"
                           style={{
                             color: isActive
                               ? isDark
@@ -300,7 +300,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
 
                 {!collapsed && (
                   <motion.span
-                    className="ml-3 text-sm font-medium"
+                    className="ml-3 whitespace-nowrap text-sm  font-medium "
                     style={{
                       color:
                         hoveredItem === index
