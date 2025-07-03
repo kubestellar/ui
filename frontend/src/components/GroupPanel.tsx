@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import {
   Box,
   Typography,
@@ -9,11 +9,8 @@ import {
   TableRow,
   IconButton,
 } from '@mui/material';
-import { FiX } from 'react-icons/fi';
-import { ResourceItem } from './TreeView/types';
+import { ResourceItem } from './TreeViewComponent';
 import useTheme from '../stores/themeStore';
-import DynamicDetailsPanel from './DynamicDetailsPanel'; // Adjust the import path
-import SettingsIcon from '@mui/icons-material/Settings'; // Placeholder for ArgoCD icon
 import { useTranslation } from 'react-i18next';
 
 interface GroupPanelProps {
@@ -69,6 +66,10 @@ const GroupPanel: React.FC<GroupPanelProps> = ({
     }, 400);
   };
 
+  const DynamicDetailsPanel = React.lazy(() => import('./DynamicDetailsPanel'));
+  const SettingsIcon = React.lazy(() => import('@mui/icons-material/Settings'));
+  const FiX = React.lazy(() => import('react-icons/fi').then(mod => ({ default: mod.FiX })));
+
   return (
     <Box
       sx={{
@@ -110,7 +111,9 @@ const GroupPanel: React.FC<GroupPanelProps> = ({
               sx={{ color: theme === 'dark' ? '#D1D5DB' : '#6C757D' }}
               aria-label={t('groupPanel.close')}
             >
-              <FiX />
+              <Suspense fallback={<span />}>
+                <FiX />
+              </Suspense>
             </IconButton>
           </Box>
           <Box sx={{ p: 2 }}>
@@ -209,12 +212,9 @@ const GroupPanel: React.FC<GroupPanelProps> = ({
                           marginBottom: '10px',
                         }}
                       >
-                        <SettingsIcon
-                          sx={{
-                            color: theme === 'dark' ? '#D1D5DB' : '#6C757D',
-                            marginRight: '8px',
-                          }}
-                        />
+                        <Suspense fallback={<span />}>
+                          <SettingsIcon />
+                        </Suspense>
                       </Box>
                     </TableCell>
                     <TableCell
@@ -248,15 +248,17 @@ const GroupPanel: React.FC<GroupPanelProps> = ({
             </Table>
           </Box>
           {selectedItem && (
-            <DynamicDetailsPanel
-              namespace={namespace}
-              name={selectedItem.metadata.name}
-              type={groupType.toLowerCase()}
-              resourceData={selectedItem}
-              onClose={() => setSelectedItem(null)}
-              isOpen={true}
-              initialTab={0}
-            />
+            <Suspense fallback={<div>Loading...</div>}>
+              <DynamicDetailsPanel
+                namespace={namespace}
+                name={selectedItem.metadata.name}
+                type={groupType.toLowerCase()}
+                resourceData={selectedItem}
+                onClose={() => setSelectedItem(null)}
+                isOpen={true}
+                initialTab={0}
+              />
+            </Suspense>
           )}
         </>
       )}
