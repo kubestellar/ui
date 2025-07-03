@@ -73,12 +73,6 @@ services:
     container_name: '${REDIS_CONTAINER_NAME:-kubestellar-redis}'
     ports:
       - '${REDIS_PORT:-6379}:6379'
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
 
 volumes:
   postgres_data: {}

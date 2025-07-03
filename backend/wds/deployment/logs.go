@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/kubestellar/ui/telemetry"
 	"github.com/kubestellar/ui/wds"
 	v1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,9 +32,11 @@ type DeploymentUpdate struct {
 func HandleDeploymentLogs(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
+		telemetry.WebsocketConnectionsFailed.WithLabelValues("deployment", "upgrade_error").Inc()
 		log.Println("WebSocket Upgrade Error:", err)
 		return
 	}
+	telemetry.WebsocketConnectionUpgradedSuccess.WithLabelValues("deployment", "upgrade_success").Inc()
 	defer conn.Close()
 
 	namespace := r.URL.Query().Get("namespace")

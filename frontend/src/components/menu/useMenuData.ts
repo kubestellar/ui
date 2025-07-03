@@ -1,17 +1,19 @@
 import {
-  HiOutlineHome,
   HiOutlineCube,
   HiOutlineCommandLine,
   HiOutlinePuzzlePiece,
+  HiOutlineUsers,
 } from 'react-icons/hi2';
-import { MdPolicy, MdAssuredWorkload } from 'react-icons/md';
+import { MdPolicy, MdAssuredWorkload, MdDashboard } from 'react-icons/md';
 import { useTranslation } from 'react-i18next';
 import { MenuItemData } from './Menu';
+import { useAdminCheck } from '../../hooks/useAuth';
 
 export const useMenuData = (): MenuItemData[] => {
   const { t } = useTranslation();
+  const { isAdmin } = useAdminCheck();
 
-  return [
+  const menuItems: MenuItemData[] = [
     {
       catalog: t('menu.catalogs.main'),
       centered: true,
@@ -20,7 +22,7 @@ export const useMenuData = (): MenuItemData[] => {
         {
           isLink: true,
           url: '/',
-          icon: HiOutlineHome,
+          icon: MdDashboard,
           label: t('menu.items.home'),
         },
       ],
@@ -70,4 +72,23 @@ export const useMenuData = (): MenuItemData[] => {
       ],
     },
   ];
+
+  // Add User Management option only for admins
+  if (isAdmin) {
+    menuItems.push({
+      catalog: t('menu.catalogs.admin') || 'Admin',
+      centered: true,
+      marginTop: '1rem',
+      listItems: [
+        {
+          isLink: true,
+          url: '/admin/users',
+          icon: HiOutlineUsers,
+          label: t('menu.items.userManagement') || 'User Management',
+        },
+      ],
+    });
+  }
+
+  return menuItems;
 };

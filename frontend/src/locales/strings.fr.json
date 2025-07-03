@@ -1388,6 +1388,7 @@
     "helm": {
       "createOwn": "Créez votre propre chart Helm",
       "popularCharts": "Déployer à partir de charts Helm populaires",
+      "prevCharts": "Liste des charts créés par l'utilisateur",
       "form": {
         "repositoryName": "Nom du Dépôt *",
         "repositoryNameTip": "Spécifiez le nom du dépôt Helm",
@@ -1693,7 +1694,8 @@
     "passwordRequired": "Le mot de passe est requis.",
     "errorCurrentPasswordIncorrect": "Le mot de passe actuel est incorrect",
     "cancel": "Annuler",
-    "changePasswordButton": "Changer le mot de passe"
+    "changePasswordButton": "Changer le mot de passe",
+    "passwordsMatch": "Les mots de passe correspondent !"
   },
   "onboardingLogs": {
     "onboarding": "Intégration",
@@ -1941,7 +1943,8 @@
       "navigation": "Navigation",
       "visualizations": "Visualisations",
       "help": "Aide",
-      "account": "Compte"
+      "account": "Compte",
+      "admin": "Administration"
     },
     "commands": {
       "home": {
@@ -1987,7 +1990,8 @@
     "catalogs": {
       "main": "Principal",
       "management": "Gestion",
-      "plugins": "Plugins"
+      "plugins": "Plugins",
+      "admin": "Administration"
     },
     "items": {
       "home": "Accueil",
@@ -1995,7 +1999,8 @@
       "stagedWorkloads": "Charges en attente",
       "bindingPolicies": "Politiques d'assignation",
       "deployedWorkloads": "Charges déployées",
-      "pluginManager": "Gestionnaire de Plugins"
+      "pluginManager": "Gestionnaire de Plugins",
+      "userManagement": "Gestion des Utilisateurs"
     }
   },
   "plugins": {
@@ -2105,6 +2110,78 @@
       "suggestion": {
         "title": "Suggestions d'amélioration",
         "placeholder": "Des suggestions pour améliorer ?"
+      }
+    }
+  },
+  "admin": {
+    "users": {
+      "title": "Gestion des Utilisateurs",
+      "subtitle": "Utilisateurs du Système",
+      "noUsers": "Aucun Utilisateur Trouvé",
+      "noUsersDescription": "Il n'y a pas encore d'utilisateurs dans le système. Cliquez sur 'Ajouter un Utilisateur' pour créer votre premier utilisateur.",
+      "noPermissions": "Aucune permission attribuée",
+      "actions": {
+        "addUser": "Ajouter un Utilisateur",
+        "editUser": "Modifier l'Utilisateur",
+        "add": "Ajouter un Utilisateur",
+        "update": "Mettre à Jour l'Utilisateur",
+        "delete": "Supprimer l'Utilisateur",
+        "edit": "Modifier",
+        "deleteUser": "Supprimer l'Utilisateur"
+      },
+      "table": {
+        "username": "Nom d'Utilisateur",
+        "role": "Rôle",
+        "permissions": "Permissions",
+        "actions": "Actions"
+      },
+      "roles": {
+        "admin": "Administrateur",
+        "user": "Utilisateur"
+      },
+      "permissions": {
+        "users": "Utilisateurs",
+        "resources": "Ressources",
+        "system": "Système",
+        "dashboard": "Tableau de Bord",
+        "levels": {
+          "read": "Lecture",
+          "write": "Écriture",
+          "none": "Aucun"
+        }
+      },
+      "form": {
+        "username": "Nom d'Utilisateur",
+        "usernamePlaceholder": "Entrez le nom d'utilisateur",
+        "password": "Mot de Passe",
+        "passwordPlaceholder": "Entrez le mot de passe",
+        "passwordOptional": "Mot de Passe (optionnel)",
+        "passwordOptionalPlaceholder": "Entrez un nouveau mot de passe ou laissez vide",
+        "confirmPassword": "Confirmer le Mot de Passe",
+        "confirmPasswordPlaceholder": "Confirmez le mot de passe",
+        "isAdmin": "Accès Administrateur",
+        "permissions": "Permissions des Composants",
+        "cancel": "Annuler",
+        "optional": "optionnel"
+      },
+      "delete": {
+        "title": "Supprimer l'Utilisateur",
+        "confirmTitle": "Confirmer la Suppression",
+        "confirmMessage": "Êtes-vous sûr de vouloir supprimer l'utilisateur \"{{username}}\" ? Cette action ne peut pas être annulée.",
+        "confirm": "Supprimer l'Utilisateur"
+      },
+      "errors": {
+        "fetchFailed": "Échec de la récupération des utilisateurs",
+        "missingFields": "Veuillez remplir tous les champs obligatoires",
+        "passwordMismatch": "Les mots de passe ne correspondent pas",
+        "addFailed": "Échec de l'ajout de l'utilisateur",
+        "updateFailed": "Échec de la mise à jour de l'utilisateur",
+        "deleteFailed": "Échec de la suppression de l'utilisateur"
+      },
+      "success": {
+        "userAdded": "Utilisateur ajouté avec succès",
+        "userUpdated": "Utilisateur mis à jour avec succès",
+        "userDeleted": "Utilisateur supprimé avec succès"
       }
     }
   }

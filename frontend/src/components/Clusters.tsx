@@ -318,16 +318,18 @@ const StatCard = ({
 
     if (title === 'Active Clusters') {
       return (
-        <div className="flex -space-x-1.5">
-          {[...Array(3)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="h-5 w-5 rounded-full border-2 border-white bg-emerald-500/80 dark:border-gray-800 dark:bg-emerald-400/80"
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: i * 0.1, duration: 0.3 }}
-            ></motion.div>
-          ))}
+        <div className="flex h-10 w-10 items-center justify-center">
+          <div className="flex -space-x-1.5">
+            {[...Array(3)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="h-5 w-5 rounded-full border-2 border-white bg-emerald-500/80 dark:border-gray-800 dark:bg-emerald-400/80"
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: i * 0.1, duration: 0.3 }}
+              ></motion.div>
+            ))}
+          </div>
         </div>
       );
     }
@@ -346,11 +348,11 @@ const StatCard = ({
 
     if (title === 'Current Context') {
       return (
-        <div className="relative flex h-12 w-12 items-center justify-center">
+        <div className="relative flex h-10 w-10 items-center justify-center">
           <div className="absolute inset-0 rounded-full border-2 border-amber-500/30 bg-amber-500/10 dark:border-amber-400/30 dark:bg-amber-400/10"></div>
           <div className="absolute inset-0 rounded-full border-2 border-dashed border-amber-500/40 dark:border-amber-400/40"></div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-amber-500/20 to-amber-600/30 dark:from-amber-400/20 dark:to-amber-500/30">
-            <Activity size={14} className="text-amber-600 dark:text-amber-400" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-amber-500/20 to-amber-600/30 dark:from-amber-400/20 dark:to-amber-500/30">
+            <Activity size={16} className="text-amber-600 dark:text-amber-400" />
           </div>
         </div>
       );
@@ -609,8 +611,8 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
     }
   };
 
-  // Helper function to trim long names
-  const trimName = (name: string, maxLength: number = 12): string => {
+  // Helper function to trim long names with better responsive handling
+  const trimName = (name: string, maxLength: number = 16): string => {
     if (!name || name.length <= maxLength) return name;
     return `${name.substring(0, maxLength)}...`;
   };
@@ -630,11 +632,11 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
 
   return (
     <motion.div
-      className="h-full overflow-hidden rounded-xl bg-white shadow-sm transition-colors duration-300 dark:bg-gray-800"
+      className="flex h-full flex-col overflow-hidden rounded-xl bg-white shadow-sm transition-colors duration-300 dark:bg-gray-800"
       variants={itemAnimationVariant}
       whileHover={{ y: -2, boxShadow: '0 8px 16px rgba(0, 0, 0, 0.05)' }}
     >
-      <div className="flex items-center justify-between border-b border-gray-200 px-5 pb-3 pt-5 transition-colors dark:border-gray-700">
+      <div className="flex shrink-0 items-center justify-between border-b border-gray-200 px-5 py-4 transition-colors dark:border-gray-700">
         <div className="flex items-center">
           <div className="mr-3 rounded-lg bg-amber-100 p-2 text-amber-600 transition-colors dark:bg-amber-900/40 dark:text-amber-400">
             <Clock size={18} />
@@ -643,160 +645,152 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
             {t('clusters.dashboard.recentActivity')}
           </h2>
         </div>
-        <div>
-          <button
-            onClick={handleRefresh}
-            className="rounded-lg bg-transparent p-2 text-blue-600 transition-colors hover:bg-gray-100 hover:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-700"
-            aria-label="Refresh data"
-          >
-            <RefreshCcw size={16} className={isLoading ? 'animate-spin' : ''} />
-          </button>
-        </div>
+        <button
+          onClick={handleRefresh}
+          className="rounded-lg bg-transparent p-2 text-blue-600 transition-colors hover:bg-gray-100 hover:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-700"
+          aria-label="Refresh data"
+        >
+          <RefreshCcw size={16} className={isLoading ? 'animate-spin' : ''} />
+        </button>
       </div>
 
-      <div className="max-h-[calc(100vh-25rem)] overflow-auto p-4 transition-colors dark:bg-gray-800">
-        {isLoading ? (
-          <div className="space-y-3">
-            {[1, 2, 3, 4].map(i => (
-              <div
-                key={i}
-                className="flex animate-pulse items-center rounded-lg bg-gray-50 p-3 transition-colors dark:bg-gray-700/60"
-              >
-                <div className="h-10 w-10 rounded-full bg-gray-200 transition-colors dark:bg-gray-600"></div>
-                <div className="ml-3 flex-grow">
-                  <div className="mb-2 h-4 w-3/4 rounded bg-gray-200 transition-colors dark:bg-gray-600"></div>
-                  <div className="h-3 w-1/2 rounded bg-gray-200 transition-colors dark:bg-gray-600"></div>
-                </div>
-                <div className="ml-2">
-                  <div className="h-6 w-16 rounded-full bg-gray-200 transition-colors dark:bg-gray-600"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : recentItems.length > 0 ? (
-          <div className="space-y-3">
-            {recentItems.map((item, index) => {
-              const isPolicy = item.type === 'binding-policy';
-
-              // Status colors based on item status
-              const getStatusColors = (status: string): { bgColor: string; textColor: string } => {
-                if (status === 'Active' || status === 'Available' || status === 'Synced') {
-                  return {
-                    bgColor: isDark ? 'bg-green-900/30' : 'bg-green-100',
-                    textColor: isDark ? 'text-green-400' : 'text-green-600',
-                  };
-                } else if (status === 'Warning' || status === 'Pending') {
-                  return {
-                    bgColor: isDark ? 'bg-yellow-900/30' : 'bg-yellow-100',
-                    textColor: isDark ? 'text-yellow-400' : 'text-yellow-600',
-                  };
-                } else {
-                  return {
-                    bgColor: isDark ? 'bg-red-900/30' : 'bg-red-100',
-                    textColor: isDark ? 'text-red-400' : 'text-red-600',
-                  };
-                }
-              };
-
-              const statusColors = getStatusColors(item.status);
-
-              // Determine the color scheme for the item based on type
-              const typeColors = isPolicy
-                ? {
-                    bg: isDark ? 'bg-purple-900/30' : 'bg-purple-100',
-                    text: isDark ? 'text-purple-400' : 'text-purple-600',
-                    icon: <FileText size={18} />,
-                  }
-                : {
-                    bg: isDark ? 'bg-blue-900/30' : 'bg-blue-100',
-                    text: isDark ? 'text-blue-400' : 'text-blue-600',
-                    icon: <Server size={18} />,
-                  };
-
-              return (
-                <Link
-                  to={isPolicy ? '/bp/manage' : '/its'}
-                  key={`${item.type}-${item.name}-${index}`}
-                  className="block"
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full overflow-y-auto p-4">
+          {isLoading ? (
+            <div className="grid gap-3">
+              {[1, 2, 3, 4].map(i => (
+                <div
+                  key={i}
+                  className="flex h-16 animate-pulse items-center rounded-lg bg-gray-50 p-3 transition-colors dark:bg-gray-700/60"
                 >
-                  <motion.div
+                  <div className="h-8 w-8 shrink-0 rounded-full bg-gray-200 transition-colors dark:bg-gray-600"></div>
+                  <div className="ml-3 flex-1 space-y-2">
+                    <div className="h-3 w-3/4 rounded bg-gray-200 transition-colors dark:bg-gray-600"></div>
+                    <div className="h-2 w-1/2 rounded bg-gray-200 transition-colors dark:bg-gray-600"></div>
+                  </div>
+                  <div className="h-5 w-16 shrink-0 rounded-full bg-gray-200 transition-colors dark:bg-gray-600"></div>
+                </div>
+              ))}
+            </div>
+          ) : recentItems.length > 0 ? (
+            <div className="grid gap-3">
+              {recentItems.map((item, index) => {
+                const isPolicy = item.type === 'binding-policy';
+
+                // Status colors based on item status
+                const getStatusColors = (
+                  status: string
+                ): { bgColor: string; textColor: string } => {
+                  if (status === 'Active' || status === 'Available' || status === 'Synced') {
+                    return {
+                      bgColor: isDark ? 'bg-green-900/30' : 'bg-green-100',
+                      textColor: isDark ? 'text-green-400' : 'text-green-600',
+                    };
+                  } else if (status === 'Warning' || status === 'Pending') {
+                    return {
+                      bgColor: isDark ? 'bg-yellow-900/30' : 'bg-yellow-100',
+                      textColor: isDark ? 'text-yellow-400' : 'text-yellow-600',
+                    };
+                  } else {
+                    return {
+                      bgColor: isDark ? 'bg-red-900/30' : 'bg-red-100',
+                      textColor: isDark ? 'text-red-400' : 'text-red-600',
+                    };
+                  }
+                };
+
+                const statusColors = getStatusColors(item.status);
+
+                // Determine the color scheme for the item based on type
+                const typeColors = isPolicy
+                  ? {
+                      bg: isDark ? 'bg-purple-900/30' : 'bg-purple-100',
+                      text: isDark ? 'text-purple-400' : 'text-purple-600',
+                      icon: <FileText size={16} />,
+                    }
+                  : {
+                      bg: isDark ? 'bg-blue-900/30' : 'bg-blue-100',
+                      text: isDark ? 'text-blue-400' : 'text-blue-600',
+                      icon: <Server size={16} />,
+                    };
+
+                return (
+                  <Link
+                    to={isPolicy ? '/bp/manage' : '/its'}
                     key={`${item.type}-${item.name}-${index}`}
-                    className="relative overflow-hidden rounded-lg border border-gray-100 bg-white p-4 transition-all duration-200 dark:border-gray-600 dark:bg-gray-700"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.05 }}
-                    whileHover={{
-                      scale: 1.01,
-                      boxShadow: isDark
-                        ? '0 4px 12px rgba(0, 0, 0, 0.3)'
-                        : '0 4px 12px rgba(0, 0, 0, 0.1)',
-                      transition: { duration: 0.2 },
-                    }}
+                    className="block"
                   >
-                    {/* Add subtle decorative element without animation */}
-                    <div className="absolute -right-4 -top-4 h-12 w-12 rounded-full bg-gray-50/40 dark:bg-gray-600/20"></div>
+                    <motion.div
+                      className="flex h-16 items-center overflow-hidden rounded-lg border border-gray-100 bg-white p-3 transition-all duration-200 hover:shadow-md dark:border-gray-600 dark:bg-gray-700"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                      whileHover={{
+                        scale: 1.02,
+                        boxShadow: isDark
+                          ? '0 4px 12px rgba(0, 0, 0, 0.3)'
+                          : '0 4px 12px rgba(0, 0, 0, 0.1)',
+                        transition: { duration: 0.2 },
+                      }}
+                    >
+                      {/* Icon with consistent sizing */}
+                      <div
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${typeColors.bg} ${typeColors.text} transition-colors`}
+                      >
+                        {typeColors.icon}
+                      </div>
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-start space-x-3">
-                        {/* Icon with proper styling */}
-                        <div
-                          className={`flex h-10 w-10 items-center justify-center rounded-full shadow-sm ${typeColors.bg} ${typeColors.text} transition-colors`}
-                        >
-                          {typeColors.icon}
-                        </div>
-
-                        {/* Content with better spacing and text styling */}
-                        <div>
-                          <div className="mb-1 flex items-center">
-                            <h3
-                              className="mr-2 font-medium text-gray-900 transition-colors dark:text-gray-100"
-                              title={item.name}
-                            >
-                              <span>{trimName(item.name)}</span>
-                            </h3>
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-xs transition-colors ${typeColors.bg} ${typeColors.text}`}
-                            >
-                              {isPolicy ? 'Policy' : 'Cluster'}
-                            </span>
-                          </div>
-                          <span className="flex items-center text-xs text-gray-500 transition-colors dark:text-gray-400">
-                            <Clock size={12} className="mr-1 inline" />
-                            {formatRelativeTime(item.timestamp)}
+                      {/* Content with proper overflow handling */}
+                      <div className="ml-3 flex-1 overflow-hidden">
+                        <div className="flex items-center gap-2">
+                          <h3
+                            className="truncate font-medium text-gray-900 transition-colors dark:text-gray-100"
+                            title={item.name}
+                          >
+                            {trimName(item.name)}
+                          </h3>
+                          <span
+                            className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${typeColors.bg} ${typeColors.text} transition-colors`}
+                          >
+                            {isPolicy ? 'Policy' : 'Cluster'}
                           </span>
                         </div>
+                        <div className="mt-0.5 flex items-center text-xs text-gray-500 transition-colors dark:text-gray-400">
+                          <Clock size={10} className="mr-1 shrink-0" />
+                          <span className="truncate">{formatRelativeTime(item.timestamp)}</span>
+                        </div>
                       </div>
 
-                      {/* Status badge with consistent styling */}
+                      {/* Status badge with consistent positioning */}
                       <div
-                        className={`inline-flex items-center rounded-full px-2 py-1 ${statusColors.bgColor} ${statusColors.textColor} text-xs font-medium transition-colors`}
+                        className={`ml-2 flex shrink-0 items-center rounded-full px-2 py-1 ${statusColors.bgColor} ${statusColors.textColor} text-xs font-medium transition-colors`}
                       >
-                        {getStatusIcon(item.status)}
-                        <span className="ml-1">{item.status}</span>
+                        <span className="mr-1">{getStatusIcon(item.status)}</span>
+                        <span className="hidden sm:inline">{item.status}</span>
                       </div>
-                    </div>
-                  </motion.div>
-                </Link>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 transition-colors dark:bg-gray-700">
-              <Clock size={24} className="text-gray-400 transition-colors dark:text-gray-500" />
+                    </motion.div>
+                  </Link>
+                );
+              })}
             </div>
-            <p className="mb-3 text-gray-500 transition-colors dark:text-gray-400">
-              {t('clusters.dashboard.noRecentActivity')}
-            </p>
-            <button
-              onClick={handleRefresh}
-              className="flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm text-white transition-colors hover:bg-blue-700"
-            >
-              <RefreshCcw size={14} className="mr-2" />
-              {t('clusters.dashboard.refresh')}
-            </button>
-          </div>
-        )}
+          ) : (
+            <div className="flex h-full flex-col items-center justify-center py-8 text-center">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 transition-colors dark:bg-gray-700">
+                <Clock size={20} className="text-gray-400 transition-colors dark:text-gray-500" />
+              </div>
+              <p className="mb-3 text-sm text-gray-500 transition-colors dark:text-gray-400">
+                {t('clusters.dashboard.noRecentActivity')}
+              </p>
+              <button
+                onClick={handleRefresh}
+                className="flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm text-white transition-colors hover:bg-blue-700"
+              >
+                <RefreshCcw size={12} className="mr-2" />
+                {t('clusters.dashboard.refresh')}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </motion.div>
   );
@@ -1171,7 +1165,7 @@ const K8sInfo = () => {
 
   // Make dashboard responsive with these layout classes
   const dashboardGridCols = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8';
-  const contentGridCols = 'grid grid-cols-1 md:grid-cols-12 gap-6 mb-6';
+  const contentGridCols = 'grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6';
 
   // Update the renderClusterStats function to use responsive grid
   const renderClusterStats = () => {
@@ -1424,11 +1418,11 @@ const K8sInfo = () => {
 
   const renderClusterList = () => (
     <motion.div
-      className="h-full overflow-hidden rounded-xl bg-white shadow-sm transition-colors duration-300 dark:bg-gray-800"
+      className="flex h-full flex-col overflow-hidden rounded-xl bg-white shadow-sm transition-colors duration-300 dark:bg-gray-800"
       variants={itemAnimationVariant}
       whileHover={{ y: -2, boxShadow: '0 8px 16px rgba(0, 0, 0, 0.05)' }}
     >
-      <div className="flex items-center justify-between border-b border-gray-200 px-5 pb-3 pt-5 dark:border-gray-700">
+      <div className="flex shrink-0 items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-700">
         <div className="flex items-center">
           <div className="mr-3 rounded-lg bg-indigo-100 p-2 text-indigo-600 transition-colors dark:bg-indigo-900/40 dark:text-indigo-400">
             <Layers size={18} />
@@ -1450,112 +1444,117 @@ const K8sInfo = () => {
         </div>
       </div>
 
-      <div className="max-h-[calc(100vh-20rem)] overflow-auto">
-        {sortedClusters.length > 0 ? (
-          <div className="grid divide-y divide-gray-200 dark:divide-gray-700">
-            {sortedClusters.slice(0, 8).map((cluster, index) => {
-              const isActive =
-                cluster.status === 'Active' ||
-                cluster.status === 'Available' ||
-                cluster.available === true;
-              const statusColor = isActive
-                ? isDark
-                  ? 'text-green-400'
-                  : 'text-green-600'
-                : isDark
-                  ? 'text-amber-400'
-                  : 'text-amber-600';
-              const statusBg = isActive
-                ? isDark
-                  ? 'bg-green-900/30'
-                  : 'bg-green-100'
-                : isDark
-                  ? 'bg-amber-900/30'
-                  : 'bg-amber-100';
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full overflow-y-auto">
+          {sortedClusters.length > 0 ? (
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              {sortedClusters.slice(0, 8).map((cluster, index) => {
+                const isActive =
+                  cluster.status === 'Active' ||
+                  cluster.status === 'Available' ||
+                  cluster.available === true;
+                const statusColor = isActive
+                  ? isDark
+                    ? 'text-green-400'
+                    : 'text-green-600'
+                  : isDark
+                    ? 'text-amber-400'
+                    : 'text-amber-600';
+                const statusBg = isActive
+                  ? isDark
+                    ? 'bg-green-900/30'
+                    : 'bg-green-100'
+                  : isDark
+                    ? 'bg-amber-900/30'
+                    : 'bg-amber-100';
 
-              return (
-                <motion.div
-                  key={cluster.name}
-                  className="dark:hover:bg-gray-750 cursor-pointer p-4 transition-all duration-200 hover:bg-gray-50"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
-                  onClick={() => handleClusterClick(cluster.name)}
-                  whileHover={{
-                    backgroundColor: isDark ? 'rgba(31, 41, 55, 0.5)' : 'rgba(249, 250, 251, 0.8)',
-                    scale: 1.01,
-                    transition: { duration: 0.2 },
-                  }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-full ${statusBg} ${statusColor} transition-colors`}
-                      >
-                        <Server size={18} />
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-gray-900 transition-colors dark:text-gray-100">
-                          {cluster.name}
-                        </h3>
-                        <div className="mt-1 flex items-center gap-2">
-                          <span className="whitespace-nowrap rounded-md bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-600 transition-colors dark:bg-blue-900/30 dark:text-blue-400">
-                            {cluster.context || cluster.name}
-                          </span>
-                          {/* Add capacity metrics */}
-                          <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
-                            <div
-                              className="flex items-center"
-                              title={t('clusters.dashboard.cpuCapacity')}
-                            >
-                              <Cpu size={12} className="mr-1 text-blue-500" />
-                              {cluster.cpuCapacity || t('clusters.dashboard.notAvailable')}
-                            </div>
-                            <div
-                              className="flex items-center"
-                              title={t('clusters.dashboard.memoryCapacity')}
-                            >
-                              <HardDrive size={12} className="mr-1 text-purple-500" />
-                              {cluster.memCapacity || t('clusters.dashboard.notAvailable')}
-                            </div>
-                            <div
-                              className="flex items-center"
-                              title={t('clusters.dashboard.podCapacity')}
-                            >
-                              <Layers size={12} className="mr-1 text-green-500" />
-                              {cluster.podsCapacity || t('clusters.dashboard.notAvailable')}{' '}
-                              {t('clusters.dashboard.podCapacityLabel')}
+                return (
+                  <motion.div
+                    key={cluster.name}
+                    className="cursor-pointer p-4 transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    onClick={() => handleClusterClick(cluster.name)}
+                    whileHover={{
+                      backgroundColor: isDark
+                        ? 'rgba(31, 41, 55, 0.5)'
+                        : 'rgba(249, 250, 251, 0.8)',
+                      scale: 1.01,
+                      transition: { duration: 0.2 },
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex min-w-0 flex-1 items-center space-x-3">
+                        <div
+                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${statusBg} ${statusColor} transition-colors`}
+                        >
+                          <Server size={18} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="truncate font-medium text-gray-900 transition-colors dark:text-gray-100">
+                            {cluster.name}
+                          </h3>
+                          <div className="mt-1 flex flex-wrap items-center gap-2">
+                            <span className="rounded-md bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-600 transition-colors dark:bg-blue-900/30 dark:text-blue-400">
+                              {cluster.context || cluster.name}
+                            </span>
+                            {/* Capacity metrics with responsive design */}
+                            <div className="hidden flex-wrap gap-1 text-xs text-gray-500 dark:text-gray-400 sm:flex">
+                              <div
+                                className="flex items-center"
+                                title={t('clusters.dashboard.cpuCapacity')}
+                              >
+                                <Cpu size={10} className="mr-1 text-blue-500" />
+                                <span className="truncate">{cluster.cpuCapacity || 'N/A'}</span>
+                              </div>
+                              <div
+                                className="flex items-center"
+                                title={t('clusters.dashboard.memoryCapacity')}
+                              >
+                                <HardDrive size={10} className="mr-1 text-purple-500" />
+                                <span className="truncate">{cluster.memCapacity || 'N/A'}</span>
+                              </div>
+                              <div
+                                className="flex items-center"
+                                title={t('clusters.dashboard.podCapacity')}
+                              >
+                                <Layers size={10} className="mr-1 text-green-500" />
+                                <span className="truncate">{cluster.podsCapacity || 'N/A'}</span>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex flex-col items-end">
-                      {isActive ? (
-                        <span className="mb-1 flex items-center whitespace-nowrap rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-600 transition-colors dark:bg-green-900/30 dark:text-green-400">
-                          <CheckCircle size={10} className="mr-1" />{' '}
-                          {t('clusters.dashboard.active')}
+                      <div className="ml-2 flex shrink-0 flex-col items-end">
+                        {isActive ? (
+                          <span className="mb-1 flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-600 transition-colors dark:bg-green-900/30 dark:text-green-400">
+                            <CheckCircle size={8} className="mr-1" />
+                            <span className="hidden sm:inline">
+                              {t('clusters.dashboard.active')}
+                            </span>
+                          </span>
+                        ) : (
+                          <span className="mb-1 flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-600 transition-colors dark:bg-amber-900/30 dark:text-amber-400">
+                            <AlertTriangle size={8} className="mr-1" />
+                            <span className="hidden sm:inline">
+                              {t('clusters.dashboard.inactive')}
+                            </span>
+                          </span>
+                        )}
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {formatDate(cluster.creationTime).split(',')[0]}
                         </span>
-                      ) : (
-                        <span className="mb-1 flex items-center whitespace-nowrap rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-600 transition-colors dark:bg-amber-900/30 dark:text-amber-400">
-                          <AlertTriangle size={10} className="mr-1" />{' '}
-                          {t('clusters.dashboard.inactive')}
-                        </span>
-                      )}
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {formatDate(cluster.creationTime).split(',')[0]}
-                      </span>
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="p-8 text-center">
-            <div className="flex flex-col items-center justify-center gap-3">
-              <div className="dark:bg-gray-750 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 transition-colors">
+                  </motion.div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex h-full flex-col items-center justify-center p-8 text-center">
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 transition-colors dark:bg-gray-700">
                 <Server size={28} className="text-gray-400 transition-colors dark:text-gray-500" />
               </div>
               <p className="mb-4 text-gray-500 transition-colors dark:text-gray-400">
@@ -1568,21 +1567,21 @@ const K8sInfo = () => {
                 <Plus size={16} className="mr-2" /> {t('clusters.dashboard.importCluster')}
               </Link>
             </div>
+          )}
+        </div>
+
+        {sortedClusters.length > 8 && (
+          <div className="shrink-0 border-t border-gray-200 p-4 dark:border-gray-700">
+            <Link
+              to="/its"
+              className="flex w-full items-center justify-center rounded-lg bg-blue-50 py-2 text-sm text-blue-600 transition-colors hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
+            >
+              {t('clusters.dashboard.showMoreClusters')}{' '}
+              <ArrowRightCircle size={14} className="ml-2" />
+            </Link>
           </div>
         )}
       </div>
-
-      {sortedClusters.length > 8 && (
-        <div className="border-t border-gray-200 p-4 dark:border-gray-700">
-          <Link
-            to="/its"
-            className="flex w-full items-center justify-center rounded-lg bg-blue-50 py-2 text-sm text-blue-600 transition-colors hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
-          >
-            {t('clusters.dashboard.showMoreClusters')}{' '}
-            <ArrowRightCircle size={14} className="ml-2" />
-          </Link>
-        </div>
-      )}
     </motion.div>
   );
 
@@ -1603,8 +1602,8 @@ const K8sInfo = () => {
           {renderHealthOverview()}
 
           <div className={contentGridCols}>
-            <div className="md:col-span-8">{renderClusterList()}</div>
-            <div className="md:col-span-4">
+            <div className="lg:col-span-8">{renderClusterList()}</div>
+            <div className="lg:col-span-4">
               <RecentActivityCard isDark={isDark} />
             </div>
           </div>

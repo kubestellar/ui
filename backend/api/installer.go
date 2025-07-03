@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/installer"
+	"github.com/kubestellar/ui/telemetry"
 	"github.com/kubestellar/ui/utils"
 )
 
@@ -41,6 +42,7 @@ func CheckPrerequisitesHandler(c *gin.Context) {
 func InstallHandler(c *gin.Context) {
 	var req InstallationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/api/install", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
@@ -63,7 +65,7 @@ func InstallHandler(c *gin.Context) {
 
 	// Start installation in background
 	go installer.InstallKubeStellar(installID, req.Platform)
-
+	telemetry.TotalHTTPRequests.WithLabelValues("POST", "/api/install", "200").Inc()
 	// Return response with install ID
 	c.JSON(http.StatusOK, InstallationResponse{
 		Success:   true,
@@ -77,10 +79,11 @@ func GetLogsHandler(c *gin.Context) {
 
 	logs, ok := installer.GetLogs(installID)
 	if !ok {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/install/logs/"+installID, "404").Inc()
 		c.JSON(http.StatusNotFound, gin.H{"error": "Installation ID not found"})
 		return
 	}
-
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/api/install/logs/"+installID, "200").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"id":   installID,
 		"logs": logs,
@@ -118,7 +121,7 @@ func handleWindowsInstall(c *gin.Context, req InstallationRequest) {
 			"PATH": "$HOME/ocm:$HOME/.kubeflex/bin:$PATH",
 		},
 	}
-
+	telemetry.HTTPErrorCounter.WithLabelValues("POST", "/api/install/windows", "200").Inc()
 	// Send response
 	c.JSON(http.StatusOK, InstallationResponse{
 		Success: true,
