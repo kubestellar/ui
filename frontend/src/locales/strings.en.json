@@ -30,7 +30,8 @@
       "success": "Success",
       "warning": "Version mismatch",
       "error": "Missing",
-      "installed": "Installed"
+      "installed": "Installed",
+      "test": "Test value"
     },
     "noResource": "No {{resource}} specified",
     "copy": "Copy",
