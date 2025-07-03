@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/kubestellar/ui/installer"
+	"github.com/kubestellar/ui/telemetry"
 )
 
 var upgrade = websocket.Upgrader{
@@ -24,6 +25,7 @@ func LogsWebSocketHandler(c *gin.Context) {
 
 	// Check if installation ID exists
 	if !installer.InstallationExists(installID) {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/ws/logs/:id", "404").Inc()
 		c.JSON(http.StatusNotFound, gin.H{"error": "Installation ID not found"})
 		return
 	}
@@ -31,6 +33,7 @@ func LogsWebSocketHandler(c *gin.Context) {
 	// Upgrade to WebSocket
 	conn, err := upgrade.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/ws/logs/:id", "400").Inc()
 		log.Printf("Error upgrading to WebSocket: %v", err)
 		return
 	}
@@ -43,6 +46,7 @@ func LogsWebSocketHandler(c *gin.Context) {
 	if err := conn.WriteJSON(map[string]interface{}{
 		"logs": initialLogs,
 	}); err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/api/ws/logs/:id", "500").Inc()
 		log.Printf("Error sending initial logs: %v", err)
 		return
 	}

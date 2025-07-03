@@ -18,6 +18,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/k8s"
 	"github.com/kubestellar/ui/models"
+	"github.com/kubestellar/ui/telemetry"
 	"github.com/kubestellar/ui/wds/bp"
 	certificatesv1 "k8s.io/api/certificates/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -47,8 +48,9 @@ type LabelUpdateResult struct {
 // OnboardClusterHandler handles HTTP requests to onboard a new cluster
 func OnboardClusterHandler(c *gin.Context) {
 	// Check if this is a file upload, JSON payload, or just a cluster name
-	contentType := c.GetHeader("Content-Type")
+	startTime := time.Now()
 
+	contentType := c.GetHeader("Content-Type")
 	var kubeconfigData []byte
 	var clusterName string
 	var useLocalKubeconfig bool = false
@@ -57,20 +59,29 @@ func OnboardClusterHandler(c *gin.Context) {
 	if strings.Contains(contentType, "multipart/form-data") {
 		file, fileErr := c.FormFile("kubeconfig")
 		clusterName = c.PostForm("name")
-
+		defer func() {
+			duration := time.Since(startTime).Seconds()
+			if err := recover(); err != nil {
+				telemetry.ClusterOnboardingDuration.WithLabelValues(clusterName, "failed").Observe(duration)
+				panic(err)
+			}
+		}()
 		// If cluster name is provided but no file, try to use local kubeconfig
 		if clusterName != "" && (fileErr != nil || file == nil) {
 			useLocalKubeconfig = true
 		} else if fileErr != nil {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/onboard", "400").Inc()
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to retrieve kubeconfig file"})
 			return
 		} else if clusterName == "" {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/onboard", "400").Inc()
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Cluster name is required"})
 			return
 		} else {
 			// Use uploaded file
 			f, err := file.Open()
 			if err != nil {
+				telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/onboard", "500").Inc()
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to open kubeconfig file"})
 				return
 			}
@@ -78,6 +89,7 @@ func OnboardClusterHandler(c *gin.Context) {
 
 			kubeconfigData, err = io.ReadAll(f)
 			if err != nil {
+				telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/onboard", "500").Inc()
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read kubeconfig file"})
 				return
 			}
@@ -90,12 +102,14 @@ func OnboardClusterHandler(c *gin.Context) {
 		}
 
 		if err := c.BindJSON(&req); err != nil {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/onboard", "400").Inc()
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
 			return
 		}
 
 		clusterName = req.ClusterName
 		if clusterName == "" {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/onboard", "400").Inc()
 			c.JSON(http.StatusBadRequest, gin.H{"error": "ClusterName is required"})
 			return
 		}
@@ -110,6 +124,7 @@ func OnboardClusterHandler(c *gin.Context) {
 		// Handle URL parameters
 		clusterName = c.Query("name")
 		if clusterName == "" {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/onboard", "400").Inc()
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Cluster name parameter is required"})
 			return
 		}
@@ -121,6 +136,7 @@ func OnboardClusterHandler(c *gin.Context) {
 		var err error
 		kubeconfigData, err = getClusterConfigFromLocal(clusterName)
 		if err != nil {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/onboard", "400").Inc()
 			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Failed to find cluster '%s' in local kubeconfig: %v", clusterName, err)})
 			return
 		}
@@ -130,6 +146,7 @@ func OnboardClusterHandler(c *gin.Context) {
 	mutex.Lock()
 	if status, exists := clusterStatuses[clusterName]; exists {
 		mutex.Unlock()
+		telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/onboard", "400").Inc()
 		c.JSON(http.StatusOK, gin.H{
 			"message": fmt.Sprintf("Cluster '%s' is already onboarded (status: %s)", clusterName, status),
 			"status":  status,
@@ -148,6 +165,7 @@ func OnboardClusterHandler(c *gin.Context) {
 		err := OnboardCluster(kubeconfigData, clusterName)
 		mutex.Lock()
 		if err != nil {
+			telemetry.HTTPErrorCounter.WithLabelValues("POST", "/clusters/onboard", "500").Inc()
 			log.Printf("Cluster '%s' onboarding failed: %v", clusterName, err)
 			clusterStatuses[clusterName] = "Failed"
 		} else {
@@ -156,7 +174,8 @@ func OnboardClusterHandler(c *gin.Context) {
 		}
 		mutex.Unlock()
 	}()
-
+	telemetry.TotalHTTPRequests.WithLabelValues("POST", "/clusters/onboard", "200").Inc()
+	telemetry.HTTPRequestDuration.WithLabelValues("POST", "/clusters/onboard").Observe(time.Since(startTime).Seconds())
 	c.JSON(http.StatusOK, gin.H{
 		"message":           fmt.Sprintf("Cluster '%s' is being onboarded", clusterName),
 		"status":            "Pending",
@@ -173,6 +192,7 @@ func getClusterConfigFromLocal(clusterName string) ([]byte, error) {
 	// Load the kubeconfig file
 	config, err := clientcmd.LoadFromFile(kubeconfig)
 	if err != nil {
+
 		return nil, fmt.Errorf("failed to load kubeconfig: %v", err)
 	}
 
@@ -287,6 +307,7 @@ func approveClusterCSRs(clientset *kubernetes.Clientset, clusterName string) err
 		output, err := approveCmd.CombinedOutput()
 		if err != nil {
 			LogOnboardingEvent(clusterName, "Error", fmt.Sprintf("Failed to approve CSRs using kubectl: %v, %s", err, string(output)))
+			telemetry.InstrumentKubectlCommand(approveCmd, "approve-csr", "its1")
 
 			// Method 2: Fall back to SDK approach if kubectl fails
 			LogOnboardingEvent(clusterName, "Fallback", "Falling back to SDK approach for CSR approval")
@@ -445,7 +466,7 @@ func acceptManagedCluster(clientset *kubernetes.Clientset, clusterName string) e
 func GetClusterStatusHandler(c *gin.Context) {
 	mutex.Lock()
 	defer mutex.Unlock()
-
+	startTime := time.Now()
 	var statuses []models.ClusterStatus
 	for cluster, status := range clusterStatuses {
 		statuses = append(statuses, models.ClusterStatus{
@@ -453,7 +474,8 @@ func GetClusterStatusHandler(c *gin.Context) {
 			Status:      status,
 		})
 	}
-
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/clusters/status", "200").Inc()
+	telemetry.HTTPRequestDuration.WithLabelValues("GET", "/clusters/status").Observe(time.Since(startTime).Seconds())
 	c.JSON(http.StatusOK, statuses)
 }
 
@@ -464,20 +486,23 @@ func UpdateManagedClusterLabelsHandler(c *gin.Context) {
 		ClusterNames []string          `json:"clusterNames"`
 		Labels       map[string]string `json:"labels"`
 	}
-
+	startTime := time.Now()
 	if err := c.BindJSON(&req); err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("PATCH", "/api/managedclusters/labels", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
 		return
 	}
 
 	// Validate required fields
 	if req.ContextName == "" || req.ClusterName == "" {
+		telemetry.HTTPErrorCounter.WithLabelValues("PATCH", "/api/managedclusters/labels", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "contextName and clusterName are required"})
 		return
 	}
 
 	clientset, restConfig, err := k8s.GetClientSetWithConfigContext(req.ContextName)
 	if err != nil {
+		telemetry.HTTPErrorCounter.WithLabelValues("PATCH", "/api/managedclusters/labels", "500").Inc()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get Kubernetes client"})
 		return
 	}
@@ -487,13 +512,16 @@ func UpdateManagedClusterLabelsHandler(c *gin.Context) {
 		// Handle partial success
 		if strings.Contains(err.Error(), "PARTIAL_SUCCESS:") {
 			message := strings.Replace(err.Error(), "PARTIAL_SUCCESS: ", "", 1)
+			telemetry.HTTPErrorCounter.WithLabelValues("PATCH", "/api/managedclusters/labels", "207").Inc()
 			c.JSON(http.StatusBadRequest, gin.H{"error": "PARTIAL_SUCCESS: " + message})
 			return
 		}
+		telemetry.HTTPErrorCounter.WithLabelValues("PATCH", "/api/managedclusters/labels", "500").Inc()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to update cluster labels: %v", err)})
 		return
 	}
-
+	telemetry.HTTPRequestDuration.WithLabelValues("PATCH", "/api/managedclusters/labels").Observe(time.Since(startTime).Seconds())
+	telemetry.TotalHTTPRequests.WithLabelValues("PATCH", "/api/managedclusters/labels", "200").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Cluster labels updated successfully",
 	})
