@@ -95,7 +95,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: check-spelling/check-spelling@prerelease
         with:
-          checkout: false
+          checkout: true
           spell_check_this: check-spelling/spell-check-this@prerelease
           task: ${{ needs.spelling.outputs.followup }}
           internal_state_directory: ${{ needs.spelling.outputs.internal_state_directory }}
@@ -112,7 +112,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: check-spelling/check-spelling@prerelease
         with:
-          checkout: false
+          checkout: true
           spell_check_this: check-spelling/spell-check-this@prerelease
           task: ${{ needs.spelling.outputs.followup }}
           internal_state_directory: ${{ needs.spelling.outputs.internal_state_directory }}
