@@ -2,6 +2,9 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import EnvironmentPlugin from 'vite-plugin-environment';
 import { execSync } from 'child_process';
+import rollupNodePolyFill from 'rollup-plugin-node-polyfills'; 
+import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill'; 
+import { NodeModulesPolyfillPlugin } from '@esbuild-plugins/node-modules-polyfill'; 
 
 // Utility function to extract the current git commit hash
 // Provides a short 7-character version of the full commit hash
@@ -33,6 +36,28 @@ export default defineConfig({
   // Ensures commit hash is available during build and runtime
   define: {
     'import.meta.env.VITE_GIT_COMMIT_HASH': JSON.stringify(getGitCommitHash()),
+    'process.env': {}, // Needed for Buffer and other Node core shims
+    global: 'globalThis', // Ensures globalThis works as `global`
+  },
+
+  resolve: {
+    alias: {
+      buffer: 'buffer', // Ensure Vite knows where to look
+    },
+  },
+
+  optimizeDeps: {
+    esbuildOptions: {
+      define: {
+        global: 'globalThis',
+      },
+      plugins: [
+        NodeGlobalsPolyfillPlugin({
+          buffer: true, // Polyfill Buffer
+        }),
+        NodeModulesPolyfillPlugin(),
+      ],
+    },
   },
 
   build: {
@@ -56,6 +81,7 @@ export default defineConfig({
           utils: ['axios', 'js-yaml', 'nanoid'],
         },
       },
+      plugins: [rollupNodePolyFill()], // Add node polyfills to Rollup
     },
   },
 
