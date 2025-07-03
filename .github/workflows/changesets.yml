@@ -31,6 +31,6 @@ jobs:
           commit: "chore: version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        # 👇 Important: still needs working-directory for Changesets action
+        # Important: still needs working-directory for Changesets action
         working-directory: frontend
 
