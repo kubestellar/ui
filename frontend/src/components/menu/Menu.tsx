@@ -43,23 +43,23 @@ const Menu: React.FC<MenuProps> = ({ collapsed = false }) => {
     expanded: {
       width: '100%',
       transition: {
-        type: 'spring',
+        type: 'spring' as const,
         stiffness: 300,
         damping: 30,
         staggerChildren: 0.05,
         delayChildren: 0.05,
-      },
+      } as const,
     },
     collapsed: {
       width: collapsed ? '100%' : '100%',
       alignItems: 'center',
       transition: {
-        type: 'spring',
+        type: 'spring' as const,
         stiffness: 300,
         damping: 30,
         staggerChildren: 0.05,
         staggerDirection: -1,
-      },
+      } as const,
     },
   };
 

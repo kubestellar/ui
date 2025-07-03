@@ -221,14 +221,14 @@ interface ProcessedCluster {
 // Revised dashboard header and transition animations
 const pageAnimationVariant = {
   initial: { opacity: 0 },
-  animate: { opacity: 1, transition: { duration: 0.6, staggerChildren: 0.1 } },
-  exit: { opacity: 0, transition: { duration: 0.4 } },
+  animate: { opacity: 1, transition: { duration: 0.6, staggerChildren: 0.1 } as const },
+  exit: { opacity: 0, transition: { duration: 0.4 } as const },
 };
 
 const itemAnimationVariant = {
   initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
-  exit: { opacity: 0, y: -10, transition: { duration: 0.3 } },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.42, 0, 0.58, 1] } as const },
+  exit: { opacity: 0, y: -10, transition: { duration: 0.3 } as const },
 };
 
 // Enhanced modern stat component with advanced UI
@@ -366,7 +366,7 @@ const StatCard = ({
         whileHover={{
           y: -4,
           boxShadow: '0 12px 24px rgba(0, 0, 0, 0.12)',
-          transition: { duration: 0.3, ease: [0.23, 1, 0.32, 1] },
+          transition: { duration: 0.3, ease: [0.23, 1, 0.32, 1] } as const,
         }}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -728,7 +728,7 @@ const RecentActivityCard = ({ isDark }: RecentActivityCardProps) => {
                         boxShadow: isDark
                           ? '0 4px 12px rgba(0, 0, 0, 0.3)'
                           : '0 4px 12px rgba(0, 0, 0, 0.1)',
-                        transition: { duration: 0.2 },
+                        transition: { duration: 0.2 } as const,
                       }}
                     >
                       {/* Icon with consistent sizing */}
@@ -1479,7 +1479,7 @@ const K8sInfo = () => {
                         ? 'rgba(31, 41, 55, 0.5)'
                         : 'rgba(249, 250, 251, 0.8)',
                       scale: 1.01,
-                      transition: { duration: 0.2 },
+                      transition: { duration: 0.2 } as const ,
                     }}
                   >
                     <div className="flex items-center justify-between">

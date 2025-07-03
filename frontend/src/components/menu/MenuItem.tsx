@@ -38,11 +38,11 @@ const MenuItem: React.FC<MenuItemProps> = ({
     expanded: {
       opacity: 1,
       width: '100%',
-      transition: { type: 'spring', stiffness: 300, damping: 20, delay },
+      transition: { type: 'spring' as const, stiffness: 300, damping: 20, delay } as const,
     },
     collapsed: {
       width: collapsed ? 'fit-content' : '100%',
-      transition: { type: 'spring', stiffness: 300, damping: 20, delay },
+      transition: { type: 'spring' as const, stiffness: 300, damping: 20, delay } as const,
     },
   };
 
@@ -51,7 +51,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
       opacity: 1,
       x: 0,
       display: 'block',
-      transition: { duration: 0.2, delay: delay + 0.1 },
+      transition: { duration: 0.2, delay: delay + 0.1 } as const,
     },
     collapsed: {
       opacity: 0,
@@ -59,7 +59,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
       transitionEnd: {
         display: 'none',
       },
-      transition: { duration: 0.2 },
+      transition: { duration: 0.2 } as const,
     },
   };
 
