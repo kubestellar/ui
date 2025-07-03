@@ -550,7 +550,7 @@ const CommandPalette: React.FC = () => {
                     scrollbarWidth: 'thin',
                     scrollbarColor: `${themeStyles.colors.brand.primary} transparent`,
                     WebkitOverflowScrolling: 'touch',
-                    '-ms-overflow-style': 'auto',
+                    msOverflowStyle: 'auto',
                   }}
                   ref={commandListRef}
                 >

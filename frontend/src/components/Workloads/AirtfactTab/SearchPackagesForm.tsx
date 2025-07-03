@@ -431,7 +431,7 @@ export const SearchPackagesForm = ({
             display: 'none',
           },
           scrollbarWidth: 'none', // Firefox
-          '-ms-overflow-style': 'none', // IE/Edge
+          msOverflowStyle: 'none', // IE/Edge
           display: 'flex',
           flexDirection: 'column',
           gap: 2,
