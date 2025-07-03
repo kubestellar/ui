@@ -50,7 +50,7 @@ export const DirectDeployForm = ({ theme, formData, setFormData, error }: Props)
           display: 'none',
         },
         scrollbarWidth: 'none',
-        msOverflowStyle: 'none',
+        '-ms-overflow-style': 'none',
         height: '55vh',
       }}
     >

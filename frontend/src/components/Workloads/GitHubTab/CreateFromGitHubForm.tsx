@@ -53,7 +53,7 @@ export const CreateFromGitHubForm = ({
           display: 'none',
         },
         scrollbarWidth: 'none',
-        msOverflowStyle: 'none',
+        '-ms-overflow-style': 'none',
         height: '55vh',
       }}
     >

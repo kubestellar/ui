@@ -47,7 +47,7 @@ export const RepositoriesListForm = ({ repositories, loading, theme }: Props) =>
             display: 'none',
           },
           scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
+          '-ms-overflow-style': 'none',
           display: 'flex',
           flexDirection: 'column',
           gap: 2,
