@@ -362,55 +362,6 @@ const ProfileSection = () => {
                     required
                     aria-label={t('profileSection.confirmNewPassword')}
                   />
-                  {/* Password match/mismatch icon */}
-                  {confirmNewPassword &&
-                    newPassword &&
-                    (newPassword === confirmNewPassword ? (
-                      <CheckCircle
-                        size={22}
-                        style={{
-                          color: '#4ade80', // green-400
-                          position: 'absolute',
-                          right: 38,
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          pointerEvents: 'none',
-                        }}
-                        aria-label="Passwords match"
-                      />
-                    ) : (
-                      <XCircle
-                        size={22}
-                        style={{
-                          color: '#f87171', // red-400
-                          position: 'absolute',
-                          right: 38,
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          pointerEvents: 'none',
-                        }}
-                        aria-label="Passwords do not match"
-                      />
-                    ))}
-                  {/* Show success message if passwords match and both are non-empty */}
-                  {!confirmPasswordError &&
-                    newPassword &&
-                    confirmNewPassword &&
-                    newPassword === confirmNewPassword && (
-                      <div
-                        style={{
-                          color: '#4ade80', // green-400
-                          fontSize: 14,
-                          marginTop: '0.3rem',
-                          marginBottom: '0.5rem',
-                          textAlign: 'left',
-                          fontWeight: 500,
-                        }}
-                        role="status"
-                      >
-                        {t('profileSection.passwordsMatch') || 'Passwords match!'}
-                      </div>
-                    )}
                   <button
                     type="button"
                     tabIndex={0}
@@ -426,47 +377,72 @@ const ProfileSection = () => {
                       border: 'none',
                       padding: 0,
                       margin: 0,
-                      right: 8,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      position: 'absolute',
                     }}
                   >
                     {showConfirmNewPassword ? <EyeOff size={22} /> : <Eye size={22} />}
                   </button>
                 </div>
               </div>
+              {/* Passwords do not match message and icon*/}
+              {!confirmPasswordError &&
+                newPassword &&
+                confirmNewPassword &&
+                newPassword === confirmNewPassword && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      color: '#4ade80', // green-400
+                      fontSize: 14,
+                      marginTop: '0.3rem',
+                      marginBottom: '0.5rem',
+                      textAlign: 'left',
+                      fontWeight: 500,
+                      gap: '0.4rem',
+                    }}
+                    role="status"
+                  >
+                    <CheckCircle size={18} style={{ flexShrink: 0 }} />
+                    {t('profileSection.passwordsMatch') || 'Passwords match!'}
+                  </div>
+                )}
               {confirmPasswordError && (
                 <div
                   style={{
-                    color: '#e57373',
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: '#e57373', // red-400
                     fontSize: 14,
                     marginTop: '0.3rem',
                     marginBottom: '0.5rem',
                     textAlign: 'left',
                     fontWeight: 500,
+                    gap: '0.4rem',
                   }}
                   role="alert"
                 >
+                  <XCircle size={18} style={{ flexShrink: 0 }} />
                   {confirmPasswordError}
                 </div>
               )}
-              {formError && (
-                <div
-                  style={{
-                    background: '#2d2323',
-                    color: '#e57373',
-                    borderRadius: 8,
-                    fontSize: 16,
-                    padding: '0.7rem 1rem',
-                    marginBottom: '1.5rem',
-                    textAlign: 'left',
-                    fontWeight: 500,
-                  }}
-                >
-                  {formError}
-                </div>
-              )}
+              {formError &&
+                (!confirmPasswordError ||
+                  formError !== t('profileSection.passwordsDoNotMatch')) && (
+                  <div
+                    style={{
+                      background: '#2d2323',
+                      color: '#e57373',
+                      borderRadius: 8,
+                      fontSize: 16,
+                      padding: '0.7rem 1rem',
+                      marginBottom: '1.5rem',
+                      textAlign: 'left',
+                      fontWeight: 500,
+                    }}
+                  >
+                    {formError}
+                  </div>
+                )}
               <div style={{ display: 'flex', gap: '1rem', marginTop: '2.2rem' }}>
                 <button
                   type="button"
