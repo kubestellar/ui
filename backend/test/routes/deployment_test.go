@@ -12,6 +12,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestSetupDeploymentRoutes tests that all deployment routes are properly registered
+// and handle requests appropriately. Note that some routes may fail due to missing
+// Kubernetes contexts or Redis connectivity, but the routes should still be accessible.
 func TestSetupDeploymentRoutes(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
@@ -50,14 +53,14 @@ func TestSetupDeploymentRoutes(t *testing.T) {
 			name:           "WebSocket deployment handler",
 			method:         "GET",
 			url:            "/ws",
-			expectedStatus: 200,
+			expectedStatus: 400, // WebSocket upgrade will fail in test environment
 			description:    "Should handle WebSocket deployment route",
 		},
 		{
 			name:           "WebSocket deployment logs",
 			method:         "GET",
 			url:            "/api/wds/logs",
-			expectedStatus: 200,
+			expectedStatus: 400, // WebSocket upgrade will fail in test environment
 			description:    "Should handle WebSocket deployment logs route",
 		},
 		{
@@ -85,6 +88,11 @@ func TestSetupDeploymentRoutes(t *testing.T) {
 
 			// For route registration tests, we just want to ensure the route exists (not 404)
 			assert.NotEqual(t, http.StatusNotFound, w.Code, "Route should be registered")
+
+			// For WebSocket routes, we expect 400 (Bad Request) due to missing WebSocket headers
+			if tt.url == "/ws" || tt.url == "/api/wds/logs" {
+				assert.Equal(t, http.StatusBadRequest, w.Code, "WebSocket routes should return 400 without proper headers")
+			}
 		})
 	}
 }
@@ -163,8 +171,10 @@ func TestDeploymentWebSocketRoutes(t *testing.T) {
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
 
-			// WebSocket routes should exist (not return 404)
+			// WebSocket routes should exist (not return 404) but will fail upgrade (400)
 			assert.NotEqual(t, http.StatusNotFound, w.Code, "WebSocket route should be registered")
+			// WebSocket upgrade will fail in test environment without proper headers
+			assert.Equal(t, http.StatusBadRequest, w.Code, "WebSocket routes should return 400 without proper headers")
 		})
 	}
 }
