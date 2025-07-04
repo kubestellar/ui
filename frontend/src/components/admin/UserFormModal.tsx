@@ -372,7 +372,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                               ? '0 2px 8px rgba(0, 0, 0, 0.25)'
                               : '0 2px 8px rgba(0, 0, 0, 0.05)'
                             : undefined,
-                          transition: { duration: 0.2 } as const,
+                          transition: { duration: 0.2 },
                         }}
                       >
                         <div className="flex items-center justify-between">
