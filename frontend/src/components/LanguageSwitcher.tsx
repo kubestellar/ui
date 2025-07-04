@@ -145,7 +145,7 @@ const LanguageSwitcher = () => {
                 ? 'absolute right-0 z-50 mt-1 w-40 overflow-hidden rounded-md border border-white/10 bg-gradient-to-b from-blue-900/90 to-purple-900/90 shadow-lg'
                 : `absolute right-0 z-50 mt-1 w-48 overflow-hidden rounded-lg border shadow-xl ${
                     isDark
-                      ? 'bg-gray-800 border-gray-700 text-gray-200'
+                      ? 'border-gray-700 bg-gray-800 text-gray-200'
                       : 'border-gray-200 bg-white text-gray-800'
                   }`
             }
@@ -189,7 +189,7 @@ const LanguageSwitcher = () => {
                               ? 'bg-blue-900/60 text-blue-200'
                               : 'bg-gray-800 text-gray-300 hover:bg-gray-700/80'
                             : i18n.language === lang.code
-                              ? 'bg-indigo-50 text-indigo-700 font-medium'
+                              ? 'bg-indigo-50 font-medium text-indigo-700'
                               : 'bg-white text-gray-800 hover:bg-gray-100'
                         }`
                   }
