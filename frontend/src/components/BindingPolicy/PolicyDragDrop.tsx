@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BindingPolicyInfo, Workload, ManagedCluster } from '../../types/bindingPolicy';
 import { PolicyConfiguration } from './ConfigurationSidebar';
-import PolicySelectionContainer from './PolicySelectionContainer';
+import PolicyDragDropContainer from './PolicyDragDropContainer';
 import {
   Dialog,
   DialogTitle,
@@ -27,7 +27,7 @@ import PublishIcon from '@mui/icons-material/Publish';
 import useTheme from '../../stores/themeStore';
 import { useTranslation } from 'react-i18next';
 
-interface PolicySelectionProps {
+interface PolicyDragDropProps {
   policies?: BindingPolicyInfo[];
   clusters?: ManagedCluster[];
   workloads?: Workload[];
@@ -202,7 +202,7 @@ const HelpDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, on
   );
 };
 
-const PolicySelection: React.FC<PolicySelectionProps> = props => {
+const PolicyDragDrop: React.FC<PolicyDragDropProps> = props => {
   const [helpDialogOpen, setHelpDialogOpen] = useState(false);
 
   const theme = useTheme(state => state.theme);
@@ -246,11 +246,11 @@ const PolicySelection: React.FC<PolicySelectionProps> = props => {
         </Tooltip>
       </Box>
 
-      <PolicySelectionContainer {...props} />
+      <PolicyDragDropContainer {...props} />
 
       <HelpDialog open={helpDialogOpen} onClose={() => setHelpDialogOpen(false)} />
     </Box>
   );
 };
 
-export default React.memo(PolicySelection);
+export default React.memo(PolicyDragDrop);

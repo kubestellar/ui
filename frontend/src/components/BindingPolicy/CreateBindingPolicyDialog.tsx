@@ -29,10 +29,10 @@ import {
   getDialogPaperProps,
 } from './styles/CreateBindingPolicyStyles';
 import { DEFAULT_BINDING_POLICY_TEMPLATE } from './constants/index';
-import PolicySelection from './PolicySelection';
+import PolicyDragDrop from './PolicyDragDrop'; // TODO: Rename component to PolicySelection
 import { ManagedCluster, Workload } from '../../types/bindingPolicy';
 import { PolicyConfiguration } from './ConfigurationSidebar';
-import { usePolicySelectionStore } from '../../stores/policySelectionStore';
+import { usePolicyDragDropStore } from '../../stores/policyDragDropStore';
 import { useBPQueries } from '../../hooks/queries/useBPQueries';
 import { toast } from 'react-hot-toast';
 import CancelButton from '../common/CancelButton';
@@ -103,7 +103,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
     config?: PolicyConfiguration;
   } | null>(null);
 
-  const policyCanvasEntities = usePolicySelectionStore(state => state.canvasEntities);
+  const policyCanvasEntities = usePolicyDragDropStore(state => state.canvasEntities);
 
   const { useGenerateBindingPolicyYaml, useWorkloadSSE } = useBPQueries();
   const generateYamlMutation = useGenerateBindingPolicyYaml();
@@ -935,7 +935,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
   const isDarkTheme = theme === 'dark';
 
   const handleClearPolicyCanvas = () => {
-    usePolicySelectionStore.getState().clearCanvas();
+    usePolicyDragDropStore.getState().clearCanvas();
   };
 
   const getWorkloadDisplayName = (workloadId: string): string => {
@@ -1441,7 +1441,7 @@ const CreateBindingPolicyDialog: React.FC<CreateBindingPolicyDialogProps> = ({
                     overflow: 'hidden',
                   }}
                 >
-                  <PolicySelection
+                  <PolicyDragDrop
                     clusters={clusters}
                     workloads={allWorkloads}
                     onCreateBindingPolicy={handleCreateBindingPolicy}
