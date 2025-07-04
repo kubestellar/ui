@@ -43,7 +43,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LabelIcon from '@mui/icons-material/Label';
 import { Tag, Tags } from 'lucide-react';
-import { usePolicyDragDropStore } from '../../stores/policyDragDropStore';
+import { usePolicySelectionStore } from '../../stores/policySelectionStore';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useBPQueries } from '../../hooks/queries/useBPQueries';
 import { toast } from 'react-hot-toast';
@@ -565,7 +565,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
     disabled: isDarkTheme ? '#475569' : '#94a3b8',
   };
 
-  // Extract unique labels from workloads
+  // Extract from workloads
   const uniqueLabels = React.useMemo(() => {
     const labelMap: Record<string, LabelGroup> = {};
 
@@ -672,7 +672,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
     const itemId = `label-${labelGroup.key}:${labelGroup.value}`;
 
     // Check if this item is in the canvas
-    const { canvasEntities } = usePolicyDragDropStore.getState();
+    const { canvasEntities } = usePolicySelectionStore.getState();
     const isInCanvas = canvasEntities.workloads.includes(itemId);
 
     // Check if this is from a cluster-scoped resource
@@ -1107,27 +1107,7 @@ const WorkloadPanel: React.FC<WorkloadPanelProps> = ({
                   : t('clusters.labels.noLabelsFound')}
               </Typography>
             ) : (
-              <>
-                {(state.status === 'success' || state.status === 'loading') && state.data && (
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      px: 2,
-                      display: 'block',
-                      color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary',
-                    }}
-                  >
-                    {t('bindingPolicy.labels.count', {
-                      count: filteredLabels.length,
-                      total: panelWorkloads.length,
-                    })}
-                    {state.status === 'loading'
-                      ? ` (${t('common.loading')})`
-                      : t('bindingPolicy.visualization.legendItems.activePolicy')}
-                  </Typography>
-                )}
-                {filteredLabels.map(labelGroup => renderLabelItem(labelGroup))}
-              </>
+              <>{filteredLabels.map(labelGroup => renderLabelItem(labelGroup))}</>
             )}
           </Box>
         )}
