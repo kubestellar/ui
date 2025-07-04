@@ -59,6 +59,10 @@
         "title": "Bindungsrichtlinien",
         "description": "Bindungsrichtlinien konfigurieren"
       },
+      "userManagement": {
+        "title": "Benutzerverwaltung",
+        "description": "Systembenutzer und Berechtigungen verwalten"
+      },
       "wdsTreeview": {
         "title": "WDS-Baumansicht",
         "description": "Workload-Verteilung visualisieren"

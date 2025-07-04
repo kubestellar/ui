@@ -1967,6 +1967,10 @@
         "title": "Politiques d'assignation",
         "description": "Configurer les politiques d'assignation"
       },
+      "userManagement": {
+        "title": "Gestion des utilisateurs",
+        "description": "Gérer les utilisateurs du système et leurs permissions"
+      },
       "wdsTreeview": {
         "title": "Vue en arborescence WDS",
         "description": "Visualiser la distribution des charges de travail"

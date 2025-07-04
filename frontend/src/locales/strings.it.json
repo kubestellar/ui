@@ -59,6 +59,10 @@
         "title": "Policy di binding",
         "description": "Configura le policy di binding"
       },
+      "userManagement": {
+        "title": "Gestione Utenti",
+        "description": "Gestisci gli utenti di sistema e i permessi"
+      },
       "wdsTreeview": {
         "title": "Vista ad albero WDS",
         "description": "Visualizza la distribuzione dei workloads"

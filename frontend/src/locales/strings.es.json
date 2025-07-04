@@ -1965,6 +1965,10 @@
         "title": "Políticas de vinculación",
         "description": "Configurar políticas de vinculación"
       },
+      "userManagement": {
+        "title": "Gestión de Usuarios",
+        "description": "Gestionar los usuarios del sistema y sus permisos"
+      },
       "wdsTreeview": {
         "title": "Vista de árbol WDS",
         "description": "Visualizar la distribución de cargas de trabajo"
