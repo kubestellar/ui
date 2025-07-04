@@ -8,8 +8,6 @@ import ToastProvider from './components/providers/ToastProvider.tsx';
 import { WebSocketProvider } from './context/WebSocketProvider.tsx';
 import { PluginProvider } from './plugins/PluginLoader.tsx';
 import './i18n.ts';
-import { Buffer } from 'buffer';
-window.Buffer = Buffer;
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
