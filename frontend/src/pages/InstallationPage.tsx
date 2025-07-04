@@ -235,6 +235,7 @@ const CodeBlock = ({
 }) => {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
+  const [hovered, setHovered] = useState(false);
 
   const copyToClipboard = (e: React.MouseEvent) => {
     // Stop propagation to prevent toggle
@@ -253,33 +254,41 @@ const CodeBlock = ({
   };
 
   return (
-    <div className="relative mb-4 overflow-hidden rounded-md" onClick={e => e.stopPropagation()}>
+    <div
+      className={`relative mb-4 overflow-hidden rounded-md border shadow-sm ${
+        isDark ? 'border-slate-800' : 'border-gray-200'
+      }`}
+      onClick={e => e.stopPropagation()}
+    >
       <div
         className={`flex items-center justify-between border-b px-4 py-2 transition-colors duration-300 ${
-          isDark ? 'border-slate-700 bg-slate-900/90' : 'border-gray-700 bg-gray-800'
+          isDark ? 'border-slate-700 bg-slate-900/90' : 'border-gray-200 bg-gray-100'
         }`}
       >
-        <span className={`font-mono text-xs ${isDark ? 'text-slate-300' : 'text-gray-300'}`}>
+        <span className={`font-mono text-xs ${isDark ? 'text-slate-300' : 'text-gray-500'}`}>
           {t(`installationPage.codeBlock.${language}`)}
         </span>
         <button
           onClick={copyToClipboard}
-          className={`rounded p-1 transition-colors ${
-            isDark ? 'text-slate-300 hover:text-white' : 'text-gray-300 hover:text-white'
-          }`}
+          className="rounded p-1 transition-colors"
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
           aria-label="Copy code"
         >
-          {copied ? <CheckCircle size={16} /> : <Copy size={16} />}
+          {copied
+            ? <CheckCircle size={16} style={{ color: isDark ? (hovered ? '#fff' : '#cbd5e1') : (hovered ? '#2563eb' : '#9ca3af') }} />
+            : <Copy size={16} style={{ color: isDark ? (hovered ? '#fff' : '#cbd5e1') : (hovered ? '#2563eb' : '#9ca3af') }} />
+          }
         </button>
       </div>
       <div
         className={`overflow-x-auto p-4 transition-colors duration-300 ${
-          isDark ? 'bg-slate-950' : 'bg-gray-900'
+          isDark ? 'bg-slate-950' : 'bg-white'
         }`}
       >
         <pre
           className={`whitespace-pre-wrap break-all font-mono text-sm ${
-            isDark ? 'text-emerald-300' : 'text-green-400'
+            isDark ? 'text-emerald-300' : 'text-green-700'
           }`}
         >
           {code}
