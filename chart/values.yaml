@@ -10,6 +10,9 @@ frontend:
 backend:
   image: mavrick1/kubestellar-b:latest
   port: 4000
+  env:
+    - name: REDIS_PORT
+      value: "{{ .Values.redis.port }}"
 
 redis:
   enabled: true
