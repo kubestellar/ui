@@ -11,8 +11,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/kubestellar/ui/k8s"
-	"github.com/kubestellar/ui/log"
+	"github.com/kubestellar/ui/backend/k8s"
+	"github.com/kubestellar/ui/backend/log"
 	"go.uber.org/zap"
 	authorizationv1 "k8s.io/api/authorization/v1"
 	v1 "k8s.io/api/core/v1"

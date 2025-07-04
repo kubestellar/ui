@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/kubestellar/ui/utils"
+	"github.com/kubestellar/ui/backend/utils"
 )
 
 func TestYAMLToJSON(t *testing.T) {

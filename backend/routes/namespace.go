@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	ns "github.com/kubestellar/ui/namespace"
-	nsresources "github.com/kubestellar/ui/namespace/resources"
+	ns "github.com/kubestellar/ui/backend/namespace"
+	nsresources "github.com/kubestellar/ui/backend/namespace/resources"
 )
 
 func setupNamespaceRoutes(router *gin.Engine) {

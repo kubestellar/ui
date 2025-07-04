@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/utils"
+	"github.com/kubestellar/ui/backend/utils"
 )
 
 // AuthenticateMiddleware validates JWT token

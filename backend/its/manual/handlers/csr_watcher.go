@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/kubestellar/ui/telemetry"
+	"github.com/kubestellar/ui/backend/telemetry"
 
 	"github.com/gin-gonic/gin"
 )

@@ -11,8 +11,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/kubestellar/ui/k8s"
-	"github.com/kubestellar/ui/telemetry"
+	"github.com/kubestellar/ui/backend/k8s"
+	"github.com/kubestellar/ui/backend/telemetry"
 	"k8s.io/client-go/kubernetes"
 )
 

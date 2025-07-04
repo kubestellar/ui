@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kubestellar/ui/telemetry"
+	"github.com/kubestellar/ui/backend/telemetry"
 	"io"
 	"log"
 	"net/http"

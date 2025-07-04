@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/kubestellar/ui/models"
+	"github.com/kubestellar/ui/backend/models"
 	"github.com/stretchr/testify/assert"
 )
 

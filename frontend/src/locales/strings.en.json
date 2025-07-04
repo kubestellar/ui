@@ -1014,7 +1014,7 @@
       "policyBindingCreatedChip": "Binding created for policy propagation"
     },
     "tabs": {
-      "selectItems": "Select Items",
+      "selectItems": "Click and Drop",
       "yaml": "YAML",
       "uploadFile": "Upload File"
     },
@@ -1163,7 +1163,7 @@
       }
     },
     "loadingCanvas": "Loading canvas data...",
-    "dragDrop": {
+    "selection": {
       "infoAlert": "This interface is using simulated responses to create binding policies. Select clusters and workloads from the lists to add them to the canvas, then click on a workload and then a cluster to create a binding policy connection.",
       "helpDialog": {
         "title": "Create Binding Policies with Direct Connections",
@@ -1259,8 +1259,7 @@
       "title": "Labels:",
       "key": "Key",
       "value": "Value",
-      "add": "Add",
-      "count": "{{count}} unique labels across {{total}}"
+      "add": "Add"
     },
     "creatingConnection": "Creating connection:",
     "previewDialog": {
@@ -1708,7 +1707,8 @@
     "creating": "Creating...",
     "createContext": "Create Context"
   },
-  "policyDragDropStore": {
+
+  "policySelectionStore": {
     "labelsAssigned": "Labels automatically assigned to {{itemType}} {{itemId}}",
     "policyAssigned": "Successfully assigned {{policyName}} to {{targetType}} {{targetName}}",
     "clusterAlreadyAssigned": "Cluster {{targetName}} is already assigned to policy {{policyName}}",

@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/log"
-	"github.com/kubestellar/ui/telemetry"
+	"github.com/kubestellar/ui/backend/log"
+	"github.com/kubestellar/ui/backend/telemetry"
 	"go.uber.org/zap"
 )
 
