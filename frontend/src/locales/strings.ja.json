@@ -2038,6 +2038,10 @@
         "title": "バインディングポリシー",
         "description": "バインディングポリシーを構成"
       },
+      "userManagement": {
+        "title": "ユーザー管理",
+        "description": "システムユーザーと権限を管理"
+      },
       "wdsTreeview": {
         "title": "WDS ツリービュー",
         "description": "ワークロード分布を可視化"
