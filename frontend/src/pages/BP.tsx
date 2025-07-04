@@ -22,7 +22,6 @@ import BPPagination from '../components/BindingPolicy/BPPagination';
 import PreviewDialog from '../components/BindingPolicy/PreviewDialog';
 import DeleteDialog from '../components/BindingPolicy/Dialogs/DeleteDialog';
 import EditBindingPolicyDialog from '../components/BindingPolicy/Dialogs/EditBindingPolicyDialog';
-import yaml from 'js-yaml'; // Import yaml parser
 import { BindingPolicyInfo, ManagedCluster, Workload } from '../types/bindingPolicy';
 import useTheme from '../stores/themeStore';
 // Import React Query hooks
@@ -35,7 +34,6 @@ import PolicySelection from '../components/BindingPolicy/PolicySelection';
 import EditIcon from '@mui/icons-material/Edit';
 import PublishIcon from '@mui/icons-material/Publish';
 import KubernetesIcon from '../components/BindingPolicy/KubernetesIcon';
-import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   getTabsStyles,
@@ -45,6 +43,9 @@ import { api } from '../lib/api';
 import BPSkeleton from '../components/ui/BPSkeleton';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import React, { Suspense } from 'react';
+const EditIcon = React.lazy(() => import('@mui/icons-material/Edit'));
+const PublishIcon = React.lazy(() => import('@mui/icons-material/Publish'));
 
 // Define EmptyState component outside of the BP component
 const EmptyState: React.FC<{
@@ -565,6 +566,7 @@ const BP = () => {
             };
           }
 
+          const yaml = (await import('js-yaml')).default;
           const parsedYaml = yaml.load(yamlContent) as YamlPolicy;
 
           // Try to extract more specific workload info if available
@@ -1048,7 +1050,9 @@ const BP = () => {
               <ListItemIcon>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <KubernetesIcon type="workload" size={20} />
-                  <ArrowRightAltIcon fontSize="small" sx={{ mx: 0.5 }} />
+                  <Suspense fallback={<span />}>
+                    <EditIcon />
+                  </Suspense>
                   <KubernetesIcon type="cluster" size={20} />
                 </Box>
               </ListItemIcon>
@@ -1058,13 +1062,17 @@ const BP = () => {
             </ListItem>
             <ListItem>
               <ListItemIcon>
-                <EditIcon />
+                <Suspense fallback={<span />}>
+                  <EditIcon />
+                </Suspense>
               </ListItemIcon>
               <ListItemText primary={t('bindingPolicy.selection.helpDialog.steps.fillDetails')} />
             </ListItem>
             <ListItem>
               <ListItemIcon>
-                <PublishIcon color="primary" />
+                <Suspense fallback={<span />}>
+                  <PublishIcon color="primary" />
+                </Suspense>
               </ListItemIcon>
               <ListItemText primary={t('bindingPolicy.selection.helpDialog.steps.deploy')} />
             </ListItem>

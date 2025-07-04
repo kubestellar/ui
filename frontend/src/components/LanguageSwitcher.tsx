@@ -140,12 +140,13 @@ const LanguageSwitcher = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            style={{ backgroundColor: isDark ? 'rgba(31, 41, 55, 0.95)' : '#ffffff' }}
             className={
               isLoginPage
                 ? 'absolute right-0 z-50 mt-1 w-40 overflow-hidden rounded-md border border-white/10 bg-gradient-to-b from-blue-900/90 to-purple-900/90 shadow-lg'
                 : `absolute right-0 z-50 mt-1 w-48 overflow-hidden rounded-lg border shadow-xl ${
-                    isDark ? 'border-gray-700 text-gray-200' : 'border-gray-200 text-gray-700'
+                    isDark
+                      ? 'bg-gray-800/94 border-gray-700 text-gray-200'
+                      : 'border-gray-200 bg-white text-gray-700'
                   }`
             }
             role="listbox"

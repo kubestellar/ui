@@ -5,20 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"log"
-	"net/http"
-	"os"
-	"sort"
-	"strings"
-	"sync"
-	"time"
-
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/kubestellar/ui/its/manual/handlers"
 	"github.com/kubestellar/ui/k8s"
 	"github.com/kubestellar/ui/redis"
+	"github.com/kubestellar/ui/telemetry"
+	"io"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
@@ -32,6 +25,13 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
+	"log"
+	"net/http"
+	"os"
+	"sort"
+	"strings"
+	"sync"
+	"time"
 )
 
 var upgrader = websocket.Upgrader{
@@ -178,8 +178,11 @@ func getITSData() ([]handlers.ManagedClusterInfo, error) {
 func StreamK8sDataChronologically(c *gin.Context) {
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
+		telemetry.WebsocketConnectionsFailed.WithLabelValues("k8s", "upgrade_error").Inc()
+
 		return
 	}
+	telemetry.WebsocketConnectionUpgradedSuccess.WithLabelValues("k8s", "upgrade_success").Inc()
 	defer conn.Close()
 
 	conn.SetPingHandler(func(pingMsg string) error {
@@ -1074,9 +1077,11 @@ func StreamPodLogs(c *gin.Context) {
 	// Upgrade the HTTP connection to a WebSocket.
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
+		telemetry.WebsocketConnectionUpgradedFailed.WithLabelValues("podlogs", "upgrade_error").Inc()
 		log.Printf("WebSocket upgrade error: %v", err)
 		return
 	}
+	telemetry.WebsocketConnectionUpgradedSuccess.WithLabelValues("podlogs", "upgrade_error").Inc()
 	defer conn.Close()
 
 	// Setup a ping/pong mechanism to keep the connection alive

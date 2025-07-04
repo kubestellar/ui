@@ -318,16 +318,18 @@ const StatCard = ({
 
     if (title === 'Active Clusters') {
       return (
-        <div className="flex -space-x-1.5">
-          {[...Array(3)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="h-5 w-5 rounded-full border-2 border-white bg-emerald-500/80 dark:border-gray-800 dark:bg-emerald-400/80"
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: i * 0.1, duration: 0.3 }}
-            ></motion.div>
-          ))}
+        <div className="flex h-10 w-10 items-center justify-center">
+          <div className="flex -space-x-1.5">
+            {[...Array(3)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="h-5 w-5 rounded-full border-2 border-white bg-emerald-500/80 dark:border-gray-800 dark:bg-emerald-400/80"
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: i * 0.1, duration: 0.3 }}
+              ></motion.div>
+            ))}
+          </div>
         </div>
       );
     }
@@ -346,11 +348,11 @@ const StatCard = ({
 
     if (title === 'Current Context') {
       return (
-        <div className="relative flex h-12 w-12 items-center justify-center">
+        <div className="relative flex h-10 w-10 items-center justify-center">
           <div className="absolute inset-0 rounded-full border-2 border-amber-500/30 bg-amber-500/10 dark:border-amber-400/30 dark:bg-amber-400/10"></div>
           <div className="absolute inset-0 rounded-full border-2 border-dashed border-amber-500/40 dark:border-amber-400/40"></div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-amber-500/20 to-amber-600/30 dark:from-amber-400/20 dark:to-amber-500/30">
-            <Activity size={14} className="text-amber-600 dark:text-amber-400" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-amber-500/20 to-amber-600/30 dark:from-amber-400/20 dark:to-amber-500/30">
+            <Activity size={16} className="text-amber-600 dark:text-amber-400" />
           </div>
         </div>
       );
