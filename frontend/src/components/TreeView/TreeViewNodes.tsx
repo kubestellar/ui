@@ -4,28 +4,6 @@ import { NodeLabel } from '../Wds_Topology/NodeLabel';
 import useTheme from '../../stores/themeStore';
 import useLabelHighlightStore from '../../stores/labelHighlightStore';
 import { CustomNode, ResourceItem, CustomEdge } from './types';
-
-interface TreeViewNodesProps {
-  onNodeSelect: (nodeData: {
-    namespace: string;
-    name: string;
-    type: string;
-    resourceData?: ResourceItem;
-    isGroup?: boolean;
-    groupItems?: ResourceItem[];
-  }) => void;
-  onMenuOpen: (event: React.MouseEvent, nodeId: string) => void;
-  isExpanded: boolean;
-}
-
-const nodeStyle: React.CSSProperties = {
-  padding: '2px 12px',
-  fontSize: '6px',
-  border: 'none',
-  width: '146px',
-  height: '30px',
-};
-
 import ConfigMap from '../../assets/k8s_resources_logo/cm.svg';
 import ClusterRoleBinding from '../../assets/k8s_resources_logo/crb.svg';
 import CustomResourceDefinition from '../../assets/k8s_resources_logo/crd.svg';
@@ -55,6 +33,26 @@ import StatefulSet from '../../assets/k8s_resources_logo/sts.svg';
 import Service from '../../assets/k8s_resources_logo/svc.svg';
 import User from '../../assets/k8s_resources_logo/user.svg';
 import Volume from '../../assets/k8s_resources_logo/vol.svg';
+interface TreeViewNodesProps {
+  onNodeSelect: (nodeData: {
+    namespace: string;
+    name: string;
+    type: string;
+    resourceData?: ResourceItem;
+    isGroup?: boolean;
+    groupItems?: ResourceItem[];
+  }) => void;
+  onMenuOpen: (event: React.MouseEvent, nodeId: string) => void;
+  isExpanded: boolean;
+}
+
+const nodeStyle: React.CSSProperties = {
+  padding: '2px 12px',
+  fontSize: '6px',
+  border: 'none',
+  width: '146px',
+  height: '30px',
+};
 
 const iconMap: Record<string, string> = {
   ConfigMap: ConfigMap,
@@ -90,148 +88,148 @@ const iconMap: Record<string, string> = {
 
 const getNodeConfig = (type: string) => {
   const normalizedType = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
-  let icon = iconMap[normalizedType] || ConfigMap;
+  let icon = iconMap[normalizedType] || iconMap.ConfigMap;
   let dynamicText = type.toLowerCase();
 
   switch (type.toLowerCase()) {
     case 'namespace':
-      icon = Namespace;
+      icon = iconMap.Namespace;
       dynamicText = 'ns';
       break;
     case 'deployment':
-      icon = Deployment;
+      icon = iconMap.Deployment;
       dynamicText = 'deploy';
       break;
     case 'replicaset':
-      icon = ReplicaSet;
+      icon = iconMap.ReplicaSet;
       dynamicText = 'replica';
       break;
     case 'service':
-      icon = Service;
+      icon = iconMap.Service;
       dynamicText = 'svc';
       break;
     case 'endpoints':
-      icon = Endpoints;
+      icon = iconMap.Endpoints;
       dynamicText = 'endpoints';
       break;
     case 'endpointslice':
-      icon = Endpoints;
+      icon = iconMap.Endpoints;
       dynamicText = 'endpointslice';
       break;
     case 'configmap':
-      icon = ConfigMap;
+      icon = iconMap.ConfigMap;
       dynamicText = 'configmap';
       break;
     case 'clusterrolebinding':
-      icon = ClusterRoleBinding;
+      icon = iconMap.ClusterRoleBinding;
       dynamicText = 'clusterrolebinding';
       break;
     case 'customresourcedefinition':
-      icon = CustomResourceDefinition;
+      icon = iconMap.CustomResourceDefinition;
       dynamicText = 'crd';
       break;
     case 'clusterrole':
-      icon = ClusterRole;
+      icon = iconMap.ClusterRole;
       dynamicText = 'clusterrole';
       break;
     case 'cronjob':
-      icon = CronJob;
+      icon = iconMap.CronJob;
       dynamicText = 'cronjob';
       break;
     case 'daemonset':
-      icon = DaemonSet;
+      icon = iconMap.DaemonSet;
       dynamicText = 'daemonset';
       break;
     case 'group':
-      icon = Group;
+      icon = iconMap.Group;
       dynamicText = 'group';
       break;
     case 'horizontalpodautoscaler':
-      icon = HorizontalPodAutoscaler;
+      icon = iconMap.HorizontalPodAutoscaler;
       dynamicText = 'hpa';
       break;
     case 'ingress':
-      icon = Ingress;
+      icon = iconMap.Ingress;
       dynamicText = 'ingress';
       break;
     case 'job':
-      icon = Job;
+      icon = iconMap.Job;
       dynamicText = 'job';
       break;
     case 'limitrange':
-      icon = LimitRange;
+      icon = iconMap.LimitRange;
       dynamicText = 'limitrange';
       break;
     case 'networkpolicy':
-      icon = NetworkPolicy;
+      icon = iconMap.NetworkPolicy;
       dynamicText = 'netpol';
       break;
     case 'podsecuritypolicy':
-      icon = PodSecurityPolicy;
+      icon = iconMap.PodSecurityPolicy;
       dynamicText = 'psp';
       break;
     case 'persistentvolume':
-      icon = PersistentVolume;
+      icon = iconMap.PersistentVolume;
       dynamicText = 'pv';
       break;
     case 'persistentvolumeclaim':
-      icon = PersistentVolumeClaim;
+      icon = iconMap.PersistentVolumeClaim;
       dynamicText = 'pvc';
       break;
     case 'resourcequota':
-      icon = ResourceQuota;
+      icon = iconMap.ResourceQuota;
       dynamicText = 'quota';
       break;
     case 'rolebinding':
-      icon = RoleBinding;
+      icon = iconMap.RoleBinding;
       dynamicText = 'rolebinding';
       break;
     case 'role':
-      icon = Role;
+      icon = iconMap.Role;
       dynamicText = 'role';
       break;
     case 'serviceaccount':
-      icon = ServiceAccount;
+      icon = iconMap.ServiceAccount;
       dynamicText = 'sa';
       break;
     case 'storageclass':
-      icon = StorageClass;
+      icon = iconMap.StorageClass;
       dynamicText = 'storageclass';
       break;
     case 'secret':
-      icon = Secret;
+      icon = iconMap.Secret;
       dynamicText = 'secret';
       break;
     case 'statefulset':
-      icon = StatefulSet;
+      icon = iconMap.StatefulSet;
       dynamicText = 'statefulset';
       break;
     case 'user':
-      icon = User;
+      icon = iconMap.User;
       dynamicText = 'user';
       break;
     case 'volume':
-      icon = Volume;
+      icon = iconMap.Volume;
       dynamicText = 'volume';
       break;
     case 'envvar':
-      icon = ConfigMap;
+      icon = iconMap.ConfigMap;
       dynamicText = 'envvar';
       break;
     case 'customresource':
-      icon = CustomResourceDefinition;
+      icon = iconMap.CustomResourceDefinition;
       dynamicText = 'cr';
       break;
     case 'controller':
-      icon = Deployment;
+      icon = iconMap.Deployment;
       dynamicText = 'controller';
       break;
     case 'ingresscontroller':
-      icon = Ingress;
+      icon = iconMap.Ingress;
       dynamicText = 'ingresscontroller';
       break;
     case 'context':
-      icon = Group;
+      icon = iconMap.Group;
       dynamicText = 'context';
       break;
     default:
