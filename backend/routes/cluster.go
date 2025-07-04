@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/api"
-	"github.com/kubestellar/ui/its/manual/handlers"
+	"github.com/kubestellar/ui/backend/api"
+	"github.com/kubestellar/ui/backend/its/manual/handlers"
 )
 
 func setupClusterRoutes(router *gin.Engine) {

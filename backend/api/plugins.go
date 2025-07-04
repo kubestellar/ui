@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/log"
-	pkg "github.com/kubestellar/ui/pkg/plugins"
-	"github.com/kubestellar/ui/plugin"
-	"github.com/kubestellar/ui/plugin/plugins"
+	"github.com/kubestellar/ui/backend/log"
+	pkg "github.com/kubestellar/ui/backend/pkg/plugins"
+	"github.com/kubestellar/ui/backend/plugin"
+	"github.com/kubestellar/ui/backend/plugin/plugins"
 	"go.uber.org/zap"
 )
 

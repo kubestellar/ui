@@ -2,8 +2,8 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/k8s"
-	"github.com/kubestellar/ui/wds"
+	"github.com/kubestellar/ui/backend/k8s"
+	"github.com/kubestellar/ui/backend/wds"
 )
 
 // SetupRoutes initializes all API routes

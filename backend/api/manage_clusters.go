@@ -9,13 +9,13 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/k8s"
-	"github.com/kubestellar/ui/telemetry"
+	"github.com/kubestellar/ui/backend/k8s"
+	"github.com/kubestellar/ui/backend/telemetry"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	// "github.com/kubestellar/ui/telemetry"
+	// "github.com/kubestellar/ui/backend/telemetry"
 )
 
 // ManagedClusterCondition represents a condition of a managed cluster

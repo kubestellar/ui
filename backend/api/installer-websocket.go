@@ -7,8 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/kubestellar/ui/installer"
-	"github.com/kubestellar/ui/telemetry"
+	"github.com/kubestellar/ui/backend/installer"
+	"github.com/kubestellar/ui/backend/telemetry"
 )
 
 var upgrade = websocket.Upgrader{

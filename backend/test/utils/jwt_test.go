@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/kubestellar/ui/utils"
+	"github.com/kubestellar/ui/backend/utils"
 )
 
 func TestInitJWT(t *testing.T) {

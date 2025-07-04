@@ -5,11 +5,11 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/auth"
-	"github.com/kubestellar/ui/middleware"
-	"github.com/kubestellar/ui/models"
-	database "github.com/kubestellar/ui/postgresql/Database"
-	"github.com/kubestellar/ui/utils"
+	"github.com/kubestellar/ui/backend/auth"
+	"github.com/kubestellar/ui/backend/middleware"
+	"github.com/kubestellar/ui/backend/models"
+	database "github.com/kubestellar/ui/backend/postgresql/Database"
+	"github.com/kubestellar/ui/backend/utils"
 )
 
 // SetupRoutes initializes all routes - THIS IS THE MISSING FUNCTION!

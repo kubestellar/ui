@@ -4,12 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
-	"time"
-
-	"github.com/kubestellar/ui/log"
+	"github.com/kubestellar/ui/backend/log"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
+	"os"
+	"time"
 )
 
 var ctx = context.Background()
@@ -175,11 +174,6 @@ func init() {
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		log.LogWarn("pls check if redis is runnnig", zap.String("err", err.Error()))
 	}
-}
-
-// PingRedis checks if Redis is reachable and returns an error if not
-func PingRedis() error {
-	return rdb.Ping(ctx).Err()
 }
 
 // SetJSONValue sets a JSON value in Redis with an optional expiration
