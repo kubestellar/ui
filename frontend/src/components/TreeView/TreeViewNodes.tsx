@@ -26,182 +26,212 @@ const nodeStyle: React.CSSProperties = {
   height: '30px',
 };
 
+import ConfigMap from '../../assets/k8s_resources_logo/cm.svg';
+import ClusterRoleBinding from '../../assets/k8s_resources_logo/crb.svg';
+import CustomResourceDefinition from '../../assets/k8s_resources_logo/crd.svg';
+import ClusterRole from '../../assets/k8s_resources_logo/c-role.svg';
+import CronJob from '../../assets/k8s_resources_logo/cronjob.svg';
+import Deployment from '../../assets/k8s_resources_logo/deploy.svg';
+import DaemonSet from '../../assets/k8s_resources_logo/ds.svg';
+import Endpoints from '../../assets/k8s_resources_logo/ep.svg';
+import Group from '../../assets/k8s_resources_logo/group.svg';
+import HorizontalPodAutoscaler from '../../assets/k8s_resources_logo/hpa.svg';
+import Ingress from '../../assets/k8s_resources_logo/ing.svg';
+import Job from '../../assets/k8s_resources_logo/job.svg';
+import LimitRange from '../../assets/k8s_resources_logo/limits.svg';
+import NetworkPolicy from '../../assets/k8s_resources_logo/netpol.svg';
+import Namespace from '../../assets/k8s_resources_logo/ns.svg';
+import PodSecurityPolicy from '../../assets/k8s_resources_logo/psp.svg';
+import PersistentVolume from '../../assets/k8s_resources_logo/pv.svg';
+import PersistentVolumeClaim from '../../assets/k8s_resources_logo/pvc.svg';
+import ResourceQuota from '../../assets/k8s_resources_logo/quota.svg';
+import RoleBinding from '../../assets/k8s_resources_logo/rb.svg';
+import Role from '../../assets/k8s_resources_logo/role.svg';
+import ReplicaSet from '../../assets/k8s_resources_logo/rs.svg';
+import ServiceAccount from '../../assets/k8s_resources_logo/sa.svg';
+import StorageClass from '../../assets/k8s_resources_logo/sc.svg';
+import Secret from '../../assets/k8s_resources_logo/secret.svg';
+import StatefulSet from '../../assets/k8s_resources_logo/sts.svg';
+import Service from '../../assets/k8s_resources_logo/svc.svg';
+import User from '../../assets/k8s_resources_logo/user.svg';
+import Volume from '../../assets/k8s_resources_logo/vol.svg';
+
 const iconMap: Record<string, string> = {
-  ConfigMap: '/src/assets/k8s_resources_logo/cm.svg',
-  ClusterRoleBinding: '/src/assets/k8s_resources_logo/crb.svg',
-  CustomResourceDefinition: '/src/assets/k8s_resources_logo/crd.svg',
-  ClusterRole: '/src/assets/k8s_resources_logo/c-role.svg',
-  CronJob: '/src/assets/k8s_resources_logo/cronjob.svg',
-  Deployment: '/src/assets/k8s_resources_logo/deploy.svg',
-  DaemonSet: '/src/assets/k8s_resources_logo/ds.svg',
-  Endpoints: '/src/assets/k8s_resources_logo/ep.svg',
-  Group: '/src/assets/k8s_resources_logo/group.svg',
-  HorizontalPodAutoscaler: '/src/assets/k8s_resources_logo/hpa.svg',
-  Ingress: '/src/assets/k8s_resources_logo/ing.svg',
-  Job: '/src/assets/k8s_resources_logo/job.svg',
-  LimitRange: '/src/assets/k8s_resources_logo/limits.svg',
-  NetworkPolicy: '/src/assets/k8s_resources_logo/netpol.svg',
-  Namespace: '/src/assets/k8s_resources_logo/ns.svg',
-  PodSecurityPolicy: '/src/assets/k8s_resources_logo/psp.svg',
-  PersistentVolume: '/src/assets/k8s_resources_logo/pv.svg',
-  PersistentVolumeClaim: '/src/assets/k8s_resources_logo/pvc.svg',
-  ResourceQuota: '/src/assets/k8s_resources_logo/quota.svg',
-  RoleBinding: '/src/assets/k8s_resources_logo/rb.svg',
-  Role: '/src/assets/k8s_resources_logo/role.svg',
-  ReplicaSet: '/src/assets/k8s_resources_logo/rs.svg',
-  ServiceAccount: '/src/assets/k8s_resources_logo/sa.svg',
-  StorageClass: '/src/assets/k8s_resources_logo/sc.svg',
-  Secret: '/src/assets/k8s_resources_logo/secret.svg',
-  StatefulSet: '/src/assets/k8s_resources_logo/sts.svg',
-  Service: '/src/assets/k8s_resources_logo/svc.svg',
-  User: '/src/assets/k8s_resources_logo/user.svg',
-  Volume: '/src/assets/k8s_resources_logo/vol.svg',
+  ConfigMap: ConfigMap,
+  ClusterRoleBinding: ClusterRoleBinding,
+  CustomResourceDefinition: CustomResourceDefinition,
+  ClusterRole: ClusterRole,
+  CronJob: CronJob,
+  Deployment: Deployment,
+  DaemonSet: DaemonSet,
+  Endpoints: Endpoints,
+  Group: Group,
+  HorizontalPodAutoscaler: HorizontalPodAutoscaler,
+  Ingress: Ingress,
+  Job: Job,
+  LimitRange: LimitRange,
+  NetworkPolicy: NetworkPolicy,
+  Namespace: Namespace,
+  PodSecurityPolicy: PodSecurityPolicy,
+  PersistentVolume: PersistentVolume,
+  PersistentVolumeClaim: PersistentVolumeClaim,
+  ResourceQuota: ResourceQuota,
+  RoleBinding: RoleBinding,
+  Role: Role,
+  ReplicaSet: ReplicaSet,
+  ServiceAccount: ServiceAccount,
+  StorageClass: StorageClass,
+  Secret: Secret,
+  StatefulSet: StatefulSet,
+  Service: Service,
+  User: User,
+  Volume: Volume,
 };
 
 const getNodeConfig = (type: string) => {
   const normalizedType = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
-  let icon = iconMap[normalizedType] || iconMap.ConfigMap;
+  let icon = iconMap[normalizedType] || ConfigMap;
   let dynamicText = type.toLowerCase();
 
   switch (type.toLowerCase()) {
     case 'namespace':
-      icon = iconMap.Namespace;
+      icon = Namespace;
       dynamicText = 'ns';
       break;
     case 'deployment':
-      icon = iconMap.Deployment;
+      icon = Deployment;
       dynamicText = 'deploy';
       break;
     case 'replicaset':
-      icon = iconMap.ReplicaSet;
+      icon = ReplicaSet;
       dynamicText = 'replica';
       break;
     case 'service':
-      icon = iconMap.Service;
+      icon = Service;
       dynamicText = 'svc';
       break;
     case 'endpoints':
-      icon = iconMap.Endpoints;
+      icon = Endpoints;
       dynamicText = 'endpoints';
       break;
     case 'endpointslice':
-      icon = iconMap.Endpoints;
+      icon = Endpoints;
       dynamicText = 'endpointslice';
       break;
     case 'configmap':
-      icon = iconMap.ConfigMap;
+      icon = ConfigMap;
       dynamicText = 'configmap';
       break;
     case 'clusterrolebinding':
-      icon = iconMap.ClusterRoleBinding;
+      icon = ClusterRoleBinding;
       dynamicText = 'clusterrolebinding';
       break;
     case 'customresourcedefinition':
-      icon = iconMap.CustomResourceDefinition;
+      icon = CustomResourceDefinition;
       dynamicText = 'crd';
       break;
     case 'clusterrole':
-      icon = iconMap.ClusterRole;
+      icon = ClusterRole;
       dynamicText = 'clusterrole';
       break;
     case 'cronjob':
-      icon = iconMap.CronJob;
+      icon = CronJob;
       dynamicText = 'cronjob';
       break;
     case 'daemonset':
-      icon = iconMap.DaemonSet;
+      icon = DaemonSet;
       dynamicText = 'daemonset';
       break;
     case 'group':
-      icon = iconMap.Group;
+      icon = Group;
       dynamicText = 'group';
       break;
     case 'horizontalpodautoscaler':
-      icon = iconMap.HorizontalPodAutoscaler;
+      icon = HorizontalPodAutoscaler;
       dynamicText = 'hpa';
       break;
     case 'ingress':
-      icon = iconMap.Ingress;
+      icon = Ingress;
       dynamicText = 'ingress';
       break;
     case 'job':
-      icon = iconMap.Job;
+      icon = Job;
       dynamicText = 'job';
       break;
     case 'limitrange':
-      icon = iconMap.LimitRange;
+      icon = LimitRange;
       dynamicText = 'limitrange';
       break;
     case 'networkpolicy':
-      icon = iconMap.NetworkPolicy;
+      icon = NetworkPolicy;
       dynamicText = 'netpol';
       break;
     case 'podsecuritypolicy':
-      icon = iconMap.PodSecurityPolicy;
+      icon = PodSecurityPolicy;
       dynamicText = 'psp';
       break;
     case 'persistentvolume':
-      icon = iconMap.PersistentVolume;
+      icon = PersistentVolume;
       dynamicText = 'pv';
       break;
     case 'persistentvolumeclaim':
-      icon = iconMap.PersistentVolumeClaim;
+      icon = PersistentVolumeClaim;
       dynamicText = 'pvc';
       break;
     case 'resourcequota':
-      icon = iconMap.ResourceQuota;
+      icon = ResourceQuota;
       dynamicText = 'quota';
       break;
     case 'rolebinding':
-      icon = iconMap.RoleBinding;
+      icon = RoleBinding;
       dynamicText = 'rolebinding';
       break;
     case 'role':
-      icon = iconMap.Role;
+      icon = Role;
       dynamicText = 'role';
       break;
     case 'serviceaccount':
-      icon = iconMap.ServiceAccount;
+      icon = ServiceAccount;
       dynamicText = 'sa';
       break;
     case 'storageclass':
-      icon = iconMap.StorageClass;
+      icon = StorageClass;
       dynamicText = 'storageclass';
       break;
     case 'secret':
-      icon = iconMap.Secret;
+      icon = Secret;
       dynamicText = 'secret';
       break;
     case 'statefulset':
-      icon = iconMap.StatefulSet;
+      icon = StatefulSet;
       dynamicText = 'statefulset';
       break;
     case 'user':
-      icon = iconMap.User;
+      icon = User;
       dynamicText = 'user';
       break;
     case 'volume':
-      icon = iconMap.Volume;
+      icon = Volume;
       dynamicText = 'volume';
       break;
     case 'envvar':
-      icon = iconMap.ConfigMap;
+      icon = ConfigMap;
       dynamicText = 'envvar';
       break;
     case 'customresource':
-      icon = iconMap.CustomResourceDefinition;
+      icon = CustomResourceDefinition;
       dynamicText = 'cr';
       break;
     case 'controller':
-      icon = iconMap.Deployment;
+      icon = Deployment;
       dynamicText = 'controller';
       break;
     case 'ingresscontroller':
-      icon = iconMap.Ingress;
+      icon = Ingress;
       dynamicText = 'ingresscontroller';
       break;
     case 'context':
-      icon = iconMap.Group;
+      icon = Group;
       dynamicText = 'context';
       break;
     default:
