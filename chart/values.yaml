@@ -4,17 +4,17 @@
 replicaCount: 1
 
 frontend:
-  image: kubestellar-ui-frontend:latest
+  image: ghcr.io/kubestellar/ui/frontend:latest
   port: 80
   imagePullPolicy: IfNotPresent
 
 backend:
-  image: kubestellar-ui-backend:latest
+  image: ghcr.io/kubestellar/ui/backend:latest
   port: 4000
   imagePullPolicy: IfNotPresent
 
 redis:
-  image: redis:7-alpine
+  image:  ghcr.io/kubestellar/ui/redis:latest
   port: 6379
   replicas: 1
   resources:

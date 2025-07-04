@@ -1,6 +1,6 @@
 # Values for kind-kubeflex cluster deployment
 frontend:
-  image: kubestellar-ui-frontend:latest
+  image: ghcr.io/kubestellar/ui/frontend:latest
   port: 80
   imagePullPolicy: IfNotPresent
   nodePort: 30138
@@ -30,7 +30,7 @@ postgresql:
     storageClass: standard
 
 redis:
-  image: redis:7-alpine
+  image:  ghcr.io/kubestellar/ui/redis:latest
   port: 6379
   replicas: 1
   resources:
