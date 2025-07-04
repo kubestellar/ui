@@ -31,8 +31,6 @@ import { useBPQueries } from '../hooks/queries/useBPQueries';
 import { PolicyData } from '../components/BindingPolicy/CreateBindingPolicyDialog';
 import BPVisualization from '../components/BindingPolicy/BPVisualization';
 import PolicySelection from '../components/BindingPolicy/PolicySelection';
-import EditIcon from '@mui/icons-material/Edit';
-import PublishIcon from '@mui/icons-material/Publish';
 import KubernetesIcon from '../components/BindingPolicy/KubernetesIcon';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
