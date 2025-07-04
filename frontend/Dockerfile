@@ -42,6 +42,7 @@ RUN npm run build
 RUN mv commit_hash.txt dist/
 
 # Stage 2: Serve with Nginx
+# Stage 2: Serve with Nginx
 FROM nginx:alpine AS frontend
 
 # Install gettext for envsubst
@@ -53,9 +54,15 @@ COPY --from=frontend-builder /app/dist /usr/share/nginx/html
 # Copy nginx template (make sure this file exists in your project root)
 COPY nginx.conf /etc/nginx/templates/default.conf.template
 
-# Create startup script
+# Create startup script that respects mounted configs
 RUN echo '#!/bin/sh' > /docker-entrypoint.sh && \
-    echo 'envsubst "\$NGINX_HOST \$BACKEND_URL" < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf' >> /docker-entrypoint.sh && \
+    echo '# Check if config is already mounted (from ConfigMap)' >> /docker-entrypoint.sh && \
+    echo 'if [ ! -f /etc/nginx/conf.d/default.conf ] || [ ! -s /etc/nginx/conf.d/default.conf ]; then' >> /docker-entrypoint.sh && \
+    echo '  echo "Generating nginx config from template..."' >> /docker-entrypoint.sh && \
+    echo '  envsubst "\$NGINX_HOST \$BACKEND_URL" < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf' >> /docker-entrypoint.sh && \
+    echo 'else' >> /docker-entrypoint.sh && \
+    echo '  echo "Using existing nginx config (likely from ConfigMap)"' >> /docker-entrypoint.sh && \
+    echo 'fi' >> /docker-entrypoint.sh && \
     echo 'exec "$@"' >> /docker-entrypoint.sh && \
     chmod +x /docker-entrypoint.sh
 

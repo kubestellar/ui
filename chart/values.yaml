@@ -4,7 +4,7 @@
 replicaCount: 1
 
 frontend:
-  image: ghcr.io/kubestellar/ui/frontend:latest
+  image: ghcr.io/kubestellar/ui/frontend:v1.0.1
   port: 80
   imagePullPolicy: IfNotPresent
 
