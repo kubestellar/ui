@@ -19,7 +19,7 @@ import {
   Chip,
 } from '@mui/material';
 import { FiX, FiGitPullRequest, FiTrash2 } from 'react-icons/fi';
-import React, { Suspense } from 'react';
+import Editor from '@monaco-editor/react';
 import jsyaml from 'js-yaml';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
@@ -153,8 +153,6 @@ const StyledTab = styled(Tab)(({ theme }) => {
     },
   };
 });
-
-const MonacoEditor = React.lazy(() => import('@monaco-editor/react'));
 
 const DynamicDetailsPanel = ({
   namespace,
@@ -781,28 +779,26 @@ const DynamicDetailsPanel = ({
                     </Button>
                   </Stack>
                   <Box sx={{ overflow: 'auto', maxHeight: '500px' }}>
-                    <Suspense fallback={<div>Loading editor...</div>}>
-                      <MonacoEditor
-                        height="500px"
-                        language={editFormat}
-                        value={
-                          editFormat === 'yaml'
-                            ? jsonToYaml(editedManifest)
-                            : editedManifest || 'No manifest available'
-                        }
-                        onChange={handleEditorChange}
-                        theme={theme === 'dark' ? 'vs-dark' : 'light'}
-                        options={{
-                          minimap: { enabled: false },
-                          fontSize: 14,
-                          lineNumbers: 'on',
-                          scrollBeyondLastLine: false,
-                          readOnly: false,
-                          automaticLayout: true,
-                          wordWrap: 'on',
-                        }}
-                      />
-                    </Suspense>
+                    <Editor
+                      height="500px"
+                      language={editFormat}
+                      value={
+                        editFormat === 'yaml'
+                          ? jsonToYaml(editedManifest)
+                          : editedManifest || 'No manifest available'
+                      }
+                      onChange={handleEditorChange}
+                      theme={theme === 'dark' ? 'vs-dark' : 'light'}
+                      options={{
+                        minimap: { enabled: false },
+                        fontSize: 14,
+                        lineNumbers: 'on',
+                        scrollBeyondLastLine: false,
+                        readOnly: false,
+                        automaticLayout: true,
+                        wordWrap: 'on',
+                      }}
+                    />
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                     <Button

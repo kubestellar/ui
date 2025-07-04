@@ -3,8 +3,9 @@ import FileUploadIcon from '@mui/icons-material/FileUpload';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { StyledContainer, StyledPaper } from '../StyledComponents';
 import yaml from 'js-yaml';
-import { useState, useEffect, Suspense, lazy } from 'react';
+import { useState, useEffect } from 'react';
 import useTheme from '../../stores/themeStore';
+import Editor from '@monaco-editor/react';
 import WorkloadLabelInput from './WorkloadLabelInput';
 import CancelButton from '../common/CancelButton';
 import { useTranslation } from 'react-i18next';
@@ -31,8 +32,6 @@ interface Props {
   handleFileUpload: (autoNs: boolean) => void;
   handleCancelClick: () => void;
 }
-
-const MonacoEditor = lazy(() => import('@monaco-editor/react'));
 
 export const UploadFileTab = ({
   selectedFile,
@@ -243,24 +242,22 @@ export const UploadFileTab = ({
                 flexDirection: 'column',
               }}
             >
-              <Suspense fallback={<div>Loading editor...</div>}>
-                <MonacoEditor
-                  height="27vh"
-                  language="yaml"
-                  value={fileContent || ''}
-                  theme={theme === 'dark' ? 'vs-dark' : 'light'}
-                  options={{
-                    minimap: { enabled: false },
-                    fontSize: 14,
-                    lineNumbers: 'on',
-                    scrollBeyondLastLine: true,
-                    automaticLayout: true,
-                    fontFamily: "'JetBrains Mono', monospace",
-                    padding: { top: 0, bottom: 10 },
-                    readOnly: true,
-                  }}
-                />
-              </Suspense>
+              <Editor
+                height="27vh"
+                language="yaml"
+                value={fileContent || ''}
+                theme={theme === 'dark' ? 'vs-dark' : 'light'}
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 14,
+                  lineNumbers: 'on',
+                  scrollBeyondLastLine: true,
+                  automaticLayout: true,
+                  fontFamily: "'JetBrains Mono', monospace",
+                  padding: { top: 0, bottom: 10 },
+                  readOnly: true,
+                }}
+              />
             </StyledPaper>
           </Box>
         ) : (

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState, Suspense, lazy } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Box,
   Grid,
@@ -21,11 +21,12 @@ import { useKubestellarData } from '../../hooks/useKubestellarData';
 import DeploymentConfirmationDialog, { DeploymentPolicy } from './DeploymentConfirmationDialog';
 import { ClusterPanelContainer, WorkloadPanelContainer } from './PolicyPanels';
 import { useBPQueries } from '../../hooks/queries/useBPQueries';
+import Editor from '@monaco-editor/react';
+import useTheme from '../../stores/themeStore';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import toast from 'react-hot-toast';
 import PolicyNameDialog from './PolicyNameDialog';
 import { useTranslation } from 'react-i18next';
-import useTheme from '../../stores/themeStore';
 
 // Type definitions for components from other files
 interface TreeItem {
@@ -129,8 +130,6 @@ interface PolicyDragDropContainerProps {
   ) => void;
   dialogMode?: boolean;
 }
-
-const MonacoEditor = lazy(() => import('@monaco-editor/react'));
 
 const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
   policies: propPolicies,
@@ -1775,38 +1774,36 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
               backdropFilter: 'blur(10px)',
             }}
           >
-            <Suspense fallback={<div>Loading editor...</div>}>
-              <MonacoEditor
-                height="100%"
-                language="yaml"
-                value={previewYaml}
-                theme={theme === 'dark' ? 'vs-dark' : 'light'}
-                options={{
-                  minimap: { enabled: false },
-                  fontSize: 14,
-                  lineNumbers: 'on',
-                  scrollBeyondLastLine: false,
-                  automaticLayout: true,
-                  fontFamily: "'JetBrains Mono', monospace",
-                  padding: { top: 10 },
-                  readOnly: false, // Allow editing the YAML
-                }}
-                onChange={(value: string | undefined) => {
-                  // Update preview YAML
-                  setPreviewYaml(value || '');
+            <Editor
+              height="100%"
+              language="yaml"
+              value={previewYaml}
+              theme={theme === 'dark' ? 'vs-dark' : 'light'}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 14,
+                lineNumbers: 'on',
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                fontFamily: "'JetBrains Mono', monospace",
+                padding: { top: 10 },
+                readOnly: false, // Allow editing the YAML
+              }}
+              onChange={value => {
+                // Update preview YAML
+                setPreviewYaml(value || '');
 
-                  // Store the edited YAML for deployment
-                  if (currentWorkloadId && value) {
-                    // Use a consistent key format for all clusters
-                    const connectionKey = `${currentWorkloadId}-${currentClusterId}`;
-                    setEditedPolicyYaml(prev => ({
-                      ...prev,
-                      [connectionKey]: value,
-                    }));
-                  }
-                }}
-              />
-            </Suspense>
+                // Store the edited YAML for deployment
+                if (currentWorkloadId && value) {
+                  // Use a consistent key format for all clusters
+                  const connectionKey = `${currentWorkloadId}-${currentClusterId}`;
+                  setEditedPolicyYaml(prev => ({
+                    ...prev,
+                    [connectionKey]: value,
+                  }));
+                }
+              }}
+            />
           </Paper>
         </DialogContent>
         <DialogActions

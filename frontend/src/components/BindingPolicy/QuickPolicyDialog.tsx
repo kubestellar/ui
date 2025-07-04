@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, Suspense } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -20,12 +20,11 @@ import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import CodeIcon from '@mui/icons-material/Code';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import { PolicyConfiguration } from './ConfigurationSidebar';
+import Editor from '@monaco-editor/react';
 import yaml from 'js-yaml';
 import useTheme from '../../stores/themeStore';
 import CancelButton from '../common/CancelButton';
 import { useTranslation } from 'react-i18next';
-
-const MonacoEditor = React.lazy(() => import('@monaco-editor/react'));
 
 export interface QuickPolicyDialogProps {
   open: boolean;
@@ -328,24 +327,22 @@ const QuickPolicyDialog: React.FC<QuickPolicyDialogProps> = ({
         border: `1px solid ${isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
       }}
     >
-      <Suspense fallback={<div>Loading editor...</div>}>
-        <MonacoEditor
-          height="100%"
-          language="yaml"
-          value={generatedYaml}
-          theme={isDarkTheme ? 'vs-dark' : 'light'}
-          options={{
-            readOnly: true,
-            minimap: { enabled: false },
-            fontSize: 14,
-            lineNumbers: 'on',
-            scrollBeyondLastLine: false,
-            automaticLayout: true,
-            fontFamily: "'JetBrains Mono', monospace",
-            padding: { top: 10 },
-          }}
-        />
-      </Suspense>
+      <Editor
+        height="100%"
+        language="yaml"
+        value={generatedYaml}
+        theme={isDarkTheme ? 'vs-dark' : 'light'}
+        options={{
+          readOnly: true,
+          minimap: { enabled: false },
+          fontSize: 14,
+          lineNumbers: 'on',
+          scrollBeyondLastLine: false,
+          automaticLayout: true,
+          fontFamily: "'JetBrains Mono', monospace",
+          padding: { top: 10 },
+        }}
+      />
     </Box>
   );
 

@@ -1,5 +1,4 @@
-import React, { Suspense } from 'react';
-const MonacoEditor = React.lazy(() => import('@monaco-editor/react'));
+import Editor from '@monaco-editor/react';
 import { Box, Button, FormControlLabel, Checkbox } from '@mui/material'; // Added Checkbox and FormControlLabel
 import { StyledContainer } from '../StyledComponents';
 import yaml from 'js-yaml';
@@ -187,23 +186,21 @@ export const YamlTab = ({
             margin: '0 auto',
           }}
         >
-          <Suspense fallback={<div>Loading editor...</div>}>
-            <MonacoEditor
-              height="435px"
-              language={detectContentType(editorContent)}
-              value={editorContent}
-              theme={theme === 'dark' ? 'vs-dark' : 'light'}
-              options={{
-                minimap: { enabled: false },
-                fontSize: 14,
-                lineNumbers: 'on',
-                scrollBeyondLastLine: false,
-                automaticLayout: true,
-                padding: { top: 27, bottom: 20 },
-              }}
-              onChange={value => setEditorContent(value || '')}
-            />
-          </Suspense>
+          <Editor
+            height="435px"
+            language={detectContentType(editorContent)}
+            value={editorContent}
+            theme={theme === 'dark' ? 'vs-dark' : 'light'}
+            options={{
+              minimap: { enabled: false },
+              fontSize: 14,
+              lineNumbers: 'on',
+              scrollBeyondLastLine: false,
+              automaticLayout: true,
+              padding: { top: 27, bottom: 20 },
+            }}
+            onChange={value => setEditorContent(value || '')}
+          />
         </Box>
       </Box>
       <Box
