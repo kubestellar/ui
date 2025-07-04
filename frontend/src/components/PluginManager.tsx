@@ -42,7 +42,7 @@ export const PluginManager: React.FC = () => {
   const isDark = theme === 'dark';
   const themeStyles = getThemeStyles(isDark);
 
-  const { loadedPlugins, loadPlugin, unloadPlugin } = usePlugins();
+  const { loadedPlugins, loadPlugin, unloadPlugin, loadAvailablePlugins } = usePlugins();
   const [pluginAPI] = useState(() => new PluginAPI());
 
   const [availablePlugins, setAvailablePlugins] = useState<Plugin[]>([]);
@@ -76,7 +76,8 @@ export const PluginManager: React.FC = () => {
 
   useEffect(() => {
     loadPluginData();
-  }, [loadPluginData]);
+    loadAvailablePlugins();
+  }, [loadPluginData, loadAvailablePlugins]);
 
   const handleEnablePlugin = async (pluginName: string) => {
     try {
