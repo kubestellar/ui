@@ -1,9 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { IconType } from 'react-icons';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import useTheme from '../../stores/themeStore';
-import getThemeStyles from '../../lib/theme-utils';
 
 interface MenuItemProps {
   onClick?: () => void;
@@ -32,7 +31,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
 }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
-  const themeStyles = getThemeStyles(isDark);
+  const [hoveredItem, setHoveredItem] = useState<number | null>(null);
 
   // Animation variants
   const itemVariants = {
@@ -70,7 +69,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
 
     return (
       <div
-        className="pointer-events-none absolute left-14 top-1/2 z-50 -translate-y-1/2 whitespace-nowrap rounded-lg px-3 py-2 opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100"
+        className="pointer-events-none absolute left-14 top-1/2 z-50 -translate-y-1/2 whitespace-nowrap rounded-lg px-3 py-2 opacity-0 shadow-lg transition-opacity duration-300 group-hover:opacity-100"
         style={{
           background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
           borderColor: isDark ? 'rgba(71, 85, 105, 0.5)' : 'rgba(203, 213, 225, 0.8)',
@@ -97,76 +96,120 @@ const MenuItem: React.FC<MenuItemProps> = ({
 
   return (
     <motion.div
-      className={`flex w-full flex-col ${collapsed ? 'items-center' : 'items-stretch'} group mb-6 gap-3`}
+      className={`flex w-full flex-col ${collapsed ? 'items-center' : 'items-stretch'} group mb-3 gap-3`}
       role="navigation"
       variants={itemVariants}
       initial={false}
       animate={collapsed ? 'collapsed' : 'expanded'}
     >
-      {/* Category header - show only first letter when collapsed */}
-      <motion.span
-        className={`border-l-[3px] border-transparent px-2 text-sm font-semibold 
-        uppercase tracking-[0.15em] transition-all 
-        duration-300 ${centered || collapsed ? 'text-center' : ''}`}
-        style={{ color: themeStyles.menu.catalog.color }}
-        animate={{
-          opacity: 1,
-          scale: collapsed ? 0.9 : 1,
-          fontSize: collapsed ? '0.7rem' : '0.875rem',
-        }}
-        transition={{ type: 'spring', stiffness: 500, damping: 30, delay }}
-      >
-        {collapsed ? catalog.charAt(0) : catalog}
-      </motion.span>
+      {/* Category header */}
+      <div className="rounded-lg px-3 py-1.5">
+        <span
+          className={`text-sm font-semibold uppercase tracking-[0.15em] transition-colors 
+          duration-300 ${centered || collapsed ? 'text-center' : 'pl-2'}`}
+          style={{
+            color: isDark ? 'rgba(226, 232, 240, 0.9)' : 'rgba(30, 41, 59, 0.9)',
+          }}
+        >
+          {collapsed ? catalog.charAt(0) : catalog}
+        </span>
+      </div>
 
       {/* Menu items */}
       <div className={`flex w-full flex-col gap-2 ${collapsed ? 'items-center' : ''}`}>
         {listItems.map((listItem, index) => {
           if (listItem.isLink) {
             return (
-              <NavLink key={index} onClick={onClick} to={listItem.url || ''} className="relative">
+              <NavLink
+                key={index}
+                onClick={onClick}
+                to={listItem.url || ''}
+                className="relative w-full"
+                onMouseEnter={() => setHoveredItem(index)}
+                onMouseLeave={() => setHoveredItem(null)}
+              >
                 {({ isActive }) => (
                   <div
-                    className={`relative flex items-center ${collapsed ? 'h-12 min-h-0 w-12 justify-center p-0' : 'w-full justify-start px-4 py-3'} 
-                      rounded-xl transition-all duration-300 ease-out
-                      ${collapsed ? '' : 'hover:translate-x-2'} 
-                      group/item group relative hover:shadow-md focus:outline-none`}
+                    className={`relative flex items-center ${collapsed ? 'h-10 min-h-0 w-10 justify-center p-0' : 'w-full justify-start px-4 py-3'} 
+                      rounded-xl transition-all duration-200 ease-out
+                      ${collapsed ? '' : 'hover:translate-x-1'} 
+                      group/item relative hover:shadow-md focus:outline-none`}
                     style={
-                      isActive
+                      isActive || hoveredItem === index
                         ? {
-                            background: themeStyles.menu.itemActive,
-                            boxShadow: collapsed ? 'none' : themeStyles.colors.shadow.sm,
+                            background: isActive
+                              ? isDark
+                                ? 'rgba(59, 130, 246, 0.15)'
+                                : 'rgba(59, 130, 246, 0.08)'
+                              : isDark
+                                ? 'rgba(59, 130, 246, 0.1)'
+                                : 'rgba(59, 130, 246, 0.05)',
+                            boxShadow: collapsed
+                              ? 'none'
+                              : isDark
+                                ? '0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.1)'
+                                : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
                           }
                         : {}
                     }
                   >
+                    {/* Active item indicator */}
+                    <AnimatePresence>
+                      {isActive && !collapsed && (
+                        <motion.div
+                          className="absolute bottom-0 left-0 top-0 w-1 rounded-l-full"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          style={{
+                            background: isDark ? '#60a5fa' : '#3b82f6',
+                          }}
+                        />
+                      )}
+                    </AnimatePresence>
+
                     <div className="relative flex items-center justify-center">
                       <motion.div
                         animate={{
                           scale: collapsed ? 1.2 : 1,
-                          x: collapsed ? 0 : 0,
                         }}
                         whileHover={{ scale: 1.15 }}
                         whileTap={{ scale: 0.95 }}
                         transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                        className={`relative ${isAnimating ? 'transition-none' : 'transition-transform duration-300'}`}
+                        className={`relative ${isAnimating ? 'transition-none' : 'transition-transform duration-200'}`}
                       >
                         <listItem.icon
-                          className="shrink-0 text-2xl"
+                          className="shrink-0 text-xl"
                           style={{
                             color: isActive
-                              ? themeStyles.colors.brand.primary
-                              : themeStyles.menu.icon.color,
-                            filter: themeStyles.menu.icon.shadow,
+                              ? isDark
+                                ? '#60a5fa'
+                                : '#3b82f6'
+                              : hoveredItem === index
+                                ? isDark
+                                  ? '#93c5fd'
+                                  : '#2563eb'
+                                : isDark
+                                  ? '#cbd5e1'
+                                  : '#64748b',
+                            filter: isActive
+                              ? isDark
+                                ? 'drop-shadow(0 0 6px rgba(96, 165, 250, 0.5))'
+                                : 'drop-shadow(0 0 6px rgba(59, 130, 246, 0.3))'
+                              : 'none',
                           }}
                           aria-hidden="true"
                         />
 
-                        {/* Ripple effect for active item in collapsed state */}
-                        {collapsed && isActive && (
+                        {/* Enhanced ripple effect */}
+                        {isActive && (
                           <motion.div
                             className="absolute inset-0 rounded-full"
-                            style={{ backgroundColor: themeStyles.menu.itemActive }}
+                            style={{
+                              backgroundColor: isDark
+                                ? 'rgba(96, 165, 250, 0.2)'
+                                : 'rgba(59, 130, 246, 0.15)',
+                            }}
                             animate={{
                               scale: [0.8, 1.2, 1],
                               opacity: [0.5, 0.3, 0],
@@ -183,11 +226,19 @@ const MenuItem: React.FC<MenuItemProps> = ({
                       {/* Text label */}
                       {!collapsed && (
                         <motion.span
-                          className="ml-3 text-sm font-medium tracking-wide"
+                          className="ml-3 whitespace-nowrap text-sm font-medium"
                           style={{
                             color: isActive
-                              ? themeStyles.colors.brand.primary
-                              : themeStyles.colors.text.primary,
+                              ? isDark
+                                ? '#60a5fa'
+                                : '#3b82f6'
+                              : hoveredItem === index
+                                ? isDark
+                                  ? '#93c5fd'
+                                  : '#2563eb'
+                                : isDark
+                                  ? '#e2e8f0'
+                                  : '#334155',
                           }}
                           variants={textVariants}
                           initial="expanded"
@@ -209,37 +260,57 @@ const MenuItem: React.FC<MenuItemProps> = ({
               <button
                 key={index}
                 onClick={listItem.onClick}
-                className={`relative flex items-center ${collapsed ? 'h-12 w-12 justify-center' : 'w-full gap-4'} 
-                rounded-xl px-4 py-3 transition-all duration-300 
-                hover:${collapsed ? 'scale-110' : 'translate-x-2'} group/item
+                className={`relative flex items-center ${collapsed ? 'h-10 w-10 justify-center' : 'w-full gap-4'} 
+                rounded-xl px-4 py-3 transition-all duration-200 
+                hover:${collapsed ? 'scale-110' : 'translate-x-1'} group/item
                 group hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50`}
                 style={{
-                  backgroundImage: collapsed ? 'none' : themeStyles.effects.gradients.subtle,
+                  backgroundImage: collapsed
+                    ? 'none'
+                    : isDark
+                      ? 'linear-gradient(to right, rgba(30, 41, 59, 0.5), rgba(30, 41, 59, 0.3))'
+                      : 'linear-gradient(to right, rgba(241, 245, 249, 0.5), rgba(241, 245, 249, 0.3))',
                 }}
+                onMouseEnter={() => setHoveredItem(index)}
+                onMouseLeave={() => setHoveredItem(null)}
               >
                 <motion.div
                   animate={{
                     scale: collapsed ? 1.2 : 1,
-                    x: collapsed ? 0 : 0,
                   }}
                   whileHover={{ scale: 1.15 }}
                   whileTap={{ scale: 0.95 }}
                   transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                  className={`relative ${isAnimating ? 'transition-none' : 'transition-transform duration-300'}`}
                 >
                   <listItem.icon
-                    className="shrink-0 text-2xl"
+                    className="shrink-0 text-xl"
                     style={{
-                      color: themeStyles.menu.icon.color,
-                      filter: themeStyles.menu.icon.shadow,
+                      color:
+                        hoveredItem === index
+                          ? isDark
+                            ? '#93c5fd'
+                            : '#2563eb'
+                          : isDark
+                            ? '#cbd5e1'
+                            : '#64748b',
                     }}
+                    aria-hidden="true"
                   />
                 </motion.div>
 
                 {!collapsed && (
                   <motion.span
-                    className="text-sm font-medium tracking-wide"
-                    style={{ color: themeStyles.colors.text.primary }}
+                    className="ml-3 whitespace-nowrap text-sm  font-medium "
+                    style={{
+                      color:
+                        hoveredItem === index
+                          ? isDark
+                            ? '#93c5fd'
+                            : '#2563eb'
+                          : isDark
+                            ? '#e2e8f0'
+                            : '#334155',
+                    }}
                     variants={textVariants}
                     initial="expanded"
                     animate={collapsed ? 'collapsed' : 'expanded'}
@@ -248,7 +319,6 @@ const MenuItem: React.FC<MenuItemProps> = ({
                   </motion.span>
                 )}
 
-                {/* Enhanced custom tooltip */}
                 <CustomTooltip label={listItem.label} />
               </button>
             );

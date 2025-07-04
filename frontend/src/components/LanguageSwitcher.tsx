@@ -131,8 +131,8 @@ const LanguageSwitcher = () => {
           </AnimatePresence>
         </motion.button>
       )}
-      {/* Dropdown */}
 
+      {/* Dropdown list */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -140,12 +140,13 @@ const LanguageSwitcher = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            style={{ backgroundColor: isDark ? 'rgba(31, 41, 55, 0.95)' : '#ffffff' }}
             className={
               isLoginPage
                 ? 'absolute right-0 z-50 mt-1 w-40 overflow-hidden rounded-md border border-white/10 bg-gradient-to-b from-blue-900/90 to-purple-900/90 shadow-lg'
                 : `absolute right-0 z-50 mt-1 w-48 overflow-hidden rounded-lg border shadow-xl ${
-                    isDark ? 'border-gray-700 text-gray-200' : 'border-gray-200 text-gray-700'
+                    isDark
+                      ? 'border-gray-700 bg-gray-800 text-gray-200'
+                      : 'border-gray-200 bg-white text-gray-800'
                   }`
             }
             role="listbox"
@@ -186,10 +187,10 @@ const LanguageSwitcher = () => {
                           isDark
                             ? i18n.language === lang.code
                               ? 'bg-blue-900/60 text-blue-200'
-                              : 'text-gray-300 hover:bg-gray-700/80'
+                              : 'bg-gray-800 text-gray-300 hover:bg-gray-700/80'
                             : i18n.language === lang.code
-                              ? 'font-medium text-indigo-600 hover:bg-blue-50'
-                              : 'text-gray-700 hover:bg-gray-100'
+                              ? 'bg-indigo-50 font-medium text-indigo-700'
+                              : 'bg-white text-gray-800 hover:bg-gray-100'
                         }`
                   }
                   role="option"
@@ -203,7 +204,7 @@ const LanguageSwitcher = () => {
                           : isDark
                             ? 'text-gray-500'
                             : i18n.language === lang.code
-                              ? 'text-indigo-500'
+                              ? 'text-indigo-600'
                               : 'text-gray-400'
                       }`}
                     >

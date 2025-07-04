@@ -65,12 +65,18 @@ const Menu: React.FC<MenuProps> = ({ collapsed = false }) => {
 
   return (
     <motion.div
-      className="flex w-full flex-col rounded-xl border p-2 py-4 backdrop-blur-sm"
+      className="flex w-full flex-col overflow-hidden rounded-xl border backdrop-blur-sm"
       style={{
-        background: themeStyles.effects.glassMorphism.background as string,
-        backdropFilter: themeStyles.effects.glassMorphism.backdropFilter as string,
-        borderColor: themeStyles.menu.borderColor as string,
-        boxShadow: themeStyles.colors.shadow.md as string,
+        background: isDark ? 'rgba(15, 23, 42, 0.65)' : 'rgba(255, 255, 255, 0.85)',
+        backdropFilter: 'blur(12px)',
+        borderColor: isDark ? 'rgba(71, 85, 105, 0.2)' : 'rgba(226, 232, 240, 0.7)',
+        boxShadow: isDark
+          ? '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.05) inset'
+          : '0 8px 32px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.02) inset',
+        overflowY: 'auto',
+        scrollbarWidth: 'thin',
+        scrollbarColor: `${themeStyles.colors.brand.primary} transparent`,
+        maxHeight: 'calc(100vh - 220px)',
       }}
       variants={containerVariants}
       initial={false}
@@ -78,17 +84,39 @@ const Menu: React.FC<MenuProps> = ({ collapsed = false }) => {
       onAnimationStart={() => setIsAnimating(true)}
       onAnimationComplete={() => setIsAnimating(false)}
     >
-      {menu.map((item: MenuItemData, index: number) => (
-        <MenuItem
-          key={index}
-          catalog={item.catalog}
-          listItems={item.listItems}
-          centered={collapsed || item.centered}
-          collapsed={collapsed}
-          isAnimating={isAnimating}
-          delay={index * 0.05}
-        />
-      ))}
+      {/* Top accent line */}
+      <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50" />
+
+      {/* Menu content */}
+      <div className="relative z-10 space-y-4 p-3">
+        {menu.map((item: MenuItemData, index: number) => (
+          <div key={index} className="relative">
+            {/* Section divider */}
+            {index > 0 && (
+              <div className="relative my-2">
+                <div
+                  className="mx-2 h-px rounded-full"
+                  style={{
+                    background: isDark
+                      ? 'linear-gradient(to right, transparent, rgba(148, 163, 184, 0.15), transparent)'
+                      : 'linear-gradient(to right, transparent, rgba(148, 163, 184, 0.12), transparent)',
+                  }}
+                />
+              </div>
+            )}
+
+            <MenuItem
+              key={index}
+              catalog={item.catalog}
+              listItems={item.listItems}
+              centered={collapsed || item.centered}
+              collapsed={collapsed}
+              isAnimating={isAnimating}
+              delay={index * 0.05}
+            />
+          </div>
+        ))}
+      </div>
     </motion.div>
   );
 };

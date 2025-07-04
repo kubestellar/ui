@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	database "github.com/kubestellar/ui/postgresql/Database"
+	"github.com/kubestellar/ui/redis"
 	"go.uber.org/zap"
 )
 
@@ -143,9 +144,8 @@ func checkDatabase() ComponentHealth {
 func checkRedis() ComponentHealth {
 	start := time.Now()
 
-	// Simple HTTP check to Redis (adjust based on your Redis setup)
-	client := &http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Get("http://localhost:6379")
+	// Use the Redis client to ping Redis
+	err := redis.PingRedis()
 	latency := time.Since(start)
 
 	if err != nil {
@@ -154,10 +154,6 @@ func checkRedis() ComponentHealth {
 			Error:   err.Error(),
 			Latency: latency.String(),
 		}
-	}
-
-	if resp != nil {
-		resp.Body.Close()
 	}
 
 	return ComponentHealth{

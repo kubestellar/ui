@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/log"
+	"github.com/kubestellar/ui/telemetry"
 	"go.uber.org/zap"
 )
 
@@ -14,6 +15,7 @@ func OnboardingLogsHandler(c *gin.Context) {
 	clusterName := c.Param("cluster")
 	if clusterName == "" {
 		log.LogError("Cluster name is required")
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/onboarding/logs/:cluster", "400").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Cluster name is required"})
 		return
 	}
@@ -67,6 +69,7 @@ func OnboardingLogsHandler(c *gin.Context) {
 	// Return data even if no formal status exists but we have events
 	if !exists && len(events) == 0 {
 		log.LogError("No onboarding data found for cluster", zap.String("cluster", clusterName))
+		telemetry.HTTPErrorCounter.WithLabelValues("GET", "/onboarding/logs/:cluster", "404").Inc()
 		c.JSON(http.StatusNotFound, gin.H{"error": "No onboarding data found for cluster"})
 		return
 	}
@@ -84,7 +87,7 @@ func OnboardingLogsHandler(c *gin.Context) {
 		zap.String("status", status),
 		zap.Int("logCount", len(events)),
 		zap.Any("events", events))
-
+	telemetry.TotalHTTPRequests.WithLabelValues("GET", "/onboarding/logs/:cluster").Inc()
 	c.JSON(http.StatusOK, gin.H{
 		"clusterName": clusterName,
 		"status":      status,

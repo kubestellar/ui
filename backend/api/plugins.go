@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kubestellar/ui/log"
+	pkg "github.com/kubestellar/ui/pkg/plugins"
 	"github.com/kubestellar/ui/plugin"
 	"github.com/kubestellar/ui/plugin/plugins"
 	"go.uber.org/zap"
@@ -556,6 +557,26 @@ func SubmitPluginFeedbackHandler(c *gin.Context) {
 		"pluginId": feedback.PluginID,
 		"rating":   feedback.Rating,
 		"received": feedback.CreatedAt,
+	})
+}
+
+// GetAllPluginManifestsHandler returns all plugin manifests
+func GetAllPluginManifestsHandler(c *gin.Context) {
+	// Get the plugin manager instance
+	pm := pkg.NewPluginManager(&gin.Engine{})
+
+	// Get all plugins
+	pluginList := pm.GetPluginList()
+
+	// Extract manifests
+	manifests := make([]pkg.PluginManifest, 0, len(pluginList))
+	for _, plugin := range pluginList {
+		manifests = append(manifests, *plugin.Manifest)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status": "success",
+		"data":   manifests,
 	})
 }
 
