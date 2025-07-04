@@ -146,7 +146,7 @@ const LanguageSwitcher = () => {
                 : `absolute right-0 z-50 mt-1 w-48 overflow-hidden rounded-lg border shadow-xl ${
                     isDark
                       ? 'bg-gray-800 border-gray-700 text-gray-200'
-                      : 'border-gray-200 bg-white text-gray-700'
+                      : 'border-gray-200 bg-white text-gray-800'
                   }`
             }
             role="listbox"
@@ -187,10 +187,10 @@ const LanguageSwitcher = () => {
                           isDark
                             ? i18n.language === lang.code
                               ? 'bg-blue-900/60 text-blue-200'
-                              : 'text-gray-300 hover:bg-gray-700/80'
+                              : 'bg-gray-800 text-gray-300 hover:bg-gray-700/80'
                             : i18n.language === lang.code
-                              ? 'font-medium text-indigo-600 hover:bg-blue-50'
-                              : 'text-gray-700 hover:bg-gray-100'
+                              ? 'bg-indigo-50 text-indigo-700 font-medium'
+                              : 'bg-white text-gray-800 hover:bg-gray-100'
                         }`
                   }
                   role="option"
@@ -204,7 +204,7 @@ const LanguageSwitcher = () => {
                           : isDark
                             ? 'text-gray-500'
                             : i18n.language === lang.code
-                              ? 'text-indigo-500'
+                              ? 'text-indigo-600'
                               : 'text-gray-400'
                       }`}
                     >
