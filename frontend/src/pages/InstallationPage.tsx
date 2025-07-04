@@ -271,44 +271,39 @@ const CodeBlock = ({
         <button
           onClick={copyToClipboard}
           className={`rounded p-1 transition-colors ${
-            isDark
-              ? 'bg-slate-800 hover:bg-slate-700'
-              : 'bg-gray-100 hover:bg-blue-100'
+            isDark ? 'bg-slate-800 hover:bg-slate-700' : 'bg-gray-100 hover:bg-blue-100'
           }`}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
           aria-label="Copy code"
         >
-          {copied
-            ? (
-                <CheckCircle
-                  size={16}
-                  style={{
-                    color: isDark
-                      ? hovered
-                        ? '#34d399' // emerald-400
-                        : '#4ade80' // emerald-300
-                      : hovered
-                        ? '#16a34a' // emerald-600
-                        : '#22c55e', // emerald-500
-                  }}
-                />
-              )
-            : (
-                <Copy
-                  size={16}
-                  style={{
-                    color: isDark
-                      ? hovered
-                        ? '#fff'
-                        : '#cbd5e1' // slate-300
-                      : hovered
-                        ? '#2563eb' // blue-600
-                        : '#64748b', // slate-500
-                  }}
-                />
-              )
-          }
+          {copied ? (
+            <CheckCircle
+              size={16}
+              style={{
+                color: isDark
+                  ? hovered
+                    ? '#34d399' // emerald-400
+                    : '#4ade80' // emerald-300
+                  : hovered
+                    ? '#16a34a' // emerald-600
+                    : '#22c55e', // emerald-500
+              }}
+            />
+          ) : (
+            <Copy
+              size={16}
+              style={{
+                color: isDark
+                  ? hovered
+                    ? '#fff'
+                    : '#cbd5e1' // slate-300
+                  : hovered
+                    ? '#2563eb' // blue-600
+                    : '#64748b', // slate-500
+              }}
+            />
+          )}
         </button>
       </div>
       <div
