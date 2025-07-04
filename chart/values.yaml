@@ -13,6 +13,11 @@ backend:
 
 redis:
   enabled: true
+  # You can override redis chart values here if needed
+  # For example, to override the password:
+  # auth:
+  #   enabled: true
+  #   password: mypassword
 
 kubeConfig: ""
 

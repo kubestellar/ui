@@ -147,3 +147,6 @@ db.json
 
 #Personal text file
 ExtraCode.md
+
+# Helm chart lock file (user-generated, should not be committed)
+Chart.lock
