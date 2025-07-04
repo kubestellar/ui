@@ -198,7 +198,7 @@ const ProfileSection = () => {
         <div
           className="relative flex w-full max-w-lg flex-col"
           style={{
-            background: isDark ? '#1f2937' : '#fff',
+            background: isDark ? '#232f3e' : '#fff',
             borderRadius: '18px',
             boxShadow: themeStyles.colors.shadow.lg,
             border: `1.5px solid ${themeStyles.effects.glassMorphism.borderColor}`,
