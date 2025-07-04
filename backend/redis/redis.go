@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kubestellar/ui/log"
+	"github.com/kubestellar/ui/backend/log"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"os"

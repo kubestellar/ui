@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/telemetry"
-	"github.com/kubestellar/ui/wds"
+	"github.com/kubestellar/ui/backend/telemetry"
+	"github.com/kubestellar/ui/backend/wds"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

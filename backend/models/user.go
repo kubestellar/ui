@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	database "github.com/kubestellar/ui/postgresql/Database"
+	database "github.com/kubestellar/ui/backend/postgresql/Database"
 	"golang.org/x/crypto/bcrypt"
 )
 

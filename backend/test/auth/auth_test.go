@@ -1,7 +1,7 @@
 package auth_test
 
 import (
-	auth "github.com/kubestellar/ui/auth"
+	auth "github.com/kubestellar/ui/backend/auth"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

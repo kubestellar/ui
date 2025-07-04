@@ -5,9 +5,9 @@ import (
 	"runtime"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/installer"
-	"github.com/kubestellar/ui/telemetry"
-	"github.com/kubestellar/ui/utils"
+	"github.com/kubestellar/ui/backend/installer"
+	"github.com/kubestellar/ui/backend/telemetry"
+	"github.com/kubestellar/ui/backend/utils"
 )
 
 // InstallationRequest represents the installation request parameters

@@ -10,20 +10,20 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	database "github.com/kubestellar/ui/postgresql/Database"
-	"github.com/kubestellar/ui/redis"
+	database "github.com/kubestellar/ui/backend/postgresql/Database"
+	"github.com/kubestellar/ui/backend/redis"
 	"go.uber.org/zap"
 )
 
 type HealthConfig struct {
-	ServiceName         string
-	ServiceVersion      string
-	DatabaseTimeout     time.Duration
-	RedisTimeout        time.Duration
-	MemoryThreshold     float64 // Percentage
-	DiskThreshold       float64 // Percentage
-	HealthCheckTimeout  time.Duration
-	ComponentsToCheck   []string
+	ServiceName        string
+	ServiceVersion     string
+	DatabaseTimeout    time.Duration
+	RedisTimeout       time.Duration
+	MemoryThreshold    float64 // Percentage
+	DiskThreshold      float64 // Percentage
+	HealthCheckTimeout time.Duration
+	ComponentsToCheck  []string
 }
 
 type HealthStatus struct {
@@ -37,10 +37,10 @@ type HealthStatus struct {
 }
 
 type ComponentHealth struct {
-	Status   string `json:"status"`
-	Message  string `json:"message,omitempty"`
-	Latency  string `json:"latency,omitempty"`
-	Error    string `json:"error,omitempty"`
+	Status   string                 `json:"status"`
+	Message  string                 `json:"message,omitempty"`
+	Latency  string                 `json:"latency,omitempty"`
+	Error    string                 `json:"error,omitempty"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
@@ -55,7 +55,7 @@ func NewHealthChecker(logger *zap.Logger, config *HealthConfig) *HealthChecker {
 	if config == nil {
 		config = getDefaultConfig()
 	}
-	
+
 	return &HealthChecker{
 		config:    *config,
 		logger:    logger,
@@ -66,14 +66,14 @@ func NewHealthChecker(logger *zap.Logger, config *HealthConfig) *HealthChecker {
 // getDefaultConfig returns default configuration with values from environment variables
 func getDefaultConfig() *HealthConfig {
 	return &HealthConfig{
-		ServiceName:         getEnv("SERVICE_NAME", "kubestellar-ui"),
-		ServiceVersion:      getEnv("SERVICE_VERSION", "1.0.0"),
-		DatabaseTimeout:     getDurationEnv("DB_HEALTH_TIMEOUT", 5*time.Second),
-		RedisTimeout:        getDurationEnv("REDIS_HEALTH_TIMEOUT", 3*time.Second),
-		MemoryThreshold:     getFloatEnv("MEMORY_THRESHOLD", 85.0),
-		DiskThreshold:       getFloatEnv("DISK_THRESHOLD", 90.0),
-		HealthCheckTimeout:  getDurationEnv("HEALTH_CHECK_TIMEOUT", 10*time.Second),
-		ComponentsToCheck:   getSliceEnv("HEALTH_COMPONENTS", []string{"database", "redis", "memory", "disk"}),
+		ServiceName:        getEnv("SERVICE_NAME", "kubestellar-ui"),
+		ServiceVersion:     getEnv("SERVICE_VERSION", "1.0.0"),
+		DatabaseTimeout:    getDurationEnv("DB_HEALTH_TIMEOUT", 5*time.Second),
+		RedisTimeout:       getDurationEnv("REDIS_HEALTH_TIMEOUT", 3*time.Second),
+		MemoryThreshold:    getFloatEnv("MEMORY_THRESHOLD", 85.0),
+		DiskThreshold:      getFloatEnv("DISK_THRESHOLD", 90.0),
+		HealthCheckTimeout: getDurationEnv("HEALTH_CHECK_TIMEOUT", 10*time.Second),
+		ComponentsToCheck:  getSliceEnv("HEALTH_COMPONENTS", []string{"database", "redis", "memory", "disk"}),
 	}
 }
 
@@ -143,7 +143,7 @@ type componentResult struct {
 // checkComponent performs health check for a specific component
 func (hc *HealthChecker) checkComponent(ctx context.Context, component string, results chan<- componentResult) {
 	var health ComponentHealth
-	
+
 	switch component {
 	case "database":
 		health = hc.checkDatabase(ctx)
@@ -159,7 +159,7 @@ func (hc *HealthChecker) checkComponent(ctx context.Context, component string, r
 			Error:  "unknown component: " + component,
 		}
 	}
-	
+
 	results <- componentResult{name: component, health: health}
 }
 
@@ -206,7 +206,7 @@ func (hc *HealthChecker) checkDatabase(ctx context.Context) ComponentHealth {
 	}
 
 	start := time.Now()
-	
+
 	// Create a context with timeout for database check
 	dbCtx, cancel := context.WithTimeout(ctx, hc.config.DatabaseTimeout)
 	defer cancel()
@@ -232,15 +232,15 @@ func (hc *HealthChecker) checkDatabase(ctx context.Context) ComponentHealth {
 // checkRedis verifies Redis connectivity using the existing redis package
 func (hc *HealthChecker) checkRedis(ctx context.Context) ComponentHealth {
 	start := time.Now()
-	
+
 	// Create a context with timeout for Redis check
-	redisCtx, cancel := context.WithTimeout(ctx, hc.config.RedisTimeout)
+	_, cancel := context.WithTimeout(ctx, hc.config.RedisTimeout)
 	defer cancel()
 
 	// Use a simple Redis operation to check connectivity
 	// This assumes you have a Redis client available in your redis package
 	testKey := "health_check_" + strconv.FormatInt(time.Now().UnixNano(), 10)
-	
+
 	// Try to set and get a test value
 	err := redis.SetNamespaceCache(testKey, "test", 1*time.Second)
 	if err != nil {
@@ -278,12 +278,12 @@ func (hc *HealthChecker) checkMemory() ComponentHealth {
 	// Calculate memory usage percentage
 	allocMB := float64(memStats.Alloc) / 1024 / 1024
 	sysMB := float64(memStats.Sys) / 1024 / 1024
-	
+
 	metadata := map[string]interface{}{
-		"alloc_mb":    allocMB,
-		"sys_mb":      sysMB,
-		"gc_cycles":   memStats.NumGC,
-		"goroutines":  runtime.NumGoroutine(),
+		"alloc_mb":   allocMB,
+		"sys_mb":     sysMB,
+		"gc_cycles":  memStats.NumGC,
+		"goroutines": runtime.NumGoroutine(),
 	}
 
 	// Simple threshold check - you might want to implement more sophisticated logic
@@ -305,7 +305,7 @@ func (hc *HealthChecker) checkMemory() ComponentHealth {
 // checkDiskSpace checks available disk space with configurable thresholds
 func (hc *HealthChecker) checkDiskSpace() ComponentHealth {
 	diskPath := getEnv("DISK_PATH", "/")
-	
+
 	var stat syscall.Statfs_t
 	err := syscall.Statfs(diskPath, &stat)
 	if err != nil {
@@ -322,11 +322,11 @@ func (hc *HealthChecker) checkDiskSpace() ComponentHealth {
 	usedPercent := float64(used) / float64(total) * 100
 
 	metadata := map[string]interface{}{
-		"total_gb":      float64(total) / 1024 / 1024 / 1024,
-		"free_gb":       float64(free) / 1024 / 1024 / 1024,
-		"used_gb":       float64(used) / 1024 / 1024 / 1024,
-		"used_percent":  usedPercent,
-		"path":          diskPath,
+		"total_gb":     float64(total) / 1024 / 1024 / 1024,
+		"free_gb":      float64(free) / 1024 / 1024 / 1024,
+		"used_gb":      float64(used) / 1024 / 1024 / 1024,
+		"used_percent": usedPercent,
+		"path":         diskPath,
 	}
 
 	status := "healthy"

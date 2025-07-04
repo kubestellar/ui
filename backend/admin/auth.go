@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/kubestellar/ui/models"
+	"github.com/kubestellar/ui/backend/models"
 )
 
 // InitializeAdminUser creates default admin user if no users exist

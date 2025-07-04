@@ -2,17 +2,17 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/health"
+	"github.com/kubestellar/ui/backend/health"
 	"go.uber.org/zap"
 )
 
 // HealthEndpointConfig holds configuration for health endpoints
 type HealthEndpointConfig struct {
-	HealthPath     string
-	LivenessPath   string
-	ReadinessPath  string
-	EnableMetrics  bool
-	HealthConfig   *health.HealthConfig
+	HealthPath    string
+	LivenessPath  string
+	ReadinessPath string
+	EnableMetrics bool
+	HealthConfig  *health.HealthConfig
 }
 
 // getDefaultHealthEndpointConfig returns default configuration for health endpoints
@@ -42,7 +42,7 @@ func SetupHealthEndpointsWithConfig(router *gin.Engine, logger *zap.Logger, conf
 
 	// Setup health endpoint group for better organization
 	healthGroup := router.Group("")
-	
+
 	// Apply middleware if needed (optional)
 	if config.EnableMetrics {
 		healthGroup.Use(healthMetricsMiddleware(logger))
@@ -57,7 +57,7 @@ func SetupHealthEndpointsWithConfig(router *gin.Engine, logger *zap.Logger, conf
 
 	// Additional health endpoints for monitoring
 	healthGroup.GET("/health/detailed", healthChecker.HealthHandler()) // Alias for detailed health
-	
+
 	logger.Info("Health endpoints configured",
 		zap.String("health_path", config.HealthPath),
 		zap.String("liveness_path", config.LivenessPath),
@@ -93,7 +93,7 @@ func SetupCustomHealthEndpoints(router *gin.Engine, logger *zap.Logger, healthCh
 	if paths == nil {
 		paths = map[string]string{
 			"health":    "/health",
-			"liveness":  "/healthz", 
+			"liveness":  "/healthz",
 			"readiness": "/readyz",
 		}
 	}
@@ -102,11 +102,11 @@ func SetupCustomHealthEndpoints(router *gin.Engine, logger *zap.Logger, healthCh
 	if healthPath, exists := paths["health"]; exists {
 		router.GET(healthPath, healthChecker.HealthHandler())
 	}
-	
+
 	if livenessPath, exists := paths["liveness"]; exists {
 		router.GET(livenessPath, healthChecker.LivenessHandler())
 	}
-	
+
 	if readinessPath, exists := paths["readiness"]; exists {
 		router.GET(readinessPath, healthChecker.ReadinessHandler())
 	}

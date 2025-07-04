@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/kubestellar/ui/log"
+	"github.com/kubestellar/ui/backend/log"
 	"go.uber.org/zap"
 )
 

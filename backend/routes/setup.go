@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/api"
-	"github.com/kubestellar/ui/telemetry"
+	"github.com/kubestellar/ui/backend/api"
+	"github.com/kubestellar/ui/backend/telemetry"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

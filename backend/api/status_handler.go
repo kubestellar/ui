@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/installer"
-	"github.com/kubestellar/ui/telemetry"
+	"github.com/kubestellar/ui/backend/installer"
+	"github.com/kubestellar/ui/backend/telemetry"
 )
 
 // CheckKubeStellarStatusHandler checks if KubeStellar is installed and returns status

@@ -6,8 +6,8 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/log"
-	"github.com/kubestellar/ui/plugin"
+	"github.com/kubestellar/ui/backend/log"
+	"github.com/kubestellar/ui/backend/plugin"
 	"go.uber.org/zap"
 )
 

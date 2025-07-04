@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kubestellar/ui/utils"
+	"github.com/kubestellar/ui/backend/utils"
 )
 
 func TestGenerateInstallID(t *testing.T) {
