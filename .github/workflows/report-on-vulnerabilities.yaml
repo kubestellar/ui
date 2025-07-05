@@ -1,0 +1,103 @@
+name: Trivy Vulnerability Scanner
+permissions:
+  issues: write
+  contents: read
+  security-events: write
+on:
+  pull_request:
+    paths:
+      - '**/package*.json'
+      - '**/go.mod'
+      - '**/go.sum'
+      - '**/Dockerfile'
+      - '.github/workflows/**'
+jobs:
+  scan:
+    name: Scan for Vulnerabilities
+    runs-on: ubuntu-latest
+    outputs:
+      vulnerabilities_found: ${{ steps.parse-results.outputs.vulnerabilities_found }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+      - name: Run Trivy scan and generate reports (SARIF + JSON)
+        run: |
+          trivy fs \
+            --format template \
+            --template '@/contrib/sarif.tpl' \
+            --output trivy-results.sarif \
+            --severity CRITICAL,HIGH \
+            --vuln-type os,library \
+            --no-progress .
+          trivy fs \
+            --format json \
+            --output trivy-results.json \
+            --severity CRITICAL,HIGH \
+            --vuln-type os,library \
+            --no-progress .
+      - name: Check for HIGH or CRITICAL vulnerabilities
+        id: parse-results
+        run: |
+          if jq -e '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH" or .Severity=="CRITICAL")] | length > 0' trivy-results.json; then
+            echo "vulnerabilities_found=true" >> $GITHUB_OUTPUT
+          else
+            echo "vulnerabilities_found=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Upload Trivy JSON report as artifact
+        if: steps.parse-results.outputs.vulnerabilities_found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-json-report
+          path: trivy-results.json
+          retention-days: 1
+      - name: Upload SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+          category: trivy-fs
+  create-issue:
+    name: Create Vulnerability Issue
+    needs: [scan]
+    if: needs.scan.outputs.vulnerabilities_found == 'true'
+    runs-on: ubuntu-latest
+  
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+  
+      - name: Download Trivy JSON report
+        uses: actions/download-artifact@v4
+        with:
+          name: trivy-json-report
+  
+      - name: Generate issue content file
+        run: |
+          cat <<'EOF' > filter.jq
+          "### 🚨 Vulnerabilities Detected in PR #${{ github.event.pull_request.number }}\n\n" +
+          "Trivy has detected the following HIGH or CRITICAL vulnerabilities. Please investigate and address them.\n\n" +
+          "| Severity | Package | Version | Vulnerability ID | Fix Version |\n" +
+          "|---|---|---|---|---|\n" +
+          (
+            .Results[]? | .Vulnerabilities[]? | 
+            select(.Severity == "HIGH" or .Severity == "CRITICAL") |
+            "| " + .Severity + " | " + .PkgName + " | " + .InstalledVersion + " | [" + .VulnerabilityID + "](https://avd.aquasec.com/nvd/" + (.VulnerabilityID | ascii_downcase) + ") | " + (.FixedVersion // "N/A") + " |"
+          )
+          EOF
+  
+          jq -r -f filter.jq trivy-results.json > cve-issue-report.md
+          ls -la
+  
+      - name: Create GitHub Issue (deduplicated)
+        uses: peter-evans/create-issue-from-file@v5
+        with:
+          title: "🔒 Security Vulnerabilities Detected in PR #${{ github.event.pull_request.number }}"
+          content-filepath: cve-issue-report.md
+          labels: |
+            security
+            vulnerability
+          assignees: ${{ github.actor }}
+          search-existing: all
+          update-existing: false
