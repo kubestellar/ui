@@ -83,7 +83,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{ duration: 0.25, type: 'spring', stiffness: 300, damping: 30 }}
-          className="relative z-50 w-full max-w-md max-h-[90vh] flex flex-col rounded-xl shadow-2xl"
+          className="relative z-50 flex max-h-[90vh] w-full max-w-md flex-col rounded-xl shadow-2xl"
           style={{
             background: isDark ? 'rgba(17, 24, 39, 0.95)' : 'rgba(255, 255, 255, 0.95)',
             borderColor: isDark ? 'rgba(75, 85, 99, 0.3)' : 'rgba(226, 232, 240, 0.8)',
@@ -94,7 +94,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
         >
           {/* Header with gradient background - fixed at top */}
           <div
-            className="flex items-center justify-between px-6 py-4 sticky top-0 z-10 rounded-t-xl"
+            className="sticky top-0 z-10 flex items-center justify-between rounded-t-xl px-6 py-4"
             style={{
               background: isDark
                 ? 'linear-gradient(to right, rgba(30, 58, 138, 0.4), rgba(30, 64, 175, 0.3))'
@@ -123,7 +123,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
             </motion.button>
           </div>
 
-          <div className="px-6 py-5 overflow-y-auto flex-1 custom-scrollbar">
+          <div className="custom-scrollbar flex-1 overflow-y-auto px-6 py-5">
             {formError && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -205,9 +205,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                         onChange={e => setPassword(e.target.value)}
                         className="w-full rounded-lg border px-4 py-2.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
                         style={{
-                          background: isDark
-                            ? 'rgba(31, 41, 55, 0.5)'
-                            : 'rgba(255, 255, 255, 0.8)',
+                          background: isDark ? 'rgba(31, 41, 55, 0.5)' : 'rgba(255, 255, 255, 0.8)',
                           borderColor: isDark
                             ? 'rgba(75, 85, 99, 0.3)'
                             : 'rgba(226, 232, 240, 0.8)',
@@ -228,7 +226,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                         } transition-colors duration-150`}
                         onClick={() => setShowPassword(!showPassword)}
                         tabIndex={-1}
-                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
                       >
                         {showPassword ? (
                           <FiEyeOff className="text-gray-600 dark:text-gray-400" size={16} />
@@ -257,9 +255,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                         onChange={e => setConfirmPassword(e.target.value)}
                         className="w-full rounded-lg border px-4 py-2.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
                         style={{
-                          background: isDark
-                            ? 'rgba(31, 41, 55, 0.5)'
-                            : 'rgba(255, 255, 255, 0.8)',
+                          background: isDark ? 'rgba(31, 41, 55, 0.5)' : 'rgba(255, 255, 255, 0.8)',
                           borderColor: isDark
                             ? 'rgba(75, 85, 99, 0.3)'
                             : 'rgba(226, 232, 240, 0.8)',
@@ -276,7 +272,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                         } transition-colors duration-150`}
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         tabIndex={-1}
-                        aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                        aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                       >
                         {showConfirmPassword ? (
                           <FiEyeOff className="text-gray-600 dark:text-gray-400" size={16} />
@@ -286,17 +282,17 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                       </button>
                     </div>
                     {password && confirmPassword && password !== confirmPassword && (
-                      <motion.p 
+                      <motion.p
                         initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="mt-1 text-xs text-red-500 flex items-center gap-1"
+                        className="mt-1 flex items-center gap-1 text-xs text-red-500"
                       >
                         <FiAlertCircle size={12} />
                         {t('admin.users.errors.passwordMismatch')}
                       </motion.p>
                     )}
                     {password && confirmPassword && password === confirmPassword && (
-                      <motion.p 
+                      <motion.p
                         initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="mt-1 flex items-center gap-1 text-xs text-green-500"
@@ -328,7 +324,11 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                     : isDark
                       ? 'rgba(75, 85, 99, 0.3)'
                       : 'rgba(226, 232, 240, 0.8)',
-                  boxShadow: isAdmin ? (isDark ? '0 2px 8px rgba(37, 99, 235, 0.15)' : '0 2px 8px rgba(37, 99, 235, 0.1)') : 'none',
+                  boxShadow: isAdmin
+                    ? isDark
+                      ? '0 2px 8px rgba(37, 99, 235, 0.15)'
+                      : '0 2px 8px rgba(37, 99, 235, 0.1)'
+                    : 'none',
                 }}
               >
                 <div className="flex items-center">
@@ -338,11 +338,11 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                       id="isAdmin"
                       checked={isAdmin}
                       onChange={e => setIsAdmin(e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      className="h-4 w-4 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                     <label
                       htmlFor="isAdmin"
-                      className="ml-2 flex items-center gap-1.5 text-sm font-medium cursor-pointer"
+                      className="ml-2 flex cursor-pointer items-center gap-1.5 text-sm font-medium"
                       style={{ color: themeStyles.colors.text.primary }}
                     >
                       <FiShield size={14} className={isAdmin ? 'text-blue-500' : ''} />
@@ -372,16 +372,14 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                   {t('admin.users.form.permissions')}
                 </label>
 
-                <div className="space-y-3 max-h-[240px] overflow-y-auto pr-1 custom-scrollbar">
+                <div className="custom-scrollbar max-h-[240px] space-y-3 overflow-y-auto pr-1">
                   {permissionComponents.map(component => (
                     <motion.div
                       key={component.id}
                       className="rounded-lg border p-3.5"
                       style={{
                         background: isDark ? 'rgba(31, 41, 55, 0.3)' : 'rgba(249, 250, 251, 0.8)',
-                        borderColor: isDark
-                          ? 'rgba(75, 85, 99, 0.3)'
-                          : 'rgba(226, 232, 240, 0.8)',
+                        borderColor: isDark ? 'rgba(75, 85, 99, 0.3)' : 'rgba(226, 232, 240, 0.8)',
                         opacity: isAdmin ? 0.7 : 1,
                         transition: 'all 0.2s ease',
                       }}
@@ -420,12 +418,12 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                                 value={level.id}
                                 checked={permissions[component.id] === level.id}
                                 onChange={() => setPermissionChange(component.id, level.id)}
-                                className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                className="h-4 w-4 cursor-pointer border-gray-300 text-blue-600 focus:ring-blue-500"
                                 disabled={isAdmin}
                               />
                               <label
                                 htmlFor={`${component.id}-${level.id}`}
-                                className="ml-2 block text-sm cursor-pointer"
+                                className="ml-2 block cursor-pointer text-sm"
                                 style={{ color: themeStyles.colors.text.primary }}
                               >
                                 {level.name}
@@ -450,9 +448,12 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                 )}
               </div>
 
-              <div className="mt-6 flex justify-end gap-3 pt-2 sticky bottom-0 bg-opacity-80 backdrop-blur-sm" style={{
-                background: isDark ? 'rgba(17, 24, 39, 0.8)' : 'rgba(255, 255, 255, 0.8)',
-              }}>
+              <div
+                className="sticky bottom-0 mt-6 flex justify-end gap-3 bg-opacity-80 pt-2 backdrop-blur-sm"
+                style={{
+                  background: isDark ? 'rgba(17, 24, 39, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+                }}
+              >
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
