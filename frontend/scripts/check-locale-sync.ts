@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { Octokit } from '@octokit/rest';
+// import { Octokit } from '@octokit/rest';
 
 interface LocaleData {
   [key: string]: unknown;
@@ -16,35 +16,35 @@ interface LocaleResults {
   [locale: string]: LocaleIssues;
 }
 
-interface GitHubIssue {
-  number: number;
-  title: string;
-  body: string;
-  state: 'open' | 'closed';
-  labels: Array<{ name: string }>;
-}
+// interface GitHubIssue {
+//   number: number;
+//   title: string;
+//   body: string;
+//   state: 'open' | 'closed';
+//   labels: Array<{ name: string }>;
+// }
 
 class LocaleSyncChecker {
-  private octokit?: Octokit;
-  private owner?: string;
-  private repo?: string;
+  // private octokit?: Octokit;
+  // private owner?: string;
+  // private repo?: string;
   private localesPath: string;
   private masterLocale: string;
-  private issueLabel: string;
+  // private issueLabel: string;
 
   constructor() {
-    const repository = process.env.GITHUB_REPOSITORY;
-    if (!repository) {
-      console.warn(
-        '⚠️  GITHUB_REPOSITORY not set; running in local-only mode (no issues will be created).'
-      );
-    } else {
-      [this.owner, this.repo] = repository.split('/');
-      this.octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
-    }
+    // const repository = process.env.GITHUB_REPOSITORY;
+    // if (!repository) {
+    //   console.warn(
+    //     '⚠️  GITHUB_REPOSITORY not set; running in local-only mode (no issues will be created).'
+    //   );
+    // } else {
+    //   [this.owner, this.repo] = repository.split('/');
+    //   this.octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+    // }
     this.localesPath = path.join(process.cwd(), 'src', 'locales');
     this.masterLocale = 'en';
-    this.issueLabel = 'locale-sync';
+    // this.issueLabel = 'locale-sync';
   }
 
   private flattenObject(obj: Record<string, unknown>, prefix = ''): string[] {
@@ -115,106 +115,107 @@ class LocaleSyncChecker {
     return results;
   }
 
-  private async findExistingIssues(): Promise<GitHubIssue[]> {
-    if (!this.octokit || !this.owner || !this.repo) return [];
-    try {
-      const { data } = await this.octokit.rest.issues.listForRepo({
-        owner: this.owner,
-        repo: this.repo,
-        labels: this.issueLabel,
-        state: 'open',
-      });
-      return data.map(issue => ({
-        number: issue.number,
-        title: issue.title,
-        body: issue.body ?? '',
-        state: issue.state as 'open' | 'closed',
-        labels: issue.labels.map(l => ({ name: typeof l === 'string' ? l : l.name || '' })),
-      }));
-    } catch (err) {
-      console.error('❌ Failed to fetch issues:', err);
-      return [];
-    }
-  }
+  // private async findExistingIssues(): Promise<GitHubIssue[]> {
+  //   if (!this.octokit || !this.owner || !this.repo) return [];
+  //   try {
+  //     const { data } = await this.octokit.rest.issues.listForRepo({
+  //       owner: this.owner,
+  //       repo: this.repo,
+  //       labels: this.issueLabel,
+  //       state: 'open',
+  //     });
+  //     return data.map(issue => ({
+  //       number: issue.number,
+  //       title: issue.title,
+  //       body: issue.body ?? '',
+  //       state: issue.state as 'open' | 'closed',
+  //       labels: issue.labels.map(l => ({ name: typeof l === 'string' ? l : l.name || '' })),
+  //     }));
+  //   } catch (err) {
+  //     console.error('❌ Failed to fetch issues:', err);
+  //     return [];
+  //   }
+  // }
 
-  private async createOrUpdateIssue(locale: string, issues: LocaleIssues): Promise<void> {
-    if (!this.octokit || !this.owner || !this.repo) return;
-    const title = `[Locale Sync] ${locale.toUpperCase()} translation keys out of sync`;
-    const body = this.generateIssueBody(locale, issues);
-    const existing = (await this.findExistingIssues()).find(i => i.title === title);
-    try {
-      if (existing) {
-        await this.octokit.rest.issues.update({
-          owner: this.owner,
-          repo: this.repo,
-          issue_number: existing.number,
-          title,
-          body,
-        });
-        console.log(`🔄 Updated issue #${existing.number}`);
-      } else {
-        const { data } = await this.octokit.rest.issues.create({
-          owner: this.owner,
-          repo: this.repo,
-          title,
-          body,
-          labels: [this.issueLabel],
-        });
-        console.log(`🆕 Created issue #${data.number}`);
-      }
-    } catch (err) {
-      console.error('❌ Issue create/update failed:', err);
-    }
-  }
+  // private async createOrUpdateIssue(locale: string, issues: LocaleIssues): Promise<void> {
+  //   if (!this.octokit || !this.owner || !this.repo) return;
+  //   const title = `[Locale Sync] ${locale.toUpperCase()} translation keys out of sync`;
+  //   const body = this.generateIssueBody(locale, issues);
+  //   const existing = (await this.findExistingIssues()).find(i => i.title === title);
+  //   try {
+  //     if (existing) {
+  //       await this.octokit.rest.issues.update({
+  //         owner: this.owner,
+  //         repo: this.repo,
+  //         issue_number: existing.number,
+  //         title,
+  //         body,
+  //       });
+  //       console.log(`🔄 Updated issue #${existing.number}`);
+  //     } else {
+  //       const { data } = await this.octokit.rest.issues.create({
+  //         owner: this.owner,
+  //         repo: this.repo,
+  //         title,
+  //         body,
+  //         labels: [this.issueLabel],
+  //       });
+  //       console.log(`🆕 Created issue #${data.number}`);
+  //     }
+  //   } catch (err) {
+  //     console.error('❌ Issue create/update failed:', err);
+  //   }
+  // }
 
-  private async closeResolved(results: LocaleResults): Promise<void> {
-    if (!this.octokit || !this.owner || !this.repo) return;
-    const existing = await this.findExistingIssues();
-    for (const issue of existing) {
-      const m = issue.title.match(/\[Locale Sync\] (.+) translation keys out of sync/);
-      if (!m) continue;
-      const locale = m[1].toLowerCase();
-      const { missing, extra } = results[locale] || { missing: [], extra: [] };
-      if (missing.length === 0 && extra.length === 0) {
-        try {
-          await this.octokit.rest.issues.update({
-            owner: this.owner,
-            repo: this.repo,
-            issue_number: issue.number,
-            state: 'closed',
-          });
-          console.log(`✅ Closed issue #${issue.number}`);
-        } catch (err) {
-          console.error('❌ Failed to close issue:', err);
-        }
-      }
-    }
-  }
+  // private async closeResolved(results: LocaleResults): Promise<void> {
+  //   if (!this.octokit || !this.owner || !this.repo) return;
+  //   const existing = await this.findExistingIssues();
+  //   for (const issue of existing) {
+  //     const m = issue.title.match(/\[Locale Sync\] (.+) translation keys out of sync/);
+  //     if (!m) continue;
+  //     const locale = m[1].toLowerCase();
+  //     const { missing, extra } = results[locale] || { missing: [], extra: [] };
+  //     if (missing.length === 0 && extra.length === 0) {
+  //       try {
+  //         await this.octokit.rest.issues.update({
+  //           owner: this.owner,
+  //           repo: this.repo,
+  //           issue_number: issue.number,
+  //           state: 'closed',
+  //         });
+  //         console.log(`✅ Closed issue #${issue.number}`);
+  //       } catch (err) {
+  //         console.error('❌ Failed to close issue:', err);
+  //       }
+  //     }
+  //   }
+  // }
 
-  private generateIssueBody(locale: string, issues: LocaleIssues): string {
-    const { missing, extra } = issues;
-    let b = `## Locale Sync for \`${locale}\`\n`;
-    if (missing.length) b += `\nMissing (\`${missing.length}\`): ${missing.join(', ')}\n`;
-    if (extra.length) b += `\nExtra   (\`${extra.length}\`): ${extra.join(', ')}\n`;
-    return b;
-  }
+  // private generateIssueBody(locale: string, issues: LocaleIssues): string {
+  //   const { missing, extra } = issues;
+  //   let b = `## Locale Sync for \`${locale}\`\n`;
+  //   if (missing.length) b += `\nMissing (\`${missing.length}\`): ${missing.join(', ')}\n`;
+  //   if (extra.length) b += `\nExtra   (\`${extra.length}\`): ${extra.join(', ')}\n`;
+  //   return b;
+  // }
 
   async run(): Promise<void> {
-    const results = this.checkLocaleSync();
-    const out = path.join(process.cwd(), 'locale-check-results.json');
-    fs.writeFileSync(out, JSON.stringify(results, null, 2));
-    if (this.octokit) {
-      for (const [loc, iss] of Object.entries(results)) {
-        if (iss.missing.length || iss.extra.length) {
-          await this.createOrUpdateIssue(loc, iss);
-        }
-      }
-      await this.closeResolved(results);
-    }
+    this.checkLocaleSync();
+    // const results = this.checkLocaleSync();
+    // const out = path.join(process.cwd(), 'locale-check-results.json');
+    // fs.writeFileSync(out, JSON.stringify(results, null, 2));
+    // if (this.octokit) {
+    //   for (const [loc, iss] of Object.entries(results)) {
+    //     if (iss.missing.length || iss.extra.length) {
+    //       await this.createOrUpdateIssue(loc, iss);
+    //     }
+    //   }
+    //   await this.closeResolved(results);
+    // }
   }
 }
 
-// ESM entry-point
+
 async function main() {
   const checker = new LocaleSyncChecker();
   await checker.run();
