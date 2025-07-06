@@ -39,26 +39,66 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          // Core vendor dependencies
+          // Monaco Editor - already optimized
+          editor: ['@monaco-editor/react'],
+
+          // React core libraries
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
 
-          // MUI core and icons in separate chunks
-          'vendor-mui-core': ['@mui/material'],
-          'vendor-mui-icons': ['@mui/icons-material'],
-          'vendor-mui-tree': ['@mui/x-tree-view'],
+          // MUI core libraries
+          'vendor-mui-core': [
+            '@mui/material',
+            '@mui/icons-material',
+            '@emotion/react',
+            '@emotion/styled',
+          ],
 
-          // Feature-specific chunks
-          charts: ['recharts'],
-          editor: ['@monaco-editor/react'],
+          // MUI specific components
+          'vendor-mui-components': ['@mui/lab', '@mui/x-tree-view'],
+
+          // Terminal and related libraries
           terminal: ['xterm', 'xterm-addon-fit'],
 
+          // Charts and visualization
+          charts: ['recharts'],
+
+          // 3D and graphics libraries
+          three: ['three', '@react-three/fiber', '@react-three/drei'],
+
+          // Animation libraries
+          animations: ['framer-motion'],
+
+          // Flow and topology libraries
+          flow: ['reactflow', '@xyflow/react', 'dagre'],
+
           // Utility libraries
-          utils: ['axios', 'js-yaml', 'nanoid'],
+          utils: ['lodash', 'js-yaml', 'yaml', 'uuid', 'nanoid'],
+
+          // HTTP and API libraries
+          api: ['axios', '@tanstack/react-query'],
+
+          // Internationalization
+          i18n: ['react-i18next', 'i18next', 'i18next-browser-languagedetector'],
+
+          // File handling and upload
+          files: [],
+
+          // State management
+          state: ['zustand'],
+
+          // Icons and UI
+          icons: ['react-icons', 'lucide-react', '@fortawesome/fontawesome-free'],
+
+          // Drag and drop
+          dnd: ['@hello-pangea/dnd'],
+
+          // WebSocket
+          websocket: [],
         },
       },
     },
+    chunkSizeWarningLimit: 1000,
   },
-
   // Add preload directives
   experimental: {
     renderBuiltUrl(filename: string, { hostType }: { hostType: 'js' | 'css' | 'html' }) {
