@@ -215,7 +215,6 @@ class LocaleSyncChecker {
   }
 }
 
-
 async function main() {
   const checker = new LocaleSyncChecker();
   await checker.run();
