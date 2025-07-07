@@ -22,10 +22,10 @@ export const zoomPresets: ZoomPreset[] = [
   { level: 2.0, label: 'Focus', description: 'Maximum detail' },
 ];
 
-const useZoomStore = create<ZoomState>((set) => ({
+const useZoomStore = create<ZoomState>(set => ({
   currentZoom: 1.0,
   zoomPresets,
-  
+
   setZoom: (zoom: number) => {
     set({ currentZoom: zoom });
   },
@@ -51,4 +51,4 @@ const useZoomStore = create<ZoomState>((set) => ({
   },
 }));
 
-export default useZoomStore; 
+export default useZoomStore;

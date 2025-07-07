@@ -179,11 +179,13 @@ export const NodeLabel = memo<NodeLabelProps>(
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: '-5px' }}>
               <div>
                 <img src={icon} alt={label} width={iconSize} height={iconSize} />
-                <span style={{ 
-                  color: 'gray', 
-                  fontWeight: 500,
-                  fontSize: `${fontSize}px`
-                }}>
+                <span
+                  style={{
+                    color: 'gray',
+                    fontWeight: 500,
+                    fontSize: `${fontSize}px`,
+                  }}
+                >
                   {dynamicText}
                 </span>
               </div>

@@ -19,7 +19,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
     const { getZoom, setViewport, getViewport } = useReactFlow();
     const [zoomLevel, setZoomLevel] = useState<number>(120);
     const [presetMenuAnchor, setPresetMenuAnchor] = useState<null | HTMLElement>(null);
-    
+
     const { setZoom } = useZoomStore();
 
     const snapToStep = useCallback((zoom: number) => {
@@ -94,10 +94,13 @@ export const ZoomControls = memo<ZoomControlsProps>(
       }
     }, [animateZoom, getZoom, snapToStep]);
 
-    const handlePresetClick = useCallback((preset: typeof zoomPresets[0]) => {
-      animateZoom(preset.level, 300);
-      setPresetMenuAnchor(null);
-    }, [animateZoom]);
+    const handlePresetClick = useCallback(
+      (preset: (typeof zoomPresets)[0]) => {
+        animateZoom(preset.level, 300);
+        setPresetMenuAnchor(null);
+      },
+      [animateZoom]
+    );
 
     const handlePresetMenuOpen = useCallback((event: React.MouseEvent<HTMLElement>) => {
       setPresetMenuAnchor(event.currentTarget);
@@ -250,7 +253,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
             },
           }}
         >
-          {zoomPresets.map((preset) => (
+          {zoomPresets.map(preset => (
             <MenuItem
               key={preset.level}
               onClick={() => handlePresetClick(preset)}
@@ -269,7 +272,10 @@ export const ZoomControls = memo<ZoomControlsProps>(
               <Typography variant="body2" sx={{ fontWeight: 500, minWidth: 70 }}>
                 {preset.label} ({Math.round(preset.level * 100)}%)
               </Typography>
-              <Typography variant="caption" sx={{ color: theme === 'dark' ? '#ccc' : '#666', whiteSpace: 'nowrap', ml: 1 }}>
+              <Typography
+                variant="caption"
+                sx={{ color: theme === 'dark' ? '#ccc' : '#666', whiteSpace: 'nowrap', ml: 1 }}
+              >
                 {preset.description}
               </Typography>
             </MenuItem>

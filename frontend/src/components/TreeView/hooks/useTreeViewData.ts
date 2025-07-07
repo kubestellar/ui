@@ -109,13 +109,13 @@ export const useTreeViewData = ({
     (nodes: CustomNode[], edges: CustomEdge[], direction = 'LR') => {
       const { currentZoom } = useZoomStore.getState();
       const scaleFactor = Math.max(0.5, Math.min(2.0, currentZoom));
-      
+
       const dagreGraph = new dagre.graphlib.Graph();
       dagreGraph.setDefaultEdgeLabel(() => ({}));
-      dagreGraph.setGraph({ 
-        rankdir: direction, 
-        nodesep: 30 * scaleFactor, 
-        ranksep: 60 * scaleFactor 
+      dagreGraph.setGraph({
+        rankdir: direction,
+        nodesep: 30 * scaleFactor,
+        ranksep: 60 * scaleFactor,
       });
 
       const nodeMap = new Map<string, CustomNode>();
@@ -129,9 +129,9 @@ export const useTreeViewData = ({
       nodes.forEach(node => {
         const cachedNode = nodeMap.get(node.id);
         if (!cachedNode || !isEqual(cachedNode, node) || shouldRecalculate) {
-          dagreGraph.setNode(node.id, { 
-            width: 146 * scaleFactor, 
-            height: 20 * scaleFactor 
+          dagreGraph.setNode(node.id, {
+            width: 146 * scaleFactor,
+            height: 20 * scaleFactor,
           });
           newNodes.push(node);
         } else {
@@ -151,8 +151,8 @@ export const useTreeViewData = ({
           ? {
               ...node,
               position: {
-                x: dagreNode.x - (73 * scaleFactor) + (50 * scaleFactor),
-                y: dagreNode.y - (15 * scaleFactor) + (50 * scaleFactor),
+                x: dagreNode.x - 73 * scaleFactor + 50 * scaleFactor,
+                y: dagreNode.y - 15 * scaleFactor + 50 * scaleFactor,
               },
             }
           : node;

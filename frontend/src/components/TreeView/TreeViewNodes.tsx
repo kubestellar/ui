@@ -413,7 +413,15 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
         newEdges.push(edge);
       }
     },
-    [theme, isExpanded, highlightedLabels, onNodeSelect, onMenuOpen, currentZoom, getScaledNodeStyle]
+    [
+      theme,
+      isExpanded,
+      highlightedLabels,
+      onNodeSelect,
+      onMenuOpen,
+      currentZoom,
+      getScaledNodeStyle,
+    ]
   );
 
   const clearNodeCache = useCallback(() => {
