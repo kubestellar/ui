@@ -106,7 +106,7 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    const originalRequest = error.config as (AxiosRequestConfig & { _retry?: boolean });
+    const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
     const errorMessage =
       error.response?.data?.message || error.response?.data?.error || error.message;
     const isAuthCheck = error.config?.url?.includes('/api/me');
