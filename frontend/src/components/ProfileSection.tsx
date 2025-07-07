@@ -547,18 +547,20 @@ const ProfileSection = () => {
 
   return (
     <div className="relative">
-      <button
-        ref={buttonRef}
-        onClick={() => setShowUserMenu(!showUserMenu)}
-        className="\ hover:bg-primary/10\ btn btn-circle border-2 border-primary/30 bg-primary/5
-          shadow-sm transition-all duration-300 hover:scale-105
-          hover:shadow-md active:scale-95"
-        aria-label="Open user menu"
-        aria-expanded={showUserMenu}
-        aria-haspopup="menu"
-      >
+      <div className="tooltip tooltip-bottom" data-tip={t('profileSection.account')}>
+        <button
+          ref={buttonRef}
+          onClick={() => setShowUserMenu(!showUserMenu)}
+          className="\ hover:bg-primary/10\ btn btn-circle border-2 border-primary/30 bg-primary/5
+            shadow-sm transition-all duration-300 hover:scale-105
+            hover:shadow-md active:scale-95"
+          aria-label="Open user menu"
+          aria-expanded={showUserMenu}
+          aria-haspopup="menu"
+        >
         <ProfileIcon className="text-xl text-primary" />
-      </button>
+        </button>
+      </div>
 
       {/* User dropdown menu */}
       {showUserMenu && (

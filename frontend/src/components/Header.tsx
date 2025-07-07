@@ -100,15 +100,16 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
         className={`flex items-center gap-3 transition-all duration-300 ${scrolled ? 'scale-[0.97]' : ''}`}
       >
         <div className="mr-1 w-auto p-0 xl:hidden">
-          <motion.button
-            onClick={toggleMobileMenu}
-            className="btn btn-circle transition-all duration-300 hover:scale-105 active:scale-95"
-            style={getButtonStyle()}
-            aria-label={t('header.menu')}
-            animate={isMobileMenuOpen ? 'open' : 'closed'}
-            variants={menuButtonVariants}
-            transition={{ duration: 0.3, type: 'spring', stiffness: 300, damping: 20 }}
-          >
+          <div className="tooltip tooltip-bottom" data-tip={t('header.menu')}>
+            <motion.button
+              onClick={toggleMobileMenu}
+              className="btn btn-circle transition-all duration-300 hover:scale-105 active:scale-95"
+              style={getButtonStyle()}
+              aria-label={t('header.menu')}
+              animate={isMobileMenuOpen ? 'open' : 'closed'}
+              variants={menuButtonVariants}
+              transition={{ duration: 0.3, type: 'spring', stiffness: 300, damping: 20 }}
+            >
             <AnimatePresence mode="wait">
               {isMobileMenuOpen ? (
                 <motion.div
@@ -135,7 +136,8 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
                 </motion.div>
               )}
             </AnimatePresence>
-          </motion.button>
+            </motion.button>
+          </div>
         </div>
 
         <Link
@@ -158,14 +160,15 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
       <div className="3xl:gap-5 flex items-center gap-2 xl:gap-4">
         {authData?.isAuthenticated ? (
           <>
-            <motion.button
-              onClick={toggleTheme}
-              className="btn btn-circle transition-all duration-300 hover:scale-105 active:scale-95"
-              style={getButtonStyle()}
-              aria-label={t('header.themeToggle')}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
+            <div className="tooltip tooltip-bottom" data-tip={t('header.themeToggle')}>
+              <motion.button
+                onClick={toggleTheme}
+                className="btn btn-circle transition-all duration-300 hover:scale-105 active:scale-95"
+                style={getButtonStyle()}
+                aria-label={t('header.themeToggle')}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
               <AnimatePresence mode="wait">
                 {!isDark ? (
                   <motion.div
@@ -195,7 +198,8 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
                   </motion.div>
                 )}
               </AnimatePresence>
-            </motion.button>
+              </motion.button>
+            </div>
 
             <CommandPalette />
             <LanguageSwitcher />
@@ -206,14 +210,15 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
           </>
         ) : (
           <>
-            <motion.button
-              onClick={toggleTheme}
-              className="btn btn-circle transition-all duration-300 hover:scale-105 active:scale-95"
-              style={getButtonStyle()}
-              aria-label={t('header.switchTheme', { mode: isDark ? 'light' : 'dark' })}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
+            <div className="tooltip tooltip-bottom" data-tip={t('header.switchTheme', { mode: isDark ? 'light' : 'dark' })}>
+              <motion.button
+                onClick={toggleTheme}
+                className="btn btn-circle transition-all duration-300 hover:scale-105 active:scale-95"
+                style={getButtonStyle()}
+                aria-label={t('header.switchTheme', { mode: isDark ? 'light' : 'dark' })}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
               <AnimatePresence mode="wait">
                 {!isDark ? (
                   <motion.div
@@ -243,7 +248,8 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
                   </motion.div>
                 )}
               </AnimatePresence>
-            </motion.button>
+              </motion.button>
+            </div>
 
             <CommandPalette />
             <LanguageSwitcher />

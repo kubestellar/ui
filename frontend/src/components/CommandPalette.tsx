@@ -397,11 +397,12 @@ const CommandPalette: React.FC = () => {
     <>
       {/* Command palette toggle button */}
       <motion.div
-        className="relative"
+        className="relative tooltip tooltip-bottom"
         initial="rest"
         whileHover="hover"
         whileTap="tap"
         ref={buttonRef}
+        data-tip={t('commandPalette.title')}
       >
         <motion.button
           onClick={() => setIsOpen(true)}
@@ -413,7 +414,6 @@ const CommandPalette: React.FC = () => {
             overflow: 'hidden',
           }}
           aria-label={t('commandPalette.ariaLabel')}
-          title={t('commandPalette.title')}
         >
           <motion.div
             className="absolute inset-0 rounded-full"
