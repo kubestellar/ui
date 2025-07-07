@@ -8,7 +8,7 @@ type Plugin struct {
 	Version     string    `json:"version" binding:"required"`
 	Enabled     bool      `json:"enabled" binding:"required"`
 	Description string    `json:"description,omitempty"`
-	UserId      int       `json:"user_id" binding:"required"`
+	UserID      int       `json:"user_id" binding:"required"`
 	Status      string    `json:"status"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
@@ -16,8 +16,8 @@ type Plugin struct {
 
 type PluginFeedback struct {
 	ID          int       `json:"id"`
-	PluginId    int       `json:"plugin_id" binding:"required"`
-	UserId      int       `json:"user_id" binding:"required"`
+	PluginID    int       `json:"plugin_id" binding:"required"`
+	UserID      int       `json:"user_id" binding:"required"`
 	Rating      int       `json:"rating" binding:"required,min=1,max=5"`
 	Comment     string    `json:"comment,omitempty"`
 	Suggestions string    `json:"suggestions,omitempty"`
@@ -36,7 +36,7 @@ type PluginSystemConfig struct {
 
 type PluginRoute struct {
 	ID        int       `json:"id"`
-	PluginId  int       `json:"plugin_id" binding:"required"`
+	PluginID  int       `json:"plugin_id" binding:"required"`
 	Path      string    `json:"path" binding:"required"`
 	Method    string    `json:"method" binding:"required"`
 	Handler   string    `json:"handler" binding:"required"`
