@@ -117,18 +117,18 @@ const LanguageSwitcher = () => {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
-          <AnimatePresence mode="wait">
-            <motion.div
-              key="language-icon"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="flex items-center justify-center"
-            >
-              <HiLanguage className="text-xl" style={{ color: isDark ? '#a5b4fc' : '#4f46e5' }} />
-            </motion.div>
-          </AnimatePresence>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key="language-icon"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="flex items-center justify-center"
+              >
+                <HiLanguage className="text-xl" style={{ color: isDark ? '#a5b4fc' : '#4f46e5' }} />
+              </motion.div>
+            </AnimatePresence>
           </motion.button>
         </div>
       )}

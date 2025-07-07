@@ -110,32 +110,32 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
               variants={menuButtonVariants}
               transition={{ duration: 0.3, type: 'spring', stiffness: 300, damping: 20 }}
             >
-            <AnimatePresence mode="wait">
-              {isMobileMenuOpen ? (
-                <motion.div
-                  key="close"
-                  initial={{ opacity: 0, rotate: -90 }}
-                  animate={{ opacity: 1, rotate: 0 }}
-                  exit={{ opacity: 0, rotate: 90 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <HiXMark
-                    className="text-2xl"
-                    style={{ color: themeStyles.colors.status.error }}
-                  />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="open"
-                  initial={{ opacity: 0, rotate: 90 }}
-                  animate={{ opacity: 1, rotate: 0 }}
-                  exit={{ opacity: 0, rotate: -90 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <HiBars3CenterLeft className="text-2xl" />
-                </motion.div>
-              )}
-            </AnimatePresence>
+              <AnimatePresence mode="wait">
+                {isMobileMenuOpen ? (
+                  <motion.div
+                    key="close"
+                    initial={{ opacity: 0, rotate: -90 }}
+                    animate={{ opacity: 1, rotate: 0 }}
+                    exit={{ opacity: 0, rotate: 90 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <HiXMark
+                      className="text-2xl"
+                      style={{ color: themeStyles.colors.status.error }}
+                    />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="open"
+                    initial={{ opacity: 0, rotate: 90 }}
+                    animate={{ opacity: 1, rotate: 0 }}
+                    exit={{ opacity: 0, rotate: -90 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <HiBars3CenterLeft className="text-2xl" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.button>
           </div>
         </div>
@@ -169,35 +169,35 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               >
-              <AnimatePresence mode="wait">
-                {!isDark ? (
-                  <motion.div
-                    key="moon"
-                    initial={{ opacity: 0, rotate: -30 }}
-                    animate={{ opacity: 1, rotate: 0 }}
-                    exit={{ opacity: 0, rotate: 30 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <FiMoon
-                      style={{ color: themeStyles.colors.brand.secondary }}
-                      className="text-xl"
-                    />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="sun"
-                    initial={{ opacity: 0, rotate: 30 }}
-                    animate={{ opacity: 1, rotate: 0 }}
-                    exit={{ opacity: 0, rotate: -30 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <FiSun
-                      style={{ color: themeStyles.colors.status.warning }}
-                      className="text-xl"
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                <AnimatePresence mode="wait">
+                  {!isDark ? (
+                    <motion.div
+                      key="moon"
+                      initial={{ opacity: 0, rotate: -30 }}
+                      animate={{ opacity: 1, rotate: 0 }}
+                      exit={{ opacity: 0, rotate: 30 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <FiMoon
+                        style={{ color: themeStyles.colors.brand.secondary }}
+                        className="text-xl"
+                      />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="sun"
+                      initial={{ opacity: 0, rotate: 30 }}
+                      animate={{ opacity: 1, rotate: 0 }}
+                      exit={{ opacity: 0, rotate: -30 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <FiSun
+                        style={{ color: themeStyles.colors.status.warning }}
+                        className="text-xl"
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.button>
             </div>
 
@@ -210,7 +210,10 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
           </>
         ) : (
           <>
-            <div className="tooltip tooltip-bottom" data-tip={t('header.switchTheme', { mode: isDark ? 'light' : 'dark' })}>
+            <div
+              className="tooltip tooltip-bottom"
+              data-tip={t('header.switchTheme', { mode: isDark ? 'light' : 'dark' })}
+            >
               <motion.button
                 onClick={toggleTheme}
                 className="btn btn-circle transition-all duration-300 hover:scale-105 active:scale-95"
@@ -219,35 +222,35 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               >
-              <AnimatePresence mode="wait">
-                {!isDark ? (
-                  <motion.div
-                    key="moon"
-                    initial={{ opacity: 0, rotate: -30 }}
-                    animate={{ opacity: 1, rotate: 0 }}
-                    exit={{ opacity: 0, rotate: 30 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <FiMoon
-                      style={{ color: themeStyles.colors.brand.secondary }}
-                      className="text-xl"
-                    />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="sun"
-                    initial={{ opacity: 0, rotate: 30 }}
-                    animate={{ opacity: 1, rotate: 0 }}
-                    exit={{ opacity: 0, rotate: -30 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <FiSun
-                      style={{ color: themeStyles.colors.status.warning }}
-                      className="text-xl"
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                <AnimatePresence mode="wait">
+                  {!isDark ? (
+                    <motion.div
+                      key="moon"
+                      initial={{ opacity: 0, rotate: -30 }}
+                      animate={{ opacity: 1, rotate: 0 }}
+                      exit={{ opacity: 0, rotate: 30 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <FiMoon
+                        style={{ color: themeStyles.colors.brand.secondary }}
+                        className="text-xl"
+                      />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="sun"
+                      initial={{ opacity: 0, rotate: 30 }}
+                      animate={{ opacity: 1, rotate: 0 }}
+                      exit={{ opacity: 0, rotate: -30 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <FiSun
+                        style={{ color: themeStyles.colors.status.warning }}
+                        className="text-xl"
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.button>
             </div>
 

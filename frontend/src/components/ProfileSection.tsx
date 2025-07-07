@@ -558,7 +558,7 @@ const ProfileSection = () => {
           aria-expanded={showUserMenu}
           aria-haspopup="menu"
         >
-        <ProfileIcon className="text-xl text-primary" />
+          <ProfileIcon className="text-xl text-primary" />
         </button>
       </div>
 

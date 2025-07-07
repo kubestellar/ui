@@ -397,7 +397,7 @@ const CommandPalette: React.FC = () => {
     <>
       {/* Command palette toggle button */}
       <motion.div
-        className="relative tooltip tooltip-bottom"
+        className="tooltip tooltip-bottom relative"
         initial="rest"
         whileHover="hover"
         whileTap="tap"
