@@ -1587,7 +1587,7 @@ const K8sInfo = () => {
 
   return (
     <motion.div
-      className="mx-auto w-full max-w-7xl p-4 md:p-6"
+      className="mx-auto w-full p-4 md:p-6"
       variants={pageAnimationVariant}
       initial="initial"
       animate="animate"
