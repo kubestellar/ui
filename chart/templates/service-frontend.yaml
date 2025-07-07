@@ -13,4 +13,6 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: {{ .Values.frontend.port }}
-      nodePort: 30137
+      {{- if .Values.frontend.nodePort }}
+      nodePort: {{ .Values.frontend.nodePort }}
+      {{- end }}

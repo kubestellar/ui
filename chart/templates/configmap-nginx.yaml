@@ -1,0 +1,46 @@
+# Nginx configuration for frontend to properly proxy API calls
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  labels:
+    app: frontend
+    component: webserver
+data:
+  default.conf: |
+    # Use Kubernetes DNS resolver
+    resolver kube-dns.kube-system.svc.cluster.local valid=10s;
+    
+    server {
+        listen 80;
+        server_name localhost;
+
+        root /usr/share/nginx/html;
+        index index.html;
+        
+        location / {
+            try_files $uri /index.html;
+        }
+
+        error_page 404 /index.html;
+
+        # Login endpoint - proxy to backend
+        location /login {
+            set $backend backend.default.svc.cluster.local:4000;
+            proxy_pass http://$backend/login;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # API routes - preserve full path including /api
+        location ~ ^/api/(.*)$ {
+            set $backend backend.default.svc.cluster.local:4000;
+            proxy_pass http://$backend/api/$1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
