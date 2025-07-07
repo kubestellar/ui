@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import ReactFlow, { Background, BackgroundVariant, PanOnScrollMode, useReactFlow } from 'reactflow';
 import useLabelHighlightStore from '../../stores/labelHighlightStore';
+import useZoomStore from '../../stores/zoomStore';
 import { CustomEdge, CustomNode } from '../TreeViewComponent';
 
 interface FlowCanvasProps {
@@ -18,7 +19,10 @@ interface FlowCanvasProps {
 export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
   const { setViewport, getViewport } = useReactFlow();
   const highlightedLabels = useLabelHighlightStore(state => state.highlightedLabels);
-  const viewportRef = useRef({ x: 0, y: 0, zoom: 1.6 });
+  const { currentZoom } = useZoomStore();
+  const viewportRef = useRef({ x: 0, y: 0, zoom: currentZoom });
+  const initializedRef = useRef(false);
+  const lastTouchDistance = useRef<number | null>(null);
 
   /**
    * Calculates the boundaries of all nodes in the flow to determine positioning and scaling.
@@ -54,7 +58,7 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
    * Adjusts the container height based on the content and sets proper zoom level for optimal viewing.
    */
   useEffect(() => {
-    if (nodes.length > 0) {
+    if (nodes.length > 0 && !initializedRef.current) {
       const { minX, minY, maxY } = positions;
       const treeHeight = maxY - minY;
 
@@ -65,7 +69,7 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
 
       const padding = 20;
       const topMargin = 100;
-      const initialZoom = 1.6;
+      const initialZoom = currentZoom;
 
       const centerX = -minX * initialZoom + 50;
       const centerY = -minY * initialZoom + topMargin;
@@ -74,19 +78,11 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
         reactFlowContainer.style.minHeight = `${Math.max(treeHeight * initialZoom + padding * 2 + topMargin, viewportHeight)}px`;
       }
 
-      if (
-        viewportRef.current.zoom === 1.6 &&
-        viewportRef.current.x === 0 &&
-        viewportRef.current.y === 0
-      ) {
-        const initialViewport = { x: centerX, y: centerY, zoom: initialZoom };
-        setViewport(initialViewport);
-        viewportRef.current = initialViewport;
-      } else {
-        setViewport(viewportRef.current);
-      }
+      setViewport({ x: centerX, y: centerY, zoom: initialZoom });
+      viewportRef.current = { x: centerX, y: centerY, zoom: initialZoom };
+      initializedRef.current = true;
     }
-  }, [nodes, edges, setViewport, positions]);
+  }, [nodes, positions, setViewport, currentZoom]);
 
   /**
    * Saves the current viewport position and zoom level when user stops panning or zooming.
@@ -97,11 +93,54 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
     viewportRef.current = currentViewport;
   }, [getViewport]);
 
-  /**
-   * Custom wheel event handler that provides enhanced control over panning and zooming.
-   * Enables horizontal scrolling with Shift key, zooming with Ctrl key, and vertical scrolling by default.
-   * Clamps scrolling within appropriate boundaries based on tree dimensions.
-   */
+  // Pinch-to-zoom for touch devices
+  useEffect(() => {
+    const reactFlowContainer = document.querySelector('.react-flow') as HTMLElement | null;
+    if (!reactFlowContainer) return;
+
+    function getDistance(touches: TouchList) {
+      if (touches.length < 2) return 0;
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    function handleTouchStart(e: TouchEvent) {
+      if (e.touches.length === 2) {
+        lastTouchDistance.current = getDistance(e.touches);
+      }
+    }
+
+    function handleTouchMove(e: TouchEvent) {
+      if (e.touches.length === 2 && lastTouchDistance.current !== null) {
+        const { zoom, x, y } = getViewport();
+        const newDistance = getDistance(e.touches);
+        const delta = newDistance - lastTouchDistance.current;
+        let newZoom = zoom + delta * 0.0025; // Sensitivity factor
+        newZoom = Math.max(0.1, Math.min(2, newZoom));
+        setViewport({ x, y, zoom: newZoom });
+        lastTouchDistance.current = newDistance;
+      }
+    }
+
+    function handleTouchEnd(e: TouchEvent) {
+      if (e.touches.length < 2) {
+        lastTouchDistance.current = null;
+      }
+    }
+
+    reactFlowContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
+    reactFlowContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
+    reactFlowContainer.addEventListener('touchend', handleTouchEnd, { passive: false });
+
+    return () => {
+      reactFlowContainer.removeEventListener('touchstart', handleTouchStart);
+      reactFlowContainer.removeEventListener('touchmove', handleTouchMove);
+      reactFlowContainer.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [getViewport, setViewport]);
+
+  // Enhanced mouse wheel zoom: zoom with wheel unless Shift (pan horizontally)
   const handleWheel = useCallback(
     (event: React.WheelEvent) => {
       const reactFlowContainer = document.querySelector('.react-flow');
@@ -113,31 +152,20 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
         const zoomSpeed = 0.05;
 
         if (event.shiftKey) {
+          // Pan horizontally
           const newX = x - event.deltaY * scrollSpeed;
           setViewport({ x: newX, y, zoom });
           viewportRef.current = { x: newX, y, zoom };
-        } else if (event.ctrlKey) {
-          const newZoom = Math.min(
-            Math.max(zoom + (event.deltaY > 0 ? -zoomSpeed : zoomSpeed), 0.1),
-            2
-          );
+        } else {
+          // Zoom in/out with wheel (no modifier needed)
+          let newZoom = zoom + (event.deltaY > 0 ? -zoomSpeed : zoomSpeed);
+          newZoom = Math.max(0.1, Math.min(2, newZoom));
           setViewport({ x, y, zoom: newZoom });
           viewportRef.current = { x, y, zoom: newZoom };
-        } else {
-          const { minY, maxY } = positions;
-          const treeHeight = maxY - minY;
-          const zoomedTreeHeight = treeHeight * zoom;
-          const minScrollY = -zoomedTreeHeight + 10;
-          const maxScrollY = 10;
-
-          const newY = y - event.deltaY * scrollSpeed;
-          const clampedY = Math.min(Math.max(newY, minScrollY), maxScrollY);
-          setViewport({ x, y: clampedY, zoom });
-          viewportRef.current = { x, y: clampedY, zoom };
         }
       }
     },
-    [getViewport, setViewport, positions]
+    [getViewport, setViewport]
   );
 
   /**

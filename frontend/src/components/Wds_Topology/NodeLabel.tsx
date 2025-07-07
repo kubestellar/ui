@@ -4,6 +4,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import { ResourceItem } from '../TreeViewComponent';
 import useTheme from '../../stores/themeStore'; // Import useTheme for dark mode support
 import useLabelHighlightStore from '../../stores/labelHighlightStore'; // Import the label highlight store
+import useZoomStore from '../../stores/zoomStore';
 import { Tooltip, Chip, Box } from '@mui/material';
 import { useTranslation } from 'react-i18next'; // Add this import
 
@@ -22,6 +23,7 @@ export const NodeLabel = memo<NodeLabelProps>(
   ({ label, icon, dynamicText, timeAgo, onClick, onMenuClick, resourceData }) => {
     const { t } = useTranslation(); // Add translation hook
     const theme = useTheme(state => state.theme); // Get the current theme
+    const { currentZoom, getScaledIconSize, getScaledFontSize } = useZoomStore();
 
     // Get highlighted labels state from the store
     const { highlightedLabels, setHighlightedLabels, clearHighlightedLabels } =
@@ -34,6 +36,10 @@ export const NodeLabel = memo<NodeLabelProps>(
     // Check if this node's labels match the highlighted label
     const hasHighlightedLabel =
       highlightedLabels && labels[highlightedLabels.key] === highlightedLabels.value;
+
+    // Get scaled dimensions
+    const iconSize = getScaledIconSize(currentZoom);
+    const fontSize = getScaledFontSize(currentZoom);
 
     // Create label tooltip content
     const labelTooltipContent = hasLabels ? (
@@ -172,11 +178,17 @@ export const NodeLabel = memo<NodeLabelProps>(
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: '-5px' }}>
               <div>
-                <img src={icon} alt={label} width="18" height="18" />
-                <span style={{ color: 'gray', fontWeight: 500 }}>{dynamicText}</span>
+                <img src={icon} alt={label} width={iconSize} height={iconSize} />
+                <span style={{ 
+                  color: 'gray', 
+                  fontWeight: 500,
+                  fontSize: `${fontSize}px`
+                }}>
+                  {dynamicText}
+                </span>
               </div>
               <div style={{ textAlign: 'left' }}>
-                <div>{label}</div>
+                <div style={{ fontSize: `${fontSize}px` }}>{label}</div>
                 <div style={{ display: 'flex', gap: '1px' }}>
                   {/* Removed heart and check/cross icons */}
                   {/* Removed heart and check/cross icons */}
@@ -186,7 +198,7 @@ export const NodeLabel = memo<NodeLabelProps>(
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
               <FiMoreVertical
                 style={{
-                  fontSize: '11px',
+                  fontSize: `${Math.max(11, fontSize * 1.8)}px`,
                   color: '#34aadc',
                   marginRight: '-10px',
                   cursor: 'pointer',
@@ -200,7 +212,7 @@ export const NodeLabel = memo<NodeLabelProps>(
                   position: 'absolute',
                   bottom: '-6px',
                   right: '-10px',
-                  fontSize: '5px',
+                  fontSize: `${Math.max(5, fontSize * 0.8)}px`,
                   color: theme === 'dark' ? '#fff' : '#495763',
                   backgroundColor: theme === 'dark' ? '#333333' : '#ccd6dd',
                   padding: '0 2px',

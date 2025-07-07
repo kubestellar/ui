@@ -1,8 +1,9 @@
 import { memo, useState, useEffect, useCallback } from 'react';
-import { Box, Button, Typography } from '@mui/material';
+import { Box, Button, Typography, Menu, MenuItem, Tooltip } from '@mui/material';
 import { ZoomIn, ZoomOut } from '@mui/icons-material';
 import { useReactFlow } from 'reactflow';
-import { useTranslation } from 'react-i18next'; // Add this import
+import { useTranslation } from 'react-i18next';
+import useZoomStore, { zoomPresets } from '../../stores/zoomStore';
 
 interface ZoomControlsProps {
   theme: string;
@@ -14,9 +15,12 @@ interface ZoomControlsProps {
 
 export const ZoomControls = memo<ZoomControlsProps>(
   ({ theme, onToggleCollapse, isCollapsed, onExpandAll, onCollapseAll }) => {
-    const { t } = useTranslation(); // Add translation hook
+    const { t } = useTranslation();
     const { getZoom, setViewport, getViewport } = useReactFlow();
     const [zoomLevel, setZoomLevel] = useState<number>(120);
+    const [presetMenuAnchor, setPresetMenuAnchor] = useState<null | HTMLElement>(null);
+    
+    const { setZoom } = useZoomStore();
 
     const snapToStep = useCallback((zoom: number) => {
       const step = 10;
@@ -28,6 +32,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
         const currentZoom = getZoom() * 100;
         const snappedZoom = snapToStep(currentZoom);
         setZoomLevel(Math.min(Math.max(snappedZoom, 10), 200));
+        setZoom(getZoom());
       };
 
       updateZoomLevel();
@@ -35,16 +40,7 @@ export const ZoomControls = memo<ZoomControlsProps>(
       const interval = setInterval(updateZoomLevel, 100);
 
       return () => clearInterval(interval);
-    }, [getZoom, snapToStep, setViewport]);
-
-    useEffect(() => {
-      const reset = () => {
-        setViewport({ ...getViewport(), zoom: 1 }, { duration: 0 });
-        setZoomLevel(100);
-      };
-      const timer = setTimeout(reset, 100);
-      return () => clearTimeout(timer);
-    }, [setViewport, getViewport]);
+    }, [getZoom, snapToStep, setViewport, setZoom]);
 
     const animateZoom = useCallback(
       (targetZoom: number, duration: number = 200) => {
@@ -67,12 +63,13 @@ export const ZoomControls = memo<ZoomControlsProps>(
             requestAnimationFrame(step);
           } else {
             setZoomLevel(snapToStep(newZoom * 100));
+            setZoom(newZoom);
           }
         };
 
         requestAnimationFrame(step);
       },
-      [getZoom, getViewport, setViewport, snapToStep]
+      [getZoom, getViewport, setViewport, snapToStep, setZoom]
     );
 
     const handleZoomIn = useCallback(() => {
@@ -96,6 +93,25 @@ export const ZoomControls = memo<ZoomControlsProps>(
         animateZoom(newZoom);
       }
     }, [animateZoom, getZoom, snapToStep]);
+
+    const handlePresetClick = useCallback((preset: typeof zoomPresets[0]) => {
+      animateZoom(preset.level, 300);
+      setPresetMenuAnchor(null);
+    }, [animateZoom]);
+
+    const handlePresetMenuOpen = useCallback((event: React.MouseEvent<HTMLElement>) => {
+      setPresetMenuAnchor(event.currentTarget);
+    }, []);
+
+    const handlePresetMenuClose = useCallback(() => {
+      setPresetMenuAnchor(null);
+    }, []);
+
+    const handleResetZoom = useCallback(() => {
+      setViewport({ ...getViewport(), zoom: 1 }, { duration: 200 });
+      setZoomLevel(100);
+      setZoom(1);
+    }, [setViewport, getViewport, setZoom]);
 
     return (
       <Box
@@ -186,6 +202,22 @@ export const ZoomControls = memo<ZoomControlsProps>(
         >
           <ZoomOut />
         </Button>
+        <Tooltip title="Reset Zoom">
+          <Button
+            variant="text"
+            onClick={handleResetZoom}
+            sx={{
+              color: theme === 'dark' ? '#fff' : '#6d7f8b',
+              '&:hover': {
+                backgroundColor: theme === 'dark' ? '#555' : '#e3f2fd',
+              },
+              minWidth: '36px',
+              padding: '4px',
+            }}
+          >
+            <i className="fa fa-refresh fa-fw" style={{ fontSize: '17px' }} />
+          </Button>
+        </Tooltip>
         <Typography
           variant="body1"
           sx={{
@@ -198,10 +230,51 @@ export const ZoomControls = memo<ZoomControlsProps>(
             justifyContent: 'center',
             alignItems: 'center',
             width: '50px',
+            cursor: 'pointer',
+            userSelect: 'none',
           }}
+          onClick={handlePresetMenuOpen}
         >
           {zoomLevel}%
         </Typography>
+
+        <Menu
+          anchorEl={presetMenuAnchor}
+          open={Boolean(presetMenuAnchor)}
+          onClose={handlePresetMenuClose}
+          PaperProps={{
+            sx: {
+              backgroundColor: theme === 'dark' ? '#333' : '#fff',
+              color: theme === 'dark' ? '#fff' : '#000',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+            },
+          }}
+        >
+          {zoomPresets.map((preset) => (
+            <MenuItem
+              key={preset.level}
+              onClick={() => handlePresetClick(preset)}
+              sx={{
+                '&:hover': {
+                  backgroundColor: theme === 'dark' ? '#555' : '#e3f2fd',
+                },
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 1,
+                minWidth: 0,
+                padding: '4px 12px',
+              }}
+            >
+              <Typography variant="body2" sx={{ fontWeight: 500, minWidth: 70 }}>
+                {preset.label} ({Math.round(preset.level * 100)}%)
+              </Typography>
+              <Typography variant="caption" sx={{ color: theme === 'dark' ? '#ccc' : '#666', whiteSpace: 'nowrap', ml: 1 }}>
+                {preset.description}
+              </Typography>
+            </MenuItem>
+          ))}
+        </Menu>
       </Box>
     );
   }

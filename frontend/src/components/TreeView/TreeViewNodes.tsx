@@ -3,6 +3,7 @@ import { Position, MarkerType } from 'reactflow';
 import { NodeLabel } from '../Wds_Topology/NodeLabel';
 import useTheme from '../../stores/themeStore';
 import useLabelHighlightStore from '../../stores/labelHighlightStore';
+import useZoomStore from '../../stores/zoomStore';
 import { CustomNode, ResourceItem, CustomEdge } from './types';
 import ConfigMap from '../../assets/k8s_resources_logo/cm.svg';
 import ClusterRoleBinding from '../../assets/k8s_resources_logo/crb.svg';
@@ -33,6 +34,7 @@ import StatefulSet from '../../assets/k8s_resources_logo/sts.svg';
 import Service from '../../assets/k8s_resources_logo/svc.svg';
 import User from '../../assets/k8s_resources_logo/user.svg';
 import Volume from '../../assets/k8s_resources_logo/vol.svg';
+
 interface TreeViewNodesProps {
   onNodeSelect: (nodeData: {
     namespace: string;
@@ -46,13 +48,7 @@ interface TreeViewNodesProps {
   isExpanded: boolean;
 }
 
-const nodeStyle: React.CSSProperties = {
-  padding: '2px 12px',
-  fontSize: '6px',
-  border: 'none',
-  width: '146px',
-  height: '30px',
-};
+// Node styling is now handled dynamically through the zoom store
 
 const iconMap: Record<string, string> = {
   ConfigMap: ConfigMap,
@@ -256,6 +252,7 @@ const getTimeAgo = (timestamp: string | undefined, t: (key: string) => string): 
 export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeViewNodesProps) => {
   const theme = useTheme(state => state.theme);
   const highlightedLabels = useLabelHighlightStore(state => state.highlightedLabels);
+  const { currentZoom, getScaledNodeStyle } = useZoomStore();
   const nodeCache = useRef<Map<string, CustomNode>>(new Map());
   const edgeIdCounter = useRef<number>(0);
 
@@ -285,6 +282,9 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
         highlightedLabels &&
         resourceData?.metadata?.labels &&
         resourceData.metadata.labels[highlightedLabels.key] === highlightedLabels.value;
+
+      // Get dynamically scaled node style
+      const scaledNodeStyle = getScaledNodeStyle(currentZoom);
 
       const node =
         cachedNode ||
@@ -329,11 +329,10 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
           },
           position: { x: 0, y: 0 },
           style: {
-            ...nodeStyle,
+            ...scaledNodeStyle,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '2px 12px',
             color: theme === 'dark' ? '#fff' : '#000',
             ...(hasHighlightedLabel
               ? {
@@ -362,7 +361,10 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
       // If the node is already cached but highlighting changed, update style
       if (cachedNode) {
         node.style = {
-          ...node.style,
+          ...scaledNodeStyle,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           backgroundColor: hasHighlightedLabel
             ? theme === 'dark'
               ? 'rgba(68, 152, 255, 0.15)'
@@ -411,7 +413,7 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
         newEdges.push(edge);
       }
     },
-    [theme, isExpanded, highlightedLabels, onNodeSelect, onMenuOpen]
+    [theme, isExpanded, highlightedLabels, onNodeSelect, onMenuOpen, currentZoom, getScaledNodeStyle]
   );
 
   const clearNodeCache = useCallback(() => {
@@ -428,8 +430,13 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
           highlightedLabels &&
           resourceData.metadata.labels[highlightedLabels.key] === highlightedLabels.value;
 
+        const scaledNodeStyle = getScaledNodeStyle(currentZoom);
+
         const newStyle = {
-          ...node.style,
+          ...scaledNodeStyle,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           backgroundColor: hasHighlightedLabel
             ? theme === 'dark'
               ? 'rgba(47, 134, 255, 0.2)'
@@ -452,7 +459,7 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
         };
       });
     },
-    [theme, highlightedLabels]
+    [theme, highlightedLabels, currentZoom, getScaledNodeStyle]
   );
 
   return {
