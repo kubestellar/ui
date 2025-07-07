@@ -13,12 +13,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv" // Add this import
-	"github.com/kubestellar/ui/api"
-	"github.com/kubestellar/ui/models"
-	config "github.com/kubestellar/ui/postgresql"
-	database "github.com/kubestellar/ui/postgresql/Database"
-	"github.com/kubestellar/ui/routes"
-	"github.com/kubestellar/ui/utils"
+	"github.com/kubestellar/ui/backend/api"
+	"github.com/kubestellar/ui/backend/models"
+	config "github.com/kubestellar/ui/backend/postgresql"
+	database "github.com/kubestellar/ui/backend/postgresql/Database"
+	"github.com/kubestellar/ui/backend/routes"
+	"github.com/kubestellar/ui/backend/utils"
 	"go.uber.org/zap"
 )
 

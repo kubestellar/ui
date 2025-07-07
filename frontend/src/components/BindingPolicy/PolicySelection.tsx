@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BindingPolicyInfo, Workload, ManagedCluster } from '../../types/bindingPolicy';
 import { PolicyConfiguration } from './ConfigurationSidebar';
-import PolicyDragDropContainer from './PolicyDragDropContainer';
+import PolicySelectionContainer from './PolicySelectionContainer';
 import {
   Dialog,
   DialogTitle,
@@ -27,7 +27,7 @@ import PublishIcon from '@mui/icons-material/Publish';
 import useTheme from '../../stores/themeStore';
 import { useTranslation } from 'react-i18next';
 
-interface PolicyDragDropProps {
+interface PolicySelectionProps {
   policies?: BindingPolicyInfo[];
   clusters?: ManagedCluster[];
   workloads?: Workload[];
@@ -80,7 +80,7 @@ const HelpDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, on
               color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
             }}
           >
-            {t('bindingPolicy.dragDrop.helpDialog.helpDialog.title')}
+            {t('bindingPolicy.selection.helpDialog.helpDialog.title')}
           </Typography>
         </Box>
       </DialogTitle>
@@ -91,7 +91,7 @@ const HelpDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, on
             color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined,
           }}
         >
-          {t('bindingPolicy.dragDrop.helpDialog.helpDialog.intro')}
+          {t('bindingPolicy.selection.helpDialog.helpDialog.intro')}
         </Typography>
         <List>
           <ListItem>
@@ -101,7 +101,7 @@ const HelpDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, on
             <ListItemText
               primary={
                 <Typography sx={{ color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined }}>
-                  {t('bindingPolicy.dragDrop.helpDialog.helpDialog.steps.selectLabels')}
+                  {t('bindingPolicy.selection.helpDialog.helpDialog.steps.selectLabels')}
                 </Typography>
               }
               secondary={
@@ -109,7 +109,7 @@ const HelpDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, on
                   variant="body2"
                   sx={{ color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : undefined }}
                 >
-                  {t('bindingPolicy.dragDrop.helpDialog.helpDialog.steps.selectLabelsDesc')}
+                  {t('bindingPolicy.selection.helpDialog.helpDialog.steps.selectLabelsDesc')}
                 </Typography>
               }
             />
@@ -121,7 +121,7 @@ const HelpDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, on
             <ListItemText
               primary={
                 <Typography sx={{ color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined }}>
-                  {t('bindingPolicy.dragDrop.helpDialog.helpDialog.steps.deploy')}
+                  {t('bindingPolicy.selection.helpDialog.helpDialog.steps.deploy')}
                 </Typography>
               }
               secondary={
@@ -129,7 +129,7 @@ const HelpDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, on
                   variant="body2"
                   sx={{ color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : undefined }}
                 >
-                  {t('bindingPolicy.dragDrop.helpDialog.helpDialog.steps.deployDesc')}
+                  {t('bindingPolicy.selection.helpDialog.helpDialog.steps.deployDesc')}
                 </Typography>
               }
             />
@@ -143,7 +143,7 @@ const HelpDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, on
             color: isDarkTheme ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary',
           }}
         >
-          {t('bindingPolicy.dragDrop.helpDialog.helpDialog.tip')}
+          {t('bindingPolicy.selection.helpDialog.helpDialog.tip')}
         </Typography>
       </DialogContent>
       <DialogActions
@@ -170,7 +170,7 @@ const HelpDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, on
                 }
                 label={
                   <Typography sx={{ color: isDarkTheme ? 'rgba(255, 255, 255, 0.9)' : undefined }}>
-                    {t('bindingPolicy.dragDrop.helpDialog.helpDialog.dontShowAgain')}
+                    {t('bindingPolicy.selection.helpDialog.helpDialog.dontShowAgain')}
                   </Typography>
                 }
               />
@@ -194,7 +194,7 @@ const HelpDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, on
               },
             }}
           >
-            {t('bindingPolicy.dragDrop.helpDialog.gotIt')}
+            {t('bindingPolicy.selection.helpDialog.gotIt')}
           </Button>
         </Box>
       </DialogActions>
@@ -202,7 +202,7 @@ const HelpDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, on
   );
 };
 
-const PolicyDragDrop: React.FC<PolicyDragDropProps> = props => {
+const PolicySelection: React.FC<PolicySelectionProps> = props => {
   const [helpDialogOpen, setHelpDialogOpen] = useState(false);
 
   const theme = useTheme(state => state.theme);
@@ -227,7 +227,7 @@ const PolicyDragDrop: React.FC<PolicyDragDropProps> = props => {
           zIndex: 10,
         }}
       >
-        <Tooltip title={t('bindingPolicy.dragDrop.helpDialog.helpDialog.tooltip')}>
+        <Tooltip title={t('bindingPolicy.selection.helpDialog.helpDialog.tooltip')}>
           <IconButton
             onClick={() => setHelpDialogOpen(true)}
             size="small"
@@ -246,11 +246,11 @@ const PolicyDragDrop: React.FC<PolicyDragDropProps> = props => {
         </Tooltip>
       </Box>
 
-      <PolicyDragDropContainer {...props} />
+      <PolicySelectionContainer {...props} />
 
       <HelpDialog open={helpDialogOpen} onClose={() => setHelpDialogOpen(false)} />
     </Box>
   );
 };
 
-export default React.memo(PolicyDragDrop);
+export default React.memo(PolicySelection);

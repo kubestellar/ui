@@ -16,7 +16,7 @@ import AddIcon from '@mui/icons-material/Add';
 import InfoIcon from '@mui/icons-material/Info';
 import AddLinkIcon from '@mui/icons-material/AddLink';
 import KubernetesIcon from './KubernetesIcon';
-import { usePolicyDragDropStore } from '../../stores/policyDragDropStore';
+import { usePolicySelectionStore } from '../../stores/policySelectionStore';
 import { useCanvasStore } from '../../stores/canvasStore';
 import { BindingPolicyInfo, ManagedCluster, Workload } from '../../types/bindingPolicy';
 import StrictModeDroppable from './StrictModeDroppable';
@@ -142,7 +142,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
     assignmentMap: policyAssignmentMap,
     removeFromCanvas: removeFromPolicyCanvas,
     clearCanvas,
-  } = usePolicyDragDropStore();
+  } = usePolicySelectionStore();
 
   const { connectionLines, setConnectionLines, drawingActive } = useCanvasStore();
 
@@ -1110,7 +1110,7 @@ const PolicyCanvas: React.FC<PolicyCanvasProps> = ({
               <Typography variant="body2" fontWeight="bold">
                 {t('bindingPolicy.canvas.policiesOnCanvas')}
               </Typography>
-              <Typography variant="body2">{t('bindingPolicy.dragDrop.infoAlert')}</Typography>
+              <Typography variant="body2">{t('bindingPolicy.selection.infoAlert')}</Typography>
             </Box>
           }
           arrow

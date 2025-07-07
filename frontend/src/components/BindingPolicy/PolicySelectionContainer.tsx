@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { DragDropContext, DropResult, DragStart } from '@hello-pangea/dnd';
 import { BindingPolicyInfo, ManagedCluster, Workload } from '../../types/bindingPolicy';
-import { usePolicyDragDropStore, DragTypes } from '../../stores/policyDragDropStore';
+import { usePolicySelectionStore, SelectionTypes } from '../../stores/policySelectionStore';
 import PolicyCanvas from './PolicyCanvas';
 import SuccessNotification from './SuccessNotification';
 import ConfigurationSidebar, { PolicyConfiguration } from './ConfigurationSidebar';
@@ -87,8 +87,8 @@ const isNamespaceLabel = (labelInfo: { key: string; value: string }): boolean =>
   });
 };
 
-// StrictMode-compatible DragDropContext wrapper
-const StrictModeDragDropContext: React.FC<React.ComponentProps<typeof DragDropContext>> = ({
+// StrictMode-compatible SelectionContext wrapper
+const StrictModeSelectionContext: React.FC<React.ComponentProps<typeof DragDropContext>> = ({
   children,
   ...props
 }) => {
@@ -97,13 +97,13 @@ const StrictModeDragDropContext: React.FC<React.ComponentProps<typeof DragDropCo
   useEffect(() => {
     const animation = requestAnimationFrame(() => {
       setEnabled(true);
-      console.log('🔄 DragDropContext enabled after animation frame');
+      console.log('🔄 SelectionContext enabled after animation frame');
     });
 
     return () => {
       cancelAnimationFrame(animation);
       setEnabled(false);
-      console.log('🔄 DragDropContext disabled');
+      console.log('🔄 SelectionContext disabled');
     };
   }, []);
 
@@ -114,7 +114,7 @@ const StrictModeDragDropContext: React.FC<React.ComponentProps<typeof DragDropCo
   return <DragDropContext {...props}>{children}</DragDropContext>;
 };
 
-interface PolicyDragDropContainerProps {
+interface PolicySelectionContainerProps {
   policies?: BindingPolicyInfo[];
   clusters?: ManagedCluster[];
   workloads?: Workload[];
@@ -131,15 +131,15 @@ interface PolicyDragDropContainerProps {
   dialogMode?: boolean;
 }
 
-const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
+const PolicySelectionContainer: React.FC<PolicySelectionContainerProps> = ({
   policies: propPolicies,
   clusters: propClusters,
   workloads: propWorkloads,
   onPolicyAssign,
   onCreateBindingPolicy,
   dialogMode = false,
-}: PolicyDragDropContainerProps) => {
-  console.log('🔄 PolicyDragDropContainer component rendering', {
+}: PolicySelectionContainerProps) => {
+  console.log('🔄 PolicySelectionContainer component rendering', {
     hasPropPolicies: !!propPolicies,
     hasPropClusters: !!propClusters,
     hasPropWorkloads: !!propWorkloads,
@@ -206,10 +206,10 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
   const error = hookError;
 
   // Use individual store values to prevent recreating objects on each render
-  const setActiveDragItem = usePolicyDragDropStore(state => state.setActiveDragItem);
-  const addToCanvas = usePolicyDragDropStore(state => state.addToCanvas);
-  const canvasEntities = usePolicyDragDropStore(state => state.canvasEntities);
-  const onClearCanvas = usePolicyDragDropStore(state => state.clearCanvas);
+  const setActiveSelectionItem = usePolicySelectionStore(state => state.setActiveSelectionItem);
+  const addToCanvas = usePolicySelectionStore(state => state.addToCanvas);
+  const canvasEntities = usePolicySelectionStore(state => state.canvasEntities);
+  const onClearCanvas = usePolicySelectionStore(state => state.clearCanvas);
   const [deploymentDialogOpen, setDeploymentDialogOpen] = useState(false);
   const [deploymentLoading, setDeploymentLoading] = useState(false);
   const [deploymentError, setDeploymentError] = useState<string | null>(null);
@@ -239,14 +239,14 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
 
   // Start SSE connection when component mounts
   useEffect(() => {
-    console.log('🔵 PolicyDragDropContainer component mounted');
+    console.log('🔵 PolicySelectionContainer component mounted');
     console.log('🔍 DEBUG - Starting SSE connection for workload data');
 
     // Start the SSE connection to get comprehensive workload data
     const cleanup = startSSEConnection();
 
     return () => {
-      console.log('🔴 PolicyDragDropContainer component unmounting');
+      console.log('🔴 PolicySelectionContainer component unmounting');
       isMounted.current = false;
       if (cleanup) cleanup();
     };
@@ -690,7 +690,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
           // Also add the labels to the store for reference
           if (itemType === 'workload' || itemType === 'cluster') {
             const storeLabels = { [labelInfo.key]: labelInfo.value };
-            usePolicyDragDropStore.getState().assignLabelsToItem(itemType, itemId, storeLabels);
+            usePolicySelectionStore.getState().assignLabelsToItem(itemType, itemId, storeLabels);
             console.log(`Assigned labels to ${itemType} ${itemId}:`, storeLabels);
           }
 
@@ -1318,45 +1318,45 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     ]
   );
 
-  // Handle tracking the active drag item
-  const handleDragStart = useCallback(
+  // Handle tracking the active selection item
+  const handleSelectionStart = useCallback(
     (start: DragStart) => {
-      console.log('🔄 DRAG START EVENT', start);
+      console.log('🔄 SELECTION START EVENT', start);
 
-      if (!setActiveDragItem) {
-        console.error('❌ setActiveDragItem is not defined');
+      if (!setActiveSelectionItem) {
+        console.error('❌ setActiveSelectionItem is not defined');
         return;
       }
 
-      const draggedItemId = start.draggableId;
-      console.log('🔄 Drag started with item:', draggedItemId);
+      const selectedItemId = start.draggableId;
+      console.log('🔄 Selection started with item:', selectedItemId);
 
-      let itemType, itemId, dragType;
+      let itemType, itemId, selectionType;
 
-      if (draggedItemId.startsWith('label-')) {
-        const labelParts = draggedItemId.split('-');
+      if (selectedItemId.startsWith('label-')) {
+        const labelParts = selectedItemId.split('-');
         if (labelParts.length >= 3) {
           const sourceId = start.source?.droppableId || '';
           if (sourceId === 'cluster-panel') {
             itemType = 'cluster';
-            dragType = DragTypes.CLUSTER;
+            selectionType = SelectionTypes.CLUSTER;
           } else if (sourceId === 'workload-panel') {
             itemType = 'workload';
-            dragType = DragTypes.WORKLOAD;
+            selectionType = SelectionTypes.WORKLOAD;
           } else {
             console.error('❌ Unknown source for label:', sourceId);
             return;
           }
 
-          itemId = draggedItemId;
+          itemId = selectedItemId;
         } else {
-          console.error('❌ Invalid label format:', draggedItemId);
+          console.error('❌ Invalid label format:', selectedItemId);
           return;
         }
       } else {
-        const itemTypeMatch = draggedItemId.match(/^(policy|cluster|workload)-(.+)$/);
+        const itemTypeMatch = selectedItemId.match(/^(policy|cluster|workload)-(.+)$/);
         if (!itemTypeMatch) {
-          console.error('❌ Invalid draggable ID format:', draggedItemId);
+          console.error('❌ Invalid selectable ID format:', selectedItemId);
           return;
         }
 
@@ -1364,41 +1364,41 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
         itemId = itemTypeMatch[2];
 
         if (itemType === 'policy') {
-          dragType = DragTypes.POLICY;
+          selectionType = SelectionTypes.POLICY;
         } else if (itemType === 'cluster') {
-          dragType = DragTypes.CLUSTER;
+          selectionType = SelectionTypes.CLUSTER;
         } else if (itemType === 'workload') {
-          dragType = DragTypes.WORKLOAD;
+          selectionType = SelectionTypes.WORKLOAD;
         } else {
-          dragType = '';
+          selectionType = '';
         }
       }
 
-      console.log(`🔄 Drag item type identified: ${dragType}`);
+      console.log(`🔄 Selection item type identified: ${selectionType}`);
 
-      setActiveDragItem({
-        type: dragType || '',
+      setActiveSelectionItem({
+        type: selectionType || '',
         id: itemId,
       });
 
-      console.log('✅ Active drag item set successfully');
+      console.log('✅ Active selection item set successfully');
     },
-    [setActiveDragItem]
+    [setActiveSelectionItem]
   );
 
-  // Handle when a drag operation is completed
-  const handleDragEnd = useCallback(
+  // Handle when a selection operation is completed
+  const handleSelectionEnd = useCallback(
     (result: DropResult) => {
-      console.log('🔄 DRAG END EVENT', result);
+      console.log('🔄 SELECTION END EVENT', result);
 
-      // Clear the active drag item
-      if (setActiveDragItem) {
-        setActiveDragItem(null);
+      // Clear the active selection item
+      if (setActiveSelectionItem) {
+        setActiveSelectionItem(null);
       }
 
-      // If no destination, the drag was cancelled
+      // If no destination, the selection was cancelled
       if (!result.destination) {
-        console.log('⏭️ Drag cancelled - no destination');
+        console.log('⏭️ Selection cancelled - no destination');
         return;
       }
 
@@ -1477,10 +1477,10 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
         }
       }
 
-      console.log('✅ Drag end processing completed');
+      console.log('✅ Selection end processing completed');
     },
     [
-      setActiveDragItem,
+      setActiveSelectionItem,
       extractLabelInfo,
       findClustersByLabel,
       addItemToCanvas,
@@ -1494,7 +1494,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
     prepareForDeployment();
   }, [prepareForDeployment]);
 
-  // Main layout for the drag and drop interface
+  // Main layout for the selection interface
   return (
     <Box
       sx={{
@@ -1503,7 +1503,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
         position: 'relative',
       }}
     >
-      <StrictModeDragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <StrictModeSelectionContext onDragStart={handleSelectionStart} onDragEnd={handleSelectionEnd}>
         <Grid container spacing={dialogMode ? 1 : 2} sx={{ height: '100%', p: dialogMode ? 0 : 2 }}>
           {/* Left Panel - Clusters */}
           <Grid item xs={3} sx={{ height: '100%' }}>
@@ -1533,9 +1533,9 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
                   clusters={clusters}
                   workloads={workloads}
                   canvasEntities={canvasEntities}
-                  assignmentMap={usePolicyDragDropStore(state => state.assignmentMap)}
-                  getItemLabels={usePolicyDragDropStore(state => state.getItemLabels)}
-                  removeFromCanvas={usePolicyDragDropStore(state => state.removeFromCanvas)}
+                  assignmentMap={usePolicySelectionStore(state => state.assignmentMap)}
+                  getItemLabels={usePolicySelectionStore(state => state.getItemLabels)}
+                  removeFromCanvas={usePolicySelectionStore(state => state.removeFromCanvas)}
                   onClearCanvas={onClearCanvas}
                   onSaveBindingPolicies={() => {
                     setSuccessMessage('All binding policies saved successfully');
@@ -1613,14 +1613,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
                   >
                     {deploymentLoading ? (
                       <>
-                        <Box
-                          component="span"
-                          sx={{
-                            display: 'inline-flex',
-                            mr: 1,
-                            alignItems: 'center',
-                          }}
-                        >
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
                           <Box
                             component="span"
                             sx={{
@@ -1631,17 +1624,21 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
                               borderRightColor: 'transparent',
                               animation: 'spin 1s linear infinite',
                               display: 'inline-block',
+                              mr: 1,
                               '@keyframes spin': {
                                 '0%': { transform: 'rotate(0deg)' },
                                 '100%': { transform: 'rotate(360deg)' },
                               },
                             }}
                           />
+                          {t('bindingPolicy.deploying')}
                         </Box>
-                        {t('bindingPolicy.deploying')}
                       </>
                     ) : (
-                      t('bindingPolicy.deployBindingPolicies')
+                      <>
+                        <ArrowForwardIcon sx={{ mr: 1 }} />
+                        {t('bindingPolicy.deployBindingPolicies')}
+                      </>
                     )}
                   </Button>
                 </Box>
@@ -1662,7 +1659,7 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
             />
           </Grid>
         </Grid>
-      </StrictModeDragDropContext>
+      </StrictModeSelectionContext>
 
       {/* Success notification */}
       <SuccessNotification
@@ -1886,4 +1883,4 @@ const PolicyDragDropContainer: React.FC<PolicyDragDropContainerProps> = ({
   );
 };
 
-export default React.memo(PolicyDragDropContainer);
+export default React.memo(PolicySelectionContainer);

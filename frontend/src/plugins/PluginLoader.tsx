@@ -17,6 +17,7 @@ interface PluginContextType {
   getPluginWidget: (pluginName: string, widgetName: string) => React.ComponentType<any> | null;
   getPluginNavigation: () => PluginNavigationItem[];
   isPluginLoaded: (pluginName: string) => boolean;
+  loadAvailablePlugins: () => Promise<void>;
 }
 
 const PluginContext = createContext<PluginContextType | null>(null);
@@ -115,11 +116,6 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
       console.error('Failed to load available plugins:', error);
     }
   }, [pluginAPI, loadPlugin]);
-
-  // Load plugins from backend on mount
-  useEffect(() => {
-    loadAvailablePlugins();
-  }, [loadAvailablePlugins]);
 
   const unloadPlugin = useCallback(
     async (pluginName: string) => {
@@ -257,6 +253,7 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
     getPluginWidget,
     getPluginNavigation,
     isPluginLoaded,
+    loadAvailablePlugins,
   };
 
   return <PluginContext.Provider value={contextValue}>{children}</PluginContext.Provider>;

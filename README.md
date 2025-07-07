@@ -33,6 +33,7 @@ Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI 
   - [Local Setup](#local-setup)
   - [Local Setup with Docker Compose](#local-setup-with-docker-compose)
 - [Accessing the Application](#accessing-the-application)
+- [Migration Commands](#migration-commands)
 
 ## Prerequisites
 
@@ -75,6 +76,10 @@ Welcome to **KubestellarUI**! This guide will help you set up the KubestellarUI 
 - Make sure you have "make" installed to directly execute the backend script via makefile
 - Air helps in hot reloading of the backend
 - **Air guide**: [Guide](https://github.com/air-verse/air#installation)
+
+### 6. Golang Migrate
+- Make sure you have installed 'golang-migrate' cli tool which helps in database migration
+- **Installation Guide:** [Install](https://github.com/golang-migrate/migrate/tree/master/cmd/migrate)
 
 ## Installation Steps
 
@@ -160,6 +165,12 @@ Make sure you are in the root directory of the project
 cd backend
 
 go mod download
+
+make migrate-up #for keeping our database in sync with changes in sql code of project(only use when you've added/updated migration files)
+
+# run this only when DB got changes without migration
+# it forces the migration version(in local) to match with DB state
+make migrate-force
 
 # Option 1 : Start backend with hot reloading (recommended)
 make dev
@@ -343,6 +354,16 @@ REDIS_IMAGE=redis:7-alpine docker compose up
 
 1. **Backend API**: [http://localhost:4000](http://localhost:4000) (or custom port if `BACKEND_PORT` is set)
 2. **Frontend UI**: [http://localhost:5173](http://localhost:5173) (or custom port if `FRONTEND_PORT` is set)
+
+### Migration Commands
+
+```
+cd backend
+make migrate-up #for keeping our database in sync with changes in sql code
+make migrate-down #rollback to previous 1 migration version(1 by default) and can specify if needed more than 1
+make create-migration #create new migration file
+make migrate-force # Force set migration version (use if out of sync)
+```
 
 #### Dashboard Default Login Credentials
 

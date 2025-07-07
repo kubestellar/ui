@@ -12,13 +12,14 @@ import {
   FiHome,
   FiBox,
   FiLogOut,
+  FiUsers,
 } from 'react-icons/fi';
-import { useAuthActions } from '../hooks/useAuth';
+import { useAuthActions, useAdminCheck } from '../hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { HiOutlinePuzzlePiece } from 'react-icons/hi2';
 
 // Command types to support various actions
-type CommandType = 'navigation' | 'action' | 'documentation';
+type CommandType = 'navigation' | 'action' | 'documentation' | 'admin';
 
 interface CommandItem {
   id: string;
@@ -29,6 +30,7 @@ interface CommandItem {
   action: () => void;
   keywords: string[];
   section?: string;
+  adminOnly?: boolean;
 }
 
 const CommandPalette: React.FC = () => {
@@ -44,6 +46,7 @@ const CommandPalette: React.FC = () => {
   const themeStyles = getThemeStyles(isDark);
   const { logout } = useAuthActions();
   const { t } = useTranslation();
+  const { isAdmin } = useAdminCheck();
 
   // Close the command palette on Escape key
   useEffect(() => {
@@ -181,6 +184,28 @@ const CommandPalette: React.FC = () => {
       ],
       section: t('commandPalette.sections.navigation'),
     },
+    // Admin-only command for user management
+    {
+      id: 'user-management',
+      type: 'admin',
+      icon: FiUsers,
+      title: t('commandPalette.commands.userManagement.title') || 'User Management',
+      description:
+        t('commandPalette.commands.userManagement.description') ||
+        'Manage system users and permissions',
+      action: () => navigate('/admin/users'),
+      keywords: [
+        'users',
+        'admin',
+        'permissions',
+        'access',
+        'accounts',
+        'manage users',
+        'user admin',
+      ],
+      section: t('commandPalette.sections.admin') || 'Admin',
+      adminOnly: true,
+    },
     {
       id: 'wds-treeview',
       type: 'navigation',
@@ -267,9 +292,14 @@ const CommandPalette: React.FC = () => {
     },
   ];
 
-  // Filter commands based on search query
+  // Filter commands based on search query and admin status
   const filteredCommands = searchQuery
     ? commands.filter(command => {
+        // Filter out admin-only commands if user is not an admin
+        if (command.adminOnly && !isAdmin) {
+          return false;
+        }
+
         const searchLower = searchQuery.toLowerCase();
         return (
           command.title.toLowerCase().includes(searchLower) ||
@@ -277,13 +307,13 @@ const CommandPalette: React.FC = () => {
           command.keywords.some(keyword => keyword.toLowerCase().includes(searchLower))
         );
       })
-    : commands;
+    : commands.filter(command => !command.adminOnly || isAdmin); // Only show admin commands to admins
 
   // Group commands by section
   const groupedCommands: [string, CommandItem[]][] = searchQuery
     ? []
     : Object.entries(
-        commands.reduce<Record<string, CommandItem[]>>((groups, command) => {
+        filteredCommands.reduce<Record<string, CommandItem[]>>((groups, command) => {
           const section = command.section || 'Other';
           if (!groups[section]) {
             groups[section] = [];
@@ -569,7 +599,9 @@ const CommandPalette: React.FC = () => {
                               </div>
                               <div className="pb-1">
                                 {items.map((command: CommandItem) => {
-                                  const globalIdx = commands.findIndex(c => c.id === command.id);
+                                  const globalIdx = filteredCommands.findIndex(
+                                    c => c.id === command.id
+                                  );
                                   return (
                                     <CommandListItem
                                       key={command.id}
@@ -677,6 +709,8 @@ const CommandListItem: React.FC<CommandListItemProps> = ({
         return themeStyles.colors.brand.primary;
       case 'documentation':
         return themeStyles.colors.status.info;
+      case 'admin':
+        return themeStyles.colors.status.error;
       case 'action':
         return command.id === 'logout'
           ? themeStyles.colors.status.error
@@ -686,20 +720,36 @@ const CommandListItem: React.FC<CommandListItemProps> = ({
     }
   };
 
+  // Set background color based on command type for enhanced visual grouping
+  const getItemBackground = (isSelected: boolean, type: CommandType) => {
+    if (!isSelected) return 'transparent';
+
+    switch (type) {
+      case 'admin':
+        return isDark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.05)';
+      default:
+        return isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)';
+    }
+  };
+
+  // Set border color based on command type
+  const getBorderColor = (isSelected: boolean, type: CommandType) => {
+    if (!isSelected) return '2px solid transparent';
+
+    switch (type) {
+      case 'admin':
+        return `2px solid ${isDark ? '#f87171' : '#ef4444'}`;
+      default:
+        return `2px solid ${themeStyles.colors.brand.primary}`;
+    }
+  };
+
   return (
     <motion.button
       className={`flex w-full items-center gap-3 px-3 py-2 text-left transition-colors duration-200`}
       style={{
-        background:
-          selectedIndex === index
-            ? isDark
-              ? 'rgba(59, 130, 246, 0.1)'
-              : 'rgba(59, 130, 246, 0.05)'
-            : 'transparent',
-        borderLeft:
-          selectedIndex === index
-            ? `2px solid ${themeStyles.colors.brand.primary}`
-            : '2px solid transparent',
+        background: getItemBackground(selectedIndex === index, command.type),
+        borderLeft: getBorderColor(selectedIndex === index, command.type),
       }}
       onClick={() => executeCommand(command)}
       onMouseEnter={() => setSelectedIndex(index)}

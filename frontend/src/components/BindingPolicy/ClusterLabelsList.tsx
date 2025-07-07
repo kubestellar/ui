@@ -15,7 +15,7 @@ import {
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import EditIcon from '@mui/icons-material/Edit';
 import { ManagedCluster } from '../../types/bindingPolicy';
-import { usePolicyDragDropStore } from '../../stores/policyDragDropStore';
+import { usePolicySelectionStore } from '../../stores/policySelectionStore';
 import useTheme from '../../stores/themeStore';
 import { useTranslation } from 'react-i18next';
 
@@ -70,7 +70,7 @@ const ClusterLabelsList: React.FC<ClusterLabelsListProps> = ({
     }
 
     // Check if this item is in the canvas
-    const { canvasEntities } = usePolicyDragDropStore.getState();
+    const { canvasEntities } = usePolicySelectionStore.getState();
     const isInCanvas = canvasEntities.clusters.includes(itemId);
 
     // Find the full cluster objects for each cluster in this label group

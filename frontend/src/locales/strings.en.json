@@ -68,6 +68,78 @@
     "items_plural": "{{count}} items",
     "filteredFrom": "filtered from"
   },
+  "admin": {
+    "users": {
+      "title": "User Management",
+      "subtitle": "System Users",
+      "noUsers": "No Users Found",
+      "noUsersDescription": "There are no users in the system yet. Click 'Add User' to create your first user.",
+      "noPermissions": "No permissions assigned",
+      "actions": {
+        "addUser": "Add User",
+        "editUser": "Edit User",
+        "add": "Add User",
+        "update": "Update User",
+        "delete": "Delete User",
+        "edit": "Edit",
+        "deleteUser": "Delete User"
+      },
+      "table": {
+        "username": "Username",
+        "role": "Role",
+        "permissions": "Permissions",
+        "actions": "Actions"
+      },
+      "roles": {
+        "admin": "Admin",
+        "user": "User"
+      },
+      "permissions": {
+        "users": "Users",
+        "resources": "Resources",
+        "system": "System",
+        "dashboard": "Dashboard",
+        "levels": {
+          "read": "Read",
+          "write": "Write",
+          "none": "None"
+        }
+      },
+      "form": {
+        "username": "Username",
+        "usernamePlaceholder": "Enter username",
+        "password": "Password",
+        "passwordPlaceholder": "Enter password",
+        "passwordOptional": "Password (optional)",
+        "passwordOptionalPlaceholder": "Enter new password or leave blank",
+        "confirmPassword": "Confirm Password",
+        "confirmPasswordPlaceholder": "Confirm password",
+        "isAdmin": "Administrator Access",
+        "permissions": "Component Permissions",
+        "cancel": "Cancel",
+        "optional": "optional"
+      },
+      "delete": {
+        "title": "Delete User",
+        "confirmTitle": "Confirm Deletion",
+        "confirmMessage": "Are you sure you want to delete user \"{{username}}\"? This action cannot be undone.",
+        "confirm": "Delete User"
+      },
+      "errors": {
+        "fetchFailed": "Failed to fetch users",
+        "missingFields": "Please fill in all required fields",
+        "passwordMismatch": "Passwords do not match",
+        "addFailed": "Failed to add user",
+        "updateFailed": "Failed to update user",
+        "deleteFailed": "Failed to delete user"
+      },
+      "success": {
+        "userAdded": "User added successfully",
+        "userUpdated": "User updated successfully",
+        "userDeleted": "User deleted successfully"
+      }
+    }
+  },
   "installationPage": {
     "successSection": {
       "installed": "is correctly installed and meets the version requirements."
@@ -942,7 +1014,7 @@
       "policyBindingCreatedChip": "Binding created for policy propagation"
     },
     "tabs": {
-      "selectItems": "Select Items",
+      "selectItems": "Click and Drop",
       "yaml": "YAML",
       "uploadFile": "Upload File"
     },
@@ -1091,7 +1163,7 @@
       }
     },
     "loadingCanvas": "Loading canvas data...",
-    "dragDrop": {
+    "selection": {
       "infoAlert": "This interface is using simulated responses to create binding policies. Select clusters and workloads from the lists to add them to the canvas, then click on a workload and then a cluster to create a binding policy connection.",
       "helpDialog": {
         "title": "Create Binding Policies with Direct Connections",
@@ -1187,8 +1259,7 @@
       "title": "Labels:",
       "key": "Key",
       "value": "Value",
-      "add": "Add",
-      "count": "{{count}} unique labels across {{total}}"
+      "add": "Add"
     },
     "creatingConnection": "Creating connection:",
     "previewDialog": {
@@ -1636,7 +1707,8 @@
     "creating": "Creating...",
     "createContext": "Create Context"
   },
-  "policyDragDropStore": {
+
+  "policySelectionStore": {
     "labelsAssigned": "Labels automatically assigned to {{itemType}} {{itemId}}",
     "policyAssigned": "Successfully assigned {{policyName}} to {{targetType}} {{targetName}}",
     "clusterAlreadyAssigned": "Cluster {{targetName}} is already assigned to policy {{policyName}}",
@@ -1700,7 +1772,8 @@
     "passwordRequired": "Password is required.",
     "errorCurrentPasswordIncorrect": "Current password is incorrect",
     "cancel": "Cancel",
-    "changePasswordButton": "Change Password"
+    "changePasswordButton": "Change Password",
+    "passwordsMatch": "Passwords match!"
   },
   "onboardingLogs": {
     "onboarding": "Onboarding",
@@ -1944,12 +2017,6 @@
       "arrows": "↑↓",
       "enter": "↵"
     },
-    "sections": {
-      "navigation": "Navigation",
-      "visualizations": "Visualizations",
-      "help": "Help",
-      "account": "Account"
-    },
     "commands": {
       "home": {
         "title": "Home",
@@ -1969,7 +2036,11 @@
       },
       "bindingPolicies": {
         "title": "Binding Policies",
-        "description": "Configure binding policies"
+        "description": "Manage binding policies"
+      },
+      "userManagement": {
+        "title": "User Management",
+        "description": "Manage system users and permissions"
       },
       "wdsTreeview": {
         "title": "WDS Treeview",
@@ -1986,15 +2057,23 @@
       "logout": {
         "title": "Logout",
         "description": "Sign out of your account",
-        "infoMessage": "You have been successfully logged out."
+        "infoMessage": "You have been logged out successfully."
       }
+    },
+    "sections": {
+      "navigation": "Navigation",
+      "admin": "Administration",
+      "visualizations": "Visualizations",
+      "help": "Help",
+      "account": "Account"
     }
   },
   "menu": {
     "catalogs": {
       "main": "Main",
       "management": "Management",
-      "plugins": "Plugins"
+      "plugins": "Plugins",
+      "admin": "Administration"
     },
     "items": {
       "home": "Home",
@@ -2002,7 +2081,8 @@
       "stagedWorkloads": "Staged Workloads",
       "bindingPolicies": "Binding Policies",
       "deployedWorkloads": "Deployed Workloads",
-      "pluginManager": "Plugin Manager"
+      "pluginManager": "Plugin Manager",
+      "userManagement": "User Management"
     }
   },
   "plugins": {

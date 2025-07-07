@@ -8,8 +8,10 @@ import useTheme from '../stores/themeStore';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Eye, EyeOff } from 'lucide-react';
+import { CheckCircle, XCircle } from 'lucide-react';
 import CloseIcon from '@mui/icons-material/Close';
 import { createPortal } from 'react-dom';
+import getThemeStyles from '../lib/theme-utils';
 
 // Array of profile icon components to randomly select from
 const profileIcons = [
@@ -26,6 +28,7 @@ const ProfileSection = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const themeStyles = getThemeStyles(isDark);
 
   const { data: authData } = useAuth();
   const { logout } = useAuthActions();
@@ -45,6 +48,7 @@ const ProfileSection = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
 
   // Fetch user data
   useEffect(() => {
@@ -151,6 +155,7 @@ const ProfileSection = () => {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmNewPassword('');
+      setConfirmPasswordError('');
     } catch (error: unknown) {
       if (error && typeof error === 'object' && 'response' in error) {
         const err = error as { response?: { data?: { error?: string } } };
@@ -163,6 +168,28 @@ const ProfileSection = () => {
     }
   };
 
+  // Real-time confirm password error
+  const handleConfirmNewPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setConfirmNewPassword(value);
+    if (newPassword && value && newPassword !== value) {
+      setConfirmPasswordError(t('profileSection.passwordsDoNotMatch'));
+    } else {
+      setConfirmPasswordError('');
+    }
+  };
+
+  // Update new password and re-validate confirm password
+  const handleNewPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setNewPassword(value);
+    if (confirmNewPassword && value !== confirmNewPassword) {
+      setConfirmPasswordError(t('profileSection.passwordsDoNotMatch'));
+    } else {
+      setConfirmPasswordError('');
+    }
+  };
+
   // Helper to render modal via portal
   const renderChangePasswordModal = () => {
     if (!showChangePasswordModal) return null;
@@ -171,11 +198,10 @@ const ProfileSection = () => {
         <div
           className="relative flex w-full max-w-lg flex-col"
           style={{
-            background: '#232f3e',
-            backgroundColor: '#232f3e',
+            background: isDark ? '#232f3e' : '#fff',
             borderRadius: '18px',
-            boxShadow: '0 8px 32px 0 rgba(0,0,0,0.65)',
-            border: '1.5px solid #2d3748',
+            boxShadow: themeStyles.colors.shadow.lg,
+            border: `1.5px solid ${themeStyles.effects.glassMorphism.borderColor}`,
             minWidth: 0,
             width: '100%',
             maxWidth: 480,
@@ -186,13 +212,15 @@ const ProfileSection = () => {
           <button
             type="button"
             aria-label="Close change password dialog"
-            className="absolute right-5 top-5 z-10 rounded-full p-1 text-gray-400 transition-colors hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="absolute right-5 top-5 z-10 rounded-full p-1 transition-colors hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-primary dark:hover:bg-gray-700"
+            style={{ color: themeStyles.colors.text.secondary, background: 'transparent' }}
             onClick={() => {
               setShowChangePasswordModal(false);
               setCurrentPassword('');
               setNewPassword('');
               setConfirmNewPassword('');
               setFormError('');
+              setConfirmPasswordError('');
             }}
           >
             <CloseIcon fontSize="medium" />
@@ -200,7 +228,7 @@ const ProfileSection = () => {
           <div style={{ padding: '2.5rem 2.5rem 2rem 2.5rem', width: '100%' }}>
             <h2
               style={{
-                color: '#fff',
+                color: themeStyles.colors.text.primary,
                 fontWeight: 700,
                 fontSize: 24,
                 marginBottom: '0.5rem',
@@ -211,7 +239,12 @@ const ProfileSection = () => {
               {t('profileSection.changePassword')}
             </h2>
             <div
-              style={{ color: '#cbd5e1', fontSize: 16, marginBottom: '2rem', textAlign: 'left' }}
+              style={{
+                color: themeStyles.colors.text.secondary,
+                fontSize: 16,
+                marginBottom: '2rem',
+                textAlign: 'left',
+              }}
             >
               {t('profileSection.changePasswordSubtitle')}
             </div>
@@ -220,7 +253,7 @@ const ProfileSection = () => {
                 <label
                   className="mb-2 block text-sm font-semibold"
                   htmlFor="current-password"
-                  style={{ color: '#fff', fontSize: 15 }}
+                  style={{ color: themeStyles.colors.text.primary, fontSize: 15 }}
                 >
                   {t('profileSection.currentPassword')}
                 </label>
@@ -231,11 +264,11 @@ const ProfileSection = () => {
                     style={{
                       width: '100%',
                       borderRadius: 10,
-                      background: '#2d3748',
-                      color: '#fff',
+                      background: themeStyles.input.background,
+                      color: themeStyles.input.color,
                       fontSize: 16,
                       padding: '1rem',
-                      border: 'none',
+                      border: `1px solid ${themeStyles.input.borderColor}`,
                       outline: 'none',
                       marginBottom: 0,
                     }}
@@ -254,7 +287,7 @@ const ProfileSection = () => {
                         ? t('login.form.hidePassword')
                         : t('login.form.showPassword')
                     }
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 focus:outline-none"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 focus:outline-none dark:hover:text-gray-200"
                     onClick={() => setShowCurrentPassword(v => !v)}
                     style={{ background: 'none', border: 'none', padding: 0, margin: 0 }}
                   >
@@ -266,7 +299,7 @@ const ProfileSection = () => {
                 <label
                   className="mb-2 block text-sm font-semibold"
                   htmlFor="new-password"
-                  style={{ color: '#fff', fontSize: 15 }}
+                  style={{ color: themeStyles.colors.text.primary, fontSize: 15 }}
                 >
                   {t('profileSection.newPassword')}
                 </label>
@@ -277,17 +310,17 @@ const ProfileSection = () => {
                     style={{
                       width: '100%',
                       borderRadius: 10,
-                      background: '#2d3748',
-                      color: '#fff',
+                      background: themeStyles.input.background,
+                      color: themeStyles.input.color,
                       fontSize: 16,
                       padding: '1rem',
-                      border: 'none',
+                      border: `1px solid ${themeStyles.input.borderColor}`,
                       outline: 'none',
                       marginBottom: 0,
                     }}
                     placeholder={t('profileSection.newPassword')}
                     value={newPassword}
-                    onChange={e => setNewPassword(e.target.value)}
+                    onChange={handleNewPasswordChange}
                     autoComplete="new-password"
                     required
                     aria-label={t('profileSection.newPassword')}
@@ -298,7 +331,7 @@ const ProfileSection = () => {
                     aria-label={
                       showNewPassword ? t('login.form.hidePassword') : t('login.form.showPassword')
                     }
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 focus:outline-none"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 focus:outline-none dark:hover:text-gray-200"
                     onClick={() => setShowNewPassword(v => !v)}
                     style={{ background: 'none', border: 'none', padding: 0, margin: 0 }}
                   >
@@ -310,7 +343,7 @@ const ProfileSection = () => {
                 <label
                   className="mb-2 block text-sm font-semibold"
                   htmlFor="confirm-new-password"
-                  style={{ color: '#fff', fontSize: 15 }}
+                  style={{ color: themeStyles.colors.text.primary, fontSize: 15 }}
                 >
                   {t('profileSection.confirmNewPassword')}
                 </label>
@@ -321,17 +354,17 @@ const ProfileSection = () => {
                     style={{
                       width: '100%',
                       borderRadius: 10,
-                      background: '#2d3748',
-                      color: '#fff',
+                      background: themeStyles.input.background,
+                      color: themeStyles.input.color,
                       fontSize: 16,
                       padding: '1rem',
-                      border: 'none',
+                      border: `1px solid ${themeStyles.input.borderColor}`,
                       outline: 'none',
                       marginBottom: 0,
                     }}
                     placeholder={t('profileSection.confirmNewPassword')}
                     value={confirmNewPassword}
-                    onChange={e => setConfirmNewPassword(e.target.value)}
+                    onChange={handleConfirmNewPasswordChange}
                     autoComplete="new-password"
                     required
                     aria-label={t('profileSection.confirmNewPassword')}
@@ -344,7 +377,7 @@ const ProfileSection = () => {
                         ? t('login.form.hidePassword')
                         : t('login.form.showPassword')
                     }
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 focus:outline-none"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 focus:outline-none dark:hover:text-gray-200"
                     onClick={() => setShowConfirmNewPassword(v => !v)}
                     style={{ background: 'none', border: 'none', padding: 0, margin: 0 }}
                   >
@@ -352,22 +385,66 @@ const ProfileSection = () => {
                   </button>
                 </div>
               </div>
-              {formError && (
+              {/* Passwords do not match message and icon*/}
+              {!confirmPasswordError &&
+                newPassword &&
+                confirmNewPassword &&
+                newPassword === confirmNewPassword && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      color: themeStyles.colors.status.success,
+                      fontSize: 14,
+                      marginTop: '0.3rem',
+                      marginBottom: '0.5rem',
+                      textAlign: 'left',
+                      fontWeight: 500,
+                      gap: '0.4rem',
+                    }}
+                    role="status"
+                  >
+                    <CheckCircle size={18} style={{ flexShrink: 0 }} />
+                    {t('profileSection.passwordsMatch') || 'Passwords match!'}
+                  </div>
+                )}
+              {confirmPasswordError && (
                 <div
                   style={{
-                    background: '#2d2323',
-                    color: '#e57373',
-                    borderRadius: 8,
-                    fontSize: 16,
-                    padding: '0.7rem 1rem',
-                    marginBottom: '1.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: themeStyles.colors.status.error,
+                    fontSize: 14,
+                    marginTop: '0.3rem',
+                    marginBottom: '0.5rem',
                     textAlign: 'left',
                     fontWeight: 500,
+                    gap: '0.4rem',
                   }}
+                  role="alert"
                 >
-                  {formError}
+                  <XCircle size={18} style={{ flexShrink: 0 }} />
+                  {confirmPasswordError}
                 </div>
               )}
+              {formError &&
+                (!confirmPasswordError ||
+                  formError !== t('profileSection.passwordsDoNotMatch')) && (
+                  <div
+                    style={{
+                      background: isDark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(254, 226, 226, 0.5)',
+                      color: themeStyles.colors.status.error,
+                      borderRadius: 8,
+                      fontSize: 16,
+                      padding: '0.7rem 1rem',
+                      marginBottom: '1.5rem',
+                      textAlign: 'left',
+                      fontWeight: 500,
+                    }}
+                  >
+                    {formError}
+                  </div>
+                )}
               <div style={{ display: 'flex', gap: '1rem', marginTop: '2.2rem' }}>
                 <button
                   type="button"
@@ -375,21 +452,26 @@ const ProfileSection = () => {
                     flex: 1,
                     height: 48,
                     borderRadius: 8,
-                    background: '#374151',
-                    color: '#fff',
+                    background: isDark ? '#374151' : '#f3f4f6',
+                    color: isDark ? '#fff' : '#1e293b',
                     fontWeight: 600,
                     fontSize: 16,
                     border: 'none',
                     transition: 'background 0.2s',
                   }}
-                  onMouseOver={e => (e.currentTarget.style.background = '#27303f')}
-                  onMouseOut={e => (e.currentTarget.style.background = '#374151')}
+                  onMouseOver={e =>
+                    (e.currentTarget.style.background = isDark ? '#27303f' : '#e5e7eb')
+                  }
+                  onMouseOut={e =>
+                    (e.currentTarget.style.background = isDark ? '#374151' : '#f3f4f6')
+                  }
                   onClick={() => {
                     setShowChangePasswordModal(false);
                     setCurrentPassword('');
                     setNewPassword('');
                     setConfirmNewPassword('');
                     setFormError('');
+                    setConfirmPasswordError('');
                   }}
                   disabled={isSubmitting}
                 >
