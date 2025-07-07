@@ -105,31 +105,32 @@ const LanguageSwitcher = () => {
           </svg>
         </button>
       ) : (
-        <motion.button
-          onClick={() => setIsOpen(!isOpen)}
-          className={`btn btn-circle flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 ${
-            isDark
-              ? 'bg-gray-800/80 text-gray-200 hover:bg-gray-700/90'
-              : 'bg-white text-gray-700 hover:bg-gray-100'
-          }`}
-          aria-label="Switch Language"
-          title={currentLang.name}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          <AnimatePresence mode="wait">
-            <motion.div
-              key="language-icon"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="flex items-center justify-center"
-            >
-              <HiLanguage className="text-xl" style={{ color: isDark ? '#a5b4fc' : '#4f46e5' }} />
-            </motion.div>
-          </AnimatePresence>
-        </motion.button>
+        <div className="tooltip tooltip-bottom" data-tip={currentLang.name}>
+          <motion.button
+            onClick={() => setIsOpen(!isOpen)}
+            className={`btn btn-circle flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 ${
+              isDark
+                ? 'bg-gray-800/80 text-gray-200 hover:bg-gray-700/90'
+                : 'bg-white text-gray-700 hover:bg-gray-100'
+            }`}
+            aria-label="Switch Language"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key="language-icon"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="flex items-center justify-center"
+              >
+                <HiLanguage className="text-xl" style={{ color: isDark ? '#a5b4fc' : '#4f46e5' }} />
+              </motion.div>
+            </AnimatePresence>
+          </motion.button>
+        </div>
       )}
 
       {/* Dropdown list */}

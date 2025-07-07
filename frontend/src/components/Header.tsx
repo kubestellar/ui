@@ -100,42 +100,44 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
         className={`flex items-center gap-3 transition-all duration-300 ${scrolled ? 'scale-[0.97]' : ''}`}
       >
         <div className="mr-1 w-auto p-0 xl:hidden">
-          <motion.button
-            onClick={toggleMobileMenu}
-            className="btn btn-circle transition-all duration-300 hover:scale-105 active:scale-95"
-            style={getButtonStyle()}
-            aria-label={t('header.menu')}
-            animate={isMobileMenuOpen ? 'open' : 'closed'}
-            variants={menuButtonVariants}
-            transition={{ duration: 0.3, type: 'spring', stiffness: 300, damping: 20 }}
-          >
-            <AnimatePresence mode="wait">
-              {isMobileMenuOpen ? (
-                <motion.div
-                  key="close"
-                  initial={{ opacity: 0, rotate: -90 }}
-                  animate={{ opacity: 1, rotate: 0 }}
-                  exit={{ opacity: 0, rotate: 90 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <HiXMark
-                    className="text-2xl"
-                    style={{ color: themeStyles.colors.status.error }}
-                  />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="open"
-                  initial={{ opacity: 0, rotate: 90 }}
-                  animate={{ opacity: 1, rotate: 0 }}
-                  exit={{ opacity: 0, rotate: -90 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <HiBars3CenterLeft className="text-2xl" />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.button>
+          <div className="tooltip tooltip-bottom" data-tip={t('header.menu')}>
+            <motion.button
+              onClick={toggleMobileMenu}
+              className="btn btn-circle transition-all duration-300 hover:scale-105 active:scale-95"
+              style={getButtonStyle()}
+              aria-label={t('header.menu')}
+              animate={isMobileMenuOpen ? 'open' : 'closed'}
+              variants={menuButtonVariants}
+              transition={{ duration: 0.3, type: 'spring', stiffness: 300, damping: 20 }}
+            >
+              <AnimatePresence mode="wait">
+                {isMobileMenuOpen ? (
+                  <motion.div
+                    key="close"
+                    initial={{ opacity: 0, rotate: -90 }}
+                    animate={{ opacity: 1, rotate: 0 }}
+                    exit={{ opacity: 0, rotate: 90 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <HiXMark
+                      className="text-2xl"
+                      style={{ color: themeStyles.colors.status.error }}
+                    />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="open"
+                    initial={{ opacity: 0, rotate: 90 }}
+                    animate={{ opacity: 1, rotate: 0 }}
+                    exit={{ opacity: 0, rotate: -90 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <HiBars3CenterLeft className="text-2xl" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.button>
+          </div>
         </div>
 
         <Link
@@ -158,44 +160,46 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
       <div className="3xl:gap-5 flex items-center gap-2 xl:gap-4">
         {authData?.isAuthenticated ? (
           <>
-            <motion.button
-              onClick={toggleTheme}
-              className="btn btn-circle transition-all duration-300 hover:scale-105 active:scale-95"
-              style={getButtonStyle()}
-              aria-label={t('header.themeToggle')}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              <AnimatePresence mode="wait">
-                {!isDark ? (
-                  <motion.div
-                    key="moon"
-                    initial={{ opacity: 0, rotate: -30 }}
-                    animate={{ opacity: 1, rotate: 0 }}
-                    exit={{ opacity: 0, rotate: 30 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <FiMoon
-                      style={{ color: themeStyles.colors.brand.secondary }}
-                      className="text-xl"
-                    />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="sun"
-                    initial={{ opacity: 0, rotate: 30 }}
-                    animate={{ opacity: 1, rotate: 0 }}
-                    exit={{ opacity: 0, rotate: -30 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <FiSun
-                      style={{ color: themeStyles.colors.status.warning }}
-                      className="text-xl"
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.button>
+            <div className="tooltip tooltip-bottom" data-tip={t('header.themeToggle')}>
+              <motion.button
+                onClick={toggleTheme}
+                className="btn btn-circle transition-all duration-300 hover:scale-105 active:scale-95"
+                style={getButtonStyle()}
+                aria-label={t('header.themeToggle')}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <AnimatePresence mode="wait">
+                  {!isDark ? (
+                    <motion.div
+                      key="moon"
+                      initial={{ opacity: 0, rotate: -30 }}
+                      animate={{ opacity: 1, rotate: 0 }}
+                      exit={{ opacity: 0, rotate: 30 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <FiMoon
+                        style={{ color: themeStyles.colors.brand.secondary }}
+                        className="text-xl"
+                      />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="sun"
+                      initial={{ opacity: 0, rotate: 30 }}
+                      animate={{ opacity: 1, rotate: 0 }}
+                      exit={{ opacity: 0, rotate: -30 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <FiSun
+                        style={{ color: themeStyles.colors.status.warning }}
+                        className="text-xl"
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.button>
+            </div>
 
             <CommandPalette />
             <LanguageSwitcher />
@@ -206,44 +210,49 @@ const Header = ({ isLoading, toggleMobileMenu, isMobileMenuOpen = false }: Heade
           </>
         ) : (
           <>
-            <motion.button
-              onClick={toggleTheme}
-              className="btn btn-circle transition-all duration-300 hover:scale-105 active:scale-95"
-              style={getButtonStyle()}
-              aria-label={t('header.switchTheme', { mode: isDark ? 'light' : 'dark' })}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+            <div
+              className="tooltip tooltip-bottom"
+              data-tip={t('header.switchTheme', { mode: isDark ? 'light' : 'dark' })}
             >
-              <AnimatePresence mode="wait">
-                {!isDark ? (
-                  <motion.div
-                    key="moon"
-                    initial={{ opacity: 0, rotate: -30 }}
-                    animate={{ opacity: 1, rotate: 0 }}
-                    exit={{ opacity: 0, rotate: 30 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <FiMoon
-                      style={{ color: themeStyles.colors.brand.secondary }}
-                      className="text-xl"
-                    />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="sun"
-                    initial={{ opacity: 0, rotate: 30 }}
-                    animate={{ opacity: 1, rotate: 0 }}
-                    exit={{ opacity: 0, rotate: -30 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <FiSun
-                      style={{ color: themeStyles.colors.status.warning }}
-                      className="text-xl"
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.button>
+              <motion.button
+                onClick={toggleTheme}
+                className="btn btn-circle transition-all duration-300 hover:scale-105 active:scale-95"
+                style={getButtonStyle()}
+                aria-label={t('header.switchTheme', { mode: isDark ? 'light' : 'dark' })}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <AnimatePresence mode="wait">
+                  {!isDark ? (
+                    <motion.div
+                      key="moon"
+                      initial={{ opacity: 0, rotate: -30 }}
+                      animate={{ opacity: 1, rotate: 0 }}
+                      exit={{ opacity: 0, rotate: 30 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <FiMoon
+                        style={{ color: themeStyles.colors.brand.secondary }}
+                        className="text-xl"
+                      />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="sun"
+                      initial={{ opacity: 0, rotate: 30 }}
+                      animate={{ opacity: 1, rotate: 0 }}
+                      exit={{ opacity: 0, rotate: -30 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <FiSun
+                        style={{ color: themeStyles.colors.status.warning }}
+                        className="text-xl"
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.button>
+            </div>
 
             <CommandPalette />
             <LanguageSwitcher />
