@@ -7,6 +7,7 @@ import { LoginUser } from '../../api/auth';
 import { AUTH_QUERY_KEY } from '../../api/auth/constant';
 import { useTranslation } from 'react-i18next';
 import { encryptData, secureSet, secureRemove } from '../../utils/secureStorage';
+import { setAccessToken, setRefreshToken, clearTokens } from '../../lib/api';
 
 interface LoginCredentials {
   username: string;
@@ -28,8 +29,14 @@ export const useLogin = () => {
         if (!response.token) {
           throw new Error(t('auth.login.noToken'));
         }
-
-        localStorage.setItem('jwtToken', response.token);
+        setAccessToken(response.token);
+        if (
+          'refreshToken' in response &&
+          typeof response.refreshToken === 'string' &&
+          response.refreshToken
+        ) {
+          setRefreshToken(response.refreshToken);
+        }
 
         if (rememberMe) {
           // Use secure storage with XSS protection
@@ -92,4 +99,10 @@ export const useLogin = () => {
       toast.error(errorMessage);
     },
   });
+};
+
+export const logout = () => {
+  clearTokens();
+  localStorage.setItem('tokenRemovalTime', Date.now().toString());
+  window.dispatchEvent(new Event('storage'));
 };
