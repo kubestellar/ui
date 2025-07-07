@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kubestellar/ui/api"
+	"github.com/kubestellar/ui/backend/api"
 	"github.com/stretchr/testify/assert"
 )
 
