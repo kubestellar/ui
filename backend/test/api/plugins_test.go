@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -47,21 +48,15 @@ func TestListPluginsHandler(t *testing.T) {
 func TestGetPluginDetailsHandler(t *testing.T) {
 	tests := []struct {
 		name           string
-		pluginName     string
+		pluginID       int
 		expectedStatus int
 		expectedError  string
 	}{
 		{
 			name:           "Valid plugin name",
-			pluginName:     "test-plugin",
+			pluginID:       123456789,
 			expectedStatus: http.StatusNotFound, // Plugin not found in test environment
 			expectedError:  "Plugin not found",
-		},
-		{
-			name:           "Empty plugin name",
-			pluginName:     "",
-			expectedStatus: http.StatusBadRequest,
-			expectedError:  "Plugin ID is required",
 		},
 	}
 
@@ -74,11 +69,11 @@ func TestGetPluginDetailsHandler(t *testing.T) {
 
 			// Set plugin ID in URL params
 			c.Params = []gin.Param{
-				{Key: "id", Value: tt.pluginName},
+				{Key: "id", Value: strconv.Itoa(tt.pluginID)},
 			}
 
 			// Create a mock request
-			req, _ := http.NewRequest(http.MethodGet, "/plugins/"+tt.pluginName, nil)
+			req, _ := http.NewRequest(http.MethodGet, "/plugins/"+strconv.Itoa(tt.pluginID), nil)
 			c.Request = req
 
 			// Call the handler
@@ -104,6 +99,7 @@ func TestInstallPluginHandler(t *testing.T) {
 		{
 			name: "Valid plugin installation",
 			requestBody: map[string]interface{}{
+				"id":      123456789,
 				"name":    "test-plugin",
 				"version": "v1.0.0",
 				"source":  "https://github.com/test/plugin",
@@ -111,7 +107,7 @@ func TestInstallPluginHandler(t *testing.T) {
 			expectedStatus: http.StatusAccepted, // 202 - Installation is async
 		},
 		{
-			name: "Missing plugin name",
+			name: "Missing plugin ID",
 			requestBody: map[string]interface{}{
 				"version": "v1.0.0",
 				"source":  "https://github.com/test/plugin",
@@ -122,6 +118,7 @@ func TestInstallPluginHandler(t *testing.T) {
 		{
 			name: "Missing plugin source",
 			requestBody: map[string]interface{}{
+				"id":      123456789,
 				"name":    "test-plugin",
 				"version": "v1.0.0",
 			},
@@ -170,21 +167,15 @@ func TestInstallPluginHandler(t *testing.T) {
 func TestUninstallPluginHandler(t *testing.T) {
 	tests := []struct {
 		name           string
-		pluginName     string
+		pluginID       int
 		expectedStatus int
 		expectedError  string
 	}{
 		{
 			name:           "Valid plugin uninstallation",
-			pluginName:     "test-plugin",
+			pluginID:       123456789,
 			expectedStatus: http.StatusNotFound, // Plugin not found in test environment
 			expectedError:  "Plugin not found",
-		},
-		{
-			name:           "Empty plugin name",
-			pluginName:     "",
-			expectedStatus: http.StatusBadRequest,
-			expectedError:  "Plugin ID is required",
 		},
 	}
 
@@ -197,11 +188,11 @@ func TestUninstallPluginHandler(t *testing.T) {
 
 			// Set plugin ID in URL params
 			c.Params = []gin.Param{
-				{Key: "id", Value: tt.pluginName},
+				{Key: "id", Value: strconv.Itoa(tt.pluginID)},
 			}
 
 			// Create a mock request
-			req, _ := http.NewRequest(http.MethodDelete, "/plugins/"+tt.pluginName, nil)
+			req, _ := http.NewRequest(http.MethodDelete, "/plugins/"+strconv.Itoa(tt.pluginID), nil)
 			c.Request = req
 
 			// Call the handler
@@ -220,21 +211,15 @@ func TestUninstallPluginHandler(t *testing.T) {
 func TestEnablePluginHandler(t *testing.T) {
 	tests := []struct {
 		name           string
-		pluginName     string
+		pluginID       int
 		expectedStatus int
 		expectedError  string
 	}{
 		{
 			name:           "Valid plugin enable",
-			pluginName:     "test-plugin",
+			pluginID:       123456789,
 			expectedStatus: http.StatusNotFound, // Plugin not found in test environment
 			expectedError:  "Plugin not found",
-		},
-		{
-			name:           "Empty plugin name",
-			pluginName:     "",
-			expectedStatus: http.StatusBadRequest,
-			expectedError:  "Plugin ID is required",
 		},
 	}
 
@@ -247,11 +232,11 @@ func TestEnablePluginHandler(t *testing.T) {
 
 			// Set plugin ID in URL params
 			c.Params = []gin.Param{
-				{Key: "id", Value: tt.pluginName},
+				{Key: "id", Value: strconv.Itoa(tt.pluginID)},
 			}
 
 			// Create a mock request
-			req, _ := http.NewRequest(http.MethodPost, "/plugins/"+tt.pluginName+"/enable", nil)
+			req, _ := http.NewRequest(http.MethodPost, "/plugins/"+strconv.Itoa(tt.pluginID)+"/enable", nil)
 			c.Request = req
 
 			// Call the handler
@@ -270,21 +255,15 @@ func TestEnablePluginHandler(t *testing.T) {
 func TestDisablePluginHandler(t *testing.T) {
 	tests := []struct {
 		name           string
-		pluginName     string
+		pluginID       int
 		expectedStatus int
 		expectedError  string
 	}{
 		{
 			name:           "Valid plugin disable",
-			pluginName:     "test-plugin",
+			pluginID:       123456789,
 			expectedStatus: http.StatusNotFound, // Plugin not found in test environment
 			expectedError:  "Plugin not found",
-		},
-		{
-			name:           "Empty plugin name",
-			pluginName:     "",
-			expectedStatus: http.StatusBadRequest,
-			expectedError:  "Plugin ID is required",
 		},
 	}
 
@@ -297,11 +276,11 @@ func TestDisablePluginHandler(t *testing.T) {
 
 			// Set plugin ID in URL params
 			c.Params = []gin.Param{
-				{Key: "id", Value: tt.pluginName},
+				{Key: "id", Value: strconv.Itoa(tt.pluginID)},
 			}
 
 			// Create a mock request
-			req, _ := http.NewRequest(http.MethodPost, "/plugins/"+tt.pluginName+"/disable", nil)
+			req, _ := http.NewRequest(http.MethodPost, "/plugins/"+strconv.Itoa(tt.pluginID)+"/disable", nil)
 			c.Request = req
 
 			// Call the handler
@@ -320,21 +299,15 @@ func TestDisablePluginHandler(t *testing.T) {
 func TestGetPluginStatusHandler(t *testing.T) {
 	tests := []struct {
 		name           string
-		pluginName     string
+		pluginID       int
 		expectedStatus int
 		expectedError  string
 	}{
 		{
 			name:           "Valid plugin status check",
-			pluginName:     "test-plugin",
+			pluginID:       123456789,
 			expectedStatus: http.StatusNotFound, // Plugin not found in test environment
 			expectedError:  "Plugin not found",
-		},
-		{
-			name:           "Empty plugin name",
-			pluginName:     "",
-			expectedStatus: http.StatusBadRequest,
-			expectedError:  "Plugin ID is required",
 		},
 	}
 
@@ -347,11 +320,11 @@ func TestGetPluginStatusHandler(t *testing.T) {
 
 			// Set plugin ID in URL params
 			c.Params = []gin.Param{
-				{Key: "id", Value: tt.pluginName},
+				{Key: "id", Value: strconv.Itoa(tt.pluginID)},
 			}
 
 			// Create a mock request
-			req, _ := http.NewRequest(http.MethodGet, "/plugins/"+tt.pluginName+"/status", nil)
+			req, _ := http.NewRequest(http.MethodGet, "/plugins/"+strconv.Itoa(tt.pluginID)+"/status", nil)
 			c.Request = req
 
 			// Call the handler
@@ -370,21 +343,15 @@ func TestGetPluginStatusHandler(t *testing.T) {
 func TestReloadPluginHandler(t *testing.T) {
 	tests := []struct {
 		name           string
-		pluginName     string
+		pluginID       int
 		expectedStatus int
 		expectedError  string
 	}{
 		{
 			name:           "Valid plugin reload",
-			pluginName:     "test-plugin",
+			pluginID:       123456789,
 			expectedStatus: http.StatusNotFound, // Plugin not found in test environment
 			expectedError:  "Plugin not found",
-		},
-		{
-			name:           "Empty plugin name",
-			pluginName:     "",
-			expectedStatus: http.StatusBadRequest,
-			expectedError:  "Plugin ID is required",
 		},
 	}
 
@@ -397,11 +364,11 @@ func TestReloadPluginHandler(t *testing.T) {
 
 			// Set plugin ID in URL params
 			c.Params = []gin.Param{
-				{Key: "id", Value: tt.pluginName},
+				{Key: "id", Value: strconv.Itoa(tt.pluginID)},
 			}
 
 			// Create a mock request
-			req, _ := http.NewRequest(http.MethodPost, "/plugins/"+tt.pluginName+"/reload", nil)
+			req, _ := http.NewRequest(http.MethodPost, "/plugins/"+strconv.Itoa(tt.pluginID)+"/reload", nil)
 			c.Request = req
 
 			// Call the handler
@@ -548,7 +515,7 @@ func TestSubmitPluginFeedbackHandler(t *testing.T) {
 		{
 			name: "Valid feedback submission",
 			requestBody: map[string]interface{}{
-				"pluginId": "test-plugin",
+				"pluginId": 123456789,
 				"rating":   4.5,
 				"comments": "Great plugin!",
 			},
