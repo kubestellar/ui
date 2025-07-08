@@ -216,4 +216,12 @@ This section covers foundational analysis and planning to improve the structure,
 - Defined font sizes, weights, and heading structures aligned with visual hierarchy
 - Resource: [Type Hierarchy – Figma](https://www.figma.com/design/Gi24EeUOBqcWbdutYEPlE4/Type-Hierarchy?node-id=0-1&t=XXfQVjh9T7DgVtXB-1)
 
+### Additional Progress
+
+- **Navigation Mapping Updated**: Created a revised navigation structure in FigJam to align with improved information architecture and mapped user flows.
+
+- **Information Architecture Refined**: Enhanced the structure of documentation based on audit results and user research, ensuring better organization, hierarchy, and clarity.
+
+- **Typography Finalized**: Completed the typography hierarchy in Figma, establishing consistent type scales for headings, body text, and labels to improve readability and accessibility.
+
 ---
