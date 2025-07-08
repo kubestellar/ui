@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface PluginManifest {
+  id: number;
   name: string;
   version: string;
   description: string;
@@ -52,6 +53,7 @@ export interface PluginInstance {
 }
 
 export interface PluginError {
+  pluginID: number;
   pluginName: string;
   error: Error;
   timestamp: Date;
@@ -59,6 +61,7 @@ export interface PluginError {
 }
 
 export interface PluginMetrics {
+  pluginID: number;
   pluginName: string;
   loadTime: number;
   memoryUsage: number;

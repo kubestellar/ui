@@ -10,13 +10,13 @@ import logo from '../../assets/logo.svg';
 import { Circle } from 'lucide-react';
 
 interface IfeedbackModalProps {
-  pluginId: string;
+  pluginId: number;
   onClose: () => void;
   pluginAPI: PluginAPI;
 }
 
 interface IFeedbackFormData {
-  pluginId: string;
+  pluginId: number;
   rating: number | null;
   comment: string;
   suggestion: string;
@@ -43,7 +43,6 @@ const FeedbackModel = ({ pluginId, pluginAPI, onClose }: IfeedbackModalProps) =>
     5: 'Excellent',
   };
 
-  console.log(pluginId);
   const handleStarClick = (starIndex: number) => {
     setFormData(prv => ({
       ...prv,

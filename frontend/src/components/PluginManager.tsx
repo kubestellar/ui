@@ -33,7 +33,7 @@ interface Plugin {
   enabled: boolean;
   loadTime?: Date;
   routes?: string[];
-  id: string;
+  id: number;
 }
 
 export const PluginManager: React.FC = () => {
@@ -47,7 +47,7 @@ export const PluginManager: React.FC = () => {
 
   const [availablePlugins, setAvailablePlugins] = useState<Plugin[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
+  const [selectedPlugin, setSelectedPlugin] = useState<number | null>(null);
   const [installing, setInstalling] = useState(false);
   const [installMethod, setInstallMethod] = useState<'local' | 'github'>('local');
   const [githubUrl, setGithubUrl] = useState('');
@@ -55,10 +55,10 @@ export const PluginManager: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [confirmAction, setConfirmAction] = useState<{
     type: 'uninstall' | 'disable' | 'enable';
-    plugin: string;
+    plugin: number;
   } | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [feedbackClick, setFeedbackClick] = useState<string | null>(null);
+  const [feedbackClick, setFeedbackClick] = useState<number | null>(null);
 
   // Ref for the hidden directory input
   const directoryInputRef = useRef<HTMLInputElement>(null);
@@ -79,10 +79,10 @@ export const PluginManager: React.FC = () => {
     loadAvailablePlugins();
   }, [loadPluginData, loadAvailablePlugins]);
 
-  const handleEnablePlugin = async (pluginName: string) => {
+  const handleEnablePlugin = async (pluginID: number) => {
     try {
-      await pluginAPI.enablePlugin(pluginName);
-      const manifest = loadedPlugins.find(p => p.name === pluginName);
+      await pluginAPI.enablePlugin(pluginID);
+      const manifest = loadedPlugins.find(p => p.id === pluginID);
       if (manifest) {
         await loadPlugin(manifest);
       }
@@ -93,10 +93,10 @@ export const PluginManager: React.FC = () => {
     }
   };
 
-  const handleDisablePlugin = async (pluginName: string) => {
+  const handleDisablePlugin = async (pluginID: number) => {
     try {
-      await pluginAPI.disablePlugin(pluginName);
-      await unloadPlugin(pluginName);
+      await pluginAPI.disablePlugin(pluginID);
+      await unloadPlugin(pluginID);
       await loadPluginData();
       setConfirmAction(null);
     } catch (error) {
@@ -174,10 +174,10 @@ export const PluginManager: React.FC = () => {
     }
   };
 
-  const handleUninstallPlugin = async (pluginName: string) => {
+  const handleUninstallPlugin = async (pluginID: number) => {
     try {
-      await pluginAPI.uninstallPlugin(pluginName);
-      await unloadPlugin(pluginName);
+      await pluginAPI.uninstallPlugin(pluginID);
+      await unloadPlugin(pluginID);
       await loadPluginData();
       setConfirmAction(null);
     } catch (error) {
@@ -185,9 +185,9 @@ export const PluginManager: React.FC = () => {
     }
   };
 
-  const handleReloadPlugin = async (pluginName: string) => {
+  const handleReloadPlugin = async (pluginID: number) => {
     try {
-      await pluginAPI.reloadPlugin(pluginName);
+      await pluginAPI.reloadPlugin(pluginID);
       await loadPluginData();
     } catch (error) {
       console.error('Failed to reload plugin:', error);
@@ -672,7 +672,7 @@ export const PluginManager: React.FC = () => {
                   <div className="mt-auto grid w-full grid-cols-1 gap-2 sm:grid-cols-2">
                     {plugin.enabled ? (
                       <motion.button
-                        onClick={() => setConfirmAction({ type: 'disable', plugin: plugin.name })}
+                        onClick={() => setConfirmAction({ type: 'disable', plugin: plugin.id })}
                         className="flex items-center justify-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
                         style={{
                           background: themeStyles.colors.status.warning + '20',
@@ -686,7 +686,7 @@ export const PluginManager: React.FC = () => {
                       </motion.button>
                     ) : (
                       <motion.button
-                        onClick={() => setConfirmAction({ type: 'enable', plugin: plugin.name })}
+                        onClick={() => setConfirmAction({ type: 'enable', plugin: plugin.id })}
                         className="flex items-center justify-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
                         style={{
                           background: themeStyles.colors.status.success + '20',
@@ -701,7 +701,7 @@ export const PluginManager: React.FC = () => {
                     )}
 
                     <motion.button
-                      onClick={() => setSelectedPlugin(plugin.name)}
+                      onClick={() => setSelectedPlugin(Number(plugin.id))}
                       className="flex items-center justify-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
                       style={{
                         background: themeStyles.colors.brand.primary + '20',
@@ -715,7 +715,7 @@ export const PluginManager: React.FC = () => {
                     </motion.button>
 
                     <motion.button
-                      onClick={() => handleReloadPlugin(plugin.name)}
+                      onClick={() => handleReloadPlugin(plugin.id)}
                       className="flex items-center justify-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
                       style={{
                         background: themeStyles.colors.text.secondary + '20',
@@ -729,7 +729,7 @@ export const PluginManager: React.FC = () => {
                     </motion.button>
 
                     <motion.button
-                      onClick={() => setConfirmAction({ type: 'uninstall', plugin: plugin.name })}
+                      onClick={() => setConfirmAction({ type: 'uninstall', plugin: plugin.id })}
                       className="flex items-center justify-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
                       style={{
                         background: themeStyles.colors.status.error + '20',
@@ -765,9 +765,10 @@ export const PluginManager: React.FC = () => {
 
       {/* Plugin Details Modal */}
       <AnimatePresence>
-        {selectedPlugin && (
+        {selectedPlugin != null && (
           <PluginDetailsModal
-            pluginName={selectedPlugin}
+            pluginID={selectedPlugin}
+            pluginName={availablePlugins.find(p => p.id === selectedPlugin)?.name || ''}
             onClose={() => setSelectedPlugin(null)}
             themeStyles={themeStyles}
             t={t}
@@ -793,13 +794,14 @@ export const PluginManager: React.FC = () => {
             onCancel={() => setConfirmAction(null)}
             themeStyles={themeStyles}
             t={t}
+            pluginName={availablePlugins.find(p => p.id === confirmAction.plugin)?.name || ''}
           />
         )}
       </AnimatePresence>
 
       {/* Feedback Modal */}
       <AnimatePresence>
-        {feedbackClick && (
+        {feedbackClick != null && (
           <FeedbackModel
             pluginId={feedbackClick}
             onClose={() => setFeedbackClick(null)}
@@ -813,6 +815,7 @@ export const PluginManager: React.FC = () => {
 
 // Plugin Details Modal Component
 interface PluginDetailsModalProps {
+  pluginID: number;
   pluginName: string;
   onClose: () => void;
   themeStyles: any;
@@ -821,6 +824,7 @@ interface PluginDetailsModalProps {
 }
 
 const PluginDetailsModal: React.FC<PluginDetailsModalProps> = ({
+  pluginID,
   pluginName,
   onClose,
   themeStyles,
@@ -834,7 +838,7 @@ const PluginDetailsModal: React.FC<PluginDetailsModalProps> = ({
     const loadPluginDetails = async () => {
       try {
         setLoading(true);
-        const pluginDetails = await pluginAPI.getPluginDetails(pluginName);
+        const pluginDetails = await pluginAPI.getPluginDetails(pluginID);
         setDetails(pluginDetails);
       } catch (error) {
         console.error('Failed to load plugin details:', error);
@@ -844,7 +848,7 @@ const PluginDetailsModal: React.FC<PluginDetailsModalProps> = ({
     };
 
     loadPluginDetails();
-  }, [pluginName, pluginAPI]);
+  }, [pluginID, pluginAPI]);
 
   return (
     <motion.div
@@ -957,11 +961,12 @@ const PluginDetailsModal: React.FC<PluginDetailsModalProps> = ({
 
 // Confirmation Modal Component
 interface ConfirmationModalProps {
-  action: { type: 'uninstall' | 'disable' | 'enable'; plugin: string };
+  action: { type: 'uninstall' | 'disable' | 'enable'; plugin: number };
   onConfirm: () => void;
   onCancel: () => void;
   themeStyles: any;
   t: (key: string, options?: any) => string;
+  pluginName: string;
 }
 
 const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
@@ -970,6 +975,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   onCancel,
   themeStyles,
   t,
+  pluginName,
 }) => {
   return (
     <motion.div
@@ -996,7 +1002,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             {t(`plugins.confirmations.${action.type}.title`)}
           </h3>
           <p className="mt-2" style={{ color: themeStyles.colors.text.secondary }}>
-            {t(`plugins.confirmations.${action.type}.message`, { name: action.plugin })}
+            {t(`plugins.confirmations.${action.type}.message`, { name: pluginName })}
           </p>
         </div>
 
