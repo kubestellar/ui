@@ -272,12 +272,6 @@ export const ZoomControls = memo<ZoomControlsProps>(
               <Typography variant="body2" sx={{ fontWeight: 500, minWidth: 70 }}>
                 {preset.label} ({Math.round(preset.level * 100)}%)
               </Typography>
-              <Typography
-                variant="caption"
-                sx={{ color: theme === 'dark' ? '#ccc' : '#666', whiteSpace: 'nowrap', ml: 1 }}
-              >
-                {preset.description}
-              </Typography>
             </MenuItem>
           ))}
         </Menu>

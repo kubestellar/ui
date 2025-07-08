@@ -3,7 +3,6 @@ import { create } from 'zustand';
 export interface ZoomPreset {
   level: number;
   label: string;
-  description: string;
 }
 
 export interface ZoomState {
@@ -16,10 +15,10 @@ export interface ZoomState {
 }
 
 export const zoomPresets: ZoomPreset[] = [
-  { level: 0.5, label: 'Overview', description: 'See the big picture' },
-  { level: 1.0, label: 'Standard', description: 'Default view' },
-  { level: 1.5, label: 'Detailed', description: 'More details visible' },
-  { level: 2.0, label: 'Focus', description: 'Maximum detail' },
+  { level: 0.5, label: 'Overview' },
+  { level: 1.0, label: 'Standard' },
+  { level: 1.5, label: 'Detailed' },
+  { level: 2.0, label: 'Focus' },
 ];
 
 const useZoomStore = create<ZoomState>(set => ({
