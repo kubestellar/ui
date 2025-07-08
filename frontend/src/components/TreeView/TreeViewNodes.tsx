@@ -402,7 +402,7 @@ export const useTreeViewNodes = ({ onNodeSelect, onMenuOpen, isExpanded }: TreeV
           id: edgeId,
           source: parent,
           target: id,
-          type: 'step',
+          type: 'bezier',
           animated: true,
           style: { stroke: theme === 'dark' ? '#777' : '#a3a3a3', strokeDasharray: '2,2' },
           markerEnd: {

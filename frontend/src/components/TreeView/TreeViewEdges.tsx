@@ -13,7 +13,7 @@ export const useTreeViewEdges = ({ theme }: TreeViewEdgesProps) => {
         id: edgeId,
         source,
         target,
-        type: 'step',
+        type: 'bezier',
         animated,
         style: {
           stroke: theme === 'dark' ? '#777' : '#a3a3a3',
