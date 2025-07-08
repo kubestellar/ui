@@ -23,6 +23,7 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
   const viewportRef = useRef({ x: 0, y: 0, zoom: currentZoom });
   const initializedRef = useRef(false);
   const lastTouchDistance = useRef<number | null>(null);
+  const reactFlowContainerRef = useRef<HTMLDivElement>(null);
 
   /**
    * Calculates the boundaries of all nodes in the flow to determine positioning and scaling.
@@ -61,23 +62,18 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
     if (nodes.length > 0 && !initializedRef.current) {
       const { minX, minY, maxY } = positions;
       const treeHeight = maxY - minY;
-
-      const reactFlowContainer = document.querySelector('.react-flow') as HTMLElement;
+      const reactFlowContainer = reactFlowContainerRef.current;
       const viewportHeight = reactFlowContainer
         ? reactFlowContainer.offsetHeight
         : window.innerHeight;
-
       const padding = 20;
       const topMargin = 100;
       const initialZoom = currentZoom;
-
       const centerX = -minX * initialZoom + 50;
       const centerY = -minY * initialZoom + topMargin;
-
       if (reactFlowContainer) {
         reactFlowContainer.style.minHeight = `${Math.max(treeHeight * initialZoom + padding * 2 + topMargin, viewportHeight)}px`;
       }
-
       setViewport({ x: centerX, y: centerY, zoom: initialZoom });
       viewportRef.current = { x: centerX, y: centerY, zoom: initialZoom };
       initializedRef.current = true;
@@ -95,44 +91,38 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
 
   // Pinch-to-zoom for touch devices
   useEffect(() => {
-    const reactFlowContainer = document.querySelector('.react-flow') as HTMLElement | null;
+    const reactFlowContainer = reactFlowContainerRef.current;
     if (!reactFlowContainer) return;
-
     function getDistance(touches: TouchList) {
       if (touches.length < 2) return 0;
       const dx = touches[0].clientX - touches[1].clientX;
       const dy = touches[0].clientY - touches[1].clientY;
       return Math.sqrt(dx * dx + dy * dy);
     }
-
     function handleTouchStart(e: TouchEvent) {
       if (e.touches.length === 2) {
         lastTouchDistance.current = getDistance(e.touches);
       }
     }
-
     function handleTouchMove(e: TouchEvent) {
       if (e.touches.length === 2 && lastTouchDistance.current !== null) {
         const { zoom, x, y } = getViewport();
         const newDistance = getDistance(e.touches);
         const delta = newDistance - lastTouchDistance.current;
-        let newZoom = zoom + delta * 0.0025; // Sensitivity factor
+        let newZoom = zoom + delta * 0.0025;
         newZoom = Math.max(0.1, Math.min(2, newZoom));
         setViewport({ x, y, zoom: newZoom });
         lastTouchDistance.current = newDistance;
       }
     }
-
     function handleTouchEnd(e: TouchEvent) {
       if (e.touches.length < 2) {
         lastTouchDistance.current = null;
       }
     }
-
     reactFlowContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
     reactFlowContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
     reactFlowContainer.addEventListener('touchend', handleTouchEnd, { passive: false });
-
     return () => {
       reactFlowContainer.removeEventListener('touchstart', handleTouchStart);
       reactFlowContainer.removeEventListener('touchmove', handleTouchMove);
@@ -143,21 +133,17 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
   // Enhanced mouse wheel zoom: zoom with wheel unless Shift (pan horizontally)
   const handleWheel = useCallback(
     (event: React.WheelEvent) => {
-      const reactFlowContainer = document.querySelector('.react-flow');
+      const reactFlowContainer = reactFlowContainerRef.current;
       const isInsideTree = reactFlowContainer && reactFlowContainer.contains(event.target as Node);
-
       if (isInsideTree) {
         const { zoom, x, y } = getViewport();
         const scrollSpeed = 0.5;
         const zoomSpeed = 0.05;
-
         if (event.shiftKey) {
-          // Pan horizontally
           const newX = x - event.deltaY * scrollSpeed;
           setViewport({ x: newX, y, zoom });
           viewportRef.current = { x: newX, y, zoom };
         } else {
-          // Zoom in/out with wheel (no modifier needed)
           let newZoom = zoom + (event.deltaY > 0 ? -zoomSpeed : zoomSpeed);
           newZoom = Math.max(0.1, Math.min(2, newZoom));
           setViewport({ x, y, zoom: newZoom });
@@ -175,31 +161,34 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
   useEffect(() => {}, [highlightedLabels]);
 
   return (
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      fitView={false}
-      panOnDrag={true}
-      zoomOnScroll={false}
-      zoomOnDoubleClick={false}
-      zoomOnPinch={false}
-      panOnScroll={true}
-      panOnScrollMode={PanOnScrollMode.Free}
-      onMoveEnd={onMoveEnd}
-      style={{
-        background: theme === 'dark' ? 'rgb(15, 23, 42)' : 'rgb(222, 230, 235)',
-        width: '100%',
-        height: '100%',
-        borderRadius: '4px',
-      }}
-      onWheel={handleWheel}
-    >
-      <Background
-        variant={BackgroundVariant.Dots}
-        gap={12}
-        size={1}
-        color={theme === 'dark' ? '#555' : '#bbb'}
-      />
-    </ReactFlow>
+    <div ref={reactFlowContainerRef} style={{ width: '100%', height: '100%' }}>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        fitView={false}
+        panOnDrag={true}
+        zoomOnScroll={false}
+        zoomOnDoubleClick={false}
+        zoomOnPinch={false}
+        panOnScroll={true}
+        panOnScrollMode={PanOnScrollMode.Free}
+        onMoveEnd={onMoveEnd}
+        style={{
+          background: theme === 'dark' ? 'rgb(15, 23, 42)' : 'rgb(222, 230, 235)',
+          width: '100%',
+          height: '100%',
+          borderRadius: '4px',
+        }}
+        onWheel={handleWheel}
+        defaultEdgeOptions={{ type: 'bezier' }}
+      >
+        <Background
+          variant={BackgroundVariant.Dots}
+          gap={12}
+          size={1}
+          color={theme === 'dark' ? '#555' : '#bbb'}
+        />
+      </ReactFlow>
+    </div>
   );
 });
