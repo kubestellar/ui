@@ -162,15 +162,44 @@ func UpdateUserPassword(userID int, newPassword string) error {
 
 // DeleteUser deletes a user and their permissions
 func DeleteUser(username string) error {
-	query := `DELETE FROM users WHERE username = $1`
-	result, err := database.DB.Exec(query, username)
+	// Start a transaction to ensure both user and permissions are deleted atomically
+	tx, err := database.DB.Begin()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to begin transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	// First, get the user ID to delete permissions
+	var userID int
+	err = tx.QueryRow("SELECT id FROM users WHERE username = $1", username).Scan(&userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("user not found")
+		}
+		return fmt.Errorf("failed to get user ID: %v", err)
+	}
+
+	// Delete user permissions first (due to foreign key constraint)
+	// Note: With ON DELETE CASCADE, this is actually redundant but safer
+	_, err = tx.Exec("DELETE FROM user_permissions WHERE user_id = $1", userID)
+	if err != nil {
+		return fmt.Errorf("failed to delete user permissions: %v", err)
+	}
+
+	// Delete the user
+	result, err := tx.Exec("DELETE FROM users WHERE username = $1", username)
+	if err != nil {
+		return fmt.Errorf("failed to delete user: %v", err)
 	}
 
 	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected == 0 {
 		return fmt.Errorf("user not found")
+	}
+
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %v", err)
 	}
 
 	return nil
