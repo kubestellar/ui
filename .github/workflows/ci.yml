@@ -132,7 +132,7 @@ jobs:
         if: success()
         run: echo "Backend server started successfully ✅"
 
-   helm-chart-test:
+  helm-chart-test:
     name: Helm Chart Test
     runs-on: ubuntu-latest
     needs: [frontend, backend]  # ✅ Wait until images are built & pushed
