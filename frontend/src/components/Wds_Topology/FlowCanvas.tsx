@@ -164,33 +164,33 @@ export const FlowCanvas = memo<FlowCanvasProps>(({ nodes, edges, theme }) => {
 
   return (
     <div ref={reactFlowContainerRef} style={{ width: '100%', height: '100%' }}>
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      fitView={false}
-      panOnDrag={true}
-      zoomOnScroll={false}
-      zoomOnDoubleClick={false}
-      zoomOnPinch={false}
-      panOnScroll={true}
-      panOnScrollMode={PanOnScrollMode.Free}
-      onMoveEnd={onMoveEnd}
-      style={{
-        background: theme === 'dark' ? 'rgb(15, 23, 42)' : 'rgb(222, 230, 235)',
-        width: '100%',
-        height: '100%',
-        borderRadius: '4px',
-      }}
-      onWheel={handleWheel}
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        fitView={false}
+        panOnDrag={true}
+        zoomOnScroll={false}
+        zoomOnDoubleClick={false}
+        zoomOnPinch={false}
+        panOnScroll={true}
+        panOnScrollMode={PanOnScrollMode.Free}
+        onMoveEnd={onMoveEnd}
+        style={{
+          background: theme === 'dark' ? 'rgb(15, 23, 42)' : 'rgb(222, 230, 235)',
+          width: '100%',
+          height: '100%',
+          borderRadius: '4px',
+        }}
+        onWheel={handleWheel}
         defaultEdgeOptions={{ type: edgeType }}
-    >
-      <Background
-        variant={BackgroundVariant.Dots}
-        gap={12}
-        size={1}
-        color={theme === 'dark' ? '#555' : '#bbb'}
-      />
-    </ReactFlow>
+      >
+        <Background
+          variant={BackgroundVariant.Dots}
+          gap={12}
+          size={1}
+          color={theme === 'dark' ? '#555' : '#bbb'}
+        />
+      </ReactFlow>
     </div>
   );
 });
